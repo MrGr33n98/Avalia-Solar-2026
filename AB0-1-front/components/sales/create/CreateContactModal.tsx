@@ -23,6 +23,8 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
   const [contactFirstName, setContactFirstName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactJobTitle, setContactJobTitle] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [decisionRole, setDecisionRole] = useState('decision_maker');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +37,9 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
         first_name: contactFirstName,
         email: contactEmail,
         job_title: contactJobTitle,
+        phone: contactPhone,
+        whatsapp: contactPhone,
+        decision_role: decisionRole,
       });
       setSuccessMsg('Contato cadastrado com sucesso!');
       setTimeout(() => {
@@ -92,6 +97,30 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
               onChange={(e) => setContactJobTitle(e.target.value)}
               placeholder="Diretor Operacional"
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold text-slate-700">Telefone / WhatsApp</Label>
+            <Input
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              placeholder="(65) 99999-0000"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold text-slate-700">Papel de Decisão (Decision Role)</Label>
+            <select
+              value={decisionRole}
+              onChange={(e) => setDecisionRole(e.target.value)}
+              className="w-full h-9 text-xs rounded-md border border-slate-200 bg-white px-3 text-slate-700"
+            >
+              <option value="decision_maker">Decision Maker</option>
+              <option value="economic_buyer">Economic Buyer</option>
+              <option value="champion">Champion</option>
+              <option value="technical_buyer">Technical Buyer</option>
+            </select>
           </div>
         </div>
 

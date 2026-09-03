@@ -20,7 +20,14 @@ export interface PersonListItem {
   is_primary?: boolean;
   account_name?: string | null;
   sales_account_id?: number | null;
+  owner_id?: number | null;
+  owner_name?: string | null;
   last_contact_at?: string | null;
+  last_contact_type?: string | null;
+  last_contact_title?: string | null;
+  next_action_at?: string | null;
+  next_action_type?: string | null;
+  next_action_title?: string | null;
 }
 
 interface PeopleTableProps {
@@ -116,6 +123,7 @@ export default function PeopleTable({
               {columns.company_job && <th className="p-3">Empresa & Cargo</th>}
               {columns.decision_role && <th className="p-3">Decision Role</th>}
               {columns.last_contact && <th className="p-3">Last Contact</th>}
+              <th className="p-3">Next Action</th>
               {columns.contact_info && <th className="p-3">Canais de Contato</th>}
               <th className="p-3 text-right">Ações</th>
             </tr>
@@ -181,9 +189,35 @@ export default function PeopleTable({
 
                   {columns.last_contact && (
                     <td className="p-3 text-slate-500">
-                      {person.last_contact_at ? new Date(person.last_contact_at).toLocaleDateString('pt-BR') : '—'}
+                      {person.last_contact_at ? (
+                        <div>
+                          <span className="font-semibold block text-slate-700">
+                            {new Date(person.last_contact_at).toLocaleDateString('pt-BR')}
+                          </span>
+                          {person.last_contact_title && (
+                            <span className="text-[11px] text-slate-400 block">{person.last_contact_title}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic">Sem contato registrado</span>
+                      )}
                     </td>
                   )}
+
+                  <td className="p-3">
+                    {person.next_action_title ? (
+                      <div>
+                        <span className="font-semibold block text-indigo-900">{person.next_action_title}</span>
+                        {person.next_action_at && (
+                          <span className="text-[11px] text-slate-500 block">
+                            {new Date(person.next_action_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 italic text-[11px]">Nenhuma próxima ação</span>
+                    )}
+                  </td>
 
                   {columns.contact_info && (
                     <td className="p-3">

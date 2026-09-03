@@ -6,6 +6,8 @@ module Sales
     alias_attribute :account_id, :sales_account_id
 
     belongs_to :user, optional: true
+    alias_attribute :owner_id, :user_id
+    belongs_to :owner, class_name: 'User', foreign_key: :user_id, optional: true
 
     has_many :opportunities, class_name: 'Sales::Opportunity', foreign_key: :primary_contact_id, dependent: :nullify
 

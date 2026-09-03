@@ -26,6 +26,8 @@ import CreateActivityModal from '@/components/sales/create/CreateActivityModal';
 import CreateTaskModal from '@/components/sales/create/CreateTaskModal';
 import SendEmailModal from '@/components/sales/create/SendEmailModal';
 
+import { salesApi } from '@/lib/api/sales/client';
+
 interface ContactDetail {
   id: number;
   first_name: string;
@@ -72,6 +74,27 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
   const [error, setError] = useState<string | null>(null);
 
   const [activeModal, setActiveModal] = useState<'call' | 'email' | 'task' | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [submittingNote, setSubmittingNote] = useState(false);
+
+  const handleSaveNote = async () => {
+    if (!noteText.trim() || !contact) return;
+    setSubmittingNote(true);
+    try {
+      await salesApi.createActivity({
+        activity_type: 'note',
+        subject: 'Nota Comercial',
+        body: noteText,
+        sales_contact_id: contact.id,
+      });
+      setNoteText('');
+      fetchPersonData();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao salvar nota.');
+    } finally {
+      setSubmittingNote(false);
+    }
+  };
 
   const fetchPersonData = useCallback(() => {
     setLoading(true);
@@ -193,6 +216,33 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Column (2/3) */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Write Note Inline Composer */}
+            <div className="bg-amber-50/70 border border-amber-200 rounded-lg p-4 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-amber-700" /> Write Note (Nova Nota Comercial)
+                </h3>
+              </div>
+              <textarea
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="Escreva uma nota técnica ou observação de relacionamento..."
+                className="w-full text-xs p-2.5 rounded-md border border-amber-200 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 text-slate-800"
+                rows={3}
+              />
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleSaveNote}
+                  disabled={submittingNote || !noteText.trim()}
+                  className="h-7 text-xs bg-amber-800 hover:bg-amber-900 text-white font-bold px-3"
+                >
+                  {submittingNote ? <RotateCw className="w-3.5 h-3.5 animate-spin mr-1" /> : <Plus className="w-3.5 h-3.5 mr-1" />}
+                  Salvar Nota
+                </Button>
+              </div>
+            </div>
+
             {/* Timeline Events */}
             <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-2xs">
               <h2 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">

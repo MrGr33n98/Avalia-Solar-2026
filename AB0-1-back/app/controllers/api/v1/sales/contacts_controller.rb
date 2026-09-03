@@ -6,25 +6,12 @@ module Api
         before_action :require_internal_sales
 
         def index
-          scope = ::Sales::Contact.includes(:account, :contact_employments).order(created_at: :desc)
-
-          account_id = params[:account_id] || params[:sales_account_id]
-          scope = scope.where(sales_account_id: account_id) if account_id.present?
-          scope = scope.where(decision_role: params[:decision_role]) if params[:decision_role].present?
-
-          if params[:q].present?
-            q = "%#{params[:q].to_s.downcase}%"
-            scope = scope.where(
-              'LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(job_title) LIKE ?',
-              q, q, q, q
-            )
-          end
-
-          total_count = scope.count
+          query_scope = ::Sales::ContactsQuery.new(params).call
+          total_count = query_scope.count
           page = [params[:page].to_i, 1].max
           per_page = params[:per_page].present? ? [params[:per_page].to_i, 100].min : 50
 
-          contacts = scope.offset((page - 1) * per_page).limit(per_page)
+          contacts = query_scope.offset((page - 1) * per_page).limit(per_page)
 
           render json: {
             contacts: contacts.map { |c| serialize(c) },
@@ -38,56 +25,13 @@ module Api
         end
 
         def show
-          contact = ::Sales::Contact.includes(:account, :contact_employments, :opportunity_contacts, :activities, :tasks).find(params[:id])
+          contact = ::Sales::Contact.includes(:account, :user, :contact_employments, :opportunity_contacts, :activities, :tasks).find(params[:id])
           render json: { contact: serialize_detailed(contact) }
         end
 
         def timeline
           contact = ::Sales::Contact.find(params[:id])
-          events = []
-
-          contact.activities.order(occurred_at: :desc).each do |act|
-            events << {
-              id: "act-#{act.id}",
-              type: act.activity_type == 'call' ? 'call' : 'activity',
-              title: act.activity_type == 'call' ? 'Chamada Registrada' : 'Atividade Comercial',
-              description: act.description || act.body,
-              occurred_at: act.occurred_at || act.created_at
-            }
-          end
-
-          contact.tasks.each do |t|
-            events << {
-              id: "task-#{t.id}",
-              type: 'task',
-              title: "Tarefa: #{t.title}",
-              description: "Status: #{t.status || 'Pendente'}",
-              occurred_at: t.created_at
-            }
-          end
-
-          contact.opportunity_contacts.includes(:opportunity).each do |oc|
-            if oc.opportunity
-              events << {
-                id: "opp-#{oc.id}",
-                type: 'stage_changed',
-                title: "Vínculo a Oportunidade #{oc.opportunity.name}",
-                description: "Papel no Comitê: #{oc.role || 'Membro'}",
-                occurred_at: oc.created_at
-              }
-            end
-          end
-
-          events << {
-            id: "contact-created-#{contact.id}",
-            type: 'website',
-            title: 'Contato Cadastrado no CRM',
-            description: "Contato #{contact.first_name} #{contact.last_name} registrado.",
-            occurred_at: contact.created_at
-          }
-
-          events.sort_by! { |e| e[:occurred_at] || Time.current }.reverse!
-          render json: { timeline: events }
+          render json: { timeline: ::Sales::Contacts::TimelineBuilder.build(contact) }
         end
 
         def create
@@ -97,7 +41,9 @@ module Api
                     else
                       ::Sales::Contact.new
                     end
-          contact.assign_attributes(contact_params)
+          attrs = contact_params
+          attrs[:user_id] = params[:owner_id] if params[:owner_id].present?
+          contact.assign_attributes(attrs)
           contact.sales_account_id ||= account_id
           contact.save!
           render json: { contact: serialize_detailed(contact) }, status: contact.previously_new_record? ? :created : :ok
@@ -105,7 +51,9 @@ module Api
 
         def update
           contact = ::Sales::Contact.find(params[:id])
-          contact.update!(contact_params)
+          attrs = contact_params
+          attrs[:user_id] = params[:owner_id] if params[:owner_id].present?
+          contact.update!(attrs)
           render json: { contact: serialize_detailed(contact) }
         end
 
@@ -114,14 +62,19 @@ module Api
         def contact_params
           params.require(:contact).permit(
             :first_name, :last_name, :email, :phone, :whatsapp, :job_title, :linkedin_url,
-            :decision_role, :is_primary, :sales_account_id
+            :decision_role, :is_primary, :sales_account_id, :user_id, :owner_id
           )
         end
 
         def serialize(contact)
+          last_contact = ::Sales::Contacts::LastContactResolver.resolve(contact)
+          next_action = ::Sales::Contacts::NextActionResolver.resolve(contact)
+
           {
             id: contact.id,
             sales_account_id: contact.sales_account_id,
+            owner_id: contact.user_id,
+            owner_name: contact.user&.name || 'Vendedor Responsável',
             first_name: contact.first_name,
             last_name: contact.last_name,
             name: [contact.first_name, contact.last_name].compact.join(' '),
@@ -133,7 +86,12 @@ module Api
             decision_role: contact.decision_role || 'decision_maker',
             is_primary: contact.is_primary,
             account_name: contact.account&.name,
-            last_contact_at: contact.updated_at
+            last_contact_at: last_contact[:last_contact_at],
+            last_contact_type: last_contact[:last_contact_type],
+            last_contact_title: last_contact[:last_contact_title],
+            next_action_at: next_action[:next_action_at],
+            next_action_type: next_action[:next_action_type],
+            next_action_title: next_action[:next_action_title]
           }
         end
 

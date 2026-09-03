@@ -6,12 +6,14 @@ import CreateContactModal from '@/components/sales/create/CreateContactModal';
 import PeopleColumnsDialog, { PeopleColumnConfig } from './PeopleColumnsDialog';
 import PeopleTable, { PersonListItem } from './PeopleTable';
 import PeopleToolbar from './PeopleToolbar';
+import PeopleMapView from './views/PeopleMapView';
 
 export default function PeoplePage() {
   const [contacts, setContacts] = useState<PersonListItem[]>([]);
   const [query, setQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,21 +101,27 @@ export default function PeoplePage() {
           onRoleSelect={setSelectedRole}
           selectedOwnerId={selectedOwnerId}
           onOwnerSelect={setSelectedOwnerId}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
           onOpenColumnsDialog={() => setIsColumnsDialogOpen(true)}
           onCreatePerson={() => setIsCreatePersonModalOpen(true)}
           onExportCsv={handleExportCsv}
         />
 
-        <PeopleTable
-          contacts={contacts}
-          loading={loading}
-          error={error}
-          columns={columns}
-          selectedIds={selectedIds}
-          onToggleSelectAll={handleToggleSelectAll}
-          onToggleSelect={handleToggleSelect}
-          onRetry={fetchContacts}
-        />
+        {viewMode === 'list' ? (
+          <PeopleTable
+            contacts={contacts}
+            loading={loading}
+            error={error}
+            columns={columns}
+            selectedIds={selectedIds}
+            onToggleSelectAll={handleToggleSelectAll}
+            onToggleSelect={handleToggleSelect}
+            onRetry={fetchContacts}
+          />
+        ) : (
+          <PeopleMapView contacts={contacts} />
+        )}
 
         <PeopleColumnsDialog
           open={isColumnsDialogOpen}

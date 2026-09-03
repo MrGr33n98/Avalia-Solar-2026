@@ -29,6 +29,8 @@ interface PeopleToolbarProps {
   onRoleSelect: (role: string | null) => void;
   selectedOwnerId: string | null;
   onOwnerSelect: (ownerId: string | null) => void;
+  viewMode: 'list' | 'map';
+  onViewModeChange: (mode: 'list' | 'map') => void;
   onOpenColumnsDialog: () => void;
   onCreatePerson: () => void;
   onExportCsv: () => void;
@@ -42,6 +44,8 @@ export default function PeopleToolbar({
   onRoleSelect,
   selectedOwnerId,
   onOwnerSelect,
+  viewMode,
+  onViewModeChange,
   onOpenColumnsDialog,
   onCreatePerson,
   onExportCsv,
@@ -155,6 +159,21 @@ export default function PeopleToolbar({
             />
           </div>
           <span className="text-xs text-slate-500 font-medium whitespace-nowrap">{count} people</span>
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-md border border-slate-200">
+            <button
+              onClick={() => onViewModeChange('list')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded ${viewMode === 'list' ? 'bg-white text-indigo-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              List
+            </button>
+            <button
+              onClick={() => onViewModeChange('map')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded ${viewMode === 'map' ? 'bg-white text-indigo-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Map
+            </button>
+          </div>
+
           <Button
             variant="ghost"
             size="sm"

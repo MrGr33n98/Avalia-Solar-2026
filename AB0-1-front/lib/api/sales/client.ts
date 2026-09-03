@@ -223,6 +223,23 @@ export const salesApi = {
     return res.task;
   },
 
+  // Activities / Notes
+  async createActivity(payload: {
+    activity_type: string;
+    subject: string;
+    body?: string;
+    description?: string;
+    occurred_at?: string;
+    sales_account_id?: number;
+    sales_contact_id?: number;
+    sales_opportunity_id?: number;
+  }): Promise<void> {
+    await request('/api/v1/sales/activities', {
+      method: 'POST',
+      body: JSON.stringify({ activity: payload }),
+    });
+  },
+
   // Accounts
   async getAccounts(query?: string): Promise<ApiAccount[]> {
     const qs = new URLSearchParams();
@@ -254,7 +271,9 @@ export const salesApi = {
     last_name?: string;
     email?: string;
     phone?: string;
+    whatsapp?: string;
     job_title?: string;
+    decision_role?: string;
   }): Promise<ApiContact> {
     const res = await request<{ contact: ApiContact }>('/api/v1/sales/contacts', {
       method: 'POST',
