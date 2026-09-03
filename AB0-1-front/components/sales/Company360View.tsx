@@ -22,7 +22,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SalesOutreachTemplates from '@/components/sales/SalesOutreachTemplates';
 import SolarRoiCalculator from '@/components/sales/SolarRoiCalculator';
@@ -40,6 +47,7 @@ type DetailedAccount = {
   state?: string | null;
   segment?: string | null;
   status?: string | null;
+  tags?: Array<{ id: number; name: string; color?: string | null }>;
   owner_name?: string | null;
   contacts?: Array<{
     id: number;
@@ -73,6 +81,7 @@ type DetailedAccount = {
     completed_at?: string;
     priority?: string;
   }>;
+  solar_project_id?: number;
   marketplace?: {
     id: number;
     name: string;
@@ -110,13 +119,6 @@ export default function Company360View({
   const [error, setError] = useState<string | null>(null);
   const [accountData, setAccountData] = useState<DetailedAccount | null>(null);
 
-  useEffect(() => {
-    if (openByDefault) {
-      setOpen(true);
-      fetchDetails();
-    }
-  }, [openByDefault, fetchDetails]);
-
   const fetchDetails = useCallback(() => {
     if (!accountId) return;
     setLoading(true);
@@ -137,6 +139,13 @@ export default function Company360View({
       .finally(() => setLoading(false));
   }, [accountId]);
 
+  useEffect(() => {
+    if (openByDefault) {
+      setOpen(true);
+      fetchDetails();
+    }
+  }, [openByDefault, fetchDetails]);
+
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (isOpen && accountId && !accountData) {
@@ -153,21 +162,32 @@ export default function Company360View({
   const opportunities = accountData?.opportunities ?? [];
   const activities = accountData?.activities ?? [];
   const marketplace = accountData?.marketplace;
+  const tags = accountData?.tags ?? [];
+  const activeSolarProjectId = solarProjectId || accountData?.solar_project_id;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-blue-900 hover:bg-blue-50">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs font-bold text-blue-900 hover:bg-blue-50"
+        >
           <Eye className="mr-1 h-3.5 w-3.5 text-blue-700" /> Ver Ficha 360°
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white border-slate-200 p-6">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-5xl max-h-[90vh] overflow-y-auto bg-white border-slate-200 p-3 sm:p-6">
         <DialogHeader className="border-b border-slate-100 pb-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <Badge className="border-0 bg-blue-900 font-bold text-white">Company 360° Sales OS</Badge>
-                <Badge variant="outline" className="border-slate-300 bg-slate-50 text-[11px] font-semibold text-slate-700">
+                <Badge className="border-0 bg-blue-900 font-bold text-white">
+                  Company 360° Sales OS
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-slate-300 bg-slate-50 text-[11px] font-semibold text-slate-700"
+                >
                   {activeSegment}
                 </Badge>
                 {marketplace?.verified && (
@@ -197,12 +217,14 @@ export default function Company360View({
         </DialogHeader>
 
         {accountId && <NotesPanel accountId={accountId} />}
-        {solarProjectId && <SiteSurveyForm projectId={solarProjectId} />}
+        {activeSolarProjectId && <SiteSurveyForm projectId={activeSolarProjectId} />}
 
         {loading ? (
           <div className="py-16 text-center space-y-3">
             <RotateCw className="mx-auto h-8 w-8 animate-spin text-blue-900" />
-            <p className="text-sm font-semibold text-slate-600">Carregando inteligência 360° da conta...</p>
+            <p className="text-sm font-semibold text-slate-600">
+              Carregando inteligência 360° da conta...
+            </p>
           </div>
         ) : error ? (
           <div className="py-12 text-center space-y-3">
@@ -214,20 +236,35 @@ export default function Company360View({
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-slate-100 p-1 text-xs">
-              <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:font-bold">
+            <TabsList className="flex w-full gap-1 overflow-x-auto bg-slate-100 p-1 text-xs">
+              <TabsTrigger
+                value="overview"
+                className="min-w-max data-[state=active]:bg-white data-[state=active]:font-bold"
+              >
                 Visão Geral 360°
               </TabsTrigger>
-              <TabsTrigger value="committee" className="data-[state=active]:bg-white data-[state=active]:font-bold">
+              <TabsTrigger
+                value="committee"
+                className="min-w-max data-[state=active]:bg-white data-[state=active]:font-bold"
+              >
                 Comitê ({contacts.length})
               </TabsTrigger>
-              <TabsTrigger value="timeline" className="data-[state=active]:bg-white data-[state=active]:font-bold">
+              <TabsTrigger
+                value="timeline"
+                className="min-w-max data-[state=active]:bg-white data-[state=active]:font-bold"
+              >
                 Timeline ({activities.length})
               </TabsTrigger>
-              <TabsTrigger value="opportunities" className="data-[state=active]:bg-white data-[state=active]:font-bold">
+              <TabsTrigger
+                value="opportunities"
+                className="min-w-max data-[state=active]:bg-white data-[state=active]:font-bold"
+              >
                 Oportunidades ({opportunities.length})
               </TabsTrigger>
-              <TabsTrigger value="intelligence" className="data-[state=active]:bg-white data-[state=active]:font-bold">
+              <TabsTrigger
+                value="intelligence"
+                className="min-w-max data-[state=active]:bg-white data-[state=active]:font-bold"
+              >
                 Marketplace Intel
               </TabsTrigger>
             </TabsList>
@@ -247,11 +284,17 @@ export default function Company360View({
                       </CardTitle>
                     </div>
                     {marketplace ? (
-                      <Badge variant="outline" className="border-blue-300 bg-white font-bold text-blue-900 text-[10px]">
+                      <Badge
+                        variant="outline"
+                        className="border-blue-300 bg-white font-bold text-blue-900 text-[10px]"
+                      >
                         Perfil Vinculado (#{marketplace.id})
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="border-amber-300 bg-amber-50 font-bold text-amber-900 text-[10px]">
+                      <Badge
+                        variant="outline"
+                        className="border-amber-300 bg-amber-50 font-bold text-amber-900 text-[10px]"
+                      >
                         Não Vinculado ao Portal
                       </Badge>
                     )}
@@ -260,10 +303,14 @@ export default function Company360View({
                     {marketplace ? (
                       <div className="grid grid-cols-2 gap-3">
                         <div className="rounded-lg bg-white p-3 border border-slate-200">
-                          <p className="text-[10px] uppercase font-bold text-slate-500">Reputação Pública</p>
+                          <p className="text-[10px] uppercase font-bold text-slate-500">
+                            Reputação Pública
+                          </p>
                           <p className="mt-1 text-base font-extrabold text-amber-600 flex items-center gap-1">
                             <Star className="h-4 w-4 fill-amber-500 text-amber-500" />{' '}
-                            {marketplace.rating_avg ? `${marketplace.rating_avg.toFixed(1)} ★` : 'Sem nota'}
+                            {marketplace.rating_avg
+                              ? `${marketplace.rating_avg.toFixed(1)} ★`
+                              : 'Sem nota'}
                             <span className="text-xs font-medium text-slate-500">
                               ({marketplace.rating_count ?? 0} avaliações)
                             </span>
@@ -271,7 +318,9 @@ export default function Company360View({
                         </div>
 
                         <div className="rounded-lg bg-white p-3 border border-slate-200">
-                          <p className="text-[10px] uppercase font-bold text-slate-500">Status no Portal</p>
+                          <p className="text-[10px] uppercase font-bold text-slate-500">
+                            Status no Portal
+                          </p>
                           <p className="mt-1 text-sm font-bold text-slate-900">
                             {marketplace.verified ? 'Empresa Verificada' : 'Perfil Não Reclamado'}
                           </p>
@@ -281,10 +330,12 @@ export default function Company360View({
                       <div className="rounded-lg bg-white p-4 border border-dashed border-slate-300 text-center space-y-2">
                         <Building2 className="mx-auto h-8 w-8 text-slate-400" />
                         <p className="text-xs font-semibold text-slate-700">
-                          Esta Conta de Vendas ainda não está vinculada a um perfil cadastrado no Marketplace Avalia Solar.
+                          Esta Conta de Vendas ainda não está vinculada a um perfil cadastrado no
+                          Marketplace Avalia Solar.
                         </p>
                         <p className="text-[11px] text-slate-500">
-                          Vincule a empresa para visualizar métricas de tráfego, avaliações e demandas B2C recebidas.
+                          Vincule a empresa para visualizar métricas de tráfego, avaliações e
+                          demandas B2C recebidas.
                         </p>
                       </div>
                     )}
@@ -306,18 +357,35 @@ export default function Company360View({
                       {accountData?.status || 'Prospect'}
                     </Badge>
                   </CardHeader>
+                  {tags.length > 0 && (
+                    <CardContent className="flex flex-wrap gap-1 border-b border-slate-100 p-4">
+                      {tags.map((tag) => (
+                        <Badge
+                          key={tag.id}
+                          variant="outline"
+                          style={{ color: tag.color || '#1d4ed8' }}
+                        >
+                          {tag.name}
+                        </Badge>
+                      ))}
+                    </CardContent>
+                  )}
 
                   <CardContent className="p-4 space-y-3.5 text-xs">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="rounded-lg bg-slate-50 p-3 border border-slate-200">
-                        <p className="text-[10px] uppercase font-bold text-slate-500">Estágio Comercial</p>
+                        <p className="text-[10px] uppercase font-bold text-slate-500">
+                          Estágio Comercial
+                        </p>
                         <p className="mt-1 text-sm font-bold text-blue-900">
                           {accountData?.status ? accountData.status.toUpperCase() : 'NOVO PROSPECT'}
                         </p>
                       </div>
 
                       <div className="rounded-lg bg-slate-50 p-3 border border-slate-200">
-                        <p className="text-[10px] uppercase font-bold text-slate-500">Responsável (Owner)</p>
+                        <p className="text-[10px] uppercase font-bold text-slate-500">
+                          Responsável (Owner)
+                        </p>
                         <p className="mt-1 text-sm font-bold text-slate-900">
                           {accountData?.owner_name || 'Vendedor Interno'}
                         </p>
@@ -326,7 +394,8 @@ export default function Company360View({
 
                     <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 space-y-1.5">
                       <p className="font-bold text-blue-950 text-xs flex items-center gap-1.5">
-                        <Zap className="h-4 w-4 text-blue-700" /> Próxima Melhor Ação (Next Best Action):
+                        <Zap className="h-4 w-4 text-blue-700" /> Próxima Melhor Ação (Next Best
+                        Action):
                       </p>
                       <p className="text-[11px] text-blue-900 leading-relaxed font-medium">
                         {contacts.length === 0
@@ -343,12 +412,17 @@ export default function Company360View({
             <TabsContent value="committee" className="mt-4 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Comitê de Compra (Buying Committee)</h3>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Comitê de Compra (Buying Committee)
+                  </h3>
                   <p className="text-xs text-slate-500">
                     Pessoas e decisores conhecidos na operação de vendas.
                   </p>
                 </div>
-                <Button size="sm" className="bg-blue-900 font-bold text-white text-xs hover:bg-blue-950">
+                <Button
+                  size="sm"
+                  className="bg-blue-900 font-bold text-white text-xs hover:bg-blue-950"
+                >
                   <UserPlus className="mr-1.5 h-3.5 w-3.5" /> Adicionar Decisor
                 </Button>
               </div>
@@ -356,20 +430,29 @@ export default function Company360View({
               {contacts.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center space-y-2">
                   <Users className="mx-auto h-8 w-8 text-slate-400" />
-                  <p className="text-sm font-semibold text-slate-800">Nenhum decisor cadastrado neste comitê</p>
-                  <p className="text-xs text-slate-500">Adicione contatos como CEO, CFO ou Gerente de Vendas para gerenciar a abordagem.</p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Nenhum decisor cadastrado neste comitê
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Adicione contatos como CEO, CFO ou Gerente de Vendas para gerenciar a abordagem.
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {contacts.map((c) => (
-                    <Card key={c.id} className="border-slate-200 bg-white shadow-2xs hover:border-blue-400 transition">
+                    <Card
+                      key={c.id}
+                      className="border-slate-200 bg-white shadow-2xs hover:border-blue-400 transition"
+                    >
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-start justify-between">
                           <div>
                             <p className="text-sm font-bold text-slate-900">
                               {c.first_name} {c.last_name}
                             </p>
-                            <p className="text-xs text-slate-500">{c.job_title || 'Cargo não especificado'}</p>
+                            <p className="text-xs text-slate-500">
+                              {c.job_title || 'Cargo não especificado'}
+                            </p>
                           </div>
                           {c.decision_role && (
                             <Badge className="border-0 bg-blue-900 font-semibold text-white text-[10px]">
@@ -407,13 +490,19 @@ export default function Company360View({
             {/* Timeline Tab */}
             <TabsContent value="timeline" className="mt-4 space-y-3">
               <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-4">
-                <h3 className="text-sm font-bold text-slate-900">Timeline Unificada de Atividades</h3>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Timeline Unificada de Atividades
+                </h3>
 
                 {activities.length === 0 ? (
                   <div className="py-8 text-center space-y-1">
                     <Activity className="mx-auto h-8 w-8 text-slate-300" />
-                    <p className="text-xs font-semibold text-slate-600">Nenhuma atividade registrada ainda</p>
-                    <p className="text-[11px] text-slate-400">Registre chamadas, reuniões e notas para construir o histórico.</p>
+                    <p className="text-xs font-semibold text-slate-600">
+                      Nenhuma atividade registrada ainda
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Registre chamadas, reuniões e notas para construir o histórico.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200">
@@ -439,19 +528,31 @@ export default function Company360View({
               {opportunities.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center space-y-2">
                   <Target className="mx-auto h-8 w-8 text-slate-400" />
-                  <p className="text-sm font-semibold text-slate-800">Nenhuma oportunidade aberta</p>
-                  <p className="text-xs text-slate-500">Crie uma oportunidade de contratação ou upgrade de plano no Avalia Solar.</p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    Nenhuma oportunidade aberta
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Crie uma oportunidade de contratação ou upgrade de plano no Avalia Solar.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {opportunities.map((opp) => (
-                    <div key={opp.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 flex items-center justify-between">
+                    <div
+                      key={opp.id}
+                      className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 flex items-center justify-between"
+                    >
                       <div>
                         <h4 className="text-sm font-bold text-slate-900">{opp.name}</h4>
-                        <p className="text-xs text-slate-500">Probabilidade: {opp.probability ?? 50}%</p>
+                        <p className="text-xs text-slate-500">
+                          Probabilidade: {opp.probability ?? 50}%
+                        </p>
                       </div>
                       <span className="text-base font-extrabold text-blue-950">
-                        R$ {((opp.value_cents ?? 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R${' '}
+                        {((opp.value_cents ?? 0) / 100).toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                        })}
                       </span>
                     </div>
                   ))}

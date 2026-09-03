@@ -29,6 +29,7 @@ export interface CompanyListItem {
   people_count?: number;
   open_opportunities_count?: number;
   open_pipeline_value_cents?: number;
+  tags?: Array<{ id: number; name: string; color?: string | null }>;
   last_activity_at?: string | null;
 }
 
@@ -80,7 +81,8 @@ export default function CompaniesTable({
         <Building2 className="mx-auto h-10 w-10 text-slate-300" />
         <p className="mt-3 text-sm font-semibold text-slate-900">Nenhuma empresa encontrada.</p>
         <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-          Adicione ou importe empresas comerciais para organizar decisores e gerenciar oportunidades.
+          Adicione ou importe empresas comerciais para organizar decisores e gerenciar
+          oportunidades.
         </p>
       </div>
     );
@@ -108,6 +110,7 @@ export default function CompaniesTable({
               {columns.address && <th className="p-3">Address</th>}
               {columns.company_type && <th className="p-3">Company Type</th>}
               {columns.open_opps && <th className="p-3">Oportunidades</th>}
+              {columns.tags && <th className="p-3">Tags</th>}
               <th className="p-3 text-right">Ações</th>
             </tr>
           </thead>
@@ -115,7 +118,9 @@ export default function CompaniesTable({
             {accounts.map((account) => {
               const isSelected = selectedIds.includes(account.id);
               const primaryContactName = account.primary_contact
-                ? [account.primary_contact.first_name, account.primary_contact.last_name].filter(Boolean).join(' ')
+                ? [account.primary_contact.first_name, account.primary_contact.last_name]
+                    .filter(Boolean)
+                    .join(' ')
                 : null;
 
               return (
@@ -134,7 +139,10 @@ export default function CompaniesTable({
 
                   {columns.company_name && (
                     <td className="p-3 font-semibold text-slate-900">
-                      <Link href={`/dashboard/sales/accounts/${account.id}`} className="hover:text-sky-600 flex items-center gap-1.5">
+                      <Link
+                        href={`/dashboard/sales/accounts/${account.id}`}
+                        className="hover:text-sky-600 flex items-center gap-1.5"
+                      >
                         <Building2 className="w-3.5 h-3.5 text-blue-900 shrink-0" />
                         <span>{account.name}</span>
                       </Link>
@@ -150,7 +158,9 @@ export default function CompaniesTable({
                           <div>
                             <span className="font-semibold block">{primaryContactName}</span>
                             {account.primary_contact?.job_title && (
-                              <span className="text-[11px] text-slate-500 block">{account.primary_contact.job_title}</span>
+                              <span className="text-[11px] text-slate-500 block">
+                                {account.primary_contact.job_title}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -176,7 +186,10 @@ export default function CompaniesTable({
 
                   {columns.company_type && (
                     <td className="p-3">
-                      <Badge variant="outline" className="text-[11px] font-normal border-slate-200 bg-slate-50 text-slate-700">
+                      <Badge
+                        variant="outline"
+                        className="text-[11px] font-normal border-slate-200 bg-slate-50 text-slate-700"
+                      >
                         {account.company_type || 'Standard Account'}
                       </Badge>
                     </td>
@@ -184,7 +197,33 @@ export default function CompaniesTable({
 
                   {columns.open_opps && (
                     <td className="p-3">
-                      <span className="font-semibold text-slate-900">{account.open_opportunities_count ?? 0} abertas</span>
+                      <span className="font-semibold text-slate-900">
+                        {account.open_opportunities_count ?? 0} abertas
+                      </span>
+                    </td>
+                  )}
+
+                  {columns.tags && (
+                    <td className="p-3">
+                      <div className="flex max-w-48 flex-wrap gap-1">
+                        {(account.tags ?? []).slice(0, 3).map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            style={{
+                              backgroundColor: `${tag.color || '#dbeafe'}33`,
+                              color: tag.color || '#1d4ed8',
+                            }}
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                        {(account.tags ?? []).length > 3 && (
+                          <span className="text-[10px] text-slate-500">
+                            +{account.tags!.length - 3}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   )}
 
@@ -198,7 +237,11 @@ export default function CompaniesTable({
                         domain={account.domain || undefined}
                       />
                       <Link href={`/dashboard/sales/accounts/${account.id}`}>
-                        <Button variant="ghost" size="sm" className="h-7 text-xs text-sky-600 hover:text-sky-700 px-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-sky-600 hover:text-sky-700 px-2"
+                        >
                           Ficha <ChevronRight className="ml-1 h-3 w-3" />
                         </Button>
                       </Link>

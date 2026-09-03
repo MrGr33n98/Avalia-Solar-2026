@@ -14,6 +14,8 @@ export default function CompaniesPage() {
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -21,15 +23,30 @@ export default function CompaniesPage() {
   const [isDuplicateManagerOpen, setIsDuplicateManagerOpen] = useState(false);
   const [isCreateCompanyModalOpen, setIsCreateCompanyModalOpen] = useState(false);
 
-  const [columns, setColumns] = useState<CompanyColumnConfig>({
-    company_name: true,
-    primary_contact: true,
-    last_contact: true,
-    address: true,
-    company_type: true,
-    tags: true,
-    open_opps: true,
+  const [columns, setColumns] = useState<CompanyColumnConfig>(() => {
+    const defaults: CompanyColumnConfig = {
+      company_name: true,
+      primary_contact: true,
+      last_contact: true,
+      address: true,
+      company_type: true,
+      tags: true,
+      open_opps: true,
+    };
+    if (typeof window === 'undefined') return defaults;
+    try {
+      return {
+        ...defaults,
+        ...JSON.parse(window.localStorage.getItem('crm:accounts:columns') || '{}'),
+      };
+    } catch {
+      return defaults;
+    }
   });
+
+  useEffect(() => {
+    window.localStorage.setItem('crm:accounts:columns', JSON.stringify(columns));
+  }, [columns]);
 
   const fetchAccounts = useCallback(() => {
     setLoading(true);
@@ -37,7 +54,9 @@ export default function CompaniesPage() {
     const params = new URLSearchParams();
     if (query) params.set('q', query);
     if (selectedOwnerId === 'me') params.set('owner_id', '1');
-    if (selectedType) params.set('company_type', selectedType);
+    if (selectedType) params.set('segment', selectedType);
+    params.set('page', String(page));
+    params.set('per_page', '50');
 
     fetch(`/api/v1/sales/accounts?${params.toString()}`, { credentials: 'include' })
       .then((res) => {
@@ -46,12 +65,13 @@ export default function CompaniesPage() {
       })
       .then((data) => {
         setAccounts(data.accounts ?? []);
+        setTotalPages(data.meta?.total_pages ?? 1);
       })
       .catch((err) => {
         setError(err.message || 'Erro ao conectar à API.');
       })
       .finally(() => setLoading(false));
-  }, [query, selectedOwnerId, selectedType]);
+  }, [query, selectedOwnerId, selectedType, page]);
 
   useEffect(() => {
     fetchAccounts();
@@ -66,9 +86,7 @@ export default function CompaniesPage() {
   };
 
   const handleToggleSelect = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const handleExportCsv = () => {
@@ -82,7 +100,9 @@ export default function CompaniesPage() {
       `"${a.state || ''}"`,
       `"${a.company_type || ''}"`,
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -97,12 +117,18 @@ export default function CompaniesPage() {
       <div className="space-y-6 font-sans">
         <CompaniesToolbar
           query={query}
-          onQueryChange={setQuery}
+          onQueryChange={(value) => {
+            setQuery(value);
+            setPage(1);
+          }}
           count={accounts.length}
           selectedOwnerId={selectedOwnerId}
           onOwnerSelect={setSelectedOwnerId}
           selectedType={selectedType}
-          onTypeSelect={setSelectedType}
+          onTypeSelect={(value) => {
+            setSelectedType(value);
+            setPage(1);
+          }}
           onOpenColumnsDialog={() => setIsColumnsDialogOpen(true)}
           onCreateCompany={() => setIsCreateCompanyModalOpen(true)}
           onExportCsv={handleExportCsv}
@@ -119,6 +145,32 @@ export default function CompaniesPage() {
           onToggleSelect={handleToggleSelect}
           onRetry={fetchAccounts}
         />
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs">
+            <span className="text-slate-500">
+              Página {page} de {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((value) => value - 1)}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((value) => value + 1)}
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
+        )}
 
         <CompaniesColumnsDialog
           open={isColumnsDialogOpen}

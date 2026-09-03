@@ -5,20 +5,25 @@ module Api
         def index
           if params[:options].present? || params[:limit].present?
             limit = [ (params[:limit] || 20).to_i, 50 ].min
-            accounts = ::Sales::AccountOptionsQuery.call(query: params[:q], limit: limit)
+            accounts = scoped_accounts.merge(::Sales::AccountOptionsQuery.call(query: params[:q], limit: limit))
             render json: { accounts: accounts.map { |a| { id: a.id, name: a.name, domain: a.domain } } }
             return
           end
 
-          scope = ::Sales::Account.includes(:company, :owner, :contacts, :opportunities).order(created_at: :desc)
+          scope = scoped_accounts.includes(:company, :owner, :contacts, :opportunities).order(created_at: :desc)
           if params[:q].present?
             q = "%#{params[:q].to_s.downcase}%"
             scope = scope.where('LOWER(name) LIKE ? OR LOWER(domain) LIKE ?', q, q)
           end
           scope = scope.where(owner_id: params[:owner_id]) if params[:owner_id].present?
           scope = scope.where(status: params[:status]) if params[:status].present?
+          scope = scope.where(segment: params[:segment]) if params[:segment].present?
 
-          render json: { accounts: scope.limit(200).map { |account| serialize(account) } }
+          per_page = [[params.fetch(:per_page, 50).to_i, 1].max, 100].min
+          page = [params.fetch(:page, 1).to_i, 1].max
+          total = scope.unscope(:order).count
+          accounts = scope.offset((page - 1) * per_page).limit(per_page)
+          render json: { accounts: accounts.map { |account| serialize(account) }, meta: { page: page, per_page: per_page, total: total, total_pages: (total.to_f / per_page).ceil } }
         end
 
         def create
@@ -53,18 +58,18 @@ module Api
         end
 
         def show
-          account = ::Sales::Account.includes(:company, :owner, :contacts, :opportunities, :activities, :tasks, :solar_projects).find(params[:id])
+          account = scoped_accounts.includes(:company, :owner, :contacts, :opportunities, :activities, :tasks, :solar_projects, :tags).find(params[:id])
           render json: { account: serialize_detailed(account) }
         end
 
         def update
-          account = ::Sales::Account.find(params[:id])
+          account = scoped_accounts.find(params[:id])
           account.update!(account_params)
           render json: { account: serialize_detailed(account) }
         end
 
         def timeline
-          account = ::Sales::Account.find(params[:id])
+          account = scoped_accounts.find(params[:id])
           events = []
 
           account.activities.order(occurred_at: :desc).each do |act|
@@ -111,6 +116,15 @@ module Api
 
         private
 
+        def scoped_accounts
+          return ::Sales::Account.all if current_user.admin?
+          if current_user.company_id.present?
+            ::Sales::Account.where(company_id: current_user.company_id)
+          else
+            ::Sales::Account.where(owner_id: current_user.id)
+          end
+        end
+
         def account_params
           params.require(:account).permit(:name, :company_id, :domain, :website, :phone, :email, :city, :state,
                                           :segment, :company_size, :source, :source_detail, :status)
@@ -127,6 +141,7 @@ module Api
             owner_name: account.owner&.name || 'Vendedor Interno',
             status: account.status || 'prospect',
             company_type: account.segment || account.company_size || 'Standard Account',
+            tags: account.tags.map { |tag| { id: tag.id, name: tag.name, color: tag.color } },
             domain: account.domain,
             city: account.city,
             state: account.state,
