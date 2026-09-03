@@ -158,7 +158,7 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
           )}
         >
           <Building2 className="w-4 h-4 text-blue-400" />
-          <span>Contas & Prospects</span>
+          <span>Companies / Empresas</span>
         </Link>
 
         <Link
