@@ -7,6 +7,7 @@ import CreateTaskModal from './CreateTaskModal';
 import CreateActivityModal from './CreateActivityModal';
 import CreateQuoteModal from './CreateQuoteModal';
 import SendEmailModal from './SendEmailModal';
+import CreateLeadModal from '@/components/sales/leads/create/CreateLeadModal';
 
 interface CRMGlobalCreateHostProps {
   modalType: string | null;
@@ -25,14 +26,13 @@ export default function CRMGlobalCreateHost({ modalType, onClose, onSuccess }: C
     return null;
   }
 
-  if (modalType === 'opportunity') {
-    onClose();
-    router.push('/dashboard/sales/pipeline');
-    return null;
-  }
-
   return (
     <>
+      <CreateLeadModal
+        open={modalType === 'opportunity' || modalType === 'lead'}
+        onClose={onClose}
+        onSuccess={onSuccess}
+      />
       <CreateCompanyModal
         open={modalType === 'company'}
         onClose={onClose}

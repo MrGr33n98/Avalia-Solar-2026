@@ -104,6 +104,10 @@ Rails.application.routes.draw do
             get :timeline
           end
         end
+        post 'leads/bulk', to: 'sales/leads#bulk'
+        resources :leads, only: %i[index create show update], controller: 'sales/leads'
+        resources :sources, only: %i[index], controller: 'sales/sources'
+        resources :competitors, only: %i[index create], controller: 'sales/competitors'
         resources :accounts, only: [] do
           resources :contacts, only: %i[index create], controller: 'sales/contacts'
           resources :tasks, only: %i[index create], controller: 'sales/tasks'

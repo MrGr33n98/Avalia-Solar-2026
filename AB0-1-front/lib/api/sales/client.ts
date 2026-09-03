@@ -208,7 +208,42 @@ export const salesApi = {
     });
   },
 
-  // Opportunities
+  // Leads & Opportunities
+  async getLeads(params?: any): Promise<ApiOpportunity[]> {
+    const qs = new URLSearchParams();
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') qs.set(key, Array.isArray(value) ? value.join(',') : String(value));
+    });
+    const res = await request<{ leads?: ApiOpportunity[]; opportunities?: ApiOpportunity[] }>(`/api/v1/sales/leads?${qs.toString()}`);
+    return res.leads ?? res.opportunities ?? [];
+  },
+
+  async createLead(payload: any): Promise<ApiOpportunity> {
+    const res = await request<{ lead?: ApiOpportunity; opportunity?: ApiOpportunity }>('/api/v1/sales/leads', {
+      method: 'POST',
+      body: JSON.stringify({ lead: payload }),
+    });
+    return (res.lead || res.opportunity)!;
+  },
+
+  async getSources(): Promise<Array<{ id: number; name: string; slug: string }>> {
+    const res = await request<{ sources: Array<{ id: number; name: string; slug: string }> }>('/api/v1/sales/sources');
+    return res.sources ?? [];
+  },
+
+  async getCompetitors(): Promise<Array<{ id: number; name: string; website?: string }>> {
+    const res = await request<{ competitors: Array<{ id: number; name: string; website?: string }> }>('/api/v1/sales/competitors');
+    return res.competitors ?? [];
+  },
+
+  async createCompetitor(payload: { name: string; website?: string }): Promise<{ id: number; name: string; website?: string }> {
+    const res = await request<{ competitor: { id: number; name: string; website?: string } }>('/api/v1/sales/competitors', {
+      method: 'POST',
+      body: JSON.stringify({ competitor: payload }),
+    });
+    return res.competitor;
+  },
+
   async getOpportunities(params?: {
     q?: string;
     status?: string;

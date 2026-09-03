@@ -136,16 +136,16 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
         </Link>
 
         <Link
-          href="/dashboard/sales/pipeline"
+          href="/dashboard/sales/leads"
           className={cn(
             'flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors font-medium',
-            isCurrent('/dashboard/sales/pipeline')
+            isCurrent('/dashboard/sales/leads')
               ? 'bg-slate-800 text-white font-semibold'
               : 'text-slate-300 hover:bg-slate-850 hover:text-white'
           )}
         >
           <Target className="w-4 h-4 text-amber-400" />
-          <span>Pipeline Kanban</span>
+          <span>Leads</span>
         </Link>
 
         <Link

@@ -51,12 +51,12 @@ export const CRM_CREATE_ACTIONS: CreateActionDefinition[] = [
   },
   {
     id: 'opportunity',
-    label: 'Oportunidade',
-    description: 'Venda potencial no pipeline de negócios',
+    label: 'Lead',
+    description: 'Venda potencial ou oportunidade no pipeline comercial',
     iconName: 'Target',
     type: 'modal',
     target: 'opportunity',
-    keyboardShortcut: 'c o',
+    keyboardShortcut: 'c l',
   },
   {
     id: 'task',

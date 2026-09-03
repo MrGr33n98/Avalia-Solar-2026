@@ -1,5 +1,5 @@
-import SalesCommandCenter from '@/components/sales/SalesCommandCenter';
+import { redirect } from 'next/navigation';
 
-export default function SalesPipelinePage() {
-  return <SalesCommandCenter pipelineOnly />;
+export default function Page() {
+  redirect('/dashboard/sales/leads?view=kanban');
 }
