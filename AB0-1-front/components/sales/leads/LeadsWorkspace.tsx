@@ -162,7 +162,7 @@ export default function LeadsWorkspace() {
 
         {/* Main Leads Workspace View Container */}
         {view === 'kanban' || view === 'list' ? (
-          <SalesCommandCenter />
+          <SalesCommandCenter hideLayout pipelineOnly />
         ) : view === 'map' ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-slate-500 space-y-2">
             <MapPin className="w-10 h-10 text-indigo-600 mx-auto" />

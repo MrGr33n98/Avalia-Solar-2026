@@ -226,7 +226,13 @@ const DEFAULT_STAGES = [
   stageVisualTone('lost', 'Closed Lost', 0),
 ];
 
-export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineOnly?: boolean }) {
+export default function SalesCommandCenter({
+  pipelineOnly = false,
+  hideLayout = false,
+}: {
+  pipelineOnly?: boolean;
+  hideLayout?: boolean;
+}) {
   const [view, setView] = useState<'kanban' | 'table'>('kanban');
   const [dragged, setDragged] = useState<{ deal: Deal; stageKey: string } | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -525,8 +531,8 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
     }
   };
 
-  return (
-    <SalesLayoutWrapper>
+  const content = (
+    <>
       <CRMCommandPalette />
       <div className="mx-auto w-full max-w-[1700px] space-y-6">
         {/* Executive Header */}
@@ -819,6 +825,12 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
         onOpenChange={setIsNewDealOpen}
         onSuccess={loadOpportunities}
       />
-    </SalesLayoutWrapper>
+    </>
   );
+
+  if (hideLayout) {
+    return content;
+  }
+
+  return <SalesLayoutWrapper>{content}</SalesLayoutWrapper>;
 }
