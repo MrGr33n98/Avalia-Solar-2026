@@ -86,8 +86,11 @@ Rails.application.routes.draw do
         resources :contacts, only: %i[index show create update], controller: 'sales/contacts' do
           resources :employments, only: %i[index create update destroy], controller: 'sales/contact_employments'
         end
-        resources :opportunities, only: %i[index create update], controller: 'sales/opportunities' do
+        resources :opportunities, only: %i[index create show update], controller: 'sales/opportunities' do
           resources :contacts, only: %i[index create update destroy], controller: 'sales/opportunity_contacts'
+          member do
+            get :timeline
+          end
         end
         resources :accounts, only: [] do
           resources :contacts, only: %i[index create], controller: 'sales/contacts'
@@ -100,6 +103,7 @@ Rails.application.routes.draw do
           put :qualification, to: 'sales/qualifications#upsert'
           post :won, to: 'sales/closures#won'
           post :lost, to: 'sales/closures#lost'
+          get :timeline, to: 'sales/opportunities#timeline'
         end
       end
 

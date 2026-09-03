@@ -169,6 +169,27 @@ export const salesApi = {
     return res.opportunity;
   },
 
+  async getOpportunity(id: number): Promise<ApiOpportunity> {
+    const res = await request<{ opportunity: ApiOpportunity }>(`/api/v1/sales/opportunities/${id}`);
+    return res.opportunity;
+  },
+
+  async getOpportunityTimeline(id: number): Promise<any[]> {
+    const res = await request<{ timeline: any[] }>(`/api/v1/sales/opportunities/${id}/timeline`);
+    return res.timeline ?? [];
+  },
+
+  async markOpportunityWon(id: number): Promise<void> {
+    await request(`/api/v1/sales/opportunities/${id}/won`, { method: 'POST' });
+  },
+
+  async markOpportunityLost(id: number, reason?: string): Promise<void> {
+    await request(`/api/v1/sales/opportunities/${id}/lost`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
   // Tasks
   async getTasks(params?: { status?: string; q?: string }): Promise<ApiTask[]> {
     const qs = new URLSearchParams();

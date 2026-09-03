@@ -6,7 +6,7 @@ module Api
       class OpportunitiesController < BaseController
         before_action :authenticate_api_user
         before_action :require_internal_sales
-        before_action :set_opportunity, only: :update
+        before_action :set_opportunity, only: %i[show update timeline]
 
         def index
           scope = ::Sales::Opportunity.includes(:account, :stage, :primary_contact, :owner)
@@ -18,6 +18,93 @@ module Api
 
           scope = scope.order(created_at: :desc).limit(500)
           render json: { opportunities: scope.map { |o| opportunity_json(o) } }
+        end
+
+        def show
+          render json: { opportunity: opportunity_json(@opportunity) }
+        end
+
+        def timeline
+          events = []
+
+          # 1. Stage histories
+          @opportunity.stage_histories.includes(:to_stage, :actor).each do |sh|
+            events << {
+              id: "sh-#{sh.id}",
+              type: 'stage_changed',
+              title: "Estágio alterado para #{sh.to_stage&.name || 'Novo Estágio'}",
+              description: sh.actor ? "Alterado por #{sh.actor.name rescue 'Usuário'}" : nil,
+              occurred_at: sh.entered_at || sh.created_at
+            }
+          end
+
+          # 2. Activities
+          ::Sales::Activity.where(sales_opportunity_id: @opportunity.id).find_each do |act|
+            events << {
+              id: "act-#{act.id}",
+              type: act.activity_type == 'call' ? 'call' : 'activity',
+              title: act.activity_type == 'call' ? 'Chamada Telefônica Registrada' : 'Atividade Comercial',
+              description: act.description,
+              occurred_at: act.occurred_at || act.created_at
+            }
+          end
+
+          # 3. Tasks
+          ::Sales::Task.where(sales_opportunity_id: @opportunity.id).find_each do |t|
+            events << {
+              id: "task-#{t.id}",
+              type: 'task',
+              title: "Tarefa: #{t.title}",
+              description: "Status: #{t.status} | Prioridade: #{t.priority}",
+              occurred_at: t.created_at
+            }
+          end
+
+          # 4. Notes
+          ::Sales::Note.where(opportunity_id: @opportunity.id).find_each do |n|
+            events << {
+              id: "note-#{n.id}",
+              type: 'note',
+              title: 'Anotação Interna',
+              description: n.body,
+              occurred_at: n.created_at
+            }
+          end
+
+          # 5. Email messages
+          ::Sales::EmailMessage.where(sales_opportunity_id: @opportunity.id).find_each do |em|
+            events << {
+              id: "email-#{em.id}",
+              type: 'email',
+              title: "E-mail: #{em.subject}",
+              description: "Para: #{em.to_email} | Status: #{em.status}",
+              occurred_at: em.sent_at || em.created_at
+            }
+          end
+
+          # 6. Quotes
+          ::Sales::Quote.where(opportunity_id: @opportunity.id).find_each do |q|
+            events << {
+              id: "quote-#{q.id}",
+              type: 'quote',
+              title: "Proposta Comercial ##{q.number}",
+              description: "Status: #{q.status} | Potência: #{q.system_size_kwp || '—'} kWp",
+              occurred_at: q.created_at
+            }
+          end
+
+          # 7. Opportunity creation
+          events << {
+            id: "opp-create-#{@opportunity.id}",
+            type: 'website',
+            title: 'Oportunidade Criada no CRM',
+            description: "Oportunidade #{@opportunity.name} iniciada.",
+            occurred_at: @opportunity.created_at
+          }
+
+          events.sort_by! { |e| e[:occurred_at] || Time.current }.reverse!
+
+          render json: { timeline: events }
         end
 
         def create
@@ -152,11 +239,15 @@ module Api
             probability: opportunity.probability,
             status: opportunity.status,
             stage_key: opportunity.stage&.key,
+            stage_entered_at: opportunity.stage_entered_at || opportunity.created_at,
+            source: opportunity.source,
             sales_account_id: opportunity.sales_account_id,
             sales_pipeline_id: opportunity.sales_pipeline_id,
             account: opportunity.account ? { id: opportunity.account.id, name: opportunity.account.name } : nil,
             stage: opportunity.stage ? { id: opportunity.stage.id, key: opportunity.stage.key, name: opportunity.stage.name } : nil,
+            contact_id: contact&.id,
             contact_name: contact ? [contact.first_name, contact.last_name].compact.join(' ') : nil,
+            contact_email: contact&.email,
             owner_id: opportunity.owner_id,
             next_activity_at: opportunity.next_activity_at,
             expected_close_date: opportunity.expected_close_date,

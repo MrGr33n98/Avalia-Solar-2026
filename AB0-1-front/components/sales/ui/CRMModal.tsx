@@ -8,7 +8,8 @@ export type CRMModalSize = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
 interface CRMModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange?: (open: boolean) => void;
+  onClose?: () => void;
   title: string;
   description?: string;
   size?: CRMModalSize;
@@ -28,6 +29,7 @@ const sizeClasses: Record<CRMModalSize, string> = {
 export default function CRMModal({
   open,
   onOpenChange,
+  onClose,
   title,
   description,
   size = 'md',
@@ -35,8 +37,13 @@ export default function CRMModal({
   footer,
   icon,
 }: CRMModalProps) {
+  const handleOpenChange = (isOpen: boolean) => {
+    if (onOpenChange) onOpenChange(isOpen);
+    if (!isOpen && onClose) onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className={cn(
           sizeClasses[size],

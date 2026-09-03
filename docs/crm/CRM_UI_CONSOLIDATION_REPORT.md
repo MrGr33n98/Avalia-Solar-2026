@@ -1,22 +1,26 @@
-# Relatório de Consolidação de UI e UX — Avalia Solar CRM
+# Relatório de Consolidação de UI e UX — Avalia Solar CRM (HEAD State)
 
 ## Resumo das Melhorias da Sprint
 
-1. **Eliminação de Wrappers Duplicados**:
-   - `DashboardLayout` removido de 100% das páginas sob `/dashboard/sales/**`.
-   - Todas as rotas agora utilizam o `SalesLayoutWrapper` com a sidebar B2B Navy (`#0c1a30`).
+1. **Top Header & Shell (Nutshell Benchmark Layout)**:
+   - Header horizontal `CRMTopbar` (`#0c1a30`) com barra de busca (`Search or press Ctrl+K...`) e botão `+ Add new` dispostos lado a lado.
+   - Navegação primária limpa mantida na sidebar B2B Navy.
 
-2. **Menu Global `+ Add new` Funcional**:
-   - 8 Ações reais mapeadas no registro `CRM_CREATE_ACTIONS`.
-   - Zero botões mortos.
+2. **Sistema de Modais Desacoplados (`CRMGlobalCreateHost`)**:
+   - 8 Ações reais despachadas para componentes reutilizáveis em `components/sales/create/`:
+     - `CreateCompanyModal`
+     - `CreateContactModal`
+     - `CreateTaskModal`
+     - `CreateActivityModal`
+     - `CreateQuoteModal`
+     - `SendEmailModal`
 
-3. **Padronização do Design System de Modais**:
-   - Respiro vertical e padding interno unificados em `p-6` (24px).
-   - Larguras expandidas para evitar inputs colados e formulários espremidos:
-     - Opportunity Modal: `680px`
-     - Call Logger: `620px`
-     - Contact 360: `880px`
-     - Company 360: `1000px`
+3. **Opportunity 360° & Timeline Canônica**:
+   - Remoção total de dados sintéticos / mocks ("3 dias", "3,2 anos", "Inbound / Site").
+   - Cálculo de idade do estágio derivado de `stage_entered_at`.
+   - Timeline cronológica canônica alimentada por `GET /api/v1/sales/opportunities/:id/timeline`.
+   - Ações Rápidas (Registrar Chamada, Enviar E-mail, Agendar Tarefa, Criar Proposta, Won, Lost) integradas a fluxos persistentes com refetch automático.
 
-4. **Atomicidade no Fluxo de Oportunidades**:
-   - Suporte a criação transacional de Account, Contact e Opportunity em um único bloco de banco de dados (`ActiveRecord::Base.transaction`).
+4. **Zero-Mock & Validação de Qualidade**:
+   - `npm run typecheck`: **0 erros**.
+   - `check-sales-zero-mock.sh`: **PASS**.
