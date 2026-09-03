@@ -24,7 +24,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
 import SalesOutreachTemplates from '@/components/sales/SalesOutreachTemplates';
 import CallLoggerModal from '@/components/sales/CallLoggerModal';
@@ -111,7 +111,7 @@ export default function SalesTodayWorkQueuePage() {
   const stale = data?.stale ?? [];
 
   return (
-    <DashboardLayout className="bg-slate-50/70">
+    <SalesLayoutWrapper>
       <CRMCommandPalette />
       <div className="mx-auto w-full max-w-7xl space-y-6">
         {/* Header */}
@@ -268,6 +268,6 @@ export default function SalesTodayWorkQueuePage() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </SalesLayoutWrapper>
   );
 }

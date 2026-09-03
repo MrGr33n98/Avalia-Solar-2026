@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 
 type ApiTask = {
   id: number;
@@ -371,7 +371,7 @@ export default function SalesTasksPage() {
   const pendingCount = filtered.filter((t) => t.status !== 'completed' && t.status !== 'done').length;
 
   return (
-    <DashboardLayout className="bg-slate-50/70">
+    <SalesLayoutWrapper>
       <div className="mx-auto w-full max-w-6xl space-y-6">
         {/* Header */}
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
@@ -635,6 +635,6 @@ export default function SalesTasksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </SalesLayoutWrapper>
   );
 }

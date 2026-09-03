@@ -376,43 +376,41 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
     try {
       let finalAccountId: number | null = null;
       let finalContactId: number | null = null;
+      let inlineAccountObj: { name: string; domain?: string } | null = null;
+      let inlineContactObj: { first_name: string; email?: string } | null = null;
 
-      // 1. Create Inline Account if requested
+      // 1. Prepare Inline Account if requested
       if (isInlineAccount) {
         if (!inlineAccountName.trim()) {
           setCreateError('O nome da empresa é obrigatório.');
           setIsCreating(false);
           return;
         }
-        const createdAcc = await salesApi.createAccount({
+        inlineAccountObj = {
           name: inlineAccountName.trim(),
           domain: inlineAccountDomain.trim() || undefined,
-        });
-        finalAccountId = createdAcc.id;
-        setAccounts((prev) => [createdAcc, ...prev]);
+        };
       } else if (selectedAccountId) {
         finalAccountId = parseInt(selectedAccountId, 10);
       }
 
-      if (!finalAccountId || isNaN(finalAccountId)) {
-        setCreateError('É obrigatório vincular uma Empresa (Account) à oportunidade.');
+      if (!finalAccountId && !inlineAccountObj) {
+        setCreateError('É obrigatório selecionar ou criar uma Empresa (Account) para a oportunidade.');
         setIsCreating(false);
         return;
       }
 
-      // 2. Create Inline Contact if requested
+      // 2. Prepare Inline Contact if requested
       if (isInlineContact) {
         if (!inlineContactFirstName.trim()) {
           setCreateError('O nome do contato é obrigatório.');
           setIsCreating(false);
           return;
         }
-        const createdContact = await salesApi.createContact({
-          sales_account_id: finalAccountId,
+        inlineContactObj = {
           first_name: inlineContactFirstName.trim(),
           email: inlineContactEmail.trim() || undefined,
-        });
-        finalContactId = createdContact.id;
+        };
       } else if (selectedContactId) {
         const cId = parseInt(selectedContactId, 10);
         if (!isNaN(cId)) finalContactId = cId;
@@ -422,10 +420,12 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
       const rawVal = parseFloat(newValue.replace(/[^0-9,.]/g, '').replace(',', '.'));
       const valueCents = isNaN(rawVal) || rawVal < 0 ? 0 : Math.round(rawVal * 100);
 
-      // 4. Create Opportunity
+      // 4. Create Opportunity Atomically
       const opp = await salesApi.createOpportunity({
-        sales_account_id: finalAccountId,
-        primary_contact_id: finalContactId,
+        sales_account_id: finalAccountId || undefined,
+        primary_contact_id: finalContactId || undefined,
+        account: inlineAccountObj,
+        contact: inlineContactObj,
         name: newName.trim(),
         stage_key: newStage,
         value_cents: valueCents,

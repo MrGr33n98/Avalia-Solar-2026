@@ -15,6 +15,7 @@ import {
   FileText,
   Mail,
   Megaphone,
+  Phone,
   Plus,
   Receipt,
   Search,
@@ -99,6 +100,15 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
             <DropdownMenuItem onClick={() => onOpenAddModal?.('task')} className="cursor-pointer hover:bg-slate-800">
               <CalendarClock className="w-4 h-4 mr-2 text-sky-400" /> Tarefa / Compromisso
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onOpenAddModal?.('activity')} className="cursor-pointer hover:bg-slate-800">
+              <Phone className="w-4 h-4 mr-2 text-rose-400" /> Atividade / Chamada
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onOpenAddModal?.('email')} className="cursor-pointer hover:bg-slate-800">
+              <Mail className="w-4 h-4 mr-2 text-purple-400" /> Enviar E-mail
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onOpenAddModal?.('import')} className="cursor-pointer hover:bg-slate-800">
+              <FileSpreadsheet className="w-4 h-4 mr-2 text-teal-400" /> Importar Leads (CSV)
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -144,7 +154,7 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
                   pathname === '/dashboard/sales/today' && 'text-amber-400 font-semibold'
                 )}
               >
-                <span>Today (Work Queue)</span>
+                <span>Fila Diária (Today)</span>
               </Link>
               <Link
                 href="/dashboard/sales/quotes"
@@ -162,24 +172,11 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
                   pathname === '/dashboard/sales/tasks' && 'text-amber-400 font-semibold'
                 )}
               >
-                <span>Tasks & Follow-ups</span>
+                <span>Tarefas & Follow-ups</span>
               </Link>
             </div>
           )}
         </div>
-
-        <Link
-          href="/dashboard/sales/emails"
-          className={cn(
-            'flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors font-medium',
-            isCurrent('/dashboard/sales/emails')
-              ? 'bg-slate-800 text-white font-semibold'
-              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
-          )}
-        >
-          <Mail className="w-4 h-4 text-sky-400" />
-          <span>Marketing / Outreach</span>
-        </Link>
 
         <Link
           href="/dashboard/sales/prospects"
@@ -191,33 +188,7 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
           )}
         >
           <Zap className="w-4 h-4 text-emerald-400" />
-          <span>Engagement</span>
-        </Link>
-
-        <Link
-          href="/dashboard/sales/accounts"
-          className={cn(
-            'flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors font-medium',
-            isCurrent('/dashboard/sales/accounts')
-              ? 'bg-slate-800 text-white font-semibold'
-              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
-          )}
-        >
-          <Building2 className="w-4 h-4 text-blue-400" />
-          <span>Companies</span>
-        </Link>
-
-        <Link
-          href="/dashboard/sales/people"
-          className={cn(
-            'flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors font-medium',
-            isCurrent('/dashboard/sales/people')
-              ? 'bg-slate-800 text-white font-semibold'
-              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
-          )}
-        >
-          <Users className="w-4 h-4 text-indigo-400" />
-          <span>People</span>
+          <span>Fila de Prospecção</span>
         </Link>
 
         <Link
@@ -230,20 +201,46 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
           )}
         >
           <Target className="w-4 h-4 text-amber-400" />
-          <span>Leads & Pipeline</span>
+          <span>Pipeline Kanban</span>
         </Link>
 
         <Link
-          href="/dashboard/sales/reports"
+          href="/dashboard/sales/accounts"
           className={cn(
             'flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors font-medium',
-            isCurrent('/dashboard/sales/reports')
+            isCurrent('/dashboard/sales/accounts')
               ? 'bg-slate-800 text-white font-semibold'
               : 'text-slate-300 hover:bg-slate-850 hover:text-white'
           )}
         >
-          <BarChart3 className="w-4 h-4 text-violet-400" />
-          <span>Reports</span>
+          <Building2 className="w-4 h-4 text-blue-400" />
+          <span>Contas & Prospects</span>
+        </Link>
+
+        <Link
+          href="/dashboard/sales/people"
+          className={cn(
+            'flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors font-medium',
+            isCurrent('/dashboard/sales/people')
+              ? 'bg-slate-800 text-white font-semibold'
+              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
+          )}
+        >
+          <Users className="w-4 h-4 text-indigo-400" />
+          <span>Pessoas & Decisores</span>
+        </Link>
+
+        <Link
+          href="/dashboard/sales/emails"
+          className={cn(
+            'flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors font-medium',
+            isCurrent('/dashboard/sales/emails')
+              ? 'bg-slate-800 text-white font-semibold'
+              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
+          )}
+        >
+          <Mail className="w-4 h-4 text-sky-400" />
+          <span>Central de E-mails</span>
         </Link>
 
         <Link
@@ -256,7 +253,20 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
           )}
         >
           <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-          <span>Import (.CSV)</span>
+          <span>Importar Leads (.CSV)</span>
+        </Link>
+
+        <Link
+          href="/dashboard/sales/reports"
+          className={cn(
+            'flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors font-medium',
+            isCurrent('/dashboard/sales/reports')
+              ? 'bg-slate-800 text-white font-semibold'
+              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
+          )}
+        >
+          <BarChart3 className="w-4 h-4 text-violet-400" />
+          <span>Analytics & Reports</span>
         </Link>
 
         <div className="pt-2">

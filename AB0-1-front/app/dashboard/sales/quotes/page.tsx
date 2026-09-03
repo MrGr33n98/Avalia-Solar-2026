@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import QuoteBuilder from '@/components/sales/QuoteBuilder';
 import QuoteItemsBuilder from '@/components/sales/QuoteItemsBuilder';
-import DashboardLayout from '@/app/dashboard/components/DashboardLayout';
+import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -34,7 +34,7 @@ export default function SalesQuotesPage() {
   }, [opportunityId, load]);
 
   return (
-    <DashboardLayout className="bg-slate-50/70">
+    <SalesLayoutWrapper>
       <main className="mx-auto w-full max-w-6xl space-y-6 p-6">
         <header>
           <p className="text-xs font-bold uppercase tracking-wider text-blue-800">Revenue</p>
@@ -59,6 +59,6 @@ export default function SalesQuotesPage() {
           ))}
         </section>
       </main>
-    </DashboardLayout>
+    </SalesLayoutWrapper>
   );
 }

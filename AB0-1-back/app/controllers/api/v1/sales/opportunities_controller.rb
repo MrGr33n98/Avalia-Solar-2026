@@ -22,11 +22,34 @@ module Api
 
         def create
           ActiveRecord::Base.transaction do
+            account_id = opportunity_create_params[:sales_account_id]
+            if account_id.blank? && params[:account].present?
+              new_account = ::Sales::Account.create!(
+                name: params[:account][:name],
+                domain: params[:account][:domain],
+                user: current_user
+              )
+              account_id = new_account.id
+            end
+
+            contact_id = opportunity_create_params[:primary_contact_id]
+            if contact_id.blank? && params[:contact].present? && account_id.present?
+              new_contact = ::Sales::Contact.create!(
+                sales_account_id: account_id,
+                first_name: params[:contact][:first_name],
+                email: params[:contact][:email],
+                user: current_user
+              )
+              contact_id = new_contact.id
+            end
+
             pipeline = resolve_pipeline
             stage = resolve_stage(pipeline)
 
             opportunity = ::Sales::Opportunity.new(
               opportunity_create_params.merge(
+                sales_account_id: account_id,
+                primary_contact_id: contact_id,
                 owner: current_user,
                 sales_pipeline: pipeline,
                 sales_stage: stage,

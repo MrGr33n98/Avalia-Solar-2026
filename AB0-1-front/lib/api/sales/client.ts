@@ -135,7 +135,7 @@ export const salesApi = {
   },
 
   async createOpportunity(payload: {
-    sales_account_id: number;
+    sales_account_id?: number | null;
     primary_contact_id?: number | null;
     sales_pipeline_id?: number | null;
     name: string;
@@ -146,10 +146,17 @@ export const salesApi = {
     expected_close_date?: string;
     priority?: string;
     source?: string;
+    account?: { name: string; domain?: string } | null;
+    contact?: { first_name: string; email?: string } | null;
   }): Promise<ApiOpportunity> {
+    const { account, contact, ...oppPayload } = payload;
+    const bodyObj: any = { opportunity: oppPayload };
+    if (account) bodyObj.account = account;
+    if (contact) bodyObj.contact = contact;
+
     const res = await request<{ opportunity: ApiOpportunity }>('/api/v1/sales/opportunities', {
       method: 'POST',
-      body: JSON.stringify({ opportunity: payload }),
+      body: JSON.stringify(bodyObj),
     });
     return res.opportunity;
   },
