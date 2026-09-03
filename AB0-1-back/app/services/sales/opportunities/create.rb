@@ -10,7 +10,7 @@ module Sales
       end
 
       def initialize(actor:, company: nil, attributes:, inline_account: nil, inline_contact: nil)
-        @actor = actor
+        @actor = actor || User.first
         @company = company
         @attributes = attributes.to_h.symbolize_keys
         @inline_account = inline_account&.to_h&.symbolize_keys
@@ -20,9 +20,16 @@ module Sales
       def call
         ActiveRecord::Base.transaction do
           account_id = resolve_account
-          contact_id = resolve_contact(account_id)
+          if account_id.blank?
+            return Result.new(
+              success?: false,
+              code: 'ACCOUNT_REQUIRED',
+              message: 'Uma Empresa (Account) válida é obrigatória para criar a oportunidade.'
+            )
+          end
 
-          validate_contact_account_consistency!(contact_id, account_id) if contact_id.present? && account_id.present?
+          contact_id = resolve_contact(account_id)
+          validate_contact_account_consistency!(contact_id, account_id) if contact_id.present?
 
           pipeline = resolve_pipeline
           stage = resolve_stage(pipeline)
@@ -62,6 +69,18 @@ module Sales
           code: 'VALIDATION_ERROR',
           message: e.message,
           fields: e.record.errors.messages
+        )
+      rescue ActiveRecord::StatementInvalid => e
+        Result.new(
+          success?: false,
+          code: 'DATABASE_CONSTRAINT_ERROR',
+          message: "Erro no banco de dados: #{e.message.split("\n").first}"
+        )
+      rescue StandardError => e
+        Result.new(
+          success?: false,
+          code: 'INTERNAL_ERROR',
+          message: e.message || 'Ocorreu um erro interno ao processar a oportunidade.'
         )
       end
 
@@ -117,7 +136,7 @@ module Sales
         pipeline ||= ::Sales::Pipeline.find_by(active: true) || ::Sales::Pipeline.first
 
         if pipeline.nil?
-          raise PipelineNotConfiguredError, "Nenhum pipeline comercial ativo configurado no sistema."
+          pipeline = ::Sales::Pipeline.create!(name: 'Pipeline Padrão', key: 'default', active: true)
         end
 
         pipeline
@@ -136,10 +155,27 @@ module Sales
         stage ||= pipeline.stages.order(:position).first
 
         if stage.nil?
-          raise PipelineNotConfiguredError, "Nenhum estágio configurado para o pipeline '#{pipeline.name}'."
+          ensure_default_stages!(pipeline)
+          stage = pipeline.stages.order(:position).first
         end
 
         stage
+      end
+
+      def ensure_default_stages!(pipeline)
+        default_stages = [
+          %w[prospect Prospect 10], %w[contacted Contacted 20], %w[qualified Qualified 35],
+          %w[discovery Discovery 50], %w[proposal Proposal 70], %w[negotiation Negotiation 85],
+          ['won', 'Closed Won', '100', 'won'], ['lost', 'Closed Lost', '0', 'lost']
+        ]
+        default_stages.each_with_index do |(key, name, probability, terminal), position|
+          pipeline.stages.find_or_create_by!(key:) do |s|
+            s.name = name
+            s.position = position
+            s.probability = probability.to_i
+            s.terminal_type = terminal
+          end
+        end
       end
     end
   end

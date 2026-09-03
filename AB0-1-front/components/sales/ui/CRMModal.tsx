@@ -23,11 +23,11 @@ interface CRMModalProps {
 }
 
 const sizeClasses: Record<CRMModalSize, string> = {
-  sm: 'max-w-[580px]',
-  md: 'max-w-[680px]', // Ergonomic spacious creation modal width
-  lg: 'max-w-[880px]', // Rich multi-column creation & inline combobox modal width
-  xl: 'max-w-[1080px]', // Workspace & 360 view modal width
-  '2xl': 'max-w-[1240px]',
+  sm: 'max-w-[620px]',
+  md: 'max-w-[740px]', // Ergonomic spacious creation modal width
+  lg: 'max-w-[940px]', // Rich multi-column creation & inline combobox modal width
+  xl: 'max-w-[1140px]', // Workspace & 360 view modal width
+  '2xl': 'max-w-[1280px]',
 };
 
 export default function CRMModal({
@@ -53,16 +53,16 @@ export default function CRMModal({
       <DialogContent
         className={cn(
           sizeClasses[size],
-          'max-h-[90vh] overflow-y-auto p-8 font-sans border-slate-200 bg-white shadow-2xl rounded-2xl'
+          'max-h-[92vh] overflow-y-auto p-9 sm:p-10 font-sans border-slate-200/80 bg-white shadow-2xl rounded-3xl'
         )}
       >
         {/* Header Bar */}
-        <DialogHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
-          <div className="flex items-center gap-3">
-            {icon && <div className="p-2 rounded-lg bg-indigo-50 text-indigo-900">{icon}</div>}
+        <DialogHeader className="pb-4 border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
+          <div className="flex items-center gap-3.5">
+            {icon && <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-900 border border-indigo-100">{icon}</div>}
             <div>
-              <DialogTitle className="text-xl font-bold tracking-tight text-slate-900">{title}</DialogTitle>
-              {description && <DialogDescription className="text-xs text-slate-500 mt-0.5">{description}</DialogDescription>}
+              <DialogTitle className="text-2xl font-extrabold tracking-tight text-slate-900">{title}</DialogTitle>
+              {description && <DialogDescription className="text-xs text-slate-500 mt-1">{description}</DialogDescription>}
             </div>
           </div>
 
@@ -72,9 +72,9 @@ export default function CRMModal({
                 variant="outline"
                 size="sm"
                 type="button"
-                className="h-8 px-3 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 font-semibold rounded-lg shadow-2xs"
+                className="h-9 px-3.5 text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 font-semibold rounded-xl shadow-2xs"
               >
-                <Settings className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
+                <Settings className="w-4 h-4 mr-1.5 text-slate-500" />
                 Customize fields
               </Button>
             )}
@@ -83,19 +83,19 @@ export default function CRMModal({
 
         {/* Hero Avatar Badge if provided */}
         {heroIcon && (
-          <div className="pt-3 pb-2 flex items-center justify-start">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 text-indigo-700 flex items-center justify-center shadow-xs">
+          <div className="pt-4 pb-2 flex items-center justify-start">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100/80 text-indigo-700 flex items-center justify-center shadow-xs">
               {heroIcon}
             </div>
           </div>
         )}
 
         {/* Form Body Container with Generous Spacing */}
-        <div className="py-3 text-xs space-y-5">{children}</div>
+        <div className="py-4 text-xs space-y-6">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between font-sans">
+          <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between font-sans">
             {footer}
           </div>
         )}

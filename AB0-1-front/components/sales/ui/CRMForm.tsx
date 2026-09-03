@@ -22,7 +22,7 @@ export function CRMFormField({
   className,
 }: CRMFormFieldProps) {
   return (
-    <div className={cn('space-y-1.5 font-sans', className)}>
+    <div className={cn('space-y-2 font-sans', className)}>
       {label && (
         <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
           {label} {required && <span className="text-red-500 font-bold">*</span>}
@@ -48,7 +48,7 @@ export function CRMFormRow({ children, cols = 2, className }: CRMFormRowProps) {
     4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
   }[cols];
 
-  return <div className={cn('grid gap-5', gridCols, className)}>{children}</div>;
+  return <div className={cn('grid gap-6', gridCols, className)}>{children}</div>;
 }
 
 interface CRMFormSectionProps {
@@ -60,14 +60,14 @@ interface CRMFormSectionProps {
 
 export function CRMFormSection({ title, description, children, className }: CRMFormSectionProps) {
   return (
-    <div className={cn('space-y-4 pt-2 border-t border-slate-100 first:border-t-0 first:pt-0', className)}>
+    <div className={cn('space-y-5 pt-3 border-t border-slate-100 first:border-t-0 first:pt-0', className)}>
       {(title || description) && (
         <div>
           {title && <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-950">{title}</h4>}
           {description && <p className="text-[11px] text-slate-500 mt-0.5">{description}</p>}
         </div>
       )}
-      <div className="space-y-4">{children}</div>
+      <div className="space-y-5">{children}</div>
     </div>
   );
 }
