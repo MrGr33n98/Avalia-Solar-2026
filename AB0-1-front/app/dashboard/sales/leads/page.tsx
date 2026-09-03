@@ -1,4 +1,7 @@
+import { Suspense } from 'react';
 import LeadsWorkspace from '@/components/sales/leads/LeadsWorkspace';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Leads | Avalia Solar CRM',
@@ -6,5 +9,9 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <LeadsWorkspace />;
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Carregando Leads Workspace...</div>}>
+      <LeadsWorkspace />
+    </Suspense>
+  );
 }
