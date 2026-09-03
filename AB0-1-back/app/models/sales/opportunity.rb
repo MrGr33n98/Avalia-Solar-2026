@@ -8,6 +8,8 @@ module Sales
     belongs_to :stage, class_name: 'Sales::Stage', foreign_key: :sales_stage_id
     belongs_to :owner, class_name: 'User'
 
+    has_many :taggings, as: :taggable, class_name: 'Sales::Tagging', dependent: :destroy
+    has_many :tags, through: :taggings, source: :tag
     has_many :stage_histories, class_name: 'Sales::StageHistory', foreign_key: :sales_opportunity_id, dependent: :destroy
     has_many :activities, class_name: 'Sales::Activity', foreign_key: :sales_opportunity_id, dependent: :destroy
     has_many :tasks, class_name: 'Sales::Task', foreign_key: :sales_opportunity_id, dependent: :destroy

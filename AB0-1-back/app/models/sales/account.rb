@@ -5,6 +5,8 @@ module Sales
     belongs_to :company, optional: true
     belongs_to :owner, class_name: 'User'
 
+    has_many :taggings, as: :taggable, class_name: 'Sales::Tagging', dependent: :destroy
+    has_many :tags, through: :taggings, source: :tag
     has_many :contacts, class_name: 'Sales::Contact', foreign_key: :sales_account_id, dependent: :destroy
     has_many :opportunities, class_name: 'Sales::Opportunity', foreign_key: :sales_account_id, dependent: :destroy
     has_many :activities, class_name: 'Sales::Activity', foreign_key: :sales_account_id, dependent: :destroy

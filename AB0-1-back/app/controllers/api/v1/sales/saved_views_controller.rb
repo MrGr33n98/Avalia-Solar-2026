@@ -5,7 +5,7 @@ module Api
     module Sales
       class SavedViewsController < BaseController
         def index
-          views = ::Sales::SavedView.for_user(current_user.id).order(created_at: :asc)
+          views = ::Sales::SavedView.for_user(current_user.id).where(resource_type: params[:resource_type].presence || 'opportunity').order(is_pinned: :desc, position: :asc, created_at: :asc)
           render json: { saved_views: views }
         end
 
@@ -17,19 +17,25 @@ module Api
             filters: view_params[:filters] || {},
             sort: view_params[:sort] || {},
             columns: view_params[:columns] || [],
-            is_shared: view_params[:is_shared] || false
+            is_shared: current_user.admin? && ActiveModel::Type::Boolean.new.cast(view_params[:is_shared])
           )
           render json: { saved_view: view }, status: :created
         end
 
+        def pin
+          view = ::Sales::SavedView.where(user_id: current_user.id).find(params[:id])
+          view.update!(is_pinned: ActiveModel::Type::Boolean.new.cast(params[:pinned]))
+          render json: { saved_view: view }
+        end
+
         def update
-          view = ::Sales::SavedView.for_user(current_user.id).find(params[:id])
+          view = ::Sales::SavedView.where(user_id: current_user.id).find(params[:id])
           view.update!(view_params)
           render json: { saved_view: view }
         end
 
         def destroy
-          view = ::Sales::SavedView.for_user(current_user.id).find(params[:id])
+          view = ::Sales::SavedView.where(user_id: current_user.id).find(params[:id])
           view.destroy!
           render json: { message: 'Visão salva removida.' }
         end

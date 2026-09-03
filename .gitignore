@@ -119,3 +119,7 @@ agent/
 !docs/crm/
 !docs/crm/*
 
+
+# PDRs de produto versionados
+!docs/product/
+!docs/product/*.md

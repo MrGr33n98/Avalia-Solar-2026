@@ -5,6 +5,8 @@ import {
   ApiErrorResponse,
   ApiOpportunity,
   ApiPipeline,
+  ApiSavedView,
+  ApiTag,
   ApiTask,
 } from './types';
 
@@ -125,11 +127,60 @@ export const salesApi = {
     return res.pipelines ?? [];
   },
 
+  async getSavedViews(resourceType: ApiSavedView['resource_type'] = 'opportunity'): Promise<ApiSavedView[]> {
+    const res = await request<{ saved_views: ApiSavedView[] }>(`/api/v1/sales/saved_views?resource_type=${resourceType}`);
+    return res.saved_views ?? [];
+  },
+
+  async createSavedView(payload: Pick<ApiSavedView, 'name' | 'resource_type' | 'filters' | 'sort' | 'columns'>): Promise<ApiSavedView> {
+    const res = await request<{ saved_view: ApiSavedView }>('/api/v1/sales/saved_views', {
+      method: 'POST', body: JSON.stringify({ saved_view: payload }),
+    });
+    return res.saved_view;
+  },
+
+  async deleteSavedView(id: number): Promise<void> {
+    await request(`/api/v1/sales/saved_views/${id}`, { method: 'DELETE' });
+  },
+
+  async pinSavedView(id: number, pinned: boolean): Promise<ApiSavedView> {
+    const res = await request<{ saved_view: ApiSavedView }>(`/api/v1/sales/saved_views/${id}/pin`, { method: 'POST', body: JSON.stringify({ pinned }) });
+    return res.saved_view;
+  },
+
+  async getTags(entityType = 'Opportunity'): Promise<ApiTag[]> {
+    const res = await request<{ tags: ApiTag[] }>(`/api/v1/sales/tags?entity_type=${entityType}`);
+    return res.tags ?? [];
+  },
+
+  async createTag(payload: Pick<ApiTag, 'name' | 'color' | 'entity_type'> & { description?: string }): Promise<ApiTag> {
+    const res = await request<{ tag: ApiTag }>('/api/v1/sales/tags', { method: 'POST', body: JSON.stringify({ tag: payload }) });
+    return res.tag;
+  },
+
+  async archiveTag(id: number): Promise<void> {
+    await request(`/api/v1/sales/tags/${id}`, { method: 'DELETE' });
+  },
+
+  async applyTag(id: number, taggableType: 'Opportunity' | 'Account' | 'Contact', recordId: number): Promise<void> {
+    await request(`/api/v1/sales/tags/${id}/apply`, { method: 'POST', body: JSON.stringify({ taggable_type: taggableType, taggable_id: recordId }) });
+  },
+
+  async removeTag(id: number, taggableType: 'Opportunity' | 'Account' | 'Contact', recordId: number): Promise<void> {
+    await request(`/api/v1/sales/tags/${id}/remove`, { method: 'DELETE', body: JSON.stringify({ taggable_type: taggableType, taggable_id: recordId }) });
+  },
+
   // Opportunities
-  async getOpportunities(params?: { status?: string; account_id?: number }): Promise<ApiOpportunity[]> {
+  async getOpportunities(params?: {
+    q?: string; status?: string; account_id?: number; pipeline_id?: number; stage_id?: number | number[]; stage_key?: string;
+    owner_id?: number | 'unassigned'; value_min?: number; value_max?: number;
+    close_from?: string; close_to?: string; sort?: string; direction?: 'asc' | 'desc';
+    page?: number; per_page?: number;
+  }): Promise<ApiOpportunity[]> {
     const qs = new URLSearchParams();
-    if (params?.status) qs.set('status', params.status);
-    if (params?.account_id) qs.set('account_id', String(params.account_id));
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') qs.set(key, Array.isArray(value) ? value.join(',') : String(value));
+    });
     const res = await request<{ opportunities: ApiOpportunity[] }>(`/api/v1/sales/opportunities?${qs.toString()}`);
     return res.opportunities ?? [];
   },
@@ -159,6 +210,10 @@ export const salesApi = {
       body: JSON.stringify(bodyObj),
     });
     return res.opportunity;
+  },
+
+  async bulkUpdateOpportunities(ids: number[], action: 'status' | 'owner' | 'stage' | 'tag' | 'remove_tag', value: string | number): Promise<void> {
+    await request('/api/v1/sales/opportunities/bulk', { method: 'POST', body: JSON.stringify({ ids, action, value }) });
   },
 
   async updateOpportunityStage(id: number, stageKey: string): Promise<ApiOpportunity> {

@@ -97,7 +97,7 @@ export default function PeopleToolbar({
                 className={`h-7 text-xs ${selectedOwnerId ? 'bg-indigo-50 text-indigo-900 font-bold border border-indigo-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
                 <Filter className="w-3 h-3 mr-1.5 text-indigo-600 fill-indigo-600" />
-                <span>{selectedOwnerId ? 'Assigned: Me' : 'Assigned to'}</span>
+                <span>{selectedOwnerId === 'unassigned' ? 'Unassigned' : 'Assigned to'}</span>
                 <ChevronDown className="w-3 h-3 ml-1 text-slate-400" />
               </Button>
             </DropdownMenuTrigger>
@@ -107,8 +107,8 @@ export default function PeopleToolbar({
               <DropdownMenuItem onClick={() => onOwnerSelect(null)} className="cursor-pointer">
                 Todas as Pessoas
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onOwnerSelect('me')} className="cursor-pointer font-bold text-indigo-900">
-                Felipe (You)
+              <DropdownMenuItem onClick={() => onOwnerSelect('unassigned')} className="cursor-pointer font-bold text-indigo-900">
+                Sem responsável
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

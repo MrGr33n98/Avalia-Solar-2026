@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Activity,
   AlertCircle,
@@ -93,6 +93,7 @@ export default function Company360View({
   segment = 'Integrador / Instalador',
   domain,
   solarProjectId,
+  openByDefault = false,
 }: {
   accountId?: number;
   companyName?: string;
@@ -101,12 +102,20 @@ export default function Company360View({
   segment?: string;
   domain?: string;
   solarProjectId?: number;
+  openByDefault?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accountData, setAccountData] = useState<DetailedAccount | null>(null);
+
+  useEffect(() => {
+    if (openByDefault) {
+      setOpen(true);
+      fetchDetails();
+    }
+  }, [openByDefault, fetchDetails]);
 
   const fetchDetails = useCallback(() => {
     if (!accountId) return;

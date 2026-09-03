@@ -78,7 +78,13 @@ Rails.application.routes.draw do
         resources :user_roles, only: %i[index create destroy], controller: 'sales/user_roles'
         resources :consents, only: %i[index create], controller: 'sales/consents'
         post 'consent_revocations', to: 'sales/consent_revocations#create'
-        resources :saved_views, only: %i[index create update destroy], controller: 'sales/saved_views'
+        resources :saved_views, only: %i[index create update destroy], controller: 'sales/saved_views' do
+          post :pin, on: :member
+        end
+        resources :tags, only: %i[index create update destroy], controller: 'sales/tags' do
+          post :apply, on: :member
+          delete :remove, on: :member
+        end
         resources :emails, only: %i[index create show], controller: 'sales/emails'
         post 'email_events/provider', to: 'sales/email_events#create'
         resources :pipelines, only: %i[index show], controller: 'sales/pipelines'
@@ -87,6 +93,7 @@ Rails.application.routes.draw do
           get :timeline, on: :member
           resources :employments, only: %i[index create update destroy], controller: 'sales/contact_employments'
         end
+        post 'opportunities/bulk', to: 'sales/opportunities#bulk'
         resources :opportunities, only: %i[index create show update], controller: 'sales/opportunities' do
           resources :contacts, only: %i[index create update destroy], controller: 'sales/opportunity_contacts'
           member do

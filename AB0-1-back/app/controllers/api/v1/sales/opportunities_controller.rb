@@ -9,19 +9,42 @@ module Api
         before_action :set_opportunity, only: %i[show update timeline]
 
         def index
-          scope = ::Sales::Opportunity.includes(:account, :stage, :primary_contact, :owner)
-
-          scope = scope.where(status: params[:status]) if params[:status].present?
-          scope = scope.where(sales_account_id: params[:account_id]) if params[:account_id].present?
-          scope = scope.where(owner_id: params[:owner_id]) if params[:owner_id].present?
-          scope = scope.open unless params[:status].present?
-
-          scope = scope.order(created_at: :desc).limit(500)
-          render json: { opportunities: scope.map { |o| opportunity_json(o) } }
+          scope = scoped_opportunities.merge(::Sales::OpportunitiesQuery.call(params)).includes(:account, :stage, :primary_contact, :owner)
+          page = [params[:page].to_i, 1].max
+          per_page = [[params[:per_page].to_i, 50].max, 100].min
+          total = scope.count
+          opportunities = scope.offset((page - 1) * per_page).limit(per_page)
+          totals = scope.unscope(:select, :order, :limit, :offset).pick(
+            Arel.sql('COALESCE(SUM(sales_opportunities.value_cents), 0)'),
+            Arel.sql('COUNT(sales_opportunities.id)')
+          )
+          render json: {
+            opportunities: opportunities.map { |o| opportunity_json(o) },
+            meta: { page: page, per_page: per_page, total: total, pages: (total.to_f / per_page).ceil },
+            totals: { value_cents: totals&.first.to_i, count: totals&.last.to_i }
+          }
         end
 
         def show
           render json: { opportunity: opportunity_json(@opportunity) }
+        end
+
+        def bulk
+          ids = Array(params[:ids]).filter_map { |id| Integer(id, exception: false) }.uniq
+          return render_error_response(message: 'Selecione ao menos um Lead.', status: :unprocessable_entity, code: 'BULK_EMPTY') if ids.empty?
+          return render_error_response(message: 'Limite de 100 Leads por operação.', status: :unprocessable_entity, code: 'BULK_LIMIT') if ids.size > 100
+
+          updated = ActiveRecord::Base.transaction do
+            records = scoped_opportunities.includes(pipeline: :stages).where(id: ids).lock.to_a
+            raise ActiveRecord::RecordNotFound if records.size != ids.size
+            records.each { |record| apply_bulk_action(record) }
+            records
+          end
+          render json: { updated_ids: updated.map(&:id), count: updated.size }
+        rescue ActiveRecord::RecordNotFound
+          render_error_response(message: 'Lead não encontrado ou sem permissão.', status: :not_found, code: 'LEAD_NOT_FOUND')
+        rescue ActiveRecord::RecordInvalid, ArgumentError => e
+          render_error_response(message: e.message, status: :unprocessable_entity, code: 'BULK_INVALID')
         end
 
         def timeline
@@ -161,8 +184,38 @@ module Api
 
         private
 
+        def scoped_opportunities
+          return ::Sales::Opportunity.all if current_user.admin?
+          ::Sales::Opportunity.joins(:account).where(sales_accounts: { company_id: current_user.company_id })
+        end
+
+        def apply_bulk_action(record)
+          case params[:action].to_s
+          when 'status'
+            record.update!(status: params[:value].to_s)
+          when 'owner'
+            record.update!(owner_id: Integer(params[:value]))
+          when 'remove_tag'
+            tag_scope = current_user.admin? ? ::Sales::Tag.all : ::Sales::Tag.where(company_id: current_user.company_id)
+            tag = tag_scope.find(params[:value])
+            raise ActiveRecord::RecordNotFound unless tag.entity_type == 'Opportunity'
+            record.taggings.where(sales_tag_id: tag.id).delete_all
+          when 'tag'
+            tag_scope = current_user.admin? ? ::Sales::Tag.all : ::Sales::Tag.where(company_id: current_user.company_id)
+            tag = tag_scope.active.find(params[:value])
+            raise ActiveRecord::RecordNotFound unless tag.entity_type == 'Opportunity'
+            record.taggings.create_or_find_by!(sales_tag_id: tag.id, created_by: current_user)
+          when 'stage'
+            stage = record.pipeline.stages.to_a.find { |candidate| candidate.id == Integer(params[:value], exception: false) || candidate.key == params[:value].to_s }
+            raise ActiveRecord::RecordNotFound if stage.nil?
+            ::Sales::Opportunities::ChangeStage.call(opportunity: record, stage: stage, actor: current_user)
+          else
+            raise ArgumentError, 'Ação em massa inválida.'
+          end
+        end
+
         def set_opportunity
-          @opportunity = ::Sales::Opportunity.includes(:account, :stage, :primary_contact, :pipeline).find(params[:id])
+          @opportunity = scoped_opportunities.includes(:account, :stage, :primary_contact, :pipeline).find(params[:id])
         end
 
         def resolve_pipeline

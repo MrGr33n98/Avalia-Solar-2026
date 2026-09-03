@@ -37,7 +37,7 @@ export default function SalesLayoutWrapper({ children }: SalesLayoutWrapperProps
           onOpenAddModal={(type) => setAddModalType(type)}
         />
         <main className="flex-1 min-w-0 flex flex-col overflow-y-auto">
-          <div className="p-6 lg:p-8 max-w-[1600px] w-full mx-auto">{children}</div>
+          <div className="mx-auto w-full max-w-[1600px] min-w-0 p-3 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
 

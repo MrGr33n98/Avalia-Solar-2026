@@ -9,6 +9,8 @@ module Sales
     alias_attribute :owner_id, :user_id
     belongs_to :owner, class_name: 'User', foreign_key: :user_id, optional: true
 
+    has_many :taggings, as: :taggable, class_name: 'Sales::Tagging', dependent: :destroy
+    has_many :tags, through: :taggings, source: :tag
     has_many :opportunities, class_name: 'Sales::Opportunity', foreign_key: :primary_contact_id, dependent: :nullify
 
     has_many :contact_employments, class_name: 'Sales::ContactEmployment', foreign_key: :sales_contact_id, dependent: :destroy

@@ -52,6 +52,28 @@ export interface ApiContact {
   updated_at?: string;
 }
 
+export interface ApiSavedView {
+  id: number;
+  name: string;
+  resource_type: 'account' | 'contact' | 'opportunity';
+  filters: Record<string, unknown>;
+  sort: Record<string, unknown>;
+  columns: string[];
+  is_default?: boolean;
+  is_shared?: boolean;
+  created_at?: string;
+}
+
+export interface ApiTag {
+  id: number;
+  name: string;
+  slug: string;
+  color: string;
+  description?: string | null;
+  entity_type: string;
+  records_count?: number;
+}
+
 export interface ApiOpportunity {
   id: number;
   name: string;

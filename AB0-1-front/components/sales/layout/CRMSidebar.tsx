@@ -49,7 +49,7 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
   const isCurrent = (path: string) => pathname === path || pathname.startsWith(path);
 
   return (
-    <aside className="w-60 bg-[#0c1a30] text-slate-200 flex flex-col h-screen sticky top-0 border-r border-slate-800 select-none font-sans z-30">
+    <aside className="hidden w-60 shrink-0 bg-[#0c1a30] md:flex text-slate-200 flex flex-col h-screen sticky top-0 border-r border-slate-800 select-none font-sans z-30">
       {/* Brand Header */}
       <div className="p-4 flex items-center justify-between border-b border-slate-800/80">
         <Link href="/dashboard/sales" className="flex items-center gap-2">

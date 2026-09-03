@@ -10,6 +10,7 @@ import PeopleMapView from './views/PeopleMapView';
 
 export default function PeoplePage() {
   const [contacts, setContacts] = useState<PersonListItem[]>([]);
+  const [totalContacts, setTotalContacts] = useState(0);
   const [query, setQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
@@ -21,13 +22,29 @@ export default function PeoplePage() {
   const [isColumnsDialogOpen, setIsColumnsDialogOpen] = useState(false);
   const [isCreatePersonModalOpen, setIsCreatePersonModalOpen] = useState(false);
 
-  const [columns, setColumns] = useState<PeopleColumnConfig>({
-    person_name: true,
-    company_job: true,
-    decision_role: true,
-    last_contact: true,
-    contact_info: true,
+  const [columns, setColumns] = useState<PeopleColumnConfig>(() => {
+    const defaults = { person_name: true, company_job: true, decision_role: true, last_contact: true, contact_info: true };
+    if (typeof window === 'undefined') return defaults;
+    try { return { ...defaults, ...JSON.parse(localStorage.getItem('crm.people.columns') || '{}') }; } catch { return defaults; }
   });
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('crm.people.filters') || '{}');
+      setQuery(saved.query || '');
+      setSelectedRole(saved.selectedRole || null);
+      setSelectedOwnerId(saved.selectedOwnerId || null);
+      setViewMode(saved.viewMode || 'list');
+    } catch { /* preferir filtros vazios */ }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('crm.people.filters', JSON.stringify({ query, selectedRole, selectedOwnerId, viewMode }));
+  }, [query, selectedRole, selectedOwnerId, viewMode]);
+
+  useEffect(() => {
+    localStorage.setItem('crm.people.columns', JSON.stringify(columns));
+  }, [columns]);
 
   const fetchContacts = useCallback(() => {
     setLoading(true);
@@ -35,6 +52,8 @@ export default function PeoplePage() {
     const params = new URLSearchParams();
     if (query) params.set('q', query);
     if (selectedRole) params.set('decision_role', selectedRole);
+    if (selectedOwnerId) params.set('owner_id', selectedOwnerId);
+    params.set('per_page', '100');
 
     fetch(`/api/v1/sales/contacts?${params.toString()}`, { credentials: 'include' })
       .then((res) => {
@@ -43,15 +62,17 @@ export default function PeoplePage() {
       })
       .then((data) => {
         setContacts(data.contacts ?? []);
+        setTotalContacts(data.meta?.total ?? data.contacts?.length ?? 0);
       })
       .catch((err) => {
         setError(err.message || 'Erro ao conectar à API do CRM.');
       })
       .finally(() => setLoading(false));
-  }, [query, selectedRole]);
+  }, [query, selectedRole, selectedOwnerId]);
 
   useEffect(() => {
-    fetchContacts();
+    const timer = window.setTimeout(fetchContacts, 250);
+    return () => window.clearTimeout(timer);
   }, [fetchContacts]);
 
   const handleToggleSelectAll = () => {
@@ -96,7 +117,7 @@ export default function PeoplePage() {
         <PeopleToolbar
           query={query}
           onQueryChange={setQuery}
-          count={contacts.length}
+          count={totalContacts}
           selectedRole={selectedRole}
           onRoleSelect={setSelectedRole}
           selectedOwnerId={selectedOwnerId}

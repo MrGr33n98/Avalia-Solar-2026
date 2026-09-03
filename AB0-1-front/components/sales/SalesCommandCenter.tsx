@@ -54,6 +54,8 @@ import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
 import CRMModal from '@/components/sales/ui/CRMModal';
 import { CRMFormField, CRMFormRow } from '@/components/sales/ui/CRMForm';
 import CreateOpportunityDialog from '@/components/sales/opportunities/CreateOpportunityDialog';
+import LeadFilterDrawer, { LeadFilters } from '@/components/sales/filters/LeadFilterDrawer';
+import SavedViewMenu from '@/components/sales/filters/SavedViewMenu';
 import { salesApi, SalesApiError } from '@/lib/api/sales/client';
 import { ApiAccount, ApiContact, ApiOpportunity, ApiStage } from '@/lib/api/sales/types';
 
@@ -165,10 +167,14 @@ function DealCard({
   deal,
   onOpen,
   onDragStart,
+  selected,
+  onToggleSelect,
 }: {
   deal: Deal;
   onOpen: () => void;
   onDragStart: (e: React.DragEvent) => void;
+  selected: boolean;
+  onToggleSelect: () => void;
 }) {
   return (
     <div
@@ -179,7 +185,8 @@ function DealCard({
       className="group relative cursor-grab rounded-lg border border-slate-200 bg-white p-3.5 shadow-2xs transition-all hover:border-blue-700 hover:shadow-md active:cursor-grabbing"
     >
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <div className="flex min-w-0 items-start gap-2">
+          <input type="checkbox" checked={selected} onChange={onToggleSelect} onClick={(event) => event.stopPropagation()} aria-label={`Selecionar ${deal.plan}`} className="mt-1 h-3.5 w-3.5 accent-blue-900" />
           <p className="text-sm font-bold text-slate-900 group-hover:text-blue-900">{deal.company}</p>
           <p className="mt-0.5 text-xs text-slate-500">{deal.plan}</p>
         </div>
@@ -230,6 +237,12 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
   const [isNewDealOpen, setIsNewDealOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [leadFilters, setLeadFilters] = useState<LeadFilters>({});
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [tags, setTags] = useState<import('@/lib/api/sales/types').ApiTag[]>([]);
+  const [columnDialogOpen, setColumnDialogOpen] = useState(false);
+  const [columns, setColumns] = useState({ company: true, opportunity: true, stage: true, value: true, contact: true });
 
   // Stages State (initialized with DEFAULT_STAGES so Kanban board is never empty)
   const [stages, setStages] = useState<Array<{ key: string; label: string; bg: string; color: string; probability: number }>>(DEFAULT_STAGES);
@@ -274,7 +287,7 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
   const loadOpportunities = useCallback(async () => {
     setFetchState('loading');
     try {
-      const opportunities = await salesApi.getOpportunities();
+      const opportunities = await salesApi.getOpportunities({ per_page: 100, q: search || undefined, ...leadFilters });
       setDealData(mapApiToDeals(opportunities));
       setFetchState('success');
     } catch (err) {
@@ -286,7 +299,7 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
         setFetchState('error');
       }
     }
-  }, []);
+  }, [leadFilters, search]);
 
   const loadAccountsList = useCallback(async () => {
     try {
@@ -299,8 +312,10 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
 
   useEffect(() => {
     loadPipelineAndStages();
-    loadOpportunities();
+    const timer = window.setTimeout(loadOpportunities, 250);
     loadAccountsList();
+    salesApi.getTags().then(setTags).catch(() => setTags([]));
+    return () => window.clearTimeout(timer);
   }, [loadPipelineAndStages, loadOpportunities, loadAccountsList]);
 
   // Load contacts when selectedAccountId changes
@@ -330,6 +345,14 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
     0
   );
   const totalDealsCount = allDeals.length;
+
+  const toggleSelected = (id: number) => setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+
+  const runBulk = async (action: 'status' | 'stage' | 'tag' | 'remove_tag', value: string | number) => {
+    if (!selectedIds.length) return;
+    try { await salesApi.bulkUpdateOpportunities(selectedIds, action, value); setSelectedIds([]); await loadOpportunities(); toastMessage('Leads atualizados com sucesso.'); }
+    catch { toastMessage('Não foi possível atualizar os Leads.', 'error'); }
+  };
 
   const handleDragStart = (deal: Deal, stageKey: string) => {
     setDragged({ deal, stageKey });
@@ -583,7 +606,8 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                 className="h-9 border-slate-300 pl-9 text-xs"
               />
             </div>
-            <Button variant="outline" size="sm" className="h-9 border-slate-300 text-xs font-semibold">
+            <Button variant="outline" size="sm" onClick={() => setColumnDialogOpen(true)} className="h-9 border-slate-300 text-xs font-semibold">Colunas</Button>
+            <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)} className="h-9 border-slate-300 text-xs font-semibold">
               <Filter className="mr-1.5 h-3.5 w-3.5 text-slate-500" /> Filtros Avançados
             </Button>
             <Button
@@ -597,7 +621,9 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {selectedIds.length > 0 && <div className="flex items-center gap-1 rounded-md bg-blue-50 p-1 text-xs"><span className="px-2 font-semibold text-blue-900">{selectedIds.length} selecionados</span><Button size="sm" variant="ghost" onClick={() => runBulk('status', 'won')} className="h-7 text-xs">Marcar ganho</Button><select aria-label="Mover Leads selecionados" defaultValue="" onChange={(event) => { if (event.target.value) runBulk('stage', event.target.value); }} className="h-7 rounded border border-blue-200 bg-white px-1 text-xs"><option value="">Mover para...</option>{stages.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}</select><select aria-label="Adicionar tag aos Leads selecionados" defaultValue="" onChange={(event) => { if (event.target.value) runBulk('tag', event.target.value); }} className="h-7 rounded border border-blue-200 bg-white px-1 text-xs"><option value="">Adicionar tag...</option>{tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}</select><select aria-label="Remover tag dos Leads selecionados" defaultValue="" onChange={(event) => { if (event.target.value) runBulk('remove_tag', event.target.value); }} className="h-7 rounded border border-blue-200 bg-white px-1 text-xs"><option value="">Remover tag...</option>{tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}</select><Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="h-7 text-xs">Limpar</Button></div>}
+            <SavedViewMenu filters={leadFilters} search={search} viewMode={view} onApply={(savedFilters, savedSearch) => { setLeadFilters(savedFilters as LeadFilters); setSearch(savedSearch); }} />
             {pipelineOnly && (
               <Button
                 onClick={() => setIsNewDealOpen(true)}
@@ -666,7 +692,8 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
 
         {/* KANBAN BOARD */}
         {fetchState === 'success' && view === 'kanban' && (
-          <section className="flex gap-4 overflow-x-auto pb-4 pt-1 select-none">
+          <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-color:#94a3b8_transparent] [scrollbar-width:thin]">
+            <section className="flex w-max min-w-full gap-3 pb-1 pt-1 select-none sm:gap-4">
             {stages.map((stage) => {
               const list = (dealData[stage.key] || []).filter(visible);
               const stageTotalCents = list.reduce((sum, d) => sum + d.rawCents, 0);
@@ -681,7 +708,7 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                   }}
                   onDragLeave={() => setDragOverStage(null)}
                   onDrop={() => handleDrop(stage.key)}
-                  className={`flex w-80 flex-shrink-0 flex-col rounded-xl border transition-all ${
+                  className={`flex w-[clamp(18rem,82vw,20rem)] max-w-[calc(100vw-2rem)] flex-shrink-0 snap-start flex-col rounded-xl border transition-all ${
                     isOver
                       ? 'border-blue-700 bg-blue-50/50 shadow-md ring-2 ring-blue-700/20'
                       : 'border-slate-200 bg-slate-100/70'
@@ -713,6 +740,8 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                           deal={deal}
                           onOpen={() => setSelectedDeal(deal)}
                           onDragStart={(e) => handleDragStart(deal, stage.key)}
+                          selected={selectedIds.includes(deal.id)}
+                          onToggleSelect={() => toggleSelected(deal.id)}
                         />
                       ))
                     )}
@@ -720,8 +749,21 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                 </div>
               );
             })}
-          </section>
+            </section>
+          </div>
         )}
+
+        <LeadFilterDrawer
+          open={filtersOpen}
+          onOpenChange={setFiltersOpen}
+          filters={leadFilters}
+          stages={stages}
+          tags={tags}
+          onApply={setLeadFilters}
+          onClear={() => setLeadFilters({})}
+        />
+
+        <Dialog open={columnDialogOpen} onOpenChange={setColumnDialogOpen}><DialogContent className="w-[calc(100vw-1.5rem)] max-w-sm"><DialogHeader><DialogTitle>Colunas do Lead</DialogTitle><DialogDescription>Escolha campos visíveis na tabela.</DialogDescription></DialogHeader><div className="grid gap-3 py-3">{Object.entries(columns).map(([key, enabled]) => <label key={key} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={enabled} onChange={() => setColumns((current) => ({ ...current, [key]: !current[key as keyof typeof current] }))} />{key}</label>)}</div></DialogContent></Dialog>
 
         {/* TABLE VIEW */}
         {fetchState === 'success' && view === 'table' && (
@@ -742,15 +784,15 @@ export default function SalesCommandCenter({ pipelineOnly = false }: { pipelineO
                   <tbody className="divide-y divide-slate-100">
                     {allDeals.filter(visible).map((deal) => (
                       <tr key={deal.id} className="hover:bg-slate-50 transition">
-                        <td className="p-3 font-bold text-slate-900">{deal.company}</td>
-                        <td className="p-3 text-slate-700">{deal.plan}</td>
-                        <td className="p-3">
+                        {columns.company && <td className="p-3 font-bold text-slate-900">{deal.company}</td>}
+                        {columns.opportunity && <td className="p-3 text-slate-700">{deal.plan}</td>}
+                        {columns.stage && <td className="p-3">
                           <Badge variant="outline" className="font-semibold border-slate-300">
                             {stages.find((s) => s.key === deal.stageKey)?.label || deal.stageKey}
                           </Badge>
-                        </td>
-                        <td className="p-3 font-bold text-blue-900">{deal.value}</td>
-                        <td className="p-3 text-slate-600">{deal.contact || '—'}</td>
+                        </td>}
+                        {columns.value && <td className="p-3 font-bold text-blue-900">{deal.value}</td>}
+                        {columns.contact && <td className="p-3 text-slate-600">{deal.contact || '—'}</td>}
                         <td className="p-3 text-right">
                           <Button
                             variant="ghost"

@@ -33,7 +33,7 @@ interface CRMTopbarProps {
 
 export default function CRMTopbar({ onOpenSearch, onOpenAddModal }: CRMTopbarProps) {
   return (
-    <header className="h-14 bg-[#0c1a30] border-b border-slate-800 text-slate-200 flex items-center justify-between px-4 sticky top-0 z-20 select-none font-sans">
+    <header className="h-14 min-w-0 bg-[#0c1a30] border-b border-slate-800 text-slate-200 flex items-center justify-between px-4 sticky top-0 z-20 select-none font-sans">
       {/* Left: Search & + Add new button aligned side-by-side like Nutshell */}
       <div className="flex items-center gap-3">
         {/* Search Bar */}
