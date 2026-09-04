@@ -43,14 +43,49 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
     setLoading(true);
     setError(null);
     try {
+      let city: string | undefined;
+      let state: string | undefined;
+      if (companyAddress.trim()) {
+        const parts = companyAddress.split(/[-—,]/);
+        if (parts.length >= 2) {
+          city = parts[parts.length - 2].trim();
+          state = parts[parts.length - 1].trim();
+        } else {
+          city = companyAddress.trim();
+        }
+      }
+
+      const cleanDomain = companyUrl
+        ? companyUrl.replace(/^https?:\/\//, '').split('/')[0]
+        : undefined;
+
+      const personParts = personName.trim().split(' ');
+      const firstName = personParts[0] || undefined;
+      const lastName = personParts.slice(1).join(' ') || undefined;
+
       await salesApi.createAccount({
-        name: companyName,
-        domain: companyUrl.replace(/^https?:\/\//, ''),
-        phone: companyPhone,
-        email: companyEmail,
+        name: companyName.trim(),
+        domain: cleanDomain,
+        website: companyUrl.trim() || undefined,
+        phone: companyPhone.trim() || undefined,
+        email: companyEmail.trim() || undefined,
+        city,
+        state,
+        segment: 'Integrador / Instalador',
+        primary_contact: firstName
+          ? {
+              first_name: firstName,
+              last_name: lastName,
+              email: companyEmail.trim() || undefined,
+              phone: companyPhone.trim() || undefined,
+            }
+          : undefined,
       });
 
       setSuccessMsg('Empresa cadastrada com sucesso!');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('crm:account-created'));
+      }
       setTimeout(() => {
         onClose();
         setSuccessMsg(null);

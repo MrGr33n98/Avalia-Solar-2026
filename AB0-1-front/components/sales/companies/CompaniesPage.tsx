@@ -96,7 +96,16 @@ export default function CompaniesPage() {
 
   useEffect(() => {
     const cleanup = fetchAccounts();
-    return () => cleanup?.();
+    const handleAccountCreated = () => fetchAccounts();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('crm:account-created', handleAccountCreated);
+    }
+    return () => {
+      cleanup?.();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('crm:account-created', handleAccountCreated);
+      }
+    };
   }, [fetchAccounts]);
 
   const handleToggleSelectAll = () => {
@@ -166,6 +175,7 @@ export default function CompaniesPage() {
           onToggleSelectAll={handleToggleSelectAll}
           onToggleSelect={handleToggleSelect}
           onRetry={fetchAccounts}
+          onCreateCompany={() => setIsCreateCompanyModalOpen(true)}
         />
 
         {totalPages > 1 && (

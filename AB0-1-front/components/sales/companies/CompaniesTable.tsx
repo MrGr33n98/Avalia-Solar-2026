@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertCircle, Building2, ChevronRight, RotateCw, UserCheck } from 'lucide-react';
+import { AlertCircle, Building2, ChevronRight, Plus, RotateCw, UserCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Company360View from '@/components/sales/Company360View';
@@ -42,6 +42,7 @@ interface CompaniesTableProps {
   onToggleSelectAll: () => void;
   onToggleSelect: (id: number) => void;
   onRetry: () => void;
+  onCreateCompany?: () => void;
 }
 
 export default function CompaniesTable({
@@ -53,6 +54,7 @@ export default function CompaniesTable({
   onToggleSelectAll,
   onToggleSelect,
   onRetry,
+  onCreateCompany,
 }: CompaniesTableProps) {
   if (loading) {
     return (
@@ -77,13 +79,24 @@ export default function CompaniesTable({
 
   if (accounts.length === 0) {
     return (
-      <div className="py-16 text-center bg-white rounded-lg border border-slate-200">
-        <Building2 className="mx-auto h-10 w-10 text-slate-300" />
-        <p className="mt-3 text-sm font-semibold text-slate-900">Nenhuma empresa encontrada.</p>
+      <div className="py-16 text-center bg-white rounded-lg border border-slate-200 shadow-2xs">
+        <Building2 className="mx-auto h-12 w-12 text-slate-300" />
+        <p className="mt-3 text-base font-bold text-slate-900">Nenhuma empresa encontrada.</p>
         <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
           Adicione ou importe empresas comerciais para organizar decisores e gerenciar
           oportunidades.
         </p>
+        {onCreateCompany && (
+          <div className="mt-5 flex justify-center">
+            <Button
+              onClick={onCreateCompany}
+              size="sm"
+              className="h-9 px-4 text-xs font-bold bg-blue-900 hover:bg-blue-950 text-white shadow-xs"
+            >
+              <Plus className="w-4 h-4 mr-1.5 text-emerald-400" /> Cadastrar Nova Empresa
+            </Button>
+          </div>
+        )}
       </div>
     );
   }

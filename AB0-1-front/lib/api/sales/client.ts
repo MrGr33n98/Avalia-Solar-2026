@@ -410,10 +410,11 @@ export const salesApi = {
     return res.accounts ?? [];
   },
 
-  async createAccount(payload: Partial<ApiAccount>): Promise<ApiAccount> {
+  async createAccount(payload: Partial<ApiAccount> & { primary_contact?: any }): Promise<ApiAccount> {
+    const { primary_contact, ...accountFields } = payload;
     const res = await request<{ account: ApiAccount }>('/api/v1/sales/accounts', {
       method: 'POST',
-      body: JSON.stringify({ account: payload }),
+      body: JSON.stringify({ account: accountFields, primary_contact }),
     });
     return res.account;
   },

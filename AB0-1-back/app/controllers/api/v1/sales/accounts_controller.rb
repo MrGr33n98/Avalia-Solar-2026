@@ -29,18 +29,29 @@ module Api
         def create
           ActiveRecord::Base.transaction do
             account = ::Sales::Account.where(owner: current_user).find_or_initialize_by(name: account_params[:name])
-            account.assign_attributes(account_params.merge(owner: current_user))
+            account.assign_attributes(
+              account_params.merge(
+                owner: current_user,
+                company_id: current_user.company_id || account_params[:company_id]
+              )
+            )
             account.save!
 
             if params[:primary_contact].present?
-              contact = account.contacts.find_or_initialize_by(email: params[:primary_contact][:email])
+              c_params = params[:primary_contact]
+              first_name = c_params[:first_name].presence || c_params[:name] || 'Contato'
+              last_name = c_params[:last_name]
+              contact_email = c_params[:email].presence || "#{account.name.parameterize}-#{SecureRandom.hex(3)}@contato.crm"
+
+              contact = account.contacts.find_or_initialize_by(email: contact_email)
               contact.assign_attributes(
-                first_name: params[:primary_contact][:first_name],
-                last_name: params[:primary_contact][:last_name],
-                job_title: params[:primary_contact][:job_title],
-                phone: params[:primary_contact][:phone],
+                first_name: first_name,
+                last_name: last_name,
+                job_title: c_params[:job_title],
+                phone: c_params[:phone] || account.phone,
                 is_primary: true,
-                user: current_user
+                user: current_user,
+                company_id: current_user.company_id
               )
               contact.save!
             end
