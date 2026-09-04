@@ -69,17 +69,26 @@ async function request<T>(url: string, options: RequestInit = {}, isRetry = fals
     Accept: 'application/json',
   };
 
-  const response = await fetch(url, {
-    credentials: 'include',
-    ...options,
-    headers:
-      options.body instanceof FormData
-        ? { Accept: 'application/json', ...options.headers }
-        : {
-            ...defaultHeaders,
-            ...options.headers,
-          },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      credentials: 'include',
+      ...options,
+      headers:
+        options.body instanceof FormData
+          ? { Accept: 'application/json', ...options.headers }
+          : {
+              ...defaultHeaders,
+              ...options.headers,
+            },
+    });
+  } catch (err: any) {
+    throw new SalesApiError(
+      0,
+      'Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente.',
+      'NETWORK_ERROR'
+    );
+  }
 
   if (response.status === 204) {
     return {} as T;
