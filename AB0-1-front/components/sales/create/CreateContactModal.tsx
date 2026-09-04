@@ -1,12 +1,13 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Building2, Camera, RotateCw, User } from 'lucide-react';
+import { Camera, RotateCw, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import CRMModal from '@/components/sales/ui/CRMModal';
 import { CRMFormField, CRMFormRow } from '@/components/sales/ui/CRMForm';
+import CRMCompanySelect, { CompanyOption } from '@/components/sales/ui/CRMCompanySelect';
 import { salesApi } from '@/lib/api/sales/client';
 
 interface CreateContactModalProps {
@@ -25,6 +26,7 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
   const [personEmail, setPersonEmail] = useState('');
   const [description, setDescription] = useState('');
   const [companyInputName, setCompanyInputName] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState<CompanyOption | null>(null);
   const [personPhone, setPersonPhone] = useState('');
   const [personAddress, setPersonAddress] = useState('');
   const [personUrl, setPersonUrl] = useState('');
@@ -45,16 +47,25 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
     setLoading(true);
     setError(null);
     try {
+      const personParts = personName.trim().split(' ');
+      const firstName = personParts[0];
+      const lastName = personParts.slice(1).join(' ') || undefined;
+
       await salesApi.createContact({
-        sales_account_id: accountId,
-        first_name: personName,
-        email: personEmail,
-        phone: personPhone,
-        whatsapp: personPhone,
+        sales_account_id: accountId || selectedCompany?.id || undefined,
+        company_name: companyInputName.trim() || undefined,
+        first_name: firstName,
+        last_name: lastName,
+        email: personEmail.trim() || undefined,
+        phone: personPhone.trim() || undefined,
+        whatsapp: personPhone.trim() || undefined,
         decision_role: decisionRole,
       });
 
       setSuccessMsg('Pessoa cadastrada com sucesso!');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('crm:contact-created'));
+      }
       setTimeout(() => {
         onClose();
         setSuccessMsg(null);
@@ -62,6 +73,7 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
         setPersonEmail('');
         setDescription('');
         setCompanyInputName('');
+        setSelectedCompany(null);
         setPersonPhone('');
         setPersonAddress('');
         setPersonUrl('');
@@ -157,15 +169,15 @@ export default function CreateContactModal({ open, onClose, accountId, onSuccess
         {/* 2-Column Row: Company & Decision Role */}
         <CRMFormRow cols={2}>
           <CRMFormField label="Company">
-            <div className="relative">
-              <Building2 className="w-4 h-4 text-indigo-600 absolute left-3.5 top-3 pointer-events-none" />
-              <Input
-                value={companyInputName}
-                onChange={(e) => setCompanyInputName(e.target.value)}
-                placeholder="Selecione a empresa..."
-                className="h-10 pl-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg"
-              />
-            </div>
+            <CRMCompanySelect
+              value={companyInputName}
+              selectedAccount={selectedCompany}
+              onChange={(name, company) => {
+                setCompanyInputName(name);
+                setSelectedCompany(company || null);
+              }}
+              placeholder="Selecione ou digite a empresa..."
+            />
           </CRMFormField>
 
           <CRMFormField label="Decision role">

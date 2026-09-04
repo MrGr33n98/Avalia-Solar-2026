@@ -32,7 +32,7 @@ module Api
             account.assign_attributes(
               account_params.merge(
                 owner: current_user,
-                company_id: current_user.company_id || account_params[:company_id]
+                company_id: account_params[:company_id]
               )
             )
             account.save!
@@ -54,8 +54,7 @@ module Api
                 job_title: c_params[:job_title],
                 phone: c_params[:phone] || account.phone,
                 is_primary: true,
-                user: current_user,
-                company_id: current_user.company_id
+                user: current_user
               )
               contact.sales_account_id ||= account.id
               contact.save!
@@ -107,7 +106,8 @@ module Api
         def scoped_accounts
           return ::Sales::Account.all if current_user.admin?
           if current_user.company_id.present?
-            ::Sales::Account.where(company_id: current_user.company_id)
+            user_ids = User.where(company_id: current_user.company_id).pluck(:id)
+            ::Sales::Account.where(owner_id: user_ids).or(::Sales::Account.where(company_id: current_user.company_id))
           else
             ::Sales::Account.where(owner_id: current_user.id)
           end

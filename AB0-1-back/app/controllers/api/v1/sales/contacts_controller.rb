@@ -66,22 +66,32 @@ module Api
 
         def create
           account_id = params[:account_id] || params[:sales_account_id] || contact_params[:sales_account_id]
+          company_name = params[:company_name] || params[:account_name] || contact_params[:company_name]
+
+          if account_id.blank? && company_name.present?
+            c_name = company_name.to_s.strip
+            if c_name.present?
+              account = ::Sales::Account.where(owner: current_user).find_or_create_by!(name: c_name)
+              account_id = account.id
+            end
+          end
+
           contact = if contact_params[:email].present? && account_id.present?
                       ::Sales::Contact.where(sales_account_id: account_id).find_or_initialize_by(email: contact_params[:email].downcase.strip)
                     else
                       ::Sales::Contact.new
                     end
-          attrs = contact_params
+          attrs = contact_params.except(:company_name)
           attrs[:user_id] = params[:owner_id] if params[:owner_id].present?
           contact.assign_attributes(attrs)
-          contact.sales_account_id ||= account_id
+          contact.sales_account_id = account_id if account_id.present?
           contact.save!
           render json: { contact: serialize_detailed(contact) }, status: contact.previously_new_record? ? :created : :ok
         end
 
         def update
           contact = ::Sales::Contact.find(params[:id])
-          attrs = contact_params
+          attrs = contact_params.except(:company_name)
           attrs[:user_id] = params[:owner_id] if params[:owner_id].present?
           contact.update!(attrs)
           render json: { contact: serialize_detailed(contact) }
@@ -92,7 +102,7 @@ module Api
         def contact_params
           params.require(:contact).permit(
             :first_name, :last_name, :email, :phone, :whatsapp, :job_title, :linkedin_url,
-            :decision_role, :is_primary, :sales_account_id, :user_id, :owner_id
+            :decision_role, :is_primary, :sales_account_id, :user_id, :owner_id, :company_name
           )
         end
 
