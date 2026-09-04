@@ -183,6 +183,10 @@ function DealCard({
       draggable
       onDragStart={onDragStart}
       onClick={onOpen}
+      onMouseEnter={() => {
+        // Prefetch opportunity into memory cache on hover for instant open
+        salesApi.getOpportunity(deal.id).catch(() => {});
+      }}
       data-testid={`deal-card-${deal.id}`}
       className="group relative cursor-grab rounded-lg border border-slate-200 bg-white p-3.5 shadow-2xs transition-all hover:border-blue-700 hover:shadow-md active:cursor-grabbing"
     >
@@ -791,6 +795,18 @@ export default function SalesCommandCenter({
       {/* OPPORTUNITY 360 BENCHMARK NUTSHELL VIEW */}
       <Opportunity360View
         opportunityId={selectedDeal?.id || null}
+        initialData={
+          selectedDeal
+            ? {
+                id: selectedDeal.id,
+                name: selectedDeal.plan || selectedDeal.company,
+                value_cents: selectedDeal.rawCents,
+                account: { name: selectedDeal.company },
+                contact_name: selectedDeal.contact,
+                probability: selectedDeal.probability,
+              }
+            : null
+        }
         onClose={() => setSelectedDeal(null)}
         onUpdated={loadOpportunities}
       />

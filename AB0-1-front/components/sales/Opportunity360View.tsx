@@ -45,12 +45,13 @@ import { salesApi } from '@/lib/api/sales/client';
 
 interface Opportunity360ViewProps {
   opportunityId: number | null;
+  initialData?: any;
   onClose: () => void;
   onUpdated?: () => void;
 }
 
-export default function Opportunity360View({ opportunityId, onClose, onUpdated }: Opportunity360ViewProps) {
-  const [opp, setOpp] = useState<any | null>(null);
+export default function Opportunity360View({ opportunityId, initialData, onClose, onUpdated }: Opportunity360ViewProps) {
+  const [opp, setOpp] = useState<any | null>(initialData || null);
   const [loading, setLoading] = useState(false);
   const [pipelines, setPipelines] = useState<any[]>([]);
   const [activePipeline, setActivePipeline] = useState<any | null>(null);
@@ -81,32 +82,34 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
   
   // Editable fields state
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [oppTitle, setOppTitle] = useState('');
+  const [oppTitle, setOppTitle] = useState(initialData?.name || '');
   const [isEditingValue, setIsEditingValue] = useState(false);
-  const [oppValue, setOppValue] = useState('');
+  const [oppValue, setOppValue] = useState(initialData?.value_cents ? (initialData.value_cents / 100).toString() : '0');
 
   const fetchOpportunityData = async (id: number) => {
-    setLoading(true);
+    // If we have initial data, don't trigger blank loading screen!
+    if (!opp) setLoading(true);
     try {
-      const data = await salesApi.getOpportunity(id);
+      // Parallel execution of all required APIs to eliminate waterfall latency
+      const [data, fetchedPipelines, rawTimeline] = await Promise.all([
+        salesApi.getOpportunity(id),
+        salesApi.getPipelines(),
+        salesApi.getOpportunityTimeline(id),
+      ]);
+
       setOpp(data);
       setOppTitle(data.name || '');
       setOppValue(data.value_cents ? (data.value_cents / 100).toString() : '0');
 
-      // Fetch contacts for account if account exists
+      // Fetch contacts for account in parallel if account exists
       if (data.sales_account_id) {
-        try {
-          const contacts = await salesApi.getContacts({ sales_account_id: data.sales_account_id });
-          setAccountContacts(contacts || []);
-        } catch {
-          setAccountContacts([]);
-        }
+        salesApi.getContacts({ sales_account_id: data.sales_account_id })
+          .then((contacts) => setAccountContacts(contacts || []))
+          .catch(() => setAccountContacts([]));
       } else {
         setAccountContacts([]);
       }
 
-      // Fetch pipelines
-      const fetchedPipelines = await salesApi.getPipelines();
       setPipelines(fetchedPipelines);
       if (data.sales_pipeline_id) {
         const matchingPipe = fetchedPipelines.find((p: any) => p.id === data.sales_pipeline_id);
@@ -115,9 +118,7 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
         setActivePipeline(fetchedPipelines[0] || null);
       }
 
-      // Fetch canonical timeline
-      const rawTimeline = await salesApi.getOpportunityTimeline(id);
-      const formattedEvents: TimelineEvent[] = rawTimeline.map((item: any) => ({
+      const formattedEvents: TimelineEvent[] = (rawTimeline || []).map((item: any) => ({
         id: String(item.id),
         type: item.type,
         title: item.title,
@@ -127,14 +128,12 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
       }));
       setEvents(formattedEvents);
 
-      // Filter activities, tasks, emails, quotes
-      setTasks(rawTimeline.filter((t: any) => t.type === 'task'));
-      setActivities(rawTimeline.filter((t: any) => t.type === 'call' || t.type === 'activity'));
-      setEmails(rawTimeline.filter((t: any) => t.type === 'email'));
-      setQuotes(rawTimeline.filter((t: any) => t.type === 'quote'));
+      setTasks((rawTimeline || []).filter((t: any) => t.type === 'task'));
+      setActivities((rawTimeline || []).filter((t: any) => t.type === 'call' || t.type === 'activity'));
+      setEmails((rawTimeline || []).filter((t: any) => t.type === 'email'));
+      setQuotes((rawTimeline || []).filter((t: any) => t.type === 'quote'));
     } catch (err) {
       console.error('Erro ao carregar Oportunidade 360:', err);
-      setOpp(null);
     } finally {
       setLoading(false);
     }
@@ -142,6 +141,11 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
 
   useEffect(() => {
     if (opportunityId) {
+      if (initialData) {
+        setOpp(initialData);
+        setOppTitle(initialData.name || '');
+        setOppValue(initialData.value_cents ? (initialData.value_cents / 100).toString() : '0');
+      }
       fetchOpportunityData(opportunityId);
     }
   }, [opportunityId]);

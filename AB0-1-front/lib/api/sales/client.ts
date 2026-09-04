@@ -129,11 +129,45 @@ async function request<T>(url: string, options: RequestInit = {}, isRetry = fals
   return data as T;
 }
 
+// High-performance client-side SWR Memory Cache
+const apiCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL_MS = 60_000; // 60 seconds
+
+function getCached<T>(key: string): T | null {
+  const item = apiCache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.timestamp > CACHE_TTL_MS) {
+    apiCache.delete(key);
+    return null;
+  }
+  return item.data as T;
+}
+
+function setCache(key: string, data: any) {
+  apiCache.set(key, { data, timestamp: Date.now() });
+}
+
+export function clearSalesApiCache(pattern?: string) {
+  if (!pattern) {
+    apiCache.clear();
+    return;
+  }
+  for (const key of apiCache.keys()) {
+    if (key.includes(pattern)) apiCache.delete(key);
+  }
+}
+
 export const salesApi = {
   // Pipelines & Stages
   async getPipelines(): Promise<ApiPipeline[]> {
+    const cacheKey = 'pipelines:all';
+    const cached = getCached<ApiPipeline[]>(cacheKey);
+    if (cached) return cached;
+
     const res = await request<{ pipelines: ApiPipeline[] }>('/api/v1/sales/pipelines');
-    return res.pipelines ?? [];
+    const data = res.pipelines ?? [];
+    setCache(cacheKey, data);
+    return data;
   },
 
   async getSavedViews(
@@ -311,6 +345,8 @@ export const salesApi = {
   },
 
   async updateOpportunity(id: number, payload: Record<string, any>): Promise<ApiOpportunity> {
+    clearSalesApiCache(`opp:${id}`);
+    clearSalesApiCache('opps:');
     const res = await request<{ opportunity: ApiOpportunity }>(
       `/api/v1/sales/opportunities/${id}`,
       {
@@ -318,10 +354,13 @@ export const salesApi = {
         body: JSON.stringify({ opportunity: payload }),
       }
     );
+    if (res.opportunity) setCache(`opp:${id}`, res.opportunity);
     return res.opportunity;
   },
 
   async updateOpportunityStage(id: number, stageKey: string): Promise<ApiOpportunity> {
+    clearSalesApiCache(`opp:${id}`);
+    clearSalesApiCache('opps:');
     const res = await request<{ opportunity: ApiOpportunity }>(
       `/api/v1/sales/opportunities/${id}`,
       {
@@ -329,24 +368,40 @@ export const salesApi = {
         body: JSON.stringify({ opportunity: { stage_key: stageKey } }),
       }
     );
+    if (res.opportunity) setCache(`opp:${id}`, res.opportunity);
     return res.opportunity;
   },
 
   async getOpportunity(id: number): Promise<ApiOpportunity> {
+    const cacheKey = `opp:${id}`;
+    const cached = getCached<ApiOpportunity>(cacheKey);
+    if (cached) return cached;
+
     const res = await request<{ opportunity: ApiOpportunity }>(`/api/v1/sales/opportunities/${id}`);
+    if (res.opportunity) setCache(cacheKey, res.opportunity);
     return res.opportunity;
   },
 
   async getOpportunityTimeline(id: number): Promise<any[]> {
+    const cacheKey = `opp_timeline:${id}`;
+    const cached = getCached<any[]>(cacheKey);
+    if (cached) return cached;
+
     const res = await request<{ timeline: any[] }>(`/api/v1/sales/opportunities/${id}/timeline`);
-    return res.timeline ?? [];
+    const data = res.timeline ?? [];
+    setCache(cacheKey, data);
+    return data;
   },
 
   async markOpportunityWon(id: number): Promise<void> {
+    clearSalesApiCache(`opp:${id}`);
+    clearSalesApiCache('opps:');
     await request(`/api/v1/sales/opportunities/${id}/won`, { method: 'POST' });
   },
 
   async markOpportunityLost(id: number, reason?: string): Promise<void> {
+    clearSalesApiCache(`opp:${id}`);
+    clearSalesApiCache('opps:');
     await request(`/api/v1/sales/opportunities/${id}/lost`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
@@ -442,10 +497,17 @@ export const salesApi = {
     if (params?.sales_account_id) qs.set('sales_account_id', String(params.sales_account_id));
     if (params?.options) qs.set('options', 'true');
     if (params?.limit) qs.set('limit', String(params.limit));
+
+    const cacheKey = `contacts:${qs.toString()}`;
+    const cached = getCached<ApiContact[]>(cacheKey);
+    if (cached) return cached;
+
     const res = await request<{ contacts: ApiContact[] }>(
       `/api/v1/sales/contacts?${qs.toString()}`
     );
-    return res.contacts ?? [];
+    const data = res.contacts ?? [];
+    setCache(cacheKey, data);
+    return data;
   },
 
   async createContact(payload: {
@@ -459,6 +521,7 @@ export const salesApi = {
     job_title?: string;
     decision_role?: string;
   }): Promise<ApiContact> {
+    clearSalesApiCache('contacts:');
     const res = await request<{ contact: ApiContact }>('/api/v1/sales/contacts', {
       method: 'POST',
       body: JSON.stringify({ contact: payload }),
