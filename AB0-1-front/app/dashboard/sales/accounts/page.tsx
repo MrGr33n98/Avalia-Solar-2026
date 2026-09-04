@@ -1,5 +1,5 @@
-import AccountList from '@/components/sales/AccountList';
+import CompaniesPage from '@/components/sales/companies/CompaniesPage';
 
 export default function SalesAccountsPage() {
-  return <AccountList />;
+  return <CompaniesPage />;
 }
