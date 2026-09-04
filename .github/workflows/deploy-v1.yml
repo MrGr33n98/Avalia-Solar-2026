@@ -124,6 +124,9 @@ jobs:
             NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || '' }}
             NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY || 'phc_oo5u9eWrjVdqdLRg1UbuiHnh5AZCp8SUxdgi68fGARd' }}
             NEXT_PUBLIC_POSTHOG_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_HOST || 'https://f.avaliasolar.com.br' }}
+            NEXT_PUBLIC_PUBLIC_ORIGIN=${{ vars.NEXT_PUBLIC_PUBLIC_ORIGIN || 'https://www.avaliasolar.com.br' }}
+            NEXT_PUBLIC_APP_ORIGIN=${{ vars.NEXT_PUBLIC_APP_ORIGIN || 'https://app.avaliasolar.com.br' }}
+            NEXT_PUBLIC_CRM_ORIGIN=${{ vars.NEXT_PUBLIC_CRM_ORIGIN || 'https://crm.avaliasolar.com.br' }}
             SENTRY_ORG=${{ vars.SENTRY_ORG || '' }}
             SENTRY_PROJECT=${{ vars.SENTRY_PROJECT || '' }}
             NEXT_PUBLIC_ENABLE_PREMIUM_PROFILE=true
@@ -286,11 +289,15 @@ jobs:
               echo "?? /etc/nginx/conf.d nao encontrado neste host; pulando ajuste automatico de upload."
             fi
 
-            echo "?? Implantando vhosts no Nginx (app e npm)..."
+            echo "?? Implantando vhosts no Nginx (app, crm, npm)..."
             
-            # Subdominio APP -> Rails (3001)
+            # Subdominio APP -> Next.js (3000)
             APP_VHOST_SRC="${DEPLOY_DIR}/infra/nginx/app.avaliasolar.com.br.conf"
             APP_VHOST_DST="/etc/nginx/conf.d/app.avaliasolar.com.br.conf"
+
+            # Subdominio CRM -> Next.js (3000)
+            CRM_VHOST_SRC="${DEPLOY_DIR}/infra/nginx/crm.avaliasolar.com.br.conf"
+            CRM_VHOST_DST="/etc/nginx/conf.d/crm.avaliasolar.com.br.conf"
 
             # Subdominio NPM -> NPM Admin UI (81)
             NPM_VHOST_SRC="${DEPLOY_DIR}/infra/nginx/npm.avaliasolar.com.br.conf"
@@ -317,7 +324,14 @@ jobs:
                 fi
 
                 if [ "$EXISTING_LINES" -gt 30 ]; then
-                  echo "?? Vhost $DESC ja possui SSL. Pulando."
+                  echo "?? Vhost $DESC ja possui SSL. Garantindo upstream correto..."
+                  if [ "$DESC" = "app" ] || [ "$DESC" = "crm" ]; then
+                    if command -v sudo >/dev/null 2>&1; then
+                      sudo sed -i 's|proxy_pass http://127.0.0.1:3001;|proxy_pass http://127.0.0.1:3000;|g' "$DST" || true
+                    else
+                      sed -i 's|proxy_pass http://127.0.0.1:3001;|proxy_pass http://127.0.0.1:3000;|g' "$DST" || true
+                    fi
+                  fi
                 else
                   if command -v sudo >/dev/null 2>&1; then
                     sudo cp "$SRC" "$DST" || true
@@ -333,6 +347,7 @@ jobs:
             }
 
             deploy_vhost "$APP_VHOST_SRC" "$APP_VHOST_DST" "app"
+            deploy_vhost "$CRM_VHOST_SRC" "$CRM_VHOST_DST" "crm"
             deploy_vhost "$NPM_VHOST_SRC" "$NPM_VHOST_DST" "npm"
 
             # Reload Nginx se houver arquivos novos

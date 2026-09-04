@@ -751,10 +751,9 @@ Rails.application.routes.draw do
   get 'waiting_approval', to: 'dashboard/access#waiting_approval', as: :waiting_approval
 
   # ============================================================
-  # app.avaliasolar.com.br — Ecossistema B2B Solar
-  # Mesmo banco, namespace separado, layout próprio Hotwire
+  # legacy-app.avaliasolar.com.br — Legado Hotwire B2B (Next.js é o dono exclusivo de app.avaliasolar.com.br)
   # ============================================================
-  constraints subdomain: 'app' do
+  constraints subdomain: 'legacy-app' do
     scope module: :app, as: :app do
 
       # Landing pública — Expo de parceiros (tipo OpenSolar Expo)

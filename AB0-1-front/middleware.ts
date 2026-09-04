@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveSurfaceFromHost } from '@/lib/host-context';
+import { SURFACE_ORIGINS } from '@/lib/routing/surface-origins';
 import {
   HOME_HERO_EXPERIMENT_COOKIE,
   HOME_HERO_EXPERIMENT_TTL_DAYS,
@@ -167,12 +168,37 @@ export async function middleware(request: NextRequest) {
   // Resolve Product Surface (CRM vs Company App vs Public Platform)
   const host = request.headers.get('host') || '';
   const surface = resolveSurfaceFromHost(host);
+  const search = request.nextUrl.search;
 
-  // 1. CRM Surface Routing (crm.avaliasolar.com.br)
+  // CANONICAL SURFACE HOST FIREWALL (308 Permanent Redirects for misrouted paths)
+  if (surface === 'public') {
+    // 1a. Sales CRM paths on www -> redirect to crm.avaliasolar.com.br
+    if (pathname.startsWith('/dashboard/sales')) {
+      const canonicalTarget = `${SURFACE_ORIGINS.crm}${pathname}${search}`;
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(canonicalTarget, 308))
+      );
+    }
+
+    // 1b. Company Portal paths on www -> redirect to app.avaliasolar.com.br
+    if (
+      pathname === '/dashboard' ||
+      pathname.startsWith('/dashboard/') ||
+      pathname.startsWith('/company-dashboard') ||
+      pathname === '/select-company'
+    ) {
+      const canonicalTarget = `${SURFACE_ORIGINS.company}${pathname}${search}`;
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(canonicalTarget, 308))
+      );
+    }
+  }
+
+  // 2. CRM Surface Routing (crm.avaliasolar.com.br)
   if (surface === 'crm') {
     if (!token && (pathname === '/' || pathname.startsWith('/dashboard'))) {
       const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('redirect', pathname + search);
       return maybeAttachHomeHeroExperimentCookie(
         applyNoStoreHeaders(NextResponse.redirect(loginUrl))
       );
@@ -210,24 +236,25 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Company Application Surface Routing (app.avaliasolar.com.br)
+  // 3. Company Application Surface Routing (app.avaliasolar.com.br)
   if (surface === 'company_app') {
+    // 3a. CRM routes hit on app -> redirect 308 to crm
+    if (pathname.startsWith('/dashboard/sales')) {
+      const canonicalTarget = `${SURFACE_ORIGINS.crm}${pathname}${search}`;
+      return maybeAttachHomeHeroExperimentCookie(
+        applyNoStoreHeaders(NextResponse.redirect(canonicalTarget, 308))
+      );
+    }
+
     if (!token && (pathname === '/' || pathname.startsWith('/dashboard'))) {
       const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('redirect', pathname + search);
       return maybeAttachHomeHeroExperimentCookie(
         applyNoStoreHeaders(NextResponse.redirect(loginUrl))
       );
     }
 
     if (pathname === '/') {
-      return maybeAttachHomeHeroExperimentCookie(
-        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard', request.url)))
-      );
-    }
-
-    // Company App must NEVER redirect to CRM /dashboard/sales
-    if (pathname.startsWith('/dashboard/sales')) {
       return maybeAttachHomeHeroExperimentCookie(
         applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard', request.url)))
       );

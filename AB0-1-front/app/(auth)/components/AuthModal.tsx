@@ -12,15 +12,30 @@ import LoginTab from './LoginTab';
 import RegisterCompanyTab from './RegisterCompanyTab';
 import RegisterUserTab from './RegisterUserTab';
 
+import { resolveSurfaceFromHost, getSurfaceInfo } from '@/lib/host-context';
+
 interface AuthModalProps {
   initialTab: 'login' | 'register';
 }
 
 export default function AuthModal({ initialTab }: AuthModalProps) {
   const router = useRouter();
+  const [surfaceInfo, setSurfaceInfo] = useState(() =>
+    getSurfaceInfo(resolveSurfaceFromHost(typeof window !== 'undefined' ? window.location.host : ''))
+  );
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(initialTab);
   const [registerType, setRegisterType] = useState<'user' | 'company'>('user');
   const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const info = getSurfaceInfo(resolveSurfaceFromHost(window.location.host));
+      setSurfaceInfo(info);
+      if (info.isCrm) {
+        setActiveTab('login');
+      }
+    }
+  }, []);
 
   const handleClose = useCallback(() => {
     setIsVisible(false);
@@ -45,6 +60,7 @@ export default function AuthModal({ initialTab }: AuthModalProps) {
   }, [handleClose]);
 
   const handleTabChange = (value: string) => {
+    if (surfaceInfo.isCrm) return;
     const newTab = value as 'login' | 'register';
     setActiveTab(newTab);
     // Update URL without full reload
@@ -99,22 +115,24 @@ export default function AuthModal({ initialTab }: AuthModalProps) {
                 onValueChange={handleTabChange}
                 className="flex flex-col h-full"
               >
-                <div className="px-5 pb-2 pt-5 sm:px-10 md:px-12 md:pt-11">
-                  <TabsList className="mx-auto grid h-12 w-full max-w-[430px] grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-0 shadow-none">
-                    <TabsTrigger
-                      value="login"
-                      className="h-full rounded-md border-b-2 border-transparent text-sm font-semibold text-slate-600 shadow-none data-[state=active]:border-blue-600 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                    >
-                      Entrar
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="register"
-                      className="h-full rounded-md border-b-2 border-transparent text-sm font-semibold text-slate-600 shadow-none data-[state=active]:border-blue-600 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
-                    >
-                      Criar conta
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
+                {!surfaceInfo.isCrm && (
+                  <div className="px-5 pb-2 pt-5 sm:px-10 md:px-12 md:pt-11">
+                    <TabsList className="mx-auto grid h-12 w-full max-w-[430px] grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-0 shadow-none">
+                      <TabsTrigger
+                        value="login"
+                        className="h-full rounded-md border-b-2 border-transparent text-sm font-semibold text-slate-600 shadow-none data-[state=active]:border-blue-600 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
+                      >
+                        Entrar
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="register"
+                        className="h-full rounded-md border-b-2 border-transparent text-sm font-semibold text-slate-600 shadow-none data-[state=active]:border-blue-600 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
+                      >
+                        Criar conta
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+                )}
 
                 <div className="flex-1 overflow-hidden relative">
                   <TabsContent value="login" className="h-full m-0 data-[state=inactive]:hidden">

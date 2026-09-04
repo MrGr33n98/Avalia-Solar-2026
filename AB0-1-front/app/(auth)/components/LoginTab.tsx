@@ -78,7 +78,11 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
     try {
       const authenticatedUser = await login(email, password);
       const destination = await getPostLoginDestination(authenticatedUser, safeReturnTo, surfaceInfo.surface);
-      router.push(destination);
+      if (typeof window !== 'undefined' && new URL(destination, window.location.href).origin !== window.location.origin) {
+        window.location.assign(destination);
+      } else {
+        router.push(destination);
+      }
     } catch (error: unknown) {
       const err = error as LoginError;
       const code = err.context?.details?.code || err.status || 'UNKNOWN';
@@ -135,22 +139,30 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
             {surfaceInfo.displayName}
           </span>
           <h2 className="text-2xl font-bold tracking-tight text-slate-950">{surfaceInfo.loginTitle}</h2>
-          <p className="mt-1 text-sm text-slate-600">Use seu e-mail ou uma conta social.</p>
+          <p className="mt-1 text-sm text-slate-600">
+            {surfaceInfo.isCrm
+              ? 'Acesso exclusivo à equipe e consultores Avalia Solar.'
+              : 'Use seu e-mail ou uma conta social.'}
+          </p>
         </div>
-        <div className="mb-6 space-y-2.5">
-          <Button variant="outline" className="h-11 w-full justify-center gap-3 rounded-md border-slate-200 font-medium text-slate-950 shadow-none hover:bg-slate-50" onClick={async () => { setError(null); try { await signInWithGoogle(); } catch { setError("Falha ao iniciar login com Google."); } }} type="button">
-            <span aria-hidden="true" className="text-base font-bold text-blue-600">G</span>
-            Continuar com Google
-          </Button>
-        </div>
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-200" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-slate-500">ou</span>
-          </div>
-        </div>
+        {!surfaceInfo.isCrm && (
+          <>
+            <div className="mb-6 space-y-2.5">
+              <Button variant="outline" className="h-11 w-full justify-center gap-3 rounded-md border-slate-200 font-medium text-slate-950 shadow-none hover:bg-slate-50" onClick={async () => { setError(null); try { await signInWithGoogle(); } catch { setError("Falha ao iniciar login com Google."); } }} type="button">
+                <span aria-hidden="true" className="text-base font-bold text-blue-600">G</span>
+                Continuar com Google
+              </Button>
+            </div>
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-slate-500">ou</span>
+              </div>
+            </div>
+          </>
+        )}
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
@@ -242,16 +254,18 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
             )}
           </Button>
         </form>
-        <div className="mt-6 flex items-center justify-center gap-2 text-sm text-slate-500">
-          <span>Não tem uma conta?</span>
-          <button
-            type="button"
-            onClick={onCreateAccount}
-            className="font-semibold text-blue-600 hover:text-blue-700"
-          >
-            Criar conta
-          </button>
-        </div>
+        {!surfaceInfo.isCrm && (
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-slate-500">
+            <span>Não tem uma conta?</span>
+            <button
+              type="button"
+              onClick={onCreateAccount}
+              className="font-semibold text-blue-600 hover:text-blue-700"
+            >
+              Criar conta
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

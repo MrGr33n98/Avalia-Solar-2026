@@ -15,8 +15,12 @@ export function resolveSurfaceFromHost(hostHeader: string | null | undefined): P
 
   const cleanHost = hostHeader.split(':')[0].toLowerCase().trim();
 
-  // Explicit Surface Override via environment variable (useful in local dev/testing)
-  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SURFACE_OVERRIDE) {
+  // Explicit Surface Override via environment variable (useful ONLY in local dev/testing)
+  if (
+    typeof process !== 'undefined' &&
+    process.env.NODE_ENV !== 'production' &&
+    process.env.NEXT_PUBLIC_SURFACE_OVERRIDE
+  ) {
     const override = process.env.NEXT_PUBLIC_SURFACE_OVERRIDE as ProductSurface;
     if (['public', 'company_app', 'crm'].includes(override)) {
       return override;

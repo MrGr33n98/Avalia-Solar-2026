@@ -1,5 +1,6 @@
 import type { User } from '@/lib/api';
 import { ProductSurface } from '@/lib/host-context';
+import { buildCanonicalUrl } from '@/lib/routing/surface-origins';
 
 const AUTH_PATHS = [
   '/login',
@@ -11,10 +12,10 @@ const AUTH_PATHS = [
 ];
 
 export function isSafeReturnTo(returnTo: string | null | undefined): returnTo is string {
-  if (!returnTo || !returnTo.startsWith('/') || returnTo.startsWith('//')) return false;
+  if (!returnTo || typeof returnTo !== 'string') return false;
+  if (!returnTo.startsWith('/') || returnTo.startsWith('//')) return false;
   try {
     const parsed = new URL(returnTo, 'https://www.avaliasolar.com.br');
-    if (parsed.origin !== 'https://www.avaliasolar.com.br') return false;
     return !AUTH_PATHS.some(
       (path) => parsed.pathname === path || parsed.pathname.startsWith(`${path}/`)
     );
@@ -100,42 +101,60 @@ export function resolvePostAuthDestination({
   creatorEnabled?: boolean;
   creatorSlug?: string | null;
 }): string {
-  // 1. Respeitar returnTo se for seguro e compatível com a role
+  // 1. Respeitar returnTo se for seguro e compatível com a role, mapeando para o domínio da superfície correta
   if (
     isSafeReturnTo(returnTo) &&
     isReturnToCompatibleWithRole(returnTo, user, activeMembershipsCount)
   ) {
-    return returnTo;
+    const pathname = new URL(returnTo, 'https://www.avaliasolar.com.br').pathname;
+    const search = new URL(returnTo, 'https://www.avaliasolar.com.br').search;
+    if (pathname.startsWith('/dashboard/sales')) {
+      return buildCanonicalUrl('crm', pathname + search);
+    }
+    if (
+      pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/company-dashboard') ||
+      pathname === '/select-company'
+    ) {
+      return buildCanonicalUrl('company_app', pathname + search);
+    }
+    return buildCanonicalUrl('public', pathname + search);
   }
 
-  // 2. Destino específico por Superfície (CRM vs Company App vs Public)
+  // 2. Destino específico por Superfície ativa (quando na superfície CRM ou Company App)
   if (surface === 'crm') {
     if (hasCrmWorkspaceAccess(user)) {
-      return '/dashboard/sales/leads';
+      return buildCanonicalUrl('crm', '/dashboard/sales/leads');
     }
-    return '/forbidden';
+    return buildCanonicalUrl('crm', '/forbidden');
   }
 
   if (surface === 'company_app') {
     if (hasCompanyWorkspaceAccess({ user, activeMembershipsCount })) {
-      return activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company';
+      return buildCanonicalUrl(
+        'company_app',
+        activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company'
+      );
     }
-    return '/select-company';
+    return buildCanonicalUrl('company_app', '/select-company');
   }
 
-  // 3. Destino padrão na Superfície Pública
+  // 3. Destino padrão quando autenticado a partir da Superfície Pública (www)
   if (hasCrmWorkspaceAccess(user)) {
-    return '/dashboard/sales/leads';
+    return buildCanonicalUrl('crm', '/dashboard/sales/leads');
   }
 
   if (hasCompanyWorkspaceAccess({ user, activeMembershipsCount })) {
-    return activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company';
+    return buildCanonicalUrl(
+      'company_app',
+      activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company'
+    );
   }
 
   if (user.role === 'review') {
-    if (creatorEnabled && creatorSlug) return '/feed';
-    return '/review-dashboard';
+    if (creatorEnabled && creatorSlug) return buildCanonicalUrl('public', '/feed');
+    return buildCanonicalUrl('public', '/review-dashboard');
   }
 
-  return '/';
+  return buildCanonicalUrl('public', '/');
 }
