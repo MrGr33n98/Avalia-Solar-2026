@@ -90,6 +90,8 @@ export interface ApiOpportunity {
   stage?: { id: number; key: string; name: string } | null;
   contact_name?: string | null;
   owner_id?: number | null;
+  source?: string | null;
+  stage_entered_at?: string | null;
   next_activity_at?: string | null;
   expected_close_date?: string | null;
   priority?: string | null;

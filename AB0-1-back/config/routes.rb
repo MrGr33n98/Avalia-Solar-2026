@@ -93,7 +93,10 @@ Rails.application.routes.draw do
         resources :email_suppressions, only: %i[index create destroy], controller: 'sales/email_suppressions'
         resources :email_signatures, only: %i[index create update destroy], controller: 'sales/email_signatures'
         post 'email_events/provider', to: 'sales/email_events#create'
-        resources :pipelines, only: %i[index show], controller: 'sales/pipelines'
+        resources :pipelines, only: %i[index show], controller: 'sales/pipelines' do
+          get :board, to: 'sales/pipelines/boards#show', on: :member
+        end
+        get 'pipelines/board', to: 'sales/pipelines/boards#show'
         resources :accounts, only: %i[index create show update], controller: 'sales/accounts' do
           collection do
             post :export

@@ -57,6 +57,7 @@ import { CRMFormField, CRMFormRow } from '@/components/sales/ui/CRMForm';
 import CreateOpportunityDialog from '@/components/sales/opportunities/CreateOpportunityDialog';
 import LeadFilterDrawer, { LeadFilters } from '@/components/sales/filters/LeadFilterDrawer';
 import SavedViewMenu from '@/components/sales/filters/SavedViewMenu';
+import { PipelineBoard } from '@/components/sales/pipeline/PipelineBoard';
 import { salesApi, SalesApiError } from '@/lib/api/sales/client';
 import { ApiAccount, ApiContact, ApiOpportunity, ApiStage } from '@/lib/api/sales/types';
 
@@ -697,68 +698,27 @@ export default function SalesCommandCenter({
           </div>
         )}
 
-        {/* KANBAN BOARD */}
+        {/* KANBAN BOARD (DECOUPLED PIPELINE BOARD V4) */}
         {fetchState === 'success' && view === 'kanban' && (
-          <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-color:#94a3b8_transparent] [scrollbar-width:thin]">
-            <section data-testid="sales-pipeline-board" className="flex w-max min-w-full gap-3 pb-1 pt-1 select-none sm:gap-4">
-            {stages.map((stage) => {
-              const list = (dealData[stage.key] || []).filter(visible);
-              const stageTotalCents = list.reduce((sum, d) => sum + d.rawCents, 0);
-              const isOver = dragOverStage === stage.key;
-
-              return (
-                <div
-                  data-testid={`stage-column-${stage.key}`}
-                  key={stage.key}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragOverStage(stage.key);
-                  }}
-                  onDragLeave={() => setDragOverStage(null)}
-                  onDrop={() => handleDrop(stage.key)}
-                  className={`flex w-[clamp(18rem,82vw,20rem)] max-w-[calc(100vw-2rem)] flex-shrink-0 snap-start flex-col rounded-xl border transition-all ${
-                    isOver
-                      ? 'border-blue-700 bg-blue-50/50 shadow-md ring-2 ring-blue-700/20'
-                      : 'border-slate-200 bg-slate-100/70'
-                  }`}
-                >
-                  {/* Stage Header */}
-                  <div className="flex items-center justify-between border-b border-slate-200 bg-white p-3 rounded-t-xl">
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-block rounded-md border px-2 py-0.5 text-xs font-bold ${stage.bg} ${stage.color}`}>
-                        {stage.label}
-                      </span>
-                      <span className="text-xs font-bold text-slate-500">({list.length})</span>
-                    </div>
-                    <span className="text-xs font-bold text-slate-700">
-                      R$ {(stageTotalCents / 100).toLocaleString('pt-BR')}
-                    </span>
-                  </div>
-
-                  {/* Deals Container */}
-                  <div className="flex flex-1 flex-col gap-3 p-3 min-h-[420px]">
-                    {list.length === 0 ? (
-                      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 p-4 text-center">
-                        <p className="text-xs text-slate-400 font-medium">Arraste oportunidades aqui</p>
-                      </div>
-                    ) : (
-                      list.map((deal) => (
-                        <DealCard
-                          key={deal.id}
-                          deal={deal}
-                          onOpen={() => setSelectedDeal(deal)}
-                          onDragStart={(e) => handleDragStart(deal, stage.key)}
-                          selected={selectedIds.includes(deal.id)}
-                          onToggleSelect={() => toggleSelected(deal.id)}
-                        />
-                      ))
-                    )}
-                  </div>
-                </div>
-              );
+          <PipelineBoard
+            search={search}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelected}
+            onOpenDetails={(card) => setSelectedDeal({
+              id: card.id,
+              stageKey: card.stage?.key || 'prospect',
+              company: card.account?.name || card.name,
+              plan: card.name,
+              value: card.value_cents ? `R$ ${(card.value_cents / 100).toLocaleString('pt-BR')}` : 'R$ 0',
+              rawCents: card.value_cents || 0,
+              probability: card.probability,
+              contact: card.primary_contact?.name || '',
+              next: card.next_action?.title || null,
+              score: card.qualification?.score || null,
+              accountId: card.account?.id,
+              contactId: card.primary_contact?.id,
             })}
-            </section>
-          </div>
+          />
         )}
 
         <LeadFilterDrawer
