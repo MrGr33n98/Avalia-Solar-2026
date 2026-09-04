@@ -310,6 +310,17 @@ export const salesApi = {
     });
   },
 
+  async updateOpportunity(id: number, payload: Record<string, any>): Promise<ApiOpportunity> {
+    const res = await request<{ opportunity: ApiOpportunity }>(
+      `/api/v1/sales/opportunities/${id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ opportunity: payload }),
+      }
+    );
+    return res.opportunity;
+  },
+
   async updateOpportunityStage(id: number, stageKey: string): Promise<ApiOpportunity> {
     const res = await request<{ opportunity: ApiOpportunity }>(
       `/api/v1/sales/opportunities/${id}`,

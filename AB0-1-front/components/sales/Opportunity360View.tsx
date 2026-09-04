@@ -40,7 +40,6 @@ import CreateActivityModal from '@/components/sales/create/CreateActivityModal';
 import CreateQuoteModal from '@/components/sales/create/CreateQuoteModal';
 import CreateTaskModal from '@/components/sales/create/CreateTaskModal';
 import SendEmailModal from '@/components/sales/create/SendEmailModal';
-import CallLoggerModal from '@/components/sales/CallLoggerModal';
 import { salesApi } from '@/lib/api/sales/client';
 
 interface Opportunity360ViewProps {
@@ -747,7 +746,7 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
       </Dialog>
 
       {/* QUICK ACTION MODALS */}
-      <CallLoggerModal
+      <CreateActivityModal
         open={activeModal === 'call'}
         onClose={() => setActiveModal(null)}
         opportunityId={opp?.id}
