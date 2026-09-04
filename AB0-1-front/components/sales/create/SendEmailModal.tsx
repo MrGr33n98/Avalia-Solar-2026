@@ -123,11 +123,24 @@ export default function SendEmailModal({
   const [sendMenuOpen, setSendMenuOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
 
+  const [isEditingTo, setIsEditingTo] = useState<boolean>(
+    !contactEmail || contactEmail === 'sem-email@exemplo.com' || !contactEmail.includes('@')
+  );
+
   useEffect(() => {
-    if (contactEmail) setToEmail(contactEmail);
-    if (contactName) setRecipientName(contactName);
-    if (companyName) setRelatedLead(companyName);
-  }, [contactEmail, contactName, companyName]);
+    if (open) {
+      const isValid = contactEmail && contactEmail !== 'sem-email@exemplo.com' && contactEmail.includes('@');
+      if (isValid) {
+        setToEmail(contactEmail);
+        setIsEditingTo(false);
+      } else {
+        setToEmail('');
+        setIsEditingTo(true);
+      }
+      if (contactName && contactName !== 'Contato') setRecipientName(contactName);
+      if (companyName) setRelatedLead(companyName);
+    }
+  }, [contactEmail, contactName, companyName, open]);
 
   const filteredTemplates = DEFAULT_TEMPLATES.filter(
     (t) =>
@@ -171,8 +184,18 @@ export default function SendEmailModal({
   };
 
   const handleSendEmail = async (mode: 'now' | 'task' | 'schedule' = 'now') => {
-    if (!toEmail.trim() || !subject.trim() || !body.trim()) {
-      return setError('Preencha os campos obrigatórios: Destinatário, Assunto e Mensagem.');
+    const trimmedTo = toEmail.trim();
+    if (!trimmedTo || trimmedTo === 'sem-email@exemplo.com' || !trimmedTo.includes('@')) {
+      setIsEditingTo(true);
+      return setError('Informe um e-mail de destinatário válido (ex: cliente@empresa.com.br).');
+    }
+
+    if (!subject.trim()) {
+      return setError('Informe o assunto do e-mail comercial.');
+    }
+
+    if (!body.trim()) {
+      return setError('Escreva a mensagem do e-mail.');
     }
 
     setLoading(true);
@@ -338,22 +361,52 @@ export default function SendEmailModal({
             </div>
 
             {/* TO ROW */}
-            <div className="flex items-center text-xs pb-1 border-b border-slate-100 justify-between">
-              <div className="flex items-center flex-1 gap-2">
-                <span className="w-20 text-slate-400 font-medium">To</span>
-                <div className="flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-800 px-2.5 py-0.5 rounded-md text-[11px] font-semibold">
-                  <span>
-                    {recipientName} &lt;{toEmail || 'sem-email@exemplo.com'}&gt;
-                  </span>
-                  <button type="button" onClick={() => setToEmail('')} className="text-slate-400 hover:text-slate-700 ml-1">
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
+            <div className="flex items-center text-xs pb-1 border-b border-slate-100 justify-between gap-2">
+              <div className="flex items-center flex-1 gap-2 min-w-0">
+                <span className="w-20 text-slate-400 font-medium shrink-0">To</span>
+                {!isEditingTo && toEmail && toEmail !== 'sem-email@exemplo.com' ? (
+                  <div
+                    onClick={() => setIsEditingTo(true)}
+                    className="flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-800 px-2.5 py-0.5 rounded-md text-[11px] font-semibold truncate cursor-pointer hover:bg-slate-200/60"
+                  >
+                    <span className="truncate">
+                      {recipientName ? `${recipientName} ` : ''}&lt;{toEmail}&gt;
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setToEmail('');
+                        setRecipientName('');
+                        setIsEditingTo(true);
+                      }}
+                      className="text-slate-400 hover:text-slate-700 ml-1 shrink-0 p-0.5 rounded hover:bg-slate-200"
+                      title="Remover destinatário"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <Input
+                    type="email"
+                    placeholder="Digite o e-mail do destinatário (ex: cliente@empresa.com)..."
+                    value={toEmail}
+                    onChange={(e) => setToEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && toEmail.trim()) {
+                        e.preventDefault();
+                        setIsEditingTo(false);
+                      }
+                    }}
+                    autoFocus
+                    className="h-7 text-xs border-slate-200 focus:border-sky-500 font-medium text-slate-900 flex-1"
+                  />
+                )}
               </div>
               <button
                 type="button"
                 onClick={() => setShowCc(!showCc)}
-                className="text-sky-600 font-bold hover:underline text-[11px]"
+                className="text-sky-600 font-bold hover:underline text-[11px] shrink-0"
               >
                 Cc
               </button>
