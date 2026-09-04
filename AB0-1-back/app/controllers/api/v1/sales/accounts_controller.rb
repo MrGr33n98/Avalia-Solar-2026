@@ -81,47 +81,7 @@ module Api
 
         def timeline
           account = scoped_accounts.find(params[:id])
-          events = []
-
-          account.activities.order(occurred_at: :desc).each do |act|
-            events << {
-              id: "act-#{act.id}",
-              type: act.activity_type == 'call' ? 'call' : 'activity',
-              title: act.activity_type == 'call' ? 'Chamada Registrada' : 'Atividade Comercial',
-              description: act.description || act.body,
-              occurred_at: act.occurred_at || act.created_at
-            }
-          end
-
-          account.tasks.each do |t|
-            events << {
-              id: "task-#{t.id}",
-              type: 'task',
-              title: "Tarefa: #{t.title}",
-              description: "Status: #{t.status}",
-              occurred_at: t.created_at
-            }
-          end
-
-          account.opportunities.each do |o|
-            events << {
-              id: "opp-#{o.id}",
-              type: 'stage_changed',
-              title: "Oportunidade #{o.name}",
-              description: "Estágio: #{o.stage&.name || 'Prospect'}",
-              occurred_at: o.created_at
-            }
-          end
-
-          events << {
-            id: "acc-created-#{account.id}",
-            type: 'website',
-            title: 'Empresa Cadastrada no CRM',
-            description: "Empresa #{account.name} registrada.",
-            occurred_at: account.created_at
-          }
-
-          events.sort_by! { |e| e[:occurred_at] || Time.current }.reverse!
+          events = ::Sales::TimelineBuilder.for_account(account)
           render json: { timeline: events }
         end
 
@@ -168,7 +128,7 @@ module Api
             people_count: account.contacts.size,
             open_opportunities_count: open_opps.size,
             open_pipeline_value_cents: open_opps.sum(&:value_cents),
-            last_activity_at: account.updated_at
+            last_activity_at: account.last_contact_at
           }
         end
 

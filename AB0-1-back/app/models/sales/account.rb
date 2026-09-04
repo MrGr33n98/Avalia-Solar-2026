@@ -17,5 +17,9 @@ module Sales
     has_many :employed_contacts, through: :contact_employments, source: :contact
 
     validates :name, presence: true
+
+    def last_contact_at
+      activities.maximum(:occurred_at) || activities.maximum(:created_at) || created_at
+    end
   end
 end

@@ -6,11 +6,7 @@
 
 class Rack::Attack
   ### Configuração de Cache ###
-  # Migrado para Redis (Fase 1)
-  Rack::Attack.cache.store = ActiveSupport::Cache::RedisCacheStore.new(
-    url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/2'),
-    namespace: 'avaliasolar:rack_attack'
-  )
+  Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
   ### Throttle Configurations ###
 
@@ -188,7 +184,7 @@ class Rack::Attack
     # Não aplicar throttle em assets estáticos
     # Leituras públicas possuem cache/deduplicação e limites próprios; não
     # devem consumir a cota geral compartilhada por NAT/CDN.
-    next if req.path.start_with?('/assets', '/rails/active_storage')
+    next if req.path.start_with?('/assets', '/rails/active_storage', '/api/v1/sales/')
     next if req.get? && %r{\A/api/v1/(banners|auth/me)\z}.match?(req.path)
 
     req.ip
