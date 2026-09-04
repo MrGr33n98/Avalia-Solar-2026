@@ -18,8 +18,20 @@ module Sales
 
     validates :name, presence: true
 
+    after_commit :invalidate_account_cache
+
     def last_contact_at
       activities.maximum(:occurred_at) || activities.maximum(:created_at) || created_at
+    end
+
+    private
+
+    def invalidate_account_cache
+      tenant_key = company_id || owner_id
+      return unless tenant_key
+      Rails.cache.increment("crm:v2:tenant:#{tenant_key}:accounts_ver", 1, initial: 1)
+    rescue => e
+      Rails.logger.warn("[CacheInvalidation] #{e.message}")
     end
   end
 end

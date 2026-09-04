@@ -94,7 +94,18 @@ Rails.application.routes.draw do
         resources :email_signatures, only: %i[index create update destroy], controller: 'sales/email_signatures'
         post 'email_events/provider', to: 'sales/email_events#create'
         resources :pipelines, only: %i[index show], controller: 'sales/pipelines'
-        resources :accounts, only: %i[index create show update], controller: 'sales/accounts'
+        resources :accounts, only: %i[index create show update], controller: 'sales/accounts' do
+          collection do
+            post :export
+            get :export
+            post :bulk
+            get :filter_options
+            get :duplicates
+          end
+          member do
+            post :merge
+          end
+        end
         resources :contacts, only: %i[index show create update], controller: 'sales/contacts' do
           get :timeline, on: :member
           get :engagement, on: :member

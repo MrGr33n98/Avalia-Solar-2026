@@ -4,26 +4,76 @@ module Api
       class AccountsController < BaseController
         def index
           if params[:options].present? || params[:limit].present?
-            limit = [ (params[:limit] || 20).to_i, 50 ].min
+            limit = [(params[:limit] || 20).to_i, 50].min
             accounts = scoped_accounts.merge(::Sales::AccountOptionsQuery.call(query: params[:q], limit: limit))
             render json: { accounts: accounts.map { |a| { id: a.id, name: a.name, domain: a.domain } } }
             return
           end
 
-          scope = scoped_accounts.includes(:company, :owner, :contacts, :opportunities).order(created_at: :desc)
-          if params[:q].present?
-            q = "%#{params[:q].to_s.downcase}%"
-            scope = scope.where('LOWER(name) LIKE ? OR LOWER(domain) LIKE ?', q, q)
-          end
-          scope = scope.where(owner_id: params[:owner_id]) if params[:owner_id].present?
-          scope = scope.where(status: params[:status]) if params[:status].present?
-          scope = scope.where(segment: params[:segment]) if params[:segment].present?
+          tenant_key = current_user.company_id || current_user.id
+          version = Rails.cache.read("crm:v2:tenant:#{tenant_key}:accounts_ver") || 1
+          query_hash = Digest::SHA256.hexdigest(params.to_unsafe_h.except(:controller, :action).sort.to_s)
+          cache_key = "crm:v2:tenant:#{tenant_key}:accounts:v#{version}:#{query_hash}"
 
-          per_page = [[params.fetch(:per_page, 50).to_i, 1].max, 100].min
-          page = [params.fetch(:page, 1).to_i, 1].max
-          total = scope.unscope(:order).count
-          accounts = scope.offset((page - 1) * per_page).limit(per_page)
-          render json: { accounts: accounts.map { |account| serialize(account) }, meta: { page: page, per_page: per_page, total: total, total_pages: (total.to_f / per_page).ceil } }
+          response_data = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+            query_result = ::Sales::AccountsQuery.call(scoped_accounts, params)
+                                                 .paginate_result(page: params[:page], per_page: params[:per_page])
+
+            records = query_result[:records].includes(:company, :owner, :contacts, :opportunities, :tags)
+            serialized = serialize_batch(records)
+
+            {
+              accounts: serialized,
+              meta: query_result[:meta]
+            }
+          end
+
+          render json: response_data
+        end
+
+        def export
+          csv_data = ::Sales::AccountExportService.call(scoped_accounts, params)
+          filename = "companies_export_#{Time.current.strftime('%Y%m%d_%H%M%S')}.csv"
+          send_data csv_data, type: 'text/csv; charset=utf-8', filename: filename
+        end
+
+        def filter_options
+          options = ::Sales::AccountFilterOptionsQuery.call(scoped_accounts)
+          render json: { options: options }
+        end
+
+        def bulk
+          result = ::Sales::Accounts::BulkActionService.call(
+            tenant_scope: scoped_accounts,
+            account_ids: params[:account_ids] || params[:ids],
+            action_type: params[:action_type],
+            payload: params[:payload] || params,
+            current_user: current_user
+          )
+          render json: result
+        rescue ArgumentError => e
+          render json: { error: { message: e.message } }, status: :bad_request
+        rescue StandardError => e
+          render json: { error: { message: e.message } }, status: :unprocessable_entity
+        end
+
+        def duplicates
+          result = ::Sales::AccountDuplicateDetector.call(scoped_accounts)
+          render json: result
+        end
+
+        def merge
+          result = ::Sales::AccountMergeService.call(
+            tenant_scope: scoped_accounts,
+            master_account_id: params[:master_account_id],
+            duplicate_account_id: params[:duplicate_account_id],
+            current_user: current_user
+          )
+          render json: result
+        rescue ArgumentError => e
+          render json: { error: { message: e.message } }, status: :bad_request
+        rescue StandardError => e
+          render json: { error: { message: e.message } }, status: :unprocessable_entity
         end
 
         def create
@@ -41,16 +91,20 @@ module Api
               c_params = params[:primary_contact]
               first_name = c_params[:first_name].presence || c_params[:name] || 'Contato'
               last_name = c_params[:last_name]
-              contact_email = c_params[:email].presence || "#{account.name.parameterize}-#{SecureRandom.hex(3)}@contato.crm"
+              contact_email = c_params[:email].presence
 
               contact = if c_params[:id].present?
-                          account.contacts.find_by(id: c_params[:id]) || ::Sales::Contact.find_by(id: c_params[:id]) || account.contacts.build
-                        else
+                          account.contacts.find_by(id: c_params[:id]) || account.contacts.build
+                        elsif contact_email.present?
                           account.contacts.find_or_initialize_by(email: contact_email)
+                        else
+                          account.contacts.build
                         end
+
               contact.assign_attributes(
                 first_name: first_name,
                 last_name: last_name,
+                email: contact_email,
                 job_title: c_params[:job_title],
                 phone: c_params[:phone] || account.phone,
                 is_primary: true,
@@ -118,35 +172,51 @@ module Api
                                           :segment, :company_size, :source, :source_detail, :status)
         end
 
+        def serialize_batch(accounts)
+          account_ids = accounts.map(&:id)
+          return [] if account_ids.empty?
+
+          last_activity_times = ::Sales::Activity.where(sales_account_id: account_ids)
+                                                  .group(:sales_account_id)
+                                                  .maximum(:occurred_at)
+
+          accounts.map do |account|
+            contacts = account.contacts.to_a
+            primary = contacts.find(&:is_primary?) || contacts.first
+            open_opps = account.opportunities.to_a.reject { |o| %w[won lost].include?(o.status.to_s.downcase) }
+            last_activity = last_activity_times[account.id] || account.created_at
+
+            {
+              id: account.id,
+              name: account.name,
+              company_id: account.company_id,
+              owner_id: account.owner_id,
+              owner_name: account.owner&.name || 'Vendedor Interno',
+              status: account.status || 'prospect',
+              company_type: account.segment || account.company_size || 'Standard Account',
+              tags: account.tags.map { |tag| { id: tag.id, name: tag.name, color: tag.color } },
+              domain: account.domain,
+              city: account.city,
+              state: account.state,
+              phone: account.phone,
+              email: account.email,
+              primary_contact: primary ? {
+                id: primary.id,
+                first_name: primary.first_name,
+                last_name: primary.last_name,
+                email: primary.email,
+                job_title: primary.job_title
+              } : nil,
+              people_count: contacts.size,
+              open_opportunities_count: open_opps.size,
+              open_pipeline_value_cents: open_opps.sum(&:value_cents),
+              last_activity_at: last_activity
+            }
+          end
+        end
+
         def serialize(account)
-          primary = account.contacts.find_by(is_primary: true) || account.contacts.first
-          open_opps = account.opportunities.select { |o| o.status == 'open' }
-          {
-            id: account.id,
-            name: account.name,
-            company_id: account.company_id,
-            owner_id: account.owner_id,
-            owner_name: account.owner&.name || 'Vendedor Interno',
-            status: account.status || 'prospect',
-            company_type: account.segment || account.company_size || 'Standard Account',
-            tags: account.tags.map { |tag| { id: tag.id, name: tag.name, color: tag.color } },
-            domain: account.domain,
-            city: account.city,
-            state: account.state,
-            phone: account.phone,
-            email: account.email,
-            primary_contact: primary ? {
-              id: primary.id,
-              first_name: primary.first_name,
-              last_name: primary.last_name,
-              email: primary.email,
-              job_title: primary.job_title
-            } : nil,
-            people_count: account.contacts.size,
-            open_opportunities_count: open_opps.size,
-            open_pipeline_value_cents: open_opps.sum(&:value_cents),
-            last_activity_at: account.last_contact_at
-          }
+          serialize_batch([account]).first
         end
 
         def serialize_detailed(account)

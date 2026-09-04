@@ -33,6 +33,9 @@ interface CompaniesToolbarProps {
   onCreateCompany: () => void;
   onExportCsv: () => void;
   onManageDuplicates: () => void;
+  onOpenViewsSidebar: () => void;
+  onOpenAdvancedFilters: () => void;
+  activeFilterCount?: number;
 }
 
 export default function CompaniesToolbar({
@@ -47,6 +50,9 @@ export default function CompaniesToolbar({
   onCreateCompany,
   onExportCsv,
   onManageDuplicates,
+  onOpenViewsSidebar,
+  onOpenAdvancedFilters,
+  activeFilterCount = 0,
 }: CompaniesToolbarProps) {
   return (
     <div className="space-y-3">
@@ -64,6 +70,15 @@ export default function CompaniesToolbar({
 
         {/* Global Action Toolbar */}
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenViewsSidebar}
+            className="h-8 text-xs bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100 font-bold px-3 shadow-xs"
+          >
+            <Filter className="w-3.5 h-3.5 mr-1 text-amber-600" /> Visões Salvas
+          </Button>
+
           <Button
             onClick={onCreateCompany}
             size="sm"
@@ -95,6 +110,24 @@ export default function CompaniesToolbar({
       {/* Filter Bar (Chips & Search) */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenAdvancedFilters}
+            className={`h-7 text-xs font-semibold ${
+              activeFilterCount > 0
+                ? 'bg-amber-100 text-amber-900 border-amber-300'
+                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <Filter className="w-3 h-3 mr-1 text-amber-600" />
+            Filtros Avançados
+            {activeFilterCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 py-0.2 text-[10px] font-bold text-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
           {/* Owner Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -115,7 +148,7 @@ export default function CompaniesToolbar({
                 Todos os Responsáveis
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onOwnerSelect('me')} className="cursor-pointer font-bold text-blue-900">
-                Felipe (You)
+                Meu Usuário (Você)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -128,7 +161,7 @@ export default function CompaniesToolbar({
                 size="sm"
                 className={`h-7 text-xs ${selectedType ? 'bg-emerald-50 text-emerald-900 font-bold border border-emerald-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
-                <span>{selectedType ? `Type: ${selectedType}` : 'Company type'}</span>
+                <span>{selectedType ? `Tipo: ${selectedType}` : 'Tipo de Empresa'}</span>
                 <ChevronDown className="w-3 h-3 ml-1 text-slate-400" />
               </Button>
             </DropdownMenuTrigger>
@@ -138,7 +171,7 @@ export default function CompaniesToolbar({
               <DropdownMenuItem onClick={() => onTypeSelect(null)} className="cursor-pointer">
                 Todos os Tipos
               </DropdownMenuItem>
-              {['Prospect', 'Customer', 'Installer', 'Manufacturer', 'Partner'].map((type) => (
+              {['Integrador / Instalador', 'Distribuidor', 'Fabricante', 'Cliente', 'Prospect'].map((type) => (
                 <DropdownMenuItem key={type} onClick={() => onTypeSelect(type)} className="cursor-pointer">
                   {type}
                 </DropdownMenuItem>

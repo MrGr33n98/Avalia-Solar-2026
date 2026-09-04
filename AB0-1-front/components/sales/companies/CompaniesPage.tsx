@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateCompanyModal from '@/components/sales/create/CreateCompanyModal';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,9 @@ import CompaniesColumnsDialog, { CompanyColumnConfig } from './CompaniesColumnsD
 import CompaniesDuplicateManager from './CompaniesDuplicateManager';
 import CompaniesTable, { CompanyListItem } from './CompaniesTable';
 import CompaniesToolbar from './CompaniesToolbar';
+import CRMAdvancedFilterPanel, { CRMFilterState, INITIAL_FILTER_STATE } from '@/components/sales/filters/CRMAdvancedFilterPanel';
+import CRMEntityViewsSidebar from '@/components/sales/views/CRMEntityViewsSidebar';
+import CRMBulkActionBar from '@/components/sales/bulk/CRMBulkActionBar';
 
 export default function CompaniesPage() {
   const [accounts, setAccounts] = useState<CompanyListItem[]>([]);
@@ -17,12 +21,16 @@ export default function CompaniesPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isColumnsDialogOpen, setIsColumnsDialogOpen] = useState(false);
   const [isDuplicateManagerOpen, setIsDuplicateManagerOpen] = useState(false);
   const [isCreateCompanyModalOpen, setIsCreateCompanyModalOpen] = useState(false);
+  const [isViewsSidebarOpen, setIsViewsSidebarOpen] = useState(false);
+  const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<CRMFilterState>(INITIAL_FILTER_STATE);
 
   const [columns, setColumns] = useState<CompanyColumnConfig>(() => {
     const defaults: CompanyColumnConfig = {
@@ -49,6 +57,8 @@ export default function CompaniesPage() {
     window.localStorage.setItem('crm:accounts:columns', JSON.stringify(columns));
   }, [columns]);
 
+  const { user } = useAuth();
+
   const fetchAccounts = useCallback(() => {
     if (typeof window !== 'undefined' && !navigator.onLine) {
       setLoading(false);
@@ -61,8 +71,26 @@ export default function CompaniesPage() {
     setError(null);
     const params = new URLSearchParams();
     if (query) params.set('q', query);
-    if (selectedOwnerId === 'me') params.set('owner_id', '1');
+    if (selectedOwnerId === 'me' && user?.id) {
+      params.set('owner_id', String(user.id));
+    } else if (selectedOwnerId && selectedOwnerId !== 'me') {
+      params.set('owner_id', selectedOwnerId);
+    }
     if (selectedType) params.set('segment', selectedType);
+
+    // Advanced Filter parameters
+    if (advancedFilters.segment) params.set('segment', advancedFilters.segment);
+    if (advancedFilters.state) params.set('state', advancedFilters.state);
+    if (advancedFilters.city) params.set('city', advancedFilters.city);
+    if (advancedFilters.status) params.set('status', advancedFilters.status);
+    if (advancedFilters.owner_id === 'me' && user?.id) {
+      params.set('owner_id', String(user.id));
+    } else if (advancedFilters.owner_id && advancedFilters.owner_id !== 'me') {
+      params.set('owner_id', advancedFilters.owner_id);
+    }
+    if (advancedFilters.has_email) params.set('has_email', 'true');
+    if (advancedFilters.has_phone) params.set('has_phone', 'true');
+
     params.set('page', String(page));
     params.set('per_page', '50');
 
@@ -80,6 +108,7 @@ export default function CompaniesPage() {
       .then((data) => {
         setAccounts(data.accounts ?? []);
         setTotalPages(data.meta?.total_pages ?? 1);
+        setTotalCount(data.meta?.total ?? 0);
       })
       .catch((err) => {
         if (err.name === 'AbortError') return;
@@ -92,7 +121,7 @@ export default function CompaniesPage() {
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [query, selectedOwnerId, selectedType, page]);
+  }, [query, selectedOwnerId, selectedType, advancedFilters, page, user?.id]);
 
   useEffect(() => {
     const cleanup = fetchAccounts();
@@ -120,39 +149,59 @@ export default function CompaniesPage() {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
-  const handleExportCsv = () => {
-    if (accounts.length === 0) return alert('Nenhuma empresa para exportar.');
-    const headers = ['ID', 'Nome', 'Contato Principal', 'Cidade', 'Estado', 'Tipo'];
-    const rows = accounts.map((a) => [
-      a.id,
-      `"${a.name}"`,
-      `"${a.primary_contact ? `${a.primary_contact.first_name} ${a.primary_contact.last_name || ''}` : ''}"`,
-      `"${a.city || ''}"`,
-      `"${a.state || ''}"`,
-      `"${a.company_type || ''}"`,
-    ]);
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `companies_export_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportCsv = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (query) params.set('q', query);
+      if (selectedOwnerId === 'me' && user?.id) {
+        params.set('owner_id', String(user.id));
+      } else if (selectedOwnerId && selectedOwnerId !== 'me') {
+        params.set('owner_id', selectedOwnerId);
+      }
+      if (selectedType) params.set('segment', selectedType);
+      if (selectedIds.length > 0) {
+        selectedIds.forEach((id) => params.append('ids[]', String(id)));
+      }
+
+      const response = await fetch('/api/v1/sales/accounts/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao gerar arquivo de exportação no servidor.');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `companies_export_${Date.now()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao exportar CSV.');
+    }
   };
+
+  const activeFilterCount = Object.entries(advancedFilters).filter(([_, val]) =>
+    typeof val === 'boolean' ? val : Boolean(val)
+  ).length;
 
   return (
     <SalesLayoutWrapper>
-      <div className="space-y-6 font-sans">
+      <div className="space-y-6 font-sans pb-16">
         <CompaniesToolbar
           query={query}
           onQueryChange={(value) => {
             setQuery(value);
             setPage(1);
           }}
-          count={accounts.length}
+          count={totalCount}
           selectedOwnerId={selectedOwnerId}
           onOwnerSelect={setSelectedOwnerId}
           selectedType={selectedType}
@@ -164,6 +213,9 @@ export default function CompaniesPage() {
           onCreateCompany={() => setIsCreateCompanyModalOpen(true)}
           onExportCsv={handleExportCsv}
           onManageDuplicates={() => setIsDuplicateManagerOpen(true)}
+          onOpenViewsSidebar={() => setIsViewsSidebarOpen(true)}
+          onOpenAdvancedFilters={() => setIsAdvancedFiltersOpen(true)}
+          activeFilterCount={activeFilterCount}
         />
 
         <CompaniesTable
@@ -214,11 +266,45 @@ export default function CompaniesPage() {
         <CompaniesDuplicateManager
           open={isDuplicateManagerOpen}
           onClose={() => setIsDuplicateManagerOpen(false)}
+          onMerged={fetchAccounts}
         />
 
         <CreateCompanyModal
           open={isCreateCompanyModalOpen}
           onClose={() => setIsCreateCompanyModalOpen(false)}
+          onSuccess={fetchAccounts}
+        />
+
+        <CRMEntityViewsSidebar
+          open={isViewsSidebarOpen}
+          onClose={() => setIsViewsSidebarOpen(false)}
+          activeFilterState={advancedFilters}
+          onSelectView={(viewFilters, name) => {
+            setAdvancedFilters({
+              ...INITIAL_FILTER_STATE,
+              ...viewFilters,
+            });
+            setPage(1);
+          }}
+        />
+
+        <CRMAdvancedFilterPanel
+          open={isAdvancedFiltersOpen}
+          onClose={() => setIsAdvancedFiltersOpen(false)}
+          filters={advancedFilters}
+          onApply={(newFilters) => {
+            setAdvancedFilters(newFilters);
+            setPage(1);
+          }}
+          onReset={() => {
+            setAdvancedFilters(INITIAL_FILTER_STATE);
+            setPage(1);
+          }}
+        />
+
+        <CRMBulkActionBar
+          selectedIds={selectedIds}
+          onClearSelection={() => setSelectedIds([])}
           onSuccess={fetchAccounts}
         />
       </div>
