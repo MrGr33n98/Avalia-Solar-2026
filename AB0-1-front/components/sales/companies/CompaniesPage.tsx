@@ -50,6 +50,13 @@ export default function CompaniesPage() {
   }, [columns]);
 
   const fetchAccounts = useCallback(() => {
+    if (typeof window !== 'undefined' && !navigator.onLine) {
+      setLoading(false);
+      setError('Sem conexão com a internet. Verifique sua rede e tente novamente.');
+      return;
+    }
+
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
     const params = new URLSearchParams();
@@ -59,9 +66,15 @@ export default function CompaniesPage() {
     params.set('page', String(page));
     params.set('per_page', '50');
 
-    fetch(`/api/v1/sales/accounts?${params.toString()}`, { credentials: 'include' })
+    fetch(`/api/v1/sales/accounts?${params.toString()}`, {
+      credentials: 'include',
+      signal: controller.signal,
+    })
       .then((res) => {
-        if (!res.ok) throw new Error('Não foi possível carregar as empresas.');
+        if (res.status === 401) throw new Error('Sessão expirada. Por favor, faça login novamente.');
+        if (res.status === 403) throw new Error('Acesso não autorizado para visualizar empresas.');
+        if (res.status >= 500) throw new Error('Servidor indisponível no momento. Tente novamente.');
+        if (!res.ok) throw new Error('Não foi possível carregar a lista de empresas.');
         return res.json();
       })
       .then((data) => {
@@ -69,13 +82,21 @@ export default function CompaniesPage() {
         setTotalPages(data.meta?.total_pages ?? 1);
       })
       .catch((err) => {
-        setError(err.message || 'Erro ao conectar à API.');
+        if (err.name === 'AbortError') return;
+        if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+          setError('Não foi possível alcançar a API do CRM. Verifique sua conexão.');
+        } else {
+          setError(err.message || 'Erro ao conectar à API do CRM.');
+        }
       })
       .finally(() => setLoading(false));
+
+    return () => controller.abort();
   }, [query, selectedOwnerId, selectedType, page]);
 
   useEffect(() => {
-    fetchAccounts();
+    const cleanup = fetchAccounts();
+    return () => cleanup?.();
   }, [fetchAccounts]);
 
   const handleToggleSelectAll = () => {

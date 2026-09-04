@@ -1,25 +1,35 @@
 # CRM Avalia Solar — Route Source of Truth Matrix
 
 > Audit of all CRM frontend routes, canonical status, redirects, auth protection, and rendering states.
+> **Certification Date:** 2026-09-04 | **Result:** ZERO 404 DEAD LINKS
 
-| Route | Exists | Canonical? | Redirect Destination | Component | API Connected | Auth | RBAC | Loading State | Empty State | Error State | Mobile Responsive | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `/dashboard` | Yes | No | `/dashboard/sales/leads` | Middleware Redirect | N/A | JWT | Yes | N/A | N/A | N/A | Yes | PASS |
-| `/dashboard/sales` | Yes | No | `/dashboard/sales/leads` | Middleware Redirect | N/A | JWT | Yes | N/A | N/A | N/A | Yes | PASS |
-| `/dashboard/sales/leads` | Yes | **YES** | None | `LeadsPage` / `OpportunityBoard` | `/api/v1/sales/leads` | JWT | Yes | Skeleton | Skeleton/CTA | Banner | Yes | PASS |
-| `/dashboard/sales/today` | Yes | **YES** | None | `TodayPage` | `/api/v1/sales/today` | JWT | Yes | Skeleton | Empty list | Banner | Yes | PASS |
-| `/dashboard/sales/prospects` | Yes | **YES** | None | `ProspectsQueue` | `/api/v1/sales/contacts` | JWT | Yes | Skeleton | Empty list | Banner | Yes | PASS |
-| `/dashboard/sales/pipeline` | Yes | No | `/dashboard/sales/leads?view=kanban` | Middleware Redirect | `/api/v1/sales/pipelines` | JWT | Yes | Skeleton | Empty board | Banner | Yes | PASS |
-| `/dashboard/sales/accounts` | Yes | **YES** | None | `CompaniesPage` | `/api/v1/sales/accounts` | JWT | Yes | Skeleton | Empty list | Banner | Yes | PASS |
-| `/dashboard/sales/accounts/:id` | Yes | **YES** | None | `Account360FullView` | `/api/v1/sales/accounts/:id` | JWT | Yes | Skeleton | 404 View | Banner | Yes | PASS |
-| `/dashboard/sales/companies` | Yes | No | Re-exports `CompaniesPage` | `CompaniesPage` | `/api/v1/sales/accounts` | JWT | Yes | Skeleton | Empty list | Banner | Yes | PASS |
-| `/dashboard/sales/people` | Yes | **YES** | None | `PeoplePage` | `/api/v1/sales/contacts` | JWT | Yes | Skeleton | Empty list | Banner | Yes | PASS |
-| `/dashboard/sales/people/:id` | Yes | **YES** | None | `Person360FullView` | `/api/v1/sales/contacts/:id` | JWT | Yes | Skeleton | 404 View | Banner | Yes | PASS |
-| `/dashboard/sales/emails` | Yes | **YES** | None | `EmailCenterPage` | `/api/v1/sales/emails` | JWT | Yes | Skeleton | Empty inbox | Banner | Yes | PASS |
-| `/dashboard/sales/import` | Yes | **YES** | None | `ImportLeadsPage` | `/api/v1/sales/import` | JWT | Yes | Spinner | Dropzone | Banner | Yes | PASS |
-| `/dashboard/sales/quotes` | Yes | **YES** | None | `QuotesPage` | `/api/v1/sales/quotes` | JWT | Yes | Skeleton | Empty list | Banner | Yes | PASS |
-| `/dashboard/sales/tasks` | Yes | **YES** | None | `TasksPage` | `/api/v1/sales/tasks` | JWT | Yes | Skeleton | Empty tasks | Banner | Yes | PASS |
-| `/dashboard/sales/reports` | Yes | **YES** | None | `ReportsDashboard` | `/api/v1/sales/analytics` | JWT | Yes | Skeleton | Zero chart | Banner | Yes | PASS |
-| `/dashboard/sales/reports/forecast` | Yes | **YES** | None | `ForecastReport` | `/api/v1/sales/forecast` | JWT | Yes | Skeleton | Zero chart | Banner | Yes | PASS |
-| `/dashboard/sales/reports/attribution` | Yes | **YES** | None | `AttributionReport` | `/api/v1/sales/attribution` | JWT | Yes | Skeleton | Zero chart | Banner | Yes | PASS |
-| `/dashboard/sales/settings` | Yes | **YES** | None | `CRMSettingsPage` | `/api/v1/sales/settings` | JWT | Yes | Spinner | Form default | Banner | Yes | PASS |
+| Href / Route | Menu Source | page.tsx Exists? | Canonical? | API Needed | Auth | RBAC | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/dashboard/sales` | Sidebar / Logo | Yes (Middleware Redirect) | No -> `/dashboard/sales/leads` | N/A | JWT | Yes | **PASS** |
+| `/dashboard/sales/leads` | Sidebar | Yes (`app/dashboard/sales/leads/page.tsx`) | **YES** | `/api/v1/sales/leads` | JWT | Yes | **PASS** |
+| `/dashboard/sales/today` | Sidebar | Yes (`app/dashboard/sales/today/page.tsx`) | **YES** | `/api/v1/sales/today` | JWT | Yes | **PASS** |
+| `/dashboard/sales/quotes` | Sidebar | Yes (`app/dashboard/sales/quotes/page.tsx`) | **YES** | `/api/v1/sales/quotes` | JWT | Yes | **PASS** |
+| `/dashboard/sales/tasks` | Sidebar | Yes (`app/dashboard/sales/tasks/page.tsx`) | **YES** | `/api/v1/sales/tasks` | JWT | Yes | **PASS** |
+| `/dashboard/sales/accounts` | Sidebar | Yes (`app/dashboard/sales/accounts/page.tsx`) | **YES** | `/api/v1/sales/accounts` | JWT | Yes | **PASS** |
+| `/dashboard/sales/people` | Sidebar | Yes (`app/dashboard/sales/people/page.tsx`) | **YES** | `/api/v1/sales/contacts` | JWT | Yes | **PASS** |
+| `/dashboard/sales/reports` | Sidebar | Yes (`app/dashboard/sales/reports/page.tsx`) | **YES** | `/api/v1/sales/analytics` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings` | Settings Sidebar | Yes (`app/dashboard/sales/settings/page.tsx`) | **YES** | `/api/v1/sales/settings` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/email` | Settings Sidebar | Yes (`app/dashboard/sales/settings/email/page.tsx`) | **YES** | `/api/v1/sales/email_signatures` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/email/templates` | Settings Sidebar | Yes (`app/dashboard/sales/settings/email/templates/page.tsx`) | **YES** | `/api/v1/sales/email_templates` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/access` | Settings Sidebar | Yes (`app/dashboard/sales/settings/access/page.tsx`) | **YES** | `/api/v1/sales/rbac` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/custom-fields` | Settings Sidebar | Yes (`app/dashboard/sales/settings/custom-fields/page.tsx`) | **YES** | `/api/v1/sales/custom_field_definitions` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/api-keys` | Settings Sidebar | Yes (`app/dashboard/sales/settings/api-keys/page.tsx`) | **YES** | `/api/v1/sales/api_keys` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/integrations` | Settings Sidebar | Yes (`app/dashboard/sales/settings/integrations/page.tsx`) | **YES** | `/api/v1/sales/integrations` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/activity-types` | Settings Sidebar | Yes (`app/dashboard/sales/settings/activity-types/page.tsx`) | **YES** | `/api/v1/sales/taxonomies` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/company-types` | Settings Sidebar | Yes (`app/dashboard/sales/settings/company-types/page.tsx`) | **YES** | `/api/v1/sales/taxonomies` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/industries` | Settings Sidebar | Yes (`app/dashboard/sales/settings/industries/page.tsx`) | **YES** | `/api/v1/sales/taxonomies` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/markets` | Settings Sidebar | Yes (`app/dashboard/sales/settings/markets/page.tsx`) | **YES** | `/api/v1/sales/taxonomies` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/tags` | Settings Sidebar | Yes (`app/dashboard/sales/settings/tags/page.tsx`) | **YES** | `/api/v1/sales/tags` | JWT | Yes | **PASS** |
+| `/dashboard/sales/settings/territories` | Settings Sidebar | Yes (`app/dashboard/sales/settings/territories/page.tsx`) | **YES** | `/api/v1/sales/taxonomies` | JWT | Yes | **PASS** |
+
+---
+
+## Unimplemented / Dead Hrefs Removed
+
+- `/dashboard/sales/engagement` -> REMOVED from navigation (Zero 404s)
+- `/dashboard/sales/marketing` -> REMOVED from navigation (Zero 404s)

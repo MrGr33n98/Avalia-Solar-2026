@@ -10,8 +10,6 @@ import {
   ChevronRight,
   ChevronDown,
   CircleDollarSign,
-  Megaphone,
-  MessageSquare,
   Settings,
   Sparkles,
   Tag,
@@ -62,7 +60,7 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
         collapsed ? 'w-16' : 'w-60'
       )}
     >
-      {/* Edge Floating Toggle Button (Image 3) */}
+      {/* Edge Floating Toggle Button */}
       <button
         type="button"
         onClick={toggleCollapsed}
@@ -167,42 +165,6 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
           )}
         </div>
 
-        {/* Marketing */}
-        <Link
-          href="/dashboard/sales/marketing"
-          title="Marketing"
-          className={cn(
-            'transition-all duration-150 flex items-center gap-3',
-            collapsed
-              ? 'w-10 h-10 justify-center mx-auto rounded-xl'
-              : 'px-3 py-2.5 rounded-xl font-medium',
-            isCurrent('/dashboard/sales/marketing')
-              ? 'bg-white text-slate-900 font-semibold shadow-xs'
-              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
-          )}
-        >
-          <Megaphone className={cn('w-4 h-4 shrink-0', isCurrent('/dashboard/sales/marketing') ? 'text-slate-900' : 'text-slate-300')} />
-          {!collapsed && <span>Marketing</span>}
-        </Link>
-
-        {/* Engagement */}
-        <Link
-          href="/dashboard/sales/engagement"
-          title="Engagement"
-          className={cn(
-            'transition-all duration-150 flex items-center gap-3',
-            collapsed
-              ? 'w-10 h-10 justify-center mx-auto rounded-xl'
-              : 'px-3 py-2.5 rounded-xl font-medium',
-            isCurrent('/dashboard/sales/engagement')
-              ? 'bg-white text-slate-900 font-semibold shadow-xs'
-              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
-          )}
-        >
-          <MessageSquare className={cn('w-4 h-4 shrink-0', isCurrent('/dashboard/sales/engagement') ? 'text-slate-900' : 'text-slate-300')} />
-          {!collapsed && <span>Engagement</span>}
-        </Link>
-
         <div className="border-t border-slate-800/80 my-3 mx-1" />
 
         {/* Companies */}
@@ -279,7 +241,7 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
 
         <div className="border-t border-slate-800/80 my-3 mx-1" />
 
-        {/* Nutshell AI / Avalia AI */}
+        {/* Nutshell AI */}
         <div className="pt-1">
           <button
             type="button"
