@@ -40,6 +40,7 @@ import CreateActivityModal from '@/components/sales/create/CreateActivityModal';
 import CreateQuoteModal from '@/components/sales/create/CreateQuoteModal';
 import CreateTaskModal from '@/components/sales/create/CreateTaskModal';
 import SendEmailModal from '@/components/sales/create/SendEmailModal';
+import AttachCompanyPersonModal from '@/components/sales/create/AttachCompanyPersonModal';
 import { salesApi } from '@/lib/api/sales/client';
 
 interface Opportunity360ViewProps {
@@ -53,6 +54,8 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
   const [loading, setLoading] = useState(false);
   const [pipelines, setPipelines] = useState<any[]>([]);
   const [activePipeline, setActivePipeline] = useState<any | null>(null);
+  const [accountContacts, setAccountContacts] = useState<any[]>([]);
+  const [isAddPersonModalOpen, setIsAddPersonModalOpen] = useState(false);
   
   // Navigation Tabs: 'recap' | 'sales_process' | 'tasks' | 'activities' | 'emails' | 'timeline'
   const [activeTab, setActiveTab] = useState<'recap' | 'sales_process' | 'tasks' | 'activities' | 'emails' | 'timeline'>('recap');
@@ -89,6 +92,18 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
       setOpp(data);
       setOppTitle(data.name || '');
       setOppValue(data.value_cents ? (data.value_cents / 100).toString() : '0');
+
+      // Fetch contacts for account if account exists
+      if (data.sales_account_id) {
+        try {
+          const contacts = await salesApi.getContacts({ sales_account_id: data.sales_account_id });
+          setAccountContacts(contacts || []);
+        } catch {
+          setAccountContacts([]);
+        }
+      } else {
+        setAccountContacts([]);
+      }
 
       // Fetch pipelines
       const fetchedPipelines = await salesApi.getPipelines();
@@ -189,6 +204,17 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
     }
   };
 
+  const handleSetPrimaryContact = async (contactId: number) => {
+    if (!opp) return;
+    try {
+      await salesApi.updateOpportunity(opp.id, { primary_contact_id: contactId });
+      fetchOpportunityData(opp.id);
+      onUpdated?.();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao definir contato principal');
+    }
+  };
+
   const stagesList = activePipeline?.stages || [
     { id: 1, key: 'prospect', name: 'Qualify', position: 1 },
     { id: 2, key: 'proposal', name: 'Pitch', position: 2 },
@@ -241,9 +267,14 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
 
                   {/* Right Header Controls (Value Chip, Owner Avatar, Actions) */}
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-emerald-800 font-extrabold text-sm">
+                    <div
+                      onClick={() => setIsEditingValue(!isEditingValue)}
+                      title="Clique para editar o valor"
+                      className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 hover:border-emerald-400 rounded-full text-emerald-800 font-extrabold text-sm cursor-pointer transition shadow-2xs group"
+                    >
                       <DollarSign className="w-4 h-4 text-emerald-600" />
                       <span>{valueFormatted}</span>
+                      <Pencil className="w-3 h-3 text-emerald-600 opacity-60 group-hover:opacity-100 ml-0.5" />
                     </div>
 
                     <div className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 text-xs font-semibold text-slate-700">
@@ -654,33 +685,108 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
                     >
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-sky-700" />
-                        <span>Companies & people ({opp.account ? 2 : 0})</span>
+                        <span>Companies & people ({opp.account ? (accountContacts.length > 0 ? accountContacts.length : 1) : 0})</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sky-700 text-xs font-bold hover:underline">+ Add</span>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsAddPersonModalOpen(true);
+                          }}
+                          className="text-sky-700 text-xs font-bold hover:underline cursor-pointer"
+                        >
+                          + Add
+                        </span>
                         <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${companiesExpanded ? '' : '-rotate-90'}`} />
                       </div>
                     </div>
                     {companiesExpanded && (
                       <CardContent className="p-4 space-y-3">
                         {opp.account ? (
-                          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
-                            <div className="flex items-center gap-2 text-slate-900 font-bold">
-                              <Building2 className="w-4 h-4 text-sky-700" />
-                              <span>{opp.account.name}</span>
+                          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+                                <Building2 className="w-4 h-4 text-sky-700" />
+                                <span>{opp.account.name}</span>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setIsAddPersonModalOpen(true)}
+                                className="h-6 px-2 text-[11px] font-bold text-sky-700 hover:bg-sky-100"
+                              >
+                                + Add Pessoa
+                              </Button>
                             </div>
-                            {opp.contact_name && (
-                              <div className="pl-6 space-y-1 text-slate-600 border-l-2 border-slate-200 ml-2">
-                                <div className="flex items-center gap-1.5 font-semibold text-slate-800">
-                                  <User className="w-3.5 h-3.5 text-slate-400" />
+
+                            {/* Contacts List */}
+                            {accountContacts && accountContacts.length > 0 ? (
+                              <div className="space-y-2 pt-2 border-t border-slate-200">
+                                <p className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Pessoas na Empresa</p>
+                                {accountContacts.map((c: any) => {
+                                  const contactFullName = c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim();
+                                  const isPrimary = opp.contact_id === c.id || opp.primary_contact_id === c.id;
+                                  return (
+                                    <div key={c.id} className="p-2 bg-white border border-slate-200 rounded-lg flex items-center justify-between text-xs">
+                                      <div className="flex items-start gap-2">
+                                        <User className="w-3.5 h-3.5 text-sky-600 mt-0.5 shrink-0" />
+                                        <div>
+                                          <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                                            <span>{contactFullName}</span>
+                                            {isPrimary && (
+                                              <Badge className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0">Principal</Badge>
+                                            )}
+                                          </div>
+                                          {c.email && <p className="text-[11px] text-slate-500">{c.email}</p>}
+                                          {c.job_title && <p className="text-[10px] text-slate-400">{c.job_title}</p>}
+                                        </div>
+                                      </div>
+                                      {!isPrimary && (
+                                        <button
+                                          onClick={() => handleSetPrimaryContact(c.id)}
+                                          className="text-[10px] text-sky-700 font-bold hover:underline bg-sky-50 px-2 py-0.5 rounded border border-sky-200"
+                                        >
+                                          Definir principal
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : opp.contact_name ? (
+                              <div className="pl-3 space-y-1 text-slate-600 border-l-2 border-sky-400 ml-1">
+                                <div className="flex items-center gap-1.5 font-semibold text-slate-800 text-xs">
+                                  <User className="w-3.5 h-3.5 text-sky-600" />
                                   <span>{opp.contact_name}</span>
+                                  <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-bold ml-auto">Principal</Badge>
                                 </div>
                                 {opp.contact_email && <p className="text-[11px] text-slate-500">{opp.contact_email}</p>}
+                              </div>
+                            ) : (
+                              <div className="pt-1 text-center space-y-2">
+                                <p className="text-slate-500 text-xs">Nenhum contato cadastrado para esta empresa.</p>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setIsAddPersonModalOpen(true)}
+                                  className="h-7 text-xs font-bold border-sky-300 text-sky-700 hover:bg-sky-50"
+                                >
+                                  + Adicionar Pessoa à Empresa
+                                </Button>
                               </div>
                             )}
                           </div>
                         ) : (
-                          <p className="text-slate-400 text-center py-2">Nenhuma empresa ou contato vinculado.</p>
+                          <div className="text-center py-4 space-y-2">
+                            <p className="text-slate-500 text-xs">Nenhuma empresa ou contato vinculado.</p>
+                            <Button
+                              size="sm"
+                              onClick={() => setIsAddPersonModalOpen(true)}
+                              className="h-8 text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white"
+                            >
+                              + Vincular Empresa & Adicionar Pessoa
+                            </Button>
+                          </div>
                         )}
                       </CardContent>
                     )}
@@ -694,17 +800,71 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
                     >
                       <div className="flex items-center gap-2">
                         <Tag className="w-4 h-4 text-emerald-600" />
-                        <span>Revenue U.S. (USD)</span>
+                        <span>Revenue U.S. (USD / BRL)</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sky-700 text-xs font-bold hover:underline">+ Add</span>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditingValue(!isEditingValue);
+                          }}
+                          className="text-sky-700 text-xs font-bold hover:underline cursor-pointer"
+                        >
+                          + {isEditingValue ? 'Cancelar' : 'Editar / Add'}
+                        </span>
                         <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${revenueExpanded ? '' : '-rotate-90'}`} />
                       </div>
                     </div>
                     {revenueExpanded && (
-                      <CardContent className="p-4 text-center space-y-2">
-                        <p className="text-2xl font-extrabold text-slate-900">{valueFormatted}</p>
-                        <p className="text-[11px] text-slate-400">Nenhum produto cadastrado separadamente.</p>
+                      <CardContent className="p-4 text-center space-y-3">
+                        {isEditingValue ? (
+                          <div className="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-left">
+                            <label className="block text-xs font-bold text-slate-700">Valor da Oportunidade (R$)</label>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-slate-500">R$</span>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={oppValue}
+                                onChange={(e) => setOppValue(e.target.value)}
+                                placeholder="0.00"
+                                className="h-9 text-base font-bold border-slate-300"
+                                autoFocus
+                              />
+                            </div>
+                            <div className="flex items-center gap-2 justify-end pt-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setIsEditingValue(false);
+                                  setOppValue(opp?.value_cents ? (opp.value_cents / 100).toString() : '0');
+                                }}
+                                className="h-8 text-xs"
+                              >
+                                Cancelar
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={handleSaveValue}
+                                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                              >
+                                Salvar Valor
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => setIsEditingValue(true)}
+                            className="group cursor-pointer p-3 rounded-lg hover:bg-emerald-50/60 transition border border-transparent hover:border-emerald-200"
+                          >
+                            <div className="flex items-center justify-center gap-2">
+                              <p className="text-2xl font-extrabold text-slate-900">{valueFormatted}</p>
+                              <Pencil className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-1">Clique para editar o valor estimado do negócio.</p>
+                          </div>
+                        )}
                       </CardContent>
                     )}
                   </Card>
@@ -785,6 +945,19 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
           onUpdated?.();
         }}
       />
+      {opp && (
+        <AttachCompanyPersonModal
+          open={isAddPersonModalOpen}
+          onClose={() => setIsAddPersonModalOpen(false)}
+          opportunityId={opp.id}
+          currentAccount={opp.account}
+          currentContactId={opp.contact_id || opp.primary_contact_id}
+          onSuccess={() => {
+            fetchOpportunityData(opp.id);
+            onUpdated?.();
+          }}
+        />
+      )}
     </>
   );
 }
