@@ -426,6 +426,9 @@ export const salesApi = {
     sales_account_id?: number | null;
     sales_opportunity_id?: number | null;
   }): Promise<ApiTask> {
+    if (payload.sales_opportunity_id) {
+      clearSalesApiCache(`opp_timeline:${payload.sales_opportunity_id}`);
+    }
     const res = await request<{ task: ApiTask }>('/api/v1/sales/tasks', {
       method: 'POST',
       body: JSON.stringify({ task: payload }),
@@ -434,6 +437,9 @@ export const salesApi = {
   },
 
   async updateTask(id: number, payload: Partial<ApiTask>): Promise<ApiTask> {
+    if (payload.sales_opportunity_id) {
+      clearSalesApiCache(`opp_timeline:${payload.sales_opportunity_id}`);
+    }
     const res = await request<{ task: ApiTask }>(`/api/v1/sales/tasks/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ task: payload }),
@@ -452,6 +458,9 @@ export const salesApi = {
     sales_contact_id?: number;
     sales_opportunity_id?: number;
   }): Promise<void> {
+    if (payload.sales_opportunity_id) {
+      clearSalesApiCache(`opp_timeline:${payload.sales_opportunity_id}`);
+    }
     await request('/api/v1/sales/activities', {
       method: 'POST',
       body: JSON.stringify({ activity: payload }),

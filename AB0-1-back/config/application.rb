@@ -93,6 +93,8 @@ module RailsBlogDemo
       Rails.root.join('lib/scripts')
     )
 
+    # Gzip response compression for ultra-fast HTTP JSON payloads
+    config.middleware.use Rack::Deflater
     # Enable Rack::Attack middleware for rate limiting (TASK-001)
     config.middleware.use Rack::Attack
     # Idempotency for critical endpoints
