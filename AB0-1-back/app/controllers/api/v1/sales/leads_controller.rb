@@ -61,6 +61,21 @@ module Api
           end
         end
 
+        def convert
+          lead = ::Sales::Opportunity.find(params[:id])
+          result = ::Sales::LeadConversionService.call(
+            opportunity: lead,
+            actor: current_user || User.first,
+            stage_id: params[:sales_stage_id] || params[:stage_id]
+          )
+
+          render json: {
+            lead: serialize_lead(result[:opportunity]),
+            account: { id: result[:account].id, name: result[:account].name },
+            contact: { id: result[:contact].id, name: [result[:contact].first_name, result[:contact].last_name].compact.join(' ') }
+          }, status: :ok
+        end
+
         private
 
         def serialize_lead(opp)

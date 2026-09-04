@@ -108,7 +108,9 @@ Rails.application.routes.draw do
           end
         end
         post 'leads/bulk', to: 'sales/leads#bulk'
-        resources :leads, only: %i[index create show update], controller: 'sales/leads'
+        resources :leads, only: %i[index create show update], controller: 'sales/leads' do
+          post :convert, on: :member
+        end
         resources :sources, only: %i[index], controller: 'sales/sources'
         resources :competitors, only: %i[index create], controller: 'sales/competitors'
         resources :accounts, only: [] do
