@@ -19,11 +19,18 @@ echo "✅ Database is ready!"
 
 # Wait for Redis to be ready
 echo "⏳ Waiting for Redis..."
-until redis-cli -h redis ping; do
+until ruby -r socket -e "TCPSocket.new('redis', 6379).close" 2>/dev/null; do
   echo "Redis is unavailable - sleeping"
   sleep 2
 done
 echo "✅ Redis is ready!"
+
+# Ensure bundle is up to date
+echo "💎 Checking gems..."
+if ! bundle check > /dev/null 2>&1; then
+  echo "📦 Installing missing gems..."
+  bundle install
+fi
 
 # Setup database if needed
 if ! bundle exec rails db:version > /dev/null 2>&1; then

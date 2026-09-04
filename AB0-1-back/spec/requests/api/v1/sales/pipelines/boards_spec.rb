@@ -3,31 +3,51 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Sales::Pipelines::Boards', type: :request do
-  let(:company) { create(:company) }
-  let(:user) { create(:user, company: company, roles: ['sales_rep']) }
-  let(:auth_headers) { auth_headers_for(user) }
+  let(:company) do
+    Company.new(name: 'Empresa Teste', slug: "empresa-#{SecureRandom.hex(4)}").tap { |c| c.save!(validate: false) }
+  end
 
-  let(:pipeline) { create(:sales_pipeline, name: 'B2B Pipeline', active: true) }
-  let!(:stage) { create(:sales_stage, pipeline: pipeline, key: 'prospect', name: 'Prospect', position: 1, probability: 20) }
-  let(:account) { create(:sales_account, company: company, name: 'WEG Solar') }
-  let(:contact) { create(:sales_contact, account: account, first_name: 'Felipe', last_name: 'Oliveira', email: 'felipe@weg.com') }
+  let(:user) do
+    User.new(
+      name: 'Sales User',
+      email: "sales.#{SecureRandom.hex(4)}@avaliasolar.com.br",
+      password: 'Password123!',
+      role: 'admin',
+      company_id: company.id,
+      terms_accepted: true
+    ).tap { |u| u.save!(validate: false) }
+  end
+
+  let(:headers) do
+    token = JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i }, Rails.application.secret_key_base)
+    {
+      'Authorization' => "Bearer #{token}",
+      'CONTENT_TYPE' => 'application/json',
+      'Accept' => 'application/json'
+    }
+  end
+
+  let(:pipeline) { Sales::Pipeline.create!(name: 'B2B Pipeline', key: "b2b_#{SecureRandom.hex(4)}", active: true) }
+  let!(:stage) { pipeline.stages.create!(key: 'prospect', name: 'Prospect', position: 1, probability: 20) }
+  let(:account) { Sales::Account.create!(company_id: company.id, owner: user, name: 'WEG Solar') }
+  let(:contact) { Sales::Contact.create!(account: account, first_name: 'Felipe', last_name: 'Oliveira', email: 'felipe@weg.com') }
 
   let!(:opportunity) do
-    create(:sales_opportunity,
-           pipeline: pipeline,
-           stage: stage,
-           account: account,
-           primary_contact: contact,
-           owner: user,
-           name: 'Usina Solar 500kWp',
-           value_cents: 1_500_000,
-           temperature: 'hot',
-           status: 'open')
+    account.opportunities.create!(
+      pipeline: pipeline,
+      stage: stage,
+      primary_contact: contact,
+      owner: user,
+      name: 'Usina Solar 500kWp',
+      value_cents: 1_500_000,
+      temperature: 'hot',
+      status: 'open'
+    )
   end
 
   describe 'GET /api/v1/sales/pipelines/:pipeline_id/board' do
     it 'returns the board DTO with cards, stages, and totals' do
-      get "/api/v1/sales/pipelines/#{pipeline.id}/board", headers: auth_headers
+      get "/api/v1/sales/pipelines/#{pipeline.id}/board", headers: headers
 
       expect(response).to have_http_status(:ok)
 
@@ -49,7 +69,7 @@ RSpec.describe 'Api::V1::Sales::Pipelines::Boards', type: :request do
     end
 
     it 'returns default pipeline board when pipeline_id is default' do
-      get '/api/v1/sales/pipelines/default/board', headers: auth_headers
+      get '/api/v1/sales/pipelines/default/board', headers: headers
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body, symbolize_names: true)

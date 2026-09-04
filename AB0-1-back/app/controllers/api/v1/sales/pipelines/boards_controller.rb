@@ -12,7 +12,7 @@ module Api
             pipeline_param = params[:id] || params[:pipeline_id] || 'default'
             start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-            board_data = ::Sales::Pipeline::BoardQuery.call(
+            board_data = ::Sales::PipelineBoard::BoardQuery.call(
               pipeline_id: pipeline_param,
               current_user: current_user,
               params: params
@@ -26,7 +26,7 @@ module Api
               )
             end
 
-            payload = ::Sales::Pipeline::BoardPresenter.call(board_data)
+            payload = ::Sales::PipelineBoard::BoardPresenter.call(board_data)
             duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).round(2)
 
             Rails.logger.info(

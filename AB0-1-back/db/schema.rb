@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_04_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -617,7 +617,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["product_id"], name: "index_campaign_reviews_on_product_id"
     t.index ["status"], name: "index_campaign_reviews_on_status"
     t.check_constraint "start_at IS NULL OR end_at IS NULL OR end_at >= start_at", name: "chk_campaign_reviews_period"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'finished'::character varying::text, 'canceled'::character varying::text]))", name: "campaign_reviews_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'finished'::character varying, 'canceled'::character varying]::text[]))", name: "campaign_reviews_status_allowed"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -1090,7 +1090,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
     t.check_constraint "cnpj IS NULL OR length(cnpj::text) = 14 AND cnpj::text ~ '^[0-9]+$'::text", name: "ck_companies_valid_cnpj"
     t.check_constraint "email IS NULL OR email::text ~ '^[^@]+@[^@]+\\.[^@]+$'::text", name: "ck_companies_valid_email"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'inactive'::character varying::text, 'pending'::character varying::text, 'blocked'::character varying::text])", name: "companies_status_allowed"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'inactive'::character varying, 'pending'::character varying, 'blocked'::character varying]::text[])", name: "companies_status_allowed"
   end
 
   create_table "company_access_requests", force: :cascade do |t|
@@ -1107,7 +1107,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["company_id"], name: "index_company_access_requests_on_company_id"
     t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
     t.index ["status"], name: "index_company_access_requests_on_status"
-    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))"
+    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying])::text[]))"
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
@@ -1571,7 +1571,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["session_id", "consented_at"], name: "index_consent_logs_on_session_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id", "consented_at"], name: "index_consent_logs_on_user_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id"], name: "index_consent_logs_on_user_id"
-    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying::text, 'marketing'::character varying::text, 'functional'::character varying::text, 'all'::character varying::text, 'none'::character varying::text])", name: "consent_logs_type_check"
+    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying, 'marketing'::character varying, 'functional'::character varying, 'all'::character varying, 'none'::character varying]::text[])", name: "consent_logs_type_check"
   end
 
   create_table "content", force: :cascade do |t|
@@ -2111,7 +2111,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["product_id"], name: "index_forum_questions_on_product_id"
     t.index ["status"], name: "index_forum_questions_on_status"
     t.index ["user_id"], name: "index_forum_questions_on_user_id"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text]))", name: "forum_questions_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[]))", name: "forum_questions_status_allowed"
   end
 
   create_table "gated_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -2152,9 +2152,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["group_id", "user_id"], name: "index_group_memberships_on_group_id_and_user_id", unique: true
     t.index ["group_id"], name: "index_group_memberships_on_group_id"
     t.index ["user_id"], name: "index_group_memberships_on_user_id"
-    t.check_constraint "notifications_level::text = ANY (ARRAY['all'::character varying::text, 'highlights'::character varying::text, 'mentions'::character varying::text, 'off'::character varying::text])", name: "group_memberships_notifications_level_check"
-    t.check_constraint "role::text = ANY (ARRAY['member'::character varying::text, 'moderator'::character varying::text, 'admin'::character varying::text, 'owner'::character varying::text])", name: "group_memberships_role_check"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'active'::character varying::text, 'rejected'::character varying::text, 'left'::character varying::text, 'banned'::character varying::text])", name: "group_memberships_status_check"
+    t.check_constraint "notifications_level::text = ANY (ARRAY['all'::character varying, 'highlights'::character varying, 'mentions'::character varying, 'off'::character varying]::text[])", name: "group_memberships_notifications_level_check"
+    t.check_constraint "role::text = ANY (ARRAY['member'::character varying, 'moderator'::character varying, 'admin'::character varying, 'owner'::character varying]::text[])", name: "group_memberships_role_check"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'active'::character varying, 'rejected'::character varying, 'left'::character varying, 'banned'::character varying]::text[])", name: "group_memberships_status_check"
   end
 
   create_table "group_posts", force: :cascade do |t|
@@ -2176,7 +2176,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["group_topic_id", "status"], name: "index_group_posts_on_group_topic_id_and_status"
     t.index ["group_topic_id"], name: "index_group_posts_on_group_topic_id"
     t.index ["user_id"], name: "index_group_posts_on_user_id"
-    t.check_constraint "status::text = ANY (ARRAY['published'::character varying::text, 'hidden'::character varying::text, 'removed'::character varying::text])", name: "group_posts_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['published'::character varying, 'hidden'::character varying, 'removed'::character varying]::text[])", name: "group_posts_status_check"
   end
 
   create_table "group_rules", force: :cascade do |t|
@@ -2231,10 +2231,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["status", "visibility"], name: "index_groups_on_status_and_visibility"
     t.index ["status"], name: "index_groups_on_status"
     t.index ["visibility"], name: "index_groups_on_visibility"
-    t.check_constraint "membership_mode::text = ANY (ARRAY['open'::character varying::text, 'approval'::character varying::text, 'invite_only'::character varying::text])", name: "groups_membership_mode_check"
-    t.check_constraint "posting_mode::text = ANY (ARRAY['members'::character varying::text, 'moderated'::character varying::text, 'admins_only'::character varying::text])", name: "groups_posting_mode_check"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'suspended'::character varying::text])", name: "groups_status_check"
-    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying::text, 'private_visible'::character varying::text, 'private_hidden'::character varying::text])", name: "groups_visibility_check"
+    t.check_constraint "membership_mode::text = ANY (ARRAY['open'::character varying, 'approval'::character varying, 'invite_only'::character varying]::text[])", name: "groups_membership_mode_check"
+    t.check_constraint "posting_mode::text = ANY (ARRAY['members'::character varying, 'moderated'::character varying, 'admins_only'::character varying]::text[])", name: "groups_posting_mode_check"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'suspended'::character varying]::text[])", name: "groups_status_check"
+    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying, 'private_visible'::character varying, 'private_hidden'::character varying]::text[])", name: "groups_visibility_check"
   end
 
   create_table "growth_insights", force: :cascade do |t|
@@ -2592,7 +2592,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["actor_type", "actor_id"], name: "index_news_items_on_actor"
     t.index ["published", "published_at"], name: "index_news_items_on_published_and_published_at"
     t.index ["status"], name: "index_news_items_on_status"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text])", name: "news_items_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[])", name: "news_items_status_valid"
   end
 
   create_table "newsletters", force: :cascade do |t|
@@ -2978,7 +2978,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.bigint "actor_id"
     t.string "status", default: "draft", null: false
     t.index ["actor_type", "actor_id"], name: "index_polls_on_actor"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'closed'::character varying::text])", name: "polls_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'closed'::character varying]::text[])", name: "polls_status_valid"
   end
 
   create_table "posts", force: :cascade do |t|
@@ -3082,7 +3082,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true
     t.index ["status"], name: "index_products_on_status"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'disabled'::character varying::text]))", name: "products_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'disabled'::character varying]::text[]))", name: "products_status_allowed"
   end
 
   create_table "publication_entities", force: :cascade do |t|
@@ -3544,8 +3544,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.datetime "last_activity_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["company_id", "name"], name: "idx_sales_accounts_company_name"
     t.index ["company_id"], name: "index_sales_accounts_on_company_id", unique: true, where: "(company_id IS NOT NULL)"
     t.index ["domain"], name: "index_sales_accounts_on_domain"
+    t.index ["owner_id", "name"], name: "idx_sales_accounts_owner_name"
     t.index ["owner_id"], name: "index_sales_accounts_on_owner_id"
     t.index ["status"], name: "index_sales_accounts_on_status"
   end
@@ -3569,6 +3571,101 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["sales_opportunity_id"], name: "index_sales_activities_on_sales_opportunity_id"
   end
 
+  create_table "sales_api_keys", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "company_id"
+    t.string "name", null: false
+    t.string "key_prefix", null: false
+    t.string "key_digest", null: false
+    t.jsonb "scopes", default: [], null: false
+    t.datetime "last_used_at"
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_sales_api_keys_on_company_id"
+    t.index ["key_digest"], name: "index_sales_api_keys_on_key_digest", unique: true
+    t.index ["user_id"], name: "index_sales_api_keys_on_user_id"
+  end
+
+  create_table "sales_audit_logs", force: :cascade do |t|
+    t.bigint "company_id"
+    t.bigint "actor_id"
+    t.string "action", null: false
+    t.string "auditable_type", null: false
+    t.bigint "auditable_id", null: false
+    t.jsonb "changeset", default: {}, null: false
+    t.string "request_id"
+    t.inet "ip"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_sales_audit_logs_on_actor_id"
+    t.index ["auditable_type", "auditable_id"], name: "index_sales_audit_logs_on_auditable_type_and_auditable_id"
+    t.index ["company_id"], name: "index_sales_audit_logs_on_company_id"
+  end
+
+  create_table "sales_campaigns", force: :cascade do |t|
+    t.bigint "company_id"
+    t.string "name", null: false
+    t.string "source"
+    t.string "medium"
+    t.string "campaign_key", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "campaign_key"], name: "index_sales_campaigns_on_company_id_and_campaign_key", unique: true
+    t.index ["company_id"], name: "index_sales_campaigns_on_company_id"
+  end
+
+  create_table "sales_competitors", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "normalized_name", null: false
+    t.string "website"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["normalized_name"], name: "index_sales_competitors_on_normalized_name", unique: true
+  end
+
+  create_table "sales_consents", force: :cascade do |t|
+    t.bigint "contact_id", null: false
+    t.string "purpose", null: false
+    t.string "lawful_basis", null: false
+    t.boolean "granted", default: false, null: false
+    t.datetime "granted_at"
+    t.datetime "revoked_at"
+    t.datetime "expires_at"
+    t.string "source"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["contact_id", "purpose"], name: "index_sales_consents_on_contact_id_and_purpose", unique: true
+    t.index ["contact_id"], name: "index_sales_consents_on_contact_id"
+  end
+
+  create_table "sales_contact_employments", force: :cascade do |t|
+    t.bigint "sales_contact_id", null: false
+    t.bigint "sales_account_id", null: false
+    t.string "job_title"
+    t.string "department"
+    t.string "seniority"
+    t.string "relationship_type", default: "employee", null: false
+    t.boolean "is_current", default: true, null: false
+    t.boolean "is_primary", default: true, null: false
+    t.datetime "started_at"
+    t.datetime "ended_at"
+    t.string "source"
+    t.string "source_url"
+    t.float "confidence"
+    t.datetime "verified_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_current"], name: "index_sales_contact_employments_on_is_current"
+    t.index ["is_primary"], name: "index_sales_contact_employments_on_is_primary"
+    t.index ["sales_account_id"], name: "index_sales_contact_employments_on_sales_account_id"
+    t.index ["sales_contact_id", "sales_account_id"], name: "idx_sales_contact_employments_contact_account"
+    t.index ["sales_contact_id"], name: "index_sales_contact_employments_on_sales_contact_id"
+  end
+
   create_table "sales_contacts", force: :cascade do |t|
     t.bigint "sales_account_id", null: false
     t.bigint "user_id"
@@ -3584,9 +3681,364 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.jsonb "metadata", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index "sales_account_id, lower((email)::text)", name: "index_sales_contacts_on_account_and_normalized_email", unique: true, where: "((email IS NOT NULL) AND (btrim((email)::text) <> ''::text))"
     t.index ["email"], name: "index_sales_contacts_on_email"
     t.index ["sales_account_id"], name: "index_sales_contacts_on_sales_account_id"
     t.index ["user_id"], name: "index_sales_contacts_on_user_id"
+  end
+
+  create_table "sales_custom_field_definitions", force: :cascade do |t|
+    t.bigint "company_id"
+    t.string "entity_type", null: false
+    t.string "key", null: false
+    t.string "label", null: false
+    t.string "field_type", null: false
+    t.boolean "required", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.jsonb "options", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "entity_type", "key"], name: "idx_sales_custom_fields_key", unique: true
+    t.index ["company_id"], name: "index_sales_custom_field_definitions_on_company_id"
+  end
+
+  create_table "sales_custom_field_values", force: :cascade do |t|
+    t.bigint "definition_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "entity_id", null: false
+    t.text "value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["definition_id", "entity_type", "entity_id"], name: "idx_sales_custom_field_values_unique", unique: true
+    t.index ["definition_id"], name: "index_sales_custom_field_values_on_definition_id"
+  end
+
+  create_table "sales_email_accounts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "email", null: false
+    t.string "provider", default: "ses", null: false
+    t.text "access_token_encrypted"
+    t.text "refresh_token_encrypted"
+    t.string "sync_status", default: "idle", null: false
+    t.datetime "last_synced_at"
+    t.integer "messages_imported", default: 0, null: false
+    t.integer "messages_failed", default: 0, null: false
+    t.text "sync_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "company_id", null: false
+    t.index ["company_id", "provider", "email"], name: "idx_email_accounts_company_provider_email", unique: true
+    t.index ["company_id"], name: "index_sales_email_accounts_on_company_id"
+    t.index ["user_id", "email"], name: "index_sales_email_accounts_on_user_id_and_email", unique: true
+    t.index ["user_id"], name: "index_sales_email_accounts_on_user_id"
+  end
+
+  create_table "sales_email_attachments", force: :cascade do |t|
+    t.bigint "sales_email_message_id", null: false
+    t.string "file_name", null: false
+    t.string "content_type", null: false
+    t.bigint "file_size", default: 0, null: false
+    t.boolean "inline", default: false, null: false
+    t.string "content_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "company_id", null: false
+    t.index ["company_id"], name: "index_sales_email_attachments_on_company_id"
+    t.index ["sales_email_message_id"], name: "index_sales_email_attachments_on_sales_email_message_id"
+  end
+
+  create_table "sales_email_events", force: :cascade do |t|
+    t.bigint "sales_email_message_id", null: false
+    t.string "provider_event_id"
+    t.string "event_type", null: false
+    t.string "url"
+    t.string "user_agent"
+    t.datetime "occurred_at", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "company_id", null: false
+    t.index ["company_id"], name: "index_sales_email_events_on_company_id"
+    t.index ["provider_event_id"], name: "index_sales_email_events_on_provider_event_id", unique: true, where: "(provider_event_id IS NOT NULL)"
+    t.index ["sales_email_message_id", "event_type"], name: "idx_sales_email_events_msg_event"
+    t.index ["sales_email_message_id"], name: "index_sales_email_events_on_sales_email_message_id"
+  end
+
+  create_table "sales_email_links", force: :cascade do |t|
+    t.bigint "email_message_id", null: false
+    t.string "token", null: false
+    t.text "original_url", null: false
+    t.integer "click_count", default: 0, null: false
+    t.datetime "first_clicked_at"
+    t.datetime "last_clicked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email_message_id"], name: "index_sales_email_links_on_email_message_id"
+    t.index ["token"], name: "index_sales_email_links_on_token", unique: true
+  end
+
+  create_table "sales_email_messages", force: :cascade do |t|
+    t.bigint "sales_account_id"
+    t.bigint "sales_contact_id"
+    t.bigint "sales_opportunity_id"
+    t.bigint "sender_user_id", null: false
+    t.string "provider", default: "aws_ses", null: false
+    t.string "provider_message_id"
+    t.string "from_email", null: false
+    t.string "to_email", null: false
+    t.string "cc"
+    t.string "bcc"
+    t.string "subject", null: false
+    t.text "body_text"
+    t.text "body_html"
+    t.string "status", default: "queued", null: false
+    t.datetime "sent_at"
+    t.datetime "delivered_at"
+    t.datetime "bounced_at"
+    t.datetime "first_opened_at"
+    t.datetime "last_opened_at"
+    t.integer "open_count", default: 0, null: false
+    t.datetime "first_clicked_at"
+    t.datetime "last_clicked_at"
+    t.integer "click_count", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "sales_email_account_id"
+    t.bigint "sales_email_thread_id"
+    t.jsonb "body_json", default: {}
+    t.string "in_reply_to"
+    t.text "references_header"
+    t.string "tracking_token"
+    t.boolean "open_tracking_enabled", default: true, null: false
+    t.boolean "click_tracking_enabled", default: true, null: false
+    t.bigint "company_id", null: false
+    t.string "message_id"
+    t.index ["company_id", "message_id"], name: "idx_sales_email_messages_company_message_id", unique: true, where: "(message_id IS NOT NULL)"
+    t.index ["company_id"], name: "index_sales_email_messages_on_company_id"
+    t.index ["provider_message_id"], name: "index_sales_email_messages_on_provider_message_id"
+    t.index ["sales_account_id"], name: "index_sales_email_messages_on_sales_account_id"
+    t.index ["sales_contact_id"], name: "index_sales_email_messages_on_sales_contact_id"
+    t.index ["sales_email_account_id"], name: "index_sales_email_messages_on_sales_email_account_id"
+    t.index ["sales_email_thread_id"], name: "index_sales_email_messages_on_sales_email_thread_id"
+    t.index ["sales_opportunity_id"], name: "index_sales_email_messages_on_sales_opportunity_id"
+    t.index ["sender_user_id"], name: "index_sales_email_messages_on_sender_user_id"
+    t.index ["sent_at"], name: "index_sales_email_messages_on_sent_at"
+    t.index ["status"], name: "index_sales_email_messages_on_status"
+    t.index ["tracking_token"], name: "index_sales_email_messages_on_tracking_token", unique: true
+  end
+
+  create_table "sales_email_participants", force: :cascade do |t|
+    t.bigint "sales_email_message_id", null: false
+    t.bigint "sales_contact_id"
+    t.string "participant_type", null: false
+    t.string "name"
+    t.string "email", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "company_id", null: false
+    t.index ["company_id"], name: "index_sales_email_participants_on_company_id"
+    t.index ["sales_contact_id"], name: "index_sales_email_participants_on_sales_contact_id"
+    t.index ["sales_email_message_id", "participant_type"], name: "idx_email_participants_type"
+    t.index ["sales_email_message_id"], name: "index_sales_email_participants_on_sales_email_message_id"
+  end
+
+  create_table "sales_email_sequence_steps", force: :cascade do |t|
+    t.bigint "email_sequence_id", null: false
+    t.bigint "email_template_id"
+    t.integer "position", null: false
+    t.integer "delay_days", default: 0, null: false
+    t.string "step_type", default: "email", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email_sequence_id", "position"], name: "idx_sequence_steps_position", unique: true
+    t.index ["email_sequence_id"], name: "index_sales_email_sequence_steps_on_email_sequence_id"
+    t.index ["email_template_id"], name: "index_sales_email_sequence_steps_on_email_template_id"
+  end
+
+  create_table "sales_email_sequences", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "user_id"
+    t.string "name", null: false
+    t.text "description"
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_sales_email_sequences_on_company_id"
+    t.index ["user_id"], name: "index_sales_email_sequences_on_user_id"
+  end
+
+  create_table "sales_email_signatures", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "sales_email_account_id"
+    t.string "name", null: false
+    t.text "body_html", null: false
+    t.boolean "is_default", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "company_id", null: false
+    t.index ["company_id"], name: "index_sales_email_signatures_on_company_id"
+    t.index ["sales_email_account_id"], name: "index_sales_email_signatures_on_sales_email_account_id"
+    t.index ["user_id"], name: "index_sales_email_signatures_on_user_id"
+  end
+
+  create_table "sales_email_suppressions", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.string "email", null: false
+    t.string "reason", null: false
+    t.datetime "suppressed_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "email"], name: "index_sales_email_suppressions_on_company_id_and_email", unique: true
+    t.index ["company_id"], name: "index_sales_email_suppressions_on_company_id"
+  end
+
+  create_table "sales_email_templates", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "subject_template", null: false
+    t.jsonb "body_json", default: {}, null: false
+    t.text "body_html"
+    t.string "category", default: "outreach", null: false
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "company_id", null: false
+    t.index ["company_id"], name: "index_sales_email_templates_on_company_id"
+    t.index ["user_id"], name: "index_sales_email_templates_on_user_id"
+  end
+
+  create_table "sales_email_threads", force: :cascade do |t|
+    t.string "provider_thread_id"
+    t.string "subject_normalized"
+    t.datetime "first_message_at"
+    t.datetime "last_message_at"
+    t.integer "message_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "company_id", null: false
+    t.bigint "sales_account_id"
+    t.bigint "sales_contact_id"
+    t.index ["company_id", "provider_thread_id"], name: "idx_email_threads_company_provider_id", unique: true
+    t.index ["company_id", "sales_account_id", "sales_contact_id"], name: "idx_email_threads_tenant_account_contact"
+    t.index ["company_id"], name: "index_sales_email_threads_on_company_id"
+    t.index ["sales_account_id"], name: "index_sales_email_threads_on_sales_account_id"
+    t.index ["sales_contact_id"], name: "index_sales_email_threads_on_sales_contact_id"
+  end
+
+  create_table "sales_energy_profiles", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.decimal "monthly_consumption_kwh", precision: 12, scale: 2
+    t.decimal "tariff_brl_per_kwh", precision: 10, scale: 4
+    t.string "utility"
+    t.string "connection_type"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_sales_energy_profiles_on_account_id"
+  end
+
+  create_table "sales_form_submissions", force: :cascade do |t|
+    t.bigint "form_id", null: false
+    t.bigint "account_id"
+    t.bigint "contact_id"
+    t.bigint "campaign_id"
+    t.string "idempotency_key", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.string "status", default: "received", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_sales_form_submissions_on_account_id"
+    t.index ["campaign_id"], name: "index_sales_form_submissions_on_campaign_id"
+    t.index ["contact_id"], name: "index_sales_form_submissions_on_contact_id"
+    t.index ["form_id"], name: "index_sales_form_submissions_on_form_id"
+    t.index ["idempotency_key"], name: "index_sales_form_submissions_on_idempotency_key", unique: true
+  end
+
+  create_table "sales_forms", force: :cascade do |t|
+    t.bigint "company_id"
+    t.bigint "campaign_id"
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.boolean "active", default: true, null: false
+    t.jsonb "fields", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign_id"], name: "index_sales_forms_on_campaign_id"
+    t.index ["company_id", "slug"], name: "index_sales_forms_on_company_id_and_slug", unique: true
+    t.index ["company_id"], name: "index_sales_forms_on_company_id"
+  end
+
+  create_table "sales_integrations", force: :cascade do |t|
+    t.bigint "company_id"
+    t.bigint "created_by_id"
+    t.string "provider", null: false
+    t.string "name", null: false
+    t.string "status", default: "active", null: false
+    t.jsonb "settings", default: {}, null: false
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_sales_integrations_on_company_id"
+    t.index ["created_by_id"], name: "index_sales_integrations_on_created_by_id"
+  end
+
+  create_table "sales_intelligence_signals", force: :cascade do |t|
+    t.bigint "sales_account_id", null: false
+    t.bigint "sales_contact_id"
+    t.bigint "sales_opportunity_id"
+    t.string "signal_type", null: false
+    t.string "severity", default: "info", null: false
+    t.float "confidence", default: 1.0, null: false
+    t.string "title", null: false
+    t.text "description"
+    t.string "source_type"
+    t.bigint "source_id"
+    t.datetime "detected_at", null: false
+    t.datetime "expires_at"
+    t.datetime "acknowledged_at"
+    t.bigint "acknowledged_by_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["acknowledged_at"], name: "index_sales_intelligence_signals_on_acknowledged_at"
+    t.index ["acknowledged_by_id"], name: "index_sales_intelligence_signals_on_acknowledged_by_id"
+    t.index ["detected_at"], name: "index_sales_intelligence_signals_on_detected_at"
+    t.index ["sales_account_id", "signal_type"], name: "index_sales_signals_account_type_active", where: "(acknowledged_at IS NULL)"
+    t.index ["sales_account_id"], name: "index_sales_intelligence_signals_on_sales_account_id"
+    t.index ["sales_contact_id"], name: "index_sales_intelligence_signals_on_sales_contact_id"
+    t.index ["sales_opportunity_id"], name: "index_sales_intelligence_signals_on_sales_opportunity_id"
+  end
+
+  create_table "sales_message_templates", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "channel", default: "email", null: false
+    t.string "subject"
+    t.text "body", null: false
+    t.string "category", default: "first_contact", null: false
+    t.boolean "active", default: true, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["channel", "category"], name: "index_sales_message_templates_on_channel_and_category"
+  end
+
+  create_table "sales_notes", force: :cascade do |t|
+    t.bigint "company_id"
+    t.bigint "account_id"
+    t.bigint "opportunity_id"
+    t.bigint "contact_id"
+    t.bigint "author_id", null: false
+    t.string "title"
+    t.text "body", null: false
+    t.boolean "pinned", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "created_at"], name: "index_sales_notes_on_account_id_and_created_at"
+    t.index ["account_id"], name: "index_sales_notes_on_account_id"
+    t.index ["author_id"], name: "index_sales_notes_on_author_id"
+    t.index ["company_id"], name: "index_sales_notes_on_company_id"
+    t.index ["contact_id"], name: "index_sales_notes_on_contact_id"
+    t.index ["opportunity_id"], name: "index_sales_notes_on_opportunity_id"
   end
 
   create_table "sales_opportunities", force: :cascade do |t|
@@ -3615,13 +4067,68 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "temperature", default: "cold", null: false
+    t.bigint "source_id"
+    t.index ["expected_close_date"], name: "idx_sales_opp_expected_close"
     t.index ["next_activity_at"], name: "index_sales_opportunities_on_next_activity_at"
+    t.index ["owner_id", "status"], name: "idx_sales_opp_owner_status"
     t.index ["owner_id"], name: "index_sales_opportunities_on_owner_id"
     t.index ["primary_contact_id"], name: "index_sales_opportunities_on_primary_contact_id"
     t.index ["sales_account_id"], name: "index_sales_opportunities_on_sales_account_id"
     t.index ["sales_pipeline_id"], name: "index_sales_opportunities_on_sales_pipeline_id"
     t.index ["sales_stage_id"], name: "index_sales_opportunities_on_sales_stage_id"
+    t.index ["source_id"], name: "index_sales_opportunities_on_source_id"
+    t.index ["status", "sales_pipeline_id", "sales_stage_id"], name: "idx_sales_opp_status_pipeline_stage"
     t.index ["status"], name: "index_sales_opportunities_on_status"
+    t.index ["value_cents"], name: "idx_sales_opp_value_cents"
+  end
+
+  create_table "sales_opportunity_competitors", force: :cascade do |t|
+    t.bigint "sales_opportunity_id", null: false
+    t.bigint "sales_competitor_id", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sales_competitor_id"], name: "index_sales_opportunity_competitors_on_sales_competitor_id"
+    t.index ["sales_opportunity_id", "sales_competitor_id"], name: "idx_opp_competitors_unique", unique: true
+    t.index ["sales_opportunity_id"], name: "index_sales_opportunity_competitors_on_sales_opportunity_id"
+  end
+
+  create_table "sales_opportunity_contacts", force: :cascade do |t|
+    t.bigint "sales_opportunity_id", null: false
+    t.bigint "sales_contact_id", null: false
+    t.string "role", default: "decision_maker", null: false
+    t.string "influence", default: "medium", null: false
+    t.string "support_level", default: "neutral", null: false
+    t.boolean "is_primary", default: false, null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sales_contact_id"], name: "index_sales_opportunity_contacts_on_sales_contact_id"
+    t.index ["sales_opportunity_id", "sales_contact_id"], name: "idx_opp_contacts_unique", unique: true
+    t.index ["sales_opportunity_id", "sales_contact_id"], name: "index_sales_opp_contacts_unique", unique: true
+    t.index ["sales_opportunity_id"], name: "index_sales_opportunity_contacts_on_sales_opportunity_id"
+  end
+
+  create_table "sales_opportunity_line_items", force: :cascade do |t|
+    t.bigint "opportunity_id", null: false
+    t.bigint "product_id", null: false
+    t.decimal "quantity", precision: 12, scale: 3, default: "1.0", null: false
+    t.integer "unit_price_cents", null: false
+    t.integer "discount_cents", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["opportunity_id"], name: "index_sales_opportunity_line_items_on_opportunity_id"
+    t.index ["product_id"], name: "index_sales_opportunity_line_items_on_product_id"
+  end
+
+  create_table "sales_permissions", force: :cascade do |t|
+    t.string "resource", null: false
+    t.string "action", null: false
+    t.string "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["resource", "action"], name: "index_sales_permissions_on_resource_and_action", unique: true
   end
 
   create_table "sales_pipelines", force: :cascade do |t|
@@ -3631,6 +4138,20 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_sales_pipelines_on_key", unique: true
+  end
+
+  create_table "sales_products", force: :cascade do |t|
+    t.bigint "company_id"
+    t.string "sku", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.integer "unit_price_cents", default: 0, null: false
+    t.string "currency", default: "BRL", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "sku"], name: "index_sales_products_on_company_id_and_sku", unique: true
+    t.index ["company_id"], name: "index_sales_products_on_company_id"
   end
 
   create_table "sales_qualifications", force: :cascade do |t|
@@ -3649,6 +4170,133 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["sales_opportunity_id"], name: "index_sales_qualifications_on_sales_opportunity_id", unique: true
+  end
+
+  create_table "sales_quote_events", force: :cascade do |t|
+    t.bigint "quote_id", null: false
+    t.bigint "actor_id"
+    t.string "event_type", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_sales_quote_events_on_actor_id"
+    t.index ["quote_id"], name: "index_sales_quote_events_on_quote_id"
+  end
+
+  create_table "sales_quote_items", force: :cascade do |t|
+    t.bigint "quote_id", null: false
+    t.bigint "product_id"
+    t.string "description", null: false
+    t.decimal "quantity", precision: 12, scale: 3, default: "1.0", null: false
+    t.integer "unit_price_cents", null: false
+    t.integer "total_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_sales_quote_items_on_product_id"
+    t.index ["quote_id"], name: "index_sales_quote_items_on_quote_id"
+  end
+
+  create_table "sales_quotes", force: :cascade do |t|
+    t.bigint "opportunity_id", null: false
+    t.bigint "created_by_id"
+    t.string "number", null: false
+    t.string "status", default: "draft", null: false
+    t.date "expires_on"
+    t.integer "total_cents", default: 0, null: false
+    t.string "currency", default: "BRL", null: false
+    t.datetime "sent_at"
+    t.datetime "accepted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "solar_project_id"
+    t.index ["created_by_id"], name: "index_sales_quotes_on_created_by_id"
+    t.index ["number"], name: "index_sales_quotes_on_number", unique: true
+    t.index ["opportunity_id"], name: "index_sales_quotes_on_opportunity_id"
+    t.index ["solar_project_id"], name: "index_sales_quotes_on_solar_project_id"
+  end
+
+  create_table "sales_role_permissions", force: :cascade do |t|
+    t.bigint "role_id", null: false
+    t.bigint "permission_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["permission_id"], name: "index_sales_role_permissions_on_permission_id"
+    t.index ["role_id", "permission_id"], name: "index_sales_role_permissions_on_role_id_and_permission_id", unique: true
+    t.index ["role_id"], name: "index_sales_role_permissions_on_role_id"
+  end
+
+  create_table "sales_roles", force: :cascade do |t|
+    t.bigint "company_id"
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.boolean "system", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "slug"], name: "index_sales_roles_on_company_id_and_slug", unique: true
+    t.index ["company_id"], name: "index_sales_roles_on_company_id"
+  end
+
+  create_table "sales_saved_views", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "name", null: false
+    t.string "resource_type", default: "account", null: false
+    t.jsonb "filters", default: {}, null: false
+    t.jsonb "sort", default: {}, null: false
+    t.jsonb "columns", default: [], null: false
+    t.boolean "is_default", default: false, null: false
+    t.boolean "is_shared", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "is_pinned", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.bigint "company_id"
+    t.index ["company_id", "resource_type"], name: "idx_sales_saved_views_company_resource"
+    t.index ["user_id", "resource_type", "is_pinned", "position"], name: "idx_sales_saved_views_navigation"
+    t.index ["user_id", "resource_type"], name: "idx_sales_saved_views_user_resource"
+    t.index ["user_id"], name: "index_sales_saved_views_on_user_id"
+  end
+
+  create_table "sales_solar_projects", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "opportunity_id"
+    t.string "status", default: "qualification", null: false
+    t.decimal "system_kwp", precision: 12, scale: 3
+    t.decimal "estimated_generation_kwh", precision: 14, scale: 2
+    t.integer "estimated_cost_cents"
+    t.integer "version", default: 1, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_sales_solar_projects_on_account_id"
+    t.index ["opportunity_id"], name: "index_sales_solar_projects_on_opportunity_id"
+  end
+
+  create_table "sales_solar_site_surveys", force: :cascade do |t|
+    t.bigint "solar_project_id", null: false
+    t.bigint "inspector_id"
+    t.string "status", default: "draft", null: false
+    t.datetime "visited_at"
+    t.decimal "roof_area_m2", precision: 12, scale: 2
+    t.decimal "roof_pitch_degrees", precision: 6, scale: 2
+    t.string "roof_material"
+    t.string "shading_level"
+    t.string "connection_voltage"
+    t.text "observations"
+    t.jsonb "photos", default: [], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["inspector_id"], name: "index_sales_solar_site_surveys_on_inspector_id"
+    t.index ["solar_project_id", "status"], name: "index_sales_solar_site_surveys_on_solar_project_id_and_status"
+    t.index ["solar_project_id"], name: "index_sales_solar_site_surveys_on_solar_project_id"
+  end
+
+  create_table "sales_sources", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_sales_sources_on_slug", unique: true
   end
 
   create_table "sales_stage_histories", force: :cascade do |t|
@@ -3682,6 +4330,37 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["sales_pipeline_id"], name: "index_sales_stages_on_sales_pipeline_id"
   end
 
+  create_table "sales_taggings", force: :cascade do |t|
+    t.bigint "sales_tag_id", null: false
+    t.string "taggable_type", null: false
+    t.bigint "taggable_id", null: false
+    t.bigint "created_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_sales_taggings_on_created_by_id"
+    t.index ["sales_tag_id", "taggable_type", "taggable_id"], name: "idx_sales_taggings_unique", unique: true
+    t.index ["sales_tag_id"], name: "index_sales_taggings_on_sales_tag_id"
+    t.index ["taggable_type", "taggable_id"], name: "index_sales_taggings_on_taggable"
+  end
+
+  create_table "sales_tags", force: :cascade do |t|
+    t.bigint "company_id"
+    t.bigint "created_by_id"
+    t.string "name", null: false
+    t.string "normalized_name", null: false
+    t.string "slug", null: false
+    t.string "color", default: "#2563eb", null: false
+    t.text "description"
+    t.string "entity_type", default: "Opportunity", null: false
+    t.datetime "archived_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "entity_type", "archived_at"], name: "idx_sales_tags_scope"
+    t.index ["company_id", "entity_type", "normalized_name"], name: "idx_sales_tags_unique_name", unique: true
+    t.index ["company_id"], name: "index_sales_tags_on_company_id"
+    t.index ["created_by_id"], name: "index_sales_tags_on_created_by_id"
+  end
+
   create_table "sales_tasks", force: :cascade do |t|
     t.bigint "sales_account_id", null: false
     t.bigint "sales_opportunity_id"
@@ -3700,6 +4379,90 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
     t.index ["sales_account_id"], name: "index_sales_tasks_on_sales_account_id"
     t.index ["sales_contact_id"], name: "index_sales_tasks_on_sales_contact_id"
     t.index ["sales_opportunity_id"], name: "index_sales_tasks_on_sales_opportunity_id"
+  end
+
+  create_table "sales_taxonomies", force: :cascade do |t|
+    t.bigint "company_id"
+    t.string "kind", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.boolean "active", default: true, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "kind", "slug"], name: "index_sales_taxonomies_on_company_id_and_kind_and_slug", unique: true
+    t.index ["company_id"], name: "index_sales_taxonomies_on_company_id"
+  end
+
+  create_table "sales_tracking_events", force: :cascade do |t|
+    t.bigint "account_id"
+    t.bigint "contact_id"
+    t.string "session_id", null: false
+    t.string "event_name", null: false
+    t.string "path"
+    t.jsonb "properties", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_sales_tracking_events_on_account_id"
+    t.index ["contact_id"], name: "index_sales_tracking_events_on_contact_id"
+    t.index ["session_id", "occurred_at"], name: "index_sales_tracking_events_on_session_id_and_occurred_at"
+  end
+
+  create_table "sales_tracking_sessions", force: :cascade do |t|
+    t.bigint "account_id"
+    t.bigint "contact_id"
+    t.string "session_id", null: false
+    t.string "anonymous_id"
+    t.string "utm_source"
+    t.string "utm_medium"
+    t.string "utm_campaign"
+    t.datetime "started_at", null: false
+    t.datetime "ended_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_sales_tracking_sessions_on_account_id"
+    t.index ["contact_id"], name: "index_sales_tracking_sessions_on_contact_id"
+    t.index ["session_id"], name: "index_sales_tracking_sessions_on_session_id", unique: true
+  end
+
+  create_table "sales_user_roles", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "role_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["role_id"], name: "index_sales_user_roles_on_role_id"
+    t.index ["user_id", "role_id"], name: "index_sales_user_roles_on_user_id_and_role_id", unique: true
+    t.index ["user_id"], name: "index_sales_user_roles_on_user_id"
+  end
+
+  create_table "sales_webhook_deliveries", force: :cascade do |t|
+    t.bigint "endpoint_id", null: false
+    t.string "event_type", null: false
+    t.string "idempotency_key", null: false
+    t.integer "status_code"
+    t.integer "attempts", default: 0, null: false
+    t.string "status", default: "pending", null: false
+    t.text "response_body"
+    t.datetime "delivered_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["endpoint_id"], name: "index_sales_webhook_deliveries_on_endpoint_id"
+    t.index ["idempotency_key"], name: "index_sales_webhook_deliveries_on_idempotency_key", unique: true
+  end
+
+  create_table "sales_webhook_endpoints", force: :cascade do |t|
+    t.bigint "company_id"
+    t.bigint "created_by_id"
+    t.string "url", null: false
+    t.string "secret_digest", null: false
+    t.jsonb "events", default: [], null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "secret_ciphertext"
+    t.index ["company_id"], name: "index_sales_webhook_endpoints_on_company_id"
+    t.index ["created_by_id"], name: "index_sales_webhook_endpoints_on_created_by_id"
   end
 
   create_table "saved_items", force: :cascade do |t|
@@ -4149,23 +4912,118 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_01_000000) do
   add_foreign_key "sales_activities", "sales_contacts"
   add_foreign_key "sales_activities", "sales_opportunities"
   add_foreign_key "sales_activities", "users", column: "actor_id"
+  add_foreign_key "sales_api_keys", "companies"
+  add_foreign_key "sales_api_keys", "users"
+  add_foreign_key "sales_audit_logs", "companies"
+  add_foreign_key "sales_audit_logs", "users", column: "actor_id"
+  add_foreign_key "sales_campaigns", "companies"
+  add_foreign_key "sales_consents", "sales_contacts", column: "contact_id"
+  add_foreign_key "sales_contact_employments", "sales_accounts"
+  add_foreign_key "sales_contact_employments", "sales_contacts"
   add_foreign_key "sales_contacts", "sales_accounts"
   add_foreign_key "sales_contacts", "users"
+  add_foreign_key "sales_custom_field_definitions", "companies"
+  add_foreign_key "sales_custom_field_values", "sales_custom_field_definitions", column: "definition_id"
+  add_foreign_key "sales_email_accounts", "companies"
+  add_foreign_key "sales_email_accounts", "users"
+  add_foreign_key "sales_email_attachments", "companies"
+  add_foreign_key "sales_email_attachments", "sales_email_messages"
+  add_foreign_key "sales_email_events", "companies"
+  add_foreign_key "sales_email_events", "sales_email_messages"
+  add_foreign_key "sales_email_links", "sales_email_messages", column: "email_message_id"
+  add_foreign_key "sales_email_messages", "companies"
+  add_foreign_key "sales_email_messages", "sales_accounts"
+  add_foreign_key "sales_email_messages", "sales_contacts"
+  add_foreign_key "sales_email_messages", "sales_email_accounts"
+  add_foreign_key "sales_email_messages", "sales_email_threads"
+  add_foreign_key "sales_email_messages", "sales_opportunities"
+  add_foreign_key "sales_email_messages", "users", column: "sender_user_id"
+  add_foreign_key "sales_email_participants", "companies"
+  add_foreign_key "sales_email_participants", "sales_contacts"
+  add_foreign_key "sales_email_participants", "sales_email_messages"
+  add_foreign_key "sales_email_sequence_steps", "sales_email_sequences", column: "email_sequence_id"
+  add_foreign_key "sales_email_sequence_steps", "sales_email_templates", column: "email_template_id"
+  add_foreign_key "sales_email_sequences", "companies"
+  add_foreign_key "sales_email_sequences", "users"
+  add_foreign_key "sales_email_signatures", "companies"
+  add_foreign_key "sales_email_signatures", "sales_email_accounts"
+  add_foreign_key "sales_email_signatures", "users"
+  add_foreign_key "sales_email_suppressions", "companies"
+  add_foreign_key "sales_email_templates", "companies"
+  add_foreign_key "sales_email_templates", "users"
+  add_foreign_key "sales_email_threads", "companies"
+  add_foreign_key "sales_email_threads", "sales_accounts"
+  add_foreign_key "sales_email_threads", "sales_contacts"
+  add_foreign_key "sales_energy_profiles", "sales_accounts", column: "account_id"
+  add_foreign_key "sales_form_submissions", "sales_accounts", column: "account_id"
+  add_foreign_key "sales_form_submissions", "sales_campaigns", column: "campaign_id"
+  add_foreign_key "sales_form_submissions", "sales_contacts", column: "contact_id"
+  add_foreign_key "sales_form_submissions", "sales_forms", column: "form_id"
+  add_foreign_key "sales_forms", "companies"
+  add_foreign_key "sales_forms", "sales_campaigns", column: "campaign_id"
+  add_foreign_key "sales_integrations", "companies"
+  add_foreign_key "sales_integrations", "users", column: "created_by_id"
+  add_foreign_key "sales_intelligence_signals", "sales_accounts"
+  add_foreign_key "sales_intelligence_signals", "sales_contacts"
+  add_foreign_key "sales_intelligence_signals", "sales_opportunities"
+  add_foreign_key "sales_intelligence_signals", "users", column: "acknowledged_by_id"
+  add_foreign_key "sales_notes", "companies"
+  add_foreign_key "sales_notes", "sales_accounts", column: "account_id"
+  add_foreign_key "sales_notes", "sales_contacts", column: "contact_id"
+  add_foreign_key "sales_notes", "sales_opportunities", column: "opportunity_id"
+  add_foreign_key "sales_notes", "users", column: "author_id"
   add_foreign_key "sales_opportunities", "sales_accounts"
   add_foreign_key "sales_opportunities", "sales_contacts", column: "primary_contact_id"
   add_foreign_key "sales_opportunities", "sales_pipelines"
+  add_foreign_key "sales_opportunities", "sales_sources", column: "source_id"
   add_foreign_key "sales_opportunities", "sales_stages"
   add_foreign_key "sales_opportunities", "users", column: "owner_id"
+  add_foreign_key "sales_opportunity_competitors", "sales_competitors"
+  add_foreign_key "sales_opportunity_competitors", "sales_opportunities"
+  add_foreign_key "sales_opportunity_contacts", "sales_contacts"
+  add_foreign_key "sales_opportunity_contacts", "sales_opportunities"
+  add_foreign_key "sales_opportunity_line_items", "sales_opportunities", column: "opportunity_id"
+  add_foreign_key "sales_opportunity_line_items", "sales_products", column: "product_id"
+  add_foreign_key "sales_products", "companies"
   add_foreign_key "sales_qualifications", "sales_opportunities"
+  add_foreign_key "sales_quote_events", "sales_quotes", column: "quote_id"
+  add_foreign_key "sales_quote_events", "users", column: "actor_id"
+  add_foreign_key "sales_quote_items", "sales_products", column: "product_id"
+  add_foreign_key "sales_quote_items", "sales_quotes", column: "quote_id"
+  add_foreign_key "sales_quotes", "sales_opportunities", column: "opportunity_id"
+  add_foreign_key "sales_quotes", "sales_solar_projects", column: "solar_project_id"
+  add_foreign_key "sales_quotes", "users", column: "created_by_id"
+  add_foreign_key "sales_role_permissions", "sales_permissions", column: "permission_id"
+  add_foreign_key "sales_role_permissions", "sales_roles", column: "role_id"
+  add_foreign_key "sales_roles", "companies"
+  add_foreign_key "sales_saved_views", "users"
+  add_foreign_key "sales_solar_projects", "sales_accounts", column: "account_id"
+  add_foreign_key "sales_solar_projects", "sales_opportunities", column: "opportunity_id"
+  add_foreign_key "sales_solar_site_surveys", "sales_solar_projects", column: "solar_project_id"
+  add_foreign_key "sales_solar_site_surveys", "users", column: "inspector_id"
   add_foreign_key "sales_stage_histories", "sales_opportunities"
   add_foreign_key "sales_stage_histories", "sales_stages", column: "from_stage_id"
   add_foreign_key "sales_stage_histories", "sales_stages", column: "to_stage_id"
   add_foreign_key "sales_stage_histories", "users", column: "actor_id"
   add_foreign_key "sales_stages", "sales_pipelines"
+  add_foreign_key "sales_taggings", "sales_tags"
+  add_foreign_key "sales_taggings", "users", column: "created_by_id"
+  add_foreign_key "sales_tags", "companies"
+  add_foreign_key "sales_tags", "users", column: "created_by_id"
   add_foreign_key "sales_tasks", "sales_accounts"
   add_foreign_key "sales_tasks", "sales_contacts"
   add_foreign_key "sales_tasks", "sales_opportunities"
   add_foreign_key "sales_tasks", "users", column: "owner_id"
+  add_foreign_key "sales_taxonomies", "companies"
+  add_foreign_key "sales_tracking_events", "sales_accounts", column: "account_id"
+  add_foreign_key "sales_tracking_events", "sales_contacts", column: "contact_id"
+  add_foreign_key "sales_tracking_sessions", "sales_accounts", column: "account_id"
+  add_foreign_key "sales_tracking_sessions", "sales_contacts", column: "contact_id"
+  add_foreign_key "sales_user_roles", "sales_roles", column: "role_id"
+  add_foreign_key "sales_user_roles", "users"
+  add_foreign_key "sales_webhook_deliveries", "sales_webhook_endpoints", column: "endpoint_id"
+  add_foreign_key "sales_webhook_endpoints", "companies"
+  add_foreign_key "sales_webhook_endpoints", "users", column: "created_by_id"
   add_foreign_key "saved_items", "users"
   add_foreign_key "sector_ratings", "companies"
   add_foreign_key "sector_ratings", "users"

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Sales
-  module Pipeline
+  module PipelineBoard
     class BoardQuery
       def self.call(pipeline_id:, current_user:, params: {})
         new(pipeline_id: pipeline_id, current_user: current_user, params: params).call
@@ -79,20 +79,17 @@ module Sales
       end
 
       def fetch_opportunities_with_latest_activity_and_task(scope)
-        # Select opportunities and batch load latest_activity and next_task via efficient batching
         opportunities = scope.to_a
         return [] if opportunities.empty?
 
         opp_ids = opportunities.map(&:id)
 
-        # Batch load latest activities (1 query for all cards)
         latest_activities = ::Sales::Activity
                               .where(sales_opportunity_id: opp_ids)
                               .order(occurred_at: :desc, created_at: :desc)
                               .group_by(&:sales_opportunity_id)
                               .transform_values(&:first)
 
-        # Batch load next pending tasks (1 query for all cards)
         next_tasks = ::Sales::Task
                        .where(sales_opportunity_id: opp_ids, status: 'pending')
                        .order(Arel.sql('due_at ASC NULLS LAST, created_at ASC'))

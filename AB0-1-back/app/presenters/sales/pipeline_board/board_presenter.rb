@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Sales
-  module Pipeline
+  module PipelineBoard
     class BoardPresenter
       def self.call(board_data)
         new(board_data).as_json
