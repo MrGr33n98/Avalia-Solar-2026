@@ -388,7 +388,7 @@ export default function Opportunity360View({ opportunityId, onClose, onUpdated }
                               <Sparkles className="w-4 h-4 text-purple-700" />
                               <span>Recap Inteligente da Oportunidade</span>
                             </div>
-                            <Badge className="bg-purple-200 text-purple-900 text-[10px] font-bold">Nutshell AI</Badge>
+                            <Badge className="bg-purple-200 text-purple-900 text-[10px] font-bold">Avalia AI</Badge>
                           </div>
                           <p className="text-xs text-slate-700 leading-relaxed font-medium">
                             {opp.recap_summary ||

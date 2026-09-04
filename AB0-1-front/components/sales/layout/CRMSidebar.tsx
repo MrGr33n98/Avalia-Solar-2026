@@ -241,12 +241,12 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
 
         <div className="border-t border-slate-800/80 my-3 mx-1" />
 
-        {/* Nutshell AI */}
+        {/* Avalia AI */}
         <div className="pt-1">
           <button
             type="button"
             onClick={() => onOpenAddModal?.('ai')}
-            title="Nutshell AI"
+            title="Avalia AI"
             className={cn(
               'transition-all duration-150 flex items-center text-purple-200 bg-[#161233] border border-purple-700/50 hover:bg-[#1f1945]',
               collapsed
@@ -255,7 +255,7 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
             )}
           >
             <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
-            {!collapsed && <span>Nutshell AI</span>}
+            {!collapsed && <span>Avalia AI</span>}
           </button>
         </div>
       </div>

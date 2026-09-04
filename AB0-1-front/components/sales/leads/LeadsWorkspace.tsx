@@ -65,7 +65,7 @@ export default function LeadsWorkspace() {
             <div>
               <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
                 Leads Workspace
-                <Badge className="bg-indigo-100 text-indigo-800 text-[11px] font-bold">Nutshell Benchmark</Badge>
+                <Badge className="bg-indigo-100 text-indigo-800 text-[11px] font-bold">Avalia Solar CRM</Badge>
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
                 Gerencie todos os leads comerciais B2B, oportunidades e estágios do seu pipeline.
