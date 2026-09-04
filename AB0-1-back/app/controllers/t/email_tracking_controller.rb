@@ -11,6 +11,17 @@ module T
       send_data GIF_1X1, type: 'image/gif', disposition: 'inline'
     end
 
+    def unsubscribe
+      email = ::Sales::EmailMessage.find_by(tracking_token: params[:token])
+      if email
+        ::Sales::EmailSuppression.find_or_create_by!(company_id: email.company_id, email: email.to_email) do |item|
+          item.reason = 'unsubscribe'
+          item.suppressed_at = Time.current
+        end
+      end
+      render plain: 'Preferências de e-mail atualizadas.', status: :ok
+    end
+
     def click
       link = ::Sales::EmailLink.includes(:email_message).find_by(token: params[:token])
       target_url = link&.original_url

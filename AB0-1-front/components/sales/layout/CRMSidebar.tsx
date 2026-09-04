@@ -46,7 +46,7 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
   const pathname = usePathname();
   const [salesExpanded, setSalesExpanded] = useState(true);
 
-  const isCurrent = (path: string) => pathname === path || pathname.startsWith(path);
+  const isCurrent = (path: string) => pathname === path || pathname?.startsWith(path) === true;
 
   return (
     <aside className="hidden w-60 shrink-0 bg-[#0c1a30] md:flex text-slate-200 flex flex-col h-screen sticky top-0 border-r border-slate-800 select-none font-sans z-30">

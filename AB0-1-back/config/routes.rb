@@ -86,15 +86,18 @@ Rails.application.routes.draw do
           delete :remove, on: :member
         end
         resources :emails, only: %i[index create show], controller: 'sales/emails'
-        resources :email_templates, only: %i[index create update destroy], controller: 'sales/email_templates' do
+        resources :email_templates, only: %i[index show create update destroy], controller: 'sales/email_templates' do
           post :preview, on: :member
         end
+        resources :email_sequences, only: %i[index show create update destroy], controller: 'sales/email_sequences'
+        resources :email_suppressions, only: %i[index create destroy], controller: 'sales/email_suppressions'
         resources :email_signatures, only: %i[index create update destroy], controller: 'sales/email_signatures'
         post 'email_events/provider', to: 'sales/email_events#create'
         resources :pipelines, only: %i[index show], controller: 'sales/pipelines'
         resources :accounts, only: %i[index create show update], controller: 'sales/accounts'
         resources :contacts, only: %i[index show create update], controller: 'sales/contacts' do
           get :timeline, on: :member
+          get :engagement, on: :member
           resources :employments, only: %i[index create update destroy], controller: 'sales/contact_employments'
         end
         post 'opportunities/bulk', to: 'sales/opportunities#bulk'
@@ -820,6 +823,7 @@ Rails.application.routes.draw do
 
   # Tracking de Engajamento de E-mail (Abertura Pixel + Clique Link)
   get '/t/email/open/:token.gif', to: 't/email_tracking#open'
+  get '/t/email/unsubscribe/:token', to: 't/email_tracking#unsubscribe'
   get '/t/email/click/:token', to: 't/email_tracking#click'
   post '/api/v1/sales/ses_webhooks', to: 'api/v1/sales/ses_webhooks#create'
 

@@ -48,9 +48,20 @@ module Api
           render json: { contact: serialize_detailed(contact) }
         end
 
+        def engagement
+          contact = scoped_contacts.find(params[:id])
+          emails = contact.email_messages
+          render json: { engagement: { sent: emails.where.not(sent_at: nil).count, delivered: emails.where(status: "delivered").count, opens: emails.sum(:open_count), clicks: emails.sum(:click_count), last_opened_at: emails.maximum(:last_opened_at), last_clicked_at: emails.maximum(:last_clicked_at) } }
+        end
+
         def timeline
-          contact = ::Sales::Contact.find(params[:id])
-          render json: { timeline: ::Sales::Contacts::TimelineBuilder.build(contact) }
+          contact = scoped_contacts.find(params[:id])
+          timeline = ::Sales::Contacts::TimelineBuilder.build(contact)
+          timeline = timeline.select { |event| event[:type].to_s == params[:type].to_s } if params[:type].present?
+          page = [params.fetch(:page, 1).to_i, 1].max
+          per_page = [[params.fetch(:per_page, 50).to_i, 1].max, 100].min
+          total = timeline.length
+          render json: { timeline: timeline.slice((page - 1) * per_page, per_page) || [], meta: { page: page, per_page: per_page, total: total } }
         end
 
         def create

@@ -22,6 +22,7 @@ module Sales
 
     has_many :activities, class_name: 'Sales::Activity', foreign_key: :sales_contact_id, dependent: :nullify
     has_many :tasks, class_name: 'Sales::Task', foreign_key: :sales_contact_id, dependent: :nullify
+    has_many :email_messages, class_name: "Sales::EmailMessage", foreign_key: :sales_contact_id, dependent: :nullify
 
     validates :first_name, presence: true
 

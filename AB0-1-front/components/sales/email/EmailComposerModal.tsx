@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertCircle, Loader2, Mail, Paperclip, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,8 @@ import CRMModal from '@/components/sales/ui/CRMModal';
 import { CRMFormField } from '@/components/sales/ui/CRMForm';
 import { salesApi } from '@/lib/api/sales/client';
 import { toast } from 'sonner';
+
+interface EmailTemplate { id: number; name: string; subject_template?: string; body_html?: string }
 
 interface EmailComposerModalProps {
   open: boolean;
@@ -44,6 +46,9 @@ export default function EmailComposerModal({
   const [trackOpens, setTrackOpens] = useState(true);
   const [trackClicks, setTrackClicks] = useState(true);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+
+  useEffect(() => { if (open) salesApi.getEmailTemplates().then(setTemplates).catch(() => setTemplates([])); }, [open]);
 
   const handleInsertVariable = (variable: string) => {
     setBodyText((prev) => `${prev} {{${variable}}}`);
@@ -133,7 +138,7 @@ export default function EmailComposerModal({
               variant="ghost"
               onClick={onClose}
               disabled={loading}
-              className="h-11 px-5 text-xs font-semibold text-slate-600 hover:text-slate-900"
+              className="h-9 px-5 text-xs font-semibold text-slate-600 hover:text-slate-900"
             >
               Cancelar
             </Button>
@@ -141,7 +146,7 @@ export default function EmailComposerModal({
               type="submit"
               form="create-email-form"
               disabled={loading}
-              className="h-11 px-6 text-xs font-bold bg-indigo-900 hover:bg-indigo-950 text-white rounded-xl shadow-md flex items-center gap-2"
+              className="h-9 px-6 text-xs font-bold bg-indigo-900 hover:bg-indigo-950 text-white rounded-md shadow-md flex items-center gap-2"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -154,9 +159,9 @@ export default function EmailComposerModal({
         </div>
       }
     >
-      <form id="create-email-form" onSubmit={handleSubmit} className="space-y-5 font-sans">
+      <form id="create-email-form" onSubmit={handleSubmit} className="space-y-3 font-sans">
         {error && (
-          <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-800">
+          <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-800">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
             <span>{error}</span>
           </div>
@@ -171,7 +176,7 @@ export default function EmailComposerModal({
                 placeholder="destinatario@cliente.com.br"
                 value={toEmail}
                 onChange={(e) => setToEmail(e.target.value)}
-                className="h-11 text-xs border-slate-300 rounded-xl px-4 flex-1"
+                className="h-9 text-xs border-slate-300 rounded-md px-4 flex-1"
                 required
               />
               {!showCc && (
@@ -179,7 +184,7 @@ export default function EmailComposerModal({
                   type="button"
                   variant="outline"
                   onClick={() => setShowCc(true)}
-                  className="h-11 text-xs font-semibold text-slate-600 border-slate-200 rounded-xl px-3"
+                  className="h-9 text-xs font-semibold text-slate-600 border-slate-200 rounded-md px-3"
                 >
                   + Cc
                 </Button>
@@ -194,7 +199,7 @@ export default function EmailComposerModal({
                 placeholder="copia@empresa.com.br"
                 value={ccEmail}
                 onChange={(e) => setCcEmail(e.target.value)}
-                className="h-11 text-xs border-slate-300 rounded-xl px-4"
+                className="h-9 text-xs border-slate-300 rounded-md px-4"
               />
               {!showBcc && (
                 <Button
@@ -216,13 +221,13 @@ export default function EmailComposerModal({
                 placeholder="oculta@empresa.com.br"
                 value={bccEmail}
                 onChange={(e) => setBccEmail(e.target.value)}
-                className="h-11 text-xs border-slate-300 rounded-xl px-4"
+                className="h-9 text-xs border-slate-300 rounded-md px-4"
               />
             </CRMFormField>
           )}
 
           <CRMFormField label="Anexos">
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 px-4 py-3 text-xs text-slate-600 hover:bg-slate-50">
+            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-slate-300 px-4 py-3 text-xs text-slate-600 hover:bg-slate-50">
               <Paperclip className="h-4 w-4" />
               <span>
                 {attachments.length
@@ -238,13 +243,18 @@ export default function EmailComposerModal({
             </label>
           </CRMFormField>
 
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
+            <div className="mb-1 text-[11px] font-semibold text-slate-600">Templates salvos</div>
+            {templates.length === 0 ? <p className="text-[11px] text-slate-400">Nenhum template disponível.</p> : <div className="flex flex-wrap gap-1">{templates.map((template) => <button key={template.id} type="button" onClick={() => { setSubject(template.subject_template || ""); setBodyText(template.body_html || ""); }} className="rounded border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700">{template.name}</button>)}</div>}
+          </div>
+
           {/* Subject */}
           <CRMFormField label="Assunto" required>
             <Input
               placeholder="Ex: Proposta Comercial de Usina Solar 100kWp"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="h-11 text-xs border-slate-300 rounded-xl px-4 font-semibold text-slate-900"
+              className="h-9 text-xs border-slate-300 rounded-md px-4 font-semibold text-slate-900"
               required
             />
           </CRMFormField>
@@ -298,7 +308,7 @@ export default function EmailComposerModal({
               placeholder="Escreva sua mensagem comercial aqui..."
               value={bodyText}
               onChange={(e) => setBodyText(e.target.value)}
-              className="text-xs border-slate-300 rounded-xl p-4 min-h-[180px] resize-y font-sans leading-relaxed focus:border-indigo-600"
+              className="text-xs border-slate-300 rounded-md p-4 min-h-[180px] resize-y font-sans leading-relaxed focus:border-indigo-600"
               required
             />
           </CRMFormField>

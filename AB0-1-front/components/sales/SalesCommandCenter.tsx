@@ -699,7 +699,7 @@ export default function SalesCommandCenter({
         {/* KANBAN BOARD */}
         {fetchState === 'success' && view === 'kanban' && (
           <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-color:#94a3b8_transparent] [scrollbar-width:thin]">
-            <section className="flex w-max min-w-full gap-3 pb-1 pt-1 select-none sm:gap-4">
+            <section data-testid="sales-pipeline-board" className="flex w-max min-w-full gap-3 pb-1 pt-1 select-none sm:gap-4">
             {stages.map((stage) => {
               const list = (dealData[stage.key] || []).filter(visible);
               const stageTotalCents = list.reduce((sum, d) => sum + d.rawCents, 0);
@@ -707,6 +707,7 @@ export default function SalesCommandCenter({
 
               return (
                 <div
+                  data-testid={`stage-column-${stage.key}`}
                   key={stage.key}
                   onDragOver={(e) => {
                     e.preventDefault();

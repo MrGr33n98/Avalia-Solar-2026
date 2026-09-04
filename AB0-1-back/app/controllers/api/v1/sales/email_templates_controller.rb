@@ -5,7 +5,14 @@ module Api
     module Sales
       class EmailTemplatesController < BaseController
         def index
-          render json: { templates: scoped_templates.order(updated_at: :desc).map { |template| serialize(template) } }
+          templates = scoped_templates.order(updated_at: :desc)
+          templates = templates.where(category: params[:category]) if params[:category].present?
+          templates = templates.where("name ILIKE ? OR subject_template ILIKE ?", "%#{params[:q]}%", "%#{params[:q]}%") if params[:q].present?
+          render json: { templates: templates.limit(100).map { |template| serialize(template) } }
+        end
+
+        def show
+          render json: { template: serialize(scoped_templates.find(params[:id])) }
         end
 
         def create

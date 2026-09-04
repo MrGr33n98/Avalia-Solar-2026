@@ -14,7 +14,7 @@ interface SalesLayoutWrapperProps {
 
 export default function SalesLayoutWrapper({ children }: SalesLayoutWrapperProps) {
   const pathname = usePathname();
-  const isSettings = pathname.startsWith('/dashboard/sales/settings');
+  const isSettings = pathname?.startsWith('/dashboard/sales/settings') ?? false;
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [addModalType, setAddModalType] = useState<string | null>(null);

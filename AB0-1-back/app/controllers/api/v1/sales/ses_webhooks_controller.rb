@@ -26,6 +26,12 @@ module Api
             if email
               provider_event_id = "ses-#{message_id}-#{normalized_type}"
               email.register_event!(event_type: normalized_type, provider_event_id: provider_event_id, payload: payload)
+              if %w[bounce complaint].include?(normalized_type)
+                ::Sales::EmailSuppression.find_or_create_by!(company_id: email.company_id, email: email.to_email) do |item|
+                  item.reason = normalized_type
+                  item.suppressed_at = Time.current
+                end
+              end
             end
           end
 

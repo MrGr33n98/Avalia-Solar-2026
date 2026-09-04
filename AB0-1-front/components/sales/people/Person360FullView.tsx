@@ -149,7 +149,7 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
 
   return (
     <SalesLayoutWrapper>
-      <div className="space-y-6 font-sans">
+      <div className="space-y-3 font-sans max-w-none">
         {/* Navigation back link */}
         <div>
           <Link href="/dashboard/sales/people" className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-indigo-900">
@@ -158,15 +158,15 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
         </div>
 
         {/* Person Header Banner */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-2xs">
+        <div className="bg-white rounded-md border border-slate-200 px-3 py-2 shadow-none sticky top-0 z-20">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-full bg-indigo-900 text-white font-bold flex items-center justify-center text-xl shadow-xs shrink-0 border-2 border-indigo-200">
+              <div className="w-8 h-8 rounded-full bg-indigo-900 text-white font-bold flex items-center justify-center text-xs shrink-0 border-2 border-indigo-200">
                 {initials}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900">{contact.name}</h1>
+                  <h1 className="text-sm font-bold tracking-tight text-slate-900">{contact.name}</h1>
                   <Badge className="bg-indigo-100 text-indigo-900 border-indigo-200 text-xs font-semibold">
                     {contact.decision_role || 'Decision Maker'}
                   </Badge>
@@ -213,11 +213,15 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
         </div>
 
         {/* 2-Column Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <nav className="hidden lg:flex sticky top-14 flex-col gap-1 text-[11px]">
+          {[["nota", "Nova nota"], ["timeline", "Timeline"], ["contato", "Contato"], ["oportunidades", "Oportunidades"]].map(([id, label]) => <a key={id} href={`#${id}`} className="rounded px-2 py-2 text-slate-600 hover:bg-slate-100">{label}</a>)}
+        </nav>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[145px_minmax(0,1fr)_280px] gap-3 items-start">
           {/* Main Column (2/3) */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-3">
             {/* Write Note Inline Composer */}
-            <div className="bg-amber-50/70 border border-amber-200 rounded-lg p-4 shadow-2xs space-y-3">
+            <div id="nota" className="bg-amber-50/70 border border-amber-200 rounded-lg p-4 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
                   <FileText className="w-4 h-4 text-amber-700" /> Write Note (Nova Nota Comercial)
@@ -244,7 +248,7 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
             </div>
 
             {/* Timeline Events */}
-            <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-2xs">
+            <div id="timeline" className="bg-white rounded-lg border border-slate-200 p-5 shadow-2xs">
               <h2 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-indigo-700" />
                 <span>Linha do Tempo de Atividades</span>
@@ -274,9 +278,9 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
           </div>
 
           {/* Right Rail Column (1/3) */}
-          <div className="space-y-6">
+          <div className="space-y-3 lg:sticky lg:top-14">
             {/* Contact Info Card */}
-            <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-2xs space-y-3">
+            <div id="contato" className="bg-white rounded-lg border border-slate-200 p-5 shadow-2xs space-y-3">
               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider text-slate-400">Canais de Contato</h3>
               <div className="space-y-2 text-xs">
                 {contact.email && (

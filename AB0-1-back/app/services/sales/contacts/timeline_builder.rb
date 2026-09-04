@@ -38,6 +38,13 @@ module Sales
           end
         end
 
+        contact.email_messages.includes(:events).each do |email|
+          events << { id: "email-#{email.id}", type: "email", title: email.subject.presence || "E-mail enviado", description: "#{email.status} - #{email.to_email}", occurred_at: email.sent_at || email.created_at }
+          email.events.each do |event|
+            events << { id: "email-event-#{event.id}", type: "email", title: "E-mail: #{event.event_type.humanize}", description: email.subject, occurred_at: event.occurred_at }
+          end
+        end
+
         events << {
           id: "contact-created-#{contact.id}",
           type: 'website',
