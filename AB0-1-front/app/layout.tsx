@@ -87,6 +87,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Avalia Solar',
   },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
   formatDetection: {
     telephone: true,
     email: true,
