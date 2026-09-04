@@ -56,16 +56,28 @@ module Api
               contact.save!
             end
 
-            DomainEvent.create!(
-              event_type: 'sales.account.created', aggregate_type: account.class.name,
-              aggregate_id: account.id, occurred_at: Time.current,
-              payload: { account_id: account.id, actor_id: current_user.id }
-            )
+            begin
+              DomainEvent.create!(
+                event_type: 'sales.account.created',
+                aggregate_type: account.class.name,
+                aggregate_id: account.id,
+                occurred_at: Time.current,
+                status: 'pending',
+                payload: { account_id: account.id, actor_id: current_user.id }
+              )
+            rescue => e
+              Rails.logger.warn("[DomainEvent] Failed to emit sales.account.created event: #{e.message}")
+            end
 
             render json: { account: serialize_detailed(account) }, status: account.previously_new_record? ? :created : :ok
           end
+        rescue ActionController::ParameterMissing => e
+          render json: { error: { message: "Parâmetro obrigatório ausente: #{e.param}" } }, status: :bad_request
         rescue ActiveRecord::RecordInvalid => e
           render json: { error: { message: e.message } }, status: :unprocessable_entity
+        rescue StandardError => e
+          Rails.logger.error("[AccountsController#create Exception] #{e.class}: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+          render json: { error: { message: e.message || 'Erro interno ao criar empresa' } }, status: :internal_server_error
         end
 
         def show

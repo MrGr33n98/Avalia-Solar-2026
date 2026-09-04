@@ -3,6 +3,8 @@
 class DomainEvent < ApplicationRecord
   STATUSES = %w[pending processing completed failed].freeze
 
+  before_validation :set_default_status
+
   validates :event_type, presence: true
   validates :aggregate_type, presence: true
   validates :aggregate_id, presence: true
@@ -20,5 +22,11 @@ class DomainEvent < ApplicationRecord
 
   def processable?
     status == 'pending' || (status == 'failed' && attempts < 5)
+  end
+
+  private
+
+  def set_default_status
+    self.status ||= 'pending'
   end
 end
