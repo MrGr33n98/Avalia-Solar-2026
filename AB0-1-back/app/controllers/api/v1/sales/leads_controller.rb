@@ -28,7 +28,7 @@ module Api
           inline_cnt = params[:contact]
 
           result = ::Sales::Leads::Create.call(
-            actor: current_user || User.first,
+            actor: current_user,
             attributes: lead_params.permit(
               :name, :sales_account_id, :primary_contact_id, :sales_pipeline_id, :sales_stage_id,
               :stage_key, :value_cents, :currency, :probability, :expected_close_date, :temperature,
@@ -65,7 +65,7 @@ module Api
           lead = scoped_opportunities.find(params[:id])
           result = ::Sales::LeadConversionService.call(
             opportunity: lead,
-            actor: current_user || User.first,
+            actor: current_user,
             stage_id: params[:sales_stage_id] || params[:stage_id]
           )
 
@@ -77,22 +77,74 @@ module Api
         end
 
         def bulk
-          ids = Array(params[:ids] || params[:lead_ids])
-          records = scoped_opportunities.where(id: ids)
-          count = records.count
+          action = params[:bulk_action].presence || params[:action_type].presence
+          supported_actions = %w[assign_owner change_stage stage change_status status change_temperature temperature add_tag remove_tag archive delete]
 
-          case params[:bulk_action].to_s
-          when 'status'
-            records.update_all(status: params[:value].to_s)
-          when 'temperature'
-            records.update_all(temperature: params[:value].to_s)
-          when 'stage'
-            records.update_all(sales_stage_id: params[:value].to_i)
-          when 'delete'
-            records.destroy_all
+          unless supported_actions.include?(action.to_s)
+            return render json: {
+              error: {
+                code: 'INVALID_BULK_ACTION',
+                message: "Ação em massa '#{action}' não é suportada."
+              }
+            }, status: :unprocessable_entity
           end
 
-          render json: { success: true, updated_count: count }, status: :ok
+          raw_ids = Array(params[:ids] || params[:lead_ids])
+          ids = raw_ids.take(100) # Max batch 100
+          records = scoped_opportunities.where(id: ids)
+          matched_count = records.count
+          updated_count = 0
+          failed_count = 0
+          failures = []
+
+          records.each do |lead|
+            begin
+              case action.to_s
+              when 'change_stage', 'stage'
+                target_stage = lead.pipeline.stages.find_by(id: params[:value]) || lead.pipeline.stages.find_by(key: params[:value])
+                if target_stage
+                  ::Sales::StageTransition.call(opportunity: lead, to_stage: target_stage, actor: current_user)
+                  updated_count += 1
+                else
+                  failed_count += 1
+                  failures << { id: lead.id, error: 'Estágio inválido para o pipeline' }
+                end
+
+              when 'change_status', 'status'
+                lead.update!(status: params[:value].to_s)
+                updated_count += 1
+
+              when 'change_temperature', 'temperature'
+                lead.update!(temperature: params[:value].to_s)
+                updated_count += 1
+
+              when 'assign_owner'
+                target_owner = User.find_by(id: params[:value])
+                if target_owner
+                  lead.update!(owner: target_owner)
+                  updated_count += 1
+                else
+                  failed_count += 1
+                  failures << { id: lead.id, error: 'Vendedor responsável não encontrado' }
+                end
+
+              when 'archive', 'delete'
+                lead.update!(status: 'archived')
+                updated_count += 1
+              end
+            rescue => e
+              failed_count += 1
+              failures << { id: lead.id, error: e.message }
+            end
+          end
+
+          render json: {
+            requested_count: raw_ids.length,
+            matched_count: matched_count,
+            updated_count: updated_count,
+            failed_count: failed_count,
+            failures: failures
+          }, status: :ok
         end
 
         private

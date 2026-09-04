@@ -8,8 +8,13 @@ module Api
         def index
           if params[:options].present? || params[:sales_account_id].present? || params[:account_id].present?
             acc_id = params[:sales_account_id] || params[:account_id]
+            if acc_id.present?
+              account = ::Sales::TenantScope.for(current_user).accounts.find_by(id: acc_id)
+              return render json: { error: 'Account not found or access denied' }, status: :not_found unless account
+            end
+
             limit = [ (params[:limit] || 20).to_i, 50 ].min
-            contacts = ::Sales::ContactOptionsQuery.call(account_id: acc_id, query: params[:q], limit: limit)
+            contacts = ::Sales::ContactOptionsQuery.call(account_id: acc_id, query: params[:q], limit: limit, scope: scoped_contacts)
             render json: {
               contacts: contacts.map do |c|
                 {
@@ -68,10 +73,15 @@ module Api
           account_id = params[:account_id] || params[:sales_account_id] || contact_params[:sales_account_id]
           company_name = params[:company_name] || params[:account_name] || contact_params[:company_name]
 
-          if account_id.blank? && company_name.present?
+          if account_id.present?
+            account = ::Sales::TenantScope.for(current_user).accounts.find_by(id: account_id)
+            return render json: { error: 'Account not found or access denied' }, status: :not_found unless account
+          elsif company_name.present?
             c_name = company_name.to_s.strip
             if c_name.present?
-              account = ::Sales::Account.where(owner: current_user).find_or_create_by!(name: c_name)
+              account = ::Sales::TenantScope.for(current_user).accounts.find_or_create_by!(name: c_name) do |a|
+                a.owner = current_user
+              end
               account_id = account.id
             end
           end
@@ -85,6 +95,7 @@ module Api
           attrs[:user_id] = params[:owner_id] if params[:owner_id].present?
           contact.assign_attributes(attrs)
           contact.sales_account_id = account_id if account_id.present?
+          contact.user ||= current_user
           contact.save!
           render json: { contact: serialize_detailed(contact) }, status: contact.previously_new_record? ? :created : :ok
         end

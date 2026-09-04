@@ -10,7 +10,7 @@ module Sales
       end
 
       def initialize(actor:, company: nil, attributes:, inline_account: nil, inline_contact: nil)
-        @actor = actor || User.first
+        @actor = actor
         @company = company
         @attributes = attributes.to_h.symbolize_keys
         @inline_account = inline_account&.to_h&.symbolize_keys

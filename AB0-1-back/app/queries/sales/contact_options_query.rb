@@ -2,16 +2,17 @@
 
 module Sales
   class ContactOptionsQuery
-    def self.call(account_id:, query: nil, limit: 20)
+    def self.call(account_id:, query: nil, limit: 20, scope: nil)
       return [] if account_id.blank?
 
-      scope = ::Sales::Contact.where(sales_account_id: account_id)
-                              .select(:id, :first_name, :last_name, :email, :job_title)
+      base_scope = scope || ::Sales::Contact.all
+      contacts_scope = base_scope.where(sales_account_id: account_id)
+                                 .select(:id, :first_name, :last_name, :email, :job_title)
       if query.present?
         q = "%#{query.to_s.downcase.strip}%"
-        scope = scope.where('LOWER(first_name) LIKE :q OR LOWER(last_name) LIKE :q OR LOWER(email) LIKE :q', q: q)
+        contacts_scope = contacts_scope.where('LOWER(first_name) LIKE :q OR LOWER(last_name) LIKE :q OR LOWER(email) LIKE :q', q: q)
       end
-      scope.order(created_at: :desc).limit(limit)
+      contacts_scope.order(created_at: :desc).limit(limit)
     end
   end
 end
