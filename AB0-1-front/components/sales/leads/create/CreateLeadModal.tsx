@@ -79,7 +79,10 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
       };
 
       if (selectedAccountId) payload.sales_account_id = Number(selectedAccountId);
-      if (selectedContactId) payload.contact_ids = [Number(selectedContactId)];
+      if (selectedContactId) {
+        payload.primary_contact_id = Number(selectedContactId);
+        payload.contact_ids = [Number(selectedContactId)];
+      }
 
       if (isInlineAccount) {
         payload.account = { name: inlineAccountName, domain: inlineAccountDomain };

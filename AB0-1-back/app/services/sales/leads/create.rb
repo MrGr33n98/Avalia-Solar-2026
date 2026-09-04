@@ -27,17 +27,45 @@ module Sales
             )
           end
 
+          if @actor.present?
+            tenant_scope = ::Sales::TenantScope.for(@actor)
+            unless tenant_scope.admin?
+              if account_id.present? && !tenant_scope.accounts.where(id: account_id).exists?
+                return Result.new(
+                  success?: false,
+                  code: 'FORBIDDEN',
+                  message: 'Empresa inválida ou inacessível para esta organização.'
+                )
+              end
+
+              cnt_id = @attributes[:primary_contact_id]
+              if cnt_id.present? && !tenant_scope.contacts.where(id: cnt_id).exists?
+                return Result.new(
+                  success?: false,
+                  code: 'FORBIDDEN',
+                  message: 'Contato principal inválido ou inacessível para esta organização.'
+                )
+              end
+            end
+          end
+
           pipeline = resolve_pipeline
           stage = resolve_stage(pipeline)
 
-          clean_attrs = @attributes.except(:sales_account_id, :primary_contact_id, :account, :contact, :stage_key, :sales_stage_id, :competitor_ids, :contact_ids)
+          clean_attrs = @attributes.except(
+            :sales_account_id, :primary_contact_id, :account, :contact,
+            :stage_key, :sales_stage_id, :sales_pipeline_id, :competitor_ids, :contact_ids
+          )
 
           opportunity = ::Sales::Opportunity.new(
             clean_attrs.merge(
               sales_account_id: account_id,
+              primary_contact_id: @attributes[:primary_contact_id],
               owner: @actor,
-              sales_pipeline: pipeline,
-              sales_stage: stage,
+              pipeline: pipeline,
+              stage: stage,
+              sales_pipeline_id: pipeline.id,
+              sales_stage_id: stage.id,
               stage_entered_at: Time.current,
               status: clean_attrs[:status].presence || 'open',
               temperature: clean_attrs[:temperature].presence || 'cold'

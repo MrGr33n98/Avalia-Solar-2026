@@ -5,9 +5,12 @@ module Sales
     self.table_name = 'sales_opportunities'
 
     belongs_to :account, class_name: 'Sales::Account', foreign_key: :sales_account_id
+    belongs_to :sales_account, class_name: 'Sales::Account', foreign_key: :sales_account_id, optional: true
     belongs_to :primary_contact, class_name: 'Sales::Contact', optional: true
     belongs_to :pipeline, class_name: 'Sales::Pipeline', foreign_key: :sales_pipeline_id
+    belongs_to :sales_pipeline, class_name: 'Sales::Pipeline', foreign_key: :sales_pipeline_id, optional: true
     belongs_to :stage, class_name: 'Sales::Stage', foreign_key: :sales_stage_id
+    belongs_to :sales_stage, class_name: 'Sales::Stage', foreign_key: :sales_stage_id, optional: true
     belongs_to :owner, class_name: 'User'
     belongs_to :source, class_name: 'Sales::Source', foreign_key: :source_id, optional: true
 

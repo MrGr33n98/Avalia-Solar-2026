@@ -48,6 +48,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
+import Opportunity360View from '@/components/sales/Opportunity360View';
 import SolarRoiCalculator from '@/components/sales/SolarRoiCalculator';
 import SolarSalesBattlecards from '@/components/sales/SolarSalesBattlecards';
 import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
@@ -825,6 +826,13 @@ export default function SalesCommandCenter({
         open={isNewDealOpen}
         onOpenChange={setIsNewDealOpen}
         onSuccess={loadOpportunities}
+      />
+
+      {/* OPPORTUNITY 360 BENCHMARK NUTSHELL VIEW */}
+      <Opportunity360View
+        opportunityId={selectedDeal?.id || null}
+        onClose={() => setSelectedDeal(null)}
+        onUpdated={loadOpportunities}
       />
     </>
   );
