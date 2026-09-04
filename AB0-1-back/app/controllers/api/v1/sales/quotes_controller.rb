@@ -3,8 +3,9 @@ module Api
     module Sales
       class QuotesController < BaseController
         def index
-          quotes = ::Sales::Quote.includes(:items).where(opportunity_id: params[:opportunity_id]).order(created_at: :desc)
-          render json: { quotes: quotes.map { |quote| serialize(quote) } }
+          scope = ::Sales::Quote.includes(:items).order(created_at: :desc)
+          scope = scope.where(opportunity_id: params[:opportunity_id]) if params[:opportunity_id].present?
+          render json: { quotes: scope.map { |quote| serialize(quote) } }
         end
 
         def create

@@ -16,10 +16,12 @@ export default function SalesQuotesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    if (!opportunityId) return;
     setLoading(true);
     setError(null);
-    fetch(`/api/v1/sales/quotes?opportunity_id=${encodeURIComponent(opportunityId)}`, { credentials: 'include' })
+    const url = opportunityId
+      ? `/api/v1/sales/quotes?opportunity_id=${encodeURIComponent(opportunityId)}`
+      : '/api/v1/sales/quotes';
+    fetch(url, { credentials: 'include' })
       .then((response) => {
         if (!response.ok) throw new Error('Não foi possível carregar propostas.');
         return response.json();
@@ -30,8 +32,8 @@ export default function SalesQuotesPage() {
   }, [opportunityId]);
 
   useEffect(() => {
-    if (opportunityId) load();
-  }, [opportunityId, load]);
+    load();
+  }, [load]);
 
   return (
     <SalesLayoutWrapper>
@@ -43,18 +45,18 @@ export default function SalesQuotesPage() {
         </header>
         <QuoteBuilder onCreated={load} />
         <section className="flex max-w-lg gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <Input value={opportunityId} onChange={(event) => setOpportunityId(event.target.value)} placeholder="ID da oportunidade" inputMode="numeric" />
-          <Button onClick={load} disabled={loading || !opportunityId}>Buscar</Button>
+          <Input value={opportunityId} onChange={(event) => setOpportunityId(event.target.value)} placeholder="Filtrar por ID da oportunidade" inputMode="numeric" />
+          <Button onClick={load} disabled={loading}>Buscar</Button>
         </section>
         {error && <p className="rounded-lg bg-red-50 p-4 text-sm text-red-800">{error}</p>}
-        {!loading && !error && opportunityId && quotes.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">Nenhuma proposta encontrada.</p>}
+        {!loading && !error && quotes.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">Nenhuma proposta encontrada.</p>}
         <section className="grid gap-3 md:grid-cols-2">
           {quotes.map((quote) => (
             <article key={quote.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between"><h2 className="font-bold text-slate-900">{quote.number}</h2><span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-800">{quote.status}</span></div>
               <p className="mt-3 text-2xl font-bold text-slate-900">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: quote.currency }).format(quote.total_cents / 100)}</p>
               <QuoteItemsBuilder quoteId={quote.id} onChanged={load} />
-              <a className="mt-3 inline-flex text-sm font-semibold text-blue-800 underline" href={`/api/v1/sales/quotes//document`} target="_blank" rel="noreferrer">Abrir proposta para impressão/PDF</a>
+              <a className="mt-3 inline-flex text-sm font-semibold text-blue-800 underline" href={`/api/v1/sales/quotes/${quote.id}/document`} target="_blank" rel="noreferrer">Abrir proposta para impressão/PDF</a>
             </article>
           ))}
         </section>
