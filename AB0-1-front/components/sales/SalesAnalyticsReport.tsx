@@ -3,14 +3,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   AlertCircle,
+  Award,
   BarChart3,
   CheckCircle2,
   CircleDollarSign,
   Clock,
+  Download,
   Loader2,
   RotateCw,
   Target,
   TrendingUp,
+  Trophy,
   Users,
   XCircle,
 } from 'lucide-react';
@@ -61,7 +64,19 @@ type FunnelItem = {
 type WinLossItem = {
   name: string;
   value: number;
+  count?: number;
   color?: string;
+};
+
+type TeamPerformanceItem = {
+  owner_id: number;
+  name: string;
+  email: string;
+  total_deals: number;
+  won_deals: number;
+  lost_deals: number;
+  won_revenue_cents: number;
+  win_rate: number;
 };
 
 type RevenueByMonth = {
@@ -83,6 +98,7 @@ type AnalyticsData = {
   win_loss: WinLossItem[];
   revenue_by_month: RevenueByMonth[];
   loss_reasons?: WinLossItem[];
+  team_performance?: TeamPerformanceItem[];
   email_metrics?: EmailMetrics;
 };
 
@@ -175,15 +191,67 @@ export default function SalesAnalyticsReport() {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
+  const exportCSV = () => {
+    if (!data) return;
+    const lines: string[] = [];
+    lines.push('Relatório de Analytics Comercial - Avalia Solar');
+    lines.push(`Período: ${period}`);
+    lines.push('');
+    lines.push('INDICADORES PRINCIPAIS (KPIs)');
+    lines.push(`Pipeline Total,${fmtBRL(data.kpis.pipeline_value_cents)}`);
+    lines.push(`Pipeline Ponderado,${fmtBRL(data.kpis.weighted_pipeline_cents)}`);
+    lines.push(`Receita Fechada,${fmtBRL(data.kpis.won_revenue_cents)}`);
+    lines.push(`Taxa de Conversão,${(data.kpis.conversion_rate * 100).toFixed(1)}%`);
+    lines.push(`Ticket Médio,${fmtBRL(data.kpis.average_ticket_cents)}`);
+    lines.push(`Ciclo Médio de Vendas,${data.kpis.average_sales_cycle_days} dias`);
+    lines.push(`Negócios Ganhos,${data.kpis.won_deals}`);
+    lines.push(`Negócios Perdidos,${data.kpis.lost_deals}`);
+    lines.push('');
+
+    if (data.team_performance && data.team_performance.length > 0) {
+      lines.push('DESEMPENHO DA EQUIPE');
+      lines.push('Vendedor,Negócios Criados,Negócios Ganhos,Negócios Perdidos,Receita Gerada,Taxa de Conversão');
+      data.team_performance.forEach((item) => {
+        lines.push(
+          `"${item.name}",${item.total_deals},${item.won_deals},${item.lost_deals},${fmtBRL(item.won_revenue_cents)},${item.win_rate}%`
+        );
+      });
+      lines.push('');
+    }
+
+    if (data.funnel && data.funnel.length > 0) {
+      lines.push('FUNIL DE VENDAS');
+      lines.push('Estágio,Quantidade,Valor (R$)');
+      data.funnel.forEach((item) => {
+        lines.push(`"${item.stage}",${item.count},${fmtBRL(item.value_cents || (item.valor || 0) * 100)}`);
+      });
+    }
+
+    const csvContent = '\uFEFF' + lines.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `analytics-vendas-${period}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const kpis = data?.kpis;
   const funnel = (data?.funnel ?? []).map((item) => ({
     ...item,
     valor: item.valor ?? (item.value_cents ? Math.round(item.value_cents / 100) : 0),
   }));
-  const winLoss = (data?.win_loss ?? data?.loss_reasons ?? []).map((item, idx) => ({
+  const winLoss = (data?.win_loss ?? []).map((item, idx) => ({
     ...item,
     color: item.color || WIN_LOSS_COLORS[idx % WIN_LOSS_COLORS.length],
   }));
+  const lossReasons = (data?.loss_reasons ?? []).map((item, idx) => ({
+    ...item,
+    color: item.color || WIN_LOSS_COLORS[idx % WIN_LOSS_COLORS.length],
+  }));
+  const teamPerformance = data?.team_performance ?? [];
   const revenueByMonth = (data?.revenue_by_month ?? []).map((item) => ({
     ...item,
     realizado: item.realizado ?? (item.won_cents ? Math.round(item.won_cents / 100) : 0),
@@ -208,22 +276,34 @@ export default function SalesAnalyticsReport() {
               Analytics & Performance Comercial
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Métricas reais do pipeline — dados extraídos diretamente do PostgreSQL.
+              Métricas reais do pipeline extraídas diretamente do PostgreSQL.
             </p>
           </div>
 
           <div className="flex items-center gap-2.5">
             <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-[200px] border-slate-300 bg-white shadow-xs min-h-11">
+              <SelectTrigger className="w-[180px] border-slate-300 bg-white shadow-xs min-h-11">
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="this_week">Esta Semana</SelectItem>
                 <SelectItem value="this_month">Este Mês</SelectItem>
                 <SelectItem value="last_month">Mês Passado</SelectItem>
+                <SelectItem value="this_quarter">Este Trimestre</SelectItem>
                 <SelectItem value="last_quarter">Último Trimestre</SelectItem>
                 <SelectItem value="ytd">Acumulado do Ano</SelectItem>
               </SelectContent>
             </Select>
+
+            <Button
+              onClick={exportCSV}
+              variant="outline"
+              className="min-h-11 border-slate-300 bg-white font-semibold text-slate-700"
+              disabled={!data || loading}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Exportar CSV
+            </Button>
 
             <Button
               onClick={fetchAnalytics}
@@ -337,11 +417,86 @@ export default function SalesAnalyticsReport() {
               </div>
             )}
 
+            {/* Team Performance Leaderboard */}
+            {teamPerformance.length > 0 && (
+              <Card className="border-slate-200 bg-white shadow-xs">
+                <CardHeader className="border-b border-slate-100 p-5">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-amber-500" />
+                    <div>
+                      <CardTitle className="text-base font-bold text-slate-900">
+                        Desempenho da Equipe de Vendas
+                      </CardTitle>
+                      <CardDescription className="text-xs text-slate-500">
+                        Ranking de vendedores por receita realizada e taxa de conversão no período
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                          <th className="p-3.5 pl-5">#</th>
+                          <th className="p-3.5">Vendedor</th>
+                          <th className="p-3.5 text-center">Criados</th>
+                          <th className="p-3.5 text-center">Ganhos</th>
+                          <th className="p-3.5 text-center">Perdidos</th>
+                          <th className="p-3.5 text-right">Taxa de Conversão</th>
+                          <th className="p-3.5 text-right pr-5">Receita Won</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {teamPerformance.map((rep, index) => (
+                          <tr
+                            key={rep.owner_id}
+                            className="border-b border-slate-100 transition-colors hover:bg-slate-50/80"
+                          >
+                            <td className="p-3.5 pl-5 font-bold text-slate-400">
+                              {index === 0 ? (
+                                <Badge className="bg-amber-100 text-amber-800 border-amber-300">
+                                  🥇 1º
+                                </Badge>
+                              ) : index === 1 ? (
+                                <Badge className="bg-slate-100 text-slate-700 border-slate-300">
+                                  🥈 2º
+                                </Badge>
+                              ) : index === 2 ? (
+                                <Badge className="bg-amber-50 text-amber-700 border-amber-200">
+                                  🥉 3º
+                                </Badge>
+                              ) : (
+                                `${index + 1}º`
+                              )}
+                            </td>
+                            <td className="p-3.5 font-semibold text-slate-900">
+                              <div>{rep.name}</div>
+                              <span className="text-xs text-slate-400 font-normal">{rep.email}</span>
+                            </td>
+                            <td className="p-3.5 text-center text-slate-600 font-medium">{rep.total_deals}</td>
+                            <td className="p-3.5 text-center font-bold text-emerald-600">{rep.won_deals}</td>
+                            <td className="p-3.5 text-center text-rose-500">{rep.lost_deals}</td>
+                            <td className="p-3.5 text-right font-semibold text-slate-700">
+                              {rep.win_rate}%
+                            </td>
+                            <td className="p-3.5 text-right pr-5 font-bold text-slate-900">
+                              {fmtBRL(rep.won_revenue_cents)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {data.email_metrics && (
               <Card className="border-slate-200 bg-white shadow-xs" data-testid="email-analytics">
                 <CardHeader className="border-b border-slate-100 p-5">
                   <CardTitle className="text-base font-bold text-slate-900">
-                    Desempenho de e-mail
+                    Desempenho de E-mail
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
                     Eventos registrados no período selecionado
@@ -434,7 +589,7 @@ export default function SalesAnalyticsReport() {
               </CardContent>
             </Card>
 
-            {/* Funnel + Win/Loss */}
+            {/* Funnel + Win/Loss/Loss Reasons */}
             <div className="grid gap-4 lg:grid-cols-2">
               <Card className="border-slate-200 bg-white shadow-xs">
                 <CardHeader className="border-b border-slate-100 p-5">
@@ -484,18 +639,18 @@ export default function SalesAnalyticsReport() {
                     Motivos de Perda
                   </CardTitle>
                   <CardDescription className="text-xs text-slate-500">
-                    Distribuição de negócios Won vs. categorias de Lost
+                    Principais motivos reportados no cancelamento de negócios
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-5">
-                  {winLoss.length === 0 ? (
+                  {(lossReasons.length > 0 ? lossReasons : winLoss).length === 0 ? (
                     <EmptyChart message="Nenhum dado de Win/Loss para o período selecionado." />
                   ) : (
                     <div className="flex items-center gap-6">
                       <ResponsiveContainer width="50%" height={200}>
                         <PieChart>
                           <Pie
-                            data={winLoss}
+                            data={lossReasons.length > 0 ? lossReasons : winLoss}
                             cx="50%"
                             cy="50%"
                             innerRadius={55}
@@ -503,7 +658,7 @@ export default function SalesAnalyticsReport() {
                             paddingAngle={2}
                             dataKey="value"
                           >
-                            {winLoss.map((entry, index) => (
+                            {(lossReasons.length > 0 ? lossReasons : winLoss).map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
@@ -511,7 +666,7 @@ export default function SalesAnalyticsReport() {
                         </PieChart>
                       </ResponsiveContainer>
                       <div className="flex flex-col gap-2">
-                        {winLoss.map((item, idx) => (
+                        {(lossReasons.length > 0 ? lossReasons : winLoss).map((item, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-xs">
                             <span
                               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"

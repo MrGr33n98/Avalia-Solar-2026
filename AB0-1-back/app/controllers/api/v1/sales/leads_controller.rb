@@ -5,7 +5,7 @@ module Api
     module Sales
       class LeadsController < BaseController
         def index
-          scope = ::Sales::LeadsQuery.call(params)
+          scope = ::Sales::LeadsQuery.call(params, scoped_opportunities)
           page = [params[:page].to_i, 1].max
           per_page = [[params[:per_page].to_i, 25].max, 100].min
 
@@ -46,12 +46,12 @@ module Api
         end
 
         def show
-          lead = ::Sales::Opportunity.find(params[:id])
+          lead = scoped_opportunities.find(params[:id])
           render json: { lead: serialize_lead(lead), opportunity: serialize_lead(lead) }
         end
 
         def update
-          lead = ::Sales::Opportunity.find(params[:id])
+          lead = scoped_opportunities.find(params[:id])
           lead_params = params[:lead] || params[:opportunity] || params
 
           if lead.update(lead_params.permit(:name, :value_cents, :temperature, :sales_stage_id, :stage_key, :expected_close_date, :probability))
@@ -62,7 +62,7 @@ module Api
         end
 
         def convert
-          lead = ::Sales::Opportunity.find(params[:id])
+          lead = scoped_opportunities.find(params[:id])
           result = ::Sales::LeadConversionService.call(
             opportunity: lead,
             actor: current_user || User.first,
@@ -74,6 +74,25 @@ module Api
             account: { id: result[:account].id, name: result[:account].name },
             contact: { id: result[:contact].id, name: [result[:contact].first_name, result[:contact].last_name].compact.join(' ') }
           }, status: :ok
+        end
+
+        def bulk
+          ids = Array(params[:ids] || params[:lead_ids])
+          records = scoped_opportunities.where(id: ids)
+          count = records.count
+
+          case params[:bulk_action].to_s
+          when 'status'
+            records.update_all(status: params[:value].to_s)
+          when 'temperature'
+            records.update_all(temperature: params[:value].to_s)
+          when 'stage'
+            records.update_all(sales_stage_id: params[:value].to_i)
+          when 'delete'
+            records.destroy_all
+          end
+
+          render json: { success: true, updated_count: count }, status: :ok
         end
 
         private
@@ -99,6 +118,9 @@ module Api
             created_at: opp.created_at,
             updated_at: opp.updated_at
           }
+        end
+        def scoped_opportunities
+          ::Sales::TenantScope.for(current_user).opportunities
         end
       end
     end

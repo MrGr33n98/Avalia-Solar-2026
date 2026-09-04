@@ -25,7 +25,7 @@ module Api
             return
           end
 
-          query_scope = ::Sales::ContactsQuery.new(params).call
+          query_scope = ::Sales::ContactsQuery.new(params, scope: scoped_contacts).call
           total_count = query_scope.count
           page = [params[:page].to_i, 1].max
           per_page = params[:per_page].present? ? [params[:per_page].to_i, 100].min : 50
@@ -44,7 +44,7 @@ module Api
         end
 
         def show
-          contact = ::Sales::Contact.includes(:account, :user, :contact_employments, :opportunity_contacts, :activities, :tasks).find(params[:id])
+          contact = scoped_contacts.includes(:account, :user, :contact_employments, :opportunity_contacts, :activities, :tasks).find(params[:id])
           render json: { contact: serialize_detailed(contact) }
         end
 
@@ -77,7 +77,7 @@ module Api
           end
 
           contact = if contact_params[:email].present? && account_id.present?
-                      ::Sales::Contact.where(sales_account_id: account_id).find_or_initialize_by(email: contact_params[:email].downcase.strip)
+                      scoped_contacts.where(sales_account_id: account_id).find_or_initialize_by(email: contact_params[:email].downcase.strip)
                     else
                       ::Sales::Contact.new
                     end
@@ -90,7 +90,7 @@ module Api
         end
 
         def update
-          contact = ::Sales::Contact.find(params[:id])
+          contact = scoped_contacts.find(params[:id])
           attrs = contact_params.except(:company_name)
           attrs[:user_id] = params[:owner_id] if params[:owner_id].present?
           contact.update!(attrs)
@@ -169,6 +169,9 @@ module Api
               { id: t.id, title: t.title, due_at: t.due_at, completed_at: t.completed_at }
             end
           )
+        end
+        def scoped_contacts
+          ::Sales::TenantScope.for(current_user).contacts
         end
       end
     end
