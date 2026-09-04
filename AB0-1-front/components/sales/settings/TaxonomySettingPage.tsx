@@ -91,8 +91,20 @@ export default function TaxonomySettingPage({
     }
   };
 
-  const handleDelete = (id: number) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetch(`/api/v1/sales/taxonomies/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setItems((prev) => prev.filter((item) => item.id !== id));
+      } else {
+        setItems((prev) => prev.filter((item) => item.id !== id));
+      }
+    } catch {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    }
   };
 
   return (

@@ -13,6 +13,18 @@ module Api
           render json: { taxonomy: { id: item.id, kind: item.kind, name: item.name, slug: item.slug } }, status: :created
         end
 
+        def update
+          item = ::Sales::Taxonomy.find(params[:id])
+          item.update!(taxonomy_params)
+          render json: { taxonomy: { id: item.id, kind: item.kind, name: item.name, slug: item.slug } }
+        end
+
+        def destroy
+          item = ::Sales::Taxonomy.find(params[:id])
+          item.destroy!
+          head :no_content
+        end
+
         private
 
         def taxonomy_params

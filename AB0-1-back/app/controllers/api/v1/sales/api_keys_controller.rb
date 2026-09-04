@@ -8,9 +8,16 @@ module Api
         end
 
         def create
-          key, raw = ::Sales::ApiKey.issue!(user: current_user, name: params.require(:name),
-                                            scopes: Array(params[:scopes]), company: current_user.company)
-          render json: { api_key: serialize(key).merge(secret: raw) }, status: :created
+          name_param = params[:name].presence || params.dig(:api_key, :name)
+          raise ActionController::ParameterMissing, :name if name_param.blank?
+
+          key, raw = ::Sales::ApiKey.issue!(
+            user: current_user,
+            name: name_param,
+            scopes: Array(params[:scopes] || params.dig(:api_key, :scopes)),
+            company: current_user.company
+          )
+          render json: { api_key: serialize(key).merge(secret: raw, token: raw) }, status: :created
         end
 
         def destroy

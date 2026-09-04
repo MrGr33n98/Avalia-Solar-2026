@@ -4,8 +4,12 @@ module Api
       class RbacController < BaseController
         def index
           roles = ::Sales::Role.includes(:permissions).order(:name)
-          render json: { roles: roles.map { |role| { id: role.id, name: role.name, slug: role.slug,
-                                                     permissions: role.permissions.map { |permission| "#{permission.resource}:#{permission.action}" } } } }
+          users_scope = current_user&.company ? current_user.company.users.includes(:sales_roles) : User.none
+          render json: {
+            roles: roles.map { |role| { id: role.id, name: role.name, slug: role.slug, key: role.slug,
+                                       permissions: role.permissions.map { |permission| "#{permission.resource}:#{permission.action}" } } },
+            users: users_scope.map { |u| { id: u.id, email: u.email, roles: u.sales_roles.map(&:name) } }
+          }
         end
 
         def create
