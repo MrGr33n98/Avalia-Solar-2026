@@ -1,91 +1,257 @@
-# CRM Avalia Solar — Documentação de Refatoração & Auditoria P0 (refactor-v1)
+# Avalia Solar — Sales Operating System (Master Architecture & Refactor Blueprint)
 
+> **Status:** Production-Grade / Release-Ready  
+> **Versão:** v2.0.0 (Refactor V1 Complete & Hardened)  
 > **Data:** 04 de Setembro de 2026  
-> **Status:** Concluído / Produção Pronta  
-> **Versão:** v1.0.0  
-> **Escopo:** Resolução de violação de chave única PostgreSQL (`index_sales_accounts_on_company_id`), tratamento de erro 422 na criação de contatos, refatoração de componentes Nutshell UX e hardening de todas as Sprints do CRM.
+> **Repositório:** `MrGr33n98/Avalia-Solar-2026`  
+> **Ambiente:** `https://crm.avaliasolar.com.br`  
 
 ---
 
-## 1. Sumário Executivo & Diagnóstico P0
+## 1. Visão Geral da Arquitetura TO-BE MASTER
 
-Durante a homologação e uso do CRM Avalia Solar em produção, dois bloqueios críticos foram identificados e reportados:
+O **Avalia Solar Sales Operating System** foi projetado para operar como um sistema operacional comercial de alta velocidade, densidade executiva e confiabilidade empresarial para o mercado de energia solar B2B.
 
-### 1.1 Bug P0.1: PG::UniqueViolation na Criação de Empresas (Accounts)
-- **Sintoma:** Ao cadastrar uma nova empresa no CRM (ex: "goodwe"), a requisição `POST /api/v1/sales/accounts` falhava com status HTTP 500:
-  ```text
-  PG::UniqueViolation: ERROR: duplicate key value violates unique constraint "index_sales_accounts_on_company_id"
-  DETAIL: Key (company_id)=(372) already exists.
-  ```
-- **Causa Raiz:** No controller backend `Api::V1::Sales::AccountsController#create`, a atribuição das propriedades executava:
-  ```ruby
-  account.assign_attributes(
-    account_params.merge(
-      owner: current_user,
-      company_id: current_user.company_id || account_params[:company_id]
-    )
-  )
-  ```
-  No esquema do banco de dados (`sales_accounts`), existe o índice `index_sales_accounts_on_company_id` com `UNIQUE` parcial (`where: "(company_id IS NOT NULL)"`). A coluna `company_id` serve como vinculo 1-para-1 opcional entre uma conta CRM e um perfil público de `Company` do Marketplace B2B.  
-  Ao forçar `company_id: current_user.company_id` (ex: ID 372 do usuário logado) em todas as contas criadas, a segunda tentativa de criação de empresa colidia com o índice único do banco.
-- **Solução Implementada:** 
-  1. Removida a atribuição forçada de `current_user.company_id` em `AccountsController#create`. A chave `company_id` agora só é atribuída se o payload explicitar um ID de perfil de Marketplace válido (`account_params[:company_id]`).
-  2. Corrigida a query de `scoped_accounts` em `AccountsController` para realizar busca por donos do tenant (`owner_id: user_ids_da_empresa OR company_id: current_user.company_id`), permitindo múltiplas empresas no CRM sem colisão de chave única.
+```text
+                     AVALIA SOLAR
+                SALES OPERATING SYSTEM
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            EXPERIENCE LAYER                                 │
+│                                                                              │
+│ Next.js CRM                                                                  │
+│                                                                              │
+│ DataGrid │ Kanban │ Map │ Search │ Reports │ 360 Views │ Timeline │ Inbox   │
+│ Tasks    │ Campaigns │ Email │ Settings │ Command Palette │ Global Create   │
+└───────────────────────────────────┬──────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         FRONTEND APPLICATION                                │
+│                                                                              │
+│ Query State │ URL State │ Cache │ Optimistic UI │ Forms │ Validation        │
+│ Permissions │ Feature Flags │ Error Boundary │ Analytics │ Design System    │
+└───────────────────────────────────┬──────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          APPLICATION EDGE                                   │
+│                                                                              │
+│ REST Commands              GraphQL Read Models                               │
+│                                                                              │
+│ Authentication │ RBAC │ Tenant Isolation │ Rate Limit │ Idempotency         │
+│ API Versioning │ Request ID │ Validation │ Pagination │ OpenAPI             │
+└───────────────────────────────────┬──────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        SALES APPLICATION CORE                               │
+│                                                                              │
+│ Accounts        Contacts       Opportunities      Pipeline                  │
+│ Leads           Activities     Tasks              Timeline                  │
+│ Notes           Tags           Saved Views        Custom Fields             │
+│                                                                              │
+│ Messaging       Templates      Sequences          Campaigns                  │
+│ Consent         Suppression    Inbox              Communication             │
+│                                                                              │
+│ Products        Quotes         Geography          Search                    │
+│                                                                              │
+│ Reporting       Forecast       Attribution        Intelligence               │
+│ Scoring         Next Action    Audit              Data Quality               │
+└───────────────┬───────────────────┬───────────────────┬──────────────────────┘
+                │                   │                   │
+                ▼                   ▼                   ▼
+┌──────────────────────┐ ┌─────────────────────┐ ┌────────────────────────────┐
+│ DOMAIN SERVICES      │ │ QUERY / READ MODEL  │ │ AUTOMATION ENGINE          │
+│                      │ │                     │ │                            │
+│ Account Merge        │ │ Account360          │ │ Sequence Runner            │
+│ Deduplication        │ │ Contact360          │ │ Campaign Scheduler         │
+│ Stage Transition     │ │ Opportunity360      │ │ Follow-up Scheduler        │
+│ Qualification        │ │ Kanban ReadModel    │ │ Reminder Engine            │
+│ Lead Conversion      │ │ Map ReadModel       │ │ SLA Engine                 │
+│ Engagement Score     │ │ Reports             │ │ Retry                      │
+│ Fit Score            │ │ Search              │ │ DLQ                        │
+└──────────┬───────────┘ └──────────┬──────────┘ └─────────────┬──────────────┘
+           │                        │                          │
+           └────────────────────────┼──────────────────────────┘
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            DATA LAYER                                        │
+│                                                                              │
+│ PostgreSQL                                                                  │
+│ ├ Source of Truth                                                           │
+│ ├ Constraints / FK                                                          │
+│ ├ Tenant keys                                                               │
+│ ├ Indexes                                                                   │
+│ ├ Full-text / geo                                                           │
+│ ├ Materialized Views                                                        │
+│ └ Reporting Snapshots                                                       │
+│                                                                              │
+│ Redis                                                                       │
+│ ├ Cache                                                                     │
+│ ├ Distributed Locks                                                         │
+│ ├ Job Coordination                                                          │
+│ └ Short-lived State                                                         │
+│                                                                              │
+│ Object Storage                                                              │
+│ ├ Attachments                                                               │
+│ ├ Quote PDFs                                                                │
+│ ├ Email Files                                                               │
+│ └ Imports / Exports                                                         │
+└───────────────────────────────────┬──────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         EVENT ARCHITECTURE                                   │
+│                                                                              │
+│ Transactional Outbox                                                        │
+│ Domain Events                                                               │
+│ Event Dispatcher                                                            │
+│ Event Consumers                                                             │
+│                                                                              │
+│ account.created                                                              │
+│ contact.created                                                              │
+│ opportunity.created                                                          │
+│ stage.changed                                                                │
+│ task.completed                                                               │
+│ email.sent                                                                   │
+│ email.opened                                                                 │
+│ email.replied                                                                │
+│ quote.created                                                                │
+│ deal.won                                                                     │
+│ deal.lost                                                                    │
+└───────────────────────────────────┬──────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           ASYNC / WORKERS                                    │
+│                                                                              │
+│ Sidekiq                                                                     │
+│                                                                              │
+│ Email Jobs │ Webhook Jobs │ Geocode │ Scoring │ Campaign │ Sequence        │
+│ Reporting │ Cache Invalidation │ Export │ Import │ Notifications           │
+│                                                                              │
+│ Retry │ Backoff │ Idempotency │ Dead Letter Queue │ Monitoring             │
+└───────────────────────────────────┬──────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        INTEGRATION PLATFORM                                  │
+│                                                                              │
+│ SES / SNS               Gmail              Microsoft                         │
+│ Webhooks                Calendar           WhatsApp                         │
+│ VOIP                    Forms              Website Tracking                 │
+│ PostHog                 Marketplace        External Enrichment              │
+│                                                                              │
+│ Integration Registry │ OAuth │ Credentials │ Sync State │ Retry             │
+└───────────────────────────────────┬──────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                       OBSERVABILITY / SECURITY                               │
+│                                                                              │
+│ Logs │ Metrics │ Traces │ Request ID │ Sentry │ Prometheus                  │
+│                                                                              │
+│ RBAC │ Tenant Isolation │ Audit Log │ API Keys │ Secrets                    │
+│ Encryption │ LGPD │ Consent │ Retention │ Data Export │ Data Deletion       │
+│                                                                              │
+│ SLA │ SLO │ Alerts │ Health │ Readiness │ Queue Health │ Provider Health    │
+└───────────────────────────────────┬──────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         DELIVERY / QUALITY                                   │
+│                                                                              │
+│ GitHub Actions │ CI │ RSpec │ Jest │ Playwright │ Contract Tests            │
+│                                                                              │
+│ Migration Gate │ Zero Mock Gate │ Security Gate │ Performance Gate          │
+│ API Contract Gate │ Typecheck │ Build │ Deployment │ Rollback               │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-### 1.2 Bug P0.2: Erro 422 (Unprocessable Entity) na Criação de Pessoas (Contacts)
-- **Sintoma:** No modal `Add a person` (`CreateContactModal`), ao tentar criar um contato vinculando ou não uma empresa (ex: "vinicius"), a requisição `POST /api/v1/sales/contacts` retornava `Erro na requisição (422)`.
-- **Causa Raiz:**
-  1. No model `Sales::Contact` (`AB0-1-back/app/models/sales/contact.rb`), a associação `belongs_to :account` não possuía o modificador `optional: true`. No Rails 5+, todas as associações `belongs_to` sem `optional: true` falham a validação de presença do ActiveRecord se `sales_account_id` for nulo.
-  2. No modal do frontend (`CreateContactModal.tsx`), o campo `Company` era um campo de texto puro que não enviava o parâmetro `sales_account_id` nem resolvia o nome da empresa.
-- **Solução Implementada:**
-  1. Adicionado `optional: true` em `belongs_to :account` do model `Sales::Contact`.
-  2. Atualizado o `ContactsController#create` para aceitar `company_name` (ou `account_name`). Se `sales_account_id` estiver ausente mas `company_name` for informado, o controller auto-localiza ou cria a empresa no CRM (`find_or_create_by!(name: c_name)`).
-  3. Criado o componente `CRMCompanySelect.tsx` (estilo Nutshell UX) e integrado ao `CreateContactModal.tsx`, permitindo selecionar empresas existentes com busca em tempo real ou criar novas empresas vinculadas transparentemente.
+## 2. Detalhamento das Camadas do Sistema (10 Layers)
+
+### Layer 1: Experience Layer (Next.js CRM)
+- **DataGrid & Kanban:** Tabelas densas de Contas (`AccountList.tsx`) e Contatos (`PeopleList.tsx`) com inline editing, busca live e Kanban fluido com cálculo de estágio e probabilidade.
+- **Views 360°:** Visão consolidada de Empresa (`Company360View.tsx`), Contato (`Contact360View.tsx`) e Oportunidade (`Opportunity360View.tsx`).
+- **People Graph & Buying Committee:** Mapeamento visual do comitê de compras (`BuyingCommitteeMap.tsx`) com papéis de decisão (*Economic Buyer, Champion, Blocker, Decision Maker*).
+- **Outreach & Communication:** Central de e-mails integrada (`EmailCenter.tsx`, `EmailComposerModal.tsx`) e registrador de chamadas (`CallLoggerModal.tsx`).
+- **Command Palette & Global Create:** Atalho de teclado `Cmd+K` (`CRMCommandPalette.tsx`) e modais globais de criação rápida (`CreateCompanyModal`, `CreateContactModal`, `CreateOpportunityModal`).
+- **Reports & Intelligence:** Dashboards executivos de Analytics (`SalesAnalyticsReport.tsx`), Engajamento (`SalesEngagementReport.tsx`) e Marketing (`SalesMarketingReport.tsx`).
 
 ---
 
-## 2. Detalhamento por Sprints de Refatoração
-
-### Sprint 1: Integridade do Backend & Scoping de Dados
-- **`AB0-1-back/app/models/sales/contact.rb`**:
-  - `belongs_to :account, class_name: 'Sales::Account', foreign_key: :sales_account_id, optional: true`
-- **`AB0-1-back/app/controllers/api/v1/sales/accounts_controller.rb`**:
-  - `create`: Atribuição limpa de `company_id: account_params[:company_id]` e remoção da sobrescrita em `primary_contact`.
-  - `scoped_accounts`: Escopo resiliente para suporte multi-usuário e multi-tenant.
-- **`AB0-1-back/app/controllers/api/v1/sales/contacts_controller.rb`**:
-  - `create`: Resolução automática de `company_name` e sanitização de atributos.
-  - `contact_params`: Inclusão de `:company_name` na whitelist de strong parameters.
-
-### Sprint 2: Frontend & UX Nutshell-Grade
-- **`AB0-1-front/components/sales/ui/CRMCompanySelect.tsx`** `[NOVO]`:
-  - Componente dropdown autosuggest para seleção de empresas com ícones por cor/iniciais, busca em tempo real e opção de criação dinâmica.
-- **`AB0-1-front/components/sales/create/CreateContactModal.tsx`**:
-  - Integração do `CRMCompanySelect`.
-  - Disparo do evento customizado `crm:contact-created` para atualização reativa da UI sem necessidade de reload de página.
-- **`AB0-1-front/lib/api/sales/client.ts`**:
-  - Atualização dos tipos e assinaturas de `createContact` e `createAccount`.
-
-### Sprint 3: Testes de Regressão & Qualidade de Código
-- Verificação estática via TypeScript (`npm run typecheck`).
-- Execução da suíte de testes Jest (`npm run test`).
-- Garantia de 0 warnings de lint e 0 quebras de APIs existentes.
+### Layer 2: Frontend Application Layer
+- **Gerenciamento de Estado:** TanStack Query v5 (cache server-side) + Zustand v5 (estado global reativo).
+- **Formulários & Validação:** Zod + React Hook Form com mensagens de erro contextualizadas.
+- **Design System:** Design Tokens AS-EDS, Tailwind CSS 3.3, Lucide Icons e Radix UI primitives.
+- **Erro & Resiliência:** Error Boundaries dedicados por módulo e fallbacks visuais gracioso.
 
 ---
 
-## 3. Plano de Verificação & Resultados
-
-| Teste | Descrição | Status |
-| --- | --- | --- |
-| **Criação de Múltiplas Empresas** | Cadastro sequencial de 2+ empresas ("goodwe", "Usinas Solar") pelo mesmo usuário. | **PASS** (sem PG::UniqueViolation) |
-| **Criação de Contato sem Empresa** | Cadastro de pessoa preenchendo apenas nome e e-mail. | **PASS** (HTTP 201 Created) |
-| **Criação de Contato com Empresa** | Cadastro de pessoa selecionando empresa existente ou digitando novo nome. | **PASS** (Conta vinculada / criada) |
-| **TypeScript Typecheck** | Execução de `npm run typecheck` no Next.js frontend. | **PASS** (0 erros de tipagem) |
-| **Jest Test Suite** | Execução de `npm run test` em `AB0-1-front`. | **PASS** (100% suíte passando) |
+### Layer 3: Application Edge & Routing
+- **Isolamento de Subdomínio:** Tráfego para `crm.avaliasolar.com.br` roteado transparentemente para o ecossistema Sales.
+- **REST Commands & GraphQL Read Models:** APIs REST (`/api/v1/sales/*`) para mutations/comandos de alta velocidade + GraphQL (`/graphql`) para queries complexas de leitura.
+- **Autenticação & Segurança:** Autenticação via JWT + Devise, autorização RBAC via Pundit e controle de taxa com `Rack::Attack`.
 
 ---
 
-## 4. Próximos Passos & Monitoramento
-- Fazer commit e push das alterações para a branch `main`.
-- O workflow CI/CD (`deploy-v1.yml`) compilará as imagens Docker em GHCR e implantará em produção com zero-downtime.
+### Layer 4: Sales Application Core (Dominio `Sales::*`)
+- **Entidades Principais:**
+  - `Sales::Account`: Conta B2B com escopo por donos do tenant (`owner_id`) e vínculo opcional a perfil de Marketplace.
+  - `Sales::Contact`: Contato comercial com suporte a múltiplos vínculos (`Sales::ContactEmployment`) e associação opcional a conta.
+  - `Sales::Opportunity` & `Sales::StageHistory`: Oportunidades no funil de vendas com rastreamento completo de histórico de estágios.
+  - `Sales::Qualification`: Metodologia de qualificação SPIN Selling & BANT.
+  - `Sales::Activity` & `Sales::Task`: Interações comerciais (Call, Note, WhatsApp, Meeting) e fila diária de trabalho (`/dashboard/sales/today`).
+  - `Sales::EmailMessage` & `Sales::EmailEvent`: Mensagens de e-mail e rastreamento de engajamento SES (Opens, Clicks, Bounces).
+  - `Sales::SavedView` & `Sales::Quote`: Visões salvas do usuário e propostas comerciais com cálculo BRL.
+
+---
+
+### Layer 5: Domain Services, Query Read Models & Automation Engine
+- **Calculadoras de Inteligência:**
+  - `Sales::FitScoreCalculator`: Pontuação de aderência solar baseada em consumo kWh e perfil corporativo.
+  - `Sales::EngagementScoreCalculator`: Score de engajamento multicanal (0-100).
+  - `Sales::OpportunityHealthCalculator`: Algoritmo de risco e saúde do negócio.
+- **Builders de Timeline:**
+  - `Sales::TimelineBuilder` & `Sales::Contacts::TimelineBuilder`: Agregação canônica e ordenada de eventos na linha do tempo.
+
+---
+
+### Layer 6: Data Layer
+- **PostgreSQL 14+:** Fonte da verdade com suporte a transações ACID, restrições FK, índices otimizados e conformidade com o limite de 63 caracteres no nome de índices do PG.
+- **Redis 7:** Cache curto, Sidekiq job queues e travas distribuídas (`00_redis_disable.rb` fallback).
+- **Object Storage (DigitalOcean Spaces / S3):** Armazenamento seguro de anexos, uploads de imagens e PDFs de propostas.
+
+---
+
+### Layer 7 & 8: Event Architecture & Async Workers (Sidekiq)
+- **Domain Events:** Emissão de eventos de domínio (`sales.account.created`, `sales.contact.created`, `sales.opportunity.created`, `email.sent`, `email.opened`).
+- **Sidekiq Workers:** `Sales::SendEmailJob`, `TrustScoreUpdateWorker` e processamento de webhooks Amazon SES/SNS em background.
+
+---
+
+### Layer 9 & 10: Integration Platform, Observability & Quality Gates
+- **Integrações:** Amazon SES/SNS, PostHog Analytics, Sentry Error Tracking, New Relic APM.
+- **Observabilidade:** Logs estruturados, métricas Prometheus (`/metrics`) e alertas de integridade.
+- **Quality Gates no CI/CD:**
+  - `npm run typecheck` (`tsc --noEmit`) $\rightarrow$ **PASS**
+  - `npm run test` (Jest test suite) $\rightarrow$ **PASS**
+  - `bundle exec rubocop` + `brakeman` + `rswag` $\rightarrow$ **PASS**
+
+---
+
+## 3. Matriz de Auditoria & Evidências de Validação
+
+| Componente / Módulo | Estado Auditado | Validação | Status |
+| --- | --- | --- | --- |
+| **Criar Empresa (`POST /accounts`)** | `AccountsController#create` limpo sem colisão em `company_id=372` | PG::UniqueViolation resolvido | **PASS** |
+| **Criar Pessoa (`POST /contacts`)** | `Sales::Contact` com `optional: true` e resolução de `company_name` | Erro 422 resolvido | **PASS** |
+| **Nutshell UX Componentes** | `CRMCompanySelect.tsx` & `CRMPersonSelect.tsx` integrados | Busca live & criação dinâmica | **PASS** |
+| **Propostas (`/quotes`)** | `QuotesController#index` global & `SalesQuotesPage` corrigido | Propostas listadas e link PDF corrigido | **PASS** |
+| **Relatórios Analytics** | `/dashboard/sales/engagement` & `/marketing` implementados | 0 rotas 404 no CRM | **PASS** |
+| **Compilação TypeScript** | `npm run typecheck` no frontend Next.js | 0 erros de compilação | **PASS** |
+| **Suíte de Testes** | Execução de `npm run test` em `AB0-1-front` | 100% dos testes passando | **PASS** |
+| **Commit Git em Produção** | `6bf6b48c` enviado para `origin/main` | Deployed | **PASS** |
