@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import CRMUserPopover from '@/components/sales/layout/CRMUserPopover';
 
 interface CRMTopbarProps {
   onOpenSearch?: () => void;
@@ -104,9 +105,7 @@ export default function CRMTopbar({ onOpenSearch, onOpenAddModal }: CRMTopbarPro
           <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500" />
         </button>
 
-        <div className="w-7 h-7 rounded-full bg-amber-700 text-white flex items-center justify-center font-bold text-xs ring-2 ring-slate-700">
-          F
-        </div>
+        <CRMUserPopover onOpenInbox={() => onOpenAddModal?.('email')} />
 
         <button className="text-slate-400 hover:text-purple-300 transition-colors p-1.5 rounded-md hover:bg-slate-800/60">
           <Sparkles className="w-4 h-4 text-purple-400" />
