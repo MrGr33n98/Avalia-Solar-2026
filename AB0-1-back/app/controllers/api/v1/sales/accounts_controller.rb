@@ -43,7 +43,11 @@ module Api
               last_name = c_params[:last_name]
               contact_email = c_params[:email].presence || "#{account.name.parameterize}-#{SecureRandom.hex(3)}@contato.crm"
 
-              contact = account.contacts.find_or_initialize_by(email: contact_email)
+              contact = if c_params[:id].present?
+                          account.contacts.find_by(id: c_params[:id]) || ::Sales::Contact.find_by(id: c_params[:id]) || account.contacts.build
+                        else
+                          account.contacts.find_or_initialize_by(email: contact_email)
+                        end
               contact.assign_attributes(
                 first_name: first_name,
                 last_name: last_name,
@@ -53,6 +57,7 @@ module Api
                 user: current_user,
                 company_id: current_user.company_id
               )
+              contact.sales_account_id ||= account.id
               contact.save!
             end
 

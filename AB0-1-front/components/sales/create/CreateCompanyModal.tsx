@@ -1,12 +1,13 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Building2, Image as ImageIcon, Plus, RotateCw, UserPlus } from 'lucide-react';
+import { Building2, Image as ImageIcon, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import CRMModal from '@/components/sales/ui/CRMModal';
 import { CRMFormField, CRMFormRow } from '@/components/sales/ui/CRMForm';
+import CRMPersonSelect, { PersonOption } from '@/components/sales/ui/CRMPersonSelect';
 import { salesApi } from '@/lib/api/sales/client';
 
 interface CreateCompanyModalProps {
@@ -26,6 +27,7 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
   const [companyPhone, setCompanyPhone] = useState('');
   const [companyAddress, setCompanyAddress] = useState('');
   const [personName, setPersonName] = useState('');
+  const [selectedPersonContact, setSelectedPersonContact] = useState<PersonOption | null>(null);
   const [companyUrl, setCompanyUrl] = useState('');
   const [logoFileName, setLogoFileName] = useState<string | null>(null);
 
@@ -60,8 +62,8 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
         : undefined;
 
       const personParts = personName.trim().split(' ');
-      const firstName = personParts[0] || undefined;
-      const lastName = personParts.slice(1).join(' ') || undefined;
+      const firstName = selectedPersonContact?.first_name || personParts[0] || undefined;
+      const lastName = selectedPersonContact?.last_name || personParts.slice(1).join(' ') || undefined;
 
       await salesApi.createAccount({
         name: companyName.trim(),
@@ -72,11 +74,12 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
         city,
         state,
         segment: 'Integrador / Instalador',
-        primary_contact: firstName
+        primary_contact: (firstName || selectedPersonContact?.id)
           ? {
-              first_name: firstName,
+              id: selectedPersonContact?.id,
+              first_name: firstName || 'Contato',
               last_name: lastName,
-              email: companyEmail.trim() || undefined,
+              email: selectedPersonContact?.email || companyEmail.trim() || undefined,
               phone: companyPhone.trim() || undefined,
             }
           : undefined,
@@ -95,6 +98,7 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
         setCompanyPhone('');
         setCompanyAddress('');
         setPersonName('');
+        setSelectedPersonContact(null);
         setCompanyUrl('');
         setLogoFileName(null);
         onSuccess?.();
@@ -199,15 +203,15 @@ export default function CreateCompanyModal({ open, onClose, onSuccess }: CreateC
         {/* 2-Column Row: Primary Person & Website URL */}
         <CRMFormRow cols={2}>
           <CRMFormField label="Person (Contato Principal)">
-            <div className="relative">
-              <UserPlus className="w-4 h-4 text-indigo-600 absolute left-3.5 top-3 pointer-events-none" />
-              <Input
-                value={personName}
-                onChange={(e) => setPersonName(e.target.value)}
-                placeholder="Selecione ou crie um contato..."
-                className="h-10 pl-10 text-xs border-slate-300 focus:border-indigo-600 rounded-lg"
-              />
-            </div>
+            <CRMPersonSelect
+              value={personName}
+              selectedContact={selectedPersonContact}
+              onChange={(name, contact) => {
+                setPersonName(name);
+                setSelectedPersonContact(contact || null);
+              }}
+              placeholder="Select or create a person"
+            />
           </CRMFormField>
 
           <CRMFormField label="URL / Website">
