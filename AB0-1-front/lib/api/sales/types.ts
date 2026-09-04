@@ -27,6 +27,7 @@ export interface ApiAccount {
   id: number;
   name: string;
   domain?: string | null;
+  website?: string | null;
   cnpj?: string | null;
   city?: string | null;
   state?: string | null;
