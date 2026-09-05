@@ -1,8 +1,7 @@
 'use client';
 
-import { Columns } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import CRMModal from '@/components/sales/ui/CRMModal';
+import React from 'react';
+import CRMColumnSelectorModal, { ColumnDefinition } from '@/components/sales/ui/CRMColumnSelectorModal';
 
 export interface PeopleColumnConfig {
   person_name: boolean;
@@ -10,7 +9,35 @@ export interface PeopleColumnConfig {
   decision_role: boolean;
   last_contact: boolean;
   contact_info: boolean;
+  phone: boolean;
+  email: boolean;
+  created_at: boolean;
+  owner_name: boolean;
 }
+
+export const DEFAULT_PEOPLE_COLUMNS: PeopleColumnConfig = {
+  person_name: true,
+  company_job: true,
+  decision_role: true,
+  last_contact: true,
+  contact_info: true,
+  phone: false,
+  email: false,
+  created_at: false,
+  owner_name: false,
+};
+
+const PEOPLE_COLUMNS_DEFINITIONS: ColumnDefinition<keyof PeopleColumnConfig>[] = [
+  { id: 'person_name', label: 'Nome da Pessoa (Name)', category: 'companies', required: true, description: 'Nome completo do contato/decisor.' },
+  { id: 'company_job', label: 'Empresa & Cargo', category: 'companies', description: 'Empresa vinculada e cargo ocupado.' },
+  { id: 'decision_role', label: 'Papel de Decisão (Decision Role)', category: 'companies', description: 'Papel no comitê de compra (Decisor, Influenciador, Usuário).' },
+  { id: 'contact_info', label: 'Canais de Contato (Resumo)', category: 'email', description: 'Ícones e atalhos rápidos de E-mail e WhatsApp.' },
+  { id: 'phone', label: 'Telefone / WhatsApp Direto', category: 'engagement', description: 'Número de telefone direto do contato.' },
+  { id: 'email', label: 'Endereço de E-mail', category: 'email', description: 'E-mail profissional do contato.' },
+  { id: 'last_contact', label: 'Último Contato / Atividade', category: 'engagement', description: 'Data e horário da última interação registrada.' },
+  { id: 'created_at', label: 'Data de Cadastro', category: 'custom', description: 'Data de adição do contato no CRM.' },
+  { id: 'owner_name', label: 'Responsável (Owner)', category: 'custom', description: 'Vendedor responsável pelo contato.' },
+];
 
 interface PeopleColumnsDialogProps {
   open: boolean;
@@ -25,78 +52,16 @@ export default function PeopleColumnsDialog({
   columns,
   onChange,
 }: PeopleColumnsDialogProps) {
-  const toggleColumn = (key: keyof PeopleColumnConfig) => {
-    onChange({ ...columns, [key]: !columns[key] });
-  };
-
   return (
-    <CRMModal
+    <CRMColumnSelectorModal
       open={open}
       onClose={onClose}
       title="Configurar Colunas Exibidas — Pessoas"
       description="Selecione as colunas ativas na tabela de pessoas e decisores."
-      icon={<Columns className="w-5 h-5 text-indigo-700" />}
-      size="sm"
-      showCustomizeFields={false}
-      footer={
-        <div className="w-full flex justify-end">
-          <Button size="sm" onClick={onClose} className="h-9 px-5 bg-indigo-900 text-white hover:bg-indigo-950 font-bold rounded-lg shadow-sm">
-            Concluir
-          </Button>
-        </div>
-      }
-    >
-      <div className="space-y-3 py-1 text-xs font-sans">
-        <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 border border-slate-200">
-          <input
-            type="checkbox"
-            checked={columns.person_name}
-            disabled
-            className="rounded border-slate-300 text-indigo-600 w-4 h-4"
-          />
-          <span className="font-bold text-slate-900">Nome da Pessoa (Obrigatório)</span>
-        </label>
-
-        <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 border border-slate-200">
-          <input
-            type="checkbox"
-            checked={columns.company_job}
-            onChange={() => toggleColumn('company_job')}
-            className="rounded border-slate-300 text-indigo-600 w-4 h-4"
-          />
-          <span className="font-semibold text-slate-800">Empresa & Cargo</span>
-        </label>
-
-        <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 border border-slate-200">
-          <input
-            type="checkbox"
-            checked={columns.decision_role}
-            onChange={() => toggleColumn('decision_role')}
-            className="rounded border-slate-300 text-indigo-600 w-4 h-4"
-          />
-          <span className="font-semibold text-slate-800">Papel de Decisão (Decision Role)</span>
-        </label>
-
-        <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 border border-slate-200">
-          <input
-            type="checkbox"
-            checked={columns.last_contact}
-            onChange={() => toggleColumn('last_contact')}
-            className="rounded border-slate-300 text-indigo-600 w-4 h-4"
-          />
-          <span className="font-semibold text-slate-800">Último Contato / Atividade</span>
-        </label>
-
-        <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 border border-slate-200">
-          <input
-            type="checkbox"
-            checked={columns.contact_info}
-            onChange={() => toggleColumn('contact_info')}
-            className="rounded border-slate-300 text-indigo-600 w-4 h-4"
-          />
-          <span className="font-semibold text-slate-800">Canais de Contato (E-mail / WhatsApp)</span>
-        </label>
-      </div>
-    </CRMModal>
+      availableColumns={PEOPLE_COLUMNS_DEFINITIONS}
+      selectedColumns={columns}
+      onChange={(updated) => onChange(updated as PeopleColumnConfig)}
+      onRestoreDefaults={() => onChange(DEFAULT_PEOPLE_COLUMNS)}
+    />
   );
 }

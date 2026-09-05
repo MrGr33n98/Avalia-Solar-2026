@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateCompanyModal from '@/components/sales/create/CreateCompanyModal';
 import { Button } from '@/components/ui/button';
-import CompaniesColumnsDialog, { CompanyColumnConfig } from './CompaniesColumnsDialog';
+import CompaniesColumnsDialog, { CompanyColumnConfig, DEFAULT_COMPANY_COLUMNS } from './CompaniesColumnsDialog';
 import CompaniesDuplicateManager from './CompaniesDuplicateManager';
 import CompaniesTable, { CompanyListItem } from './CompaniesTable';
 import CompaniesToolbar from './CompaniesToolbar';
@@ -33,15 +33,7 @@ export default function CompaniesPage() {
   const [advancedFilters, setAdvancedFilters] = useState<CRMFilterState>(INITIAL_FILTER_STATE);
 
   const [columns, setColumns] = useState<CompanyColumnConfig>(() => {
-    const defaults: CompanyColumnConfig = {
-      company_name: true,
-      primary_contact: true,
-      last_contact: true,
-      address: true,
-      company_type: true,
-      tags: true,
-      open_opps: true,
-    };
+    const defaults = DEFAULT_COMPANY_COLUMNS;
     if (typeof window === 'undefined') return defaults;
     try {
       return {
@@ -183,8 +175,9 @@ export default function CompaniesPage() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      alert(err.message || 'Erro ao exportar CSV.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao exportar CSV.';
+      alert(errorMessage);
     }
   };
 
@@ -279,7 +272,7 @@ export default function CompaniesPage() {
           open={isViewsSidebarOpen}
           onClose={() => setIsViewsSidebarOpen(false)}
           activeFilterState={advancedFilters}
-          onSelectView={(viewFilters, name) => {
+          onSelectView={(viewFilters, _name) => {
             setAdvancedFilters({
               ...INITIAL_FILTER_STATE,
               ...viewFilters,
