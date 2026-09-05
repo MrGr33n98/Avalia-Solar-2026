@@ -4,6 +4,7 @@ module Api
   module V1
     module Sales
       class CampaignsController < BaseController
+        before_action :authenticate_api_user
         before_action :set_campaign, only: %i[show update destroy snapshot preflight dispatch pause resume cancel retry_failed analytics]
 
         def preflight
@@ -18,11 +19,15 @@ module Api
 
         def index
           scope = scoped_campaigns.order(created_at: :desc)
-          scope = scope.where(status: params[:status]) if params[:status].present?
-          scope = scope.where(campaign_type: params[:campaign_type]) if params[:campaign_type].present?
+          scope = scope.where(status: params[:status]) if params[:status].present? && ::Sales::Campaign.column_names.include?('status')
+          scope = scope.where(campaign_type: params[:campaign_type]) if params[:campaign_type].present? && ::Sales::Campaign.column_names.include?('campaign_type')
           if params[:q].present?
             term = "%#{params[:q].to_s.downcase}%"
-            scope = scope.where('LOWER(name) LIKE :term OR LOWER(campaign_key) LIKE :term', term: term)
+            if ::Sales::Campaign.column_names.include?('campaign_key')
+              scope = scope.where('LOWER(name) LIKE :term OR LOWER(campaign_key) LIKE :term', term: term)
+            else
+              scope = scope.where('LOWER(name) LIKE :term', term: term)
+            end
           end
 
           page = [params[:page].to_i, 1].max
@@ -136,10 +141,12 @@ module Api
         end
 
         def scoped_campaigns
-          return ::Sales::Campaign.all if current_user.admin?
-          if current_user.company_id.present?
+          return ::Sales::Campaign.none if current_user.nil?
+          return ::Sales::Campaign.all if current_user.respond_to?(:admin?) && current_user.admin?
+
+          if current_user.respond_to?(:company_id) && current_user.company_id.present?
             ::Sales::Campaign.where(company_id: current_user.company_id)
-          elsif current_user.id.present?
+          elsif current_user.respond_to?(:id) && current_user.id.present? && ::Sales::Campaign.column_names.include?('user_id')
             ::Sales::Campaign.where(user_id: current_user.id)
           else
             ::Sales::Campaign.none
@@ -157,24 +164,24 @@ module Api
           {
             id: c.id,
             name: c.name,
-            campaign_key: c.campaign_key,
-            campaign_type: c.campaign_type,
-            status: c.status,
-            active: c.active,
-            total_recipients: c.total_recipients,
-            processed_recipients: c.processed_recipients,
-            sent_count: c.sent_count,
-            delivered_count: c.delivered_count,
-            opened_count: c.opened_count,
-            clicked_count: c.clicked_count,
-            bounced_count: c.bounced_count,
-            unsubscribed_count: c.unsubscribed_count,
-            revenue_attributed_cents: c.revenue_attributed_cents,
-            scheduled_at: c.scheduled_at,
-            started_at: c.started_at,
-            completed_at: c.completed_at,
-            email_template_id: c.email_template_id,
-            template_name: c.email_template&.name,
+            campaign_key: c.try(:campaign_key),
+            campaign_type: c.try(:campaign_type) || 'email_broadcast',
+            status: c.try(:status) || 'draft',
+            active: c.try(:active).nil? ? true : c.active,
+            total_recipients: c.try(:total_recipients).to_i,
+            processed_recipients: c.try(:processed_recipients).to_i,
+            sent_count: c.try(:sent_count).to_i,
+            delivered_count: c.try(:delivered_count).to_i,
+            opened_count: c.try(:opened_count).to_i,
+            clicked_count: c.try(:clicked_count).to_i,
+            bounced_count: c.try(:bounced_count).to_i,
+            unsubscribed_count: c.try(:unsubscribed_count).to_i,
+            revenue_attributed_cents: c.try(:revenue_attributed_cents).to_i,
+            scheduled_at: c.try(:scheduled_at),
+            started_at: c.try(:started_at),
+            completed_at: c.try(:completed_at),
+            email_template_id: c.try(:email_template_id),
+            template_name: c.respond_to?(:email_template) ? c.email_template&.name : nil,
             created_at: c.created_at,
             updated_at: c.updated_at
           }
@@ -182,8 +189,8 @@ module Api
 
         def serialize_campaign_detailed(c)
           serialize_campaign_summary(c).merge(
-            audience_filter: c.audience_filter,
-            user_name: c.user&.name || 'Sistema'
+            audience_filter: c.try(:audience_filter) || {},
+            user_name: c.try(:user)&.name || 'Sistema'
           )
         end
       end

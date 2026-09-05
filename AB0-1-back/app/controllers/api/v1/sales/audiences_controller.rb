@@ -4,6 +4,8 @@ module Api
   module V1
     module Sales
       class AudiencesController < BaseController
+        before_action :authenticate_api_user
+
         def preview
           company = current_user.company
           unless company
