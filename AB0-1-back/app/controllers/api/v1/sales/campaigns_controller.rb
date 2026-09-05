@@ -86,7 +86,14 @@ module Api
             return
           end
 
-          campaign = ::Sales::Campaign.new(campaign_params.merge(
+          attributes = campaign_params.to_h
+          audience = attributes[:audience_id].present? ? ::Sales::Audience.find_by(id: attributes[:audience_id], company_id: company.id, active: true) : nil
+          if attributes[:audience_id].present? && audience.nil?
+            render json: { errors: ['Audiência inválida ou não autorizada.'] }, status: :unprocessable_entity
+            return
+          end
+          attributes[:audience_filter] = audience.filter_definition if audience
+          campaign = ::Sales::Campaign.new(attributes.merge(
             company_id: company.id,
             user_id: current_user.id,
             status: 'draft'
@@ -100,7 +107,16 @@ module Api
         end
 
         def update
-          if @campaign.update(campaign_params)
+          attributes = campaign_params.to_h
+          if attributes.key?(:audience_id)
+            audience = ::Sales::Audience.find_by(id: attributes[:audience_id], company_id: @campaign.company_id, active: true)
+            if attributes[:audience_id].present? && audience.nil?
+              render json: { errors: ['Audiência inválida ou não autorizada.'] }, status: :unprocessable_entity
+              return
+            end
+            attributes[:audience_filter] = audience&.filter_definition || {} if attributes[:audience_id].present?
+          end
+          if @campaign.update(attributes)
             render json: { campaign: serialize_campaign_summary(@campaign) }
           else
             render json: { errors: @campaign.errors.full_messages }, status: :unprocessable_entity
@@ -210,7 +226,7 @@ module Api
         def campaign_params
           params.require(:campaign).permit(
             :name, :campaign_key, :campaign_type, :email_template_id,
-            :scheduled_at, :active, audience_filter: {}
+            :scheduled_at, :active, :audience_id, audience_filter: {}
           )
         end
 

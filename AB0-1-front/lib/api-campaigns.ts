@@ -243,6 +243,7 @@ export const createCampaign = async (payload: {
   email_template_id?: number | null;
   scheduled_at?: string | null;
   audience_filter?: Record<string, unknown>;
+  audience_id?: number | null;
 }): Promise<{ campaign: CampaignSummary }> => {
   return requestApi<{ campaign: CampaignSummary }>('/campaigns', {
     method: 'POST',
@@ -317,3 +318,12 @@ export const fetchCampaignRecipients = async (id: number, params: { page?: numbe
 };
 
 export const fetchCampaignActivity = (id: number) => requestApi<{ activity: Array<{ id: number; type: string; occurred_at: string; provider_event_id?: string | null; recipient_id?: number | null }> }>(`/campaigns/${id}/activity`);
+
+export type SavedAudience = { id: number; name: string; description?: string | null; kind: string; active: boolean; filter_definition: Record<string, unknown> };
+export const fetchAudiences = (params: { page?: number; per_page?: number; active?: boolean } = {}) => { const q = new URLSearchParams(); if (params.page) q.set('page', String(params.page)); if (params.per_page) q.set('per_page', String(params.per_page)); if (params.active !== undefined) q.set('active', String(params.active)); return requestApi<{ audiences: SavedAudience[]; meta?: { page: number; total_count: number; total_pages: number } }>(`/audiences?${q}`); };
+export const fetchAudience = (id: number) => requestApi<{ audience: SavedAudience }>(`/audiences/${id}`);
+export const createAudience = (payload: Pick<SavedAudience, 'name' | 'kind' | 'filter_definition'> & { description?: string }) => requestApi<{ audience: SavedAudience }>('/audiences', { method: 'POST', body: JSON.stringify({ audience: payload }) });
+export const updateAudience = (id: number, payload: Partial<Pick<SavedAudience, 'name' | 'description' | 'active' | 'filter_definition'>>) => requestApi<{ audience: SavedAudience }>(`/audiences/${id}`, { method: 'PATCH', body: JSON.stringify({ audience: payload }) });
+export const deleteAudience = (id: number) => requestApi<void>(`/audiences/${id}`, { method: 'DELETE' });
+export const duplicateAudience = async (id: number, name: string) => { const { audience } = await fetchAudience(id); return createAudience({ name, kind: audience.kind, filter_definition: audience.filter_definition, description: audience.description || undefined }); };
+export const archiveAudience = (id: number) => updateAudience(id, { active: false });

@@ -14,6 +14,7 @@ interface CampaignWizardModalProps {
     campaign_type: string;
     email_template_id?: number | null;
     audience_filter: Record<string, unknown>;
+    audience_id?: number | null;
   }) => Promise<void>;
 }
 
@@ -24,6 +25,8 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
   const [emailTemplateId, setEmailTemplateId] = useState<number | null>(null);
 
   const [templates, setTemplates] = useState<Array<{ id: number; name: string }>>([]);
+  const [audiences, setAudiences] = useState<Array<{ id: number; name: string; filter_definition?: Record<string, unknown> }>>([]);
+  const [audienceId, setAudienceId] = useState<number | null>(null);
   const [templateError, setTemplateError] = useState('');
 
   // Audience Filter State
@@ -46,6 +49,9 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
       fetchAudienceSegments()
         .then(setSegments)
         .catch((err) => console.error('Erro ao carregar segmentos:', err));
+      requestApi<{ audiences: Array<{ id: number; name: string; filter_definition?: Record<string, unknown> }> }>('/audiences?per_page=100')
+        .then((result) => setAudiences(result.audiences))
+        .catch((err) => setTemplateError(err.message || 'Falha ao carregar audiências.'));
     }
   }, [open]);
 
@@ -74,6 +80,7 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
         name,
         campaign_type: campaignType,
         email_template_id: emailTemplateId,
+        audience_id: audienceId,
         audience_filter: {
           state: stateFilter || undefined,
           city: cityFilter || undefined,
@@ -199,7 +206,12 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
         </label>}
 
         {/* Step 2: Audience Filter */}
-        {step === 2 && (
+        {step === 2 && (<>
+            <label className="block text-sm font-medium">Audiência salva
+              <select className="mt-1 w-full rounded border p-2" value={audienceId ?? ''} onChange={(event) => { const id = Number(event.target.value); const selected = audiences.find((item) => item.id === id); setAudienceId(id || null); if (selected?.filter_definition) { setStateFilter(String(selected.filter_definition.state || '')); setCityFilter(String(selected.filter_definition.city || '')); setSegmentFilter(String(selected.filter_definition.segment || '')); setSearchTerm(String(selected.filter_definition.search || '')); } }}>
+                <option value="">Filtros manuais</option>{audiences.map((audience) => <option key={audience.id} value={audience.id}>{audience.name}</option>)}
+              </select>
+            </label>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -253,7 +265,7 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
               </span>
             </div>
           </div>
-        )}
+          </>)}
 
         {/* Step 3: Review */}
         {step === 3 && (

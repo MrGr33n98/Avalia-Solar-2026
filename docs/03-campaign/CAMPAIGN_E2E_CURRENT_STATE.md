@@ -24,3 +24,5 @@ Atualização: P0 routing/loading corrigido; rotas estáticas e regressões adic
 Deliverability: rotas de domínio, remetente e deliverability criadas; exibem unavailable até integração real de verificação.
 
 Sequences: criação e listagem UI usam `email_sequences` real; steps/enrollment ainda sem engine.
+
+Atualização adicional: Campaign Wizard carrega Saved Audiences, envia `audience_id` e o backend valida o tenant ativo e copia `filter_definition` para `audience_filter` como snapshot. O client frontend expõe CRUD, duplicação e arquivamento de audiences.

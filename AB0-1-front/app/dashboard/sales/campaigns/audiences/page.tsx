@@ -16,17 +16,19 @@ export default function AudiencesPage() {
   const [retry, setRetry] = useState(0);
   const [name, setName] = useState('');
   const [saved, setSaved] = useState('');
+  const [savedAudiences, setSavedAudiences] = useState<Array<{ id: number; name: string; kind: string; active: boolean }>>([]);
   const load = useCallback(async (signal: AbortSignal) => {
     setLoading(true);
     setError('');
     try {
-      const [options, result] = await Promise.all([
+      const [options, savedResult, result] = await Promise.all([
         requestApi<AudienceSegmentsOptions>('/audiences/segments', { signal }),
+        requestApi<{ audiences: Array<{ id: number; name: string; kind: string; active: boolean }> }>('/audiences?per_page=100', { signal }),
         requestApi<AudiencePreviewResult>('/audiences/preview', {
           method: 'POST', signal, body: JSON.stringify({ audience_filter: filter, page, per_page: 20 }),
         }),
       ]);
-      if (!signal.aborted) { setSegments(options); setData(result); }
+      if (!signal.aborted) { setSegments(options); setData(result); setSavedAudiences(savedResult.audiences); }
     } catch (err) {
       if (!signal.aborted) setError(err instanceof Error ? err.message : 'Falha ao carregar audiência.');
     } finally {
@@ -43,9 +45,10 @@ export default function AudiencesPage() {
     <p>Segmentos de contatos utilizados nas campanhas. Prévia de contatos elegíveis para e-mail.</p>
     <div className="flex flex-wrap gap-3 items-end">
       <label className="text-sm">Nome da audiência<Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Integradores RS" /></label>
-      <Button disabled={!name.trim() || loading} onClick={async () => { try { await requestApi('/audiences', { method: 'POST', body: JSON.stringify({ audience: { name: name.trim(), kind: 'dynamic', filter_definition: filter } }) }); setSaved('Audiência salva.'); setName(''); } catch (err) { setError(err instanceof Error ? err.message : 'Falha ao salvar audiência.'); } }}>Salvar audiência</Button>
+      <Button disabled={!name.trim() || loading} onClick={async () => { try { await requestApi('/audiences', { method: 'POST', body: JSON.stringify({ audience: { name: name.trim(), kind: 'dynamic', filter_definition: filter } }) }); setSaved('Audiência salva.'); setName(''); setRetry((value) => value + 1); } catch (err) { setError(err instanceof Error ? err.message : 'Falha ao salvar audiência.'); } }}>Salvar audiência</Button>
     </div>
     {saved && <p role="status">{saved}</p>}
+    {savedAudiences.length > 0 && <section aria-label="Audiências salvas" className="rounded border p-4"><h2 className="font-semibold">Audiências salvas</h2><div className="mt-2 divide-y">{savedAudiences.map((audience) => <div key={audience.id} className="flex items-center justify-between py-2"><span>{audience.name} <small>({audience.kind})</small></span><span className="text-sm">{audience.active ? "Ativa" : "Arquivada"}</span></div>)}</div></section>}
     <div className="grid gap-3 sm:grid-cols-2">
       {(['state', 'city', 'segment'] as const).map((key) => <label key={key} className="text-sm">
         {{ state: 'Estado', city: 'Cidade', segment: 'Tipo de empresa' }[key]}

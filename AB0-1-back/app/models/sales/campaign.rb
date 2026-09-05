@@ -6,6 +6,7 @@ module Sales
 
     belongs_to :company
     belongs_to :user, class_name: 'User', foreign_key: :user_id, optional: true
+    belongs_to :audience, class_name: 'Sales::Audience', foreign_key: :audience_id, optional: true
     belongs_to :email_template, class_name: 'Sales::EmailTemplate', foreign_key: :email_template_id, optional: true
 
     has_many :recipients, class_name: 'Sales::CampaignRecipient', foreign_key: :sales_campaign_id, dependent: :destroy

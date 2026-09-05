@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_05_000005) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_05_000007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -3587,6 +3587,22 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_05_000005) do
     t.index ["user_id"], name: "index_sales_api_keys_on_user_id"
   end
 
+  create_table "sales_audiences", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "created_by_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.string "kind", default: "dynamic", null: false
+    t.jsonb "filter_definition", default: {}, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "active", "updated_at"], name: "index_sales_audiences_on_company_id_and_active_and_updated_at"
+    t.index ["company_id"], name: "index_sales_audiences_on_company_id"
+    t.index ["created_by_id"], name: "index_sales_audiences_on_created_by_id"
+    t.check_constraint "kind::text = 'dynamic'::text", name: "sales_audiences_kind"
+  end
+
   create_table "sales_audit_logs", force: :cascade do |t|
     t.bigint "company_id"
     t.bigint "actor_id"
@@ -3671,6 +3687,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_05_000005) do
     t.bigint "revenue_attributed_cents", default: 0, null: false
     t.bigint "email_template_id"
     t.bigint "user_id"
+    t.bigint "audience_id"
+    t.index ["audience_id"], name: "index_sales_campaigns_on_audience_id"
     t.index ["company_id", "campaign_key"], name: "index_sales_campaigns_on_company_id_and_campaign_key", unique: true
     t.index ["company_id", "campaign_type"], name: "idx_sales_campaigns_company_type"
     t.index ["company_id", "created_at"], name: "index_sales_campaigns_on_company_id_and_created_at", order: { created_at: :desc }
@@ -4982,9 +5000,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_05_000005) do
   add_foreign_key "sales_activities", "users", column: "actor_id"
   add_foreign_key "sales_api_keys", "companies"
   add_foreign_key "sales_api_keys", "users"
+  add_foreign_key "sales_audiences", "companies"
+  add_foreign_key "sales_audiences", "users", column: "created_by_id"
   add_foreign_key "sales_audit_logs", "companies"
   add_foreign_key "sales_audit_logs", "users", column: "actor_id"
   add_foreign_key "sales_campaigns", "companies"
+  add_foreign_key "sales_campaigns", "sales_audiences", column: "audience_id"
   add_foreign_key "sales_consents", "sales_contacts", column: "contact_id"
   add_foreign_key "sales_contact_employments", "sales_accounts"
   add_foreign_key "sales_contact_employments", "sales_contacts"
