@@ -5,7 +5,7 @@ module Api
     module Sales
       class CampaignsController < BaseController
         before_action :authenticate_api_user
-        before_action :set_campaign, only: %i[show update destroy snapshot preflight launch pause resume cancel retry_failed analytics]
+        before_action :set_campaign, only: %i[show update destroy snapshot preflight launch pause resume cancel retry_failed analytics recipients activity]
 
         def preflight
           result = ::Sales::Campaigns::Preflight.call(campaign: @campaign)
@@ -167,6 +167,27 @@ module Api
           render json: { campaign_id: @campaign.id, metrics: metrics }
         end
 
+        def activity
+          messages = @campaign.email_messages.includes(:events).order(created_at: :desc).limit(100)
+          rows = messages.flat_map do |message|
+            message.events.map do |event|
+              { id: event.id, type: event.event_type, occurred_at: event.occurred_at, provider_event_id: event.provider_event_id,
+                recipient_id: message.sales_campaign_recipient_id }
+            end
+          end.sort_by { |row| row[:occurred_at] || Time.at(0) }.reverse
+          render json: { campaign_id: @campaign.id, activity: rows }
+        end
+
+        def recipients
+          scope = @campaign.recipients.order(updated_at: :desc)
+          scope = scope.where(status: params[:status]) if params[:status].present?
+          page = [params.fetch(:page, 1).to_i, 1].max
+          per_page = [[params.fetch(:per_page, 50).to_i, 1].max, 100].min
+          total_count = scope.count
+          rows = scope.offset((page - 1) * per_page).limit(per_page).map { |r| serialize_recipient(r) }
+          render json: { recipients: rows, meta: { page: page, per_page: per_page, total_count: total_count, total_pages: (total_count.to_f / per_page).ceil } }
+        end
+
         private
 
         def set_campaign
@@ -218,6 +239,11 @@ module Api
             created_at: c.created_at,
             updated_at: c.updated_at
           }
+        end
+
+        def serialize_recipient(r)
+          { id: r.id, email: r.email, first_name: r.first_name, status: r.status, error_message: r.error_message,
+            sent_at: r.sent_at, delivered_at: r.delivered_at, opened_at: r.opened_at, clicked_at: r.clicked_at }
         end
 
         def serialize_campaign_detailed(c)

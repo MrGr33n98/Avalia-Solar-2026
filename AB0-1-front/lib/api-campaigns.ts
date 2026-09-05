@@ -122,17 +122,40 @@ function extractBlockers(body: Record<string, unknown>): PreflightItem[] {
   return [];
 }
 
-async function requestApi<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`/api/v1/sales${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-    credentials: 'include',
-  });
-
-  const body: unknown = await res.json().catch(() => ({}));
+export async function requestApi<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  options.signal?.addEventListener('abort', abort, { once: true });
+  if (options.signal?.aborted) controller.abort();
+  const timeout = setTimeout(abort, 20000);
+  let res: Response;
+  let body: unknown;
+  try {
+    res = await fetch(`/api/v1/sales${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      credentials: 'include',
+    });
+    if (res.status === 204) return undefined as T;
+    try {
+      body = await res.json();
+    } catch {
+      if (!res.ok) throw new ApiDomainError(`HTTP_${res.status}`, `Erro HTTP ${res.status}`);
+      throw new ApiDomainError('INVALID_RESPONSE', 'Resposta inválida do servidor. Tente novamente.');
+    }
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new ApiDomainError('REQUEST_ABORTED', 'Solicitação interrompida ou tempo limite excedido. Tente novamente.');
+    }
+    if (error instanceof SyntaxError) {
+      throw new ApiDomainError('INVALID_RESPONSE', 'Resposta inválida do servidor. Tente novamente.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', abort);
+  }
 
   // Extract domain error from body — may be at root or nested in dispatch/snapshot
   function findDomainError(parsed: Record<string, unknown>): { code: string; message: string; blockers: PreflightItem[] } | null {
@@ -283,3 +306,14 @@ export const previewAudience = async (
 export const fetchAudienceSegments = async (): Promise<AudienceSegmentsOptions> => {
   return requestApi<AudienceSegmentsOptions>('/audiences/segments');
 };
+
+
+export const fetchCampaignRecipients = async (id: number, params: { page?: number; per_page?: number; status?: string } = {}) => {
+  const query = new URLSearchParams();
+  if (params.page) query.set('page', String(params.page));
+  if (params.per_page) query.set('per_page', String(params.per_page));
+  if (params.status) query.set('status', params.status);
+  return requestApi<{ recipients: CampaignRecipientLog[]; meta: { page: number; per_page: number; total_count: number; total_pages: number } }>(`/campaigns/${id}/recipients?${query}`);
+};
+
+export const fetchCampaignActivity = (id: number) => requestApi<{ activity: Array<{ id: number; type: string; occurred_at: string; provider_event_id?: string | null; recipient_id?: number | null }> }>(`/campaigns/${id}/activity`);

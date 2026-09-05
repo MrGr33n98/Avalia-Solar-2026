@@ -96,8 +96,11 @@ Rails.application.routes.draw do
             post :cancel
             post :retry_failed
             get :analytics
+            get :recipients
+            get :activity
           end
         end
+        resources :audiences, only: %i[index show create update destroy], controller: 'sales/audiences', constraints: { id: /\d+/ }
         post 'audiences/preview', to: 'sales/audiences#preview'
         get 'audiences/segments', to: 'sales/audiences#segments'
         resources :emails, only: %i[index create show], controller: 'sales/emails'

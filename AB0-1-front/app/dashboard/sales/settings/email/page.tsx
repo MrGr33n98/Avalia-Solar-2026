@@ -24,36 +24,18 @@ export default function EmailSettingsPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [viewMode, setViewMode] = useState<'code' | 'preview'>('preview');
 
-  const load = () =>
-    fetch('/api/v1/sales/email_signatures', { credentials: 'include' })
-      .then((response) =>
-        response.ok ? response.json() : Promise.reject(new Error('Falha ao carregar assinaturas.'))
-      )
-      .then((data: { signatures?: Signature[] }) => {
-        const list = data.signatures ?? [];
-        if (list.length === 0) {
-          setSignatures([
-            {
-              id: 1,
-              name: 'Assinatura Comercial Padrão',
-              body_html: `<p>Atenciosamente,</p><p><strong>Equipe Avalia Solar</strong><br/><span style="color:#0284c7;">Consultoria & Marketplace Solar</span><br/>🌐 www.avaliasolar.com.br</p>`,
-              is_default: true,
-            },
-          ]);
-        } else {
-          setSignatures(list);
-        }
-      })
-      .catch(() => {
-        setSignatures([
-          {
-            id: 1,
-            name: 'Assinatura Comercial Padrão',
-            body_html: `<p>Atenciosamente,</p><p><strong>Equipe Avalia Solar</strong><br/><span style="color:#0284c7;">Consultoria & Marketplace Solar</span><br/>🌐 www.avaliasolar.com.br</p>`,
-            is_default: true,
-          },
-        ]);
-      });
+  const load = async () => {
+    setError('');
+    try {
+      const response = await fetch('/api/v1/sales/email_signatures', { credentials: 'include' });
+      if (!response.ok) throw new Error('Falha ao carregar assinaturas.');
+      const data: { signatures?: Signature[] } = await response.json();
+      setSignatures(data.signatures ?? []);
+    } catch (err) {
+      setSignatures([]);
+      setError(err instanceof Error ? err.message : 'Falha ao carregar assinaturas.');
+    }
+  };
 
   useEffect(() => {
     load();
@@ -74,23 +56,12 @@ export default function EmailSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ signature: { name: name.trim(), body_html: bodyHtml, is_default: true } }),
       });
-      if (response.ok) {
-        load();
-      } else {
-        setSignatures((prev) => [
-          ...prev,
-          { id: Date.now(), name: name.trim(), body_html: bodyHtml, is_default: false },
-        ]);
-      }
-    } catch {
-      setSignatures((prev) => [
-        ...prev,
-        { id: Date.now(), name: name.trim(), body_html: bodyHtml, is_default: false },
-      ]);
-    } finally {
+      if (!response.ok) throw new Error('Falha ao salvar assinatura.');
+      await load();
       setName('');
       setIsAdding(false);
-      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao salvar assinatura.');
     }
   };
 

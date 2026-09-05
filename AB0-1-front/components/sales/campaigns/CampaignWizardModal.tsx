@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Megaphone, Users, FileText, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Megaphone, Users, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CRMModal from '@/components/sales/ui/CRMModal';
-import { fetchAudienceSegments, previewAudience, AudiencePreviewResult, AudienceSegmentsOptions } from '@/lib/api-campaigns';
+import { requestApi, fetchAudienceSegments, previewAudience, AudiencePreviewResult, AudienceSegmentsOptions } from '@/lib/api-campaigns';
 
 interface CampaignWizardModalProps {
   open: boolean;
@@ -13,7 +13,7 @@ interface CampaignWizardModalProps {
     name: string;
     campaign_type: string;
     email_template_id?: number | null;
-    audience_filter: Record<string, any>;
+    audience_filter: Record<string, unknown>;
   }) => Promise<void>;
 }
 
@@ -22,6 +22,9 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
   const [name, setName] = useState<string>('');
   const [campaignType, setCampaignType] = useState<string>('email_broadcast');
   const [emailTemplateId, setEmailTemplateId] = useState<number | null>(null);
+
+  const [templates, setTemplates] = useState<Array<{ id: number; name: string }>>([]);
+  const [templateError, setTemplateError] = useState('');
 
   // Audience Filter State
   const [stateFilter, setStateFilter] = useState<string>('');
@@ -36,6 +39,10 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
 
   useEffect(() => {
     if (open) {
+      setTemplateError('');
+      requestApi<{ templates: Array<{ id: number; name: string }> }>('/email_templates')
+        .then((result) => setTemplates(result.templates))
+        .catch((err) => setTemplateError(err.message || 'Falha ao carregar templates.'));
       fetchAudienceSegments()
         .then(setSegments)
         .catch((err) => console.error('Erro ao carregar segmentos:', err));
@@ -78,8 +85,8 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
       // Reset form
       setStep(1);
       setName('');
-    } catch (err: any) {
-      alert(err.message || 'Erro ao criar campanha.');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erro ao criar campanha.');
     } finally {
       setSubmitting(false);
     }
@@ -169,12 +176,27 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
               >
                 <option value="email_broadcast">E-mail Broadcast (Disparo Direto em Lote)</option>
-                <option value="sequence">Sequência Drip (Nutrição em Etapas)</option>
-                <option value="event_triggered">Gatilho de Evento (Boas-vindas / Lead Intent)</option>
+
               </select>
             </div>
           </div>
         )}
+
+        {step === 1 && <label className="block text-xs font-semibold">Template de e-mail
+          <select className="block w-full border rounded p-2" value={emailTemplateId ?? ''} onChange={(event) => setEmailTemplateId(event.target.value ? Number(event.target.value) : null)}>
+            <option value="">Selecione um template</option>
+            {templates.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
+          </select>
+          {templateError && <span role="alert">{templateError}</span>}
+          {!templateError && templates.length === 0 && <span>Nenhum template disponível.</span>}
+        </label>}
+
+        {step === 2 && <label className="block text-xs font-semibold">Cidade
+          <select className="block w-full border rounded p-2" value={cityFilter} onChange={(event) => setCityFilter(event.target.value)}>
+            <option value="">Todas</option>
+            {(segments?.cities ?? []).map((city) => <option key={city}>{city}</option>)}
+          </select>
+        </label>}
 
         {/* Step 2: Audience Filter */}
         {step === 2 && (

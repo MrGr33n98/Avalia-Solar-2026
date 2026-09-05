@@ -17,6 +17,8 @@ module Sales
       end
 
       def call
+        return { records: ::Sales::Contact.none, total_count: 0, page: @page, per_page: @per_page, total_pages: 0 } unless @company
+
         scope = base_contacts_scope
 
         # Apply segment filter

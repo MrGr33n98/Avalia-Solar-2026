@@ -57,7 +57,10 @@ module Api
             return render json: { error: 'Endereço de e-mail inválido', code: 'INVALID_EMAIL_ADDRESS' }, status: :unprocessable_entity
           end
 
-          company_id = account&.company_id || current_user.company_id || 1
+          company_id = account&.company_id || current_user.company_id
+          unless company_id.present?
+            return render json: { error: 'Empresa não configurada', code: 'COMPANY_REQUIRED' }, status: :forbidden
+          end
           if ::Sales::Messaging::SuppressionChecker.blocked?(company_id: company_id, email: to_email)
             return render json: { error: "Destinatário suprimido", code: "EMAIL_SUPPRESSED" }, status: :unprocessable_entity
           end

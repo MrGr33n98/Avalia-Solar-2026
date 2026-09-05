@@ -33,7 +33,13 @@ module Sales
         break unless campaign.status == 'dispatching'
 
         begin
-          email_message = ::Sales::EmailMessage.create!(
+          existing_message = recipient.email_message
+          if existing_message&.status == 'sent'
+            recipient.mark_sent!(existing_message)
+            next
+          end
+
+          email_message = existing_message || ::Sales::EmailMessage.new(
             company_id: campaign.company_id,
             sales_campaign_id: campaign.id,
             sales_campaign_recipient_id: recipient.id,
@@ -47,6 +53,8 @@ module Sales
             body_json: template.body_json || {},
             status: 'queued'
           )
+          email_message.update!(status: 'queued') if email_message.persisted? && email_message.status != 'queued'
+          email_message.save! unless email_message.persisted?
 
           # Send email
           ::Sales::SendEmailJob.perform_now(email_message.id)

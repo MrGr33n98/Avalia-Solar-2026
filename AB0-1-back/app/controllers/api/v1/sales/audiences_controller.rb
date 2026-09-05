@@ -6,6 +6,46 @@ module Api
       class AudiencesController < BaseController
         before_action :authenticate_api_user
 
+        def index
+          authorize ::Sales::Audience, :index?
+          page = [params.fetch(:page, 1).to_i, 1].max
+          scope = saved_audiences.order(updated_at: :desc)
+          render json: { audiences: scope.page(page).per(20), meta: { page: page, total_count: scope.count, total_pages: scope.page(page).per(20).total_pages } }
+        end
+
+        def show
+          audience = saved_audiences.find(params[:id])
+          authorize audience
+          render json: { audience: audience }
+        end
+
+        def create
+          authorize ::Sales::Audience, :create?
+          audience = saved_audiences.new(audience_params.merge(created_by: current_user))
+          if audience.save
+            render json: { audience: audience }, status: :created
+          else
+            render json: { error: 'AUDIENCE_INVALID', message: audience.errors.full_messages.to_sentence }, status: :unprocessable_entity
+          end
+        end
+
+        def update
+          audience = saved_audiences.find(params[:id])
+          authorize audience
+          if audience.update(audience_params)
+            render json: { audience: audience }
+          else
+            render json: { error: 'AUDIENCE_INVALID', message: audience.errors.full_messages.to_sentence }, status: :unprocessable_entity
+          end
+        end
+
+        def destroy
+          audience = saved_audiences.find(params[:id])
+          authorize audience
+          audience.destroy!
+          head :no_content
+        end
+
         def preview
           company = current_user.company
           unless company
@@ -66,6 +106,15 @@ module Api
             company_types: company_types,
             tags: tags
           }
+        end
+        private
+
+        def saved_audiences
+          ::Sales::Audience.where(company_id: current_user.company_id)
+        end
+
+        def audience_params
+          params.require(:audience).permit(:name, :description, :kind, :active, filter_definition: [:state, :city, :segment, :search, { tag_ids: [] }])
         end
       end
     end

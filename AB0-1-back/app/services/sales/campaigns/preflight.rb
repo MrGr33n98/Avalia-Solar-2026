@@ -52,7 +52,7 @@ module Sales
       end
 
       def check_sender
-        sender_id = @campaign.user_id || @campaign.company&.users&.first&.id
+        sender_id = @campaign.user_id
         if sender_id.nil?
           @blockers << { code: 'MISSING_SENDER', message: 'Nenhum usuário remetente foi associado à campanha.' }
         end
@@ -63,15 +63,11 @@ module Sales
       end
 
       def check_audience
-        contacts = ::Sales::Campaigns::AudienceResolver.call(
-          company_id: @campaign.company_id,
-          filter: @campaign.audience_filter
-        )
-
-        if contacts.empty?
-          @blockers << { code: 'EMPTY_AUDIENCE', message: 'O filtro de público não retornou nenhum contato legível (com e-mail e opt-in).' }
-        elsif contacts.size < 5
-          @warnings << { code: 'SMALL_AUDIENCE', message: "O público estimado é pequeno (#{contacts.size} contatos)." }
+        count = audience_summary[:estimated_count]
+        if count.zero?
+          @blockers << { code: 'EMPTY_AUDIENCE', message: 'O filtro de público não retornou contatos elegíveis.' }
+        elsif count < 5
+          @warnings << { code: 'SMALL_AUDIENCE', message: "O público estimado é pequeno (#{count} contatos)." }
         end
       end
 
@@ -82,15 +78,15 @@ module Sales
       end
 
       def audience_summary
-        contacts = ::Sales::Campaigns::AudienceResolver.call(
-          company_id: @campaign.company_id,
-          filter: @campaign.audience_filter
-        )
-        { estimated_count: contacts.size }
+        @audience_summary ||= {
+          estimated_count: ::Sales::Campaigns::AudienceResolver.call(
+            company_id: @campaign.company_id, filter: @campaign.audience_filter
+          ).fetch(:total_count)
+        }
       end
 
       def sender_summary
-        user = @campaign.user || @campaign.company&.users&.first
+        user = @campaign.user
         {
           sender_id: user&.id,
           sender_name: user&.name || 'Sistema',
@@ -101,7 +97,7 @@ module Sales
       def provider_summary
         {
           provider: 'aws_ses',
-          status: 'configured'
+          status: 'unverified'
         }
       end
     end

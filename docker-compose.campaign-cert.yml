@@ -2,7 +2,7 @@ name: campaign-cert
 
 services:
   campaign-cert-postgres:
-    image: postgres:14-alpine
+    image: postgres:14
     container_name: campaign-cert-postgres
     environment:
       POSTGRES_USER: postgres
@@ -95,6 +95,8 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: http://campaign-cert-backend:3001
       PORT: 3000
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: campaign-cert-next-actions-key-0123456789abcdef0123456789abcdef
+      BETTER_AUTH_SECRET: campaign-cert-auth-secret-0123456789abcdef
     ports:
       - "3010:3000"
     healthcheck:

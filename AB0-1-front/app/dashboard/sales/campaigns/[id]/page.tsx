@@ -21,7 +21,9 @@ import { Megaphone, ArrowLeft, Play, Pause, RotateCcw, RotateCw, CheckCircle2, D
 
 export default function Campaign360DetailPage() {
   const params = useParams();
-  const campaignId = Number(params?.id);
+  const rawId = params?.id;
+  const campaignId = typeof rawId === 'string' && /^\d+$/.test(rawId) ? Number(rawId) : NaN;
+  const validCampaignId = Number.isSafeInteger(campaignId) && campaignId > 0;
 
   const [data, setData] = useState<{
     campaign: CampaignDetailed;
@@ -32,18 +34,32 @@ export default function Campaign360DetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(() => {
-    if (!campaignId) return;
+    if (!validCampaignId) {
+      setLoading(false);
+      return;
+    }
+    setError(null);
     setLoading(true);
 
     fetchCampaign(campaignId)
       .then(setData)
       .catch((err) => setError(err.message || 'Erro ao carregar detalhes da campanha.'))
       .finally(() => setLoading(false));
-  }, [campaignId]);
+  }, [campaignId, validCampaignId]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  if (!validCampaignId) {
+    return (
+      <SalesLayoutWrapper>
+        <h1>Campanha não encontrada</h1>
+        <p>O identificador da campanha deve ser um número inteiro positivo.</p>
+        <Link href="/dashboard/sales/campaigns">Voltar para Campanhas</Link>
+      </SalesLayoutWrapper>
+    );
+  }
 
   if (loading) {
     return (
@@ -61,6 +77,7 @@ export default function Campaign360DetailPage() {
       <SalesLayoutWrapper>
         <div className="py-16 text-center space-y-3 bg-white rounded-lg border border-slate-200">
           <p className="text-xs font-semibold text-red-600">{error || 'Campanha não encontrada.'}</p>
+          <Button onClick={loadData} variant="outline">Tentar novamente</Button>
           <Link href="/dashboard/sales/campaigns">
             <Button variant="outline" size="sm" className="h-8 text-xs">
               <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Voltar para Campanhas
