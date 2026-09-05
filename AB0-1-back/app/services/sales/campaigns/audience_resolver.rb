@@ -1,0 +1,76 @@
+# frozen_string_literal: true
+
+module Sales
+  module Campaigns
+    class AudienceResolver
+      def self.call(company:, audience_filter: {}, page: 1, per_page: 50)
+        new(company: company, audience_filter: audience_filter, page: page, per_page: per_page).call
+      end
+
+      def initialize(company:, audience_filter: {}, page: 1, per_page: 50)
+        @company = company
+        @filter = (audience_filter || {}).with_indifferent_access
+        @page = [page.to_i, 1].max
+        @per_page = [[per_page.to_i, 1].max, 500].min
+      end
+
+      def call
+        scope = base_contacts_scope
+
+        # Apply segment filter
+        if @filter[:segment].present?
+          scope = scope.joins(:account).where(sales_accounts: { segment: @filter[:segment] })
+        end
+
+        # Apply geography filter (state/city)
+        if @filter[:state].present?
+          scope = scope.joins(:account).where(sales_accounts: { state: @filter[:state] })
+        end
+        if @filter[:city].present?
+          scope = scope.joins(:account).where(sales_accounts: { city: @filter[:city] })
+        end
+
+        # Apply search term
+        if @filter[:search].present?
+          term = "%#{@filter[:search].to_s.downcase}%"
+          scope = scope.where('LOWER(sales_contacts.first_name) LIKE :term OR LOWER(sales_contacts.last_name) LIKE :term OR LOWER(sales_contacts.email) LIKE :term', term: term)
+        end
+
+        # Filter by tags if present
+        if @filter[:tag_ids].present? && @filter[:tag_ids].is_a?(Array)
+          tag_ids = @filter[:tag_ids].map(&:to_i).reject(&:zero?)
+          if tag_ids.any?
+            scope = scope.joins(:taggings).where(sales_taggings: { tag_id: tag_ids })
+          end
+        end
+
+        # Exclude suppressed emails (Opt-Out / Bounce)
+        suppressed_emails = ::Sales::EmailSuppression.where(company_id: @company.id).pluck(:email)
+        scope = scope.where.not(email: suppressed_emails) if suppressed_emails.any?
+
+        total_count = scope.distinct.count
+        records = scope.distinct.includes(:account).order('sales_contacts.id ASC').page(@page).per(@per_page)
+
+        {
+          records: records,
+          total_count: total_count,
+          page: @page,
+          per_page: @per_page,
+          total_pages: (total_count.to_f / @per_page).ceil
+        }
+      end
+
+      private
+
+      def base_contacts_scope
+        return ::Sales::Contact.none unless @company.present?
+
+        user_ids = User.where(company_id: @company.id).pluck(:id)
+        account_ids = ::Sales::Account.where(company_id: @company.id).or(::Sales::Account.where(owner_id: user_ids)).pluck(:id)
+
+        ::Sales::Contact.where('sales_contacts.company_id = ? OR sales_contacts.sales_account_id IN (?)', @company.id, account_ids.presence || [0])
+                         .where.not(email: [nil, ''])
+      end
+    end
+  end
+end

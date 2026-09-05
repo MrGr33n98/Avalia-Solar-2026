@@ -63,6 +63,8 @@ docs/security-audit/
 !docs/security-audit/
 !docs/security-audit/*
 docs/*
+!docs/03-campaign/
+!docs/03-campaign/*
 !docs/security-audit/
 !docs/security-audit/*
 !docs/observability/

@@ -13,6 +13,8 @@ module Sales
 
     belongs_to :email_account, class_name: 'Sales::EmailAccount', foreign_key: :sales_email_account_id, optional: true
     belongs_to :email_thread, class_name: 'Sales::EmailThread', foreign_key: :sales_email_thread_id, optional: true
+    belongs_to :campaign, class_name: 'Sales::Campaign', foreign_key: :sales_campaign_id, optional: true
+    belongs_to :campaign_recipient, class_name: 'Sales::CampaignRecipient', foreign_key: :sales_campaign_recipient_id, optional: true
 
     has_many :participants, class_name: 'Sales::EmailParticipant', foreign_key: :sales_email_message_id, dependent: :destroy
     has_many :attachments, class_name: 'Sales::EmailAttachment', foreign_key: :sales_email_message_id, dependent: :destroy
