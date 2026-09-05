@@ -15,6 +15,7 @@ import {
   resumeCampaign,
   retryFailedCampaign,
   CampaignSummary,
+  ApiDomainError,
 } from '@/lib/api-campaigns';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
@@ -52,7 +53,7 @@ export default function CampaignsWorkspacePage() {
     name: string;
     campaign_type: string;
     email_template_id?: number | null;
-    audience_filter: Record<string, any>;
+    audience_filter: Record<string, unknown>;
   }) => {
     await createCampaign(payload);
     loadCampaigns();
@@ -62,8 +63,10 @@ export default function CampaignsWorkspacePage() {
     try {
       await snapshotCampaign(id);
       loadCampaigns();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao gerar snapshot da audiência.');
+    } catch (err: unknown) {
+      const message = err instanceof ApiDomainError ? err.userMessage
+        : err instanceof Error ? err.message : 'Erro ao gerar snapshot da audiência.';
+      alert(message);
     }
   };
 
@@ -71,8 +74,10 @@ export default function CampaignsWorkspacePage() {
     try {
       await dispatchCampaign(id);
       loadCampaigns();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao iniciar disparo da campanha.');
+    } catch (err: unknown) {
+      const message = err instanceof ApiDomainError ? err.userMessage
+        : err instanceof Error ? err.message : 'Erro ao iniciar disparo da campanha.';
+      alert(message);
     }
   };
 
@@ -80,8 +85,10 @@ export default function CampaignsWorkspacePage() {
     try {
       await pauseCampaign(id);
       loadCampaigns();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao pausar campanha.');
+    } catch (err: unknown) {
+      const message = err instanceof ApiDomainError ? err.userMessage
+        : err instanceof Error ? err.message : 'Erro ao pausar campanha.';
+      alert(message);
     }
   };
 
@@ -89,8 +96,10 @@ export default function CampaignsWorkspacePage() {
     try {
       await resumeCampaign(id);
       loadCampaigns();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao retomar campanha.');
+    } catch (err: unknown) {
+      const message = err instanceof ApiDomainError ? err.userMessage
+        : err instanceof Error ? err.message : 'Erro ao retomar campanha.';
+      alert(message);
     }
   };
 
@@ -98,8 +107,10 @@ export default function CampaignsWorkspacePage() {
     try {
       await retryFailedCampaign(id);
       loadCampaigns();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao re-tentar destinatários com falha.');
+    } catch (err: unknown) {
+      const message = err instanceof ApiDomainError ? err.userMessage
+        : err instanceof Error ? err.message : 'Erro ao re-tentar destinatários com falha.';
+      alert(message);
     }
   };
 

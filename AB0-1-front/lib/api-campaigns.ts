@@ -24,7 +24,7 @@ export interface CampaignSummary {
 }
 
 export interface CampaignDetailed extends CampaignSummary {
-  audience_filter: Record<string, any>;
+  audience_filter: Record<string, unknown>;
   user_name?: string;
 }
 
@@ -81,6 +81,47 @@ export interface AudienceSegmentsOptions {
   tags: Array<{ id: number; name: string; color?: string | null }>;
 }
 
+export interface PreflightItem {
+  code: string;
+  message: string;
+}
+
+/** Structured domain error from the Campaign API. */
+export class ApiDomainError extends Error {
+  readonly code: string;
+  readonly blockers: PreflightItem[];
+
+  constructor(code: string, message: string, blockers: PreflightItem[] = []) {
+    super(message);
+    this.name = 'ApiDomainError';
+    this.code = code;
+    this.blockers = blockers;
+  }
+
+  /** User-friendly message: first blocker message, falling back to this.message */
+  get userMessage(): string {
+    if (this.blockers.length > 0) {
+      return this.blockers.map((b) => b.message).join('; ');
+    }
+    return this.message;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function extractBlockers(body: Record<string, unknown>): PreflightItem[] {
+  const preflight = body.preflight ?? body.dispatch;
+  if (isRecord(preflight) && Array.isArray(preflight.blockers)) {
+    return (preflight.blockers as unknown[]).filter(isRecord).map((b) => ({
+      code: typeof b.code === 'string' ? b.code : 'UNKNOWN',
+      message: typeof b.message === 'string' ? b.message : 'Erro desconhecido',
+    }));
+  }
+  return [];
+}
+
 async function requestApi<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`/api/v1/sales${path}`, {
     ...options,
@@ -91,12 +132,59 @@ async function requestApi<T>(path: string, options: RequestInit = {}): Promise<T
     credentials: 'include',
   });
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.error || errorBody.message || `Erro HTTP ${res.status}`);
+  const body: unknown = await res.json().catch(() => ({}));
+
+  // Extract domain error from body — may be at root or nested in dispatch/snapshot
+  function findDomainError(parsed: Record<string, unknown>): { code: string; message: string; blockers: PreflightItem[] } | null {
+    // Root-level error (legacy or direct)
+    if (typeof parsed.error === 'string') {
+      return {
+        code: parsed.error,
+        message: typeof parsed.message === 'string' ? parsed.message : parsed.error,
+        blockers: extractBlockers(parsed),
+      };
+    }
+    // Nested in dispatch envelope
+    const dispatch = parsed.dispatch;
+    if (isRecord(dispatch) && typeof dispatch.error === 'string') {
+      return {
+        code: dispatch.error,
+        message: typeof dispatch.message === 'string' ? dispatch.message : dispatch.error,
+        blockers: extractBlockers(dispatch),
+      };
+    }
+    // Nested in snapshot envelope
+    const snapshot = parsed.snapshot;
+    if (isRecord(snapshot) && typeof snapshot.error === 'string') {
+      return {
+        code: snapshot.error,
+        message: typeof snapshot.message === 'string' ? snapshot.message : snapshot.error,
+        blockers: extractBlockers(snapshot),
+      };
+    }
+    return null;
   }
 
-  return res.json();
+  if (!res.ok) {
+    if (isRecord(body)) {
+      const domainErr = findDomainError(body);
+      if (domainErr) {
+        throw new ApiDomainError(domainErr.code, domainErr.message, domainErr.blockers);
+      }
+      throw new ApiDomainError(`HTTP_${res.status}`, `Erro HTTP ${res.status}`);
+    }
+    throw new Error(`Erro HTTP ${res.status}`);
+  }
+
+  // Defensive guard: backend may return 200 with domain error envelope (legacy)
+  if (isRecord(body)) {
+    const domainErr = findDomainError(body);
+    if (domainErr) {
+      throw new ApiDomainError(domainErr.code, domainErr.message, domainErr.blockers);
+    }
+  }
+
+  return body as T;
 }
 
 export const fetchCampaigns = async (params: {
@@ -131,7 +219,7 @@ export const createCampaign = async (payload: {
   campaign_type?: string;
   email_template_id?: number | null;
   scheduled_at?: string | null;
-  audience_filter?: Record<string, any>;
+  audience_filter?: Record<string, unknown>;
 }): Promise<{ campaign: CampaignSummary }> => {
   return requestApi<{ campaign: CampaignSummary }>('/campaigns', {
     method: 'POST',
@@ -175,14 +263,14 @@ export const cancelCampaign = async (id: number): Promise<{ campaign: CampaignSu
   });
 };
 
-export const fetchPreflight = async (id: number): Promise<{ campaign_id: number; preflight: { ready: boolean; blockers: any[]; warnings: any[] } }> => {
-  return requestApi<{ campaign_id: number; preflight: { ready: boolean; blockers: any[]; warnings: any[] } }>(`/campaigns/${id}/preflight`, {
+export const fetchPreflight = async (id: number): Promise<{ campaign_id: number; preflight: { ready: boolean; blockers: PreflightItem[]; warnings: PreflightItem[] } }> => {
+  return requestApi<{ campaign_id: number; preflight: { ready: boolean; blockers: PreflightItem[]; warnings: PreflightItem[] } }>(`/campaigns/${id}/preflight`, {
     method: 'POST',
   });
 };
 
 export const previewAudience = async (
-  audienceFilter: Record<string, any>,
+  audienceFilter: Record<string, unknown>,
   page = 1,
   per_page = 20
 ): Promise<AudiencePreviewResult> => {

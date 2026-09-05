@@ -9,12 +9,18 @@ module Api
 
         def preflight
           result = ::Sales::Campaigns::Preflight.call(campaign: @campaign)
-          render json: { campaign_id: @campaign.id, preflight: result }
+          status = result[:ready] ? :ok : :unprocessable_entity
+          render json: { campaign_id: @campaign.id, preflight: result }, status: status
         end
 
         def cancel
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'cancel')
-          render json: { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          if result[:error]
+            render json: payload, status: :unprocessable_entity
+          else
+            render json: payload
+          end
         end
 
         def index
@@ -108,27 +114,52 @@ module Api
 
         def snapshot
           result = ::Sales::Campaigns::SnapshotService.call(campaign: @campaign)
-          render json: { campaign: serialize_campaign_summary(@campaign.reload), snapshot: result }
+          payload = { campaign: serialize_campaign_summary(@campaign.reload), snapshot: result }
+          if result.is_a?(Hash) && result[:error]
+            render json: payload, status: :unprocessable_entity
+          else
+            render json: payload
+          end
         end
 
         def launch
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'dispatch')
-          render json: { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          if result[:error]
+            render json: payload, status: :unprocessable_entity
+          else
+            render json: payload
+          end
         end
 
         def pause
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'pause')
-          render json: { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          if result[:error]
+            render json: payload, status: :unprocessable_entity
+          else
+            render json: payload
+          end
         end
 
         def resume
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'resume')
-          render json: { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          if result[:error]
+            render json: payload, status: :unprocessable_entity
+          else
+            render json: payload
+          end
         end
 
         def retry_failed
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'retry_failed')
-          render json: { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+          if result[:error]
+            render json: payload, status: :unprocessable_entity
+          else
+            render json: payload
+          end
         end
 
         def analytics

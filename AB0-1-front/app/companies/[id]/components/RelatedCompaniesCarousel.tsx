@@ -1,15 +1,11 @@
 "use client";
 
-import { ShieldCheck, Lock, ChevronRight, ChevronLeft, Star, MapPin, Building2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { ShieldCheck, Lock, ChevronRight, ChevronLeft } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
-import { hasPaidPlan } from "@/lib/feature-access";
-import { companiesApiSafe } from "@/lib/api-client";
 import Link from "next/link";
 import React, { useEffect, useState, useRef } from "react";
-import Image from "next/image";
-import { CompanyLogo } from "@/components/CompanyLogo";
 import RelatedCompanyCard from "./RelatedCompanyCard";
 
 interface RelatedCompaniesCarouselProps {
@@ -20,7 +16,7 @@ interface RelatedCompaniesCarouselProps {
 }
 
 export default function RelatedCompaniesCarousel({
-  company,
+  company: _company,
   showAlternatives,
   relatedCompanies,
   loading,

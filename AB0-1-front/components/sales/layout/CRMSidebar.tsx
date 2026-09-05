@@ -25,7 +25,7 @@ interface CRMSidebarProps {
   onOpenAddModal?: (type: string) => void;
 }
 
-export default function CRMSidebar({ _onOpenSearch, onOpenAddModal }: CRMSidebarProps) {
+export default function CRMSidebar({ onOpenSearch: _onOpenSearch, onOpenAddModal }: CRMSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [salesExpanded, setSalesExpanded] = useState(false);

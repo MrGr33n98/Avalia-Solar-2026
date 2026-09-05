@@ -264,4 +264,56 @@ RSpec.describe 'Sales Campaigns API', type: :request do
       expect(json['metrics']['total_recipients']).to be >= 1
     end
   end
+
+  describe 'DOMAIN ERROR CONTRACT (dispatch returns 422 on preflight failure)' do
+    let!(:campaign_no_template) do
+      ::Sales::Campaign.create!(
+        name: 'Campanha Sem Template',
+        campaign_type: 'email_broadcast',
+        company_id: company.id,
+        user_id: user.id,
+        email_template_id: nil,
+        audience_filter: { state: 'RS' },
+        status: 'draft'
+      )
+    end
+
+    it 'launch with failed preflight returns HTTP 422' do
+      post "/api/v1/sales/campaigns/#{campaign_no_template.id}/dispatch", headers: auth_headers(user)
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'payload contains error=PREFLIGHT_FAILED' do
+      post "/api/v1/sales/campaigns/#{campaign_no_template.id}/dispatch", headers: auth_headers(user)
+      json = JSON.parse(response.body)
+      expect(json['dispatch']['error']).to eq('PREFLIGHT_FAILED')
+    end
+
+    it 'payload preserves preflight.blockers with MISSING_TEMPLATE' do
+      post "/api/v1/sales/campaigns/#{campaign_no_template.id}/dispatch", headers: auth_headers(user)
+      json = JSON.parse(response.body)
+      blockers = json['dispatch']['preflight']['blockers']
+      expect(blockers).to be_an(Array)
+      codes = blockers.map { |b| b['code'] }
+      expect(codes).to include('MISSING_TEMPLATE')
+    end
+
+    it 'does NOT enqueue CampaignBatchProcessorJob when preflight fails' do
+      expect {
+        post "/api/v1/sales/campaigns/#{campaign_no_template.id}/dispatch", headers: auth_headers(user)
+      }.not_to have_enqueued_job(::Sales::CampaignBatchProcessorJob)
+    end
+
+    it 'campaign remains in draft status after failed dispatch' do
+      post "/api/v1/sales/campaigns/#{campaign_no_template.id}/dispatch", headers: auth_headers(user)
+      expect(campaign_no_template.reload.status).to eq('draft')
+    end
+
+    it 'preflight endpoint returns 422 when campaign has blockers' do
+      post "/api/v1/sales/campaigns/#{campaign_no_template.id}/preflight", headers: auth_headers(user)
+      expect(response).to have_http_status(:unprocessable_entity)
+      json = JSON.parse(response.body)
+      expect(json['preflight']['ready']).to be(false)
+    end
+  end
 end

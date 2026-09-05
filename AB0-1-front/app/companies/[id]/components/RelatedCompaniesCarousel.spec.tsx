@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import RelatedCompaniesCarousel from './RelatedCompaniesCarousel';
 import { Company } from '@/lib/api';
@@ -17,7 +17,7 @@ jest.mock('@/lib/api-client', () => ({
 }));
 
 jest.mock('./RelatedCompanyCard', () => {
-  return function DummyRelatedCompanyCard({ company }: { company: any }) {
+  return function DummyRelatedCompanyCard({ company }: { company: { id: number; name: string } }) {
     return <div data-testid={`related-card-${company.id}`}>{company.name}</div>;
   };
 });
@@ -48,8 +48,8 @@ describe('RelatedCompaniesCarousel', () => {
   });
 
   it('renders nothing if showAlternatives is false', () => {
-    const { container } = render(
-      <RelatedCompaniesCarousel company={mockCurrentCompany} showAlternatives={false} />
+    render(
+      <RelatedCompaniesCarousel company={mockCurrentCompany} showAlternatives={false} relatedCompanies={[]} loading={false} />
     );
     // It should render the "Perfil Protegido Exclusivo" if showAlternatives is false
     expect(screen.getByText(/Perfil Protegido Exclusivo/i)).toBeInTheDocument();
@@ -57,22 +57,25 @@ describe('RelatedCompaniesCarousel', () => {
 
   it('returns null if paid plan is true despite showAlternatives being true', () => {
     (hasPaidPlan as jest.Mock).mockReturnValue(true);
-    const { container } = render(<RelatedCompaniesCarousel company={mockCurrentCompany} showAlternatives={true} />);
+    const { container } = render(<RelatedCompaniesCarousel company={mockCurrentCompany} showAlternatives={true} relatedCompanies={[]} loading={false} />);
     
     expect(container).toBeEmptyDOMElement();
     expect(companiesApiSafe.getAllPaginated).not.toHaveBeenCalled();
   });
 
-  it('fetches and renders related companies, excluding the current company and slicing to 5', async () => {
-    render(<RelatedCompaniesCarousel company={mockCurrentCompany} showAlternatives={true} />);
+  it('renders related companies, excluding the current company and slicing to 5', () => {
+    const mockCompanies = mockRelatedCompaniesResponse.data
+      .filter((c) => c.id !== mockCurrentCompany.id)
+      .slice(0, 5) as unknown as Company[];
 
-    await waitFor(() => {
-      expect(companiesApiSafe.getAllPaginated).toHaveBeenCalledWith({
-        category_id: 1,
-        per_page: 6,
-        status: 'active',
-      });
-    });
+    render(
+      <RelatedCompaniesCarousel
+        company={mockCurrentCompany}
+        showAlternatives={true}
+        relatedCompanies={mockCompanies}
+        loading={false}
+      />
+    );
 
     // Should not render the current company
     expect(screen.queryByTestId('related-card-100')).not.toBeInTheDocument();

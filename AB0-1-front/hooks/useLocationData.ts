@@ -7,6 +7,25 @@ const CACHE_KEY_CITIES_PREFIX = 'avalia_solar_cities_cache_';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const MIN_REQUEST_INTERVAL = 500; // 500ms rate limit
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+type NormalizedState = {
+  id: number | string | null;
+  name: string;
+};
+
+function extractArray(resp: unknown): unknown[] {
+  if (Array.isArray(resp)) return resp;
+  if (isRecord(resp)) {
+    if (Array.isArray(resp.states)) return resp.states;
+    if (Array.isArray(resp.cities)) return resp.cities;
+    if (Array.isArray(resp.data)) return resp.data;
+  }
+  return [];
+}
+
 interface CacheItem<T> {
   data: T;
   timestamp: number;
@@ -89,28 +108,30 @@ export function useLocationData() {
 
     try {
       let names: string[] = [];
-      let index: Record<string, number> = {};
+      const index: Record<string, number> = {};
 
       try {
-        const resp: any = await withTimeout(statesApi.getAll(), 'states');
-        const list: any[] = Array.isArray(resp) ? resp : Array.isArray(resp?.states) ? resp.states : Array.isArray(resp?.data) ? resp.data : [];
-        const cleaned = list
-          .map((s: any) => {
+        const resp: unknown = await withTimeout(statesApi.getAll(), 'states');
+        const list = extractArray(resp);
+        const cleaned: NormalizedState[] = list
+          .map((s: unknown): NormalizedState | null => {
             if (typeof s === 'string') {
               return { id: null, name: s };
             }
-            if (s && typeof s === 'object') {
-              const name = s.name ?? s.state_name ?? s.abbreviation ?? s.acronym ?? s.uf;
-              const id = s.id ?? s.state_id ?? s.id;
-              return name ? { id: id ?? null, name } : null;
+            if (isRecord(s)) {
+              const nameVal = s.name ?? s.state_name ?? s.abbreviation ?? s.acronym ?? s.uf;
+              const idVal = s.id ?? s.state_id;
+              const name = nameVal != null ? String(nameVal).trim() : '';
+              const id = idVal != null ? (idVal as number | string) : null;
+              return name ? { id, name } : null;
             }
             return null;
           })
-          .filter((s: any) => s && s.name && String(s.name).trim() !== '');
-        names = cleaned.map(s => s?.name ? String(s.name).trim() : '').filter(Boolean);
+          .filter((s): s is NormalizedState => s !== null && s.name.trim() !== '');
+        names = cleaned.map(s => s.name.trim()).filter(Boolean);
         cleaned.forEach(s => {
-          if (s && s.name && s.id) {
-            index[String(s.name)] = Number(s.id) || 0;
+          if (s.name && s.id != null) {
+            index[s.name] = Number(s.id) || 0;
           }
         });
       } catch {}
@@ -183,12 +204,19 @@ export function useLocationData() {
 
           try {
             if (stateId && stateId > 0) {
-              const resp: any = await withTimeout(citiesApi.getByState(stateId), `cities-${state}`);
-              const arr: any[] = Array.isArray(resp) ? resp : Array.isArray(resp?.cities) ? resp.cities : Array.isArray(resp?.data) ? resp.data : [];
+              const resp: unknown = await withTimeout(citiesApi.getByState(stateId), `cities-${state}`);
+              const arr = extractArray(resp);
               list = arr
-                .map((c: any) => c.name ?? c.city_name ?? c)
-                .filter((c: any) => c && String(c).trim() !== '')
-                .map((c: any) => String(c));
+                .map((c: unknown): string => {
+                  if (typeof c === 'string') return c;
+                  if (isRecord(c)) {
+                    const nameVal = c.name ?? c.city_name;
+                    return nameVal != null ? String(nameVal) : '';
+                  }
+                  return '';
+                })
+                .filter((c: string) => c.trim() !== '')
+                .map((c: string) => c.trim());
             }
           } catch (err) {
             console.error(`Failed to fetch cities by state id for ${state}:`, err);

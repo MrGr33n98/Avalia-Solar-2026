@@ -1,0 +1,108 @@
+name: campaign-cert
+
+services:
+  campaign-cert-postgres:
+    image: postgres:14-alpine
+    container_name: campaign-cert-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_campaign_cert_pass
+      POSTGRES_DB: avalia_solar_test
+    volumes:
+      - campaign_cert_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d avalia_solar_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  campaign-cert-redis:
+    image: redis:7-alpine
+    container_name: campaign-cert-redis
+    volumes:
+      - campaign_cert_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  campaign-cert-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: campaign-cert-backend
+    depends_on:
+      campaign-cert-postgres:
+        condition: service_healthy
+      campaign-cert-redis:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres_campaign_cert_pass@campaign-cert-postgres:5432/avalia_solar_test
+      POSTGRES_HOST: campaign-cert-postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_campaign_cert_pass
+      POSTGRES_DB: avalia_solar_test
+      REDIS_URL: redis://campaign-cert-redis:6379/0
+      REDIS_ENABLED: "true"
+      SECRET_KEY_BASE: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      PORT: 3001
+    ports:
+      - "3011:3001"
+    command: >
+      sh -c "
+        bundle exec rails db:prepare &&
+        bundle exec rails server -b 0.0.0.0 -p 3001
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health/liveness"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  campaign-cert-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: campaign-cert-worker
+    depends_on:
+      campaign-cert-backend:
+        condition: service_healthy
+      campaign-cert-redis:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres_campaign_cert_pass@campaign-cert-postgres:5432/avalia_solar_test
+      POSTGRES_HOST: campaign-cert-postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_campaign_cert_pass
+      POSTGRES_DB: avalia_solar_test
+      REDIS_URL: redis://campaign-cert-redis:6379/0
+      REDIS_ENABLED: "true"
+      SECRET_KEY_BASE: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    command: bundle exec sidekiq -q campaign -q default -q mailers
+
+  campaign-cert-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: campaign-cert-frontend
+    depends_on:
+      campaign-cert-backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://campaign-cert-backend:3001
+      PORT: 3000
+    ports:
+      - "3010:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  campaign_cert_pgdata:
+  campaign_cert_redisdata:

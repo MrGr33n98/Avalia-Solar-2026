@@ -1,0 +1,61 @@
+name: Campaign Certification Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'feature/campaign*' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  frontend-certification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: AB0-1-front/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: cd AB0-1-front && npm ci --legacy-peer-deps
+
+      - name: Frontend Typecheck
+        run: cd AB0-1-front && npm run typecheck
+
+      - name: Frontend Lint
+        run: cd AB0-1-front && npm run lint
+
+      - name: Frontend Test
+        run: cd AB0-1-front && npm run test:ci
+
+      - name: Frontend Build
+        run: cd AB0-1-front && npm run build
+
+  isolated-campaign-harness:
+    needs: frontend-certification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Spin up Campaign Certification Stack
+        run: docker compose -f docker-compose.campaign-cert.yml -p campaign-cert up -d --build
+
+      - name: Wait for Stack Health
+        run: |
+          docker compose -f docker-compose.campaign-cert.yml -p campaign-cert exec -T campaign-cert-backend bundle exec rails db:version
+          docker compose -f docker-compose.campaign-cert.yml -p campaign-cert exec -T campaign-cert-backend curl -f http://localhost:3001/health/liveness
+
+      - name: Run Campaign Integration E2E Smoke
+        run: |
+          docker compose -f docker-compose.campaign-cert.yml -p campaign-cert exec -T campaign-cert-backend bundle exec rails runner scripts/campaign_certification_smoke.rb
+
+      - name: Teardown Stack
+        if: always()
+        run: docker compose -f docker-compose.campaign-cert.yml -p campaign-cert down -v
