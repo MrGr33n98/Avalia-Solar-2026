@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ChevronDown,
   CircleDollarSign,
+  Megaphone,
   Settings,
   Sparkles,
   Tag,
@@ -219,6 +220,24 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
         >
           <Tag className={cn('w-4 h-4 shrink-0', isCurrent('/dashboard/sales/leads') ? 'text-slate-900' : 'text-slate-300')} />
           {!collapsed && <span>Leads</span>}
+        </Link>
+
+        {/* Campanhas */}
+        <Link
+          href="/dashboard/sales/campaigns"
+          title="Campanhas"
+          className={cn(
+            'transition-all duration-150 flex items-center gap-3',
+            collapsed
+              ? 'w-10 h-10 justify-center mx-auto rounded-xl'
+              : 'px-3 py-2.5 rounded-xl font-medium',
+            isCurrent('/dashboard/sales/campaigns')
+              ? 'bg-white text-slate-900 font-semibold shadow-xs'
+              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
+          )}
+        >
+          <Megaphone className={cn('w-4 h-4 shrink-0', isCurrent('/dashboard/sales/campaigns') ? 'text-slate-900' : 'text-slate-300')} />
+          {!collapsed && <span>Campanhas</span>}
         </Link>
 
         {/* Reports */}

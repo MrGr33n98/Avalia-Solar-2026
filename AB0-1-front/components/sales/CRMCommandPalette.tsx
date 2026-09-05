@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   FileText,
   LayoutGrid,
+  Megaphone,
   MessageSquare,
   Plus,
   Search,
@@ -128,6 +129,14 @@ export default function CRMCommandPalette({ open: controlledOpen, onOpenChange }
       detail: 'Upload .CSV, .XLSX, Google Sheets e cola de dados',
       icon: FileSpreadsheet,
       href: '/dashboard/sales/import',
+    },
+    {
+      id: 'nav-campaigns',
+      category: 'navigation',
+      label: 'Ir para Campanhas & Automações',
+      detail: 'Workspace de disparo de e-mails, audiências e métricas de conversão',
+      icon: Megaphone,
+      href: '/dashboard/sales/campaigns',
     },
     {
       id: 'nav-reports',
