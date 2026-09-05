@@ -5,7 +5,7 @@ module Api
     module Sales
       class CampaignsController < BaseController
         before_action :authenticate_api_user
-        before_action :set_campaign, only: %i[show update destroy snapshot preflight dispatch pause resume cancel retry_failed analytics]
+        before_action :set_campaign, only: %i[show update destroy snapshot preflight launch pause resume cancel retry_failed analytics]
 
         def preflight
           result = ::Sales::Campaigns::Preflight.call(campaign: @campaign)
@@ -109,7 +109,7 @@ module Api
           render json: { campaign: serialize_campaign_summary(@campaign.reload), snapshot: result }
         end
 
-        def dispatch
+        def launch
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'dispatch')
           render json: { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
         end

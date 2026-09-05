@@ -13,11 +13,16 @@
    - Quando uma requisição sem token ou com sessão/cookie expirado chamava `GET /api/v1/sales/campaigns`, o método `scoped_campaigns` executava `current_user.admin?` com `current_user = nil`.
    - O Rails levantava `NoMethodError: undefined method 'admin?' for nil:NilClass`, que não era capturado pelo controlador e gerava resposta **HTTP 500 Internal Server Error** em produção.
 
-2. **Schema Mismatch e Ausência de Defesa contra Colunas Nulas**:
+2. **Conflito de Sobrescrita de Método `ActionController#dispatch` (`ArgumentError`)**:
+   - No `CampaignsController`, a ação member `def dispatch` sobrescrevia o método nativo do Rails `ActionController::Metal#dispatch(name, request, response)` (que espera 3 argumentos).
+   - Quando o Rails tentava processar requisições no `CampaignsController`, a chamada interna passava 3 argumentos e disparava `ArgumentError (wrong number of arguments (given 3, expected 0))` em `app/controllers/api/v1/sales/campaigns_controller.rb:112:in dispatch`.
+   - **Fix**: Renomeada a ação do controlador para `def launch` e mapeadas as rotas `post :dispatch, action: :launch` e `post :launch, action: :launch`.
+
+3. **Schema Mismatch e Ausência de Defesa contra Colunas Nulas**:
    - As migrações da release de campanhas (`20260905000001_enhance_sales_campaigns.rb` a `20260905000004_add_campaign_id_to_sales_email_messages.rb`) não constavam no contrato estrito `script/schema_contract_check.rb`.
    - Quando colunas novas ou migrações pendentes eram consultadas em bancos não atualizados, queries por colunas como `status`, `campaign_type` ou `user_id` falhavam com `PG::UndefinedColumn`.
 
-3. **Fallback Inseguro `Company.first` & Remetente Hardcoded**:
+4. **Fallback Inseguro `Company.first` & Remetente Hardcoded**:
    - `create` de campanhas continha fallback `Company.first`, violando o isolamento de tenant.
    - `CampaignBatchProcessorJob` continha remetente hardcoded `sender_user_id = 1` e corpo HTML fake `<p>Olá ..., confira as ofertas...</p>`.
 

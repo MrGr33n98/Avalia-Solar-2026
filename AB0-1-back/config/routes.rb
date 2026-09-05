@@ -89,7 +89,8 @@ Rails.application.routes.draw do
           member do
             post :snapshot
             post :preflight
-            post :dispatch
+            post :dispatch, action: :launch
+            post :launch, action: :launch
             post :pause
             post :resume
             post :cancel
