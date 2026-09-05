@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_04_000001) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_05_000005) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -2772,28 +2772,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_04_000001) do
     t.index ["occurred_at"], name: "idx_platform_events_brin_time", using: :brin
   end
 
-  create_table "platform_events_y2026m07", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2026m07_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2026m07_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m07_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2026m07_occurred_at_idx", using: :brin
-  end
-
   create_table "platform_events_y2026m08", id: false, force: :cascade do |t|
     t.bigint "id", null: false
     t.text "event_id", null: false
@@ -2946,6 +2924,28 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_04_000001) do
     t.index ["event_id"], name: "platform_events_y2027m02_event_id_idx"
     t.index ["event_type", "occurred_at"], name: "platform_events_y2027m02_event_type_occurred_at_idx", order: { occurred_at: :desc }
     t.index ["occurred_at"], name: "platform_events_y2027m02_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2027m03", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2027m03_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2027m03_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m03_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2027m03_occurred_at_idx", using: :brin
   end
 
   create_table "poll_options", force: :cascade do |t|
@@ -3603,6 +3603,48 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_04_000001) do
     t.index ["company_id"], name: "index_sales_audit_logs_on_company_id"
   end
 
+  create_table "sales_campaign_daily_metrics", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_campaign_id", null: false
+    t.date "metric_date", null: false
+    t.integer "sent_count", default: 0, null: false
+    t.integer "delivered_count", default: 0, null: false
+    t.integer "open_count", default: 0, null: false
+    t.integer "click_count", default: 0, null: false
+    t.integer "bounce_count", default: 0, null: false
+    t.integer "unsubscribe_count", default: 0, null: false
+    t.bigint "revenue_cents", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "metric_date"], name: "idx_campaign_daily_metrics_company_date"
+    t.index ["sales_campaign_id", "metric_date"], name: "idx_campaign_daily_metrics_uniq", unique: true
+  end
+
+  create_table "sales_campaign_recipients", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_campaign_id", null: false
+    t.bigint "sales_contact_id"
+    t.bigint "sales_account_id"
+    t.bigint "sales_email_message_id"
+    t.string "email", null: false
+    t.string "first_name"
+    t.string "status", default: "pending", null: false
+    t.text "error_message"
+    t.datetime "sent_at"
+    t.datetime "delivered_at"
+    t.datetime "opened_at"
+    t.datetime "clicked_at"
+    t.datetime "bounced_at"
+    t.datetime "unsubscribed_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "sales_campaign_id", "status"], name: "idx_campaign_recipients_status"
+    t.index ["sales_campaign_id", "email"], name: "idx_campaign_recipients_campaign_email", unique: true
+    t.index ["sales_contact_id"], name: "idx_campaign_recipients_contact"
+    t.index ["sales_email_message_id"], name: "idx_campaign_recipients_email_msg"
+  end
+
   create_table "sales_campaigns", force: :cascade do |t|
     t.bigint "company_id"
     t.string "name", null: false
@@ -3612,8 +3654,30 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_04_000001) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "draft", null: false
+    t.string "campaign_type", default: "email_broadcast", null: false
+    t.jsonb "audience_filter", default: {}, null: false
+    t.datetime "scheduled_at"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.integer "total_recipients", default: 0, null: false
+    t.integer "processed_recipients", default: 0, null: false
+    t.integer "sent_count", default: 0, null: false
+    t.integer "delivered_count", default: 0, null: false
+    t.integer "opened_count", default: 0, null: false
+    t.integer "clicked_count", default: 0, null: false
+    t.integer "bounced_count", default: 0, null: false
+    t.integer "unsubscribed_count", default: 0, null: false
+    t.bigint "revenue_attributed_cents", default: 0, null: false
+    t.bigint "email_template_id"
+    t.bigint "user_id"
     t.index ["company_id", "campaign_key"], name: "index_sales_campaigns_on_company_id_and_campaign_key", unique: true
+    t.index ["company_id", "campaign_type"], name: "idx_sales_campaigns_company_type"
+    t.index ["company_id", "created_at"], name: "index_sales_campaigns_on_company_id_and_created_at", order: { created_at: :desc }
+    t.index ["company_id", "status"], name: "idx_sales_campaigns_company_status"
     t.index ["company_id"], name: "index_sales_campaigns_on_company_id"
+    t.index ["email_template_id"], name: "idx_sales_campaigns_email_template_id"
+    t.index ["user_id"], name: "idx_sales_campaigns_user_id"
   end
 
   create_table "sales_competitors", force: :cascade do |t|
@@ -3814,10 +3878,14 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_04_000001) do
     t.boolean "click_tracking_enabled", default: true, null: false
     t.bigint "company_id", null: false
     t.string "message_id"
+    t.bigint "sales_campaign_id"
+    t.bigint "sales_campaign_recipient_id"
     t.index ["company_id", "message_id"], name: "idx_sales_email_messages_company_message_id", unique: true, where: "(message_id IS NOT NULL)"
     t.index ["company_id"], name: "index_sales_email_messages_on_company_id"
     t.index ["provider_message_id"], name: "index_sales_email_messages_on_provider_message_id"
     t.index ["sales_account_id"], name: "index_sales_email_messages_on_sales_account_id"
+    t.index ["sales_campaign_id"], name: "idx_sales_email_messages_campaign"
+    t.index ["sales_campaign_recipient_id"], name: "idx_sales_email_messages_recipient"
     t.index ["sales_contact_id"], name: "index_sales_email_messages_on_sales_contact_id"
     t.index ["sales_email_account_id"], name: "index_sales_email_messages_on_sales_email_account_id"
     t.index ["sales_email_thread_id"], name: "index_sales_email_messages_on_sales_email_thread_id"

@@ -18,7 +18,7 @@ module Api
         end
 
         def index
-          scope = scoped_campaigns.order(created_at: :desc)
+          scope = scoped_campaigns.includes(:email_template).order(created_at: :desc)
           scope = scope.where(status: params[:status]) if params[:status].present? && ::Sales::Campaign.column_names.include?('status')
           scope = scope.where(campaign_type: params[:campaign_type]) if params[:campaign_type].present? && ::Sales::Campaign.column_names.include?('campaign_type')
           if params[:q].present?
@@ -72,7 +72,9 @@ module Api
         end
 
         def create
-          company = current_user.company || (current_user.admin? && params[:campaign] && params[:campaign][:company_id].present? ? Company.find_by(id: params[:campaign][:company_id]) : nil)
+          company = (current_user.respond_to?(:company) ? current_user.company : nil) ||
+                    (current_user.respond_to?(:company_id) && current_user.company_id.present? ? ::Company.find_by(id: current_user.company_id) : nil) ||
+                    (current_user.respond_to?(:admin?) && current_user.admin? && params[:campaign] && params[:campaign][:company_id].present? ? ::Company.find_by(id: params[:campaign][:company_id]) : nil)
           unless company
             render json: { errors: ['Empresa (tenant) inválida ou não autorizada.'] }, status: :forbidden
             return

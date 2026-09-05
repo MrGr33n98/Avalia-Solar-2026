@@ -47,7 +47,7 @@ module Sales
 
         begin
           yield
-        finally
+        ensure
           release_lock(lock_key, token)
         end
       end
@@ -63,9 +63,17 @@ module Sales
         true
       end
 
+      LUA_RELEASE_SCRIPT = <<~LUA
+        if redis.call("get", KEYS[1]) == ARGV[1] then
+          return redis.call("del", KEYS[1])
+        else
+          return 0
+        end
+      LUA
+
       def release_lock(key, token)
-        if redis_client && redis_client.get(key) == token
-          redis_client.del(key)
+        if redis_client
+          redis_client.eval(LUA_RELEASE_SCRIPT, keys: [key], argv: [token])
         end
       rescue StandardError => e
         Rails.logger.warn("[Campaigns::Dispatcher] Erro ao liberar Redis lock: #{e.message}")
@@ -121,13 +129,14 @@ module Sales
 
       def retry_failed!
         failed_recipients = @campaign.recipients.where(status: 'failed')
-        return { status: @campaign.status, count: 0 } if failed_recipients.empty?
+        retried_count = failed_recipients.count
+        return { status: @campaign.status, retried_count: 0 } if retried_count.zero?
 
         failed_recipients.update_all(status: 'pending', error_message: nil)
         @campaign.update!(status: 'dispatching')
         enqueue_batches!(scope: @campaign.recipients.pending)
 
-        { status: @campaign.status, retried_count: failed_recipients.count }
+        { status: @campaign.status, retried_count: retried_count }
       end
 
       def enqueue_batches!(scope:)

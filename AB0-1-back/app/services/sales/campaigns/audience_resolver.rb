@@ -3,8 +3,10 @@
 module Sales
   module Campaigns
     class AudienceResolver
-      def self.call(company:, audience_filter: {}, page: 1, per_page: 50)
-        new(company: company, audience_filter: audience_filter, page: page, per_page: per_page).call
+      def self.call(company: nil, company_id: nil, audience_filter: nil, filter: nil, page: 1, per_page: 50)
+        target_company = company || Company.find_by(id: company_id)
+        target_filter = audience_filter || filter || {}
+        new(company: target_company, audience_filter: target_filter, page: page, per_page: per_page).call
       end
 
       def initialize(company:, audience_filter: {}, page: 1, per_page: 50)
@@ -70,8 +72,11 @@ module Sales
         user_ids = User.where(company_id: @company.id).pluck(:id)
         account_ids = ::Sales::Account.where(company_id: @company.id).or(::Sales::Account.where(owner_id: user_ids)).pluck(:id)
 
-        ::Sales::Contact.where('sales_contacts.company_id = ? OR sales_contacts.sales_account_id IN (?)', @company.id, account_ids.presence || [0])
-                         .where.not(email: [nil, ''])
+        scope = ::Sales::Contact.where(sales_account_id: account_ids.presence || [0])
+        if ::Sales::Contact.column_names.include?('company_id')
+          scope = scope.or(::Sales::Contact.where(company_id: @company.id))
+        end
+        scope.where.not(email: [nil, ''])
       end
     end
   end
