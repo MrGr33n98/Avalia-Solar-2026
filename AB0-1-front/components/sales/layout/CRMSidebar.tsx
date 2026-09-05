@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   BarChart3,
@@ -18,14 +19,13 @@ import {
   Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { AcornBadgeIcon } from '@/components/sales/layout/CRMUserPopover';
 
 interface CRMSidebarProps {
   onOpenSearch?: () => void;
   onOpenAddModal?: (type: string) => void;
 }
 
-export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarProps) {
+export default function CRMSidebar({ _onOpenSearch, onOpenAddModal }: CRMSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [salesExpanded, setSalesExpanded] = useState(false);
@@ -76,11 +76,37 @@ export default function CRMSidebar({ onOpenSearch, onOpenAddModal }: CRMSidebarP
       </button>
 
       {/* Brand Header */}
-      <div className={cn('p-4 border-b border-slate-800/60 flex items-center', collapsed ? 'justify-center' : 'justify-start gap-3')}>
-        <Link href="/dashboard/sales" className="flex items-center gap-3 focus:outline-none">
-          <AcornBadgeIcon className={collapsed ? 'w-9 h-9' : 'w-7 h-7'} />
-          {!collapsed && (
-            <span className="font-bold text-sm text-white tracking-tight">Avalia Solar</span>
+      <div className={cn('p-3.5 border-b border-slate-800/60 flex items-center', collapsed ? 'justify-center' : 'justify-start')}>
+        <Link
+          href="/dashboard/sales"
+          className={cn(
+            'flex items-center transition-all focus:outline-none focus:ring-2 focus:ring-amber-400/40 rounded-xl',
+            collapsed
+              ? 'p-1.5 bg-white shadow-md rounded-xl hover:scale-105 transition-transform'
+              : 'px-3 py-1.5 bg-white rounded-xl shadow-xs border border-slate-200/20 hover:bg-slate-50 transition-colors'
+          )}
+          title="Avalia Solar CRM"
+        >
+          {collapsed ? (
+            <div className="w-8 h-8 relative flex items-center justify-center overflow-hidden">
+              <Image
+                src="/images/avalia-solar-logo-horizontal.png"
+                alt="Avalia Solar Logo"
+                width={120}
+                height={30}
+                priority
+                className="object-cover object-left h-7 w-auto max-w-none"
+              />
+            </div>
+          ) : (
+            <Image
+              src="/images/avalia-solar-logo-horizontal.png"
+              alt="Avalia Solar Logo"
+              width={160}
+              height={36}
+              priority
+              className="h-6.5 w-auto object-contain"
+            />
           )}
         </Link>
       </div>
