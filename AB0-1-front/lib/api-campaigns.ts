@@ -169,6 +169,18 @@ export const retryFailedCampaign = async (id: number): Promise<{ campaign: Campa
   });
 };
 
+export const cancelCampaign = async (id: number): Promise<{ campaign: CampaignSummary }> => {
+  return requestApi<{ campaign: CampaignSummary }>(`/campaigns/${id}/cancel`, {
+    method: 'POST',
+  });
+};
+
+export const fetchPreflight = async (id: number): Promise<{ campaign_id: number; preflight: { ready: boolean; blockers: any[]; warnings: any[] } }> => {
+  return requestApi<{ campaign_id: number; preflight: { ready: boolean; blockers: any[]; warnings: any[] } }>(`/campaigns/${id}/preflight`, {
+    method: 'POST',
+  });
+};
+
 export const previewAudience = async (
   audienceFilter: Record<string, any>,
   page = 1,

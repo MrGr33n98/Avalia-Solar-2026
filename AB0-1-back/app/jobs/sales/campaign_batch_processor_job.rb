@@ -12,6 +12,19 @@ module Sales
       return if recipients.empty?
 
       template = campaign.email_template
+      unless template && template.body_html.present?
+        Rails.logger.error("[CampaignBatchProcessorJob] Abortando: Campanha ##{campaign.id} não possui template ou corpo HTML configurado.")
+        campaign.update!(status: 'failed')
+        return
+      end
+
+      sender_id = campaign.user_id || campaign.company&.users&.first&.id
+      unless sender_id
+        Rails.logger.error("[CampaignBatchProcessorJob] Abortando: Nenhum remetente válido associado à campanha ##{campaign.id}.")
+        campaign.update!(status: 'failed')
+        return
+      end
+
       from_email = campaign.company.try(:email).presence || 'contato@avaliasolar.com.br'
 
       recipients.each do |recipient|
@@ -26,12 +39,12 @@ module Sales
             sales_campaign_recipient_id: recipient.id,
             sales_account_id: recipient.sales_account_id,
             sales_contact_id: recipient.sales_contact_id,
-            sender_user_id: campaign.user_id || campaign.company.users.first&.id || 1,
+            sender_user_id: sender_id,
             from_email: from_email,
             to_email: recipient.email,
-            subject: template&.subject_template || campaign.name,
-            body_html: template&.body_html || "<p>Olá #{recipient.first_name}, confira as ofertas da #{campaign.company.name}.</p>",
-            body_json: template&.body_json || {},
+            subject: template.subject_template.presence || campaign.name,
+            body_html: template.body_html,
+            body_json: template.body_json || {},
             status: 'queued'
           )
 

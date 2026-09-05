@@ -5,7 +5,12 @@ module Api
     module Sales
       class AudiencesController < BaseController
         def preview
-          company = current_user.company || Company.first
+          company = current_user.company
+          unless company
+            render json: { errors: ['Empresa (tenant) não configurada ou não autorizada.'] }, status: :forbidden
+            return
+          end
+
           filter = params[:audience_filter] || params[:filter] || {}
           page = params[:page] || 1
           per_page = params[:per_page] || 20
@@ -40,7 +45,11 @@ module Api
         end
 
         def segments
-          company = current_user.company || Company.first
+          company = current_user.company
+          unless company
+            render json: { errors: ['Empresa (tenant) não configurada ou não autorizada.'] }, status: :forbidden
+            return
+          end
           user_ids = User.where(company_id: company.id).pluck(:id)
           accounts = ::Sales::Account.where(company_id: company.id).or(::Sales::Account.where(owner_id: user_ids))
 

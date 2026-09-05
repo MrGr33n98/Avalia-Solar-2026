@@ -88,9 +88,11 @@ Rails.application.routes.draw do
         resources :campaigns, controller: 'sales/campaigns' do
           member do
             post :snapshot
+            post :preflight
             post :dispatch
             post :pause
             post :resume
+            post :cancel
             post :retry_failed
             get :analytics
           end

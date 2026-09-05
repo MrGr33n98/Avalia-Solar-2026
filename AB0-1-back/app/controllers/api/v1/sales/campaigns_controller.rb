@@ -4,7 +4,17 @@ module Api
   module V1
     module Sales
       class CampaignsController < BaseController
-        before_action :set_campaign, only: %i[show update destroy snapshot dispatch pause resume retry_failed analytics]
+        before_action :set_campaign, only: %i[show update destroy snapshot preflight dispatch pause resume cancel retry_failed analytics]
+
+        def preflight
+          result = ::Sales::Campaigns::Preflight.call(campaign: @campaign)
+          render json: { campaign_id: @campaign.id, preflight: result }
+        end
+
+        def cancel
+          result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'cancel')
+          render json: { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
+        end
 
         def index
           scope = scoped_campaigns.order(created_at: :desc)
@@ -57,7 +67,12 @@ module Api
         end
 
         def create
-          company = current_user.company || Company.find_by(id: params[:campaign][:company_id]) || Company.first
+          company = current_user.company || (current_user.admin? && params[:campaign] && params[:campaign][:company_id].present? ? Company.find_by(id: params[:campaign][:company_id]) : nil)
+          unless company
+            render json: { errors: ['Empresa (tenant) inválida ou não autorizada.'] }, status: :forbidden
+            return
+          end
+
           campaign = ::Sales::Campaign.new(campaign_params.merge(
             company_id: company.id,
             user_id: current_user.id,
@@ -124,8 +139,10 @@ module Api
           return ::Sales::Campaign.all if current_user.admin?
           if current_user.company_id.present?
             ::Sales::Campaign.where(company_id: current_user.company_id)
-          else
+          elsif current_user.id.present?
             ::Sales::Campaign.where(user_id: current_user.id)
+          else
+            ::Sales::Campaign.none
           end
         end
 

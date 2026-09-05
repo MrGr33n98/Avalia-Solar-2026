@@ -58,9 +58,21 @@ export default function CampaignsTable({
 
   if (error) {
     return (
-      <div className="py-12 text-center space-y-3 bg-white rounded-lg border border-slate-200">
-        <AlertCircle className="mx-auto h-8 w-8 text-red-600" />
-        <p className="text-xs font-semibold text-slate-900">{error}</p>
+      <div className="py-12 px-6 text-center space-y-4 bg-white rounded-lg border border-red-100 shadow-2xs">
+        <AlertCircle className="mx-auto h-9 w-9 text-red-500" />
+        <div className="space-y-1">
+          <p className="text-sm font-bold text-slate-900">Não foi possível carregar as campanhas</p>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">{error}</p>
+        </div>
+        <div className="pt-2 flex justify-center gap-3">
+          <Button
+            size="sm"
+            onClick={() => window.location.reload()}
+            className="h-8 text-xs bg-indigo-900 hover:bg-indigo-950 text-white font-medium"
+          >
+            <RotateCw className="w-3.5 h-3.5 mr-1.5" /> Tentar Novamente
+          </Button>
+        </div>
       </div>
     );
   }

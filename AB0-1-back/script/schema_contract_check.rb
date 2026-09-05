@@ -23,6 +23,37 @@ required_schema = {
     active
     metadata
     clicks_count
+  ],
+  sales_campaigns: %i[
+    company_id
+    name
+    campaign_key
+    status
+    campaign_type
+    audience_filter
+    scheduled_at
+    total_recipients
+    processed_recipients
+    sent_count
+    delivered_count
+    opened_count
+    clicked_count
+    bounced_count
+    unsubscribed_count
+    revenue_attributed_cents
+    email_template_id
+    user_id
+  ],
+  sales_campaign_recipients: %i[
+    company_id
+    sales_campaign_id
+    email
+    status
+  ],
+  sales_campaign_daily_metrics: %i[
+    company_id
+    sales_campaign_id
+    metric_date
   ]
 }.freeze
 
@@ -44,6 +75,10 @@ required_migrations = %w[
   20260814124000
   20260814125000
   20260817200000
+  20260905000001
+  20260905000002
+  20260905000003
+  20260905000004
 ].freeze
 
 required_foreign_keys = {
