@@ -21,14 +21,24 @@ export default function AudiencesPage() {
     setLoading(true);
     setError('');
     try {
-      const [options, savedResult, result] = await Promise.all([
+      const [optionsRes, savedRes, resultRes] = await Promise.allSettled([
         requestApi<AudienceSegmentsOptions>('/audiences/segments', { signal }),
         requestApi<{ audiences: Array<{ id: number; name: string; kind: string; active: boolean }> }>('/audiences?per_page=100', { signal }),
         requestApi<AudiencePreviewResult>('/audiences/preview', {
           method: 'POST', signal, body: JSON.stringify({ audience_filter: filter, page, per_page: 20 }),
         }),
       ]);
-      if (!signal.aborted) { setSegments(options); setData(result); setSavedAudiences(savedResult.audiences); }
+
+      if (signal.aborted) return;
+
+      if (optionsRes.status === 'fulfilled') setSegments(optionsRes.value);
+      if (savedRes.status === 'fulfilled') setSavedAudiences(savedRes.value.audiences);
+      if (resultRes.status === 'fulfilled') setData(resultRes.value);
+
+      if (resultRes.status === 'rejected' && !signal.aborted) {
+        const err = resultRes.reason;
+        setError(err instanceof Error ? err.message : 'Falha ao carregar prévia da audiência.');
+      }
     } catch (err) {
       if (!signal.aborted) setError(err instanceof Error ? err.message : 'Falha ao carregar audiência.');
     } finally {

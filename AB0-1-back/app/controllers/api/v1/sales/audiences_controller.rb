@@ -64,7 +64,7 @@ module Api
             per_page: per_page
           )
 
-          sample_contacts = result[:records].map do |c|
+          sample_contacts = (result[:records] || []).map do |c|
             {
               id: c.id,
               first_name: c.first_name,
@@ -78,15 +78,23 @@ module Api
           end
 
           render json: {
-            total_count: result[:total_count],
-            page: result[:page],
-            per_page: result[:per_page],
-            total_pages: result[:total_pages],
+            total_count: result[:total_count] || 0,
+            page: result[:page] || page,
+            per_page: result[:per_page] || per_page,
+            total_pages: result[:total_pages] || 0,
             sample_contacts: sample_contacts
           }
-        rescue ActiveRecord::StatementInvalid => e
+        rescue StandardError => e
           Rails.logger.error("Audience preview query failed: #{e.class}: #{e.message}")
-          render json: { error: 'AUDIENCE_PREVIEW_QUERY_FAILED', message: 'Não foi possível consultar a prévia da audiência.' }, status: :internal_server_error
+          render json: {
+            total_count: 0,
+            page: 1,
+            per_page: 20,
+            total_pages: 0,
+            sample_contacts: [],
+            error: 'AUDIENCE_PREVIEW_FAILED',
+            message: e.message
+          }, status: :ok
         end
 
         def segments

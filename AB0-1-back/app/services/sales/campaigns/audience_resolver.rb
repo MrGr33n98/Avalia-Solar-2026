@@ -44,7 +44,11 @@ module Sales
         if @filter[:tag_ids].present? && @filter[:tag_ids].is_a?(Array)
           tag_ids = @filter[:tag_ids].map(&:to_i).reject(&:zero?)
           if tag_ids.any?
-            scope = scope.joins(:taggings).where(sales_taggings: { tag_id: tag_ids })
+            if defined?(::Sales::Tagging) && ::Sales::Tagging.column_names.include?('sales_tag_id')
+              scope = scope.joins(:taggings).where(sales_taggings: { sales_tag_id: tag_ids })
+            elsif defined?(::Sales::Tagging) && ::Sales::Tagging.column_names.include?('tag_id')
+              scope = scope.joins(:taggings).where(sales_taggings: { tag_id: tag_ids })
+            end
           end
         end
 
@@ -56,7 +60,7 @@ module Sales
           )
         end
 
-        total_count = scope.distinct.count
+        total_count = scope.distinct.count('sales_contacts.id')
         records = scope.distinct.includes(:account).order('sales_contacts.id ASC').page(@page).per(@per_page)
 
         {
