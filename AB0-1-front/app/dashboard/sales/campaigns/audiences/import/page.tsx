@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WorkspaceFrame from '@/components/sales/campaigns/WorkspaceFrame';
@@ -16,10 +16,11 @@ import {
   ContactList,
 } from '@/lib/api-campaigns';
 
-export default function ImportContactsPage() {
+function ImportContactsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const preselectedListId = searchParams.get('list_id') ? Number(searchParams.get('list_id')) : null;
+  const rawListId = searchParams.get('list_id');
+  const preselectedListId = rawListId && Number.isFinite(Number(rawListId)) ? Number(rawListId) : null;
 
   const [step, setStep] = useState<'upload' | 'mapping' | 'options' | 'preview' | 'processing' | 'done'>('upload');
   const [fileContent, setFileContent] = useState<string>('');
@@ -521,3 +522,26 @@ export default function ImportContactsPage() {
     </WorkspaceFrame>
   );
 }
+
+function ImportContactsSkeleton() {
+  return (
+    <WorkspaceFrame title="Audiências">
+      <div className="space-y-6">
+        <AudienceNavigation activeTab="import" />
+        <div className="p-8 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-6 animate-pulse">
+          <div className="h-6 w-48 bg-slate-200 rounded" />
+          <div className="h-32 bg-slate-100 rounded-xl" />
+        </div>
+      </div>
+    </WorkspaceFrame>
+  );
+}
+
+export default function ImportContactsPage() {
+  return (
+    <Suspense fallback={<ImportContactsSkeleton />}>
+      <ImportContactsContent />
+    </Suspense>
+  );
+}
+
