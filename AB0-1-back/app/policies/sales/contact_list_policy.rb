@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Sales
-  class CampaignPolicy < ApplicationPolicy
+  class ContactListPolicy < ApplicationPolicy
     def index?
       user.present?
     end
@@ -22,55 +22,11 @@ module Sales
       user.admin? || user_belongs_to_tenant?
     end
 
-    def dispatch?
+    def add_contacts?
       user_belongs_to_tenant?
     end
 
-    def launch?
-      dispatch?
-    end
-
-    def pause?
-      user_belongs_to_tenant?
-    end
-
-    def resume?
-      user_belongs_to_tenant?
-    end
-
-    def cancel?
-      user_belongs_to_tenant?
-    end
-
-    def retry?
-      user_belongs_to_tenant?
-    end
-
-    def retry_failed?
-      retry?
-    end
-
-    def snapshot?
-      user_belongs_to_tenant?
-    end
-
-    def schedule?
-      user_belongs_to_tenant?
-    end
-
-    def preflight?
-      user_belongs_to_tenant?
-    end
-
-    def analytics?
-      user_belongs_to_tenant?
-    end
-
-    def recipients?
-      user_belongs_to_tenant?
-    end
-
-    def activity?
+    def remove_contacts?
       user_belongs_to_tenant?
     end
 
@@ -88,7 +44,7 @@ module Sales
         return scope.all if user&.admin?
         return scope.where(company_id: user.company_id) if user&.company_id.present?
 
-        scope.where(user_id: user&.id)
+        scope.none
       end
     end
   end

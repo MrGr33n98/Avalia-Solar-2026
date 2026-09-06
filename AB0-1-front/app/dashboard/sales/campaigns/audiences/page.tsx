@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import WorkspaceFrame from '@/components/sales/campaigns/WorkspaceFrame';
 import { AudiencePreviewResult, AudienceSegmentsOptions, requestApi } from '@/lib/api-campaigns';
 import { Button } from '@/components/ui/button';
@@ -59,7 +60,21 @@ export default function AudiencesPage() {
   }
 
   return <WorkspaceFrame title="Audiências"><div className="space-y-6">
-    <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">Campaign workspace</p><h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Segmentos que trabalham por você</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Crie audiências reutilizáveis, confira a elegibilidade e envie campanhas com segurança.</p></div><div className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">Dados em tempo real</div></header>
+    <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">Campaign workspace</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Segmentos que trabalham por você</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Crie audiências reutilizáveis, confira a elegibilidade e envie campanhas com segurança.</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <Link href="/dashboard/sales/campaigns/audiences/lists" className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-700 transition-colors">
+          Listas de Contatos
+        </Link>
+        <Link href="/dashboard/sales/campaigns/audiences/import" className="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 rounded-xl text-xs font-semibold text-white transition-colors">
+          Importar Contatos
+        </Link>
+      </div>
+    </header>
     {saved && <p role="status" aria-live="polite" className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{saved}</p>}
     {loading && !segments ? <AudienceSkeleton /> : <AudienceBuilder filter={filter} segments={segments} name={name} onNameChange={setName} onFilterChange={changeFilter} onSave={saveAudience} saving={saving} />}
     {savedAudiences.length > 0 ? <section aria-label="Audiências salvas" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><div><h2 className="font-semibold text-slate-950">Audiências salvas</h2><p className="mt-1 text-sm text-slate-500">Segmentos dinâmicos prontos para campanhas.</p></div><span className="text-xs text-slate-400">{savedAudiences.length} total</span></div><div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{savedAudiences.map((audience) => <div key={audience.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3"><span className="truncate text-sm font-medium text-slate-800">{audience.name}</span><div className="ml-3 flex shrink-0 items-center gap-2"><span className="text-xs text-emerald-600">{audience.active ? 'Ativa' : 'Arquivada'}</span><button type="button" className="text-xs text-slate-500 hover:underline" onClick={() => void updateAudience(audience.id, { active: !audience.active })}>{audience.active ? 'Arquivar' : 'Reativar'}</button><button type="button" className="text-xs text-red-600 hover:underline" onClick={() => void removeAudience(audience.id)}>Excluir</button></div></div>)}</div></section>

@@ -85,9 +85,23 @@ Rails.application.routes.draw do
           post :apply, on: :member
           delete :remove, on: :member
         end
+        resources :contact_lists, controller: 'sales/contact_lists' do
+          member do
+            post :add_contacts
+            post :remove_contacts
+          end
+        end
+        resources :contact_imports, only: %i[index show create], controller: 'sales/contact_imports' do
+          member do
+            patch :mapping
+            post :commit
+            post :cancel
+          end
+        end
         resources :campaigns, controller: 'sales/campaigns' do
           member do
             post :snapshot
+            post :schedule
             post :preflight
             post :dispatch, action: :launch
             post :launch, action: :launch

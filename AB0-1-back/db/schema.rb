@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_06_000002) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_06_193000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -2772,6 +2772,28 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_06_000002) do
     t.index ["occurred_at"], name: "idx_platform_events_brin_time", using: :brin
   end
 
+  create_table "platform_events_y2026m07", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2026m07_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2026m07_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m07_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2026m07_occurred_at_idx", using: :brin
+  end
+
   create_table "platform_events_y2026m08", id: false, force: :cascade do |t|
     t.bigint "id", null: false
     t.text "event_id", null: false
@@ -2924,28 +2946,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_06_000002) do
     t.index ["event_id"], name: "platform_events_y2027m02_event_id_idx"
     t.index ["event_type", "occurred_at"], name: "platform_events_y2027m02_event_type_occurred_at_idx", order: { occurred_at: :desc }
     t.index ["occurred_at"], name: "platform_events_y2027m02_occurred_at_idx", using: :brin
-  end
-
-  create_table "platform_events_y2027m03", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2027m03_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2027m03_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m03_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2027m03_occurred_at_idx", using: :brin
   end
 
   create_table "poll_options", force: :cascade do |t|
@@ -3751,6 +3751,55 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_06_000002) do
     t.index ["sales_contact_id"], name: "index_sales_contact_employments_on_sales_contact_id"
   end
 
+  create_table "sales_contact_imports", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "user_id", null: false
+    t.string "filename", null: false
+    t.string "status", default: "uploaded", null: false
+    t.integer "total_rows", default: 0
+    t.integer "valid_rows", default: 0
+    t.integer "invalid_rows", default: 0
+    t.integer "duplicate_rows", default: 0
+    t.integer "imported_rows", default: 0
+    t.integer "failed_rows", default: 0
+    t.jsonb "mapping_jsonb", default: {}
+    t.jsonb "options_jsonb", default: {}
+    t.jsonb "error_summary_jsonb", default: {}
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "status"], name: "index_sales_contact_imports_on_company_id_and_status"
+    t.index ["company_id"], name: "index_sales_contact_imports_on_company_id"
+    t.index ["user_id"], name: "index_sales_contact_imports_on_user_id"
+  end
+
+  create_table "sales_contact_list_memberships", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_contact_list_id", null: false
+    t.bigint "sales_contact_id", null: false
+    t.string "source", default: "manual"
+    t.datetime "created_at", null: false
+    t.index ["company_id"], name: "index_sales_contact_list_memberships_on_company_id"
+    t.index ["sales_contact_id"], name: "index_sales_contact_list_memberships_on_sales_contact_id"
+    t.index ["sales_contact_list_id", "sales_contact_id"], name: "idx_sales_contact_list_memberships_unique", unique: true
+    t.index ["sales_contact_list_id"], name: "index_sales_contact_list_memberships_on_sales_contact_list_id"
+  end
+
+  create_table "sales_contact_lists", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "created_by_id"
+    t.string "name", null: false
+    t.text "description"
+    t.string "kind", default: "static", null: false
+    t.boolean "active", default: true, null: false
+    t.integer "contacts_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "active"], name: "index_sales_contact_lists_on_company_id_and_active"
+    t.index ["company_id"], name: "index_sales_contact_lists_on_company_id"
+  end
+
   create_table "sales_contacts", force: :cascade do |t|
     t.bigint "sales_account_id", null: false
     t.bigint "user_id"
@@ -3906,7 +3955,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_06_000002) do
     t.index ["provider_message_id"], name: "index_sales_email_messages_on_provider_message_id"
     t.index ["sales_account_id"], name: "index_sales_email_messages_on_sales_account_id"
     t.index ["sales_campaign_id"], name: "idx_sales_email_messages_campaign"
-    t.index ["sales_campaign_recipient_id"], name: "idx_sales_email_messages_recipient"
+    t.index ["sales_campaign_recipient_id"], name: "idx_sales_email_messages_recipient_unique", unique: true, where: "(sales_campaign_recipient_id IS NOT NULL)"
     t.index ["sales_contact_id"], name: "index_sales_email_messages_on_sales_contact_id"
     t.index ["sales_email_account_id"], name: "index_sales_email_messages_on_sales_email_account_id"
     t.index ["sales_email_thread_id"], name: "index_sales_email_messages_on_sales_email_thread_id"

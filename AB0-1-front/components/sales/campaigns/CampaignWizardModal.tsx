@@ -81,15 +81,14 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
   }, [open, step, stateFilter, cityFilter, segmentFilter, searchTerm]);
 
   const handleFinish = async () => {
-    if (!name.trim() || !emailTemplateId) { setFormError('Informe nome e template antes de continuar.'); return; }
-    if (audiencePreview && audiencePreview.total_count <= 0) { setFormError('Nenhum destinatário elegível encontrado. Ajuste a audiência.'); return; }
+    if (!name.trim()) { setFormError('Informe o nome da campanha.'); return; }
     setFormError('');
     setSubmitting(true);
     try {
-      const created = await onSubmit({
+      await onSubmit({
         name,
         campaign_type: campaignType,
-        email_template_id: emailTemplateId,
+        email_template_id: emailTemplateId || null,
         audience_id: audienceId,
         scheduled_at: scheduledAt || null,
         audience_filter: {
@@ -99,15 +98,12 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
           search: searchTerm || undefined,
         },
       });
-      const result = await fetchPreflight(created.campaign.id);
-      setPreflight(result.preflight);
-      if (!result.preflight.ready) return;
       onClose();
       // Reset form
       setStep(1);
       setName('');
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : 'Erro ao criar campanha.');
+      setFormError(err instanceof Error ? err.message : 'Erro ao criar rascunho de campanha.');
     } finally {
       setSubmitting(false);
     }

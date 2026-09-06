@@ -110,12 +110,12 @@ export default function WebVitalsReporter() {
           headers: { 'Content-Type': 'application/json' },
           body,
           keepalive: true,
+        }).catch(() => {
+          // Ignore network errors silently
         });
       }
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[WebVitals] Failed to send backend event:', error);
-      }
+    } catch {
+      // Ignore beacon errors silently
     }
 
     // Development logging

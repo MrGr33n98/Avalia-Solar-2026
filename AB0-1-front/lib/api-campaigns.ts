@@ -258,6 +258,13 @@ export const snapshotCampaign = async (id: number): Promise<{ campaign: Campaign
   });
 };
 
+export const scheduleCampaign = async (id: number, scheduledAt: string): Promise<{ campaign: CampaignSummary }> => {
+  return requestApi<{ campaign: CampaignSummary }>(`/campaigns/${id}/schedule`, {
+    method: 'POST',
+    body: JSON.stringify({ scheduled_at: scheduledAt }),
+  });
+};
+
 export const dispatchCampaign = async (id: number): Promise<{ campaign: CampaignSummary }> => {
   return requestApi<{ campaign: CampaignSummary }>(`/campaigns/${id}/dispatch`, {
     method: 'POST',
@@ -328,3 +335,71 @@ export const updateAudience = (id: number, payload: Partial<Pick<SavedAudience, 
 export const deleteAudience = (id: number) => requestApi<void>(`/audiences/${id}`, { method: 'DELETE' });
 export const duplicateAudience = async (id: number, name: string) => { const { audience } = await fetchAudience(id); return createAudience({ name, kind: audience.kind, filter_definition: audience.filter_definition, description: audience.description || undefined }); };
 export const archiveAudience = (id: number) => updateAudience(id, { active: false });
+
+export interface ContactList {
+  id: number;
+  name: string;
+  description?: string | null;
+  kind: 'static' | 'imported';
+  active: boolean;
+  contacts_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContactImport {
+  id: number;
+  filename: string;
+  status: 'uploaded' | 'validating' | 'ready' | 'importing' | 'completed' | 'failed' | 'cancelled';
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  duplicate_rows: number;
+  imported_rows: number;
+  failed_rows: number;
+  mapping: Record<string, string>;
+  options: Record<string, unknown>;
+  error_summary?: Record<string, unknown>;
+  created_at: string;
+}
+
+export const fetchContactLists = (params: { page?: number; per_page?: number; active?: boolean } = {}) => {
+  const q = new URLSearchParams();
+  if (params.page) q.set('page', String(params.page));
+  if (params.per_page) q.set('per_page', String(params.per_page));
+  if (params.active !== undefined) q.set('active', String(params.active));
+  return requestApi<{ contact_lists: ContactList[]; meta: { page: number; total_count: number; total_pages: number } }>(`/contact_lists?${q}`);
+};
+
+export const fetchContactList = (id: number, page = 1) =>
+  requestApi<{ contact_list: ContactList; contacts: Array<Record<string, unknown>>; meta: { page: number; total_count: number; total_pages: number } }>(`/contact_lists/${id}?page=${page}`);
+
+export const createContactList = (payload: { name: string; description?: string; kind?: string }) =>
+  requestApi<{ contact_list: ContactList }>('/contact_lists', { method: 'POST', body: JSON.stringify({ contact_list: payload }) });
+
+export const updateContactList = (id: number, payload: Partial<ContactList>) =>
+  requestApi<{ contact_list: ContactList }>(`/contact_lists/${id}`, { method: 'PATCH', body: JSON.stringify({ contact_list: payload }) });
+
+export const deleteContactList = (id: number) =>
+  requestApi<void>(`/contact_lists/${id}`, { method: 'DELETE' });
+
+export const uploadContactImport = (fileContent: string, filename: string) =>
+  requestApi<{ contact_import: ContactImport; suggested_mapping: Record<string, string> }>('/contact_imports', {
+    method: 'POST',
+    body: JSON.stringify({ file_content: fileContent, filename }),
+  });
+
+export const updateImportMapping = (id: number, mapping: Record<string, string>, options: Record<string, unknown> = {}) =>
+  requestApi<{ contact_import: ContactImport }>(`/contact_imports/${id}/mapping`, {
+    method: 'PATCH',
+    body: JSON.stringify({ mapping, options }),
+  });
+
+export const commitImport = (id: number) =>
+  requestApi<{ contact_import: ContactImport; message: string }>(`/contact_imports/${id}/commit`, { method: 'POST' });
+
+export const fetchContactImports = (page = 1) =>
+  requestApi<{ contact_imports: ContactImport[]; meta: { page: number; total_count: number; total_pages: number } }>(`/contact_imports?page=${page}`);
+
+export const fetchContactImport = (id: number) =>
+  requestApi<{ contact_import: ContactImport }>(`/contact_imports/${id}`);

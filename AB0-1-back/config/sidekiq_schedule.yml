@@ -11,6 +11,13 @@ social_outbox_processor_job:
   description: 'Processa eventos sociais pendentes e projeta itens no feed'
   enabled: true
 
+sales_campaign_scheduler_job:
+  cron: '*/1 * * * *'
+  class: Sales::CampaignSchedulerJob
+  queue: default
+  description: 'Dispara campanhas de e-mail agendadas que atingiram o horário de envio'
+  enabled: true
+
 # Daily cache cleanup at 3 AM
 cache_cleanup_job:
   cron: '0 3 * * *'  # Every day at 3:00 AM

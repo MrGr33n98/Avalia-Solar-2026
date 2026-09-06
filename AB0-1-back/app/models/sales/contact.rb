@@ -12,6 +12,8 @@ module Sales
     has_many :taggings, as: :taggable, class_name: 'Sales::Tagging', dependent: :destroy
     has_many :tags, through: :taggings, source: :tag
     has_many :opportunities, class_name: 'Sales::Opportunity', foreign_key: :primary_contact_id, dependent: :nullify
+    has_many :contact_list_memberships, class_name: 'Sales::ContactListMembership', foreign_key: :sales_contact_id, dependent: :destroy
+    has_many :contact_lists, through: :contact_list_memberships, source: :list
 
     has_many :contact_employments, class_name: 'Sales::ContactEmployment', foreign_key: :sales_contact_id, dependent: :destroy
     has_many :employments, class_name: 'Sales::ContactEmployment', foreign_key: :sales_contact_id, dependent: :destroy

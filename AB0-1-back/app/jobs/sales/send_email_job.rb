@@ -8,6 +8,16 @@ module Sales
       email = ::Sales::EmailMessage.find_by(id: email_message_id)
       return unless email && (email.status == 'queued' || email.status == 'draft')
 
+      # Send-Time Suppression Check (P0)
+      if ::Sales::Messaging::SuppressionChecker.blocked?(company_id: email.company_id, email: email.to_email)
+        Rails.logger.warn("[SendEmailJob] Prevenindo envio para #{email.to_email}: endereço suprimido para a empresa #{email.company_id}.")
+        email.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => 'SUPPRESSED_AT_SEND_TIME'))
+        if email.campaign_recipient.present?
+          email.campaign_recipient.update!(status: 'unsubscribed', error_message: 'SUPPRESSED_AT_SEND_TIME')
+        end
+        return
+      end
+
       # 1. Render through Fail-Closed Renderer
       rendered = ::Sales::Messaging::Renderer.render(
         body_json: email.body_json,

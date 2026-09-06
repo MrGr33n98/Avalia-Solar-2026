@@ -27,6 +27,7 @@ module Sales
     validates :from_email, presence: true
     validates :to_email, presence: true
     validates :subject, presence: true
+    validates :sales_campaign_recipient_id, uniqueness: true, allow_nil: true
 
     scope :queued, -> { where(status: 'queued') }
     scope :sent, -> { where(status: 'sent') }

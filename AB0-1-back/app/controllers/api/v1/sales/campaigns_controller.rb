@@ -5,15 +5,17 @@ module Api
     module Sales
       class CampaignsController < BaseController
         before_action :authenticate_api_user
-        before_action :set_campaign, only: %i[show update destroy snapshot preflight launch pause resume cancel retry_failed analytics recipients activity]
+        before_action :set_campaign, only: %i[show update destroy snapshot schedule preflight launch pause resume cancel retry_failed analytics recipients activity]
 
         def preflight
+          authorize @campaign
           result = ::Sales::Campaigns::Preflight.call(campaign: @campaign)
           status = result[:ready] ? :ok : :unprocessable_entity
           render json: { campaign_id: @campaign.id, preflight: result }, status: status
         end
 
         def cancel
+          authorize @campaign
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'cancel')
           payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
           if result[:error]
@@ -24,6 +26,7 @@ module Api
         end
 
         def index
+          authorize ::Sales::Campaign
           scope = scoped_campaigns.includes(:email_template).order(created_at: :desc)
           scope = scope.where(status: params[:status]) if params[:status].present? && ::Sales::Campaign.column_names.include?('status')
           scope = scope.where(campaign_type: params[:campaign_type]) if params[:campaign_type].present? && ::Sales::Campaign.column_names.include?('campaign_type')
@@ -55,6 +58,7 @@ module Api
         end
 
         def show
+          authorize @campaign
           metrics = ::Sales::Campaigns::MetricsCalculator.calculate(@campaign)
           recent_recipients = @campaign.recipients.order(updated_at: :desc).limit(50).map do |r|
             {
@@ -78,6 +82,7 @@ module Api
         end
 
         def create
+          authorize ::Sales::Campaign
           company = (current_user.respond_to?(:company) ? current_user.company : nil) ||
                     (current_user.respond_to?(:company_id) && current_user.company_id.present? ? ::Company.find_by(id: current_user.company_id) : nil) ||
                     (current_user.respond_to?(:admin?) && current_user.admin? && params[:campaign] && params[:campaign][:company_id].present? ? ::Company.find_by(id: params[:campaign][:company_id]) : nil)
@@ -107,28 +112,83 @@ module Api
         end
 
         def update
+          authorize @campaign
           attributes = campaign_params.to_h
-          if attributes.key?(:audience_id)
-            audience = ::Sales::Audience.find_by(id: attributes[:audience_id], company_id: @campaign.company_id, active: true)
-            if attributes[:audience_id].present? && audience.nil?
-              render json: { errors: ['Audiência inválida ou não autorizada.'] }, status: :unprocessable_entity
+          is_structural = attributes.key?(:audience_id) || attributes.key?(:audience_filter) || attributes.key?(:email_template_id)
+
+          if is_structural && !@campaign.draft?
+            render json: {
+              error: 'CAMPAIGN_NOT_EDITABLE',
+              message: 'Alterações estruturais (audiência ou template) só são permitidas quando a campanha está em rascunho (draft).',
+              details: {
+                blockers: [
+                  { code: 'CAMPAIGN_NOT_EDITABLE', message: "Campanha no estado '#{@campaign.status}' não permite alteração estrutural." }
+                ]
+              }
+            }, status: :conflict
+            return
+          end
+
+          updated_successfully = false
+          invalid_audience = false
+
+          @campaign.with_lock do
+            @campaign.reload
+            if is_structural && !@campaign.draft?
+              render json: {
+                error: 'CAMPAIGN_NOT_EDITABLE',
+                message: 'Alterações estruturais (audiência ou template) só são permitidas quando a campanha está em rascunho (draft).',
+                details: {
+                  blockers: [
+                    { code: 'CAMPAIGN_NOT_EDITABLE', message: "Campanha no estado '#{@campaign.status}' não permite alteração estrutural." }
+                  ]
+                }
+              }, status: :conflict
               return
             end
-            attributes[:audience_filter] = audience&.filter_definition || {} if attributes[:audience_id].present?
+
+            if attributes.key?(:audience_id)
+              audience = ::Sales::Audience.find_by(id: attributes[:audience_id], company_id: @campaign.company_id, active: true)
+              if attributes[:audience_id].present? && audience.nil?
+                invalid_audience = true
+                next
+              end
+              attributes[:audience_filter] = audience&.filter_definition || {} if attributes[:audience_id].present?
+            end
+
+            @campaign.assign_attributes(attributes)
+            unless @campaign.valid?
+              next
+            end
+
+            if is_structural
+              @campaign.recipients.delete_all
+              @campaign.template_snapshot = nil
+              @campaign.template_snapshot_at = nil
+              @campaign.total_recipients = 0
+            end
+
+            @campaign.save!
+            updated_successfully = true
           end
-          if @campaign.update(attributes)
-            render json: { campaign: serialize_campaign_summary(@campaign) }
+
+          if invalid_audience
+            render json: { error: 'INVALID_AUDIENCE', message: 'Audiência inválida ou não autorizada.', details: { blockers: [{ code: 'INVALID_AUDIENCE', message: 'Audiência não encontrada.' }] } }, status: :unprocessable_entity
+          elsif updated_successfully
+            render json: { campaign: serialize_campaign_summary(@campaign.reload) }
           else
-            render json: { errors: @campaign.errors.full_messages }, status: :unprocessable_entity
+            render json: { error: 'VALIDATION_FAILED', message: @campaign.errors.full_messages.join(', '), details: { blockers: @campaign.errors.full_messages.map { |m| { code: 'VALIDATION_ERROR', message: m } } } }, status: :unprocessable_entity
           end
         end
 
         def destroy
+          authorize @campaign
           @campaign.destroy!
           render json: { message: 'Campanha excluída com sucesso.' }
         end
 
         def snapshot
+          authorize @campaign
           result = ::Sales::Campaigns::SnapshotService.call(campaign: @campaign)
           payload = { campaign: serialize_campaign_summary(@campaign.reload), snapshot: result }
           if result.is_a?(Hash) && result[:error]
@@ -137,10 +197,66 @@ module Api
             render json: payload
           end
         rescue ::Sales::Campaigns::SnapshotService::EmptyAudienceError => e
-          render json: { error: 'EMPTY_AUDIENCE', message: e.message }, status: :unprocessable_entity
+          render json: { error: 'EMPTY_AUDIENCE', message: e.message, details: { blockers: [{ code: 'EMPTY_AUDIENCE', message: e.message }] } }, status: :unprocessable_entity
+        rescue ::Sales::Campaigns::SnapshotService::SnapshotError => e
+          render json: { error: 'SNAPSHOT_FAILED', message: e.message, details: { blockers: [{ code: 'SNAPSHOT_FAILED', message: e.message }] } }, status: :unprocessable_entity
+        end
+
+        def schedule
+          authorize @campaign
+          scheduled_at_param = params[:scheduled_at] || campaign_params[:scheduled_at]
+          if scheduled_at_param.blank?
+            render json: { error: 'MISSING_SCHEDULED_AT', message: 'Data e hora de agendamento são obrigatórias.' }, status: :unprocessable_entity
+            return
+          end
+
+          parsed_time = begin
+            Time.zone.parse(scheduled_at_param.to_s)
+          rescue StandardError
+            nil
+          end
+
+          if parsed_time.nil? || parsed_time <= Time.current
+            render json: { error: 'INVALID_SCHEDULED_AT', message: 'A data de agendamento deve ser uma data futura válida.' }, status: :unprocessable_entity
+            return
+          end
+
+          schedule_success = false
+          schedule_error = nil
+
+          @campaign.with_lock do
+            @campaign.reload
+            unless @campaign.can_schedule?
+              schedule_error = { error: 'CAMPAIGN_NOT_SCHEDULEABLE', message: "Campanha em estado '#{@campaign.status}' não pode ser agendada." }
+              next
+            end
+
+            preflight = ::Sales::Campaigns::Preflight.call(campaign: @campaign)
+            unless preflight[:ready]
+              schedule_error = { campaign_id: @campaign.id, preflight: preflight, error: 'PREFLIGHT_FAILED', message: 'A campanha não passou no preflight.' }
+              next
+            end
+
+            if @campaign.recipients.empty?
+              ::Sales::Campaigns::SnapshotService.call(campaign: @campaign)
+            end
+
+            @campaign.update!(status: 'scheduled', scheduled_at: parsed_time)
+            schedule_success = true
+          end
+
+          if schedule_error
+            status_code = schedule_error[:error] == 'CAMPAIGN_NOT_SCHEDULEABLE' ? :conflict : :unprocessable_entity
+            render json: schedule_error, status: status_code
+          else
+            render json: { campaign: serialize_campaign_summary(@campaign.reload) }
+          end
+        rescue ::Sales::Campaigns::SnapshotService::SnapshotError => e
+          render json: { error: 'SNAPSHOT_FAILED', message: e.message, details: { blockers: [{ code: 'SNAPSHOT_FAILED', message: e.message }] } }, status: :unprocessable_entity
         end
 
         def launch
+          authorize @campaign
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'dispatch')
           payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
           if result[:error]
@@ -151,6 +267,7 @@ module Api
         end
 
         def pause
+          authorize @campaign
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'pause')
           payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
           if result[:error]
@@ -161,6 +278,7 @@ module Api
         end
 
         def resume
+          authorize @campaign
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'resume')
           payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
           if result[:error]
@@ -171,6 +289,7 @@ module Api
         end
 
         def retry_failed
+          authorize @campaign
           result = ::Sales::Campaigns::Dispatcher.call(campaign: @campaign, action: 'retry_failed')
           payload = { campaign: serialize_campaign_summary(@campaign.reload), dispatch: result }
           if result[:error]
@@ -181,11 +300,13 @@ module Api
         end
 
         def analytics
+          authorize @campaign
           metrics = ::Sales::Campaigns::MetricsCalculator.calculate(@campaign)
           render json: { campaign_id: @campaign.id, metrics: metrics }
         end
 
         def activity
+          authorize @campaign
           messages = @campaign.email_messages.includes(:events).order(created_at: :desc).limit(100)
           rows = messages.flat_map do |message|
             message.events.map do |event|
@@ -197,6 +318,7 @@ module Api
         end
 
         def recipients
+          authorize @campaign
           scope = @campaign.recipients.order(updated_at: :desc)
           scope = scope.where(status: params[:status]) if params[:status].present?
           page = [params.fetch(:page, 1).to_i, 1].max

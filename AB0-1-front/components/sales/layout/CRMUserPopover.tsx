@@ -159,7 +159,7 @@ export default function CRMUserPopover({ onOpenInbox }: CRMUserPopoverProps) {
                 Explore plans and find the best fit for your team before your trial ends.
               </p>
               <Link
-                href="/dashboard/sales/settings/billing"
+                href="/company-dashboard/billing"
                 onClick={() => setOpen(false)}
                 className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 hover:underline transition-colors"
               >

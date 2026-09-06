@@ -40,6 +40,15 @@ module Sales
           scope = scope.where('LOWER(sales_contacts.first_name) LIKE :term OR LOWER(sales_contacts.last_name) LIKE :term OR LOWER(sales_contacts.email) LIKE :term', term: term)
         end
 
+        # Apply contact list filter
+        if @filter[:contact_list_id].present?
+          list_id = @filter[:contact_list_id].to_i
+          scope = scope.joins(:contact_list_memberships).where(sales_contact_list_memberships: { sales_contact_list_id: list_id })
+        elsif @filter[:contact_list_ids].present? && @filter[:contact_list_ids].is_a?(Array)
+          list_ids = @filter[:contact_list_ids].map(&:to_i).reject(&:zero?)
+          scope = scope.joins(:contact_list_memberships).where(sales_contact_list_memberships: { sales_contact_list_id: list_ids }) if list_ids.any?
+        end
+
         # Filter by tags if present
         if @filter[:tag_ids].present? && @filter[:tag_ids].is_a?(Array)
           tag_ids = @filter[:tag_ids].map(&:to_i).reject(&:zero?)

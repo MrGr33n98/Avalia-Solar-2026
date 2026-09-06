@@ -17,13 +17,14 @@ module Sales
     has_many :email_messages, class_name: 'Sales::EmailMessage', foreign_key: :sales_campaign_id, dependent: :nullify
     has_many :daily_metrics, class_name: 'Sales::CampaignDailyMetric', foreign_key: :sales_campaign_id, dependent: :destroy
 
-    STATUSES = %w[draft scheduled dispatching paused completed cancelled].freeze
+    STATUSES = %w[draft scheduled dispatching paused completed cancelled failed].freeze
     CAMPAIGN_TYPES = %w[email_broadcast sequence drip event_triggered].freeze
 
     validates :name, presence: true
     validates :campaign_key, presence: true, uniqueness: { scope: :company_id }
     validates :status, inclusion: { in: STATUSES }
     validates :campaign_type, inclusion: { in: CAMPAIGN_TYPES }
+    validates :scheduled_at, presence: true, if: :scheduled?
 
     scope :active_campaigns, -> { where(active: true) }
     scope :by_status, ->(st) { where(status: st) }
@@ -31,16 +32,41 @@ module Sales
 
     before_validation :ensure_campaign_key
 
+    # Canonical State Predicates
+    def draft? = status == 'draft'
+    def scheduled? = status == 'scheduled'
+    def dispatching? = status == 'dispatching'
+    def paused? = status == 'paused'
+    def completed? = status == 'completed'
+    def cancelled? = status == 'cancelled'
+    def failed? = status == 'failed'
+
+    # Canonical Transition Guards
+    # Allowed initial dispatch: draft -> dispatching, scheduled -> dispatching
     def can_dispatch?
-      %w[draft scheduled paused].include?(status)
+      draft? || scheduled?
+    end
+
+    # Allowed schedule: draft -> scheduled
+    def can_schedule?
+      draft?
     end
 
     def can_pause?
-      status == 'dispatching'
+      dispatching?
     end
 
     def can_resume?
-      status == 'paused'
+      paused?
+    end
+
+    def can_cancel?
+      !terminal?
+    end
+
+    # Terminal states: completed, cancelled (failed allows retry)
+    def terminal?
+      completed? || cancelled?
     end
 
     def update_progress_counters!

@@ -3,23 +3,26 @@
 module Sales
   module Campaigns
     class SnapshotService
-      class EmptyAudienceError < StandardError; end
+      class SnapshotError < StandardError; end
+      class EmptyAudienceError < SnapshotError; end
+      class MissingTemplateError < SnapshotError; end
+      class InvalidTemplateError < SnapshotError; end
+
       def self.call(campaign:)
         new(campaign: campaign).call
       end
 
       def initialize(campaign:)
         @campaign = campaign
-        @company = campaign.company
+        @company = campaign&.company
       end
 
       def call
-        raise ArgumentError, 'Campanha inválida' unless @campaign && @company
+        raise SnapshotError, 'Campanha ou empresa inválida' unless @campaign && @company
         snapshot_template!
 
         page = 1
         per_page = 250
-        created_count = 0
         initial_result = AudienceResolver.call(company: @company, audience_filter: @campaign.audience_filter, page: 1, per_page: 1)
         raise EmptyAudienceError, 'Nenhum destinatário elegível encontrado.' if initial_result[:total_count].to_i.zero?
 
@@ -46,7 +49,7 @@ module Sales
               metadata: {
                 job_title: contact.job_title,
                 account_name: contact.account&.name
-              }.to_json,
+              },
               created_at: Time.current,
               updated_at: Time.current
             }
@@ -65,8 +68,7 @@ module Sales
 
         total = @campaign.recipients.count
         @campaign.update!(
-          total_recipients: total,
-          status: total > 0 ? 'scheduled' : 'draft'
+          total_recipients: total
         )
 
         { recipients_count: total, status: @campaign.status, template_snapshot_at: @campaign.template_snapshot_at }
@@ -77,7 +79,7 @@ module Sales
       def snapshot_template!
         return if @campaign.template_snapshot_present?
         template = @campaign.email_template
-        raise ArgumentError, 'Template inválido para snapshot.' unless template
+        raise MissingTemplateError, 'Template de e-mail ausente para snapshot.' unless template
 
         @campaign.update!(
           template_snapshot: {
