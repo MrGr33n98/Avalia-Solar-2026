@@ -383,6 +383,18 @@ export const updateContactList = (id: number, payload: Partial<ContactList>) =>
 export const deleteContactList = (id: number) =>
   requestApi<void>(`/contact_lists/${id}`, { method: 'DELETE' });
 
+export const addContactsToList = (id: number, contactIds: number[], source = 'manual') =>
+  requestApi<{ contact_list: ContactList; added_count: number }>(`/contact_lists/${id}/add_contacts`, {
+    method: 'POST',
+    body: JSON.stringify({ contact_ids: contactIds, source }),
+  });
+
+export const removeContactsFromList = (id: number, contactIds: number[]) =>
+  requestApi<{ contact_list: ContactList; removed_count: number }>(`/contact_lists/${id}/remove_contacts`, {
+    method: 'POST',
+    body: JSON.stringify({ contact_ids: contactIds }),
+  });
+
 export const uploadContactImport = (fileContent: string, filename: string) =>
   requestApi<{ contact_import: ContactImport; suggested_mapping: Record<string, string> }>('/contact_imports', {
     method: 'POST',

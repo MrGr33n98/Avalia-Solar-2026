@@ -9,6 +9,8 @@ import { AudienceBuilder } from '@/components/sales/campaigns/audiences/Audience
 import { AudienceSkeleton } from '@/components/sales/campaigns/audiences/AudienceSkeleton';
 import { AudienceTable } from '@/components/sales/campaigns/audiences/AudienceTable';
 
+import { AudienceNavigation } from '@/components/sales/campaigns/audiences/AudienceNavigation';
+
 type Filter = { state: string; city: string; segment: string; search: string; tag_ids: number[] };
 type SavedAudience = { id: number; name: string; kind: string; active: boolean };
 
@@ -59,7 +61,10 @@ export default function AudiencesPage() {
     finally { setSaving(false); }
   }
 
-  return <WorkspaceFrame title="Audiências"><div className="space-y-6">
+  return (
+    <WorkspaceFrame title="Audiências">
+      <div className="space-y-6">
+        <AudienceNavigation activeTab="overview" />
     <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">Campaign workspace</p>
