@@ -8,11 +8,12 @@ import { X, Send } from 'lucide-react';
 
 interface TemplatePreviewProps {
   preview: TemplatePreviewResult;
+  contextMode?: 'sample' | 'real';
   onClose: () => void;
   onOpenTestSend?: () => void;
 }
 
-export function TemplatePreview({ preview, onClose, onOpenTestSend }: TemplatePreviewProps) {
+export function TemplatePreview({ preview, contextMode = 'sample', onClose, onOpenTestSend }: TemplatePreviewProps) {
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
 
   const srcDoc = `
@@ -39,7 +40,14 @@ export function TemplatePreview({ preview, onClose, onOpenTestSend }: TemplatePr
       <div className="flex flex-col w-full max-w-4xl max-h-[90vh] bg-background rounded-lg shadow-xl border overflow-hidden">
         <div className="flex items-center justify-between border-b px-6 py-4 bg-card">
           <div className="space-y-0.5">
-            <h3 className="font-semibold text-base line-clamp-1">Prévia: {preview.subject}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-base line-clamp-1">Prévia: {preview.subject}</h3>
+              {contextMode === 'sample' && (
+                <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 border border-amber-200">
+                  Dados de demonstração
+                </span>
+              )}
+            </div>
             {preview.preheader && (
               <p className="text-xs text-muted-foreground line-clamp-1 italic">
                 Preheader: {preview.preheader}
@@ -57,7 +65,7 @@ export function TemplatePreview({ preview, onClose, onOpenTestSend }: TemplatePr
               </Button>
             )}
 
-            <Button size="sm" variant="ghost" onClick={onClose} className="h-8 w-8 p-0">
+            <Button size="sm" variant="ghost" onClick={onClose} aria-label="Fechar prévia" className="h-8 w-8 p-0">
               <X className="h-4 w-4" />
             </Button>
           </div>

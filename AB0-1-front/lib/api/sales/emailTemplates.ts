@@ -2,6 +2,9 @@ import { requestApi } from '@/lib/api-campaigns';
 import type {
   EmailTemplate,
   EmailTemplatePayload,
+  EmailTemplateDraftPayload,
+  EmailTemplatePreviewRequest,
+  EmailTemplatePreviewResponse,
   TemplateListParams,
   TemplateListResponse,
   TemplateStats,
@@ -61,20 +64,22 @@ export async function deleteEmailTemplate(id: number): Promise<{ message: string
 }
 
 export async function previewEmailTemplate(
-  id: number,
-  options: { to_email?: string; context?: Record<string, unknown>; context_ids?: Record<string, number> } = {}
-): Promise<{ preview: TemplatePreviewResult }> {
-  return requestApi<{ preview: TemplatePreviewResult }>(`/email_templates/${id}/preview`, {
+  id?: number | null,
+  options: EmailTemplatePreviewRequest = {}
+): Promise<EmailTemplatePreviewResponse> {
+  const url = id ? `/email_templates/${id}/preview` : '/email_templates/preview';
+  return requestApi<EmailTemplatePreviewResponse>(url, {
     method: 'POST',
     body: JSON.stringify(options),
   });
 }
 
 export async function sendTemplateTest(
-  id: number,
-  options: { to_email: string; context_ids?: Record<string, number> }
+  id?: number | null,
+  options: { to_email: string; draft?: EmailTemplateDraftPayload; context_ids?: Record<string, number> } = { to_email: '' }
 ): Promise<{ message: string; to_email: string; rendered: TemplatePreviewResult }> {
-  return requestApi<{ message: string; to_email: string; rendered: TemplatePreviewResult }>(`/email_templates/${id}/test_send`, {
+  const url = id ? `/email_templates/${id}/test_send` : '/email_templates/test_send';
+  return requestApi<{ message: string; to_email: string; rendered: TemplatePreviewResult }>(url, {
     method: 'POST',
     body: JSON.stringify(options),
   });

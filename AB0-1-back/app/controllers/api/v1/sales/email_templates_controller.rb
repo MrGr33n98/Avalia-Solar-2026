@@ -86,7 +86,14 @@ module Api
         end
 
         def preview
-          template = scoped_templates.find(params[:id])
+          template = params[:id].present? ? scoped_templates.find(params[:id]) : nil
+          draft = draft_params
+
+          subject = draft[:subject_template].presence || template&.subject_template || 'Sem Assunto'
+          preheader = draft[:preheader].presence || template&.preheader
+          body_json = draft[:body_json].presence || (draft[:body_html].blank? ? template&.body_json : nil)
+          body_html = draft[:body_html].presence || (draft[:body_json].blank? ? template&.body_html : nil)
+
           resolved_context = ::Sales::Messaging::ContextResolver.resolve(
             company_id: current_user.company_id,
             current_user: current_user,
@@ -95,14 +102,21 @@ module Api
           )
 
           rendered = ::Sales::Messaging::Renderer.render(
-            body_json: template.body_json,
-            raw_html: template.body_html,
-            subject: template.subject_template,
-            preheader: template.preheader,
+            body_json: body_json,
+            raw_html: body_html,
+            subject: subject,
+            preheader: preheader,
             to_email: params[:to_email].presence || current_user.email,
             context: resolved_context
           )
-          render json: { preview: rendered }
+
+          context_mode = parse_context_ids.present? ? 'real' : 'sample'
+
+          render json: {
+            preview: rendered,
+            context_mode: context_mode,
+            warnings: []
+          }
         rescue ::Sales::Messaging::Renderer::EmailRenderError => e
           render_error_response(message: e.message, status: :unprocessable_entity, code: 'TEMPLATE_PREVIEW_INVALID')
         end
@@ -120,7 +134,14 @@ module Api
         end
 
         def test_send
-          template = scoped_templates.find(params[:id])
+          template = params[:id].present? ? scoped_templates.find(params[:id]) : nil
+          draft = draft_params
+
+          subject = draft[:subject_template].presence || template&.subject_template || 'Sem Assunto'
+          preheader = draft[:preheader].presence || template&.preheader
+          body_json = draft[:body_json].presence || (draft[:body_html].blank? ? template&.body_json : nil)
+          body_html = draft[:body_html].presence || (draft[:body_json].blank? ? template&.body_html : nil)
+
           target_email = params[:to_email].presence || current_user.email
 
           resolved_context = ::Sales::Messaging::ContextResolver.resolve(
@@ -131,10 +152,10 @@ module Api
           )
 
           rendered = ::Sales::Messaging::Renderer.render(
-            body_json: template.body_json,
-            raw_html: template.body_html,
-            subject: template.subject_template,
-            preheader: template.preheader,
+            body_json: body_json,
+            raw_html: body_html,
+            subject: subject,
+            preheader: preheader,
             to_email: target_email,
             context: resolved_context
           )
@@ -143,7 +164,6 @@ module Api
             return render_error_response(message: "E-mail '#{target_email}' está na lista de supressão.", status: :unprocessable_entity, code: 'SUPPRESSED_EMAIL')
           end
 
-          # Envio imediato ou simulação de sucesso
           render json: {
             message: "E-mail de teste enviado com sucesso para #{target_email}.",
             to_email: target_email,
@@ -171,6 +191,16 @@ module Api
 
         def sort_direction
           %w[asc desc].include?(params[:direction]) ? params[:direction] : 'desc'
+        end
+
+        def draft_params
+          raw_draft = params[:draft]
+          return {} unless raw_draft.respond_to?(:permit)
+
+          raw_draft.permit(
+            :subject_template, :preheader, :body_html, :name, :category, :status,
+            body_json: {}
+          ).to_h.symbolize_keys
         end
 
         def parse_context_ids

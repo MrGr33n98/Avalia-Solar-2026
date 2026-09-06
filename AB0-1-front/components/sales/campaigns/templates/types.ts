@@ -106,3 +106,25 @@ export interface TemplatePreviewResult {
   body_html: string;
   body_text?: string;
 }
+
+export interface EmailTemplateDraftPayload {
+  name?: string;
+  subject_template?: string;
+  preheader?: string;
+  category?: string;
+  status?: TemplateStatus;
+  body_json?: TemplateBodyJson;
+  body_html?: string;
+}
+
+export interface EmailTemplatePreviewRequest {
+  draft?: EmailTemplateDraftPayload;
+  context_ids?: Record<string, number>;
+  to_email?: string;
+}
+
+export interface EmailTemplatePreviewResponse {
+  preview: TemplatePreviewResult;
+  context_mode?: 'sample' | 'real';
+  warnings?: Array<{ type: string; token: string }>;
+}

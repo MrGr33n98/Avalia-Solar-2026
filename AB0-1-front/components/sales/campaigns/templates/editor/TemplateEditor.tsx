@@ -106,6 +106,7 @@ export function TemplateEditor({
   };
 
   const getCurrentTemplateData = (): Partial<EmailTemplate> => ({
+    id: initialTemplate?.id,
     name,
     subject_template: subject,
     preheader,

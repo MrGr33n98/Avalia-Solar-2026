@@ -36,6 +36,63 @@ RSpec.describe 'Sales email template preview API', type: :request do
     expect(JSON.parse(response.body).dig('preview', 'subject')).to eq('Olá')
   end
 
+  it 'previews unsaved draft changes for an existing template through backend without persisting' do
+    post "/api/v1/sales/email_templates/#{template.id}/preview",
+         params: {
+           draft: {
+             subject_template: 'Assunto do Draft Não Salvo',
+             body_html: '<p>Olá {{person.first_name}}, bem-vindo à {{company.name}}!</p>'
+           }
+         },
+         headers: auth_headers(user),
+         as: :json
+
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig('preview', 'subject')).to eq('Assunto do Draft Não Salvo')
+    expect(json.dig('preview', 'body_html')).to include('Maria')
+    expect(json.dig('preview', 'body_html')).to include('Solaris Energia')
+
+    # Confirm original template in DB remains unchanged
+    expect(template.reload.subject_template).to eq('Olá')
+    expect(template.body_html).to eq('<p>Oi</p>')
+  end
+
+  it 'previews a new unsaved template draft via collection endpoint without template ID' do
+    post '/api/v1/sales/email_templates/preview',
+         params: {
+           draft: {
+             subject_template: 'Template Totalmente Novo',
+             body_html: '<p>Novo template {{person.first_name}}</p>'
+           }
+         },
+         headers: auth_headers(user),
+         as: :json
+
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig('preview', 'subject')).to eq('Template Totalmente Novo')
+    expect(json.dig('preview', 'body_html')).to include('Maria')
+  end
+
+  it 'sanitizes malicious script in draft payload' do
+    post "/api/v1/sales/email_templates/#{template.id}/preview",
+         params: {
+           draft: {
+             subject_template: 'Teste Sanitizer',
+             body_html: '<script>alert(1)</script><p>Conteúdo seguro</p>'
+           }
+         },
+         headers: auth_headers(user),
+         as: :json
+
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig('preview', 'body_html')).not_to include('<script>')
+    expect(json.dig('preview', 'body_html')).not_to include('alert(1)')
+    expect(json.dig('preview', 'body_html')).to include('Conteúdo seguro')
+  end
+
   it 'returns TEMPLATE_PREVIEW_INVALID when renderer rejects input' do
     allow(::Sales::Messaging::Renderer).to receive(:render).and_raise(
       ::Sales::Messaging::Renderer::EmailRenderError, 'Corpo inválido'

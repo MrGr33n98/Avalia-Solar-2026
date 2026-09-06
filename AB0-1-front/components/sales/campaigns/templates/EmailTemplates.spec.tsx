@@ -65,4 +65,46 @@ describe('Email Templates Module UI', () => {
     expect(screen.getByText('Total de Templates')).toBeInTheDocument();
     expect(screen.getByText('Novo template')).toBeInTheDocument();
   });
+
+  it('calls previewEmailTemplate API with draft payload and template id for existing template', async () => {
+    jest.mocked(api.previewEmailTemplate).mockResolvedValue({
+      preview: {
+        subject: 'Sua proposta Maria',
+        preheader: undefined,
+        body_html: '<p>Olá Maria</p>',
+      },
+      context_mode: 'sample',
+    });
+
+    render(<TemplatesWorkspace />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Proposta Solar')).toBeInTheDocument();
+    });
+
+    // Click edit on template
+    const editBtn = screen.getByRole('button', { name: /Editar/i });
+    editBtn.click();
+
+    await waitFor(() => {
+      expect(screen.getByText('Editar: Proposta Solar')).toBeInTheDocument();
+    });
+
+    // Click preview button
+    const previewBtn = screen.getByRole('button', { name: /Prévia/i });
+    previewBtn.click();
+
+    await waitFor(() => {
+      expect(api.previewEmailTemplate).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          draft: expect.objectContaining({
+            subject_template: 'Sua proposta {{person.first_name}}',
+          }),
+        })
+      );
+      expect(screen.getByText('Prévia: Sua proposta Maria')).toBeInTheDocument();
+      expect(screen.getByText('Dados de demonstração')).toBeInTheDocument();
+    });
+  });
 });

@@ -56,6 +56,8 @@ export default function TemplatesWorkspace() {
 
   // Modals
   const [previewData, setPreviewData] = useState<TemplatePreviewResult | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewContextMode, setPreviewContextMode] = useState<'sample' | 'real'>('sample');
   const [testSendTarget, setTestSendTarget] = useState<EmailTemplate | Partial<EmailTemplate> | null>(null);
   const [deletingTemplate, setDeletingTemplate] = useState<EmailTemplate | null>(null);
 
@@ -178,27 +180,49 @@ export default function TemplatesWorkspace() {
   };
 
   const handleShowPreview = async (templateData: EmailTemplate | Partial<EmailTemplate>) => {
+    if (previewLoading) return;
+    setPreviewLoading(true);
     setError('');
     try {
-      if (templateData.id) {
-        const res = await previewEmailTemplate(templateData.id);
-        setPreviewData(res.preview);
-      } else if (templateData.subject_template) {
-        setPreviewData({
-          subject: templateData.subject_template,
+      const res = await previewEmailTemplate(templateData.id, {
+        draft: {
+          name: templateData.name,
+          subject_template: templateData.subject_template,
           preheader: templateData.preheader,
-          body_html: templateData.body_html || '<p>Prévia do conteúdo...</p>',
-        });
-      }
+          body_json: templateData.body_json,
+          body_html: templateData.body_html,
+        },
+      });
+      setPreviewData(res.preview);
+      setPreviewContextMode(res.context_mode || 'sample');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao gerar prévia.');
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
   const handleTestSendExecute = async (email: string) => {
     if (!testSendTarget) return;
-    if (testSendTarget.id) {
-      await sendTemplateTest(testSendTarget.id, { to_email: email });
+    setBusy(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await sendTemplateTest(testSendTarget.id, {
+        to_email: email,
+        draft: {
+          name: testSendTarget.name,
+          subject_template: testSendTarget.subject_template,
+          preheader: testSendTarget.preheader,
+          body_json: testSendTarget.body_json,
+          body_html: testSendTarget.body_html,
+        },
+      });
+      setSuccess(res.message || `E-mail de teste enviado com sucesso para ${email}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao enviar e-mail de teste.');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -268,6 +292,7 @@ export default function TemplatesWorkspace() {
       {previewData && (
         <TemplatePreview
           preview={previewData}
+          contextMode={previewContextMode}
           onClose={() => setPreviewData(null)}
           onOpenTestSend={() => {
             const current = editingTemplate || { subject_template: previewData.subject };

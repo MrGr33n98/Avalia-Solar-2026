@@ -109,6 +109,8 @@ Rails.application.routes.draw do
             get :stats
             get :variables
             get :categories
+            post :preview
+            post :test_send
           end
           member do
             post :preview
