@@ -23,6 +23,7 @@ function ImportContactsContent() {
   const preselectedListId = rawListId && Number.isFinite(Number(rawListId)) ? Number(rawListId) : null;
 
   const [step, setStep] = useState<'upload' | 'mapping' | 'options' | 'preview' | 'processing' | 'done'>('upload');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
   const [filename, setFilename] = useState<string>('');
   const [fileSize, setFileSize] = useState<number>(0);
@@ -90,6 +91,7 @@ function ImportContactsContent() {
       return;
     }
 
+    setSelectedFile(file);
     setFilename(file.name);
     setFileSize(file.size);
     setErrorMsg(null);
@@ -104,7 +106,7 @@ function ImportContactsContent() {
   };
 
   const handleUploadSubmit = async () => {
-    if (!fileContent) {
+    if (!selectedFile && !fileContent) {
       setErrorMsg('Selecione um arquivo CSV válido para continuar.');
       return;
     }
@@ -113,7 +115,8 @@ function ImportContactsContent() {
     setErrorMsg(null);
 
     try {
-      const res = await uploadContactImport(fileContent, filename || 'contatos.csv');
+      const payload = selectedFile || fileContent;
+      const res = await uploadContactImport(payload, filename || 'contatos.csv');
       setImportObj(res.contact_import);
       setMapping(res.suggested_mapping || {});
       setStep('mapping');

@@ -131,11 +131,19 @@ export async function requestApi<T>(path: string, options: RequestInit = {}): Pr
   const timeout = setTimeout(abort, 20000);
   let res: Response;
   let body: unknown;
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const headers: Record<string, string> = {
+    ...((options.headers as Record<string, string>) || {}),
+  };
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   try {
     res = await fetch(`/api/v1/sales${path}`, {
       ...options,
       signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', ...options.headers },
+      headers,
       credentials: 'include',
     });
     if (res.status === 204) return undefined as T;
@@ -395,11 +403,21 @@ export const removeContactsFromList = (id: number, contactIds: number[]) =>
     body: JSON.stringify({ contact_ids: contactIds }),
   });
 
-export const uploadContactImport = (fileContent: string, filename: string) =>
-  requestApi<{ contact_import: ContactImport; suggested_mapping: Record<string, string> }>('/contact_imports', {
+export const uploadContactImport = (fileOrContent: File | string, filename = 'contatos.csv') => {
+  if (typeof File !== 'undefined' && fileOrContent instanceof File) {
+    const formData = new FormData();
+    formData.append('file', fileOrContent);
+    return requestApi<{ contact_import: ContactImport; suggested_mapping: Record<string, string> }>('/contact_imports', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  return requestApi<{ contact_import: ContactImport; suggested_mapping: Record<string, string> }>('/contact_imports', {
     method: 'POST',
-    body: JSON.stringify({ file_content: fileContent, filename }),
+    body: JSON.stringify({ file_content: fileOrContent, filename }),
   });
+};
 
 export const updateImportMapping = (id: number, mapping: Record<string, string>, options: Record<string, unknown> = {}) =>
   requestApi<{ contact_import: ContactImport }>(`/contact_imports/${id}/mapping`, {
