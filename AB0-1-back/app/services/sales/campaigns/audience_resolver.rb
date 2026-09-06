@@ -77,10 +77,11 @@ module Sales
       def base_contacts_scope
         return ::Sales::Contact.none unless @company.present?
 
-        user_ids = User.where(company_id: @company.id).pluck(:id)
-        account_ids = ::Sales::Account.where(company_id: @company.id).or(::Sales::Account.where(owner_id: user_ids)).pluck(:id)
+        user_ids = User.where(company_id: @company.id).select(:id)
+        account_scope = ::Sales::Account.where(company_id: @company.id)
+          .or(::Sales::Account.where(company_id: nil, owner_id: user_ids))
 
-        scope = ::Sales::Contact.where(sales_account_id: account_ids.presence || [0])
+        scope = ::Sales::Contact.where(sales_account_id: account_scope.select(:id))
         if ::Sales::Contact.column_names.include?('company_id')
           scope = scope.or(::Sales::Contact.where(company_id: @company.id))
         end

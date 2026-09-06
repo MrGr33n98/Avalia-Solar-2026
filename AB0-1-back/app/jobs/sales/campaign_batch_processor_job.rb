@@ -12,7 +12,8 @@ module Sales
       return if recipients.empty?
 
       template = campaign.email_template
-      unless template && (template.body_html.present? || template.body_json.present?)
+      template_data = campaign.template_snapshot_present? ? campaign.template_snapshot : template_payload(template)
+      unless template_data && (template_data['body_html'].present? || template_data['body_json'].present?)
         Rails.logger.error("[CampaignBatchProcessorJob] Abortando: Campanha ##{campaign.id} não possui template ou corpo configurado.")
         campaign.update!(status: 'failed')
         return
@@ -48,9 +49,9 @@ module Sales
             sender_user_id: sender_id,
             from_email: from_email,
             to_email: recipient.email,
-            subject: template.subject_template.presence || campaign.name,
-            body_html: template.body_html,
-            body_json: template.body_json || {},
+            subject: template_data['subject_template'].presence || campaign.name,
+            body_html: template_data['body_html'],
+            body_json: template_data['body_json'] || {},
             status: 'queued'
           )
           email_message.update!(status: 'queued') if email_message.persisted? && email_message.status != 'queued'
@@ -70,6 +71,16 @@ module Sales
           recipient.mark_failed!(e.message)
         end
       end
+    end
+
+    def template_payload(template)
+      return nil unless template
+
+      {
+        'subject_template' => template.subject_template,
+        'body_html' => template.body_html,
+        'body_json' => template.body_json
+      }
     end
   end
 end

@@ -55,8 +55,9 @@ export default function CampaignsWorkspacePage() {
     email_template_id?: number | null;
     audience_filter: Record<string, unknown>;
   }) => {
-    await createCampaign(payload);
+    const result = await createCampaign(payload);
     loadCampaigns();
+    return result;
   };
 
   const handleSnapshot = async (id: number) => {

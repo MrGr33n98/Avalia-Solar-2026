@@ -10,7 +10,9 @@ module Api
           authorize ::Sales::Audience, :index?
           page = [params.fetch(:page, 1).to_i, 1].max
           per_page = [[params.fetch(:per_page, 20).to_i, 1].max, 100].min
-          scope = saved_audiences.order(updated_at: :desc)
+          scope = saved_audiences
+          scope = scope.where(active: params[:active] == 'true') if %w[true false].include?(params[:active].to_s)
+          scope = scope.order(updated_at: :desc)
           paginated = scope.page(page).per(per_page)
           render json: { audiences: paginated, meta: { page: page, current_page: page, per_page: per_page, total_count: scope.count, total_pages: paginated.total_pages } }
         end
@@ -44,8 +46,13 @@ module Api
         def destroy
           audience = saved_audiences.find(params[:id])
           authorize audience
-          audience.destroy!
-          head :no_content
+          if audience.campaigns.exists?
+            audience.update!(active: false)
+            render json: { message: 'Audiência arquivada porque possui campanhas históricas.', archived: true }
+          else
+            audience.destroy!
+            head :no_content
+          end
         end
 
         def preview
@@ -96,8 +103,8 @@ module Api
             total_pages: 0,
             sample_contacts: [],
             error: 'AUDIENCE_PREVIEW_FAILED',
-            message: e.message
-          }, status: :ok
+            message: Rails.env.production? ? 'Não foi possível calcular a prévia da audiência.' : e.message
+          }, status: :unprocessable_entity
         end
 
         def segments
@@ -109,12 +116,20 @@ module Api
           cache_key = "sales:audience_segments:v1:company:#{company.id}"
           payload = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
             user_ids = User.where(company_id: company.id).select(:id)
-            accounts = ::Sales::Account.where(company_id: company.id).or(::Sales::Account.where(owner_id: user_ids))
+            accounts = ::Sales::Account.where(company_id: company.id).or(
+              ::Sales::Account.where(company_id: nil, owner_id: user_ids)
+            )
             {
               states: accounts.where.not(state: [nil, '']).distinct.pluck(:state).sort,
               cities: accounts.where.not(city: [nil, '']).distinct.pluck(:city).sort,
+              cities_by_state: accounts.where.not(state: [nil, '']).where.not(city: [nil, '']).distinct.pluck(:state, :city).group_by(&:first).transform_values { |pairs| pairs.map(&:last).sort },
               company_types: accounts.where.not(segment: [nil, '']).distinct.pluck(:segment).sort,
-              tags: ::Sales::Tag.where(company_id: company.id).pluck(:id, :name, :color).map { |id, name, color| { id: id, name: name, color: color } }
+              tags: ::Sales::Tag.where(company_id: company.id).active
+                .left_joins(:taggings)
+                .group('sales_tags.id')
+                .order(:name)
+                .pluck(:id, :name, :color, Arel.sql('COUNT(sales_taggings.id)'))
+                .map { |id, name, color, usage_count| { id: id, name: name, color: color, usage_count: usage_count } }
             }
           end
           render json: payload

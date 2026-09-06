@@ -3,6 +3,7 @@
 module Sales
   module Campaigns
     class SnapshotService
+      class EmptyAudienceError < StandardError; end
       def self.call(campaign:)
         new(campaign: campaign).call
       end
@@ -14,10 +15,13 @@ module Sales
 
       def call
         raise ArgumentError, 'Campanha inválida' unless @campaign && @company
+        snapshot_template!
 
         page = 1
         per_page = 250
         created_count = 0
+        initial_result = AudienceResolver.call(company: @company, audience_filter: @campaign.audience_filter, page: 1, per_page: 1)
+        raise EmptyAudienceError, 'Nenhum destinatário elegível encontrado.' if initial_result[:total_count].to_i.zero?
 
         loop do
           result = AudienceResolver.call(
@@ -65,7 +69,28 @@ module Sales
           status: total > 0 ? 'scheduled' : 'draft'
         )
 
-        { recipients_count: total, status: @campaign.status }
+        { recipients_count: total, status: @campaign.status, template_snapshot_at: @campaign.template_snapshot_at }
+      end
+
+      private
+
+      def snapshot_template!
+        return if @campaign.template_snapshot_present?
+        template = @campaign.email_template
+        raise ArgumentError, 'Template inválido para snapshot.' unless template
+
+        @campaign.update!(
+          template_snapshot: {
+            'template_id' => template.id,
+            'name' => template.name,
+            'subject_template' => template.subject_template,
+            'preheader' => template.preheader,
+            'body_json' => template.body_json,
+            'body_html' => template.body_html
+          },
+          template_snapshot_at: Time.current
+        )
+        @campaign.reload
       end
     end
   end

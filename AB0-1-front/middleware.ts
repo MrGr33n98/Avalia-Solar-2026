@@ -171,7 +171,7 @@ export async function middleware(request: NextRequest) {
   const search = request.nextUrl.search;
 
   // CANONICAL SURFACE HOST FIREWALL (308 Permanent Redirects for misrouted paths)
-  if (surface === 'public') {
+  if (surface === 'public' && process.env.NODE_ENV === 'production') {
     // 1a. Sales CRM paths on www -> redirect to crm.avaliasolar.com.br
     if (pathname.startsWith('/dashboard/sales')) {
       const canonicalTarget = `${SURFACE_ORIGINS.crm}${pathname}${search}`;

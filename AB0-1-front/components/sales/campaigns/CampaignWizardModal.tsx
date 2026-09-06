@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Megaphone, Users, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CRMModal from '@/components/sales/ui/CRMModal';
-import { requestApi, fetchAudienceSegments, previewAudience, AudiencePreviewResult, AudienceSegmentsOptions } from '@/lib/api-campaigns';
+import { requestApi, fetchAudienceSegments, previewAudience, fetchPreflight, AudiencePreviewResult, AudienceSegmentsOptions } from '@/lib/api-campaigns';
 
 interface CampaignWizardModalProps {
   open: boolean;
@@ -15,7 +15,7 @@ interface CampaignWizardModalProps {
     email_template_id?: number | null;
     audience_filter: Record<string, unknown>;
     audience_id?: number | null;
-  }) => Promise<void>;
+  }) => Promise<{ campaign: { id: number } }>;
 }
 
 export default function CampaignWizardModal({ open, onClose, onSubmit }: CampaignWizardModalProps) {
@@ -39,10 +39,14 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
   const [audiencePreview, setAudiencePreview] = useState<AudiencePreviewResult | null>(null);
   const [previewLoading, setPreviewLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [formError, setFormError] = useState('');
+  const [preflight, setPreflight] = useState<{ ready: boolean; blockers: Array<{ code: string; message: string }>; warnings: Array<{ code: string; message: string }> } | null>(null);
 
   useEffect(() => {
     if (open) {
       setTemplateError('');
+      setFormError('');
+      setPreflight(null);
       requestApi<{ templates: Array<{ id: number; name: string }> }>('/email_templates')
         .then((result) => setTemplates(result.templates))
         .catch((err) => setTemplateError(err.message || 'Falha ao carregar templates.'));
@@ -57,6 +61,8 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
 
   useEffect(() => {
     if (open && step === 2) {
+      const hasFilter = Boolean(stateFilter || cityFilter || segmentFilter || searchTerm || audienceId);
+      if (!hasFilter) { setAudiencePreview(null); return; }
       setPreviewLoading(true);
       const filter = {
         state: stateFilter.trim() || undefined,
@@ -73,10 +79,12 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
   }, [open, step, stateFilter, cityFilter, segmentFilter, searchTerm]);
 
   const handleFinish = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !emailTemplateId) { setFormError('Informe nome e template antes de continuar.'); return; }
+    if (audiencePreview && audiencePreview.total_count <= 0) { setFormError('Nenhum destinatário elegível encontrado. Ajuste a audiência.'); return; }
+    setFormError('');
     setSubmitting(true);
     try {
-      await onSubmit({
+      const created = await onSubmit({
         name,
         campaign_type: campaignType,
         email_template_id: emailTemplateId,
@@ -88,12 +96,15 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
           search: searchTerm || undefined,
         },
       });
+      const result = await fetchPreflight(created.campaign.id);
+      setPreflight(result.preflight);
+      if (!result.preflight.ready) return;
       onClose();
       // Reset form
       setStep(1);
       setName('');
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erro ao criar campanha.');
+      setFormError(err instanceof Error ? err.message : 'Erro ao criar campanha.');
     } finally {
       setSubmitting(false);
     }
@@ -144,7 +155,7 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
         </div>
       }
     >
-      <div className="space-y-4 font-sans py-1">
+      <div className="space-y-4 font-sans py-1">{formError && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{formError}</div>}
         {/* Step Indicator */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-xs">
           <div className={`flex items-center gap-1.5 ${step === 1 ? 'font-bold text-indigo-700' : 'text-slate-500'}`}>
@@ -201,7 +212,7 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
         {step === 2 && <label className="block text-xs font-semibold">Cidade
           <select className="block w-full border rounded p-2" value={cityFilter} onChange={(event) => setCityFilter(event.target.value)}>
             <option value="">Todas</option>
-            {(segments?.cities ?? []).map((city) => <option key={city}>{city}</option>)}
+            {(stateFilter ? (segments?.cities_by_state?.[stateFilter] ?? []) : (segments?.cities ?? [])).map((city) => <option key={city}>{city}</option>)}
           </select>
         </label>}
 
@@ -218,7 +229,7 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
                 <label className="block text-[11px] font-semibold text-slate-600 mb-1">Estado (UF)</label>
                 <select
                   value={stateFilter}
-                  onChange={(e) => setStateFilter(e.target.value)}
+                  onChange={(e) => { setStateFilter(e.target.value); setCityFilter(''); }}
                   className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
                 >
                   <option value="">Todos os Estados</option>
@@ -285,6 +296,7 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
               </div>
             </div>
 
+            {preflight && <div className={`rounded-lg border p-3 ${preflight.ready ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-red-200 bg-red-50 text-red-800'}`}><strong>{preflight.ready ? 'Pré-flight aprovado' : 'Pré-flight bloqueado'}</strong>{!preflight.ready && <ul className="mt-2 list-disc pl-4">{preflight.blockers.map((item) => <li key={item.code}>{item.message}</li>)}</ul>}{preflight.ready && preflight.warnings.length > 0 && <ul className="mt-2 list-disc pl-4">{preflight.warnings.map((item) => <li key={item.code}>{item.message}</li>)}</ul>}</div>}
             <p className="text-[11px] text-slate-500 italic">
               Após criar a campanha, você poderá gerar o snapshot congelado da audiência e disparar a qualquer momento.
             </p>

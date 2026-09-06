@@ -136,6 +136,8 @@ module Api
           else
             render json: payload
           end
+        rescue ::Sales::Campaigns::SnapshotService::EmptyAudienceError => e
+          render json: { error: 'EMPTY_AUDIENCE', message: e.message }, status: :unprocessable_entity
         end
 
         def launch

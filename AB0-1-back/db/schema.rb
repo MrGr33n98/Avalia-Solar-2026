@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_06_000001) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_06_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -3688,6 +3688,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_06_000001) do
     t.bigint "email_template_id"
     t.bigint "user_id"
     t.bigint "audience_id"
+    t.jsonb "template_snapshot", default: {}, null: false
+    t.datetime "template_snapshot_at"
     t.index ["audience_id"], name: "index_sales_campaigns_on_audience_id"
     t.index ["company_id", "campaign_key"], name: "index_sales_campaigns_on_company_id_and_campaign_key", unique: true
     t.index ["company_id", "campaign_type"], name: "idx_sales_campaigns_company_type"
@@ -3695,6 +3697,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_06_000001) do
     t.index ["company_id", "status"], name: "idx_sales_campaigns_company_status"
     t.index ["company_id"], name: "index_sales_campaigns_on_company_id"
     t.index ["email_template_id"], name: "idx_sales_campaigns_email_template_id"
+    t.index ["template_snapshot_at"], name: "index_sales_campaigns_on_template_snapshot_at"
     t.index ["user_id"], name: "idx_sales_campaigns_user_id"
   end
 

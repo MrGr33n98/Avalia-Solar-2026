@@ -77,6 +77,7 @@ export interface AudiencePreviewResult {
 export interface AudienceSegmentsOptions {
   states: string[];
   cities: string[];
+  cities_by_state?: Record<string, string[]>;
   company_types: string[];
   tags: Array<{ id: number; name: string; color?: string | null }>;
 }

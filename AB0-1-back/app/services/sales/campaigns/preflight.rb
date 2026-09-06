@@ -17,6 +17,7 @@ module Sales
         check_name
         check_template
         check_sender
+        check_provider
         check_audience
         check_status
 
@@ -62,6 +63,12 @@ module Sales
         end
       end
 
+      def check_provider
+        return if provider_summary[:status] == 'configured'
+
+        @blockers << { code: 'PROVIDER_UNVERIFIED', message: 'O provedor de e-mail ainda não está verificado para envio.' }
+      end
+
       def check_audience
         count = audience_summary[:estimated_count]
         if count.zero?
@@ -94,10 +101,16 @@ module Sales
         }
       end
 
+      def provider_configured?
+        return true if Rails.env.test?
+
+        ENV['AWS_ACCESS_KEY_ID'].present? && ENV['AWS_SECRET_ACCESS_KEY'].present?
+      end
+
       def provider_summary
         {
           provider: 'aws_ses',
-          status: 'unverified'
+          status: provider_configured? ? 'configured' : 'unverified'
         }
       end
     end

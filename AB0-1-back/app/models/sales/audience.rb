@@ -4,6 +4,7 @@ module Sales
 
     belongs_to :company
     belongs_to :created_by, class_name: 'User'
+    has_many :campaigns, class_name: 'Sales::Campaign', foreign_key: :audience_id, inverse_of: :audience
     validates :name, presence: true, length: { maximum: 200 }
     validates :kind, inclusion: { in: %w[dynamic] }
     validate :valid_filter_definition
