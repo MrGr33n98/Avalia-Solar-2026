@@ -56,6 +56,7 @@ export default function CampaignsWorkspacePage() {
     campaign_type: string;
     email_template_id?: number | null;
     audience_filter: Record<string, unknown>;
+    scheduled_at?: string | null;
   }) => {
     const result = await createCampaign(payload);
     loadCampaigns();

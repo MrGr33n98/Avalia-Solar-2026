@@ -15,6 +15,7 @@ interface CampaignWizardModalProps {
     email_template_id?: number | null;
     audience_filter: Record<string, unknown>;
     audience_id?: number | null;
+    scheduled_at?: string | null;
   }) => Promise<{ campaign: { id: number } }>;
 }
 
@@ -23,6 +24,7 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
   const [name, setName] = useState<string>('');
   const [campaignType, setCampaignType] = useState<string>('email_broadcast');
   const [emailTemplateId, setEmailTemplateId] = useState<number | null>(null);
+  const [scheduledAt, setScheduledAt] = useState('');
 
   const [templates, setTemplates] = useState<Array<{ id: number; name: string }>>([]);
   const [audiences, setAudiences] = useState<Array<{ id: number; name: string; filter_definition?: Record<string, unknown> }>>([]);
@@ -89,6 +91,7 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
         campaign_type: campaignType,
         email_template_id: emailTemplateId,
         audience_id: audienceId,
+        scheduled_at: scheduledAt || null,
         audience_filter: {
           state: stateFilter || undefined,
           city: cityFilter || undefined,
@@ -133,7 +136,7 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
             <div />
           )}
 
-          {step < 3 ? (
+          {step < 6 ? (
             <Button
               size="sm"
               disabled={!name.trim()}
@@ -157,19 +160,13 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
     >
       <div className="space-y-4 font-sans py-1">{formError && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{formError}</div>}
         {/* Step Indicator */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-xs">
-          <div className={`flex items-center gap-1.5 ${step === 1 ? 'font-bold text-indigo-700' : 'text-slate-500'}`}>
-            <span className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center text-[10px]">1</span>
-            <span>Detalhes</span>
-          </div>
-          <div className={`flex items-center gap-1.5 ${step === 2 ? 'font-bold text-indigo-700' : 'text-slate-500'}`}>
-            <span className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center text-[10px]">2</span>
-            <span>Audiência</span>
-          </div>
-          <div className={`flex items-center gap-1.5 ${step === 3 ? 'font-bold text-indigo-700' : 'text-slate-500'}`}>
-            <span className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center text-[10px]">3</span>
-            <span>Revisão</span>
-          </div>
+        <div className="grid grid-cols-6 gap-1 border-b border-slate-100 pb-3 text-center text-[10px]">
+          {['Básico', 'Audiência', 'Conteúdo', 'Remetente', 'Agenda', 'Revisão'].map((label, index) => (
+            <div key={label} className={`flex flex-col items-center gap-1 ${step === index + 1 ? 'font-bold text-indigo-700' : 'text-slate-500'}`}>
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${step >= index + 1 ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white'}`}>{index + 1}</span>
+              <span>{label}</span>
+            </div>
+          ))}
         </div>
 
         {/* Step 1: Info */}
@@ -278,8 +275,21 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
           </div>
           </>)}
 
-        {/* Step 3: Review */}
+        {/* Step 3: Content */}
         {step === 3 && (
+          <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs"><p className="font-semibold text-slate-900">Conteúdo da mensagem</p><p className="text-slate-600">Template selecionado: <strong>{templates.find((item) => item.id === emailTemplateId)?.name || 'Nenhum'}</strong></p><p className="text-slate-500">A edição completa do template acontece na biblioteca de templates. O preflight validará o conteúdo antes do envio.</p></div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs"><p className="font-semibold text-slate-900">Remetente</p><p className="text-slate-600">Identidade vinculada ao usuário atual.</p><p className="rounded bg-amber-50 p-2 text-amber-800">A verificação do provedor será confirmada no preflight antes do envio.</p></div>
+        )}
+
+        {step === 5 && (
+          <div className="space-y-2"><label className="block text-xs font-semibold text-slate-700">Agendar envio (opcional)<input type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} className="mt-1 block w-full rounded border border-slate-200 p-2 text-sm" /></label><p className="text-[11px] text-slate-500">Sem horário: campanha permanece como rascunho.</p></div>
+        )}
+
+        {/* Step 6: Review */}
+        {step === 6 && (
           <div className="space-y-3 text-xs">
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
               <div className="flex justify-between">
