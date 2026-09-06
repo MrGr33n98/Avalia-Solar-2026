@@ -222,7 +222,9 @@ export default function TemplatesWorkspace() {
       });
       setSuccess(res.message || `E-mail de teste enviado com sucesso para ${email}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao enviar e-mail de teste.');
+      const msg = err instanceof Error ? err.message : 'Falha ao enviar e-mail de teste.';
+      setError(msg);
+      throw err;
     } finally {
       setBusy(false);
     }

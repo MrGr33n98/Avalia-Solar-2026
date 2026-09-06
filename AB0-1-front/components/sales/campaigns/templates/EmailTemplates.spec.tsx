@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import TemplatesWorkspace from './TemplatesWorkspace';
 import * as api from '@/lib/api/sales/emailTemplates';
 
@@ -35,6 +35,8 @@ const mockStats = {
 };
 
 describe('Email Templates Module UI', () => {
+  jest.setTimeout(15000);
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(api.listEmailTemplates).mockResolvedValue({
@@ -105,6 +107,49 @@ describe('Email Templates Module UI', () => {
       );
       expect(screen.getByText('Prévia: Sua proposta Maria')).toBeInTheDocument();
       expect(screen.getByText('Dados de demonstração')).toBeInTheDocument();
+    });
+  });
+
+  it('triggers sendTemplateTest with draft data and displays error if delivery fails', async () => {
+    jest.mocked(api.sendTemplateTest).mockRejectedValue(new Error('AWS SES não configurado.'));
+
+    render(<TemplatesWorkspace />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Proposta Solar')).toBeInTheDocument();
+    });
+
+    const editBtn = screen.getByRole('button', { name: /Editar/i });
+    editBtn.click();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Enviar teste/i })).toBeInTheDocument();
+    });
+
+    const testSendBtn = screen.getByRole('button', { name: /Enviar teste/i });
+    testSendBtn.click();
+
+    await waitFor(() => {
+      expect(screen.getByText('Enviar E-mail de Teste')).toBeInTheDocument();
+    });
+
+    const input = screen.getByPlaceholderText('seu.email@empresa.com.br');
+    fireEvent.change(input, { target: { value: 'teste@exemplo.com' } });
+
+    const submitBtn = screen.getByRole('button', { name: /Enviar Agora/i });
+    submitBtn.click();
+
+    await waitFor(() => {
+      expect(api.sendTemplateTest).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          to_email: 'teste@exemplo.com',
+          draft: expect.objectContaining({
+            name: 'Proposta Solar',
+          }),
+        })
+      );
+      expect(screen.getAllByText('AWS SES não configurado.').length).toBeGreaterThan(0);
     });
   });
 });

@@ -134,6 +134,16 @@ module Api
         end
 
         def test_send
+          target_email = params[:to_email].presence || current_user.email
+
+          if defined?(::Sales::EmailSuppression) && ::Sales::EmailSuppression.exists?(email: target_email, company_id: current_user.company_id)
+            return render_error_response(
+              message: "E-mail '#{target_email}' está na lista de supressão.",
+              status: :unprocessable_entity,
+              code: 'SUPPRESSED_EMAIL'
+            )
+          end
+
           template = params[:id].present? ? scoped_templates.find(params[:id]) : nil
           draft = draft_params
 
@@ -142,12 +152,11 @@ module Api
           body_json = draft[:body_json].presence || (draft[:body_html].blank? ? template&.body_json : nil)
           body_html = draft[:body_html].presence || (draft[:body_json].blank? ? template&.body_html : nil)
 
-          target_email = params[:to_email].presence || current_user.email
-
+          c_ids = parse_context_ids
           resolved_context = ::Sales::Messaging::ContextResolver.resolve(
             company_id: current_user.company_id,
             current_user: current_user,
-            context_ids: parse_context_ids,
+            context_ids: c_ids,
             raw_context: preview_context
           )
 
@@ -160,17 +169,45 @@ module Api
             context: resolved_context
           )
 
-          if defined?(::Sales::EmailSuppression) && ::Sales::EmailSuppression.exists?(email: target_email, company_id: current_user.company_id)
-            return render_error_response(message: "E-mail '#{target_email}' está na lista de supressão.", status: :unprocessable_entity, code: 'SUPPRESSED_EMAIL')
-          end
-
-          render json: {
-            message: "E-mail de teste enviado com sucesso para #{target_email}.",
+          email_message = ::Sales::EmailMessage.create!(
+            company_id: current_user.company_id,
+            sender_user_id: current_user.id,
+            from_email: current_user.email,
             to_email: target_email,
-            rendered: rendered
-          }
+            subject: rendered[:subject] || subject,
+            body_html: rendered[:body_html] || body_html,
+            body_text: rendered[:body_text],
+            body_json: body_json,
+            status: 'queued',
+            sales_contact_id: c_ids[:contact_id],
+            sales_account_id: c_ids[:account_id],
+            sales_opportunity_id: c_ids[:opportunity_id]
+          )
+
+          ::Sales::SendEmailJob.perform_now(email_message.id)
+          email_message.reload
+
+          if (email_message.status == 'sent' || email_message.status == 'delivered') && email_message.provider_message_id.present?
+            render json: {
+              message: "E-mail de teste enviado com sucesso para #{target_email}.",
+              to_email: target_email,
+              provider_message_id: email_message.provider_message_id,
+              rendered: rendered
+            }
+          else
+            error_msg = email_message.metadata.is_a?(Hash) ? email_message.metadata['error'] : nil
+            error_msg = error_msg.presence || "Falha no envio do e-mail de teste (status: #{email_message.status})."
+
+            render_error_response(
+              message: error_msg,
+              status: :unprocessable_entity,
+              code: 'TEST_SEND_FAILED'
+            )
+          end
         rescue ::Sales::Messaging::Renderer::EmailRenderError => e
           render_error_response(message: e.message, status: :unprocessable_entity, code: 'TEST_SEND_INVALID')
+        rescue StandardError => e
+          render_error_response(message: e.message, status: :unprocessable_entity, code: 'TEST_SEND_ERROR')
         end
 
         private
