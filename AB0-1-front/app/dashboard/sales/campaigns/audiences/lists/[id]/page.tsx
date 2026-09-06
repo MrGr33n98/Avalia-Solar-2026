@@ -38,7 +38,7 @@ export default function ContactListDetailPage() {
     try {
       const res = await fetchContactList(listId, page);
       setList(res.contact_list);
-      setContacts((res.contacts as ContactRow[]) || []);
+      setContacts((res.contacts as unknown as ContactRow[]) || []);
       setTotalPages(res.meta?.total_pages || 1);
       setTotalCount(res.meta?.total_count || 0);
     } catch (err) {
