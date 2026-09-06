@@ -188,9 +188,10 @@ export default function TemplatesWorkspace() {
         draft: {
           name: templateData.name,
           subject_template: templateData.subject_template,
-          preheader: templateData.preheader,
-          body_json: templateData.body_json,
-          body_html: templateData.body_html,
+          preheader: templateData.preheader ?? undefined,
+          category: templateData.category ?? undefined,
+          body_json: templateData.body_json ?? undefined,
+          body_html: templateData.body_html ?? undefined,
         },
       });
       setPreviewData(res.preview);
@@ -213,9 +214,10 @@ export default function TemplatesWorkspace() {
         draft: {
           name: testSendTarget.name,
           subject_template: testSendTarget.subject_template,
-          preheader: testSendTarget.preheader,
-          body_json: testSendTarget.body_json,
-          body_html: testSendTarget.body_html,
+          preheader: testSendTarget.preheader ?? undefined,
+          category: testSendTarget.category ?? undefined,
+          body_json: testSendTarget.body_json ?? undefined,
+          body_html: testSendTarget.body_html ?? undefined,
         },
       });
       setSuccess(res.message || `E-mail de teste enviado com sucesso para ${email}.`);
