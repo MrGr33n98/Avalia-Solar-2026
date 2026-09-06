@@ -109,9 +109,11 @@ export default function CampaignsTable({
               const processed = c.processed_recipients || 0;
               const total = c.total_recipients || 0;
               const progressPct = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
-              const openRate = c.delivered_count > 0 ? ((c.opened_count / c.delivered_count) * 100).toFixed(1) : '0.0';
-              const clickRate = c.opened_count > 0 ? ((c.clicked_count / c.opened_count) * 100).toFixed(1) : '0.0';
-              const revenueFormatted = (c.revenue_attributed_cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+              const openRate = c.delivered_count > 0 ? `${((c.opened_count / c.delivered_count) * 100).toFixed(1)}%` : '—';
+              const clickRate = c.opened_count > 0 ? `${((c.clicked_count / c.opened_count) * 100).toFixed(1)}%` : '—';
+              const revenueFormatted = c.revenue_attributed_cents > 0
+                ? (c.revenue_attributed_cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                : '—';
 
               return (
                 <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
@@ -149,7 +151,7 @@ export default function CampaignsTable({
                   </td>
 
                   <td className="p-3">
-                    <span className="text-indigo-800 font-semibold">{openRate}%</span> ab. / <span className="text-amber-800 font-semibold">{clickRate}%</span> clq.
+                    <span className="text-indigo-800 font-semibold">{openRate}</span> ab. / <span className="text-amber-800 font-semibold">{clickRate}</span> clq.
                   </td>
 
                   <td className="p-3 font-bold text-slate-900">

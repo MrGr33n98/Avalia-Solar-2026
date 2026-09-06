@@ -29,10 +29,12 @@ export default function CampaignsWorkspacePage() {
   const [query, setQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const loadCampaigns = useCallback(() => {
     setLoading(true);
     setError(null);
+    setActionError(null);
 
     fetchCampaigns({ page, per_page: 20, q: query || undefined, status: statusFilter || undefined })
       .then((data) => {
@@ -67,7 +69,7 @@ export default function CampaignsWorkspacePage() {
     } catch (err: unknown) {
       const message = err instanceof ApiDomainError ? err.userMessage
         : err instanceof Error ? err.message : 'Erro ao gerar snapshot da audiência.';
-      alert(message);
+      setActionError(message);
     }
   };
 
@@ -78,7 +80,7 @@ export default function CampaignsWorkspacePage() {
     } catch (err: unknown) {
       const message = err instanceof ApiDomainError ? err.userMessage
         : err instanceof Error ? err.message : 'Erro ao iniciar disparo da campanha.';
-      alert(message);
+      setActionError(message);
     }
   };
 
@@ -89,7 +91,7 @@ export default function CampaignsWorkspacePage() {
     } catch (err: unknown) {
       const message = err instanceof ApiDomainError ? err.userMessage
         : err instanceof Error ? err.message : 'Erro ao pausar campanha.';
-      alert(message);
+      setActionError(message);
     }
   };
 
@@ -100,7 +102,7 @@ export default function CampaignsWorkspacePage() {
     } catch (err: unknown) {
       const message = err instanceof ApiDomainError ? err.userMessage
         : err instanceof Error ? err.message : 'Erro ao retomar campanha.';
-      alert(message);
+      setActionError(message);
     }
   };
 
@@ -111,7 +113,7 @@ export default function CampaignsWorkspacePage() {
     } catch (err: unknown) {
       const message = err instanceof ApiDomainError ? err.userMessage
         : err instanceof Error ? err.message : 'Erro ao re-tentar destinatários com falha.';
-      alert(message);
+      setActionError(message);
     }
   };
 
@@ -119,6 +121,13 @@ export default function CampaignsWorkspacePage() {
     <SalesLayoutWrapper>
       <div className="space-y-6 font-sans pb-16">
         <CampaignsHeader onCreateCampaign={() => setIsWizardOpen(true)} />
+
+        {actionError && (
+          <div role="alert" className="flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <span>{actionError}</span>
+            <button type="button" className="font-medium underline" onClick={() => setActionError(null)}>Fechar</button>
+          </div>
+        )}
 
         <CampaignAnalyticsCards campaigns={campaigns} />
 
