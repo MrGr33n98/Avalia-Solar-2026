@@ -105,7 +105,17 @@ Rails.application.routes.draw do
         get 'audiences/segments', to: 'sales/audiences#segments'
         resources :emails, only: %i[index create show], controller: 'sales/emails'
         resources :email_templates, only: %i[index show create update destroy], controller: 'sales/email_templates' do
-          post :preview, on: :member
+          collection do
+            get :stats
+            get :variables
+            get :categories
+          end
+          member do
+            post :preview
+            post :duplicate
+            post :archive
+            post :test_send
+          end
         end
         resources :email_sequences, only: %i[index show create update destroy], controller: 'sales/email_sequences'
         resources :email_suppressions, only: %i[index create destroy], controller: 'sales/email_suppressions'

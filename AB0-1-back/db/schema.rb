@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_05_000007) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_06_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -3989,6 +3989,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_05_000007) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "company_id", null: false
+    t.string "preheader"
+    t.string "status", default: "active", null: false
+    t.integer "schema_version", default: 1, null: false
+    t.index ["company_id", "category"], name: "index_sales_email_templates_on_company_id_and_category"
+    t.index ["company_id", "status"], name: "index_sales_email_templates_on_company_id_and_status"
+    t.index ["company_id", "updated_at"], name: "index_sales_email_templates_on_company_id_and_updated_at"
     t.index ["company_id"], name: "index_sales_email_templates_on_company_id"
     t.index ["user_id"], name: "index_sales_email_templates_on_user_id"
   end
