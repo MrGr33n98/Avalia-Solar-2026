@@ -77,7 +77,13 @@ module Sales
 
         created_contacts_for_list = []
 
-        CSV.parse(file_content, headers: true, encoding: 'bom|utf-8') do |row|
+        # Ensure valid UTF-8 encoding, strip BOM if present and normalize line endings
+        raw_utf8 = file_content.to_s.force_encoding('UTF-8')
+        clean_utf8 = raw_utf8.sub("\xEF\xBB\xBF", '')
+        clean_utf8 = clean_utf8.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+        clean_utf8 = clean_utf8.gsub("\r\n", "\n").gsub("\r", "\n")
+
+        CSV.parse(clean_utf8, headers: true) do |row|
           processed += 1
           if processed > MAX_ROWS
             Rails.logger.warn("[ContactImport] Import #{@import.id} capped at #{MAX_ROWS} rows.")
@@ -210,7 +216,8 @@ module Sales
         mapping.each do |csv_col, crm_field|
           next if crm_field == 'ignore' || crm_field.blank?
 
-          res[crm_field.to_sym] = truncate_cell(row[csv_col].to_s.strip)
+          cell_val = row[csv_col] || row[csv_col.to_s]
+          res[crm_field.to_sym] = truncate_cell(cell_val.to_s.strip)
         end
         res
       end
