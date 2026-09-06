@@ -84,6 +84,9 @@ module Api
             total_pages: result[:total_pages],
             sample_contacts: sample_contacts
           }
+        rescue ActiveRecord::StatementInvalid => e
+          Rails.logger.error("Audience preview query failed: #{e.class}: #{e.message}")
+          render json: { error: 'AUDIENCE_PREVIEW_QUERY_FAILED', message: 'Não foi possível consultar a prévia da audiência.' }, status: :internal_server_error
         end
 
         def segments
