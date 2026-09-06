@@ -38,7 +38,7 @@ module Api
           rendered = ::Sales::Messaging::Renderer.render(
             body_json: template.body_json, raw_html: template.body_html,
             subject: template.subject_template, to_email: params[:to_email].presence || current_user.email,
-            context: params[:context].respond_to?(:to_h) ? params[:context].to_h : {}
+            context: preview_context
           )
           render json: { preview: rendered }
         rescue ::Sales::Messaging::Renderer::EmailRenderError => e
@@ -55,6 +55,22 @@ module Api
 
         def private_template?
           ActiveModel::Type::Boolean.new.cast(template_params[:private])
+        end
+
+        def preview_context
+          raw_context = params[:context]
+          return {} unless raw_context.respond_to?(:permit)
+
+          raw_context.permit(
+            person: {},
+            contact: {},
+            company: {},
+            account: {},
+            opportunity: {},
+            lead: {},
+            owner: {},
+            user: {}
+          ).to_h.symbolize_keys
         end
 
         def template_params

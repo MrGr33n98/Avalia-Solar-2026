@@ -26,6 +26,16 @@ RSpec.describe 'Sales email template preview API', type: :request do
     expect(JSON.parse(response.body).dig('preview', 'subject')).to eq('Olá')
   end
 
+  it 'accepts the frontend preview payload with an empty context' do
+    post "/api/v1/sales/email_templates/#{template.id}/preview",
+         params: { context: {} },
+         headers: auth_headers(user),
+         as: :json
+
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body).dig('preview', 'subject')).to eq('Olá')
+  end
+
   it 'returns TEMPLATE_PREVIEW_INVALID when renderer rejects input' do
     allow(::Sales::Messaging::Renderer).to receive(:render).and_raise(
       ::Sales::Messaging::Renderer::EmailRenderError, 'Corpo inválido'
