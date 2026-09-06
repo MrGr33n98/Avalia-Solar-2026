@@ -9,8 +9,10 @@ module Api
         def index
           authorize ::Sales::Audience, :index?
           page = [params.fetch(:page, 1).to_i, 1].max
+          per_page = [[params.fetch(:per_page, 20).to_i, 1].max, 100].min
           scope = saved_audiences.order(updated_at: :desc)
-          render json: { audiences: scope.page(page).per(20), meta: { page: page, total_count: scope.count, total_pages: scope.page(page).per(20).total_pages } }
+          paginated = scope.page(page).per(per_page)
+          render json: { audiences: paginated, meta: { page: page, current_page: page, per_page: per_page, total_count: scope.count, total_pages: paginated.total_pages } }
         end
 
         def show
@@ -54,6 +56,7 @@ module Api
           end
 
           filter = params[:audience_filter] || params[:filter] || {}
+          filter = filter.permit(:state, :city, :segment, :search, tag_ids: []).to_h if filter.respond_to?(:permit)
           page = params[:page] || 1
           per_page = params[:per_page] || 20
 
@@ -103,20 +106,18 @@ module Api
             render json: { errors: ['Empresa (tenant) não configurada ou não autorizada.'] }, status: :forbidden
             return
           end
-          user_ids = User.where(company_id: company.id).pluck(:id)
-          accounts = ::Sales::Account.where(company_id: company.id).or(::Sales::Account.where(owner_id: user_ids))
-
-          states = accounts.where.not(state: [nil, '']).distinct.pluck(:state).sort
-          cities = accounts.where.not(city: [nil, '']).distinct.pluck(:city).sort
-          company_types = accounts.where.not(segment: [nil, '']).distinct.pluck(:segment).sort
-          tags = ::Sales::Tag.where(company_id: company.id).map { |t| { id: t.id, name: t.name, color: t.color } }
-
-          render json: {
-            states: states,
-            cities: cities,
-            company_types: company_types,
-            tags: tags
-          }
+          cache_key = "sales:audience_segments:v1:company:#{company.id}"
+          payload = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
+            user_ids = User.where(company_id: company.id).select(:id)
+            accounts = ::Sales::Account.where(company_id: company.id).or(::Sales::Account.where(owner_id: user_ids))
+            {
+              states: accounts.where.not(state: [nil, '']).distinct.pluck(:state).sort,
+              cities: accounts.where.not(city: [nil, '']).distinct.pluck(:city).sort,
+              company_types: accounts.where.not(segment: [nil, '']).distinct.pluck(:segment).sort,
+              tags: ::Sales::Tag.where(company_id: company.id).pluck(:id, :name, :color).map { |id, name, color| { id: id, name: name, color: color } }
+            }
+          end
+          render json: payload
         end
         private
 

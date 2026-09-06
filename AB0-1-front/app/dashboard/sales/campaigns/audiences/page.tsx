@@ -17,6 +17,7 @@ export default function AudiencesPage() {
   const [name, setName] = useState('');
   const [saved, setSaved] = useState('');
   const [savedAudiences, setSavedAudiences] = useState<Array<{ id: number; name: string; kind: string; active: boolean }>>([]);
+  const hasMeaningfulFilter = Object.values(filter).some(Boolean);
   const load = useCallback(async (signal: AbortSignal) => {
     setLoading(true);
     setError('');
@@ -24,17 +25,21 @@ export default function AudiencesPage() {
       const [optionsRes, savedRes, resultRes] = await Promise.allSettled([
         requestApi<AudienceSegmentsOptions>('/audiences/segments', { signal }),
         requestApi<{ audiences: Array<{ id: number; name: string; kind: string; active: boolean }> }>('/audiences?per_page=100', { signal }),
-        requestApi<AudiencePreviewResult>('/audiences/preview', {
-          method: 'POST', signal, body: JSON.stringify({ audience_filter: filter, page, per_page: 20 }),
-        }),
+        hasMeaningfulFilter
+          ? requestApi<AudiencePreviewResult>('/audiences/preview', {
+              method: 'POST', signal, body: JSON.stringify({ audience_filter: filter, page, per_page: 20 }),
+            })
+          : Promise.resolve(null),
       ]);
 
       if (signal.aborted) return;
 
       if (optionsRes.status === 'fulfilled') setSegments(optionsRes.value);
       if (savedRes.status === 'fulfilled') setSavedAudiences(savedRes.value.audiences);
-      if (resultRes.status === 'fulfilled') setData(resultRes.value);
+      if (resultRes.status === 'fulfilled') setData(resultRes.value ?? null);
 
+      if (optionsRes.status === 'rejected' && !signal.aborted) setError('Não foi possível carregar os filtros de segmentação.');
+      if (savedRes.status === 'rejected' && !signal.aborted) setError('Não foi possível carregar suas audiências salvas.');
       if (resultRes.status === 'rejected' && !signal.aborted) {
         const err = resultRes.reason;
         setError(err instanceof Error ? err.message : 'Falha ao carregar prévia da audiência.');
@@ -44,7 +49,7 @@ export default function AudiencesPage() {
     } finally {
       if (!signal.aborted) setLoading(false);
     }
-  }, [filter, page]);
+  }, [filter, page, hasMeaningfulFilter]);
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => void load(controller.signal), 250);
@@ -71,6 +76,7 @@ export default function AudiencesPage() {
     </div>
     {loading && <p role="status">Carregando audiência...</p>}
     {error && <div role="alert"><p>{error}</p><Button onClick={() => setRetry(retry + 1)}>Tentar novamente</Button></div>}
+    {!loading && !error && !data && <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center"><p className="font-medium">Defina um filtro para visualizar sua audiência</p><p className="mt-1 text-sm text-slate-500">A prévia aparece depois que você selecionar estado, cidade, segmento ou buscar um contato.</p></div>}
     {!loading && !error && data && <>
       <p>{data.total_count} contatos elegíveis. Contatos sem e-mail e suprimidos não entram nesta prévia.</p>
       {data.sample_contacts.length === 0 ? <p>Nenhum contato encontrado para os filtros selecionados.</p> : <div className="overflow-x-auto"><table className="w-full text-sm text-left">
