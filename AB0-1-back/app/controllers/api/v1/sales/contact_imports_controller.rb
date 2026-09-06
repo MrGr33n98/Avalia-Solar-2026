@@ -109,17 +109,39 @@ module Api
 
         def mapping
           authorize @import
-          mapping_json = params[:mapping] || {}
-          options_json = params[:options] || {}
+          raw_mapping = params[:mapping]
+          raw_options = params[:options]
 
-          merged_options = (@import.options_jsonb || {}).merge(options_json.to_h)
+          mapping_hash = if raw_mapping.respond_to?(:to_unsafe_h)
+                           raw_mapping.to_unsafe_h
+                         elsif raw_mapping.is_a?(Hash)
+                           raw_mapping
+                         else
+                           {}
+                         end
+
+          options_hash = if raw_options.respond_to?(:to_unsafe_h)
+                           raw_options.to_unsafe_h
+                         elsif raw_options.is_a?(Hash)
+                           raw_options
+                         else
+                           {}
+                         end
+
+          merged_options = (@import.options_jsonb || {}).merge(options_hash.transform_keys(&:to_s))
           @import.update!(
-            mapping_jsonb: mapping_json.to_h,
+            mapping_jsonb: mapping_hash.transform_keys(&:to_s),
             options_jsonb: merged_options,
             status: 'ready'
           )
 
           render json: { contact_import: serialize_import(@import) }
+        rescue StandardError => e
+          render json: {
+            error: 'MAPPING_FAILED',
+            message: e.message,
+            details: { blockers: [{ code: 'MAPPING_FAILED', message: e.message }] }
+          }, status: :unprocessable_entity
         end
 
         def commit
