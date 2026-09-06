@@ -44,8 +44,8 @@ module Sales
         template = @campaign.email_template
         if template.nil?
           @blockers << { code: 'MISSING_TEMPLATE', message: 'Selecione um template de e-mail.' }
-        elsif template.body_html.blank?
-          @blockers << { code: 'EMPTY_TEMPLATE_BODY', message: 'O template selecionado não possui conteúdo HTML.' }
+        elsif template.body_html.blank? && template.body_json.blank?
+          @blockers << { code: 'EMPTY_TEMPLATE_BODY', message: 'O template selecionado não possui conteúdo.' }
         elsif template.subject_template.blank?
           @warnings << { code: 'EMPTY_SUBJECT_TEMPLATE', message: 'O template de e-mail não especifica assunto personalizado.' }
         end

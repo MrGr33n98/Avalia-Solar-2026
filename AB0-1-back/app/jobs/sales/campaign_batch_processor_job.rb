@@ -12,8 +12,8 @@ module Sales
       return if recipients.empty?
 
       template = campaign.email_template
-      unless template && template.body_html.present?
-        Rails.logger.error("[CampaignBatchProcessorJob] Abortando: Campanha ##{campaign.id} não possui template ou corpo HTML configurado.")
+      unless template && (template.body_html.present? || template.body_json.present?)
+        Rails.logger.error("[CampaignBatchProcessorJob] Abortando: Campanha ##{campaign.id} não possui template ou corpo configurado.")
         campaign.update!(status: 'failed')
         return
       end
@@ -58,7 +58,13 @@ module Sales
 
           # Send email
           ::Sales::SendEmailJob.perform_now(email_message.id)
-          recipient.mark_sent!(email_message)
+          email_message.reload
+          if email_message.status == 'sent' || email_message.status == 'delivered'
+            recipient.mark_sent!(email_message)
+          else
+            err_msg = email_message.metadata.is_a?(Hash) ? email_message.metadata['error'] : nil
+            recipient.mark_failed!(err_msg.presence || "Envio falhou com status '#{email_message.status}'")
+          end
         rescue StandardError => e
           Rails.logger.error("[CampaignBatchProcessorJob] Erro ao enviar para #{recipient.email}: #{e.message}")
           recipient.mark_failed!(e.message)

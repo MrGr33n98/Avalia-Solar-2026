@@ -49,10 +49,12 @@ module Sales
         end
 
         # Exclude suppressed emails (Opt-Out / Bounce) via SQL NOT EXISTS subquery
-        scope = scope.where(
-          'NOT EXISTS (SELECT 1 FROM sales_email_suppressions WHERE sales_email_suppressions.company_id = ? AND LOWER(sales_email_suppressions.email) = LOWER(sales_contacts.email))',
-          @company.id
-        )
+        if ActiveRecord::Base.connection.table_exists?('sales_email_suppressions')
+          scope = scope.where(
+            'NOT EXISTS (SELECT 1 FROM sales_email_suppressions WHERE sales_email_suppressions.company_id = ? AND LOWER(sales_email_suppressions.email) = LOWER(sales_contacts.email))',
+            @company.id
+          )
+        end
 
         total_count = scope.distinct.count
         records = scope.distinct.includes(:account).order('sales_contacts.id ASC').page(@page).per(@per_page)
