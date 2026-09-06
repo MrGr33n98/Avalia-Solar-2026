@@ -41,7 +41,7 @@ module Api
             context: params[:context].respond_to?(:to_h) ? params[:context].to_h : {}
           )
           render json: { preview: rendered }
-        rescue Sales::Messaging::Renderer::EmailRenderError => e
+        rescue ::Sales::Messaging::Renderer::EmailRenderError => e
           render_error_response(message: e.message, status: :unprocessable_entity, code: 'TEMPLATE_PREVIEW_INVALID')
         end
 
