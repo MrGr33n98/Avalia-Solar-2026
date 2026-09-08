@@ -98,6 +98,17 @@ Rails.application.routes.draw do
             post :cancel
           end
         end
+        resources :imports, controller: 'sales/imports' do
+          member do
+            post :analyze
+            patch :mapping
+            post :validate
+            post :commit
+            get :rows
+            get :errors_csv
+            post :cancel
+          end
+        end
         resources :campaigns, controller: 'sales/campaigns' do
           member do
             post :snapshot

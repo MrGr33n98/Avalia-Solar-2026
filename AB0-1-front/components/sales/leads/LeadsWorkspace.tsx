@@ -6,6 +6,7 @@ import {
   BarChart3,
   Building2,
   Calendar,
+  Download,
   Filter,
   Flame,
   Kanban,
@@ -21,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateLeadModal from './create/CreateLeadModal';
 import SalesCommandCenter from '@/components/sales/SalesCommandCenter';
@@ -110,12 +112,23 @@ export default function LeadsWorkspace() {
               </button>
             </div>
 
-            <Button
-              onClick={() => setCreateModalOpen(true)}
-              className="h-11 px-5 text-xs font-bold bg-indigo-900 hover:bg-indigo-950 text-white rounded-xl shadow-md flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> Adicionar Lead
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link href="/dashboard/sales/import?entity=leads">
+                <Button
+                  variant="outline"
+                  className="h-11 px-4 text-xs font-bold border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-xl shadow-xs flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4 text-blue-700" /> Importar CSV
+                </Button>
+              </Link>
+
+              <Button
+                onClick={() => setCreateModalOpen(true)}
+                className="h-11 px-5 text-xs font-bold bg-indigo-900 hover:bg-indigo-950 text-white rounded-xl shadow-md flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> Adicionar Lead
+              </Button>
+            </div>
           </div>
         </div>
 
