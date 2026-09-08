@@ -150,22 +150,46 @@ module Sales
       end
 
       def create_lead(dto)
-        lead = ::Lead.new(
-          company_id: @company.id,
-          name: dto.contact_name.presence || dto.company_name,
-          company: dto.company_name,
+        account = find_or_create_account(dto)
+        contact = find_or_create_contact(dto, account)
+        result = ::Sales::Leads::Create.call(
+          actor: @user,
+          attributes: {
+            name: dto.contact_name.presence || dto.company_name,
+            sales_account_id: account.id,
+            primary_contact_id: contact&.id,
+            stage_key: dto.stage_identifier,
+            value_cents: dto.estimated_value.present? ? (dto.estimated_value.to_f * 100).round : nil,
+            contact_ids: contact ? [contact.id] : []
+          }
+        )
+        raise StandardError, result.message unless result.success?
+
+        result.lead
+      end
+
+      def find_or_create_account(dto)
+        name = dto.company_name.presence || dto.contact_name
+        ::Sales::Account.where(company_id: @company.id).find_or_create_by!(name: name) do |account|
+          account.owner = @user
+        end
+      end
+
+      def find_or_create_contact(dto, account)
+        return if dto.contact_name.blank?
+
+        existing = account.contacts.find_by("LOWER(first_name) = ?", dto.contact_name.downcase)
+        return existing if existing
+
+        names = dto.contact_name.split(/\s+/, 2)
+        account.contacts.create!(
+          first_name: names.first,
+          last_name: names.second,
           email: dto.email,
           phone: dto.phone || dto.whatsapp,
-          state: dto.state,
-          city: dto.city,
-          product_vertical: dto.segment.presence || 'energia_solar',
-          project_profile: dto.job_title.presence || 'Prospecção CSV',
-          source: dto.source.presence || 'importacao_csv',
-          wizard_status: 'draft'
+          job_title: dto.job_title,
+          user: @user
         )
-
-        lead.save!
-        lead
       end
 
       def update_lead(lead, dto, overwrite:)
