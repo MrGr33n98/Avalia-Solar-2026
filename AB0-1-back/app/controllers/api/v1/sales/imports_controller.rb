@@ -138,9 +138,15 @@ module Api
           end
 
           @import.update!(status: 'queued')
-          ::Sales::ProcessImportJob.perform_later(@import.id)
+          begin
+            ::Sales::ProcessImportJob.perform_now(@import.id)
+            @import.reload
+          rescue StandardError => e
+            Rails.logger.error("[ImportsController#commit] Synchronous process error: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+            ::Sales::ProcessImportJob.perform_later(@import.id)
+          end
 
-          render json: { import: serialize_import(@import), message: 'Importação enfileirada com sucesso' }
+          render json: { import: serialize_import(@import), message: 'Importação processada com sucesso' }
         end
 
         def rows

@@ -169,22 +169,43 @@ module Sales
       end
 
       def find_or_create_account(dto)
-        name = dto.company_name.presence || dto.contact_name
-        ::Sales::Account.where(company_id: @company.id).find_or_create_by!(name: name) do |account|
-          account.owner = @user
-        end
+        name = dto.company_name.presence || dto.contact_name || 'Empresa sem Nome'
+
+        acc = ::Sales::Account.where(owner_id: @user.id).find_by('LOWER(name) = ?', name.downcase)
+        acc ||= ::Sales::Account.where(company_id: @company.id).find_by('LOWER(name) = ?', name.downcase) if @company.present?
+        return acc if acc.present?
+
+        ::Sales::Account.create!(
+          name: name,
+          owner: @user,
+          phone: dto.phone || dto.whatsapp,
+          email: dto.email,
+          city: dto.city,
+          state: dto.state,
+          segment: dto.segment,
+          website: dto.website,
+          source: dto.source.presence || 'importacao_csv'
+        )
       end
 
       def find_or_create_contact(dto, account)
-        return if dto.contact_name.blank?
+        return nil if dto.contact_name.blank?
 
-        existing = account.contacts.find_by("LOWER(first_name) = ?", dto.contact_name.downcase)
+        if dto.email.present?
+          existing = account.contacts.find_by('LOWER(email) = ?', dto.email.downcase)
+          return existing if existing
+        end
+
+        names = dto.contact_name.strip.split(/\s+/, 2)
+        first_name = names.first
+        last_name = names.second.to_s
+
+        existing = account.contacts.find_by('LOWER(first_name) = ? AND LOWER(COALESCE(last_name, \'\')) = ?', first_name.downcase, last_name.downcase)
         return existing if existing
 
-        names = dto.contact_name.split(/\s+/, 2)
         account.contacts.create!(
-          first_name: names.first,
-          last_name: names.second,
+          first_name: first_name,
+          last_name: last_name.presence,
           email: dto.email,
           phone: dto.phone || dto.whatsapp,
           job_title: dto.job_title,
