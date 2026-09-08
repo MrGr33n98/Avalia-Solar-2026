@@ -9,7 +9,7 @@ module Api
         before_action :set_import, only: %i[show analyze mapping validate commit rows errors_csv cancel]
 
         def index
-          scope = Sales::ImportPolicy::Scope.new(current_user, ::Sales::Import).resolve
+          scope = ::Sales::ImportPolicy::Scope.new(current_user, ::Sales::Import).resolve
           imports = scope.order(created_at: :desc).page(params[:page] || 1).per(params[:per_page] || 20)
 
           render json: {
@@ -29,7 +29,7 @@ module Api
             return
           end
 
-          authorize ::Sales::Import, policy_class: Sales::ImportPolicy
+          authorize ::Sales::Import, policy_class: ::Sales::ImportPolicy
 
           file = params[:file]
           filename = params[:filename] || file&.original_filename || 'import.csv'
@@ -176,8 +176,8 @@ module Api
         private
 
         def set_import
-          @import = Sales::ImportPolicy::Scope.new(current_user, ::Sales::Import).resolve.find(params[:id])
-          authorize @import, policy_class: Sales::ImportPolicy
+          @import = ::Sales::ImportPolicy::Scope.new(current_user, ::Sales::Import).resolve.find(params[:id])
+          authorize @import, policy_class: ::Sales::ImportPolicy
         end
 
         def current_company
