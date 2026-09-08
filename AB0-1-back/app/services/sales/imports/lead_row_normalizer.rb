@@ -93,8 +93,9 @@ module Sales
 
       def normalize_number(val)
         clean = val.gsub(/[^0-9,.]/, '').tr(',', '.')
-        num = Float(clean) rescue nil
-        num
+        Float(clean)
+      rescue ArgumentError, TypeError
+        nil
       end
     end
   end

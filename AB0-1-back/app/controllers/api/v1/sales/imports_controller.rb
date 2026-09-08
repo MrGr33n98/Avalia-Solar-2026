@@ -63,9 +63,8 @@ module Api
 
         def mapping
           mapping_params = params[:mapping] || {}
-          options_params = params[:options] || {}
-
-          new_options = (@import.options || {}).merge(options_params.to_unsafe_h rescue options_params)
+          opts_hash = options_params.respond_to?(:to_unsafe_h) ? options_params.to_unsafe_h : options_params
+          new_options = (@import.options || {}).merge(opts_hash || {})
 
           if @import.update(mapping: mapping_params, options: new_options, status: 'mapping')
             Sales::AnalyzeImportJob.perform_later(@import.id)
