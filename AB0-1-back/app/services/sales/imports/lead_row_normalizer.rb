@@ -41,7 +41,7 @@ module Sales
           end
         end
 
-        LeadRowDTO.new(dto_attrs)
+        LeadRowDto.new(dto_attrs)
       end
 
       private

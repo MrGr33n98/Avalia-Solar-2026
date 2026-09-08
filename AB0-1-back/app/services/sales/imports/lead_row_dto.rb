@@ -2,7 +2,7 @@
 
 module Sales
   module Imports
-    class LeadRowDTO
+    class LeadRowDto
       attr_accessor :company_name, :contact_name, :email, :phone, :whatsapp,
                     :website, :city, :state, :segment, :job_title,
                     :estimated_value, :source, :owner_identifier,
