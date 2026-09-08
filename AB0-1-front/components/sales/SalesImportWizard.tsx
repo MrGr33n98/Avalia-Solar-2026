@@ -65,7 +65,10 @@ export default function SalesImportWizard() {
     try {
       const res = await salesImportsApi.uploadFile(uploadedFile, 'lead');
       setActiveImport(res.import);
-      setHeaders(Object.keys(res.import.mapping || {}));
+      const fileHeaders = res.import.headers && res.import.headers.length > 0
+        ? res.import.headers
+        : Object.keys(res.import.mapping || {});
+      setHeaders(fileHeaders);
       setColumnMap(res.import.mapping || {});
       setStep(2);
     } catch (err: any) {
@@ -84,7 +87,10 @@ export default function SalesImportWizard() {
     try {
       const res = await salesImportsApi.uploadFile(textFile, 'lead');
       setActiveImport(res.import);
-      setHeaders(Object.keys(res.import.mapping || {}));
+      const fileHeaders = res.import.headers && res.import.headers.length > 0
+        ? res.import.headers
+        : Object.keys(res.import.mapping || {});
+      setHeaders(fileHeaders);
       setColumnMap(res.import.mapping || {});
       setStep(2);
     } catch (err: any) {

@@ -24,6 +24,7 @@ export interface SalesImport {
   updated_rows: number;
   skipped_rows: number;
   mapping: Record<string, string>;
+  headers?: string[];
   options: {
     duplicate_strategy?: 'update_blank_fields_only' | 'overwrite_all' | 'skip_duplicates';
   };

@@ -58,7 +58,14 @@ module Api
           end
 
           if import.save
-            ::Sales::AnalyzeImportJob.perform_later(import.id) if import.file.attached?
+            if import.file.attached?
+              begin
+                ::Sales::AnalyzeImportJob.perform_now(import.id)
+                import.reload
+              rescue StandardError => e
+                Rails.logger.error("[ImportsController#create] Analyze error: #{e.message}")
+              end
+            end
             render json: { import: serialize_import(import) }, status: :created
           else
             render json: { error: { message: import.errors.full_messages.join(', ') } }, status: :unprocessable_entity
@@ -101,7 +108,12 @@ module Api
           new_options = (@import.options || {}).merge(options_hash)
 
           if @import.update(mapping: mapping_hash, options: new_options, status: 'mapping')
-            ::Sales::AnalyzeImportJob.perform_later(@import.id)
+            begin
+              ::Sales::AnalyzeImportJob.perform_now(@import.id)
+              @import.reload
+            rescue StandardError => e
+              Rails.logger.error("[ImportsController#mapping] Analyze error: #{e.message}")
+            end
             render json: { import: serialize_import(@import) }
           else
             render json: { error: { message: @import.errors.full_messages.join(', ') } }, status: :unprocessable_entity
@@ -189,6 +201,10 @@ module Api
         end
 
         def serialize_import(imp)
+          first_row_keys = imp.rows.first&.raw_data&.keys || []
+          mapping_keys = imp.mapping.respond_to?(:keys) ? imp.mapping.keys : []
+          headers = (first_row_keys.presence || mapping_keys).map(&:to_s)
+
           {
             id: imp.id,
             company_id: imp.company_id,
@@ -205,6 +221,7 @@ module Api
             updated_rows: imp.updated_rows,
             skipped_rows: imp.skipped_rows,
             mapping: imp.mapping,
+            headers: headers,
             options: imp.options,
             error_summary: imp.error_summary,
             started_at: imp.started_at,
