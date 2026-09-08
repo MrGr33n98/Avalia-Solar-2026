@@ -53,19 +53,24 @@ module Api
             options: options_hash
           )
 
-          if file.present?
-            import.file.attach(file)
-          end
-
           if import.save
-            if import.file.attached?
+            if file.present?
+              begin
+                import.file.attach(file)
+              rescue StandardError => e
+                Rails.logger.error("[ImportsController#create] Attach error: #{e.message}")
+              end
+            end
+
+            if (import.file.attached? rescue false)
               begin
                 ::Sales::AnalyzeImportJob.perform_now(import.id)
                 import.reload
               rescue StandardError => e
-                Rails.logger.error("[ImportsController#create] Analyze error: #{e.message}")
+                Rails.logger.error("[ImportsController#create] Analyze error: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
               end
             end
+
             render json: { import: serialize_import(import) }, status: :created
           else
             render json: { error: { message: import.errors.full_messages.join(', ') } }, status: :unprocessable_entity
@@ -227,7 +232,7 @@ module Api
             started_at: imp.started_at,
             completed_at: imp.completed_at,
             created_at: imp.created_at,
-            file_attached: imp.file.attached?
+            file_attached: (imp.file.attached? rescue false)
           }
         end
 
