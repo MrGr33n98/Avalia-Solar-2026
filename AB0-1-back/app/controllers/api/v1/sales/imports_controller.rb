@@ -23,19 +23,34 @@ module Api
         end
 
         def create
+          company = current_company
+          unless company
+            render json: { error: { message: 'Empresa não identificada ou não autorizada para o usuário' } }, status: :forbidden
+            return
+          end
+
           authorize ::Sales::Import, policy_class: Sales::ImportPolicy
 
           file = params[:file]
           filename = params[:filename] || file&.original_filename || 'import.csv'
           entity_type = params[:entity_type] || 'lead'
 
+          raw_options = params[:options]
+          options_hash = if raw_options.respond_to?(:to_unsafe_h)
+                           raw_options.to_unsafe_h
+                         elsif raw_options.is_a?(Hash)
+                           raw_options
+                         else
+                           { 'duplicate_strategy' => 'update_blank_fields_only' }
+                         end
+
           import = ::Sales::Import.new(
-            company_id: current_user.company_id,
+            company_id: company.id,
             user_id: current_user.id,
             entity_type: entity_type,
             filename: filename,
             status: 'uploaded',
-            options: params[:options] || { duplicate_strategy: 'update_blank_fields_only' }
+            options: options_hash
           )
 
           if file.present?
@@ -43,12 +58,14 @@ module Api
           end
 
           if import.save
-            # Trigger background analysis
             Sales::AnalyzeImportJob.perform_later(import.id) if import.file.attached?
             render json: { import: serialize_import(import) }, status: :created
           else
             render json: { error: { message: import.errors.full_messages.join(', ') } }, status: :unprocessable_entity
           end
+        rescue StandardError => e
+          Rails.logger.error("[ImportsController#create] Exception: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+          render json: { error: { message: "Falha ao criar importação: #{e.message}" } }, status: :internal_server_error
         end
 
         def show
@@ -62,16 +79,35 @@ module Api
         end
 
         def mapping
-          mapping_params = params[:mapping] || {}
-          opts_hash = options_params.respond_to?(:to_unsafe_h) ? options_params.to_unsafe_h : options_params
-          new_options = (@import.options || {}).merge(opts_hash || {})
+          raw_mapping = params[:mapping]
+          raw_options = params[:options]
 
-          if @import.update(mapping: mapping_params, options: new_options, status: 'mapping')
+          mapping_hash = if raw_mapping.respond_to?(:to_unsafe_h)
+                           raw_mapping.to_unsafe_h
+                         elsif raw_mapping.is_a?(Hash)
+                           raw_mapping
+                         else
+                           {}
+                         end
+
+          options_hash = if raw_options.respond_to?(:to_unsafe_h)
+                           raw_options.to_unsafe_h
+                         elsif raw_options.is_a?(Hash)
+                           raw_options
+                         else
+                           {}
+                         end
+
+          new_options = (@import.options || {}).merge(options_hash)
+
+          if @import.update(mapping: mapping_hash, options: new_options, status: 'mapping')
             Sales::AnalyzeImportJob.perform_later(@import.id)
             render json: { import: serialize_import(@import) }
           else
             render json: { error: { message: @import.errors.full_messages.join(', ') } }, status: :unprocessable_entity
           end
+        rescue StandardError => e
+          render json: { error: { message: e.message } }, status: :unprocessable_entity
         end
 
         def validate
@@ -115,7 +151,6 @@ module Api
             failed_rows.find_each do |row|
               errs = Array(row.errors_json).join(' | ')
               raw = row.raw_data || {}
-              # Escape CSV injection starting formula characters =, +, -, @
               safe_errs = errs.start_with?('=', '+', '-', '@') ? "'#{errs}" : errs
 
               csv << [
@@ -145,6 +180,14 @@ module Api
           authorize @import, policy_class: Sales::ImportPolicy
         end
 
+        def current_company
+          return current_user.company if current_user.respond_to?(:company) && current_user.company
+          return ::Company.find_by(id: current_user.company_id) if current_user.respond_to?(:company_id) && current_user.company_id.present?
+          return ::Company.first if current_user.respond_to?(:admin?) && current_user.admin?
+
+          nil
+        end
+
         def serialize_import(imp)
           {
             id: imp.id,
@@ -167,7 +210,7 @@ module Api
             started_at: imp.started_at,
             completed_at: imp.completed_at,
             created_at: imp.created_at,
-            file_url: imp.file.attached? ? url_for(imp.file) : nil
+            file_attached: imp.file.attached?
           }
         end
 
