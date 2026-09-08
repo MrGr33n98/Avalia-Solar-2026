@@ -58,7 +58,7 @@ module Api
           end
 
           if import.save
-            Sales::AnalyzeImportJob.perform_later(import.id) if import.file.attached?
+            ::Sales::AnalyzeImportJob.perform_later(import.id) if import.file.attached?
             render json: { import: serialize_import(import) }, status: :created
           else
             render json: { error: { message: import.errors.full_messages.join(', ') } }, status: :unprocessable_entity
@@ -73,7 +73,7 @@ module Api
         end
 
         def analyze
-          Sales::AnalyzeImportJob.perform_now(@import.id)
+          ::Sales::AnalyzeImportJob.perform_now(@import.id)
           @import.reload
           render json: { import: serialize_import(@import) }
         end
@@ -101,7 +101,7 @@ module Api
           new_options = (@import.options || {}).merge(options_hash)
 
           if @import.update(mapping: mapping_hash, options: new_options, status: 'mapping')
-            Sales::AnalyzeImportJob.perform_later(@import.id)
+            ::Sales::AnalyzeImportJob.perform_later(@import.id)
             render json: { import: serialize_import(@import) }
           else
             render json: { error: { message: @import.errors.full_messages.join(', ') } }, status: :unprocessable_entity
@@ -111,7 +111,7 @@ module Api
         end
 
         def validate
-          Sales::AnalyzeImportJob.perform_later(@import.id)
+          ::Sales::AnalyzeImportJob.perform_later(@import.id)
           render json: { import: serialize_import(@import), message: 'Validação iniciada' }
         end
 
@@ -121,7 +121,7 @@ module Api
           end
 
           @import.update!(status: 'queued')
-          Sales::ProcessImportJob.perform_later(@import.id)
+          ::Sales::ProcessImportJob.perform_later(@import.id)
 
           render json: { import: serialize_import(@import), message: 'Importação enfileirada com sucesso' }
         end

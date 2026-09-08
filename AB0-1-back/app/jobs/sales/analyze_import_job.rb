@@ -5,7 +5,7 @@ module Sales
     queue_as :default
 
     def perform(import_id)
-      import = Sales::Import.find_by(id: import_id)
+      import = ::Sales::Import.find_by(id: import_id)
       return if import.nil? || import.status_cancelled?
 
       import.update!(status: 'validating')
@@ -16,7 +16,7 @@ module Sales
       end
 
       file_content = import.file.download
-      parse_result = Sales::Imports::CsvParser.call(file_content)
+      parse_result = ::Sales::Imports::CsvParser.call(file_content)
 
       if parse_result[:error].present?
         import.update!(status: 'failed', error_summary: { error: parse_result[:error] })
@@ -26,7 +26,7 @@ module Sales
       headers = parse_result[:headers]
       rows_data = parse_result[:rows]
 
-      suggested_mapping = Sales::Imports::HeaderMapper.call(headers)
+      suggested_mapping = ::Sales::Imports::HeaderMapper.call(headers)
       current_mapping = import.mapping.presence || suggested_mapping
 
       # Clear old rows if re-analyzing
@@ -40,9 +40,9 @@ module Sales
       import_rows_build = []
 
       rows_data.each do |r|
-        dto = Sales::Imports::LeadRowNormalizer.call(r[:data], current_mapping)
-        val_res = Sales::Imports::LeadRowValidator.call(dto, company: import.company)
-        dup_res = Sales::Imports::LeadDuplicateDetector.call(dto, company: import.company)
+        dto = ::Sales::Imports::LeadRowNormalizer.call(r[:data], current_mapping)
+        val_res = ::Sales::Imports::LeadRowValidator.call(dto, company: import.company)
+        dup_res = ::Sales::Imports::LeadDuplicateDetector.call(dto, company: import.company)
 
         status = if !val_res[:valid]
                    invalid_count += 1
@@ -72,7 +72,7 @@ module Sales
       end
 
       # Bulk insert import rows for fast analysis
-      Sales::ImportRow.insert_all!(import_rows_build) if import_rows_build.any?
+      ::Sales::ImportRow.insert_all!(import_rows_build) if import_rows_build.any?
 
       import.update!(
         status: 'ready',
