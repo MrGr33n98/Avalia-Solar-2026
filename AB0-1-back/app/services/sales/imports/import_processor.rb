@@ -63,11 +63,11 @@ module Sales
         raw = row.raw_data || {}
         mapping = @import.mapping || {}
 
-        # 1. Normalize
+        # 1. Normalizar
         dto = LeadRowNormalizer.call(raw, mapping)
         row.normalized_data = dto.to_h
 
-        # 2. Validate
+        # 2. Validar
         val_result = LeadRowValidator.call(dto, company: @company)
         row.errors_json = val_result[:errors]
         row.warnings_json = val_result[:warnings]
@@ -80,11 +80,11 @@ module Sales
           return
         end
 
-        # 3. Idempotency fingerprint
+        # 3. Fingerprint de idempotência
         fingerprint = LeadDuplicateDetector.calculate_fingerprint(@company.id, dto)
         row.fingerprint = fingerprint
 
-        # 4. Check duplicate
+        # 4. Verificar duplicata
         dup_result = LeadDuplicateDetector.call(dto, company: @company)
 
         if dup_result.present?
@@ -101,22 +101,22 @@ module Sales
             @import.increment!(:processed_rows)
             return
           when 'overwrite_all'
-            existing_lead = dup_result[:record]
-            update_lead(existing_lead, dto, overwrite: true)
+            existing_record = dup_result[:record]
+            update_existing_record(existing_record, dto, overwrite: true)
             row.status = 'processed'
-            row.result_record_type = 'Lead'
-            row.result_record_id = existing_lead.id
+            row.result_record_type = existing_record.class.name
+            row.result_record_id = existing_record.id
             row.save!
             @import.increment!(:duplicate_rows)
             @import.increment!(:updated_rows)
             @import.increment!(:processed_rows)
             return
           else # 'update_blank_fields_only'
-            existing_lead = dup_result[:record]
-            update_lead(existing_lead, dto, overwrite: false)
+            existing_record = dup_result[:record]
+            update_existing_record(existing_record, dto, overwrite: false)
             row.status = 'processed'
-            row.result_record_type = 'Lead'
-            row.result_record_id = existing_lead.id
+            row.result_record_type = existing_record.class.name
+            row.result_record_id = existing_record.id
             row.save!
             @import.increment!(:duplicate_rows)
             @import.increment!(:updated_rows)
@@ -125,17 +125,17 @@ module Sales
           end
         end
 
-        # 5. Create new Lead
+        # 5. Criar novo Lead via Sales pipeline
         new_lead = create_lead(dto)
         if new_lead.persisted?
           row.status = 'processed'
-          row.result_record_type = 'Lead'
+          row.result_record_type = 'Sales::Opportunity'
           row.result_record_id = new_lead.id
           row.save!
           @import.increment!(:created_rows)
         else
           row.status = 'failed'
-          row.errors_json = row.errors_json + new_lead.errors.full_messages
+          row.errors_json = (row.errors_json || []) + new_lead.errors.full_messages
           row.save!
           @import.increment!(:invalid_rows)
         end
@@ -213,16 +213,37 @@ module Sales
         )
       end
 
-      def update_lead(lead, dto, overwrite:)
-        attrs = {}
-        attrs[:name] = dto.contact_name if dto.contact_name.present? && (overwrite || lead.name.blank?)
-        attrs[:company] = dto.company_name if dto.company_name.present? && (overwrite || lead.company.blank?)
-        attrs[:email] = dto.email if dto.email.present? && (overwrite || lead.email.blank?)
-        attrs[:phone] = (dto.phone || dto.whatsapp) if (dto.phone || dto.whatsapp).present? && (overwrite || lead.phone.blank?)
-        attrs[:state] = dto.state if dto.state.present? && (overwrite || lead.state.blank?)
-        attrs[:city] = dto.city if dto.city.present? && (overwrite || lead.city.blank?)
+      # Atualiza um registro existente (Sales::Opportunity ou Sales::Account)
+      # com os dados do DTO. Usa os atributos corretos de cada modelo.
+      def update_existing_record(record, dto, overwrite:)
+        if record.is_a?(::Sales::Opportunity)
+          update_opportunity(record, dto, overwrite: overwrite)
+        elsif record.is_a?(::Sales::Account)
+          update_account(record, dto, overwrite: overwrite)
+        end
+      end
 
-        lead.update!(attrs) if attrs.any?
+      def update_opportunity(opportunity, dto, overwrite:)
+        attrs = {}
+        attrs[:name] = dto.contact_name if dto.contact_name.present? && (overwrite || opportunity.name.blank?)
+
+        opportunity.update!(attrs) if attrs.any?
+
+        # Atualizar o account associado
+        account = opportunity.account
+        update_account(account, dto, overwrite: overwrite) if account
+      end
+
+      def update_account(account, dto, overwrite:)
+        attrs = {}
+        attrs[:name] = dto.company_name if dto.company_name.present? && (overwrite || account.name.blank?)
+        attrs[:phone] = dto.phone if dto.phone.present? && (overwrite || account.phone.blank?)
+        attrs[:email] = dto.email if dto.email.present? && (overwrite || account.email.blank?)
+        attrs[:city] = dto.city if dto.city.present? && (overwrite || account.city.blank?)
+        attrs[:state] = dto.state if dto.state.present? && (overwrite || account.state.blank?)
+        attrs[:segment] = dto.segment if dto.segment.present? && (overwrite || account.segment.blank?)
+
+        account.update!(attrs) if attrs.any?
       end
 
       def track_audit_log(final_status)

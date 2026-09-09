@@ -138,15 +138,12 @@ module Api
           end
 
           @import.update!(status: 'queued')
-          begin
-            ::Sales::ProcessImportJob.perform_now(@import.id)
-            @import.reload
-          rescue StandardError => e
-            Rails.logger.error("[ImportsController#commit] Synchronous process error: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
-            ::Sales::ProcessImportJob.perform_later(@import.id)
-          end
 
-          render json: { import: serialize_import(@import), message: 'Importação processada com sucesso' }
+          # Usar perform_later sempre para evitar timeout no Nginx em CSVs grandes.
+          # O frontend faz polling do status via GET /api/v1/sales/imports/:id
+          ::Sales::ProcessImportJob.perform_later(@import.id)
+
+          render json: { import: serialize_import(@import), message: 'Importação enfileirada para processamento assíncrono via Sidekiq' }
         end
 
         def rows
@@ -212,9 +209,21 @@ module Api
         end
 
         def serialize_import(imp)
+          # Prioridade para headers originais do CSV persistidos pelo AnalyzeImportJob.
+          # Fallback: chaves do mapeamento (que são os headers CSV quando foi o usuário que definiu).
+          # Último fallback: primeira row dos dados brutos.
+          csv_headers = (imp.csv_headers.presence if imp.respond_to?(:csv_headers)) || []
           first_row_keys = imp.rows.first&.raw_data&.keys || []
           mapping_keys = imp.mapping.respond_to?(:keys) ? imp.mapping.keys : []
-          headers = (first_row_keys.presence || mapping_keys).map(&:to_s)
+
+          # csv_headers sempre contém as colunas originais do CSV (não campos CRM)
+          headers = if csv_headers.any?
+                      csv_headers.map(&:to_s)
+                    elsif first_row_keys.any?
+                      first_row_keys.map(&:to_s)
+                    else
+                      mapping_keys.map(&:to_s)
+                    end
 
           {
             id: imp.id,

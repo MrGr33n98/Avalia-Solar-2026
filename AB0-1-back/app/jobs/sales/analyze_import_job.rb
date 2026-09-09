@@ -26,10 +26,15 @@ module Sales
       headers = parse_result[:headers]
       rows_data = parse_result[:rows]
 
+      # Persistir os headers originais do CSV para o wizard usar corretamente
+      csv_headers_to_save = headers
+
+      # Usar o mapeamento já definido pelo usuário (Step 2) se existir,
+      # caso contrário sugerir automaticamente a partir dos headers do CSV.
       suggested_mapping = ::Sales::Imports::HeaderMapper.call(headers)
       current_mapping = import.mapping.presence || suggested_mapping
 
-      # Clear old rows if re-analyzing
+      # Limpar rows antigas se re-analisando
       import.rows.delete_all
 
       total = rows_data.length
@@ -71,12 +76,13 @@ module Sales
         }
       end
 
-      # Bulk insert import rows for fast analysis
+      # Bulk insert de linhas para análise rápida
       ::Sales::ImportRow.insert_all!(import_rows_build) if import_rows_build.any?
 
       import.update!(
         status: 'ready',
         mapping: current_mapping,
+        csv_headers: csv_headers_to_save,
         total_rows: total,
         valid_rows: valid_count,
         invalid_rows: invalid_count,
