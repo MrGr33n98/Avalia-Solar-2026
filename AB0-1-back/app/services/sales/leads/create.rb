@@ -144,7 +144,18 @@ module Sales
         stage_id = @attributes[:sales_stage_id].presence
 
         stage = if stage_key.present?
-                  pipeline.stages.find_by(key: stage_key) || pipeline.stages.find_by(name: stage_key)
+                  clean_key = stage_key.to_s.strip
+                  lower_key = clean_key.downcase
+                  pt_map = {
+                    'prospect' => 'prospect', 'contatado' => 'contacted', 'contato' => 'contacted',
+                    'qualificado' => 'qualified', 'qualificacao' => 'qualified', 'qualificação' => 'qualified',
+                    'descoberta' => 'discovery', 'proposta' => 'proposal', 'negociacao' => 'negotiation',
+                    'negociação' => 'negotiation', 'ganho' => 'won', 'fechado' => 'won', 'perdido' => 'lost'
+                  }
+                  target_key = pt_map[lower_key] || lower_key
+
+                  pipeline.stages.find_by('LOWER(key) = ? OR LOWER(name) = ?', target_key, lower_key) ||
+                    pipeline.stages.where('name ILIKE ? OR key ILIKE ?', "%#{clean_key}%", "%#{clean_key}%").first
                 elsif stage_id.present?
                   pipeline.stages.find_by(id: stage_id) || ::Sales::Stage.find_by(id: stage_id)
                 end

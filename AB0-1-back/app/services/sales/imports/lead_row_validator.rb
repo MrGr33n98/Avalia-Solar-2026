@@ -68,13 +68,53 @@ module Sales
       end
 
       def resolve_stage(identifier)
-        return nil if @company.nil?
+        return nil if identifier.blank?
 
-        pipeline_ids = ::Sales::Pipeline.where(company_id: @company.id).pluck(:id)
+        pipelines = if ::Sales::Pipeline.column_names.include?('company_id') && @company.present?
+                      ::Sales::Pipeline.where(company_id: @company.id)
+                    else
+                      ::Sales::Pipeline.where(active: true)
+                    end
+
+        pipeline_ids = pipelines.pluck(:id)
+        pipeline_ids = ::Sales::Pipeline.pluck(:id) if pipeline_ids.empty?
         return nil if pipeline_ids.empty?
 
+        clean_id = identifier.to_s.strip
+        lower_id = clean_id.downcase
+
+        # 1. Busca exata por key ou name ou id
+        stage = ::Sales::Stage.where(sales_pipeline_id: pipeline_ids)
+                              .where('LOWER(key) = ? OR id::text = ? OR LOWER(name) = ?', lower_id, clean_id, lower_id)
+                              .first
+        return stage if stage.present?
+
+        # 2. Mapeamento de termos em PT-BR para chaves padrão
+        pt_mapping = {
+          'prospect' => 'prospect',
+          'contatado' => 'contacted',
+          'contato' => 'contacted',
+          'qualificado' => 'qualified',
+          'qualificacao' => 'qualified',
+          'qualificação' => 'qualified',
+          'descoberta' => 'discovery',
+          'proposta' => 'proposal',
+          'negociacao' => 'negotiation',
+          'negociação' => 'negotiation',
+          'ganho' => 'won',
+          'fechado' => 'won',
+          'perdido' => 'lost'
+        }
+        mapped_key = pt_mapping[lower_id]
+        if mapped_key.present?
+          stage = ::Sales::Stage.where(sales_pipeline_id: pipeline_ids).find_by('LOWER(key) = ?', mapped_key)
+          return stage if stage.present?
+        end
+
+        # 3. Busca parcial por aproximação
         ::Sales::Stage.where(sales_pipeline_id: pipeline_ids)
-                      .find_by('key = ? OR id::text = ? OR name ILIKE ?', identifier.downcase, identifier, identifier)
+                      .where('name ILIKE ? OR key ILIKE ?', "%#{clean_id}%", "%#{clean_id}%")
+                      .first
       end
     end
   end

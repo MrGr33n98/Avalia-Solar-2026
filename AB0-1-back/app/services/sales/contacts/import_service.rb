@@ -108,7 +108,12 @@ module Sales
           end
 
           # Tenant-scoped case-insensitive email lookup (P0-6)
-          existing = ::Sales::Contact.where(company_id: @company.id).where('LOWER(email) = ?', raw_email).first
+          contact_scope = if ::Sales::Contact.column_names.include?('company_id')
+                            ::Sales::Contact.where(company_id: @company.id)
+                          else
+                            ::Sales::Contact.joins(:account).where('sales_accounts.company_id = ? OR sales_contacts.user_id IN (?)', @company.id, @company.users.select(:id))
+                          end
+          existing = contact_scope.where('LOWER(sales_contacts.email) = ?', raw_email).first
 
           # Account matching (P0-7)
           account_id = nil
@@ -118,7 +123,7 @@ module Sales
             if matched_account
               account_id = matched_account.id
             elsif create_missing_accounts
-              created_account = ::Sales::Account.create!(company_id: @company.id, name: acc_name, user_id: @user.id)
+              created_account = ::Sales::Account.create!(company_id: @company.id, name: acc_name, owner_id: @user.id)
               account_id = created_account.id
             end
           end
