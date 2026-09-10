@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Megaphone, ArrowLeft, Play, Pause, RotateCcw, RotateCw, CheckCircle2, DollarSign, Send, Eye, MousePointerClick } from 'lucide-react';
+import CampaignFunnelChart from '@/components/sales/campaigns/CampaignFunnelChart';
 
 export default function Campaign360DetailPage() {
   const params = useParams();
@@ -255,6 +256,12 @@ export default function Campaign360DetailPage() {
             <div className="text-xl font-bold text-slate-900">{formattedRevenue}</div>
           </div>
         </div>
+
+        {/* Visual Conversion Funnel & Engagement */}
+        <CampaignFunnelChart
+          metrics={metrics}
+          title={`Funil de Conversão: ${campaign.name}`}
+        />
 
         {/* Recipients Log Table */}
         <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">

@@ -6,14 +6,17 @@ import {
   AlertCircle,
   ArrowLeft,
   Building2,
+  Calendar,
   ChevronDown,
   ChevronUp,
   Clock,
   Eye,
+  FileText,
   Mail,
   MessageSquare,
   MousePointerClick,
   PhoneCall,
+  Plus,
   RotateCw,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
