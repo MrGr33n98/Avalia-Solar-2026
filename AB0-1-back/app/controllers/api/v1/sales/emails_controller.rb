@@ -57,6 +57,21 @@ module Api
             return render json: { error: 'Endereço de e-mail inválido', code: 'INVALID_EMAIL_ADDRESS' }, status: :unprocessable_entity
           end
 
+          # Fallback inteligente: se contact não foi passado explicitamente, associar pelo to_email
+          if contact.nil? && to_email.present?
+            contact = scoped_contacts.find_by('LOWER(email) = ?', to_email)
+            account ||= contact&.account
+          end
+
+          # Se opportunity_id foi fornecido, preenche account e contact se ainda vazios
+          if email_params[:sales_opportunity_id].present?
+            opp = ::Sales::Opportunity.find_by(id: email_params[:sales_opportunity_id])
+            if opp
+              account ||= opp.account
+              contact ||= opp.primary_contact
+            end
+          end
+
           company_id = account&.company_id || current_user.company_id
           unless company_id.present?
             return render json: { error: 'Empresa não configurada', code: 'COMPANY_REQUIRED' }, status: :forbidden

@@ -58,6 +58,33 @@ module Sales
         }
       end
 
+      # Emails
+      emails.each do |email|
+        opens = email.respond_to?(:open_count) ? email.open_count.to_i : email.events.count { |ev| ev.event_type == 'open' }
+        clicks = email.respond_to?(:click_count) ? email.click_count.to_i : email.events.count { |ev| ev.event_type == 'click' }
+
+        events << {
+          id: "email-#{email.id}",
+          type: 'email',
+          title: email.subject.presence || 'E-mail Comercial Enviado',
+          subject: email.subject,
+          description: email.body_text.presence || "#{email.status} - #{email.to_email}",
+          body_snippet: email.body_text&.truncate(220),
+          body_text: email.body_text,
+          body_html: email.body_html,
+          from_email: email.from_email,
+          to_email: email.to_email,
+          status: email.status,
+          delivered_at: email.delivered_at,
+          first_opened_at: email.first_opened_at,
+          last_opened_at: email.last_opened_at,
+          opens_count: opens,
+          clicks_count: clicks,
+          occurred_at: email.sent_at || email.created_at,
+          actor_name: email.sender_user&.name
+        }
+      end
+
       # Account / Contact creation event
       if @account
         events << {
@@ -113,6 +140,22 @@ module Sales
         Sales::Opportunity.where(primary_contact_id: @contact.id).includes(:stage)
       elsif @opportunity
         [@opportunity]
+      else
+        []
+      end
+    end
+
+    def emails
+      if @account
+        Sales::EmailMessage.where(sales_account_id: @account.id).includes(:events, :sender_user)
+      elsif @contact
+        if @contact.email.present?
+          Sales::EmailMessage.where('sales_contact_id = ? OR LOWER(to_email) = ?', @contact.id, @contact.email.to_s.downcase.strip).includes(:events, :sender_user)
+        else
+          Sales::EmailMessage.where(sales_contact_id: @contact.id).includes(:events, :sender_user)
+        end
+      elsif @opportunity
+        Sales::EmailMessage.where(sales_opportunity_id: @opportunity.id).includes(:events, :sender_user)
       else
         []
       end
