@@ -33,14 +33,25 @@ module Sales
         duplicate_option = @options[:duplicate_strategy] || 'update_blank_fields_only'
 
         @import.rows.find_in_batches(batch_size: BATCH_SIZE) do |batch|
-          ActiveRecord::Base.transaction do
-            batch.each do |row|
-              process_row(row, duplicate_option)
+          batch.each do |row|
+            begin
+              ActiveRecord::Base.transaction(requires_new: true) do
+                process_row(row, duplicate_option)
+              end
+            rescue StandardError => e
+              Rails.logger.error("[Sales::Imports::ImportProcessor] Row ##{row.row_number} failed: #{e.message}")
+              row.reload rescue nil
+              row.update_columns(
+                status: 'failed',
+                errors_json: (row.errors_json || []) + [e.message]
+              ) rescue nil
+              @import.increment!(:invalid_rows) rescue nil
+              @import.increment!(:processed_rows) rescue nil
             end
           end
         end
 
-        has_errors = @import.invalid_rows > 0 || @import.rows.where(status: 'failed').exists?
+        has_errors = @import.invalid_rows > 0 || @import.rows.where(status: %w[invalid failed]).exists?
         final_status = has_errors ? 'completed_with_errors' : 'completed'
 
         @import.update!(
@@ -127,7 +138,7 @@ module Sales
 
         # 5. Criar novo Lead via Sales pipeline
         new_lead = create_lead(dto)
-        if new_lead.persisted?
+        if new_lead&.persisted?
           row.status = 'processed'
           row.result_record_type = 'Sales::Opportunity'
           row.result_record_id = new_lead.id
@@ -135,17 +146,11 @@ module Sales
           @import.increment!(:created_rows)
         else
           row.status = 'failed'
-          row.errors_json = (row.errors_json || []) + new_lead.errors.full_messages
+          row.errors_json = (row.errors_json || []) + (new_lead&.errors&.full_messages || ['Falha ao salvar lead'])
           row.save!
           @import.increment!(:invalid_rows)
         end
 
-        @import.increment!(:processed_rows)
-      rescue StandardError => e
-        row.status = 'failed'
-        row.errors_json = (row.errors_json || []) + [e.message]
-        row.save!
-        @import.increment!(:invalid_rows)
         @import.increment!(:processed_rows)
       end
 
@@ -175,18 +180,37 @@ module Sales
         acc ||= ::Sales::Account.where(company_id: @company.id).find_by('LOWER(name) = ?', name.downcase) if @company.present?
         return acc if acc.present?
 
-        ::Sales::Account.create!(
-          name: name,
-          owner: @user,
-          company: @company,
-          phone: dto.phone || dto.whatsapp,
-          email: dto.email,
-          city: dto.city,
-          state: dto.state,
-          segment: dto.segment,
-          website: dto.website,
-          source: dto.source.presence || 'importacao_csv'
-        )
+        begin
+          ::Sales::Account.create!(
+            name: name,
+            owner: @user,
+            company: @company,
+            phone: dto.phone || dto.whatsapp,
+            email: dto.email,
+            city: dto.city,
+            state: dto.state,
+            segment: dto.segment,
+            website: dto.website,
+            source: dto.source.presence || 'importacao_csv'
+          )
+        rescue ActiveRecord::RecordNotUnique, PG::UniqueViolation => e
+          if e.message.include?('index_sales_accounts_on_company_id')
+            ::Sales::Account.create!(
+              name: name,
+              owner: @user,
+              company: nil,
+              phone: dto.phone || dto.whatsapp,
+              email: dto.email,
+              city: dto.city,
+              state: dto.state,
+              segment: dto.segment,
+              website: dto.website,
+              source: dto.source.presence || 'importacao_csv'
+            )
+          else
+            raise
+          end
+        end
       end
 
       def find_or_create_contact(dto, account)
