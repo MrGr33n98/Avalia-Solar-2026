@@ -178,6 +178,7 @@ module Sales
         ::Sales::Account.create!(
           name: name,
           owner: @user,
+          company: @company,
           phone: dto.phone || dto.whatsapp,
           email: dto.email,
           city: dto.city,

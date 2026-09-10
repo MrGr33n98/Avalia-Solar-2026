@@ -14,7 +14,7 @@ module Sales
       end
 
       def parse
-        return { headers: [], rows: [], error: 'Conteúdo do arquivo está vazio' } if @content.blank?
+        return { headers: [], rows: [], error: 'Conteúdo do arquivo está vazio' } if @content.nil? || @content.to_s.strip.empty?
 
         sanitized_content = remove_bom(@content)
         delimiter = detect_delimiter(sanitized_content)
@@ -23,10 +23,16 @@ module Sales
           col_sep: delimiter,
           headers: true,
           skip_blanks: true,
-          quote_char: '"'
+          quote_char: '"',
+          liberal_parsing: true
         }
 
-        parsed_csv = CSV.parse(sanitized_content, **options)
+        parsed_csv = begin
+                       CSV.parse(sanitized_content, **options)
+                     rescue CSV::MalformedCSVError
+                       CSV.parse(sanitized_content, col_sep: delimiter, headers: true, skip_blanks: true, liberal_parsing: true, quote_char: nil)
+                     end
+
         headers = parsed_csv.headers.compact.map(&:to_s).map(&:strip)
 
         rows = []

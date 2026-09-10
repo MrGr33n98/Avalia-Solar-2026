@@ -82,7 +82,19 @@ export default function SalesImportWizard() {
     setErrorMessage('');
     setLoading(true);
     try {
-      const res = await salesImportsApi.uploadFile(file, 'lead');
+      // Ler texto do CSV no cliente para enviar como fallback resiliente
+      const csvText = await file.text().catch(() => '');
+      const res = await salesImportsApi.uploadFile(file, 'lead', csvText || undefined);
+
+      if (res.import.status === 'failed') {
+        const msg =
+          res.import.error_summary?.error ||
+          res.import.error_summary?.fatal_error ||
+          'Falha ao analisar o arquivo CSV. Verifique se o arquivo possui colunas e cabeçalho válidos.';
+        setErrorMessage(msg);
+        return;
+      }
+
       applyImportResponse(res.import);
       setStep(2);
     } catch (err: any) {
@@ -117,7 +129,17 @@ export default function SalesImportWizard() {
     setLoading(true);
     setErrorMessage('');
     try {
-      const res = await salesImportsApi.uploadFile(textFile, 'lead');
+      const res = await salesImportsApi.uploadFile(textFile, 'lead', rawText.trim());
+
+      if (res.import.status === 'failed') {
+        const msg =
+          res.import.error_summary?.error ||
+          res.import.error_summary?.fatal_error ||
+          'Falha ao analisar o conteúdo CSV colado. Verifique os dados.';
+        setErrorMessage(msg);
+        return;
+      }
+
       applyImportResponse(res.import);
       setStep(2);
     } catch (err: any) {
@@ -469,7 +491,7 @@ export default function SalesImportWizard() {
             <CardContent className="p-6 space-y-6">
 
               {/* Preview das colunas detectadas */}
-              {headers.length > 0 && (
+              {headers.length > 0 ? (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                   <p className="mb-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Colunas detectadas no CSV
@@ -491,6 +513,18 @@ export default function SalesImportWizard() {
                       </span>
                     ))}
                   </div>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+                    <span>
+                      Nenhuma coluna foi detectada no arquivo. Verifique se o arquivo possui uma primeira linha de cabeçalho com nomes de colunas separados por vírgula (,) ou ponto-e-vírgula (;).
+                    </span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setStep(1)} className="border-amber-300 text-amber-900 hover:bg-amber-100 flex-shrink-0">
+                    Voltar e Reenviar
+                  </Button>
                 </div>
               )}
 

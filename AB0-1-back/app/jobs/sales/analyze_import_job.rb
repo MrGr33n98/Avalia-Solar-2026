@@ -10,12 +10,22 @@ module Sales
 
       import.update!(status: 'validating')
 
-      unless import.file.attached?
-        import.update!(status: 'failed', error_summary: { error: 'Nenhum arquivo anexado' })
+      file_content = if import.file.attached?
+                       begin
+                         import.file.download
+                       rescue StandardError => e
+                         Rails.logger.warn("[AnalyzeImportJob] ActiveStorage download failed: #{e.message}")
+                         nil
+                       end
+                     end
+
+      file_content ||= import.options&.dig('raw_csv_content')
+
+      if file_content.blank?
+        import.update!(status: 'failed', error_summary: { error: 'Nenhum arquivo ou conteúdo CSV encontrado para análise' })
         return
       end
 
-      file_content = import.file.download
       parse_result = ::Sales::Imports::CsvParser.call(file_content)
 
       if parse_result[:error].present?
@@ -25,6 +35,11 @@ module Sales
 
       headers = parse_result[:headers]
       rows_data = parse_result[:rows]
+
+      if headers.empty? || rows_data.empty?
+        import.update!(status: 'failed', error_summary: { error: 'O arquivo CSV está vazio ou não possui colunas válidas' })
+        return
+      end
 
       # Persistir os headers originais do CSV para o wizard usar corretamente
       csv_headers_to_save = headers

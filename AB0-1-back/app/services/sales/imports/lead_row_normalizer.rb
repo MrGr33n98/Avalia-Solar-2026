@@ -16,10 +16,10 @@ module Sales
         dto_attrs = {}
 
         @mapping.each do |csv_header, canonical_key|
-          next if canonical_key.blank?
+          next if is_blank?(canonical_key)
 
           raw_val = @row_hash[csv_header].to_s.strip
-          next if raw_val.blank?
+          next if is_blank?(raw_val)
 
           case canonical_key.to_sym
           when :email
@@ -46,9 +46,13 @@ module Sales
 
       private
 
+      def is_blank?(val)
+        val.nil? || (val.respond_to?(:empty?) ? val.empty? : false) || val.to_s.strip.empty?
+      end
+
       def normalize_phone(val)
         digits = val.gsub(/\D/, '')
-        return nil if digits.blank?
+        return nil if is_blank?(digits)
 
         if digits.length == 10 || digits.length == 11
           "+55#{digits}"
@@ -69,7 +73,7 @@ module Sales
           'DISTRITO FEDERAL' => 'DF', 'ESPÍRITO SANTO' => 'ES', 'ESPIRITO SANTO' => 'ES',
           'GOIÁS' => 'GO', 'GOIAS' => 'GO', 'MARANHÃO' => 'MA', 'MARANHAO' => 'MA',
           'MATO GROSSO' => 'MT', 'MATO GROSSO DO SUL' => 'MS', 'MINAS GERAIS' => 'MG',
-          'PARÁ' => 'PA', 'PARA' => 'PA', 'PARAIBA' => 'PB', 'PARAIBA' => 'PB',
+          'PARÁ' => 'PA', 'PARA' => 'PA', 'PARAÍBA' => 'PB', 'PARAIBA' => 'PB',
           'PARANÁ' => 'PR', 'PARANA' => 'PR', 'PERNAMBUCO' => 'PE', 'PIAUÍ' => 'PI',
           'RIO DE JANEIRO' => 'RJ', 'RIO GRANDE DO NORTE' => 'RN',
           'RIO GRANDE DO SUL' => 'RS', 'RONDÔNIA' => 'RO', 'RONDONIA' => 'RO',
@@ -81,14 +85,14 @@ module Sales
       end
 
       def normalize_url(val)
-        return nil if val.blank?
+        return nil if is_blank?(val)
         return val if val.start_with?('http://', 'https://')
 
         "https://#{val}"
       end
 
       def normalize_tags(val)
-        val.split(/[,;|]/).map(&:strip).reject(&:blank?).uniq
+        val.split(/[,;|]/).map(&:strip).reject { |t| is_blank?(t) }.uniq
       end
 
       def normalize_number(val)

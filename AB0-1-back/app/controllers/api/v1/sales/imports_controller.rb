@@ -34,6 +34,22 @@ module Api
           file = params[:file]
           filename = params[:filename] || file&.original_filename || 'import.csv'
           entity_type = params[:entity_type] || 'lead'
+          raw_csv_content = params[:csv_content].to_s.presence
+
+          # Extrair conteúdo do arquivo se fornecido via upload multipart
+          if raw_csv_content.blank? && file.present?
+            raw_csv_content = if file.respond_to?(:read)
+                                file.read.to_s
+                              else
+                                file.to_s
+                              end
+            file.rewind if file.respond_to?(:rewind)
+          end
+
+          if file.blank? && raw_csv_content.blank?
+            render json: { error: { message: 'Nenhum arquivo ou conteúdo CSV fornecido para importação.' } }, status: :unprocessable_entity
+            return
+          end
 
           raw_options = params[:options]
           options_hash = if raw_options.respond_to?(:to_unsafe_h)
@@ -43,6 +59,9 @@ module Api
                          else
                            { 'duplicate_strategy' => 'update_blank_fields_only' }
                          end
+
+          # Persistir o raw_csv_content no options como fallback resiliente independente de storage externo
+          options_hash['raw_csv_content'] = raw_csv_content if raw_csv_content.present? && raw_csv_content.bytesize <= 25.megabytes
 
           import = ::Sales::Import.new(
             company_id: company.id,
@@ -54,21 +73,37 @@ module Api
           )
 
           if import.save
+            # Anexar arquivo via ActiveStorage se possível
             if file.present?
               begin
                 import.file.attach(file)
               rescue StandardError => e
-                Rails.logger.error("[ImportsController#create] Attach error: #{e.message}")
+                Rails.logger.error("[ImportsController#create] File attach error: #{e.message}")
+              end
+            elsif raw_csv_content.present?
+              begin
+                import.file.attach(
+                  io: StringIO.new(raw_csv_content),
+                  filename: filename,
+                  content_type: 'text/csv'
+                )
+              rescue StandardError => e
+                Rails.logger.error("[ImportsController#create] Content attach error: #{e.message}")
               end
             end
 
-            if (import.file.attached? rescue false)
-              begin
-                ::Sales::AnalyzeImportJob.perform_now(import.id)
-                import.reload
-              rescue StandardError => e
-                Rails.logger.error("[ImportsController#create] Analyze error: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
-              end
+            # Executa a análise síncrona para popular headers e colunas
+            begin
+              ::Sales::AnalyzeImportJob.perform_now(import.id)
+              import.reload
+            rescue StandardError => e
+              Rails.logger.error("[ImportsController#create] Analyze error: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+            end
+
+            if import.status_failed?
+              err_msg = import.error_summary&.dig('error') || 'Falha ao analisar o arquivo CSV.'
+              render json: { error: { message: err_msg }, import: serialize_import(import) }, status: :unprocessable_entity
+              return
             end
 
             render json: { import: serialize_import(import) }, status: :created

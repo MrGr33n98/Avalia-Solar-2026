@@ -73,7 +73,7 @@ function buildUpstreamUrl(baseUrl: string, pathSegments: string[], search: strin
   return `${baseUrl}/${encodedPath}${search}`;
 }
 
-function buildUpstreamHeaders(request: NextRequest) {
+function buildUpstreamHeaders(request: NextRequest, bodyLength?: number) {
   const headers = new Headers(request.headers);
   const forwardedFor = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
@@ -88,6 +88,10 @@ function buildUpstreamHeaders(request: NextRequest) {
   headers.delete('connection');
   headers.delete('content-length');
   UPSTREAM_FORWARDED_HEADERS.forEach((header) => headers.delete(header));
+
+  if (typeof bodyLength === 'number' && bodyLength >= 0) {
+    headers.set('content-length', bodyLength.toString());
+  }
 
   const defaults = getApiRequestHeaders();
   Object.entries(defaults).forEach(([key, value]) => {
@@ -168,7 +172,7 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
     try {
       const init: RequestInit & { duplex?: 'half' } = {
         method,
-        headers: buildUpstreamHeaders(request),
+        headers: buildUpstreamHeaders(request, requestBody?.byteLength),
         cache: 'no-store',
         redirect: 'manual',
       };
