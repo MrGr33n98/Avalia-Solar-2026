@@ -90,6 +90,8 @@ docs/groups/*
 !docs/adr/
 docs/adr/*
 !docs/adr/ADR_GROUP_POST_MODEL.md
+!docs/architecture/
+!docs/architecture/*
 
 # Testes e previews de e-mail fazem parte da implementação de produção.
 !AB0-1-back/spec/
