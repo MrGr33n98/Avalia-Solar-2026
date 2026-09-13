@@ -8,3 +8,4 @@ export * from './OpportunityCardNextAction';
 export * from './OpportunityCardFooter';
 export * from './OpportunityCardMenu';
 export * from './OpportunityCardSkeleton';
+export * from './OpportunityTemperatureBadge';

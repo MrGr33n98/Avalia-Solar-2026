@@ -26,6 +26,19 @@ export const PipelineColumn: React.FC<PipelineColumnProps> = ({
   onCreateTask,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [expandedCardIds, setExpandedCardIds] = useState<Set<number>>(new Set());
+
+  const toggleCardExpanded = (id: number) => {
+    setExpandedCardIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const stageTotalCents = cards.reduce((sum, c) => sum + (c.value_cents || 0), 0);
 
@@ -90,6 +103,8 @@ export const PipelineColumn: React.FC<PipelineColumnProps> = ({
             <OpportunityCard
               key={card.id}
               card={card}
+              density={expandedCardIds.has(card.id) ? 'expanded' : 'compact'}
+              onToggleExpand={() => toggleCardExpanded(card.id)}
               selected={selectedIds.includes(card.id)}
               onToggleSelect={onToggleSelect}
               onOpenDetails={onOpenDetails}

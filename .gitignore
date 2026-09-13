@@ -54,6 +54,7 @@ AB0-1-front/public/**/*.zip
 # Testes de filtros da listagem de categorias
 !AB0-1-front/components/categories/CategoryFiltersPanel.test.tsx
 !AB0-1-front/components/categories/DecisionChips.test.tsx
+!AB0-1-front/__tests__/components/sales/OpportunityCard.test.tsx
 
 # Ignorar documentações de desenvolvimento
 docs/
