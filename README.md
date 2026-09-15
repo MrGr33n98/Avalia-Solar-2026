@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>☀️ Avalia Solar 2026</h1>
+  <h1> Avalia Solar 2026</h1>
   <p><b>Plataforma SaaS Multi-tier de Inteligência e Consultoria de Energia Solar</b></p>
 
   <p>
@@ -22,7 +22,7 @@
 
 ---
 
-## 📌 Visão Geral & Proposta de Valor
+## Visão Geral & Proposta de Valor
 
 O **Avalia Solar 2026** é uma plataforma SaaS profissional projetada para avaliação, comparação e consultoria de soluções em energia solar no Brasil. 
 
@@ -30,7 +30,7 @@ Construída sob uma arquitetura de **Monorepo Escalável**, a plataforma integra
 
 ---
 
-## 🏗️ Arquitetura do Sistema
+##  Arquitetura do Sistema
 
 ```mermaid
 graph TD
