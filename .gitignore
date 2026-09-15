@@ -136,3 +136,4 @@ agent/
 !docs/product/
 !docs/product/*.md
 tmp/
+skills-lock.json
