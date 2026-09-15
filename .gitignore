@@ -1,4 +1,3 @@
-```
 # Compiled and build artifacts
 *.pyc
 __pycache__/
@@ -23,9 +22,16 @@ node_modules/
 .env.local
 .env.*
 
-# Editors
+# Editors & AI IDE Internal Caches
 .vscode/
 .idea/
+.gemini/
+.kiro/
+.planning/
+.planning-archive-web/
+.codex
+.claude/
+.agents/
 ```
 # Arquivos de Testes, Logs e Cache
 .claude/
