@@ -1,3 +1,5 @@
+export type OpportunityCardDensity = 'compact' | 'expanded';
+
 export interface PipelineCardTag {
   id: number;
   name: string;

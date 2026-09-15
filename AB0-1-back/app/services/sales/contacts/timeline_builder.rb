@@ -38,11 +38,36 @@ module Sales
           end
         end
 
-        contact.email_messages.includes(:events).each do |email|
-          events << { id: "email-#{email.id}", type: "email", title: email.subject.presence || "E-mail enviado", description: "#{email.status} - #{email.to_email}", occurred_at: email.sent_at || email.created_at }
-          email.events.each do |event|
-            events << { id: "email-event-#{event.id}", type: "email", title: "E-mail: #{event.event_type.humanize}", description: email.subject, occurred_at: event.occurred_at }
-          end
+        emails_query = if contact.email.present?
+                         Sales::EmailMessage.where('sales_contact_id = ? OR LOWER(to_email) = ?', contact.id, contact.email.downcase.strip)
+                       else
+                         contact.email_messages
+                       end
+
+        emails_query.includes(:events, :sender_user).order(created_at: :desc).each do |email|
+          opens = email.respond_to?(:open_count) ? email.open_count.to_i : email.events.count { |ev| ev.event_type == 'open' }
+          clicks = email.respond_to?(:click_count) ? email.click_count.to_i : email.events.count { |ev| ev.event_type == 'click' }
+
+          events << {
+            id: "email-#{email.id}",
+            type: 'email',
+            title: email.subject.presence || 'E-mail Comercial Enviado',
+            subject: email.subject,
+            description: email.body_text.presence || "#{email.status} - #{email.to_email}",
+            body_snippet: email.body_text&.truncate(220),
+            body_text: email.body_text,
+            body_html: email.body_html,
+            from_email: email.from_email,
+            to_email: email.to_email,
+            status: email.status,
+            delivered_at: email.delivered_at,
+            first_opened_at: email.first_opened_at,
+            last_opened_at: email.last_opened_at,
+            opens_count: opens,
+            clicks_count: clicks,
+            occurred_at: email.sent_at || email.created_at,
+            actor: email.sender_user ? { id: email.sender_user.id, name: email.sender_user.name } : nil
+          }
         end
 
         events << {

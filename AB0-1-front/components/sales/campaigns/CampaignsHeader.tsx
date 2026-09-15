@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Megaphone, Plus, Users, FileText, Layers } from 'lucide-react';
+import { Megaphone, Plus, Users, FileText, Layers, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CampaignsHeaderProps {
@@ -25,9 +25,15 @@ export default function CampaignsHeader({ onCreateCampaign }: CampaignsHeaderPro
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <Link href="/dashboard/sales/campaigns/audiences/lists">
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100">
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Listas & Importar CSV
+          </Button>
+        </Link>
+
         <Link href="/dashboard/sales/campaigns/audiences">
           <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 border-slate-300">
-            <Users className="w-3.5 h-3.5 text-slate-500" /> Audiências
+            <Users className="w-3.5 h-3.5 text-slate-500" /> Segmentações
           </Button>
         </Link>
 

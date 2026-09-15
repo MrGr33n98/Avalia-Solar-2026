@@ -1,22 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import {
-  AlertCircle,
-  Award,
-  BarChart3,
-  CheckCircle2,
-  CircleDollarSign,
-  Clock,
-  Download,
-  Loader2,
-  RotateCw,
-  Target,
-  TrendingUp,
-  Trophy,
-  Users,
-  XCircle,
-} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AlertCircle, RotateCw, XCircle } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -30,19 +15,20 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
+import {
+  ReportIcon,
+  ReportKpiCard,
+  ReportsHeader,
+  ReportsInsightCard,
+  SalesTeamPerformance,
+  EmailPerformance,
+  ReportsSkeleton,
+} from './reports';
 
-type Kpi = {
+export type Kpi = {
   pipeline_value_cents: number;
   weighted_pipeline_cents: number;
   won_revenue_cents: number;
@@ -54,21 +40,21 @@ type Kpi = {
   lost_deals: number;
 };
 
-type FunnelItem = {
+export type FunnelItem = {
   stage: string;
   count: number;
   valor?: number;
   value_cents?: number;
 };
 
-type WinLossItem = {
+export type WinLossItem = {
   name: string;
   value: number;
   count?: number;
   color?: string;
 };
 
-type TeamPerformanceItem = {
+export type TeamPerformanceItem = {
   owner_id: number;
   name: string;
   email: string;
@@ -79,7 +65,7 @@ type TeamPerformanceItem = {
   win_rate: number;
 };
 
-type RevenueByMonth = {
+export type RevenueByMonth = {
   month: string;
   realizado?: number;
   previsao?: number;
@@ -87,12 +73,12 @@ type RevenueByMonth = {
   pipeline_cents?: number;
 };
 
-type EmailMetrics = Record<
+export type EmailMetrics = Record<
   'sent' | 'delivered' | 'open' | 'click' | 'replied' | 'bounce' | 'complaint',
   number
 >;
 
-type AnalyticsData = {
+export type AnalyticsData = {
   kpis: Kpi;
   funnel: FunnelItem[];
   win_loss: WinLossItem[];
@@ -112,41 +98,16 @@ function fmtBRL(cents: number): string {
   });
 }
 
-function KpiCard({
-  icon: Icon,
-  label,
-  value,
-  detail,
-  highlight,
-}: {
-  icon: typeof Target;
-  label: string;
-  value: string;
-  detail: string;
-  highlight?: boolean;
-}) {
-  return (
-    <Card
-      className={`border shadow-xs ${highlight ? 'border-blue-200 bg-blue-50/50' : 'border-slate-200 bg-white'}`}
-    >
-      <CardContent className="flex items-start gap-3.5 p-4">
-        <div className={`rounded-lg p-2.5 text-white ${highlight ? 'bg-blue-700' : 'bg-blue-900'}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
-          <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
-          <p className="mt-0.5 text-xs text-slate-500">{detail}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function EmptyChart({ message }: { message: string }) {
   return (
-    <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50">
-      <p className="text-xs text-slate-400 italic">{message}</p>
+    <div className="flex h-44 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+      <ReportIcon
+        src="/assets/avaliasolar_reports_icon_assets/05_status_indicadores/informacao.png"
+        tone="neutral"
+        size="sm"
+        className="opacity-60"
+      />
+      <p className="mt-2 text-xs font-medium text-slate-400 italic text-center">{message}</p>
     </div>
   );
 }
@@ -261,145 +222,119 @@ export default function SalesAnalyticsReport() {
   return (
     <SalesLayoutWrapper>
       <div className="mx-auto w-full max-w-7xl space-y-6">
-        {/* Header */}
-        <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Badge className="border-0 bg-blue-900 font-semibold text-white">
-                Avalia Solar CRM
-              </Badge>
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Executive Intelligence
-              </span>
-            </div>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
-              Analytics & Performance Comercial
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Métricas reais do pipeline extraídas diretamente do PostgreSQL.
-            </p>
-          </div>
+        {/* Header Executivo & Subnavegação */}
+        <ReportsHeader
+          period={period}
+          onPeriodChange={setPeriod}
+          onExportCSV={exportCSV}
+          onRefresh={fetchAnalytics}
+          loading={loading}
+          exportDisabled={!data}
+        />
 
-          <div className="flex items-center gap-2.5">
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-[180px] border-slate-300 bg-white shadow-xs min-h-11">
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="this_week">Esta Semana</SelectItem>
-                <SelectItem value="this_month">Este Mês</SelectItem>
-                <SelectItem value="last_month">Mês Passado</SelectItem>
-                <SelectItem value="this_quarter">Este Trimestre</SelectItem>
-                <SelectItem value="last_quarter">Último Trimestre</SelectItem>
-                <SelectItem value="ytd">Acumulado do Ano</SelectItem>
-              </SelectContent>
-            </Select>
+        {/* Loading State com Skeletons Reais */}
+        {loading && <ReportsSkeleton />}
 
-            <Button
-              onClick={exportCSV}
-              variant="outline"
-              className="min-h-11 border-slate-300 bg-white font-semibold text-slate-700"
-              disabled={!data || loading}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Exportar CSV
-            </Button>
-
-            <Button
-              onClick={fetchAnalytics}
-              variant="outline"
-              className="min-h-11 border-slate-300 bg-white font-semibold text-slate-700"
-              disabled={loading}
-            >
-              <RotateCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
-          </div>
-        </header>
-
-        {/* State Handling */}
-        {loading && (
-          <div
-            className="flex flex-col items-center justify-center py-20 gap-4"
-            data-testid="analytics-loading"
-          >
-            <Loader2 className="h-8 w-8 animate-spin text-blue-700" />
-            <p className="text-sm text-slate-500">Carregando dados do pipeline...</p>
-          </div>
-        )}
-
+        {/* Unauthorized State */}
         {!loading && unauthorized && (
           <div
             className="flex flex-col items-center justify-center py-20 gap-4"
             data-testid="analytics-unauthorized"
           >
             <XCircle className="h-10 w-10 text-amber-500" />
-            <p className="font-semibold text-slate-900">Sessão expirada ou sem permissão</p>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">
+              Sessão expirada ou sem permissão
+            </p>
             <a href="/login">
               <Button className="bg-blue-900 font-bold hover:bg-blue-950">Fazer Login</Button>
             </a>
           </div>
         )}
 
+        {/* Error State */}
         {!loading && error && (
           <div
             className="flex flex-col items-center justify-center py-20 gap-4"
             data-testid="analytics-error"
           >
-            <AlertCircle className="h-10 w-10 text-red-500" />
-            <p className="font-semibold text-slate-900">{error}</p>
+            <AlertCircle className="h-10 w-10 text-rose-500" />
+            <p className="font-semibold text-slate-900 dark:text-slate-100">{error}</p>
             <Button onClick={fetchAnalytics} variant="outline" className="font-semibold">
               <RotateCw className="mr-2 h-4 w-4" /> Tentar Novamente
             </Button>
           </div>
         )}
 
+        {/* Conteúdo Principal com Dados Carregados */}
         {!loading && !error && !unauthorized && data !== null && (
           <>
-            {/* KPI Grid */}
+            {/* Card de Insights e Alertas Executivos */}
+            {kpis && (
+              <ReportsInsightCard
+                openDeals={kpis.open_deals}
+                pipelineValueFormatted={fmtBRL(kpis.pipeline_value_cents)}
+                weightedValueFormatted={fmtBRL(kpis.weighted_pipeline_cents)}
+                wonDeals={kpis.won_deals}
+                wonRevenueFormatted={fmtBRL(kpis.won_revenue_cents)}
+                lostDeals={kpis.lost_deals}
+                conversionRatePercent={kpis.conversion_rate * 100}
+              />
+            )}
+
+            {/* Grid Hierarquizado de KPIs: Linha 1 (4 principais) */}
             {kpis && (
               <div
-                className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+                className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
                 data-testid="analytics-kpis"
               >
-                <KpiCard
-                  icon={CircleDollarSign}
+                <ReportKpiCard
                   label="Pipeline Total"
                   value={fmtBRL(kpis.pipeline_value_cents)}
                   detail={`${kpis.open_deals} negócios em aberto`}
+                  iconSrc="/assets/avaliasolar_reports_icon_assets/01_kpi_metricas/pipeline_total.png"
+                  iconTone="blue"
                   highlight
+                  testId="kpi-pipeline-total"
                 />
-                <KpiCard
-                  icon={Target}
+                <ReportKpiCard
                   label="Pipeline Ponderado"
                   value={fmtBRL(kpis.weighted_pipeline_cents)}
                   detail="soma de valor × probabilidade"
+                  iconSrc="/assets/avaliasolar_reports_icon_assets/01_kpi_metricas/pipeline_ponderado.png"
+                  iconTone="purple"
+                  testId="kpi-pipeline-weighted"
                 />
-                <KpiCard
-                  icon={CheckCircle2}
+                <ReportKpiCard
                   label="Receita Fechada"
                   value={fmtBRL(kpis.won_revenue_cents)}
                   detail={`${kpis.won_deals} negócios ganhos`}
+                  iconSrc="/assets/avaliasolar_reports_icon_assets/01_kpi_metricas/receita_fechada.png"
+                  iconTone="emerald"
+                  testId="kpi-won-revenue"
                 />
-                <KpiCard
-                  icon={TrendingUp}
+                <ReportKpiCard
                   label="Taxa de Conversão"
                   value={`${(kpis.conversion_rate * 100).toFixed(1)}%`}
-                  detail={`Won / (Won + Lost)`}
+                  detail="Won / (Won + Lost)"
+                  iconSrc="/assets/avaliasolar_reports_icon_assets/01_kpi_metricas/taxa_conversao.png"
+                  iconTone="blue"
+                  testId="kpi-conversion-rate"
                 />
               </div>
             )}
 
+            {/* Grid Hierarquizado de KPIs: Linha 2 (3 operacionais) */}
             {kpis && (
-              <div className="grid gap-3 sm:grid-cols-3">
-                <KpiCard
-                  icon={CircleDollarSign}
+              <div className="grid gap-3.5 sm:grid-cols-3">
+                <ReportKpiCard
                   label="Ticket Médio"
                   value={fmtBRL(kpis.average_ticket_cents)}
                   detail="média de negócios fechados"
+                  iconSrc="/assets/avaliasolar_reports_icon_assets/01_kpi_metricas/ticket_medio.png"
+                  iconTone="blue"
+                  testId="kpi-ticket-medio"
                 />
-                <KpiCard
-                  icon={Clock}
+                <ReportKpiCard
                   label="Ciclo Médio de Venda"
                   value={
                     kpis.average_sales_cycle_days > 0
@@ -407,133 +342,39 @@ export default function SalesAnalyticsReport() {
                       : '—'
                   }
                   detail="da criação ao fechamento"
+                  iconSrc="/assets/avaliasolar_reports_icon_assets/01_kpi_metricas/ciclo_venda.png"
+                  iconTone="amber"
+                  testId="kpi-ciclo-venda"
                 />
-                <KpiCard
-                  icon={Users}
+                <ReportKpiCard
                   label="Perdidos no Período"
                   value={String(kpis.lost_deals)}
                   detail="negócios marcados como Lost"
+                  iconSrc="/assets/avaliasolar_reports_icon_assets/01_kpi_metricas/perdidos_periodo.png"
+                  iconTone="rose"
+                  testId="kpi-lost-deals"
                 />
               </div>
             )}
 
-            {/* Team Performance Leaderboard */}
-            {teamPerformance.length > 0 && (
-              <Card className="border-slate-200 bg-white shadow-xs">
-                <CardHeader className="border-b border-slate-100 p-5">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-amber-500" />
-                    <div>
-                      <CardTitle className="text-base font-bold text-slate-900">
-                        Desempenho da Equipe de Vendas
-                      </CardTitle>
-                      <CardDescription className="text-xs text-slate-500">
-                        Ranking de vendedores por receita realizada e taxa de conversão no período
-                      </CardDescription>
-                    </div>
+            {/* Evolução do Pipeline (Previsão Ponderada) */}
+            <Card className="border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs rounded-xl overflow-hidden">
+              <CardHeader className="border-b border-slate-100 dark:border-slate-800 p-5">
+                <div className="flex items-center gap-3">
+                  <ReportIcon
+                    src="/assets/avaliasolar_reports_icon_assets/02_tipos_graficos/grafico_linhas.png"
+                    tone="blue"
+                    size="md"
+                  />
+                  <div>
+                    <CardTitle className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                      Evolução do Pipeline
+                    </CardTitle>
+                    <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                      Receita realizada (Won) vs. pipeline ponderado por período
+                    </CardDescription>
                   </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
-                          <th className="p-3.5 pl-5">#</th>
-                          <th className="p-3.5">Vendedor</th>
-                          <th className="p-3.5 text-center">Criados</th>
-                          <th className="p-3.5 text-center">Ganhos</th>
-                          <th className="p-3.5 text-center">Perdidos</th>
-                          <th className="p-3.5 text-right">Taxa de Conversão</th>
-                          <th className="p-3.5 text-right pr-5">Receita Won</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {teamPerformance.map((rep, index) => (
-                          <tr
-                            key={rep.owner_id}
-                            className="border-b border-slate-100 transition-colors hover:bg-slate-50/80"
-                          >
-                            <td className="p-3.5 pl-5 font-bold text-slate-400">
-                              {index === 0 ? (
-                                <Badge className="bg-amber-100 text-amber-800 border-amber-300">
-                                  🥇 1º
-                                </Badge>
-                              ) : index === 1 ? (
-                                <Badge className="bg-slate-100 text-slate-700 border-slate-300">
-                                  🥈 2º
-                                </Badge>
-                              ) : index === 2 ? (
-                                <Badge className="bg-amber-50 text-amber-700 border-amber-200">
-                                  🥉 3º
-                                </Badge>
-                              ) : (
-                                `${index + 1}º`
-                              )}
-                            </td>
-                            <td className="p-3.5 font-semibold text-slate-900">
-                              <div>{rep.name}</div>
-                              <span className="text-xs text-slate-400 font-normal">{rep.email}</span>
-                            </td>
-                            <td className="p-3.5 text-center text-slate-600 font-medium">{rep.total_deals}</td>
-                            <td className="p-3.5 text-center font-bold text-emerald-600">{rep.won_deals}</td>
-                            <td className="p-3.5 text-center text-rose-500">{rep.lost_deals}</td>
-                            <td className="p-3.5 text-right font-semibold text-slate-700">
-                              {rep.win_rate}%
-                            </td>
-                            <td className="p-3.5 text-right pr-5 font-bold text-slate-900">
-                              {fmtBRL(rep.won_revenue_cents)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {data.email_metrics && (
-              <Card className="border-slate-200 bg-white shadow-xs" data-testid="email-analytics">
-                <CardHeader className="border-b border-slate-100 p-5">
-                  <CardTitle className="text-base font-bold text-slate-900">
-                    Desempenho de E-mail
-                  </CardTitle>
-                  <CardDescription className="text-xs text-slate-500">
-                    Eventos registrados no período selecionado
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-4 lg:grid-cols-7">
-                  {(
-                    [
-                      ['Enviados', 'sent'],
-                      ['Entregues', 'delivered'],
-                      ['Aberturas', 'open'],
-                      ['Cliques', 'click'],
-                      ['Respostas', 'replied'],
-                      ['Bounces', 'bounce'],
-                      ['Reclamações', 'complaint'],
-                    ] as const
-                  ).map(([label, key]) => (
-                    <div key={key} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                      <p className="text-[11px] font-semibold text-slate-500">{label}</p>
-                      <p className="mt-1 text-xl font-bold text-slate-900">
-                        {data.email_metrics?.[key] ?? 0}
-                      </p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Revenue by Month Chart */}
-            <Card className="border-slate-200 bg-white shadow-xs">
-              <CardHeader className="border-b border-slate-100 p-5">
-                <CardTitle className="text-base font-bold text-slate-900">
-                  Previsão Ponderada do Pipeline
-                </CardTitle>
-                <CardDescription className="text-xs text-slate-500">
-                  Receita realizada (Won) vs. pipeline ponderado por período
-                </CardDescription>
+                </div>
               </CardHeader>
               <CardContent className="p-5">
                 {revenueByMonth.length === 0 ? (
@@ -589,16 +430,26 @@ export default function SalesAnalyticsReport() {
               </CardContent>
             </Card>
 
-            {/* Funnel + Win/Loss/Loss Reasons */}
+            {/* Funil de Vendas + Motivos de Perda */}
             <div className="grid gap-4 lg:grid-cols-2">
-              <Card className="border-slate-200 bg-white shadow-xs">
-                <CardHeader className="border-b border-slate-100 p-5">
-                  <CardTitle className="text-base font-bold text-slate-900">
-                    Funil de Vendas
-                  </CardTitle>
-                  <CardDescription className="text-xs text-slate-500">
-                    Oportunidades por estágio do pipeline
-                  </CardDescription>
+              {/* Funil de Vendas */}
+              <Card className="border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs rounded-xl overflow-hidden">
+                <CardHeader className="border-b border-slate-100 dark:border-slate-800 p-5">
+                  <div className="flex items-center gap-3">
+                    <ReportIcon
+                      src="/assets/avaliasolar_reports_icon_assets/02_tipos_graficos/funil.png"
+                      tone="blue"
+                      size="md"
+                    />
+                    <div>
+                      <CardTitle className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                        Funil de Vendas
+                      </CardTitle>
+                      <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                        Oportunidades ativas distribuídas por estágio
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-5">
                   {funnel.length === 0 ? (
@@ -614,10 +465,10 @@ export default function SalesAnalyticsReport() {
                         <YAxis
                           dataKey="stage"
                           type="category"
-                          tick={{ fontSize: 11, fill: '#374151' }}
+                          tick={{ fontSize: 11, fill: '#64748B' }}
                           tickLine={false}
                           axisLine={false}
-                          width={90}
+                          width={95}
                         />
                         <Tooltip
                           formatter={(val: number, name: string) =>
@@ -633,18 +484,28 @@ export default function SalesAnalyticsReport() {
                 </CardContent>
               </Card>
 
-              <Card className="border-slate-200 bg-white shadow-xs">
-                <CardHeader className="border-b border-slate-100 p-5">
-                  <CardTitle className="text-base font-bold text-slate-900">
-                    Motivos de Perda
-                  </CardTitle>
-                  <CardDescription className="text-xs text-slate-500">
-                    Principais motivos reportados no cancelamento de negócios
-                  </CardDescription>
+              {/* Motivos de Perda */}
+              <Card className="border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs rounded-xl overflow-hidden">
+                <CardHeader className="border-b border-slate-100 dark:border-slate-800 p-5">
+                  <div className="flex items-center gap-3">
+                    <ReportIcon
+                      src="/assets/avaliasolar_reports_icon_assets/02_tipos_graficos/grafico_pizza.png"
+                      tone="rose"
+                      size="md"
+                    />
+                    <div>
+                      <CardTitle className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                        Motivos de Perda
+                      </CardTitle>
+                      <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                        Principais motivos reportados no cancelamento de negócios
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-5">
                   {(lossReasons.length > 0 ? lossReasons : winLoss).length === 0 ? (
-                    <EmptyChart message="Nenhum dado de Win/Loss para o período selecionado." />
+                    <EmptyChart message="Nenhum dado de perda registrado para o período selecionado." />
                   ) : (
                     <div className="flex items-center gap-6">
                       <ResponsiveContainer width="50%" height={200}>
@@ -672,8 +533,12 @@ export default function SalesAnalyticsReport() {
                               className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                               style={{ backgroundColor: item.color }}
                             />
-                            <span className="text-slate-700 font-medium">{item.name}</span>
-                            <span className="font-bold text-slate-900">{item.value}%</span>
+                            <span className="text-slate-700 dark:text-slate-300 font-medium">
+                              {item.name}
+                            </span>
+                            <span className="font-bold text-slate-900 dark:text-slate-100">
+                              {item.value}%
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -682,20 +547,31 @@ export default function SalesAnalyticsReport() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Desempenho da Equipe de Vendas (Leaderboard) */}
+            <SalesTeamPerformance team={teamPerformance} formatCurrency={fmtBRL} />
+
+            {/* Desempenho de E-mail (Analytics Strip) */}
+            <EmailPerformance metrics={data.email_metrics} />
           </>
         )}
 
+        {/* Empty State Global (quando data é null e não está carregando) */}
         {!loading && !error && !unauthorized && data === null && (
           <div
             className="flex flex-col items-center justify-center py-20 gap-4"
             data-testid="analytics-empty"
           >
-            <BarChart3 className="h-10 w-10 text-slate-300" />
-            <p className="font-semibold text-slate-700">
+            <ReportIcon
+              src="/assets/avaliasolar_reports_icon_assets/05_status_indicadores/informacao.png"
+              tone="neutral"
+              size="lg"
+            />
+            <p className="font-semibold text-slate-700 dark:text-slate-300">
               Nenhum dado disponível para o período selecionado.
             </p>
             <p className="text-xs text-slate-500">
-              Crie oportunidades no pipeline para que os dados apareçam aqui.
+              Crie oportunidades no pipeline para que os relatórios sejam gerados automaticamente.
             </p>
           </div>
         )}

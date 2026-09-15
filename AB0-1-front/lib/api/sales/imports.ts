@@ -142,11 +142,14 @@ export const salesImportsApi = {
     );
   },
 
-  async uploadFile(file: File, entityType = 'lead') {
+  async uploadFile(file: File, entityType = 'lead', csvContent?: string) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('filename', file.name);
     formData.append('entity_type', entityType);
+    if (csvContent) {
+      formData.append('csv_content', csvContent);
+    }
 
     return authedJson<{ import: SalesImport }>('/api/v1/sales/imports', {
       method: 'POST',

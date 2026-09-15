@@ -1,10 +1,20 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Megaphone, Users, ChevronRight, ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
+import { Megaphone, Users, ChevronRight, ChevronLeft, FileSpreadsheet, ListFilter, Upload, ExternalLink, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CRMModal from '@/components/sales/ui/CRMModal';
-import { requestApi, fetchAudienceSegments, previewAudience, fetchPreflight, AudiencePreviewResult, AudienceSegmentsOptions } from '@/lib/api-campaigns';
+import {
+  requestApi,
+  fetchAudienceSegments,
+  previewAudience,
+  fetchPreflight,
+  fetchContactLists,
+  ContactList,
+  AudiencePreviewResult,
+  AudienceSegmentsOptions,
+} from '@/lib/api-campaigns';
 
 interface CampaignWizardModalProps {
   open: boolean;
@@ -30,6 +40,11 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
   const [audiences, setAudiences] = useState<Array<{ id: number; name: string; filter_definition?: Record<string, unknown> }>>([]);
   const [audienceId, setAudienceId] = useState<number | null>(null);
   const [templateError, setTemplateError] = useState('');
+
+  // Contact Lists State (Smart Lists / CSV Uploads)
+  const [contactLists, setContactLists] = useState<ContactList[]>([]);
+  const [selectedListId, setSelectedListId] = useState<number | null>(null);
+  const [audienceMode, setAudienceMode] = useState<'list' | 'filters'>('list');
 
   // Audience Filter State
   const [stateFilter, setStateFilter] = useState<string>('');
@@ -58,45 +73,68 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
       requestApi<{ audiences: Array<{ id: number; name: string; filter_definition?: Record<string, unknown> }> }>('/audiences?per_page=100')
         .then((result) => setAudiences(result.audiences))
         .catch((err) => setTemplateError(err.message || 'Falha ao carregar audiências.'));
+      fetchContactLists({ active: true })
+        .then((res) => {
+          const lists = res.contact_lists || [];
+          setContactLists(lists);
+          if (lists.length > 0 && !selectedListId) {
+            setSelectedListId(lists[0].id);
+          }
+        })
+        .catch((err) => console.error('Erro ao carregar listas de contatos:', err));
     }
   }, [open]);
 
   useEffect(() => {
     if (open && step === 2) {
-      const hasFilter = Boolean(stateFilter || cityFilter || segmentFilter || searchTerm || audienceId);
+      const hasFilter = audienceMode === 'list'
+        ? Boolean(selectedListId)
+        : Boolean(stateFilter || cityFilter || segmentFilter || searchTerm || audienceId);
+
       if (!hasFilter) { setAudiencePreview(null); return; }
       setPreviewLoading(true);
-      const filter = {
-        state: stateFilter.trim() || undefined,
-        city: cityFilter.trim() || undefined,
-        segment: segmentFilter.trim() || undefined,
-        search: searchTerm.trim() || undefined,
-      };
+
+      const filter = audienceMode === 'list'
+        ? { contact_list_id: selectedListId || undefined }
+        : {
+            state: stateFilter.trim() || undefined,
+            city: cityFilter.trim() || undefined,
+            segment: segmentFilter.trim() || undefined,
+            search: searchTerm.trim() || undefined,
+          };
 
       previewAudience(filter, 1, 5)
         .then(setAudiencePreview)
         .catch(console.error)
         .finally(() => setPreviewLoading(false));
     }
-  }, [open, step, stateFilter, cityFilter, segmentFilter, searchTerm]);
+  }, [open, step, audienceMode, selectedListId, stateFilter, cityFilter, segmentFilter, searchTerm, audienceId]);
 
   const handleFinish = async () => {
     if (!name.trim()) { setFormError('Informe o nome da campanha.'); return; }
+    if (audienceMode === 'list' && !selectedListId) {
+      setFormError('Selecione uma lista de contatos para o disparo.');
+      return;
+    }
     setFormError('');
     setSubmitting(true);
     try {
+      const finalFilter = audienceMode === 'list'
+        ? { contact_list_id: selectedListId || undefined }
+        : {
+            state: stateFilter || undefined,
+            city: cityFilter || undefined,
+            segment: segmentFilter || undefined,
+            search: searchTerm || undefined,
+          };
+
       await onSubmit({
         name,
         campaign_type: campaignType,
         email_template_id: emailTemplateId || null,
         audience_id: audienceId,
         scheduled_at: scheduledAt || null,
-        audience_filter: {
-          state: stateFilter || undefined,
-          city: cityFilter || undefined,
-          segment: segmentFilter || undefined,
-          search: searchTerm || undefined,
-        },
+        audience_filter: finalFilter,
       });
       onClose();
       // Reset form
@@ -202,74 +240,215 @@ export default function CampaignWizardModal({ open, onClose, onSubmit }: Campaig
           {!templateError && templates.length === 0 && <span>Nenhum template disponível.</span>}
         </label>}
 
-        {step === 2 && <label className="block text-xs font-semibold">Cidade
-          <select className="block w-full border rounded p-2" value={cityFilter} onChange={(event) => setCityFilter(event.target.value)}>
-            <option value="">Todas</option>
-            {(stateFilter ? (segments?.cities_by_state?.[stateFilter] ?? []) : (segments?.cities ?? [])).map((city) => <option key={city}>{city}</option>)}
-          </select>
-        </label>}
+        {/* Step 2: Audience Selection (List vs Filters) */}
+        {step === 2 && (
+          <div className="space-y-4">
+            {/* Audience Mode Switcher */}
+            <div className="flex rounded-lg border border-slate-200 p-1 bg-slate-50 gap-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setAudienceMode('list')}
+                className={`flex-1 py-1.5 px-3 rounded-md flex items-center justify-center gap-1.5 font-medium transition-all ${
+                  audienceMode === 'list'
+                    ? 'bg-white text-indigo-950 font-bold shadow-2xs border border-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Lista de Contatos (.CSV)</span>
+              </button>
 
-        {/* Step 2: Audience Filter */}
-        {step === 2 && (<>
-            <label className="block text-sm font-medium">Audiência salva
-              <select className="mt-1 w-full rounded border p-2" value={audienceId ?? ''} onChange={(event) => { const id = Number(event.target.value); const selected = audiences.find((item) => item.id === id); setAudienceId(id || null); if (selected?.filter_definition) { setStateFilter(String(selected.filter_definition.state || '')); setCityFilter(String(selected.filter_definition.city || '')); setSegmentFilter(String(selected.filter_definition.segment || '')); setSearchTerm(String(selected.filter_definition.search || '')); } }}>
-                <option value="">Filtros manuais</option>{audiences.map((audience) => <option key={audience.id} value={audience.id}>{audience.name}</option>)}
-              </select>
-            </label>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Estado (UF)</label>
-                <select
-                  value={stateFilter}
-                  onChange={(e) => { setStateFilter(e.target.value); setCityFilter(''); }}
-                  className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
-                >
-                  <option value="">Todos os Estados</option>
-                  {(segments?.states || []).map((st) => (
-                    <option key={st} value={st}>{st}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Segmento da Empresa</label>
-                <select
-                  value={segmentFilter}
-                  onChange={(e) => setSegmentFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
-                >
-                  <option value="">Todos os Segmentos</option>
-                  {(segments?.company_types || []).map((seg) => (
-                    <option key={seg} value={seg}>{seg}</option>
-                  ))}
-                </select>
-              </div>
+              <button
+                type="button"
+                onClick={() => setAudienceMode('filters')}
+                className={`flex-1 py-1.5 px-3 rounded-md flex items-center justify-center gap-1.5 font-medium transition-all ${
+                  audienceMode === 'filters'
+                    ? 'bg-white text-indigo-950 font-bold shadow-2xs border border-slate-200'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ListFilter className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Filtros Dinâmicos (UF / Cidade)</span>
+              </button>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">Busca por Nome ou E-mail</label>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Filtrar por palavra-chave..."
-                className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg"
-              />
-            </div>
+            {/* Mode 1: Contact List Selection */}
+            {audienceMode === 'list' && (
+              <div className="space-y-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-800">
+                      Selecione a Lista de Destinatários *
+                    </label>
+                    <Link
+                      href="/dashboard/sales/campaigns/audiences/import"
+                      target="_blank"
+                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                    >
+                      <Upload className="w-3 h-3" />
+                      Subir nova planilha (.CSV)
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </Link>
+                  </div>
+
+                  {contactLists.length > 0 ? (
+                    <select
+                      value={selectedListId ?? ''}
+                      onChange={(e) => setSelectedListId(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    >
+                      <option value="">Selecione uma lista de contatos...</option>
+                      {contactLists.map((list) => (
+                        <option key={list.id} value={list.id}>
+                          {list.name} ({list.contacts_count} contatos cadastrados)
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-800 flex flex-col gap-2">
+                      <p>Nenhuma lista de contatos encontrada no seu CRM.</p>
+                      <Link
+                        href="/dashboard/sales/campaigns/audiences/import"
+                        target="_blank"
+                        className="inline-flex items-center gap-1 font-bold text-emerald-800 underline"
+                      >
+                        <Upload className="w-3.5 h-3.5" /> Clique aqui para importar sua primeira planilha CSV
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Filtrar nome ou e-mail na lista (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Buscar dentro da lista selecionada..."
+                    className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Mode 2: Dynamic Filters Selection */}
+            {audienceMode === 'filters' && (
+              <div className="space-y-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                {audiences.length > 0 && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Usar Audiência Salva (opcional)
+                    </label>
+                    <select
+                      className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                      value={audienceId ?? ''}
+                      onChange={(event) => {
+                        const id = Number(event.target.value);
+                        const selected = audiences.find((item) => item.id === id);
+                        setAudienceId(id || null);
+                        if (selected?.filter_definition) {
+                          setStateFilter(String(selected.filter_definition.state || ''));
+                          setCityFilter(String(selected.filter_definition.city || ''));
+                          setSegmentFilter(String(selected.filter_definition.segment || ''));
+                          setSearchTerm(String(selected.filter_definition.search || ''));
+                        }
+                      }}
+                    >
+                      <option value="">Filtros manuais</option>
+                      {audiences.map((aud) => (
+                        <option key={aud.id} value={aud.id}>
+                          {aud.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Estado (UF)</label>
+                    <select
+                      value={stateFilter}
+                      onChange={(e) => {
+                        setStateFilter(e.target.value);
+                        setCityFilter('');
+                      }}
+                      className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                    >
+                      <option value="">Todos os Estados</option>
+                      {(segments?.states || []).map((st) => (
+                        <option key={st} value={st}>
+                          {st}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Cidade</label>
+                    <select
+                      value={cityFilter}
+                      onChange={(e) => setCityFilter(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                    >
+                      <option value="">Todas as Cidades</option>
+                      {(stateFilter
+                        ? segments?.cities_by_state?.[stateFilter] ?? []
+                        : segments?.cities ?? []
+                      ).map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Segmento da Empresa</label>
+                    <select
+                      value={segmentFilter}
+                      onChange={(e) => setSegmentFilter(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                    >
+                      <option value="">Todos os Segmentos</option>
+                      {(segments?.company_types || []).map((seg) => (
+                        <option key={seg} value={seg}>
+                          {seg}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Palavra-chave</label>
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Nome, e-mail..."
+                      className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Live Count Preview Card */}
-            <div className="p-3 bg-indigo-50/60 rounded-lg border border-indigo-100 flex items-center justify-between text-xs">
+            <div className="p-3 bg-indigo-50/80 rounded-xl border border-indigo-100 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-indigo-700" />
-                <span className="font-semibold text-indigo-950">Destinatários Estimados</span>
+                <span className="font-semibold text-indigo-950">Destinatários Estimados para o Envio</span>
               </div>
               <span className="font-bold text-sm text-indigo-900">
-                {previewLoading ? '...' : `${audiencePreview?.total_count || 0} contatos`}
+                {previewLoading ? 'Calculando...' : `${audiencePreview?.total_count || 0} contatos válidos`}
               </span>
             </div>
           </div>
-          </>)}
+        )}
 
         {/* Step 3: Content */}
         {step === 3 && (

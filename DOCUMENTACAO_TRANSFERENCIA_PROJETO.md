@@ -4,6 +4,8 @@
 > senhas, tokens, chaves privadas ou dados pessoais. Transfira esses itens por um
 > cofre de segredos; nunca por Git, e-mail, print ou este arquivo.
 
+Continuação técnica: [Parte 2 — contratos e operação](./DOCUMENTACAO_TRANSFERENCIA_PARTE_2.md).
+
 | Campo | Estado observado |
 | --- | --- |
 | Repositório | Avalia-Solar-2026 / monorepo local AB0-1-main |
@@ -757,4 +759,3 @@ automações externas e segredos como mudanças de alto risco com revisão human
 Atualize o cabeçalho deste arquivo em toda troca de responsável: commit/data,
 infraestrutura, acessos transferidos e riscos encerrados. Ele deve ser um
 registro verificável, nunca um local para credenciais.
-

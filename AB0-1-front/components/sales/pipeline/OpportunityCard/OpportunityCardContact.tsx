@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { User, UserCheck } from 'lucide-react';
+import { User } from 'lucide-react';
 import { PipelineCardDTO } from './OpportunityCard.types';
 
 interface ContactProps {

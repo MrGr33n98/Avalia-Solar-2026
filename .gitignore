@@ -54,6 +54,8 @@ AB0-1-front/public/**/*.zip
 # Testes de filtros da listagem de categorias
 !AB0-1-front/components/categories/CategoryFiltersPanel.test.tsx
 !AB0-1-front/components/categories/DecisionChips.test.tsx
+!AB0-1-front/__tests__/components/sales/OpportunityCard.test.tsx
+!AB0-1-front/__tests__/components/sales/SalesAnalyticsReport.test.tsx
 
 # Ignorar documentações de desenvolvimento
 docs/
@@ -89,6 +91,8 @@ docs/groups/*
 !docs/adr/
 docs/adr/*
 !docs/adr/ADR_GROUP_POST_MODEL.md
+!docs/architecture/
+!docs/architecture/*
 
 # Testes e previews de e-mail fazem parte da implementação de produção.
 !AB0-1-back/spec/

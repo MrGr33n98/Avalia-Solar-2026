@@ -6,12 +6,10 @@ import {
   Bold,
   CheckCircle2,
   ChevronDown,
-  FileText,
   Image as ImageIcon,
   Italic,
   Link as LinkIcon,
   List,
-  Mail,
   Minus,
   Paperclip,
   Pencil,
@@ -26,13 +24,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 interface SendEmailModalProps {
   open: boolean;
   onClose: () => void;
   opportunityId?: number;
+  contactId?: number;
+  accountId?: number;
   contactEmail?: string;
   contactName?: string;
   companyName?: string;
@@ -96,6 +95,8 @@ export default function SendEmailModal({
   open,
   onClose,
   opportunityId,
+  contactId,
+  accountId,
   contactEmail = '',
   contactName = '',
   companyName = '',
@@ -207,6 +208,8 @@ export default function SendEmailModal({
       formData.append('email[subject]', subject);
       formData.append('email[body_text]', body);
       if (opportunityId) formData.append('email[sales_opportunity_id]', String(opportunityId));
+      if (contactId) formData.append('email[sales_contact_id]', String(contactId));
+      if (accountId) formData.append('email[sales_account_id]', String(accountId));
       if (cc) formData.append('email[cc]', cc);
       if (bcc) formData.append('email[bcc]', bcc);
       formData.append('email[open_tracking_enabled]', 'true');
