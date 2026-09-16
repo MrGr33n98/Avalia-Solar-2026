@@ -1,6 +1,12 @@
 <div align="center">
+  <p>
+    <b>🌐 Language:</b> 
+    <b>🇺🇸 English</b> | 
+    <a href="README.pt-BR.md">🇧🇷 Português</a>
+  </p>
+  
   <h1>☀️ Avalia Solar 2026</h1>
-  <p><b>Plataforma SaaS Multi-tier de Inteligência e Consultoria de Energia Solar</b></p>
+  <p><b>Multi-tier SaaS Platform for Solar Energy Intelligence & Technical Consulting</b></p>
 
   <p>
     <a href="https://www.avaliasolar.com.br"><img src="https://img.shields.io/badge/Production_SaaS-avaliasolar.com.br-059669?style=for-the-badge&logo=vercel&logoColor=white" alt="Live SaaS" /></a>
@@ -22,15 +28,15 @@
 
 ---
 
-## 📌 Visão Geral & Proposta de Valor
+## 📌 Overview & Value Proposition
 
-O **Avalia Solar 2026** é uma plataforma SaaS profissional projetada para avaliação, comparação e consultoria de soluções em energia solar no Brasil. 
+**Avalia Solar 2026** is a professional SaaS platform designed for evaluation, comparison, and technical consulting of solar energy solutions in Brazil.
 
-Construída sob uma arquitetura de **Monorepo Escalável**, a plataforma integra APIs REST/GraphQL de alta performance, frontend web otimizado (PWA-first com Next.js 14 App Router), aplicativo mobile nativo (Expo SDK 56) e automação completa de infraestrutura (CI/CD, Docker, DevSecOps e Observabilidade).
+Engineered under a **Scalable Monorepo** architecture, the platform integrates high-performance REST/GraphQL APIs, an optimized web frontend (PWA-first with Next.js 14 App Router), a native mobile application (Expo SDK 56), and complete infrastructure automation (CI/CD, Docker, DevSecOps, and Observability).
 
 ---
 
-## 🏗️ Arquitetura do Sistema
+## 🏗️ System Architecture
 
 ```mermaid
 graph TD
@@ -52,102 +58,102 @@ graph TD
 
 ---
 
-## 📦 Componentes do Monorepo
+## 📦 Monorepo Modules & Components
 
-| Módulo | Tecnologias | Descrição |
+| Module | Stack | Description |
 | :--- | :--- | :--- |
-| **Backend (`AB0-1-back/`)** | Ruby 3.2, Rails 7, ActiveAdmin, GraphQL, RSpec | API RESTful & GraphQL, painel administrativo ActiveAdmin, autenticação JWT, Sidekiq queues e Pundit authorization. |
-| **Frontend (`AB0-1-front/`)** | Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS | Interface Web PWA-first, Server Components, ISR caching, otimização de SEO/AEO/GEO e design system Claymorphism. |
-| **Mobile (`AB0-1-mobile/`)** | Expo SDK 56, React Native 0.85, expo-router, Zustand | Aplicativo móvel nativo iOS/Android com navegação por tabs, offline caching e suporte safe-area. |
-| **Hermes Agent (`hermes-agent/`)** | Node.js, TypeScript, n8n integration | Agente autônomo de automação de growth, prospecção e integrações outbound. |
-| **Vídeos (`videos/`)** | Remotion 4, React | Composições dinâmicas de vídeo renderizadas programaticamente para marketing. |
-| **Infraestrutura (`infra/`)** | Docker, Docker Compose, Nginx, GitHub Actions | Orquestração de containers em produção, SSL/TLS, reverse proxy e workflows CI/CD. |
+| **Backend (`AB0-1-back/`)** | Ruby 3.2, Rails 7, ActiveAdmin, GraphQL, RSpec | RESTful & GraphQL API, ActiveAdmin management dashboard, JWT authentication, Sidekiq background jobs, and Pundit authorization policies. |
+| **Frontend (`AB0-1-front/`)** | Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS | PWA-first Web application, React Server Components, ISR caching, SEO/AEO/GEO optimizations, and Claymorphism design system. |
+| **Mobile (`AB0-1-mobile/`)** | Expo SDK 56, React Native 0.85, expo-router, Zustand | Native mobile application (iOS/Android) with file-based tab routing, offline caching, and safe-area support. |
+| **Hermes Agent (`hermes-agent/`)** | Node.js, TypeScript, n8n integration | Autonomous growth automation agent for outbound prospecting, lead enrichment, and integration workflows. |
+| **Videos (`videos/`)** | Remotion 4, React | Programmatic video rendering compositions for dynamic marketing video assets. |
+| **Infrastructure (`infra/`)** | Docker, Docker Compose, Nginx, GitHub Actions | Production container orchestration, SSL/TLS reverse proxy, and automated CI/CD workflows. |
 
 ---
 
-## ⚡ Guia de Inicialização Rápida (Quickstart)
+## ⚡ Quickstart Guide
 
-### Pré-requisitos
+### Prerequisites
 - Docker & Docker Compose
-- Node.js 20+ & Ruby 3.2+ (para desenvolvimento local fora do Docker)
+- Node.js 20+ & Ruby 3.2+ (for local development outside Docker)
 
-### 1. Clonar e Subir os Containers
+### 1. Clone & Spin up Stack
 ```bash
 git clone https://github.com/MrGr33n98/Avalia-Solar-2026.git
 cd Avalia-Solar-2026
 
-# Subir a stack completa via Docker Compose
+# Start full application stack via Docker Compose
 docker compose up -d
 ```
 
-### 2. Rodar as Migrations do Banco de Dados
+### 2. Run Database Migrations & Seeds
 ```bash
 docker compose exec backend bundle exec rails db:migrate db:seed
 ```
 
-### 3. Endereços Locais
-- 🌐 **Frontend Web:** `http://localhost:3000`
+### 3. Local Application URLs
+- 🌐 **Web Frontend:** `http://localhost:3000`
 - 🚀 **Backend API:** `http://localhost:3001`
-- 🏥 **Healthcheck API:** `http://localhost:3001/health/liveness`
+- 🏥 **Healthcheck Endpoint:** `http://localhost:3001/health/liveness`
 
 ---
 
-## 🧪 Suíte de Testes & Qualidade de Código
+## 🧪 Test Suite & Code Quality
 
-O repositório possui garantia rigorosa de qualidade com testes automatizados em todas as camadas:
+The repository enforces strict quality gates with automated testing across all architecture layers:
 
 ### Backend (Ruby on Rails)
 ```bash
 cd AB0-1-back
-bundle exec rspec           # Suíte de testes unitários e de integração
-bundle exec rubocop         # Análise estática de código Ruby
-bundle exec brakeman -q     # Auditoria de segurança de código SAST
+bundle exec rspec           # Unit and integration test suite
+bundle exec rubocop         # Static code analysis & Ruby linting
+bundle exec brakeman -q     # SAST security vulnerability scanner
 ```
 
 ### Frontend (Next.js)
 ```bash
 cd AB0-1-front
-npm run test                # Testes unitários com Jest
-npm run typecheck           # Checagem de tipos TypeScript
-npm run test:e2e            # Testes End-to-End com Playwright
+npm run test                # Unit tests with Jest
+npm run typecheck           # TypeScript compilation & type checking
+npm run test:e2e            # End-to-End tests with Playwright
 ```
 
 ### Mobile (Expo)
 ```bash
 cd AB0-1-mobile
-npm run test                # Testes unitários Jest
-npm run ui-audit            # Verificação de tokens de cor e UI audit
+npm run test                # Unit tests with Jest
+npm run ui-audit            # Hardcoded color audit & UI token validation
 ```
 
 ---
 
-## 🔒 DevSecOps & Confiabilidade (SRE)
+## 🔒 DevSecOps & Site Reliability (SRE)
 
-- **Análise Estática & Dinâmica (SAST/DAST):** CodeQL, StackHawk, Brakeman, RuboCop.
-- **Gerenciamento de Dependências:** Dependabot, `bundler-audit` e `npm audit` ativos no CI/CD.
-- **Proteção de Segredos:** Secret scanning ativo com Gitleaks em pre-commit.
-- **Pipelines CI/CD:** `.github/workflows/deploy-v1.yml` realiza build, execução de testes, publicação de imagens no GitHub Container Registry (GHCR) e deploy automatizado com rollback em caso de falha de healthcheck.
-
----
-
-## 📖 Documentação Técnica & Arquitetura
-
-A documentação detalhada do projeto está disponível no diretório [`docs/`](./docs/):
-- 📘 [Introdução à Documentação](./docs/00_LEIA-ME_PRIMEIRO.md)
-- 🏗️ [Decisões Arquiteturais (MADR)](./docs/architecture/)
-- 📊 [Relatórios de Auditoria e Qualidade](./docs/reports/)
-- 🔒 [Guias de Segurança & Compliance](./docs/security/)
+- **Static & Dynamic Code Analysis (SAST/DAST):** CodeQL, StackHawk, Brakeman, RuboCop.
+- **Dependency Security:** Dependabot, `bundler-audit`, and `npm audit` integrated into CI/CD pipelines.
+- **Secret Protection:** Pre-commit secret scanning powered by Gitleaks.
+- **CI/CD Pipelines:** `.github/workflows/deploy-v1.yml` orchestrates automated builds, test execution, image publishing to GitHub Container Registry (GHCR), and production deployment with zero-downtime healthcheck rollbacks.
 
 ---
 
-## 👤 Autor
+## 📖 Technical Documentation & Architecture
+
+Detailed technical documentation is available in the [`docs/`](./docs/) folder:
+- 📘 [Documentation Overview](./docs/00_LEIA-ME_PRIMEIRO.md)
+- 🏗️ [Architectural Decision Records (MADR)](./docs/architecture/)
+- 📊 [Audit & Quality Reports](./docs/reports/)
+- 🔒 [Security & Compliance Guides](./docs/security/)
+
+---
+
+## 👤 Author
 
 **Felipe Henrique Morais Almeida**  
 DevOps Engineer | Site Reliability Engineer (SRE) | Full Stack Engineer  
 - 💼 **LinkedIn:** [linkedin.com/in/felipe-almeida](https://linkedin.com/in/felipe-almeida)  
 - 🐙 **GitHub:** [@MrGr33n98](https://github.com/MrGr33n98)  
-- 🌐 **Plataforma em Produção:** [avaliasolar.com.br](https://www.avaliasolar.com.br)  
-- ✉️ **E-mail:** [felipehhenriquee@gmail.com](mailto:felipehhenriquee@gmail.com)
+- 🌐 **Production SaaS:** [avaliasolar.com.br](https://www.avaliasolar.com.br)  
+- ✉️ **Email:** [felipehhenriquee@gmail.com](mailto:felipehhenriquee@gmail.com)
 
 ---
 <div align="center">
