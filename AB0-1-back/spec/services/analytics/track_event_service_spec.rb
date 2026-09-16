@@ -8,6 +8,7 @@ RSpec.describe Analytics::TrackEventService do
     context 'when kill switch is active (G4_ANALYTICS_ENABLED=false)' do
       it 'returns success with analytics_disabled_by_flag error and logs' do
         allow(Rails.env).to receive(:test?).and_return(false)
+        allow(ENV).to receive(:[]).and_call_original
         allow(ENV).to receive(:[]).with('G4_ANALYTICS_ENABLED').and_return('false')
         allow(Rails.logger).to receive(:info)
 

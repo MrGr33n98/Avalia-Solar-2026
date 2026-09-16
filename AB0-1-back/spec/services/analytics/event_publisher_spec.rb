@@ -4,7 +4,7 @@ RSpec.describe Analytics::EventPublisher do
   let(:redis_mock) { instance_double(Redis) }
   
   before do
-    allow(Redis).to receive(:current).and_return(redis_mock)
+    stub_const('REDIS', redis_mock)
     allow(redis_mock).to receive(:set).and_return(true)
     allow(Analytics::BigQueryBatchFlushJob).to receive(:perform_later)
   end

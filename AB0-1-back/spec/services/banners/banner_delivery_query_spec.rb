@@ -48,7 +48,7 @@ RSpec.describe Banners::BannerDeliveryQuery do
   it 'não entrega banner de placement ainda planejado' do
     banner = create(:banner, :approved, active: true, position: 'navbar')
     allow(BannerPlacements::Catalog).to receive(:all).and_return([
-      BannerPlacements::Catalog::Entry.new('navbar', ['/*'], [960, 100], 'premium', 'planned')
+      BannerPlacements::Catalog::Entry.new('navbar', 'Barra de navegação', ['/*'], [960, 100], 'premium', 'planned')
     ])
 
     expect(described_class.call(position: 'navbar')).not_to include(banner)
