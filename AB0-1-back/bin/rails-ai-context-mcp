@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Wrapper local para o servidor MCP rails-ai-context no Avalia Solar 2026
+# Garante a navegação para o diretório AB0-1-back antes de executar rails ai:serve
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+cd "${BACKEND_DIR}"
+exec bundle exec rails ai:serve "$@"

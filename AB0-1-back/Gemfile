@@ -115,6 +115,9 @@ group :development do
 
   # TASK-020: N+1 query detection
   gem 'bullet'
+
+  # Rails AI Context for development AI/MCP server
+  gem 'rails-ai-context'
 end
 
 group :test do

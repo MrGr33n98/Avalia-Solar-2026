@@ -433,6 +433,8 @@ GEM
     rails-html-sanitizer (1.6.0)
       loofah (~> 2.21)
       nokogiri (~> 1.14)
+    rails-ai-context (0.4.0)
+      railties (>= 7.0)
     railties (7.0.8.4)
       actionpack (= 7.0.8.4)
       activesupport (= 7.0.8.4)
@@ -709,6 +711,7 @@ DEPENDENCIES
   rack-session (~> 1.0)
   rackup (~> 1.0)
   rails (~> 7.0.8)
+  rails-ai-context
   redis (~> 5.0)
   rqrcode (~> 2.2)
   rspec-rails (~> 6.0)
