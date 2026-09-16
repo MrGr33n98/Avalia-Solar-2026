@@ -8,8 +8,16 @@ class Plan < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
-  # Virtual attribute to store feature flags during form submission
-  attr_accessor :plan_feature_fields, :plan_tier_template
+  # Virtual attributes to store feature flags, tier, and status during form submission or specs
+  attr_accessor :plan_feature_fields, :plan_tier_template, :status
+
+  def tier=(val)
+    self.plan_tier_template = val
+  end
+
+  def tier
+    plan_tier_template || inferred_plan_tier
+  end
 
   # =========================================================================
   # Feature Management
