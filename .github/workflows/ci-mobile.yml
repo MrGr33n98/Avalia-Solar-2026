@@ -1,4 +1,4 @@
-name: Mobile CI Checks
+name: CI — Mobile App (React Native)
 
 on:
   pull_request:

@@ -417,12 +417,11 @@ Os workflows garantem qualidade em PR/push para `main`, `develop`, `staging`:
 
 | Workflow | Gatilho | O que faz |
 | --- | --- | --- |
-| `deploy-v1.yml` | push `main` / manual | Build e deploy de produção com rollback automático |
-| `deploy-staging.yml` | manual | Deploy em staging |
-| `enterprise-pr-pipeline.yml` | PR/push `main`/`develop`/`staging` | RuboCop, Brakeman, bundler-audit, ESLint, npm audit, Gitleaks, RSpec, Playwright E2E |
-| `backend-regression-smoke.yml` | alterações em `AB0-1-back/**` | RSpec regressão com Postgres/Redis |
-| `mobile-ci.yml` | PR com alterações mobile | lint, typecheck, testes mobile |
-| `mobile-cd.yml` | push `main` em mobile / manual | EAS Update OTA; build de binários sob demanda |
+| `cd-production.yml` | push `main` / manual | Build e deploy de produção com rollback automático |
+| `cd-staging.yml` | manual | Deploy em staging |
+| `ci-web-backend.yml` | PR/push `main`/`staging` | RuboCop, Brakeman, bundler-audit, ESLint, npm audit, Gitleaks, RSpec, Playwright E2E |
+| `ci-mobile.yml` | PR com alterações mobile | lint, typecheck, testes mobile |
+| `cd-mobile.yml` | push `main` em mobile / manual | EAS Update OTA; build de binários sob demanda |
 
 ---
 

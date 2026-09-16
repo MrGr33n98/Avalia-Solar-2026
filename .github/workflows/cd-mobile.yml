@@ -1,4 +1,4 @@
-name: Mobile CD (EAS Build & Update)
+name: CD — Mobile App (Expo EAS & OTA)
 
 on:
   push:

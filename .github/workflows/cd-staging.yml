@@ -1,4 +1,4 @@
-name: Deploy Staging — Avalia Solar
+name: CD — Staging Deploy (Manual)
 
 # Triggers only on manual dispatch (automatic push to staging disabled to save resources)
 on:

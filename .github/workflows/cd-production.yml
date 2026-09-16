@@ -1,4 +1,4 @@
-name: Enterprise Deploy - Avalia Solar
+name: CD — Production Deploy (DigitalOcean)
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Enterprise CI/CD Pipeline
+name: CI — Web & Backend (Quality & Tests)
 
 on:
   push:
