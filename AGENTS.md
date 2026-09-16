@@ -355,6 +355,7 @@ AB0-1-mobile/
 ### 7.1 Geral
 
 - **Idioma:** comentários, nomes de commits, documentação e mensagens de erro em **português do Brasil**, salvo quando a convenção da tecnologia exigir inglês (nomes de classes, métodos, variáveis e tabelas do banco).
+- **Commits Semânticos (Conventional Commits):** todo commit DEVE obrigatoriamente seguir o padrão Conventional Commits: `<tipo>(<escopo>): <descrição imperativa>` (ex: `feat(front):`, `fix(back):`, `docs:`, `ci:`, `refactor:`, `test:`, `chore:`).
 - **Mínimo de mudanças:** faça apenas as alterações necessárias para a tarefa. Evite refatorações oportunistas.
 - **Não invente padrões:** siga o estilo e as convenções já presentes no arquivo e no módulo.
 
