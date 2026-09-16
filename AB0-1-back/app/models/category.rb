@@ -130,6 +130,10 @@ class Category < ApplicationRecord
     seo_url
   end
 
+  def slug=(val)
+    self.seo_url = val
+  end
+
   def tags
     t = []
     t << 'Destaque' if featured?
