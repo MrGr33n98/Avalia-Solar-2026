@@ -12,6 +12,7 @@ FactoryBot.define do
     description { Faker::Company.catch_phrase }
     email { Faker::Internet.email }
     status { 'active' }
+    plan_status { 'active' }
     active_admin { true }
     association :plan
 
