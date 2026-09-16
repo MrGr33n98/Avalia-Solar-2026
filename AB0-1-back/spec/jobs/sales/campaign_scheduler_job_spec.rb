@@ -5,24 +5,29 @@ require 'rails_helper'
 RSpec.describe Sales::CampaignSchedulerJob, type: :job do
   let(:company) { create(:company) }
   let(:user) { create(:user, company: company) }
+  let(:template) { Sales::EmailTemplate.create!(company: company, name: 'Template Scheduler', subject_template: 'Assunto', body_html: '<p>Mensagem</p>') }
 
   describe '#perform' do
+    before do
+      account = Sales::Account.create!(company: company, owner: user, name: 'Conta Scheduler')
+      Sales::Contact.create!(sales_account_id: account.id, first_name: 'Contato', email: 'contato-scheduler@example.test')
+    end
     it 'dispatches due scheduled campaigns' do
-      due_campaign = create(:sales_campaign, company: company, user: user, status: 'scheduled', scheduled_at: 10.minutes.ago)
+      due_campaign = create(:sales_campaign, company: company, user: user, email_template: template, status: 'scheduled', scheduled_at: 10.minutes.ago)
       expect(Sales::Campaigns::Dispatcher).to receive(:call).with(campaign: due_campaign, action: 'dispatch').and_call_original
 
       described_class.new.perform
     end
 
     it 'does not dispatch future scheduled campaigns' do
-      future_campaign = create(:sales_campaign, company: company, user: user, status: 'scheduled', scheduled_at: 1.hour.from_now)
+      future_campaign = create(:sales_campaign, company: company, user: user, email_template: template, status: 'scheduled', scheduled_at: 1.hour.from_now)
       expect(Sales::Campaigns::Dispatcher).not_to receive(:call).with(campaign: future_campaign, action: 'dispatch')
 
       described_class.new.perform
     end
 
     it 'is idempotent across two concurrent executions' do
-      due_campaign = create(:sales_campaign, company: company, user: user, status: 'scheduled', scheduled_at: 5.minutes.ago)
+      due_campaign = create(:sales_campaign, company: company, user: user, email_template: template, status: 'scheduled', scheduled_at: 5.minutes.ago)
       
       described_class.new.perform
       expect(due_campaign.reload.status).to eq('dispatching')

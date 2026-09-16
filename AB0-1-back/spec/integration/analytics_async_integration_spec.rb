@@ -92,6 +92,7 @@ RSpec.describe 'Analytics Async Integration', type: :model do
     it 'enqueues analytics job for company activation' do
       # Start with non-active company
       inactive_company = create(:company, status: 'inactive')
+      inactive_company.categories << create(:category)
       
       expect(Analytics::TrackEventJob).to receive(:perform_later).with(
         hash_including(

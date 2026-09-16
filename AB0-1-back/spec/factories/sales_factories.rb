@@ -25,6 +25,10 @@ FactoryBot.define do
     subject { 'Assunto de Teste' }
     body_html { '<p>Conteúdo de teste</p>' }
     status { 'queued' }
+
+    after(:build) do |message|
+      message.sender_user ||= build(:user, company: message.company)
+    end
   end
 
   factory :sales_email_template, class: 'Sales::EmailTemplate' do

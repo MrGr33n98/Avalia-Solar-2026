@@ -23,7 +23,7 @@ RSpec.describe Sales::SendEmailJob, type: :job do
   describe '#perform' do
     context 'send-time suppression check' do
       it 'prevents provider dispatch and marks email failed / recipient unsubscribed if suppressed' do
-        Sales::EmailSuppression.create!(company: company, email: recipient.email, reason: 'unsubscribed')
+        Sales::EmailSuppression.create!(company: company, email: recipient.email, reason: 'unsubscribe')
 
         expect(Sales::Messaging::Providers::Ses).not_to receive(:new)
         expect {

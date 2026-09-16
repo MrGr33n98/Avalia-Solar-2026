@@ -70,6 +70,8 @@ module Sales
             email_message.reload
             if email_message.status == 'sent' || email_message.status == 'delivered'
               recipient.mark_sent!(email_message)
+            elsif campaign.reload.status != 'dispatching'
+              next
             elsif email_message.status == 'failed' && email_message.metadata.is_a?(Hash) && email_message.metadata['error'] == 'SUPPRESSED_AT_SEND_TIME'
               recipient.update!(status: 'unsubscribed', error_message: 'SUPPRESSED_AT_SEND_TIME')
             else
