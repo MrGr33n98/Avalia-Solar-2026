@@ -21,7 +21,7 @@ RSpec.describe 'Event Platform Integration DB', type: :model do
     ActiveRecord::Base.connection.execute("INSERT INTO event_definitions (event_type, required_keys, enabled) VALUES ('profile_view', '[]', true) ON CONFLICT DO NOTHING")
     
     # 1. Ingest
-    res = Analytics::TrackEventService.call(company_id: 99, event_type: 'profile_view', metadata: {}, event_id: test_event_id)
+    res = Analytics::TrackEventService.call(company_id: 99, event_type: 'profile_view', metadata: {}, tracked_at: 1.minute.ago, event_id: test_event_id)
     expect(res.ok).to be true
     
     # Fast path
@@ -35,7 +35,7 @@ RSpec.describe 'Event Platform Integration DB', type: :model do
     expect(features['engagement_score'].to_i).to eq(1)
 
     # Idempotency checks
-    res_dup = Analytics::TrackEventService.call(company_id: 99, event_type: 'profile_view', metadata: {}, event_id: test_event_id)
+    res_dup = Analytics::TrackEventService.call(company_id: 99, event_type: 'profile_view', metadata: {}, tracked_at: 1.minute.ago, event_id: test_event_id)
     expect(res_dup.ok).to be true
     expect(res_dup.error).to eq('duplicate_event')
 

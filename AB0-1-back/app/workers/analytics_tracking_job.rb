@@ -10,8 +10,18 @@ class AnalyticsTrackingJob
   sidekiq_options queue: :analytics, retry: 3
 
   # Process analytics event
-  def perform(event_name, properties, metadata)
-    company_id = properties['company_id']
+  def perform(event_name, arg2, arg3 = {}, arg4 = {})
+    if arg2.is_a?(Hash)
+      properties = (arg2 || {}).transform_keys(&:to_s)
+      metadata = arg3 || {}
+      company_id = properties['company_id']
+    else
+      company_id = arg2
+      properties = (arg3 || {}).transform_keys(&:to_s)
+      properties['company_id'] ||= company_id
+      metadata = arg4 || {}
+    end
+
     return unless company_id
 
     day = Date.current
