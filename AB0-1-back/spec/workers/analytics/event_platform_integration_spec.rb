@@ -17,8 +17,8 @@ RSpec.describe 'Event Platform Integration DB', type: :model do
     test_event_id = "test_id_#{SecureRandom.hex(6)}"
     
     # Create required data
-    ActiveRecord::Base.connection.execute("INSERT OR IGNORE INTO companies (id, name, slug, status, created_at, updated_at) VALUES (99, 'Test Company', 'test-company', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)")
-    ActiveRecord::Base.connection.execute("INSERT OR IGNORE INTO event_definitions (event_type, required_keys, enabled) VALUES ('profile_view', '[]', 1)")
+    ActiveRecord::Base.connection.execute("INSERT INTO companies (id, name, slug, status, created_at, updated_at) VALUES (99, 'Test Company', 'test-company', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ON CONFLICT DO NOTHING")
+    ActiveRecord::Base.connection.execute("INSERT INTO event_definitions (event_type, required_keys, enabled) VALUES ('profile_view', '[]', true) ON CONFLICT DO NOTHING")
     
     # 1. Ingest
     res = Analytics::TrackEventService.call(company_id: 99, event_type: 'profile_view', metadata: {}, event_id: test_event_id)

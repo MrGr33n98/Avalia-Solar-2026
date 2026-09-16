@@ -126,13 +126,7 @@ class Category < ApplicationRecord
     true
   end
 
-  def slug
-    seo_url
-  end
-
-  def slug=(val)
-    self.seo_url = val
-  end
+  alias_attribute :slug, :seo_url
 
   def tags
     t = []

@@ -4,7 +4,7 @@ FactoryBot.define do
   factory :plan do
     sequence(:name) { |n| "Basic Plan #{n}" }
     price { 99.90 }
-    features { { max_products: 50, dashboard_access: true } }
+    features { { max_products: 50, dashboard_access: true, quote_feature: true, custom_ctas: true, quote_requests: true } }
   end
 
   factory :company do
