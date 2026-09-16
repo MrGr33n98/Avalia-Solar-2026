@@ -1,121 +1,46 @@
-# Synkra AIOS Agent for GitHub Copilot
+# GitHub Copilot Custom Instructions — Avalia Solar 2026
 
-You are working with Synkra AIOS, an AI-Orchestrated System for Full Stack Development.
-
-## Core Framework Understanding
-
-Synkra AIOS is a meta-framework that orchestrates AI agents to handle complex development workflows. Always recognize and work within this architecture.
-
-## Agent System
-
-### Agent Activation (Chat Modes)
-- Select agent mode from the chat mode selector in VS Code
-- Available agents: dev, qa, architect, pm, po, sm, analyst
-- Agent commands use the * prefix: *help, *create-story, *task, *exit
-
-### Agent Context
-When an agent mode is active:
-- Follow that agent's specific persona and expertise
-- Use the agent's designated workflow patterns
-- Maintain the agent's perspective throughout the interaction
-
-## Development Methodology
-
-### Story-Driven Development
-1. **Work from stories** - All development starts with a story in `docs/stories/`
-2. **Update progress** - Mark checkboxes as tasks complete: [ ] → [x]
-3. **Track changes** - Maintain the File List section in the story
-4. **Follow criteria** - Implement exactly what the acceptance criteria specify
-
-### Code Standards
-- Write clean, self-documenting code
-- Follow existing patterns in the codebase
-- Include comprehensive error handling
-- Add unit tests for all new functionality
-- Use TypeScript/JavaScript best practices
-
-### Testing Requirements
-- Run all tests before marking tasks complete
-- Ensure linting passes: `npm run lint`
-- Verify type checking: `npm run typecheck`
-- Add tests for new features
-- Test edge cases and error scenarios
-
-## AIOS Framework Structure
-
-```
-aios-core/
-├── agents/         # Agent persona definitions (YAML/Markdown)
-├── tasks/          # Executable task workflows
-├── workflows/      # Multi-step workflow definitions
-├── templates/      # Document and code templates
-├── checklists/     # Validation and review checklists
-└── rules/          # Framework rules and patterns
-
-docs/
-├── stories/        # Development stories (numbered)
-├── prd/            # Product requirement documents
-├── architecture/   # System architecture documentation
-└── guides/         # User and developer guides
-```
-
-## Ruby on Rails Specialized Knowledge
-
-When working on backend tasks, apply expertise from our specialized Rails skills:
-
-### 💎 Ruby Pro & Rails Patterns
-- **Metaprogramming**: Use mixins, DSLs, and blocks effectively for expressive code.
-- **ActiveRecord**: Avoid N+1 queries, use scopes, and ensure proper indexing (UUID primary keys).
-- **Architecture**: Follow MVC strictly. Use ActiveAdmin for administration (`app/admin`).
-- **Clean Code**: Follow Ruby idioms and community conventions. Use RuboCop for styling.
-
-### 🏗️ Advanced Setup (NextGen Rails)
-- **Stack**: Rails 8 API + PostgreSQL + Inertia.js 2 + React.
-- **Background Jobs**: Use Sidekiq 8 with Redis for asynchronous tasks.
-- **Database**: Use `timestamptz`, JSONB for metadata, and encrypted fields for sensitive data.
-
-### 🔄 Maintenance & Upgrades
-- **Upgrade Path**: Always test before upgrading. Use selective file merging instead of `rails app:update` to preserve local configurations.
-- **JS Integration**: Ensure Hotwire (Turbo/Stimulus) versions align with Rails when applicable.
-
-## GitHub Copilot-Specific Configuration
-
-### Requirements
-- VS Code 1.101+ required
-- Enable `chat.agent.enabled: true` in settings
-
-### Chat Modes Location
-- Agent modes defined in `.github/chatmodes/`
-- Each file defines a specialized agent persona
-
-### Usage
-1. Open Chat view: `Ctrl+Alt+I` (Windows/Linux) or `⌃⌘I` (Mac)
-2. Select **Agent** from the chat mode selector
-3. Choose the AIOS agent mode you need
-
-### Available Agent Modes
-| Mode | Purpose |
-|------|---------|
-| aios-dev | Full-stack development |
-| aios-qa | Quality assurance |
-| aios-architect | System design |
-| aios-pm | Project management |
-
-### Performance Tips
-- Use inline completions for quick code suggestions
-- Use chat for complex explanations and refactoring
-- Reference files with @file syntax
-- Use @workspace for project-wide context
+Você é o assistente de IA especialista trabalhando no repositório **Avalia Solar 2026**, uma plataforma profissional de consultoria e marketplace de energia solar.
 
 ---
-*Synkra AIOS GitHub Copilot Configuration v4.0.4*
 
-<!-- GSD Configuration — managed by get-shit-done installer -->
-# Instructions for GSD
+## 🚀 Arquitetura e Stack Tecnológica
 
-- Use the get-shit-done skill when the user asks for GSD or uses a `gsd-*` command.
-- Treat `/gsd-...` or `gsd-...` as command invocations and load the matching file from `.github/skills/gsd-*`.
-- When a command says to spawn a subagent, prefer a matching custom agent from `.github/agents`.
-- Do not apply GSD workflows unless the user explicitly asks for them.
-- After completing any `gsd-*` command (or any deliverable it triggers: feature, bug fix, tests, docs, etc.), ALWAYS: (1) offer the user the next step by prompting via `ask_user`; repeat this feedback loop until the user explicitly indicates they are done.
-<!-- /GSD Configuration -->
+O repositório é um **monorepo** composto pelas seguintes camadas:
+
+1. **Backend (`AB0-1-back/`)**:
+   - **Ruby 3.2.2** com **Rails 7.0.8** (API REST em `/api/v1` + GraphQL em `/graphql` + ActiveAdmin em `/admin`).
+   - **PostgreSQL 14+** + **Redis 7** (Sidekiq 7 para background jobs).
+   - Autenticação Devise + JWT customizado / Autorização via Pundit.
+   - Padrão MVC + Service Objects (`app/services`) para lógica de negócio.
+
+2. **Frontend (`AB0-1-front/`)**:
+   - **Next.js 14.2 (App Router)** + **React 18** + **TypeScript 5**.
+   - **Tailwind CSS 3.3** + Design Tokens Claymorphism / AS-EDS + Radix UI / shadcn/ui primitives.
+   - Estado: Zustand 5 + TanStack Query 5 + Apollo Client 4.
+   - Path alias: `@/*` para imports internos.
+
+3. **Mobile (`AB0-1-mobile/`)**:
+   - **Expo SDK 56** + **React Native 0.85** com `expo-router` (file-based routing).
+   - Componentes responsivos PWA-first e navegação nativa.
+   - Proibido usar cores hardcoded (usar obrigatoriamente `src/constants/theme.ts`).
+
+---
+
+## 🎨 Diretrizes de Estilo e Código
+
+- **Idioma**: Documentação, comentários e mensagens de commit em **Português (Brasil)**. Código e identificadores em Inglês.
+- **Commits Semânticos**: Use Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `ci:`).
+- **Trunk-Based Development**: Commits e PRs são direcionados para a branch `main`.
+- **Qualidade de Código**:
+  - Backend: Seguir estilos do RuboCop, evitar N+1 queries (`includes`/`preload`).
+  - Frontend: `npm run lint` (ESLint) e `npm run typecheck` devem passar sem erros.
+  - Mobile: Executar `npm run ui-audit` antes de finalizar alterações de UI.
+
+---
+
+## 🧪 Suíte de Testes e Qualidade
+
+- **Backend**: RSpec (`bundle exec rspec`) + Brakeman (`bundle exec brakeman -q -w2`).
+- **Frontend**: Jest (`npm run test`) + Playwright E2E (`npx playwright test`).
+- **Mobile**: Jest (`npm run test`) + Maestro E2E (`.maestro/`).
