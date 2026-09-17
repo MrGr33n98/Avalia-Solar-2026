@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_06_193000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -3545,7 +3545,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_06_193000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["company_id", "name"], name: "idx_sales_accounts_company_name"
-    t.index ["company_id"], name: "index_sales_accounts_on_company_id", unique: true, where: "(company_id IS NOT NULL)"
+    t.index ["company_id"], name: "index_sales_accounts_on_company_id"
     t.index ["domain"], name: "index_sales_accounts_on_domain"
     t.index ["owner_id", "name"], name: "idx_sales_accounts_owner_name"
     t.index ["owner_id"], name: "index_sales_accounts_on_owner_id"
@@ -4110,6 +4110,56 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_06_193000) do
     t.index ["campaign_id"], name: "index_sales_forms_on_campaign_id"
     t.index ["company_id", "slug"], name: "index_sales_forms_on_company_id_and_slug", unique: true
     t.index ["company_id"], name: "index_sales_forms_on_company_id"
+  end
+
+  create_table "sales_import_rows", force: :cascade do |t|
+    t.uuid "sales_import_id", null: false
+    t.integer "row_number", null: false
+    t.jsonb "raw_data", default: {}
+    t.jsonb "normalized_data", default: {}
+    t.string "status", default: "pending", null: false
+    t.string "fingerprint"
+    t.jsonb "errors_json", default: []
+    t.jsonb "warnings_json", default: []
+    t.string "duplicate_type"
+    t.string "duplicate_record_type"
+    t.bigint "duplicate_record_id"
+    t.string "result_record_type"
+    t.bigint "result_record_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sales_import_id", "fingerprint"], name: "index_sales_import_rows_on_sales_import_id_and_fingerprint"
+    t.index ["sales_import_id", "row_number"], name: "index_sales_import_rows_on_sales_import_id_and_row_number", unique: true
+    t.index ["sales_import_id", "status"], name: "index_sales_import_rows_on_sales_import_id_and_status"
+    t.index ["sales_import_id"], name: "index_sales_import_rows_on_sales_import_id"
+  end
+
+  create_table "sales_imports", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "user_id", null: false
+    t.string "entity_type", default: "lead", null: false
+    t.string "filename", null: false
+    t.string "status", default: "uploaded", null: false
+    t.integer "total_rows", default: 0
+    t.integer "processed_rows", default: 0
+    t.integer "valid_rows", default: 0
+    t.integer "invalid_rows", default: 0
+    t.integer "duplicate_rows", default: 0
+    t.integer "created_rows", default: 0
+    t.integer "updated_rows", default: 0
+    t.integer "skipped_rows", default: 0
+    t.jsonb "mapping", default: {}
+    t.jsonb "options", default: {}
+    t.jsonb "error_summary", default: {}
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "csv_headers", default: [], null: false
+    t.index ["company_id", "created_at"], name: "index_sales_imports_on_company_id_and_created_at"
+    t.index ["company_id", "status"], name: "index_sales_imports_on_company_id_and_status"
+    t.index ["company_id"], name: "index_sales_imports_on_company_id"
+    t.index ["user_id"], name: "index_sales_imports_on_user_id"
   end
 
   create_table "sales_integrations", force: :cascade do |t|
@@ -5108,6 +5158,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_06_193000) do
   add_foreign_key "sales_form_submissions", "sales_forms", column: "form_id"
   add_foreign_key "sales_forms", "companies"
   add_foreign_key "sales_forms", "sales_campaigns", column: "campaign_id"
+  add_foreign_key "sales_import_rows", "sales_imports", on_delete: :cascade
+  add_foreign_key "sales_imports", "companies"
+  add_foreign_key "sales_imports", "users"
   add_foreign_key "sales_integrations", "companies"
   add_foreign_key "sales_integrations", "users", column: "created_by_id"
   add_foreign_key "sales_intelligence_signals", "sales_accounts"
