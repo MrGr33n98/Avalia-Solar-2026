@@ -1,33 +1,16 @@
 {
   "mcpServers": {
     "posthog": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote@latest",
-        "https://mcp.posthog.com/sse"
-      ]
+      "serverUrl": "https://mcp.posthog.com/sse"
     },
     "n8n-mcp": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "supergateway",
-        "--streamableHttp",
-        "https://n8n.avaliasolar.com.br/mcp-server/http",
-        "--header",
-        "authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMzNkNGZiOC0xOTA5LTQ1NDItYTdlZS00Y2JmMTRhYWYxYTgiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjNjMzM3NmY5LTQxY2MtNDBlNy1iZTFiLWFkZDRhZDAzNDQzZCIsImlhdCI6MTc3NjI2Njk2OX0.Yja2LaUXeclkV6i4_2EJ14STotOPqN5B0T4-YdxYY1w"
-      ]
+      "serverUrl": "https://n8n.avaliasolar.com.br/mcp-server/http",
+      "headers": {
+        "Authorization": "${N8N_MCP_AUTHORIZATION}"
+      }
     },
     "figma": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-figma"
-      ],
-      "env": {
-        "FIGMA_PERSONAL_ACCESS_TOKEN": "{env:FIGMA_PERSONAL_ACCESS_TOKEN}"
-      }
+      "serverUrl": "https://mcp.figma.com/mcp"
     },
     "github": {
       "command": "npx",
@@ -36,7 +19,7 @@
         "@modelcontextprotocol/server-github"
       ],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "SUA_CHAVE_AQUI"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
     },
     "firecrawl": {
@@ -46,14 +29,14 @@
         "@modelcontextprotocol/server-firecrawl"
       ],
       "env": {
-        "FIRECRAWL_API_KEY": "SUA_CHAVE_AQUI"
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
       }
     },
     "playwright": {
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-playwright"
+        "@playwright/mcp@latest"
       ]
     },
     "context7": {
@@ -63,6 +46,33 @@
         "@upstash/context7-mcp"
       ]
     },
+    "next-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "next-devtools-mcp@latest"
+      ]
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "shadcn@latest",
+        "mcp"
+      ]
+    },
+    "dbhub": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@bytebase/dbhub@latest",
+        "--transport",
+        "stdio",
+        "--readonly",
+        "--dsn",
+        "postgresql://postgres:postgres@127.0.0.1:5433/ab0_development"
+      ]
+    },
     "stitchmcp": {
       "command": "npx",
       "args": [
@@ -70,6 +80,9 @@
         "@_davideast/stitch-mcp",
         "serve"
       ]
+    },
+    "rails-ai-context": {
+      "command": "/home/felipe/.gemini/antigravity-ide/scratch/Avalia-Solar-2026/AB0-1-back/bin/rails-ai-context-mcp"
     }
   }
 }
