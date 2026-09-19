@@ -651,8 +651,8 @@ module PlanFeatureCatalog
     def cast_value(value, definition)
       case definition[:type]
       when :integer
-        integer = value.to_i
-        integer.positive? ? integer : nil
+        return nil if value.nil? || value == '' || value == true || value == 'unlimited'
+        value.to_i
       else
         ActiveModel::Type::Boolean.new.cast(value)
       end

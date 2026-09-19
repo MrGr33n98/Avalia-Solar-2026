@@ -1,0 +1,72 @@
+version: "2026-09-18"
+framework: "Golden SaaS Blueprint"
+project: "Avalia Solar 2026"
+
+capabilities:
+  identity:
+    status: "PARTIAL"
+    canonical_model: "User"
+    auth_providers: ["devise", "jwt", "oauth2"]
+    mfa_ready: false
+
+  tenancy:
+    status: "PARTIAL"
+    strategy: "pool-first"
+    bridge_ready: false
+    tenant_scope_enforced: false
+    models: ["Company", "CompanyMember"]
+
+  authorization:
+    status: "PARTIAL"
+    engine: "pundit"
+    rbac_unified: false
+    policies_count: 36
+
+  control_plane:
+    status: "PARTIAL"
+    entitlements_engine: "CompanyFeatureAccessResolver"
+    usage_metering: false
+    quota_enforcement: "PARTIAL"
+
+  billing:
+    status: "IMPLEMENTED"
+    gateways: ["stripe", "mercadopago"]
+    models: ["Plan", "CompanySubscription", "Billing::StripeEvent"]
+
+  sales_crm:
+    status: "PARTIAL"
+    models: ["Sales::Account", "Sales::Opportunity", "Sales::Contact", "Sales::Pipeline", "Sales::Stage"]
+    tenant_isolation: "admin_only_scope"
+
+  marketplace_reviews:
+    status: "IMPLEMENTED"
+    models: ["Company", "Review", "Product", "Category", "CompanyTrustScore"]
+    moderation_pipeline: true
+
+  event_bus:
+    status: "PARTIAL"
+    transactional_outbox: false
+    models: ["DomainEvent"]
+    dispatcher: "EventDispatcher"
+
+  async_processing:
+    status: "IMPLEMENTED"
+    engine: "Sidekiq 7"
+    redis_persistence: false
+    queues: ["default", "critical", "mailers", "analytics"]
+
+  data_architecture:
+    status: "IMPLEMENTED"
+    system_of_record: "PostgreSQL 14+"
+    tables_count: 260
+
+  observability:
+    status: "IMPLEMENTED"
+    providers: ["sentry", "new_relic", "scout_apm", "yabeda_prometheus", "posthog"]
+    distributed_tracing: "PARTIAL"
+
+  mcp_agent_readiness:
+    status: "PARTIAL"
+    mcp_config: "infra/MCP_CONFIG.json"
+    hitl_approval_queue: false
+    agent_identity: false

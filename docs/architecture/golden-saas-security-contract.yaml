@@ -1,0 +1,35 @@
+version: "2026-09-18"
+framework: "Golden SaaS Security Contract"
+wave: "Wave 0 Remediated"
+
+contracts:
+  tenancy:
+    strategy: "pool-first"
+    dashboard_scope: "VERIFIED"
+    subresources_scope: "VERIFIED"
+    idor_protection: "membership_validation_active"
+
+  jwt:
+    revocation_check: "VERIFIED"
+    finding_id: "SEC-02"
+    status: "REMEDIATED"
+    canonical_guard: "BaseController#current_user checks JwtBlacklistService.revoked?"
+
+  sales_boundary:
+    scope: "INTERNAL_ONLY"
+    marketplace_companies_access: "DENY"
+    reviewers_access: "DENY"
+    staff_access: "ALLOW"
+    guard: "SalesController#require_internal_sales"
+
+  activeadmin_boundary:
+    model: "AdminUser"
+    marketplace_user_access: "DENY"
+    status: "VERIFIED"
+
+findings_summary:
+  confirmed_p0: 0
+  confirmed_p1: 2
+  needs_test: 0
+  false_positives: 2
+  unknown: 0

@@ -286,23 +286,23 @@ export default function CRMSidebar({ onOpenSearch: _onOpenSearch, onOpenAddModal
 
         <div className="border-t border-slate-800/80 my-3 mx-1" />
 
-        {/* Avalia AI */}
-        <div className="pt-1">
-          <button
-            type="button"
-            onClick={() => onOpenAddModal?.('ai')}
-            title="Avalia AI"
-            className={cn(
-              'transition-all duration-150 flex items-center text-purple-200 bg-[#161233] border border-purple-700/50 hover:bg-[#1f1945]',
-              collapsed
-                ? 'w-10 h-10 justify-center mx-auto rounded-xl'
-                : 'w-full px-3 py-2.5 rounded-xl font-semibold gap-3 text-xs'
-            )}
-          >
-            <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
-            {!collapsed && <span>Avalia AI</span>}
-          </button>
-        </div>
+        {/* AI Control Plane */}
+        <Link
+          href="/dashboard/sales/ai/inbox"
+          title="AI Control Plane"
+          className={cn(
+            'transition-all duration-150 flex items-center gap-3',
+            collapsed
+              ? 'w-10 h-10 justify-center mx-auto rounded-xl'
+              : 'px-3 py-2.5 rounded-xl font-medium',
+            isCurrent('/dashboard/sales/ai')
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-xs'
+              : 'text-purple-200 bg-[#161233]/70 border border-purple-800/40 hover:bg-[#1f1945] hover:text-white'
+          )}
+        >
+          <Sparkles className={cn('w-4 h-4 shrink-0', isCurrent('/dashboard/sales/ai') ? 'text-white' : 'text-purple-400')} />
+          {!collapsed && <span>AI Control Plane</span>}
+        </Link>
       </div>
 
       {/* Bottom Footer: Settings */}

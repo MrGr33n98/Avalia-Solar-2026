@@ -8,6 +8,7 @@ module Api
       # TASK-021: Include pagination
       include Paginatable
       include Pundit::Authorization
+      include JwtAuthenticatable
 
       # Skip CSRF for API requests
       skip_before_action :verify_authenticity_token
@@ -65,7 +66,28 @@ module Api
       end
 
       def current_user
-        @current_user ||= User.find_by(id: decoded_token[:user_id]) if access_token_payload?
+        return @current_user if defined?(@current_user)
+        return @current_user = nil unless access_token_payload?
+
+        raw_token = current_token
+        if raw_token.present? && defined?(JwtBlacklistService) && JwtBlacklistService.revoked?(raw_token)
+          Rails.logger.warn("[Auth] Revoked token rejected")
+          return @current_user = nil
+        end
+
+        user_id = decoded_token&.[](:user_id)
+        return @current_user = nil unless user_id
+
+        if defined?(JwtBlacklistService)
+          revoked_at = JwtBlacklistService.user_tokens_revoked_at(user_id)
+          iat = token_issued_at
+          if revoked_at && iat && iat < revoked_at.to_i
+            Rails.logger.warn("[Auth] Expired user session rejected for user_id=#{user_id}")
+            return @current_user = nil
+          end
+        end
+
+        @current_user = User.find_by(id: user_id)
       end
 
       def jwt_decode(token)
@@ -75,17 +97,10 @@ module Api
       end
 
       def decoded_token
-        # Fallback to header (old method) for migration
-        header = request.headers['Authorization']
-        if header.present?
-          token = header.split.last
-          decoded = jwt_decode(token)
-          return decoded if decoded
-        end
+        return @decoded_token if defined?(@decoded_token)
 
-        # Try to get token from cookie first (new method)
-        token = cookies.signed[:jwt_token]
-        jwt_decode(token) if token.present?
+        token = current_token
+        @decoded_token = token.present? ? jwt_decode(token) : nil
       end
 
       def access_token_payload?

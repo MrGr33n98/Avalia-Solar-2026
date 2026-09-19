@@ -1,0 +1,95 @@
+# Avalia Solar — Domain Event Catalog
+# Wave 3: Transactional Outbox & Domain Event Definitions
+version: 1.0.0
+last_updated: "2026-09-18"
+
+events:
+  - event_type: "sales.opportunity.stage_changed"
+    event_version: 1
+    domain: "sales"
+    aggregate_type: "Sales::Opportunity"
+    description: "Emitted when an opportunity transitions across pipeline stages"
+    payload_schema:
+      opportunity_id: "integer (required)"
+      from_stage_id: "integer (required)"
+      to_stage_id: "integer (required)"
+      actor_id: "integer (required)"
+
+  - event_type: "sales.lead.converted"
+    event_version: 1
+    domain: "sales"
+    aggregate_type: "Sales::Opportunity"
+    description: "Emitted when a qualified sales lead is converted into account, contact and opportunity"
+    payload_schema:
+      opportunity_id: "integer (required)"
+      account_id: "integer (required)"
+      contact_id: "integer (optional)"
+      actor_id: "integer (required)"
+
+  - event_type: "sales.opportunity.won"
+    event_version: 1
+    domain: "sales"
+    aggregate_type: "Sales::Opportunity"
+    description: "Emitted when a sales deal is closed as won"
+    payload_schema:
+      opportunity_id: "integer (required)"
+      actor_id: "integer (required)"
+
+  - event_type: "sales.opportunity.lost"
+    event_version: 1
+    domain: "sales"
+    aggregate_type: "Sales::Opportunity"
+    description: "Emitted when a sales deal is closed as lost"
+    payload_schema:
+      opportunity_id: "integer (required)"
+      actor_id: "integer (required)"
+
+  - event_type: "billing.subscription.activated"
+    event_version: 1
+    domain: "billing"
+    aggregate_type: "Billing::CompanySubscription"
+    description: "Emitted when a company subscription becomes active or starts trial"
+    payload_schema:
+      subscription_id: "integer (required)"
+      company_id: "integer (required)"
+      plan_id: "integer (required)"
+      status: "string (required)"
+      stripe_subscription_id: "string (optional)"
+
+  - event_type: "billing.subscription.updated"
+    event_version: 1
+    domain: "billing"
+    aggregate_type: "Billing::CompanySubscription"
+    description: "Emitted when a company subscription plan or period updates"
+    payload_schema:
+      subscription_id: "integer (required)"
+      company_id: "integer (required)"
+      plan_id: "integer (required)"
+      status: "string (required)"
+
+  - event_type: "billing.subscription.canceled"
+    event_version: 1
+    domain: "billing"
+    aggregate_type: "Billing::CompanySubscription"
+    description: "Emitted when a company subscription is canceled or expired"
+    payload_schema:
+      subscription_id: "integer (required)"
+      company_id: "integer (required)"
+      plan_id: "integer (required)"
+
+  - event_type: "publication.published"
+    event_version: 1
+    domain: "social"
+    aggregate_type: "ReviewerPublication"
+    description: "Emitted when a reviewer publication is published"
+    payload_schema:
+      publication_id: "integer (required)"
+
+  - event_type: "lead.captured"
+    event_version: 1
+    domain: "marketplace"
+    aggregate_type: "Lead"
+    description: "Emitted when a new solar consumer lead is captured"
+    payload_schema:
+      lead_id: "integer (required)"
+      company_id: "integer (optional)"

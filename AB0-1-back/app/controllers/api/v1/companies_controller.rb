@@ -549,9 +549,14 @@ module Api
       end
 
       def feature_access_payload(company)
+        plan_tier = company.respond_to?(:inferred_plan_tier) ? company.inferred_plan_tier : 'free'
         {
           features: feature_access_entries_for_api(company),
-          plan: company.respond_to?(:inferred_plan_tier) ? company.inferred_plan_tier : 'free',
+          plan: {
+            id: company.plan&.id,
+            name: company.plan&.name,
+            tier: plan_tier
+          },
           subscription: feature_access_subscription_payload(company),
           metadata: {
             timestamp: Time.current.iso8601,

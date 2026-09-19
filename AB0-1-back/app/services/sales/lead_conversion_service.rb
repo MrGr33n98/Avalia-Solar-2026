@@ -48,25 +48,16 @@ module Sales
           )
         end
 
-        if defined?(DomainEvent) && ActiveRecord::Base.connection.table_exists?('domain_events')
-          begin
-            DomainEvent.create!(
-              event_type: 'sales.lead.converted',
-              aggregate_type: 'Sales::Opportunity',
-              aggregate_id: opportunity.id,
-              occurred_at: Time.current,
-              status: 'pending',
-              payload: {
-                opportunity_id: opportunity.id,
-                account_id: account.id,
-                contact_id: contact&.id,
-                actor_id: actor.id
-              }
-            )
-          rescue => e
-            Rails.logger.warn("[DomainEvent] Failed to emit sales.lead.converted: #{e.message}")
-          end
-        end
+        Outbox.record!(
+          event_type: 'sales.lead.converted',
+          aggregate: opportunity,
+          payload: {
+            opportunity_id: opportunity.id,
+            account_id: account.id,
+            contact_id: contact&.id,
+            actor_id: actor.id
+          }
+        )
 
         { opportunity: opportunity, account: account, contact: contact }
       end

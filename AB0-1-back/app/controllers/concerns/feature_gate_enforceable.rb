@@ -10,10 +10,10 @@ module FeatureGateEnforceable
     target_company = company || feature_gate_company_for(company_id)
     return if performed? || target_company.blank?
 
-    feature_state = target_company.feature_access[feature_key] || {}
-    return if feature_state['state'] == 'enabled'
+    explanation = EntitlementService.explain(company: target_company, feature: feature_key)
+    return if explanation[:allowed]
 
-    reason = feature_state['reason'].presence || 'upgrade_required'
+    reason = explanation[:reason].presence || 'upgrade_required'
     log_feature_gate_block(target_company, feature_key, reason)
 
     render json: {
@@ -21,7 +21,10 @@ module FeatureGateEnforceable
       error: 'Feature not available in your plan',
       feature: feature_key,
       reason: reason,
-      plan: target_company.respond_to?(:inferred_plan_tier) ? target_company.inferred_plan_tier : 'free',
+      plan: explanation[:plan] || 'free',
+      limit: explanation[:limit],
+      usage: explanation[:usage],
+      remaining: explanation[:remaining],
       suggestion: 'Upgrade your plan to unlock this feature'
     }, status: :forbidden
   rescue ActiveRecord::RecordNotFound

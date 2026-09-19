@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_19_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -212,9 +212,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.boolean "featured"
     t.integer "views_count"
     t.bigint "author_id"
+    t.string "seo_keywords"
     t.string "seo_title"
     t.text "seo_description"
-    t.string "seo_keywords"
     t.index ["author_id"], name: "index_articles_on_author_id"
     t.index ["category_id"], name: "index_articles_on_category_id"
     t.index ["company_id", "sponsored"], name: "index_articles_on_company_sponsored"
@@ -617,7 +617,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["product_id"], name: "index_campaign_reviews_on_product_id"
     t.index ["status"], name: "index_campaign_reviews_on_status"
     t.check_constraint "start_at IS NULL OR end_at IS NULL OR end_at >= start_at", name: "chk_campaign_reviews_period"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'finished'::character varying, 'canceled'::character varying]::text[]))", name: "campaign_reviews_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'finished'::character varying::text, 'canceled'::character varying::text]))", name: "campaign_reviews_status_allowed"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -1049,8 +1049,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.integer "delivered_projects_count", default: 0, null: false
     t.integer "response_sla_minutes"
     t.datetime "operational_data_updated_at"
-    t.text "seo_description"
     t.string "seo_keywords"
+    t.text "seo_description"
     t.index "to_tsvector('portuguese'::regconfig, (((((((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)) || ' '::text) || (COALESCE(city, ''::character varying))::text) || ' '::text) || (COALESCE(state, ''::character varying))::text))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"
@@ -1090,7 +1090,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
     t.check_constraint "cnpj IS NULL OR length(cnpj::text) = 14 AND cnpj::text ~ '^[0-9]+$'::text", name: "ck_companies_valid_cnpj"
     t.check_constraint "email IS NULL OR email::text ~ '^[^@]+@[^@]+\\.[^@]+$'::text", name: "ck_companies_valid_email"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'inactive'::character varying, 'pending'::character varying, 'blocked'::character varying]::text[])", name: "companies_status_allowed"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'inactive'::character varying::text, 'pending'::character varying::text, 'blocked'::character varying::text])", name: "companies_status_allowed"
   end
 
   create_table "company_access_requests", force: :cascade do |t|
@@ -1107,7 +1107,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["company_id"], name: "index_company_access_requests_on_company_id"
     t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
     t.index ["status"], name: "index_company_access_requests_on_status"
-    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying])::text[]))"
+    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))"
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
@@ -1571,7 +1571,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["session_id", "consented_at"], name: "index_consent_logs_on_session_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id", "consented_at"], name: "index_consent_logs_on_user_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id"], name: "index_consent_logs_on_user_id"
-    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying, 'marketing'::character varying, 'functional'::character varying, 'all'::character varying, 'none'::character varying]::text[])", name: "consent_logs_type_check"
+    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying::text, 'marketing'::character varying::text, 'functional'::character varying::text, 'all'::character varying::text, 'none'::character varying::text])", name: "consent_logs_type_check"
   end
 
   create_table "content", force: :cascade do |t|
@@ -2111,7 +2111,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["product_id"], name: "index_forum_questions_on_product_id"
     t.index ["status"], name: "index_forum_questions_on_status"
     t.index ["user_id"], name: "index_forum_questions_on_user_id"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[]))", name: "forum_questions_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text]))", name: "forum_questions_status_allowed"
   end
 
   create_table "gated_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -2152,9 +2152,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["group_id", "user_id"], name: "index_group_memberships_on_group_id_and_user_id", unique: true
     t.index ["group_id"], name: "index_group_memberships_on_group_id"
     t.index ["user_id"], name: "index_group_memberships_on_user_id"
-    t.check_constraint "notifications_level::text = ANY (ARRAY['all'::character varying, 'highlights'::character varying, 'mentions'::character varying, 'off'::character varying]::text[])", name: "group_memberships_notifications_level_check"
-    t.check_constraint "role::text = ANY (ARRAY['member'::character varying, 'moderator'::character varying, 'admin'::character varying, 'owner'::character varying]::text[])", name: "group_memberships_role_check"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'active'::character varying, 'rejected'::character varying, 'left'::character varying, 'banned'::character varying]::text[])", name: "group_memberships_status_check"
+    t.check_constraint "notifications_level::text = ANY (ARRAY['all'::character varying::text, 'highlights'::character varying::text, 'mentions'::character varying::text, 'off'::character varying::text])", name: "group_memberships_notifications_level_check"
+    t.check_constraint "role::text = ANY (ARRAY['member'::character varying::text, 'moderator'::character varying::text, 'admin'::character varying::text, 'owner'::character varying::text])", name: "group_memberships_role_check"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'active'::character varying::text, 'rejected'::character varying::text, 'left'::character varying::text, 'banned'::character varying::text])", name: "group_memberships_status_check"
   end
 
   create_table "group_posts", force: :cascade do |t|
@@ -2176,7 +2176,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["group_topic_id", "status"], name: "index_group_posts_on_group_topic_id_and_status"
     t.index ["group_topic_id"], name: "index_group_posts_on_group_topic_id"
     t.index ["user_id"], name: "index_group_posts_on_user_id"
-    t.check_constraint "status::text = ANY (ARRAY['published'::character varying, 'hidden'::character varying, 'removed'::character varying]::text[])", name: "group_posts_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['published'::character varying::text, 'hidden'::character varying::text, 'removed'::character varying::text])", name: "group_posts_status_check"
   end
 
   create_table "group_rules", force: :cascade do |t|
@@ -2231,10 +2231,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["status", "visibility"], name: "index_groups_on_status_and_visibility"
     t.index ["status"], name: "index_groups_on_status"
     t.index ["visibility"], name: "index_groups_on_visibility"
-    t.check_constraint "membership_mode::text = ANY (ARRAY['open'::character varying, 'approval'::character varying, 'invite_only'::character varying]::text[])", name: "groups_membership_mode_check"
-    t.check_constraint "posting_mode::text = ANY (ARRAY['members'::character varying, 'moderated'::character varying, 'admins_only'::character varying]::text[])", name: "groups_posting_mode_check"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'suspended'::character varying]::text[])", name: "groups_status_check"
-    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying, 'private_visible'::character varying, 'private_hidden'::character varying]::text[])", name: "groups_visibility_check"
+    t.check_constraint "membership_mode::text = ANY (ARRAY['open'::character varying::text, 'approval'::character varying::text, 'invite_only'::character varying::text])", name: "groups_membership_mode_check"
+    t.check_constraint "posting_mode::text = ANY (ARRAY['members'::character varying::text, 'moderated'::character varying::text, 'admins_only'::character varying::text])", name: "groups_posting_mode_check"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'suspended'::character varying::text])", name: "groups_status_check"
+    t.check_constraint "visibility::text = ANY (ARRAY['public'::character varying::text, 'private_visible'::character varying::text, 'private_hidden'::character varying::text])", name: "groups_visibility_check"
   end
 
   create_table "growth_insights", force: :cascade do |t|
@@ -2540,6 +2540,59 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["content_lead_id"], name: "index_material_downloads_on_content_lead_id"
   end
 
+  create_table "mcp_agent_credentials", force: :cascade do |t|
+    t.string "agent_identity_id", null: false
+    t.string "key_id", null: false
+    t.string "secret_digest", null: false
+    t.string "status", default: "active", null: false
+    t.datetime "last_used_at"
+    t.datetime "expires_at"
+    t.datetime "revoked_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_identity_id", "status"], name: "index_mcp_agent_credentials_on_agent_identity_id_and_status"
+    t.index ["agent_identity_id"], name: "index_mcp_agent_credentials_on_agent_identity_id"
+    t.index ["key_id"], name: "index_mcp_agent_credentials_on_key_id", unique: true
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'revoked'::character varying, 'expired'::character varying]::text[])", name: "chk_mcp_agent_credentials_status"
+  end
+
+  create_table "mcp_approval_requests", force: :cascade do |t|
+    t.string "request_uuid", null: false
+    t.string "agent_id", null: false
+    t.bigint "tenant_id"
+    t.string "tool_name", null: false
+    t.jsonb "parameters_payload", default: {}, null: false
+    t.string "risk_tier", null: false
+    t.string "status", default: "pending", null: false
+    t.bigint "requested_by_user_id"
+    t.bigint "approved_by_user_id"
+    t.text "rejection_reason"
+    t.datetime "requested_at", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "executed_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "payload_digest", null: false
+    t.datetime "snoozed_until"
+    t.string "execution_id"
+    t.index ["agent_id"], name: "index_mcp_approval_requests_on_agent_id"
+    t.index ["approved_by_user_id"], name: "index_mcp_approval_requests_on_approved_by_user_id"
+    t.index ["execution_id"], name: "index_mcp_approval_requests_on_execution_id"
+    t.index ["expires_at"], name: "index_mcp_approval_requests_on_expires_at"
+    t.index ["payload_digest"], name: "index_mcp_approval_requests_on_payload_digest"
+    t.index ["request_uuid"], name: "index_mcp_approval_requests_on_request_uuid", unique: true
+    t.index ["requested_by_user_id"], name: "index_mcp_approval_requests_on_requested_by_user_id"
+    t.index ["risk_tier", "status"], name: "index_mcp_approval_requests_on_risk_tier_and_status"
+    t.index ["snoozed_until"], name: "index_mcp_approval_requests_on_snoozed_until"
+    t.index ["status", "expires_at"], name: "index_mcp_approval_requests_on_status_and_expires_at"
+    t.index ["status"], name: "index_mcp_approval_requests_on_status"
+    t.index ["tenant_id"], name: "index_mcp_approval_requests_on_tenant_id"
+    t.check_constraint "risk_tier::text = ANY (ARRAY['r0'::character varying, 'r1'::character varying, 'r2'::character varying, 'r3'::character varying, 'r4'::character varying]::text[])", name: "chk_mcp_approval_requests_risk_tier"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'executed'::character varying, 'expired'::character varying]::text[])", name: "chk_mcp_approval_requests_status"
+  end
+
   create_table "milestones", force: :cascade do |t|
     t.bigint "transaction_id", null: false
     t.string "title", null: false
@@ -2592,7 +2645,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["actor_type", "actor_id"], name: "index_news_items_on_actor"
     t.index ["published", "published_at"], name: "index_news_items_on_published_and_published_at"
     t.index ["status"], name: "index_news_items_on_status"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[])", name: "news_items_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text])", name: "news_items_status_valid"
   end
 
   create_table "newsletters", force: :cascade do |t|
@@ -2751,7 +2804,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
   end
 
   create_table "platform_events", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
+    t.bigserial "id", null: false
     t.text "event_id", null: false
     t.text "event_type", null: false
     t.integer "schema_version", default: 1
@@ -2770,6 +2823,50 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["event_id"], name: "idx_platform_events_event_id"
     t.index ["event_type", "occurred_at"], name: "idx_platform_events_type_time", order: { occurred_at: :desc }
     t.index ["occurred_at"], name: "idx_platform_events_brin_time", using: :brin
+  end
+
+  create_table "platform_events_y2026m05", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2026m05_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2026m05_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m05_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2026m05_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2026m06", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2026m06_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2026m06_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m06_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2026m06_occurred_at_idx", using: :brin
   end
 
   create_table "platform_events_y2026m07", id: false, force: :cascade do |t|
@@ -2904,50 +3001,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["occurred_at"], name: "platform_events_y2026m12_occurred_at_idx", using: :brin
   end
 
-  create_table "platform_events_y2027m01", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2027m01_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2027m01_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m01_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2027m01_occurred_at_idx", using: :brin
-  end
-
-  create_table "platform_events_y2027m02", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2027m02_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2027m02_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m02_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2027m02_occurred_at_idx", using: :brin
-  end
-
   create_table "poll_options", force: :cascade do |t|
     t.bigint "poll_id", null: false
     t.string "label", null: false
@@ -2978,7 +3031,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.bigint "actor_id"
     t.string "status", default: "draft", null: false
     t.index ["actor_type", "actor_id"], name: "index_polls_on_actor"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'closed'::character varying]::text[])", name: "polls_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'closed'::character varying::text])", name: "polls_status_valid"
   end
 
   create_table "posts", force: :cascade do |t|
@@ -3082,7 +3135,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true
     t.index ["status"], name: "index_products_on_status"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'disabled'::character varying]::text[]))", name: "products_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'disabled'::character varying::text]))", name: "products_status_allowed"
   end
 
   create_table "publication_entities", force: :cascade do |t|
@@ -4112,6 +4165,35 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["company_id"], name: "index_sales_forms_on_company_id"
   end
 
+  create_table "sales_founder_inbox_items", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_account_id"
+    t.bigint "sales_opportunity_id"
+    t.bigint "mcp_approval_request_id"
+    t.string "agent_id"
+    t.string "kind", null: false
+    t.string "status", default: "open", null: false
+    t.string "title", null: false
+    t.text "why", null: false
+    t.jsonb "evidence", default: [], null: false
+    t.string "recommended_action", null: false
+    t.string "risk_tier", default: "r0", null: false
+    t.boolean "approval_required", default: false, null: false
+    t.string "dedupe_key", null: false
+    t.jsonb "action_payload", default: {}, null: false
+    t.datetime "observed_at", null: false
+    t.datetime "resolved_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_id"], name: "index_sales_founder_inbox_items_on_agent_id"
+    t.index ["company_id", "dedupe_key"], name: "idx_sales_founder_inbox_items_dedupe", unique: true
+    t.index ["company_id", "status", "observed_at"], name: "idx_sales_founder_inbox_items_queue"
+    t.index ["company_id"], name: "index_sales_founder_inbox_items_on_company_id"
+    t.index ["mcp_approval_request_id"], name: "index_sales_founder_inbox_items_on_mcp_approval_request_id"
+    t.index ["sales_account_id"], name: "index_sales_founder_inbox_items_on_sales_account_id"
+    t.index ["sales_opportunity_id"], name: "index_sales_founder_inbox_items_on_sales_opportunity_id"
+  end
+
   create_table "sales_import_rows", force: :cascade do |t|
     t.uuid "sales_import_id", null: false
     t.integer "row_number", null: false
@@ -4409,6 +4491,36 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.index ["solar_project_id"], name: "index_sales_quotes_on_solar_project_id"
   end
 
+  create_table "sales_research_records", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_account_id"
+    t.bigint "sales_contact_id"
+    t.bigint "sales_opportunity_id"
+    t.string "agent_id"
+    t.bigint "created_by_id"
+    t.string "kind", null: false
+    t.string "certainty", default: "unverified", null: false
+    t.string "source", null: false
+    t.string "source_identifier"
+    t.string "source_url"
+    t.datetime "collected_at", null: false
+    t.datetime "verified_at"
+    t.decimal "confidence", precision: 5, scale: 4
+    t.string "raw_reference_version"
+    t.string "raw_reference_digest"
+    t.string "idempotency_key"
+    t.jsonb "content", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_id"], name: "index_sales_research_records_on_agent_id"
+    t.index ["company_id", "idempotency_key"], name: "idx_sales_research_records_idempotency", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["company_id", "kind", "collected_at"], name: "idx_sales_research_kind_time"
+    t.index ["company_id"], name: "index_sales_research_records_on_company_id"
+    t.index ["sales_account_id"], name: "index_sales_research_records_on_sales_account_id"
+    t.index ["sales_contact_id"], name: "index_sales_research_records_on_sales_contact_id"
+    t.index ["sales_opportunity_id"], name: "index_sales_research_records_on_sales_opportunity_id"
+  end
+
   create_table "sales_role_permissions", force: :cascade do |t|
     t.bigint "role_id", null: false
     t.bigint "permission_id", null: false
@@ -4569,7 +4681,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "idempotency_key"
     t.index ["owner_id"], name: "index_sales_tasks_on_owner_id"
+    t.index ["sales_account_id", "idempotency_key"], name: "idx_sales_tasks_idempotency", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["sales_account_id"], name: "index_sales_tasks_on_sales_account_id"
     t.index ["sales_contact_id"], name: "index_sales_tasks_on_sales_contact_id"
     t.index ["sales_opportunity_id"], name: "index_sales_tasks_on_sales_opportunity_id"
@@ -5042,6 +5156,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
   add_foreign_key "material_downloads", "company_materials"
   add_foreign_key "material_downloads", "content_lead_forms"
   add_foreign_key "material_downloads", "content_leads"
+  add_foreign_key "mcp_approval_requests", "companies", column: "tenant_id", on_delete: :nullify
+  add_foreign_key "mcp_approval_requests", "users", column: "approved_by_user_id", on_delete: :nullify
+  add_foreign_key "mcp_approval_requests", "users", column: "requested_by_user_id", on_delete: :nullify
   add_foreign_key "milestones", "transactions"
   add_foreign_key "notification_preferences", "users", on_delete: :cascade
   add_foreign_key "notifications", "users"
@@ -5158,6 +5275,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
   add_foreign_key "sales_form_submissions", "sales_forms", column: "form_id"
   add_foreign_key "sales_forms", "companies"
   add_foreign_key "sales_forms", "sales_campaigns", column: "campaign_id"
+  add_foreign_key "sales_founder_inbox_items", "companies"
+  add_foreign_key "sales_founder_inbox_items", "mcp_approval_requests"
+  add_foreign_key "sales_founder_inbox_items", "sales_accounts"
+  add_foreign_key "sales_founder_inbox_items", "sales_opportunities"
   add_foreign_key "sales_import_rows", "sales_imports", on_delete: :cascade
   add_foreign_key "sales_imports", "companies"
   add_foreign_key "sales_imports", "users"
@@ -5193,6 +5314,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_10_000001) do
   add_foreign_key "sales_quotes", "sales_opportunities", column: "opportunity_id"
   add_foreign_key "sales_quotes", "sales_solar_projects", column: "solar_project_id"
   add_foreign_key "sales_quotes", "users", column: "created_by_id"
+  add_foreign_key "sales_research_records", "companies"
+  add_foreign_key "sales_research_records", "sales_accounts"
+  add_foreign_key "sales_research_records", "sales_contacts"
+  add_foreign_key "sales_research_records", "sales_opportunities"
+  add_foreign_key "sales_research_records", "users", column: "created_by_id"
   add_foreign_key "sales_role_permissions", "sales_permissions", column: "permission_id"
   add_foreign_key "sales_role_permissions", "sales_roles", column: "role_id"
   add_foreign_key "sales_roles", "companies"

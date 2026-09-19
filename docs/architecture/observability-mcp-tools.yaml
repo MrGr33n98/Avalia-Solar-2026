@@ -1,0 +1,129 @@
+version: "1.0"
+layer: "Observability & Performance MCP"
+contract: "Read-Only Business Safe Telemetry"
+mcp_endpoint: "POST /api/v1/mcp/tools/:tool_name"
+controller: "Api::V1::Mcp::ToolsController"
+tools:
+  - name: "diagnose_performance"
+    status: "IMPLEMENTED_MCP_TOOL"
+    service: "Mcp::Observability::DiagnosePerformanceService"
+    description: "Orquestra diagnóstico investigativo multicamadas, correlacionando métricas e gerando árvore de hipóteses."
+    risk: "R0_READ_ONLY"
+    permissions: ["admin"]
+    timeout_ms: 5000
+    source: "Observability::PerformanceDiagnosticService.diagnose"
+    inputs:
+      window_minutes:
+        type: "integer"
+        default: 15
+    outputs:
+      status: "string"
+      observations: "array"
+      correlations: "array"
+      hypotheses: "array"
+      confirmed_causes: "array"
+      recommendations: "array"
+      metrics: "object"
+      evidence: "array"
+      window: "object"
+      collected_at: "string"
+      limitations: "array"
+    redaction: "Observability::Sanitizer em todo o payload retornado."
+    failure_semantics: "Retorna evidências parciais com limitações declaradas."
+
+  - name: "get_system_health"
+    status: "IMPLEMENTED_MCP_TOOL"
+    service: "Mcp::Observability::SystemHealthToolService"
+    description: "Executa verificação de saúde da aplicação Rails e dependências via SystemHealthService."
+    risk: "R0_READ_ONLY"
+    permissions: ["admin"]
+    timeout_ms: 2000
+    source: "Observability::SystemHealthService.check"
+    inputs:
+      deep:
+        type: "boolean"
+        default: true
+    outputs:
+      status: "string (healthy | degraded | critical)"
+      collected_at: "string (ISO8601)"
+      components: "object"
+    redaction: "Observability::Sanitizer remove senhas e conexões cruas."
+    failure_semantics: "Garante resposta JSON mesmo com falha em dependências."
+
+  - name: "get_outbox_health"
+    status: "IMPLEMENTED_MCP_TOOL"
+    service: "Mcp::Observability::OutboxHealthToolService"
+    description: "Coleta métricas canônicas da tabela domain_events (pending, dead-letter, idade e throughput)."
+    risk: "R0_READ_ONLY"
+    permissions: ["admin"]
+    timeout_ms: 2000
+    source: "Observability::OutboxMetrics.collect"
+    inputs: {}
+    outputs:
+      status: "string (healthy | degraded | critical)"
+      metrics:
+        pending_count: "integer"
+        processing_count: "integer"
+        failed_count: "integer"
+        dead_letter_count: "integer"
+        oldest_pending_age_seconds: "float"
+        retry_count: "integer"
+        throughput_per_minute: "float"
+    redaction: "Apenas contagens e métricas numéricas agregadas."
+    failure_semantics: "Retorna status error sem travar processo chamador."
+
+  - name: "get_postgres_health"
+    status: "IMPLEMENTED_MCP_TOOL"
+    service: "Mcp::Observability::PostgresHealthToolService"
+    description: "Monitora conectividade do banco, latência de ping e saturação do pool de conexões."
+    risk: "R0_READ_ONLY"
+    permissions: ["admin"]
+    timeout_ms: 2000
+    source: "ActiveRecord::Base.connection_pool"
+    inputs: {}
+    outputs:
+      status: "string"
+      latency_ms: "float"
+      pool_size: "integer"
+      active_connections: "integer"
+      idle_connections: "integer"
+    redaction: "Sem exposição de credenciais ou strings de conexão."
+    failure_semantics: "Retorna status unhealthy com mensagem de erro sanitizada."
+
+  - name: "get_redis_health"
+    status: "IMPLEMENTED_MCP_TOOL"
+    service: "Mcp::Observability::RedisHealthToolService"
+    description: "Monitora latência de ping, uso de memória e contagem de conexões do Redis."
+    risk: "R0_READ_ONLY"
+    permissions: ["admin"]
+    timeout_ms: 2000
+    source: "Redis.info / Redis.ping"
+    inputs: {}
+    outputs:
+      status: "string"
+      latency_ms: "float"
+      memory_used_mb: "float"
+      connected_clients: "integer"
+      blocked_clients: "integer"
+    redaction: "URL do Redis sanitizada."
+    failure_semantics: "Retorna not_configured ou unhealthy."
+
+  - name: "get_sidekiq_health"
+    status: "IMPLEMENTED_MCP_TOOL"
+    service: "Mcp::Observability::SidekiqHealthToolService"
+    description: "Inspeciona filas do Sidekiq, número de workers ocupados, latência e falhas de jobs."
+    risk: "R0_READ_ONLY"
+    permissions: ["admin"]
+    timeout_ms: 2000
+    source: "Sidekiq::Stats & Sidekiq::Queue"
+    inputs: {}
+    outputs:
+      status: "string"
+      enqueued: "integer"
+      busy: "integer"
+      failed: "integer"
+      retry_size: "integer"
+      dead_size: "integer"
+      max_latency_seconds: "float"
+    redaction: "Sem payloads de jobs expostos."
+    failure_semantics: "Retorna not_configured ou status degraded."

@@ -10,7 +10,7 @@ class CompanyPolicy < ApplicationPolicy
   end
 
   def feature_access?
-    true
+    admin? || company_member?
   end
 
   def update?

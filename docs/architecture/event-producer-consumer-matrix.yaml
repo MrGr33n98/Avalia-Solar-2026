@@ -1,0 +1,50 @@
+# Avalia Solar — Event Producer & Consumer Matrix
+# Wave 3: Transactional Outbox Engine
+version: 1.0.0
+last_updated: "2026-09-18"
+
+producers:
+  - producer: "Sales::Opportunities::ChangeStage"
+    domain_transaction: "Sales::Opportunity.transaction"
+    event_type: "sales.opportunity.stage_changed"
+    atomicity: "ATOMIC"
+    dispatch_mechanism: "Outbox.record!"
+    consumers:
+      - consumer: "Outbox::EventRouter (Sales Activity / Pipeline)"
+        idempotency: "IDEMPOTENT (StageHistory / event_id)"
+
+  - producer: "Sales::LeadConversionService"
+    domain_transaction: "ActiveRecord::Base.transaction"
+    event_type: "sales.lead.converted"
+    atomicity: "ATOMIC"
+    dispatch_mechanism: "Outbox.record!"
+    consumers:
+      - consumer: "Outbox::EventRouter (CRM / Notification)"
+        idempotency: "IDEMPOTENT (Account & Contact matching)"
+
+  - producer: "Api::V1::Sales::ClosuresController"
+    domain_transaction: "Sales::Opportunity.transaction"
+    event_type: "sales.opportunity.won / sales.opportunity.lost"
+    atomicity: "ATOMIC"
+    dispatch_mechanism: "Outbox.record!"
+    consumers:
+      - consumer: "Outbox::EventRouter (CRM / Analytics)"
+        idempotency: "IDEMPOTENT"
+
+  - producer: "Billing::SubscriptionSyncService"
+    domain_transaction: "ActiveRecord::Base.transaction"
+    event_type: "billing.subscription.activated / updated / canceled"
+    atomicity: "ATOMIC"
+    dispatch_mechanism: "Outbox.record!"
+    consumers:
+      - consumer: "Outbox::EventRouter (Entitlements / Notification)"
+        idempotency: "IDEMPOTENT (Subscription ID + status)"
+
+  - producer: "ReviewerPublication#publish!"
+    domain_transaction: "ActiveRecord::Base.transaction"
+    event_type: "publication.published"
+    atomicity: "ATOMIC"
+    dispatch_mechanism: "Outbox.record! / DomainEvent.create!"
+    consumers:
+      - consumer: "Social::CreateFeedItemJob"
+        idempotency: "IDEMPOTENT (FeedItem subject_id uniqueness)"

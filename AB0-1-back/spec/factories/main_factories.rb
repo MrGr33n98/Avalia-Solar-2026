@@ -2,15 +2,16 @@ require 'base64'
 
 FactoryBot.define do
   factory :plan do
-    sequence(:name) { |n| "Basic Plan #{n}" }
+    name { "Basic Plan #{SecureRandom.hex(6)}" }
     price { 99.90 }
+    is_public { false }
     features { { max_products: 50, dashboard_access: true, quote_feature: true, custom_ctas: true, quote_requests: true } }
   end
 
   factory :company do
-    name { Faker::Company.name }
+    name { "#{Faker::Company.name} #{SecureRandom.hex(4)}" }
     description { Faker::Company.catch_phrase }
-    email { Faker::Internet.email }
+    email { "#{SecureRandom.hex(4)}_#{Faker::Internet.email}" }
     status { 'active' }
     plan_status { 'active' }
     active_admin { true }
@@ -29,13 +30,14 @@ FactoryBot.define do
 
     after(:build) do |company|
       if company.status == 'active' && company.categories.empty?
-        company.categories << create(:category)
+        cat = Category.first || Category.create!(name: "Cat_#{SecureRandom.hex(6)}", description: 'Categoria para testes', status: 'active')
+        company.categories << cat if cat.present?
       end
     end
   end
 
   factory :category do
-    sequence(:name) { |n| "Categoria #{n}" }
+    name { "Categoria #{SecureRandom.hex(6)}" }
     description { Faker::Lorem.sentence }
     status { 'active' }
   end

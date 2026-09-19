@@ -4,7 +4,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
   def index
     include_specs = ActiveModel::Type::Boolean.new.cast(params[:include_specs])
     scope = ::Product
-            .includes(:brand, :company, :categories, company_products: :product_offers, images_attachments: :blob)
+            .preload(:brand, :company, :categories, company_products: :product_offers, images_attachments: :blob)
             .where(status: ::Product.statuses[:active])
 
     if params[:company_id].present?
@@ -43,7 +43,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
     requested_per_page = params[:per_page].to_i
     per_page = requested_per_page.positive? ? [requested_per_page, 100].min : 12
 
-    total       = scope.count
+    total       = scope.except(:order).count
     total_pages = (total.to_f / per_page).ceil
     paginated   = scope.limit(per_page).offset((page - 1) * per_page)
 

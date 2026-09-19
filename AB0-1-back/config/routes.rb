@@ -46,9 +46,21 @@ Rails.application.routes.draw do
     namespace :v1 do
       namespace :mcp do
         post 'tools/:tool_name', to: 'tools#create'
+        get 'approvals/stats', to: 'approvals#stats'
+        resources :approvals, param: :request_uuid, only: %i[index show] do
+          member do
+            post :approve
+            post :reject
+            post :snooze
+            post :unsnooze
+            post :execute
+            get :events
+          end
+        end
       end
 
       scope :sales do
+        get '/', to: 'sales#index'
         get 'today', to: 'sales/today#index'
         get 'search', to: 'sales/search#index'
         get 'analytics', to: 'sales/analytics#index'
@@ -73,6 +85,8 @@ Rails.application.routes.draw do
         resources :tracking_sessions, controller: 'sales/tracking_sessions'
         resources :tracking_events, controller: 'sales/tracking_events'
         post 'tracking_identity', to: 'sales/tracking_identity#create'
+        get 'rbac', to: 'sales/rbac#index'
+        post 'rbac', to: 'sales/rbac#create'
         get 'rbac/roles', to: 'sales/rbac#roles'
         get 'rbac/permissions', to: 'sales/rbac#permissions'
         resources :user_roles, only: %i[index create destroy], controller: 'sales/user_roles'
@@ -802,6 +816,11 @@ Rails.application.routes.draw do
         post 'portal', to: 'portal#create'
         post 'enterprise_leads', to: 'enterprise_leads#create'
         post 'webhooks/stripe', to: 'webhooks#stripe'
+      end
+
+      namespace :mcp do
+        post 'tools/:tool_name', to: 'tools#create'
+        post 'tools', to: 'tools#create'
       end
     end
   end

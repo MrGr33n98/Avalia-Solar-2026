@@ -1008,6 +1008,22 @@ end
     {}
   end
 
+  def entitled?(feature)
+    EntitlementService.entitled?(company: self, feature: feature)
+  end
+
+  def entitlement_limit(feature)
+    EntitlementService.limit(company: self, feature: feature)
+  end
+
+  def entitlement_remaining(feature)
+    EntitlementService.remaining(company: self, feature: feature)
+  end
+
+  def entitlement_explain(feature)
+    EntitlementService.explain(company: self, feature: feature)
+  end
+
   def inferred_plan_tier
     return plan.inferred_plan_tier if plan.respond_to?(:inferred_plan_tier)
     return plan.plan_tier if plan.respond_to?(:plan_tier)
@@ -1094,7 +1110,7 @@ end
     # Gera um pseudo-slug compatível com a rota /products/[slug]
     # que extrai o ID do primeiro segmento
     pseudo_slug = "#{product.id}-#{product.name.parameterize}"
-    
+
     {
       id: product.id,
       slug: pseudo_slug,

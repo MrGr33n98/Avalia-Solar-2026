@@ -1,0 +1,158 @@
+version: "1.0"
+title: "Árvore Canônica de Decisão para Diagnóstico de Performance — Avalia Solar"
+root_question: "Por que a plataforma Avalia Solar está lenta?"
+diagnostic_policy: "Evidence First — Sem Adivinhação de Causa Raiz"
+classification_labels:
+  - OBSERVED: "Fato medido diretamente por instrumento de telemetria."
+  - CORRELATED: "Dois ou mais sinais de degradação temporalmente alinhados."
+  - LIKELY: "Hipótese técnica com alta probabilidade suportada por evidências."
+  - CONFIRMED: "Causa raiz comprovada por mecanismo determinístico."
+  - UNKNOWN: "Causa não verificável ou fora do escopo de instrumentação atual."
+
+steps:
+  - id: 1
+    layer: "VM / Host Infrastructure"
+    check: "O Host ou VM está saturado?"
+    signals:
+      - "CPU usage > 90%"
+      - "Memory usage > 95%"
+      - "Load average > CPU cores * 2"
+      - "Disk IO wait > 30%"
+    branch_if_positive:
+      classification: "OBSERVED"
+      hypothesis: "Saturação de recursos a nível de máquina virtual afetando todos os processos."
+      action: "Inspecionar processos pesados fora do docker ou redimensionar recursos de VM."
+    branch_if_negative:
+      next_step: 2
+
+  - id: 2
+    layer: "Docker Containers"
+    check: "Há pressão de memória ou throttling em containers?"
+    signals:
+      - "Container memory > 90% do limite configurado"
+      - "OOMKilled flag == true"
+      - "Container restart count > 0 nos últimos 15 min"
+      - "CPU throttling > 20%"
+    branch_if_positive:
+      classification: "CONFIRMED (se OOM) / LIKELY (se throttling)"
+      hypothesis: "Container ab0-backend ou ab0-frontend sofrendo OOMKilled ou throttling severo."
+      action: "Ajustar limites de memória cgroup ou otimizar footprint de memória da aplicação."
+    branch_if_negative:
+      next_step: 3
+
+  - id: 3
+    layer: "Puma Application Server"
+    check: "A fila de conexões ou threads do Puma está saturada?"
+    signals:
+      - "Puma request backlog > 0"
+      - "Busy threads == Total worker threads"
+      - "Puma worker timeouts"
+    branch_if_positive:
+      classification: "OBSERVED"
+      hypothesis: "Tráfego de requisições superando a capacidade de concorrência dos workers/threads Puma."
+      action: "Avaliar escala horizontal de workers Puma ou identificar requisições síncronas bloqueantes."
+    branch_if_negative:
+      next_step: 4
+
+  - id: 4
+    layer: "PostgreSQL Database"
+    check: "O banco de dados está lento, saturando pool ou bloqueado por locks?"
+    signals:
+      - "Database query latency > 200ms"
+      - "Active connections == Connection pool size"
+      - "Blocked queries > 0"
+      - "Deadlocks detectados"
+      - "Sequential scans em tabelas > 100k linhas"
+    branch_if_positive:
+      classification: "CONFIRMED (se pool saturado/deadlock) / LIKELY (se slow queries)"
+      hypothesis: "Contenção de conexões no ActiveRecord pool ou consultas lentas não indexadas."
+      action: "Analisar pg_stat_statements, adicionar índices em colunas de filtro ou aumentar pool size."
+    branch_if_negative:
+      next_step: 5
+
+  - id: 5
+    layer: "Redis"
+    check: "O Redis está lento ou com pressão de memória?"
+    signals:
+      - "Redis ping latency > 50ms"
+      - "Memory usage >= maxmemory"
+      - "Evicted keys count increasing"
+      - "Blocked clients > 0"
+    branch_if_positive:
+      classification: "OBSERVED"
+      hypothesis: "Redis sob pressão de memória descartando chaves ou bloqueado por comando lento."
+      action: "Auditar tamanho de chaves, política de evição (maxmemory-policy) ou locks de cache."
+    branch_if_negative:
+      next_step: 6
+
+  - id: 6
+    layer: "Sidekiq Workers"
+    check: "As filas de background jobs estão acumuladas ou gerando tempestades de retry?"
+    signals:
+      - "Queue latency > 60s"
+      - "Enqueued jobs crescendo continuamente"
+      - "Retry queue > 50 jobs"
+      - "Dead letter jobs aumentando"
+    branch_if_positive:
+      classification: "OBSERVED"
+      hypothesis: "Trabalhadores assíncronos não conseguem drenar fila ou jobs sofrendo falha sistemática."
+      action: "Aumentar concorrência do Sidekiq, isolar poison jobs e verificar serviços dependentes."
+    branch_if_negative:
+      next_step: 7
+
+  - id: 7
+    layer: "Transactional Outbox"
+    check: "Há backlog de eventos de domínio não despachados no Outbox?"
+    signals:
+      - "outbox.pending.count > 100"
+      - "outbox.dead_letter.count > 0"
+      - "outbox.oldest_pending_age_seconds > 60s"
+      - "outbox.throughput_per_minute == 0 com pending > 0"
+    branch_if_positive:
+      classification: "CONFIRMED"
+      hypothesis: "Dispatcher do Outbox inativo ou eventos envenenados bloqueando consumidores."
+      action: "Disparar Outbox::DispatcherService ou inspecionar last_error em DomainEvents com falha."
+    branch_if_negative:
+      next_step: 8
+
+  - id: 8
+    layer: "External APIs & Dependencies"
+    check: "Serviços externos (Stripe, SES, Spaces, ViaCEP) estão gerando timeout?"
+    signals:
+      - "HTTP client timeouts > 5s"
+      - "Stripe webhook handling latency elevated"
+      - "AWS SES bounce/suppression delays"
+    branch_if_positive:
+      classification: "CORRELATED"
+      hypothesis: "Lentidão induzida por falha ou alta latência de provedor externo de terceiros."
+      action: "Configurar timeouts curtos com fallback e mover chamadas externas para background jobs."
+    branch_if_negative:
+      next_step: 9
+
+  - id: 9
+    layer: "Next.js & Frontend"
+    check: "A lentidão ocorre na renderização do cliente ou Core Web Vitals?"
+    signals:
+      - "Largest Contentful Paint (LCP) > 2.5s"
+      - "Interaction to Next Paint (INP) > 200ms"
+      - "Time to First Byte (TTFB) elevado"
+      - "Bundle JS excessivo (> 500KB chunk)"
+    branch_if_positive:
+      classification: "OBSERVED"
+      hypothesis: "Renderização do Next.js bloqueada por Server Components sem cache ou assets não otimizados."
+      action: "Habilitar ISR/unstable_cache, otimizar imagens com next/image e code splitting."
+    branch_if_negative:
+      next_step: 10
+
+  - id: 10
+    layer: "Deployment Regression Correlation"
+    check: "A lentidão correlaciona diretamente com a última release/deploy?"
+    signals:
+      - "Início da degradação coincide temporalmente com novo GIT_SHA / release version"
+      - "Nenhum aumento de carga de tráfego externo detectado"
+    branch_if_positive:
+      classification: "LIKELY"
+      hypothesis: "Regressão introduzida por alteração recente de código ou migration na release."
+      action: "Comparar diff do commit anterior com atual e avaliar rollback seguro via HITL."
+    branch_if_negative:
+      conclusion: "UNKNOWN — Investigar anomalias de rede ou tráfego distribuído atípico."

@@ -69,10 +69,10 @@ module JwtAuthenticatable
 
     # Fallback to Authorization header (for backward compatibility)
     header = request.headers['Authorization']
-    return nil unless header
+    return nil unless header.present?
 
-    # Extract token from "Bearer <token>" format
-    header.split.last if header.start_with?('Bearer ')
+    # Extract token from "Bearer <token>" or raw format
+    header.split.last
   end
 
   # Set the JWT token as an httpOnly cookie

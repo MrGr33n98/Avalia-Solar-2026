@@ -993,6 +993,8 @@ export interface User {
   company?: { id: number; name?: string; logo_url?: string } | null;
   approved_by_admin?: boolean;
   status?: 'pending' | 'active' | 'rejected' | 'blocked';
+  crm_access?: boolean;
+  sales_capabilities?: string[];
   created_at: string;
   updated_at: string;
 }

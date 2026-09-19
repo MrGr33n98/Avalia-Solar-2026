@@ -1,0 +1,71 @@
+version: "2026-09-18"
+framework: "Golden SaaS Sales Route Permission Matrix"
+wave: "Wave 1C Enforcement & Hardening"
+status: "CANONICALIZED"
+
+authorization_hierarchy:
+  level_1_authentication:
+    mechanism: "JwtAuthenticatable#authenticate_api_user"
+    scope: "Valid, unrevoked JWT access token"
+    behavior_on_failure: "401 Unauthorized"
+  level_2_surface_access:
+    mechanism: "Sales::BaseController#require_sales_surface_access!"
+    validator: "Sales::AuthorizationService.sales_access?(user:)"
+    rules:
+      anonymous: "DENY (401/403)"
+      reviewer: "DENY (403 SALES_FORBIDDEN)"
+      company: "DENY (403 SALES_FORBIDDEN)"
+      company_member: "DENY (403 SALES_FORBIDDEN)"
+      internal_no_role: "DENY (403 SALES_FORBIDDEN)"
+      valid_sales_role: "ALLOW"
+      user_admin: "ALLOW (explicit documented bypass)"
+  level_3_action_capability:
+    mechanism: "require_sales_permission!(resource, action) / Pundit Policy"
+    validator: "Sales::AuthorizationService.can?(user:, resource:, action:)"
+    rbac_administration:
+      controllers: ["Api::V1::Sales::RbacController", "Api::V1::Sales::UserRolesController"]
+      permission: "sales.settings.manage"
+      self_escalation_guard: "DENY unless authorized admin"
+
+routes_coverage:
+  canonical_auth_routes:
+    - method: "GET"
+      path: "/api/v1/sales"
+      controller: "Api::V1::SalesController"
+      action: "index"
+      permission: "sales.opportunities.read"
+      policy: "Sales::OpportunityPolicy"
+      scope: "Sales::OpportunityPolicy::Scope"
+      status: "CANONICAL"
+
+    - method: "GET"
+      path: "/api/v1/sales/summary"
+      controller: "Api::V1::SalesController"
+      action: "summary"
+      permission: "sales.opportunities.read"
+      policy: "Sales::OpportunityPolicy"
+      scope: "Sales::OpportunityPolicy::Scope"
+      status: "CANONICAL"
+
+  subcontroller_routes:
+    - namespace: "Api::V1::Sales"
+      base_controller: "Api::V1::Sales::BaseController"
+      total_controllers: 32
+      total_actions: 90
+      surface_guard: "require_sales_surface_access! -> sales_access?"
+      rbac_guard: "require_sales_permission!('settings', 'manage')"
+      status: "CANONICAL"
+      gap_w1b_01_status: "RESOLVED"
+      gap_w1b_02_status: "RESOLVED"
+
+summary_statistics:
+  total_sales_routes: 92
+  canonical_auth_routes: 92
+  partial_routes: 0
+  legacy_routes: 0
+  unguarded_routes: 0
+  unknown_routes: 0
+  route_auth_coverage_percent: 100.0
+  total_business_capabilities: 12
+  capability_consumers: 12
+  dormant_permissions: []

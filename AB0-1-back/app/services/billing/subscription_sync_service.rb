@@ -17,6 +17,7 @@ module Billing
       update_company_plan!(company_sub)
 
       notify_status_change(company_sub, old_status)
+      record_outbox_events(company_sub, old_status)
 
       company_sub
     end
@@ -139,6 +140,53 @@ module Billing
         reason: 'Stripe webhook subscription cancellation',
         period_end: sub.current_period_end
       )
+    end
+
+    def record_outbox_events(sub, old_status)
+      return unless defined?(Outbox)
+
+      if %w[active trialing].include?(sub.status) && (old_status.nil? || !%w[active trialing].include?(old_status))
+        Outbox.record!(
+          event_type: 'billing.subscription.activated',
+          aggregate: sub,
+          company_id: sub.company_id,
+          payload: {
+            subscription_id: sub.id,
+            company_id: sub.company_id,
+            plan_id: sub.plan_id,
+            status: sub.status,
+            stripe_subscription_id: sub.stripe_subscription_id
+          }
+        )
+      elsif sub.status == 'canceled' && old_status != 'canceled'
+        Outbox.record!(
+          event_type: 'billing.subscription.canceled',
+          aggregate: sub,
+          company_id: sub.company_id,
+          payload: {
+            subscription_id: sub.id,
+            company_id: sub.company_id,
+            plan_id: sub.plan_id,
+            status: sub.status,
+            stripe_subscription_id: sub.stripe_subscription_id
+          }
+        )
+      else
+        Outbox.record!(
+          event_type: 'billing.subscription.updated',
+          aggregate: sub,
+          company_id: sub.company_id,
+          payload: {
+            subscription_id: sub.id,
+            company_id: sub.company_id,
+            plan_id: sub.plan_id,
+            status: sub.status,
+            stripe_subscription_id: sub.stripe_subscription_id
+          }
+        )
+      end
+    rescue StandardError => e
+      Rails.logger.warn("[Billing::SubscriptionSyncService] Failed to record Outbox event: #{e.message}")
     end
   end
 end

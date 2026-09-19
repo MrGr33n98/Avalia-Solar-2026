@@ -1,0 +1,117 @@
+version: "2026-09-18"
+framework: "Golden SaaS Sales RBAC Matrix"
+domain: "Internal Sales CRM"
+status: "WAVE 1C CANONICALIZED"
+
+permissions:
+  - id: "sales.opportunities.read"
+    resource: "opportunities"
+    action: "read"
+    description: "Read opportunities and pipeline"
+    roles: ["sales_admin", "sales_manager", "sales_rep", "sales_readonly"]
+
+  - id: "sales.opportunities.manage"
+    resource: "opportunities"
+    action: "manage"
+    description: "Create, update and transition opportunities"
+    roles: ["sales_admin", "sales_manager", "sales_rep"]
+
+  - id: "sales.accounts.read"
+    resource: "accounts"
+    action: "read"
+    description: "Read accounts"
+    roles: ["sales_admin", "sales_manager", "sales_rep", "sales_readonly"]
+
+  - id: "sales.accounts.manage"
+    resource: "accounts"
+    action: "manage"
+    description: "Manage accounts"
+    roles: ["sales_admin", "sales_manager"]
+
+  - id: "sales.contacts.read"
+    resource: "contacts"
+    action: "read"
+    description: "Read contacts"
+    roles: ["sales_admin", "sales_manager", "sales_rep", "sales_readonly"]
+
+  - id: "sales.contacts.manage"
+    resource: "contacts"
+    action: "manage"
+    description: "Manage contacts"
+    roles: ["sales_admin", "sales_manager", "sales_rep"]
+
+  - id: "sales.tasks.read"
+    resource: "tasks"
+    action: "read"
+    description: "Read sales tasks"
+    roles: ["sales_admin", "sales_manager", "sales_rep", "sales_readonly"]
+
+  - id: "sales.tasks.manage"
+    resource: "tasks"
+    action: "manage"
+    description: "Create and complete sales tasks"
+    roles: ["sales_admin", "sales_manager", "sales_rep"]
+
+  - id: "sales.reports.read"
+    resource: "reports"
+    action: "read"
+    description: "Read sales performance reports"
+    roles: ["sales_admin", "sales_manager"]
+
+  - id: "sales.settings.manage"
+    resource: "settings"
+    action: "manage"
+    description: "Manage Sales RBAC roles, permissions, and security assignments"
+    roles: ["sales_admin"]
+
+  - id: "sales.pipeline.manage"
+    resource: "pipeline"
+    action: "manage"
+    description: "Configure sales pipelines and stages"
+    roles: ["sales_admin", "sales_manager"]
+
+  - id: "sales.email.send"
+    resource: "email"
+    action: "send"
+    description: "Send outbound sales emails and prospect campaigns"
+    roles: ["sales_admin", "sales_manager", "sales_rep"]
+
+role_bundles:
+  sales_admin:
+    name: "Sales Administrator"
+    all_permissions: true
+
+  sales_manager:
+    name: "Sales Manager"
+    permissions:
+      - "sales.opportunities.read"
+      - "sales.opportunities.manage"
+      - "sales.accounts.read"
+      - "sales.accounts.manage"
+      - "sales.contacts.read"
+      - "sales.contacts.manage"
+      - "sales.tasks.read"
+      - "sales.tasks.manage"
+      - "sales.reports.read"
+      - "sales.pipeline.manage"
+      - "sales.email.send"
+
+  sales_rep:
+    name: "Sales Representative / SDR"
+    permissions:
+      - "sales.opportunities.read"
+      - "sales.opportunities.manage"
+      - "sales.accounts.read"
+      - "sales.contacts.read"
+      - "sales.contacts.manage"
+      - "sales.tasks.read"
+      - "sales.tasks.manage"
+      - "sales.email.send"
+
+  sales_readonly:
+    name: "Sales Read Only"
+    permissions:
+      - "sales.opportunities.read"
+      - "sales.accounts.read"
+      - "sales.contacts.read"
+      - "sales.tasks.read"

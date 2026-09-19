@@ -5,8 +5,14 @@ require 'rails_helper'
 RSpec.describe FeatureGateService do
   describe '.can_access?' do
     context 'when company is nil' do
-      it 'returns true (safe fallback)' do
-        expect(described_class.can_access?(nil, 'any_feature')).to be(true)
+      it 'denies access to arbitrary or non-free features (default deny)' do
+        expect(described_class.can_access?(nil, 'any_feature')).to be(false)
+        expect(described_class.can_access?(nil, 'advanced_analytics')).to be(false)
+      end
+
+      it 'allows access only to basic/free tier features' do
+        expect(described_class.can_access?(nil, 'view_dashboard')).to be(true)
+        expect(described_class.can_access?(nil, 'basic_analytics')).to be(true)
       end
     end
 

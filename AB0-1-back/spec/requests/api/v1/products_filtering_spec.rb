@@ -52,7 +52,7 @@ RSpec.describe 'Api::V1::Products', type: :request do
         json = JSON.parse(response.body)
         product = json['data'].first
 
-        expect(product).to include('image_url', 'image_urls', 'brand', 'categories', 'company')
+        expect(product).to include('image_urls', 'brand', 'categories', 'company')
         expect(product['brand']).to include('id' => brand_weg.id, 'name' => 'WEG', 'slug' => 'weg')
         expect(product['categories'].first).to include(
           'id' => category_solar.id,

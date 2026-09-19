@@ -8,14 +8,14 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
 
   before do
     # Setup pro plan so feature gating allows access
-    plan = create(:plan, name: 'Pro', price: 99.0)
+    plan = Plan.find_by(name: 'Pro') || create(:plan, name: 'Pro', price: 99.0)
     company.update(plan: plan)
     allow(plan).to receive(:tier).and_return('pro')
     allow(plan).to receive(:plan_tier).and_return('pro')
 
     create(:company_member, company: company, user: user, role: :owner, status: 'active')
     allow_any_instance_of(Api::V1::CompanyDashboardController).to receive(:current_user).and_return(user)
-    
+
     # Setup freshness state
     ActiveRecord::Base.connection.execute(
       "DELETE FROM analytics_processing_state WHERE pipeline_name = 'main_aggregation'"
@@ -29,7 +29,7 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
   describe 'GET /api/v1/company_dashboard/analytics/overview' do
     it 'includes freshness metadata' do
       get '/api/v1/company_dashboard/analytics/overview'
-      
+
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
       expect(json).to have_key('last_aggregated_at')
@@ -67,7 +67,7 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
   describe 'GET /api/v1/company_dashboard/analytics/timeseries' do
     it 'includes freshness metadata' do
       get '/api/v1/company_dashboard/analytics/timeseries'
-      
+
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
       expect(json).to have_key('last_aggregated_at')
@@ -132,7 +132,7 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
   describe 'GET /api/v1/company_dashboard/stats' do
     it 'includes freshness metadata in stats object' do
       get '/api/v1/company_dashboard/stats'
-      
+
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
       expect(json['stats']).to have_key('last_aggregated_at')

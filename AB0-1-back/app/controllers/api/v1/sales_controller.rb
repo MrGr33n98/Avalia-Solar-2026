@@ -5,12 +5,17 @@ module Api
       before_action :require_internal_sales
 
       def index
-        opportunities = ::Sales::Opportunity.includes(:account, :stage, :owner, :primary_contact).open.order(created_at: :desc)
+        opportunities = policy_scope(::Sales::Opportunity, policy_scope_class: ::Sales::OpportunityPolicy::Scope)
+                        .includes(:account, :stage, :owner, :primary_contact)
+                        .open
+                        .order(created_at: :desc)
         render json: { opportunities: opportunities.map { |opportunity| opportunity_json(opportunity) } }
       end
 
       def summary
-        opportunities = ::Sales::Opportunity.open
+        authorize(::Sales::Opportunity, :summary?, policy_class: ::Sales::OpportunityPolicy)
+
+        opportunities = policy_scope(::Sales::Opportunity, policy_scope_class: ::Sales::OpportunityPolicy::Scope).open
         total = opportunities.sum(:value_cents)
         weighted = opportunities.sum('value_cents * probability / 100.0').to_i
         render json: { pipeline_value_cents: total, weighted_pipeline_cents: weighted, deals_count: opportunities.count,
@@ -20,7 +25,7 @@ module Api
       private
 
       def require_internal_sales
-        return if current_user&.admin?
+        return if ::Sales::AuthorizationService.can?(user: current_user, resource: 'opportunities', action: 'read')
 
         render_error_response(message: 'CRM interno requer autorização de vendas.', status: :forbidden, code: 'SALES_FORBIDDEN')
       end

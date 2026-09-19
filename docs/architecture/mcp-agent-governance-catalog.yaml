@@ -1,0 +1,145 @@
+version: "1.1.0"
+generated_at: "2026-09-18T18:30:00-03:00"
+domain: "mcp_agent_governance"
+governance_policy: "strict_least_privilege_with_cryptographic_hitl"
+
+risk_tiers:
+  r0:
+    name: "Safe Read-Only"
+    level: 0
+    hitl_required: false
+    description: "Operações de leitura pura, idempotentes e sem efeitos colaterais."
+  r1:
+    name: "Analytical Draft"
+    level: 1
+    hitl_required: false
+    description: "Cálculos, análises heurísticas e recomendações operacionais não persistidas."
+  r2:
+    name: "Internal Low Write"
+    level: 2
+    hitl_required: false
+    description: "Mutações internas restritas ao contexto do próprio inquilino."
+  r3:
+    name: "External Mutating"
+    level: 3
+    hitl_required: true
+    description: "Mutações externas, outbound messaging ou exportações em massa de dados sensíveis."
+  r4:
+    name: "Critical & Financial"
+    level: 4
+    hitl_required: true
+    description: "Mutações financeiras, concessão de privilégios de segurança ou exclusão de dados."
+
+prohibited_tools:
+  - execute_sql
+  - raw_sql_query
+  - arbitrary_sql
+  - dbhub_query
+  - sql_executor
+  - exec_shell
+  - bash_command
+  - system_exec
+  - run_shell_command
+  - shell_runner
+  - cmd_eval
+  - drop_database
+  - truncate_tables
+
+canonical_scopes:
+  - name: "mcp:read"
+    description: "Acesso de leitura a dados públicos e recursos permitidos do tenant"
+  - name: "mcp:analyze"
+    description: "Execução de rotinas de análise, cálculo e geração de recomendações"
+  - name: "mcp:write"
+    description: "Criação e atualização de entidades internas de baixo impacto"
+  - name: "mcp:external_mutate"
+    description: "Execução de campanhas outbound e exportações (sujeito a HITL)"
+  - name: "mcp:admin"
+    description: "Acesso a métricas de plataforma e ferramentas de diagnóstico de infraestrutura"
+  - name: "mcp:admin:critical"
+    description: "Acesso a rotinas financeiras e de segurança crítica (sujeito a HITL mandatory)"
+
+authentication:
+  mechanism: "server_side_key_pair"
+  header: "X-Agent-Key"
+  format: "<key_id>:<secret>"
+  hashing: "HMAC-SHA256"
+  secure_compare: true
+  anti_spoofing: true
+
+hitl_cryptographic_binding:
+  normalization: "lexicographical_json_utc_iso8601"
+  algorithm: "SHA-256"
+  digest_column: "payload_digest"
+  immutable: true
+  tamper_prevention: "secure_compare_on_execution"
+  exactly_once: "row_lock_with_status_executed"
+  approver_rules:
+    disallow_self_approval: true
+    require_admin_role: true
+    enforce_ttl: true
+
+registered_agents:
+  - agent_id: "agent:observability:primary"
+    name: "Observability & Performance Primary Agent"
+    agent_type: "observability"
+    version: "1.0.0"
+    scopes:
+      - "mcp:read"
+      - "mcp:admin"
+    allowed_tools:
+      - "diagnose_performance"
+      - "get_system_health"
+      - "get_outbox_health"
+      - "get_postgres_health"
+      - "get_redis_health"
+      - "get_sidekiq_health"
+    risk_tier_max: "r0"
+    tenant_scope: null
+
+  - agent_id: "agent:hermes:outbound"
+    name: "Hermes Outbound Growth Agent"
+    agent_type: "growth"
+    version: "1.0.0"
+    scopes:
+      - "mcp:read"
+      - "mcp:analyze"
+    allowed_tools:
+      - "search_companies"
+      - "search_products"
+      - "get_company_profile"
+      - "compare_companies"
+      - "get_reviews_summary"
+      - "recommend_next_actions"
+    risk_tier_max: "r1"
+    tenant_scope: null
+
+  - agent_id: "agent:support:triage"
+    name: "Support & Moderation Triage Agent"
+    agent_type: "support"
+    version: "1.0.0"
+    scopes:
+      - "mcp:read"
+      - "mcp:write"
+    allowed_tools:
+      - "search_companies"
+      - "get_company_profile"
+      - "get_reviews_summary"
+      - "create_review_request"
+      - "get_leads_summary"
+    risk_tier_max: "r2"
+    tenant_scope: "scoped_to_company"
+
+  - agent_id: "agent:engineering:primary"
+    name: "Engineering & Diagnostics Agent"
+    agent_type: "engineering"
+    version: "1.0.0"
+    scopes:
+      - "mcp:read"
+      - "mcp:analyze"
+      - "mcp:write"
+      - "mcp:admin"
+    allowed_tools:
+      - ":all"
+    risk_tier_max: "r2"
+    tenant_scope: null

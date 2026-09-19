@@ -18,6 +18,15 @@ class JwtBlacklistService
     # @param exp [Time, Integer] Optional expiration time
     # @return [Boolean] true if revoked successfully
     def revoke_token(token, exp: nil)
+      if in_memory_fallback?
+        jti = extract_jti(token)
+        return false unless jti
+        ttl = calculate_ttl(token, exp)
+        return false if ttl <= 0
+        test_store["#{REDIS_PREFIX}#{jti}"] = Time.current + ttl.seconds
+        return true
+      end
+
       return false unless redis_available?
 
       jti = extract_jti(token)
@@ -42,6 +51,13 @@ class JwtBlacklistService
     # @param token [String] The JWT token to check
     # @return [Boolean] true if token is revoked
     def revoked?(token)
+      if in_memory_fallback?
+        jti = extract_jti(token)
+        return false unless jti
+        expiry = test_store["#{REDIS_PREFIX}#{jti}"]
+        return expiry.present? && expiry > Time.current
+      end
+
       return false unless redis_available?
 
       jti = extract_jti(token)
@@ -62,6 +78,17 @@ class JwtBlacklistService
     # @param token [String] The refresh token to consume
     # @return [Boolean] true when this request claimed the token
     def claim_token(token)
+      if in_memory_fallback?
+        jti = extract_jti(token)
+        return false unless jti
+        ttl = calculate_ttl(token)
+        return false if ttl <= 0
+        key = "#{REDIS_PREFIX}#{jti}"
+        return false if test_store[key].present? && test_store[key] > Time.current
+        test_store[key] = Time.current + ttl.seconds
+        return true
+      end
+
       return false unless redis_available?
 
       jti = extract_jti(token)
@@ -85,9 +112,14 @@ class JwtBlacklistService
     # @param user_id [Integer] The user ID
     # @return [Boolean] true if revoked successfully
     def revoke_all_user_tokens(user_id)
-      return false unless redis_available?
-
       timestamp = Time.current.to_i
+
+      if in_memory_fallback?
+        test_user_store["#{USER_PREFIX}#{user_id}"] = timestamp.to_s
+        return true
+      end
+
+      return false unless redis_available?
 
       RedisHelper.with_redis do |redis|
         redis.setex("#{USER_PREFIX}#{user_id}", 30.days.to_i, timestamp.to_s)
@@ -105,6 +137,11 @@ class JwtBlacklistService
     # @param user_id [Integer] The user ID
     # @return [Time, nil] The revocation timestamp or nil
     def user_tokens_revoked_at(user_id)
+      if in_memory_fallback?
+        timestamp_str = test_user_store["#{USER_PREFIX}#{user_id}"]
+        return timestamp_str ? Time.at(timestamp_str.to_i) : nil
+      end
+
       return nil unless redis_available?
 
       RedisHelper.with_redis do |redis|
@@ -143,6 +180,23 @@ class JwtBlacklistService
     # @return [Boolean]
     def redis_available?
       defined?(REDIS) && REDIS && !REDIS.is_a?(NullRedis)
+    end
+
+    def in_memory_fallback?
+      Rails.env.test? && !redis_available?
+    end
+
+    def test_store
+      @test_store ||= {}
+    end
+
+    def test_user_store
+      @test_user_store ||= {}
+    end
+
+    def clear_test_store!
+      @test_store = {}
+      @test_user_store = {}
     end
 
     # Extract JTI (JWT ID) from token

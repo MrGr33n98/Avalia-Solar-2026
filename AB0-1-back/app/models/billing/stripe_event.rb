@@ -4,7 +4,7 @@ module Billing
 
     validates :stripe_event_id, presence: true, uniqueness: true
     validates :event_type, presence: true
-    validates :processing_status, presence: true, inclusion: { in: %w[processing success failed skipped] }
+    validates :processing_status, presence: true, inclusion: { in: %w[processing success failed skipped skipped_stale] }
     validates :processed_at, presence: true
 
     scope :failed, -> { where(processing_status: 'failed') }

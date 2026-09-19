@@ -1,0 +1,298 @@
+# Avalia Solar — Canonical Entitlement Feature Catalog
+version: "2026.09"
+catalog_source: "app/models/plan_feature_catalog.rb"
+total_features: 29
+
+features:
+  # Public Profile Group
+  - key: premium_profile
+    group: public_profile
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Habilita recursos premium no perfil da empresa."
+
+  - key: product_description
+    group: public_profile
+    type: boolean
+    access_behavior: toggle
+    teaser: false
+    default: true
+    description: "Exibe o bloco de texto detalhado sobre a oferta da empresa."
+
+  - key: product_features_block
+    group: public_profile
+    type: boolean
+    access_behavior: toggle
+    teaser: false
+    default: true
+    description: "Lista de diferenciais técnicos e especificações do produto/serviço."
+
+  - key: featured_products
+    group: public_profile
+    type: integer
+    access_behavior: config
+    teaser: false
+    default: 0
+    description: "Exibe seção de produtos em destaque no perfil público da empresa."
+
+  - key: ideal_customer_block
+    group: public_profile
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Exibe para quem o serviço é mais indicado (ex: Residencial, Industrial)."
+
+  - key: company_categories_limit
+    group: public_profile
+    type: integer
+    access_behavior: config
+    teaser: false
+    default: 3
+    description: "Quantidade máxima de categorias publicáveis no perfil da empresa."
+
+  - key: service_area_states_limit
+    group: public_profile
+    type: integer
+    access_behavior: config
+    teaser: false
+    default: 1
+    description: "Quantidade máxima de estados adicionais de atendimento."
+
+  - key: service_area_cities_limit
+    group: public_profile
+    type: integer
+    access_behavior: config
+    teaser: false
+    default: 3
+    description: "Quantidade máxima de cidades adicionais de atendimento."
+
+  - key: national_coverage
+    group: public_profile
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Permite declarar atuação nacional sem revisão comercial adicional."
+
+  - key: local_seo_visibility
+    group: public_profile
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Permite usar cidades de abrangência como sinal comercial para páginas locais."
+
+  - key: company_links_block
+    group: public_profile
+    type: boolean
+    access_behavior: toggle
+    teaser: false
+    default: true
+    description: "Exibe links para Instagram, LinkedIn e site oficial."
+
+  - key: profile_media_direct_update
+    group: public_profile
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Permite atualizar logo e banner sem aprovação prévia."
+
+  - key: faq_block
+    group: public_profile
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Exibe sanfona de dúvidas frequentes (FAQs) no perfil."
+
+  # Conversion Group
+  - key: promo_banner
+    group: conversion
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Permite exibir banner de oferta personalizada no topo do perfil."
+
+  - key: custom_ctas
+    group: conversion
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Habilita botões personalizados para WhatsApp, Telefone ou Formulário Externo."
+
+  - key: pricing_table
+    group: conversion
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Exibe uma tabela comparativa de valores no perfil da empresa."
+
+  - key: special_offer
+    group: conversion
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Bloco de destaque para promoções temporárias com cronômetro ou cupom."
+
+  - key: sponsored_description
+    group: conversion
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Permite que a empresa apareça em resultados patrocinados no blog e busca."
+
+  - key: p2p_chat
+    group: conversion
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Habilita conversas diretas entre compradores e a empresa pelo marketplace."
+
+  - key: ai_live_inbox
+    group: conversion
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Permite receber e atender oportunidades qualificadas em tempo real."
+
+  # Trust Group
+  - key: verified_product
+    group: trust
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Exibe o selo de confiança que aumenta a taxa de conversão."
+
+  - key: highlight_badges
+    group: trust
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Exibe medalhas de conquistas (ex: Top 10, Empresa do Mês)."
+
+  - key: forum_highlight
+    group: trust
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Prioriza as respostas da empresa no fórum oficial."
+
+  - key: featured_review
+    group: trust
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Permite fixar o melhor depoimento de cliente no topo."
+
+  - key: social_proof
+    group: trust
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Exibe contador de estrelas e fotos de clientes satisfeitos."
+
+  # Content Group
+  - key: downloadable_materials
+    group: content
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Habilita o envio de PDFs, manuais e catálogos para download."
+
+  - key: projects_showcase
+    group: content
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Permite publicar projetos, cases e seus ativos visuais no perfil público."
+
+  - key: media_gallery
+    group: content
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Exibe fotos de instalações e vídeos de cases no perfil."
+
+  - key: media_upload
+    group: content
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Permite que a própria empresa suba fotos/vídeos via painel administrativo."
+
+  - key: product_images_limit
+    group: content
+    type: integer
+    access_behavior: config
+    teaser: false
+    default: null
+    description: "Quantidade máxima de imagens por produto."
+
+  # Insights & Analytics Group
+  - key: content_intent_analytics
+    group: insights
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Exibe funil de intenção, leads e entregas de materiais no dashboard."
+
+  - key: advanced_analytics
+    group: insights
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Acesso a métricas detalhadas de visualizações, cliques e conversões."
+
+  - key: leads_marketplace
+    group: insights
+    type: boolean
+    access_behavior: entitlement
+    teaser: hidden
+    default: false
+    description: "Permite que a empresa receba e visualize leads direto no painel."
+
+  - key: financing_simulation
+    group: insights
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Habilita a ferramenta de simulação de parcelas no perfil."
+
+  - key: webhooks
+    group: insights
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Integração via Webhooks (API) para envio de leads a CRMs externos."
+
+  - key: intent_scores
+    group: insights
+    type: boolean
+    access_behavior: entitlement
+    teaser: locked
+    default: false
+    description: "Exibe o score de propensão de compra dos leads gerados."

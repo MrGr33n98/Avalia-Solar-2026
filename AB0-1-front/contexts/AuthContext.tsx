@@ -84,10 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (typeof window !== 'undefined') {
         const isAdmin = user.role === 'admin';
-        const isEmployee = user.email?.endsWith('@avaliasolar.com.br');
+        const isCrmStaff = Boolean(user.crm_access || (user.sales_capabilities && user.sales_capabilities.length > 0));
+        const isInternalTeam = isAdmin || isCrmStaff;
         if (isAdmin) localStorage.setItem('is_admin_user', 'true');
-        if (isEmployee) localStorage.setItem('is_employee_user', 'true');
-        if (isAdmin || isEmployee) localStorage.setItem('is_internal_team', 'true');
+        if (isCrmStaff) localStorage.setItem('is_employee_user', 'true');
+        if (isInternalTeam) localStorage.setItem('is_internal_team', 'true');
       }
 
       if (stitchedIdentitySignature.current !== stitchSignature) {

@@ -43,9 +43,11 @@ class User < ApplicationRecord
   has_many :company_members, dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
   has_many :active_company_members, -> { where(status: 'active') }, class_name: 'CompanyMember'
-  has_many :member_companies, through: :company_members, source: :company
   has_many :active_member_companies, through: :active_company_members, source: :company
+  has_many :member_companies, through: :company_members, source: :company
   has_many :push_subscriptions, dependent: :destroy
+  has_many :sales_user_roles, class_name: 'Sales::UserRole', dependent: :destroy
+  has_many :sales_roles, through: :sales_user_roles, source: :role, class_name: 'Sales::Role'
   accepts_nested_attributes_for :company_members, allow_destroy: true
 
   # Role validation
@@ -153,6 +155,10 @@ class User < ApplicationRecord
 
   def regular_user?
     review_user?
+  end
+
+  def sales_staff?
+    admin? || sales_user_roles.exists?
   end
 
   def active_membership_for?(company_id)

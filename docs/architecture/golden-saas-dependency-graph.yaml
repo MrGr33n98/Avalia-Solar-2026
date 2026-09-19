@@ -1,0 +1,62 @@
+version: "2026-09-18"
+framework: "Golden SaaS Blueprint"
+project: "Avalia Solar 2026"
+
+dependency_graph:
+  nodes:
+    - id: "identity_auth"
+      name: "Canonical Identity & Authentication"
+      status: "STABLE"
+    - id: "tenancy_isolation"
+      name: "Tenant Isolation & CurrentTenant"
+      status: "REQUIRED"
+    - id: "rbac_authorization"
+      name: "Unified RBAC & Surface Policies"
+      status: "REQUIRED"
+    - id: "entitlement_engine"
+      name: "Canonical Entitlement Engine"
+      status: "REQUIRED"
+    - id: "transactional_outbox"
+      name: "Transactional Outbox & Event Bus"
+      status: "REQUIRED"
+    - id: "sales_multitenant"
+      name: "Multi-Tenant Sales CRM"
+      status: "BLOCKED_BY_TENANCY"
+    - id: "agent_identity"
+      name: "Agent Identity & Scopes"
+      status: "BLOCKED_BY_RBAC"
+    - id: "hitl_approval_queue"
+      name: "Human-in-the-Loop Approval Queue"
+      status: "BLOCKED_BY_AGENTS"
+
+  edges:
+    - from: "identity_auth"
+      to: "tenancy_isolation"
+    - from: "tenancy_isolation"
+      to: "rbac_authorization"
+    - from: "rbac_authorization"
+      to: "entitlement_engine"
+    - from: "tenancy_isolation"
+      to: "sales_multitenant"
+    - from: "rbac_authorization"
+      to: "sales_multitenant"
+    - from: "rbac_authorization"
+      to: "agent_identity"
+    - from: "transactional_outbox"
+      to: "agent_identity"
+    - from: "agent_identity"
+      to: "hitl_approval_queue"
+
+remediation_waves:
+  wave_0:
+    name: "Security & Tenancy Baseline"
+    targets: ["tenancy_isolation", "rbac_authorization"]
+  wave_1:
+    name: "Entitlements & Domain Boundaries"
+    targets: ["entitlement_engine", "sales_multitenant"]
+  wave_2:
+    name: "Event Bus & Reliability"
+    targets: ["transactional_outbox"]
+  wave_3:
+    name: "Agent Control Plane & HITL"
+    targets: ["agent_identity", "hitl_approval_queue"]

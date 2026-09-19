@@ -2,9 +2,11 @@ module Api
   module V1
     module Sales
       class RbacController < BaseController
+        before_action -> { require_sales_permission!('settings', 'manage') }
+
         def index
           roles = ::Sales::Role.includes(:permissions).order(:name)
-          users_scope = current_user&.company ? current_user.company.users.includes(:sales_roles) : User.none
+          users_scope = User.joins(:sales_user_roles).distinct.includes(:sales_roles)
           render json: {
             roles: roles.map { |role| { id: role.id, name: role.name, slug: role.slug, key: role.slug,
                                        permissions: role.permissions.map { |permission| "#{permission.resource}:#{permission.action}" } } },

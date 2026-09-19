@@ -3,6 +3,8 @@
 class AnalyticsEvent < ApplicationRecord
   self.table_name = 'analytics_events'
 
+  belongs_to :company, optional: true
+
   # ── Scopes ───────────────────────────────────────────────────────────
   scope :recent, -> { order(created_at: :desc).limit(100) }
   scope :by_event, ->(name) { where(event_name: name) }

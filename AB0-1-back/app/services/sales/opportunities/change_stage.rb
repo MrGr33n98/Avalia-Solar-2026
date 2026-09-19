@@ -22,10 +22,16 @@ module Sales
           @opportunity.update!(stage: @stage, stage_entered_at: Time.current,
                                probability: @opportunity.probability_overridden? ? @opportunity.probability : @stage.probability)
           @opportunity.stage_histories.create!(from_stage: previous, to_stage: @stage, actor: @actor, entered_at: Time.current)
-          DomainEvent.create!(event_type: 'sales.opportunity.stage_changed', aggregate_type: @opportunity.class.name,
-                              aggregate_id: @opportunity.id, occurred_at: Time.current,
-                              payload: { opportunity_id: @opportunity.id, actor_id: @actor.id,
-                                         from_stage_id: previous.id, to_stage_id: @stage.id })
+          Outbox.record!(
+            event_type: 'sales.opportunity.stage_changed',
+            aggregate: @opportunity,
+            payload: {
+              opportunity_id: @opportunity.id,
+              actor_id: @actor.id,
+              from_stage_id: previous.id,
+              to_stage_id: @stage.id
+            }
+          )
           @opportunity
         end
       end
