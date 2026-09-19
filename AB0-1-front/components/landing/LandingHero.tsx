@@ -14,7 +14,14 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 
 type LandingHeroProps = {
   categories?: Category[];
-  banners?: any[];
+  banners?: Array<{
+    id: number | string;
+    image_url?: string | null;
+    title?: string;
+    link?: string | null;
+    link_url?: string | null;
+    sponsored?: boolean;
+  }>;
   variant?: HomeHeroVariant;
   experimentId?: string;
   experimentEnabled?: boolean;
@@ -50,6 +57,7 @@ export default function LandingHero(props: LandingHeroProps) {
 
   const targetLink = activeCampaign?.target_url || '#';
   const showSponsoredBanner = Boolean(activeCampaign && activeCampaign.image_url);
+  const shouldAnimateHero = !prefersReducedMotion && !showSponsoredBanner;
 
   /* ────────────────────────────────────────────────────────────────
      Scroll-Driven 3D Canvas (desktop only, lg breakpoint: 1024px+)
@@ -58,8 +66,11 @@ export default function LandingHero(props: LandingHeroProps) {
     canvasRef,
     preloadProgress,
     isReady: canvasIsReady,
+    hasRenderedValidFrame,
+    hasCriticalFailure,
   } = useScrollDrivenFrames({
     totalFrames: TOTAL_FRAMES,
+    enabled: shouldAnimateHero,
     framesPathDesktop: FRAMES_DESKTOP_DIR,
     framesPathMobile: FRAMES_MOBILE_DIR,
     canvasWidthDesktop: 1280,
@@ -68,13 +79,15 @@ export default function LandingHero(props: LandingHeroProps) {
     canvasHeightMobile: 1200,
     smoothingDesktop: 0.22,
     smoothingMobile: 0.18,
-    travelRef: travelRef as React.RefObject<HTMLElement>,
+    travelRef,
     preloadReadyThreshold: 0.25,
   });
 
+  const disableExtendedScroll = isMobile || !shouldAnimateHero || hasCriticalFailure;
+
   const scrollTravel = useMemo(
-    () => (isMobile ? 'auto' : '280vh'),
-    [isMobile]
+    () => (disableExtendedScroll ? 'auto' : '280vh'),
+    [disableExtendedScroll]
   );
 
   return (
@@ -92,7 +105,7 @@ export default function LandingHero(props: LandingHeroProps) {
           ══════════════════════════════════════════════════════════════ */}
       <div
         className={`sticky top-0 flex w-full flex-col overflow-hidden ${
-          isMobile ? 'h-auto' : 'h-[100dvh]'
+          disableExtendedScroll ? 'h-auto' : 'h-[100dvh]'
         }`}
       >
         {/* ── Fundo decorativo: gradientes + sol + SVG geométrico ── */}
@@ -114,7 +127,7 @@ export default function LandingHero(props: LandingHeroProps) {
               <div className="absolute inset-0 flex items-end justify-end">
                 <div className="relative h-full w-full">
                   {/* Fallback: imagem estática */}
-                  {!canvasIsReady && STATIC_FALLBACK ? (
+                  {!hasRenderedValidFrame && STATIC_FALLBACK ? (
                     <Image
                       src={STATIC_FALLBACK}
                       alt=""
@@ -138,7 +151,7 @@ export default function LandingHero(props: LandingHeroProps) {
                       willChange: 'transform',
                     }}
                     className={`absolute inset-0 h-full w-full object-contain object-right-bottom select-none pointer-events-none transition-opacity duration-500 ${
-                      canvasIsReady ? 'opacity-100' : 'opacity-0'
+                      hasRenderedValidFrame ? 'opacity-100' : 'opacity-0'
                     }`}
                     role="img"
                     aria-label="Animação interativa 3D de Raio X e Fluxo de Energia Solar"
@@ -161,7 +174,7 @@ export default function LandingHero(props: LandingHeroProps) {
                   ) : null}
 
                   {/* Barra de progresso do pré-carregamento (minúscula, não intrusiva) */}
-                  {preloadProgress < 1 && canvasIsReady ? (
+                  {preloadProgress < 1 && (canvasIsReady || hasRenderedValidFrame) ? (
                     <div
                       className="absolute bottom-6 left-6 h-0.5 w-20 overflow-hidden rounded-full bg-slate-200/60"
                       aria-hidden="true"
