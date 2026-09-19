@@ -31,6 +31,7 @@ module Sales
 
     validates :name, :status, presence: true
     validates :temperature, inclusion: { in: TEMPERATURES }
+    validate :stage_belongs_to_pipeline
 
     scope :open, -> { where(status: 'open') }
     scope :hot, -> { where(temperature: 'hot') }
@@ -40,6 +41,15 @@ module Sales
       required = %w[decision_maker economic_buyer champion approver]
       matched = (required & roles).size
       ((matched.to_f / required.size) * 100).round
+    end
+
+    private
+
+    def stage_belongs_to_pipeline
+      return if sales_stage_id.blank? || sales_pipeline_id.blank?
+      return if stage&.sales_pipeline_id == sales_pipeline_id
+
+      errors.add(:sales_stage_id, 'deve pertencer ao pipeline selecionado')
     end
   end
 end

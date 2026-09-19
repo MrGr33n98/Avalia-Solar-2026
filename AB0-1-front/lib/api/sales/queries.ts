@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { salesApi } from './client';
 import { salesKeys } from './queryKeys';
+import { PipelineBoardParams } from './types';
 
 export function useSalesPipelines() {
   return useQuery({
@@ -34,10 +35,22 @@ export function useSalesContactOptions(accountId?: string | number) {
   });
 }
 
-export function useSalesOpportunities(filters?: Record<string, any>) {
+export function useSalesOpportunities(filters?: Record<string, unknown>) {
   return useQuery({
     queryKey: salesKeys.opportunities(filters),
     queryFn: () => salesApi.getOpportunities(filters),
     staleTime: 1000 * 30, // 30 seconds
+  });
+}
+
+export function useSalesPipelineBoard(pipelineId?: number, params: PipelineBoardParams = {}) {
+  return useQuery({
+    queryKey: salesKeys.pipelineBoard(pipelineId ?? 'unresolved', params),
+    queryFn: () => {
+      if (!pipelineId) throw new Error('Pipeline não selecionado.');
+      return salesApi.getPipelineBoard(pipelineId, params);
+    },
+    enabled: Boolean(pipelineId),
+    staleTime: 1000 * 30,
   });
 }

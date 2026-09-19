@@ -19,11 +19,11 @@ module Sales
 
         stages = pipeline.stages.order(:position, :id)
 
-        scope = ::Sales::Opportunity
+        tenant_scope = ::Sales::TenantScope.for(@current_user).opportunities
+        scope = tenant_scope
                   .where(sales_pipeline_id: pipeline.id)
                   .includes(:account, :stage, :primary_contact, :owner, :source, :qualification, :tags)
 
-        scope = apply_tenant_scope(scope)
         scope = apply_filters(scope)
 
         opportunities = fetch_opportunities_with_latest_activity_and_task(scope)
@@ -38,18 +38,11 @@ module Sales
       private
 
       def resolve_pipeline
-        if @pipeline_id.present? && @pipeline_id != 'default'
-          p = ::Sales::Pipeline.find_by(id: @pipeline_id) || ::Sales::Pipeline.find_by(key: @pipeline_id)
-          return p if p
+        if @pipeline_id.blank? || @pipeline_id == 'default'
+          return ::Sales::Pipeline.find_by(active: true) || ::Sales::Pipeline.first
         end
 
-        ::Sales::Pipeline.find_by(active: true) || ::Sales::Pipeline.first
-      end
-
-      def apply_tenant_scope(scope)
-        return scope if @current_user.admin?
-
-        scope.joins(:account).where(sales_accounts: { company_id: @current_user.company_id })
+        ::Sales::Pipeline.find_by(id: @pipeline_id) || ::Sales::Pipeline.find_by(key: @pipeline_id)
       end
 
       def apply_filters(scope)
@@ -73,6 +66,18 @@ module Sales
 
         if @params[:temperature].present?
           scope = scope.where(temperature: @params[:temperature])
+        end
+
+        scope = scope.joins(:stage).where(sales_stages: { key: @params[:stage_key] }) if @params[:stage_key].present?
+        if @params[:value_min].present?
+          scope = scope.where('sales_opportunities.value_cents >= ?', @params[:value_min].to_i)
+        end
+        if @params[:value_max].present?
+          scope = scope.where('sales_opportunities.value_cents <= ?', @params[:value_max].to_i)
+        end
+        if @params[:tag_ids].present?
+          tag_ids = Array(@params[:tag_ids]).flat_map { |id| id.to_s.split(',') }
+          scope = scope.joins(:tags).where(sales_tags: { id: tag_ids }).distinct
         end
 
         scope

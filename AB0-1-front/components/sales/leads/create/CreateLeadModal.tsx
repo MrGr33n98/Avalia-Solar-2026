@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { AlertCircle, Building2, Flame, Loader2, Plus, Settings, Target, User, X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { AlertCircle, Flame, Loader2, Settings, Target } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,17 +10,26 @@ import AccountCombobox from '@/components/sales/opportunities/AccountCombobox';
 import ContactCombobox from '@/components/sales/opportunities/ContactCombobox';
 import { salesApi } from '@/lib/api/sales/client';
 import { useSalesPipelines } from '@/lib/api/sales/queries';
+import { salesKeys } from '@/lib/api/sales/queryKeys';
+import {
+  ApiPipeline,
+  ApiSource,
+  ApiStage,
+  CreateLeadPayload,
+  SalesLead,
+} from '@/lib/api/sales/types';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 interface CreateLeadModalProps {
   open: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (lead: SalesLead) => void | Promise<void>;
 }
 
 export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLeadModalProps) {
   const { data: pipelines } = useSalesPipelines();
-  const stages = pipelines?.[0]?.stages || [];
+  const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,36 +39,51 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
   const [pipelineId, setPipelineId] = useState('');
   const [stageKey, setStageKey] = useState('prospect');
   const [temperature, setTemperature] = useState<'cold' | 'warm' | 'hot'>('cold');
-  const [ownerId, setOwnerId] = useState('');
   const [expectedCloseDate, setExpectedCloseDate] = useState('');
   const [valueCents, setValueCents] = useState('');
   const [probability, setProbability] = useState('20');
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [selectedContactId, setSelectedContactId] = useState('');
   const [sourceId, setSourceId] = useState('');
-  const [selectedCompetitorIds, setSelectedCompetitorIds] = useState<number[]>([]);
+  const selectedPipeline =
+    pipelines?.find((pipeline) => String(pipeline.id) === pipelineId) ?? pipelines?.[0];
+  const stages = useMemo(() => selectedPipeline?.stages ?? [], [selectedPipeline]);
 
   // Inline Account & Contact Creation
   const [isInlineAccount, setIsInlineAccount] = useState(false);
   const [inlineAccountName, setInlineAccountName] = useState('');
-  const [inlineAccountDomain, setInlineAccountDomain] = useState('');
 
   // Sources & Competitors options from backend
-  const [sources, setSources] = useState<any[]>([]);
-  const [competitors, setCompetitors] = useState<any[]>([]);
+  const [sources, setSources] = useState<ApiSource[]>([]);
 
   useEffect(() => {
     if (open) {
       salesApi.getSources().then(setSources).catch(console.error);
-      salesApi.getCompetitors().then(setCompetitors).catch(console.error);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!selectedPipeline) return;
+
+    const initialStage = selectedPipeline.stages.find(
+      (stage) => stage.key !== 'won' && stage.key !== 'lost'
+    );
+
+    if (!pipelineId) setPipelineId(String(selectedPipeline.id));
+    if (!stages.some((stage) => stage.key === stageKey)) {
+      setStageKey(initialStage?.key || '');
+    }
+  }, [pipelineId, selectedPipeline, stageKey, stages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return setError('Nome do Lead é obrigatório.');
     if (!selectedAccountId && !isInlineAccount) return setError('Empresa (Account) é obrigatória.');
     if (isInlineAccount && !inlineAccountName.trim()) return setError('Digite o nome da empresa.');
+    if (!selectedPipeline) return setError('Selecione um pipeline válido.');
+    if (!stages.some((stage) => stage.key === stageKey)) {
+      return setError('Selecione um estágio pertencente ao pipeline escolhido.');
+    }
 
     setLoading(true);
     setError(null);
@@ -67,15 +91,15 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
     try {
       const parsedValue = valueCents ? Math.round(parseFloat(valueCents.replace(',', '.')) * 100) : 0;
 
-      const payload: any = {
-        name,
+      const payload: CreateLeadPayload = {
+        name: name.trim(),
+        sales_pipeline_id: selectedPipeline.id,
         stage_key: stageKey,
         temperature,
         value_cents: isNaN(parsedValue) ? 0 : parsedValue,
         probability: probability ? Number(probability) : 20,
         expected_close_date: expectedCloseDate || null,
         source_id: sourceId ? Number(sourceId) : null,
-        competitor_ids: selectedCompetitorIds,
       };
 
       if (selectedAccountId) payload.sales_account_id = Number(selectedAccountId);
@@ -85,19 +109,24 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
       }
 
       if (isInlineAccount) {
-        payload.account = { name: inlineAccountName, domain: inlineAccountDomain };
+        payload.account = {
+          name: inlineAccountName.trim(),
+        };
       }
 
-      await salesApi.createLead(payload);
+      const lead = await salesApi.createLead(payload);
+      const createdPipelineId = lead.sales_pipeline_id ?? selectedPipeline.id;
+      await queryClient.invalidateQueries({
+        queryKey: salesKeys.pipelineBoardBase(createdPipelineId),
+      });
+      await onSuccess?.(lead);
 
       toast.success('Lead criado com sucesso!');
-      setTimeout(() => {
-        onClose();
-        setLoading(false);
-        onSuccess?.();
-      }, 300);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao cadastrar lead comercial.');
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao cadastrar lead comercial.');
+    }
+    finally {
       setLoading(false);
     }
   };
@@ -183,14 +212,14 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">Pipeline</label>
-                <Select value={pipelineId || String(pipelines?.[0]?.id || '')} onValueChange={setPipelineId}>
+                <Select value={pipelineId} onValueChange={setPipelineId}>
                   <SelectTrigger className="h-11 border-slate-300 text-xs rounded-xl px-4 bg-white">
                     <SelectValue placeholder="Selecione pipeline" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {pipelines?.map((p: any) => (
-                      <SelectItem key={p.id} value={String(p.id)} className="text-xs">
-                        {p.name}
+                    {pipelines?.map((pipeline: ApiPipeline) => (
+                      <SelectItem key={pipeline.id} value={String(pipeline.id)} className="text-xs">
+                        {pipeline.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -204,9 +233,9 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
                     <SelectValue placeholder="Selecione estágio" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {stages.filter((s: any) => s.key !== 'won' && s.key !== 'lost').map((s: any) => (
-                      <SelectItem key={s.key} value={s.key} className="text-xs">
-                        {s.name || s.label}
+                    {stages.filter((stage: ApiStage) => stage.key !== 'won' && stage.key !== 'lost').map((stage: ApiStage) => (
+                      <SelectItem key={stage.key} value={stage.key} className="text-xs">
+                        {stage.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -302,9 +331,9 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
                   <SelectValue placeholder="Selecione origem..." />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  {sources.map((s: any) => (
-                    <SelectItem key={s.id} value={String(s.id)} className="text-xs">
-                      {s.name}
+                  {sources.map((source) => (
+                    <SelectItem key={source.id} value={String(source.id)} className="text-xs">
+                      {source.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

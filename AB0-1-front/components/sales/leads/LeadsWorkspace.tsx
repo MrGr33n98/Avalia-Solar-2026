@@ -1,23 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   BarChart3,
-  Building2,
-  Calendar,
   Download,
-  Filter,
-  Flame,
   Kanban,
   LayoutList,
   MapPin,
   Plus,
   RefreshCw,
   Search,
-  Sparkles,
   Target,
-  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,34 +20,22 @@ import Link from 'next/link';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateLeadModal from './create/CreateLeadModal';
 import SalesCommandCenter from '@/components/sales/SalesCommandCenter';
-import { salesApi } from '@/lib/api/sales/client';
+import { SalesLead } from '@/lib/api/sales/types';
 
 export default function LeadsWorkspace() {
   const searchParams = useSearchParams();
   const initialView = (searchParams.get('view') as 'list' | 'kanban' | 'map' | 'analytics') || 'kanban';
 
   const [view, setView] = useState<'list' | 'kanban' | 'map' | 'analytics'>(initialView);
-  const [leads, setLeads] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<number | undefined>();
+  const [boardRefreshVersion, setBoardRefreshVersion] = useState(0);
 
-  const fetchLeads = async () => {
-    setLoading(true);
-    try {
-      const data = await salesApi.getLeads({ q: search });
-      setLeads(data);
-    } catch (err) {
-      console.error('Erro ao carregar leads:', err);
-    } finally {
-      setLoading(false);
-    }
+  const handleLeadCreated = (lead: SalesLead) => {
+    if (lead.sales_pipeline_id) setSelectedPipelineId(lead.sales_pipeline_id);
   };
-
-  useEffect(() => {
-    fetchLeads();
-  }, [search, activeFilter]);
 
   return (
     <SalesLayoutWrapper>
@@ -167,7 +149,12 @@ export default function LeadsWorkspace() {
                 className="h-8 pl-8 text-xs border-slate-200 rounded-lg w-64 bg-slate-50 focus:bg-white"
               />
             </div>
-            <Button variant="ghost" size="sm" onClick={fetchLeads} className="h-8 text-xs text-slate-500">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setBoardRefreshVersion((current) => current + 1)}
+              className="h-8 text-xs text-slate-500"
+            >
               <RefreshCw className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -175,7 +162,12 @@ export default function LeadsWorkspace() {
 
         {/* Main Leads Workspace View Container */}
         {view === 'kanban' || view === 'list' ? (
-          <SalesCommandCenter hideLayout pipelineOnly />
+          <SalesCommandCenter
+            hideLayout
+            pipelineOnly
+            pipelineId={selectedPipelineId}
+            refreshVersion={boardRefreshVersion}
+          />
         ) : view === 'map' ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-slate-500 space-y-2">
             <MapPin className="w-10 h-10 text-indigo-600 mx-auto" />
@@ -192,7 +184,11 @@ export default function LeadsWorkspace() {
       </div>
 
       {/* Canonical Create Lead Modal */}
-      <CreateLeadModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} onSuccess={fetchLeads} />
+      <CreateLeadModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSuccess={handleLeadCreated}
+      />
     </SalesLayoutWrapper>
   );
 }

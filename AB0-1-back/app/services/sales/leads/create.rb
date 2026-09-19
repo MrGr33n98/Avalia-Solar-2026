@@ -105,6 +105,10 @@ module Sales
           message: e.message,
           fields: e.record.errors.messages
         )
+      rescue PipelineNotConfiguredError => e
+        Result.new(success?: false, code: 'CRM_PIPELINE_NOT_CONFIGURED', message: e.message)
+      rescue StagePipelineMismatchError => e
+        Result.new(success?: false, code: 'STAGE_PIPELINE_MISMATCH', message: e.message)
       rescue StandardError => e
         Result.new(
           success?: false,
@@ -115,14 +119,16 @@ module Sales
 
       private
 
+      class PipelineNotConfiguredError < StandardError; end
+      class StagePipelineMismatchError < StandardError; end
+
       def resolve_account
         return @attributes[:sales_account_id] if @attributes[:sales_account_id].present?
 
         if @inline_account.present? && @inline_account[:name].present?
-          new_account = ::Sales::Account.create!(
-            name: @inline_account[:name],
-            domain: @inline_account[:domain],
-            user: @actor
+          new_account = ::Sales::Accounts::Create.call(
+            actor: @actor,
+            attributes: { name: @inline_account[:name], domain: @inline_account[:domain] }
           )
           return new_account.id
         end
@@ -131,9 +137,16 @@ module Sales
       end
 
       def resolve_pipeline
-        pipeline = if @attributes[:sales_pipeline_id].present?
-                     ::Sales::Pipeline.find_by(id: @attributes[:sales_pipeline_id])
-                   end
+        if @attributes[:sales_pipeline_id].present?
+          pipeline = ::Sales::Pipeline.find_by(id: @attributes[:sales_pipeline_id])
+          if pipeline.nil?
+            raise PipelineNotConfiguredError, "Pipeline ##{@attributes[:sales_pipeline_id]} não encontrado."
+          end
+
+          return pipeline
+        end
+
+        pipeline = nil
         pipeline ||= ::Sales::Pipeline.find_by(active: true) || ::Sales::Pipeline.first
         pipeline ||= ::Sales::Pipeline.create!(name: 'Pipeline Padrão', key: 'default', active: true)
         pipeline
@@ -157,10 +170,17 @@ module Sales
                   pipeline.stages.find_by('LOWER(key) = ? OR LOWER(name) = ?', target_key, lower_key) ||
                     pipeline.stages.where('name ILIKE ? OR key ILIKE ?', "%#{clean_key}%", "%#{clean_key}%").first
                 elsif stage_id.present?
-                  pipeline.stages.find_by(id: stage_id) || ::Sales::Stage.find_by(id: stage_id)
+                  pipeline.stages.find_by(id: stage_id)
                 end
 
+        if stage.nil? && (stage_key.present? || stage_id.present?)
+          identifier = stage_key.presence || "##{stage_id}"
+          raise StagePipelineMismatchError, "O estágio #{identifier} não pertence ao pipeline ##{pipeline.id}."
+        end
+
         stage ||= pipeline.stages.order(:position).first
+        raise PipelineNotConfiguredError, "Nenhum estágio configurado para o pipeline ##{pipeline.id}." if stage.nil?
+
         stage
       end
     end

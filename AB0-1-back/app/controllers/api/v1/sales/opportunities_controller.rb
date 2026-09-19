@@ -159,9 +159,10 @@ module Api
                         @opportunity.pipeline.stages.find_by(key: params[:opportunity][:stage_key]) ||
                           @opportunity.pipeline.stages.find_by(name: params[:opportunity][:stage_key])
                       else
-                        ::Sales::Stage.find_by(id: params[:opportunity][:sales_stage_id])
+                        @opportunity.pipeline.stages.find_by(id: params[:opportunity][:sales_stage_id])
                       end
-              stage ||= @opportunity.pipeline.stages.order(:position).first
+              raise ActiveRecord::RecordNotFound, 'Estágio não pertence ao pipeline da oportunidade.' if stage.nil?
+
               ::Sales::Opportunities::ChangeStage.call(opportunity: @opportunity, stage:, actor: current_user)
             else
               @opportunity.update!(opportunity_update_params)
@@ -185,8 +186,7 @@ module Api
         private
 
         def scoped_opportunities
-          return ::Sales::Opportunity.all if current_user.admin?
-          ::Sales::Opportunity.joins(:account).where(sales_accounts: { company_id: current_user.company_id })
+          ::Sales::TenantScope.for(current_user).opportunities
         end
 
         def apply_bulk_action(record)

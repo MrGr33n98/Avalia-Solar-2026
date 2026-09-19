@@ -78,14 +78,7 @@ module Api
 
         def create
           ActiveRecord::Base.transaction do
-            account = ::Sales::Account.where(owner: current_user).find_or_initialize_by(name: account_params[:name])
-            account.assign_attributes(
-              account_params.merge(
-                owner: current_user,
-                company_id: account_params[:company_id]
-              )
-            )
-            account.save!
+            account = ::Sales::Accounts::Create.call(actor: current_user, attributes: account_params)
 
             if params[:primary_contact].present?
               c_params = params[:primary_contact]
@@ -168,7 +161,7 @@ module Api
         end
 
         def account_params
-          params.require(:account).permit(:name, :company_id, :domain, :website, :phone, :email, :city, :state,
+          params.require(:account).permit(:name, :domain, :website, :phone, :email, :city, :state,
                                           :segment, :company_size, :source, :source_detail, :status)
         end
 

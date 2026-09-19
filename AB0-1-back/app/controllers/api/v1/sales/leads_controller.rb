@@ -24,8 +24,8 @@ module Api
 
         def create
           lead_params = params[:lead] || params[:opportunity] || params
-          inline_acc = params[:account]
-          inline_cnt = params[:contact]
+          inline_acc = params[:account] || lead_params[:account]
+          inline_cnt = params[:contact] || lead_params[:contact]
 
           result = ::Sales::Leads::Create.call(
             actor: current_user,
@@ -34,8 +34,8 @@ module Api
               :stage_key, :value_cents, :currency, :probability, :expected_close_date, :temperature,
               :source_id, competitor_ids: [], contact_ids: []
             ),
-            inline_account: inline_acc,
-            inline_contact: inline_cnt
+            inline_account: inline_acc&.permit(:name, :domain),
+            inline_contact: inline_cnt&.permit(:first_name, :email)
           )
 
           if result.success?
@@ -53,12 +53,31 @@ module Api
         def update
           lead = scoped_opportunities.find(params[:id])
           lead_params = params[:lead] || params[:opportunity] || params
+          attributes = lead_params.permit(
+            :name, :value_cents, :temperature, :sales_stage_id, :stage_key, :expected_close_date, :probability
+          ).to_h
+          stage_key = attributes.delete('stage_key')
+          stage_id = attributes.delete('sales_stage_id')
 
-          if lead.update(lead_params.permit(:name, :value_cents, :temperature, :sales_stage_id, :stage_key, :expected_close_date, :probability))
-            render json: { lead: serialize_lead(lead), opportunity: serialize_lead(lead) }
-          else
-            render json: { error: { code: 'VALIDATION_ERROR', message: lead.errors.full_messages.join(', ') } }, status: :unprocessable_entity
+          if stage_key.present? || stage_id.present?
+            stage = if stage_key.present?
+                      lead.pipeline.stages.find_by(key: stage_key) || lead.pipeline.stages.find_by(name: stage_key)
+                    else
+                      lead.pipeline.stages.find_by(id: stage_id)
+                    end
+            unless stage
+              return render json: {
+                error: { code: 'STAGE_PIPELINE_MISMATCH', message: 'Estágio não pertence ao pipeline do lead.' }
+              }, status: :unprocessable_entity
+            end
+
+            ::Sales::Opportunities::ChangeStage.call(opportunity: lead, stage:, actor: current_user)
           end
+
+          lead.update!(attributes) if attributes.present?
+          render json: { lead: serialize_lead(lead.reload), opportunity: serialize_lead(lead) }
+        rescue ArgumentError, ActiveRecord::RecordInvalid => e
+          render json: { error: { code: 'VALIDATION_ERROR', message: e.message } }, status: :unprocessable_entity
         end
 
         def convert

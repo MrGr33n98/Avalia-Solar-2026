@@ -96,10 +96,9 @@ module Sales
         return @attributes[:sales_account_id] if @attributes[:sales_account_id].present?
 
         if @inline_account.present? && @inline_account[:name].present?
-          new_account = ::Sales::Account.create!(
-            name: @inline_account[:name],
-            domain: @inline_account[:domain],
-            user: @actor
+          new_account = ::Sales::Accounts::Create.call(
+            actor: @actor,
+            attributes: { name: @inline_account[:name], domain: @inline_account[:domain] }
           )
           return new_account.id
         end
@@ -133,9 +132,16 @@ module Sales
       end
 
       def resolve_pipeline
-        pipeline = if @attributes[:sales_pipeline_id].present?
-                     ::Sales::Pipeline.find_by(id: @attributes[:sales_pipeline_id])
-                   end
+        if @attributes[:sales_pipeline_id].present?
+          pipeline = ::Sales::Pipeline.find_by(id: @attributes[:sales_pipeline_id])
+          if pipeline.nil?
+            raise PipelineNotConfiguredError, "Pipeline ##{@attributes[:sales_pipeline_id]} não encontrado."
+          end
+
+          return pipeline
+        end
+
+        pipeline = nil
         pipeline ||= ::Sales::Pipeline.find_by(active: true) || ::Sales::Pipeline.first
 
         if pipeline.nil?
@@ -155,8 +161,9 @@ module Sales
                   pipeline.stages.find_by(id: stage_id)
                 end
 
-        if stage.nil? && stage_id.present? && ::Sales::Stage.exists?(id: stage_id)
-          raise StagePipelineMismatchError, "O estágio ##{stage_id} não pertence ao pipeline ##{pipeline.id}."
+        if stage.nil? && (stage_key.present? || stage_id.present?)
+          identifier = stage_key.presence || "##{stage_id}"
+          raise StagePipelineMismatchError, "O estágio #{identifier} não pertence ao pipeline ##{pipeline.id}."
         end
 
         stage ||= pipeline.stages.order(:position).first

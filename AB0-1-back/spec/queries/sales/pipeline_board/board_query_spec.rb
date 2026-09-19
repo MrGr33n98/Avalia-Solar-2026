@@ -59,6 +59,23 @@ RSpec.describe Sales::PipelineBoard::BoardQuery do
       expect(result[:opportunities]).to be_empty
     end
 
+    it 'uses the canonical tenant scope for opportunities owned by another user in the same tenant' do
+      teammate = create(:user, company: company, role: :sales_rep)
+      teammate_account = Sales::Account.create!(owner: teammate, name: 'Conta compartilhada por owner')
+      teammate_opportunity = teammate_account.opportunities.create!(
+        pipeline: pipeline,
+        stage: stage_prospect,
+        owner: teammate,
+        name: 'Projeto do colega de tenant',
+        status: 'open'
+      )
+
+      result = described_class.call(pipeline_id: pipeline.id, current_user: user)
+      opportunity_ids = result[:opportunities].map { |item| item[:record].id }
+
+      expect(opportunity_ids).to include(teammate_opportunity.id)
+    end
+
     it 'allows admin users to view all company opportunities' do
       admin_user = create(:user, role: :admin, company: nil)
 
