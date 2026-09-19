@@ -1,0 +1,64 @@
+{
+  "_comment": "TEMPLATE: Copie este arquivo para infra/MCP_CONFIG.json e preencha com suas credenciais. NÃO COMMITE o arquivo preenchido.",
+  "googleOAuth": {
+    "installed": {
+      "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+      "project_id": "avalia-solar-g4-mcp",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_secret": "YOUR_GOOGLE_CLIENT_SECRET",
+      "redirect_uris": ["http://localhost"]
+    }
+  },
+  "mcpServers": {
+    "openings": {
+      "type": "http",
+      "url": "http://127.0.0.1:8501/mcp",
+      "serverUrl": "http://127.0.0.1:8501/mcp"
+    },
+    "dbhub": {
+      "command": "npx",
+      "args": [
+        "-y", "@bytebase/dbhub@latest", "--transport", "stdio", "--readonly",
+        "--dsn", "postgresql://postgres:YOUR_DB_PASSWORD@127.0.0.1:5433/ab0_development"
+      ]
+    },
+    "Playwright": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/playwright-mcp-server"],
+      "env": {}
+    },
+    "Figma AI Bridge": {
+      "command": "npx",
+      "args": ["-y", "figma-developer-mcp", "--stdio"],
+      "env": { "FIGMA_API_KEY": "figd_YOUR_FIGMA_PAT" },
+      "disabledTools": [],
+      "disabled": true
+    },
+    "figma": { "serverUrl": "https://mcp.figma.com/mcp" },
+    "GitHub": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_YOUR_GITHUB_PAT_CLASSIC" }
+    },
+    "Context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {}
+    },
+    "shadcn-ui": {
+      "command": "npx",
+      "args": [
+        "-y", "@jpisnice/shadcn-ui-mcp-server",
+        "--github-api-key", "ghp_YOUR_GITHUB_PAT_CLASSIC"
+      ],
+      "env": {}
+    },
+    "Firecrawl": {
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": { "FIRECRAWL_API_KEY": "fc-YOUR_FIRECRAWL_KEY" }
+    }
+  }
+}
