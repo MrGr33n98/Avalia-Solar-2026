@@ -8,7 +8,7 @@ module Sales
       # @return [Boolean]
       def sales_access?(user:)
         return false unless user
-        return true if user.admin?
+        return true if platform_admin?(user)
 
         user.sales_roles.exists?
       end
@@ -23,7 +23,7 @@ module Sales
         return false unless user
 
         # Platform Admin explicit bypass
-        return true if user.admin?
+        return true if platform_admin?(user)
 
         # Parse dot-notation permission if provided
         if permission.present?
@@ -51,7 +51,7 @@ module Sales
       # @return [Array<String>]
       def permissions_for(user:)
         return [] unless user
-        return ['sales.*'] if user.admin?
+        return ['sales.*'] if platform_admin?(user)
 
         Sales::Permission
           .joins(role_permissions: { role: :user_roles })
@@ -59,6 +59,12 @@ module Sales
           .distinct
           .pluck(:resource, :action)
           .map { |r, a| "sales.#{r}.#{a}" }
+      end
+
+      private
+
+      def platform_admin?(user)
+        user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)
       end
     end
   end
