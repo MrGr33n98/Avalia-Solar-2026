@@ -125,7 +125,54 @@ export default function LandingHero(props: LandingHeroProps) {
             {/* Imagem estática fallback (até 25% dos frames pré-carregarem) */}
             {!showSponsoredBanner ? (
               <div className="absolute inset-0 flex items-end justify-end">
-                <div className="relative h-full w-full">
+                {/* Wrapper comum com CSS mask de edge feathering:
+                    aqui aplicamos mask combinada (horizontal + vertical)
+                    para desaparecer as 4 bordas no fundo da landing,
+                    preservando ~80% central 100% nítido. */}
+                <div
+                  className="relative h-full w-full"
+                  style={{
+                    /* Horizontal: fade 0%→7%→88%→100% | Vertical: fade superior curto, inferior LONGO (item 6) */
+                    WebkitMaskImage:
+                      'linear-gradient(to right, transparent 0%, black 7%, black 88%, transparent 100%),' +
+                      'linear-gradient(to bottom, transparent 0%, black 6%, black 70%, rgba(0,0,0,0.85) 92%, transparent 100%)',
+                    maskImage:
+                      'linear-gradient(to right, transparent 0%, black 7%, black 88%, transparent 100%),' +
+                      'linear-gradient(to bottom, transparent 0%, black 6%, black 70%, rgba(0,0,0,0.85) 92%, transparent 100%)',
+                    WebkitMaskComposite: 'source-in, source-in',
+                    maskComposite: 'intersect, intersect',
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskSize: '100% 100%',
+                    maskSize: '100% 100%',
+                  }}
+                >
+                  {/* ═══════════════════════════════════════════════════════
+                      CAMADA DE BLUR LOCALIZADO (EXTREMIDADES APENAS)
+                      Fica atrás do canvas principal. Usa a imagem de fallback
+                      ou primeiro frame borrado para "espalhar" as cores das
+                      bordas para fora, eliminando qualquer linha residual.
+                      Canvas principal continua 100% sharp, sem blur.
+                      ═══════════════════════════════════════════════════════ */}
+                  {hasRenderedValidFrame && STATIC_FALLBACK ? (
+                    <Image
+                      src={STATIC_FALLBACK}
+                      alt=""
+                      fill
+                      aria-hidden="true"
+                      className="object-contain object-right-bottom select-none pointer-events-none"
+                      sizes="(max-width: 1023px) 0vw, 50vw"
+                      style={{
+                        filter: 'blur(18px) saturate(1.08)',
+                        WebkitFilter: 'blur(18px) saturate(1.08)',
+                        opacity: 0.5,
+                        transform: 'scale(1.04)',
+                        transformOrigin: 'right bottom',
+                        zIndex: 0,
+                      }}
+                    />
+                  ) : null}
+
                   {/* Fallback: imagem estática */}
                   {!hasRenderedValidFrame && STATIC_FALLBACK ? (
                     <Image
@@ -134,7 +181,7 @@ export default function LandingHero(props: LandingHeroProps) {
                       fill
                       priority
                       quality={88}
-                      className="object-contain object-right-bottom transition-opacity duration-500 opacity-100"
+                      className="object-contain object-right-bottom transition-opacity duration-500 opacity-100 relative z-[1]"
                       sizes="(max-width: 1023px) 0vw, 50vw"
                       aria-hidden="true"
                     />
@@ -149,8 +196,9 @@ export default function LandingHero(props: LandingHeroProps) {
                       mixBlendMode: 'normal',
                       imageRendering: 'auto',
                       willChange: 'transform',
+                      zIndex: 1,
                     }}
-                    className={`absolute inset-0 h-full w-full object-contain object-right-bottom select-none pointer-events-none transition-opacity duration-500 ${
+                    className={`absolute inset-0 h-full w-full object-contain object-right-bottom select-none pointer-events-none transition-opacity duration-500 relative ${
                       hasRenderedValidFrame ? 'opacity-100' : 'opacity-0'
                     }`}
                     role="img"
@@ -166,7 +214,7 @@ export default function LandingHero(props: LandingHeroProps) {
                       loop
                       playsInline
                       preload="auto"
-                      className="absolute inset-0 h-full w-full object-contain object-right-bottom"
+                      className="absolute inset-0 h-full w-full object-contain object-right-bottom relative z-[1]"
                       aria-hidden="true"
                     >
                       <source src={REDUCED_MOTION_VIDEO} type="video/mp4" />
@@ -178,6 +226,11 @@ export default function LandingHero(props: LandingHeroProps) {
                     <div
                       className="absolute bottom-6 left-6 h-0.5 w-20 overflow-hidden rounded-full bg-slate-200/60"
                       aria-hidden="true"
+                      style={{
+                        /* Reverter mask só na barra: ela deve permanecer visível. */
+                        WebkitMaskImage: 'none',
+                        maskImage: 'none',
+                      }}
                     >
                       <div
                         className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-150"
@@ -189,14 +242,59 @@ export default function LandingHero(props: LandingHeroProps) {
               </div>
             ) : null}
 
-            {/* ── Gradiente de fade: funde a borda esquerda do painel com o fundo da página
-                  Coincide com o ponto médio #f8fbff do HeroBackground — ZERO silhueta visível. */}
+            {/* ═══════════════════════════════════════════════════════
+                OVERLAYS DE INTEGRAÇÃO SEAMLESS
+                4 overlays pointer-events-none para fundir as 4 bordas
+                do canvas com o gradiente real do HeroBackground.
+                Ordem z: [2] (abaixo do sponsoredBanner z-[3])
+                ═══════════════════════════════════════════════════════ */}
+
+            {/* ── OVERLAY ESQUERDA (existente, refinado) ──
+                Funde a borda esquerda do painel com a coluna de texto.
+                Match cor média #f8fbff do HeroBackground. */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 z-[2]"
               style={{
                 background:
-                  'linear-gradient(90deg, #f8fbff 0%, rgba(248,251,255,0.5) 30%, rgba(248,251,255,0.12) 55%, transparent 72%)',
+                  'linear-gradient(90deg, #f8fbff 0%, rgba(248,251,255,0.55) 28%, rgba(248,251,255,0.15) 58%, transparent 75%)',
+              }}
+            />
+
+            {/* ── OVERLAY TOPO ──
+                Integra a borda superior com o halo solar / branco puro (#ffffff)
+                do começo do gradiente. Gradiente curto, quase imperceptível. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-[2]"
+              style={{
+                background:
+                  'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.55) 12%, rgba(248,251,255,0.18) 30%, rgba(248,251,255,0) 55%)',
+              }}
+            />
+
+            {/* ── OVERLAY DIREITA (borda hoje NUA — corte duro) ──
+                Desaparece a borda direita no tom #eef5ff do rodapé do hero.
+                Menos opaco no topo para não conflitar com o halo solar. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-[2]"
+              style={{
+                background:
+                  'linear-gradient(270deg, rgba(238,245,255,0.92) 0%, rgba(248,251,255,0.45) 32%, rgba(248,251,255,0.08) 68%, rgba(248,251,255,0) 88%)',
+              }}
+            />
+
+            {/* ── OVERLAY INFERIOR (ITEM MAIS CRÍTICO — item 6 do master) ──
+                Fade LONGO e suave para eliminar o corte branco inferior.
+                Termina exatamente em #eef5ff = cor final do HeroBackground.
+                30% de altura da viewport para a transição. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-[2]"
+              style={{
+                background:
+                  'linear-gradient(0deg, rgba(238,245,255,1) 0%, rgba(238,245,255,0.88) 10%, rgba(248,251,255,0.60) 24%, rgba(248,251,255,0.28) 42%, rgba(248,251,255,0.06) 64%, rgba(248,251,255,0) 82%)',
               }}
             />
 
