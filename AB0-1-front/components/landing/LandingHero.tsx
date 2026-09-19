@@ -81,6 +81,16 @@ export default function LandingHero(props: LandingHeroProps) {
     smoothingMobile: 0.18,
     travelRef,
     preloadReadyThreshold: 0.25,
+    autoPlay: shouldAnimateHero
+      ? {
+          enabled: true,
+          durationMs: 10000,
+          direction: 'pingpong',
+          pauseOnScroll: true,
+          pauseOnHover: true,
+          resumeIdleAfterMs: 3500,
+        }
+      : undefined,
   });
 
   const disableExtendedScroll = isMobile || !shouldAnimateHero || hasCriticalFailure;
@@ -132,13 +142,12 @@ export default function LandingHero(props: LandingHeroProps) {
                 <div
                   className="relative h-full w-full"
                   style={{
-                    /* Horizontal: fade 0%→7%→88%→100% | Vertical: fade superior curto, inferior LONGO (item 6) */
                     WebkitMaskImage:
-                      'linear-gradient(to right, transparent 0%, black 7%, black 88%, transparent 100%),' +
-                      'linear-gradient(to bottom, transparent 0%, black 6%, black 70%, rgba(0,0,0,0.85) 92%, transparent 100%)',
+                      'linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%),' +
+                      'linear-gradient(to bottom, black 0%, black 92%, rgba(0,0,0,0.72) 97%, transparent 100%)',
                     maskImage:
-                      'linear-gradient(to right, transparent 0%, black 7%, black 88%, transparent 100%),' +
-                      'linear-gradient(to bottom, transparent 0%, black 6%, black 70%, rgba(0,0,0,0.85) 92%, transparent 100%)',
+                      'linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%),' +
+                      'linear-gradient(to bottom, black 0%, black 92%, rgba(0,0,0,0.72) 97%, transparent 100%)',
                     WebkitMaskComposite: 'source-in, source-in',
                     maskComposite: 'intersect, intersect',
                     WebkitMaskRepeat: 'no-repeat',
@@ -147,13 +156,6 @@ export default function LandingHero(props: LandingHeroProps) {
                     maskSize: '100% 100%',
                   }}
                 >
-                  {/* ═══════════════════════════════════════════════════════
-                      CAMADA DE BLUR LOCALIZADO (EXTREMIDADES APENAS)
-                      Fica atrás do canvas principal. Usa a imagem de fallback
-                      ou primeiro frame borrado para "espalhar" as cores das
-                      bordas para fora, eliminando qualquer linha residual.
-                      Canvas principal continua 100% sharp, sem blur.
-                      ═══════════════════════════════════════════════════════ */}
                   {hasRenderedValidFrame && STATIC_FALLBACK ? (
                     <Image
                       src={STATIC_FALLBACK}
@@ -163,10 +165,10 @@ export default function LandingHero(props: LandingHeroProps) {
                       className="object-contain object-right-bottom select-none pointer-events-none"
                       sizes="(max-width: 1023px) 0vw, 50vw"
                       style={{
-                        filter: 'blur(18px) saturate(1.08)',
-                        WebkitFilter: 'blur(18px) saturate(1.08)',
-                        opacity: 0.5,
-                        transform: 'scale(1.04)',
+                        filter: 'blur(8px) saturate(1.04)',
+                        WebkitFilter: 'blur(8px) saturate(1.04)',
+                        opacity: 0.22,
+                        transform: 'scale(1.02)',
                         transformOrigin: 'right bottom',
                         zIndex: 0,
                       }}
@@ -243,58 +245,44 @@ export default function LandingHero(props: LandingHeroProps) {
             ) : null}
 
             {/* ═══════════════════════════════════════════════════════
-                OVERLAYS DE INTEGRAÇÃO SEAMLESS
-                4 overlays pointer-events-none para fundir as 4 bordas
-                do canvas com o gradiente real do HeroBackground.
+                OVERLAYS DE INTEGRAÇÃO SEAMLESS — SÓ NAS FRONTEIRAS
+                3 overlays pointer-events-none para fundir as 3 bordas
+                relevantes do canvas com o gradiente real do HeroBackground.
+                Overlay de topo REMOVIDO para preservar 100% do telhado.
                 Ordem z: [2] (abaixo do sponsoredBanner z-[3])
                 ═══════════════════════════════════════════════════════ */}
 
-            {/* ── OVERLAY ESQUERDA (existente, refinado) ──
-                Funde a borda esquerda do painel com a coluna de texto.
-                Match cor média #f8fbff do HeroBackground. */}
+            {/* ── OVERLAY ESQUERDA (fronteira com conteúdo textual) ──
+                Vai até ~11% de largura. NÃO invade a área da casa/carro. */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 z-[2]"
               style={{
                 background:
-                  'linear-gradient(90deg, #f8fbff 0%, rgba(248,251,255,0.55) 28%, rgba(248,251,255,0.15) 58%, transparent 75%)',
+                  'linear-gradient(90deg, #f8fbff 0%, rgba(248,251,255,0.45) 4%, rgba(248,251,255,0.08) 8%, transparent 11%)',
               }}
             />
 
-            {/* ── OVERLAY TOPO ──
-                Integra a borda superior com o halo solar / branco puro (#ffffff)
-                do começo do gradiente. Gradiente curto, quase imperceptível. */}
+            {/* ── OVERLAY DIREITA (borda física extrema do asset) ──
+                Vai até ~5% de largura. Só feather da borda mais à direita. */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 z-[2]"
               style={{
                 background:
-                  'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.55) 12%, rgba(248,251,255,0.18) 30%, rgba(248,251,255,0) 55%)',
+                  'linear-gradient(270deg, rgba(238,245,255,0.55) 0%, rgba(248,251,255,0.15) 2%, rgba(248,251,255,0) 5%)',
               }}
             />
 
-            {/* ── OVERLAY DIREITA (borda hoje NUA — corte duro) ──
-                Desaparece a borda direita no tom #eef5ff do rodapé do hero.
-                Menos opaco no topo para não conflitar com o halo solar. */}
+            {/* ── OVERLAY INFERIOR (MAIS CRÍTICO — fade SÓ NA EXTREMIDADE)
+                Vai até ~9% de altura. NÃO sobe até o carro, garagem ou rodas.
+                Termina exatamente em #eef5ff = cor final do HeroBackground. */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 z-[2]"
               style={{
                 background:
-                  'linear-gradient(270deg, rgba(238,245,255,0.92) 0%, rgba(248,251,255,0.45) 32%, rgba(248,251,255,0.08) 68%, rgba(248,251,255,0) 88%)',
-              }}
-            />
-
-            {/* ── OVERLAY INFERIOR (ITEM MAIS CRÍTICO — item 6 do master) ──
-                Fade LONGO e suave para eliminar o corte branco inferior.
-                Termina exatamente em #eef5ff = cor final do HeroBackground.
-                30% de altura da viewport para a transição. */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-[2]"
-              style={{
-                background:
-                  'linear-gradient(0deg, rgba(238,245,255,1) 0%, rgba(238,245,255,0.88) 10%, rgba(248,251,255,0.60) 24%, rgba(248,251,255,0.28) 42%, rgba(248,251,255,0.06) 64%, rgba(248,251,255,0) 82%)',
+                  'linear-gradient(0deg, rgba(238,245,255,0.98) 0%, rgba(238,245,255,0.50) 3%, rgba(248,251,255,0.12) 6%, rgba(248,251,255,0) 9%)',
               }}
             />
 

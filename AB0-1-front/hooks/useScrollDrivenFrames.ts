@@ -20,6 +20,14 @@ export interface UseScrollDrivenFramesOptions {
   smoothingMobile?: number;
   travelRef?: RefObject<HTMLElement> | null;
   preloadReadyThreshold?: number;
+  autoPlay?: {
+    enabled?: boolean;
+    durationMs?: number;
+    direction?: 'forward' | 'pingpong';
+    pauseOnScroll?: boolean;
+    pauseOnHover?: boolean;
+    resumeIdleAfterMs?: number;
+  };
 }
 
 export interface UseScrollDrivenFramesResult {
@@ -109,7 +117,15 @@ export function useScrollDrivenFrames({
   smoothingMobile = 0.18,
   travelRef = null,
   preloadReadyThreshold = 0.25,
+  autoPlay,
 }: UseScrollDrivenFramesOptions): UseScrollDrivenFramesResult {
+  const autoPlayEnabled = Boolean(autoPlay?.enabled);
+  const autoPlayDurationMs = autoPlay?.durationMs ?? 10000;
+  const autoPlayDirection = autoPlay?.direction ?? 'pingpong';
+  const autoPauseOnScroll = autoPlay?.pauseOnScroll ?? true;
+  const autoPauseOnHover = autoPlay?.pauseOnHover ?? true;
+  const autoResumeIdleAfterMs = autoPlay?.resumeIdleAfterMs ?? 3500;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const frameStatesRef = useRef<FrameLoadState[]>([]);
@@ -122,11 +138,16 @@ export function useScrollDrivenFrames({
   const rafIdRef = useRef<number | null>(null);
   const targetProgressRef = useRef<number>(0);
   const currentProgressRef = useRef<number>(0);
+  const scrollTargetProgressRef = useRef<number>(0);
   const isReducedMotionRef = useRef<boolean>(false);
   const loadedCountRef = useRef<number>(0);
   const failedCountRef = useRef<number>(0);
   const hasRenderedValidFrameRef = useRef<boolean>(false);
   const currentFrameRef = useRef<number>(0);
+  const lastUserScrollAtRef = useRef<number>(-Infinity);
+  const isHoveringCanvasRef = useRef<boolean>(false);
+  const autoPlayStartRef = useRef<number>(0);
+  const autoPlayPhaseRef = useRef<1 | -1>(1);
 
   const [preloadProgress, setPreloadProgress] = useState<number>(0);
   const [isReady, setIsReady] = useState<boolean>(false);
@@ -326,7 +347,7 @@ export function useScrollDrivenFrames({
         (canvasRef.current?.closest('[data-scroll-travel]') as HTMLElement | null);
 
       if (!travelElement) {
-        targetProgressRef.current = 0;
+        scrollTargetProgressRef.current = 0;
         return;
       }
 
@@ -335,19 +356,24 @@ export function useScrollDrivenFrames({
       const scrollDistance = rect.height - windowHeight;
 
       if (scrollDistance <= 0) {
-        targetProgressRef.current = isReducedMotionRef.current ? 1 : 0;
+        scrollTargetProgressRef.current = isReducedMotionRef.current ? 1 : 0;
         return;
       }
 
       const rawProgress = -rect.top / scrollDistance;
       const clampedProgress = clampProgress(rawProgress);
-      targetProgressRef.current =
+      scrollTargetProgressRef.current =
         isReducedMotionRef.current && clampedProgress >= 0.5 ? 1 : clampedProgress;
+
+      if (autoPauseOnScroll) {
+        lastUserScrollAtRef.current = performance.now();
+      }
     };
 
     primeInitialFrames();
     scheduleBackgroundPreload();
     calculateScrollProgress();
+    autoPlayStartRef.current = performance.now();
 
     const handleScroll = () => calculateScrollProgress();
     const handleResize = () => {
@@ -355,10 +381,77 @@ export function useScrollDrivenFrames({
       calculateScrollProgress();
     };
 
+    const handleMouseEnter = () => {
+      if (autoPauseOnHover) {
+        isHoveringCanvasRef.current = true;
+      }
+    };
+    const handleMouseLeave = () => {
+      if (autoPauseOnHover) {
+        isHoveringCanvasRef.current = false;
+        autoPlayStartRef.current =
+          performance.now() -
+          getAutoPlayElapsedFromProgress(currentProgressRef.current);
+      }
+    };
+
+    const getAutoPlayElapsedFromProgress = (progress: number): number => {
+      const duration = Math.max(100, autoPlayDurationMs);
+      if (autoPlayDirection === 'forward') {
+        return progress * duration;
+      }
+      const half = duration / 2;
+      if (progress >= 0.5) {
+        return (1 - progress) * half + half;
+      }
+      return progress * half;
+    };
+
+    const calculateAutoPlayProgress = (now: number): number | null => {
+      if (!autoPlayEnabled) return null;
+      if (isReducedMotionRef.current) return null;
+
+      if (autoPauseOnScroll) {
+        const idleMs = now - lastUserScrollAtRef.current;
+        if (idleMs < autoResumeIdleAfterMs) return null;
+      }
+      if (autoPauseOnHover && isHoveringCanvasRef.current) return null;
+
+      const duration = Math.max(100, autoPlayDurationMs);
+      let elapsed = now - autoPlayStartRef.current;
+      if (elapsed < 0) elapsed = 0;
+
+      if (autoPlayDirection === 'forward') {
+        const mod = elapsed % duration;
+        const phase = Math.sign(autoPlayPhaseRef.current);
+        if (phase === 1) return clampProgress(mod / duration);
+        return clampProgress(1 - mod / duration);
+      }
+
+      const cycle = (elapsed % duration);
+      const half = duration / 2;
+      if (cycle < half) {
+        autoPlayPhaseRef.current = 1;
+        return clampProgress(cycle / half);
+      }
+      autoPlayPhaseRef.current = -1;
+      return clampProgress(1 - (cycle - half) / half);
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize, { passive: true });
+    canvas.addEventListener('mouseenter', handleMouseEnter, { passive: true });
+    canvas.addEventListener('mouseleave', handleMouseLeave, { passive: true });
 
     const loop = () => {
+      const now = performance.now();
+      const autoProgress = calculateAutoPlayProgress(now);
+      if (autoProgress !== null) {
+        targetProgressRef.current = autoProgress;
+      } else {
+        targetProgressRef.current = scrollTargetProgressRef.current;
+      }
+
       const currentProgress = currentProgressRef.current;
       const targetProgress = targetProgressRef.current;
       const diff = targetProgress - currentProgress;
@@ -389,6 +482,8 @@ export function useScrollDrivenFrames({
       mediaQuery.removeEventListener('change', handleMotionChange);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
+      canvas.removeEventListener('mouseenter', handleMouseEnter);
+      canvas.removeEventListener('mouseleave', handleMouseLeave);
 
       if (rafIdRef.current !== null) {
         window.cancelAnimationFrame(rafIdRef.current);
@@ -424,6 +519,12 @@ export function useScrollDrivenFrames({
     travelRef,
     preloadReadyThreshold,
     isMobile,
+    autoPlayEnabled,
+    autoPlayDurationMs,
+    autoPlayDirection,
+    autoPauseOnScroll,
+    autoPauseOnHover,
+    autoResumeIdleAfterMs,
   ]);
 
   return {

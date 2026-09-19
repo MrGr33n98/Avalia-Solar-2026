@@ -28,6 +28,14 @@ export interface ScrollDrivenCanvasProps {
   reducedMotionVideoSrc?: string;
   disablePinningForReducedMotion?: boolean;
   maxZoom?: number;
+  autoPlay?: {
+    enabled?: boolean;
+    durationMs?: number;
+    direction?: 'forward' | 'pingpong';
+    pauseOnScroll?: boolean;
+    pauseOnHover?: boolean;
+    resumeIdleAfterMs?: number;
+  };
 }
 
 export function ScrollDrivenCanvas({
@@ -51,6 +59,7 @@ export function ScrollDrivenCanvas({
   reducedMotionVideoSrc,
   disablePinningForReducedMotion = true,
   maxZoom = 1.02,
+  autoPlay,
 }: ScrollDrivenCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -79,6 +88,7 @@ export function ScrollDrivenCanvas({
     smoothingMobile,
     travelRef: containerRef as React.RefObject<HTMLElement>,
     preloadReadyThreshold: 0.25,
+    autoPlay: animationEnabled ? autoPlay : undefined,
   });
 
   useEffect(() => {
@@ -140,11 +150,11 @@ export function ScrollDrivenCanvas({
             className="relative w-full"
             style={{
               WebkitMaskImage:
-                'linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%),' +
-                'linear-gradient(to bottom, transparent 0%, black 5%, black 72%, rgba(0,0,0,0.88) 93%, transparent 100%)',
+                'linear-gradient(to right, transparent 0%, black 2.5%, black 97.5%, transparent 100%),' +
+                'linear-gradient(to bottom, black 0%, black 93%, rgba(0,0,0,0.75) 98%, transparent 100%)',
               maskImage:
-                'linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%),' +
-                'linear-gradient(to bottom, transparent 0%, black 5%, black 72%, rgba(0,0,0,0.88) 93%, transparent 100%)',
+                'linear-gradient(to right, transparent 0%, black 2.5%, black 97.5%, transparent 100%),' +
+                'linear-gradient(to bottom, black 0%, black 93%, rgba(0,0,0,0.75) 98%, transparent 100%)',
               WebkitMaskComposite: 'source-in, source-in',
               maskComposite: 'intersect, intersect',
               WebkitMaskRepeat: 'no-repeat',
@@ -153,13 +163,6 @@ export function ScrollDrivenCanvas({
               maskSize: '100% 100%',
             }}
           >
-            {/* ═══════════════════════════════════════════════════════
-                CAMADA DE BLUR LOCALIZADO (EXTREMIDADES APENAS)
-                Apenas se houver fallback src e o canvas já tiver renderizado
-                pelo menos 1 frame. Usa a imagem de fallback borrada e
-                escalada para preencher quaisquer linhas residuais de borda.
-                O canvas/video principal permanece 100% sharp em cima.
-                ═══════════════════════════════════════════════════════ */}
             {hasRenderedValidFrame && fallbackSrc ? (
               <Image
                 src={fallbackSrc}
@@ -169,10 +172,10 @@ export function ScrollDrivenCanvas({
                 sizes="100vw"
                 className="object-contain object-center select-none pointer-events-none"
                 style={{
-                  filter: 'blur(16px) saturate(1.06)',
-                  WebkitFilter: 'blur(16px) saturate(1.06)',
-                  opacity: 0.45,
-                  transform: 'scale(1.03)',
+                  filter: 'blur(8px) saturate(1.04)',
+                  WebkitFilter: 'blur(8px) saturate(1.04)',
+                  opacity: 0.18,
+                  transform: 'scale(1.015)',
                   transformOrigin: 'center center',
                   zIndex: 0,
                 }}
@@ -241,43 +244,35 @@ export function ScrollDrivenCanvas({
             )}
           </div>
 
-          {/* Overlays de integração seamless — 4 bordas.
+          {/* Overlays de integração seamless — SÓ NAS EXTREMIDADES.
               Gradientes neutros (branco → transparente) para funcionar em
-              qualquer fundo claro. pointer-events-none. */}
-          {/* Topo: fade curto para integrar com header da página */}
+              qualquer fundo claro. Topo REMOVIDO para preservar telhado / header.
+              Todos os overlays são pointer-events-none. */}
+          {/* Inferior: fade SÓ NA EXTREMIDADE (8% de altura max) */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                'linear-gradient(180deg, rgba(255,255,255,0.90) 0%, rgba(255,255,255,0.45) 12%, rgba(255,255,255,0.08) 32%, transparent 58%)',
+                'linear-gradient(0deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.45) 2.5%, rgba(255,255,255,0.10) 5.5%, transparent 8%)',
             }}
           />
-          {/* Inferior: fade LONGO (item mais crítico) */}
+          {/* Esquerda: feather pequeno na fronteira */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                'linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.85) 10%, rgba(255,255,255,0.50) 26%, rgba(255,255,255,0.18) 46%, rgba(255,255,255,0.02) 70%, transparent 88%)',
+                'linear-gradient(90deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.30) 3%, rgba(255,255,255,0.06) 6%, transparent 9%)',
             }}
           />
-          {/* Esquerda */}
+          {/* Direita: feather pequeno na fronteira */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                'linear-gradient(90deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.50) 18%, rgba(255,255,255,0.10) 42%, transparent 70%)',
-            }}
-          />
-          {/* Direita */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(270deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.50) 18%, rgba(255,255,255,0.10) 42%, transparent 70%)',
+                'linear-gradient(270deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.30) 3%, rgba(255,255,255,0.06) 6%, transparent 9%)',
             }}
           />
         </div>
