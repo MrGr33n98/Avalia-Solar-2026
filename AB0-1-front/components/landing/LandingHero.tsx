@@ -81,7 +81,7 @@ export default function LandingHero(props: LandingHeroProps) {
     <section
       ref={travelRef}
       data-scroll-travel
-      className="relative isolate overflow-hidden border-b border-slate-200"
+      className="relative isolate border-b border-slate-200"
       style={{ minHeight: scrollTravel }}
     >
       {/* ══════════════════════════════════════════════════════════════
