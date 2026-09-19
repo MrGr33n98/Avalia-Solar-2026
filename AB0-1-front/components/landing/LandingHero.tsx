@@ -156,25 +156,6 @@ export default function LandingHero(props: LandingHeroProps) {
                     maskSize: '100% 100%',
                   }}
                 >
-                  {hasRenderedValidFrame && STATIC_FALLBACK ? (
-                    <Image
-                      src={STATIC_FALLBACK}
-                      alt=""
-                      fill
-                      aria-hidden="true"
-                      className="object-contain object-right-bottom select-none pointer-events-none"
-                      sizes="(max-width: 1023px) 0vw, 50vw"
-                      style={{
-                        filter: 'blur(8px) saturate(1.04)',
-                        WebkitFilter: 'blur(8px) saturate(1.04)',
-                        opacity: 0.22,
-                        transform: 'scale(1.02)',
-                        transformOrigin: 'right bottom',
-                        zIndex: 0,
-                      }}
-                    />
-                  ) : null}
-
                   {/* Fallback: imagem estática */}
                   {!hasRenderedValidFrame && STATIC_FALLBACK ? (
                     <Image
