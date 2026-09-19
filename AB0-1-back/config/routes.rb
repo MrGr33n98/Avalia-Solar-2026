@@ -152,6 +152,13 @@ Rails.application.routes.draw do
           get :board, to: 'sales/pipelines/boards#show', on: :member
         end
         get 'pipelines/board', to: 'sales/pipelines/boards#show'
+        resources :founder_inbox, only: %i[index update], controller: 'sales/founder_inbox' do
+          collection { post :refresh }
+          member do
+            post :acknowledge
+            post :resolve
+          end
+        end
         resources :accounts, only: %i[index create show update], controller: 'sales/accounts' do
           collection do
             post :export

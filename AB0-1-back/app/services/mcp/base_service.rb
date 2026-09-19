@@ -1,29 +1,19 @@
 # frozen_string_literal: true
 
 module Mcp
-  class Error < StandardError
-    attr_reader :code, :status, :details
-
-    def initialize(code:, message:, status: :unprocessable_entity, details: nil)
-      super(message)
-      @code = code
-      @status = status
-      @details = details
-    end
-  end
-
   class BaseService
     DEFAULT_LIMIT = 10
     MAX_LIMIT = 20
 
-    def initialize(arguments:, user: nil)
+    def initialize(arguments:, user: nil, tool_name: nil)
       @arguments = (arguments || {}).to_h.with_indifferent_access
       @user = user
+      @tool_name = tool_name.to_s
     end
 
     private
 
-    attr_reader :arguments, :user
+    attr_reader :arguments, :user, :tool_name
 
     def limit
       arguments.fetch(:limit, DEFAULT_LIMIT).to_i.clamp(1, MAX_LIMIT)
