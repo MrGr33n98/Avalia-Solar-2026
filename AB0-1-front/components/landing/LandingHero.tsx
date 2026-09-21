@@ -36,6 +36,30 @@ const STATIC_FALLBACK = `${FRAMES_DESKTOP_DIR}/frame_000.webp`;
 
 type AnimationLoadState = 'pending' | 'enabled' | 'disabled';
 
+// O campo branco faz parte dos frames WebP. As máscaras aninhadas se intersectam
+// naturalmente e dissolvem apenas as bordas vazias da cena.
+const HERO_SCENE_HORIZONTAL_FEATHER = {
+  WebkitMaskImage:
+    'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 4%, black 12%, black 95%, rgba(0,0,0,0.65) 98%, transparent 100%)',
+  maskImage:
+    'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 4%, black 12%, black 95%, rgba(0,0,0,0.65) 98%, transparent 100%)',
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskSize: '100% 100%',
+  maskSize: '100% 100%',
+};
+
+const HERO_SCENE_VERTICAL_FEATHER = {
+  WebkitMaskImage:
+    'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.45) 1.5%, rgba(0,0,0,0.85) 3.5%, black 7%, black 91%, rgba(0,0,0,0.82) 95%, rgba(0,0,0,0.32) 98%, transparent 100%)',
+  maskImage:
+    'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.45) 1.5%, rgba(0,0,0,0.85) 3.5%, black 7%, black 91%, rgba(0,0,0,0.82) 95%, rgba(0,0,0,0.32) 98%, transparent 100%)',
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskSize: '100% 100%',
+  maskSize: '100% 100%',
+};
+
 export default function LandingHero(props: LandingHeroProps) {
   const { activeCampaign, fetchActiveCampaign, subscribeToUpdates, unsubscribeFromUpdates } =
     useAdvertisingStore();
@@ -174,56 +198,61 @@ export default function LandingHero(props: LandingHeroProps) {
             {/* Primeiro frame estático, exibido até o canvas estar pronto. */}
             {!showSponsoredBanner ? (
               <div className="absolute inset-0 flex items-end justify-end">
-                <div className="relative h-full w-full -translate-y-[clamp(5rem,8vw,9rem)]">
-                  {/* Fallback: imagem estática */}
-                  {STATIC_FALLBACK ? (
-                    <Image
-                      src={STATIC_FALLBACK}
-                      alt=""
-                      fill
-                      loading="eager"
-                      fetchPriority="auto"
-                      quality={75}
-                      className={`relative z-[1] object-contain object-right-bottom mix-blend-multiply transition-opacity duration-300 ${
-                        hasRenderedValidFrame ? 'opacity-0' : 'opacity-100'
+                <div
+                  className="relative aspect-video w-full -translate-y-[clamp(5rem,8vw,9rem)]"
+                  style={HERO_SCENE_HORIZONTAL_FEATHER}
+                >
+                  <div className="relative h-full w-full" style={HERO_SCENE_VERTICAL_FEATHER}>
+                    {/* Fallback: imagem estática */}
+                    {STATIC_FALLBACK ? (
+                      <Image
+                        src={STATIC_FALLBACK}
+                        alt=""
+                        fill
+                        loading="eager"
+                        fetchPriority="auto"
+                        quality={75}
+                        className={`relative z-[1] object-contain object-right-bottom mix-blend-multiply transition-opacity duration-300 ${
+                          hasRenderedValidFrame ? 'opacity-0' : 'opacity-100'
+                        }`}
+                        sizes="(max-width: 1023px) 0vw, 50vw"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+
+                    {/* Canvas scroll-driven (120 frames WebP) */}
+                    <canvas
+                      ref={canvasRef}
+                      width={1280}
+                      height={720}
+                      style={{
+                        mixBlendMode: 'multiply',
+                        imageRendering: 'auto',
+                        zIndex: 1,
+                      }}
+                      className={`absolute inset-0 h-full w-full object-contain object-right-bottom select-none pointer-events-none transition-opacity duration-300 relative ${
+                        hasRenderedValidFrame ? 'opacity-100' : 'opacity-0'
                       }`}
-                      sizes="(max-width: 1023px) 0vw, 50vw"
-                      aria-hidden="true"
+                      role="img"
+                      aria-label="Animação interativa 3D de Raio X e Fluxo de Energia Solar"
                     />
-                  ) : null}
 
-                  {/* Canvas scroll-driven (120 frames WebP) */}
-                  <canvas
-                    ref={canvasRef}
-                    width={1280}
-                    height={720}
-                    style={{
-                      mixBlendMode: 'multiply',
-                      imageRendering: 'auto',
-                      zIndex: 1,
-                    }}
-                    className={`absolute inset-0 h-full w-full object-contain object-right-bottom select-none pointer-events-none transition-opacity duration-300 relative ${
-                      hasRenderedValidFrame ? 'opacity-100' : 'opacity-0'
-                    }`}
-                    role="img"
-                    aria-label="Animação interativa 3D de Raio X e Fluxo de Energia Solar"
-                  />
-
-                  {/* Fallback para prefers-reduced-motion: vídeo autoplay */}
-                  {prefersReducedMotion ? (
-                    <video
-                      key="reduced-motion-video"
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload="auto"
-                      className="absolute inset-0 h-full w-full object-contain object-right-bottom relative z-[1]"
-                      aria-hidden="true"
-                    >
-                      <source src={REDUCED_MOTION_VIDEO} type="video/mp4" />
-                    </video>
-                  ) : null}
+                    {/* Fallback para prefers-reduced-motion: vídeo autoplay */}
+                    {prefersReducedMotion ? (
+                      <video
+                        key="reduced-motion-video"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="auto"
+                        className="absolute inset-0 h-full w-full object-contain object-right-bottom relative z-[1]"
+                        aria-hidden="true"
+                      >
+                        <source src={REDUCED_MOTION_VIDEO} type="video/mp4" />
+                      </video>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             ) : null}
