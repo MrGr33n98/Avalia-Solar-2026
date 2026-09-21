@@ -51,6 +51,8 @@ class CompanyUtmAttribution < ApplicationRecord
       increment!(:phone_clicks)
     when 'website'
       increment!(:website_clicks)
+    when 'quote'
+      increment!(:quote_clicks) if respond_to?(:quote_clicks)
     end
 
     touch(:last_seen_at)

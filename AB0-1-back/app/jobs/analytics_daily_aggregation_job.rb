@@ -69,6 +69,8 @@ class AnalyticsDailyAggregationJob < ApplicationJob
           stat.phone_clicks = stat.phone_clicks.to_i + count if stat.respond_to?(:phone_clicks)
         when 'website'
           stat.website_clicks = stat.website_clicks.to_i + count if stat.respond_to?(:website_clicks)
+        when 'quote'
+          stat.quote_clicks = stat.quote_clicks.to_i + count if stat.respond_to?(:quote_clicks)
         end
         stat.save!
       end

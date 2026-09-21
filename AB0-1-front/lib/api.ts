@@ -1675,39 +1675,54 @@ export const reviewDashboardApi = {
 };
 
 export interface CompanyAnalyticsOverview {
-  views_30d: number;
-  views?: number;
+  views_30d: number | null;
+  views?: number | null;
   views_trend?: number | null;
-  unique_views_30d: number;
-  unique_views?: number;
-  returning_views_30d: number;
-  returning_views?: number;
-  cta_clicks_30d: number;
-  cta_clicks?: number;
+  unique_views_30d: number | null;
+  unique_views?: number | null;
+  returning_views_30d: number | null;
+  returning_views?: number | null;
+  cta_clicks_30d?: number | null;
+  cta_clicks?: number | null;
   cta_clicks_trend?: number | null;
-  whatsapp_clicks_30d: number;
-  whatsapp_clicks?: number;
-  email_clicks_30d: number;
-  email_clicks?: number;
-  phone_clicks_30d: number;
-  phone_clicks?: number;
-  website_clicks_30d: number;
-  website_clicks?: number;
-  leads_30d: number;
-  leads?: number;
-  conversion_rate: number;
+  whatsapp_clicks_30d?: number | null;
+  whatsapp_clicks?: number | null;
+  email_clicks_30d?: number | null;
+  email_clicks?: number | null;
+  phone_clicks_30d?: number | null;
+  phone_clicks?: number | null;
+  website_clicks_30d?: number | null;
+  website_clicks?: number | null;
+  quote_clicks_30d?: number | null;
+  quote_clicks?: number | null;
+  leads_30d?: number | null;
+  leads?: number | null;
+  conversion_rate?: number | null;
+  cta_breakdown?: {
+    whatsapp: number;
+    email: number;
+    phone: number;
+    website: number;
+    quote: number;
+    other: number;
+    total: number;
+  } | null;
   data_source: string;
-  data_status?: 'ready' | 'unavailable' | 'locked';
+  data_status?: 'ready' | 'unavailable' | 'locked' | 'stale' | 'error';
   range?: AnalyticsDateRange;
   /** Timestamp da última consolidação disponível no pipeline de analytics. */
   last_aggregated_at?: string | null;
   data_freshness_seconds?: number | null;
   is_premium_analytics?: boolean;
+  engagement_status?: 'ready' | 'unavailable' | 'stale' | 'not_configured';
   engagement?: {
-    avgTimeOnPage: number;
-    bounceRate: number;
-    pagesPerSession: number;
-  };
+    avg_time_on_page_seconds?: number | null;
+    bounce_rate_percent?: number | null;
+    pages_per_session?: number | null;
+    engagement_rate_percent?: number | null;
+    source: string;
+    last_synced_at?: string | null;
+  } | null;
   traffic_sources?: {
     source: string;
     visits: number;
@@ -1738,14 +1753,35 @@ export interface CompanyAnalyticsTimeseries {
     email: number;
     phone: number;
     website: number;
+    quote: number;
     leads: number;
   }>;
   data_source: string;
-  data_status?: 'ready' | 'unavailable' | 'locked';
+  data_status?: 'ready' | 'unavailable' | 'locked' | 'stale' | 'error';
   range?: AnalyticsDateRange;
   is_premium_analytics?: boolean;
   last_aggregated_at?: string | null;
   data_freshness_seconds?: number | null;
+}
+
+export interface TopCampaign {
+  id: string;
+  utm_campaign: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  total_visits: number;
+  total_cta_clicks: number;
+  total_leads: number;
+  conversion_rate: number;
+  last_seen_at: string | null;
+}
+
+export interface TopCampaignsResponse {
+  campaigns: TopCampaign[];
+  data_source: string;
+  data_status?: 'ready' | 'unavailable' | 'locked' | 'stale' | 'error';
+  range?: AnalyticsDateRange;
+  is_premium_analytics?: boolean;
 }
 
 // Trust Health Types
@@ -1948,6 +1984,10 @@ export const companyDashboardApi = {
         company_id: companyId,
         ...(typeof query === 'number' ? { days: query } : query),
       },
+    }),
+  getAnalyticsTopCampaigns: (companyId?: string | number, query: AnalyticsQueryParams & { limit?: number } = {}) =>
+    fetchApi<TopCampaignsResponse>('/company_dashboard/analytics/top_campaigns', {
+      params: { company_id: companyId, ...query },
     }),
 
   // Trust & Certification endpoints (TaaS)

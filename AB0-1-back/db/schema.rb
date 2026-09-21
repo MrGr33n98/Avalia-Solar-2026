@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_19_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_21_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -1177,6 +1177,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_19_000000) do
     t.integer "website_clicks", default: 0, null: false
     t.integer "unique_views", default: 0, null: false
     t.integer "returning_views", default: 0, null: false
+    t.integer "quote_clicks", default: 0, null: false
     t.index ["company_id", "day"], name: "index_company_daily_stats_on_company_id_and_day", unique: true
     t.index ["day"], name: "index_company_daily_stats_on_day"
   end
@@ -1515,6 +1516,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_19_000000) do
     t.date "last_seen_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "quote_clicks", default: 0, null: false
     t.index ["company_id", "utm_source", "utm_medium", "utm_campaign"], name: "index_utm_attributions_on_company_and_params", unique: true
     t.index ["company_id"], name: "index_company_utm_attributions_on_company_id"
     t.index ["last_seen_at"], name: "index_utm_attributions_on_last_seen"

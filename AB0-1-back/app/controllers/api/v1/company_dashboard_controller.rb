@@ -26,27 +26,31 @@ module Api
             last_aggregated_at: freshness[:last_aggregated_at]
           )
 
-          return render json: default_overview_payload.merge(freshness) unless stats
+          if stats.blank? || data_source == 'company_daily_stats_unavailable'
+            return render json: default_overview_payload(company: @company, range: range).merge(freshness)
+          end
 
           views = stats[:profile_views].to_i
           is_premium = @company.has_paid_plan?
           range_payload = analytics_range_payload(range)
+          engagement_status, engagement_payload = engagement_snapshot_for(@company)
 
-          # ✅ NOVO: Build response CONDICIONALMENTE
           response = {
             views_30d: views,
             views: views,
             unique_views: stats[:unique_views].to_i,
             returning_views: stats[:returning_views].to_i,
             data_source: data_source,
-            data_status: analytics_data_status(data_source),
-            range: range_payload
+            data_status: analytics_data_status(data_source, freshness: freshness),
+            range: range_payload,
+            engagement_status: engagement_status,
+            engagement: engagement_payload
           }
 
-          # SÓ inclui dados premium se tem permissão
           if is_premium && FeatureGateService.can_access?(@company, 'advanced_analytics')
             leads = stats[:leads].to_i
             conversion = views.positive? ? ((leads.to_f / views) * 100).round(2) : 0
+            cta_breakdown = build_cta_breakdown(stats)
 
             response.merge!(
               cta_clicks_30d: stats[:cta_clicks].to_i,
@@ -54,6 +58,7 @@ module Api
               email_clicks_30d: stats[:email_clicks].to_i,
               phone_clicks_30d: stats[:phone_clicks].to_i,
               website_clicks_30d: stats[:website_clicks].to_i,
+              quote_clicks_30d: stats[:quote_clicks].to_i,
               unique_views_30d: stats[:unique_views].to_i,
               returning_views_30d: stats[:returning_views].to_i,
               leads_30d: leads,
@@ -62,12 +67,13 @@ module Api
               email_clicks: stats[:email_clicks].to_i,
               phone_clicks: stats[:phone_clicks].to_i,
               website_clicks: stats[:website_clicks].to_i,
+              quote_clicks: stats[:quote_clicks].to_i,
               leads: leads,
               conversion_rate: conversion,
+              cta_breakdown: cta_breakdown,
               is_premium_analytics: true
             )
           else
-            # Free users NUNCA recebem essas chaves
             response.merge!(
               is_premium_analytics: false,
               upsell_message: 'Upgrade to Pro to unlock detailed analytics'
@@ -77,7 +83,10 @@ module Api
           render json: response.merge(freshness)
         rescue StandardError => e
           log_analytics_error('overview', e)
-          render json: default_overview_payload.merge(::CompanyDashboard::FreshnessProvider.call)
+          render json: default_overview_payload(company: @company, range: range).merge(
+            ::CompanyDashboard::FreshnessProvider.call,
+            data_status: 'error'
+          )
         end
       end
 
@@ -128,6 +137,7 @@ module Api
               email: row[:email_clicks],
               phone: row[:phone_clicks],
               website: row[:website_clicks],
+              quote: row[:quote_clicks],
               leads: row[:leads]
             }
           end
@@ -135,7 +145,7 @@ module Api
           render json: {
             data: data,
             data_source: data_source,
-            data_status: analytics_data_status(data_source),
+            data_status: analytics_data_status(data_source, freshness: freshness),
             range: analytics_range_payload(range),
             is_premium_analytics: true
           }.merge(freshness), status: :ok
@@ -145,7 +155,7 @@ module Api
           render json: {
             data: [],
             data_source: 'timeseries_unavailable',
-            data_status: 'unavailable',
+            data_status: 'error',
             is_premium_analytics: true
           }.merge(freshness), status: :ok
         end
@@ -154,11 +164,15 @@ module Api
       # GET /api/v1/company_dashboard/analytics/top_campaigns
       def analytics_top_campaigns
         authorize @company, :view_analytics?
+        range = analytics_date_range(default_days: 30)
+        return render_invalid_analytics_range unless range
 
-        # ✅ FEATURE GATE: Top campaigns só para premium
         unless FeatureGateService.can_access?(@company, 'top_campaigns')
           return render json: {
             campaigns: [],
+            data_source: 'feature_not_authorized',
+            data_status: 'locked',
+            range: analytics_range_payload(range),
             is_premium_analytics: false,
             upsell_message: 'Upgrade to Pro to access campaign analytics'
           }, status: :ok
@@ -167,16 +181,17 @@ module Api
         limit = [[params[:limit].to_i, 1].max, 20].min
         limit = 5 if params[:limit].blank?
 
-        campaigns = ::CompanyUtmAttribution
-                    .where(company_id: @company.id)
-                    .recent
-                    .by_leads
-                    .limit(limit)
+        campaigns = ::Analytics::CampaignPerformanceService.call(
+          company_id: @company.id,
+          from_time: range[:from_day].beginning_of_day,
+          to_time: range[:to_day].end_of_day,
+          limit: limit
+        )
 
         render json: {
-          campaigns: campaigns.map do |campaign|
+          campaigns: campaigns.map.with_index do |campaign, index|
             {
-              id: campaign.id,
+              id: "#{campaign.utm_source}-#{campaign.utm_medium}-#{campaign.utm_campaign}-#{index}",
               utm_campaign: campaign.utm_campaign,
               utm_source: campaign.utm_source,
               utm_medium: campaign.utm_medium,
@@ -187,11 +202,20 @@ module Api
               last_seen_at: campaign.last_seen_at
             }
           end,
+          data_source: 'analytics_events',
+          data_status: 'ready',
+          range: analytics_range_payload(range),
           is_premium_analytics: true
         }, status: :ok
       rescue StandardError => e
         log_analytics_error('top_campaigns', e)
-        render json: { campaigns: [], is_premium_analytics: true }, status: :ok
+        render json: {
+          campaigns: [],
+          data_source: 'top_campaigns_unavailable',
+          data_status: 'error',
+          range: analytics_range_payload(range),
+          is_premium_analytics: true
+        }, status: :ok
       end
 
       # GET /api/v1/company_dashboard/analytics/reputation
@@ -1955,16 +1979,44 @@ module Api
         Rails.logger.warn("[CompanyDashboard#notify_service_area_change_request] #{e.class}: #{e.message}")
       end
 
-      def default_overview_payload
-        {
-          views_30d: 0,
-          cta_clicks_30d: 0,
-          whatsapp_clicks_30d: 0,
-          leads_30d: 0,
-          conversion_rate: 0,
+      def default_overview_payload(company:, range:)
+        engagement_status, engagement_payload = engagement_snapshot_for(company)
+        payload = {
+          views_30d: nil,
+          views: nil,
+          unique_views_30d: nil,
+          unique_views: nil,
+          returning_views_30d: nil,
+          returning_views: nil,
           data_source: 'company_daily_stats_unavailable',
-          data_status: 'unavailable'
-        }.merge(::CompanyDashboard::FreshnessProvider.call)
+          data_status: 'unavailable',
+          range: analytics_range_payload(range),
+          engagement_status: engagement_status,
+          engagement: engagement_payload,
+          is_premium_analytics: false
+        }
+
+        return payload unless premium_analytics_enabled?(company)
+
+        payload.merge(
+          cta_clicks_30d: nil,
+          cta_clicks: nil,
+          whatsapp_clicks_30d: nil,
+          whatsapp_clicks: nil,
+          email_clicks_30d: nil,
+          email_clicks: nil,
+          phone_clicks_30d: nil,
+          phone_clicks: nil,
+          website_clicks_30d: nil,
+          website_clicks: nil,
+          quote_clicks_30d: nil,
+          quote_clicks: nil,
+          leads_30d: nil,
+          leads: nil,
+          conversion_rate: nil,
+          cta_breakdown: nil,
+          is_premium_analytics: true
+        )
       end
 
       def analytics_date_range(default_days:)
@@ -1987,11 +2039,57 @@ module Api
         { from: range[:from_day].iso8601, to: range[:to_day].iso8601 }
       end
 
-      def analytics_data_status(data_source)
+      def analytics_data_status(data_source, freshness: nil)
         return 'locked' if data_source == 'feature_not_authorized'
         return 'unavailable' if data_source.to_s.end_with?('_unavailable')
+        return 'stale' if data_source.to_s.include?('company_daily_stats') && freshness.to_h[:data_freshness_seconds].to_i > 36.hours
 
         'ready'
+      end
+
+      def premium_analytics_enabled?(company)
+        company&.has_paid_plan? && FeatureGateService.can_access?(company, 'advanced_analytics')
+      end
+
+      def build_cta_breakdown(stats)
+        whatsapp = stats[:whatsapp_clicks].to_i
+        email = stats[:email_clicks].to_i
+        phone = stats[:phone_clicks].to_i
+        website = stats[:website_clicks].to_i
+        quote = stats[:quote_clicks].to_i
+        total = stats[:cta_clicks].to_i
+        classified = whatsapp + email + phone + website + quote
+
+        {
+          whatsapp: whatsapp,
+          email: email,
+          phone: phone,
+          website: website,
+          quote: quote,
+          other: [total - classified, 0].max,
+          total: total
+        }
+      end
+
+      def engagement_snapshot_for(company)
+        return ['not_configured', nil] if company.blank? || company.ga4_property_id.blank?
+        return ['unavailable', nil] if company.ga4_last_sync.blank? || company.engagement_metrics.blank?
+
+        metrics = company.engagement_metrics.is_a?(Hash) ? company.engagement_metrics.deep_stringify_keys : {}
+        payload = {
+          avg_time_on_page_seconds: metrics['avg_time_on_page_seconds'] || metrics['avg_time_on_page'],
+          bounce_rate_percent: metrics['bounce_rate_percent'] || metrics['bounce_rate'],
+          pages_per_session: metrics['pages_per_session'],
+          engagement_rate_percent: metrics['engagement_rate_percent'] || metrics['engagement_rate'],
+          source: 'ga4',
+          last_synced_at: company.ga4_last_sync
+        }.transform_values { |value| value.is_a?(Numeric) ? value : value.presence }
+
+        status = company.ga4_last_sync < 36.hours.ago ? 'stale' : 'ready'
+        return ['unavailable', nil] if payload[:avg_time_on_page_seconds].blank? && payload[:bounce_rate_percent].blank? &&
+                                       payload[:pages_per_session].blank? && payload[:engagement_rate_percent].blank?
+
+        [status, payload]
       end
 
       def render_invalid_analytics_range
