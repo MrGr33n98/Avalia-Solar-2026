@@ -4,6 +4,10 @@ RSpec.describe Analytics::TrackEventService do
   let(:company) { create(:company) }
   let(:other_company) { create(:company) }
 
+  before do
+    allow(Analytics::EventRegistry).to receive(:fetch).and_return({ 'required_keys' => [] })
+  end
+
   describe '.call kill switch behavior' do
     context 'when kill switch is active (G4_ANALYTICS_ENABLED=false)' do
       it 'returns success with analytics_disabled_by_flag error and logs' do
@@ -211,6 +215,103 @@ RSpec.describe Analytics::TrackEventService do
         # Clean up
         ActiveRecord::Base.connection.execute("DELETE FROM analytics_event_dedup WHERE event_id = '#{event_id}'")
       end
+    end
+  end
+
+  describe '.call UTM attribution projection' do
+    it 'increments profile views only once for duplicate event_id' do
+      event_id = "utm_profile_#{SecureRandom.hex(6)}"
+
+      first_result = described_class.call(
+        company_id: company.id,
+        event_type: 'profile_view',
+        metadata: {
+          utm_source: 'google',
+          utm_medium: 'cpc',
+          utm_campaign: 'campanha-a'
+        },
+        tracked_at: Time.current,
+        event_id: event_id
+      )
+
+      second_result = described_class.call(
+        company_id: company.id,
+        event_type: 'profile_view',
+        metadata: {
+          utm_source: 'google',
+          utm_medium: 'cpc',
+          utm_campaign: 'campanha-a'
+        },
+        tracked_at: Time.current,
+        event_id: event_id
+      )
+
+      attribution = CompanyUtmAttribution.find_by!(
+        company_id: company.id,
+        utm_source: 'google',
+        utm_medium: 'cpc',
+        utm_campaign: 'campanha-a'
+      )
+
+      aggregate_failures do
+        expect(first_result.ok).to be(true)
+        expect(second_result.ok).to be(true)
+        expect(second_result.error).to eq('duplicate_event')
+        expect(attribution.total_visits).to eq(1)
+        expect(attribution.total_cta_clicks).to eq(0)
+        expect(attribution.total_leads).to eq(0)
+      end
+    end
+
+    it 'projects quote CTA clicks into the canonical attribution record' do
+      described_class.call(
+        company_id: company.id,
+        event_type: 'cta_click',
+        metadata: {
+          utm_source: 'instagram',
+          utm_medium: 'social',
+          utm_campaign: 'campanha-quote',
+          cta_type: 'quote'
+        },
+        tracked_at: Time.current,
+        event_id: "utm_quote_#{SecureRandom.hex(6)}"
+      )
+
+      attribution = CompanyUtmAttribution.find_by!(
+        company_id: company.id,
+        utm_source: 'instagram',
+        utm_medium: 'social',
+        utm_campaign: 'campanha-quote'
+      )
+
+      aggregate_failures do
+        expect(attribution.total_visits).to eq(0)
+        expect(attribution.total_cta_clicks).to eq(1)
+        expect(attribution.quote_clicks).to eq(1)
+      end
+    end
+
+    it 'projects lead_created into the attribution record' do
+      described_class.call(
+        company_id: company.id,
+        event_type: 'lead_created',
+        metadata: {
+          utm_source: 'newsletter',
+          utm_medium: 'email',
+          utm_campaign: 'campanha-lead'
+        },
+        tracked_at: Time.current,
+        event_id: "utm_lead_#{SecureRandom.hex(6)}"
+      )
+
+      attribution = CompanyUtmAttribution.find_by!(
+        company_id: company.id,
+        utm_source: 'newsletter',
+        utm_medium: 'email',
+        utm_campaign: 'campanha-lead'
+      )
+
+      expect(attribution.total_leads).to eq(1)
     end
   end
 

@@ -35,6 +35,7 @@ interface TimeSeriesDataPoint {
   email_clicks: number;
   phone_clicks: number;
   website_clicks: number;
+  quote_clicks: number;
   leads: number;
 }
 
@@ -45,7 +46,7 @@ interface TimeSeriesChartProps {
   title?: string;
   description?: string;
   chartType?: 'line' | 'area';
-  showLines?: ('views' | 'cta_clicks' | 'leads' | 'whatsapp' | 'email' | 'phone' | 'website')[];
+  showLines?: ('views' | 'cta_clicks' | 'leads' | 'whatsapp' | 'email' | 'phone' | 'website' | 'quote')[];
 }
 
 export default function TimeSeriesChart({
@@ -70,6 +71,7 @@ export default function TimeSeriesChart({
       'Email': point.email_clicks,
       'Telefone': point.phone_clicks,
       'Website': point.website_clicks,
+      'Orcamento': point.quote_clicks,
     }));
   }, [data]);
 
@@ -109,6 +111,11 @@ export default function TimeSeriesChart({
       dataKey: 'Website',
       stroke: '#64748B', // brand-muted
       fill: '#64748B',
+    },
+    quote: {
+      dataKey: 'Orcamento',
+      stroke: '#8B5CF6',
+      fill: '#8B5CF6',
     },
   };
 
@@ -151,9 +158,6 @@ export default function TimeSeriesChart({
     margin: { top: 5, right: 10, left: 0, bottom: 5 },
   };
 
-  const Chart = chartType === 'area' ? AreaChart : LineChart;
-  const DataComponent: any = chartType === 'area' ? Area : Line;
-
   return (
     <Card className={cn("shadow-none", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-[#CBD5E1]")}>
       <CardHeader className={cn("p-4 border-b", isDark ? "border-slate-800" : "border-slate-100")}>
@@ -162,72 +166,135 @@ export default function TimeSeriesChart({
       </CardHeader>
       <CardContent className="p-4">
         <ResponsiveContainer width="100%" height={300}>
-          <Chart {...commonProps}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={isDark ? "#ffffff" : "#64748B"}
-              opacity={0.08}
-              vertical={false}
-            />
-            <XAxis
-              dataKey="date"
-              stroke={isDark ? "#ffffff" : "#64748B"}
-              opacity={0.4}
-              style={{ fontSize: '10px', fontWeight: 'bold' }}
-              tickLine={false}
-              axisLine={false}
-              dy={10}
-            />
-            <YAxis 
-              stroke={isDark ? "#ffffff" : "#64748B"} 
-              opacity={0.4} 
-              style={{ fontSize: '10px', fontWeight: 'bold' }}
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: isDark ? '#0F172A' : '#ffffff',
-                border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1',
-                borderRadius: '10px',
-                boxShadow: 'none',
-                padding: '12px',
-              }}
-              itemStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}
-              labelStyle={{ color: isDark ? 'rgba(255,255,255,0.4)' : '#64748B', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
-              cursor={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.06)', strokeWidth: 1 }}
-            />
-            <Legend
-              verticalAlign="top"
-              align="right"
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{
-                paddingBottom: '20px',
-                fontSize: '10px',
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: isDark ? 'rgba(255,255,255,0.5)' : '#64748B',
-              }}
-            />
-            {activeLinesConfig.map((config, index) => (
-              <DataComponent
-                key={index}
-                type="monotone"
-                dataKey={config.dataKey}
-                stroke={config.stroke}
-                fill={chartType === 'area' ? config.fill : undefined}
-                fillOpacity={chartType === 'area' ? 0.1 : undefined}
-                strokeWidth={2.5}
-                dot={false}
-                activeDot={{ r: 4, stroke: isDark ? '#ffffff' : '#2563EB', strokeWidth: 2 }}
+          {chartType === 'area' ? (
+            <AreaChart {...commonProps}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={isDark ? "#ffffff" : "#64748B"}
+                opacity={0.08}
+                vertical={false}
               />
-            ))}
-          </Chart>
+              <XAxis
+                dataKey="date"
+                stroke={isDark ? "#ffffff" : "#64748B"}
+                opacity={0.4}
+                style={{ fontSize: '10px', fontWeight: 'bold' }}
+                tickLine={false}
+                axisLine={false}
+                dy={10}
+              />
+              <YAxis
+                stroke={isDark ? "#ffffff" : "#64748B"}
+                opacity={0.4}
+                style={{ fontSize: '10px', fontWeight: 'bold' }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: isDark ? '#0F172A' : '#ffffff',
+                  border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1',
+                  borderRadius: '10px',
+                  boxShadow: 'none',
+                  padding: '12px',
+                }}
+                itemStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}
+                labelStyle={{ color: isDark ? 'rgba(255,255,255,0.4)' : '#64748B', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
+                cursor={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.06)', strokeWidth: 1 }}
+              />
+              <Legend
+                verticalAlign="top"
+                align="right"
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{
+                  paddingBottom: '20px',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: isDark ? 'rgba(255,255,255,0.5)' : '#64748B',
+                }}
+              />
+              {activeLinesConfig.map((config, index) => (
+                <Area
+                  key={index}
+                  type="monotone"
+                  dataKey={config.dataKey}
+                  stroke={config.stroke}
+                  fill={config.fill}
+                  fillOpacity={0.1}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 4, stroke: isDark ? '#ffffff' : '#2563EB', strokeWidth: 2 }}
+                />
+              ))}
+            </AreaChart>
+          ) : (
+            <LineChart {...commonProps}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={isDark ? "#ffffff" : "#64748B"}
+                opacity={0.08}
+                vertical={false}
+              />
+              <XAxis
+                dataKey="date"
+                stroke={isDark ? "#ffffff" : "#64748B"}
+                opacity={0.4}
+                style={{ fontSize: '10px', fontWeight: 'bold' }}
+                tickLine={false}
+                axisLine={false}
+                dy={10}
+              />
+              <YAxis
+                stroke={isDark ? "#ffffff" : "#64748B"}
+                opacity={0.4}
+                style={{ fontSize: '10px', fontWeight: 'bold' }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: isDark ? '#0F172A' : '#ffffff',
+                  border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1',
+                  borderRadius: '10px',
+                  boxShadow: 'none',
+                  padding: '12px',
+                }}
+                itemStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}
+                labelStyle={{ color: isDark ? 'rgba(255,255,255,0.4)' : '#64748B', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
+                cursor={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.06)', strokeWidth: 1 }}
+              />
+              <Legend
+                verticalAlign="top"
+                align="right"
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{
+                  paddingBottom: '20px',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: isDark ? 'rgba(255,255,255,0.5)' : '#64748B',
+                }}
+              />
+              {activeLinesConfig.map((config, index) => (
+                <Line
+                  key={index}
+                  type="monotone"
+                  dataKey={config.dataKey}
+                  stroke={config.stroke}
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 4, stroke: isDark ? '#ffffff' : '#2563EB', strokeWidth: 2 }}
+                />
+              ))}
+            </LineChart>
+          )}
         </ResponsiveContainer>
       </CardContent>
     </Card>
   );
 }
-

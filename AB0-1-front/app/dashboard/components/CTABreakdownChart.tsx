@@ -18,24 +18,25 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Cell,
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageSquare, Mail, Phone, Globe } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { MessageSquare, Mail, Phone, Globe, FileText, Shapes } from 'lucide-react';
 
 interface CTAData {
   whatsapp_clicks: number;
   email_clicks: number;
   phone_clicks: number;
   website_clicks: number;
+  quote_clicks: number;
+  other_clicks: number;
+  total_clicks: number;
 }
 
 interface CTABreakdownChartProps {
-  data: CTAData;
+  data: CTAData | null;
   loading?: boolean;
   themeMode?: 'light' | 'dark';
   title?: string;
@@ -46,16 +47,21 @@ interface CTABreakdownChartProps {
 export default function CTABreakdownChart({
   data,
   loading = false,
-  themeMode = 'dark',
   title = 'Breakdown de CTAs',
   description = 'Distribuição de cliques por tipo de CTA',
   orientation = 'horizontal',
 }: CTABreakdownChartProps) {
-  // Lock to dark foundation
-  const isDark = true;
+  interface ChartDatum {
+    name: string;
+    value: number;
+    color: string;
+    icon: typeof MessageSquare;
+  }
 
   // Transform data for Recharts using Brand Tokens
-  const chartData = useMemo(() => {
+  const chartData = useMemo<ChartDatum[]>(() => {
+    if (!data) return [];
+
     return [
       {
         name: 'WhatsApp',
@@ -81,10 +87,22 @@ export default function CTABreakdownChart({
         color: '#00AFEF',
         icon: Globe,
       },
+      {
+        name: 'Orcamento',
+        value: data.quote_clicks,
+        color: '#8B5CF6',
+        icon: FileText,
+      },
+      {
+        name: 'Outros',
+        value: data.other_clicks,
+        color: '#94A3B8',
+        icon: Shapes,
+      },
     ].sort((a, b) => b.value - a.value); 
   }, [data]);
 
-  const totalClicks = chartData.reduce((sum, item) => sum + item.value, 0);
+  const totalClicks = data?.total_clicks ?? chartData.reduce((sum, item) => sum + item.value, 0);
 
   if (loading) {
     return (
@@ -95,6 +113,22 @@ export default function CTABreakdownChart({
         </CardHeader>
         <CardContent className="p-4">
           <Skeleton className="h-[250px] w-full bg-white/5 rounded-xl" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+        <CardHeader className="p-4">
+          <CardTitle className="text-white text-lg font-bold tracking-tight">{title}</CardTitle>
+          <CardDescription className="text-white/40 text-xs">{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[250px] p-4">
+          <p className="text-sm text-white/30 font-medium">
+            Dados de CTA ainda nao disponiveis para este periodo
+          </p>
         </CardContent>
       </Card>
     );
@@ -116,17 +150,23 @@ export default function CTABreakdownChart({
     );
   }
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean;
+    payload?: Array<{ payload: ChartDatum }>;
+  }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const percentage = ((data.value / totalClicks) * 100).toFixed(1);
+      const item = payload[0].payload;
+      const percentage = totalClicks > 0 ? ((item.value / totalClicks) * 100).toFixed(1) : '0.0';
       return (
         <div className="p-3 rounded-xl bg-[#002B4D] border-[0.5px] border-white/10 shadow-none">
           <p className="font-bold text-xs text-white uppercase tracking-widest mb-1">
-            {data.name}
+            {item.name}
           </p>
           <p className="text-[10px] font-bold text-white/40 font-mono uppercase">
-            {data.value} cliques ({percentage}%)
+            {item.value} cliques ({percentage}%)
           </p>
         </div>
       );

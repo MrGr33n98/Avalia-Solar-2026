@@ -9,6 +9,7 @@ module CompanyDashboard
       email_clicks
       phone_clicks
       website_clicks
+      quote_clicks
       leads
       unique_views
       returning_views
@@ -64,7 +65,8 @@ module CompanyDashboard
       'whatsapp' => :whatsapp_clicks,
       'email' => :email_clicks,
       'phone' => :phone_clicks,
-      'website' => :website_clicks
+      'website' => :website_clicks,
+      'quote' => :quote_clicks
     }.freeze
 
     def initialize(company_id:)
@@ -95,6 +97,7 @@ module CompanyDashboard
         Arel.sql('COALESCE(SUM(email_clicks), 0)'),
         Arel.sql('COALESCE(SUM(phone_clicks), 0)'),
         Arel.sql('COALESCE(SUM(website_clicks), 0)'),
+        Arel.sql('COALESCE(SUM(quote_clicks), 0)'),
         Arel.sql('COALESCE(SUM(leads), 0)'),
         Arel.sql('COALESCE(SUM(unique_views), 0)'),
         Arel.sql('COALESCE(SUM(returning_views), 0)')
@@ -107,9 +110,10 @@ module CompanyDashboard
         email_clicks: row[3].to_i,
         phone_clicks: row[4].to_i,
         website_clicks: row[5].to_i,
-        leads: row[6].to_i,
-        unique_views: row[7].to_i,
-        returning_views: row[8].to_i
+        quote_clicks: row[6].to_i,
+        leads: row[7].to_i,
+        unique_views: row[8].to_i,
+        returning_views: row[9].to_i
       }
     rescue StandardError => e
       Rails.logger.warn("[CompanyDashboard::MetricsSource] totals failed: #{e.class} #{e.message}")
@@ -124,8 +128,8 @@ module CompanyDashboard
 
       base_scope(from_day: from_day, to_day: to_day)
         .order(:day)
-        .pluck(:day, :profile_views, :cta_clicks, :whatsapp_clicks, :email_clicks, :phone_clicks, :website_clicks, :leads)
-        .map do |day, profile_views, cta_clicks, whatsapp_clicks, email_clicks, phone_clicks, website_clicks, leads|
+        .pluck(:day, :profile_views, :cta_clicks, :whatsapp_clicks, :email_clicks, :phone_clicks, :website_clicks, :quote_clicks, :leads)
+        .map do |day, profile_views, cta_clicks, whatsapp_clicks, email_clicks, phone_clicks, website_clicks, quote_clicks, leads|
           {
             date: day,
             profile_views: profile_views.to_i,
@@ -134,6 +138,7 @@ module CompanyDashboard
             email_clicks: email_clicks.to_i,
             phone_clicks: phone_clicks.to_i,
             website_clicks: website_clicks.to_i,
+            quote_clicks: quote_clicks.to_i,
             leads: leads.to_i
           }
         end
@@ -323,7 +328,7 @@ module CompanyDashboard
         key = row[:date].to_date
         rows[key] ||= default_timeseries_row(row[:date])
 
-        EVENT_TYPE_TO_METRIC.values.uniq.each do |metric|
+        default_timeseries_row(row[:date]).keys.excluding(:date).each do |metric|
           rows[key][metric] += row[metric].to_i
         end
       end
@@ -362,6 +367,7 @@ module CompanyDashboard
         email_clicks: 0,
         phone_clicks: 0,
         website_clicks: 0,
+        quote_clicks: 0,
         leads: 0
       }
     end

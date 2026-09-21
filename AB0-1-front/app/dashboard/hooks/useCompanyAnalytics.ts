@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { companyDashboardApi, CompanyAnalyticsOverview } from '@/lib/api';
 
 interface UseCompanyAnalyticsOptions {
@@ -25,43 +26,27 @@ export function useCompanyAnalytics({
   from,
   to,
 }: UseCompanyAnalyticsOptions = {}): UseCompanyAnalyticsResult {
-  const [data, setData] = useState<CompanyAnalyticsOverview | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    try {
-      setError(null);
-      const result = from && to
-        ? await companyDashboardApi.getAnalyticsOverview(companyId, { from, to })
-        : await companyDashboardApi.getAnalyticsOverview(companyId);
-      setData(result);
-    } catch (err: unknown) {
-      console.error('[useCompanyAnalytics] Error fetching analytics:', err);
-      setError(err instanceof Error ? err.message : 'Não foi possível carregar os dados de analytics');
-    } finally {
-      setLoading(false);
-    }
-  }, [companyId, from, to]);
+  const query = useQuery<CompanyAnalyticsOverview, Error>({
+    queryKey: ['analytics-overview', companyId ?? null, from ?? null, to ?? null],
+    queryFn: () =>
+      from && to
+        ? companyDashboardApi.getAnalyticsOverview(companyId, { from, to })
+        : companyDashboardApi.getAnalyticsOverview(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 30_000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchInterval: autoRefresh ? refreshInterval : false,
+  });
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    await fetchData();
-  }, [fetchData]);
+    await query.refetch();
+  }, [query]);
 
-  useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
-
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      void fetchData();
-    }, refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, fetchData]);
-
-  return { data, loading, error, refresh };
+  return {
+    data: query.data ?? null,
+    loading: query.isLoading,
+    error: query.error?.message ?? null,
+    refresh,
+  };
 }

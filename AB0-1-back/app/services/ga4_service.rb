@@ -1,20 +1,22 @@
 # frozen_string_literal: true
 
 # app/services/ga4_service.rb
-# Google Analytics 4 Measurement Protocol Integration
-# Imports engagement metrics (avgTimeOnPage, bounceRate, etc)
+# Google Analytics 4 integration
+# - leitura: Analytics Data API (property_id numerico)
+# - escrita: Measurement Protocol (measurement_id + api_secret)
 
 class Ga4Service
   MEASUREMENT_API_ENDPOINT = 'https://www.google-analytics.com/mp/collect'
   
   class << self
-    # Fetch engagement metrics from GA4 for a specific property
-    # @param property_id [String] GA4 Property ID (e.g., "G-XXXXXXXXXX")
+    # Fetch engagement metrics from GA4 Data API for a specific property
+    # @param property_id [String] GA4 Property ID numerico (e.g., "123456789")
     # @param start_date [Date] Start date for metrics
     # @param end_date [Date] End date for metrics
     # @return [Hash] Engagement metrics or nil if failed
     def fetch_engagement_metrics(property_id:, start_date: 30.days.ago.to_date, end_date: Date.current)
-      return nil unless ga4_enabled?
+      return nil unless ga4_data_api_enabled?
+      return nil unless ga4_property_id_valid_for_data_api?(property_id)
 
       begin
         response = google_analytics_data_client.run_report(
@@ -40,7 +42,7 @@ class Ga4Service
     # @param event_name [String] Event name
     # @param properties [Hash] Event properties
     def track(event_name, properties)
-      return unless ga4_enabled?
+      return unless ga4_measurement_enabled?
 
       payload = build_measurement_payload(event_name, properties)
       
@@ -51,8 +53,21 @@ class Ga4Service
 
     private
 
-    def ga4_enabled?
+    def ga4_measurement_enabled?
       ENV['GA4_MEASUREMENT_ID'].present? && ENV['GA4_API_SECRET'].present?
+    end
+
+    def ga4_data_api_enabled?
+      ENV['GA4_SERVICE_ACCOUNT_JSON'].present? || application_default_credentials_available?
+    end
+
+    def ga4_property_id_valid_for_data_api?(property_id)
+      return true if property_id.to_s.match?(/\A\d+\z/)
+
+      Rails.logger.warn(
+        "[Ga4Service] ga4_property_id inválido para Data API: #{property_id.inspect}. Esperado um Property ID numérico."
+      )
+      false
     end
 
     def google_analytics_data_client
@@ -80,6 +95,10 @@ class Ga4Service
       end
     end
 
+    def application_default_credentials_available?
+      ENV['GOOGLE_APPLICATION_CREDENTIALS'].present? || ENV['GOOGLE_CLOUD_PROJECT'].present?
+    end
+
     def parse_engagement_response(response)
       return nil if response.rows.empty?
 
@@ -87,10 +106,10 @@ class Ga4Service
       metrics = row.metric_values
 
       {
-        avg_time_on_page: metrics[0].value.to_f.round(0), # seconds
-        bounce_rate: (metrics[1].value.to_f * 100).round(2), # percentage
+        avg_time_on_page_seconds: metrics[0].value.to_f.round(0),
+        bounce_rate_percent: (metrics[1].value.to_f * 100).round(2),
         pages_per_session: metrics[2].value.to_f.round(2),
-        engagement_rate: (metrics[3].value.to_f * 100).round(2) # percentage
+        engagement_rate_percent: (metrics[3].value.to_f * 100).round(2)
       }
     rescue StandardError => e
       Rails.logger.error("[Ga4Service] Failed to parse response: #{e.message}")

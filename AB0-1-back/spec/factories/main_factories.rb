@@ -152,6 +152,7 @@ FactoryBot.define do
     day { Date.yesterday }
     profile_views { 0 }
     cta_clicks { 0 }
+    quote_clicks { 0 }
     leads { 0 }
   end
 end

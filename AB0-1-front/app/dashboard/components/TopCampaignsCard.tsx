@@ -15,46 +15,33 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, ExternalLink, Target, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchApi } from '@/lib/api';
+import { companyDashboardApi, type TopCampaign } from '@/lib/api';
 import { cn } from '@/lib/utils';
-
-interface Campaign {
-  id: number;
-  utm_campaign: string;
-  utm_source: string;
-  utm_medium: string;
-  total_visits: number;
-  total_cta_clicks: number;
-  total_leads: number;
-  conversion_rate: number;
-  last_seen_at: string;
-}
 
 interface TopCampaignsCardProps {
   companyId: string;
   themeMode?: 'light' | 'dark';
   limit?: number;
+  from?: string;
+  to?: string;
 }
 
 export default function TopCampaignsCard({
   companyId,
-  themeMode = 'dark',
   limit = 5,
+  from,
+  to,
 }: TopCampaignsCardProps) {
-  // Lock to dark theme for consistency with the Silicon foundation
-  const isDark = true; 
-
-  const { data: campaigns, isLoading } = useQuery({
-    queryKey: ['top-campaigns', companyId, limit],
+  const { data, isLoading } = useQuery({
+    queryKey: ['top-campaigns', companyId, limit, from ?? null, to ?? null],
     queryFn: async () => {
-      const response = await fetchApi<{ campaigns: Campaign[] }>(
-        `/company_dashboard/analytics/top_campaigns`,
-        { params: { company_id: companyId, limit } }
-      );
-      return response.campaigns || [];
+      return companyDashboardApi.getAnalyticsTopCampaigns(companyId, { from, to, limit });
     },
     enabled: Boolean(companyId),
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
+  const campaigns = data?.campaigns ?? [];
 
   if (isLoading) {
     return (
@@ -83,17 +70,16 @@ export default function TopCampaignsCard({
             Top Campanhas
           </CardTitle>
           <CardDescription className="text-white/40">
-            Nenhuma campanha com UTM rastreada ainda
+            Nenhuma campanha com UTM encontrada neste periodo
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-[200px] p-4">
-          <div className="text-center">
-            <Target className="h-12 w-12 mx-auto mb-3 text-white/20" />
-            <p className="text-sm text-white/50">
-              Adicione parâmetros UTM aos seus links
+        <CardContent className="p-4 pt-0">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <p className="text-sm text-white/60">
+              Use parametros UTM para identificar campanhas e acompanhar visitas, CTAs e leads no periodo selecionado.
             </p>
-            <p className="text-[10px] mt-1 text-white/30 font-mono">
-              Ex: ?utm_source=google&utm_medium=cpc&utm_campaign=solar2024
+            <p className="mt-2 text-[10px] text-white/35 font-mono">
+              Ex: ?utm_source=google&utm_medium=cpc&utm_campaign=solar2026
             </p>
           </div>
         </CardContent>
@@ -113,7 +99,7 @@ export default function TopCampaignsCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 p-4">
-        {campaigns.map((campaign, index) => {
+        {campaigns.map((campaign: TopCampaign, index) => {
           const rankColors = [
             { bg: 'bg-brand-blue/10', text: 'text-brand-blue', badge: 'bg-brand-blue' },
             { bg: 'bg-white/5', text: 'text-white/60', badge: 'bg-white/20' },
@@ -151,7 +137,7 @@ export default function TopCampaignsCard({
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider border-white/10 text-white/50 bg-white/5">
-                      {campaign.utm_source}
+                      {campaign.utm_source || 'origem'}
                     </Badge>
                     {campaign.utm_medium && (
                       <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider border-white/10 text-white/50 bg-white/5">
@@ -162,7 +148,10 @@ export default function TopCampaignsCard({
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-brand-green font-mono tracking-tighter">
-                    {campaign.conversion_rate}%
+                  {campaign.conversion_rate.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}%
                   </p>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                     conversão
@@ -191,7 +180,7 @@ export default function TopCampaignsCard({
                     </p>
                   </div>
                   <p className="text-lg font-bold text-white font-mono">
-                    {campaign.total_cta_clicks}
+                  {campaign.total_cta_clicks}
                   </p>
                   <p className="text-[10px] font-bold text-white/30 font-mono mt-0.5">
                     {ctr}% CTR
@@ -216,7 +205,9 @@ export default function TopCampaignsCard({
                   Última atividade
                 </p>
                 <p className="text-[10px] font-bold text-white/40 font-mono">
-                  {new Date(campaign.last_seen_at).toLocaleDateString('pt-BR')}
+                  {campaign.last_seen_at
+                    ? new Date(campaign.last_seen_at).toLocaleDateString('pt-BR')
+                    : '—'}
                 </p>
               </div>
             </div>

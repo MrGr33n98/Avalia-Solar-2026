@@ -56,7 +56,7 @@ class AnalyticsTrackingJob
     end
 
     # Store UTM attribution data (optional)
-    store_utm_attribution(company_id, properties, metadata) if has_utm_params?(properties)
+    store_utm_attribution(company_id, event_name, properties, metadata) if has_utm_params?(properties)
 
     # Forward to external analytics platforms
     forward_to_posthog(event_name, properties, metadata) if ENV['POSTHOG_API_KEY'].present?
@@ -140,6 +140,8 @@ class AnalyticsTrackingJob
       increment_stat(company_id, day, :phone_clicks)
     when 'website'
       increment_stat(company_id, day, :website_clicks)
+    when 'quote'
+      increment_stat(company_id, day, :quote_clicks) if CompanyDailyStat.column_names.include?('quote_clicks')
     end
   end
 
@@ -149,7 +151,7 @@ class AnalyticsTrackingJob
   end
 
   # Store UTM attribution data for advanced analytics
-  def store_utm_attribution(company_id, properties, metadata)
+  def store_utm_attribution(company_id, event_name, properties, metadata)
     return unless properties['utm_source'].present?
 
     attribution = CompanyUtmAttribution.find_or_initialize_by(
@@ -165,7 +167,7 @@ class AnalyticsTrackingJob
     attribution.last_seen_at = Date.current
 
     # Increment visit if it's a profile view
-    if ['Company Profile Viewed', 'profile_view'].include?(properties['event'])
+    if ['Company Profile Viewed', 'profile_view', 'company_profile_viewed'].include?(event_name)
       attribution.increment_visit!
     end
 
@@ -175,7 +177,7 @@ class AnalyticsTrackingJob
     end
 
     # Increment leads
-    if ['Lead Form Submitted', 'Quote Request CTA Clicked'].include?(properties['event'])
+    if ['Lead Form Submitted', 'Quote Request CTA Clicked', 'lead_created'].include?(event_name)
       attribution.increment_lead!
     end
 

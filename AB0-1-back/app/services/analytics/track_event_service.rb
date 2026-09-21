@@ -82,6 +82,7 @@ module Analytics
 
       persist_platform_event!
       event = persist_analytics_event!
+      Analytics::UtmAttributionService.call(event: event) if event.present?
 
       Feed::InterestGraph.record(user: @user, event_type: @event_type, metadata: @metadata,
                                  occurred_at: @occurred_at) if event.present?
