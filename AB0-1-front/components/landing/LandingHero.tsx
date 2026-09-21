@@ -58,6 +58,9 @@ export default function LandingHero(props: LandingHeroProps) {
   const targetLink = activeCampaign?.target_url || '#';
   const showSponsoredBanner = Boolean(activeCampaign && activeCampaign.image_url);
   const shouldAnimateHero = !prefersReducedMotion && !showSponsoredBanner;
+  // shouldLoadCanvas separa o controle de CARREGAMENTO do controle VISUAL:
+  // o canvas é desktop-only (hidden lg:block), então não deve iniciar preload em mobile.
+  const shouldLoadCanvas = !isMobile && shouldAnimateHero;
 
   /* ────────────────────────────────────────────────────────────────
      Scroll-Driven 3D Canvas (desktop only, lg breakpoint: 1024px+)
@@ -70,7 +73,7 @@ export default function LandingHero(props: LandingHeroProps) {
     hasCriticalFailure,
   } = useScrollDrivenFrames({
     totalFrames: TOTAL_FRAMES,
-    enabled: shouldAnimateHero,
+    enabled: shouldLoadCanvas,
     framesPathDesktop: FRAMES_DESKTOP_DIR,
     framesPathMobile: FRAMES_MOBILE_DIR,
     canvasWidthDesktop: 1280,

@@ -148,6 +148,8 @@ export function useScrollDrivenFrames({
   const isHoveringCanvasRef = useRef<boolean>(false);
   const autoPlayStartRef = useRef<number>(0);
   const autoPlayPhaseRef = useRef<1 | -1>(1);
+  // Rastreia se o autoplay estava pausado por scroll (para calibrar o start na retomada)
+  const wasScrollPausedRef = useRef<boolean>(false);
 
   const [preloadProgress, setPreloadProgress] = useState<number>(0);
   const [isReady, setIsReady] = useState<boolean>(false);
@@ -364,18 +366,23 @@ export function useScrollDrivenFrames({
       const clampedProgress = clampProgress(rawProgress);
       scrollTargetProgressRef.current =
         isReducedMotionRef.current && clampedProgress >= 0.5 ? 1 : clampedProgress;
-
-      if (autoPauseOnScroll) {
-        lastUserScrollAtRef.current = performance.now();
-      }
+      // Nota: lastUserScrollAtRef NÃO é atualizado aqui para não tratar
+      // a chamada de inicialização/mount como interação real do usuário.
     };
 
     primeInitialFrames();
     scheduleBackgroundPreload();
+    // Calcula posição inicial sem registrar como interação de scroll
     calculateScrollProgress();
     autoPlayStartRef.current = performance.now();
 
-    const handleScroll = () => calculateScrollProgress();
+    const handleScroll = () => {
+      // Somente eventos reais de scroll do usuário registram o timestamp
+      if (autoPauseOnScroll) {
+        lastUserScrollAtRef.current = performance.now();
+      }
+      calculateScrollProgress();
+    };
     const handleResize = () => {
       syncCanvasSize();
       calculateScrollProgress();
@@ -413,9 +420,21 @@ export function useScrollDrivenFrames({
 
       if (autoPauseOnScroll) {
         const idleMs = now - lastUserScrollAtRef.current;
-        if (idleMs < autoResumeIdleAfterMs) return null;
+        if (idleMs < autoResumeIdleAfterMs) {
+          // Autoplay pausado por scroll — registrar estado para calibrar na retomada
+          wasScrollPausedRef.current = true;
+          return null;
+        }
       }
       if (autoPauseOnHover && isHoveringCanvasRef.current) return null;
+
+      // Transição: estava pausado por scroll → vai retomar agora
+      // Recalibrar autoPlayStartRef para continuar da posição atual sem salto
+      if (wasScrollPausedRef.current) {
+        wasScrollPausedRef.current = false;
+        autoPlayStartRef.current =
+          now - getAutoPlayElapsedFromProgress(currentProgressRef.current);
+      }
 
       const duration = Math.max(100, autoPlayDurationMs);
       let elapsed = now - autoPlayStartRef.current;
