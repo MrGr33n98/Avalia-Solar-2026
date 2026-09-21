@@ -85,9 +85,17 @@ const readState = () =>
 function HookProbe({
   totalFrames = 4,
   enabled = true,
+  initialFrameCount,
+  backgroundBatchSize,
+  backgroundPreloadDelayMs,
+  maxBackgroundFrames,
 }: {
   totalFrames?: number;
   enabled?: boolean;
+  initialFrameCount?: number;
+  backgroundBatchSize?: number;
+  backgroundPreloadDelayMs?: number;
+  maxBackgroundFrames?: number;
 }) {
   const {
     canvasRef,
@@ -105,6 +113,10 @@ function HookProbe({
     enabled,
     framesPathDesktop: '/videos/frames',
     preloadReadyThreshold: 0.25,
+    initialFrameCount,
+    backgroundBatchSize,
+    backgroundPreloadDelayMs,
+    maxBackgroundFrames,
   });
 
   return (
@@ -272,6 +284,35 @@ describe('useScrollDrivenFrames', () => {
     expect(readState().failedFrameCount).toBe(0);
   });
 
+  it('adia e limita o preload de fundo dos frames', () => {
+    jest.useFakeTimers();
+    autoResolve = false;
+
+    try {
+      const { unmount } = render(
+        <HookProbe
+          totalFrames={120}
+          initialFrameCount={1}
+          backgroundBatchSize={3}
+          backgroundPreloadDelayMs={1600}
+          maxBackgroundFrames={4}
+        />
+      );
+
+      expect(imageRegistry.size).toBe(1);
+
+      act(() => {
+        jest.advanceTimersByTime(1600);
+      });
+
+      expect([...imageRegistry.keys()].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4]);
+
+      unmount();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   // ═══════════════════════════════════════════════════════════════════════════
   // TESTE A — mount não é interação de scroll (Bug 2 fix)
   // Verifica que lastUserScrollAtRef permanece em -Infinity após mount,
@@ -432,7 +473,7 @@ describe('useScrollDrivenFrames', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 // TESTE F — função pura para computar shouldLoadCanvas
 // Extrai e valida a lógica de decisão usada em LandingHero.tsx:
-//   shouldLoadCanvas = !isMobile && !prefersReducedMotion && !showSponsoredBanner
+//   shouldLoadCanvas = animationLoadState === 'enabled' && !isMobile && shouldAnimateHero
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
@@ -442,28 +483,34 @@ describe('useScrollDrivenFrames', () => {
 function computeShouldLoadCanvas(
   isMobile: boolean,
   prefersReducedMotion: boolean,
-  showSponsoredBanner: boolean
+  showSponsoredBanner: boolean,
+  animationLoadState: 'pending' | 'enabled' | 'disabled'
 ): boolean {
   const shouldAnimateHero = !prefersReducedMotion && !showSponsoredBanner;
-  return !isMobile && shouldAnimateHero;
+  return animationLoadState === 'enabled' && !isMobile && shouldAnimateHero;
 }
 
 describe('computeShouldLoadCanvas (LandingHero — lógica de carregamento do canvas)', () => {
   it('retorna false em mobile independente de outras flags', () => {
-    expect(computeShouldLoadCanvas(true, false, false)).toBe(false);
-    expect(computeShouldLoadCanvas(true, true, false)).toBe(false);
-    expect(computeShouldLoadCanvas(true, false, true)).toBe(false);
+    expect(computeShouldLoadCanvas(true, false, false, 'enabled')).toBe(false);
+    expect(computeShouldLoadCanvas(true, true, false, 'enabled')).toBe(false);
+    expect(computeShouldLoadCanvas(true, false, true, 'enabled')).toBe(false);
   });
 
   it('retorna false em desktop com prefers-reduced-motion ativo', () => {
-    expect(computeShouldLoadCanvas(false, true, false)).toBe(false);
+    expect(computeShouldLoadCanvas(false, true, false, 'enabled')).toBe(false);
   });
 
   it('retorna false em desktop com banner patrocinado ativo', () => {
-    expect(computeShouldLoadCanvas(false, false, true)).toBe(false);
+    expect(computeShouldLoadCanvas(false, false, true, 'enabled')).toBe(false);
   });
 
-  it('retorna true somente em desktop sem reduced-motion e sem banner', () => {
-    expect(computeShouldLoadCanvas(false, false, false)).toBe(true);
+  it('retorna false enquanto o carregamento estiver pendente ou desabilitado', () => {
+    expect(computeShouldLoadCanvas(false, false, false, 'pending')).toBe(false);
+    expect(computeShouldLoadCanvas(false, false, false, 'disabled')).toBe(false);
+  });
+
+  it('retorna true somente em desktop elegivel apos o carregamento diferido', () => {
+    expect(computeShouldLoadCanvas(false, false, false, 'enabled')).toBe(true);
   });
 });

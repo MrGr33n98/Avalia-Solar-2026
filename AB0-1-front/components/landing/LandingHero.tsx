@@ -32,7 +32,9 @@ const FRAMES_DESKTOP_DIR = '/videos/raio-x-fluxo-energia-frames';
 const FRAMES_MOBILE_DIR = '/videos/raio-x-fluxo-energia-frames-mobile';
 const TOTAL_FRAMES = 120;
 const REDUCED_MOTION_VIDEO = '/videos/O_Raio_X_e_Fluxo_de_Energi.mp4';
-const STATIC_FALLBACK = '/images/lp-avalia-solar-image.webp';
+const STATIC_FALLBACK = `${FRAMES_DESKTOP_DIR}/frame_000.webp`;
+
+type AnimationLoadState = 'pending' | 'enabled' | 'disabled';
 
 export default function LandingHero(props: LandingHeroProps) {
   const { activeCampaign, fetchActiveCampaign, subscribeToUpdates, unsubscribeFromUpdates } =
@@ -40,6 +42,7 @@ export default function LandingHero(props: LandingHeroProps) {
   const isMobile = useIsMobile();
   const travelRef = useRef<HTMLElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [animationLoadState, setAnimationLoadState] = useState<AnimationLoadState>('pending');
 
   useEffect(() => {
     const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -58,20 +61,58 @@ export default function LandingHero(props: LandingHeroProps) {
   const targetLink = activeCampaign?.target_url || '#';
   const showSponsoredBanner = Boolean(activeCampaign && activeCampaign.image_url);
   const shouldAnimateHero = !prefersReducedMotion && !showSponsoredBanner;
-  // shouldLoadCanvas separa o controle de CARREGAMENTO do controle VISUAL:
-  // o canvas é desktop-only (hidden lg:block), então não deve iniciar preload em mobile.
-  const shouldLoadCanvas = !isMobile && shouldAnimateHero;
+
+  useEffect(() => {
+    if (isMobile || !shouldAnimateHero) {
+      setAnimationLoadState('disabled');
+      return;
+    }
+
+    type NetworkInformation = {
+      effectiveType?: string;
+      saveData?: boolean;
+    };
+    type NavigatorWithConnection = Navigator & { connection?: NetworkInformation };
+    type WindowWithIdleCallback = Window & {
+      cancelIdleCallback?: (handle: number) => void;
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+    };
+
+    const connection = (navigator as NavigatorWithConnection).connection;
+    const shouldPreserveBandwidth =
+      connection?.saveData ||
+      connection?.effectiveType === 'slow-2g' ||
+      connection?.effectiveType === '2g';
+
+    if (shouldPreserveBandwidth) {
+      setAnimationLoadState('disabled');
+      return;
+    }
+
+    setAnimationLoadState('pending');
+
+    const browserWindow = window as WindowWithIdleCallback;
+    const enableAnimation = () => setAnimationLoadState('enabled');
+    const idleCallbackId = browserWindow.requestIdleCallback?.(enableAnimation, { timeout: 1800 });
+    const timeoutId =
+      idleCallbackId === undefined ? window.setTimeout(enableAnimation, 1200) : undefined;
+
+    return () => {
+      if (idleCallbackId !== undefined) {
+        browserWindow.cancelIdleCallback?.(idleCallbackId);
+      }
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, [isMobile, shouldAnimateHero]);
+
+  // O fallback é imediato. Os frames só passam a competir por banda e CPU após o navegador
+  // concluir o trabalho crítico da primeira dobra.
+  const shouldLoadCanvas = animationLoadState === 'enabled' && !isMobile && shouldAnimateHero;
 
   /* ────────────────────────────────────────────────────────────────
      Scroll-Driven 3D Canvas (desktop only, lg breakpoint: 1024px+)
      ──────────────────────────────────────────────────────────────── */
-  const {
-    canvasRef,
-    preloadProgress,
-    isReady: canvasIsReady,
-    hasRenderedValidFrame,
-    hasCriticalFailure,
-  } = useScrollDrivenFrames({
+  const { canvasRef, hasRenderedValidFrame, hasCriticalFailure } = useScrollDrivenFrames({
     totalFrames: TOTAL_FRAMES,
     enabled: shouldLoadCanvas,
     framesPathDesktop: FRAMES_DESKTOP_DIR,
@@ -83,20 +124,15 @@ export default function LandingHero(props: LandingHeroProps) {
     smoothingDesktop: 0.22,
     smoothingMobile: 0.18,
     travelRef,
-    preloadReadyThreshold: 0.25,
-    autoPlay: shouldAnimateHero
-      ? {
-          enabled: true,
-          durationMs: 10000,
-          direction: 'pingpong',
-          pauseOnScroll: true,
-          pauseOnHover: true,
-          resumeIdleAfterMs: 3500,
-        }
-      : undefined,
+    initialFrameCount: 1,
+    backgroundBatchSize: 3,
+    backgroundBatchDelayMs: 700,
+    backgroundPreloadDelayMs: 1600,
+    maxBackgroundFrames: 24,
   });
 
-  const disableExtendedScroll = isMobile || !shouldAnimateHero || hasCriticalFailure;
+  const disableExtendedScroll =
+    isMobile || !shouldAnimateHero || animationLoadState === 'disabled' || hasCriticalFailure;
 
   const scrollTravel = useMemo(
     () => (disableExtendedScroll ? 'auto' : '280vh'),
@@ -135,39 +171,22 @@ export default function LandingHero(props: LandingHeroProps) {
           }}
         >
           <div className="relative h-full w-full">
-            {/* Imagem estática fallback (até 25% dos frames pré-carregarem) */}
+            {/* Primeiro frame estático, exibido até o canvas estar pronto. */}
             {!showSponsoredBanner ? (
               <div className="absolute inset-0 flex items-end justify-end">
-                {/* Wrapper comum com CSS mask de edge feathering:
-                    aqui aplicamos mask combinada (horizontal + vertical)
-                    para desaparecer as 4 bordas no fundo da landing,
-                    preservando ~80% central 100% nítido. */}
-                <div
-                  className="relative h-full w-full -translate-y-[clamp(5rem,8vw,9rem)]"
-                  style={{
-                    WebkitMaskImage:
-                      'linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%),' +
-                      'linear-gradient(to bottom, black 0%, black 92%, rgba(0,0,0,0.72) 97%, transparent 100%)',
-                    maskImage:
-                      'linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%),' +
-                      'linear-gradient(to bottom, black 0%, black 92%, rgba(0,0,0,0.72) 97%, transparent 100%)',
-                    WebkitMaskComposite: 'source-in, source-in',
-                    maskComposite: 'intersect, intersect',
-                    WebkitMaskRepeat: 'no-repeat',
-                    maskRepeat: 'no-repeat',
-                    WebkitMaskSize: '100% 100%',
-                    maskSize: '100% 100%',
-                  }}
-                >
+                <div className="relative h-full w-full -translate-y-[clamp(5rem,8vw,9rem)]">
                   {/* Fallback: imagem estática */}
-                  {!hasRenderedValidFrame && STATIC_FALLBACK ? (
+                  {STATIC_FALLBACK ? (
                     <Image
                       src={STATIC_FALLBACK}
                       alt=""
                       fill
-                      priority
-                      quality={88}
-                      className="object-contain object-right-bottom transition-opacity duration-500 opacity-100 relative z-[1]"
+                      loading="eager"
+                      fetchPriority="auto"
+                      quality={75}
+                      className={`relative z-[1] object-contain object-right-bottom mix-blend-multiply transition-opacity duration-300 ${
+                        hasRenderedValidFrame ? 'opacity-0' : 'opacity-100'
+                      }`}
                       sizes="(max-width: 1023px) 0vw, 50vw"
                       aria-hidden="true"
                     />
@@ -179,12 +198,11 @@ export default function LandingHero(props: LandingHeroProps) {
                     width={1280}
                     height={720}
                     style={{
-                      mixBlendMode: 'normal',
+                      mixBlendMode: 'multiply',
                       imageRendering: 'auto',
-                      willChange: 'transform',
                       zIndex: 1,
                     }}
-                    className={`absolute inset-0 h-full w-full object-contain object-right-bottom select-none pointer-events-none transition-opacity duration-500 relative ${
+                    className={`absolute inset-0 h-full w-full object-contain object-right-bottom select-none pointer-events-none transition-opacity duration-300 relative ${
                       hasRenderedValidFrame ? 'opacity-100' : 'opacity-0'
                     }`}
                     role="img"
@@ -206,69 +224,9 @@ export default function LandingHero(props: LandingHeroProps) {
                       <source src={REDUCED_MOTION_VIDEO} type="video/mp4" />
                     </video>
                   ) : null}
-
-                  {/* Barra de progresso do pré-carregamento (minúscula, não intrusiva) */}
-                  {preloadProgress < 1 && (canvasIsReady || hasRenderedValidFrame) ? (
-                    <div
-                      className="absolute bottom-6 left-6 h-0.5 w-20 overflow-hidden rounded-full bg-slate-200/60"
-                      aria-hidden="true"
-                      style={{
-                        /* Reverter mask só na barra: ela deve permanecer visível. */
-                        WebkitMaskImage: 'none',
-                        maskImage: 'none',
-                      }}
-                    >
-                      <div
-                        className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-150"
-                        style={{ width: `${Math.round(preloadProgress * 100)}%` }}
-                      />
-                    </div>
-                  ) : null}
                 </div>
               </div>
             ) : null}
-
-            {/* ═══════════════════════════════════════════════════════
-                OVERLAYS DE INTEGRAÇÃO SEAMLESS — SÓ NAS FRONTEIRAS
-                3 overlays pointer-events-none para fundir as 3 bordas
-                relevantes do canvas com o gradiente real do HeroBackground.
-                Overlay de topo REMOVIDO para preservar 100% do telhado.
-                Ordem z: [2] (abaixo do sponsoredBanner z-[3])
-                ═══════════════════════════════════════════════════════ */}
-
-            {/* ── OVERLAY ESQUERDA (fronteira com conteúdo textual) ──
-                Vai até ~11% de largura. NÃO invade a área da casa/carro. */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-[2]"
-              style={{
-                background:
-                  'linear-gradient(90deg, #f8fbff 0%, rgba(248,251,255,0.45) 4%, rgba(248,251,255,0.08) 8%, transparent 11%)',
-              }}
-            />
-
-            {/* ── OVERLAY DIREITA (borda física extrema do asset) ──
-                Vai até ~5% de largura. Só feather da borda mais à direita. */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-[2]"
-              style={{
-                background:
-                  'linear-gradient(270deg, rgba(238,245,255,0.55) 0%, rgba(248,251,255,0.15) 2%, rgba(248,251,255,0) 5%)',
-              }}
-            />
-
-            {/* ── OVERLAY INFERIOR (MAIS CRÍTICO — fade SÓ NA EXTREMIDADE)
-                Vai até ~9% de altura. NÃO sobe até o carro, garagem ou rodas.
-                Termina exatamente em #eef5ff = cor final do HeroBackground. */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-[2]"
-              style={{
-                background:
-                  'linear-gradient(0deg, rgba(238,245,255,0.98) 0%, rgba(238,245,255,0.50) 3%, rgba(248,251,255,0.12) 6%, rgba(248,251,255,0) 9%)',
-              }}
-            />
 
             {/* ── Banner patrocinado (se existir campanha ativa, sobrepõe a animação) ── */}
             {showSponsoredBanner ? (
@@ -325,8 +283,7 @@ export default function LandingHero(props: LandingHeroProps) {
                     {activeCampaign.description && (
                       <div className="p-3">
                         <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors flex items-center gap-1">
-                          {activeCampaign.name}{' '}
-                          <ArrowRight className="h-3.5 w-3.5" />
+                          {activeCampaign.name} <ArrowRight className="h-3.5 w-3.5" />
                         </h4>
                         <p className="mt-1 text-xs text-slate-500 line-clamp-1">
                           {activeCampaign.description}

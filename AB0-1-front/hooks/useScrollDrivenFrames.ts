@@ -20,6 +20,11 @@ export interface UseScrollDrivenFramesOptions {
   smoothingMobile?: number;
   travelRef?: RefObject<HTMLElement> | null;
   preloadReadyThreshold?: number;
+  initialFrameCount?: number;
+  backgroundBatchSize?: number;
+  backgroundBatchDelayMs?: number;
+  backgroundPreloadDelayMs?: number;
+  maxBackgroundFrames?: number;
   autoPlay?: {
     enabled?: boolean;
     durationMs?: number;
@@ -117,6 +122,11 @@ export function useScrollDrivenFrames({
   smoothingMobile = 0.18,
   travelRef = null,
   preloadReadyThreshold = 0.25,
+  initialFrameCount = INITIAL_FRAME_WINDOW,
+  backgroundBatchSize = BACKGROUND_BATCH_SIZE,
+  backgroundBatchDelayMs = BACKGROUND_BATCH_DELAY_MS,
+  backgroundPreloadDelayMs = 0,
+  maxBackgroundFrames = totalFrames,
   autoPlay,
 }: UseScrollDrivenFramesOptions): UseScrollDrivenFramesResult {
   const autoPlayEnabled = Boolean(autoPlay?.enabled);
@@ -161,12 +171,15 @@ export function useScrollDrivenFrames({
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const effectiveFramesPath =
-      isMobile && framesPathMobile ? framesPathMobile : framesPathDesktop;
+    const effectiveFramesPath = isMobile && framesPathMobile ? framesPathMobile : framesPathDesktop;
     const effectiveWidth = isMobile ? canvasWidthMobile : canvasWidthDesktop;
     const effectiveHeight = isMobile ? canvasHeightMobile : canvasHeightDesktop;
     const effectiveSmoothing = isMobile ? smoothingMobile : smoothingDesktop;
-    const criticalFrameCount = Math.min(INITIAL_FRAME_WINDOW, totalFrames);
+    const criticalFrameCount = Math.min(Math.max(1, initialFrameCount), totalFrames);
+    const backgroundFrameLimit = Math.min(
+      totalFrames,
+      Math.max(criticalFrameCount, maxBackgroundFrames)
+    );
 
     backgroundTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
     backgroundTimeoutsRef.current = [];
@@ -326,20 +339,20 @@ export function useScrollDrivenFrames({
       let nextIndex = criticalFrameCount;
 
       const loadNextBatch = () => {
-        const batchEnd = Math.min(totalFrames, nextIndex + BACKGROUND_BATCH_SIZE);
+        const batchEnd = Math.min(backgroundFrameLimit, nextIndex + backgroundBatchSize);
         for (let index = nextIndex; index < batchEnd; index += 1) {
           requestFrame(index, 'low');
         }
 
         nextIndex = batchEnd;
 
-        if (nextIndex < totalFrames) {
-          const timeoutId = window.setTimeout(loadNextBatch, BACKGROUND_BATCH_DELAY_MS);
+        if (nextIndex < backgroundFrameLimit) {
+          const timeoutId = window.setTimeout(loadNextBatch, backgroundBatchDelayMs);
           backgroundTimeoutsRef.current.push(timeoutId);
         }
       };
 
-      const timeoutId = window.setTimeout(loadNextBatch, BACKGROUND_BATCH_DELAY_MS);
+      const timeoutId = window.setTimeout(loadNextBatch, backgroundPreloadDelayMs);
       backgroundTimeoutsRef.current.push(timeoutId);
     };
 
@@ -368,38 +381,6 @@ export function useScrollDrivenFrames({
         isReducedMotionRef.current && clampedProgress >= 0.5 ? 1 : clampedProgress;
       // Nota: lastUserScrollAtRef NÃO é atualizado aqui para não tratar
       // a chamada de inicialização/mount como interação real do usuário.
-    };
-
-    primeInitialFrames();
-    scheduleBackgroundPreload();
-    // Calcula posição inicial sem registrar como interação de scroll
-    calculateScrollProgress();
-    autoPlayStartRef.current = performance.now();
-
-    const handleScroll = () => {
-      // Somente eventos reais de scroll do usuário registram o timestamp
-      if (autoPauseOnScroll) {
-        lastUserScrollAtRef.current = performance.now();
-      }
-      calculateScrollProgress();
-    };
-    const handleResize = () => {
-      syncCanvasSize();
-      calculateScrollProgress();
-    };
-
-    const handleMouseEnter = () => {
-      if (autoPauseOnHover) {
-        isHoveringCanvasRef.current = true;
-      }
-    };
-    const handleMouseLeave = () => {
-      if (autoPauseOnHover) {
-        isHoveringCanvasRef.current = false;
-        autoPlayStartRef.current =
-          performance.now() -
-          getAutoPlayElapsedFromProgress(currentProgressRef.current);
-      }
     };
 
     const getAutoPlayElapsedFromProgress = (progress: number): number => {
@@ -432,8 +413,7 @@ export function useScrollDrivenFrames({
       // Recalibrar autoPlayStartRef para continuar da posição atual sem salto
       if (wasScrollPausedRef.current) {
         wasScrollPausedRef.current = false;
-        autoPlayStartRef.current =
-          now - getAutoPlayElapsedFromProgress(currentProgressRef.current);
+        autoPlayStartRef.current = now - getAutoPlayElapsedFromProgress(currentProgressRef.current);
       }
 
       const duration = Math.max(100, autoPlayDurationMs);
@@ -447,7 +427,7 @@ export function useScrollDrivenFrames({
         return clampProgress(1 - mod / duration);
       }
 
-      const cycle = (elapsed % duration);
+      const cycle = elapsed % duration;
       const half = duration / 2;
       if (cycle < half) {
         autoPlayPhaseRef.current = 1;
@@ -457,12 +437,12 @@ export function useScrollDrivenFrames({
       return clampProgress(1 - (cycle - half) / half);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize, { passive: true });
-    canvas.addEventListener('mouseenter', handleMouseEnter, { passive: true });
-    canvas.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+    let isPageVisible = !document.hidden;
 
     const loop = () => {
+      rafIdRef.current = null;
+      if (!isPageVisible) return;
+
       const now = performance.now();
       const autoProgress = calculateAutoPlayProgress(now);
       if (autoProgress !== null) {
@@ -492,15 +472,79 @@ export function useScrollDrivenFrames({
         drawFrame(targetFrameIndex);
       }
 
+      if (autoPlayEnabled || Math.abs(targetProgress - nextProgress) >= RAF_THRESHOLD) {
+        rafIdRef.current = window.requestAnimationFrame(loop);
+      }
+    };
+
+    const scheduleLoop = () => {
+      if (!isPageVisible || rafIdRef.current !== null) return;
       rafIdRef.current = window.requestAnimationFrame(loop);
     };
 
-    rafIdRef.current = window.requestAnimationFrame(loop);
+    const handleScroll = () => {
+      // Somente eventos reais de scroll do usuário registram o timestamp
+      if (autoPauseOnScroll) {
+        lastUserScrollAtRef.current = performance.now();
+      }
+      calculateScrollProgress();
+      scheduleLoop();
+    };
+    const handleResize = () => {
+      syncCanvasSize();
+      calculateScrollProgress();
+      scheduleLoop();
+    };
+
+    const handleMouseEnter = () => {
+      if (autoPauseOnHover) {
+        isHoveringCanvasRef.current = true;
+        scheduleLoop();
+      }
+    };
+    const handleMouseLeave = () => {
+      if (autoPauseOnHover) {
+        isHoveringCanvasRef.current = false;
+        autoPlayStartRef.current =
+          performance.now() - getAutoPlayElapsedFromProgress(currentProgressRef.current);
+        scheduleLoop();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      isPageVisible = !document.hidden;
+      if (!isPageVisible) {
+        if (rafIdRef.current !== null) {
+          window.cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = null;
+        }
+        return;
+      }
+
+      autoPlayStartRef.current =
+        performance.now() - getAutoPlayElapsedFromProgress(currentProgressRef.current);
+      calculateScrollProgress();
+      scheduleLoop();
+    };
+
+    primeInitialFrames();
+    scheduleBackgroundPreload();
+    // Calcula posição inicial sem registrar como interação de scroll
+    calculateScrollProgress();
+    autoPlayStartRef.current = performance.now();
+    scheduleLoop();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    canvas.addEventListener('mouseenter', handleMouseEnter, { passive: true });
+    canvas.addEventListener('mouseleave', handleMouseLeave, { passive: true });
 
     return () => {
       mediaQuery.removeEventListener('change', handleMotionChange);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       canvas.removeEventListener('mouseenter', handleMouseEnter);
       canvas.removeEventListener('mouseleave', handleMouseLeave);
 
@@ -537,6 +581,11 @@ export function useScrollDrivenFrames({
     smoothingMobile,
     travelRef,
     preloadReadyThreshold,
+    initialFrameCount,
+    backgroundBatchSize,
+    backgroundBatchDelayMs,
+    backgroundPreloadDelayMs,
+    maxBackgroundFrames,
     isMobile,
     autoPlayEnabled,
     autoPlayDurationMs,
