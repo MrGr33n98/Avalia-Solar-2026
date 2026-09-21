@@ -474,7 +474,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="integrations" className="mt-0 focus-visible:outline-none">
-                {renderGuardedTab('integrations', <WebhooksManagement />)}
+                {renderGuardedTab('integrations', <WebhooksManagement companyId={companyId} />)}
               </TabsContent>
 
               <TabsContent value="trust-widget" className="mt-0 focus-visible:outline-none">
@@ -802,7 +802,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       Ajuste as configurações da sua conta
                     </p>
                   </div>
-                  <CompanySettings companyId={companyId} />
+                  <CompanySettings companyId={companyId} company={company} />
                 </div>
               </TabsContent>
 

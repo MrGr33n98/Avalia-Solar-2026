@@ -15,11 +15,14 @@ module Api
         authorize @company, :view_analytics?
 
         begin
+          range = analytics_date_range(default_days: 30)
+          return render_invalid_analytics_range unless range
+
           freshness = ::CompanyDashboard::FreshnessProvider.call
           source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
           stats, data_source = source.realtime_totals(
-            from_day: 30.days.ago.to_date,
-            to_day: Date.current,
+            from_day: range[:from_day],
+            to_day: range[:to_day],
             last_aggregated_at: freshness[:last_aggregated_at]
           )
 
@@ -27,11 +30,17 @@ module Api
 
           views = stats[:profile_views].to_i
           is_premium = @company.has_paid_plan?
+          range_payload = analytics_range_payload(range)
 
           # ✅ NOVO: Build response CONDICIONALMENTE
           response = {
             views_30d: views,
-            data_source: data_source
+            views: views,
+            unique_views: stats[:unique_views].to_i,
+            returning_views: stats[:returning_views].to_i,
+            data_source: data_source,
+            data_status: analytics_data_status(data_source),
+            range: range_payload
           }
 
           # SÓ inclui dados premium se tem permissão
@@ -48,6 +57,12 @@ module Api
               unique_views_30d: stats[:unique_views].to_i,
               returning_views_30d: stats[:returning_views].to_i,
               leads_30d: leads,
+              cta_clicks: stats[:cta_clicks].to_i,
+              whatsapp_clicks: stats[:whatsapp_clicks].to_i,
+              email_clicks: stats[:email_clicks].to_i,
+              phone_clicks: stats[:phone_clicks].to_i,
+              website_clicks: stats[:website_clicks].to_i,
+              leads: leads,
               conversion_rate: conversion,
               is_premium_analytics: true
             )
@@ -72,21 +87,25 @@ module Api
 
         begin
           freshness = ::CompanyDashboard::FreshnessProvider.call
+          range = analytics_date_range(default_days: [[(params[:days] || 90).to_i, 7].max, 365].min)
+          return render_invalid_analytics_range unless range
 
           # ✅ FEATURE GATE: Timeseries só para premium
           unless FeatureGateService.can_access?(@company, 'advanced_analytics')
             return render json: {
               data: [],
               data_source: 'feature_not_authorized',
+              data_status: 'locked',
+              range: analytics_range_payload(range),
               is_premium_analytics: false,
               upsell_message: 'Upgrade to Pro to view timeseries analytics'
             }.merge(freshness), status: :ok
           end
 
-          days = [(params[:days] || 90).to_i, 365].min
           source = ::CompanyDashboard::MetricsSource.new(company_id: @company.id)
           series, data_source = source.realtime_timeseries(
-            days: days,
+            from_day: range[:from_day],
+            to_day: range[:to_day],
             last_aggregated_at: freshness[:last_aggregated_at]
           )
 
@@ -94,6 +113,8 @@ module Api
             return render json: {
               data: [],
               data_source: 'company_daily_stats_unavailable',
+              data_status: 'unavailable',
+              range: analytics_range_payload(range),
               is_premium_analytics: true
             }.merge(freshness), status: :ok
           end
@@ -104,6 +125,9 @@ module Api
               views: row[:profile_views],
               clicks: row[:cta_clicks],
               whatsapp: row[:whatsapp_clicks],
+              email: row[:email_clicks],
+              phone: row[:phone_clicks],
+              website: row[:website_clicks],
               leads: row[:leads]
             }
           end
@@ -111,6 +135,8 @@ module Api
           render json: {
             data: data,
             data_source: data_source,
+            data_status: analytics_data_status(data_source),
+            range: analytics_range_payload(range),
             is_premium_analytics: true
           }.merge(freshness), status: :ok
         rescue StandardError => e
@@ -119,6 +145,7 @@ module Api
           render json: {
             data: [],
             data_source: 'timeseries_unavailable',
+            data_status: 'unavailable',
             is_premium_analytics: true
           }.merge(freshness), status: :ok
         end
@@ -1935,8 +1962,41 @@ module Api
           whatsapp_clicks_30d: 0,
           leads_30d: 0,
           conversion_rate: 0,
-          data_source: 'company_daily_stats_unavailable'
+          data_source: 'company_daily_stats_unavailable',
+          data_status: 'unavailable'
         }.merge(::CompanyDashboard::FreshnessProvider.call)
+      end
+
+      def analytics_date_range(default_days:)
+        from_param = params[:from].presence
+        to_param = params[:to].presence
+
+        return { from_day: default_days.days.ago.to_date, to_day: Date.current } if from_param.blank? && to_param.blank?
+        return nil if from_param.blank? || to_param.blank?
+
+        from_day = Date.iso8601(from_param)
+        to_day = Date.iso8601(to_param)
+        return nil if from_day > to_day || to_day > Date.current || (to_day - from_day).to_i > 365
+
+        { from_day: from_day, to_day: to_day }
+      rescue Date::Error
+        nil
+      end
+
+      def analytics_range_payload(range)
+        { from: range[:from_day].iso8601, to: range[:to_day].iso8601 }
+      end
+
+      def analytics_data_status(data_source)
+        return 'locked' if data_source == 'feature_not_authorized'
+        return 'unavailable' if data_source.to_s.end_with?('_unavailable')
+
+        'ready'
+      end
+
+      def render_invalid_analytics_range
+        render json: { error: 'Período de analytics inválido. Use datas ISO até 365 dias.', code: 'INVALID_ANALYTICS_RANGE' },
+               status: :unprocessable_entity
       end
     end
   end

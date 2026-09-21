@@ -1676,18 +1676,29 @@ export const reviewDashboardApi = {
 
 export interface CompanyAnalyticsOverview {
   views_30d: number;
+  views?: number;
   views_trend?: number | null;
   unique_views_30d: number;
+  unique_views?: number;
   returning_views_30d: number;
+  returning_views?: number;
   cta_clicks_30d: number;
+  cta_clicks?: number;
   cta_clicks_trend?: number | null;
   whatsapp_clicks_30d: number;
+  whatsapp_clicks?: number;
   email_clicks_30d: number;
+  email_clicks?: number;
   phone_clicks_30d: number;
+  phone_clicks?: number;
   website_clicks_30d: number;
+  website_clicks?: number;
   leads_30d: number;
+  leads?: number;
   conversion_rate: number;
   data_source: string;
+  data_status?: 'ready' | 'unavailable' | 'locked';
+  range?: AnalyticsDateRange;
   /** Timestamp da última consolidação disponível no pipeline de analytics. */
   last_aggregated_at?: string | null;
   data_freshness_seconds?: number | null;
@@ -1705,6 +1716,36 @@ export interface CompanyAnalyticsOverview {
   freshness?: {
     last_updated_at: string;
   };
+}
+
+export interface AnalyticsDateRange {
+  from: string;
+  to: string;
+}
+
+export interface AnalyticsQueryParams {
+  days?: number;
+  from?: string;
+  to?: string;
+}
+
+export interface CompanyAnalyticsTimeseries {
+  data: Array<{
+    date: string;
+    views: number;
+    clicks: number;
+    whatsapp: number;
+    email: number;
+    phone: number;
+    website: number;
+    leads: number;
+  }>;
+  data_source: string;
+  data_status?: 'ready' | 'unavailable' | 'locked';
+  range?: AnalyticsDateRange;
+  is_premium_analytics?: boolean;
+  last_aggregated_at?: string | null;
+  data_freshness_seconds?: number | null;
 }
 
 // Trust Health Types
@@ -1894,13 +1935,19 @@ export interface RankingData {
 export const companyDashboardApi = {
   getLeads: () =>
     fetchApi<{ data: Array<Record<string, unknown>>; meta?: unknown }>('/dashboard/leads'),
-  getAnalyticsOverview: (companyId?: string | number) =>
+  getAnalyticsOverview: (companyId?: string | number, query: AnalyticsQueryParams = {}) =>
     fetchApi<CompanyAnalyticsOverview>('/company_dashboard/analytics/overview', {
-      params: companyId ? { company_id: companyId } : undefined,
+      params: { company_id: companyId, ...query },
     }),
-  getAnalyticsTimeseries: (companyId?: string | number, days: number = 90) =>
-    fetchApi('/company_dashboard/analytics/timeseries', {
-      params: { company_id: companyId, days },
+  getAnalyticsTimeseries: (
+    companyId?: string | number,
+    query: AnalyticsQueryParams | number = 90
+  ) =>
+    fetchApi<CompanyAnalyticsTimeseries>('/company_dashboard/analytics/timeseries', {
+      params: {
+        company_id: companyId,
+        ...(typeof query === 'number' ? { days: query } : query),
+      },
     }),
 
   // Trust & Certification endpoints (TaaS)

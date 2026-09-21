@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ import TopCampaignsCard from './TopCampaignsCard';
 import DateRangePicker, { type DateRangePreset } from './DateRangePicker';
 import ExportButton from './ExportButton';
 import { useQuery } from '@tanstack/react-query';
-import { fetchApi } from '@/lib/api';
+import { companyDashboardApi, type AnalyticsQueryParams } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import '../styles/print.css';
 
@@ -71,6 +71,14 @@ interface Metrics {
   }[];
 }
 
+const formatDateForApi = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
 export default function PerformanceMetrics({ companyId, themeMode }: PerformanceMetricsProps) {
   const [timeRange, setTimeRange] = useState<DateRangePreset>('30d');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date }>();
@@ -102,40 +110,69 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
       JSON.stringify({ preset, customRange })
     );
   };
+
+  const analyticsQuery = useMemo<AnalyticsQueryParams>(() => {
+    if (timeRange === 'custom' && customDateRange?.from && customDateRange.to) {
+      return {
+        from: formatDateForApi(customDateRange.from),
+        to: formatDateForApi(customDateRange.to),
+      };
+    }
+
+    return { days: timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90 };
+  }, [customDateRange, timeRange]);
   
   const { data: analyticsData, loading, error } = useCompanyAnalytics({
     companyId,
     autoRefresh: true,
     refreshInterval: 30000,
+    from: analyticsQuery.from,
+    to: analyticsQuery.to,
   });
 
-  const { data: timeseriesData, isLoading: timeseriesLoading } = useQuery({
-    queryKey: ['analytics-timeseries', companyId, timeRange],
-    queryFn: async () => {
-      const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-      const response = await fetchApi<{ data: any[] }>('/company_dashboard/analytics/timeseries', {
-        params: { company_id: companyId, days }
-      });
-      return response.data || [];
-    },
+  const { data: timeseriesResponse, isLoading: timeseriesLoading } = useQuery({
+    queryKey: [
+      'analytics-timeseries',
+      companyId,
+      analyticsQuery.days ?? null,
+      analyticsQuery.from ?? null,
+      analyticsQuery.to ?? null,
+    ],
+    queryFn: () => companyDashboardApi.getAnalyticsTimeseries(companyId, analyticsQuery),
     enabled: Boolean(companyId),
   });
 
+  const timeseriesData = useMemo(
+    () => (timeseriesResponse?.data ?? []).map((point) => ({
+      date: point.date,
+      profile_views: point.views,
+      cta_clicks: point.clicks,
+      whatsapp_clicks: point.whatsapp,
+      email_clicks: point.email,
+      phone_clicks: point.phone,
+      website_clicks: point.website,
+      leads: point.leads,
+    })),
+    [timeseriesResponse]
+  );
+  const dataUnavailable =
+    analyticsData?.data_status === 'unavailable' || timeseriesResponse?.data_status === 'unavailable';
+
   const metrics: Metrics = {
     profileViews: {
-      total: analyticsData?.views_30d || 0,
+      total: analyticsData?.views ?? analyticsData?.views_30d ?? 0,
       trend: analyticsData?.views_trend ?? null,
-      unique: analyticsData?.unique_views_30d || 0,
-      returning: analyticsData?.returning_views_30d || 0,
+      unique: analyticsData?.unique_views ?? analyticsData?.unique_views_30d ?? 0,
+      returning: analyticsData?.returning_views ?? analyticsData?.returning_views_30d ?? 0,
     },
     ctaClicks: {
-      total: analyticsData?.cta_clicks_30d || 0,
+      total: analyticsData?.cta_clicks ?? analyticsData?.cta_clicks_30d ?? 0,
       trend: analyticsData?.cta_clicks_trend ?? null,
       byType: [
-        { type: 'whatsapp', count: analyticsData?.whatsapp_clicks_30d || 0, label: 'WhatsApp' },
-        { type: 'email', count: analyticsData?.email_clicks_30d || 0, label: 'Email' },
-        { type: 'phone', count: analyticsData?.phone_clicks_30d || 0, label: 'Telefone' },
-        { type: 'website', count: analyticsData?.website_clicks_30d || 0, label: 'Website' },
+        { type: 'whatsapp', count: analyticsData?.whatsapp_clicks ?? analyticsData?.whatsapp_clicks_30d ?? 0, label: 'WhatsApp' },
+        { type: 'email', count: analyticsData?.email_clicks ?? analyticsData?.email_clicks_30d ?? 0, label: 'Email' },
+        { type: 'phone', count: analyticsData?.phone_clicks ?? analyticsData?.phone_clicks_30d ?? 0, label: 'Telefone' },
+        { type: 'website', count: analyticsData?.website_clicks ?? analyticsData?.website_clicks_30d ?? 0, label: 'Website' },
       ],
     },
     engagement: analyticsData?.engagement ?? null,
@@ -177,6 +214,15 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
           </AlertDescription>
         </Alert>
       </motion.div>
+
+      {dataUnavailable && (
+        <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription>
+            Os dados consolidados ainda não estão disponíveis para este período. Nenhuma métrica foi assumida como zero.
+          </AlertDescription>
+        </Alert>
+      )}
     );
   }
 
@@ -201,7 +247,7 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard 
           title="Telemetry: Profile Views"
-          value={metrics.profileViews.total}
+          value={dataUnavailable ? '—' : metrics.profileViews.total}
           icon={Eye}
           change={metrics.profileViews.trend === null ? undefined : `${metrics.profileViews.trend > 0 ? '+' : ''}${metrics.profileViews.trend}%`}
           changeType={metrics.profileViews.trend === null ? 'neutral' : metrics.profileViews.trend > 0 ? 'positive' : 'negative'}
@@ -211,7 +257,7 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
         />
         <MetricCard 
           title="Active Intent: CTA Clicks"
-          value={metrics.ctaClicks.total}
+          value={dataUnavailable ? '—' : metrics.ctaClicks.total}
           icon={MousePointerClick}
           change={metrics.profileViews.total > 0 ? `${((metrics.ctaClicks.total / metrics.profileViews.total) * 100).toFixed(1)}% Ratio` : undefined}
           changeType="neutral"
@@ -295,10 +341,10 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
         )}>
           <TimeSeriesChart data={timeseriesData || []} loading={timeseriesLoading} themeMode={themeMode || 'dark'} />
           <CTABreakdownChart data={{
-            whatsapp_clicks: analyticsData?.whatsapp_clicks_30d || 0,
-            email_clicks: analyticsData?.email_clicks_30d || 0,
-            phone_clicks: analyticsData?.phone_clicks_30d || 0,
-            website_clicks: analyticsData?.website_clicks_30d || 0,
+            whatsapp_clicks: analyticsData?.whatsapp_clicks ?? analyticsData?.whatsapp_clicks_30d ?? 0,
+            email_clicks: analyticsData?.email_clicks ?? analyticsData?.email_clicks_30d ?? 0,
+            phone_clicks: analyticsData?.phone_clicks ?? analyticsData?.phone_clicks_30d ?? 0,
+            website_clicks: analyticsData?.website_clicks ?? analyticsData?.website_clicks_30d ?? 0,
           }} loading={loading} themeMode={themeMode || 'dark'} />
         </div>
       </div>

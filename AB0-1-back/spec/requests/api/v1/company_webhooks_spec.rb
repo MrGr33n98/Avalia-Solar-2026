@@ -80,5 +80,26 @@ RSpec.describe 'Company webhooks API', type: :request do
       expect(body['webhooks'][0]['url']).to be_present
       expect(body['webhooks'][0]['secret_key']).to be_nil
     end
+
+    it 'uses the company selected by an active membership' do
+      other_company = create(:company, intent_tier: 'enterprise')
+      create(:company_member, company: other_company, user: user, role: :owner, status: 'active')
+      create(:company_webhook, company: company)
+      selected_webhook = create(:company_webhook, company: other_company)
+
+      get "/api/v1/company_webhooks?company_id=#{other_company.id}", headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body).dig('webhooks', 0, 'id')).to eq(selected_webhook.id)
+    end
+
+    it 'does not fall back to another company when the requested company is unauthorized' do
+      other_company = create(:company, intent_tier: 'enterprise')
+
+      get "/api/v1/company_webhooks?company_id=#{other_company.id}", headers: headers
+
+      expect(response).to have_http_status(:forbidden)
+      expect(JSON.parse(response.body)['code']).to eq('COMPANY_NOT_FOUND')
+    end
   end
 end

@@ -49,7 +49,16 @@ module Api
       private
 
       def set_company
-        @company = current_user&.company
+        requested_company_id = params[:company_id].presence
+        @company = if requested_company_id.present?
+                     if current_user&.admin?
+                       Company.find_by(id: requested_company_id)
+                     else
+                       current_user&.active_member_companies&.find_by(id: requested_company_id)
+                     end
+                   else
+                     current_user&.company || current_user&.active_member_companies&.first
+                   end
         return if @company.present?
 
         render_error_response(

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Trophy, 
@@ -11,7 +12,9 @@ import {
   Award,
   Filter,
   ShieldCheck,
-  ZapIcon
+  ZapIcon,
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Company, fetchApi, companyDashboardApi, RankingData } from '@/lib/api';
@@ -35,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface DashboardStats { conversionRate?: number; profileViews?: number }
 interface Criterion { slug: string; title: string }
@@ -47,13 +51,22 @@ interface Props {
 }
 
 export default function RankingPerformanceTab({ company, stats, themeMode: _themeMode = 'dark' }: Props) {
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
-  const [selectedCriterionSlug, setSelectedCriterionSlug] = useState<string>('all');
-  const [selectedState, setSelectedState] = useState<string>('all');
-  const [selectedCity, setSelectedCity] = useState<string>('');
-  const [selectedSector, setSelectedSector] = useState<string>('all');
-  const [historyDays, setHistoryDays] = useState<string>('90');
-  const [quadrantMode, setQuadrantMode] = useState<'default' | 'reviews'>('default');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(() => searchParams.get('ranking_category') || 'all');
+  const [selectedCriterionSlug, setSelectedCriterionSlug] = useState<string>(() => searchParams.get('ranking_criterion') || 'all');
+  const [selectedState, setSelectedState] = useState<string>(() => searchParams.get('ranking_state') || 'all');
+  const [selectedCity, setSelectedCity] = useState<string>(() => searchParams.get('ranking_city') || '');
+  const [debouncedCity, setDebouncedCity] = useState<string>(() => searchParams.get('ranking_city') || '');
+  const [selectedSector, setSelectedSector] = useState<string>(() => searchParams.get('ranking_sector') || 'all');
+  const [historyDays, setHistoryDays] = useState<string>(() => searchParams.get('ranking_history') || '90');
+  const [quadrantMode, setQuadrantMode] = useState<'default' | 'reviews'>(() => searchParams.get('ranking_quadrant') === 'reviews' ? 'reviews' : 'default');
+
+  useEffect(() => {
+    const debounceTimer = window.setTimeout(() => setDebouncedCity(selectedCity.trim()), 350);
+    return () => window.clearTimeout(debounceTimer);
+  }, [selectedCity]);
 
   const criteriaQuery = useQuery({
     queryKey: ['category-evaluation-context', selectedCategoryId],
@@ -65,18 +78,31 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
   });
 
   useEffect(() => {
-    setSelectedCriterionSlug('all');
-  }, [selectedCategoryId]);
+    const nextParams = new URLSearchParams(searchParams.toString());
+    const filters = {
+      ranking_category: selectedCategoryId !== 'all' ? selectedCategoryId : undefined,
+      ranking_criterion: selectedCriterionSlug !== 'all' ? selectedCriterionSlug : undefined,
+      ranking_state: selectedState !== 'all' ? selectedState : undefined,
+      ranking_city: debouncedCity || undefined,
+      ranking_sector: selectedSector !== 'all' ? selectedSector : undefined,
+      ranking_history: historyDays !== '90' ? historyDays : undefined,
+      ranking_quadrant: quadrantMode !== 'default' ? quadrantMode : undefined,
+    };
+    Object.entries(filters).forEach(([key, value]) => value ? nextParams.set(key, value) : nextParams.delete(key));
+    if (nextParams.toString() !== searchParams.toString()) {
+      router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+    }
+  }, [debouncedCity, historyDays, pathname, quadrantMode, router, searchParams, selectedCategoryId, selectedCriterionSlug, selectedSector, selectedState]);
 
   const rankingQuery = useQuery({
-    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, selectedState, selectedCity, selectedSector, quadrantMode, historyDays],
+    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, selectedState, debouncedCity, selectedSector, quadrantMode, historyDays],
     queryFn: async () => {
       return companyDashboardApi.getRanking(
         company.id,
         selectedCategoryId !== 'all' ? selectedCategoryId : undefined,
         selectedCriterionSlug !== 'all' ? selectedCriterionSlug : undefined,
         selectedState !== 'all' ? selectedState : undefined,
-        selectedCity.trim() !== '' ? selectedCity.trim() : undefined,
+        debouncedCity || undefined,
         selectedSector !== 'all' ? selectedSector : undefined,
         quadrantMode,
         Number(historyDays)
@@ -85,7 +111,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
     enabled: Boolean(company.id),
   });
 
-  const { data, isLoading } = rankingQuery;
+  const { data, isLoading, isError, refetch } = rankingQuery;
   const transparency = data?.transparency;
   const rankingLabel = data?.rank_position ? `${data.rank_position}º` : '--';
   const hasSnapshot = data?.status === 'ready' && !transparency?.quality_flags?.includes('snapshot_unavailable');
@@ -99,6 +125,21 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
     if (!data?.historical_data?.length) return [];
     return data.historical_data;
   }, [data]);
+  const hasActiveFilters = selectedCategoryId !== 'all' || selectedCriterionSlug !== 'all' || selectedState !== 'all' || Boolean(selectedCity) || selectedSector !== 'all' || historyDays !== '90' || quadrantMode !== 'default';
+  const historyLabel = historyDays === '365' ? 'últimos 12 meses' : `últimos ${historyDays} dias`;
+  const resetFilters = () => {
+    setSelectedCategoryId('all');
+    setSelectedCriterionSlug('all');
+    setSelectedState('all');
+    setSelectedCity('');
+    setSelectedSector('all');
+    setHistoryDays('90');
+    setQuadrantMode('default');
+  };
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+    setSelectedCriterionSlug('all');
+  };
 
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) => {
     if (active && payload && payload.length) {
@@ -145,6 +186,14 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
 
   return (
     <div className="space-y-8 max-w-[1400px] mx-auto pb-20">
+      {isError && (
+        <Card className="border-red-200 bg-red-50 dark:border-red-900/40 dark:bg-red-950/20">
+          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3"><AlertCircle className="mt-0.5 h-5 w-5 text-red-600" /><div><p className="font-semibold text-red-900 dark:text-red-200">Não foi possível atualizar o ranking</p><p className="mt-1 text-sm text-red-800/80 dark:text-red-200/80">Os dados exibidos abaixo não foram atualizados nesta tentativa.</p></div></div>
+            <Button variant="outline" size="sm" onClick={() => void refetch()}>Tentar novamente</Button>
+          </CardContent>
+        </Card>
+      )}
       {(rankingUnavailable || rankingLocked) && (
         <Card className="border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20">
           <CardContent className="p-5">
@@ -257,7 +306,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
                 Histórico de posicionamento orgânico
               </CardTitle>
               <CardDescription className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                {data?.transparency?.is_ad_hoc_preview ? 'Exibindo curva base (Nacional/Categoria)' : 'Snapshots diários · últimos 90 dias'}
+                {data?.transparency?.is_ad_hoc_preview ? `Exibindo curva base para ${historyLabel}` : `Snapshots diários · ${historyLabel}`}
               </CardDescription>
             </div>
             <div className="hidden sm:flex gap-4">
@@ -362,7 +411,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
 
               <div className="relative group">
                 <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
-                <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                <Select value={selectedCategoryId} onValueChange={handleCategoryChange}>
                   <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
                     <SelectValue placeholder="SELETOR DE ESCOPO (CATEGORIA)" />
                   </SelectTrigger>
@@ -460,6 +509,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
                   </SelectContent>
                 </Select>
               </div>
+              {hasActiveFilters && <Button type="button" variant="ghost" size="sm" className="w-full" onClick={resetFilters}><RotateCcw className="mr-2 h-4 w-4" />Limpar filtros</Button>}
             </div>
           </CardHeader>
           <CardContent className="p-8 flex-1 flex flex-col">

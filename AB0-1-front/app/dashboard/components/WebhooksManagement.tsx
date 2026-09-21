@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -23,7 +23,11 @@ const AVAILABLE_EVENTS = [
   { id: 'lead.identified', label: 'Lead Identificado', description: 'Disparado quando um visitante anônimo vira lead' }
 ];
 
-export default function WebhooksManagement() {
+interface WebhooksManagementProps {
+  companyId: string | number;
+}
+
+export default function WebhooksManagement({ companyId }: WebhooksManagementProps) {
   const [webhooks, setWebhooks] = useState<CompanyWebhook[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,14 +44,10 @@ export default function WebhooksManagement() {
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchWebhooks();
-  }, []);
-
-  const fetchWebhooks = async () => {
+  const fetchWebhooks = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await webhooksApi.getWebhooks();
+      const res = await webhooksApi.getWebhooks(companyId);
       setWebhooks(res.webhooks);
     } catch (error) {
       console.error('Failed to fetch webhooks', error);
@@ -59,7 +59,11 @@ export default function WebhooksManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, toast]);
+
+  useEffect(() => {
+    void fetchWebhooks();
+  }, [fetchWebhooks]);
 
   const handleOpenModal = (webhook?: CompanyWebhook) => {
     if (webhook) {
@@ -119,10 +123,10 @@ export default function WebhooksManagement() {
       };
 
       if (editingWebhook) {
-        await webhooksApi.updateWebhook(editingWebhook.id, payload);
+        await webhooksApi.updateWebhook(companyId, editingWebhook.id, payload);
         toast({ title: 'Webhook atualizado com sucesso!' });
       } else {
-        await webhooksApi.createWebhook(payload);
+        await webhooksApi.createWebhook(companyId, payload);
         toast({ title: 'Webhook criado com sucesso!' });
       }
       
@@ -143,7 +147,7 @@ export default function WebhooksManagement() {
     if (!confirm('Tem certeza que deseja excluir este webhook?')) return;
     
     try {
-      await webhooksApi.deleteWebhook(id);
+      await webhooksApi.deleteWebhook(companyId, id);
       setWebhooks(webhooks.filter((w) => w.id !== id));
       toast({ title: 'Webhook excluído com sucesso!' });
     } catch (error) {
@@ -156,7 +160,7 @@ export default function WebhooksManagement() {
 
   const handleToggleActive = async (webhook: CompanyWebhook, newActive: boolean) => {
     try {
-      await webhooksApi.updateWebhook(webhook.id, {
+      await webhooksApi.updateWebhook(companyId, webhook.id, {
         url: webhook.url,
         events: webhook.events,
         active: newActive

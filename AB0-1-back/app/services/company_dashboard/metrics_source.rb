@@ -116,11 +116,11 @@ module CompanyDashboard
       nil
     end
 
-    def timeseries(days:)
+    def timeseries(days: nil, from_day: nil, to_day: nil)
       return [] unless available?
 
-      from_day = days.to_i.days.ago.to_date
-      to_day = Date.current
+      from_day ||= days.to_i.days.ago.to_date
+      to_day ||= Date.current
 
       base_scope(from_day: from_day, to_day: to_day)
         .order(:day)
@@ -166,11 +166,11 @@ module CompanyDashboard
                            fallback_present: totals_present?(fallback_totals))]
     end
 
-    def realtime_timeseries(days:, last_aggregated_at: nil)
-      from_day = days.to_i.days.ago.to_date
-      to_day = Date.current
+    def realtime_timeseries(days: nil, from_day: nil, to_day: nil, last_aggregated_at: nil)
+      from_day ||= days.to_i.days.ago.to_date
+      to_day ||= Date.current
       aggregated_available = aggregated_data_available?(from_day: from_day, to_day: to_day)
-      aggregated_series = aggregated_available ? timeseries(days: days) : []
+      aggregated_series = aggregated_available ? timeseries(from_day: from_day, to_day: to_day) : []
 
       fallback_series = analytics_event_timeseries(
         from_time: analytics_event_start_time(

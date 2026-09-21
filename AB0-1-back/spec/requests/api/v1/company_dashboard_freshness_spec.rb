@@ -62,6 +62,39 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
       expect(json['conversion_rate']).to eq(100.0)
       expect(json['data_source']).to eq('analytics_events_fallback')
     end
+
+    it 'uses an explicit custom date range for the overview metrics' do
+      selected_day = 5.days.ago.to_date
+      AnalyticsEvent.create!(
+        company: company,
+        event_id: 'evt_overview_inside_custom_range',
+        event_type: 'profile_view',
+        metadata: { source: 'request_spec' },
+        tracked_at: selected_day.change(hour: 12)
+      )
+      AnalyticsEvent.create!(
+        company: company,
+        event_id: 'evt_overview_outside_custom_range',
+        event_type: 'profile_view',
+        metadata: { source: 'request_spec' },
+        tracked_at: 20.days.ago
+      )
+
+      get '/api/v1/company_dashboard/analytics/overview',
+          params: { from: selected_day.iso8601, to: selected_day.iso8601 }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json).to include('views' => 1, 'range' => { 'from' => selected_day.iso8601, 'to' => selected_day.iso8601 })
+    end
+
+    it 'rejects an invalid custom analytics range' do
+      get '/api/v1/company_dashboard/analytics/overview',
+          params: { from: Date.current.iso8601, to: 1.day.ago.to_date.iso8601 }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(JSON.parse(response.body)['code']).to eq('INVALID_ANALYTICS_RANGE')
+    end
   end
 
   describe 'GET /api/v1/company_dashboard/analytics/timeseries' do
@@ -110,6 +143,32 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
       expect(json['data']).not_to be_empty
       day_row = json['data'].find { |row| Date.parse(row['date']) == 2.days.ago.to_date }
       expect(day_row).to include('views' => 1, 'clicks' => 1, 'whatsapp' => 0, 'leads' => 0)
+    end
+
+    it 'uses the selected custom range for the timeseries' do
+      selected_day = 4.days.ago.to_date
+      AnalyticsEvent.create!(
+        company: company,
+        event_id: 'evt_timeseries_inside_custom_range',
+        event_type: 'profile_view',
+        metadata: { source: 'request_spec' },
+        tracked_at: selected_day.change(hour: 12)
+      )
+      AnalyticsEvent.create!(
+        company: company,
+        event_id: 'evt_timeseries_outside_custom_range',
+        event_type: 'profile_view',
+        metadata: { source: 'request_spec' },
+        tracked_at: 16.days.ago
+      )
+
+      get '/api/v1/company_dashboard/analytics/timeseries',
+          params: { from: selected_day.iso8601, to: selected_day.iso8601 }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['range']).to eq('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
+      expect(json['data']).to include(hash_including('date' => selected_day.iso8601, 'views' => 1))
     end
 
     it 'denies access for free users' do
