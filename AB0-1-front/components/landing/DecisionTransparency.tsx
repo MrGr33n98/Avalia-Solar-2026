@@ -13,6 +13,7 @@ import {
   CarouselIndicators,
 } from '@/components/ui/carousel';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useScrollDrivenFrames } from '@/hooks/useScrollDrivenFrames';
 
 const FEATURES = [
   {
@@ -49,6 +50,32 @@ const FEATURES = [
 
 export default function DecisionTransparency() {
   const prefersReducedMotion = usePrefersReducedMotion();
+  const canvasEnabled = !prefersReducedMotion;
+
+  const { canvasRef, hasRenderedValidFrame } = useScrollDrivenFrames({
+    totalFrames: 120,
+    enabled: canvasEnabled,
+    framesPathDesktop: '/videos/o-conceito-expositor-flutuante-frames',
+    framesPathMobile: '/videos/o-conceito-expositor-flutuante-frames-mobile',
+    canvasWidthDesktop: 1280,
+    canvasHeightDesktop: 720,
+    canvasWidthMobile: 800,
+    canvasHeightMobile: 450,
+    smoothingDesktop: 0.22,
+    smoothingMobile: 0.18,
+    travelRef: null,
+    preloadReadyThreshold: 0.25,
+    autoPlay: canvasEnabled
+      ? {
+          enabled: true,
+          durationMs: 10000,
+          direction: 'pingpong',
+          pauseOnScroll: false,
+          pauseOnHover: true,
+          resumeIdleAfterMs: 0,
+        }
+      : undefined,
+  });
 
   const plugin = React.useRef(
     Autoplay({
@@ -75,13 +102,79 @@ export default function DecisionTransparency() {
           </div>
 
           <div className="lg:col-span-5 flex flex-col items-center">
-            <div className="relative w-full aspect-[4/3] sm:aspect-[1.6/1] lg:aspect-[1.3/1] rounded-3xl overflow-hidden shadow-[0_12px_40px_rgba(15,23,42,0.04)] border border-slate-100/80 bg-white">
-              <Image
-                src="/images/avalia-solar-landing-page.png"
-                alt="Encontre as melhores empresas de energia solar e mobilidade elétrica no Brasil"
-                fill
-                sizes="(max-width: 768px) 100vw, 40vw"
-                className="object-cover hover:scale-[1.01] transition-transform duration-500"
+            <div
+              className="relative w-full aspect-[4/3] sm:aspect-[1.6/1] lg:aspect-[1.3/1] rounded-3xl overflow-hidden shadow-[0_12px_40px_rgba(15,23,42,0.04)] border border-slate-100/80 bg-white"
+              style={{
+                WebkitMaskImage:
+                  'linear-gradient(to right, rgba(0,0,0,0) 0%, #000 2%, #000 98%, rgba(0,0,0,0) 100%), linear-gradient(to bottom, #000 0%, #000 92%, rgba(0,0,0,0.6) 96%, rgba(0,0,0,0) 100%)',
+                WebkitMaskComposite: 'source-in',
+                maskImage:
+                  'linear-gradient(to right, rgba(0,0,0,0) 0%, #000 2%, #000 98%, rgba(0,0,0,0) 100%), linear-gradient(to bottom, #000 0%, #000 92%, rgba(0,0,0,0.6) 96%, rgba(0,0,0,0) 100%)',
+                maskComposite: 'intersect',
+              }}
+            >
+              {prefersReducedMotion ? (
+                <video
+                  muted
+                  playsInline
+                  loop
+                  autoPlay
+                  preload="auto"
+                  aria-label="Animação expositor flutuante"
+                  className="absolute inset-0 w-full h-full object-contain bg-white"
+                >
+                  <source src="/videos/O_Conceito_O_Expositor_Flutu.mp4" type="video/mp4" />
+                </video>
+              ) : (
+                <>
+                  <Image
+                    src="/images/decision-transparency-fallback.webp"
+                    alt="Encontre as melhores empresas de energia solar e mobilidade elétrica no Brasil"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 40vw"
+                    priority
+                    className={
+                      'object-cover transition-opacity duration-500 ease-out ' +
+                      (hasRenderedValidFrame ? 'opacity-0 pointer-events-none' : 'opacity-100')
+                    }
+                  />
+                  <canvas
+                    ref={canvasRef}
+                    width={1280}
+                    height={720}
+                    aria-hidden={!hasRenderedValidFrame}
+                    className={
+                      'absolute inset-0 w-full h-full object-cover block transition-opacity duration-500 ease-out ' +
+                      (hasRenderedValidFrame ? 'opacity-100' : 'opacity-0 pointer-events-none')
+                    }
+                    style={{ imageRendering: 'auto' }}
+                  />
+                </>
+              )}
+
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-[9%]"
+                style={{
+                  background:
+                    'linear-gradient(to top, rgba(248,251,255,0.42) 0%, rgba(248,251,255,0) 100%)',
+                }}
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 left-0 w-[11%]"
+                style={{
+                  background:
+                    'linear-gradient(to right, rgba(248,251,255,0.28) 0%, rgba(248,251,255,0) 100%)',
+                }}
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 right-0 w-[5%]"
+                style={{
+                  background:
+                    'linear-gradient(to left, rgba(248,251,255,0.22) 0%, rgba(248,251,255,0) 100%)',
+                }}
               />
             </div>
           </div>
