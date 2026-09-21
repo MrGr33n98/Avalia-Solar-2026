@@ -204,25 +204,27 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
 
   if (error) {
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-        <Alert variant="destructive" className="rounded-[2rem] border-none clay-precision bg-red-500/10 text-red-500 p-8">
-          <AlertCircle className="h-8 w-8 mb-4" />
-          <AlertDescription className="text-sm font-black uppercase tracking-[0.2em] leading-relaxed">
-            Não foi possível carregar os dados de analytics: {error}
-            <br />
-            <span className="opacity-60 text-[10px]">Tente novamente em instantes.</span>
-          </AlertDescription>
-        </Alert>
-      </motion.div>
+      <>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+          <Alert variant="destructive" className="rounded-[2rem] border-none clay-precision bg-red-500/10 text-red-500 p-8">
+            <AlertCircle className="h-8 w-8 mb-4" />
+            <AlertDescription className="text-sm font-black uppercase tracking-[0.2em] leading-relaxed">
+              Não foi possível carregar os dados de analytics: {error}
+              <br />
+              <span className="opacity-60 text-[10px]">Tente novamente em instantes.</span>
+            </AlertDescription>
+          </Alert>
+        </motion.div>
 
-      {dataUnavailable && (
-        <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertDescription>
-            Os dados consolidados ainda não estão disponíveis para este período. Nenhuma métrica foi assumida como zero.
-          </AlertDescription>
-        </Alert>
-      )}
+        {dataUnavailable && (
+          <Alert className="mt-6 border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription>
+              Os dados consolidados ainda não estão disponíveis para este período. Nenhuma métrica foi assumida como zero.
+            </AlertDescription>
+          </Alert>
+        )}
+      </>
     );
   }
 
