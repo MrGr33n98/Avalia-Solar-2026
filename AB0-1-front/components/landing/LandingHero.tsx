@@ -140,7 +140,7 @@ export default function LandingHero(props: LandingHeroProps) {
                     para desaparecer as 4 bordas no fundo da landing,
                     preservando ~80% central 100% nítido. */}
                 <div
-                  className="relative h-full w-full"
+                  className="relative h-full w-full -translate-y-[clamp(5rem,8vw,9rem)]"
                   style={{
                     WebkitMaskImage:
                       'linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%),' +
