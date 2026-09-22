@@ -419,9 +419,12 @@ module Api
             event: 'company_dashboard.ranking.failed',
             request_id: request_id,
             error_class: error.class.name,
+            error_message: error.message,
+            backtrace: error.backtrace&.first(10),
             status: 500
           }.to_json
         )
+        Sentry.capture_exception(error, extra: { request_id: request_id, endpoint: 'analytics_ranking' }) if defined?(Sentry)
       end
 
       def ranking_filter_errors(category_id:, criterion_slug:, state:, city:, sector:, quadrant_mode:)
