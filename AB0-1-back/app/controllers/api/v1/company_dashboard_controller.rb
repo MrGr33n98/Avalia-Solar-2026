@@ -326,6 +326,7 @@ module Api
       end
 
       def ranking_payload(data)
+        transparency = data[:transparency] || {}
         {
             status: data[:status],
             mode: data[:mode],
@@ -343,11 +344,11 @@ module Api
             quadrant_meta: data[:quadrant_meta],
             category_rankings: data[:category_rankings],
             historical_data: data[:historical_data],
-            transparency: data[:transparency],
+            transparency: transparency,
             quality: data[:quality],
-            scope: data[:transparency][:scope],
-            definition: data[:transparency],
-            breakdown: data[:transparency][:breakdown] || {},
+            scope: transparency[:scope] || data[:scope] || 'global',
+            definition: transparency,
+            breakdown: transparency[:breakdown] || {},
             history: {
               status: data[:history_status],
               items: data[:historical_data],

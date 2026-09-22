@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_21_120000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_21_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -1427,9 +1427,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_21_120000) do
     t.datetime "computed_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "snapshot_date", null: false
     t.index ["company_id", "scope_type", "scope_id", "computed_at"], name: "idx_ranking_snapshots_company_scope_time"
     t.index ["company_id"], name: "index_company_ranking_snapshots_on_company_id"
     t.index ["scope_type", "scope_id", "definition_version", "computed_at", "rank_position"], name: "idx_ranking_snapshots_leaderboard"
+    t.index "company_id, scope_type, COALESCE(scope_id, -1), definition_version, snapshot_date", name: "idx_ranking_snapshots_daily", unique: true
   end
 
   create_table "company_sector_questions", force: :cascade do |t|

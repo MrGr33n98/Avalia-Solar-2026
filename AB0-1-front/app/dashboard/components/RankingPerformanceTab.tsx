@@ -121,7 +121,14 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
     enabled: Boolean(company.id),
     staleTime: 30 * 1000,
     placeholderData: (previousData) => previousData,
-    retry: 1,
+    // Não tenta novamente em erros 500 estruturais (ex: migration ausente).
+    // Só reintenta em erros de rede pura (sem status) ou 429/503 (transitórios).
+    retry: (failCount, error) => {
+      const status = (error as { status?: number })?.status;
+      if (status != null && status >= 500 && status !== 503) return false;
+      if (status === 429 || status === 503) return failCount < 2;
+      return failCount < 1; // erro de rede: 1 retry
+    },
     refetchOnWindowFocus: false,
   });
 
