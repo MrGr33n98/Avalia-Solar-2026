@@ -83,12 +83,23 @@ module CompanyDashboard
     def latest_snapshot
       @latest_snapshot ||= begin
         type, id = snapshot_scope
-        CompanyRankingSnapshot.where(company_id: company.id, definition_version: CompanyRankingSnapshot::DEFINITION_VERSION)
-                              .for_scope(type, id).latest_first.first
+        base = CompanyRankingSnapshot.where(company_id: company.id, definition_version: CompanyRankingSnapshot::DEFINITION_VERSION)
+                                     .for_scope(type, id)
+        # Guard: usa latest_first (ordena por snapshot_date) só se a coluna existir.
+        # Migration 20260921130000 pode ainda não ter sido aplicada em produção.
+        if CompanyRankingSnapshot.column_names.include?('snapshot_date')
+          base.latest_first.first
+        else
+          base.order(computed_at: :desc).first
+        end
       end
     end
 
     def historical_data
+      # Guard: se a migration 20260921130000 não foi aplicada em produção, a coluna
+      # snapshot_date não existe. Retorna [] para não travar o endpoint inteiro com 500.
+      return [] unless CompanyRankingSnapshot.column_names.include?('snapshot_date')
+
       type, id = snapshot_scope
       CompanyRankingSnapshot.where(company_id: company.id, definition_version: CompanyRankingSnapshot::DEFINITION_VERSION)
                             .for_scope(type, id)

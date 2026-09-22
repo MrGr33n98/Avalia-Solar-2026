@@ -255,8 +255,11 @@ module Api
         authorize @company, :view_analytics?
 
         begin
-          # ✅ FEATURE GATE: Ranking só para enterprise
-          unless FeatureGateService.can_access?(@company, 'advanced_analytics')
+          # ✅ FEATURE GATE: Ranking só para planos Pro/Enterprise
+          # Usa EntitlementService (mesma fonte de verdade de intent_summary) para evitar
+          # inconsistência com FeatureGateService hardcoded por tier.
+          ranking_entitlement = EntitlementService.explain(company: @company, feature: 'advanced_analytics')
+          unless ranking_entitlement[:allowed]
             return render json: default_ranking_payload(
               status: 'locked',
               error: { code: 'RANKING_UPGRADE_REQUIRED' },
@@ -265,7 +268,8 @@ module Api
               history_status: 'locked'
             ).merge(
               is_premium_analytics: false,
-              upsell_message: 'Upgrade to Pro or Enterprise to access ranking analytics'
+              upsell_message: 'Upgrade to Pro or Enterprise to access ranking analytics',
+              entitlement_reason: ranking_entitlement[:reason]
             ), status: :ok
           end
 
