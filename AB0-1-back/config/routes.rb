@@ -439,6 +439,7 @@ Rails.application.routes.draw do
         get 'analytics/top_campaigns', to: 'company_dashboard#analytics_top_campaigns'
         get 'analytics/reputation', to: 'company_dashboard#analytics_reputation'
         get 'analytics/ranking', to: 'company_dashboard#analytics_ranking'
+        get 'analytics/ranking/filter_options', to: 'company_dashboard#analytics_ranking_filter_options'
 
         # Trust & Certification endpoints (TaaS)
         get 'trust_health', to: 'company_dashboard#trust_health'

@@ -29,7 +29,7 @@ export default function MetricCard({
   color = 'primary',
   delay = 0,
   description,
-  variant
+  variant: _variant
 }: MetricCardProps) {
   const colorClasses = {
     primary: {
@@ -96,12 +96,11 @@ export default function MetricCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.23, 1, 0.32, 1] }}
-      whileHover={{ y: -4 }}
       className="h-full"
     >
       <Card className={cn(
-        'relative h-full rounded-xl overflow-hidden transition-all duration-200 group cursor-pointer border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm',
-        'before:absolute before:inset-0 before:bg-slate-50 before:opacity-0 hover:before:opacity-100 before:transition-opacity'
+        'relative h-full overflow-hidden rounded-xl border-slate-200 bg-white transition-all duration-200 dark:border-slate-800 dark:bg-slate-900',
+        'before:absolute before:inset-0 before:bg-slate-50 before:opacity-0 before:transition-opacity dark:before:bg-white/5'
       )}>
         <CardContent className="p-5 relative z-10">
           <div className="flex items-start justify-between mb-4">

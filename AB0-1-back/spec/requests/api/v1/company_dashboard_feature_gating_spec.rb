@@ -83,8 +83,10 @@ RSpec.describe 'Company Dashboard Feature Gating', type: :request do
         expect(response).to have_http_status(:ok)
         json = JSON.parse(response.body)
 
+        expect(json['status']).to eq('locked')
+        expect(json.dig('ranking', 'status')).to eq('locked')
         expect(json['rank_position']).to be_nil
-        expect(json['ranking_score']).to eq(0)
+        expect(json['ranking_score']).to be_nil
         expect(json['magic_quadrant_points']).to eq([])
         expect(json['historical_data']).to eq([])
         expect(json.dig('transparency', 'sponsored_included')).to be(false)
@@ -190,6 +192,38 @@ RSpec.describe 'Company Dashboard Feature Gating', type: :request do
         json = JSON.parse(response.body)
 
         expect(json['is_premium_analytics']).to be(true)
+      end
+
+      it 'returns a structured 5xx response for an unexpected ranking failure' do
+        allow(CompanyDashboard::RankingService).to receive(:new).and_raise(StandardError, 'falha interna simulada')
+
+        get '/api/v1/company_dashboard/analytics/ranking'
+
+        expect(response).to have_http_status(:internal_server_error)
+        json = JSON.parse(response.body)
+        expect(json['status']).to eq('error')
+        expect(json.dig('error', 'code')).to eq('RANKING_UNAVAILABLE')
+        expect(json.dig('error', 'request_id')).to be_present
+        expect(response.body).not_to include('falha interna simulada')
+      end
+
+      it 'rejects invalid ranking filters before calculating the comparison' do
+        get '/api/v1/company_dashboard/analytics/ranking', params: { sector: 'Setor inexistente' }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        json = JSON.parse(response.body)
+        expect(json.dig('error', 'code')).to eq('INVALID_RANKING_FILTERS')
+        expect(json.dig('invalid_filters', 'sector')).to be_present
+      end
+
+      it 'returns filter options derived from the ranking domain' do
+        get '/api/v1/company_dashboard/analytics/ranking/filter_options'
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json['states']).to include(company.state)
+        expect(json['sectors']).to be_an(Array)
+        expect(json['categories']).to be_an(Array)
       end
     end
   end

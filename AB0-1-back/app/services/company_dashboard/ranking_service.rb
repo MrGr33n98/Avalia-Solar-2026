@@ -6,6 +6,7 @@ module CompanyDashboard
     MAX_EXECUTION_LEADS = 100.0
     MAX_EXECUTION_VIEWS = 2_000.0
     MAX_EXECUTION_CLICKS = 300.0
+    SNAPSHOT_STALE_AFTER = 36.hours
 
     attr_reader :company, :category_id, :criterion_slug, :history_days, :state, :city, :sector, :quadrant_mode
 
@@ -13,9 +14,9 @@ module CompanyDashboard
       @company = company
       @category_id = category_id
       @criterion_slug = criterion_slug
-      @state = state
-      @city = city
-      @sector = sector
+      @state = state.to_s.strip.upcase.presence
+      @city = city.to_s.strip.presence
+      @sector = sector.to_s.strip.presence
       @history_days = [[history_days.to_i, 7].max, 365].min
       @quadrant_mode = quadrant_mode == 'reviews' ? 'reviews' : 'default'
     end
@@ -26,28 +27,39 @@ module CompanyDashboard
 
     def ranking_data
       snapshot = latest_snapshot
-      position = ad_hoc_preview? ? current_position : snapshot&.rank_position
-      population = ad_hoc_preview? ? total_companies : snapshot&.population_size
-      unavailable = snapshot.nil? || (ad_hoc_preview? && (current_position.nil? || total_companies.zero?))
+      preview = ad_hoc_preview?
+      preview_population = preview ? total_companies : nil
+      history_items = historical_data
+      position = preview ? current_position : snapshot&.rank_position
+      population = preview ? preview_population : snapshot&.population_size
+      mode = preview ? 'preview' : 'canonical'
+      ranking_status = ranking_status_for(snapshot, preview_population)
+      quadrant_status = preview_population_or_snapshot?(preview, preview_population, snapshot) ? 'ready' : 'empty'
+      history_status = history_items.present? ? 'ready' : 'empty'
+      quality = quality_payload(snapshot, preview, ranking_status)
+      quadrant_points = quadrant_status == 'ready' ? competitors_for_quadrant : []
+
       {
-        # Do not silently substitute the legacy rating ranking when the auditable
-        # snapshot is absent. Criterion filtering remains a quadrant preview until
-        # criterion-level snapshots are materialized.
+        status: preview ? quadrant_status : ranking_status,
+        mode: mode,
+        ranking_status: ranking_status,
+        quadrant_status: quadrant_status,
+        history_status: history_status,
         current_position: position,
         total_companies: population,
-        score: ad_hoc_preview? ? canonical_score_for(company) : snapshot&.score,
-        percentile: ad_hoc_preview? ? percentile : snapshot&.percentile,
+        score: preview ? canonical_score_for(company) : snapshot&.score,
+        percentile: preview ? percentile : snapshot&.percentile,
         category_rankings: category_rankings,
-        magic_quadrant_competitors: competitors_for_quadrant,
+        magic_quadrant_competitors: quadrant_points,
         quadrant_meta: quadrant_meta,
-        historical_data: historical_data,
-        transparency: transparency(snapshot),
-        status: unavailable ? 'unavailable' : 'ready',
-        error: unavailable ? { code: 'RANKING_SNAPSHOT_UNAVAILABLE' } : nil,
-        quality: { flags: transparency(snapshot)[:quality_flags], computed_at: snapshot&.computed_at, data_through: snapshot&.data_through },
-        leaders: competitors_for_quadrant.first(3),
-        neighbors: competitors_for_quadrant.select { |item| !item[:is_current_company] }.first(5),
-        insights: { strengths: [], opportunities: [], next_best_action: unavailable ? 'Aguardar processamento do snapshot orgânico.' : 'Acompanhar evolução dos sinais orgânicos.' }
+        historical_data: history_items,
+        history_trend_30d: history_trend_30d(history_items),
+        transparency: transparency(snapshot, ranking_status),
+        error: nil,
+        quality: quality,
+        leaders: quadrant_points.first(3),
+        neighbors: quadrant_points.reject { |item| item[:is_current_company] }.first(5),
+        insights: insights_for(snapshot, ranking_status)
       }
     end
 
@@ -59,8 +71,8 @@ module CompanyDashboard
         scope = scope.joins(:categories).where(categories: { id: category_id }).distinct
       end
       scope = scope.where(state: state) if state.present?
-      scope = scope.where(city: city) if city.present?
-      scope = scope.where("project_types @> ?", %("#{sector}")) if sector.present?
+      scope = apply_city_filter(scope) if city.present?
+      scope = scope.where('project_types @> ?', [sector].to_json) if sector.present?
       scope
     end
 
@@ -79,18 +91,21 @@ module CompanyDashboard
     def historical_data
       type, id = snapshot_scope
       CompanyRankingSnapshot.where(company_id: company.id, definition_version: CompanyRankingSnapshot::DEFINITION_VERSION)
-                            .for_scope(type, id).where('computed_at >= ?', history_days.days.ago).order(:computed_at)
-                            .map { |row| { week: row.computed_at.to_date.iso8601, position: row.rank_position, score: row.score.to_f, percentile: row.percentile.to_f } }
+                            .for_scope(type, id)
+                            .where(snapshot_date: history_days.days.ago.to_date..business_date)
+                            .order(:snapshot_date)
+                            .map { |row| { week: snapshot_day_for(row).iso8601, position: row.rank_position, score: row.score.to_f, percentile: row.percentile.to_f } }
     end
 
-    def transparency(snapshot)
+    def transparency(snapshot, ranking_status = nil)
       {
         definition_version: CompanyRankingSnapshot::DEFINITION_VERSION,
         purpose: criterion_slug.present? ? 'criterion_quadrant_preview' : 'organic_performance', sponsored_included: false,
-        score_definition: 'Trust score × 10 + engagement score dos últimos 7 dias com decaimento exponencial.',
-        tie_breaker: 'company_id asc', scope: category_id.present? ? 'category' : 'global',
+        score_definition: 'Trust score × 10 + engajamento dos últimos 7 dias completos com decaimento exponencial.',
+        tie_breaker: 'pontuação desc, confiança desc, avaliações desc, company_id asc',
+        scope: category_id.present? ? 'category' : 'global',
         computed_at: snapshot&.computed_at, data_through: snapshot&.data_through,
-        quality_flags: (snapshot&.quality_flags || []) + (ad_hoc_preview? ? ['local_ranking_preview_not_persisted'] : (snapshot ? [] : ['snapshot_unavailable'])),
+        quality_flags: quality_flags_for(snapshot, ad_hoc_preview?, ranking_status),
         breakdown: snapshot&.breakdown || {},
         is_ad_hoc_preview: ad_hoc_preview?, position_semantics: criterion_slug.present? ? 'quadrant_preview_without_official_position' : 'canonical_organic_snapshot'
       }
@@ -99,10 +114,8 @@ module CompanyDashboard
     def current_position
       return nil if criterion_slug.present?
 
-      score = canonical_score_for(company)
-      return nil if score.nil?
-
-      scored_scope.where('crs.score > ? OR (crs.score = ? AND crs.company_id < ?)', score, score, company.id).count + 1
+      index = ranked_companies.find_index { |comp| comp.id == company.id }
+      index && index + 1
     end
 
     def total_companies
@@ -138,15 +151,15 @@ module CompanyDashboard
 
       criterion_component = criterion_slug.present? ? normalize_criterion_score(criterion_score_for(comp)) * 15.0 : 0.0
 
-      score =
+      base_score =
         (stored_trust_score_for(comp) * 0.45) +
         (verification_score_for(comp) * 0.20) +
         (review_credibility_score_for(comp) * 0.15) +
         (badge_depth_score_for(comp) * 0.10) +
-        (social_proof_score_for(comp) * 0.10) +
-        criterion_component
+        (social_proof_score_for(comp) * 0.10)
+      score = base_score * (criterion_slug.present? ? 0.85 : 1.0) + criterion_component
 
-      [score, 100.0].min.round(1)
+      score.round(1)
     end
 
     def calculate_execution_score(comp)
@@ -158,8 +171,10 @@ module CompanyDashboard
       trust_operational_signal = operational_maturity_score_for(comp) * 10.0
       category_fit_signal = criterion_slug.present? ? normalize_criterion_score(criterion_score_for(comp)) * 10.0 : 0.0
 
-      score = leads_signal + engagement_signal + conversion_signal + trust_operational_signal + category_fit_signal
-      [score, 100.0].min.round(1)
+      base_score = leads_signal + engagement_signal + conversion_signal + trust_operational_signal
+      score = base_score * (criterion_slug.present? ? 1.0 : (100.0 / 90.0)) + category_fit_signal
+
+      score.round(1)
     end
 
     def review_quadrant_authority(comp)
@@ -220,7 +235,9 @@ module CompanyDashboard
     end
 
     def ranked_companies
-      @ranked_companies ||= scored_scope.includes(:company_badges, :review_aggregates).order(Arel.sql('crs.score DESC, crs.company_id ASC')).to_a
+      @ranked_companies ||= scored_scope.joins('LEFT JOIN company_trust_score cts ON cts.company_id = companies.id')
+                                       .includes(:company_badges, :review_aggregates)
+                                       .order(Arel.sql('crs.score DESC, COALESCE(cts.score, 0) DESC, companies.reviews_count DESC, companies.id ASC')).to_a
     end
 
     def scored_scope
@@ -361,6 +378,210 @@ module CompanyDashboard
         x_axis_label: quadrant_mode == 'reviews' ? 'Autoridade das Reviews' : (criterion_slug.present? ? "Autoridade de Confiança · #{criterion_title || criterion_slug.to_s.humanize}" : 'Autoridade de Confiança'),
         y_axis_label: quadrant_mode == 'reviews' ? 'Força das Reviews' : 'Poder de Execução'
       }
+    end
+
+    def apply_city_filter(scope)
+      normalized_city = normalize_location(city)
+      matching_cities = scope.where.not(city: [nil, '']).distinct.pluck(:city)
+                             .select { |candidate| normalize_location(candidate) == normalized_city }
+      return scope.none if matching_cities.empty?
+
+      scope.where(city: matching_cities)
+    end
+
+    def normalize_location(value)
+      I18n.transliterate(value.to_s).downcase.squish
+    end
+
+    def business_date
+      Time.current.in_time_zone('America/Sao_Paulo').to_date
+    end
+
+    def ranking_status_for(snapshot, preview_population)
+      if ad_hoc_preview?
+        return 'empty' if preview_population.to_i.zero?
+        return 'not_applicable' if criterion_slug.present?
+
+        return 'preview'
+      end
+
+      return 'empty' if total_companies.zero?
+      return 'processing' if snapshot.nil?
+      return 'stale' if snapshot.computed_at < SNAPSHOT_STALE_AFTER.ago
+
+      'ready'
+    end
+
+    def preview_population_or_snapshot?(preview, preview_population, snapshot)
+      preview ? preview_population.to_i.positive? : snapshot.present?
+    end
+
+    def quality_payload(snapshot, preview, ranking_status)
+      {
+        flags: quality_flags_for(snapshot, preview, ranking_status),
+        computed_at: snapshot&.computed_at,
+        data_through: snapshot&.data_through
+      }
+    end
+
+    def quality_flags_for(snapshot, preview, ranking_status = nil)
+      flags = Array(snapshot&.quality_flags).dup
+      flags << 'local_ranking_preview_not_persisted' if preview
+      flags << 'snapshot_processing' if ranking_status == 'processing'
+      flags << 'snapshot_stale' if ranking_status == 'stale'
+      flags << 'population_empty' if ranking_status == 'empty'
+      flags.uniq
+    end
+
+    def insights_for(snapshot, ranking_status)
+      return {
+        strengths: [],
+        opportunities: [],
+        next_best_action: insight(
+          'snapshot_processing',
+          'Aguardar o processamento do primeiro snapshot orgânico.',
+          key: 'snapshot_status',
+          value: 'processing'
+        )
+      } if ranking_status == 'processing'
+
+      return {
+        strengths: [],
+        opportunities: [],
+        next_best_action: insight(
+          'population_empty',
+          'Amplie o escopo ou aguarde uma população comparável para visualizar o ranking.',
+          key: 'population',
+          value: 0
+        )
+      } if ranking_status == 'empty'
+
+      return {
+        strengths: [],
+        opportunities: [],
+        next_best_action: insight(
+          'preview_not_canonical',
+          'A comparação atual não altera a posição oficial nem o histórico orgânico.',
+          key: 'ranking_mode',
+          value: 'preview'
+        )
+      } if %w[preview not_applicable].include?(ranking_status)
+
+      breakdown = snapshot&.breakdown.to_h
+      base_trust = breakdown['base_trust'].to_f
+      engagement = breakdown['recent_engagement'].to_f
+      benchmarks = insight_benchmarks(snapshot)
+      strengths = []
+      opportunities = []
+
+      if benchmarks[:base_trust]
+        target = benchmarks[:base_trust]
+        collection = base_trust >= target ? strengths : opportunities
+        collection << insight(
+          base_trust >= target ? 'trust_above_median' : 'trust_below_median',
+          base_trust >= target ? 'A confiança do perfil está na mediana ou acima do escopo comparado.' :
+            'A confiança do perfil está abaixo da mediana do escopo comparado.',
+          key: 'base_trust', value: base_trust, benchmark: target
+        )
+      end
+
+      if benchmarks[:recent_engagement]
+        target = benchmarks[:recent_engagement]
+        collection = engagement >= target ? strengths : opportunities
+        collection << insight(
+          engagement >= target ? 'engagement_above_median' : 'engagement_below_median',
+          engagement >= target ? 'O engajamento recente está na mediana ou acima do escopo comparado.' :
+            'O engajamento recente está abaixo da mediana do escopo comparado.',
+          key: 'recent_engagement', value: engagement, benchmark: target
+        )
+      end
+
+      next_action = next_best_action_for(opportunities, strengths)
+
+      {
+        strengths: strengths,
+        opportunities: opportunities,
+        next_best_action: next_action || insight(
+          'insufficient_peer_data',
+          'Ainda não há dados comparáveis suficientes para uma recomendação específica.',
+          key: 'peer_population',
+          value: 0
+        )
+      }
+    end
+
+    def insight_benchmarks(snapshot)
+      return {} unless snapshot&.snapshot_date
+
+      values = CompanyRankingSnapshot.where(
+        scope_type: snapshot.scope_type,
+        scope_id: snapshot.scope_id,
+        definition_version: snapshot.definition_version,
+        snapshot_date: snapshot.snapshot_date
+      ).pluck(:breakdown)
+      {
+        base_trust: median(values.filter_map { |value| value.to_h['base_trust']&.to_f }),
+        recent_engagement: median(values.filter_map { |value| value.to_h['recent_engagement']&.to_f })
+      }.compact
+    end
+
+    def median(values)
+      return nil if values.empty?
+
+      sorted = values.sort
+      midpoint = sorted.length / 2
+      return sorted[midpoint] if sorted.length.odd?
+
+      ((sorted[midpoint - 1] + sorted[midpoint]) / 2.0).round(2)
+    end
+
+    def insight(code, message, key:, value:, benchmark: nil)
+      {
+        code: code,
+        message: message,
+        metric: { key: key, value: value, benchmark: benchmark }.compact
+      }
+    end
+
+    def next_best_action_for(opportunities, strengths)
+      trust_gap = opportunities.find { |item| item[:code] == 'trust_below_median' }
+      return insight(
+        'review_trust_signals',
+        'Revise os dados verificáveis do perfil; a confiança está abaixo da mediana do escopo e a mudança será refletida em ciclos futuros.',
+        **trust_gap[:metric]
+      ) if trust_gap
+
+      engagement_gap = opportunities.find { |item| item[:code] == 'engagement_below_median' }
+      return insight(
+        'review_engagement_signals',
+        'Revise a presença do perfil e acompanhe os sinais orgânicos; o engajamento recente está abaixo da mediana do escopo.',
+        **engagement_gap[:metric]
+      ) if engagement_gap
+
+      strengths.first
+    end
+
+    def history_trend_30d(items)
+      current = items.last
+      return nil unless current
+
+      current_date = Date.iso8601(current[:week])
+      comparison = items.select { |item| Date.iso8601(item[:week]) <= current_date - 30.days }.last
+      return nil unless comparison
+
+      {
+        from: comparison[:week],
+        to: current[:week],
+        position_change: comparison[:position].to_i - current[:position].to_i,
+        percentile_change: (current[:percentile].to_f - comparison[:percentile].to_f).round(1),
+        score_change: (current[:score].to_f - comparison[:score].to_f).round(1)
+      }
+    end
+
+    def snapshot_day_for(snapshot)
+      return snapshot.snapshot_date if snapshot.respond_to?(:snapshot_date) && snapshot.snapshot_date.present?
+
+      snapshot.computed_at.in_time_zone('America/Sao_Paulo').to_date
     end
   end
 end

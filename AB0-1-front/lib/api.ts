@@ -1896,9 +1896,11 @@ export interface CertificationProgress {
 
 // Ranking Data Types
 export interface RankingData {
-  status?: 'ready' | 'unavailable' | 'locked';
-  error?: { code: string };
+  status?: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
+  mode?: 'canonical' | 'preview';
+  error?: { code: string; request_id?: string } | null;
   ranking?: {
+    status?: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error' | 'preview' | 'not_applicable';
     position: number | null;
     population: number | null;
     score: number | null;
@@ -1907,7 +1909,11 @@ export interface RankingData {
   quality?: { flags: string[]; computed_at?: string | null; data_through?: string | null };
   leaders?: RankingData['magic_quadrant_points'];
   neighbors?: RankingData['magic_quadrant_points'];
-  insights?: { strengths: string[]; opportunities: string[]; next_best_action?: string };
+  insights?: {
+    strengths: RankingInsight[];
+    opportunities: RankingInsight[];
+    next_best_action?: RankingInsight | null;
+  };
   rank_position: number | null;
   ranking_score: number | null;
   scope?:
@@ -1917,8 +1923,23 @@ export interface RankingData {
     | null;
   definition?: RankingData['transparency'];
   breakdown?: Record<string, unknown>;
-  history?: RankingData['historical_data'];
-  quadrant?: { points: RankingData['magic_quadrant_points']; meta?: RankingData['quadrant_meta'] };
+  history?: {
+    status: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
+    items: RankingData['historical_data'];
+    trend_30d?: {
+      from: string;
+      to: string;
+      position_change: number;
+      percentile_change: number;
+      score_change: number;
+    } | null;
+  };
+  quadrant?: {
+    status: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
+    preview: boolean;
+    points: RankingData['magic_quadrant_points'];
+    meta?: RankingData['quadrant_meta'];
+  };
   magic_quadrant_points: Array<{
     id: number;
     name: string;
@@ -1966,6 +1987,20 @@ export interface RankingData {
     breakdown?: Record<string, unknown>;
     is_ad_hoc_preview?: boolean;
   };
+}
+
+export interface RankingInsight {
+  code: string;
+  message: string;
+  metric: { key: string; value: number | string; benchmark?: number };
+}
+
+export interface RankingFilterOptions {
+  categories: Array<{ id: number; name: string }>;
+  states: string[];
+  sectors: string[];
+  cities: string[];
+  selected_state: string | null;
 }
 
 export const companyDashboardApi = {
@@ -2024,6 +2059,10 @@ export const companyDashboardApi = {
         quadrant_mode: quadrantMode,
         history_days: historyDays,
       },
+    }),
+  getRankingFilterOptions: (companyId?: string | number, state?: string) =>
+    fetchApi<RankingFilterOptions>('/company_dashboard/analytics/ranking/filter_options', {
+      params: { company_id: companyId, state: state },
     }),
 };
 

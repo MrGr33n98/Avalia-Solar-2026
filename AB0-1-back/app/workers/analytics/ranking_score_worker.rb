@@ -25,18 +25,30 @@ module Analytics
             jsonb_build_object('base_trust', t.score, 'recent_engagement', COALESCE(SUM(f.engagement_score * EXP(-0.1 * (CURRENT_DATE - f.day))), 0)),
             NOW(), NOW(), NOW()
           FROM company_trust_score t
-          LEFT JOIN company_feature_daily f ON t.company_id = f.company_id AND f.day >= CURRENT_DATE - 7
+          LEFT JOIN company_feature_daily f ON t.company_id = f.company_id
+            AND f.day >= CURRENT_DATE - 7
+            AND f.day < CURRENT_DATE
           GROUP BY t.company_id, t.score
           ON CONFLICT (company_id) DO UPDATE SET score = EXCLUDED.score, breakdown = EXCLUDED.breakdown, computed_at = EXCLUDED.computed_at, updated_at = NOW()
           RETURNING 1;
         SQL
 
         res = ActiveRecord::Base.connection.exec_query(sql, 'RankingScore')
-        ::CompanyDashboard::RankingSnapshotWriter.call(now: Time.current)
+        snapshot_result = ::CompanyDashboard::RankingSnapshotWriter.call(now: Time.current)
         ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array(["UPDATE analytics_processing_state SET last_processed_at = NOW() WHERE pipeline_name = ?", PIPELINE]))
         
         dur = ((Time.current - start_time) * 1000).to_i
         log_run('RankingScore', 'AllCompanies', res.rows.size, dur)
+        Analytics::LogHelper.json_log(
+          level: 'INFO', component: self.class.name, pipeline: 'ranking_snapshot',
+          event_id: "scopes:#{snapshot_result[:scopes]}", rows: snapshot_result[:snapshots], duration_ms: dur
+        )
+      rescue StandardError => e
+        Analytics::LogHelper.json_log(
+          level: 'ERROR', component: self.class.name, pipeline: PIPELINE,
+          duration_ms: ((Time.current - start_time) * 1000).to_i, error_class: e.class.name
+        )
+        raise
       ensure
         ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array(["SELECT pg_advisory_unlock(?)", LOCK_ID]))
       end

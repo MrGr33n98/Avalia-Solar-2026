@@ -22,6 +22,22 @@ interface Props {
   criterionTitle?: string;
 }
 
+interface TooltipPayload {
+  payload: QuadrantData;
+}
+
+interface QuadrantTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  criterionTitle?: string;
+}
+
+interface CompanyLogoShapeProps {
+  cx?: number;
+  cy?: number;
+  payload?: QuadrantData;
+}
+
 function getCompanyInitials(name: string) {
   return name
     .split(' ')
@@ -32,9 +48,9 @@ function getCompanyInitials(name: string) {
     .toUpperCase();
 }
 
-const CustomTooltip = ({ active, payload, criterionTitle }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
+const CustomTooltip = ({ active, payload, criterionTitle }: QuadrantTooltipProps) => {
+  const data = payload?.[0]?.payload;
+  if (active && data) {
     return (
       <div className="min-w-[180px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-3 text-[10px] font-bold uppercase tracking-widest text-slate-900 dark:text-white shadow-xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center gap-2 mb-2 border-b border-slate-100 dark:border-white/5 pb-2">
@@ -51,13 +67,13 @@ const CustomTooltip = ({ active, payload, criterionTitle }: any) => {
           <div className="min-w-0">
             <p className="truncate text-sm font-bold tracking-tight text-slate-900 dark:text-white">{data.name}</p>
             <p className="mt-0.5 text-[9px] tracking-widest text-slate-400">
-              {data.is_current_company ? 'EMPRESA ATUAL' : 'PLAYER DO MERCADO'}
+              {data.is_current_company ? 'SUA EMPRESA' : 'EMPRESA COMPARADA'}
             </p>
           </div>
         </div>
         <div className="space-y-1">
-          <p className="text-slate-500 dark:text-white/50 flex justify-between">Visão: <span className="text-slate-900 dark:text-white font-mono">{data.completeness_of_vision}%</span></p>
-          <p className="text-slate-500 dark:text-white/50 flex justify-between">Execução: <span className="text-slate-900 dark:text-white font-mono">{data.ability_to_execute}%</span></p>
+          <p className="flex justify-between text-slate-500 dark:text-white/50">Confiança: <span className="font-mono text-slate-900 dark:text-white">{data.completeness_of_vision}%</span></p>
+          <p className="flex justify-between text-slate-500 dark:text-white/50">Desempenho: <span className="font-mono text-slate-900 dark:text-white">{data.ability_to_execute}%</span></p>
           {criterionTitle && data.criterion_score != null && (
             <p className="text-slate-500 dark:text-white/50 flex justify-between">{criterionTitle}: <span className="text-slate-900 dark:text-white font-mono">{Number(data.criterion_score).toFixed(2)}</span></p>
           )}
@@ -74,12 +90,13 @@ const CustomTooltip = ({ active, payload, criterionTitle }: any) => {
   return null;
 };
 
-const CompanyLogoShape = (props: any) => {
-  const { cx, cy, payload } = props;
+const CompanyLogoShape = ({ cx = 0, cy = 0, payload }: CompanyLogoShapeProps) => {
+  if (!payload) return null;
+
   const size = payload.is_current_company ? 42 : 32;
   const halfSize = size / 2;
   const haloRadius = payload.is_current_company ? halfSize + 8 : halfSize + 4;
-  const ringStroke = payload.is_current_company ? '#fbbf24' : '#3b82f6';
+  const ringStroke = payload.is_current_company ? 'hsl(var(--accent))' : 'hsl(var(--primary))';
 
   return (
     <g>
@@ -87,7 +104,7 @@ const CompanyLogoShape = (props: any) => {
         cx={cx}
         cy={cy}
         r={haloRadius}
-        fill={payload.is_current_company ? 'rgba(251, 191, 36, 0.1)' : 'rgba(59, 130, 246, 0.05)'}
+        fill={payload.is_current_company ? 'hsl(var(--accent) / 0.12)' : 'hsl(var(--primary) / 0.08)'}
         className={cn(
           'transition-all duration-300',
           payload.is_current_company ? 'animate-pulse' : ''
@@ -97,7 +114,7 @@ const CompanyLogoShape = (props: any) => {
         cx={cx}
         cy={cy}
         r={halfSize + 2}
-        fill="white"
+        fill="hsl(var(--background))"
         stroke={ringStroke}
         strokeWidth={payload.is_current_company ? 2 : 1.5}
         className={cn(
@@ -109,8 +126,8 @@ const CompanyLogoShape = (props: any) => {
         cx={cx}
         cy={cy}
         r={halfSize - 2}
-        fill="white"
-        stroke="rgba(148, 163, 184, 0.16)"
+        fill="hsl(var(--background))"
+        stroke="hsl(var(--border))"
         strokeWidth={1}
       />
 
@@ -151,8 +168,8 @@ const CompanyLogoShape = (props: any) => {
           cx={cx + halfSize - 5}
           cy={cy - halfSize + 5}
           r={4}
-          fill="#fbbf24"
-          stroke="white"
+          fill="hsl(var(--accent))"
+          stroke="hsl(var(--background))"
           strokeWidth={1.5}
           className="animate-pulse"
         />
@@ -166,7 +183,7 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confia
     <div className="relative h-[400px] w-full select-none overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-2">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.05} vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.7} vertical={false} />
           
           <XAxis 
             type="number" 
@@ -174,7 +191,7 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confia
             domain={[0, 100]} 
             tick={false} 
             axisLine={false}
-            label={{ value: `${xAxisLabel} ➔`, position: "bottom", fill: "rgba(0,0,0,0.2)", fontSize: 9, fontWeight: 700, letterSpacing: '0.1em' }}
+            label={{ value: `${xAxisLabel} →`, position: 'bottom', fill: 'hsl(var(--muted-foreground))', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em' }}
           />
           <YAxis 
             type="number" 
@@ -182,19 +199,19 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confia
             domain={[0, 100]} 
             tick={false} 
             axisLine={false}
-            label={{ value: `${yAxisLabel} ➔`, angle: -90, position: "left", fill: "rgba(0,0,0,0.2)", fontSize: 9, fontWeight: 700, letterSpacing: '0.1em' }}
+            label={{ value: `${yAxisLabel} →`, angle: -90, position: 'left', fill: 'hsl(var(--muted-foreground))', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em' }}
           />
           
-          <RechartsTooltip content={<CustomTooltip criterionTitle={criterionTitle} />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+          <RechartsTooltip content={<CustomTooltip criterionTitle={criterionTitle} />} cursor={{ strokeDasharray: '3 3', stroke: 'hsl(var(--border))' }} />
           
           {/* Quadrant Backgrounds */}
-          <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill="rgba(0,0,0,0.01)" strokeOpacity={0} />
-          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill="rgba(59,130,246,0.05)" strokeOpacity={0} />
-          <ReferenceArea x1={0} x2={50} y1={0} y2={50} fill="rgba(0,0,0,0.005)" strokeOpacity={0} />
-          <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill="rgba(0,0,0,0.01)" strokeOpacity={0} />
+          <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill="hsl(var(--muted) / 0.42)" strokeOpacity={0} />
+          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill="hsl(var(--primary) / 0.08)" strokeOpacity={0} />
+          <ReferenceArea x1={0} x2={50} y1={0} y2={50} fill="hsl(var(--muted) / 0.24)" strokeOpacity={0} />
+          <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill="hsl(var(--accent) / 0.08)" strokeOpacity={0} />
 
           <Scatter 
-            name="Companies" 
+            name="Empresas"
             data={data} 
             shape={<CompanyLogoShape />}
             isAnimationActive={true}
@@ -205,22 +222,22 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confia
       {/* Strategic Labels */}
       <div className="absolute left-7 top-6 opacity-60">
         <span className="rounded-md border border-slate-200 bg-white/50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
-          Desafiantes
+          Em expansão
         </span>
       </div>
       <div className="absolute right-7 top-6">
         <span className="rounded-md border border-blue-100 bg-blue-50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-blue-600 shadow-sm">
-          Líderes
+          Referências
         </span>
       </div>
       <div className="absolute bottom-10 left-7 opacity-60">
         <span className="rounded-md border border-slate-200 bg-white/50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
-          Nicho
+          Em desenvolvimento
         </span>
       </div>
       <div className="absolute bottom-10 right-7 opacity-60">
         <span className="rounded-md border border-slate-200 bg-white/50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
-          Visionárias
+          Especialistas
         </span>
       </div>
     </div>

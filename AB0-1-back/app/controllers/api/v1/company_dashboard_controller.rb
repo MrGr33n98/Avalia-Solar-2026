@@ -257,9 +257,13 @@ module Api
         begin
           # ✅ FEATURE GATE: Ranking só para enterprise
           unless FeatureGateService.can_access?(@company, 'advanced_analytics')
-            return render json: default_ranking_payload.merge(
+            return render json: default_ranking_payload(
               status: 'locked',
               error: { code: 'RANKING_UPGRADE_REQUIRED' },
+              ranking_status: 'locked',
+              quadrant_status: 'locked',
+              history_status: 'locked'
+            ).merge(
               is_premium_analytics: false,
               upsell_message: 'Upgrade to Pro or Enterprise to access ranking analytics'
             ), status: :ok
@@ -271,6 +275,21 @@ module Api
           city = params[:city].presence
           sector = params[:sector].presence
           quadrant_mode = params[:quadrant_mode].presence
+          filter_errors = ranking_filter_errors(
+            category_id: category_id,
+            criterion_slug: criterion_slug,
+            state: state,
+            city: city,
+            sector: sector,
+            quadrant_mode: quadrant_mode
+          )
+          if filter_errors.present?
+            return render json: {
+              status: 'error',
+              error: { code: 'INVALID_RANKING_FILTERS', request_id: request.request_id },
+              invalid_filters: filter_errors
+            }, status: :unprocessable_entity
+          end
           history_days = [[params.fetch(:history_days, 90).to_i, 7].max, 365].min
           service = ::CompanyDashboard::RankingService.new(
             company: @company,
@@ -284,10 +303,40 @@ module Api
           )
           data = service.ranking_data
 
-          render json: {
+          render json: ranking_payload(data).merge(
+            is_premium_analytics: true
+          )
+        rescue StandardError => e
+          log_ranking_error(e, request.request_id)
+          render json: default_ranking_payload(
+            status: 'error',
+            error: { code: 'RANKING_UNAVAILABLE', request_id: request.request_id },
+            ranking_status: 'error',
+            quadrant_status: 'error',
+            history_status: 'error'
+          ).merge(is_premium_analytics: true), status: :internal_server_error
+        end
+      end
+
+      # GET /api/v1/company_dashboard/analytics/ranking/filter_options
+      def analytics_ranking_filter_options
+        authorize @company, :view_analytics?
+
+        render json: ::CompanyDashboard::RankingFilterOptionsService.call(company: @company, state: params[:state])
+      end
+
+      def ranking_payload(data)
+        {
             status: data[:status],
+            mode: data[:mode],
             error: data[:error],
-            ranking: { position: data[:current_position], population: data[:total_companies], score: data[:score], percentile: data[:percentile] },
+            ranking: {
+              status: data[:ranking_status],
+              position: data[:current_position],
+              population: data[:total_companies],
+              score: data[:score],
+              percentile: data[:percentile]
+            },
             rank_position: data[:current_position],
             ranking_score: data[:score],
             magic_quadrant_points: data[:magic_quadrant_competitors],
@@ -299,17 +348,101 @@ module Api
             scope: data[:transparency][:scope],
             definition: data[:transparency],
             breakdown: data[:transparency][:breakdown] || {},
-            history: data[:historical_data],
-            quadrant: { points: data[:magic_quadrant_competitors], meta: data[:quadrant_meta] },
+            history: {
+              status: data[:history_status],
+              items: data[:historical_data],
+              trend_30d: data[:history_trend_30d]
+            },
+            quadrant: {
+              status: data[:quadrant_status],
+              preview: data[:mode] == 'preview',
+              points: data[:magic_quadrant_competitors],
+              meta: data[:quadrant_meta]
+            },
             leaders: data[:leaders],
             neighbors: data[:neighbors],
             insights: data[:insights],
-            is_premium_analytics: true
-          }
-        rescue StandardError => e
-          log_analytics_error('ranking', e)
-          render json: default_ranking_payload.merge(is_premium_analytics: true), status: :ok
+        }
+      end
+
+      def default_ranking_payload(status: 'processing', error: nil, ranking_status: nil, quadrant_status: nil, history_status: nil)
+        ranking_status ||= status
+        quadrant_status ||= status == 'processing' ? 'empty' : status
+        history_status ||= status == 'processing' ? 'empty' : status
+
+        {
+          status: status,
+          mode: 'canonical',
+          error: error,
+          ranking: { status: ranking_status, position: nil, population: nil, score: nil, percentile: nil },
+          rank_position: nil,
+          ranking_score: nil,
+          magic_quadrant_points: [],
+          quadrant_meta: {},
+          category_rankings: [],
+          historical_data: [],
+          history: { status: history_status, items: [], trend_30d: nil },
+          quadrant: { status: quadrant_status, preview: false, points: [], meta: {} },
+          leaders: [],
+          neighbors: [],
+          insights: { strengths: [], opportunities: [], next_best_action: nil },
+          quality: { flags: quality_flags_for_status(status), computed_at: nil, data_through: nil },
+          scope: 'global',
+          definition: default_ranking_transparency(status),
+          breakdown: {},
+          transparency: default_ranking_transparency(status)
+        }
+      end
+
+      def default_ranking_transparency(status)
+        {
+          definition_version: CompanyRankingSnapshot::DEFINITION_VERSION,
+          purpose: 'organic_performance',
+          sponsored_included: false,
+          quality_flags: quality_flags_for_status(status)
+        }
+      end
+
+      def quality_flags_for_status(status)
+        case status
+        when 'processing' then ['snapshot_processing']
+        when 'empty' then ['population_empty']
+        when 'stale' then ['snapshot_stale']
+        else []
         end
+      end
+
+      def log_ranking_error(error, request_id)
+        Rails.logger.error(
+          {
+            event: 'company_dashboard.ranking.failed',
+            request_id: request_id,
+            error_class: error.class.name,
+            status: 500
+          }.to_json
+        )
+      end
+
+      def ranking_filter_errors(category_id:, criterion_slug:, state:, city:, sector:, quadrant_mode:)
+        errors = {}
+        category = category_id.present? ? @company.categories.find_by(id: category_id) : nil
+
+        errors[:category_id] = 'Categoria inválida.' if category_id.present? && category.nil?
+        if criterion_slug.present?
+          criteria = category&.effective_rating_criteria || []
+          errors[:criterion_slug] = 'Critério inválido para a categoria selecionada.' unless criteria.any? { |criterion| criterion.slug == criterion_slug }
+        end
+        normalized_state = state.to_s.strip.upcase
+        if state.present? && !Company.active.where(state: normalized_state).exists?
+          errors[:state] = 'UF sem empresas ativas elegíveis para comparação.'
+        end
+        errors[:city] = 'Cidade deve ter no máximo 120 caracteres.' if city.to_s.length > 120
+        errors[:sector] = 'Setor inválido.' if sector.present? && !Company::PROJECT_TYPES.include?(sector)
+        if quadrant_mode.present? && !%w[default reviews].include?(quadrant_mode)
+          errors[:quadrant_mode] = 'Modo de mapa inválido.'
+        end
+
+        errors
       end
 
       # GET /api/v1/company_dashboard/trust_health
@@ -1830,26 +1963,6 @@ module Api
         else
           "to_char(created_at, 'YYYY-MM')"
         end
-      end
-
-      def default_ranking_payload
-        {
-          status: 'unavailable',
-          error: { code: 'RANKING_SNAPSHOT_UNAVAILABLE' },
-          ranking: { position: nil, population: nil, score: nil, percentile: nil },
-          rank_position: nil,
-          ranking_score: nil,
-          magic_quadrant_points: [],
-          quadrant_meta: {},
-          category_rankings: [],
-          historical_data: [],
-          transparency: {
-            definition_version: CompanyRankingSnapshot::DEFINITION_VERSION,
-            purpose: 'organic_performance',
-            sponsored_included: false,
-            quality_flags: ['snapshot_unavailable']
-          }
-        }
       end
 
       def social_proof_permissions(feature_permission)
