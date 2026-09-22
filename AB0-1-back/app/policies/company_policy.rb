@@ -61,6 +61,12 @@ class CompanyPolicy < ApplicationPolicy
     admin? || company_member?
   end
 
+  # O ranking possui um gate de plano separado (FeatureGateService). Esta
+  # política cobre somente o vínculo do usuário com a empresa, evitando IDOR.
+  def view_analytics_ranking?
+    admin? || company_member?
+  end
+
   def view_premium_metrics?
     admin? || (company_member? && record.has_paid_plan?)
   end

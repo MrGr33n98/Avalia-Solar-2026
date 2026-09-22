@@ -354,7 +354,7 @@ module CompanyDashboard
     def normalize_log(value, max)
       return 0.0 if value.to_f <= 0 || max.to_f <= 0
 
-      [Math.log1p(value.to_f) / Math.log1p(max.to_f), 1.0].min
+      [Math.log(1.0 + value.to_f) / Math.log(1.0 + max.to_f), 1.0].min
     end
 
     def safe_ratio(numerator, denominator)
@@ -379,10 +379,9 @@ module CompanyDashboard
     def review_aggregate_for(comp)
       @review_aggregates ||= {}
       @review_aggregates[comp.id] ||= begin
-        scope = comp.review_aggregates.select(:id, :company_id, :category_id, :criteria_breakdown)
-        scope = scope.find_by(category_id: category_id) if category_id.present?
-        scope ||= comp.review_aggregates.select(:id, :company_id, :category_id, :criteria_breakdown).find_by(category_id: nil)
-        scope
+        aggregates = comp.review_aggregates.select(:id, :company_id, :category_id, :criteria_breakdown)
+        aggregate = aggregates.find_by(category_id: category_id) if category_id.present?
+        aggregate || aggregates.find_by(category_id: nil)
       end
     end
 

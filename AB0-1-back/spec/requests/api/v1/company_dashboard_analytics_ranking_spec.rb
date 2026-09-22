@@ -146,6 +146,9 @@ RSpec.describe 'GET /api/v1/company_dashboard/analytics/ranking', type: :request
     before do
       allow(FeatureGateService).to receive(:can_access?)
         .with(company, 'advanced_analytics').and_return(false)
+      allow(EntitlementService).to receive(:explain)
+        .with(company: company, feature: 'advanced_analytics')
+        .and_return(allowed: false, reason: 'upgrade_required')
     end
 
     it 'retorna HTTP 200 com ranking_status locked' do

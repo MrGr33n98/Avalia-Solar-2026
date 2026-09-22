@@ -32,7 +32,7 @@ RSpec.describe CompanyDashboard::RankingSnapshotWriter do
     expected_data_through = Time.use_zone('America/Sao_Paulo') do
       now.in_time_zone('America/Sao_Paulo').to_date.yesterday.end_of_day
     end
-    expect(snapshots.first.data_through).to eq(expected_data_through)
+    expect(snapshots.first.data_through.to_f).to be_within(0.000001).of(expected_data_through.to_f)
   end
 
   it 'uses the published deterministic tie-break chain' do

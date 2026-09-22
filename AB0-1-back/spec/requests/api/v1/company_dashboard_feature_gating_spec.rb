@@ -12,6 +12,8 @@ RSpec.describe 'Company Dashboard Feature Gating', type: :request do
   end
 
   context 'for a free company (no plan)' do
+    before { company.update!(plan: nil) }
+
     describe 'GET /api/v1/company_dashboard/analytics/overview' do
       it 'returns minimal data without premium analytics' do
         get '/api/v1/company_dashboard/analytics/overview'

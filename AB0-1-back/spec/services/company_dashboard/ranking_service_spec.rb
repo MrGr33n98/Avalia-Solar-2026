@@ -79,9 +79,11 @@ RSpec.describe CompanyDashboard::RankingService do
     end
 
     it 'normalizes city accents, case and surrounding spaces' do
-      [company, better_company, worse_company].each { |record| record.update!(city: 'Florianópolis') }
+      [company, better_company, worse_company].each do |record|
+        record.update!(state: 'SC', city: 'Florianópolis')
+      end
 
-      result = described_class.new(company: company, state: 'SP', city: '  florianopolis ').ranking_data
+      result = described_class.new(company: company, state: 'SC', city: '  florianopolis ').ranking_data
 
       expect(result[:total_companies]).to eq(3)
       expect(result[:current_position]).to eq(2)

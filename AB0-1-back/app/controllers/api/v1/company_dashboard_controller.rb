@@ -445,11 +445,11 @@ module Api
           errors[:criterion_slug] = 'Critério inválido para a categoria selecionada.' unless criteria.any? { |criterion| criterion.slug == criterion_slug }
         end
         normalized_state = state.to_s.strip.upcase
-        if state.present? && !Company.active.where(state: normalized_state).exists?
+        if state.present? && !::Company.active.where(state: normalized_state).exists?
           errors[:state] = 'UF sem empresas ativas elegíveis para comparação.'
         end
         errors[:city] = 'Cidade deve ter no máximo 120 caracteres.' if city.to_s.length > 120
-        errors[:sector] = 'Setor inválido.' if sector.present? && !Company::PROJECT_TYPES.include?(sector)
+        errors[:sector] = 'Setor inválido.' if sector.present? && !::Company::PROJECT_TYPES.include?(sector)
         if quadrant_mode.present? && !%w[default reviews].include?(quadrant_mode)
           errors[:quadrant_mode] = 'Modo de mapa inválido.'
         end
@@ -2118,7 +2118,8 @@ module Api
           range: analytics_range_payload(range),
           engagement_status: engagement_status,
           engagement: engagement_payload,
-          is_premium_analytics: false
+          is_premium_analytics: false,
+          upsell_message: 'Upgrade to Pro to unlock detailed analytics'
         }
 
         return payload unless premium_analytics_enabled?(company)

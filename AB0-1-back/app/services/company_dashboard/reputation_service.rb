@@ -13,7 +13,12 @@ module CompanyDashboard
         total_reviews: total_reviews,
         avg_rating: avg_rating,
         trust_score: trust_score,
-        trust_components: trust_components
+        trust_components: trust_components,
+        historical_data: [],
+        transparency: {
+          purpose: 'organic_performance',
+          sponsored_included: false
+        }
       }
     end
 
