@@ -3,173 +3,169 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Trophy, 
-  BarChart3, 
-  Target,
-  Activity,
-  Award,
-  Filter,
-  ShieldCheck,
-  AlertCircle,
-  RotateCcw
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Company, fetchApi, companyDashboardApi, RankingFilterOptions } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import MagicQuadrant from './MagicQuadrant';
-import MetricCard from './MetricCard';
-import { 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  Tooltip as RechartsTooltip, 
-  CartesianGrid, 
-  Area, 
+import { AlertCircle, Filter, RotateCcw, Trophy } from 'lucide-react';
+import {
+  Area,
   AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { companyDashboardApi, fetchApi, type Company, type RankingFilterOptions } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/api-error';
+import { RankingBenchmarkCards } from './ranking/RankingBenchmarkCards';
+import { ComparisonRankingCard, OfficialRankingCard } from './ranking/RankingCards';
+import { RankingContextChips } from './ranking/RankingContextChips';
+import { RankingMethodologyDrawer } from './ranking/RankingMethodologyDrawer';
+import { RankingPositioningMap } from './ranking/RankingPositioningMap';
+import { RankingStateBanner } from './ranking/RankingStateBanner';
+import {
+  comparisonScopeLabel,
+  formatDate,
+  stateName,
+  translatedQualityFlags,
+} from './ranking/ranking-utils';
 
-interface DashboardStats { conversionRate?: number; profileViews?: number }
+interface DashboardStats { conversionRate?: number }
 interface Criterion { slug: string; title: string }
 interface CriteriaResponse { criteria?: Criterion[] }
-interface TooltipEntry { color?: string; name: string; value: string | number }
 interface Props {
   company: Company;
   stats?: DashboardStats | null;
   themeMode?: 'light' | 'dark';
 }
 
-export default function RankingPerformanceTab({ company, stats, themeMode: _themeMode = 'dark' }: Props) {
+const HISTORY_OPTIONS = [
+  { value: '30', label: '30 dias' },
+  { value: '90', label: '90 dias' },
+  { value: '365', label: '12 meses' },
+] as const;
+
+export default function RankingPerformanceTab({ company, stats: _stats, themeMode: _themeMode = 'dark' }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(() => searchParams.get('ranking_category') || 'all');
-  const [selectedCriterionSlug, setSelectedCriterionSlug] = useState<string>(() => searchParams.get('ranking_criterion') || 'all');
-  const [selectedState, setSelectedState] = useState<string>(() => searchParams.get('ranking_state') || 'all');
-  const [selectedCity, setSelectedCity] = useState<string>(() => searchParams.get('ranking_city') || '');
-  const [debouncedCity, setDebouncedCity] = useState<string>(() => searchParams.get('ranking_city') || '');
-  const [selectedSector, setSelectedSector] = useState<string>(() => searchParams.get('ranking_sector') || 'all');
-  const [historyDays, setHistoryDays] = useState<string>(() => searchParams.get('ranking_history') || '90');
-  const [quadrantMode, setQuadrantMode] = useState<'default' | 'reviews'>(() => searchParams.get('ranking_quadrant') === 'reviews' ? 'reviews' : 'default');
+  const [selectedCategoryId, setSelectedCategoryId] = useState(() => searchParams.get('ranking_category') || 'all');
+  const [selectedCriterionSlug, setSelectedCriterionSlug] = useState(() => searchParams.get('ranking_criterion') || 'all');
+  const [selectedState, setSelectedState] = useState(() => searchParams.get('ranking_state') || 'all');
+  const [selectedCity, setSelectedCity] = useState(() => searchParams.get('ranking_city') || '');
+  const [debouncedCity, setDebouncedCity] = useState(() => searchParams.get('ranking_city') || '');
+  const [selectedSector, setSelectedSector] = useState(() => searchParams.get('ranking_sector') || 'all');
+  const [historyDays, setHistoryDays] = useState(() => searchParams.get('ranking_history') || '90');
+  const [quadrantMode, setQuadrantMode] = useState<'default' | 'reviews'>(
+    () => (searchParams.get('ranking_quadrant') === 'reviews' ? 'reviews' : 'default')
+  );
   const [historyMetric, setHistoryMetric] = useState<'position' | 'percentile' | 'score'>('position');
 
   useEffect(() => {
-    const debounceTimer = window.setTimeout(() => setDebouncedCity(selectedCity.trim()), 350);
-    return () => window.clearTimeout(debounceTimer);
+    const timer = window.setTimeout(() => setDebouncedCity(selectedCity.trim()), 350);
+    return () => window.clearTimeout(timer);
   }, [selectedCity]);
+
+  // A URL é a fonte de verdade: navegação de voltar/avançar restaura o escopo
+  // sem transformar uma comparação anterior em dado atual.
+  useEffect(() => {
+    setSelectedCategoryId(searchParams.get('ranking_category') || 'all');
+    setSelectedCriterionSlug(searchParams.get('ranking_criterion') || 'all');
+    setSelectedState(searchParams.get('ranking_state') || 'all');
+    setSelectedCity(searchParams.get('ranking_city') || '');
+    setSelectedSector(searchParams.get('ranking_sector') || 'all');
+    setHistoryDays(searchParams.get('ranking_history') || '90');
+    setQuadrantMode(searchParams.get('ranking_quadrant') === 'reviews' ? 'reviews' : 'default');
+  }, [searchParams]);
+
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams.toString());
+    const params = {
+      ranking_category: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
+      ranking_criterion: selectedCriterionSlug === 'all' ? undefined : selectedCriterionSlug,
+      ranking_state: selectedState === 'all' ? undefined : selectedState,
+      ranking_city: debouncedCity || undefined,
+      ranking_sector: selectedSector === 'all' ? undefined : selectedSector,
+      ranking_history: historyDays === '90' ? undefined : historyDays,
+      ranking_quadrant: quadrantMode === 'default' ? undefined : quadrantMode,
+    };
+    Object.entries(params).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key));
+    if (next.toString() !== searchParams.toString()) router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  }, [debouncedCity, historyDays, pathname, quadrantMode, router, searchParams, selectedCategoryId, selectedCriterionSlug, selectedSector, selectedState]);
 
   const criteriaQuery = useQuery({
     queryKey: ['category-evaluation-context', selectedCategoryId],
-    queryFn: async () => {
-      if (selectedCategoryId === 'all') return { criteria: [] };
-      return fetchApi<CriteriaResponse>(`/categories/${selectedCategoryId}/evaluation_context`);
-    },
+    queryFn: () => selectedCategoryId === 'all'
+      ? Promise.resolve({ criteria: [] })
+      : fetchApi<CriteriaResponse>(`/categories/${selectedCategoryId}/evaluation_context`),
     enabled: selectedCategoryId !== 'all',
   });
 
   const filterOptionsQuery = useQuery({
     queryKey: ['company-analytics-ranking-filter-options', company.id, selectedState],
-    queryFn: () =>
-      companyDashboardApi.getRankingFilterOptions(
-        company.id,
-        selectedState !== 'all' ? selectedState : undefined
-      ),
+    queryFn: () => companyDashboardApi.getRankingFilterOptions(company.id, selectedState === 'all' ? undefined : selectedState),
     enabled: Boolean(company.id),
     staleTime: 6 * 60 * 60 * 1000,
   });
 
-  useEffect(() => {
-    const nextParams = new URLSearchParams(searchParams.toString());
-    const filters = {
-      ranking_category: selectedCategoryId !== 'all' ? selectedCategoryId : undefined,
-      ranking_criterion: selectedCriterionSlug !== 'all' ? selectedCriterionSlug : undefined,
-      ranking_state: selectedState !== 'all' ? selectedState : undefined,
-      ranking_city: debouncedCity || undefined,
-      ranking_sector: selectedSector !== 'all' ? selectedSector : undefined,
-      ranking_history: historyDays !== '90' ? historyDays : undefined,
-      ranking_quadrant: quadrantMode !== 'default' ? quadrantMode : undefined,
-    };
-    Object.entries(filters).forEach(([key, value]) => value ? nextParams.set(key, value) : nextParams.delete(key));
-    if (nextParams.toString() !== searchParams.toString()) {
-      router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
-    }
-  }, [debouncedCity, historyDays, pathname, quadrantMode, router, searchParams, selectedCategoryId, selectedCriterionSlug, selectedSector, selectedState]);
-
   const rankingQuery = useQuery({
-    queryKey: ['company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, selectedState, debouncedCity, selectedSector, quadrantMode, historyDays],
-    queryFn: async () => {
-      return companyDashboardApi.getRanking(
-        company.id,
-        selectedCategoryId !== 'all' ? selectedCategoryId : undefined,
-        selectedCriterionSlug !== 'all' ? selectedCriterionSlug : undefined,
-        selectedState !== 'all' ? selectedState : undefined,
-        debouncedCity || undefined,
-        selectedSector !== 'all' ? selectedSector : undefined,
-        quadrantMode,
-        Number(historyDays)
-      );
-    },
+    queryKey: [
+      'company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, selectedState,
+      debouncedCity, selectedSector, quadrantMode, historyDays,
+    ],
+    queryFn: () => companyDashboardApi.getRanking(
+      company.id,
+      selectedCategoryId === 'all' ? undefined : selectedCategoryId,
+      selectedCriterionSlug === 'all' ? undefined : selectedCriterionSlug,
+      selectedState === 'all' ? undefined : selectedState,
+      debouncedCity || undefined,
+      selectedSector === 'all' ? undefined : selectedSector,
+      quadrantMode,
+      Number(historyDays)
+    ),
     enabled: Boolean(company.id),
-    staleTime: 30 * 1000,
+    staleTime: 30_000,
     placeholderData: (previousData) => previousData,
-    // Não tenta novamente em erros 500 estruturais (ex: migration ausente).
-    // Só reintenta em erros de rede pura (sem status) ou 429/503 (transitórios).
     retry: (failCount, error) => {
       const status = (error as { status?: number })?.status;
       if (status != null && status >= 500 && status !== 503) return false;
       if (status === 429 || status === 503) return failCount < 2;
-      return failCount < 1; // erro de rede: 1 retry
+      return failCount < 1;
     },
     refetchOnWindowFocus: false,
   });
 
-  const { data, error: rankingError, isLoading, isError, isPlaceholderData, refetch } = rankingQuery;
-  const filterOptions: RankingFilterOptions | undefined = filterOptionsQuery.data;
-  const transparency = data?.definition;
-  const ranking = data?.ranking;
-  const quadrant = data?.quadrant;
-  const quadrantMeta = quadrant?.meta;
-  const hasSnapshot = ranking?.status === 'ready' || ranking?.status === 'stale';
+  const { data, error: rankingError, isError, isLoading, isPlaceholderData, refetch } = rankingQuery;
+  const filterOptions = filterOptionsQuery.data as RankingFilterOptions | undefined;
   const isPreview = data?.mode === 'preview';
-
-  const quadrantData = useMemo(() => {
-    return quadrant?.points || [];
-  }, [quadrant?.points]);
-
-  const historicalData = useMemo(() => {
-    return data?.history?.items || [];
-  }, [data?.history?.items]);
-  const hasActiveFilters = selectedCategoryId !== 'all' || selectedCriterionSlug !== 'all' || selectedState !== 'all' || Boolean(selectedCity) || selectedSector !== 'all' || historyDays !== '90' || quadrantMode !== 'default';
-  const lastKnownTimestamp = data?.quality?.computed_at || data?.definition?.computed_at;
+  const comparisonLabel = comparisonScopeLabel(data?.comparison_scope);
+  const requestedScope = selectedCity || stateName(selectedState === 'all' ? null : selectedState) || selectedSector;
+  const previousScope = comparisonLabel || 'o ranking oficial';
+  const officialScope = data?.official_scope?.type === 'category' ? 'Categoria oficial' : 'Brasil';
+  const heroTitle = isPreview && comparisonLabel ? `Desempenho em ${comparisonLabel}` : 'Desempenho no Mercado';
+  const heroDescription = isPreview
+    ? `Comparação dinâmica com empresas elegíveis em ${comparisonLabel}. Esta comparação não altera seu ranking orgânico oficial.`
+    : 'Acompanhe sua posição orgânica no Avalia Solar, compare seu desempenho e entenda os fatores que influenciam sua presença competitiva.';
   const apiError = rankingError as { code?: string; requestId?: string; status?: number } | null;
-  const structuredErrorMessage = getApiErrorMessage(rankingError, 'Não foi possível atualizar o ranking.');
-  const errorMessage = structuredErrorMessage.replace(/^\[\d{3}\]\s*/, '');
+  const errorMessage = getApiErrorMessage(rankingError, 'Não foi possível atualizar o ranking.').replace(/^\[\d{3}\]\s*/, '');
+  const qualityLabels = translatedQualityFlags(data?.quality?.flags);
+  const historyItems = data?.history?.items || [];
   const historyLabel = historyDays === '365' ? 'últimos 12 meses' : `últimos ${historyDays} dias`;
-  const historyMetricConfig = {
-    position: { label: 'Posição', color: 'hsl(var(--chart-3))', reversed: true, suffix: 'º' },
-    percentile: { label: 'Percentil', color: 'hsl(var(--chart-1))', reversed: false, suffix: '%' },
-    score: { label: 'Pontuação', color: 'hsl(var(--chart-4))', reversed: false, suffix: ' pts' },
-  } as const;
-  const selectedHistoryMetric = historyMetricConfig[historyMetric];
-  const positionMovement = useMemo(() => {
-    const difference = data?.history?.trend_30d?.position_change;
-    if (difference == null) return null;
-    if (difference === 0) return 'Sem mudança em 30 dias';
+  const hasActiveFilters = selectedCategoryId !== 'all' || selectedCriterionSlug !== 'all' || selectedState !== 'all' || Boolean(selectedCity) || selectedSector !== 'all' || historyDays !== '90' || quadrantMode !== 'default';
+  const insights = useMemo(
+    () => [...(data?.insights?.strengths || []), ...(data?.insights?.opportunities || [])],
+    [data?.insights?.opportunities, data?.insights?.strengths]
+  );
 
-    return difference > 0
-      ? `↑ ${difference} posições em 30 dias`
-      : `↓ ${Math.abs(difference)} posições em 30 dias`;
-  }, [data?.history?.trend_30d]);
   const resetFilters = () => {
     setSelectedCategoryId('all');
     setSelectedCriterionSlug('all');
@@ -179,430 +175,133 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
     setHistoryDays('90');
     setQuadrantMode('default');
   };
-  const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategoryId(categoryId);
-    setSelectedCriterionSlug('all');
-  };
-  const handleStateChange = (state: string) => {
-    setSelectedState(state);
-    setSelectedCity('');
-  };
-
-  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-4 rounded-lg shadow-lg min-w-[180px]">
-          <p className="text-[10px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest mb-3 border-b border-slate-100 dark:border-white/5 pb-2">
-            Atualização: {label}
-          </p>
-          <div className="space-y-3">
-            {payload.map((entry: TooltipEntry, index: number) => (
-              <div key={index} className="flex items-center justify-between gap-4">
-                 <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{entry.name}</span>
-                 </div>
-                  <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">
-                    {entry.name === 'Posição'
-                      ? `${entry.value}º`
-                      : entry.name === 'Percentil'
-                        ? `${entry.value}%`
-                        : `${Number(entry.value).toLocaleString('pt-BR')} pts`}
-                  </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (isLoading) {
-    return (
-      <div className="space-y-5">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[112px] rounded-2xl bg-slate-100 dark:bg-white/5" />)}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <Skeleton className="lg:col-span-8 h-[400px] rounded-2xl bg-slate-100 dark:bg-white/5" />
-          <Skeleton className="lg:col-span-4 h-[400px] rounded-2xl bg-slate-100 dark:bg-white/5" />
-        </div>
-      </div>
-    );
+    return <div className="grid gap-5"><Skeleton className="h-44" /><Skeleton className="h-64" /><Skeleton className="h-96" /></div>;
   }
 
-  const rankingProcessing = data?.status === 'processing';
-  const rankingEmpty = data?.status === 'empty';
-  const rankingStale = data?.status === 'stale';
-  const rankingLocked = data?.status === 'locked';
-
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto pb-20">
+    <div className="mx-auto max-w-[1400px] space-y-6 pb-20">
       {isError && (
-        <Card className="border-red-200 bg-red-50 dark:border-red-900/40 dark:bg-red-950/20">
-          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3"><AlertCircle className="mt-0.5 h-5 w-5 text-red-600" /><div><p className="font-semibold text-red-900 dark:text-red-200">{errorMessage}</p><p className="mt-1 text-sm text-red-800/80 dark:text-red-200/80">{lastKnownTimestamp ? `Exibindo o último estado conhecido, de ${new Date(lastKnownTimestamp).toLocaleString('pt-BR')}.` : 'Nenhum estado anterior está disponível nesta tentativa.'}</p>{(apiError?.code || apiError?.requestId || apiError?.status) && <p className="mt-1 text-[11px] text-red-800/70 dark:text-red-200/70">{[apiError.status && `HTTP ${apiError.status}`, apiError.code, apiError.requestId && `request_id: ${apiError.requestId}`].filter(Boolean).join(' · ')}</p>}</div></div>
+        <Card className="border-red-200 bg-red-50 dark:border-red-900/40 dark:bg-red-950/20" role="alert">
+          <CardContent className="flex flex-col justify-between gap-3 p-5 sm:flex-row sm:items-center">
+            <div className="flex items-start gap-3"><AlertCircle className="mt-0.5 h-5 w-5 text-red-600" /><div>
+              <p className="font-semibold text-red-900 dark:text-red-200">{errorMessage}</p>
+              <p className="mt-1 text-sm text-red-800/80 dark:text-red-200/80">Não foi possível atualizar o ranking; os dados anteriores só aparecem quando disponíveis.</p>
+              {(apiError?.status || apiError?.code || apiError?.requestId) && <p className="mt-1 text-xs text-red-800/70 dark:text-red-200/70">{[apiError.status && `HTTP ${apiError.status}`, apiError.code, apiError.requestId && `request_id: ${apiError.requestId}`].filter(Boolean).join(' · ')}</p>}
+            </div></div>
             <Button variant="outline" size="sm" onClick={() => void refetch()}>Tentar novamente</Button>
           </CardContent>
         </Card>
       )}
+
       {isPlaceholderData && (
         <p className="text-sm text-muted-foreground" role="status">
-          Exibindo o último estado conhecido enquanto atualizamos a comparação para os filtros selecionados.
+          Exibindo temporariamente {previousScope} enquanto atualizamos {requestedScope || 'os filtros selecionados'}.
         </p>
       )}
-      {(rankingProcessing || rankingEmpty || rankingStale || rankingLocked) && (
-        <Card className="border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20">
-          <CardContent className="p-5">
-            <p className="font-semibold text-amber-900 dark:text-amber-200">
-              {rankingLocked
-                ? 'Ranking avançado bloqueado'
-                : rankingProcessing
-                  ? 'Ranking em processamento'
-                  : rankingStale
-                    ? 'Ranking com dados defasados'
-                    : 'População insuficiente para comparar'}
-            </p>
-            <p className="mt-1 text-sm text-amber-800/80 dark:text-amber-200/80">
-              {rankingLocked
-                ? 'Altere seu plano para acessar o desempenho orgânico.'
-                : rankingProcessing
-                  ? 'O primeiro snapshot diário está sendo calculado. Tente novamente após a próxima atualização.'
-                  : rankingStale
-                    ? 'Mostramos o último snapshot disponível enquanto a atualização é concluída.'
-                    : 'Amplie os filtros ou aguarde empresas comparáveis neste escopo.'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Cabeçalho estratégico */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy className="h-6 w-6 text-amber-500" />
-            <h2 className="text-3xl font-bold tracking-tight uppercase text-foreground dark:text-white">
-              Desempenho no Mercado
-            </h2>
+      <section className="space-y-4" aria-labelledby="ranking-title">
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+          <div>
+            <div className="mb-2 flex items-center gap-2"><Trophy className="h-6 w-6 text-amber-500" /><h2 id="ranking-title" className="text-3xl font-bold tracking-tight">{heroTitle}</h2></div>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{heroDescription}</p>
           </div>
-          <p className="text-sm text-muted-foreground font-medium max-w-lg leading-relaxed">
-            Acompanhe sua posição no Avalia Solar, compare seu desempenho e entenda os fatores que influenciam o ranking orgânico.
-          </p>
+          <RankingMethodologyDrawer definition={data?.definition} quadrantMeta={data?.quadrant?.meta} />
         </div>
-        <div className="flex flex-col gap-2">
-          <div className="flex p-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 items-center px-4 py-1.5 gap-3">
-            <Award className="h-4 w-4 text-amber-500" />
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-widest whitespace-nowrap">
-              Sua posição: {ranking?.position && ranking?.population ? `${ranking.position}º de ${ranking.population} empresas` : 'aguardando ranking'}
-            </span>
-          </div>
-          {isPreview && (
-            <div className="flex p-1 bg-brand-blue/5 rounded-lg border border-brand-blue/20 items-center px-4 py-1.5 gap-3">
-              <ShieldCheck className="h-4 w-4 text-brand-blue" />
-              <span className="text-[10px] font-bold text-brand-blue uppercase tracking-widest whitespace-nowrap">
-                Comparação atual ativa
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+        <RankingContextChips data={data} />
+      </section>
 
-      {/* Matriz de KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Sua posição"
-          value={ranking?.position && ranking?.population ? `${ranking.position}º de ${ranking.population}` : '--'}
-          icon={Activity}
-          change={positionMovement || (hasSnapshot ? 'Ranking oficial' : 'Aguardando snapshot')}
-          changeType="neutral"
-          color="brand-yellow"
-          delay={0.1}
-        />
-        <MetricCard
-          title="Percentil de mercado"
-          value={ranking?.percentile != null ? `${Number(ranking.percentile).toFixed(1)}%` : '--'}
-          icon={Target}
-          change={ranking?.population ? `Entre ${ranking.population} empresas` : 'Aguardando população'}
-          changeType="neutral"
-          color="brand-blue"
-          delay={0.2}
-        />
-        <MetricCard
-          title="Pontuação orgânica"
-          value={ranking?.score != null ? `${Number(ranking.score).toFixed(1)} pts` : '--'}
-          icon={ShieldCheck}
-          change="Usada no ranking orgânico"
-          changeType="neutral"
-          color="brand-green"
-          delay={0.3}
-        />
-        <MetricCard
-          title="Conversão do perfil"
-          value={stats?.conversionRate !== undefined ? `${Number(stats.conversionRate).toFixed(1)}%` : '--'}
-          icon={Target}
-          change="Leads gerados por visualizações"
-          changeType="neutral"
-          color="brand-cyan"
-          delay={0.4}
-        />
-      </div>
+      <RankingStateBanner status={data?.status} />
 
-      <Card className="border border-sky-100 bg-sky-50/50 dark:border-sky-900/30 dark:bg-sky-950/20">
-        <CardContent className="p-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-          <p className="text-xs font-bold text-sky-900 dark:text-sky-200">Ranking orgânico</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-                {transparency?.score_definition || 'Snapshot ainda não disponível. O ranking será calculado no próximo ciclo de dados.'}
-              </p>
+      <Card>
+        <CardContent className="flex flex-wrap items-end gap-3 p-4">
+          <Filter className="mb-2 h-4 w-4 text-muted-foreground" />
+          <FilterSelect label="Categoria" value={selectedCategoryId} onChange={(value) => { setSelectedCategoryId(value); setSelectedCriterionSlug('all'); }}>
+            <SelectItem value="all">Todas as categorias</SelectItem>
+            {(filterOptions?.categories || []).map((category) => <SelectItem key={category.id} value={String(category.id)}>{category.name}</SelectItem>)}
+          </FilterSelect>
+          <FilterSelect label="Estado" value={selectedState} onChange={(value) => { setSelectedState(value); setSelectedCity(''); }}>
+            <SelectItem value="all">Brasil</SelectItem>
+            {(filterOptions?.states || []).map((state) => <SelectItem key={state} value={state}>{stateName(state)}</SelectItem>)}
+          </FilterSelect>
+          <FilterSelect label="Setor" value={selectedSector} onChange={setSelectedSector}>
+            <SelectItem value="all">Todos os setores</SelectItem>
+            {(filterOptions?.sectors || []).map((sector) => <SelectItem key={sector} value={sector}>{sector}</SelectItem>)}
+          </FilterSelect>
+          <FilterSelect label="Período" value={historyDays} onChange={setHistoryDays}>
+            {HISTORY_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+          </FilterSelect>
+          <details className="relative mb-0.5">
+            <summary className="cursor-pointer rounded-md border px-3 py-2 text-sm">Mais filtros</summary>
+            <div className="absolute right-0 z-10 mt-2 grid w-72 gap-3 rounded-lg border bg-background p-3 shadow-lg">
+              <label className="grid gap-1 text-xs font-medium">Cidade
+                <input list="ranking-cities" value={selectedCity} onChange={(event) => setSelectedCity(event.target.value)} className="h-9 rounded-md border bg-transparent px-2 text-sm" />
+                <datalist id="ranking-cities">{(filterOptions?.cities || []).map((city) => <option key={city} value={city} />)}</datalist>
+              </label>
+              <FilterSelect label="Critério do mapa" value={selectedCriterionSlug} onChange={setSelectedCriterionSlug}>
+                <SelectItem value="all">Nenhum</SelectItem>
+                {(criteriaQuery.data?.criteria || []).map((criterion) => <SelectItem key={criterion.slug} value={criterion.slug}>{criterion.title}</SelectItem>)}
+              </FilterSelect>
+              <FilterSelect label="Modo do mapa" value={quadrantMode} onChange={(value) => setQuadrantMode(value as 'default' | 'reviews')}>
+                <SelectItem value="default">Autoridade e execução</SelectItem>
+                <SelectItem value="reviews">Somente reviews</SelectItem>
+              </FilterSelect>
             </div>
-            <Badge variant="outline" className="w-fit text-[10px]">{transparency?.definition_version || 'Pendente'}</Badge>
-          </div>
-          <div className="mt-3 grid gap-2 text-[11px] text-slate-500 sm:grid-cols-3">
-            <span>Escopo: {transparency?.scope === 'category' ? 'categoria' : 'global'}</span>
-            <span>Patrocínio: {transparency?.sponsored_included ? 'incluído' : 'não influencia este ranking'}</span>
-            <span>Atualizado: {transparency?.computed_at ? new Date(transparency.computed_at).toLocaleString('pt-BR') : 'aguardando processamento'}</span>
-          </div>
-          {transparency?.quality_flags?.length ? <p className="mt-2 text-[10px] text-amber-700 dark:text-amber-300">Qualidade dos dados: {transparency.quality_flags.join(', ')}</p> : null}
+          </details>
+          {hasActiveFilters && <Button variant="ghost" size="sm" onClick={resetFilters}><RotateCcw className="mr-1 h-4 w-4" />Limpar</Button>}
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Visualização de Vetor de Crescimento */}
-        <Card className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
-          <CardHeader className="p-6 border-b border-slate-200/50 dark:border-white/[0.06] flex flex-row items-center justify-between gap-4">
-            <div>
-              <CardTitle className="text-lg font-bold text-foreground dark:text-white tracking-tight flex items-center gap-3">
-                <BarChart3 className="w-5 h-5 text-brand-blue" />
-                Evolução do desempenho orgânico
-              </CardTitle>
-              <CardDescription className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                {isPreview ? `O histórico representa o ranking oficial · ${historyLabel}` : `Snapshots diários · ${historyLabel}`}
-              </CardDescription>
-            </div>
-            <Select value={historyMetric} onValueChange={(value) => setHistoryMetric(value as typeof historyMetric)}>
-              <SelectTrigger className="w-[150px] text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="position">Posição</SelectItem>
-                <SelectItem value="percentile">Percentil</SelectItem>
-                <SelectItem value="score">Pontuação</SelectItem>
-              </SelectContent>
-            </Select>
+      <section className={isPreview ? 'grid gap-5 lg:grid-cols-2' : 'max-w-xl'} aria-label="Posições de ranking">
+        <OfficialRankingCard metric={data?.official_ranking || data?.ranking} scope={officialScope} />
+        {isPreview && <ComparisonRankingCard metric={data?.ranking} scope={comparisonLabel || 'Escopo selecionado'} />}
+      </section>
+
+      <RankingBenchmarkCards benchmarks={data?.benchmarks} />
+
+      <section className="grid gap-5 xl:grid-cols-[1.25fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>{isPreview ? 'Histórico do ranking oficial' : 'Evolução do ranking oficial'}</CardTitle>
+            <CardDescription>{isPreview ? 'A comparação regional atual é calculada em tempo real e não possui histórico persistido.' : `Snapshots oficiais · ${historyLabel}`}</CardDescription>
           </CardHeader>
-          <CardContent className="p-8 pb-12">
-            <div className="h-[400px] w-full mt-6">
-              {historicalData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={historicalData} margin={{ top: 20, right: 30, bottom: 20, left: -20 }}>
-                    <defs>
-                      <linearGradient id="ranking-history-gradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={selectedHistoryMetric.color} stopOpacity={0.24}/>
-                        <stop offset="95%" stopColor={selectedHistoryMetric.color} stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis
-                      dataKey="week"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fontWeight: 600, fill: 'hsl(var(--muted-foreground))', fontFamily: 'var(--font-sans)' }}
-                      dy={15}
-                    />
-                    <YAxis
-                      reversed={selectedHistoryMetric.reversed}
-                      domain={historyMetric === 'position' ? [1, 'dataMax + 1'] : ['auto', 'auto']}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fontWeight: 800, fill: selectedHistoryMetric.color, fontFamily: 'var(--font-mono)' }}
-                    />
-                    <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1 }} />
-                    <Area
-                      type="monotone"
-                      dataKey={historyMetric}
-                      stroke={selectedHistoryMetric.color}
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#ranking-history-gradient)"
-                      name={selectedHistoryMetric.label}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                   <div className="h-16 w-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6">
-                    <BarChart3 className="h-6 w-6 text-slate-300 dark:text-slate-600" />
-                  </div>
-                  <p className="text-[10px] font-black text-slate-400 dark:text-white/20 uppercase tracking-[0.2em] max-w-[180px]">
-                    Dados históricos insuficientes.
-                  </p>
-                </div>
-              )}
+          <CardContent>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {(['position', 'percentile', 'score'] as const).map((metric) => <Button key={metric} variant={historyMetric === metric ? 'default' : 'outline'} size="sm" onClick={() => setHistoryMetric(metric)}>{metric === 'position' ? 'Posição' : metric === 'percentile' ? 'Percentil' : 'Pontuação'}</Button>)}
             </div>
+            <p className="sr-only">Gráfico do histórico oficial de {historyLabel}, exibindo {historyMetric}.</p>
+            {historyItems.length ? (
+              <div className="h-80" aria-label="Gráfico do histórico oficial">
+                <ResponsiveContainer width="100%" height="100%"><AreaChart data={historyItems} margin={{ top: 16, right: 20, bottom: 16, left: -12 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="week" tick={{ fontSize: 10 }} /><YAxis reversed={historyMetric === 'position'} tick={{ fontSize: 10 }} />
+                  <RechartsTooltip /><Area type="monotone" dataKey={historyMetric} stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.18)" name={historyMetric} />
+                </AreaChart></ResponsiveContainer>
+              </div>
+            ) : <p className="py-16 text-center text-sm text-muted-foreground">Dados históricos insuficientes.</p>}
           </CardContent>
         </Card>
+        <RankingPositioningMap quadrant={data?.quadrant} />
+      </section>
 
-        {/* Quadrante Tático de Mercado */}
-        <Card className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col">
-          <CardHeader className="p-6 border-b border-slate-200/50 dark:border-white/[0.06]">
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-bold text-foreground dark:text-white tracking-tight flex items-center gap-3">
-                  <Target className="w-5 h-5 text-brand-green" />
-                  Mapa de Posicionamento
-                </CardTitle>
-                <div className="h-9 w-9 rounded-xl bg-brand-green/10 flex items-center justify-center">
-                   <Activity className="h-4 w-4 text-brand-green" />
-                </div>
-              </div>
-
-              <div className="relative group">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
-                <Select value={selectedCategoryId} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
-                    <SelectValue placeholder="SELETOR DE ESCOPO (CATEGORIA)" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                    <SelectItem value="all" className="text-[10px] font-bold uppercase">ESCOPO GLOBAL</SelectItem>
-                    {(filterOptions?.categories || []).map((cat) => (
-                      <SelectItem key={cat.id} value={String(cat.id)} className="text-[10px] font-bold uppercase">
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="relative group">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
-                <Select value={selectedState} onValueChange={handleStateChange}>
-                  <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
-                    <SelectValue placeholder="ESTADO (UF)" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                    <SelectItem value="all" className="text-[10px] font-bold uppercase">BRASIL TODO</SelectItem>
-                    {(filterOptions?.states || []).map((uf) => (
-                      <SelectItem key={uf} value={uf} className="text-[10px] font-bold uppercase">{uf}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="relative group">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
-                <Select value={selectedSector} onValueChange={setSelectedSector}>
-                  <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
-                    <SelectValue placeholder="SETOR / PROJETO" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                    <SelectItem value="all" className="text-[10px] font-bold uppercase">TODOS OS SETORES</SelectItem>
-                    {(filterOptions?.sectors || []).map((sector) => (
-                      <SelectItem key={sector} value={sector} className="text-[10px] font-bold uppercase">
-                        {sector}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="relative group">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
-                <input 
-                  type="text"
-                  list="ranking-city-options"
-                  placeholder="CIDADE (EX: SÃO PAULO)"
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30 focus:outline-none"
-                />
-                <datalist id="ranking-city-options">
-                  {(filterOptions?.cities || []).map((city) => <option key={city} value={city} />)}
-                </datalist>
-              </div>
-
-              <div className="relative group">
-                <Select value={quadrantMode} onValueChange={(value) => setQuadrantMode(value as 'default' | 'reviews')}>
-                  <SelectTrigger className="w-full h-11 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest">
-                    <SelectValue placeholder="BASE DO QUADRANTE" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">Autoridade e execução</SelectItem>
-                    <SelectItem value="reviews">Somente reviews</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="relative group">
-                <Select value={historyDays} onValueChange={setHistoryDays}>
-                  <SelectTrigger className="w-full h-11 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
-                    <SelectValue placeholder="PERÍODO" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                    <SelectItem value="30" className="text-[10px] font-bold uppercase">Últimos 30 dias</SelectItem>
-                    <SelectItem value="90" className="text-[10px] font-bold uppercase">Últimos 90 dias</SelectItem>
-                    <SelectItem value="365" className="text-[10px] font-bold uppercase">Últimos 12 meses</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="relative group">
-                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-brand-blue transition-colors" />
-                <Select value={selectedCriterionSlug} onValueChange={setSelectedCriterionSlug}>
-                  <SelectTrigger className="w-full h-11 pl-12 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-[10px] font-bold uppercase tracking-widest focus:ring-brand-blue/30">
-                    <SelectValue placeholder="CRITÉRIO" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-                    <SelectItem value="all" className="text-[10px] font-bold uppercase">TODOS OS CRITÉRIOS</SelectItem>
-                    {(criteriaQuery.data?.criteria || []).map((criterion: Criterion) => (
-                      <SelectItem key={criterion.slug} value={criterion.slug} className="text-[10px] font-bold uppercase">
-                        {criterion.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {hasActiveFilters && <Button type="button" variant="ghost" size="sm" className="w-full" onClick={resetFilters}><RotateCcw className="mr-2 h-4 w-4" />Limpar filtros</Button>}
-            </div>
-          </CardHeader>
-          <CardContent className="p-8 flex-1 flex flex-col">
-            <div className="flex-1 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 relative overflow-hidden group/quad">
-              {quadrantData.length > 0 ? (
-                <MagicQuadrant
-                  data={quadrantData}
-                  xAxisLabel={quadrantMeta?.x_axis_label}
-                  yAxisLabel={quadrantMeta?.y_axis_label}
-                  criterionTitle={quadrantMeta?.criterion_title}
-                />
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                   <div className="h-20 w-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6 animate-pulse">
-                    <Target className="h-8 w-8 text-slate-300 dark:text-slate-600" />
-                  </div>
-                  <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] max-w-[180px]">
-                    Dados insuficientes para mapear o quadrante.
-                  </p>
-                </div>
-              )}
-            </div>
-            
-            <div className="mt-8 p-6 rounded-2xl bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/20 group hover:border-indigo-200 transition-all">
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="h-5 w-5 text-indigo-500" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1">Como melhorar sua posição</p>
-                  <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
-                    {selectedCriterionSlug !== 'all'
-                      ? `A comparação atual usa ${quadrantMeta?.criterion_title || 'o critério selecionado'} no mapa. Ela não altera sua posição oficial nem o histórico.`
-                      : data?.insights?.next_best_action?.message || 'Aguardando dados comparáveis para recomendar uma ação específica.'}
-                  </p>
-                </div>
-              </div>
-            </div>
+      <section className="grid gap-5 lg:grid-cols-[1fr_auto]">
+        <Card>
+          <CardHeader><CardTitle>Insights e próximos passos</CardTitle><CardDescription>Recomendações derivadas somente dos dados disponíveis neste escopo.</CardDescription></CardHeader>
+          <CardContent className="space-y-3">
+            {insights.length ? insights.map((insight) => <article key={insight.code} className="rounded-lg border p-4">
+              <p className="font-medium">{insight.title || insight.code}</p><p className="mt-1 text-sm text-muted-foreground">{insight.description || insight.message}</p>
+              {insight.action_url && <a className="mt-2 inline-block text-sm font-medium text-brand-blue underline" href={insight.action_url}>Ver ação relacionada</a>}
+            </article>) : <p className="text-sm text-muted-foreground">Ainda não há evidência comparável suficiente para uma recomendação específica.</p>}
+            {data?.insights?.next_best_action && <p className="rounded-lg bg-muted p-3 text-sm"><strong>Próxima ação:</strong> {data.insights.next_best_action.title || data.insights.next_best_action.description || data.insights.next_best_action.message}</p>}
           </CardContent>
         </Card>
-      </div>
+        {qualityLabels.length > 0 && <Card className="lg:w-80"><CardHeader><CardTitle>Qualidade dos dados</CardTitle></CardHeader><CardContent><div className="flex flex-wrap gap-2">{qualityLabels.map((label) => <Badge key={label} variant="outline">{label}</Badge>)}</div>{formatDate(data?.quality?.computed_at) && <p className="mt-4 text-xs text-muted-foreground">Calculado em {formatDate(data?.quality?.computed_at)}</p>}</CardContent></Card>}
+      </section>
     </div>
   );
+}
+
+function FilterSelect({ label, value, onChange, children }: { label: string; value: string; onChange: (value: string) => void; children: React.ReactNode }) {
+  return <label className="grid min-w-36 gap-1 text-xs font-medium text-muted-foreground"><span>{label}</span><Select value={value} onValueChange={onChange}><SelectTrigger className="h-9 bg-background text-sm"><SelectValue /></SelectTrigger><SelectContent>{children}</SelectContent></Select></label>;
 }

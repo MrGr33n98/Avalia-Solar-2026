@@ -276,6 +276,14 @@ jobs:
           SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
         run: bundle exec rspec spec/services/company_dashboard/ranking_snapshot_writer_spec.rb
 
+      - name: Run ranking benchmark specs
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: bundle exec rspec spec/services/company_dashboard/ranking_benchmark_service_spec.rb
+
       - name: Run ranking request and policy specs
         working-directory: ./AB0-1-back
         env:
@@ -295,8 +303,32 @@ jobs:
           SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
         run: bundle exec rspec spec/models/company_trust_score_spec.rb
 
+  ranking-frontend-gate:
+    name: Ranking Performance Frontend Contract
+    needs: [zeitwerk-check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Ranking Performance tests
+        run: npm test -- RankingPerformanceTab --runInBand
+      - name: Typecheck Ranking Performance contract
+        run: npm run typecheck
+      - name: Lint Ranking Performance files
+        run: npx eslint app/dashboard/components/RankingPerformanceTab.tsx app/dashboard/components/ranking app/dashboard/components/MagicQuadrant.tsx
+
   deploy:
-    needs: [build-and-push, zeitwerk-check, ranking-gate]
+    needs: [build-and-push, zeitwerk-check, ranking-gate, ranking-frontend-gate]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     environment:
@@ -649,8 +681,16 @@ jobs:
             fi
 
             echo "?? Executando smoke do Ranking Performance para a empresa 372..."
-            if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails runner 'company = Company.find(372); result = CompanyDashboard::RankingService.new(company: company, quadrant_mode: \"default\", history_days: 90).ranking_data; allowed = %w[locked processing ready stale empty error]; abort(\"RANKING_SMOKE_INVALID_STATUS\") unless allowed.include?(result[:status].to_s); puts({ event: \"ranking_smoke_ok\", status: result[:status], company_id: company.id }.to_json)'"; then
+            if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails runner 'company = Company.find(372); result = CompanyDashboard::RankingService.new(company: company, quadrant_mode: \"default\", history_days: 90).ranking_data; allowed = %w[processing ready stale empty]; abort(\"RANKING_SMOKE_INVALID_STATUS\") unless allowed.include?(result[:status].to_s); puts({ event: \"ranking_smoke_ok\", status: result[:status], company_id: company.id }.to_json)'"; then
               echo "!! Smoke do Ranking Performance falhou; abortando antes de atualizar o backend"
+              docker compose logs --tail=300 backend || true
+              docker start ab0-worker >/dev/null 2>&1 || true
+              exit 1
+            fi
+
+            echo "?? Executando smoke da comparação SC para a empresa 372..."
+            if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails runner 'company = Company.find(372); result = CompanyDashboard::RankingService.new(company: company, state: \"SC\", quadrant_mode: \"default\", history_days: 90).ranking_data; abort(\"RANKING_SC_SMOKE_INVALID_MODE\") unless result[:mode] == \"preview\"; abort(\"RANKING_SC_SMOKE_ERROR\") if result[:status].to_s == \"error\"; abort(\"RANKING_SC_SCOPE_INVALID\") unless result.dig(:comparison_scope, :state) == \"SC\"; puts({ event: \"ranking_sc_smoke_ok\", status: result[:status], company_id: company.id }.to_json)'"; then
+              echo "!! Smoke da comparação SC do Ranking Performance falhou"
               docker compose logs --tail=300 backend || true
               docker start ab0-worker >/dev/null 2>&1 || true
               exit 1

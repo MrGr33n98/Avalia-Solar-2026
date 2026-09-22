@@ -13,49 +13,19 @@ jest.mock('next/navigation', () => ({
 jest.mock('@tanstack/react-query', () => ({
   useQuery: ({ queryKey }: { queryKey: string[] }) => {
     if (queryKey[0] === 'company-analytics-ranking') {
-      return {
-        data: mockRankingData,
-        isLoading: false,
-        isError: Boolean(mockRankingError),
-        error: mockRankingError,
-        isPlaceholderData: Boolean(mockRankingError),
-        refetch: jest.fn(),
-      };
+      return { data: mockRankingData, isLoading: false, isError: Boolean(mockRankingError), error: mockRankingError, isPlaceholderData: Boolean(mockRankingError), refetch: jest.fn() };
     }
     if (queryKey[0] === 'company-analytics-ranking-filter-options') {
-      return {
-        data: {
-          categories: [],
-          states: ['SP'],
-          sectors: ['Residenciais'],
-          cities: [],
-          selected_state: null,
-        },
-        isLoading: false,
-      };
+      return { data: { categories: [], states: ['SC'], sectors: ['Residenciais'], cities: [], selected_state: null }, isLoading: false };
     }
     return { data: { criteria: [] }, isLoading: false };
   },
 }));
 
-jest.mock('./MetricCard', () => ({
-  __esModule: true,
-  default: ({ title, value, change }: { title: string; value: string; change: string }) => (
-    <div data-testid={`metric-${title}`}>{`${title}: ${value} ${change}`}</div>
-  ),
-}));
-jest.mock('./MagicQuadrant', () => ({
-  __esModule: true,
-  default: () => <div data-testid="quadrant" />,
-}));
 jest.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  XAxis: () => null,
-  YAxis: () => null,
-  Tooltip: () => null,
-  CartesianGrid: () => null,
-  Area: () => null,
-  AreaChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  XAxis: () => null, YAxis: () => null, Tooltip: () => null, CartesianGrid: () => null,
+  Area: () => null, AreaChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 jest.mock('@/components/ui/card', () => ({
   Card: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
@@ -68,20 +38,22 @@ jest.mock('@/components/ui/select', () => ({
   Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SelectItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <button type="button">{children}</button>
-  ),
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button>,
   SelectValue: () => null,
 }));
+jest.mock('@/components/ui/dialog', () => ({
+  Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
+  DialogTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
 jest.mock('@/components/ui/skeleton', () => ({ Skeleton: () => <div /> }));
-jest.mock('@/components/ui/badge', () => ({
-  Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-}));
-jest.mock('@/components/ui/button', () => ({
-  Button: ({ children }: { children: React.ReactNode }) => (
-    <button type="button">{children}</button>
-  ),
-}));
+jest.mock('@/components/ui/badge', () => ({ Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span> }));
+jest.mock('@/components/ui/button', () => ({ Button: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button> }));
+jest.mock('./MagicQuadrant', () => ({ __esModule: true, default: () => <div data-testid="quadrant" /> }));
+
+const company = { id: 1, name: 'Empresa Solar', categories: [] } as never;
 
 describe('RankingPerformanceTab', () => {
   beforeEach(() => {
@@ -89,69 +61,62 @@ describe('RankingPerformanceTab', () => {
     mockRankingData = {
       status: 'ready',
       mode: 'canonical',
-      ranking: { status: 'ready', position: 4, population: 50, score: 42.4, percentile: 94.0 },
-      definition: {
-        definition_version: 'organic-performance-v2',
-        purpose: 'organic_performance',
-        sponsored_included: false,
-        quality_flags: [],
-      },
-      history: { status: 'ready', items: [], trend_30d: null },
+      official_scope: { type: 'global', category_id: null },
+      comparison_scope: { active: false, state: null, city: null, sector: null, category_id: null, criterion_slug: null },
+      ranking: { status: 'ready', position: 4, population: 50, score: 42.4, percentile: 94.0, population_label: 'eligible_companies' },
+      official_ranking: { status: 'ready', position: 4, population: 50, score: 42.4, percentile: 94.0, population_label: 'eligible_companies' },
+      benchmarks: { status: 'ready', population: 50, median_score: 31, p75_score: 41, p90_score: 55 },
+      definition: { definition_version: 'organic-performance-v2', purpose: 'organic_performance', sponsored_included: false, quality_flags: [], data_through: '2026-09-21T23:59:59Z' },
+      quality: { flags: [] },
+      history: { status: 'ready', scope: 'official', items: [], trend_30d: null },
       quadrant: { status: 'ready', preview: false, points: [], meta: {} },
       insights: { strengths: [], opportunities: [], next_best_action: null },
     };
   });
 
-  it('uses V2 fields and formats score as points rather than a percentile', () => {
-    render(
-      <RankingPerformanceTab
-        company={{ id: 1, name: 'Empresa Solar', categories: [] } as never}
-        stats={{ conversionRate: 12.5 }}
-      />
-    );
+  it('renders the official position and real score as points', () => {
+    render(<RankingPerformanceTab company={company} stats={{ conversionRate: 12.5 }} />);
 
-    expect(screen.getByTestId('metric-Sua posição')).toHaveTextContent('4º de 50');
-    expect(screen.getByTestId('metric-Percentil de mercado')).toHaveTextContent('94.0%');
-    expect(screen.getByTestId('metric-Pontuação orgânica')).toHaveTextContent('42.4 pts');
-    expect(screen.getByTestId('metric-Pontuação orgânica')).not.toHaveTextContent('42.4%');
+    expect(screen.getByText('Ranking oficial')).toBeInTheDocument();
+    expect(screen.getByText('4º de 50')).toBeInTheDocument();
+    expect(screen.getByText('42.4 pts')).toBeInTheDocument();
+    expect(screen.queryByText('42.4%')).not.toBeInTheDocument();
   });
 
-  it('communicates a processing snapshot as a business state', () => {
+  it('separates the SC comparison from the official ranking', () => {
     mockRankingData = {
       ...mockRankingData,
-      status: 'processing',
-      ranking: {
-        status: 'processing',
-        position: null,
-        population: null,
-        score: null,
-        percentile: null,
-      },
+      status: 'preview',
+      mode: 'preview',
+      comparison_scope: { active: true, state: 'SC', city: null, sector: null, category_id: null, criterion_slug: null },
+      ranking: { status: 'preview', position: 8, population: 41, score: 42.4, percentile: 82.9, population_label: 'eligible_companies' },
+      official_ranking: { status: 'ready', position: 32, population: 458, score: 42.4, percentile: 93.2, population_label: 'eligible_companies' },
     };
 
-    render(
-      <RankingPerformanceTab company={{ id: 1, name: 'Empresa Solar', categories: [] } as never} />
-    );
+    render(<RankingPerformanceTab company={company} />);
 
-    expect(screen.getByText('Ranking em processamento')).toBeInTheDocument();
+    expect(screen.getByText('Desempenho em Santa Catarina')).toBeInTheDocument();
+    expect(screen.getByText('Ranking oficial')).toBeInTheDocument();
+    expect(screen.getByText('Comparação atual')).toBeInTheDocument();
+    expect(screen.getByText('32º de 458')).toBeInTheDocument();
+    expect(screen.getByText('8º de 41')).toBeInTheDocument();
   });
 
-  it('identifica dados anteriores e preserva o erro estruturado sem object coercion', () => {
-    mockRankingError = {
-      message: '[500] Ranking indisponível',
-      status: 500,
-      code: 'RANKING_UNAVAILABLE',
-      requestId: 'req-372',
-    };
-    mockRankingData = {
-      ...mockRankingData,
-      quality: { flags: [], computed_at: '2026-09-22T10:00:00Z' },
-    };
+  it('translates quality flags instead of exposing their raw codes', () => {
+    mockRankingData = { ...mockRankingData, quality: { flags: ['snapshot_stale'] } };
 
-    render(<RankingPerformanceTab company={{ id: 1, name: 'Empresa Solar', categories: [] } as never} />);
+    render(<RankingPerformanceTab company={company} />);
+
+    expect(screen.getByText('Atualização pendente')).toBeInTheDocument();
+    expect(screen.queryByText('snapshot_stale')).not.toBeInTheDocument();
+  });
+
+  it('shows structured errors without object coercion', () => {
+    mockRankingError = { message: '[500] Ranking indisponível', status: 500, code: 'RANKING_UNAVAILABLE', requestId: 'req-372' };
+
+    render(<RankingPerformanceTab company={company} />);
 
     expect(screen.getByText('Ranking indisponível')).toBeInTheDocument();
-    expect(screen.getAllByText(/último estado conhecido/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/RANKING_UNAVAILABLE/)).toBeInTheDocument();
     expect(screen.getByText(/request_id: req-372/)).toBeInTheDocument();
     expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
