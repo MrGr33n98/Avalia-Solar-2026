@@ -15,6 +15,30 @@ import {
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useScrollDrivenFrames } from '@/hooks/useScrollDrivenFrames';
 
+// Os frames atuais são WebP VP8 sem canal alpha. As máscaras dissolvem somente o
+// campo claro nas bordas, mantendo painel, pedestal, reflexos e glow sem blur.
+const SCENE_HORIZONTAL_FEATHER = {
+  WebkitMaskImage:
+    'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.42) 5%, black 11%, black 89%, rgba(0,0,0,0.42) 95%, transparent 100%)',
+  maskImage:
+    'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.42) 5%, black 11%, black 89%, rgba(0,0,0,0.42) 95%, transparent 100%)',
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskSize: '100% 100%',
+  maskSize: '100% 100%',
+};
+
+const SCENE_VERTICAL_FEATHER = {
+  WebkitMaskImage:
+    'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 3%, black 8%, black 90%, rgba(0,0,0,0.45) 96%, transparent 100%)',
+  maskImage:
+    'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 3%, black 8%, black 90%, rgba(0,0,0,0.45) 96%, transparent 100%)',
+  WebkitMaskRepeat: 'no-repeat',
+  maskRepeat: 'no-repeat',
+  WebkitMaskSize: '100% 100%',
+  maskSize: '100% 100%',
+};
+
 const FEATURES = [
   {
     title: 'Energia limpa e inteligente',
@@ -51,6 +75,7 @@ const FEATURES = [
 export default function DecisionTransparency() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const canvasEnabled = !prefersReducedMotion;
+  const sceneTravelRef = React.useRef<HTMLElement>(null);
 
   const { canvasRef, hasRenderedValidFrame } = useScrollDrivenFrames({
     totalFrames: 120,
@@ -61,18 +86,21 @@ export default function DecisionTransparency() {
     canvasHeightDesktop: 720,
     canvasWidthMobile: 800,
     canvasHeightMobile: 450,
-    smoothingDesktop: 0.22,
-    smoothingMobile: 0.18,
-    travelRef: null,
+    smoothingDesktop: 0.14,
+    smoothingMobile: 0.12,
+    travelRef: sceneTravelRef,
+    scrollProgressMode: 'element',
+    sizeToCanvas: true,
+    frameFit: 'cover',
     preloadReadyThreshold: 0.25,
     autoPlay: canvasEnabled
       ? {
           enabled: true,
           durationMs: 10000,
           direction: 'pingpong',
-          pauseOnScroll: false,
+          pauseOnScroll: true,
           pauseOnHover: true,
-          resumeIdleAfterMs: 0,
+          resumeIdleAfterMs: 1600,
         }
       : undefined,
   });
@@ -86,7 +114,11 @@ export default function DecisionTransparency() {
   );
 
   return (
-    <section className="bg-transparent py-14 md:py-20 border-b border-slate-100">
+    <section
+      ref={sceneTravelRef}
+      data-scroll-travel
+      className="bg-transparent py-14 md:py-20 border-b border-slate-100"
+    >
       <div className="mx-auto max-w-[1320px] px-5 sm:px-6 lg:px-8 xl:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mb-12">
           <div className="lg:col-span-7 space-y-4">
@@ -103,79 +135,54 @@ export default function DecisionTransparency() {
 
           <div className="lg:col-span-5 flex flex-col items-center">
             <div
-              className="relative w-full aspect-[4/3] sm:aspect-[1.6/1] lg:aspect-[1.3/1] rounded-3xl overflow-hidden shadow-[0_12px_40px_rgba(15,23,42,0.04)] border border-slate-100/80 bg-white"
-              style={{
-                WebkitMaskImage:
-                  'linear-gradient(to right, rgba(0,0,0,0) 0%, #000 2%, #000 98%, rgba(0,0,0,0) 100%), linear-gradient(to bottom, #000 0%, #000 92%, rgba(0,0,0,0.6) 96%, rgba(0,0,0,0) 100%)',
-                WebkitMaskComposite: 'source-in',
-                maskImage:
-                  'linear-gradient(to right, rgba(0,0,0,0) 0%, #000 2%, #000 98%, rgba(0,0,0,0) 100%), linear-gradient(to bottom, #000 0%, #000 92%, rgba(0,0,0,0.6) 96%, rgba(0,0,0,0) 100%)',
-                maskComposite: 'intersect',
-              }}
+              className="relative w-full aspect-[4/3] sm:aspect-[1.6/1] lg:aspect-[1.3/1]"
+              style={SCENE_HORIZONTAL_FEATHER}
             >
-              {prefersReducedMotion ? (
-                <video
-                  muted
-                  playsInline
-                  loop
-                  autoPlay
-                  preload="auto"
-                  aria-label="Animação expositor flutuante"
-                  className="absolute inset-0 w-full h-full object-contain bg-white"
+              <div className="relative h-full w-full" style={SCENE_VERTICAL_FEATHER}>
+                <div
+                  className="relative h-full w-full origin-center will-change-transform"
+                  style={{ transform: 'translate3d(0, -1.25%, 0) scale(1.18)' }}
                 >
-                  <source src="/videos/O_Conceito_O_Expositor_Flutu.mp4" type="video/mp4" />
-                </video>
-              ) : (
-                <>
-                  <Image
-                    src="/images/decision-transparency-fallback.webp"
-                    alt="Encontre as melhores empresas de energia solar e mobilidade elétrica no Brasil"
-                    fill
-                    sizes="(max-width: 768px) 100vw, 40vw"
-                    priority
-                    className={
-                      'object-cover transition-opacity duration-500 ease-out ' +
-                      (hasRenderedValidFrame ? 'opacity-0 pointer-events-none' : 'opacity-100')
-                    }
-                  />
-                  <canvas
-                    ref={canvasRef}
-                    width={1280}
-                    height={720}
-                    aria-hidden={!hasRenderedValidFrame}
-                    className={
-                      'absolute inset-0 w-full h-full object-cover block transition-opacity duration-500 ease-out ' +
-                      (hasRenderedValidFrame ? 'opacity-100' : 'opacity-0 pointer-events-none')
-                    }
-                    style={{ imageRendering: 'auto' }}
-                  />
-                </>
-              )}
-
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-[9%]"
-                style={{
-                  background:
-                    'linear-gradient(to top, rgba(248,251,255,0.42) 0%, rgba(248,251,255,0) 100%)',
-                }}
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 left-0 w-[11%]"
-                style={{
-                  background:
-                    'linear-gradient(to right, rgba(248,251,255,0.28) 0%, rgba(248,251,255,0) 100%)',
-                }}
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 right-0 w-[5%]"
-                style={{
-                  background:
-                    'linear-gradient(to left, rgba(248,251,255,0.22) 0%, rgba(248,251,255,0) 100%)',
-                }}
-              />
+                  {prefersReducedMotion ? (
+                    <video
+                      muted
+                      playsInline
+                      loop
+                      autoPlay
+                      preload="auto"
+                      aria-label="Animação expositor flutuante"
+                      className="absolute inset-0 h-full w-full object-cover mix-blend-multiply"
+                    >
+                      <source src="/videos/O_Conceito_O_Expositor_Flutu.mp4" type="video/mp4" />
+                    </video>
+                  ) : (
+                    <>
+                      <Image
+                        src="/images/decision-transparency-fallback.webp"
+                        alt="Encontre as melhores empresas de energia solar e mobilidade elétrica no Brasil"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 40vw"
+                        priority
+                        className={
+                          'object-cover mix-blend-multiply transition-opacity duration-500 ease-out ' +
+                          (hasRenderedValidFrame ? 'pointer-events-none opacity-0' : 'opacity-100')
+                        }
+                      />
+                      <canvas
+                        ref={canvasRef}
+                        width={1280}
+                        height={720}
+                        aria-hidden={!hasRenderedValidFrame}
+                        className={
+                          'absolute inset-0 block h-full w-full transition-opacity duration-500 ease-out ' +
+                          (hasRenderedValidFrame ? 'opacity-100' : 'pointer-events-none opacity-0')
+                        }
+                        style={{ imageRendering: 'auto', mixBlendMode: 'multiply' }}
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

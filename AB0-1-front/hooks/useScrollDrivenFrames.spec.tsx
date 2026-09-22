@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { act, render, screen, waitFor } from '@testing-library/react';
 import useScrollDrivenFrames, {
   clampProgress,
+  getElementViewportProgress,
   getTargetFrameIndex,
   resolveDrawableFrameIndex,
 } from './useScrollDrivenFrames';
@@ -207,6 +208,12 @@ describe('useScrollDrivenFrames', () => {
     expect(getTargetFrameIndex(0, 120)).toBe(0);
     expect(getTargetFrameIndex(0.5, 120)).toBe(60);
     expect(getTargetFrameIndex(1, 120)).toBe(119);
+  });
+
+  it('normaliza o progresso quando a cena atravessa o viewport', () => {
+    expect(getElementViewportProgress(800, 600, 800)).toBe(0);
+    expect(getElementViewportProgress(100, 600, 800)).toBe(0.5);
+    expect(getElementViewportProgress(-600, 600, 800)).toBe(1);
   });
 
   it('resolve o frame desenhavel usando fallback proximo', () => {

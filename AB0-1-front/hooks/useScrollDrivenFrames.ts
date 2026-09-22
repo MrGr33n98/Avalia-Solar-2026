@@ -19,6 +19,12 @@ export interface UseScrollDrivenFramesOptions {
   smoothingDesktop?: number;
   smoothingMobile?: number;
   travelRef?: RefObject<HTMLElement> | null;
+  /** Define se o progresso segue uma seção sticky ou a passagem do elemento pelo viewport. */
+  scrollProgressMode?: 'travel' | 'element';
+  /** Ajusta o backing store ao tamanho CSS do canvas, preservando o enquadramento do fallback. */
+  sizeToCanvas?: boolean;
+  /** Estratégia de enquadramento dos frames dentro do canvas. */
+  frameFit?: 'stretch' | 'cover' | 'contain';
   preloadReadyThreshold?: number;
   initialFrameCount?: number;
   backgroundBatchSize?: number;
@@ -65,6 +71,17 @@ export function getTargetFrameIndex(progress: number, totalFrames: number): numb
     totalFrames - 1,
     Math.max(0, Math.round(clampProgress(progress) * (totalFrames - 1)))
   );
+}
+
+export function getElementViewportProgress(
+  elementTop: number,
+  elementHeight: number,
+  viewportHeight: number
+): number {
+  const travelDistance = elementHeight + viewportHeight;
+  if (travelDistance <= 0) return 0;
+
+  return clampProgress((viewportHeight - elementTop) / travelDistance);
 }
 
 export function resolveDrawableFrameIndex(
@@ -121,6 +138,9 @@ export function useScrollDrivenFrames({
   smoothingDesktop = 0.22,
   smoothingMobile = 0.18,
   travelRef = null,
+  scrollProgressMode = 'travel',
+  sizeToCanvas = false,
+  frameFit = 'stretch',
   preloadReadyThreshold = 0.25,
   initialFrameCount = INITIAL_FRAME_WINDOW,
   backgroundBatchSize = BACKGROUND_BATCH_SIZE,
@@ -228,12 +248,22 @@ export function useScrollDrivenFrames({
       return;
     }
 
+    let drawingWidth = effectiveWidth;
+    let drawingHeight = effectiveHeight;
+
     const syncCanvasSize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(effectiveWidth * dpr);
-      canvas.height = Math.round(effectiveHeight * dpr);
+      const cssWidth = sizeToCanvas ? canvas.clientWidth : 0;
+      const cssHeight = sizeToCanvas ? canvas.clientHeight : 0;
+
+      drawingWidth = cssWidth > 0 ? cssWidth : effectiveWidth;
+      drawingHeight = cssHeight > 0 ? cssHeight : effectiveHeight;
+
+      canvas.width = Math.round(drawingWidth * dpr);
+      canvas.height = Math.round(drawingHeight * dpr);
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
       context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
     };
 
     syncCanvasSize();
@@ -258,8 +288,22 @@ export function useScrollDrivenFrames({
         return false;
       }
 
-      context.clearRect(0, 0, effectiveWidth, effectiveHeight);
-      context.drawImage(image, 0, 0, effectiveWidth, effectiveHeight);
+      context.clearRect(0, 0, drawingWidth, drawingHeight);
+
+      if (frameFit === 'stretch') {
+        context.drawImage(image, 0, 0, drawingWidth, drawingHeight);
+      } else {
+        const scale =
+          frameFit === 'cover'
+            ? Math.max(drawingWidth / image.naturalWidth, drawingHeight / image.naturalHeight)
+            : Math.min(drawingWidth / image.naturalWidth, drawingHeight / image.naturalHeight);
+        const width = image.naturalWidth * scale;
+        const height = image.naturalHeight * scale;
+        const x = (drawingWidth - width) / 2;
+        const y = (drawingHeight - height) / 2;
+
+        context.drawImage(image, x, y, width, height);
+      }
 
       lastRenderedIndexRef.current = resolvedIndex;
       resolvedFrameRef.current = resolvedIndex;
@@ -368,6 +412,14 @@ export function useScrollDrivenFrames({
 
       const rect = travelElement.getBoundingClientRect();
       const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+
+      if (scrollProgressMode === 'element') {
+        const progress = getElementViewportProgress(rect.top, rect.height, windowHeight);
+        scrollTargetProgressRef.current =
+          isReducedMotionRef.current && progress >= 0.5 ? 1 : progress;
+        return;
+      }
+
       const scrollDistance = rect.height - windowHeight;
 
       if (scrollDistance <= 0) {
@@ -492,6 +544,8 @@ export function useScrollDrivenFrames({
     };
     const handleResize = () => {
       syncCanvasSize();
+      // Alterar width/height do canvas limpa seu bitmap; força o redesenho no mesmo loop.
+      lastRenderedIndexRef.current = -1;
       calculateScrollProgress();
       scheduleLoop();
     };
@@ -531,7 +585,12 @@ export function useScrollDrivenFrames({
     scheduleBackgroundPreload();
     // Calcula posição inicial sem registrar como interação de scroll
     calculateScrollProgress();
-    autoPlayStartRef.current = performance.now();
+    // Caso a cena monte após a seção já estar visível, o autoplay começa no
+    // frame correspondente ao scroll atual em vez de retornar ao frame zero.
+    currentProgressRef.current = scrollTargetProgressRef.current;
+    targetProgressRef.current = scrollTargetProgressRef.current;
+    autoPlayStartRef.current =
+      performance.now() - getAutoPlayElapsedFromProgress(currentProgressRef.current);
     scheduleLoop();
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -580,6 +639,9 @@ export function useScrollDrivenFrames({
     smoothingDesktop,
     smoothingMobile,
     travelRef,
+    scrollProgressMode,
+    sizeToCanvas,
+    frameFit,
     preloadReadyThreshold,
     initialFrameCount,
     backgroundBatchSize,
