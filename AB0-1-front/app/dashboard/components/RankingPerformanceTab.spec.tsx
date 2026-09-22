@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import RankingPerformanceTab from './RankingPerformanceTab';
 
 let mockRankingData: Record<string, unknown>;
+let mockRankingError: unknown = null;
 
 jest.mock('next/navigation', () => ({
   usePathname: () => '/dashboard',
@@ -15,8 +16,9 @@ jest.mock('@tanstack/react-query', () => ({
       return {
         data: mockRankingData,
         isLoading: false,
-        isError: false,
-        isPlaceholderData: false,
+        isError: Boolean(mockRankingError),
+        error: mockRankingError,
+        isPlaceholderData: Boolean(mockRankingError),
         refetch: jest.fn(),
       };
     }
@@ -83,6 +85,7 @@ jest.mock('@/components/ui/button', () => ({
 
 describe('RankingPerformanceTab', () => {
   beforeEach(() => {
+    mockRankingError = null;
     mockRankingData = {
       status: 'ready',
       mode: 'canonical',
@@ -131,5 +134,26 @@ describe('RankingPerformanceTab', () => {
     );
 
     expect(screen.getByText('Ranking em processamento')).toBeInTheDocument();
+  });
+
+  it('identifica dados anteriores e preserva o erro estruturado sem object coercion', () => {
+    mockRankingError = {
+      message: '[500] Ranking indisponível',
+      status: 500,
+      code: 'RANKING_UNAVAILABLE',
+      requestId: 'req-372',
+    };
+    mockRankingData = {
+      ...mockRankingData,
+      quality: { flags: [], computed_at: '2026-09-22T10:00:00Z' },
+    };
+
+    render(<RankingPerformanceTab company={{ id: 1, name: 'Empresa Solar', categories: [] } as never} />);
+
+    expect(screen.getByText('Ranking indisponível')).toBeInTheDocument();
+    expect(screen.getAllByText(/último estado conhecido/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/RANKING_UNAVAILABLE/)).toBeInTheDocument();
+    expect(screen.getByText(/request_id: req-372/)).toBeInTheDocument();
+    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument();
   });
 });

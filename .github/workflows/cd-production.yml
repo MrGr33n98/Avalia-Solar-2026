@@ -186,8 +186,61 @@ jobs:
           bundle exec rails runner script/schema_contract_check.rb
           RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test SECRET_KEY_BASE=ci-only-secret-key-base-not-for-production bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'
 
+  ranking-gate:
+    name: Ranking Performance Gate
+    needs: [zeitwerk-check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avaliasolar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+
+      - name: Run ranking contract specs
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: |
+          bundle exec rails db:create db:schema:load db:migrate
+          bundle exec rspec \
+            spec/services/company_dashboard/ranking_service_spec.rb \
+            spec/services/company_dashboard/ranking_snapshot_writer_spec.rb \
+            spec/requests/api/v1/company_dashboard_analytics_ranking_spec.rb \
+            spec/requests/api/v1/company_dashboard_feature_gating_spec.rb \
+            spec/models/company_trust_score_spec.rb
+
   deploy:
-    needs: [build-and-push, zeitwerk-check]
+    needs: [build-and-push, zeitwerk-check, ranking-gate]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     environment:
@@ -522,10 +575,26 @@ jobs:
               exit 1
             fi
 
+            echo "?? Executando preflight dos snapshots antes dos smokes de ranking..."
+            if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rake ranking_snapshots:preflight RAILS_ENV=production"; then
+              echo "!! Preflight de snapshots falhou; abortando antes de trocar a aplicacao"
+              docker compose run --rm --no-deps backend bash -lc "bundle exec rails db:migrate:status || true"
+              docker start ab0-worker >/dev/null 2>&1 || true
+              exit 1
+            fi
+
             echo "?? Validando contrato de schema da release..."
             if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails runner script/schema_contract_check.rb"; then
               echo "!! Contrato de schema falhou; abortando antes de atualizar o backend"
               docker compose run --rm --no-deps backend bash -lc "bundle exec rails db:migrate:status || true"
+              docker compose logs --tail=300 backend || true
+              docker start ab0-worker >/dev/null 2>&1 || true
+              exit 1
+            fi
+
+            echo "?? Executando smoke do Ranking Performance para a empresa 372..."
+            if ! docker compose run --rm --no-deps backend bash -lc "bundle exec rails runner 'company = Company.find(372); result = CompanyDashboard::RankingService.new(company: company, quadrant_mode: \"default\", history_days: 90).ranking_data; allowed = %w[locked processing ready stale empty error]; abort(\"RANKING_SMOKE_INVALID_STATUS\") unless allowed.include?(result[:status].to_s); puts({ event: \"ranking_smoke_ok\", status: result[:status], company_id: company.id }.to_json)'"; then
+              echo "!! Smoke do Ranking Performance falhou; abortando antes de atualizar o backend"
               docker compose logs --tail=300 backend || true
               docker start ab0-worker >/dev/null 2>&1 || true
               exit 1
@@ -589,6 +658,13 @@ jobs:
               if [ "$STABLE" -ne 1 ]; then
                 echo "!! AVISO: deploy concluido com backend/frontend saudaveis, mas $WORKER_SERVICE precisa de verificacao"
               fi
+            fi
+
+            echo "?? Executando smoke funcional do worker de ranking..."
+            if ! docker compose exec -T "$WORKER_SERVICE" bundle exec rails runner 'Analytics::RankingScoreWorker.new.perform; puts "RANKING_WORKER_SMOKE_OK"'; then
+              echo "!! Smoke funcional do worker de ranking falhou"
+              docker compose logs --tail=300 "$WORKER_SERVICE" || true
+              exit 1
             fi
 
             mkdir -p .deploy

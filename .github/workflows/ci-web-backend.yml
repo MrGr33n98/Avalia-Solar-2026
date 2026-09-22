@@ -141,9 +141,62 @@ jobs:
           RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test SECRET_KEY_BASE=ci-only-secret-key-base-not-for-production bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'
           bundle exec rspec
 
+  ranking-performance-gate:
+    name: Ranking Performance Contract
+    needs: fast-feedback
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avaliasolar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+
+      - name: Run ranking contract specs
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: |
+          bundle exec rails db:create db:schema:load db:migrate
+          bundle exec rspec \
+            spec/services/company_dashboard/ranking_service_spec.rb \
+            spec/services/company_dashboard/ranking_snapshot_writer_spec.rb \
+            spec/requests/api/v1/company_dashboard_analytics_ranking_spec.rb \
+            spec/requests/api/v1/company_dashboard_feature_gating_spec.rb \
+            spec/models/company_trust_score_spec.rb
+
   e2e-tests:
     name: E2E Playwright Tests
-    needs: [fast-feedback, backend-tests]
+    needs: [fast-feedback, backend-tests, ranking-performance-gate]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

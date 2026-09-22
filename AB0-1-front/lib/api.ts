@@ -1940,7 +1940,7 @@ export interface CertificationProgress {
 export interface RankingData {
   status?: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
   mode?: 'canonical' | 'preview';
-  error?: { code: string; request_id?: string } | null;
+  error?: { code: string; message?: string; request_id?: string } | null;
   ranking?: {
     status?: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error' | 'preview' | 'not_applicable';
     position: number | null;

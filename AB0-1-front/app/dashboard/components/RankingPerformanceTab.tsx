@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Company, fetchApi, companyDashboardApi, RankingFilterOptions } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/api-error';
 import MagicQuadrant from './MagicQuadrant';
 import MetricCard from './MetricCard';
 import { 
@@ -132,7 +133,7 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
     refetchOnWindowFocus: false,
   });
 
-  const { data, isLoading, isError, isPlaceholderData, refetch } = rankingQuery;
+  const { data, error: rankingError, isLoading, isError, isPlaceholderData, refetch } = rankingQuery;
   const filterOptions: RankingFilterOptions | undefined = filterOptionsQuery.data;
   const transparency = data?.definition;
   const ranking = data?.ranking;
@@ -149,6 +150,10 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
     return data?.history?.items || [];
   }, [data?.history?.items]);
   const hasActiveFilters = selectedCategoryId !== 'all' || selectedCriterionSlug !== 'all' || selectedState !== 'all' || Boolean(selectedCity) || selectedSector !== 'all' || historyDays !== '90' || quadrantMode !== 'default';
+  const lastKnownTimestamp = data?.quality?.computed_at || data?.definition?.computed_at;
+  const apiError = rankingError as { code?: string; requestId?: string; status?: number } | null;
+  const structuredErrorMessage = getApiErrorMessage(rankingError, 'Não foi possível atualizar o ranking.');
+  const errorMessage = structuredErrorMessage.replace(/^\[\d{3}\]\s*/, '');
   const historyLabel = historyDays === '365' ? 'últimos 12 meses' : `últimos ${historyDays} dias`;
   const historyMetricConfig = {
     position: { label: 'Posição', color: 'hsl(var(--chart-3))', reversed: true, suffix: 'º' },
@@ -237,14 +242,14 @@ export default function RankingPerformanceTab({ company, stats, themeMode: _them
       {isError && (
         <Card className="border-red-200 bg-red-50 dark:border-red-900/40 dark:bg-red-950/20">
           <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3"><AlertCircle className="mt-0.5 h-5 w-5 text-red-600" /><div><p className="font-semibold text-red-900 dark:text-red-200">Não foi possível atualizar o ranking</p><p className="mt-1 text-sm text-red-800/80 dark:text-red-200/80">Os dados exibidos abaixo não foram atualizados nesta tentativa.</p></div></div>
+            <div className="flex items-start gap-3"><AlertCircle className="mt-0.5 h-5 w-5 text-red-600" /><div><p className="font-semibold text-red-900 dark:text-red-200">{errorMessage}</p><p className="mt-1 text-sm text-red-800/80 dark:text-red-200/80">{lastKnownTimestamp ? `Exibindo o último estado conhecido, de ${new Date(lastKnownTimestamp).toLocaleString('pt-BR')}.` : 'Nenhum estado anterior está disponível nesta tentativa.'}</p>{(apiError?.code || apiError?.requestId || apiError?.status) && <p className="mt-1 text-[11px] text-red-800/70 dark:text-red-200/70">{[apiError.status && `HTTP ${apiError.status}`, apiError.code, apiError.requestId && `request_id: ${apiError.requestId}`].filter(Boolean).join(' · ')}</p>}</div></div>
             <Button variant="outline" size="sm" onClick={() => void refetch()}>Tentar novamente</Button>
           </CardContent>
         </Card>
       )}
       {isPlaceholderData && (
         <p className="text-sm text-muted-foreground" role="status">
-          Atualizando a comparação para os filtros selecionados.
+          Exibindo o último estado conhecido enquanto atualizamos a comparação para os filtros selecionados.
         </p>
       )}
       {(rankingProcessing || rankingEmpty || rankingStale || rankingLocked) && (

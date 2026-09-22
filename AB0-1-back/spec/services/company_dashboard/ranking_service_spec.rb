@@ -38,6 +38,20 @@ RSpec.describe CompanyDashboard::RankingService do
       expect(result[:percentile]).to be_within(0.1).of(66.7)
     end
 
+    it 'counts the scored population with qualified distinct company ids' do
+      service = described_class.new(company: company)
+
+      expect(service.send(:total_companies)).to eq(3)
+    end
+
+    it 'supports category ranking without ambiguous ids or invalid distinct ordering' do
+      result = described_class.new(company: company, category_id: category.id).ranking_data
+
+      expect(result[:status]).to eq('ready')
+      expect(result[:total_companies]).to eq(2)
+      expect(result[:current_position]).to eq(2)
+    end
+
     it 'marks a missing official snapshot as processing instead of an operational error' do
       CompanyRankingSnapshot.delete_all
 
@@ -71,6 +85,55 @@ RSpec.describe CompanyDashboard::RankingService do
 
       expect(result[:total_companies]).to eq(3)
       expect(result[:current_position]).to eq(2)
+    end
+
+    it 'applies state, city and sector filters to the population scope' do
+      company.update!(project_types: ['Residenciais'])
+      better_company.update!(project_types: ['Residenciais'])
+      worse_company.update!(project_types: ['Comerciais'])
+
+      result = described_class.new(
+        company: company,
+        state: 'sp',
+        city: 'sao paulo',
+        sector: 'Residenciais'
+      ).ranking_data
+
+      expect(result[:mode]).to eq('preview')
+      expect(result[:total_companies]).to eq(2)
+      expect(result[:current_position]).to eq(2)
+    end
+
+    it 'preserves the reviews quadrant mode' do
+      result = described_class.new(company: company, quadrant_mode: 'reviews').ranking_data
+
+      expect(result.dig(:quadrant_meta, :mode)).to eq('reviews')
+      expect(result[:quadrant_status]).to eq('ready')
+    end
+
+    it 'supports the bounded history windows' do
+      [30, 90, 365].each do |history_days|
+        result = described_class.new(company: company, history_days: history_days).ranking_data
+
+        expect(result[:status]).to eq('ready')
+      end
+    end
+
+    it 'marks an old snapshot as stale' do
+      CompanyRankingSnapshot.where(company: company, scope_type: 'global').update_all(computed_at: 2.days.ago)
+
+      result = described_class.new(company: company).ranking_data
+
+      expect(result[:status]).to eq('stale')
+      expect(result.dig(:quality, :flags)).to include('snapshot_stale')
+    end
+
+    it 'marks an empty filtered population as empty' do
+      result = described_class.new(company: company, state: 'RJ').ranking_data
+
+      expect(result[:status]).to eq('empty')
+      expect(result[:total_companies]).to eq(0)
+      expect(result.dig(:quality, :flags)).to include('population_empty')
     end
 
     it 'does not publish an official position for a criterion preview with an available quadrant' do

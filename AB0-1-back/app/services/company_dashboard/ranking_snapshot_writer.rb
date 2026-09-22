@@ -21,7 +21,7 @@ module CompanyDashboard
       snapshot_counts = [write_scope('global', nil, Company.active)]
       Category.find_each do |category|
         snapshot_counts << write_scope(
-          'category', category.id, Company.active.joins(:categories).where(categories: { id: category.id }).distinct
+          'category', category.id, Company.active.where(id: category.companies.select('companies.id'))
         )
       end
 

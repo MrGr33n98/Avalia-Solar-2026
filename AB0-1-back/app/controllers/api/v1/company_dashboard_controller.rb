@@ -252,7 +252,7 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/ranking
       def analytics_ranking
-        authorize @company, :view_analytics?
+        authorize @company, :view_analytics_ranking?
 
         begin
           # ✅ FEATURE GATE: Ranking só para planos Pro/Enterprise
@@ -328,7 +328,7 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/ranking/filter_options
       def analytics_ranking_filter_options
-        authorize @company, :view_analytics?
+        authorize @company, :view_analytics_ranking?
 
         render json: ::CompanyDashboard::RankingFilterOptionsService.call(company: @company, state: params[:state])
       end

@@ -86,13 +86,14 @@ module CompanyDashboard
     end
 
     def base_scope
-      scope = Company.active.with_attached_logo.select(:id, :name, :rating_avg, :rating_count, :verified, :social_proof_enabled, :whatsapp_enabled, :cta_whatsapp_enabled, :profile_views_count, :cta_clicks_count, :leads_count, :reviews_count)
+      scope = Company.active.with_attached_logo
       if category_id.present?
-        scope = scope.joins(:categories).where(categories: { id: category_id }).distinct
+        category_company_ids = Category.where(id: category_id).joins(:companies).select('companies.id')
+        scope = scope.where(id: category_company_ids)
       end
-      scope = scope.where(state: state) if state.present?
+      scope = scope.where(companies: { state: state }) if state.present?
       scope = apply_city_filter(scope) if city.present?
-      scope = scope.where('project_types @> ?', [sector].to_json) if sector.present?
+      scope = scope.where('companies.project_types @> ?', [sector].to_json) if sector.present?
       scope
     end
 
@@ -150,7 +151,7 @@ module CompanyDashboard
     end
 
     def total_companies
-      scored_scope.count
+      scored_scope.unscope(:select, :order).pick(Arel.sql('COUNT(DISTINCT companies.id)')).to_i
     end
 
     def percentile
@@ -413,11 +414,11 @@ module CompanyDashboard
 
     def apply_city_filter(scope)
       normalized_city = normalize_location(city)
-      matching_cities = scope.where.not(city: [nil, '']).distinct.pluck(:city)
+      matching_cities = scope.where.not(companies: { city: [nil, ''] }).distinct.pluck('companies.city')
                              .select { |candidate| normalize_location(candidate) == normalized_city }
       return scope.none if matching_cities.empty?
 
-      scope.where(city: matching_cities)
+      scope.where(companies: { city: matching_cities })
     end
 
     def normalize_location(value)
