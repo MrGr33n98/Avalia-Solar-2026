@@ -1438,11 +1438,17 @@ export const api = {
         });
         lastError = normalizedError;
 
-        // Retry if it's a timeout, network failure, or 5xx (avoid retrying 4xx like 403/429)
+        // Retry apenas em erros genuinamente transitórios:
+        //   - timeout / erro de rede (sem status HTTP)
+        //   - 401: token expirado (tenta refresh antes de retentar)
+        //   - 404: transient durante deploys
+        //   - 503 (sobrecarga) / 504 (gateway timeout)
+        // NÃO retenta 500: erro estrutural de servidor (ex: migration ausente, bug de código).
         const status = getErrorStatus(normalizedError);
         const isIdempotent = ['GET', 'HEAD', 'OPTIONS'].includes(requestMethod);
         const isRetryableStatus =
-          typeof status === 'number' && (status === 401 || status === 404 || status >= 500);
+          typeof status === 'number' &&
+          (status === 401 || status === 404 || status === 503 || status === 504);
         const isRetryable =
           normalizedError.message === 'Request timeout' ||
           normalizedError.message.includes('Network request failed') ||
