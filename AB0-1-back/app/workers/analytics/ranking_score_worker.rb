@@ -43,6 +43,7 @@ module Analytics
           level: 'INFO', component: self.class.name, pipeline: 'ranking_snapshot',
           event_id: "scopes:#{snapshot_result[:scopes]}", rows: snapshot_result[:snapshots], duration_ms: dur
         )
+        CompanyDashboard::RankingMetrics.worker(duration_ms: dur, snapshots: snapshot_result[:snapshots])
       rescue StandardError => e
         Analytics::LogHelper.json_log(
           level: 'ERROR', component: self.class.name, pipeline: PIPELINE,

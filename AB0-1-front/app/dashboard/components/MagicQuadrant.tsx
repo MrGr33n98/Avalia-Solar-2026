@@ -179,8 +179,14 @@ const CompanyLogoShape = ({ cx = 0, cy = 0, payload }: CompanyLogoShapeProps) =>
 };
 
 export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confiança', yAxisLabel = 'Poder de Execução', criterionTitle }: Props) {
+  const currentCompany = data.find((item) => item.is_current_company);
+  const textSummary = currentCompany
+    ? `Mapa com ${data.length} empresas. Sua empresa, ${currentCompany.name}, está em ${currentCompany.completeness_of_vision.toFixed(1)} de ${xAxisLabel} e ${currentCompany.ability_to_execute.toFixed(1)} de ${yAxisLabel}.`
+    : `Mapa com ${data.length} empresas comparadas nos eixos ${xAxisLabel} e ${yAxisLabel}.`;
+
   return (
-    <div className="relative h-[400px] w-full select-none overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-2">
+    <div className="relative h-[400px] w-full select-none overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-2" role="img" aria-label={textSummary}>
+      <p className="sr-only">{textSummary}</p>
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.7} vertical={false} />

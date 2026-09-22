@@ -67,6 +67,35 @@ Yabeda.configure do
               unit: :seconds,
               buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5],
               comment: 'Duração do cálculo de saúde operacional de banners'
+
+    counter :ranking_requests_total,
+            tags: [:mode, :status],
+            comment: 'Total de requisições do Ranking Performance por modo e estado'
+
+    counter :ranking_failures_total,
+            tags: [:status],
+            comment: 'Total de falhas estruturais do Ranking Performance'
+
+    histogram :ranking_api_duration,
+              tags: [:mode, :status],
+              unit: :seconds,
+              buckets: [0.01, 0.05, 0.1, 0.25, 0.4, 0.5, 1, 2, 5],
+              comment: 'Duração da API de Ranking Performance; p50 e p95 são derivados deste histograma'
+
+    histogram :ranking_eligible_population,
+              tags: [:mode],
+              buckets: [1, 10, 25, 50, 100, 500, 1_000, 10_000],
+              comment: 'Distribuição de tamanho da população elegível do ranking'
+
+    histogram :ranking_worker_duration,
+              tags: [:pipeline],
+              unit: :seconds,
+              buckets: [0.1, 0.5, 1, 5, 10, 30, 60, 300],
+              comment: 'Duração do worker de score e snapshot de ranking'
+
+    gauge :ranking_snapshot_freshness_hours,
+          tags: [:scope],
+          comment: 'Horas desde a geração do snapshot de ranking mais recente'
     
     # Performance Metrics
     histogram :request_duration,
@@ -105,6 +134,12 @@ Yabeda.configure do
       if defined?(Donation)
         pending_count = Donation.where(status: 'pending').count
         ab0_pending_donations.set({}, pending_count)
+      end
+
+      if defined?(CompanyRankingSnapshot) && CompanyRankingSnapshot.table_exists?
+        latest_snapshot = CompanyRankingSnapshot.order(computed_at: :desc).first
+        freshness_hours = latest_snapshot ? ((Time.current - latest_snapshot.computed_at) / 1.hour) : -1
+        ab0_ranking_snapshot_freshness_hours.set({ scope: 'all' }, freshness_hours.round(2))
       end
       
       # Database connection pool metrics

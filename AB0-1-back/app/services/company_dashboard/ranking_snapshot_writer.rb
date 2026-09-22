@@ -18,10 +18,10 @@ module CompanyDashboard
     end
 
     def call
-      snapshot_counts = [write_scope('global', nil, Company.active)]
+      snapshot_counts = [write_scope('global', nil, RankingEligibilityScope.new.relation)]
       Category.find_each do |category|
         snapshot_counts << write_scope(
-          'category', category.id, Company.active.where(id: category.companies.select('companies.id'))
+          'category', category.id, RankingEligibilityScope.new(category_id: category.id).relation
         )
       end
 
@@ -31,8 +31,7 @@ module CompanyDashboard
     private
 
     def write_scope(scope_type, scope_id, relation)
-      companies = relation.joins('INNER JOIN company_ranking_score crs ON crs.company_id = companies.id')
-                          .joins('LEFT JOIN company_trust_score cts ON cts.company_id = companies.id')
+      companies = relation.joins('LEFT JOIN company_trust_score cts ON cts.company_id = companies.id')
                           .select(<<~SQL.squish)
                             companies.id, crs.score AS ranking_score, crs.breakdown AS ranking_breakdown,
                             cts.score AS trust_score, cts.computed_at AS trust_computed_at,

@@ -1938,15 +1938,28 @@ export interface CertificationProgress {
 
 // Ranking Data Types
 export interface RankingData {
-  status?: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
+  status?: 'ready' | 'preview' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
   mode?: 'canonical' | 'preview';
   error?: { code: string; message?: string; request_id?: string } | null;
-  ranking?: {
-    status?: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error' | 'preview' | 'not_applicable';
-    position: number | null;
-    population: number | null;
-    score: number | null;
-    percentile: number | null;
+  request_id?: string | null;
+  official_scope?: { type: 'global' | 'category'; category_id: number | null };
+  comparison_scope?: {
+    active: boolean;
+    state: string | null;
+    city: string | null;
+    sector: string | null;
+    category_id: number | null;
+    criterion_slug: string | null;
+  };
+  ranking?: RankingMetric;
+  official_ranking?: RankingMetric;
+  benchmarks?: {
+    status: 'ready' | 'insufficient_sample' | 'empty';
+    population: number;
+    minimum_population?: number;
+    median_score: number | null;
+    p75_score: number | null;
+    p90_score: number | null;
   };
   quality?: { flags: string[]; computed_at?: string | null; data_through?: string | null };
   leaders?: RankingData['magic_quadrant_points'];
@@ -1967,6 +1980,7 @@ export interface RankingData {
   breakdown?: Record<string, unknown>;
   history?: {
     status: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
+    scope?: 'official';
     items: RankingData['historical_data'];
     trend_30d?: {
       from: string;
@@ -1999,6 +2013,9 @@ export interface RankingData {
     criterion_title?: string;
     x_axis_label?: string;
     y_axis_label?: string;
+    x_axis_definition?: string;
+    y_axis_definition?: string;
+    methodology?: string;
     mode?: 'default' | 'reviews';
   };
   category_rankings?: Array<{
@@ -2028,16 +2045,32 @@ export interface RankingData {
     quality_flags: string[];
     breakdown?: Record<string, unknown>;
     is_ad_hoc_preview?: boolean;
+    eligibility_definition?: string;
   };
+}
+
+export interface RankingMetric {
+  status?: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error' | 'preview' | 'not_applicable';
+  position: number | null;
+  population: number | null;
+  population_label?: 'eligible_companies';
+  score: number | null;
+  percentile: number | null;
 }
 
 export interface RankingInsight {
   code: string;
-  message: string;
-  metric: { key: string; value: number | string; benchmark?: number };
+  title?: string;
+  description?: string;
+  message?: string;
+  metric: string | { key: string; value: number | string; benchmark?: number };
+  evidence?: Record<string, number | string | null>;
+  action_url?: string;
 }
 
 export interface RankingFilterOptions {
+  status?: 'ready' | 'locked';
+  error?: { code: string; request_id?: string } | null;
   categories: Array<{ id: number; name: string }>;
   states: string[];
   sectors: string[];

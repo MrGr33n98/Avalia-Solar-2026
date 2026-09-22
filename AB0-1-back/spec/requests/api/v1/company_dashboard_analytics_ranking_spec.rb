@@ -72,13 +72,37 @@ RSpec.describe 'GET /api/v1/company_dashboard/analytics/ranking', type: :request
 
       expect(response).to have_http_status(:ok)
       expect(json_body.keys).to include(
-        'status', 'mode', 'ranking', 'rank_position', 'ranking_score',
+        'status', 'mode', 'official_scope', 'comparison_scope', 'ranking', 'official_ranking', 'benchmarks',
+        'request_id', 'rank_position', 'ranking_score',
         'magic_quadrant_points', 'quadrant_meta', 'category_rankings',
         'historical_data', 'transparency', 'quality',
         'scope', 'definition', 'breakdown',
         'history', 'quadrant', 'leaders', 'neighbors', 'insights',
         'is_premium_analytics'
       )
+    end
+
+    it 'returns the official ranking separately for an SC preview' do
+      competitor = create(:company, state: 'SC', reviews_count: 8)
+      company.update!(state: 'SC')
+      ActiveRecord::Base.connection.execute(
+        "INSERT INTO company_ranking_score (company_id, score, breakdown, computed_at, created_at, updated_at) " \
+        "VALUES (#{competitor.id}, 60.0, '{}', NOW(), NOW(), NOW())"
+      )
+      CompanyTrustScore.create!(company: competitor, score: 80.0, components: {}, computed_at: Time.current)
+      CompanyRankingSnapshot.delete_all
+      create_snapshot(company: competitor, position: 1, population: 2, score: 60.0)
+      create_snapshot(company: company, position: 2, population: 2, score: 50.0)
+
+      get '/api/v1/company_dashboard/analytics/ranking', params: { company_id: company.id, state: 'SC' }
+
+      expect(response).to have_http_status(:ok)
+      expect(json_body['status']).to eq('preview')
+      expect(json_body['mode']).to eq('preview')
+      expect(json_body['official_scope']).to eq({ 'type' => 'global', 'category_id' => nil })
+      expect(json_body.dig('comparison_scope', 'state')).to eq('SC')
+      expect(json_body.dig('official_ranking', 'position')).to eq(2)
+      expect(json_body.dig('history', 'scope')).to eq('official')
     end
 
     it 'retorna scope global como string não-nula' do

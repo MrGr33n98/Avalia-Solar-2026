@@ -72,10 +72,24 @@ RSpec.describe CompanyDashboard::RankingService do
     it 'uses the current scored population for an ad hoc preview' do
       result = described_class.new(company: company, state: 'SP').ranking_data
 
+      expect(result[:status]).to eq('preview')
       expect(result[:mode]).to eq('preview')
       expect(result[:score]).to eq(10.0)
       expect(result[:current_position]).to eq(2)
       expect(result[:transparency][:is_ad_hoc_preview]).to be(true)
+    end
+
+    it 'keeps the official snapshot distinct from a state comparison' do
+      [company, better_company, worse_company].each { |record| record.update!(state: 'SC') }
+
+      result = described_class.new(company: company, state: 'SC').ranking_data
+
+      expect(result[:mode]).to eq('preview')
+      expect(result[:official_scope]).to eq(type: 'global', category_id: nil)
+      expect(result[:comparison_scope]).to include(active: true, state: 'SC')
+      expect(result.dig(:ranking, :position)).to eq(2)
+      expect(result.dig(:official_ranking, :position)).to eq(2)
+      expect(result.dig(:history, :scope)).to eq('official')
     end
 
     it 'normalizes city accents, case and surrounding spaces' do
@@ -148,11 +162,30 @@ RSpec.describe CompanyDashboard::RankingService do
       expect(result[:transparency][:position_semantics]).to eq('quadrant_preview_without_official_position')
     end
 
-    it 'returns V2 insight fields with traceable metric evidence' do
+    it 'returns structured insights with traceable metric evidence' do
       result = described_class.new(company: company).ranking_data
 
       expect(result[:insights]).to include(:strengths, :opportunities, :next_best_action)
-      expect(result.dig(:insights, :next_best_action, :metric)).to include(:key, :value)
+      expect(result.dig(:insights, :next_best_action)).to include(:code, :title, :description, :metric, :evidence)
+    end
+
+    it 'includes the current eligible company and real adjacent neighbors in the positioning map' do
+      16.times do |index|
+        competitor = create(:company, reviews_count: index + 1)
+        ActiveRecord::Base.connection.execute(
+          "INSERT INTO company_ranking_score (company_id, score, breakdown, computed_at, created_at, updated_at) VALUES (#{competitor.id}, #{100 - index}, '{}', NOW(), NOW(), NOW())"
+        )
+        CompanyTrustScore.create!(company: competitor, score: 50, components: {}, computed_at: Time.current)
+      end
+      ActiveRecord::Base.connection.execute("UPDATE company_ranking_score SET score = 1 WHERE company_id = #{company.id}")
+
+      result = described_class.new(company: company).ranking_data
+      point_ids = result.dig(:quadrant, :points).map { |point| point[:id] }
+      neighbor_ids = result[:neighbors].map { |point| point[:id] }
+
+      expect(point_ids).to include(company.id)
+      expect(neighbor_ids).not_to include(company.id)
+      expect(neighbor_ids.length).to be <= 10
     end
 
     it 'returns category-specific rankings from category snapshots' do

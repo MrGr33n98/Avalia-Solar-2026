@@ -253,6 +253,7 @@ module Api
       # GET /api/v1/company_dashboard/analytics/ranking
       def analytics_ranking
         authorize @company, :view_analytics_ranking?
+        started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
         begin
           # ✅ FEATURE GATE: Ranking só para planos Pro/Enterprise
@@ -306,12 +307,14 @@ module Api
             quadrant_mode: quadrant_mode
           )
           data = service.ranking_data
-
-          render json: ranking_payload(data).merge(
+          payload = ranking_payload(data).merge(
             is_premium_analytics: true
           )
+          log_ranking_success(payload, data[:observability] || {}, request.request_id)
+          render json: payload
         rescue StandardError => e
-          log_ranking_error(e, request.request_id)
+          duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round
+          log_ranking_error(e, request.request_id, duration_ms: duration_ms)
           render json: default_ranking_payload(
             status: 'error',
             error: {
@@ -330,47 +333,53 @@ module Api
       def analytics_ranking_filter_options
         authorize @company, :view_analytics_ranking?
 
+        entitlement = EntitlementService.explain(company: @company, feature: 'advanced_analytics')
+        unless entitlement[:allowed]
+          return render json: {
+            status: 'locked',
+            error: { code: 'RANKING_UPGRADE_REQUIRED', request_id: request.request_id },
+            categories: [], states: [], sectors: [], cities: [], selected_state: nil
+          }, status: :ok
+        end
+
         render json: ::CompanyDashboard::RankingFilterOptionsService.call(company: @company, state: params[:state])
       end
 
       def ranking_payload(data)
-        transparency = data[:transparency] || {}
+        definition = data[:definition] || data[:transparency] || {}
+        ranking = data[:ranking] || legacy_ranking_payload(data)
+        history = data[:history] || { status: data[:history_status], scope: 'official', items: data[:historical_data] || [], trend_30d: data[:history_trend_30d] }
+        quadrant = data[:quadrant] || {
+          status: data[:quadrant_status], preview: data[:mode] == 'preview', points: data[:magic_quadrant_competitors] || [], meta: data[:quadrant_meta] || {}
+        }
         {
-            status: data[:status],
-            mode: data[:mode],
-            error: data[:error],
-            ranking: {
-              status: data[:ranking_status],
-              position: data[:current_position],
-              population: data[:total_companies],
-              score: data[:score],
-              percentile: data[:percentile]
-            },
-            rank_position: data[:current_position],
-            ranking_score: data[:score],
-            magic_quadrant_points: data[:magic_quadrant_competitors],
-            quadrant_meta: data[:quadrant_meta],
-            category_rankings: data[:category_rankings],
-            historical_data: data[:historical_data],
-            transparency: transparency,
-            quality: data[:quality],
-            scope: transparency[:scope] || data[:scope] || 'global',
-            definition: transparency,
-            breakdown: transparency[:breakdown] || {},
-            history: {
-              status: data[:history_status],
-              items: data[:historical_data],
-              trend_30d: data[:history_trend_30d]
-            },
-            quadrant: {
-              status: data[:quadrant_status],
-              preview: data[:mode] == 'preview',
-              points: data[:magic_quadrant_competitors],
-              meta: data[:quadrant_meta]
-            },
-            leaders: data[:leaders],
-            neighbors: data[:neighbors],
-            insights: data[:insights],
+          status: data[:status],
+          mode: data[:mode],
+          official_scope: data[:official_scope] || { type: definition[:scope] || 'global', category_id: nil },
+          comparison_scope: data[:comparison_scope] || default_comparison_scope,
+          ranking: ranking,
+          official_ranking: data[:official_ranking] || ranking,
+          benchmarks: data[:benchmarks] || default_benchmarks,
+          history: history,
+          quadrant: quadrant,
+          definition: definition,
+          quality: data[:quality] || { flags: [] },
+          leaders: data[:leaders] || [],
+          neighbors: data[:neighbors] || [],
+          insights: data[:insights] || default_insights,
+          error: data[:error],
+          request_id: request.request_id,
+
+          # Compatibilidade do contrato anterior durante a transição vNext.
+          rank_position: ranking[:position],
+          ranking_score: ranking[:score],
+          magic_quadrant_points: quadrant[:points],
+          quadrant_meta: quadrant[:meta],
+          category_rankings: data[:category_rankings] || [],
+          historical_data: history[:items],
+          transparency: definition,
+          scope: data.dig(:official_scope, :type) || definition[:scope] || data[:scope] || 'global',
+          breakdown: definition[:breakdown] || {}
         }
       end
 
@@ -383,18 +392,37 @@ module Api
           status: status,
           mode: 'canonical',
           error: error,
-          ranking: { status: ranking_status, position: nil, population: nil, score: nil, percentile: nil },
+          request_id: request.request_id,
+          official_scope: { type: 'global', category_id: nil },
+          comparison_scope: default_comparison_scope,
+          ranking: {
+            status: ranking_status,
+            position: nil,
+            population: nil,
+            population_label: 'eligible_companies',
+            score: nil,
+            percentile: nil
+          },
+          official_ranking: {
+            status: ranking_status,
+            position: nil,
+            population: nil,
+            population_label: 'eligible_companies',
+            score: nil,
+            percentile: nil
+          },
+          benchmarks: default_benchmarks,
           rank_position: nil,
           ranking_score: nil,
           magic_quadrant_points: [],
           quadrant_meta: {},
           category_rankings: [],
           historical_data: [],
-          history: { status: history_status, items: [], trend_30d: nil },
+          history: { status: history_status, scope: 'official', items: [], trend_30d: nil },
           quadrant: { status: quadrant_status, preview: false, points: [], meta: {} },
           leaders: [],
           neighbors: [],
-          insights: { strengths: [], opportunities: [], next_best_action: nil },
+          insights: default_insights,
           quality: { flags: quality_flags_for_status(status), computed_at: nil, data_through: nil },
           scope: 'global',
           definition: default_ranking_transparency(status),
@@ -408,8 +436,40 @@ module Api
           definition_version: CompanyRankingSnapshot::DEFINITION_VERSION,
           purpose: 'organic_performance',
           sponsored_included: false,
+          score_definition: 'Trust score × 10 + engajamento dos últimos 7 dias completos com decaimento exponencial.',
+          tie_breaker: 'pontuação desc, confiança desc, avaliações desc, company_id asc',
           quality_flags: quality_flags_for_status(status)
         }
+      end
+
+      def legacy_ranking_payload(data)
+        {
+          status: data[:ranking_status],
+          position: data[:current_position],
+          population: data[:total_companies],
+          population_label: 'eligible_companies',
+          score: data[:score],
+          percentile: data[:percentile]
+        }
+      end
+
+      def default_comparison_scope
+        { active: false, state: nil, city: nil, sector: nil, category_id: nil, criterion_slug: nil }
+      end
+
+      def default_benchmarks
+        {
+          status: 'empty',
+          population: 0,
+          minimum_population: CompanyDashboard::RankingBenchmarkService.min_comparable_population,
+          median_score: nil,
+          p75_score: nil,
+          p90_score: nil
+        }
+      end
+
+      def default_insights
+        { strengths: [], opportunities: [], next_best_action: nil }
       end
 
       def quality_flags_for_status(status)
@@ -421,17 +481,46 @@ module Api
         end
       end
 
-      def log_ranking_error(error, request_id)
+      def log_ranking_success(payload, observability, request_id)
+        duration_ms = observability[:duration_ms].to_i
+        population = payload.dig(:ranking, :population).to_i
+        Rails.logger.info(
+          {
+            event: 'company_dashboard.ranking.request',
+            request_id: request_id,
+            company_id: @company.id,
+            mode: payload[:mode],
+            state: payload.dig(:comparison_scope, :state),
+            category_id: payload.dig(:comparison_scope, :category_id),
+            history_days: params.fetch(:history_days, 90).to_i,
+            status: payload[:status],
+            population: population,
+            sql_queries: observability[:sql_queries].to_i,
+            duration_ms: duration_ms
+          }.to_json
+        )
+        CompanyDashboard::RankingMetrics.request(
+          mode: payload[:mode].to_s,
+          status: payload[:status].to_s,
+          duration_ms: duration_ms,
+          population: population
+        )
+      end
+
+      def log_ranking_error(error, request_id, duration_ms:)
         Rails.logger.error(
           {
             event: 'company_dashboard.ranking.failed',
             request_id: request_id,
+            company_id: @company&.id,
             error_class: error.class.name,
             error_message: error.message,
             backtrace: error.backtrace&.first(10),
-            status: 500
+            status: 500,
+            duration_ms: duration_ms
           }.to_json
         )
+        CompanyDashboard::RankingMetrics.failure(duration_ms: duration_ms)
         Sentry.capture_exception(error, extra: { request_id: request_id, endpoint: 'analytics_ranking' }) if defined?(Sentry)
       end
 
