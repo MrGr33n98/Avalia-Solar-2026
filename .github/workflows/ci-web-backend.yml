@@ -188,16 +188,22 @@ jobs:
         run: |
           bundle exec rails db:create db:schema:load db:migrate
 
-      - name: Run ranking service and writer specs
+      - name: Run ranking service specs
         working-directory: ./AB0-1-back
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
           RAILS_ENV: test
           SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
         run: |
-          bundle exec rspec \
-            spec/services/company_dashboard/ranking_service_spec.rb \
-            spec/services/company_dashboard/ranking_snapshot_writer_spec.rb
+          bundle exec rspec spec/services/company_dashboard/ranking_service_spec.rb
+
+      - name: Run ranking snapshot writer specs
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: bundle exec rspec spec/services/company_dashboard/ranking_snapshot_writer_spec.rb
 
       - name: Run ranking request and policy specs
         working-directory: ./AB0-1-back
