@@ -3,7 +3,7 @@ export type ApiErrorOptions = {
   code?: string;
   url?: string;
   method?: string;
-  details?: any;
+  details?: unknown;
   isNetworkError?: boolean;
   isTimeout?: boolean;
   requestId?: string;
@@ -14,7 +14,7 @@ export class ApiError extends Error {
   code?: string;
   url?: string;
   method?: string;
-  details?: any;
+  details?: unknown;
   isNetworkError?: boolean;
   isTimeout?: boolean;
   requestId?: string;
@@ -44,5 +44,14 @@ export const toApiError = (error: unknown, fallback: ApiErrorOptions = {}) => {
 export const getApiErrorMessage = (error: unknown, fallback = 'Erro ao comunicar com o servidor.') => {
   if (error instanceof ApiError) return error.message || fallback;
   if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'object' && error !== null) {
+    const payload = error as { error?: unknown; message?: unknown };
+    if (typeof payload.message === 'string' && payload.message) return payload.message;
+    if (typeof payload.error === 'object' && payload.error !== null) {
+      const nested = payload.error as { message?: unknown };
+      if (typeof nested.message === 'string' && nested.message) return nested.message;
+    }
+    if (typeof payload.error === 'string' && payload.error) return payload.error;
+  }
   return fallback;
 };

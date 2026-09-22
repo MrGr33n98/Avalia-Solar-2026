@@ -48,6 +48,13 @@ RSpec.describe CompanyDashboard::RankingService do
       expect(result.dig(:quality, :flags)).to include('snapshot_processing')
     end
 
+    it 'detects an incompatible ranking schema explicitly' do
+      allow(Company).to receive(:column_names).and_return(Company.column_names - ['cta_whatsapp_enabled'])
+
+      expect { described_class.new(company: company).ranking_data }
+        .to raise_error(CompanyDashboard::RankingService::SchemaMismatch, /cta_whatsapp_enabled/)
+    end
+
     it 'uses the current scored population for an ad hoc preview' do
       result = described_class.new(company: company, state: 'SP').ranking_data
 

@@ -1049,6 +1049,35 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+type StructuredApiError = {
+  code?: string;
+  message?: string;
+  requestId?: string;
+};
+
+const getStructuredApiError = (value: unknown): StructuredApiError => {
+  if (!isRecord(value)) return {};
+
+  const nested = isRecord(value.error) ? value.error : undefined;
+  const messageCandidates = [
+    nested?.message,
+    value.message,
+    typeof value.error === 'string' ? value.error : undefined,
+    value.error_description,
+  ];
+  const message = messageCandidates.find(
+    (candidate): candidate is string => typeof candidate === 'string' && candidate.trim().length > 0
+  );
+  const codeCandidate = nested?.code ?? value.code;
+  const requestIdCandidate = nested?.request_id ?? value.request_id ?? value.requestId;
+
+  return {
+    code: typeof codeCandidate === 'string' ? codeCandidate : undefined,
+    message,
+    requestId: typeof requestIdCandidate === 'string' ? requestIdCandidate : undefined,
+  };
+};
+
 export const getErrorStatus = (error: unknown): number | undefined => {
   const record = isRecord(error) ? error : undefined;
   const context = record && isRecord(record.context) ? record.context : undefined;
@@ -1074,10 +1103,9 @@ function normalizeUnknownApiError(error: unknown, fallback: ApiErrorOptions): Ap
   if (isRecord(error)) {
     const response = isRecord(error.response) ? error.response : undefined;
     const responseData = response && isRecord(response.data) ? response.data : undefined;
+    const structured = getStructuredApiError(responseData ?? error);
     const messageCandidates = [
-      error.message,
-      responseData?.error,
-      responseData?.message,
+      structured.message,
       response?.statusText,
     ];
     const message = messageCandidates.find(
@@ -1094,6 +1122,8 @@ function normalizeUnknownApiError(error: unknown, fallback: ApiErrorOptions): Ap
     return new ApiError(message || 'Erro desconhecido na API', {
       ...fallback,
       status,
+      code: structured.code,
+      requestId: structured.requestId,
       details: responseData ?? fallback.details,
     });
   }
@@ -1362,11 +1392,14 @@ export const api = {
               details = await response.json();
             } catch {}
 
-            const message =
-              details?.errors?.join(', ') ||
-              details?.error ||
-              details?.message ||
+            const structured = getStructuredApiError(details);
+            const message = structured.message ||
+              (Array.isArray(details?.errors)
+                ? details.errors.filter((item: unknown): item is string => typeof item === 'string').join(', ')
+                : undefined) ||
               response.statusText;
+            const requestId =
+              structured.requestId || response.headers.get('x-request-id') || undefined;
             const errorContext = {
               status: response.status,
               statusText: response.statusText,
@@ -1374,6 +1407,7 @@ export const api = {
               method: requestMethod,
               params: config.params,
               details,
+              request_id: requestId,
             };
             const shouldSilence = isRequestSilent || silentStatusCodes.includes(response.status);
             if (!shouldSilence) {
@@ -1391,7 +1425,8 @@ export const api = {
             if (response.status >= 400 && response.status < 500 && response.status !== 404) {
               const err = new ApiError(`[${response.status}] ${message}`, {
                 status: response.status,
-                code: details?.code,
+                code: structured.code,
+                requestId,
                 url,
                 method: requestMethod,
                 details,
@@ -1402,7 +1437,8 @@ export const api = {
 
             const err = new ApiError(`[${response.status}] ${message}`, {
               status: response.status,
-              code: details?.code,
+              code: structured.code,
+              requestId,
               url,
               method: requestMethod,
               details,

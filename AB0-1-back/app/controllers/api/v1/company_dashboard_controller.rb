@@ -314,7 +314,11 @@ module Api
           log_ranking_error(e, request.request_id)
           render json: default_ranking_payload(
             status: 'error',
-            error: { code: 'RANKING_UNAVAILABLE', request_id: request.request_id },
+            error: {
+              code: 'RANKING_UNAVAILABLE',
+              message: 'Não foi possível carregar o ranking agora.',
+              request_id: request.request_id
+            },
             ranking_status: 'error',
             quadrant_status: 'error',
             history_status: 'error'

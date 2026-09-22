@@ -211,6 +211,7 @@ RSpec.describe 'GET /api/v1/company_dashboard/analytics/ranking', type: :request
       expect(response).to have_http_status(:internal_server_error)
       body = json_body
       expect(body['error']['code']).to eq('RANKING_UNAVAILABLE')
+      expect(body['error']['message']).to be_present
       expect(body['error']['request_id']).to be_present
       expect(body['is_premium_analytics']).to be(true)
     end

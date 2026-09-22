@@ -2,6 +2,8 @@
 
 module CompanyDashboard
   class RankingService
+    class SchemaMismatch < StandardError; end
+
     MAX_BADGES_SCORE = 10.0
     MAX_EXECUTION_LEADS = 100.0
     MAX_EXECUTION_VIEWS = 2_000.0
@@ -26,6 +28,7 @@ module CompanyDashboard
     end
 
     def ranking_data
+      ensure_schema_compatible!
       snapshot = latest_snapshot
       preview = ad_hoc_preview?
       preview_population = preview ? total_companies : nil
@@ -64,6 +67,23 @@ module CompanyDashboard
     end
 
     private
+
+    def ensure_schema_compatible!
+      required_company_columns = %w[
+        id name rating_avg rating_count verified social_proof_enabled whatsapp_enabled
+        cta_whatsapp_enabled cta_whatsapp_url whatsapp_button_style_json profile_views_count
+        cta_clicks_count leads_count reviews_count
+      ]
+      missing = required_company_columns - Company.column_names
+      missing += %w[snapshot_date] unless CompanyRankingSnapshot.column_names.include?('snapshot_date')
+      missing << 'idx_ranking_snapshots_daily' unless ActiveRecord::Base.connection
+        .indexes(:company_ranking_snapshots).any? { |index| index.name == 'idx_ranking_snapshots_daily' }
+      return if missing.empty?
+
+      raise SchemaMismatch, "Ranking schema incompatível; ausentes: #{missing.join(', ')}"
+    rescue ActiveRecord::StatementInvalid => e
+      raise SchemaMismatch, "Ranking schema incompatível: #{e.message.lines.first.to_s.strip}"
+    end
 
     def base_scope
       scope = Company.active.with_attached_logo.select(:id, :name, :rating_avg, :rating_count, :verified, :social_proof_enabled, :whatsapp_enabled, :cta_whatsapp_enabled, :profile_views_count, :cta_clicks_count, :leads_count, :reviews_count)

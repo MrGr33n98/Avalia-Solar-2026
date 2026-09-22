@@ -203,6 +203,7 @@ RSpec.describe 'Company Dashboard Feature Gating', type: :request do
         json = JSON.parse(response.body)
         expect(json['status']).to eq('error')
         expect(json.dig('error', 'code')).to eq('RANKING_UNAVAILABLE')
+        expect(json.dig('error', 'message')).to be_present
         expect(json.dig('error', 'request_id')).to be_present
         expect(response.body).not_to include('falha interna simulada')
       end
