@@ -29,7 +29,7 @@ import { getApiErrorMessage } from '@/lib/api-error';
 import { RankingBenchmarkCards } from './ranking/RankingBenchmarkCards';
 import { ComparisonRankingCard, OfficialRankingCard } from './ranking/RankingCards';
 import { RankingContextChips } from './ranking/RankingContextChips';
-import { RankingMethodologyDrawer } from './ranking/RankingMethodologyDrawer';
+import { RankingMethodologyDialog } from './ranking/RankingMethodologyDialog';
 import { RankingPositioningMap } from './ranking/RankingPositioningMap';
 import { RankingStateBanner } from './ranking/RankingStateBanner';
 import {
@@ -207,7 +207,13 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
             <div className="mb-2 flex items-center gap-2"><Trophy className="h-6 w-6 text-amber-500" /><h2 id="ranking-title" className="text-3xl font-bold tracking-tight">{heroTitle}</h2></div>
             <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{heroDescription}</p>
           </div>
-          <RankingMethodologyDrawer definition={data?.definition} quadrantMeta={data?.quadrant?.meta} />
+          <RankingMethodologyDialog
+            definition={data?.definition}
+            quadrantMeta={data?.quadrant?.meta}
+            qualityFlags={data?.quality?.flags}
+            officialScope={data?.official_scope}
+            comparisonScope={data?.comparison_scope}
+          />
         </div>
         <RankingContextChips data={data} />
       </section>

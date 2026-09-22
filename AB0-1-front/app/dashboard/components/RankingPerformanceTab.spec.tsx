@@ -52,6 +52,9 @@ jest.mock('@/components/ui/skeleton', () => ({ Skeleton: () => <div /> }));
 jest.mock('@/components/ui/badge', () => ({ Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span> }));
 jest.mock('@/components/ui/button', () => ({ Button: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button> }));
 jest.mock('./MagicQuadrant', () => ({ __esModule: true, default: () => <div data-testid="quadrant" /> }));
+jest.mock('./ranking/RankingMethodologyDialog', () => ({
+  RankingMethodologyDialog: () => <button type="button">Como funciona o ranking?</button>,
+}));
 
 const company = { id: 1, name: 'Empresa Solar', categories: [] } as never;
 
