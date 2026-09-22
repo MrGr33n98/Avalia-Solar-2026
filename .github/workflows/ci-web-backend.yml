@@ -188,14 +188,40 @@ jobs:
         run: |
           bundle exec rails db:create db:schema:load db:migrate
 
-      - name: Run ranking service specs
+      - name: Diagnose ranking service core examples
         working-directory: ./AB0-1-back
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
           RAILS_ENV: test
           SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
-        run: |
-          bundle exec rspec spec/services/company_dashboard/ranking_service_spec.rb
+        continue-on-error: true
+        run: bundle exec rspec spec/services/company_dashboard/ranking_service_spec.rb:31 spec/services/company_dashboard/ranking_service_spec.rb:41 spec/services/company_dashboard/ranking_service_spec.rb:47
+
+      - name: Diagnose ranking service state and filters
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        continue-on-error: true
+        run: bundle exec rspec spec/services/company_dashboard/ranking_service_spec.rb:55 spec/services/company_dashboard/ranking_service_spec.rb:65 spec/services/company_dashboard/ranking_service_spec.rb:72 spec/services/company_dashboard/ranking_service_spec.rb:81 spec/services/company_dashboard/ranking_service_spec.rb:90
+
+      - name: Diagnose ranking service quadrant and history
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        continue-on-error: true
+        run: bundle exec rspec spec/services/company_dashboard/ranking_service_spec.rb:107 spec/services/company_dashboard/ranking_service_spec.rb:114 spec/services/company_dashboard/ranking_service_spec.rb:122 spec/services/company_dashboard/ranking_service_spec.rb:131 spec/services/company_dashboard/ranking_service_spec.rb:139 spec/services/company_dashboard/ranking_service_spec.rb:149 spec/services/company_dashboard/ranking_service_spec.rb:156 spec/services/company_dashboard/ranking_service_spec.rb:165
+
+      - name: Run complete ranking service specs
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: bundle exec rspec spec/services/company_dashboard/ranking_service_spec.rb
 
       - name: Run ranking snapshot writer specs
         working-directory: ./AB0-1-back
