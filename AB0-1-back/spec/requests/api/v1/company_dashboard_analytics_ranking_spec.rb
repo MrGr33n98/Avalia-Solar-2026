@@ -83,8 +83,8 @@ RSpec.describe 'GET /api/v1/company_dashboard/analytics/ranking', type: :request
     end
 
     it 'returns the official ranking separately for an SC preview' do
-      competitor = create(:company, state: 'SC', reviews_count: 8)
-      company.update!(state: 'SC')
+      competitor = create(:company, state: 'SC', city: 'Florianópolis', reviews_count: 8)
+      company.update!(state: 'SC', city: 'Florianópolis')
       ActiveRecord::Base.connection.execute(
         "INSERT INTO company_ranking_score (company_id, score, breakdown, computed_at, created_at, updated_at) " \
         "VALUES (#{competitor.id}, 60.0, '{}', NOW(), NOW(), NOW())"

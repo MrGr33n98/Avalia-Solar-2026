@@ -62,7 +62,8 @@ module CompanyDashboard
       official_status = official_status_for(snapshot, canonical_population)
       ranking = preview ? preview_ranking(population) : snapshot_ranking(snapshot, official_status, canonical_population)
       history_items = historical_data
-      quadrant_points = population.any? ? selected_quadrant_points(population) : []
+      quadrant_ready = population.any? && (preview || snapshot.present?)
+      quadrant_points = quadrant_ready ? selected_quadrant_points(population) : []
       history = {
         status: history_items.present? ? 'ready' : 'empty',
         scope: 'official',
@@ -71,8 +72,8 @@ module CompanyDashboard
       }
       benchmarks = RankingBenchmarkService.new(population: population).call
       quality = quality_payload(snapshot, preview, official_status, ranking[:status])
-      leaders = leader_points(population)
-      neighbors = neighbor_points(population)
+      leaders = quadrant_ready ? leader_points(population) : []
+      neighbors = quadrant_ready ? neighbor_points(population) : []
 
       {
         status: preview ? (ranking[:status] == 'empty' ? 'empty' : 'preview') : official_status,
@@ -84,7 +85,7 @@ module CompanyDashboard
         benchmarks: benchmarks,
         history: history,
         quadrant: {
-          status: population.any? ? 'ready' : 'empty',
+          status: quadrant_ready ? 'ready' : 'empty',
           preview: preview,
           points: quadrant_points,
           meta: quadrant_meta
@@ -108,7 +109,7 @@ module CompanyDashboard
         historical_data: history_items,
         history_status: history[:status],
         history_trend_30d: history[:trend_30d],
-        quadrant_status: population.any? ? 'ready' : 'empty',
+        quadrant_status: quadrant_ready ? 'ready' : 'empty',
         transparency: definition(snapshot, preview, official_status),
         scope: official_scope[:type]
       }

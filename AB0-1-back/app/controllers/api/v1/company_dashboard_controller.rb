@@ -461,7 +461,7 @@ module Api
         {
           status: 'empty',
           population: 0,
-          minimum_population: CompanyDashboard::RankingBenchmarkService.min_comparable_population,
+          minimum_population: ::CompanyDashboard::RankingBenchmarkService.min_comparable_population,
           median_score: nil,
           p75_score: nil,
           p90_score: nil
@@ -499,7 +499,7 @@ module Api
             duration_ms: duration_ms
           }.to_json
         )
-        CompanyDashboard::RankingMetrics.request(
+        ::CompanyDashboard::RankingMetrics.request(
           mode: payload[:mode].to_s,
           status: payload[:status].to_s,
           duration_ms: duration_ms,
@@ -520,7 +520,7 @@ module Api
             duration_ms: duration_ms
           }.to_json
         )
-        CompanyDashboard::RankingMetrics.failure(duration_ms: duration_ms)
+        ::CompanyDashboard::RankingMetrics.failure(duration_ms: duration_ms)
         Sentry.capture_exception(error, extra: { request_id: request_id, endpoint: 'analytics_ranking' }) if defined?(Sentry)
       end
 
