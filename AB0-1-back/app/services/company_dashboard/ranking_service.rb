@@ -196,6 +196,13 @@ module CompanyDashboard
                             .to_a
     end
 
+    # Compatibilidade temporária para os consumidores legados do serviço.
+    # O contrato novo expõe ranking.population, mas a população continua sendo
+    # a mesma relação qualificada e sem duplicidade usada no ranking.
+    def total_companies
+      ranked_companies.length
+    end
+
     def snapshot_ranking(snapshot, status, eligible_population = nil)
       {
         status: status,

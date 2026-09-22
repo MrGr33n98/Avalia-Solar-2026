@@ -80,7 +80,9 @@ RSpec.describe CompanyDashboard::RankingService do
     end
 
     it 'keeps the official snapshot distinct from a state comparison' do
-      [company, better_company, worse_company].each { |record| record.update!(state: 'SC') }
+      [company, better_company, worse_company].each do |record|
+        record.update!(state: 'SC', city: 'Florianópolis')
+      end
 
       result = described_class.new(company: company, state: 'SC').ranking_data
 
@@ -163,9 +165,18 @@ RSpec.describe CompanyDashboard::RankingService do
     end
 
     it 'returns structured insights with traceable metric evidence' do
+      7.times do |index|
+        competitor = create(:company)
+        ActiveRecord::Base.connection.execute(
+          "INSERT INTO company_ranking_score (company_id, score, breakdown, computed_at, created_at, updated_at) VALUES (#{competitor.id}, #{index + 1}, '{}', NOW(), NOW(), NOW())"
+        )
+        CompanyTrustScore.create!(company: competitor, score: 50, components: {}, computed_at: Time.current)
+      end
+
       result = described_class.new(company: company).ranking_data
 
       expect(result[:insights]).to include(:strengths, :opportunities, :next_best_action)
+      expect(result.dig(:benchmarks, :status)).to eq('ready')
       expect(result.dig(:insights, :next_best_action)).to include(:code, :title, :description, :metric, :evidence)
     end
 
