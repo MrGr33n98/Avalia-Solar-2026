@@ -224,7 +224,7 @@ jobs:
           bundler-cache: true
           working-directory: ./AB0-1-back
 
-      - name: Run ranking contract specs
+      - name: Prepare ranking test database
         working-directory: ./AB0-1-back
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
@@ -232,12 +232,36 @@ jobs:
           SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
         run: |
           bundle exec rails db:create db:schema:load db:migrate
+
+      - name: Run ranking service and writer specs
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: |
           bundle exec rspec \
             spec/services/company_dashboard/ranking_service_spec.rb \
-            spec/services/company_dashboard/ranking_snapshot_writer_spec.rb \
+            spec/services/company_dashboard/ranking_snapshot_writer_spec.rb
+
+      - name: Run ranking request and policy specs
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: |
+          bundle exec rspec \
             spec/requests/api/v1/company_dashboard_analytics_ranking_spec.rb \
-            spec/requests/api/v1/company_dashboard_feature_gating_spec.rb \
-            spec/models/company_trust_score_spec.rb
+            spec/requests/api/v1/company_dashboard_feature_gating_spec.rb
+
+      - name: Run trust score contract spec
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: bundle exec rspec spec/models/company_trust_score_spec.rb
 
   deploy:
     needs: [build-and-push, zeitwerk-check, ranking-gate]
