@@ -191,7 +191,7 @@ Rails.application.routes.draw do
           resources :employments, only: %i[index create update destroy], controller: 'sales/contact_employments'
         end
         post 'opportunities/bulk', to: 'sales/opportunities#bulk'
-        resources :opportunities, only: %i[index create show update], controller: 'sales/opportunities' do
+        resources :opportunities, only: %i[index create show update destroy], controller: 'sales/opportunities' do
           resources :contacts, only: %i[index create update destroy], controller: 'sales/opportunity_contacts'
           member do
             get :timeline

@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { salesApi } from '@/lib/api/sales/client';
 
 interface SendEmailModalProps {
   open: boolean;
@@ -203,32 +204,19 @@ export default function SendEmailModal({
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('email[to_email]', toEmail);
-      formData.append('email[subject]', subject);
-      formData.append('email[body_text]', body);
-      if (opportunityId) formData.append('email[sales_opportunity_id]', String(opportunityId));
-      if (contactId) formData.append('email[sales_contact_id]', String(contactId));
-      if (accountId) formData.append('email[sales_account_id]', String(accountId));
-      if (cc) formData.append('email[cc]', cc);
-      if (bcc) formData.append('email[bcc]', bcc);
-      formData.append('email[open_tracking_enabled]', 'true');
-      formData.append('email[click_tracking_enabled]', 'true');
-
-      attachments.forEach((file) => {
-        formData.append('email[attachments][]', file);
+      await salesApi.sendEmail({
+        to_email: toEmail,
+        subject,
+        body_text: body,
+        sales_opportunity_id: opportunityId,
+        sales_contact_id: contactId,
+        sales_account_id: accountId,
+        cc: cc ? [cc] : undefined,
+        bcc: bcc ? [bcc] : undefined,
+        open_tracking_enabled: true,
+        click_tracking_enabled: true,
+        attachments: attachments.length ? attachments : undefined,
       });
-
-      const res = await fetch('/api/v1/sales/emails', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || errData.message || 'Falha ao enviar e-mail comercial.');
-      }
 
       setSuccessMsg('E-mail comercial disparado com sucesso!');
       toast.success('E-mail enviado com sucesso!');

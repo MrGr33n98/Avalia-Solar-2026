@@ -43,6 +43,22 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
     }
   };
 
+  const handleCardAction = async (action: string, card: PipelineCardDTO) => {
+    if (onAction) {
+      onAction(action, card);
+      return;
+    }
+    if (action === 'delete') {
+      if (!window.confirm(`Tem certeza que deseja excluir "${card.name}"?`)) return;
+      try {
+        await salesApi.deleteOpportunity(card.id);
+        await onRefresh();
+      } catch (err: any) {
+        alert(err.message || 'Erro ao excluir oportunidade.');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex w-max min-w-full gap-4 overflow-x-auto p-2">
@@ -91,7 +107,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
               onToggleSelect={onToggleSelect}
               onOpenDetails={onOpenDetails}
               onDropCard={handleDropCard}
-              onAction={onAction}
+              onAction={handleCardAction}
               onCreateTask={onCreateTask}
             />
           );

@@ -450,6 +450,14 @@ export const salesApi = {
     });
   },
 
+  async deleteOpportunity(id: number): Promise<void> {
+    clearSalesApiCache(`opp:${id}`);
+    clearSalesApiCache('opps:');
+    await request(`/api/v1/sales/opportunities/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
   // Tasks
   async getTasks(params?: { status?: string; q?: string }): Promise<ApiTask[]> {
     const qs = new URLSearchParams();

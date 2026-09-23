@@ -6,7 +6,7 @@ module Api
       class OpportunitiesController < BaseController
         before_action :authenticate_api_user
         before_action :require_internal_sales
-        before_action :set_opportunity, only: %i[show update timeline]
+        before_action :set_opportunity, only: %i[show update destroy timeline]
 
         def index
           scope = scoped_opportunities.merge(::Sales::OpportunitiesQuery.call(params)).includes(:account, :stage, :primary_contact, :owner)
@@ -27,6 +27,13 @@ module Api
 
         def show
           render json: { opportunity: opportunity_json(@opportunity) }
+        end
+
+        def destroy
+          @opportunity.destroy!
+          ::Sales::AuditRecorder.call(record: @opportunity, action: 'deleted', actor: current_user,
+                                      request_id: request.request_id, ip: request.remote_ip) rescue nil
+          render json: { message: 'Oportunidade excluída com sucesso', id: @opportunity.id }
         end
 
         def bulk
