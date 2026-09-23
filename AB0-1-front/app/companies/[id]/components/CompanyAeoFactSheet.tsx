@@ -12,12 +12,15 @@ interface CompanyAeoFactSheetProps {
 
 export function CompanyAeoFactSheet({ company, reviewCount, rating }: CompanyAeoFactSheetProps) {
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
-  const ratingFormatted = Number(rating || 0).toFixed(1);
+  const hasReviews = reviewCount > 0 && rating > 0;
+  const ratingFormatted = hasReviews ? Number(rating).toFixed(1) : null;
 
   const faqs = [
     {
       q: `A empresa ${company.name} é confiável e verificada?`,
-      a: `Sim. A empresa ${company.name} é uma empresa cadastrada e auditada no portal Avalia Solar, possuindo uma reputação de ${ratingFormatted} de 5.0 estrelas com base em ${reviewCount} avaliações reais de clientes.`,
+      a: hasReviews && ratingFormatted
+        ? `Sim. A empresa ${company.name} é uma empresa cadastrada e auditada no portal Avalia Solar, possuindo uma reputação de ${ratingFormatted} de 5.0 estrelas com base em ${reviewCount} avaliações reais de clientes.`
+        : `Sim. A empresa ${company.name} é uma empresa cadastrada e auditada no portal Avalia Solar, possuindo dados cadastrais e operacionais verificados.`,
     },
     {
       q: `Onde a ${company.name} está localizada e onde atende?`,
@@ -55,13 +58,26 @@ export function CompanyAeoFactSheet({ company, reviewCount, rating }: CompanyAeo
           <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
             Avaliação Média
           </span>
-          <div className="flex items-center gap-1.5 text-sm font-black text-slate-900">
-            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-            <span>{ratingFormatted} / 5.0</span>
-          </div>
-          <span className="text-[10px] text-slate-400 block mt-0.5">
-            {reviewCount} opiniões verificadas
-          </span>
+          {hasReviews && ratingFormatted ? (
+            <>
+              <div className="flex items-center gap-1.5 text-sm font-black text-slate-900">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                <span>{ratingFormatted} / 5.0</span>
+              </div>
+              <span className="text-[10px] text-slate-400 block mt-0.5">
+                {reviewCount} {reviewCount === 1 ? 'opinião verificada' : 'opiniões verificadas'}
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="text-sm font-bold text-slate-500">
+                Sem avaliações
+              </div>
+              <span className="text-[10px] text-slate-400 block mt-0.5">
+                0 opiniões de clientes
+              </span>
+            </>
+          )}
         </div>
 
         <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">

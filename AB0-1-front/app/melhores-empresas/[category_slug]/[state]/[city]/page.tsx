@@ -123,7 +123,7 @@ export default async function LocalRankingPage({ params, searchParams }: LocalRa
               'addressRegion': company.state || stateName,
               'addressCountry': 'BR'
             },
-            ...(company.rating_avg && company.rating_count ? {
+            ...(company.rating_avg && company.rating_avg > 0 && company.rating_count && company.rating_count > 0 ? {
               'aggregateRating': {
                 '@type': 'AggregateRating',
                 'ratingValue': company.rating_avg,

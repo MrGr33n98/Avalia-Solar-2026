@@ -35,8 +35,8 @@ class CompanyCardSerializer < ActiveModel::Serializer
   end
 
   def reputation
-    rating_avg = object.rating_avg.to_f
     rating_count = object.rating_count.to_i
+    rating_avg = rating_count.positive? && object.rating_avg.present? ? object.rating_avg.to_f.round(1) : nil
     
     nps_responses = object.reviews.published.where.not(nps_score: nil).count
     nps_avg = nil

@@ -416,12 +416,29 @@ end
     ]
   end
 
+  def reviews_count
+    (self[:rating_count] || self[:reviews_count] || 0).to_i
+  end
+
+  def rating_avg
+    return nil if reviews_count.zero?
+
+    val = self[:rating_avg]
+    return nil unless val.present? && val.to_f > 0
+
+    val.to_f.round(1)
+  end
+
+  def reviews_average
+    rating_avg
+  end
+
   def average_rating
     rating_avg
   end
 
   def rating_count
-    self[:rating_count] || 0
+    reviews_count
   end
 
   def recalculate_rating_cache!

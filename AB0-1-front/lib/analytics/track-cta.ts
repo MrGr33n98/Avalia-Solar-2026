@@ -12,7 +12,6 @@ interface CTAClickProperties {
   ctaLocation: 'hero' | 'sidebar' | 'footer' | 'floating' | 'overview' | 'reviews' | 'other';
   companyId: string;
   companyName: string;
-  destinationUrl?: string;
 }
 
 interface TrackingMetadata {

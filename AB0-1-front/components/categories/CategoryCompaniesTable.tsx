@@ -368,17 +368,14 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
               const globalIndex = startIndex + index + 1;
 
-              const rating = Number(
-
-                company.rating_avg || company.rating || company.average_rating || 0
-
-              );
-
-              const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
-
               const reviewCount =
-
                 company.rating_count || company.reviews_count || company.total_reviews || 0;
+
+              const rating = reviewCount > 0
+                ? Number(company.rating_avg || company.rating || company.average_rating || 0)
+                : 0;
+
+              const ratingLabel = reviewCount > 0 && rating > 0 ? rating.toFixed(1) : 'N/A';
 
               const location = [company.city, company.state].filter(Boolean).join(', ');
 
@@ -711,189 +708,108 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   {/* Rating star/label */}
 
                   <td className="py-4 px-4">
-
                     <div className="flex items-center gap-1.5">
+                      {reviewCount > 0 && rating > 0 ? (
+                        <>
+                          <span className="font-bold text-slate-900">{ratingLabel}</span>
+                          <div className="flex items-center">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={cn(
+                                  'w-3.5 h-3.5',
+                                  i < Math.floor(rating)
+                                    ? 'fill-amber-400 text-amber-400'
+                                    : 'text-slate-200 fill-slate-200'
+                                )}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[11px] text-slate-400">({reviewCount})</span>
+                        </>
+                      ) : (
+                        <span className="text-xs font-medium text-slate-400">Sem avaliações</span>
+                      )}
 
-                      <span className="font-bold text-slate-900">{ratingLabel}</span>
-
-                      <div className="flex items-center">
-
-                        {Array.from({ length: 5 }).map((_, i) => (
-
-                          <Star
-
-                            key={i}
-
-                            className={cn(
-
-                              'w-3.5 h-3.5',
-
-                              i < Math.floor(rating)
-
-                                ? 'fill-amber-400 text-amber-400'
-
-                                : 'text-slate-200 fill-slate-200'
-
-                            )}
-
-                          />
-
-                        ))}
-
-                      </div>
-
-                      <span className="text-[11px] text-slate-400">({reviewCount})</span>
-
-                      <Popover>
-
-                        <PopoverTrigger className="hover:text-blue-600 text-slate-400 p-0.5 shrink-0 transition-colors">
-
-                          <Info className="w-3.5 h-3.5" />
-
-                        </PopoverTrigger>
-
-                        <PopoverContent className="w-85 bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-[1.75rem] shadow-xl text-xs text-slate-600 font-medium z-50">
-
-                          <div className="space-y-4">
-
-                            <div className="flex items-center gap-3">
-
-                              <span className="text-3xl font-black text-slate-900 leading-none">
-
-                                {ratingLabel}
-
-                              </span>
-
-                              <div>
-
-                                <div className="flex items-center">
-
-                                  {Array.from({ length: 5 }).map((_, i) => (
-
-                                    <Star
-
-                                      key={i}
-
-                                      className={cn(
-
-                                        'w-3.5 h-3.5',
-
-                                        i < Math.floor(rating)
-
-                                          ? 'fill-amber-400 text-amber-400'
-
-                                          : 'text-slate-200 fill-slate-200'
-
-                                      )}
-
-                                    />
-
-                                  ))}
-
+                      {reviewCount > 0 && (
+                        <Popover>
+                          <PopoverTrigger className="hover:text-blue-600 text-slate-400 p-0.5 shrink-0 transition-colors">
+                            <Info className="w-3.5 h-3.5" />
+                          </PopoverTrigger>
+                          <PopoverContent className="w-85 bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-[1.75rem] shadow-xl text-xs text-slate-600 font-medium z-50">
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-3">
+                                <span className="text-3xl font-black text-slate-900 leading-none">
+                                  {ratingLabel}
+                                </span>
+                                <div>
+                                  <div className="flex items-center">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={cn(
+                                          'w-3.5 h-3.5',
+                                          i < Math.floor(rating)
+                                            ? 'fill-amber-400 text-amber-400'
+                                            : 'text-slate-200 fill-slate-200'
+                                        )}
+                                      />
+                                    ))}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5">
+                                    ({reviewCount} avaliações registradas)
+                                  </div>
                                 </div>
-
-                                <div className="text-[10px] text-slate-400 mt-0.5">
-
-                                  ({reviewCount} avaliações registradas)
-
-                                </div>
-
                               </div>
 
-                            </div>
-
-                            {/* Stars breakdown */}
-
-                            <div className="space-y-1.5 pt-2">
-
-                              {[
-
-                                { label: '5 estrelas', pct: '96%' },
-
-                                { label: '4 estrelas', pct: '3%' },
-
-                                { label: '3 estrelas', pct: '1%' },
-
-                                { label: '2 estrelas', pct: '0%' },
-
-                                { label: '1 estrela', pct: '0%' },
-
-                              ].map((starRow) => (
-
-                                <div
-
-                                  key={starRow.label}
-
-                                  className="flex items-center gap-3 text-[10px]"
-
-                                >
-
-                                  <span className="w-16 text-slate-400 font-semibold">
-
-                                    {starRow.label}
-
-                                  </span>
-
-                                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-
-                                    <div
-
-                                      className="bg-amber-400 h-full rounded-full"
-
-                                      style={{ width: starRow.pct }}
-
-                                    />
-
+                              {/* Stars breakdown */}
+                              <div className="space-y-1.5 pt-2">
+                                {[
+                                  { label: '5 estrelas', pct: '96%' },
+                                  { label: '4 estrelas', pct: '3%' },
+                                  { label: '3 estrelas', pct: '1%' },
+                                  { label: '2 estrelas', pct: '0%' },
+                                  { label: '1 estrela', pct: '0%' },
+                                ].map((starRow) => (
+                                  <div
+                                    key={starRow.label}
+                                    className="flex items-center gap-3 text-[10px]"
+                                  >
+                                    <span className="w-16 text-slate-400 font-semibold">
+                                      {starRow.label}
+                                    </span>
+                                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                      <div
+                                        className="bg-amber-400 h-full rounded-full"
+                                        style={{ width: starRow.pct }}
+                                      />
+                                    </div>
+                                    <span className="w-8 text-right text-slate-500 font-bold">
+                                      {starRow.pct}
+                                    </span>
                                   </div>
+                                ))}
+                              </div>
 
-                                  <span className="w-8 text-right text-slate-500 font-bold">
-
-                                    {starRow.pct}
-
-                                  </span>
-
-                                </div>
-
-                              ))}
-
+                              <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-4">
+                                <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 shrink-0">
+                                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                  Última avaliação: recente
+                                </span>
+                                <Button
+                                  asChild
+                                  size="sm"
+                                  variant="link"
+                                  className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto"
+                                >
+                                  <Link href={href}>Ver todas as avaliações</Link>
+                                </Button>
+                              </div>
                             </div>
-
-                            <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-4">
-
-                              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 shrink-0">
-
-                                <Clock className="w-3.5 h-3.5 text-slate-400" />
-
-                                Última avaliação: recente
-
-                              </span>
-
-                              <Button
-
-                                asChild
-
-                                size="sm"
-
-                                variant="link"
-
-                                className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto"
-
-                              >
-
-                                <Link href={href}>Ver todas as avaliações</Link>
-
-                              </Button>
-
-                            </div>
-
-                          </div>
-
-                        </PopoverContent>
-
-                      </Popover>
-
+                          </PopoverContent>
+                        </Popover>
+                      )}
                     </div>
-
                   </td>
 
                   {/* Projects/Cases count */}
@@ -1268,11 +1184,13 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
 function CategoryCompanyCard({ company, position }: { company: Company; position: number }) {
 
-  const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
-
-  const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
-
   const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
+
+  const rating = reviewCount > 0
+    ? Number(company.rating_avg || company.rating || company.average_rating || 0)
+    : 0;
+
+  const ratingLabel = reviewCount > 0 && rating > 0 ? rating.toFixed(1) : 'Sem avaliações';
 
   const location = [company.city, company.state].filter(Boolean).join(', ') || 'Brasil';
 
@@ -1338,13 +1256,14 @@ function CategoryCompanyCard({ company, position }: { company: Company; position
 
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
 
-            <span className="inline-flex items-center gap-1 font-bold text-slate-900">
-
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-
-              {ratingLabel} ({reviewCount})
-
-            </span>
+            {reviewCount > 0 && rating > 0 ? (
+              <span className="inline-flex items-center gap-1 font-bold text-slate-900">
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                {ratingLabel} ({reviewCount})
+              </span>
+            ) : (
+              <span className="text-xs font-medium text-slate-400">Sem avaliações</span>
+            )}
 
             <span
 

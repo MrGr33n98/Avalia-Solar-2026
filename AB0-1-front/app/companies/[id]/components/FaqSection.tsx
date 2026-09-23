@@ -80,7 +80,10 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
     // 4. Fallback padrão apenas quando a empresa não possui FAQs cadastradas
     const name = companyName || company?.name || 'esta empresa';
     const locationLabel = [company?.city, company?.state].filter(Boolean).join(' - ');
-    const ratingAvg = Number(company?.rating_avg ?? company?.average_rating ?? company?.rating ?? 4.5).toFixed(1);
+    const reviewsCount = Number(company?.rating_count ?? company?.reviews_count ?? company?.total_reviews ?? 0);
+    const rawRating = Number(company?.rating_avg ?? company?.average_rating ?? company?.rating ?? 0);
+    const hasReviews = reviewsCount > 0 && rawRating > 0;
+    const ratingAvg = hasReviews ? rawRating.toFixed(1) : null;
 
     return [
       {
@@ -96,7 +99,7 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
       {
         id: 9002,
         question: `A empresa ${name} é confiável e verificada?`,
-        answer: `Sim. A ${name} possui cadastro auditado no portal Avalia Solar${locationLabel ? ` em ${locationLabel}` : ''}, com dados checados e pontuação média de ${ratingAvg}/5.0 baseada em avaliações reais.`,
+        answer: `Sim. A ${name} possui cadastro auditado no portal Avalia Solar${locationLabel ? ` em ${locationLabel}` : ''}, com dados operacionais checados${hasReviews && ratingAvg ? ` e pontuação média de ${ratingAvg}/5.0 baseada em avaliações reais` : ''}.`,
         category: 'Reputação',
         position: 2,
         views_count: 98,

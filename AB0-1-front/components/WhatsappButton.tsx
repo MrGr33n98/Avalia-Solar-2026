@@ -141,8 +141,6 @@ export default function WhatsappButton({
         ctaLocation: path?.includes('/companies/') ? 'hero' : 'other',
         companyId: String(companyId),
         companyName: '', // Will be filled by context if available
-        destinationUrl: link,
-        phoneNumber: href,
       });
     }
     

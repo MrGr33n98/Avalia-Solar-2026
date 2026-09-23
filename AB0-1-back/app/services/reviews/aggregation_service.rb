@@ -42,7 +42,7 @@ module Reviews
       else
         # Sync to Company denormalized cache for high-performance listing access
         @company.update_columns(
-          rating_avg: aggregate.average_rating,
+          rating_avg: aggregate.total_reviews.positive? ? aggregate.average_rating : nil,
           rating_count: aggregate.total_reviews
         )
       end

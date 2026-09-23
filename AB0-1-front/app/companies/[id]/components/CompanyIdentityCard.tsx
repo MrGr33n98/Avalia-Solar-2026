@@ -47,8 +47,9 @@ export default function CompanyIdentityCard({
   );
 
   const numericRating = Number.parseFloat(companyStats.rating);
+  const hasReviews = companyStats.reviewCount > 0;
   const ratingFormatted =
-    Number.isNaN(numericRating) || numericRating <= 0 ? '5.0' : numericRating.toFixed(1);
+    hasReviews && !Number.isNaN(numericRating) && numericRating > 0 ? numericRating.toFixed(1) : null;
 
   return (
     <section
@@ -126,14 +127,20 @@ export default function CompanyIdentityCard({
 
             {/* Nota + avaliações + visualizações em linha compacta */}
             <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs sm:text-sm">
-              <div className="flex items-center gap-1 font-bold text-slate-950">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" strokeWidth={0} aria-hidden="true" />
-                <span>{ratingFormatted}</span>
-              </div>
-              <span className="text-slate-300" aria-hidden="true">|</span>
-              <span className="text-slate-500">
-                {companyStats.reviewCount} {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
-              </span>
+              {hasReviews && ratingFormatted ? (
+                <>
+                  <div className="flex items-center gap-1 font-bold text-slate-950">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" strokeWidth={0} aria-hidden="true" />
+                    <span>{ratingFormatted}</span>
+                  </div>
+                  <span className="text-slate-300" aria-hidden="true">|</span>
+                  <span className="text-slate-500">
+                    {companyStats.reviewCount} {companyStats.reviewCount === 1 ? 'avaliação' : 'avaliações'}
+                  </span>
+                </>
+              ) : (
+                <span className="text-slate-500 font-medium">0 avaliações</span>
+              )}
               <span className="text-slate-300" aria-hidden="true">·</span>
               <CompanyViewCounter companyId={company.id} />
             </div>

@@ -189,14 +189,18 @@ export function buildCompanyFaqJsonLd({
   company: Company;
   canonicalUrl: string;
 }) {
-  const ratingAvg = Number(company.rating_avg ?? company.average_rating ?? company.rating ?? 0).toFixed(1);
   const ratingCount = Number(company.rating_count ?? company.total_reviews ?? company.reviews_count ?? 0);
+  const rawRating = Number(company.rating_avg ?? company.average_rating ?? company.rating ?? 0);
+  const hasReviews = ratingCount > 0 && rawRating > 0;
+  const ratingAvg = hasReviews ? rawRating.toFixed(1) : null;
   const locationLabel = [company.city, company.state].filter(Boolean).join(' - ');
 
   const mainQuestions = [
     {
       question: `A empresa ${company.name} é confiável e verificada no Avalia Solar?`,
-      answer: `Sim. A empresa ${company.name} possui perfil no Avalia Solar${locationLabel ? ` em ${locationLabel}` : ''}, contando com uma nota média de ${ratingAvg}/5.0 baseada em ${ratingCount} avaliações reais de clientes auditados.`,
+      answer: hasReviews && ratingAvg
+        ? `Sim. A empresa ${company.name} possui perfil no Avalia Solar${locationLabel ? ` em ${locationLabel}` : ''}, contando com uma nota média de ${ratingAvg}/5.0 baseada em ${ratingCount} avaliações reais de clientes auditados.`
+        : `Sim. A empresa ${company.name} possui perfil no Avalia Solar${locationLabel ? ` em ${locationLabel}` : ''}, com dados cadastrais e operacionais verificados no portal.`,
     },
     {
       question: `Quais serviços e produtos a ${company.name} oferece?`,

@@ -135,7 +135,6 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
             {paginatedCompanies.map((comp, index) => {
               const globalIndex = startIndex + index + 1;
               const rating = Number(comp.rating_avg || comp.rating || comp.average_rating || 0);
-              const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
               const reviewCount = comp.rating_count || comp.reviews_count || comp.total_reviews || 0;
               const location = [comp.city, comp.state].filter(Boolean).join(', ');
               const href = comp.slug ? `/companies/${comp.slug}` : `/companies/${comp.id}`;
@@ -176,11 +175,15 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
 
                   {/* Rating */}
                   <td className="py-4 px-4">
-                    <div className="flex items-center gap-1">
-                      <span className="font-bold text-slate-900">{ratingLabel}</span>
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="text-[11px] text-slate-400">({reviewCount})</span>
-                    </div>
+                    {reviewCount > 0 && rating > 0 ? (
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-slate-900">{rating.toFixed(1)}</span>
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span className="text-[11px] text-slate-400">({reviewCount})</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs font-medium text-slate-400">Sem avaliações</span>
+                    )}
                   </td>
 
                   {/* Verification Status */}
@@ -276,7 +279,6 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
 
 function RelatedCompanyCard({ company, position }: { company: Company; position: number }) {
   const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
-  const ratingLabel = rating > 0 ? rating.toFixed(1) : '5.0';
   const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
   const location = [company.city, company.state].filter(Boolean).join(', ') || 'Brasil';
   const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
@@ -310,10 +312,14 @@ function RelatedCompanyCard({ company, position }: { company: Company; position:
             />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
-            <span className="inline-flex items-center gap-1 font-bold text-slate-900">
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              {ratingLabel} ({reviewCount})
-            </span>
+            {reviewCount > 0 && rating > 0 ? (
+              <span className="inline-flex items-center gap-1 font-bold text-slate-900">
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                {rating.toFixed(1)} ({reviewCount})
+              </span>
+            ) : (
+              <span className="text-xs font-medium text-slate-400">Sem avaliações</span>
+            )}
             <span className={cn('inline-flex items-center gap-1 font-semibold', isVerified ? 'text-emerald-600' : 'text-slate-500')}>
               {isVerified && <BadgeCheck className="h-4 w-4" />}
               {isVerified ? 'Verificada' : 'Padrão'}

@@ -512,10 +512,10 @@ export function CompaniesContent({
               addressCountry: 'BR',
             },
             aggregateRating:
-              company.rating_count && company.rating_count > 0
+              company.rating_count && company.rating_count > 0 && company.rating_avg && company.rating_avg > 0
                 ? {
                     '@type': 'AggregateRating',
-                    ratingValue: company.rating_avg || 0,
+                    ratingValue: company.rating_avg,
                     reviewCount: company.rating_count,
                   }
                 : undefined,

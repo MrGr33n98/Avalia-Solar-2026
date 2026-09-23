@@ -522,7 +522,7 @@ export default function CompanyCard({
             <div className="flex items-center gap-1 font-bold text-slate-800 text-xs">
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
               <span>
-                {company.reputation.rating_avg > 0
+                {company.reputation.rating_count > 0 && company.reputation.rating_avg > 0
                   ? company.reputation.rating_avg.toFixed(1)
                   : 'S/N'}
               </span>

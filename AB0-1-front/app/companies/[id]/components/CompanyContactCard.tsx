@@ -94,7 +94,6 @@ export default function CompanyContactCard({ company }: CompanyContactCardProps)
                   ctaLocation: "sidebar",
                   companyId: String(company.id),
                   companyName: company.name,
-                  phoneNumber: company.phone,
                 });
               }}
             >
@@ -139,7 +138,6 @@ export default function CompanyContactCard({ company }: CompanyContactCardProps)
                   ctaLocation: "sidebar",
                   companyId: String(company.id),
                   companyName: company.name,
-                  email: company.email || company.email_public,
                 });
               }}
             >
@@ -174,7 +172,6 @@ export default function CompanyContactCard({ company }: CompanyContactCardProps)
                   ctaLocation: "sidebar",
                   companyId: String(company.id),
                   companyName: company.name,
-                  destinationUrl: company.website,
                 });
               }}
             >

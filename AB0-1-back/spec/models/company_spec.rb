@@ -11,7 +11,7 @@ RSpec.describe Company, type: :model do
     end
 
     it 'valida formato de CNPJ quando informado' do
-      company = build(:company, cnpj: 'cnpj-invalido')
+      company = build(:company, status: 'pending', cnpj: 'cnpj-invalido')
 
       expect(company).not_to be_valid
       expect(company.errors[:cnpj]).to be_present
@@ -87,6 +87,17 @@ RSpec.describe Company, type: :model do
         company.valid?
         expect(company.errors[:email]).to be_empty
       end
+    end
+  end
+
+  describe '#reviews_average e rating_avg com 0 avaliações' do
+    let(:company) { create(:company, status: 'pending') }
+
+    it 'retorna nil para reviews_average e rating_avg quando nao possui avaliacoes publicadas' do
+      expect(company.reviews_count).to eq(0)
+      expect(company.reviews_average).to be_nil
+      expect(company.rating_avg).to be_nil
+      expect(company.average_rating).to be_nil
     end
   end
 

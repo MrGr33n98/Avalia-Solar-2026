@@ -282,10 +282,10 @@ function ComparePageContent() {
           '@type': 'Organization',
           name: comp.name,
           url: absoluteUrl(buildCompanyPath(comp.slug, comp.name, comp.id)),
-          aggregateRating: comp.rating > 0 ? {
+          aggregateRating: comp.rating > 0 && comp.reviewsCount > 0 ? {
             '@type': 'AggregateRating',
             ratingValue: comp.rating,
-            reviewCount: comp.reviewsCount || 1,
+            reviewCount: comp.reviewsCount,
           } : undefined,
         },
       })),

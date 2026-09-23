@@ -145,7 +145,6 @@ export default function CompanySidebar({
                       ctaLocation: 'sidebar',
                       companyId: String(company.id),
                       companyName: company.name,
-                      phoneNumber: company.phone,
                     });
                   }}
                 >
@@ -176,13 +175,12 @@ export default function CompanySidebar({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-base font-semibold hover:text-primary transition-colors flex items-center gap-1.5 hover:underline decoration-primary/30 underline-offset-4 truncate w-full"
-                  onClick={async (e) => {
+                  onClick={async () => {
                     await trackCTAClick({
                       ctaType: 'website',
                       ctaLocation: 'sidebar',
                       companyId: String(company.id),
                       companyName: company.name,
-                      destinationUrl: company.website,
                     });
                   }}
                 >
@@ -242,7 +240,6 @@ export default function CompanySidebar({
                       ctaLocation: 'sidebar',
                       companyId: String(company.id),
                       companyName: company.name,
-                      email: company.email || company.email_public,
                     });
                   }}
                 >

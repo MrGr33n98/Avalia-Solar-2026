@@ -26,13 +26,14 @@ export function RatingStars({
   countClassName,
   ratingValueClassName
 }: RatingStarsProps) {
-  const parsedRating = Number(rating);
-  const normalizedRating = Number.isFinite(parsedRating)
-    ? Math.min(5, Math.max(0, parsedRating))
-    : 0;
   const parsedCount = Number(count);
   const normalizedCount = Number.isFinite(parsedCount)
     ? Math.max(0, Math.floor(parsedCount))
+    : 0;
+
+  const parsedRating = Number(rating);
+  const normalizedRating = normalizedCount > 0 && Number.isFinite(parsedRating)
+    ? Math.min(5, Math.max(0, parsedRating))
     : 0;
 
   const fullStars = Math.floor(normalizedRating);
@@ -43,7 +44,7 @@ export function RatingStars({
     <div 
       className={cn("flex items-center gap-1.5", className)}
       role="img"
-      aria-label={`Avaliação: ${normalizedRating.toFixed(1)} de 5 estrelas`}
+      aria-label={normalizedCount > 0 ? `Avaliação: ${normalizedRating.toFixed(1)} de 5 estrelas` : 'Sem avaliações'}
     >
       <div className="flex items-center">
         {[...Array(fullStars)].map((_, i) => (
@@ -76,7 +77,7 @@ export function RatingStars({
           />
         ))}
       </div>
-      {showRatingValue && (
+      {showRatingValue && normalizedCount > 0 && (
         <span className={cn("text-sm font-bold text-foreground", ratingValueClassName)}>
           {normalizedRating.toFixed(1)}
         </span>

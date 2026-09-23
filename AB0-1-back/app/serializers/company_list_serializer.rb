@@ -67,8 +67,8 @@ class CompanyListSerializer < ActiveModel::Serializer
 
   # ─── Reputação real (sem N+1 extra: usa review_aggregate preloaded se possível) ─
   def reputation
-    rating_avg   = object.rating_avg.to_f
     rating_count = object.rating_count.to_i
+    rating_avg   = rating_count.positive? && object.rating_avg.present? ? object.rating_avg.to_f.round(1) : nil
 
     # Tenta usar o aggregate global (category_id = nil) já preloaded
     aggregate = if object.association(:review_aggregates).loaded?

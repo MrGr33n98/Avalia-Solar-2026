@@ -40,7 +40,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          config-inline: |
+          buildkitd-config-inline: |
             [registry."docker.io"]
               mirrors = ["mirror.gcr.io", "registry.hub.docker.com"]
 
@@ -322,7 +322,7 @@ jobs:
         run: npm ci
       - name: Run Ranking Performance tests
         run: npm test -- RankingPerformanceTab --runInBand
-      - name: Typecheck Ranking Performance contract
+      - name: Typecheck frontend
         run: npm run typecheck
       - name: Lint Ranking Performance files
         run: npx eslint app/dashboard/components/RankingPerformanceTab.tsx app/dashboard/components/ranking app/dashboard/components/MagicQuadrant.tsx
