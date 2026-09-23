@@ -41,39 +41,39 @@ module Analytics
     def aggregate_day(day)
       is_pg = ActiveRecord::Base.connection.adapter_name =~ /postgre/i
       
-      sql = <<~SQL
-        INSERT INTO company_feature_daily (company_id, day, engagement_score, lead_conversion_rate, review_velocity, unique_session_ratio, updated_at, created_at)
-        SELECT 
-          company_id, $1,
-          (profile_views + (cta_clicks * 5) + (whatsapp_clicks * 10))::numeric,
-          CASE WHEN profile_views > 0 THEN (leads / profile_views) ELSE 0 END,
-          reviews, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-        FROM company_daily_stats
-        WHERE day = $1 AND company_id IS NOT NULL
-        ON CONFLICT (company_id, day) DO UPDATE SET
-          engagement_score = EXCLUDED.engagement_score,
-          lead_conversion_rate = EXCLUDED.lead_conversion_rate,
-          review_velocity = EXCLUDED.review_velocity,
-          updated_at = CURRENT_TIMESTAMP
-        RETURNING 1;
-      SQL
-
-      # SQLite compatibility fallback
-      unless is_pg
-        sql = <<~SQL
+      sql = if is_pg
+        <<~SQL
           INSERT INTO company_feature_daily (company_id, day, engagement_score, lead_conversion_rate, review_velocity, unique_session_ratio, updated_at, created_at)
           SELECT 
-            company_id, date($1),
+            company_id, ?,
+            (profile_views + (cta_clicks * 5) + (whatsapp_clicks * 10))::numeric,
+            CASE WHEN profile_views > 0 THEN (leads::numeric / profile_views::numeric) ELSE 0 END,
+            reviews, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+          FROM company_daily_stats
+          WHERE day = ? AND company_id IS NOT NULL
+          ON CONFLICT (company_id, day) DO UPDATE SET
+            engagement_score = EXCLUDED.engagement_score,
+            lead_conversion_rate = EXCLUDED.lead_conversion_rate,
+            review_velocity = EXCLUDED.review_velocity,
+            updated_at = CURRENT_TIMESTAMP
+          RETURNING 1;
+        SQL
+      else
+        <<~SQL
+          INSERT INTO company_feature_daily (company_id, day, engagement_score, lead_conversion_rate, review_velocity, unique_session_ratio, updated_at, created_at)
+          SELECT 
+            company_id, date(?),
             (profile_views + (cta_clicks * 5) + (whatsapp_clicks * 10)),
             CASE WHEN profile_views > 0 THEN (leads * 1.0 / profile_views) ELSE 0 END,
             reviews, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           FROM company_daily_stats
-          WHERE day = date($1) AND company_id IS NOT NULL
+          WHERE day = date(?) AND company_id IS NOT NULL
         SQL
       end
 
-      res = ActiveRecord::Base.connection.execute(ActiveRecord::Base.send(:sanitize_sql_array, [sql, day.to_s]))
-      is_pg ? res.rows.size : 1
+      sanitized_sql = ActiveRecord::Base.sanitize_sql_array([sql, day.to_s, day.to_s])
+      res = ActiveRecord::Base.connection.execute(sanitized_sql)
+      is_pg ? (res.respond_to?(:rows) ? res.rows.size : 1) : 1
     end
     
     private

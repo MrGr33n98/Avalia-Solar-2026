@@ -2229,7 +2229,7 @@ export const companiesApi = {
       return altResponse?.companies || altResponse || [];
     } catch (error) {
       console.error('Error fetching mine companies:', error);
-      return [];
+      throw error;
     }
   },
   getById: async (id: number | string): Promise<Company | null> => {

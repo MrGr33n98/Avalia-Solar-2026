@@ -338,6 +338,17 @@ jobs:
       contents: read
       packages: read
     steps:
+      - name: Verify CI Status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Verificando status das verificações do CI para o SHA ${{ env.RELEASE_SHA }}..."
+          STATUS=$(gh api repos/${{ github.repository }}/commits/${{ env.RELEASE_SHA }}/check-runs --jq '.check_runs[] | select(.name=="rspec") | .conclusion' 2>/dev/null || echo "passed")
+          if [ "$STATUS" = "failure" ]; then
+            echo "::error::O CI RSpec falhou para este commit. Abortando deploy de produção."
+            exit 1
+          fi
+
       - name: Validate Secrets
         run: |
           MISSING=()

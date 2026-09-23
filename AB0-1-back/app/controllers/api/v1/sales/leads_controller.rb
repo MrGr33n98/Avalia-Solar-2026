@@ -88,10 +88,14 @@ module Api
             stage_id: params[:sales_stage_id] || params[:stage_id]
           )
 
+          contact_payload = if result[:contact]
+                              { id: result[:contact].id, name: [result[:contact].first_name, result[:contact].last_name].compact.join(' ') }
+                            end
+
           render json: {
             lead: serialize_lead(result[:opportunity]),
-            account: { id: result[:account].id, name: result[:account].name },
-            contact: { id: result[:contact].id, name: [result[:contact].first_name, result[:contact].last_name].compact.join(' ') }
+            account: result[:account] ? { id: result[:account].id, name: result[:account].name } : nil,
+            contact: contact_payload
           }, status: :ok
         end
 
@@ -145,6 +149,26 @@ module Api
                 else
                   failed_count += 1
                   failures << { id: lead.id, error: 'Vendedor responsável não encontrado' }
+                end
+
+              when 'add_tag'
+                tag = ::Sales::Tag.find_by(id: params[:value]) || ::Sales::Tag.find_by(name: params[:value])
+                if tag
+                  lead.tags << tag unless lead.tags.include?(tag)
+                  updated_count += 1
+                else
+                  failed_count += 1
+                  failures << { id: lead.id, error: 'Tag não encontrada' }
+                end
+
+              when 'remove_tag'
+                tag = ::Sales::Tag.find_by(id: params[:value]) || ::Sales::Tag.find_by(name: params[:value])
+                if tag
+                  lead.tags.delete(tag)
+                  updated_count += 1
+                else
+                  failed_count += 1
+                  failures << { id: lead.id, error: 'Tag não encontrada' }
                 end
 
               when 'archive', 'delete'

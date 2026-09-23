@@ -71,12 +71,12 @@ Rails.application.routes.draw do
         post 'companies/:company_id/account', to: 'sales/account_links#create'
         resources :taxonomies, only: %i[index create update destroy], controller: 'sales/taxonomies'
         resources :custom_field_definitions, controller: 'sales/custom_field_definitions'
-        resources :notes, controller: 'sales/notes'
+        resources :notes, only: %i[index create update], controller: 'sales/notes'
         resources :api_keys, only: %i[index create destroy], controller: 'sales/api_keys'
         resources :integrations, controller: 'sales/integrations'
         resources :webhooks, controller: 'sales/webhooks'
         resources :products, controller: 'sales/products'
-        resources :quotes, controller: 'sales/quotes' do
+        resources :quotes, only: %i[index create update], controller: 'sales/quotes' do
           resources :items, controller: 'sales/quote_items'
           get :document, to: 'sales/quote_documents#show'
         end
