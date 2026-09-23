@@ -511,7 +511,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                           Métricas detalhadas de performance e engajamento
                         </p>
                       </div>
-                      <PerformanceMetrics companyId={companyId} themeMode={themeMode} />
+                      <PerformanceMetrics companyId={companyId} companyName={dashboardCompany?.name || companyId} themeMode={themeMode} />
                     </div>
                 )}
               </TabsContent>

@@ -28,36 +28,58 @@ interface TimeSeriesDataPoint {
   leads: number;
 }
 
-interface ExportButtonProps {
+export type ExportRangeLabel = string;
+
+export interface ExportSummaryData {
+  views: number;
+  cta_clicks: number;
+  whatsapp_clicks: number;
+  email_clicks: number;
+  phone_clicks: number;
+  website_clicks: number;
+  leads: number;
+  conversion_rate: number;
+}
+
+export const buildExportFilename = (prefix: string, companyName: string, rangeLabel: string, date = new Date()) => {
+  const timestamp = date.toISOString().split('T')[0];
+  const scope = rangeLabel.replace(/[^a-zA-Z0-9À-ÿ]+/g, '_').replace(/^_|_$/g, '');
+  return `${prefix}_${companyName.replace(/\s+/g, '_')}_${scope}_${timestamp}.csv`;
+};
+
+export const buildExportSummaryRows = (aggregatedData: ExportSummaryData, rangeLabel: string) => [
+  { 'Métrica': `Visualizações (${rangeLabel})`, 'Valor': aggregatedData.views },
+  { 'Métrica': `Total CTAs (${rangeLabel})`, 'Valor': aggregatedData.cta_clicks },
+  { 'Métrica': `WhatsApp (${rangeLabel})`, 'Valor': aggregatedData.whatsapp_clicks },
+  { 'Métrica': `Email (${rangeLabel})`, 'Valor': aggregatedData.email_clicks },
+  { 'Métrica': `Telefone (${rangeLabel})`, 'Valor': aggregatedData.phone_clicks },
+  { 'Métrica': `Website (${rangeLabel})`, 'Valor': aggregatedData.website_clicks },
+  { 'Métrica': `Leads (${rangeLabel})`, 'Valor': aggregatedData.leads },
+  { 'Métrica': `Taxa de Conversão (%) (${rangeLabel})`, 'Valor': aggregatedData.conversion_rate },
+];
+
+export interface ExportButtonProps {
   timeseriesData?: TimeSeriesDataPoint[];
-  aggregatedData?: {
-    views_30d: number;
-    cta_clicks_30d: number;
-    whatsapp_clicks_30d: number;
-    email_clicks_30d: number;
-    phone_clicks_30d: number;
-    website_clicks_30d: number;
-    leads_30d: number;
-    conversion_rate: number;
-  };
-  companyName?: string;
+  aggregatedData?: ExportSummaryData;
+  companyName: string;
+  rangeLabel: ExportRangeLabel;
   disabled?: boolean;
 }
 
 export default function ExportButton({
   timeseriesData = [],
   aggregatedData,
-  companyName = 'Empresa',
+  companyName,
+  rangeLabel,
   disabled = false,
 }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const generateTimestampFilename = (prefix: string) => {
-    const timestamp = new Date().toISOString().split('T')[0];
-    return `${prefix}_${companyName.replace(/\s+/g, '_')}_${timestamp}.csv`;
+    return buildExportFilename(prefix, companyName, rangeLabel);
   };
 
-  const convertToCSV = (data: any[], headers: string[]) => {
+  const convertToCSV = (data: Array<Record<string, string | number>>, headers: string[]) => {
     const headerRow = headers.join(',');
     const rows = data.map((row) =>
       headers.map((header) => {
@@ -123,16 +145,7 @@ export default function ExportButton({
       if (!aggregatedData) return;
 
       const headers = ['Métrica', 'Valor'];
-      const data = [
-        { 'Métrica': 'Visualizações (30d)', 'Valor': aggregatedData.views_30d },
-        { 'Métrica': 'Total CTAs (30d)', 'Valor': aggregatedData.cta_clicks_30d },
-        { 'Métrica': 'WhatsApp (30d)', 'Valor': aggregatedData.whatsapp_clicks_30d },
-        { 'Métrica': 'Email (30d)', 'Valor': aggregatedData.email_clicks_30d },
-        { 'Métrica': 'Telefone (30d)', 'Valor': aggregatedData.phone_clicks_30d },
-        { 'Métrica': 'Website (30d)', 'Valor': aggregatedData.website_clicks_30d },
-        { 'Métrica': 'Leads (30d)', 'Valor': aggregatedData.leads_30d },
-        { 'Métrica': 'Taxa de Conversão (%)', 'Valor': aggregatedData.conversion_rate },
-      ];
+      const data = buildExportSummaryRows(aggregatedData, rangeLabel);
 
       const csv = convertToCSV(data, headers);
       downloadCSV(csv, generateTimestampFilename('analytics_summary'));
@@ -172,7 +185,7 @@ export default function ExportButton({
         </DropdownMenuItem>
         <DropdownMenuItem onClick={exportSummary} disabled={!aggregatedData}>
           <Download className="h-[18px] w-[18px] mr-2" />
-          Resumo 30 dias (CSV)
+          Resumo do período (CSV)
         </DropdownMenuItem>
         <DropdownMenuItem onClick={exportAll} disabled={!aggregatedData}>
           <Download className="h-[18px] w-[18px] mr-2" />

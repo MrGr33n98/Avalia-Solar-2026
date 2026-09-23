@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '../tests/test-utils';
 import PerformanceMetrics from '../app/dashboard/components/PerformanceMetrics';
+import { useCompanyAnalytics } from '../app/dashboard/hooks/useCompanyAnalytics';
 import * as api from '../lib/api';
 
 // Mock the API calls
@@ -11,7 +12,7 @@ jest.mock('../app/dashboard/hooks/useCompanyAnalytics', () => ({
   useCompanyAnalytics: jest.fn(),
 }));
 
-const { useCompanyAnalytics } = require('../app/dashboard/hooks/useCompanyAnalytics');
+const mockUseCompanyAnalytics = useCompanyAnalytics as jest.Mock;
 const mockRequest = api.request as jest.MockedFunction<typeof api.request>;
 
 describe('PerformanceMetrics - Real Data Integration', () => {
@@ -28,13 +29,14 @@ describe('PerformanceMetrics - Real Data Integration', () => {
   });
 
   it('displays real analytics data from API', async () => {
-    useCompanyAnalytics.mockReturnValue({
+    mockUseCompanyAnalytics.mockReturnValue({
       data: {
         views_30d: 1500,
         cta_clicks_30d: 200,
         whatsapp_clicks_30d: 120,
         leads_30d: 45,
         conversion_rate: 3.0,
+        data_status: 'ready',
         data_source: 'company_daily_stats',
       },
       loading: false,
@@ -51,7 +53,7 @@ describe('PerformanceMetrics - Real Data Integration', () => {
   });
 
   it('shows loading skeleton while fetching', () => {
-    useCompanyAnalytics.mockReturnValue({
+    mockUseCompanyAnalytics.mockReturnValue({
       data: null,
       loading: true,
       error: null,
@@ -65,7 +67,7 @@ describe('PerformanceMetrics - Real Data Integration', () => {
   });
 
   it('displays error state gracefully', () => {
-    useCompanyAnalytics.mockReturnValue({
+    mockUseCompanyAnalytics.mockReturnValue({
       data: null,
       loading: false,
       error: 'Failed to load analytics',
@@ -79,7 +81,7 @@ describe('PerformanceMetrics - Real Data Integration', () => {
   });
 
   it('does not display a trend when comparison data is unavailable', () => {
-    useCompanyAnalytics.mockReturnValue({
+    mockUseCompanyAnalytics.mockReturnValue({
       data: { views_30d: 0, cta_clicks_30d: 0, views_trend: null, cta_clicks_trend: null },
       loading: false,
       error: null,
@@ -93,13 +95,14 @@ describe('PerformanceMetrics - Real Data Integration', () => {
   });
 
   it('calculates conversion rate from real data', () => {
-    useCompanyAnalytics.mockReturnValue({
+    mockUseCompanyAnalytics.mockReturnValue({
       data: {
         views_30d: 1000,
         cta_clicks_30d: 125,
         whatsapp_clicks_30d: 75,
         leads_30d: 30,
         conversion_rate: 12.5,
+        data_status: 'ready',
         data_source: 'company_daily_stats',
       },
       loading: false,

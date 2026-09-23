@@ -1,4 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { useCompanyAnalytics } from '../app/dashboard/hooks/useCompanyAnalytics';
 import * as api from '../lib/api';
 
@@ -7,6 +9,18 @@ jest.mock('../lib/api', () => ({
     getAnalyticsOverview: jest.fn(),
   },
 }));
+
+const createWrapper = () => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  function TestQueryProvider({ children }: { children: ReactNode }) {
+    return (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  }
+
+  TestQueryProvider.displayName = 'TestQueryProvider';
+  return TestQueryProvider;
+};
 
 describe('useCompanyAnalytics', () => {
   beforeEach(() => {
@@ -25,7 +39,7 @@ describe('useCompanyAnalytics', () => {
 
     (api.companyDashboardApi.getAnalyticsOverview as jest.Mock).mockResolvedValue(mockData);
 
-    const { result } = renderHook(() => useCompanyAnalytics({ companyId: '123' }));
+    const { result } = renderHook(() => useCompanyAnalytics({ companyId: '123' }), { wrapper: createWrapper() });
 
     expect(result.current.loading).toBe(true);
 
@@ -42,11 +56,12 @@ describe('useCompanyAnalytics', () => {
     const mockError = new Error('Network error');
     (api.companyDashboardApi.getAnalyticsOverview as jest.Mock).mockRejectedValue(mockError);
 
-    const { result } = renderHook(() => useCompanyAnalytics({ companyId: '123' }));
+    const { result } = renderHook(() => useCompanyAnalytics({ companyId: '123' }), { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
+      expect(api.companyDashboardApi.getAnalyticsOverview).toHaveBeenCalledTimes(2);
+    }, { timeout: 5000 });
+    expect(result.current.loading).toBe(false);
 
     expect(result.current.data).toBeNull();
     expect(result.current.error).toBe('Network error');
@@ -68,7 +83,8 @@ describe('useCompanyAnalytics', () => {
       useCompanyAnalytics({
         companyId: '123',
         autoRefresh: false,
-      })
+      }),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -81,7 +97,7 @@ describe('useCompanyAnalytics', () => {
 
     await waitFor(() => {
       expect(api.companyDashboardApi.getAnalyticsOverview).toHaveBeenCalledTimes(2);
-    });
+    }, { timeout: 5000 });
   });
 
   it('auto-refreshes when enabled', async () => {
@@ -103,7 +119,8 @@ describe('useCompanyAnalytics', () => {
         companyId: '123',
         autoRefresh: true,
         refreshInterval: 30000,
-      })
+      }),
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -114,7 +131,7 @@ describe('useCompanyAnalytics', () => {
 
     await waitFor(() => {
       expect(api.companyDashboardApi.getAnalyticsOverview).toHaveBeenCalledTimes(2);
-    });
+    }, { timeout: 5000 });
 
     jest.useRealTimers();
   });

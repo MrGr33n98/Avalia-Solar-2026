@@ -3,15 +3,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Eye, 
   MousePointerClick, 
   ArrowUpRight,
   AlertCircle,
   Printer,
-  Lock,
-  Zap,
   Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,11 +22,11 @@ import DateRangePicker, { type DateRangePreset } from './DateRangePicker';
 import ExportButton from './ExportButton';
 import { useQuery } from '@tanstack/react-query';
 import { companyDashboardApi, type AnalyticsQueryParams } from '@/lib/api';
-import { cn } from '@/lib/utils';
 import '../styles/print.css';
 
 interface PerformanceMetricsProps {
   companyId: string;
+  companyName?: string;
   themeMode?: 'light' | 'dark';
 }
 
@@ -83,6 +81,15 @@ const resolveAnalyticsRange = (
   };
 };
 
+export const formatExportRangeLabel = (preset: DateRangePreset, customRange?: { from: Date; to: Date }) => {
+  if (preset === 'custom' && customRange?.from && customRange.to) {
+    const format = (date: Date) => date.toLocaleDateString('pt-BR');
+    return `${format(customRange.from)} a ${format(customRange.to)}`;
+  }
+
+  return { '7d': '7 dias', '30d': '30 dias', '90d': '90 dias', custom: 'período selecionado' }[preset];
+};
+
 const formatTime = (seconds?: number | null) => {
   if (seconds === null || seconds === undefined) return '—';
   const mins = Math.floor(seconds / 60);
@@ -103,7 +110,7 @@ const formatFreshnessLabel = (timestamp?: string | null) => {
   return `Atualizado há ${diffHours} h`;
 };
 
-export default function PerformanceMetrics({ companyId, themeMode }: PerformanceMetricsProps) {
+export default function PerformanceMetrics({ companyId, companyName = 'Empresa', themeMode }: PerformanceMetricsProps) {
   const [timeRange, setTimeRange] = useState<DateRangePreset>('30d');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date }>();
   
@@ -134,6 +141,8 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
       JSON.stringify({ preset, customRange })
     );
   };
+
+  const exportRangeLabel = formatExportRangeLabel(timeRange, customDateRange);
 
   const analyticsQuery = useMemo<AnalyticsQueryParams>(
     () => resolveAnalyticsRange(timeRange, customDateRange),
@@ -266,27 +275,28 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
             timeseriesData={timeseriesData}
             aggregatedData={
               overviewReady &&
-              analyticsData?.views_30d != null &&
-              analyticsData?.cta_clicks_30d != null &&
-              analyticsData?.whatsapp_clicks_30d != null &&
-              analyticsData?.email_clicks_30d != null &&
-              analyticsData?.phone_clicks_30d != null &&
-              analyticsData?.website_clicks_30d != null &&
-              analyticsData?.leads_30d != null &&
+              analyticsData?.views != null &&
+              analyticsData?.cta_clicks != null &&
+              analyticsData?.whatsapp_clicks != null &&
+              analyticsData?.email_clicks != null &&
+              analyticsData?.phone_clicks != null &&
+              analyticsData?.website_clicks != null &&
+              analyticsData?.leads != null &&
               analyticsData?.conversion_rate != null
                 ? {
-                    views_30d: analyticsData.views_30d,
-                    cta_clicks_30d: analyticsData.cta_clicks_30d,
-                    whatsapp_clicks_30d: analyticsData.whatsapp_clicks_30d,
-                    email_clicks_30d: analyticsData.email_clicks_30d,
-                    phone_clicks_30d: analyticsData.phone_clicks_30d,
-                    website_clicks_30d: analyticsData.website_clicks_30d,
-                    leads_30d: analyticsData.leads_30d,
+                    views: analyticsData.views,
+                    cta_clicks: analyticsData.cta_clicks,
+                    whatsapp_clicks: analyticsData.whatsapp_clicks,
+                    email_clicks: analyticsData.email_clicks,
+                    phone_clicks: analyticsData.phone_clicks,
+                    website_clicks: analyticsData.website_clicks,
+                    leads: analyticsData.leads,
                     conversion_rate: analyticsData.conversion_rate,
                   }
                 : undefined
             }
-            companyName="Avalia Solar"
+            companyName={companyName}
+            rangeLabel={exportRangeLabel}
           />
           <Button variant="ghost" size="sm" onClick={() => window.print()} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/[0.05]">
             <Printer className="mr-2 h-4 w-4" />
@@ -379,82 +389,31 @@ export default function PerformanceMetrics({ companyId, themeMode }: Performance
       </div>
 
       {/* Analytics Visualization Layer */}
-      <div className="relative group">
-        <AnimatePresence>
-          {!analyticsData?.is_premium_analytics && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-20 flex items-center justify-center p-6 bg-slate-950/20 backdrop-blur-xl rounded-[3rem] border border-white/5"
-            >
-              <div className="clay-precision bg-card dark:bg-[#0F172A] p-10 rounded-[2.5rem] shadow-2xl border-none text-center max-w-lg mx-auto transform transition-all hover:scale-[1.02] duration-500">
-                <div className="flex justify-center mb-6">
-                    <div className="relative">
-                        <div className="h-20 w-20 rounded-[2rem] bg-indigo-500/10 flex items-center justify-center animate-pulse">
-                            <Lock className="h-10 w-10 text-indigo-500" />
-                        </div>
-                        <motion.div 
-                            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                            transition={{ repeat: Infinity, duration: 2 }}
-                            className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full"
-                        />
-                    </div>
-                </div>
-                <h3 className="text-2xl font-black uppercase tracking-tighter mb-4 text-foreground dark:text-white">
-                  Unlock Strategic Intelligence
-                </h3>
-                <p className="text-sm text-muted-foreground dark:text-white/40 mb-10 font-medium leading-relaxed">
-                  Eleve seu dashboard ao nível Enterprise. Obtenha acesso a vertores temporais, análise de origem de tráfego profundo e mapas de conversão comportamental.
-                </p>
-                <Button 
-                    onClick={() => window.location.href='/pricing'}
-                    className="w-full rounded-[1.2rem] font-black uppercase tracking-widest text-xs bg-indigo-600 hover:bg-indigo-500 text-white h-14 shadow-lg shadow-indigo-600/20 transition-all border-none"
-                >
-                  <Zap className="h-4 w-4 mr-2 fill-current" />
-                  Upgrade to Enterprise Core
-                </Button>
-                <p className="mt-6 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
-                    Trusted by 500+ Energy Institutions
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        <div className={cn(
-          "grid grid-cols-1 lg:grid-cols-2 gap-8 transition-all duration-700",
-          !analyticsData?.is_premium_analytics && "blur-[12px] pointer-events-none select-none grayscale-[0.5] opacity-20"
-        )}>
-          <TimeSeriesChart data={timeseriesData || []} loading={timeseriesLoading} themeMode={themeMode || 'dark'} />
-          <CTABreakdownChart
-            data={
-              analyticsData?.cta_breakdown
-                ? {
-                    whatsapp_clicks: analyticsData.cta_breakdown.whatsapp,
-                    email_clicks: analyticsData.cta_breakdown.email,
-                    phone_clicks: analyticsData.cta_breakdown.phone,
-                    website_clicks: analyticsData.cta_breakdown.website,
-                    quote_clicks: analyticsData.cta_breakdown.quote,
-                    other_clicks: analyticsData.cta_breakdown.other,
-                    total_clicks: analyticsData.cta_breakdown.total,
-                  }
-                : null
-            }
-            loading={loading}
-            themeMode={themeMode || 'dark'}
-          />
-        </div>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <TimeSeriesChart data={timeseriesData || []} loading={timeseriesLoading} themeMode={themeMode || 'dark'} />
+        <CTABreakdownChart
+          data={
+            analyticsData?.cta_breakdown
+              ? {
+                  whatsapp_clicks: analyticsData.cta_breakdown.whatsapp,
+                  email_clicks: analyticsData.cta_breakdown.email,
+                  phone_clicks: analyticsData.cta_breakdown.phone,
+                  website_clicks: analyticsData.cta_breakdown.website,
+                  quote_clicks: analyticsData.cta_breakdown.quote,
+                  other_clicks: analyticsData.cta_breakdown.other,
+                  total_clicks: analyticsData.cta_breakdown.total,
+                }
+              : null
+          }
+          loading={loading}
+          themeMode={themeMode || 'dark'}
+        />
       </div>
-
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className={cn(
-            "transition-all duration-700 delay-150",
-            !analyticsData?.is_premium_analytics && "blur-[8px] pointer-events-none select-none opacity-10"
-        )}
+        className="transition-all duration-700 delay-150"
       >
         <TopCampaignsCard
           companyId={companyId}
