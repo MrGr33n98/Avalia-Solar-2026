@@ -45,16 +45,16 @@ export default function TopCampaignsCard({
 
   if (isLoading) {
     return (
-      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+      <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
         <CardHeader className="p-4">
-          <Skeleton className="h-6 w-[180px] bg-white/5" />
-          <Skeleton className="h-4 w-[240px] mt-2 bg-white/5" />
+          <Skeleton className="h-6 w-[180px] bg-[hsl(var(--dashboard-surface))]" />
+          <Skeleton className="h-4 w-[240px] mt-2 bg-[hsl(var(--dashboard-surface))]" />
         </CardHeader>
         <CardContent className="p-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="mb-4">
-              <Skeleton className="h-4 w-full mb-2 bg-white/5" />
-              <Skeleton className="h-6 w-3/4 bg-white/5" />
+              <Skeleton className="h-4 w-full mb-2 bg-[hsl(var(--dashboard-surface))]" />
+              <Skeleton className="h-6 w-3/4 bg-[hsl(var(--dashboard-surface))]" />
             </div>
           ))}
         </CardContent>
@@ -64,21 +64,21 @@ export default function TopCampaignsCard({
 
   if (!campaigns || campaigns.length === 0) {
     return (
-      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+      <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
         <CardHeader className="p-4">
-          <CardTitle className="text-white text-lg font-bold tracking-tight">
+          <CardTitle className="text-[hsl(var(--dashboard-ink))] text-lg font-bold tracking-tight">
             Top Campanhas
           </CardTitle>
-          <CardDescription className="text-white/40">
+          <CardDescription className="text-[hsl(var(--dashboard-muted))]">
             Nenhuma campanha com UTM encontrada neste periodo
           </CardDescription>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-sm text-white/60">
+          <div className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] p-4">
+            <p className="text-sm text-[hsl(var(--dashboard-muted))]">
               Use parametros UTM para identificar campanhas e acompanhar visitas, CTAs e leads no periodo selecionado.
             </p>
-            <p className="mt-2 text-[10px] text-white/35 font-mono">
+            <p className="mt-2 text-[10px] text-[hsl(var(--dashboard-ink))]/35 font-mono">
               Ex: ?utm_source=google&utm_medium=cpc&utm_campaign=solar2026
             </p>
           </div>
@@ -88,13 +88,13 @@ export default function TopCampaignsCard({
   }
 
   return (
-    <Card className="bg-[#002B4D] border-white/10 shadow-none">
+    <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
       <CardHeader className="p-4">
-        <CardTitle className="flex items-center gap-2 text-white text-lg font-bold tracking-tight">
+        <CardTitle className="flex items-center gap-2 text-[hsl(var(--dashboard-ink))] text-lg font-bold tracking-tight">
           <TrendingUp className="h-5 w-5 text-brand-cyan" />
           Top Campanhas
         </CardTitle>
-        <CardDescription className="text-white/40">
+        <CardDescription className="text-[hsl(var(--dashboard-muted))]">
           Performance por campanha de marketing
         </CardDescription>
       </CardHeader>
@@ -102,7 +102,7 @@ export default function TopCampaignsCard({
         {campaigns.map((campaign: TopCampaign, index) => {
           const rankColors = [
             { bg: 'bg-brand-blue/10', text: 'text-brand-blue', badge: 'bg-brand-blue' },
-            { bg: 'bg-white/5', text: 'text-white/60', badge: 'bg-white/20' },
+            { bg: 'bg-[hsl(var(--dashboard-surface))]', text: 'text-[hsl(var(--dashboard-muted))]', badge: 'bg-[hsl(var(--dashboard-border))]' },
             { bg: 'bg-brand-cyan/10', text: 'text-brand-cyan', badge: 'bg-brand-cyan' },
           ];
           const color = index < 3 ? rankColors[index] : rankColors[1];
@@ -115,8 +115,8 @@ export default function TopCampaignsCard({
             <div
               key={campaign.id}
               className={cn(
-                "p-4 rounded-xl border-[0.5px] transition-all duration-300 hover:bg-white/5",
-                "border-white/10 bg-white/5"
+                "p-4 rounded-xl border-[0.5px] transition-all duration-300 hover:bg-[hsl(var(--dashboard-surface))]",
+                "border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))]"
               )}
             >
               {/* Campaign Header */}
@@ -125,22 +125,22 @@ export default function TopCampaignsCard({
                   <div className="flex items-center gap-3 mb-2">
                     <span
                       className={cn(
-                        "inline-flex items-center justify-center w-6 h-6 rounded-lg text-[10px] font-bold text-white border-[0.5px] border-white/20",
+                        "inline-flex items-center justify-center w-6 h-6 rounded-lg text-[10px] font-bold text-[hsl(var(--dashboard-ink))] border-[0.5px] border-[hsl(var(--dashboard-border))]",
                         color.badge
                       )}
                     >
                       #{index + 1}
                     </span>
-                    <h4 className="font-bold text-sm text-white tracking-tight">
+                    <h4 className="font-bold text-sm text-[hsl(var(--dashboard-ink))] tracking-tight">
                       {campaign.utm_campaign || 'Sem nome'}
                     </h4>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider border-white/10 text-white/50 bg-white/5">
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-ink))]/50 bg-[hsl(var(--dashboard-surface))]">
                       {campaign.utm_source || 'origem'}
                     </Badge>
                     {campaign.utm_medium && (
-                      <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider border-white/10 text-white/50 bg-white/5">
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-ink))]/50 bg-[hsl(var(--dashboard-surface))]">
                         {campaign.utm_medium}
                       </Badge>
                     )}
@@ -153,7 +153,7 @@ export default function TopCampaignsCard({
                     maximumFractionDigits: 2,
                   })}%
                   </p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--dashboard-muted))]">
                     conversão
                   </p>
                 </div>
@@ -161,50 +161,50 @@ export default function TopCampaignsCard({
 
               {/* Metrics Grid */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-lg bg-white/5 border-[0.5px] border-white/5">
+                <div className="p-3 rounded-lg bg-[hsl(var(--dashboard-surface))] border-[0.5px] border-[hsl(var(--dashboard-border))]">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Users className="h-3.5 w-3.5 text-brand-blue" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--dashboard-muted))]">
                       Visitas
                     </p>
                   </div>
-                  <p className="text-lg font-bold text-white font-mono">
+                  <p className="text-lg font-bold text-[hsl(var(--dashboard-ink))] font-mono">
                     {campaign.total_visits.toLocaleString()}
                   </p>
                 </div>
-                <div className="p-3 rounded-lg bg-white/5 border-[0.5px] border-white/5">
+                <div className="p-3 rounded-lg bg-[hsl(var(--dashboard-surface))] border-[0.5px] border-[hsl(var(--dashboard-border))]">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <ExternalLink className="h-3.5 w-3.5 text-brand-cyan" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--dashboard-muted))]">
                       CTAs
                     </p>
                   </div>
-                  <p className="text-lg font-bold text-white font-mono">
+                  <p className="text-lg font-bold text-[hsl(var(--dashboard-ink))] font-mono">
                   {campaign.total_cta_clicks}
                   </p>
-                  <p className="text-[10px] font-bold text-white/30 font-mono mt-0.5">
+                  <p className="text-[10px] font-bold text-[hsl(var(--dashboard-muted)/0.75)] font-mono mt-0.5">
                     {ctr}% CTR
                   </p>
                 </div>
-                <div className="p-3 rounded-lg bg-white/5 border-[0.5px] border-white/5">
+                <div className="p-3 rounded-lg bg-[hsl(var(--dashboard-surface))] border-[0.5px] border-[hsl(var(--dashboard-border))]">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Target className="h-3.5 w-3.5 text-brand-green" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--dashboard-muted))]">
                       Leads
                     </p>
                   </div>
-                  <p className="text-lg font-bold text-white font-mono">
+                  <p className="text-lg font-bold text-[hsl(var(--dashboard-ink))] font-mono">
                     {campaign.total_leads}
                   </p>
                 </div>
               </div>
 
               {/* Last Seen */}
-              <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/5">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-[hsl(var(--dashboard-border))]">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--dashboard-muted)/0.75)]">
                   Última atividade
                 </p>
-                <p className="text-[10px] font-bold text-white/40 font-mono">
+                <p className="text-[10px] font-bold text-[hsl(var(--dashboard-muted))] font-mono">
                   {campaign.last_seen_at
                     ? new Date(campaign.last_seen_at).toLocaleDateString('pt-BR')
                     : '—'}

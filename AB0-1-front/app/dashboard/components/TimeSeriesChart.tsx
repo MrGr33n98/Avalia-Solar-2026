@@ -58,7 +58,7 @@ export default function TimeSeriesChart({
   chartType = 'line',
   showLines = ['views', 'cta_clicks', 'leads'],
 }: TimeSeriesChartProps) {
-  const isDark = themeMode === 'dark';
+  const isDark = themeMode !== 'light';
 
   // Transform data for Recharts
   const chartData = useMemo(() => {
@@ -123,7 +123,7 @@ export default function TimeSeriesChart({
 
   if (loading) {
     return (
-      <Card className={cn("shadow-none", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-[#CBD5E1]")}>
+      <Card className={cn("shadow-none", 'bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))]')}>
         <CardHeader className="p-4">
           <Skeleton className="h-6 w-[200px]" />
           <Skeleton className="h-4 w-[300px] mt-2" />
@@ -137,13 +137,13 @@ export default function TimeSeriesChart({
 
   if (!data || data.length === 0) {
     return (
-      <Card className={cn("shadow-none", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-[#CBD5E1]")}>
+      <Card className={cn("shadow-none", 'bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))]')}>
         <CardHeader className="p-4">
-          <CardTitle className={cn("text-lg font-bold tracking-tight", isDark ? "text-white" : "text-slate-850")}>{title}</CardTitle>
-          <CardDescription className={isDark ? "text-white/40" : "text-slate-500"}>{description}</CardDescription>
+          <CardTitle className={cn("text-lg font-bold tracking-tight", 'text-[hsl(var(--dashboard-ink))]')}>{title}</CardTitle>
+          <CardDescription className={'text-[hsl(var(--dashboard-muted))]'}>{description}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[300px] p-4">
-          <p className={cn("text-sm font-medium", isDark ? "text-white/30" : "text-slate-400")}>
+          <p className={cn("text-sm font-medium", 'text-[hsl(var(--dashboard-muted))]')}>
             Sem dados disponíveis para o período selecionado
           </p>
         </CardContent>
@@ -159,10 +159,10 @@ export default function TimeSeriesChart({
   };
 
   return (
-    <Card className={cn("shadow-none", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-[#CBD5E1]")}>
-      <CardHeader className={cn("p-4 border-b", isDark ? "border-slate-800" : "border-slate-100")}>
-        <CardTitle className={cn("text-lg font-bold tracking-tight", isDark ? "text-white" : "text-slate-800")}>{title}</CardTitle>
-        <CardDescription className={cn("text-xs", isDark ? "text-white/40" : "text-slate-500")}>{description}</CardDescription>
+    <Card className={cn("shadow-none", 'bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))]')}>
+      <CardHeader className={cn("p-4 border-b", 'border-[hsl(var(--dashboard-border))]')}>
+        <CardTitle className={cn("text-lg font-bold tracking-tight", 'text-[hsl(var(--dashboard-ink))]')}>{title}</CardTitle>
+        <CardDescription className={cn("text-xs", 'text-[hsl(var(--dashboard-muted))]')}>{description}</CardDescription>
       </CardHeader>
       <CardContent className="p-4">
         <ResponsiveContainer width="100%" height={300}>
@@ -192,14 +192,14 @@ export default function TimeSeriesChart({
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: isDark ? '#0F172A' : '#ffffff',
-                  border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1',
+                  backgroundColor: 'hsl(var(--dashboard-panel))',
+                  border: '1px solid hsl(var(--dashboard-border))',
                   borderRadius: '10px',
                   boxShadow: 'none',
                   padding: '12px',
                 }}
                 itemStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}
-                labelStyle={{ color: isDark ? 'rgba(255,255,255,0.4)' : '#64748B', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
+                labelStyle={{ color: 'hsl(var(--dashboard-muted))', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
                 cursor={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.06)', strokeWidth: 1 }}
               />
               <Legend
@@ -213,7 +213,7 @@ export default function TimeSeriesChart({
                   fontWeight: 'bold',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  color: isDark ? 'rgba(255,255,255,0.5)' : '#64748B',
+                  color: 'hsl(var(--dashboard-muted))',
                 }}
               />
               {activeLinesConfig.map((config, index) => (
@@ -256,14 +256,14 @@ export default function TimeSeriesChart({
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: isDark ? '#0F172A' : '#ffffff',
-                  border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1',
+                  backgroundColor: 'hsl(var(--dashboard-panel))',
+                  border: '1px solid hsl(var(--dashboard-border))',
                   borderRadius: '10px',
                   boxShadow: 'none',
                   padding: '12px',
                 }}
                 itemStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}
-                labelStyle={{ color: isDark ? 'rgba(255,255,255,0.4)' : '#64748B', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
+                labelStyle={{ color: 'hsl(var(--dashboard-muted))', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
                 cursor={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.06)', strokeWidth: 1 }}
               />
               <Legend
@@ -277,7 +277,7 @@ export default function TimeSeriesChart({
                   fontWeight: 'bold',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  color: isDark ? 'rgba(255,255,255,0.5)' : '#64748B',
+                  color: 'hsl(var(--dashboard-muted))',
                 }}
               />
               {activeLinesConfig.map((config, index) => (

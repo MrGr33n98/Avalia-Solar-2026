@@ -99,15 +99,15 @@ export default function MetricCard({
       className="h-full"
     >
       <Card className={cn(
-        'relative h-full overflow-hidden rounded-xl border-slate-200 bg-white transition-all duration-200 dark:border-slate-800 dark:bg-slate-900',
-        'before:absolute before:inset-0 before:bg-slate-50 before:opacity-0 before:transition-opacity dark:before:bg-white/5'
+        'relative h-full overflow-hidden rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] text-[hsl(var(--dashboard-ink))] transition-all duration-200',
+        'before:absolute before:inset-0 before:bg-[hsl(var(--dashboard-surface))] before:opacity-0 before:transition-opacity'
       )}>
         <CardContent className="p-5 relative z-10">
           <div className="flex items-start justify-between mb-4">
             {/* Enhanced Icon Container */}
             <div
               className={cn(
-                'p-1.5 rounded-md transition-all duration-200 border bg-slate-50 border-slate-100',
+                'rounded-md border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] p-1.5 transition-all duration-200',
                 colors.icon
               )}
             >
@@ -122,7 +122,7 @@ export default function MetricCard({
                   "text-[10px] font-semibold px-2 h-5 border",
                   changeType === 'positive' ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
                   changeType === 'negative' ? "bg-red-50 text-red-600 border-red-200" :
-                  "bg-slate-50 text-slate-600 border-slate-200"
+                  "bg-[hsl(var(--dashboard-surface))] text-[hsl(var(--dashboard-muted))] border-[hsl(var(--dashboard-border))]"
                 )}
               >
                 {changeType === 'positive' && <TrendingUp className="w-3 h-3 mr-1 inline" />}
@@ -134,14 +134,14 @@ export default function MetricCard({
 
           {/* Enhanced Content */}
           <div className="space-y-1">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 leading-tight">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-[hsl(var(--dashboard-muted))] leading-tight">
               {title}
             </p>
-            <p className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums leading-none">
+            <p className="text-2xl font-bold text-[hsl(var(--dashboard-ink))] tracking-tight tabular-nums leading-none">
               {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
             </p>
             {description && (
-              <p className="text-xs text-slate-400 leading-tight mt-1">
+              <p className="text-xs text-[hsl(var(--dashboard-muted))] leading-tight mt-1">
                 {description}
               </p>
             )}
@@ -158,7 +158,7 @@ export default function MetricCard({
                     'flex-1 min-w-[3px] rounded-t-sm transition-all',
                     changeType === 'positive' ? 'bg-emerald-400' :
                     changeType === 'negative' ? 'bg-red-400' :
-                    'bg-slate-300'
+                    'bg-[hsl(var(--dashboard-muted))]'
                   )}
                 />
               ))}

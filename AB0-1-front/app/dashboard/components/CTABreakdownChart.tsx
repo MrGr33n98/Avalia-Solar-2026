@@ -106,13 +106,13 @@ export default function CTABreakdownChart({
 
   if (loading) {
     return (
-      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+      <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
         <CardHeader className="p-4">
-          <Skeleton className="h-6 w-[200px] bg-white/5" />
-          <Skeleton className="h-4 w-[300px] mt-2 bg-white/5" />
+          <Skeleton className="h-6 w-[200px] bg-[hsl(var(--dashboard-surface))]" />
+          <Skeleton className="h-4 w-[300px] mt-2 bg-[hsl(var(--dashboard-surface))]" />
         </CardHeader>
         <CardContent className="p-4">
-          <Skeleton className="h-[250px] w-full bg-white/5 rounded-xl" />
+          <Skeleton className="h-[250px] w-full bg-[hsl(var(--dashboard-surface))] rounded-xl" />
         </CardContent>
       </Card>
     );
@@ -120,13 +120,13 @@ export default function CTABreakdownChart({
 
   if (!data) {
     return (
-      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+      <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
         <CardHeader className="p-4">
-          <CardTitle className="text-white text-lg font-bold tracking-tight">{title}</CardTitle>
-          <CardDescription className="text-white/40 text-xs">{description}</CardDescription>
+          <CardTitle className="text-[hsl(var(--dashboard-ink))] text-lg font-bold tracking-tight">{title}</CardTitle>
+          <CardDescription className="text-[hsl(var(--dashboard-muted))] text-xs">{description}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[250px] p-4">
-          <p className="text-sm text-white/30 font-medium">
+          <p className="text-sm text-[hsl(var(--dashboard-muted)/0.75)] font-medium">
             Dados de CTA ainda nao disponiveis para este periodo
           </p>
         </CardContent>
@@ -136,13 +136,13 @@ export default function CTABreakdownChart({
 
   if (totalClicks === 0) {
     return (
-      <Card className="bg-[#002B4D] border-white/10 shadow-none">
+      <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
         <CardHeader className="p-4">
-          <CardTitle className="text-white text-lg font-bold tracking-tight">{title}</CardTitle>
-          <CardDescription className="text-white/40 text-xs">{description}</CardDescription>
+          <CardTitle className="text-[hsl(var(--dashboard-ink))] text-lg font-bold tracking-tight">{title}</CardTitle>
+          <CardDescription className="text-[hsl(var(--dashboard-muted))] text-xs">{description}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[250px] p-4">
-          <p className="text-sm text-white/30 font-medium">
+          <p className="text-sm text-[hsl(var(--dashboard-muted)/0.75)] font-medium">
             Nenhum CTA clicado ainda
           </p>
         </CardContent>
@@ -161,11 +161,11 @@ export default function CTABreakdownChart({
       const item = payload[0].payload;
       const percentage = totalClicks > 0 ? ((item.value / totalClicks) * 100).toFixed(1) : '0.0';
       return (
-        <div className="p-3 rounded-xl bg-[#002B4D] border-[0.5px] border-white/10 shadow-none">
-          <p className="font-bold text-xs text-white uppercase tracking-widest mb-1">
+        <div className="p-3 rounded-xl bg-[hsl(var(--dashboard-panel))] border-[0.5px] border-[hsl(var(--dashboard-border))] shadow-none">
+          <p className="font-bold text-xs text-[hsl(var(--dashboard-ink))] uppercase tracking-widest mb-1">
             {item.name}
           </p>
-          <p className="text-[10px] font-bold text-white/40 font-mono uppercase">
+          <p className="text-[10px] font-bold text-[hsl(var(--dashboard-muted))] font-mono uppercase">
             {item.value} cliques ({percentage}%)
           </p>
         </div>
@@ -175,10 +175,10 @@ export default function CTABreakdownChart({
   };
 
   return (
-    <Card className="bg-[#002B4D] border-white/10 shadow-none">
-      <CardHeader className="p-4 border-b border-white/5">
-        <CardTitle className="text-white text-lg font-bold tracking-tight">{title}</CardTitle>
-        <CardDescription className="text-white/40 text-xs">
+    <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
+      <CardHeader className="p-4 border-b border-[hsl(var(--dashboard-border))]">
+        <CardTitle className="text-[hsl(var(--dashboard-ink))] text-lg font-bold tracking-tight">{title}</CardTitle>
+        <CardDescription className="text-[hsl(var(--dashboard-muted))] text-xs">
           {description} · <span className="font-mono text-brand-cyan">{totalClicks.toLocaleString()} total</span>
         </CardDescription>
       </CardHeader>
@@ -252,16 +252,16 @@ export default function CTABreakdownChart({
             const Icon = item.icon;
             const percentage = ((item.value / totalClicks) * 100).toFixed(1);
             return (
-              <div key={item.name} className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border-[0.5px] border-white/5">
+              <div key={item.name} className="flex items-center gap-3 p-2 rounded-lg bg-[hsl(var(--dashboard-surface))] border-[0.5px] border-[hsl(var(--dashboard-border))]">
                 <div
                   className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
                 <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: item.color }} />
-                <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest flex-1">
+                <span className="text-[10px] font-bold text-[hsl(var(--dashboard-muted))] uppercase tracking-widest flex-1">
                   {item.name}
                 </span>
-                <span className="text-[10px] font-bold text-white font-mono">
+                <span className="text-[10px] font-bold text-[hsl(var(--dashboard-ink))] font-mono">
                   {percentage}%
                 </span>
               </div>
