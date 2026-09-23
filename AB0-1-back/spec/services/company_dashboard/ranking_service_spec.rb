@@ -126,7 +126,8 @@ RSpec.describe CompanyDashboard::RankingService do
       result = described_class.new(company: company, quadrant_mode: 'reviews').ranking_data
 
       expect(result.dig(:quadrant_meta, :mode)).to eq('reviews')
-      expect(result[:quadrant_status]).to eq('ready')
+      expect(result[:quadrant_status]).to eq('insufficient_sample')
+      expect(result.dig(:quadrant, :status)).to eq('insufficient_sample')
     end
 
     it 'supports the bounded history windows' do
@@ -159,7 +160,7 @@ RSpec.describe CompanyDashboard::RankingService do
 
       expect(result[:mode]).to eq('preview')
       expect(result[:ranking_status]).to eq('not_applicable')
-      expect(result[:quadrant_status]).to eq('ready')
+      expect(result[:quadrant_status]).to eq('insufficient_sample')
       expect(result[:current_position]).to be_nil
       expect(result[:transparency][:position_semantics]).to eq('quadrant_preview_without_official_position')
     end
@@ -182,7 +183,7 @@ RSpec.describe CompanyDashboard::RankingService do
 
     it 'includes the current eligible company and real adjacent neighbors in the positioning map' do
       16.times do |index|
-        competitor = create(:company, reviews_count: index + 1)
+        competitor = create(:company, reviews_count: index + 1, leads_count: index + 1, profile_views_count: (index + 1) * 10, cta_clicks_count: index + 1)
         ActiveRecord::Base.connection.execute(
           "INSERT INTO company_ranking_score (company_id, score, breakdown, computed_at, created_at, updated_at) VALUES (#{competitor.id}, #{100 - index}, '{}', NOW(), NOW(), NOW())"
         )
@@ -226,6 +227,13 @@ RSpec.describe CompanyDashboard::RankingService do
     end
 
     it 'exposes score drivers and real rank positions for nearby companies' do
+      8.times do |index|
+        competitor = create(:company, leads_count: index + 1, profile_views_count: (index + 1) * 10)
+        ActiveRecord::Base.connection.execute(
+          "INSERT INTO company_ranking_score (company_id, score, breakdown, computed_at, created_at, updated_at) VALUES (#{competitor.id}, #{index + 2}, '{}', NOW(), NOW(), NOW())"
+        )
+        CompanyTrustScore.create!(company: competitor, score: index + 2, components: {}, computed_at: Time.current)
+      end
       result = described_class.new(company: company, state: company.state).ranking_data
       current_point = result.dig(:quadrant, :points).find { |point| point[:is_current_company] }
 

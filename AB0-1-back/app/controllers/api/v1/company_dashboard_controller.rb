@@ -577,6 +577,10 @@ module Api
 
       def ranking_filter_errors(category_id:, criterion_slug:, state:, city:, sector:, quadrant_mode:)
         errors = {}
+        governed_parameters = %w[x_weights y_weights threshold_method minimum_population badge_weight trust_weight]
+        if governed_parameters.any? { |key| params.key?(key) }
+          errors[:methodology] = 'Pesos, thresholds e população mínima são governados pela plataforma.'
+        end
         category = category_id.present? ? @company.categories.find_by(id: category_id) : nil
 
         errors[:category_id] = 'Categoria inválida.' if category_id.present? && category.nil?

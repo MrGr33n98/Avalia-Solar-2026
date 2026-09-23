@@ -63,13 +63,15 @@ module CompanyDashboard
       official_status = official_status_for(snapshot, canonical_population)
       ranking = preview ? preview_ranking(population) : snapshot_ranking(snapshot, official_status, canonical_population)
       history_items = historical_data
-      quadrant_ready = population.any? && (preview || snapshot.present?)
-      quadrant_points = quadrant_ready ? selected_quadrant_points(population) : []
+      positioning = build_positioning
+      quadrant_published = snapshot.present? || preview
+      quadrant = quadrant_published ? positioning : empty_positioning(positioning)
       history = history_payload(history_items)
       benchmarks = RankingBenchmarkService.new(population: population).call
       quality = quality_payload(snapshot, preview, official_status, ranking[:status])
-      leaders = quadrant_ready ? leader_points(population) : []
-      neighbors = quadrant_ready ? neighbor_points(population) : []
+      quality[:flags] = (quality[:flags] + positioning[:quality_flags].to_a.map { |flag| "positioning_#{flag}" }).uniq
+      leaders = quadrant[:leaders]
+      neighbors = quadrant[:neighbors]
 
       {
         status: preview ? (ranking[:status] == 'empty' ? 'empty' : 'preview') : official_status,
@@ -81,10 +83,18 @@ module CompanyDashboard
         benchmarks: benchmarks,
         history: history,
         quadrant: {
-          status: quadrant_ready ? 'ready' : 'empty',
+          status: quadrant[:status],
           preview: preview,
-          points: quadrant_points,
-          meta: quadrant_meta
+          points: quadrant[:points],
+          meta: quadrant_meta(quadrant),
+          methodology: { version: Positioning::Definition::VERSION, threshold_method: Positioning::Definition::THRESHOLD_METHOD },
+          requested_scope: quadrant[:requested_scope],
+          resolved_scope: quadrant[:resolved_scope],
+          fallback: { active: quadrant[:fallback] == true, reason: quadrant[:fallback_reason] },
+          population: quadrant[:population_payload],
+          distribution: quadrant[:distribution],
+          thresholds: quadrant[:thresholds],
+          axes: quadrant_meta(quadrant)[:axes]
         },
         definition: definition(snapshot, preview, official_status),
         quality: quality,
@@ -103,12 +113,12 @@ module CompanyDashboard
         score: ranking[:score],
         percentile: ranking[:percentile],
         category_rankings: category_rankings,
-        magic_quadrant_competitors: quadrant_points,
-        quadrant_meta: quadrant_meta,
+        magic_quadrant_competitors: quadrant[:points],
+        quadrant_meta: quadrant_meta(quadrant),
         historical_data: history_items,
         history_status: history[:status],
         history_trend_30d: history[:trend_30d],
-        quadrant_status: quadrant_ready ? 'ready' : 'empty',
+        quadrant_status: quadrant[:status],
         transparency: definition(snapshot, preview, official_status),
         scope: official_scope[:type]
       }
@@ -205,14 +215,28 @@ module CompanyDashboard
     end
 
     def ranked_companies
-      @ranked_companies ||= eligible_population
-                            .joins('LEFT JOIN company_trust_score cts ON cts.company_id = companies.id')
-                            .select(<<~SQL.squish)
-                              companies.*, crs.score AS ranking_score, crs.breakdown AS ranking_breakdown
-                            SQL
-                            .includes(:company_badges, :review_aggregates, logo_attachment: :blob)
-                            .order(Arel.sql('crs.score DESC, COALESCE(cts.score, 0) DESC, companies.reviews_count DESC, companies.id ASC'))
-                            .to_a
+      @ranked_companies ||= ranked_companies_for(
+        category_id: category_id,
+        state: state,
+        city: city,
+        sector: sector
+      )
+    end
+
+    def ranked_companies_for(scope)
+      RankingEligibilityScope.new(
+        category_id: scope[:category_id],
+        state: scope[:state],
+        city: scope[:city],
+        sector: scope[:sector]
+      ).relation
+        .joins('LEFT JOIN company_trust_score cts ON cts.company_id = companies.id')
+        .select(<<~SQL.squish)
+          companies.*, crs.score AS ranking_score, crs.breakdown AS ranking_breakdown
+        SQL
+        .includes(:company_badges, :review_aggregates, logo_attachment: :blob)
+        .order(Arel.sql('crs.score DESC, COALESCE(cts.score, 0) DESC, companies.reviews_count DESC, companies.id ASC'))
+        .to_a
     end
 
     # Compatibilidade temporária para os consumidores legados do serviço.
@@ -303,180 +327,145 @@ module CompanyDashboard
       'ready'
     end
 
-    def selected_quadrant_points(population)
-      selected_companies_for_quadrant(population).map { |record| quadrant_point_for(record) }
+    def build_positioning
+      minimum_population = RankingBenchmarkService.min_comparable_population
+      eligibility = Positioning::Eligibility.new(minimum_population: minimum_population)
+      population_cache = {}
+      calculator_cache = {}
+      loader = lambda do |scope|
+        key = scope.slice(:category_id, :state, :city, :sector)
+        population_cache[key] ||= ranked_companies_for(key)
+      end
+      points_for = lambda do |records|
+        key = records.map(&:id)
+        calculator_cache[key] ||= Positioning::Calculator.new(
+          trust_scores: trust_scores_for(records),
+          category_id: category_id,
+          criterion_slug: criterion_slug,
+          criterion_title: criterion_title,
+          quadrant_mode: quadrant_mode
+        )
+      end
+      resolver = Positioning::ScopeResolver.new(
+        category_id: category_id,
+        state: state,
+        city: city,
+        sector: sector,
+        minimum_population: minimum_population,
+        population_loader: loader,
+        eligibility_checker: lambda do |records|
+          calculator = points_for.call(records)
+          eligibility.call(records.map { |record| calculator.calculate(record) })
+        end
+      )
+      resolved = resolver.resolve
+      records = resolved[:population]
+      calculator = points_for.call(records)
+      raw_points = records.map { |record| positioning_point_for(record, calculator, records) }
+      assessment = eligibility.call(raw_points)
+      thresholds = assessment[:status] == "ready" ? Positioning::ThresholdCalculator.new(raw_points).call : empty_thresholds(raw_points)
+      points = raw_points.map { |point| point.merge(quadrant_payload(point, thresholds)) }
+      point_by_id = points.index_by { |point| point[:id] }
+      selection = Positioning::PointSelector.new(
+        leaders_limit: QUADRANT_LEADERS_LIMIT,
+        neighbors_limit: QUADRANT_NEIGHBORS_LIMIT
+      ).call(
+        population: records,
+        company_id: company.id,
+        point_builder: ->(record) { point_by_id.fetch(record.id) }
+      )
+      resolved.merge(
+        status: assessment[:status],
+        points: assessment[:status] == "ready" ? selection[:points] : [],
+        leaders: assessment[:status] == "ready" ? selection[:leaders] : [],
+        neighbors: assessment[:status] == "ready" ? selection[:neighbors] : [],
+        all_points: raw_points,
+        thresholds: thresholds,
+        population_payload: {
+          eligible: records.length,
+          displayed: assessment[:status] == "ready" ? selection[:displayed_count] : 0,
+          minimum_required: minimum_population
+        },
+        distribution: thresholds.slice(:distinct_x, :distinct_y),
+        quality_flags: (resolved[:assessment][:quality_flags].to_a + assessment[:quality_flags]).uniq
+      )
     end
 
-    def selected_companies_for_quadrant(population)
-      current_index = population.find_index { |record| record.id == company.id }
-      top = population.first(QUADRANT_LEADERS_LIMIT)
-      adjacent = if current_index
-                   from = [current_index - QUADRANT_NEIGHBORS_LIMIT, 0].max
-                   to = [current_index + QUADRANT_NEIGHBORS_LIMIT, population.length - 1].min
-                   population[from..to]
-                 else
-                   []
-                 end
-      (top + adjacent + Array(current_index && population[current_index])).compact.uniq(&:id)
+    def empty_positioning(positioning)
+      positioning.merge(
+        status: "empty",
+        points: [],
+        leaders: [],
+        neighbors: [],
+        population_payload: positioning[:population_payload].to_h.merge(displayed: 0)
+      )
     end
 
-    def leader_points(population)
-      population.first(QUADRANT_LEADERS_LIMIT).map { |record| quadrant_point_for(record) }
+    def empty_thresholds(points)
+      {
+        method: Positioning::Definition::THRESHOLD_METHOD,
+        population_size: points.length,
+        x_threshold: nil,
+        y_threshold: nil,
+        distinct_x: points.map { |point| point[:x_score].to_f }.uniq.length,
+        distinct_y: points.map { |point| point[:y_score].to_f }.uniq.length
+      }
     end
 
-    def neighbor_points(population)
-      current_index = population.find_index { |record| record.id == company.id }
-      return [] unless current_index
-
-      from = [current_index - QUADRANT_NEIGHBORS_LIMIT, 0].max
-      to = [current_index + QUADRANT_NEIGHBORS_LIMIT, population.length - 1].min
-      population[from..to].reject { |record| record.id == company.id }.map { |record| quadrant_point_for(record) }
+    def trust_scores_for(records)
+      CompanyTrustScore.where(company_id: records.map(&:id)).pluck(:company_id, :score).to_h do |id, score|
+        [id, score.to_f]
+      end
     end
 
-    def quadrant_point_for(record)
-      @quadrant_points ||= {}
-      @quadrant_points[record.id] ||= {
+    def positioning_point_for(record, calculator, population)
+      calculated = calculator.calculate(record)
+      {
         id: record.id,
         name: record.name,
         logo_url: record.logo_url,
         rating: comparison_rating(record).to_f,
-        completeness_of_vision: calculate_vision_score(record),
-        ability_to_execute: calculate_execution_score(record),
+        x_score: calculated[:x_score],
+        y_score: calculated[:y_score],
+        completeness_of_vision: calculated[:x_score],
+        ability_to_execute: calculated[:y_score],
+        x_breakdown: calculated[:x_breakdown],
+        y_breakdown: calculated[:y_breakdown],
         is_current_company: record.id == company.id,
-        ranking_position: ranking_position_for(record),
+        ranking_position: population.find_index { |candidate| candidate.id == record.id }&.+(1),
         ranking_score: record.ranking_score&.to_f,
-        score_distance: score_distance_from_current(record),
+        score_distance: score_distance_from_current(record, population),
         criterion_score: criterion_score_for(record),
         criteria_breakdown: criteria_breakdown_for(record)
       }
     end
 
-    def ranking_position_for(record)
-      index = ranked_companies.find_index { |candidate| candidate.id == record.id }
-      index && index + 1
+    def quadrant_payload(point, thresholds)
+      return { quadrant: nil, quadrant_label: nil } unless thresholds[:x_threshold] && thresholds[:y_threshold]
+
+      key = Positioning::Definition.quadrant_for(
+        point[:x_score], point[:y_score], thresholds[:x_threshold], thresholds[:y_threshold]
+      )
+      definition = Positioning::Definition.quadrant_payload(key)
+      { quadrant: definition[:key], quadrant_label: definition[:label] }
     end
 
-    def score_distance_from_current(record)
-      current_score = score_for_company(ranked_companies)
+    def score_distance_from_current(record, population)
+      current_score = score_for_company(population)
       return nil if current_score.nil? || record.ranking_score.nil?
 
       (record.ranking_score.to_f - current_score).round(2)
     end
-
-    def calculate_vision_score(record)
-      return review_quadrant_authority(record) if quadrant_mode == 'reviews'
-
-      criterion_component = criterion_slug.present? ? normalize_criterion_score(criterion_score_for(record)) * 15.0 : 0.0
-      base_score =
-        (stored_trust_score_for(record) * 0.45) +
-        (verification_score_for(record) * 0.20) +
-        (review_credibility_score_for(record) * 0.15) +
-        (badge_depth_score_for(record) * 0.10) +
-        (social_proof_score_for(record) * 0.10)
-      (base_score * (criterion_slug.present? ? 0.85 : 1.0) + criterion_component).round(1)
-    end
-
-    def calculate_execution_score(record)
-      return review_quadrant_strength(record) if quadrant_mode == 'reviews'
-
-      leads_signal = normalize(record.leads_count.to_f, MAX_EXECUTION_LEADS) * 35.0
-      engagement_signal = blended_engagement_score_for(record) * 25.0
-      conversion_signal = conversion_efficiency_score_for(record) * 20.0
-      trust_operational_signal = operational_maturity_score_for(record) * 10.0
-      category_fit_signal = criterion_slug.present? ? normalize_criterion_score(criterion_score_for(record)) * 10.0 : 0.0
-      base_score = leads_signal + engagement_signal + conversion_signal + trust_operational_signal
-      (base_score * (criterion_slug.present? ? 1.0 : (100.0 / 90.0)) + category_fit_signal).round(1)
-    end
-
-    def review_quadrant_authority(record)
-      rating = normalize(record.rating_avg.to_f, 5.0) * 70.0
-      volume = normalize_log(record.reviews_count.to_f, 200.0) * 30.0
-      (rating + volume).round(1)
-    end
-
-    def review_quadrant_strength(record)
-      volume = normalize_log(record.reviews_count.to_f, 200.0) * 45.0
-      credibility = review_credibility_score_for(record) * 0.55
-      (volume + credibility).round(1)
-    end
-
     def comparison_rating(record)
       return record.rating_avg.to_f if criterion_slug.blank?
 
       criterion_score_for(record).presence || record.rating_avg.to_f
     end
 
-    def stored_trust_score_for(record)
-      trust_scores_by_company.fetch(record.id, 0.0)
-    end
-
     def trust_scores_by_company
       @trust_scores_by_company ||= CompanyTrustScore.where(company_id: ranked_companies.map(&:id)).pluck(:company_id, :score)
                                                        .to_h { |id, score| [id, score.to_f] }
     end
-
-    def verification_score_for(record)
-      record.verified? ? 100.0 : 0.0
-    end
-
-    def review_credibility_score_for(record)
-      rating_score = normalize(record.rating_avg.to_f, 5.0)
-      volume_score = normalize_log(record.reviews_count.to_f, 200.0)
-      ((rating_score * 0.7) + (volume_score * 0.3)) * 100.0
-    end
-
-    def badge_depth_score_for(record)
-      normalize(record.company_badges.size.to_f, MAX_BADGES_SCORE) * 100.0
-    end
-
-    def social_proof_score_for(record)
-      record.social_proof_enabled? ? 100.0 : 0.0
-    end
-
-    def blended_engagement_score_for(record)
-      views = normalize_log(record.profile_views_count.to_f, MAX_EXECUTION_VIEWS)
-      clicks = normalize_log(record.cta_clicks_count.to_f, MAX_EXECUTION_CLICKS)
-      (views * 0.55) + (clicks * 0.45)
-    end
-
-    def conversion_efficiency_score_for(record)
-      view_to_click = safe_ratio(record.cta_clicks_count.to_f, record.profile_views_count.to_f)
-      click_to_lead = safe_ratio(record.leads_count.to_f, record.cta_clicks_count.to_f)
-      ((([view_to_click, 0.35].min / 0.35) * 0.45) + (([click_to_lead, 0.60].min / 0.60) * 0.55))
-    end
-
-    def operational_maturity_score_for(record)
-      signals = []
-      signals << 1.0 if record.verified?
-      signals << 1.0 if record.social_proof_enabled?
-      signals << 1.0 if record.whatsapp_enabled?
-      signals << 1.0 if record.cta_whatsapp_enabled?
-      signals << 1.0 if record.company_badges.any?
-      signals.sum / 5.0
-    end
-
-    def normalize_criterion_score(score)
-      normalize(score.to_f, 5.0)
-    end
-
-    def normalize(value, max)
-      return 0.0 if max.to_f <= 0
-
-      [[value.to_f / max.to_f, 0.0].max, 1.0].min
-    end
-
-    def normalize_log(value, max)
-      return 0.0 if value.to_f <= 0 || max.to_f <= 0
-
-      [Math.log(1.0 + value.to_f) / Math.log(1.0 + max.to_f), 1.0].min
-    end
-
-    def safe_ratio(numerator, denominator)
-      return 0.0 if denominator.to_f <= 0
-
-      numerator.to_f / denominator.to_f
-    end
-
     def criterion_score_for(record)
       return nil if criterion_slug.blank?
 
@@ -502,7 +491,7 @@ module CompanyDashboard
                            end
     end
 
-    def quadrant_meta
+    def quadrant_meta(positioning = {})
       reviews_mode = quadrant_mode == 'reviews'
       x_label = reviews_mode ? 'Autoridade das Reviews' : 'Autoridade de Confiança'
       y_label = reviews_mode ? 'Força das Reviews' : 'Poder de Execução'
@@ -511,14 +500,26 @@ module CompanyDashboard
         criterion_slug: criterion_slug,
         criterion_title: criterion_title,
         mode: quadrant_mode,
+        methodology_version: Positioning::Definition::VERSION,
+        threshold_method: Positioning::Definition::THRESHOLD_METHOD,
         methodology: 'O mapa de posicionamento usa eixos próprios e não determina a posição do ranking orgânico oficial.',
         x_axis_label: x_label,
         y_axis_label: y_label,
         x_axis_definition: reviews_mode ? 'Nota e volume de avaliações.' : 'Confiança, verificação, credibilidade de reviews, selos e prova social.',
-        y_axis_definition: reviews_mode ? 'Volume e credibilidade das avaliações.' : 'Sinais de execução, engajamento e maturidade operacional.'
+        y_axis_definition: reviews_mode ? 'Volume e credibilidade das avaliações.' : 'Sinais de execução, engajamento e maturidade operacional.',
+        requested_scope: positioning[:requested_scope],
+        resolved_scope: positioning[:resolved_scope],
+        fallback: { active: positioning[:fallback] == true, reason: positioning[:fallback_reason] },
+        population: positioning[:population_payload],
+        distribution: positioning[:distribution],
+        thresholds: positioning[:thresholds],
+        axes: {
+          x: { key: 'trust_authority', label: x_label },
+          y: { key: 'execution_power', label: y_label }
+        },
+        quadrant_taxonomy: Positioning::Definition::QUADRANTS.transform_values { |value| value }
       }
     end
-
     def category_rankings
       company.categories.map do |category|
         if ad_hoc_preview?

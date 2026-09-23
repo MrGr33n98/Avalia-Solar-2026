@@ -13,6 +13,10 @@ module CompanyDashboard
       DEFAULT_MIN_COMPARABLE_POPULATION
     end
 
+    class << self
+      alias minimum_population min_comparable_population
+    end
+
     def initialize(population:, minimum_population: self.class.min_comparable_population)
       @population = population
       @minimum_population = [minimum_population.to_i, 1].max
