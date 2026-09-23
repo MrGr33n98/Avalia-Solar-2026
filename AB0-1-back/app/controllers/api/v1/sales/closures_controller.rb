@@ -26,7 +26,7 @@ module Api
         private
 
         def set_opportunity
-          @opportunity = ::Sales::Opportunity.find(params[:opportunity_id])
+          @opportunity = current_tenant_scope.opportunities.find(params[:opportunity_id])
         end
 
         def publish_event(event_type)

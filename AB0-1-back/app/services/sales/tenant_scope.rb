@@ -105,10 +105,10 @@ module Sales
       opp_ids = opportunities.select(:id)
 
       scope = ::Sales::Note.all
-      scope = scope.where(user_id: tenant_user_ids)
-                   .or(::Sales::Note.where(sales_account_id: acc_ids))
-                   .or(::Sales::Note.where(sales_contact_id: cnt_ids))
-                   .or(::Sales::Note.where(sales_opportunity_id: opp_ids))
+      scope = scope.where(author_id: tenant_user_ids)
+                   .or(::Sales::Note.where(account_id: acc_ids))
+                   .or(::Sales::Note.where(contact_id: cnt_ids))
+                   .or(::Sales::Note.where(opportunity_id: opp_ids))
       scope
     end
 
@@ -122,10 +122,8 @@ module Sales
     def quotes
       return ::Sales::Quote.all if admin?
 
-      acc_ids = accounts.select(:id)
       opp_ids = opportunities.select(:id)
-      ::Sales::Quote.where(sales_account_id: acc_ids)
-                    .or(::Sales::Quote.where(sales_opportunity_id: opp_ids))
+      ::Sales::Quote.where(opportunity_id: opp_ids)
                     .or(::Sales::Quote.where(created_by_id: tenant_user_ids))
     end
 

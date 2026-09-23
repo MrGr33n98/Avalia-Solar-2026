@@ -3,11 +3,21 @@ module Api
     module Sales
       class NotesController < BaseController
         def index
-          notes = ::Sales::Note.where(account_id: params[:account_id]).order(created_at: :desc)
+          notes = current_tenant_scope.notes
+          notes = notes.where(account_id: params[:account_id]) if params[:account_id].present?
+          notes = notes.where(opportunity_id: params[:opportunity_id]) if params[:opportunity_id].present?
+          notes = notes.order(created_at: :desc)
           render json: { notes: notes.map { |note| serialize(note) } }
         end
 
         def create
+          if note_params[:account_id].present? && !current_tenant_scope.accounts.exists?(id: note_params[:account_id])
+            return render_error_response(message: 'Conta fora do escopo do tenant', status: :forbidden, code: 'UNAUTHORIZED_RELATION')
+          end
+          if note_params[:opportunity_id].present? && !current_tenant_scope.opportunities.exists?(id: note_params[:opportunity_id])
+            return render_error_response(message: 'Oportunidade fora do escopo do tenant', status: :forbidden, code: 'UNAUTHORIZED_RELATION')
+          end
+
           note = ::Sales::Note.create!(note_params.merge(author: current_user))
           ::Sales::AuditRecorder.call(record: note, action: 'created', actor: current_user,
                                       request_id: request.request_id, ip: request.remote_ip)
@@ -15,7 +25,7 @@ module Api
         end
 
         def update
-          note = ::Sales::Note.find(params[:id])
+          note = current_tenant_scope.notes.find(params[:id])
           note.update!(note_params)
           render json: { note: serialize(note) }
         end

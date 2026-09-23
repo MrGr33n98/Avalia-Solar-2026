@@ -29,6 +29,10 @@ module Api
             code: 'SALES_FORBIDDEN'
           )
         end
+
+        def current_tenant_scope
+          ::Sales::TenantScope.new(user: current_user)
+        end
       end
     end
   end

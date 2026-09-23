@@ -153,10 +153,14 @@ module Billing
       # Em modo de teste, se mockado, aceita diretamente
       return JSON.parse(@payload, object_class: OpenStruct) if Rails.env.test? && @signature == 'mock_sig'
 
+      secret = ENV['STRIPE_BILLING_WEBHOOK_SECRET']
+      secret = 'mock_secret' if secret.blank? && Rails.env.test?
+      raise ::Billing::Errors::InvalidWebhookSignature, 'STRIPE_BILLING_WEBHOOK_SECRET não configurado' if secret.blank?
+
       Stripe::Webhook.construct_event(
         @payload,
         @signature,
-        ENV.fetch('STRIPE_BILLING_WEBHOOK_SECRET', 'mock_secret')
+        secret
       )
     rescue Stripe::SignatureVerificationError => e
       Billing::SlackNotifier.notify_invalid_webhook(error: e.message) if defined?(Billing::SlackNotifier)

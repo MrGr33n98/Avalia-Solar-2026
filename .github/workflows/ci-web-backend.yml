@@ -57,19 +57,19 @@ jobs:
       # Backend Checks
       - name: Rubocop
         working-directory: ./AB0-1-back
-        run: bundle exec rubocop --parallel || true
+        run: bundle exec rubocop --parallel
 
       - name: Brakeman (Security)
         working-directory: ./AB0-1-back
         run: |
           gem install brakeman
-          bundle exec brakeman -q -w2 || true
+          bundle exec brakeman -q -w2
 
       - name: Bundler Audit
         working-directory: ./AB0-1-back
         run: |
           gem install bundler-audit
-          bundle-audit check --update || true
+          bundle-audit check --update
 
       # Frontend Checks
       - name: Install Frontend Deps

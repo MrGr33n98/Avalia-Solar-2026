@@ -40,7 +40,7 @@ module Sales
         duplicate.tasks.update_all(sales_account_id: master.id)
 
         # 5. Reassign solar projects
-        duplicate.solar_projects.update_all(sales_account_id: master.id)
+        duplicate.solar_projects.update_all(account_id: master.id)
 
         # 6. Fill missing attributes on master if blank
         master.phone ||= duplicate.phone

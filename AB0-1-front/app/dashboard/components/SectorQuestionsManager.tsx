@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { 
   Eye, 
   Pencil, 
@@ -70,7 +70,7 @@ export default function SectorQuestionsManager({ companyId }: Props) {
     return !meta.paid_required;
   }, [meta]);
 
-  const loadQuestions = async () => {
+  const loadQuestions = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchApi<{ questions: SectorQuestion[]; meta: Meta }>('/company_dashboard/sector_questions', {
@@ -88,11 +88,11 @@ export default function SectorQuestionsManager({ companyId }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, toast]);
 
   useEffect(() => {
     void loadQuestions();
-  }, [companyId, loadQuestions]);
+  }, [loadQuestions]);
 
   const openCreate = () => {
     setEditing(null);
@@ -113,6 +113,7 @@ export default function SectorQuestionsManager({ companyId }: Props) {
         await fetchApi(`/company_dashboard/sector_questions/${editing.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
+          params: { company_id: companyId },
           body: JSON.stringify(payload),
         });
         toast({ title: 'Protocolo atualizado com sucesso' });
@@ -120,6 +121,7 @@ export default function SectorQuestionsManager({ companyId }: Props) {
         await fetchApi('/company_dashboard/sector_questions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          params: { company_id: companyId },
           body: JSON.stringify(payload),
         });
         toast({ title: 'Novo protocolo de autoridade gerado' });
@@ -142,6 +144,7 @@ export default function SectorQuestionsManager({ companyId }: Props) {
       await fetchApi(`/company_dashboard/sector_questions/${question.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        params: { company_id: companyId },
         body: JSON.stringify({ company_sector_question: { enabled } }),
       });
       setQuestions((prev) => prev.map((item) => (item.id === question.id ? { ...item, enabled } : item)));
@@ -155,7 +158,10 @@ export default function SectorQuestionsManager({ companyId }: Props) {
     if (!id) return;
 
     try {
-      await fetchApi(`/company_dashboard/sector_questions/${id}`, { method: 'DELETE' });
+      await fetchApi(`/company_dashboard/sector_questions/${id}`, {
+        method: 'DELETE',
+        params: { company_id: companyId },
+      });
       toast({ title: 'Ativo removido do pipeline' });
       await loadQuestions();
     } catch (error: any) {

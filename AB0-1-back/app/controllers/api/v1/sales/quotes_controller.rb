@@ -3,18 +3,22 @@ module Api
     module Sales
       class QuotesController < BaseController
         def index
-          scope = ::Sales::Quote.includes(:items).order(created_at: :desc)
+          scope = current_tenant_scope.quotes.includes(:items).order(created_at: :desc)
           scope = scope.where(opportunity_id: params[:opportunity_id]) if params[:opportunity_id].present?
           render json: { quotes: scope.map { |quote| serialize(quote) } }
         end
 
         def create
+          if quote_params[:opportunity_id].present? && !current_tenant_scope.opportunities.exists?(id: quote_params[:opportunity_id])
+            return render_error_response(message: 'Oportunidade fora do escopo do tenant', status: :forbidden, code: 'UNAUTHORIZED_RELATION')
+          end
+
           quote = ::Sales::Quote.create!(quote_params.merge(created_by: current_user))
           render json: { quote: serialize(quote) }, status: :created
         end
 
         def update
-          quote = ::Sales::Quote.find(params[:id])
+          quote = current_tenant_scope.quotes.find(params[:id])
           ::Sales::QuoteLifecycle.call(quote: quote, to: params.require(:quote).require(:status), actor: current_user)
           render json: { quote: serialize(quote.reload) }
         end

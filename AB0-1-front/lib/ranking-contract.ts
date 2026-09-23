@@ -28,11 +28,41 @@ const rankingPointSchema = z.object({
   criteria_breakdown: z.record(z.number()).optional(),
 });
 
+const rankingInsightSchema = z.object({
+  code: z.string(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  message: z.string().optional(),
+  metric: z.union([
+    z.string(),
+    z.object({
+      key: z.string(),
+      value: z.union([z.number(), z.string()]),
+      benchmark: z.number().optional(),
+    }),
+  ]),
+  evidence: z.record(z.union([z.number(), z.string(), z.null()])).optional(),
+  action_url: z.string().optional(),
+}).passthrough();
+
+const scoreDriverItemSchema = z.object({
+  code: z.string(),
+  label: z.string(),
+  value: z.number(),
+});
+
+const gapItemSchema = z.object({
+  code: z.string(),
+  title: z.string(),
+  description: z.string(),
+  evidence: z.record(z.union([z.number(), z.string(), z.null()])),
+});
+
 // Contrato canônico v1 do read side. `passthrough` preserva a transição dos
 // campos legados, mas nenhum campo central chega à UI sem validação runtime.
 export const rankingDataSchema = z.object({
-  status: z.string(),
-  mode: z.enum(['canonical', 'preview']),
+  status: z.enum(['ready', 'preview', 'empty', 'processing', 'stale', 'locked', 'error']).optional(),
+  mode: z.enum(['canonical', 'preview']).optional(),
   official_scope: z.object({ type: z.enum(['global', 'category']), category_id: nullableNumber }),
   comparison_scope: z.object({
     active: z.boolean(),
@@ -61,7 +91,7 @@ export const rankingDataSchema = z.object({
   }),
   history: z.object({
     status: z.string(),
-    scope: z.literal('official'),
+    scope: z.literal('official').optional(),
     items: z.array(z.object({
       week: z.string(),
       position: nullableNumber,
@@ -73,27 +103,40 @@ export const rankingDataSchema = z.object({
     status: z.string(),
     preview: z.boolean(),
     points: z.array(rankingPointSchema),
-    meta: z.record(z.unknown()),
+    meta: z.record(z.unknown()).optional(),
   }),
   definition: z.object({
     definition_version: z.string(),
     purpose: z.literal('organic_performance'),
     sponsored_included: z.literal(false),
-  }).passthrough(),
-  quality: z.object({ flags: z.array(z.string()) }).passthrough(),
-  leaders: z.array(rankingPointSchema),
-  neighbors: z.array(rankingPointSchema),
+  }).passthrough().optional(),
+  quality: z.object({ flags: z.array(z.string()) }).passthrough().optional(),
+  leaders: z.array(rankingPointSchema).optional(),
+  neighbors: z.array(rankingPointSchema).optional(),
   insights: z.object({
-    strengths: z.array(z.record(z.unknown())),
-    opportunities: z.array(z.record(z.unknown())),
-    next_best_action: z.record(z.unknown()).nullable(),
-  }),
-  score_drivers: z.object({ status: z.string(), source: z.string().nullable(), score: nullableNumber, items: z.array(z.record(z.unknown())) }),
-  gaps: z.array(z.record(z.unknown())),
-  changes: z.object({ status: z.string(), from: z.string().nullable(), to: z.string().nullable(), changes: z.record(z.number()) }),
-  error: z.unknown().nullable(),
-  request_id: z.string().nullable(),
-  is_premium_analytics: z.boolean(),
+    strengths: z.array(rankingInsightSchema),
+    opportunities: z.array(rankingInsightSchema),
+    next_best_action: rankingInsightSchema.nullable().optional(),
+  }).optional(),
+  score_drivers: z.object({
+    status: z.enum(['ready', 'unavailable']),
+    source: z.enum(['official_snapshot', 'current_ranking_score']).nullable(),
+    score: nullableNumber,
+    items: z.array(scoreDriverItemSchema),
+  }).optional(),
+  gaps: z.array(gapItemSchema).optional(),
+  changes: z.object({
+    status: z.enum(['ready', 'insufficient_history']),
+    from: z.string().nullable(),
+    to: z.string().nullable(),
+    changes: z.record(z.number()),
+  }).optional(),
+  error: z.object({ code: z.string(), message: z.string().optional(), request_id: z.string().optional() }).nullable().optional(),
+  request_id: z.string().nullable().optional(),
+  is_premium_analytics: z.boolean().optional(),
+  rank_position: z.number().nullable().optional(),
+  ranking_score: z.number().nullable().optional(),
+  magic_quadrant_points: z.array(rankingPointSchema).optional(),
 }).passthrough();
 
 export function parseRankingData(payload: unknown): RankingData {
