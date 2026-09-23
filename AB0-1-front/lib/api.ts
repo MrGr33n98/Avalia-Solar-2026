@@ -1767,7 +1767,11 @@ export interface CompanyAnalyticsOverview {
   } | null;
   data_source: string;
   metrics?: { views: number | null; cta_clicks: number | null; leads: number | null };
-  rates?: { ctr: number | null; profile_to_lead_conversion: number | null; cta_to_lead_rate: number | null };
+  rates?: {
+    ctr: number | null;
+    profile_to_lead_conversion: number | null;
+    cta_to_lead_rate: number | null;
+  };
   data_status?: 'ready' | 'empty' | 'processing' | 'unavailable' | 'locked' | 'stale' | 'error';
   range?: AnalyticsDateRange;
   /** Timestamp da última consolidação disponível no pipeline de analytics. */
@@ -2049,6 +2053,60 @@ export interface CertificationProgress {
 }
 
 // Ranking Data Types
+export type PositioningQuadrant = 'reference' | 'specialist' | 'expansion' | 'developing';
+
+export interface PositioningScope {
+  type: 'global' | 'category' | 'state' | 'city' | 'sector';
+  category_id: number | null;
+  state: string | null;
+  city: string | null;
+  sector: string | null;
+}
+
+export interface PositioningPoint {
+  id: number;
+  name: string;
+  logo_url?: string;
+  rating: number;
+  x_score?: number;
+  y_score?: number;
+  completeness_of_vision: number;
+  ability_to_execute: number;
+  x_breakdown?: Record<string, number>;
+  y_breakdown?: Record<string, number>;
+  quadrant?: PositioningQuadrant | null;
+  quadrant_label?: string | null;
+  is_current_company: boolean;
+  ranking_position?: number | null;
+  ranking_score?: number | null;
+  score_distance?: number | null;
+  criterion_score?: number | null;
+  criteria_breakdown?: Record<string, number>;
+}
+
+export interface PositioningThresholds {
+  method: 'median';
+  population_size: number;
+  x_threshold: number | null;
+  y_threshold: number | null;
+  distinct_x: number;
+  distinct_y: number;
+}
+
+export interface PositioningData {
+  status: 'ready' | 'insufficient_sample' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
+  preview: boolean;
+  points: PositioningPoint[];
+  methodology?: { version: string; threshold_method: 'median' };
+  requested_scope?: PositioningScope;
+  resolved_scope?: PositioningScope;
+  fallback?: { active: boolean; reason?: string | null };
+  population?: { eligible: number; displayed: number; minimum_required: number };
+  distribution?: { distinct_x: number; distinct_y: number };
+  thresholds?: PositioningThresholds;
+  axes?: Record<string, { key: string; label: string }>;
+  meta?: Record<string, unknown>;
+}
 export interface RankingData {
   status?: 'ready' | 'preview' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
   mode?: 'canonical' | 'preview';
@@ -2130,13 +2188,10 @@ export interface RankingData {
       score_change: number;
     } | null;
   };
-  quadrant?: {
-    status: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
-    preview: boolean;
-    points: RankingData['magic_quadrant_points'];
-    meta?: RankingData['quadrant_meta'];
-  };
-  magic_quadrant_points: Array<{
+  quadrant?: PositioningData;
+  magic_quadrant_points: PositioningPoint[];
+  /* Campo legado mantido para compatibilidade de rollout. */
+  magic_quadrant_points_legacy?: Array<{
     id: number;
     name: string;
     logo_url?: string;

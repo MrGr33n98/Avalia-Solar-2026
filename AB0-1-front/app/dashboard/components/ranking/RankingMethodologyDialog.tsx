@@ -132,12 +132,12 @@ function RankingContexts({
         <Card className="border-border/60 bg-muted/20 shadow-sm">
           <CardContent className="space-y-3 p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
-              <h4 className="font-semibold tracking-tight">Comparação personalizada</h4>
+              <h4 className="font-semibold tracking-tight">Mapa de posicionamento</h4>
               <Badge variant="outline">Calculada em tempo real</Badge>
             </div>
             <p className="text-sm leading-6 text-muted-foreground">
               {hasComparison
-                ? 'Considera os filtros atuais de estado, cidade, setor ou critério, sem alterar o ranking oficial.'
+                ? 'Usa eixos próprios de Autoridade de Confiança e Poder de Execução, com cortes relativos à população comparável, sem alterar o ranking oficial.'
                 : 'Pode considerar estado, cidade, setor ou critério, sem alterar o ranking oficial.'}
             </p>
           </CardContent>
