@@ -216,6 +216,23 @@ RSpec.describe CompanyDashboard::RankingService do
       expect(result.dig(:history_trend_30d, :position_change)).to eq(1)
       expect(result.dig(:history_trend_30d, :score_change)).to eq(2.0)
     end
+
+    it 'identifies a short official series as history in formation' do
+      result = described_class.new(company: company).ranking_data
+
+      expect(result.dig(:history, :status)).to eq('forming')
+      expect(result.dig(:history, :scope)).to eq('official')
+      expect(result.dig(:history, :minimum_snapshots)).to eq(7)
+    end
+
+    it 'exposes score drivers and real rank positions for nearby companies' do
+      result = described_class.new(company: company, state: company.state).ranking_data
+      current_point = result.dig(:quadrant, :points).find { |point| point[:is_current_company] }
+
+      expect(result[:score_drivers]).to include(:status, :source, :items)
+      expect(current_point).to include(:ranking_position, :ranking_score, :score_distance)
+      expect(current_point[:score_distance]).to eq(0.0)
+    end
   end
 
   private

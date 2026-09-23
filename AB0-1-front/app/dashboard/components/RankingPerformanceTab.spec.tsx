@@ -114,6 +114,22 @@ describe('RankingPerformanceTab', () => {
     expect(screen.queryByText('snapshot_stale')).not.toBeInTheDocument();
   });
 
+  it('keeps an outdated official snapshot visible during a regional preview', () => {
+    mockRankingData = {
+      ...mockRankingData,
+      status: 'preview',
+      mode: 'preview',
+      comparison_scope: { active: true, state: 'SC', city: null, sector: null, category_id: null, criterion_slug: null },
+      official_ranking: { status: 'stale', position: 4, population: 50, score: 42.4, percentile: 94.0, population_label: 'eligible_companies' },
+      quality: { flags: ['local_ranking_preview_not_persisted'] },
+    };
+
+    render(<RankingPerformanceTab company={company} />);
+
+    expect(screen.getByText('Atualização pendente')).toBeInTheDocument();
+    expect(screen.getByText('Comparação atual')).toBeInTheDocument();
+  });
+
   it('shows structured errors without object coercion', () => {
     mockRankingError = { message: '[500] Ranking indisponível', status: 500, code: 'RANKING_UNAVAILABLE', requestId: 'req-372' };
 

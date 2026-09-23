@@ -8,9 +8,12 @@ RSpec.describe CompanyDashboard::RankingBenchmarkService do
   it 'calculates real distribution percentiles from the supplied population' do
     result = described_class.new(population: [10, 20, 30, 40].map { |score| Row.new(score) }, minimum_population: 4).call
 
-    expect(result).to eq(
+    expect(result).to include(
       status: 'ready', population: 4, minimum_population: 4,
       median_score: 25.0, p75_score: 32.5, p90_score: 37.0
+    )
+    expect(result[:distribution]).to include(
+      min_score: 10.0, max_score: 40.0, distinct_score_count: 4
     )
   end
 

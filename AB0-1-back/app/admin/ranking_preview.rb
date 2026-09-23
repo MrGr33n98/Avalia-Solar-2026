@@ -74,8 +74,8 @@ ActiveAdmin.register_page 'Ranking Preview' do
             column 'Priority Score', :priority_score
             column 'Rating Avg', :rating_avg
             column 'Reviews', :rating_count
-            column 'Ranking Score (Ruby)' do |c|
-              c.calculate_ranking_score.round(4)
+            column 'Placement patrocinado (Ruby)' do |c|
+              c.calculate_sponsored_placement_score.round(4)
             end
           end
         else

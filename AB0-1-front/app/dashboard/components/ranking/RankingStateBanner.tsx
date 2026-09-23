@@ -3,10 +3,15 @@ import { Card, CardContent } from '@/components/ui/card';
 
 type Props = {
   status?: string;
+  officialStatus?: string;
 };
 
-export function RankingStateBanner({ status }: Props) {
-  if (!['processing', 'empty', 'stale', 'locked'].includes(status || '')) return null;
+export function RankingStateBanner({ status, officialStatus }: Props) {
+  // Em um preview, `status` é intencionalmente "preview". O estado oficial
+  // precisa continuar visível para que comparação dinâmica não pareça um fato
+  // persistido nem esconda um snapshot em processamento/desatualizado.
+  const visibleStatus = officialStatus || status;
+  if (!['processing', 'empty', 'stale', 'locked'].includes(visibleStatus || '')) return null;
 
   const content = {
     processing: {
@@ -29,7 +34,7 @@ export function RankingStateBanner({ status }: Props) {
       description: 'Esta análise está disponível para planos com Advanced Analytics.',
       icon: LockKeyhole,
     },
-  }[status as 'processing' | 'empty' | 'stale' | 'locked'];
+  }[visibleStatus as 'processing' | 'empty' | 'stale' | 'locked'];
   const Icon = content.icon;
 
   return (

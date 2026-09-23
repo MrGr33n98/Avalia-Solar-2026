@@ -77,7 +77,7 @@ RSpec.describe 'GET /api/v1/company_dashboard/analytics/ranking', type: :request
         'magic_quadrant_points', 'quadrant_meta', 'category_rankings',
         'historical_data', 'transparency', 'quality',
         'scope', 'definition', 'breakdown',
-        'history', 'quadrant', 'leaders', 'neighbors', 'insights',
+        'history', 'quadrant', 'leaders', 'neighbors', 'insights', 'score_drivers', 'gaps', 'changes',
         'is_premium_analytics'
       )
     end

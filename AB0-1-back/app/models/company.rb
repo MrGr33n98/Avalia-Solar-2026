@@ -394,9 +394,9 @@ end
     "))
   }
 
-  def calculate_ranking_score
-    # Fórmula base: (Avaliação * 60%) + (Volume de reviews irrelevante para peso mas útil para empate) + Score de Prioridade + Bônus de Patrocínio
-    # sponsored ? 1000 : 0 garante que patrocinados fiquem no topo se o priority_score for similar
+  # Score exclusivo de placement patrocinado/administrativo. Não é usado pelo
+  # Ranking Performance orgânico, snapshots, benchmarks ou API de dashboard.
+  def calculate_sponsored_placement_score
     (rating_avg.to_f * 0.6) + (rating_count * 0.0001) + priority_score + (sponsored ? 1000 : 0)
   end
 

@@ -20,18 +20,32 @@ export function RankingBenchmarkCards({ benchmarks }: { benchmarks?: RankingData
     ['P75', benchmarks.p75_score],
     ['P90', benchmarks.p90_score],
   ];
+  const distribution = benchmarks.distribution;
+  const concentrated = distribution != null && distribution.standard_deviation <= 0.01;
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base"><ChartNoAxesCombined className="h-4 w-4" />Benchmark da população elegível</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-3">
-        {metrics.map(([label, value]) => (
-          <div key={label} className="rounded-lg border p-3">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="mt-1 text-xl font-semibold">{value == null ? '—' : `${Number(value).toFixed(1)} pts`}</p>
+      <CardContent className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-3">
+          {metrics.map(([label, value]) => (
+            <div key={label} className="rounded-lg border p-3">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className="mt-1 text-xl font-semibold">{value == null ? '—' : `${Number(value).toFixed(1)} pts`}</p>
+            </div>
+          ))}
+        </div>
+        {distribution && (
+          <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">Distribuição observada</p>
+            <p className="mt-1">
+              Faixa real de {distribution.min_score.toFixed(1)} a {distribution.max_score.toFixed(1)} pts ·
+              média {distribution.mean_score.toFixed(1)} · dispersão {distribution.standard_deviation.toFixed(2)}.
+            </p>
+            {concentrated && <p className="mt-1">As pontuações desta população estão concentradas; percentis podem coincidir.</p>}
           </div>
-        ))}
+        )}
       </CardContent>
     </Card>
   );

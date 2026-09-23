@@ -30,6 +30,7 @@ import { RankingBenchmarkCards } from './ranking/RankingBenchmarkCards';
 import { ComparisonRankingCard, OfficialRankingCard } from './ranking/RankingCards';
 import { RankingContextChips } from './ranking/RankingContextChips';
 import { RankingMethodologyDialog } from './ranking/RankingMethodologyDialog';
+import { RankingEvidence, RankingNearbyCompetitors } from './ranking/RankingEvidence';
 import { RankingPositioningMap } from './ranking/RankingPositioningMap';
 import { RankingStateBanner } from './ranking/RankingStateBanner';
 import {
@@ -218,7 +219,10 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
         <RankingContextChips data={data} />
       </section>
 
-      <RankingStateBanner status={data?.status} />
+      <RankingStateBanner
+        status={data?.status}
+        officialStatus={isPreview ? data?.official_ranking?.status : undefined}
+      />
 
       <Card>
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
@@ -266,11 +270,19 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
 
       <RankingBenchmarkCards benchmarks={data?.benchmarks} />
 
+      <RankingEvidence data={data} />
+
       <section className="grid gap-5 xl:grid-cols-[1.25fr_1fr]">
         <Card>
           <CardHeader>
             <CardTitle>{isPreview ? 'Histórico do ranking oficial' : 'Evolução do ranking oficial'}</CardTitle>
-            <CardDescription>{isPreview ? 'A comparação regional atual é calculada em tempo real e não possui histórico persistido.' : `Snapshots oficiais · ${historyLabel}`}</CardDescription>
+            <CardDescription>
+              {data?.history?.status === 'forming'
+                ? `Histórico oficial em formação: ${data.history.sample_size || historyItems.length} de ${data.history.minimum_snapshots || 7} snapshots disponíveis.`
+                : isPreview
+                  ? 'A comparação regional atual é calculada em tempo real e não possui histórico persistido.'
+                  : `Snapshots oficiais · ${historyLabel}`}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-4 flex flex-wrap gap-2">
@@ -288,7 +300,10 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
             ) : <p className="py-16 text-center text-sm text-muted-foreground">Dados históricos insuficientes.</p>}
           </CardContent>
         </Card>
-        <RankingPositioningMap quadrant={data?.quadrant} />
+        <div className="space-y-5">
+          <RankingPositioningMap quadrant={data?.quadrant} />
+          <RankingNearbyCompetitors leaders={data?.leaders} neighbors={data?.neighbors} />
+        </div>
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[1fr_auto]">

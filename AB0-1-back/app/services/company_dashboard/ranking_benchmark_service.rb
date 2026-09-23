@@ -29,7 +29,8 @@ module CompanyDashboard
         minimum_population: @minimum_population,
         median_score: percentile(scores, 50),
         p75_score: percentile(scores, 75),
-        p90_score: percentile(scores, 90)
+        p90_score: percentile(scores, 90),
+        distribution: distribution_for(scores)
       }
     end
 
@@ -42,7 +43,8 @@ module CompanyDashboard
         minimum_population: @minimum_population,
         median_score: nil,
         p75_score: nil,
-        p90_score: nil
+        p90_score: nil,
+        distribution: nil
       }
     end
 
@@ -53,7 +55,8 @@ module CompanyDashboard
         minimum_population: @minimum_population,
         median_score: nil,
         p75_score: nil,
-        p90_score: nil
+        p90_score: nil,
+        distribution: nil
       }
     end
 
@@ -73,6 +76,19 @@ module CompanyDashboard
       lower = values[lower_index]
       upper = values[upper_index]
       (lower + ((upper - lower) * (index - lower_index))).round(2)
+    end
+
+    def distribution_for(scores)
+      mean = scores.sum / scores.length.to_f
+      variance = scores.sum { |score| (score - mean)**2 } / scores.length.to_f
+
+      {
+        min_score: scores.first.round(2),
+        max_score: scores.last.round(2),
+        mean_score: mean.round(2),
+        standard_deviation: Math.sqrt(variance).round(2),
+        distinct_score_count: scores.uniq.length
+      }
     end
   end
 end

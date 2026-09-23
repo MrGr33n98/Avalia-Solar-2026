@@ -48,7 +48,7 @@ module Chat
         {
           patrocinada: boolean_flag(@company.sponsored),
           verificada: boolean_flag(@company.verified),
-          recommendation_score: recommendation_score,
+          sponsored_placement_score: sponsored_placement_score,
           recommendation_reason: build_recommendation_reason
         }
       end
@@ -73,10 +73,10 @@ module Chat
         @company.respond_to?(attr_name) ? @company.public_send(attr_name) : nil
       end
 
-      def recommendation_score
-        return nil unless @company.respond_to?(:calculate_ranking_score)
+      def sponsored_placement_score
+        return nil unless @company.respond_to?(:calculate_sponsored_placement_score)
 
-        @company.calculate_ranking_score.to_f.round(2)
+        @company.calculate_sponsored_placement_score.to_f.round(2)
       end
 
       def years_in_business
