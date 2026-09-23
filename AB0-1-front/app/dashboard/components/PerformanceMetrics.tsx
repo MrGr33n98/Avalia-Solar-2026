@@ -20,6 +20,7 @@ import CTABreakdownChart from './CTABreakdownChart';
 import TopCampaignsCard from './TopCampaignsCard';
 import DateRangePicker, { type DateRangePreset } from './DateRangePicker';
 import ExportButton from './ExportButton';
+import AttributionOverview from './analytics/AttributionOverview';
 import { useQuery } from '@tanstack/react-query';
 import { companyDashboardApi, type AnalyticsQueryParams } from '@/lib/api';
 import '../styles/print.css';
@@ -59,7 +60,7 @@ const formatDateForApi = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const resolveAnalyticsRange = (
+export const resolveAnalyticsRange = (
   preset: DateRangePreset,
   customRange?: { from: Date; to: Date }
 ): AnalyticsQueryParams => {
@@ -67,6 +68,8 @@ const resolveAnalyticsRange = (
     return {
       from: formatDateForApi(customRange.from),
       to: formatDateForApi(customRange.to),
+      preset: 'custom',
+      timezone: 'America/Sao_Paulo',
     };
   }
 
@@ -78,6 +81,8 @@ const resolveAnalyticsRange = (
   return {
     from: formatDateForApi(from),
     to: formatDateForApi(to),
+    preset,
+    timezone: 'America/Sao_Paulo',
   };
 };
 
@@ -155,14 +160,18 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
     refreshInterval: 30000,
     from: analyticsQuery.from,
     to: analyticsQuery.to,
+    preset: analyticsQuery.preset,
+    timezone: analyticsQuery.timezone,
   });
 
-  const { data: timeseriesResponse, isLoading: timeseriesLoading } = useQuery({
+  const { data: timeseriesResponse, isLoading: timeseriesLoading, isError: timeseriesError } = useQuery({
     queryKey: [
       'analytics-timeseries',
       companyId,
       analyticsQuery.from ?? null,
       analyticsQuery.to ?? null,
+      analyticsQuery.preset ?? null,
+      analyticsQuery.timezone ?? null,
     ],
     queryFn: () => companyDashboardApi.getAnalyticsTimeseries(companyId, analyticsQuery),
     enabled: Boolean(companyId),
@@ -188,12 +197,12 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
   const dataUnavailable =
     analyticsData?.data_status === 'unavailable' || timeseriesResponse?.data_status === 'unavailable';
   const dataError =
-    analyticsData?.data_status === 'error' || timeseriesResponse?.data_status === 'error';
+    error || timeseriesError || analyticsData?.data_status === 'error' || timeseriesResponse?.data_status === 'error';
   const freshnessLabel = formatFreshnessLabel(analyticsData?.last_aggregated_at);
 
   const metrics: Metrics = {
     profileViews: {
-      total: overviewReady ? (analyticsData?.views ?? analyticsData?.views_30d ?? null) : null,
+      total: overviewReady ? (analyticsData?.metrics?.views ?? analyticsData?.views ?? analyticsData?.views_30d ?? null) : null,
       trend: analyticsData?.views_trend ?? null,
       unique: overviewReady ? (analyticsData?.unique_views ?? analyticsData?.unique_views_30d ?? null) : null,
       returning: overviewReady
@@ -201,7 +210,7 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
         : null,
     },
     ctaClicks: {
-      total: overviewReady ? (analyticsData?.cta_clicks ?? analyticsData?.cta_clicks_30d ?? null) : null,
+      total: overviewReady ? (analyticsData?.metrics?.cta_clicks ?? analyticsData?.cta_clicks ?? analyticsData?.cta_clicks_30d ?? null) : null,
       trend: analyticsData?.cta_clicks_trend ?? null,
     },
     engagement: engagementReady ? analyticsData?.engagement ?? null : null,
@@ -236,31 +245,6 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
     );
   }
 
-  if (error) {
-    return (
-      <>
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-          <Alert variant="destructive" className="rounded-[2rem] border-none clay-precision bg-red-500/10 text-red-500 p-8">
-            <AlertCircle className="h-8 w-8 mb-4" />
-            <AlertDescription className="text-sm font-black uppercase tracking-[0.2em] leading-relaxed">
-              Não foi possível carregar os dados de analytics: {error}
-              <br />
-              <span className="opacity-60 text-[10px]">Tente novamente em instantes.</span>
-            </AlertDescription>
-          </Alert>
-        </motion.div>
-
-        {dataUnavailable && (
-          <Alert className="mt-6 border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertDescription>
-              Os dados consolidados ainda não estão disponíveis para este período. Nenhuma métrica foi assumida como zero.
-            </AlertDescription>
-          </Alert>
-        )}
-      </>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-6 pb-32">
@@ -275,22 +259,22 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
             timeseriesData={timeseriesData}
             aggregatedData={
               overviewReady &&
-              analyticsData?.views != null &&
-              analyticsData?.cta_clicks != null &&
+              (analyticsData?.metrics?.views ?? analyticsData?.views) != null &&
+              (analyticsData?.metrics?.cta_clicks ?? analyticsData?.cta_clicks) != null &&
               analyticsData?.whatsapp_clicks != null &&
               analyticsData?.email_clicks != null &&
               analyticsData?.phone_clicks != null &&
               analyticsData?.website_clicks != null &&
-              analyticsData?.leads != null &&
+              (analyticsData?.metrics?.leads ?? analyticsData?.leads) != null &&
               analyticsData?.conversion_rate != null
                 ? {
-                    views: analyticsData.views,
-                    cta_clicks: analyticsData.cta_clicks,
+                    views: analyticsData.metrics?.views ?? analyticsData.views!,
+                    cta_clicks: analyticsData.metrics?.cta_clicks ?? analyticsData.cta_clicks!,
                     whatsapp_clicks: analyticsData.whatsapp_clicks,
                     email_clicks: analyticsData.email_clicks,
                     phone_clicks: analyticsData.phone_clicks,
                     website_clicks: analyticsData.website_clicks,
-                    leads: analyticsData.leads,
+                    leads: analyticsData.metrics?.leads ?? analyticsData.leads!,
                     conversion_rate: analyticsData.conversion_rate,
                   }
                 : undefined
@@ -312,6 +296,13 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
           </p>
         )}
       </motion.div>
+
+      {error && (
+        <Alert variant="destructive" className="border-red-500/30 bg-red-500/10">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>O resumo de analytics está indisponível neste momento. Os demais blocos continuam independentes.</AlertDescription>
+        </Alert>
+      )}
 
       {dataUnavailable && (
         <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100">
@@ -390,7 +381,7 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
 
       {/* Analytics Visualization Layer */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <TimeSeriesChart data={timeseriesData || []} loading={timeseriesLoading} themeMode={themeMode || 'dark'} />
+        <TimeSeriesChart data={timeseriesData || []} loading={timeseriesLoading} dataStatus={timeseriesResponse?.data_status} themeMode={themeMode || 'dark'} />
         <CTABreakdownChart
           data={
             analyticsData?.cta_breakdown
@@ -406,9 +397,19 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
               : null
           }
           loading={loading}
+          dataStatus={analyticsData?.data_status}
           themeMode={themeMode || 'dark'}
         />
       </div>
+      <AttributionOverview
+        companyId={companyId}
+        from={analyticsQuery.from || ''}
+        to={analyticsQuery.to || ''}
+        preset={analyticsQuery.preset}
+        rangeLabel={exportRangeLabel}
+        premium={analyticsData?.is_premium_analytics !== false}
+      />
+
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -417,6 +418,8 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
       >
         <TopCampaignsCard
           companyId={companyId}
+          preset={analyticsQuery.preset}
+          timezone={analyticsQuery.timezone}
           themeMode={themeMode || 'dark'}
           limit={5}
           from={analyticsQuery.from}

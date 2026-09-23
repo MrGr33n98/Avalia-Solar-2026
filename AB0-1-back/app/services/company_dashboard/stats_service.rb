@@ -146,7 +146,7 @@ module CompanyDashboard
     end
 
     def calculate_conversion_rate(views:, leads:)
-      return 0 if views.zero?
+      return nil if views.zero?
 
       ((leads.to_f / views) * 100).round(2)
     end
@@ -163,7 +163,7 @@ module CompanyDashboard
         average_rating: 0,
         pending_approvals: 0,
         active_campaigns: 0,
-        conversion_rate: 0,
+        conversion_rate: nil,
         data_source: 'company_unavailable'
       }.merge(CompanyDashboard::FreshnessProvider.call)
     end

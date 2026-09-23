@@ -22,10 +22,26 @@ module Analytics
       :last_seen_at,
       keyword_init: true
     ) do
-      def conversion_rate
-        return 0.0 if total_visits.to_i.zero?
+      def ctr
+        return nil if total_visits.to_i.zero?
+
+        ((total_cta_clicks.to_f / total_visits) * 100).round(2)
+      end
+
+      def profile_to_lead_conversion
+        return nil if total_visits.to_i.zero?
 
         ((total_leads.to_f / total_visits) * 100).round(2)
+      end
+
+      def cta_to_lead_rate
+        return nil if total_cta_clicks.to_i.zero?
+
+        ((total_leads.to_f / total_cta_clicks) * 100).round(2)
+      end
+
+      def conversion_rate
+        profile_to_lead_conversion
       end
 
       def as_json(*)
@@ -37,6 +53,9 @@ module Analytics
           total_cta_clicks: total_cta_clicks,
           total_leads: total_leads,
           conversion_rate: conversion_rate,
+          ctr: ctr,
+          profile_to_lead_conversion: profile_to_lead_conversion,
+          cta_to_lead_rate: cta_to_lead_rate,
           last_seen_at: last_seen_at
         }
       end

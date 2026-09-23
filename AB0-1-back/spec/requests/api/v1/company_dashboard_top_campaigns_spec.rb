@@ -51,7 +51,7 @@ RSpec.describe 'Company dashboard top campaigns', type: :request do
     expect(body['campaigns'].first['last_seen_at']).to start_with('2026-03-11T10:00:00.000')
     expect(body['data_source']).to eq('analytics_events')
     expect(body['data_status']).to eq('ready')
-    expect(body['range']).to eq({ 'from' => '2026-03-01', 'to' => '2026-03-11' })
+    expect(body['range']).to include('from' => '2026-03-01', 'to' => '2026-03-11', 'preset' => 'custom', 'timezone' => 'America/Sao_Paulo')
     expect(body['is_premium_analytics']).to be(true)
     expect(Analytics::CampaignPerformanceService).to have_received(:call).with(
       company_id: company.id,

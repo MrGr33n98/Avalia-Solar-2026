@@ -10,6 +10,8 @@ interface UseCompanyAnalyticsOptions {
   refreshInterval?: number;
   from?: string;
   to?: string;
+  preset?: '7d' | '30d' | '90d' | 'custom';
+  timezone?: string;
 }
 
 interface UseCompanyAnalyticsResult {
@@ -25,12 +27,14 @@ export function useCompanyAnalytics({
   refreshInterval = 30000,
   from,
   to,
+  preset,
+  timezone = 'America/Sao_Paulo',
 }: UseCompanyAnalyticsOptions = {}): UseCompanyAnalyticsResult {
   const query = useQuery<CompanyAnalyticsOverview, Error>({
-    queryKey: ['analytics-overview', companyId ?? null, from ?? null, to ?? null],
+    queryKey: ['analytics-overview', companyId ?? null, from ?? null, to ?? null, preset ?? null, timezone],
     queryFn: () =>
       from && to
-        ? companyDashboardApi.getAnalyticsOverview(companyId, { from, to })
+        ? companyDashboardApi.getAnalyticsOverview(companyId, { from, to, preset, timezone })
         : companyDashboardApi.getAnalyticsOverview(companyId),
     enabled: Boolean(companyId),
     staleTime: 30_000,

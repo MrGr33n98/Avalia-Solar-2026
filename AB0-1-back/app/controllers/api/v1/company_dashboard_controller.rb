@@ -48,12 +48,15 @@ module Api
           }
 
           if is_premium && FeatureGateService.can_access?(@company, 'advanced_analytics')
+            cta_clicks = stats[:cta_clicks].to_i
             leads = stats[:leads].to_i
-            conversion = views.positive? ? ((leads.to_f / views) * 100).round(2) : 0
+            rates = analytics_rates(views: views, cta_clicks: cta_clicks, leads: leads)
             cta_breakdown = build_cta_breakdown(stats)
 
             response.merge!(
-              cta_clicks_30d: stats[:cta_clicks].to_i,
+              metrics: { views: views, cta_clicks: cta_clicks, leads: leads },
+              rates: rates,
+              cta_clicks_30d: cta_clicks,
               whatsapp_clicks_30d: stats[:whatsapp_clicks].to_i,
               email_clicks_30d: stats[:email_clicks].to_i,
               phone_clicks_30d: stats[:phone_clicks].to_i,
@@ -62,14 +65,14 @@ module Api
               unique_views_30d: stats[:unique_views].to_i,
               returning_views_30d: stats[:returning_views].to_i,
               leads_30d: leads,
-              cta_clicks: stats[:cta_clicks].to_i,
+              cta_clicks: cta_clicks,
               whatsapp_clicks: stats[:whatsapp_clicks].to_i,
               email_clicks: stats[:email_clicks].to_i,
               phone_clicks: stats[:phone_clicks].to_i,
               website_clicks: stats[:website_clicks].to_i,
               quote_clicks: stats[:quote_clicks].to_i,
               leads: leads,
-              conversion_rate: conversion,
+              conversion_rate: rates[:profile_to_lead_conversion],
               cta_breakdown: cta_breakdown,
               is_premium_analytics: true
             )
@@ -96,7 +99,7 @@ module Api
 
         begin
           freshness = ::CompanyDashboard::FreshnessProvider.call
-          range = analytics_date_range(default_days: [[(params[:days] || 90).to_i, 7].max, 365].min)
+          range = analytics_date_range(default_days: 30)
           return render_invalid_analytics_range unless range
 
           # ✅ FEATURE GATE: Timeseries só para premium
@@ -138,24 +141,29 @@ module Api
               phone: row[:phone_clicks],
               website: row[:website_clicks],
               quote: row[:quote_clicks],
-              leads: row[:leads]
+              leads: row[:leads],
+              ctr: analytics_rate(row[:cta_clicks], row[:profile_views]),
+              profile_to_lead_conversion: analytics_rate(row[:leads], row[:profile_views]),
+              cta_to_lead_rate: analytics_rate(row[:leads], row[:cta_clicks])
             }
           end
 
           render json: {
             data: data,
             data_source: data_source,
-            data_status: analytics_data_status(data_source, freshness: freshness),
+            data_status: data.empty? ? 'empty' : analytics_data_status(data_source, freshness: freshness),
             range: analytics_range_payload(range),
             is_premium_analytics: true
           }.merge(freshness), status: :ok
         rescue StandardError => e
           log_analytics_error('timeseries', e)
           freshness = ::CompanyDashboard::FreshnessProvider.call
+          fallback_range = range || analytics_date_range(default_days: 30)
           render json: {
             data: [],
             data_source: 'timeseries_unavailable',
             data_status: 'error',
+            range: analytics_range_payload(fallback_range),
             is_premium_analytics: true
           }.merge(freshness), status: :ok
         end
@@ -198,12 +206,15 @@ module Api
               total_visits: campaign.total_visits,
               total_cta_clicks: campaign.total_cta_clicks,
               total_leads: campaign.total_leads,
-              conversion_rate: campaign.conversion_rate.to_f,
+              conversion_rate: campaign.conversion_rate,
+              ctr: campaign.ctr,
+              profile_to_lead_conversion: campaign.profile_to_lead_conversion,
+              cta_to_lead_rate: campaign.cta_to_lead_rate,
               last_seen_at: campaign.last_seen_at
             }
           end,
           data_source: 'analytics_events',
-          data_status: 'ready',
+          data_status: campaigns.empty? ? 'empty' : 'ready',
           range: analytics_range_payload(range),
           is_premium_analytics: true
         }, status: :ok
@@ -235,7 +246,8 @@ module Api
         )
         render json: payload.merge(
           range: analytics_range_payload(range), attribution_model: attribution_model, data_source: 'analytics_events',
-          data_status: 'ready', is_premium_analytics: true
+          data_status: payload[:summary].to_h.values_at(:visits, :cta_clicks, :leads).all? { |value| value.to_i.zero? } ? 'empty' : 'ready',
+          is_premium_analytics: true
         ).merge(freshness), status: :ok
       rescue StandardError => e
         log_analytics_error('attribution', e)
@@ -2237,6 +2249,8 @@ module Api
         payload = {
           views_30d: nil,
           views: nil,
+          metrics: { views: nil, cta_clicks: nil, leads: nil },
+          rates: { ctr: nil, profile_to_lead_conversion: nil, cta_to_lead_rate: nil },
           unique_views_30d: nil,
           unique_views: nil,
           returning_views_30d: nil,
@@ -2274,23 +2288,71 @@ module Api
       end
 
       def analytics_date_range(default_days:)
-        from_param = params[:from].presence
-        to_param = params[:to].presence
+        today = Time.zone.today
+        requested_preset = params[:preset].presence
+        days_param = params[:days].presence
+        preset = requested_preset || preset_from_days(days_param || default_days)
 
-        return { from_day: default_days.days.ago.to_date, to_day: Date.current } if from_param.blank? && to_param.blank?
-        return nil if from_param.blank? || to_param.blank?
+        if preset != 'custom' && %w[7d 30d 90d].include?(preset)
+          days = preset.delete_suffix('d').to_i
+          to_day = today
+          from_day = to_day - (days - 1)
+        else
+          from_param = params[:from].presence
+          to_param = params[:to].presence
+          return nil if from_param.blank? || to_param.blank?
 
-        from_day = Date.iso8601(from_param)
-        to_day = Date.iso8601(to_param)
-        return nil if from_day > to_day || to_day > Date.current || (to_day - from_day).to_i > 365
+          from_day = Date.iso8601(from_param)
+          to_day = Date.iso8601(to_param)
+          preset = 'custom'
+        end
 
-        { from_day: from_day, to_day: to_day }
+        return nil if from_day > to_day || to_day > today || (to_day - from_day).to_i > 365
+
+        { from_day: from_day, to_day: to_day, preset: preset }
       rescue Date::Error
         nil
       end
 
+      def preset_from_days(days)
+        case days.to_i
+        when 7 then '7d'
+        when 30 then '30d'
+        when 90 then '90d'
+        else 'custom'
+        end
+      end
+
       def analytics_range_payload(range)
-        { from: range[:from_day].iso8601, to: range[:to_day].iso8601 }
+        {
+          from: range[:from_day].iso8601,
+          to: range[:to_day].iso8601,
+          preset: range[:preset] || 'custom',
+          timezone: 'America/Sao_Paulo',
+          label: analytics_range_label(range)
+        }
+      end
+
+      def analytics_range_label(range)
+        return 'Últimos 7 dias' if range[:preset] == '7d'
+        return 'Últimos 30 dias' if range[:preset] == '30d'
+        return 'Últimos 90 dias' if range[:preset] == '90d'
+
+        "#{range[:from_day].strftime('%d/%m/%Y')} a #{range[:to_day].strftime('%d/%m/%Y')}"
+      end
+
+      def analytics_rate(numerator, denominator)
+        return nil unless denominator.to_f.positive?
+
+        (numerator.to_f / denominator * 100).round(2)
+      end
+
+      def analytics_rates(views:, cta_clicks:, leads:)
+        {
+          ctr: analytics_rate(cta_clicks, views),
+          profile_to_lead_conversion: analytics_rate(leads, views),
+          cta_to_lead_rate: analytics_rate(leads, cta_clicks)
+        }
       end
 
       def attribution_model

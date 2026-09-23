@@ -1766,7 +1766,9 @@ export interface CompanyAnalyticsOverview {
     total: number;
   } | null;
   data_source: string;
-  data_status?: 'ready' | 'unavailable' | 'locked' | 'stale' | 'error';
+  metrics?: { views: number | null; cta_clicks: number | null; leads: number | null };
+  rates?: { ctr: number | null; profile_to_lead_conversion: number | null; cta_to_lead_rate: number | null };
+  data_status?: 'ready' | 'empty' | 'processing' | 'unavailable' | 'locked' | 'stale' | 'error';
   range?: AnalyticsDateRange;
   /** Timestamp da última consolidação disponível no pipeline de analytics. */
   last_aggregated_at?: string | null;
@@ -1791,15 +1793,22 @@ export interface CompanyAnalyticsOverview {
   };
 }
 
+export type AnalyticsPreset = '7d' | '30d' | '90d' | 'custom';
+
 export interface AnalyticsDateRange {
   from: string;
   to: string;
+  preset?: AnalyticsPreset;
+  timezone?: string;
+  label?: string;
 }
 
 export interface AnalyticsQueryParams {
   days?: number;
   from?: string;
   to?: string;
+  preset?: AnalyticsPreset;
+  timezone?: string;
 }
 
 export interface CompanyAnalyticsTimeseries {
@@ -1813,9 +1822,12 @@ export interface CompanyAnalyticsTimeseries {
     website: number;
     quote: number;
     leads: number;
+    ctr?: number | null;
+    profile_to_lead_conversion?: number | null;
+    cta_to_lead_rate?: number | null;
   }>;
   data_source: string;
-  data_status?: 'ready' | 'unavailable' | 'locked' | 'stale' | 'error';
+  data_status?: 'ready' | 'empty' | 'processing' | 'unavailable' | 'locked' | 'stale' | 'error';
   range?: AnalyticsDateRange;
   is_premium_analytics?: boolean;
   last_aggregated_at?: string | null;
@@ -1830,14 +1842,17 @@ export interface TopCampaign {
   total_visits: number;
   total_cta_clicks: number;
   total_leads: number;
-  conversion_rate: number;
+  conversion_rate: number | null;
+  ctr?: number | null;
+  profile_to_lead_conversion?: number | null;
+  cta_to_lead_rate?: number | null;
   last_seen_at: string | null;
 }
 
 export interface TopCampaignsResponse {
   campaigns: TopCampaign[];
   data_source: string;
-  data_status?: 'ready' | 'unavailable' | 'locked' | 'stale' | 'error';
+  data_status?: 'ready' | 'empty' | 'processing' | 'unavailable' | 'locked' | 'stale' | 'error';
   range?: AnalyticsDateRange;
   is_premium_analytics?: boolean;
 }
@@ -1852,7 +1867,10 @@ export interface AttributionSummary {
   direct_visits: number;
   unknown_visits: number;
   attribution_coverage_pct: number;
-  conversion_rate: number;
+  conversion_rate: number | null;
+  ctr: number | null;
+  profile_to_lead_conversion: number | null;
+  cta_to_lead_rate: number | null;
 }
 export interface AttributionChannelRow {
   channel_group: string;
@@ -1861,7 +1879,10 @@ export interface AttributionChannelRow {
   visits: number;
   cta_clicks: number;
   leads: number;
-  conversion_rate: number;
+  conversion_rate: number | null;
+  ctr: number | null;
+  profile_to_lead_conversion: number | null;
+  cta_to_lead_rate: number | null;
   cta_breakdown: Record<string, number>;
 }
 export interface AttributionCampaignRow {
@@ -1871,7 +1892,10 @@ export interface AttributionCampaignRow {
   visits: number;
   cta_clicks: number;
   leads: number;
-  conversion_rate: number;
+  conversion_rate: number | null;
+  ctr: number | null;
+  profile_to_lead_conversion: number | null;
+  cta_to_lead_rate: number | null;
 }
 export interface AttributionCtaMatrixRow {
   channel_group: string;
@@ -1885,14 +1909,20 @@ export interface AttributionCtaMatrixRow {
   other: number;
   total_clicks: number;
   leads: number;
-  conversion_rate: number;
+  conversion_rate: number | null;
+  ctr: number | null;
+  profile_to_lead_conversion: number | null;
+  cta_to_lead_rate: number | null;
 }
 export interface AttributionLandingPageRow {
   landing_path: string | null;
   visits: number;
   cta_clicks: number;
   leads: number;
-  conversion_rate: number;
+  conversion_rate: number | null;
+  ctr: number | null;
+  profile_to_lead_conversion: number | null;
+  cta_to_lead_rate: number | null;
 }
 export interface AttributionResponse {
   attribution_model: AttributionModel;
@@ -1902,7 +1932,7 @@ export interface AttributionResponse {
   cta_matrix: AttributionCtaMatrixRow[];
   landing_pages: AttributionLandingPageRow[];
   data_source: string;
-  data_status?: 'ready' | 'unavailable' | 'locked' | 'error';
+  data_status?: 'ready' | 'empty' | 'processing' | 'unavailable' | 'locked' | 'stale' | 'error';
   range?: AnalyticsDateRange;
   data_freshness_seconds?: number | null;
   last_aggregated_at?: string | null;

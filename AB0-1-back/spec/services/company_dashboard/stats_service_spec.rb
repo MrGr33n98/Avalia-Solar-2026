@@ -9,7 +9,7 @@ RSpec.describe CompanyDashboard::StatsService do
     it 'falls back to denormalized counters' do
       expect(subject[:profile_views]).to eq(100)
       expect(subject[:leads_received]).to eq(0)
-      expect(subject[:conversion_rate]).to eq(0)
+      expect(subject[:conversion_rate]).to be_nil
       expect(subject[:data_source]).to eq('company_denormalized_fallback')
     end
   end
@@ -55,7 +55,7 @@ RSpec.describe CompanyDashboard::StatsService do
 
     it 'returns safe default values' do
       expect(subject[:profile_views]).to eq(0)
-      expect(subject[:conversion_rate]).to eq(0)
+      expect(subject[:conversion_rate]).to be_nil
       expect(subject[:data_source]).to eq('company_unavailable')
     end
   end
