@@ -31,6 +31,10 @@ describe('FeatureGuard', () => {
     expect(screen.queryByText('conteudo protegido')).not.toBeInTheDocument();
     expect(screen.getByText('Analytics')).toBeInTheDocument();
     expect(screen.getByText('Disponivel via upgrade')).toBeInTheDocument();
+    expect(screen.queryByText('1.240')).not.toBeInTheDocument();
+    expect(screen.queryByText('4.890')).not.toBeInTheDocument();
+    expect(screen.queryByText('3.2%')).not.toBeInTheDocument();
+    expect(document.querySelector('[aria-hidden=\"true\"]')).toBeInTheDocument();
   });
 
   it('renders nothing when feature is hidden', () => {
