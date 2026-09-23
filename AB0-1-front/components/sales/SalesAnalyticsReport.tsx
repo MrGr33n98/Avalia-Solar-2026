@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
+import { salesApi, SalesApiError } from '@/lib/api/sales/client';
 import {
   ReportIcon,
   ReportKpiCard,
@@ -124,25 +125,15 @@ export default function SalesAnalyticsReport() {
     setError(null);
     setUnauthorized(false);
     try {
-      const res = await fetch(`/api/v1/sales/analytics?period=${period}`, {
-        credentials: 'include',
-      });
-
-      if (res.status === 401 || res.status === 403) {
+      const json = await salesApi.getAnalytics(period);
+      setData(json as AnalyticsData);
+    } catch (err: any) {
+      if (err instanceof SalesApiError && (err.status === 401 || err.status === 403)) {
         setUnauthorized(true);
-        setLoading(false);
-        return;
+      } else {
+        setError(err instanceof Error ? err.message : 'Erro ao conectar ao servidor.');
+        console.error('[CRM] Analytics fetch error', err);
       }
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `Erro ${res.status} ao carregar analytics.`);
-      }
-
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao conectar ao servidor.');
-      console.error('[CRM] Analytics fetch error', err);
     } finally {
       setLoading(false);
     }

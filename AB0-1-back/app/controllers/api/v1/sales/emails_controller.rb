@@ -142,8 +142,17 @@ module Api
             end
           end
 
-          # Launch background delivery job
-          ::Sales::SendEmailJob.perform_later(email.id)
+          # Launch background delivery job com fallback síncrono quando Redis/Sidekiq desativado
+          if ENV.fetch('REDIS_ENABLED', 'true') == 'false' || ENV.fetch('EXECUTE_JOBS_INLINE', 'false') == 'true'
+            ::Sales::SendEmailJob.perform_now(email.id)
+          else
+            begin
+              ::Sales::SendEmailJob.perform_later(email.id)
+            rescue StandardError => e
+              Rails.logger.warn("[EmailsController] Fallback inline devido a erro no Sidekiq: #{e.message}")
+              ::Sales::SendEmailJob.perform_now(email.id)
+            end
+          end
 
           render json: {
             message: 'E-mail enfileirado para envio com sucesso.',
