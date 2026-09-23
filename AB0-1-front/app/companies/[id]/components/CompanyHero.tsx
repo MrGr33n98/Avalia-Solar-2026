@@ -3,15 +3,7 @@
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
 import { useRouter } from 'next/navigation';
-import {
-  MessageCircle,
-  Share2,
-  ArrowLeft,
-  MapPin,
-  Star,
-  BadgeCheck,
-  Diamond,
-} from 'lucide-react';
+import { MessageCircle, Share2, ArrowLeft, MapPin, Star, BadgeCheck, Diamond } from 'lucide-react';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,7 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
-import { trackCTAClick, trackCompanyProfileView } from '@/lib/analytics/track-cta';
+import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { getFullImageUrl } from '@/utils/image';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled } from '@/lib/feature-access';
@@ -130,12 +122,6 @@ export default function CompanyHero({
 
   useEffect(() => {
     setBadgeImageError(false);
-
-    trackCompanyProfileView(
-      String(company.id),
-      company.name,
-      company.category_id ? String(company.category_id) : undefined
-    );
   }, [company.id, company.name, company.category_id, heroBadgeUrl]);
 
   const handleShare = async () => {
@@ -346,7 +332,6 @@ export default function CompanyHero({
                   )}
                 </div>
               </div>
-
             </div>
 
             {/* Ações principais no mesmo eixo visual da identidade. */}
@@ -354,8 +339,6 @@ export default function CompanyHero({
               {/* CTA Primário: Solicitar orçamento */}
               {canRequestQuote ? (
                 <QuoteCTA
-
-
                   onMouseEnter={heroQuoteHoverIntent.onMouseEnter}
                   onMouseLeave={heroQuoteHoverIntent.onMouseLeave}
                   onRequest={async () => {
@@ -374,9 +357,6 @@ export default function CompanyHero({
                     });
                   }}
                 />
-
-
-
               ) : null}
 
               {/* Avaliar empresa */}
@@ -408,8 +388,6 @@ export default function CompanyHero({
               {/* Chat — botão verde simples */}
               {directChatVisible && (
                 <Button
-
-
                   onClick={() => {
                     track('company_direct_chat_click', {
                       company_id: company.id,

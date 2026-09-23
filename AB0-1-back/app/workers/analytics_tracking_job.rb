@@ -51,7 +51,7 @@ class AnalyticsTrackingJob
       increment_stat(company_id, day, :cta_clicks)
       increment_stat(company_id, day, :website_clicks)
       
-    when 'Quote Request CTA Clicked', 'Lead Form Submitted'
+    when 'Lead Form Submitted'
       increment_stat(company_id, day, :leads)
     end
 
@@ -177,7 +177,7 @@ class AnalyticsTrackingJob
     end
 
     # Increment leads
-    if ['Lead Form Submitted', 'Quote Request CTA Clicked', 'lead_created'].include?(event_name)
+    if ['Lead Form Submitted', 'lead_created'].include?(event_name)
       attribution.increment_lead!
     end
 

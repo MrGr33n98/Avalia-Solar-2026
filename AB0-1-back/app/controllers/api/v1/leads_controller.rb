@@ -118,13 +118,6 @@ class Api::V1::LeadsController < Api::V1::BaseController
     if @lead.save
       persist_identity_on_lead!(@lead)
       LeadRoutingJob.perform_later(@lead.id) if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
-      if @lead.company_id.present?
-        Analytics::TrackEventService.call(
-          company_id: @lead.company_id,
-          event_type: 'lead_created',
-          metadata: { lead_id: @lead.id }
-        )
-      end
       render json: @lead, status: :created
     else
       render json: { errors: @lead.errors.full_messages }, status: :unprocessable_entity
@@ -392,13 +385,6 @@ class Api::V1::LeadsController < Api::V1::BaseController
         metadata: request_metadata.merge(identity_metadata).merge(lead_id: @lead.id)
       )
 
-      if @lead.company_id.present?
-        Analytics::TrackEventService.call(
-          company_id: @lead.company_id,
-          event_type: 'lead_created',
-          metadata: { lead_id: @lead.id }
-        )
-      end
 
       companies.each do |comp|
         Analytics::PostHogService.track_server_event(

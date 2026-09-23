@@ -33,10 +33,13 @@ module Analytics
     def initialize(company_id:, event_type:, metadata: {}, user: nil, occurred_at: nil, event_id: nil, user_id: nil)
       @company_id = company_id
       @user = user || (user_id ? User.find_by(id: user_id) : nil)
-      @event_type = event_type.to_s
       @metadata = sanitize_metadata(metadata)
+      raw_event_type = event_type.to_s
+      @event_type = Analytics::EventTaxonomy.canonical(raw_event_type)
+      @metadata['original_event_type'] ||= raw_event_type if @event_type != raw_event_type
+      @metadata['cta_type'] ||= Analytics::EventTaxonomy.cta_type(raw_event_type, @metadata) if @event_type == 'cta_click'
       @occurred_at = occurred_at.presence || Time.current
-      @event_id = event_id || "evt_#{Time.current.to_i}_#{SecureRandom.hex(6)}"
+      @event_id = event_id || deterministic_event_id || "evt_#{Time.current.to_i}_#{SecureRandom.hex(6)}"
 
       # Enriquecimento de versionamento e ambiente
       @metadata['event_version'] ||= '1'
@@ -100,6 +103,12 @@ module Analytics
     end
 
     private
+
+    def deterministic_event_id
+      return unless @event_type == 'lead_created' && @metadata['lead_id'].present?
+
+      "lead_created:#{@metadata['lead_id']}"
+    end
 
     def strict_mode?
       ENV['G4_ANALYTICS_STRICT_MODE'] == 'true'

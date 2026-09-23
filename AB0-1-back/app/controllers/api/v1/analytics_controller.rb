@@ -23,7 +23,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     'WhatsApp CTA Clicked' => 'whatsapp_click',
     'lead' => 'lead_created',
     'Lead Form Submitted' => 'lead_created',
-    'Quote Request CTA Clicked' => 'lead_created',
+    'Quote Request CTA Clicked' => 'cta_click',
     'badge_click' => 'badge_cta_click',
     'badges_cta_click' => 'badge_cta_click',
     'badges_cta_view' => 'badge_cta_view'
@@ -56,7 +56,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     'Website CTA Clicked' => :website_clicks,
     'lead_created' => :leads,
     'Lead Form Submitted' => :leads,
-    'Quote Request CTA Clicked' => :leads
+
   }.freeze
 
   # POST /api/v1/events/track

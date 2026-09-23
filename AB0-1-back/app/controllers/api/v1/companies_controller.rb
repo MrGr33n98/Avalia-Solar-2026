@@ -848,36 +848,12 @@ module Api
         from_time = days.to_i.days.ago.beginning_of_day
         to_time = Time.current.end_of_day
 
-        events = AnalyticsEvent.where(company_id: company.id, tracked_at: from_time..to_time,
-                                      event_type: 'profile_view')
-        lead_events = AnalyticsEvent.where(company_id: company.id, tracked_at: from_time..to_time,
-                                           event_type: 'lead_created')
-
-        visit_counts = Hash.new(0)
-        lead_counts = Hash.new(0)
-
-        events.find_each do |e|
-          source = normalize_source(e.metadata)
-          visit_counts[source] += 1
+        payload = Analytics::AttributionQuery.call(company_id: company.id, from_time: from_time, to_time: to_time, limit: 100)
+        total = payload[:summary][:visits].to_i
+        payload[:channels].map do |row|
+          { source: row[:source], visits: row[:visits], percentage: total.positive? ? (row[:visits].to_f / total * 100).round(2) : 0,
+            conversion_rate: row[:conversion_rate] }
         end
-
-        lead_events.find_each do |e|
-          source = normalize_source(e.metadata)
-          lead_counts[source] += 1
-        end
-
-        total = visit_counts.values.sum
-        return [] if total.zero?
-
-        visit_counts.map do |source, visits|
-          leads = lead_counts[source].to_i
-          {
-            source: source,
-            visits: visits,
-            percentage: ((visits.to_f / total) * 100).round(2),
-            conversion_rate: visits.positive? ? ((leads.to_f / visits) * 100).round(2) : 0
-          }
-        end.sort_by { |row| -row[:visits].to_i }
       end
 
       def generate_historical_data(company, days)
@@ -905,24 +881,7 @@ module Api
       end
 
       def normalize_source(metadata)
-        meta = metadata.is_a?(Hash) ? metadata : {}
-        utm = meta['utm_source'].to_s.strip
-        return utm if utm.present?
-
-        ref = meta['referrer'].to_s
-        return 'Direct' if ref.blank?
-
-        host = begin
-          URI.parse(ref).host.to_s.downcase
-        rescue StandardError
-          ''
-        end
-        return 'Organic Search' if host.include?('google') || host.include?('bing') || host.include?('duckduckgo')
-        if host.include?('facebook') || host.include?('instagram') || host.include?('linkedin') || host.include?('t.co') || host.include?('x.com')
-          return 'Social Media'
-        end
-
-        'Referral'
+        Analytics::AttributionClassifier.call(metadata)[:source]
       end
 
       def social_proof_review_payload(review)
