@@ -220,6 +220,11 @@ RSpec.describe 'Company Dashboard Feature Gating', type: :request do
       end
 
       it 'returns filter options derived from the ranking domain' do
+        ActiveRecord::Base.connection.execute(<<~SQL.squish)
+          INSERT INTO company_ranking_score (company_id, score, breakdown, computed_at, created_at, updated_at)
+          VALUES (#{company.id}, 50, '{}', NOW(), NOW(), NOW())
+        SQL
+
         get '/api/v1/company_dashboard/analytics/ranking/filter_options'
 
         expect(response).to have_http_status(:ok)

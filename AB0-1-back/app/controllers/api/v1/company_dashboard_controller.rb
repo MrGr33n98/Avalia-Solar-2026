@@ -367,6 +367,9 @@ module Api
           leaders: data[:leaders] || [],
           neighbors: data[:neighbors] || [],
           insights: data[:insights] || default_insights,
+          score_drivers: data[:score_drivers] || default_score_drivers,
+          gaps: data[:gaps] || [],
+          changes: data[:changes] || default_changes,
           error: data[:error],
           request_id: request.request_id,
 
@@ -423,6 +426,9 @@ module Api
           leaders: [],
           neighbors: [],
           insights: default_insights,
+          score_drivers: default_score_drivers,
+          gaps: [],
+          changes: default_changes,
           quality: { flags: quality_flags_for_status(status), computed_at: nil, data_through: nil },
           scope: 'global',
           definition: default_ranking_transparency(status),
@@ -464,12 +470,21 @@ module Api
           minimum_population: ::CompanyDashboard::RankingBenchmarkService.min_comparable_population,
           median_score: nil,
           p75_score: nil,
-          p90_score: nil
+          p90_score: nil,
+          distribution: nil
         }
       end
 
       def default_insights
         { strengths: [], opportunities: [], next_best_action: nil }
+      end
+
+      def default_score_drivers
+        { status: 'unavailable', source: nil, score: nil, items: [] }
+      end
+
+      def default_changes
+        { status: 'insufficient_history', from: nil, to: nil, changes: {} }
       end
 
       def quality_flags_for_status(status)
@@ -534,7 +549,7 @@ module Api
           errors[:criterion_slug] = 'Critério inválido para a categoria selecionada.' unless criteria.any? { |criterion| criterion.slug == criterion_slug }
         end
         normalized_state = state.to_s.strip.upcase
-        if state.present? && !::Company.active.where(state: normalized_state).exists?
+        if state.present? && !::CompanyDashboard::RankingEligibilityScope.new(state: normalized_state).relation.exists?
           errors[:state] = 'UF sem empresas ativas elegíveis para comparação.'
         end
         errors[:city] = 'Cidade deve ter no máximo 120 caracteres.' if city.to_s.length > 120

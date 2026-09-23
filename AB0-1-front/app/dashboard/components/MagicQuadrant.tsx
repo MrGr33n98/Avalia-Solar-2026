@@ -30,6 +30,8 @@ interface QuadrantTooltipProps {
   active?: boolean;
   payload?: TooltipPayload[];
   criterionTitle?: string;
+  xAxisLabel: string;
+  yAxisLabel: string;
 }
 
 interface CompanyLogoShapeProps {
@@ -48,7 +50,7 @@ function getCompanyInitials(name: string) {
     .toUpperCase();
 }
 
-const CustomTooltip = ({ active, payload, criterionTitle }: QuadrantTooltipProps) => {
+const CustomTooltip = ({ active, payload, criterionTitle, xAxisLabel, yAxisLabel }: QuadrantTooltipProps) => {
   const data = payload?.[0]?.payload;
   if (active && data) {
     return (
@@ -72,8 +74,8 @@ const CustomTooltip = ({ active, payload, criterionTitle }: QuadrantTooltipProps
           </div>
         </div>
         <div className="space-y-1">
-          <p className="flex justify-between text-slate-500 dark:text-white/50">Confiança: <span className="font-mono text-slate-900 dark:text-white">{data.completeness_of_vision}%</span></p>
-          <p className="flex justify-between text-slate-500 dark:text-white/50">Desempenho: <span className="font-mono text-slate-900 dark:text-white">{data.ability_to_execute}%</span></p>
+          <p className="flex justify-between text-slate-500 dark:text-white/50">{xAxisLabel}: <span className="font-mono text-slate-900 dark:text-white">{data.completeness_of_vision}%</span></p>
+          <p className="flex justify-between text-slate-500 dark:text-white/50">{yAxisLabel}: <span className="font-mono text-slate-900 dark:text-white">{data.ability_to_execute}%</span></p>
           {criterionTitle && data.criterion_score != null && (
             <p className="text-slate-500 dark:text-white/50 flex justify-between">{criterionTitle}: <span className="text-slate-900 dark:text-white font-mono">{Number(data.criterion_score).toFixed(2)}</span></p>
           )}
@@ -208,7 +210,10 @@ export default function MagicQuadrant({ data, xAxisLabel = 'Autoridade de Confia
             label={{ value: `${yAxisLabel} →`, angle: -90, position: 'left', fill: 'hsl(var(--muted-foreground))', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em' }}
           />
           
-          <RechartsTooltip content={<CustomTooltip criterionTitle={criterionTitle} />} cursor={{ strokeDasharray: '3 3', stroke: 'hsl(var(--border))' }} />
+          <RechartsTooltip
+            content={<CustomTooltip criterionTitle={criterionTitle} xAxisLabel={xAxisLabel} yAxisLabel={yAxisLabel} />}
+            cursor={{ strokeDasharray: '3 3', stroke: 'hsl(var(--border))' }}
+          />
           
           {/* Quadrant Backgrounds */}
           <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill="hsl(var(--muted) / 0.42)" strokeOpacity={0} />

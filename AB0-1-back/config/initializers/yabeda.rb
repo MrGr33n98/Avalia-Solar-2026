@@ -125,7 +125,7 @@ Yabeda.configure do
   collect do
     begin
       # Active users in last 24 hours
-      if defined?(User)
+      if defined?(User) && User.table_exists? && User.column_names.include?('last_sign_in_at')
         active_count = User.where('last_sign_in_at > ?', 24.hours.ago).count
         ab0_active_users.set({}, active_count)
       end

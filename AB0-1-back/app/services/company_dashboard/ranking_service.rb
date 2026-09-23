@@ -11,6 +11,7 @@ module CompanyDashboard
     MAX_EXECUTION_VIEWS = 2_000.0
     MAX_EXECUTION_CLICKS = 300.0
     SNAPSHOT_STALE_AFTER = 36.hours
+    HISTORY_FORMING_MIN_SNAPSHOTS = 7
     QUADRANT_LEADERS_LIMIT = 5
     QUADRANT_NEIGHBORS_LIMIT = 5
 
@@ -64,12 +65,7 @@ module CompanyDashboard
       history_items = historical_data
       quadrant_ready = population.any? && (preview || snapshot.present?)
       quadrant_points = quadrant_ready ? selected_quadrant_points(population) : []
-      history = {
-        status: history_items.present? ? 'ready' : 'empty',
-        scope: 'official',
-        items: history_items,
-        trend_30d: history_trend_30d(history_items)
-      }
+      history = history_payload(history_items)
       benchmarks = RankingBenchmarkService.new(population: population).call
       quality = quality_payload(snapshot, preview, official_status, ranking[:status])
       leaders = quadrant_ready ? leader_points(population) : []
@@ -95,6 +91,9 @@ module CompanyDashboard
         leaders: leaders,
         neighbors: neighbors,
         insights: insights_for(ranking: ranking, benchmarks: benchmarks, official_status: official_status),
+        score_drivers: score_drivers_for(snapshot: snapshot, ranking: ranking, population: population, preview: preview),
+        gaps: gaps_for(population),
+        changes: changes_for(history_items),
         error: nil,
 
         # Compatibilidade temporária do contrato anterior.
@@ -184,6 +183,25 @@ module CompanyDashboard
           percentile: row.percentile.to_f
         }
       end
+    end
+
+    def history_payload(items)
+      {
+        status: history_status_for(items),
+        scope: 'official',
+        items: items,
+        sample_size: items.length,
+        minimum_snapshots: HISTORY_FORMING_MIN_SNAPSHOTS,
+        first_snapshot_date: items.first&.dig(:week),
+        trend_30d: history_trend_30d(items)
+      }
+    end
+
+    def history_status_for(items)
+      return 'empty' if items.empty?
+      return 'forming' if items.length < HISTORY_FORMING_MIN_SNAPSHOTS
+
+      'ready'
     end
 
     def ranked_companies
@@ -325,9 +343,24 @@ module CompanyDashboard
         completeness_of_vision: calculate_vision_score(record),
         ability_to_execute: calculate_execution_score(record),
         is_current_company: record.id == company.id,
+        ranking_position: ranking_position_for(record),
+        ranking_score: record.ranking_score&.to_f,
+        score_distance: score_distance_from_current(record),
         criterion_score: criterion_score_for(record),
         criteria_breakdown: criteria_breakdown_for(record)
       }
+    end
+
+    def ranking_position_for(record)
+      index = ranked_companies.find_index { |candidate| candidate.id == record.id }
+      index && index + 1
+    end
+
+    def score_distance_from_current(record)
+      current_score = score_for_company(ranked_companies)
+      return nil if current_score.nil? || record.ranking_score.nil?
+
+      (record.ranking_score.to_f - current_score).round(2)
     end
 
     def calculate_vision_score(record)
@@ -523,6 +556,7 @@ module CompanyDashboard
     def definition(snapshot, preview, official_status)
       {
         definition_version: CompanyRankingSnapshot::DEFINITION_VERSION,
+        trust_score_definition_version: TrustScore::Definition::VERSION,
         purpose: 'organic_performance',
         sponsored_included: false,
         score_definition: 'Trust score × 10 + engajamento dos últimos 7 dias completos com decaimento exponencial.',
@@ -551,6 +585,65 @@ module CompanyDashboard
       flags << 'snapshot_stale' if official_status == 'stale'
       flags << 'population_empty' if ranking_status == 'empty' || (!preview && official_status == 'empty')
       flags.uniq
+    end
+
+    def score_drivers_for(snapshot:, ranking:, population:, preview:)
+      record = population.find { |candidate| candidate.id == company.id }
+      breakdown = normalized_breakdown(record&.ranking_breakdown || snapshot&.breakdown)
+      items = [
+        score_driver('trust_score', 'Trust Score', breakdown['base_trust']),
+        score_driver('recent_engagement', 'Engajamento recente', breakdown['recent_engagement'])
+      ].compact
+
+      {
+        status: items.any? ? 'ready' : 'unavailable',
+        source: preview ? 'current_ranking_score' : 'official_snapshot',
+        score: ranking[:score],
+        items: items
+      }
+    end
+
+    def normalized_breakdown(value)
+      return value.stringify_keys if value.respond_to?(:stringify_keys)
+      return JSON.parse(value) if value.is_a?(String)
+
+      {}
+    rescue JSON::ParserError
+      {}
+    end
+
+    def score_driver(code, label, value)
+      return if value.nil?
+
+      { code: code, label: label, value: value.to_f.round(2) }
+    end
+
+    def gaps_for(population)
+      return [] if trust_scores_by_company.key?(company.id)
+
+      [{
+        code: 'trust_score_missing',
+        title: 'Dados de confiança incompletos',
+        description: 'A empresa ainda não possui um Trust Score calculado para o próximo ciclo orgânico.',
+        evidence: { company_id: company.id, eligible_population: population.length }
+      }]
+    end
+
+    def changes_for(items)
+      return { status: 'insufficient_history', from: nil, to: nil, changes: {} } if items.length < 2
+
+      previous = items[-2]
+      current = items[-1]
+      {
+        status: 'ready',
+        from: previous[:week],
+        to: current[:week],
+        changes: {
+          position: previous[:position].to_i - current[:position].to_i,
+          score: (current[:score].to_f - previous[:score].to_f).round(2),
+          percentile: (current[:percentile].to_f - previous[:percentile].to_f).round(2)
+        }
+      }
     end
 
     def insights_for(ranking:, benchmarks:, official_status:)

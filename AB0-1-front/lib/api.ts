@@ -10,6 +10,7 @@ import { apolloClient, GRAPHQL_ENABLED } from './apollo-client';
 import { gql } from '@apollo/client';
 import type { Banner } from './api-banner-types';
 import type { FeatureAccessEntry, CompanyFeatureAccessResponse } from './feature-access-types';
+import { parseRankingData } from './ranking-contract';
 
 // =======================
 // API Response Types
@@ -1960,6 +1961,13 @@ export interface RankingData {
     median_score: number | null;
     p75_score: number | null;
     p90_score: number | null;
+    distribution?: {
+      min_score: number;
+      max_score: number;
+      mean_score: number;
+      standard_deviation: number;
+      distinct_score_count: number;
+    } | null;
   };
   quality?: { flags: string[]; computed_at?: string | null; data_through?: string | null };
   leaders?: RankingData['magic_quadrant_points'];
@@ -1968,6 +1976,24 @@ export interface RankingData {
     strengths: RankingInsight[];
     opportunities: RankingInsight[];
     next_best_action?: RankingInsight | null;
+  };
+  score_drivers?: {
+    status: 'ready' | 'unavailable';
+    source: 'official_snapshot' | 'current_ranking_score' | null;
+    score: number | null;
+    items: Array<{ code: string; label: string; value: number }>;
+  };
+  gaps?: Array<{
+    code: string;
+    title: string;
+    description: string;
+    evidence: Record<string, number | string | null>;
+  }>;
+  changes?: {
+    status: 'ready' | 'insufficient_history';
+    from: string | null;
+    to: string | null;
+    changes: Record<string, number>;
   };
   rank_position: number | null;
   ranking_score: number | null;
@@ -1979,9 +2005,12 @@ export interface RankingData {
   definition?: RankingData['transparency'];
   breakdown?: Record<string, unknown>;
   history?: {
-    status: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
+    status: 'ready' | 'forming' | 'empty' | 'processing' | 'stale' | 'locked' | 'error';
     scope?: 'official';
     items: RankingData['historical_data'];
+    sample_size?: number;
+    minimum_snapshots?: number;
+    first_snapshot_date?: string | null;
     trend_30d?: {
       from: string;
       to: string;
@@ -2004,6 +2033,9 @@ export interface RankingData {
     completeness_of_vision: number;
     ability_to_execute: number;
     is_current_company: boolean;
+    ranking_position?: number | null;
+    ranking_score?: number | null;
+    score_distance?: number | null;
     criterion_score?: number | null;
     criteria_breakdown?: Record<string, number>;
   }>;
@@ -2043,6 +2075,7 @@ export interface RankingData {
     computed_at?: string | null;
     data_through?: string | null;
     quality_flags: string[];
+    trust_score_definition_version?: string;
     breakdown?: Record<string, unknown>;
     is_ad_hoc_preview?: boolean;
     eligibility_definition?: string;
@@ -2123,7 +2156,7 @@ export const companyDashboardApi = {
     quadrantMode?: 'default' | 'reviews',
     historyDays: number = 90
   ) =>
-    fetchApi<RankingData>('/company_dashboard/analytics/ranking', {
+    fetchApi<unknown>('/company_dashboard/analytics/ranking', {
       params: {
         company_id: companyId,
         category_id: categoryId,
@@ -2134,7 +2167,7 @@ export const companyDashboardApi = {
         quadrant_mode: quadrantMode,
         history_days: historyDays,
       },
-    }),
+    }).then(parseRankingData),
   getRankingFilterOptions: (companyId?: string | number, state?: string) =>
     fetchApi<RankingFilterOptions>('/company_dashboard/analytics/ranking/filter_options', {
       params: { company_id: companyId, state: state },

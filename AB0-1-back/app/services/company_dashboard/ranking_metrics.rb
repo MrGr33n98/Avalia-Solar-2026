@@ -29,7 +29,10 @@ module CompanyDashboard
     end
 
     def observe(metric, value, tags)
-      collector(metric)&.observe(tags, value)
+      # Histograms da API pública do Yabeda registram amostras com `measure`.
+      # Este adaptador mantém o detalhe da biblioteca fora do controller e do
+      # worker, além de preservar a regra de que telemetria é não bloqueante.
+      collector(metric)&.measure(tags, value)
     rescue StandardError => e
       Rails.logger.warn("[RankingMetrics] #{metric}: #{e.message}")
     end

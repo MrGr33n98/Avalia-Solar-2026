@@ -1,24 +1,11 @@
 # frozen_string_literal: true
 
 module TrustScore
+  # Fachada de compatibilidade para consumidores síncronos. A fórmula fica em
+  # Definition/Calculator para não divergir do worker diário.
   class CalculationService
-    # Score components and their weights
-    WEIGHTS = {
-      base: 50,
-      verification: 20,
-      rating: 20,
-      reviews: 10,
-      engagement: 10,
-      leads: 10
-    }.freeze
-
-    # Maximum values for each component (used for normalization)
-    MAX_VALUES = {
-      rating: 5.0,           # Max rating is 5 stars
-      reviews: 100,          # Capped at 100 reviews for scoring
-      engagement: 500,      # Capped at 500 profile views
-      leads: 100             # Capped at 100 leads
-    }.freeze
+    WEIGHTS = Definition::WEIGHTS
+    MAX_VALUES = Definition::MAX_VALUES
 
     attr_reader :company
 
@@ -26,136 +13,29 @@ module TrustScore
       @company = company
     end
 
-    # Calculate trust score and return hash with score and components
-    # @return [Hash] { score: Integer, components: Hash, previous_score: Integer, score_changed: Boolean }
     def calculate!
-      components = calculate_components
-      score = normalize_score(calculate_total(components))
+      result = Calculator.new(company).call
       previous_score = fetch_previous_score
 
-      {
-        score: score,
-        components: components,
+      result.merge(
         previous_score: previous_score,
-        score_changed: previous_score.nil? || (score - previous_score).abs > 0
-      }
+        score_changed: previous_score.nil? || result[:score] != previous_score
+      )
     end
 
-    # Calculate trust score from stored record (for real-time queries)
-    # @return [Integer] The stored trust score
     def self.fetch_stored(company_id)
       record = CompanyTrustScore.find_by(company_id: company_id)
-      record&.score&.to_i || 0
+      record&.score&.to_f || 0.0
     end
 
-    # Calculate trust score inline (for widgets when stored value is stale)
-    # @return [Integer] The calculated trust score
     def self.calculate_inline(company)
       new(company).calculate![:score]
     end
 
     private
 
-    def calculate_components
-      {
-        base: WEIGHTS[:base],
-        verification: calculate_verification_component,
-        rating: calculate_rating_component,
-        reviews: calculate_reviews_component,
-        engagement: calculate_engagement_component,
-        leads: calculate_leads_component,
-        conversion_bonus: calculate_conversion_bonus,
-        penalty: calculate_penalty
-      }
-    end
-
-    def calculate_total(components)
-      total = components.values.sum
-      # Cap at 100, floor at 0
-      total.clamp(0, 100)
-    end
-
-    def normalize_score(score)
-      score.round.clamp(0, 100)
-    end
-
-    # Verification component: +20 if verified, +0 if not
-    def calculate_verification_component
-      company.verified? ? WEIGHTS[:verification] : 0
-    end
-
-    # Rating component: (rating / max_rating) * max_weight
-    # Example: 4.5 stars = (4.5/5) * 20 = 18 points
-    def calculate_rating_component
-      return 0 unless company.rating_avg.present? && company.rating_avg > 0
-
-      normalized = (company.rating_avg.to_f / MAX_VALUES[:rating]) * WEIGHTS[:rating]
-      normalized.round(1)
-    end
-
-    # Reviews component: min((reviews / max_reviews) * max_weight, max_weight)
-    # Example: 50 reviews = min((50/100) * 10, 10) = 5 points
-    def calculate_reviews_component
-      count = company.reviews.approved.count
-      return 0 if count.zero?
-
-      raw = (count.to_f / MAX_VALUES[:reviews]) * WEIGHTS[:reviews]
-      [raw, WEIGHTS[:reviews]].min.round(1)
-    end
-
-    # Engagement component: based on profile views and CTA clicks
-    # Using log scale for better distribution
-    def calculate_engagement_component
-      totals = ::CompanyDashboard::MetricsSource.new(company_id: company.id).totals
-      engagement = if totals
-                     totals[:profile_views].to_i + (totals[:cta_clicks].to_i * 2)
-                   else
-                     fallback_profile_views + (fallback_cta_clicks * 2)
-                   end
-      
-      return 0 if engagement.zero?
-
-      # Logarithmic scaling: log(1 + x) / log(1 + max) * weight
-      raw = Math.log1p(engagement) / Math.log1p(MAX_VALUES[:engagement]) * WEIGHTS[:engagement]
-      [raw, WEIGHTS[:engagement]].min.round(1)
-    end
-
-    def fallback_profile_views
-      company.respond_to?(:profile_views_count) ? company.profile_views_count.to_i : 0
-    end
-
-    def fallback_cta_clicks
-      company.respond_to?(:cta_clicks_count) ? company.cta_clicks_count.to_i : 0
-    end
-
-    # Bonus points for Conversion fundamentals (insurance, warranty)
-    def calculate_conversion_bonus
-      bonus = 0
-      bonus += 5 if company.respond_to?(:engineering_insurance) && company.engineering_insurance
-      bonus += 5 if company.respond_to?(:installation_warranty_years) && company.installation_warranty_years.to_i > 1
-      bonus += 5 if company.respond_to?(:delivered_projects_score) && company.delivered_projects_score.to_i > 0
-      [bonus, 10].min
-    end
-
-    # Leads component: based on lead volume
-    def calculate_leads_component
-      count = company.leads.count
-      return 0 if count.zero?
-
-      raw = (count.to_f / MAX_VALUES[:leads]) * WEIGHTS[:leads]
-      [raw, WEIGHTS[:leads]].min.round(1)
-    end
-
-    # Penalty component: negative values for anomalies
-    # This would query the anomaly table in production
-    def calculate_penalty
-      # For now, return 0 - could be enhanced with anomaly detection
-      0
-    end
-
     def fetch_previous_score
-      record = CompanyTrustScore.find_by(company_id: company.id)
-      record&.score&.to_i
+      CompanyTrustScore.find_by(company_id: company.id)&.score&.to_f
     end
   end
 end
