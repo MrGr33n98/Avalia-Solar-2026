@@ -214,18 +214,27 @@ class Lead < ApplicationRecord
 
   def track_analytics_event
     return if company_id.blank?
-
-    estimated_budget_value = has_attribute?(:estimated_budget) ? self[:estimated_budget] : nil
     project_type_value = has_attribute?(:project_type) ? self[:project_type] : nil
 
     # Enqueue async job instead of synchronous call
     Analytics::TrackEventJob.perform_later(
       company_id: company_id,
       event_type: 'lead_created',
+      event_id: "lead_created:#{id}",
       metadata: {
         source: 'lead',
-        estimated_budget: estimated_budget_value,
-        project_type: project_type_value
+        lead_id: id,
+        utm_source: self[:utm_source],
+        utm_medium: self[:utm_medium],
+        utm_campaign: self[:utm_campaign],
+        utm_content: self[:utm_content],
+        utm_term: self[:utm_term],
+        gclid: self[:gclid],
+        fbclid: self[:fbclid],
+        msclkid: self[:msclkid],
+        landing_path: self[:landing_path],
+        referrer_host: self[:referrer_host],
+        attribution: self[:attribution_json]
       }.compact,
       user_id: nil,
       tracked_at: created_at

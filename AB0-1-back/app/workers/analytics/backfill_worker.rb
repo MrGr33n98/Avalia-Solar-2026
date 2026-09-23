@@ -11,7 +11,7 @@ module Analytics
     EMAIL_CLICK_EVENTS = ['Email CTA Clicked', 'email_click', 'company_cta_email'].freeze
     PHONE_CLICK_EVENTS = ['Phone CTA Clicked', 'phone_click', 'company_cta_phone'].freeze
     WEBSITE_CLICK_EVENTS = ['Website CTA Clicked', 'website_click', 'company_cta_website'].freeze
-    LEAD_EVENTS = ['lead_created', 'Lead Form Submitted', 'Quote Request CTA Clicked'].freeze
+    LEAD_EVENTS = ['lead_created', 'Lead Form Submitted'].freeze
     REVIEW_EVENTS = ['review_created'].freeze
 
     def perform(target_date = nil)

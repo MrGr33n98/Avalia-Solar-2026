@@ -10,7 +10,7 @@ module Analytics
       company_cta_clicked
       company_cta_quote
     ].freeze
-    LEAD_EVENTS = %w[lead_created Lead\ Form\ Submitted Quote\ Request\ CTA\ Clicked].freeze
+    LEAD_EVENTS = %w[lead_created Lead\ Form\ Submitted].freeze
 
     CampaignRow = Struct.new(
       :utm_source,

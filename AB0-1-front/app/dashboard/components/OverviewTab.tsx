@@ -42,6 +42,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { companyDashboardApi, fetchApi, type FeatureAccessEntry } from '@/lib/api';
+import AttributionOverview from './analytics/AttributionOverview';
 import { cn } from '@/lib/utils';
 
 type CompanyOverview = {
@@ -545,6 +546,11 @@ export default function OverviewTab({
 
   return (
     <div className="space-y-4 pb-10 text-[hsl(var(--dashboard-ink))]">
+      <AttributionOverview
+        companyId={companyId}
+        days={period}
+        premium={detailedAnalyticsAvailable}
+      />
       <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Olá, {displayName}!</h1>
@@ -994,8 +1000,12 @@ export default function OverviewTab({
                 ].map((dim) => (
                   <div key={dim.label} className="space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-medium text-[hsl(var(--dashboard-ink))]">{dim.label}</span>
-                      <span className="font-bold text-[hsl(var(--dashboard-muted))]">{dim.val}%</span>
+                      <span className="font-medium text-[hsl(var(--dashboard-ink))]">
+                        {dim.label}
+                      </span>
+                      <span className="font-bold text-[hsl(var(--dashboard-muted))]">
+                        {dim.val}%
+                      </span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-[hsl(var(--dashboard-surface))]">
                       <div
@@ -1023,68 +1033,70 @@ export default function OverviewTab({
               <h2 className="text-sm font-bold">Próximas ações recomendadas</h2>
             </div>
             <div className="space-y-1 p-2">
-              {nextBestActions && nextBestActions.length > 0 ? (
-                nextBestActions.map((action) => {
-                  const Icon = getActionIcon(action.id);
-                  const colorClass = getActionColor(action.severity);
-                  return (
-                    <button
-                      key={action.id}
-                      type="button"
-                      onClick={() => onNavigateToTab?.(action.action_params?.tab || 'product-general')}
-                      className="flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition hover:bg-[hsl(var(--dashboard-surface))]"
-                    >
-                      <span
-                        className={cn(
-                          'grid h-8 w-8 shrink-0 place-items-center rounded-lg',
-                          colorClass
-                        )}
+              {nextBestActions && nextBestActions.length > 0
+                ? nextBestActions.map((action) => {
+                    const Icon = getActionIcon(action.id);
+                    const colorClass = getActionColor(action.severity);
+                    return (
+                      <button
+                        key={action.id}
+                        type="button"
+                        onClick={() =>
+                          onNavigateToTab?.(action.action_params?.tab || 'product-general')
+                        }
+                        className="flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition hover:bg-[hsl(var(--dashboard-surface))]"
                       >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <strong className="block text-xs text-[hsl(var(--dashboard-ink))]">
-                          {action.title}
-                        </strong>
-                        <small className="mt-0.5 block text-[10px] leading-snug text-[hsl(var(--dashboard-muted))]">
-                          {action.description}
-                        </small>
-                      </span>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))]" />
-                    </button>
-                  );
-                })
-              ) : (
-                actions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <button
-                      key={action.title}
-                      type="button"
-                      onClick={() => onNavigateToTab?.(action.tab === 'info' ? 'product-general' : action.tab)}
-                      className="flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition hover:bg-[hsl(var(--dashboard-surface))]"
-                    >
-                      <span
-                        className={cn(
-                          'grid h-8 w-8 shrink-0 place-items-center rounded-lg',
-                          action.color
-                        )}
+                        <span
+                          className={cn(
+                            'grid h-8 w-8 shrink-0 place-items-center rounded-lg',
+                            colorClass
+                          )}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <strong className="block text-xs text-[hsl(var(--dashboard-ink))]">
+                            {action.title}
+                          </strong>
+                          <small className="mt-0.5 block text-[10px] leading-snug text-[hsl(var(--dashboard-muted))]">
+                            {action.description}
+                          </small>
+                        </span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))]" />
+                      </button>
+                    );
+                  })
+                : actions.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <button
+                        key={action.title}
+                        type="button"
+                        onClick={() =>
+                          onNavigateToTab?.(action.tab === 'info' ? 'product-general' : action.tab)
+                        }
+                        className="flex w-full items-center gap-3 rounded-lg p-2.5 text-left transition hover:bg-[hsl(var(--dashboard-surface))]"
                       >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <strong className="block text-xs text-[hsl(var(--dashboard-ink))]">
-                          {action.title}
-                        </strong>
-                        <small className="mt-0.5 block text-[10px] leading-snug text-[hsl(var(--dashboard-muted))]">
-                          {action.description}
-                        </small>
-                      </span>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))]" />
-                    </button>
-                  );
-                })
-              )}
+                        <span
+                          className={cn(
+                            'grid h-8 w-8 shrink-0 place-items-center rounded-lg',
+                            action.color
+                          )}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <strong className="block text-xs text-[hsl(var(--dashboard-ink))]">
+                            {action.title}
+                          </strong>
+                          <small className="mt-0.5 block text-[10px] leading-snug text-[hsl(var(--dashboard-muted))]">
+                            {action.description}
+                          </small>
+                        </span>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-[hsl(var(--dashboard-muted))]" />
+                      </button>
+                    );
+                  })}
             </div>
             <button
               type="button"

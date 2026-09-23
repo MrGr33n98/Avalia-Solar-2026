@@ -1,6 +1,6 @@
 /**
  * CTA Tracking Helper - Real Analytics Implementation
- * 
+ *
  * Tracks CTA clicks through the unified analytics layer.
  * The shared layer handles consent, backend forwarding and GA4/GTM dispatch.
  */
@@ -13,8 +13,6 @@ interface CTAClickProperties {
   companyId: string;
   companyName: string;
   destinationUrl?: string;
-  phoneNumber?: string;
-  email?: string;
 }
 
 interface TrackingMetadata {
@@ -26,14 +24,16 @@ interface TrackingMetadata {
   device_type: 'desktop' | 'mobile' | 'tablet';
   timestamp: string;
   page_url: string;
-  full_url: string;
   referrer: string;
 }
 
 /**
  * Extract UTM parameters from current URL
  */
-function getUTMParams(): Omit<TrackingMetadata, 'device_type' | 'timestamp' | 'page_url' | 'full_url' | 'referrer'> {
+function getUTMParams(): Omit<
+  TrackingMetadata,
+  'device_type' | 'timestamp' | 'page_url' | 'referrer'
+> {
   if (typeof window === 'undefined') {
     return {
       utm_source: null,
@@ -59,19 +59,23 @@ function getUTMParams(): Omit<TrackingMetadata, 'device_type' | 'timestamp' | 'p
  */
 function getDeviceType(): 'desktop' | 'mobile' | 'tablet' {
   if (typeof window === 'undefined') return 'desktop';
-  
+
   const ua = navigator.userAgent;
-  
+
   // Tablet detection
   if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
     return 'tablet';
   }
-  
+
   // Mobile detection
-  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+  if (
+    /Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(
+      ua
+    )
+  ) {
     return 'mobile';
   }
-  
+
   return 'desktop';
 }
 
@@ -84,7 +88,6 @@ function getTrackingMetadata(): TrackingMetadata {
     device_type: getDeviceType(),
     timestamp: new Date().toISOString(),
     page_url: typeof window !== 'undefined' ? window.location.pathname : '',
-    full_url: typeof window !== 'undefined' ? window.location.href : '',
     referrer: typeof window !== 'undefined' ? document.referrer : '',
   };
 }
@@ -96,47 +99,25 @@ function getTrackingMetadata(): TrackingMetadata {
 export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
   try {
     const metadata = getTrackingMetadata();
-    
+
     // Prepare base event properties
     const baseProperties = {
       cta_type: props.ctaType,
       cta_location: props.ctaLocation,
       company_id: props.companyId,
       company_name: props.companyName,
-      destination_url: props.destinationUrl,
-      phone_number: props.phoneNumber,
-      email: props.email,
       ...metadata,
     };
 
     // 1. Track generic CTA click event (Unified snake_case)
     await track('company_cta_clicked', baseProperties);
 
-    // 2. Track specific CTA type event
-    const specificEvents: Record<string, string> = {
-      whatsapp: 'company_cta_whatsapp',
-      email: 'company_cta_email',
-      phone: 'company_cta_phone',
-      website: 'company_cta_website',
-      quote: 'company_cta_quote',
-    };
-
-    const specificEventName = specificEvents[props.ctaType];
-    if (specificEventName) {
-      await track(specificEventName, {
-        company_id: props.companyId,
-        company_name: props.companyName,
-        cta_location: props.ctaLocation,
-        ...metadata,
-      }, {
-        sendTo: { backend: false },
-      });
-    }
+    // O backend recebe um único evento canônico; o cta_type é preservado no payload.
 
     // Debug log in development
     if (process.env.NODE_ENV === 'development') {
       console.log('[Analytics] CTA Tracked', {
-        event: specificEventName || 'CTA Clicked',
+        event: 'company_cta_clicked',
         properties: baseProperties,
       });
     }
@@ -157,16 +138,19 @@ export async function trackCompanyProfileView(
 ): Promise<void> {
   try {
     const metadata = getTrackingMetadata();
-    
-    await track('Company Profile Viewed', {
-      company_id: companyId,
-      company_name: companyName,
-      category_id: categoryId,
-      ...metadata,
-    }, {
-      sendTo: { backend: false },
-    });
 
+    await track(
+      'Company Profile Viewed',
+      {
+        company_id: companyId,
+        company_name: companyName,
+        category_id: categoryId,
+        ...metadata,
+      },
+      {
+        sendTo: { backend: false },
+      }
+    );
   } catch (error) {
     console.error('[Analytics] Failed to track profile view:', error);
   }
@@ -182,7 +166,7 @@ export async function trackLeadFormSubmit(
 ): Promise<void> {
   try {
     const metadata = getTrackingMetadata();
-    
+
     await track('Lead Form Submitted', {
       company_id: companyId,
       company_name: companyName,
@@ -190,7 +174,6 @@ export async function trackLeadFormSubmit(
       lead_source: metadata.utm_source || 'organic',
       ...metadata,
     });
-
   } catch (error) {
     console.error('[Analytics] Failed to track lead form:', error);
   }
@@ -204,13 +187,13 @@ export function addUTMToUrl(baseUrl: string, ctaType: string): string {
   try {
     const url = new URL(baseUrl);
     const params = new URLSearchParams(url.search);
-    
+
     // Add Avalia Solar UTM tags
     params.set('utm_source', 'avaliasolar');
     params.set('utm_medium', 'company_profile');
     params.set('utm_campaign', 'profile_cta');
     params.set('utm_content', ctaType);
-    
+
     url.search = params.toString();
     return url.toString();
   } catch (error) {

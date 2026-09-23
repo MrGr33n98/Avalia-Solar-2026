@@ -437,6 +437,7 @@ Rails.application.routes.draw do
         get 'analytics/overview', to: 'company_dashboard#analytics_overview'
         get 'analytics/timeseries', to: 'company_dashboard#analytics_timeseries'
         get 'analytics/top_campaigns', to: 'company_dashboard#analytics_top_campaigns'
+        get 'analytics/attribution', to: 'company_dashboard#analytics_attribution'
         get 'analytics/reputation', to: 'company_dashboard#analytics_reputation'
         get 'analytics/ranking', to: 'company_dashboard#analytics_ranking'
         get 'analytics/ranking/filter_options', to: 'company_dashboard#analytics_ranking_filter_options'

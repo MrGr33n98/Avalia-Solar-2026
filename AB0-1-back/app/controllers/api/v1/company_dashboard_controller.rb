@@ -218,6 +218,30 @@ module Api
         }, status: :ok
       end
 
+      # GET /api/v1/company_dashboard/analytics/attribution
+      def analytics_attribution
+        authorize @company, :view_analytics?
+        range = analytics_date_range(default_days: 30)
+        return render_invalid_analytics_range unless range
+
+        freshness = ::CompanyDashboard::FreshnessProvider.call
+        unless FeatureGateService.can_access?(@company, 'advanced_analytics')
+          return render json: { attribution_model: attribution_model, summary: nil, channels: [], campaigns: [], cta_matrix: [], landing_pages: [], data_source: 'feature_not_authorized', data_status: 'locked', range: analytics_range_payload(range), is_premium_analytics: false, upsell_message: 'Upgrade to Pro to access attribution analytics' }.merge(freshness), status: :ok
+        end
+
+        payload = ::Analytics::AttributionQuery.call(
+          company_id: @company.id, from_time: range[:from_day].beginning_of_day,
+          to_time: range[:to_day].end_of_day, attribution_model: attribution_model, limit: attribution_limit
+        )
+        render json: payload.merge(
+          range: analytics_range_payload(range), attribution_model: attribution_model, data_source: 'analytics_events',
+          data_status: 'ready', is_premium_analytics: true
+        ).merge(freshness), status: :ok
+      rescue StandardError => e
+        log_analytics_error('attribution', e)
+        render json: { summary: nil, channels: [], campaigns: [], cta_matrix: [], landing_pages: [], attribution_model: attribution_model, data_source: 'analytics_events_unavailable', data_status: 'unavailable', range: analytics_range_payload(range), is_premium_analytics: true }.merge(::CompanyDashboard::FreshnessProvider.call), status: :ok
+      end
+
       # GET /api/v1/company_dashboard/analytics/reputation
       def analytics_reputation
         authorize @company, :view_analytics?
@@ -2267,6 +2291,14 @@ module Api
 
       def analytics_range_payload(range)
         { from: range[:from_day].iso8601, to: range[:to_day].iso8601 }
+      end
+
+      def attribution_model
+        params[:attribution_model].to_s.in?(%w[first_touch last_touch]) ? params[:attribution_model].to_s : 'last_touch'
+      end
+
+      def attribution_limit
+        [[params.fetch(:limit, 20).to_i, 1].max, 100].min
       end
 
       def analytics_data_status(data_source, freshness: nil)

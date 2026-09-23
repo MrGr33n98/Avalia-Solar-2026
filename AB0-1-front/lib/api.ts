@@ -113,8 +113,19 @@ export interface Conversation {
   company_avatar?: string | null;
   user_avatar?: string | null;
   user_avatar_url?: string | null;
-  user?: { id?: number; name?: string | null; avatar_url?: string | null; email?: string | null } | null;
-  company?: { id?: number; name?: string | null; logo_url?: string | null; avatar_url?: string | null; p2p_chat_enabled?: boolean } | null;
+  user?: {
+    id?: number;
+    name?: string | null;
+    avatar_url?: string | null;
+    email?: string | null;
+  } | null;
+  company?: {
+    id?: number;
+    name?: string | null;
+    logo_url?: string | null;
+    avatar_url?: string | null;
+    p2p_chat_enabled?: boolean;
+  } | null;
   status?: 'open' | 'pending_user' | 'pending_company' | 'resolved' | 'blocked';
   last_message?: string | { body?: string; created_at?: string } | null;
   last_message_at?: string | null;
@@ -1084,11 +1095,12 @@ export const getErrorStatus = (error: unknown): number | undefined => {
   const context = record && isRecord(record.context) ? record.context : undefined;
   const contextStatus = context?.status ?? record?.status;
   if (typeof contextStatus === 'number') return contextStatus;
-  const message = error instanceof Error
-    ? error.message
-    : typeof record?.message === 'string'
-      ? record.message
-      : '';
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof record?.message === 'string'
+        ? record.message
+        : '';
   const matched = message.match(/\[(\d{3})\]/);
   return matched ? Number(matched[1]) : undefined;
 };
@@ -1105,10 +1117,7 @@ function normalizeUnknownApiError(error: unknown, fallback: ApiErrorOptions): Ap
     const response = isRecord(error.response) ? error.response : undefined;
     const responseData = response && isRecord(response.data) ? response.data : undefined;
     const structured = getStructuredApiError(responseData ?? error);
-    const messageCandidates = [
-      structured.message,
-      response?.statusText,
-    ];
+    const messageCandidates = [structured.message, response?.statusText];
     const message = messageCandidates.find(
       (candidate): candidate is string => typeof candidate === 'string' && candidate.length > 0
     );
@@ -1224,7 +1233,10 @@ const attemptRefresh = async (): Promise<boolean> => {
         const isDefinitiveAuthFailure = [400, 401, 403].includes(response.status);
 
         if (isDefinitiveAuthFailure) {
-          console.warn('[API] Refresh token is invalid or revoked. User must re-authenticate.', details);
+          console.warn(
+            '[API] Refresh token is invalid or revoked. User must re-authenticate.',
+            details
+          );
           return false;
         }
 
@@ -1234,7 +1246,7 @@ const attemptRefresh = async (): Promise<boolean> => {
           code: details?.code,
           url,
           method: 'POST',
-          details
+          details,
         });
       }
 
@@ -1253,7 +1265,7 @@ const attemptRefresh = async (): Promise<boolean> => {
       throw new ApiError('Erro de conexão ao atualizar sessão. Verifique sua internet.', {
         status: 0,
         url: buildApiUrl('/auth/refresh'),
-        method: 'POST'
+        method: 'POST',
       });
     } finally {
       refreshInFlight = null;
@@ -1394,9 +1406,12 @@ export const api = {
             } catch {}
 
             const structured = getStructuredApiError(details);
-            const message = structured.message ||
+            const message =
+              structured.message ||
               (Array.isArray(details?.errors)
-                ? details.errors.filter((item: unknown): item is string => typeof item === 'string').join(', ')
+                ? details.errors
+                    .filter((item: unknown): item is string => typeof item === 'string')
+                    .join(', ')
                 : undefined) ||
               response.statusText;
             const requestId =
@@ -1827,6 +1842,72 @@ export interface TopCampaignsResponse {
   is_premium_analytics?: boolean;
 }
 
+export type AttributionModel = 'first_touch' | 'last_touch';
+
+export interface AttributionSummary {
+  visits: number;
+  cta_clicks: number;
+  leads: number;
+  attributed_visits: number;
+  direct_visits: number;
+  unknown_visits: number;
+  attribution_coverage_pct: number;
+  conversion_rate: number;
+}
+export interface AttributionChannelRow {
+  channel_group: string;
+  source: string;
+  medium: string;
+  visits: number;
+  cta_clicks: number;
+  leads: number;
+  conversion_rate: number;
+  cta_breakdown: Record<string, number>;
+}
+export interface AttributionCampaignRow {
+  source: string;
+  medium: string;
+  campaign: string;
+  visits: number;
+  cta_clicks: number;
+  leads: number;
+  conversion_rate: number;
+}
+export interface AttributionCtaMatrixRow {
+  channel_group: string;
+  source: string;
+  visits: number;
+  whatsapp: number;
+  email: number;
+  phone: number;
+  website: number;
+  quote: number;
+  other: number;
+  total_clicks: number;
+  leads: number;
+  conversion_rate: number;
+}
+export interface AttributionLandingPageRow {
+  landing_path: string | null;
+  visits: number;
+  cta_clicks: number;
+  leads: number;
+  conversion_rate: number;
+}
+export interface AttributionResponse {
+  attribution_model: AttributionModel;
+  summary: AttributionSummary | null;
+  channels: AttributionChannelRow[];
+  campaigns: AttributionCampaignRow[];
+  cta_matrix: AttributionCtaMatrixRow[];
+  landing_pages: AttributionLandingPageRow[];
+  data_source: string;
+  data_status?: 'ready' | 'unavailable' | 'locked' | 'error';
+  range?: AnalyticsDateRange;
+  data_freshness_seconds?: number | null;
+  last_aggregated_at?: string | null;
+}
+
 // Trust Health Types
 export interface TrustHealth {
   trust_score: number;
@@ -2083,7 +2164,15 @@ export interface RankingData {
 }
 
 export interface RankingMetric {
-  status?: 'ready' | 'empty' | 'processing' | 'stale' | 'locked' | 'error' | 'preview' | 'not_applicable';
+  status?:
+    | 'ready'
+    | 'empty'
+    | 'processing'
+    | 'stale'
+    | 'locked'
+    | 'error'
+    | 'preview'
+    | 'not_applicable';
   position: number | null;
   population: number | null;
   population_label?: 'eligible_companies';
@@ -2128,8 +2217,18 @@ export const companyDashboardApi = {
         ...(typeof query === 'number' ? { days: query } : query),
       },
     }),
-  getAnalyticsTopCampaigns: (companyId?: string | number, query: AnalyticsQueryParams & { limit?: number } = {}) =>
+  getAnalyticsTopCampaigns: (
+    companyId?: string | number,
+    query: AnalyticsQueryParams & { limit?: number } = {}
+  ) =>
     fetchApi<TopCampaignsResponse>('/company_dashboard/analytics/top_campaigns', {
+      params: { company_id: companyId, ...query },
+    }),
+  getAnalyticsAttribution: (
+    companyId?: string | number,
+    query: AnalyticsQueryParams & { attribution_model?: AttributionModel; limit?: number } = {}
+  ) =>
+    fetchApi<AttributionResponse>('/company_dashboard/analytics/attribution', {
       params: { company_id: companyId, ...query },
     }),
 
@@ -2269,7 +2368,9 @@ export const companiesApi = {
     }
   },
   getFeatureAccess: (id: number | string, noCache = false): Promise<CompanyFeatureAccessResponse> =>
-    fetchApi<CompanyFeatureAccessResponse>(`/companies/${encodeURIComponent(id)}/feature_access`, { noCache }),
+    fetchApi<CompanyFeatureAccessResponse>(`/companies/${encodeURIComponent(id)}/feature_access`, {
+      noCache,
+    }),
   getReviews: (id: number, params?: any) => {
     try {
       return fetchApi(`/companies/${id}/reviews`, { params });
@@ -2457,20 +2558,25 @@ export const leadsApi = {
 };
 
 export const creatorLeadsApi = {
-  mine: async (params: {
-    status?: string;
-    q?: string;
-    source?: string;
-    from?: string;
-    to?: string;
-    limit?: number;
-    cursor?: string;
-  } = {}): Promise<CreatorLeadListResponse> => {
-    const response = await fetchApi<CreatorLead[] | CreatorLeadListResponse>('/reviewer/creator_leads', {
-      params,
-      timeout: 5000,
-      retries: 0,
-    });
+  mine: async (
+    params: {
+      status?: string;
+      q?: string;
+      source?: string;
+      from?: string;
+      to?: string;
+      limit?: number;
+      cursor?: string;
+    } = {}
+  ): Promise<CreatorLeadListResponse> => {
+    const response = await fetchApi<CreatorLead[] | CreatorLeadListResponse>(
+      '/reviewer/creator_leads',
+      {
+        params,
+        timeout: 5000,
+        retries: 0,
+      }
+    );
 
     if (Array.isArray(response)) return { data: response };
     return { ...response, data: Array.isArray(response.data) ? response.data : [] };
@@ -2487,7 +2593,11 @@ export const reviewsApi = {
   listMine: async (params: any = {}): Promise<Review[]> => {
     const normalizeReviews = (response: unknown): Review[] => {
       if (Array.isArray(response)) return response as Review[];
-      if (response && typeof response === 'object' && Array.isArray((response as { data?: unknown }).data)) {
+      if (
+        response &&
+        typeof response === 'object' &&
+        Array.isArray((response as { data?: unknown }).data)
+      ) {
         return (response as { data: Review[] }).data;
       }
       return [];
@@ -2534,24 +2644,30 @@ export const reviewsApi = {
           fetchPolicy: 'network-only',
         });
         return normalizeReviews(
-          (data?.myReviews?.nodes || []).map((review: Review & {
-            authorDisplayName?: string | null;
-            authorAvatarUrl?: string | null;
-            creatorSlug?: string | null;
-          }) => ({
-            ...review,
-            user: {
-              name: review.authorDisplayName,
-              avatar_url: review.authorAvatarUrl,
-              creator_slug: review.creatorSlug,
-            },
-          }))
+          (data?.myReviews?.nodes || []).map(
+            (
+              review: Review & {
+                authorDisplayName?: string | null;
+                authorAvatarUrl?: string | null;
+                creatorSlug?: string | null;
+              }
+            ) => ({
+              ...review,
+              user: {
+                name: review.authorDisplayName,
+                avatar_url: review.authorAvatarUrl,
+                creator_slug: review.creatorSlug,
+              },
+            })
+          )
         );
       }
     } catch (err) {
       console.warn('[reviewsApi.listMine] GraphQL failed, falling back to REST:', err);
     }
-    return normalizeReviews(await fetchApi<Review[] | { data?: Review[] }>('/reviews/mine', { params }));
+    return normalizeReviews(
+      await fetchApi<Review[] | { data?: Review[] }>('/reviews/mine', { params })
+    );
   },
   getById: (id: number) => fetchApi(`/reviews/${id}`),
   create: (review: Partial<Review>) =>
