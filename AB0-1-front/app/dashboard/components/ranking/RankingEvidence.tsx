@@ -59,30 +59,76 @@ export function RankingEvidence({ data }: { data?: RankingData }) {
   );
 }
 
-export function RankingNearbyCompetitors({ leaders = [], neighbors = [] }: Pick<RankingData, 'leaders' | 'neighbors'>) {
-  const rows = [...leaders, ...neighbors].filter((point, index, all) => !point.is_current_company && all.findIndex((item) => item.id === point.id) === index);
+export function RankingNearbyCompetitors({
+  leaders = [],
+  neighbors = [],
+  currentScore,
+  currentPosition,
+}: Pick<RankingData, 'leaders' | 'neighbors'> & { currentScore?: number | null; currentPosition?: number | null }) {
+  const rows = [...leaders, ...neighbors].filter(
+    (point, index, all) => !point.is_current_company && all.findIndex((item) => item.id === point.id) === index
+  );
   if (!rows.length) return null;
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base"><UsersRound className="h-4 w-4" />Empresas próximas no ranking</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <UsersRound className="h-4 w-4 text-brand-blue" />
+          Empresas próximas no ranking
+        </CardTitle>
         <CardDescription>Vizinhos imediatos e referências da mesma população elegível.</CardDescription>
       </CardHeader>
       <CardContent className="divide-y rounded-lg border">
-        {rows.map((point) => (
-          <div key={point.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-            <span className="min-w-0 truncate">{point.name}</span>
-            <span className="shrink-0 text-muted-foreground">#{point.ranking_position ?? '—'} · {point.ranking_score == null ? '—' : `${point.ranking_score.toFixed(1)} pts`}</span>
-          </div>
-        ))}
+        {rows.map((point) => {
+          const diff = currentScore != null && point.ranking_score != null ? point.ranking_score - currentScore : null;
+          const isAbove = currentPosition != null && point.ranking_position != null && point.ranking_position < currentPosition;
+          return (
+            <div key={point.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
+              <div className="min-w-0">
+                <p className="truncate font-medium text-foreground">{point.name}</p>
+                {diff != null && (
+                  <p className="text-xs text-muted-foreground">
+                    {diff > 0
+                      ? `▲ a ${diff.toFixed(1)} pts de distância`
+                      : diff < 0
+                        ? `▼ sua vantagem: ${Math.abs(diff).toFixed(1)} pts`
+                        : 'empate em pontos'}
+                  </p>
+                )}
+              </div>
+              <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                #{point.ranking_position ?? '—'} · {point.ranking_score == null ? '—' : `${point.ranking_score.toFixed(1)} pts`}
+              </span>
+            </div>
+          );
+        })}
       </CardContent>
     </Card>
   );
 }
 
-function ChangeRow({ label, value, suffix = '', invertDirection = false }: { label: string; value: number; suffix?: string; invertDirection?: boolean }) {
-  const favorable = invertDirection ? value > 0 : value > 0;
+function ChangeRow({
+  label,
+  value,
+  suffix = '',
+  invertDirection = false,
+}: {
+  label: string;
+  value: number;
+  suffix?: string;
+  invertDirection?: boolean;
+}) {
+  // O backend calcula position_change como previous - current (+ significa melhora de posição)
+  const favorable = invertDirection ? value < 0 : value > 0;
   const Icon = value === 0 ? Equal : favorable ? ArrowUp : ArrowDown;
-  return <p className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"><span>{label}</span><span className="flex items-center gap-1 font-medium"><Icon className="h-3.5 w-3.5" />{signed(value, suffix)}</span></p>;
+  return (
+    <p className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
+      <span>{label}</span>
+      <span className={`flex items-center gap-1 font-medium ${value === 0 ? 'text-muted-foreground' : favorable ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+        <Icon className="h-3.5 w-3.5" />
+        {signed(value, suffix)}
+      </span>
+    </p>
+  );
 }

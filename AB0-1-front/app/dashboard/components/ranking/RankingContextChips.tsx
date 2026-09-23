@@ -11,14 +11,28 @@ export function RankingContextChips({ data }: Props) {
   const version = data?.definition?.definition_version;
 
   return (
-    <div className="flex flex-wrap gap-2" aria-label="Contexto do ranking">
-      {data?.comparison_scope?.state && <Badge variant="outline">{data.comparison_scope.state}</Badge>}
-      {comparisonLabel && <Badge variant="outline">{comparisonLabel}</Badge>}
+    <div className="flex flex-wrap items-center gap-2" aria-label="Contexto do ranking">
+      {comparisonLabel ? (
+        <Badge variant="secondary" className="font-medium">
+          Comparação: {comparisonLabel}
+        </Badge>
+      ) : (
+        <Badge variant="secondary" className="font-medium">
+          Escopo: Brasil
+        </Badge>
+      )}
       {population && <Badge variant="outline">{population}</Badge>}
-      {data?.definition?.purpose === 'organic_performance' && <Badge variant="outline">Orgânico</Badge>}
+      {data?.definition?.purpose === 'organic_performance' && (
+        <Badge variant="outline" className="border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+          Orgânico
+        </Badge>
+      )}
       {dataThrough && <Badge variant="outline">Dados até {dataThrough}</Badge>}
-      {version && <Badge variant="outline">Metodologia {version.replace('organic-performance-', 'v')}</Badge>}
-      {data?.definition?.sponsored_included === false && <Badge variant="outline">Patrocínio não influencia</Badge>}
+      {version && (
+        <Badge variant="outline">
+          Metodologia {version.replace('organic-performance-', 'v')}
+        </Badge>
+      )}
     </div>
   );
 }

@@ -29,10 +29,12 @@ import { getApiErrorMessage } from '@/lib/api-error';
 import { RankingBenchmarkCards } from './ranking/RankingBenchmarkCards';
 import { ComparisonRankingCard, OfficialRankingCard } from './ranking/RankingCards';
 import { RankingContextChips } from './ranking/RankingContextChips';
+import { RankingExecutiveHero } from './ranking/RankingExecutiveHero';
 import { RankingMethodologyDialog } from './ranking/RankingMethodologyDialog';
 import { RankingEvidence, RankingNearbyCompetitors } from './ranking/RankingEvidence';
 import { RankingPositioningMap } from './ranking/RankingPositioningMap';
 import { RankingStateBanner } from './ranking/RankingStateBanner';
+import { RankingWhyCard } from './ranking/RankingWhyCard';
 import {
   comparisonScopeLabel,
   formatDate,
@@ -61,7 +63,10 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
   const searchParams = useSearchParams();
   const [selectedCategoryId, setSelectedCategoryId] = useState(() => searchParams.get('ranking_category') || 'all');
   const [selectedCriterionSlug, setSelectedCriterionSlug] = useState(() => searchParams.get('ranking_criterion') || 'all');
-  const [selectedState, setSelectedState] = useState(() => searchParams.get('ranking_state') || 'all');
+  const [selectedState, setSelectedState] = useState(() => {
+    const raw = searchParams.get('ranking_state');
+    return raw && raw.trim() !== '' ? raw.trim() : 'all';
+  });
   const [selectedCity, setSelectedCity] = useState(() => searchParams.get('ranking_city') || '');
   const [debouncedCity, setDebouncedCity] = useState(() => searchParams.get('ranking_city') || '');
   const [selectedSector, setSelectedSector] = useState(() => searchParams.get('ranking_sector') || 'all');
@@ -81,7 +86,8 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
   useEffect(() => {
     setSelectedCategoryId(searchParams.get('ranking_category') || 'all');
     setSelectedCriterionSlug(searchParams.get('ranking_criterion') || 'all');
-    setSelectedState(searchParams.get('ranking_state') || 'all');
+    const rawSt = searchParams.get('ranking_state');
+    setSelectedState(rawSt && rawSt.trim() !== '' ? rawSt.trim() : 'all');
     setSelectedCity(searchParams.get('ranking_city') || '');
     setSelectedSector(searchParams.get('ranking_sector') || 'all');
     setHistoryDays(searchParams.get('ranking_history') || '90');
@@ -93,13 +99,17 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
     const params = {
       ranking_category: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
       ranking_criterion: selectedCriterionSlug === 'all' ? undefined : selectedCriterionSlug,
-      ranking_state: selectedState === 'all' ? undefined : selectedState,
+      ranking_state: selectedState === 'all' || !selectedState ? undefined : selectedState,
       ranking_city: debouncedCity || undefined,
       ranking_sector: selectedSector === 'all' ? undefined : selectedSector,
       ranking_history: historyDays === '90' ? undefined : historyDays,
       ranking_quadrant: quadrantMode === 'default' ? undefined : quadrantMode,
     };
-    Object.entries(params).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key));
+    Object.entries(params).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)));
+    // Assegura remoção de ranking_state quando vazio ou 'all'
+    if (selectedState === 'all' || !selectedState) {
+      next.delete('ranking_state');
+    }
     if (next.toString() !== searchParams.toString()) router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   }, [debouncedCity, historyDays, pathname, quadrantMode, router, searchParams, selectedCategoryId, selectedCriterionSlug, selectedSector, selectedState]);
 
@@ -202,12 +212,16 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
         </p>
       )}
 
-      <section className="space-y-4" aria-labelledby="ranking-title">
-        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-          <div>
-            <div className="mb-2 flex items-center gap-2"><Trophy className="h-6 w-6 text-amber-500" /><h2 id="ranking-title" className="text-3xl font-bold tracking-tight">{heroTitle}</h2></div>
-            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{heroDescription}</p>
-          </div>
+      {/* 01. EXECUTIVE RANKING HERO & ESCOPO */}
+      <section className="space-y-3" aria-labelledby="ranking-hero">
+        <RankingExecutiveHero
+          data={data}
+          isPreview={isPreview}
+          comparisonLabel={comparisonLabel}
+          heroTitle={heroTitle}
+        />
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <RankingContextChips data={data} />
           <RankingMethodologyDialog
             definition={data?.definition}
             quadrantMeta={data?.quadrant?.meta}
@@ -216,7 +230,6 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
             comparisonScope={data?.comparison_scope}
           />
         </div>
-        <RankingContextChips data={data} />
       </section>
 
       <RankingStateBanner
@@ -224,55 +237,141 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
         officialStatus={isPreview ? data?.official_ranking?.status : undefined}
       />
 
-      <Card>
+      {/* 02. BARRA DE COMPARAÇÃO CONTEXTUAL */}
+      <Card className="border-slate-200/80 dark:border-slate-800">
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
           <Filter className="mb-2 h-4 w-4 text-muted-foreground" />
-          <FilterSelect label="Categoria" value={selectedCategoryId} onChange={(value) => { setSelectedCategoryId(value); setSelectedCriterionSlug('all'); }}>
+          <FilterSelect
+            label="Comparar com (Estado)"
+            value={selectedState}
+            onChange={(value) => {
+              setSelectedState(value);
+              setSelectedCity('');
+            }}
+          >
+            <SelectItem value="all">Brasil (Nacional)</SelectItem>
+            {(filterOptions?.states || []).map((state) => (
+              <SelectItem key={state} value={state}>
+                {stateName(state)}
+              </SelectItem>
+            ))}
+          </FilterSelect>
+
+          <FilterSelect
+            label="Categoria"
+            value={selectedCategoryId}
+            onChange={(value) => {
+              setSelectedCategoryId(value);
+              setSelectedCriterionSlug('all');
+            }}
+          >
             <SelectItem value="all">Todas as categorias</SelectItem>
-            {(filterOptions?.categories || []).map((category) => <SelectItem key={category.id} value={String(category.id)}>{category.name}</SelectItem>)}
+            {(filterOptions?.categories || []).map((category) => (
+              <SelectItem key={category.id} value={String(category.id)}>
+                {category.name}
+              </SelectItem>
+            ))}
           </FilterSelect>
-          <FilterSelect label="Estado" value={selectedState} onChange={(value) => { setSelectedState(value); setSelectedCity(''); }}>
-            <SelectItem value="all">Brasil</SelectItem>
-            {(filterOptions?.states || []).map((state) => <SelectItem key={state} value={state}>{stateName(state)}</SelectItem>)}
-          </FilterSelect>
+
           <FilterSelect label="Setor" value={selectedSector} onChange={setSelectedSector}>
             <SelectItem value="all">Todos os setores</SelectItem>
-            {(filterOptions?.sectors || []).map((sector) => <SelectItem key={sector} value={sector}>{sector}</SelectItem>)}
+            {(filterOptions?.sectors || []).map((sector) => (
+              <SelectItem key={sector} value={sector}>
+                {sector}
+              </SelectItem>
+            ))}
           </FilterSelect>
+
           <FilterSelect label="Período" value={historyDays} onChange={setHistoryDays}>
-            {HISTORY_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+            {HISTORY_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </FilterSelect>
+
           <details className="relative mb-0.5">
-            <summary className="cursor-pointer rounded-md border px-3 py-2 text-sm">Mais filtros</summary>
+            <summary className="cursor-pointer rounded-md border px-3 py-2 text-sm bg-background">
+              Mais filtros
+            </summary>
             <div className="absolute right-0 z-10 mt-2 grid w-72 gap-3 rounded-lg border bg-background p-3 shadow-lg">
-              <label className="grid gap-1 text-xs font-medium">Cidade
-                <input list="ranking-cities" value={selectedCity} onChange={(event) => setSelectedCity(event.target.value)} className="h-9 rounded-md border bg-transparent px-2 text-sm" />
-                <datalist id="ranking-cities">{(filterOptions?.cities || []).map((city) => <option key={city} value={city} />)}</datalist>
+              <label className="grid gap-1 text-xs font-medium">
+                Cidade
+                <input
+                  list="ranking-cities"
+                  value={selectedCity}
+                  onChange={(event) => setSelectedCity(event.target.value)}
+                  className="h-9 rounded-md border bg-transparent px-2 text-sm"
+                  placeholder="Ex: Florianópolis"
+                />
+                <datalist id="ranking-cities">
+                  {(filterOptions?.cities || []).map((city) => (
+                    <option key={city} value={city} />
+                  ))}
+                </datalist>
               </label>
-              <FilterSelect label="Critério do mapa" value={selectedCriterionSlug} onChange={setSelectedCriterionSlug}>
-                <SelectItem value="all">Nenhum</SelectItem>
-                {(criteriaQuery.data?.criteria || []).map((criterion) => <SelectItem key={criterion.slug} value={criterion.slug}>{criterion.title}</SelectItem>)}
+
+              <FilterSelect
+                label="Critério do mapa"
+                value={selectedCriterionSlug}
+                onChange={setSelectedCriterionSlug}
+              >
+                <SelectItem value="all">Nenhum (Geral)</SelectItem>
+                {(criteriaQuery.data?.criteria || []).map((criterion) => (
+                  <SelectItem key={criterion.slug} value={criterion.slug}>
+                    {criterion.title}
+                  </SelectItem>
+                ))}
               </FilterSelect>
-              <FilterSelect label="Modo do mapa" value={quadrantMode} onChange={(value) => setQuadrantMode(value as 'default' | 'reviews')}>
+
+              <FilterSelect
+                label="Modo do mapa"
+                value={quadrantMode}
+                onChange={(value) => setQuadrantMode(value as 'default' | 'reviews')}
+              >
                 <SelectItem value="default">Autoridade e execução</SelectItem>
                 <SelectItem value="reviews">Somente reviews</SelectItem>
               </FilterSelect>
             </div>
           </details>
-          {hasActiveFilters && <Button variant="ghost" size="sm" onClick={resetFilters}><RotateCcw className="mr-1 h-4 w-4" />Limpar</Button>}
+
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <RotateCcw className="mr-1 h-4 w-4" />
+              Limpar
+            </Button>
+          )}
         </CardContent>
       </Card>
 
+      {/* 03. POSIÇÕES OFICIAIS & COMPARAÇÃO DETALHADA */}
       <section className={isPreview ? 'grid gap-5 lg:grid-cols-2' : 'max-w-xl'} aria-label="Posições de ranking">
         <OfficialRankingCard metric={data?.official_ranking || data?.ranking} scope={officialScope} />
         {isPreview && <ComparisonRankingCard metric={data?.ranking} scope={comparisonLabel || 'Escopo selecionado'} />}
       </section>
 
-      <RankingBenchmarkCards benchmarks={data?.benchmarks} />
+      {/* 04. POR QUE ESTOU NESTA POSIÇÃO? & OPPORTUNITY GAP */}
+      <RankingWhyCard data={data} />
 
+      {/* 04. BENCHMARKS & COMPONENTES DO SCORE */}
+      <RankingBenchmarkCards benchmarks={data?.benchmarks} />
       <RankingEvidence data={data} />
 
-      <section className="grid gap-5 xl:grid-cols-[1.25fr_1fr]">
+      {/* 05. MAPA DE POSICIONAMENTO ESTRATÉGICO (MAGIC QUADRANT) & COMPETIDORES */}
+      <section className="grid gap-5 xl:grid-cols-[1.25fr_1fr]" aria-label="Mapa Estratégico e Competidores">
+        <RankingPositioningMap quadrant={data?.quadrant} />
+        <div className="space-y-5">
+          <RankingNearbyCompetitors
+            leaders={data?.leaders}
+            neighbors={data?.neighbors}
+            currentScore={data?.ranking?.score}
+            currentPosition={data?.ranking?.position}
+          />
+        </div>
+      </section>
+
+      {/* 06. EVOLUÇÃO TEMPORAL & NEXT BEST ACTION */}
+      <section className="grid gap-5 xl:grid-cols-[1.25fr_1fr]" aria-label="Histórico e Insights">
         <Card>
           <CardHeader>
             <CardTitle>{isPreview ? 'Histórico do ranking oficial' : 'Evolução do ranking oficial'}</CardTitle>
@@ -286,38 +385,99 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
           </CardHeader>
           <CardContent>
             <div className="mb-4 flex flex-wrap gap-2">
-              {(['position', 'percentile', 'score'] as const).map((metric) => <Button key={metric} variant={historyMetric === metric ? 'default' : 'outline'} size="sm" onClick={() => setHistoryMetric(metric)}>{metric === 'position' ? 'Posição' : metric === 'percentile' ? 'Percentil' : 'Pontuação'}</Button>)}
+              {(['position', 'percentile', 'score'] as const).map((metric) => (
+                <Button
+                  key={metric}
+                  variant={historyMetric === metric ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setHistoryMetric(metric)}
+                >
+                  {metric === 'position' ? 'Posição' : metric === 'percentile' ? 'Percentil' : 'Pontuação'}
+                </Button>
+              ))}
             </div>
             <p className="sr-only">Gráfico do histórico oficial de {historyLabel}, exibindo {historyMetric}.</p>
             {historyItems.length ? (
-              <div className="h-80" aria-label="Gráfico do histórico oficial">
-                <ResponsiveContainer width="100%" height="100%"><AreaChart data={historyItems} margin={{ top: 16, right: 20, bottom: 16, left: -12 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="week" tick={{ fontSize: 10 }} /><YAxis reversed={historyMetric === 'position'} tick={{ fontSize: 10 }} />
-                  <RechartsTooltip /><Area type="monotone" dataKey={historyMetric} stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.18)" name={historyMetric} />
-                </AreaChart></ResponsiveContainer>
+              <div className="h-72" aria-label="Gráfico do histórico oficial">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={historyItems} margin={{ top: 16, right: 20, bottom: 16, left: -12 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="week" tick={{ fontSize: 10 }} />
+                    <YAxis reversed={historyMetric === 'position'} tick={{ fontSize: 10 }} />
+                    <RechartsTooltip />
+                    <Area
+                      type="monotone"
+                      dataKey={historyMetric}
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary) / 0.18)"
+                      name={historyMetric}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-            ) : <p className="py-16 text-center text-sm text-muted-foreground">Dados históricos insuficientes.</p>}
+            ) : (
+              <p className="py-16 text-center text-sm text-muted-foreground">Dados históricos insuficientes.</p>
+            )}
           </CardContent>
         </Card>
-        <div className="space-y-5">
-          <RankingPositioningMap quadrant={data?.quadrant} />
-          <RankingNearbyCompetitors leaders={data?.leaders} neighbors={data?.neighbors} />
-        </div>
-      </section>
 
-      <section className="grid gap-5 lg:grid-cols-[1fr_auto]">
-        <Card>
-          <CardHeader><CardTitle>Insights e próximos passos</CardTitle><CardDescription>Recomendações derivadas somente dos dados disponíveis neste escopo.</CardDescription></CardHeader>
-          <CardContent className="space-y-3">
-            {insights.length ? insights.map((insight) => <article key={insight.code} className="rounded-lg border p-4">
-              <p className="font-medium">{insight.title || insight.code}</p><p className="mt-1 text-sm text-muted-foreground">{insight.description || insight.message}</p>
-              {insight.action_url && <a className="mt-2 inline-block text-sm font-medium text-brand-blue underline" href={insight.action_url}>Ver ação relacionada</a>}
-            </article>) : <p className="text-sm text-muted-foreground">Ainda não há evidência comparável suficiente para uma recomendação específica.</p>}
-            {data?.insights?.next_best_action && <p className="rounded-lg bg-muted p-3 text-sm"><strong>Próxima ação:</strong> {data.insights.next_best_action.title || data.insights.next_best_action.description || data.insights.next_best_action.message}</p>}
-          </CardContent>
-        </Card>
-        {qualityLabels.length > 0 && <Card className="lg:w-80"><CardHeader><CardTitle>Qualidade dos dados</CardTitle></CardHeader><CardContent><div className="flex flex-wrap gap-2">{qualityLabels.map((label) => <Badge key={label} variant="outline">{label}</Badge>)}</div>{formatDate(data?.quality?.computed_at) && <p className="mt-4 text-xs text-muted-foreground">Calculado em {formatDate(data?.quality?.computed_at)}</p>}</CardContent></Card>}
+        <div className="space-y-5">
+          <Card>
+            <CardHeader>
+              <CardTitle>Insights e próximos passos</CardTitle>
+              <CardDescription>Recomendações derivadas somente dos dados disponíveis neste escopo.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {insights.length ? (
+                insights.map((insight) => (
+                  <article key={insight.code} className="rounded-lg border p-4">
+                    <p className="font-medium">{insight.title || insight.code}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{insight.description || insight.message}</p>
+                    {insight.action_url && (
+                      <a className="mt-2 inline-block text-sm font-medium text-brand-blue underline" href={insight.action_url}>
+                        Ver ação relacionada
+                      </a>
+                    )}
+                  </article>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Ainda não há evidência comparável suficiente para uma recomendação específica.
+                </p>
+              )}
+              {data?.insights?.next_best_action && (
+                <p className="rounded-lg bg-muted p-3 text-sm">
+                  <strong>Próxima ação:</strong>{' '}
+                  {data.insights.next_best_action.title ||
+                    data.insights.next_best_action.description ||
+                    data.insights.next_best_action.message}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {qualityLabels.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold">Qualidade dos dados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {qualityLabels.map((label) => (
+                    <Badge key={label} variant="outline">
+                      {label}
+                    </Badge>
+                  ))}
+                </div>
+                {formatDate(data?.quality?.computed_at) && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Calculado em {formatDate(data?.quality?.computed_at)}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </section>
     </div>
   );
