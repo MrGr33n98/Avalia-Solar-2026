@@ -72,7 +72,7 @@ export function RankingExecutiveHero({
                   Market Position Intelligence
                 </h2>
                 <Badge variant="outline" className="text-[10px] font-semibold border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300">
-                  Oficial · v3
+                  Oficial
                 </Badge>
               </div>
               <h2 id="ranking-title" className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-xl">

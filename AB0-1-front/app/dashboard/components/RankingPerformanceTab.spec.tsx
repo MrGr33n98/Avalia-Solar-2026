@@ -3,6 +3,7 @@ import RankingPerformanceTab from './RankingPerformanceTab';
 
 let mockRankingData: Record<string, unknown>;
 let mockRankingError: unknown = null;
+let mockFilterOptionsQuery: { staleTime?: number } | undefined;
 
 jest.mock('next/navigation', () => ({
   usePathname: () => '/dashboard',
@@ -11,11 +12,13 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('@tanstack/react-query', () => ({
-  useQuery: ({ queryKey }: { queryKey: string[] }) => {
+  useQuery: (options: { queryKey: string[]; staleTime?: number }) => {
+    const { queryKey } = options;
     if (queryKey[0] === 'company-analytics-ranking') {
       return { data: mockRankingData, isLoading: false, isError: Boolean(mockRankingError), error: mockRankingError, isPlaceholderData: Boolean(mockRankingError), refetch: jest.fn() };
     }
     if (queryKey[0] === 'company-analytics-ranking-filter-options') {
+      mockFilterOptionsQuery = options;
       return { data: { categories: [], states: ['SC'], sectors: ['Residenciais'], cities: [], selected_state: null }, isLoading: false };
     }
     return { data: { criteria: [] }, isLoading: false };
@@ -61,6 +64,7 @@ const company = { id: 1, name: 'Empresa Solar', categories: [] } as never;
 describe('RankingPerformanceTab', () => {
   beforeEach(() => {
     mockRankingError = null;
+    mockFilterOptionsQuery = undefined;
     mockRankingData = {
       status: 'ready',
       mode: 'canonical',
@@ -77,10 +81,18 @@ describe('RankingPerformanceTab', () => {
     };
   });
 
+  it('uses a short stale time for current ranking filter options', () => {
+    render(<RankingPerformanceTab company={company} />);
+
+    expect(mockFilterOptionsQuery?.staleTime).toBe(30_000);
+  });
+
   it('renders the official position and real score as points', () => {
     render(<RankingPerformanceTab company={company} stats={{ conversionRate: 12.5 }} />);
 
     expect(screen.getByText('Ranking oficial')).toBeInTheDocument();
+    expect(screen.getByText('Oficial')).toBeInTheDocument();
+    expect(screen.queryByText('Oficial · v3')).not.toBeInTheDocument();
     expect(screen.getByText('4º de 50')).toBeInTheDocument();
     expect(screen.getByText('42.4 pts')).toBeInTheDocument();
     expect(screen.queryByText('42.4%')).not.toBeInTheDocument();

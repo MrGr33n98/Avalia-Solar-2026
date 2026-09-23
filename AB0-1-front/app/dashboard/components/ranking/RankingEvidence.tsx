@@ -38,7 +38,7 @@ export function RankingEvidence({ data }: { data?: RankingData }) {
           {changes?.status === 'ready' ? (
             <div className="space-y-2 text-sm">
               <p className="text-muted-foreground">{changes.from} → {changes.to}</p>
-              <ChangeRow label="Posição" value={changes.changes.position} invertDirection />
+              <ChangeRow label="Posição" value={changes.changes.position} />
               <ChangeRow label="Score" value={changes.changes.score} suffix=" pts" />
               <ChangeRow label="Percentil" value={changes.changes.percentile} suffix=" p.p." />
             </div>
@@ -112,6 +112,12 @@ export function RankingNearbyCompetitors({
   );
 }
 
+export function getChangeTone(value: number, invertDirection = false) {
+  if (value === 0) return 'neutral' as const;
+  const favorable = invertDirection ? value < 0 : value > 0;
+  return favorable ? 'positive' as const : 'negative' as const;
+}
+
 function ChangeRow({
   label,
   value,
@@ -123,13 +129,13 @@ function ChangeRow({
   suffix?: string;
   invertDirection?: boolean;
 }) {
-  // O backend calcula position_change como previous - current (+ significa melhora de posição)
-  const favorable = invertDirection ? value < 0 : value > 0;
-  const Icon = value === 0 ? Equal : favorable ? ArrowUp : ArrowDown;
+  // position_change segue previous_position - current_position: positivo é melhora.
+  const tone = getChangeTone(value, invertDirection);
+  const Icon = tone === 'neutral' ? Equal : tone === 'positive' ? ArrowUp : ArrowDown;
   return (
     <p className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
       <span>{label}</span>
-      <span className={`flex items-center gap-1 font-medium ${value === 0 ? 'text-muted-foreground' : favorable ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+      <span className={`flex items-center gap-1 font-medium ${tone === 'neutral' ? 'text-muted-foreground' : tone === 'positive' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
         <Icon className="h-3.5 w-3.5" />
         {signed(value, suffix)}
       </span>

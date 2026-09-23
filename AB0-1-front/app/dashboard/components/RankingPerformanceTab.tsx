@@ -51,6 +51,8 @@ interface Props {
   themeMode?: 'light' | 'dark';
 }
 
+export const RANKING_FILTER_OPTIONS_STALE_TIME_MS = 30_000;
+
 const HISTORY_OPTIONS = [
   { value: '30', label: '30 dias' },
   { value: '90', label: '90 dias' },
@@ -125,7 +127,8 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
     queryKey: ['company-analytics-ranking-filter-options', company.id, selectedState],
     queryFn: () => companyDashboardApi.getRankingFilterOptions(company.id, selectedState === 'all' ? undefined : selectedState),
     enabled: Boolean(company.id),
-    staleTime: 6 * 60 * 60 * 1000,
+    // O backend deriva as opções da população atual, sem cache deliberado; alinhar ao ranking evita filtros obsoletos.
+    staleTime: RANKING_FILTER_OPTIONS_STALE_TIME_MS,
   });
 
   const rankingQuery = useQuery({
