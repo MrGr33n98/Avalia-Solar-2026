@@ -23,41 +23,31 @@ export default function CompanyPremiumHero({
   return (
     <div
       id="company-premium-hero"
-      className="relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm"
+      className="relative w-full overflow-hidden bg-slate-900"
     >
-      <div className="relative h-[160px] w-full sm:h-[190px] md:h-[230px] lg:h-[230px]">
+      <div className="relative h-[145px] w-full sm:h-[165px] md:h-[185px] lg:h-[195px]">
         {showPlaceholder ? (
           <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
         ) : (
-          <>
-            <OptimizedImage
-              src={bannerUrl}
-              alt=""
-              fill
-              aria-hidden="true"
-              className="scale-110 object-cover opacity-40 blur-xl"
-              containerClassName="pointer-events-none absolute inset-0 h-full w-full"
-            />
-            <OptimizedImage
-              src={bannerUrl}
-              alt={company.name}
-              fill
-              priority
-              quality={95}
-              imageContext="company-banner"
-              entityName={company.name}
-              locationLabel={locationLabel}
-              objectFit="contain"
-              className="object-center"
-              containerClassName="h-full w-full"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
-              fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
-              useAspectRatio={false}
-              width={1600}
-              height={900}
-              onError={() => setBannerError(true)}
-            />
-          </>
+          <OptimizedImage
+            src={bannerUrl}
+            alt={company.name}
+            fill
+            priority
+            quality={95}
+            imageContext="company-banner"
+            entityName={company.name}
+            locationLabel={locationLabel}
+            objectFit="cover"
+            className="object-center object-cover"
+            containerClassName="h-full w-full"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1240px"
+            fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
+            useAspectRatio={false}
+            width={1600}
+            height={900}
+            onError={() => setBannerError(true)}
+          />
         )}
         {showPlaceholder && (
           <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
@@ -66,8 +56,8 @@ export default function CompanyPremiumHero({
             </span>
           </div>
         )}
-        {/* Overlay linear sutil para contraste */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+        {/* Overlay sutil para contraste */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
       </div>
     </div>
   );

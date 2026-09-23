@@ -449,7 +449,7 @@ export default function CompanyDetailClient({
         setLogoError={setLogoError}
         canRequestQuote={canRequestQuote}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         showFinancing={showFinancing}
         showGallery={showGallery}
         showFaq={showFaq}

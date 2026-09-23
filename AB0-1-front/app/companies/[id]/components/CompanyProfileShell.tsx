@@ -97,7 +97,11 @@ export default function CompanyProfileShell({
         <div className="mx-auto w-full max-w-[430px] px-4 pt-4 md:max-w-[1240px] md:px-6">
           <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
 
-          <div className="flex flex-col gap-0 overflow-visible">
+          {/* Compound Hero Container estilo WEG */}
+          <div
+            id="company-profile-compound-hero"
+            className="relative w-full overflow-hidden rounded-2xl md:rounded-3xl border border-slate-200/90 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
+          >
             {/* Hero Banner */}
             <CompanyPremiumHero
               company={company}
@@ -107,7 +111,7 @@ export default function CompanyProfileShell({
             />
 
             {/* Identidade da Empresa e CTAs */}
-            <div className="relative z-20 mt-0 px-0 pt-0">
+            <div className="relative z-20 mt-0 px-0 pt-0 bg-white">
               <CompanyIdentityCard
                 company={company}
                 companyStats={companyStats}
@@ -118,26 +122,26 @@ export default function CompanyProfileShell({
                 <CompanyCTAGroup company={company} canRequestQuote={canRequestQuote} />
               </CompanyIdentityCard>
             </div>
-
-            {/* Navegação por Abas Responsiva */}
-            <CompanyProfileTabs
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              categories={
-                company.categories?.length
-                  ? company.categories
-                  : company.category_info
-                    ? [company.category_info]
-                    : []
-              }
-              companyPath={buildCompanyPath(company.slug, company.name, company.id)}
-              companyName={company.name}
-              companyId={company.id}
-              showFinancing={showFinancing}
-              showGallery={showGallery}
-              showFaq={showFaq}
-            />
           </div>
+
+          {/* Navegação por Abas Responsiva */}
+          <CompanyProfileTabs
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            categories={
+              company.categories?.length
+                ? company.categories
+                : company.category_info
+                  ? [company.category_info]
+                  : []
+            }
+            companyPath={buildCompanyPath(company.slug, company.name, company.id)}
+            companyName={company.name}
+            companyId={company.id}
+            showFinancing={showFinancing}
+            showGallery={showGallery}
+            showFaq={showFaq}
+          />
         </div>
       </header>
 

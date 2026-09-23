@@ -179,10 +179,10 @@ export default function CompanyProfileTabs({
       </div>
 
       {/* Desktop tabs */}
-      <div className="relative z-30 mt-5 hidden w-full border-b border-slate-200 bg-transparent md:block">
+      <div className="relative z-30 mt-2 md:mt-3 hidden w-full border-b border-slate-200 bg-transparent md:block">
         <div className="w-full overflow-x-auto md:overflow-visible">
           <nav aria-label="Seções do perfil da empresa">
-            <div className="flex h-auto min-w-full justify-start gap-6 text-slate-500">
+            <div className="flex h-auto min-w-full justify-start gap-6 lg:gap-8 text-slate-500">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 const isProductsTab = tab.id === 'products';
@@ -198,12 +198,11 @@ export default function CompanyProfileTabs({
                       aria-controls={`company-tab-panel-${tab.id}`}
                       onClick={() => handleTabClick(tab.id)}
                       className={cn(
-                        'inline-flex h-14 items-center whitespace-nowrap rounded-none border-b-2 border-transparent px-0 pb-0 pt-1 text-[13px] font-medium shadow-none transition-all duration-200',
-                        'text-slate-500 hover:bg-transparent hover:text-slate-900',
-                        isActive && 'border-blue-700 bg-transparent text-slate-950 shadow-none font-bold'
+                        'inline-flex h-11 md:h-12 items-center whitespace-nowrap rounded-none border-b-2 border-transparent px-0 pb-0 pt-0.5 text-xs sm:text-sm font-semibold shadow-none transition-all duration-200',
+                        'text-slate-600 hover:bg-transparent hover:text-slate-950',
+                        isActive && 'border-blue-700 bg-transparent text-blue-700 shadow-none font-bold'
                       )}
                     >
-                      <tab.icon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
                       <span className="whitespace-nowrap">{tab.label}</span>
                     </button>
                   );
@@ -228,15 +227,14 @@ export default function CompanyProfileTabs({
                         aria-selected={isActive}
                         aria-controls={`company-tab-panel-${tab.id}`}
                         className={cn(
-                          'inline-flex h-14 items-center whitespace-nowrap rounded-none border-b-2 border-transparent px-0 pb-0 pt-1 text-[13px] font-medium shadow-none transition-all duration-200',
-                          'text-slate-500 hover:bg-transparent hover:text-slate-900',
-                          isActive && 'border-blue-700 bg-transparent text-slate-950 shadow-none font-bold'
+                          'inline-flex h-11 md:h-12 items-center whitespace-nowrap rounded-none border-b-2 border-transparent px-0 pb-0 pt-0.5 text-xs sm:text-sm font-semibold shadow-none transition-all duration-200',
+                          'text-slate-600 hover:bg-transparent hover:text-slate-950',
+                          isActive && 'border-blue-700 bg-transparent text-blue-700 shadow-none font-bold'
                         )}
                       >
-                        <tab.icon className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
                         <span className="whitespace-nowrap">{tab.label}</span>
                         <ChevronDown
-                          className="ml-1 h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180"
+                          className="ml-1 h-3.5 w-3.5 shrink-0 transition-transform group-data-[state=open]:rotate-180 text-slate-400"
                           aria-hidden="true"
                         />
                       </button>
