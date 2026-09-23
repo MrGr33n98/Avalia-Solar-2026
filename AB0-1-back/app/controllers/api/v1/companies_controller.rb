@@ -671,15 +671,18 @@ module Api
             json_ld: {
               '@context': 'https://schema.org',
               '@type': 'Organization',
-              name: company.name,
-              aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: company.rating_avg.to_f.positive? ? company.rating_avg.to_f : 5.0,
-                reviewCount: company.rating_count.to_i.positive? ? company.rating_count.to_i : 1,
-                bestRating: '5',
-                worstRating: '1'
-              }
-            }
+              name: company.name
+            }.tap do |ld|
+              if company.reviews_count.positive? && company.reviews_average.present?
+                ld[:aggregateRating] = {
+                  '@type': 'AggregateRating',
+                  ratingValue: company.reviews_average,
+                  reviewCount: company.reviews_count,
+                  bestRating: '5',
+                  worstRating: '1'
+                }
+              end
+            end
           }
         )
       end
@@ -754,8 +757,8 @@ module Api
         reviews = company.reviews.includes(:user)
         distribution = reviews.group(:rating).count
         {
-          total_reviews: reviews.count,
-          average_rating: company.rating_avg || 0,
+          total_reviews: company.reviews_count,
+          average_rating: company.reviews_average,
           rating_distribution: {
             5 => distribution[5.0] || 0,
             4 => distribution[4.0] || 0,
