@@ -4,7 +4,15 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { companyDashboardApi, type AttributionModel } from '@/lib/api';
 
-type Props = { companyId: string; days: number; premium: boolean };
+type Props = {
+  companyId: string;
+  from?: string;
+  to?: string;
+  rangeLabel?: string;
+  preset?: '7d' | '30d' | '90d' | 'custom';
+  days?: number;
+  premium: boolean;
+};
 
 const labels: Record<string, string> = {
   visits: 'Visitas',
@@ -13,20 +21,23 @@ const labels: Record<string, string> = {
   attribution_coverage_pct: 'Cobertura',
 };
 
-export default function AttributionOverview({ companyId, days, premium }: Props) {
+export default function AttributionOverview({ companyId, from: requestedFrom, to: requestedTo, rangeLabel, preset = 'custom', days = 30, premium }: Props) {
   const [model, setModel] = useState<AttributionModel>('last_touch');
-  const to = new Date().toISOString().slice(0, 10);
-  const fromDate = new Date();
-  fromDate.setDate(fromDate.getDate() - days + 1);
-  const from = fromDate.toISOString().slice(0, 10);
+  const fallbackTo = new Date().toISOString().slice(0, 10);
+  const fallbackFromDate = new Date();
+  fallbackFromDate.setDate(fallbackFromDate.getDate() - days + 1);
+  const from = requestedFrom || fallbackFromDate.toISOString().slice(0, 10);
+  const to = requestedTo || fallbackTo;
   const query = useQuery({
-    queryKey: ['analytics-attribution', companyId, from, to, model],
+    queryKey: ['analytics-attribution', companyId, from, to, preset, model],
     queryFn: () =>
       companyDashboardApi.getAnalyticsAttribution(companyId, {
         from,
         to,
         attribution_model: model,
         limit: 20,
+        preset,
+        timezone: 'America/Sao_Paulo',
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -39,7 +50,7 @@ export default function AttributionOverview({ companyId, days, premium }: Props)
         Carregando origem e atribuição…
       </section>
     );
-  if (query.data?.data_status === 'unavailable' || query.isError)
+  if (query.data?.data_status === 'unavailable' || query.data?.data_status === 'error' || query.isError)
     return (
       <section className="rounded-xl border p-5 text-sm text-[hsl(var(--dashboard-muted))]">
         Dados de atribuição indisponíveis.
@@ -54,13 +65,14 @@ export default function AttributionOverview({ companyId, days, premium }: Props)
 
   const data = query.data;
   const summary = data?.summary;
+  const isEmpty = data?.data_status === 'empty' || (!summary && data?.data_status === 'ready');
   return (
     <section className="space-y-5 rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-4 sm:p-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold">Origem &amp; Atribuição</h2>
           <p className="text-sm text-[hsl(var(--dashboard-muted))]">
-            Canais, CTAs e leads no mesmo período da aba.
+            Canais, CTAs e leads no mesmo período da aba{rangeLabel ? ` · ${rangeLabel}` : ''}.
           </p>
         </div>
         <select
@@ -85,7 +97,7 @@ export default function AttributionOverview({ companyId, days, premium }: Props)
         </div>
       ) : (
         <p className="text-sm text-[hsl(var(--dashboard-muted))]">
-          Nenhum dado de atribuição disponível neste período.
+          {isEmpty ? 'Nenhuma interação atribuível neste período.' : 'Nenhum dado de atribuição disponível neste período.'}
         </p>
       )}
       <div className="grid gap-5 lg:grid-cols-2">
