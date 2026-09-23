@@ -98,22 +98,13 @@ export default function CompanyIdentityCard({
       aria-label="Card da empresa com ações"
       className="relative overflow-visible bg-white px-4 pb-4 pt-0 sm:px-6 lg:px-7"
     >
-      {/* Silhueta com Curvas Côncavas Assimétricas (Estilo WEG Compound Hero) */}
-      <div className="pointer-events-none absolute -top-6 left-0 right-0 z-20 hidden h-6 lg:flex lg:items-end lg:justify-between px-6">
-        {/* Shelf Esquerda (Nome/Badge) com descontinuidade suave em S */}
+      {/* Silhueta com Curva Côncava na Shelf da Logo/Nome (Estilo WEG) */}
+      <div className="pointer-events-none absolute -top-6 left-0 z-20 hidden h-6 lg:flex lg:items-end px-6">
         <div className="flex items-end">
           <div className="h-6 w-52 bg-white rounded-tl-2xl" />
           <svg viewBox="0 0 36 24" className="h-6 w-9 text-white fill-current shrink-0" preserveAspectRatio="none" aria-hidden="true">
             <path d="M 0,0 C 18,0 18,24 36,24 L 0,24 Z" />
           </svg>
-        </div>
-
-        {/* Shelf Direita (CTA Shelf) com curva côncava de subida estilo WEG */}
-        <div className="flex items-end">
-          <svg viewBox="0 0 36 24" className="h-6 w-9 text-white fill-current shrink-0" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M 0,24 C 18,24 18,0 36,0 L 36,24 Z" />
-          </svg>
-          <div className="h-6 w-80 bg-white rounded-tr-2xl" />
         </div>
       </div>
 
@@ -248,10 +239,28 @@ export default function CompanyIdentityCard({
           </div>
         </div>
 
-        {/* Lado Direito: CTA Shelf */}
+        {/* Lado Direito: CTA Shelf Estilo WEG (Todos os CTAs juntos abaixo da curva) */}
         {children && (
-          <div className="w-full shrink-0 pt-2 lg:w-auto lg:pt-0">
-            {children}
+          <div className="relative w-full shrink-0 pt-2 lg:w-auto lg:pt-0">
+            {/* Wrapper Desktop com a Curva Côncava na borda esquerda da Shelf */}
+            <div className="relative hidden lg:block">
+              {/* SVG Curva Côncava (Subida suave do banner para a Shelf de CTAs) */}
+              <div className="absolute -left-9 top-0 h-7 w-9 pointer-events-none z-10">
+                <svg viewBox="0 0 36 28" className="h-7 w-9 text-white fill-current shrink-0" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M 0,28 C 18,28 18,0 36,0 L 36,28 Z" />
+                </svg>
+              </div>
+
+              {/* Shelf Branca de CTAs elevada com cantos arredondados no topo */}
+              <div className="relative z-20 bg-white pt-2 pb-1.5 pl-2 pr-1 rounded-t-2xl lg:rounded-tr-2xl">
+                {children}
+              </div>
+            </div>
+
+            {/* Layout Mobile / Tablet */}
+            <div className="block lg:hidden">
+              {children}
+            </div>
           </div>
         )}
       </div>
