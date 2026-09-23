@@ -89,6 +89,7 @@ export default function DecisionTransparency() {
     smoothingDesktop: 0.14,
     smoothingMobile: 0.12,
     travelRef: sceneTravelRef,
+    scrollDriven: false,
     scrollProgressMode: 'element',
     sizeToCanvas: true,
     frameFit: 'cover',
@@ -98,7 +99,7 @@ export default function DecisionTransparency() {
           enabled: true,
           durationMs: 10000,
           direction: 'pingpong',
-          pauseOnScroll: true,
+          pauseOnScroll: false,
           pauseOnHover: true,
           resumeIdleAfterMs: 1600,
         }

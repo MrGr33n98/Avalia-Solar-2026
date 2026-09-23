@@ -8,18 +8,15 @@ import {
   Equal,
   Globe2,
   HelpCircle,
-  Info,
   MapPinned,
   ShieldCheck,
   Sparkles,
-  TrendingUp,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { RankingData } from '@/lib/api';
-import { formatEligiblePopulation, formatPosition } from './ranking-utils';
 
 interface Props {
   data?: RankingData;

@@ -2,17 +2,14 @@
 
 import React from 'react';
 import {
-  ArrowRight,
   CheckCircle2,
   HelpCircle,
-  Sparkles,
   Target,
   TrendingUp,
   Zap,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import type { RankingData } from '@/lib/api';
 
 interface Props {
@@ -38,7 +35,6 @@ export function RankingWhyCard({ data }: Props) {
 
   // Determinar próximo patamar
   let nextTierName = 'Top 50% (Mediana)';
-  let nextTierScore = median;
   let gap: number | null = null;
   let currentTier = 'Base da População';
 
@@ -46,22 +42,18 @@ export function RankingWhyCard({ data }: Props) {
     if (p90 != null && currentScore >= p90) {
       currentTier = 'Top 10% (Líderes de Mercado)';
       nextTierName = 'Liderança Absoluta';
-      nextTierScore = null;
       gap = 0;
     } else if (p75 != null && currentScore >= p75) {
       currentTier = 'Top 25% (Alta Performance)';
       nextTierName = 'Top 10%';
-      nextTierScore = p90;
       gap = p90 != null ? +(p90 - currentScore).toFixed(1) : null;
     } else if (median != null && currentScore >= median) {
       currentTier = 'Top 50% (Acima da Média)';
       nextTierName = 'Top 25%';
-      nextTierScore = p75;
       gap = p75 != null ? +(p75 - currentScore).toFixed(1) : null;
     } else {
       currentTier = 'Em Consolidação';
       nextTierName = 'Top 50% (Mediana)';
-      nextTierScore = median;
       gap = median != null ? +(median - currentScore).toFixed(1) : null;
     }
   }
@@ -174,7 +166,14 @@ export function RankingWhyCard({ data }: Props) {
           {/* Régua de Patamares */}
           <div className="space-y-2 rounded-xl border border-slate-100 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900/80 text-xs">
             <div className="flex justify-between items-center text-slate-500">
-              <span>Sua Pontuação Atual</span>
+              <div className="flex items-center gap-2">
+                <span>Sua Pontuação Atual</span>
+                {currentScore != null && (
+                  <Badge variant="outline" className="text-[10px] font-normal">
+                    {currentTier}
+                  </Badge>
+                )}
+              </div>
               <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
                 {currentScore != null ? `${currentScore.toFixed(1)} pontos` : '—'}
               </span>

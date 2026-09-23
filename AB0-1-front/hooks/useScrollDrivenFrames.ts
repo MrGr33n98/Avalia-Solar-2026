@@ -19,6 +19,8 @@ export interface UseScrollDrivenFramesOptions {
   smoothingDesktop?: number;
   smoothingMobile?: number;
   travelRef?: RefObject<HTMLElement> | null;
+  /** Quando false, o scroll não altera o frame; útil para loops de autoplay independentes. */
+  scrollDriven?: boolean;
   /** Define se o progresso segue uma seção sticky ou a passagem do elemento pelo viewport. */
   scrollProgressMode?: 'travel' | 'element';
   /** Ajusta o backing store ao tamanho CSS do canvas, preservando o enquadramento do fallback. */
@@ -138,6 +140,7 @@ export function useScrollDrivenFrames({
   smoothingDesktop = 0.22,
   smoothingMobile = 0.18,
   travelRef = null,
+  scrollDriven = true,
   scrollProgressMode = 'travel',
   sizeToCanvas = false,
   frameFit = 'stretch',
@@ -401,6 +404,11 @@ export function useScrollDrivenFrames({
     };
 
     const calculateScrollProgress = () => {
+      if (!scrollDriven) {
+        scrollTargetProgressRef.current = 0;
+        return;
+      }
+
       const travelElement =
         (travelRef?.current as HTMLElement | null) ??
         (canvasRef.current?.closest('[data-scroll-travel]') as HTMLElement | null);
@@ -535,6 +543,8 @@ export function useScrollDrivenFrames({
     };
 
     const handleScroll = () => {
+      if (!scrollDriven) return;
+
       // Somente eventos reais de scroll do usuário registram o timestamp
       if (autoPauseOnScroll) {
         lastUserScrollAtRef.current = performance.now();
@@ -587,13 +597,16 @@ export function useScrollDrivenFrames({
     calculateScrollProgress();
     // Caso a cena monte após a seção já estar visível, o autoplay começa no
     // frame correspondente ao scroll atual em vez de retornar ao frame zero.
-    currentProgressRef.current = scrollTargetProgressRef.current;
-    targetProgressRef.current = scrollTargetProgressRef.current;
+    const initialProgress = scrollDriven ? scrollTargetProgressRef.current : 0;
+    currentProgressRef.current = initialProgress;
+    targetProgressRef.current = initialProgress;
     autoPlayStartRef.current =
       performance.now() - getAutoPlayElapsedFromProgress(currentProgressRef.current);
     scheduleLoop();
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    if (scrollDriven) {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+    }
     window.addEventListener('resize', handleResize, { passive: true });
     document.addEventListener('visibilitychange', handleVisibilityChange);
     canvas.addEventListener('mouseenter', handleMouseEnter, { passive: true });
@@ -601,7 +614,9 @@ export function useScrollDrivenFrames({
 
     return () => {
       mediaQuery.removeEventListener('change', handleMotionChange);
-      window.removeEventListener('scroll', handleScroll);
+      if (scrollDriven) {
+        window.removeEventListener('scroll', handleScroll);
+      }
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       canvas.removeEventListener('mouseenter', handleMouseEnter);
@@ -639,6 +654,7 @@ export function useScrollDrivenFrames({
     smoothingDesktop,
     smoothingMobile,
     travelRef,
+    scrollDriven,
     scrollProgressMode,
     sizeToCanvas,
     frameFit,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Category } from '@/lib/api';
@@ -136,7 +136,7 @@ export default function LandingHero(props: LandingHeroProps) {
   /* ────────────────────────────────────────────────────────────────
      Scroll-Driven 3D Canvas (desktop only, lg breakpoint: 1024px+)
      ──────────────────────────────────────────────────────────────── */
-  const { canvasRef, hasRenderedValidFrame, hasCriticalFailure } = useScrollDrivenFrames({
+  const { canvasRef, hasRenderedValidFrame } = useScrollDrivenFrames({
     totalFrames: TOTAL_FRAMES,
     enabled: shouldLoadCanvas,
     framesPathDesktop: FRAMES_DESKTOP_DIR,
@@ -148,6 +148,16 @@ export default function LandingHero(props: LandingHeroProps) {
     smoothingDesktop: 0.22,
     smoothingMobile: 0.18,
     travelRef,
+    scrollDriven: false,
+    autoPlay: shouldLoadCanvas
+      ? {
+          enabled: true,
+          durationMs: 9000,
+          direction: 'pingpong',
+          pauseOnScroll: false,
+          pauseOnHover: true,
+        }
+      : undefined,
     initialFrameCount: 1,
     backgroundBatchSize: 3,
     backgroundBatchDelayMs: 700,
@@ -155,13 +165,7 @@ export default function LandingHero(props: LandingHeroProps) {
     maxBackgroundFrames: 24,
   });
 
-  const disableExtendedScroll =
-    isMobile || !shouldAnimateHero || animationLoadState === 'disabled' || hasCriticalFailure;
-
-  const scrollTravel = useMemo(
-    () => (disableExtendedScroll ? 'auto' : '280vh'),
-    [disableExtendedScroll]
-  );
+  const scrollTravel = 'auto';
 
   return (
     <section
@@ -178,7 +182,7 @@ export default function LandingHero(props: LandingHeroProps) {
           ══════════════════════════════════════════════════════════════ */}
       <div
         className={`sticky top-0 flex w-full flex-col overflow-hidden ${
-          disableExtendedScroll ? 'h-auto' : 'h-[100dvh]'
+          'h-auto min-h-[min(100dvh,920px)]'
         }`}
       >
         {/* ── Fundo decorativo: gradientes + sol + SVG geométrico ── */}
@@ -220,7 +224,7 @@ export default function LandingHero(props: LandingHeroProps) {
                       />
                     ) : null}
 
-                    {/* Canvas scroll-driven (120 frames WebP) */}
+                    {/* Canvas em loop independente do scroll (120 frames WebP) */}
                     <canvas
                       ref={canvasRef}
                       width={1280}

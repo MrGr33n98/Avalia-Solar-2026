@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, Filter, RotateCcw, Trophy } from 'lucide-react';
+import { AlertCircle, Filter, RotateCcw } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -163,9 +163,6 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
   const previousScope = comparisonLabel || 'o ranking oficial';
   const officialScope = data?.official_scope?.type === 'category' ? 'Categoria oficial' : 'Brasil';
   const heroTitle = isPreview && comparisonLabel ? `Desempenho em ${comparisonLabel}` : 'Desempenho no Mercado';
-  const heroDescription = isPreview
-    ? `Comparação dinâmica com empresas elegíveis em ${comparisonLabel}. Esta comparação não altera seu ranking orgânico oficial.`
-    : 'Acompanhe sua posição orgânica no Avalia Solar, compare seu desempenho e entenda os fatores que influenciam sua presença competitiva.';
   const apiError = rankingError as { code?: string; requestId?: string; status?: number } | null;
   const errorMessage = getApiErrorMessage(rankingError, 'Não foi possível atualizar o ranking.').replace(/^\[\d{3}\]\s*/, '');
   const qualityLabels = translatedQualityFlags(data?.quality?.flags);

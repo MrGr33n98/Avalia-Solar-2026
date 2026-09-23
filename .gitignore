@@ -32,7 +32,10 @@ node_modules/
 .codex
 .claude/
 .agents/
-```
+*.DISABLED_BACKUP
+infra/MCP_CONFIG.json
+AB0-1-front/public/_*.html
+
 # Arquivos de Testes, Logs e Cache
 .claude/
 .opencode/

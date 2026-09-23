@@ -87,7 +87,7 @@ export function RankingNearbyCompetitors({
             <div key={point.id} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
               <div className="min-w-0">
                 <p className="truncate font-medium text-foreground">{point.name}</p>
-                {diff != null && (
+                {diff != null ? (
                   <p className="text-xs text-muted-foreground">
                     {diff > 0
                       ? `▲ a ${diff.toFixed(1)} pts de distância`
@@ -95,7 +95,11 @@ export function RankingNearbyCompetitors({
                         ? `▼ sua vantagem: ${Math.abs(diff).toFixed(1)} pts`
                         : 'empate em pontos'}
                   </p>
-                )}
+                ) : currentPosition != null && point.ranking_position != null ? (
+                  <p className="text-xs text-muted-foreground">
+                    {isAbove ? '▲ à sua frente no ranking' : '▼ atrás de você no ranking'}
+                  </p>
+                ) : null}
               </div>
               <span className="shrink-0 font-mono text-xs text-muted-foreground">
                 #{point.ranking_position ?? '—'} · {point.ranking_score == null ? '—' : `${point.ranking_score.toFixed(1)} pts`}
