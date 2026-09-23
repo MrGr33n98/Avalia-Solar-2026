@@ -38,6 +38,7 @@ interface CTAData {
 interface CTABreakdownChartProps {
   data: CTAData | null;
   loading?: boolean;
+  dataStatus?: 'ready' | 'empty' | 'processing' | 'unavailable' | 'locked' | 'stale' | 'error';
   themeMode?: 'light' | 'dark';
   title?: string;
   description?: string;
@@ -47,6 +48,7 @@ interface CTABreakdownChartProps {
 export default function CTABreakdownChart({
   data,
   loading = false,
+  dataStatus = 'ready',
   title = 'Breakdown de CTAs',
   description = 'Distribuição de cliques por tipo de CTA',
   orientation = 'horizontal',
@@ -72,7 +74,7 @@ export default function CTABreakdownChart({
       {
         name: 'Email',
         value: data.email_clicks,
-        color: '#6C5CE7',
+        color: 'hsl(var(--dashboard-chart-1))',
         icon: Mail,
       },
       {
@@ -84,13 +86,13 @@ export default function CTABreakdownChart({
       {
         name: 'Website',
         value: data.website_clicks,
-        color: '#00AFEF',
+        color: 'hsl(var(--dashboard-chart-2))',
         icon: Globe,
       },
       {
         name: 'Orcamento',
         value: data.quote_clicks,
-        color: '#8B5CF6',
+        color: 'hsl(var(--dashboard-chart-2))',
         icon: FileText,
       },
       {
@@ -103,6 +105,16 @@ export default function CTABreakdownChart({
   }, [data]);
 
   const totalClicks = data?.total_clicks ?? chartData.reduce((sum, item) => sum + item.value, 0);
+
+  if (dataStatus === 'error' || dataStatus === 'unavailable' || dataStatus === 'locked') {
+    return (
+      <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
+        <CardContent className="flex h-[310px] items-center justify-center p-4 text-sm text-[hsl(var(--dashboard-muted))]">
+          Breakdown de CTAs indisponível ou bloqueado para este plano.
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (

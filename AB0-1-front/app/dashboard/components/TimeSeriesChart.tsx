@@ -42,6 +42,7 @@ interface TimeSeriesDataPoint {
 interface TimeSeriesChartProps {
   data: TimeSeriesDataPoint[];
   loading?: boolean;
+  dataStatus?: 'ready' | 'empty' | 'processing' | 'unavailable' | 'locked' | 'stale' | 'error';
   themeMode?: 'light' | 'dark';
   title?: string;
   description?: string;
@@ -52,6 +53,7 @@ interface TimeSeriesChartProps {
 export default function TimeSeriesChart({
   data,
   loading = false,
+  dataStatus = 'ready',
   themeMode = 'dark',
   title = 'Métricas ao Longo do Tempo',
   description = 'Acompanhe a evolução das suas métricas nos últimos dias',
@@ -79,47 +81,57 @@ export default function TimeSeriesChart({
   const lineConfigs = {
     views: {
       dataKey: 'Visualizações',
-      stroke: '#2563EB', // brand-blue oficial
-      fill: '#2563EB',
+      stroke: 'hsl(var(--dashboard-chart-1))', // brand-blue oficial
+      fill: 'hsl(var(--dashboard-chart-1))',
     },
     cta_clicks: {
       dataKey: 'CTAs',
-      stroke: '#00AFEF', // brand-cyan
-      fill: '#00AFEF',
+      stroke: 'hsl(var(--dashboard-chart-2))', // brand-cyan
+      fill: 'hsl(var(--dashboard-chart-2))',
     },
     leads: {
       dataKey: 'Leads',
-      stroke: '#10B981', // brand-green suporte
-      fill: '#10B981',
+      stroke: 'hsl(var(--dashboard-chart-1))', // brand-green suporte
+      fill: 'hsl(var(--dashboard-chart-1))',
     },
     whatsapp: {
       dataKey: 'WhatsApp',
-      stroke: '#047857', // dark green suporte
-      fill: '#047857',
+      stroke: 'hsl(var(--dashboard-chart-2))', // dark green suporte
+      fill: 'hsl(var(--dashboard-chart-2))',
     },
     email: {
       dataKey: 'Email',
-      stroke: '#6C5CE7', // brand-purple
-      fill: '#6C5CE7',
+      stroke: 'hsl(var(--dashboard-chart-1))', // brand-purple
+      fill: 'hsl(var(--dashboard-chart-1))',
     },
     phone: {
       dataKey: 'Telefone',
-      stroke: '#F59E0B', // brand-yellow
-      fill: '#F59E0B',
+      stroke: 'hsl(var(--dashboard-chart-2))', // brand-yellow
+      fill: 'hsl(var(--dashboard-chart-2))',
     },
     website: {
       dataKey: 'Website',
-      stroke: '#64748B', // brand-muted
-      fill: '#64748B',
+      stroke: 'hsl(var(--dashboard-chart-1))', // brand-muted
+      fill: 'hsl(var(--dashboard-chart-1))',
     },
     quote: {
       dataKey: 'Orcamento',
-      stroke: '#8B5CF6',
-      fill: '#8B5CF6',
+      stroke: 'hsl(var(--dashboard-chart-2))',
+      fill: 'hsl(var(--dashboard-chart-2))',
     },
   };
 
   const activeLinesConfig = showLines.map((key) => lineConfigs[key]).filter(Boolean);
+
+  if (dataStatus === 'error' || dataStatus === 'unavailable' || dataStatus === 'locked') {
+    return (
+      <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
+        <CardContent className="flex h-[310px] items-center justify-center p-4 text-sm text-[hsl(var(--dashboard-muted))]">
+          Série temporal indisponível ou bloqueada para este plano.
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (
@@ -226,7 +238,7 @@ export default function TimeSeriesChart({
                   fillOpacity={0.1}
                   strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 4, stroke: isDark ? '#ffffff' : '#2563EB', strokeWidth: 2 }}
+                  activeDot={{ r: 4, stroke: isDark ? '#ffffff' : 'hsl(var(--dashboard-chart-1))', strokeWidth: 2 }}
                 />
               ))}
             </AreaChart>
@@ -288,7 +300,7 @@ export default function TimeSeriesChart({
                   stroke={config.stroke}
                   strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 4, stroke: isDark ? '#ffffff' : '#2563EB', strokeWidth: 2 }}
+                  activeDot={{ r: 4, stroke: isDark ? '#ffffff' : 'hsl(var(--dashboard-chart-1))', strokeWidth: 2 }}
                 />
               ))}
             </LineChart>

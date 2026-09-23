@@ -76,8 +76,9 @@ describe('PerformanceMetrics - Real Data Integration', () => {
 
     render(<PerformanceMetrics companyId="123" />);
 
-    expect(screen.getByText(/Não foi possível carregar os dados de analytics/)).toBeInTheDocument();
-    expect(screen.getByText(/Failed to load analytics/)).toBeInTheDocument();
+    expect(screen.getByText(/O resumo de analytics está indisponível/)).toBeInTheDocument();
+    expect(screen.getByText(/Os demais blocos continuam independentes/)).toBeInTheDocument();
+    expect(screen.getByText('Visualizacoes de perfil')).toBeInTheDocument();
   });
 
   it('does not display a trend when comparison data is unavailable', () => {
@@ -94,7 +95,7 @@ describe('PerformanceMetrics - Real Data Integration', () => {
     expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
 
-  it('calculates conversion rate from real data', () => {
+  it('does not render a conversion metric that is not part of the current surface', () => {
     mockUseCompanyAnalytics.mockReturnValue({
       data: {
         views_30d: 1000,
@@ -112,6 +113,7 @@ describe('PerformanceMetrics - Real Data Integration', () => {
 
     render(<PerformanceMetrics companyId="123" />);
 
-    expect(screen.getByText('12.5%')).toBeInTheDocument();
+    expect(screen.getByText('Taxa de rejeicao')).toBeInTheDocument();
+    expect(screen.queryByText('12.5%')).not.toBeInTheDocument();
   });
 });

@@ -24,6 +24,8 @@ interface TopCampaignsCardProps {
   limit?: number;
   from?: string;
   to?: string;
+  preset?: '7d' | '30d' | '90d' | 'custom';
+  timezone?: string;
 }
 
 export default function TopCampaignsCard({
@@ -31,17 +33,30 @@ export default function TopCampaignsCard({
   limit = 5,
   from,
   to,
+  preset,
+  timezone = 'America/Sao_Paulo',
 }: TopCampaignsCardProps) {
-  const { data, isLoading } = useQuery({
-    queryKey: ['top-campaigns', companyId, limit, from ?? null, to ?? null],
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['top-campaigns', companyId, limit, from ?? null, to ?? null, preset ?? null, timezone],
     queryFn: async () => {
-      return companyDashboardApi.getAnalyticsTopCampaigns(companyId, { from, to, limit });
+      return companyDashboardApi.getAnalyticsTopCampaigns(companyId, { from, to, preset, timezone, limit });
     },
     enabled: Boolean(companyId),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
   const campaigns = data?.campaigns ?? [];
+
+  if (isError || data?.data_status === 'error' || data?.data_status === 'unavailable' || data?.data_status === 'locked') {
+    return (
+      <Card className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] shadow-none">
+        <CardHeader className="p-4">
+          <CardTitle className="text-[hsl(var(--dashboard-ink))] text-lg font-bold tracking-tight">Top Campanhas</CardTitle>
+          <CardDescription className="text-[hsl(var(--dashboard-muted))]">Campanhas indisponíveis ou bloqueadas para este plano.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -107,9 +122,7 @@ export default function TopCampaignsCard({
           ];
           const color = index < 3 ? rankColors[index] : rankColors[1];
 
-          const ctr = campaign.total_visits > 0
-            ? ((campaign.total_cta_clicks / campaign.total_visits) * 100).toFixed(1)
-            : '0.0';
+          const ctr = campaign.ctr ?? null;
 
           return (
             <div
@@ -148,10 +161,12 @@ export default function TopCampaignsCard({
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-brand-green font-mono tracking-tighter">
-                  {campaign.conversion_rate.toLocaleString('pt-BR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}%
+                  {campaign.conversion_rate === null
+                    ? '—'
+                    : `${campaign.conversion_rate.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}%`}
                   </p>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--dashboard-muted))]">
                     conversão
@@ -183,7 +198,7 @@ export default function TopCampaignsCard({
                   {campaign.total_cta_clicks}
                   </p>
                   <p className="text-[10px] font-bold text-[hsl(var(--dashboard-muted)/0.75)] font-mono mt-0.5">
-                    {ctr}% CTR
+                    {ctr === null ? '—' : `${ctr.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`} CTR
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-[hsl(var(--dashboard-surface))] border-[0.5px] border-[hsl(var(--dashboard-border))]">
