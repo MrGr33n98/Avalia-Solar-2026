@@ -98,6 +98,25 @@ export default function CompanyIdentityCard({
       aria-label="Card da empresa com ações"
       className="relative overflow-visible bg-white px-4 pb-4 pt-0 sm:px-6 lg:px-7"
     >
+      {/* Silhueta com Curvas Côncavas Assimétricas (Estilo WEG Compound Hero) */}
+      <div className="pointer-events-none absolute -top-6 left-0 right-0 z-20 hidden h-6 lg:flex lg:items-end lg:justify-between px-6">
+        {/* Shelf Esquerda (Nome/Badge) com descontinuidade suave em S */}
+        <div className="flex items-end">
+          <div className="h-6 w-52 bg-white rounded-tl-2xl" />
+          <svg viewBox="0 0 36 24" className="h-6 w-9 text-white fill-current shrink-0" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M 0,0 C 18,0 18,24 36,24 L 0,24 Z" />
+          </svg>
+        </div>
+
+        {/* Shelf Direita (CTA Shelf) com curva côncava de subida estilo WEG */}
+        <div className="flex items-end">
+          <svg viewBox="0 0 36 24" className="h-6 w-9 text-white fill-current shrink-0" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M 0,24 C 18,24 18,0 36,0 L 36,24 Z" />
+          </svg>
+          <div className="h-6 w-80 bg-white rounded-tr-2xl" />
+        </div>
+      </div>
+
       <div className="flex flex-col gap-4 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
         {/* Lado Esquerdo: Logo + Dados */}
         <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-start sm:gap-5">
