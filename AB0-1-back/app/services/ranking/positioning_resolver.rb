@@ -21,17 +21,32 @@ module Ranking
       # Calculate benchmark stats
       scores = population_data.map { |d| d[:score].to_f }.sort
       median = scores[scores.size / 2]
+      p25 = scores[(scores.size * 0.25).to_i]
+      p75 = scores[(scores.size * 0.75).to_i]
+
+      zero_count = scores.count(&:zero?)
+      distinct_count = scores.uniq.size
+      quantile_collision = (p25 == median) || (median == p75)
 
       {
         analysis_available: true,
         reason: :benchmark_computed,
+        calibration_status: :pending_calibration,
         observed_population: pop_size,
         required_population: MIN_BENCHMARK_POPULATION,
         median_score: median,
         percentiles: {
-          p25: scores[(scores.size * 0.25).to_i],
+          p25: p25,
           p50: median,
-          p75: scores[(scores.size * 0.75).to_i]
+          p75: p75
+        },
+        diagnostics: {
+          zero_scores_count: zero_count,
+          distinct_scores_count: distinct_count,
+          ties_count: pop_size - distinct_count,
+          quantile_collision: quantile_collision,
+          analysis_only: true,
+          blocks_rank_publication: false
         }
       }
     end

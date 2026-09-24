@@ -1,0 +1,67 @@
+{
+  "manifest": "organic-performance-v2@2.0.0",
+  "generated_at": "2026-09-24T00:00:00Z",
+  "description": "Golden fixtures imutáveis para validação determinística de cálculo de score e desempate do Ranking v2 (ORG-001)",
+  "cases": [
+    {
+      "id": 101,
+      "name": "Solar Alpha Premium",
+      "features": {
+        "trust_score": 0.90,
+        "delivered_projects_score": 0.80,
+        "response_time_sla_score": 0.95,
+        "warranty_score": 0.70
+      },
+      "expected_score": 85.0,
+      "expected_rank": 1
+    },
+    {
+      "id": 102,
+      "name": "Solar Beta (Tie Group 1)",
+      "features": {
+        "trust_score": 0.80,
+        "delivered_projects_score": 0.80,
+        "response_time_sla_score": 0.80,
+        "warranty_score": 0.80
+      },
+      "expected_score": 80.0,
+      "expected_rank": 2
+    },
+    {
+      "id": 103,
+      "name": "Solar Gamma (Tie Group 2 - Higher ID)",
+      "features": {
+        "trust_score": 0.80,
+        "delivered_projects_score": 0.80,
+        "response_time_sla_score": 0.80,
+        "warranty_score": 0.80
+      },
+      "expected_score": 80.0,
+      "expected_rank": 3
+    },
+    {
+      "id": 104,
+      "name": "Solar Delta - Zero Warranty",
+      "features": {
+        "trust_score": 0.80,
+        "delivered_projects_score": 0.40,
+        "response_time_sla_score": 0.0,
+        "warranty_score": 0.0
+      },
+      "expected_score": 40.0,
+      "expected_rank": 4
+    },
+    {
+      "id": 105,
+      "name": "Solar Epsilon - Minimum Boundary",
+      "features": {
+        "trust_score": 0.0,
+        "delivered_projects_score": 0.0,
+        "response_time_sla_score": 0.0,
+        "warranty_score": 0.0
+      },
+      "expected_score": 0.0,
+      "expected_rank": 5
+    }
+  ]
+}

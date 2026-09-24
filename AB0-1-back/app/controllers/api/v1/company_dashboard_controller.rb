@@ -442,7 +442,29 @@ module Api
           historical_data: history[:items],
           transparency: definition,
           scope: data.dig(:official_scope, :type) || definition[:scope] || data[:scope] || 'global',
-          breakdown: definition[:breakdown] || {}
+          breakdown: definition[:breakdown] || {},
+
+          # Ranking v2: Metadados canônicos e transparência de escopo
+          manifest: {
+            release: '2.0.0',
+            name: 'organic-performance-v2',
+            parameter_digest: MethodologyManifest.organic_v2.parameter_digest
+          },
+          requested_scope: data[:requested_scope] || {
+            state: params[:state].presence,
+            city: params[:city].presence,
+            category_id: params[:category_id].presence
+          },
+          resolved_scope: data[:resolved_scope] || {
+            level: params[:city].present? ? 'city' : (params[:state].present? ? 'state' : 'country'),
+            state: params[:state].presence,
+            city: params[:city].presence
+          },
+          scope_ladder_fallback: data[:scope_ladder_fallback] || false,
+          snapshot_freshness: {
+            as_of: data[:as_of] || Time.now.utc.to_date.to_s,
+            computed_at: data[:computed_at] || Time.now.utc.iso8601
+          }
         }
       end
 
