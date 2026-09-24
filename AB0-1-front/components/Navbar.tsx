@@ -104,37 +104,37 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-white pt-[var(--safe-area-inset-top)] max-w-full overflow-x-clip">
-      <div className="mx-auto flex h-[56px] max-w-[1280px] items-center gap-2 px-3 sm:px-4 xl:h-[60px] xl:gap-4 xl:px-5 min-w-0">
+      <div className="mx-auto flex h-[56px] max-w-[1500px] items-center gap-1.5 px-3 sm:px-4 dashboard:px-4 xl:h-[60px] xl:gap-3 2xl:gap-4 xl:px-6 min-w-0">
         <Link
           href="/"
           aria-label="Home Avalia Solar"
           className="flex shrink-0 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2"
         >
           <BrandLogo
-            className="h-7 sm:h-8 xl:h-[30px]"
+            className="h-7 sm:h-8 dashboard:h-7 xl:h-[30px]"
             priority={pathname === '/'}
           />
         </Link>
 
-        <div className="hidden min-w-0 flex-1 items-center gap-3 xl:flex">
+        <div className="hidden min-w-0 flex-1 items-center gap-2 dashboard:flex xl:gap-3 2xl:gap-4">
           <NavbarSearch
-            className="w-[280px] min-w-0 2xl:w-[360px]"
+            className="w-[180px] min-w-[150px] dashboard:w-[190px] xl:w-[260px] 2xl:w-[340px]"
             inputClassName="border-brand-border bg-slate-50"
             placeholder="Buscar empresas, produtos..."
             onSearch={handleSearch}
           />
 
-          <div className="w-[176px] shrink-0 2xl:w-[200px]">
+          <div className="w-[130px] shrink-0 dashboard:w-[140px] xl:w-[170px] 2xl:w-[200px]">
             <LocationSearch
               className="w-full border-brand-border bg-slate-50"
               onLocationSelect={handleLocationSelect}
             />
           </div>
 
-          <div className="ml-auto flex h-full shrink-0 items-center gap-1" aria-label="Navegação principal">
+          <div className="ml-auto flex h-full shrink-0 items-center gap-0.5 xl:gap-1" aria-label="Navegação principal">
             <Link
               href={primaryLinks[0].href}
-              className="inline-flex h-[40px] items-center whitespace-nowrap rounded-md px-2.5 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
+              className="inline-flex h-[38px] xl:h-[40px] items-center whitespace-nowrap rounded-md px-1.5 xl:px-2.5 text-xs xl:text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
             >
               {primaryLinks[0].label}
             </Link>
@@ -149,7 +149,7 @@ export default function Navbar() {
                 type="button"
                 variant="ghost"
                 className={cn(
-                  'h-[40px] whitespace-nowrap rounded-md px-2.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-blue',
+                  'h-[38px] xl:h-[40px] whitespace-nowrap rounded-md px-1.5 xl:px-2.5 text-xs xl:text-[13px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-blue',
                   isMegaMenuOpen && 'bg-slate-50 text-brand-blue'
                 )}
                 onClick={toggleMegaMenu}
@@ -177,23 +177,23 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="inline-flex h-[40px] items-center whitespace-nowrap rounded-md px-2.5 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
+                className="inline-flex h-[38px] xl:h-[40px] items-center whitespace-nowrap rounded-md px-1.5 xl:px-2.5 text-xs xl:text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
               >
                 {link.label}
               </Link>
             ))}
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5 border-l border-brand-borderSoft pl-3">
+          <div className="flex shrink-0 items-center gap-1 xl:gap-1.5 border-l border-brand-borderSoft pl-2 xl:pl-3">
             {!isAuthenticated ? (
               <>
-                <Button asChild variant="ghost" className="h-[40px] rounded-md px-2.5 text-[13px] font-semibold text-slate-700">
+                <Button asChild variant="ghost" className="h-[38px] xl:h-[40px] rounded-md px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold text-slate-700">
                   <Link href="/login">
-                    <UserIcon className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                    <UserIcon className="mr-1 h-3.5 w-3.5 xl:h-4 xl:w-4" aria-hidden="true" />
                     Entrar
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="h-[40px] rounded-md border-blue-300 px-3 text-xs font-semibold text-blue-700 shadow-none">
+                <Button asChild variant="outline" className="h-[38px] xl:h-[40px] rounded-md border-blue-300 px-2 xl:px-3 text-[11px] xl:text-xs font-semibold text-blue-700 shadow-none">
                   <Link href="/register">Para empresas</Link>
                 </Button>
               </>
@@ -238,7 +238,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="ml-auto flex min-w-0 items-center justify-end gap-2 xl:hidden">
+        <div className="ml-auto flex min-w-0 items-center justify-end gap-2 dashboard:hidden">
           <Button asChild variant="outline" size="icon" className="h-[44px] w-[44px] shrink-0 rounded-lg border-brand-border bg-white text-slate-700 shadow-none">
             <Link href="/search" aria-label="Buscar no site">
               <Search className="h-5 w-5" aria-hidden="true" />

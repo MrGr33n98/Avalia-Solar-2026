@@ -380,13 +380,13 @@ export const FilterSidebar: React.FC<{ hideMobileTrigger?: boolean }> = ({ hideM
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="sticky top-[calc(88px+var(--safe-area-inset-top))] hidden h-[calc(100vh-120px-var(--safe-area-inset-top)-var(--safe-area-inset-bottom))] w-[300px] flex-col overflow-hidden border border-slate-200 bg-white rounded-xl shadow-sm lg:flex">
+      <aside className="sticky top-[calc(88px+var(--safe-area-inset-top))] hidden h-[calc(100vh-120px-var(--safe-area-inset-top)-var(--safe-area-inset-bottom))] w-full flex-col overflow-hidden border border-slate-200 bg-white rounded-xl shadow-sm dashboard:flex">
         <FilterContent />
       </aside>
 
       {/* Mobile Trigger & Sheet */}
       {!hideMobileTrigger && (
-        <div className="lg:hidden fixed bottom-[max(1.5rem,var(--safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50">
+        <div className="dashboard:hidden fixed bottom-[max(1.5rem,var(--safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50">
           <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
             <SheetTrigger asChild>
               <Button

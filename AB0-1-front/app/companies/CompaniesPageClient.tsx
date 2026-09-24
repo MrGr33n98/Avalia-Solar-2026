@@ -671,8 +671,8 @@ export function CompaniesContent({
         </div>
 
         <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex w-full min-w-0 flex-col items-start gap-8 lg:flex-row">
-            <aside className="hidden lg:block lg:w-[260px] xl:w-[280px] 2xl:w-[300px] shrink-0">
+          <div className="flex w-full min-w-0 flex-col items-start gap-4 dashboard:gap-4 xl:gap-6 2xl:gap-8 dashboard:flex-row">
+            <aside className="hidden dashboard:block dashboard:w-[220px] xl:w-[240px] 2xl:w-[300px] shrink-0">
               <FilterSidebar hideMobileTrigger={true} />
             </aside>
 
@@ -856,12 +856,12 @@ export function CompaniesContent({
                 {loading ? (
                   <div
                     className={cn(
-                      'grid w-full min-w-0 gap-4',
+                      'grid w-full min-w-0 gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]',
                       viewMode !== 'grid' && 'grid-cols-1'
                     )}
                     style={
                       viewMode === 'grid'
-                        ? { gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))' }
+                        ? { gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, var(--company-card-min)), 1fr))' }
                         : undefined
                     }
                   >
@@ -897,14 +897,14 @@ export function CompaniesContent({
                       <div
                         data-testid="companies-grid"
                         className={cn(
-                          'grid w-full min-w-0 gap-4',
+                          'grid w-full min-w-0 gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]',
                           viewMode !== 'grid' && 'grid-cols-1'
                         )}
                         style={
                           viewMode === 'grid'
                             ? {
                                 gridTemplateColumns:
-                                  'repeat(auto-fit, minmax(min(100%, 380px), 1fr))',
+                                  'repeat(auto-fit, minmax(min(100%, var(--company-card-min)), 1fr))',
                               }
                             : undefined
                         }
@@ -975,7 +975,7 @@ export function CompaniesContent({
               </section>
             </div>
 
-            <div className="hidden 2xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))]">
+            <div className="hidden dashboard:flex flex-col gap-4 dashboard:w-[220px] xl:w-[240px] 2xl:w-[300px] shrink-0 sticky top-[calc(88px+var(--safe-area-inset-top))]">
               <BannerByLocation
                 location="sidebar"
                 limit={1}
