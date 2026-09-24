@@ -12,7 +12,8 @@ module CompanyDashboard
         current_index = population.find_index { |record| record.id == company_id }
         leaders = population.first(@leaders_limit)
         neighbors = neighbors_for(population, current_index)
-        selected = (leaders + neighbors + [population[current_index]]).compact.uniq(&:id)
+        current = current_index ? population[current_index] : nil
+        selected = (leaders + neighbors + [current]).compact.uniq(&:id)
         build_payload(population, leaders, neighbors, selected, point_builder)
       end
 
