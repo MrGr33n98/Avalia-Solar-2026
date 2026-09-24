@@ -18,7 +18,7 @@ export default function AppContentFrame({ children }: AppContentFrameProps) {
       className={
         isChatRoute || isDashboardRoute || isReviewerRoute
           ? 'pb-0'
-          : 'pb-[calc(5.5rem+var(--safe-area-inset-bottom))] md:pb-0'
+          : 'pb-[calc(var(--mobile-nav-height,56px)+var(--safe-area-inset-bottom,0px))] md:pb-0'
       }
       style={{ width: '100%', maxWidth: '100%', overflowX: 'clip' }}
     >

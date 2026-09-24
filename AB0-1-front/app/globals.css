@@ -57,6 +57,7 @@
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
   --app-navbar-height: calc(56px + var(--safe-area-inset-top));
+  --mobile-nav-height: 56px;
   --reviewer-mobile-nav-height: calc(64px + var(--safe-area-inset-bottom));
 }
 

@@ -1,139 +1,106 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useCallback } from 'react';
 import Link from 'next/link';
-import {
-  Building2,
-  Home,
-  MessageCircle,
-  Search,
-} from 'lucide-react';
-import {
-  usePathname,
-  useRouter,
-} from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { Building2, Home, MessageCircle, Search } from 'lucide-react';
 
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { useComparison } from '@/hooks/useComparison';
+import { useAuth } from '@/contexts/AuthContext';
+import { useVirtualKeyboard } from '@/hooks/useVirtualKeyboard';
+import { useMobileNavNotifications } from '@/hooks/useMobileNavNotifications';
 import { openComparisonModal } from '@/lib/floating-widget-events';
 import { cn } from '@/lib/utils';
-import { useNotificationStore } from '@/store/notificationStore';
+import { shouldHideMobileNav, MOBILE_NAV_HEIGHT } from './mobileNavTokens';
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const {
-    count,
-    maxComparison,
-  } = useComparison();
+  const { count } = useComparison();
+  const { isAuthenticated } = useAuth();
+  const { isKeyboardOpen } = useVirtualKeyboard();
+  const { unreadMessagesCount, toggleChat } = useMobileNavNotifications();
 
-  const {
-    unreadMessagesCount,
-    fetchUnreadMessagesCount,
-    toggleChat,
-  } = useNotificationStore();
+  // Estados ativos
+  const isHomeActive = pathname === '/';
+  const isCompaniesActive =
+    (pathname === '/companies' || pathname?.startsWith('/companies/')) &&
+    !pathname?.startsWith('/companies/compare');
+  const isSearchActive = pathname === '/search' || pathname?.startsWith('/search/');
+  const isCompareActive =
+    pathname === '/compare' ||
+    pathname?.startsWith('/compare/') ||
+    pathname?.startsWith('/products/compare');
+  const isMessagesActive = pathname === '/messages' || pathname?.startsWith('/messages/');
 
-  useEffect(() => {
-    fetchUnreadMessagesCount();
-  }, [fetchUnreadMessagesCount]);
+  // Ações sem dead-actions
+  const handleSearchClick = useCallback(() => {
+    if (isSearchActive) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const searchInput = document.querySelector<HTMLInputElement>(
+        'input[type="search"], input[name="q"], input[placeholder*="Buscar"]'
+      );
+      if (searchInput) {
+        searchInput.focus();
+      }
+    } else {
+      router.push('/search');
+    }
+  }, [isSearchActive, router]);
 
-  const handleComparisonClick = () => {
+  const handleComparisonClick = useCallback(() => {
     if (count > 0) {
       openComparisonModal();
+    } else {
+      router.push('/compare');
     }
-  };
+  }, [count, router]);
 
-  const isInternalProfile =
-    pathname === '/profile' ||
-    pathname === '/review-dashboard' ||
-    pathname.startsWith('/review-dashboard/') ||
-    pathname === '/creator-studio' ||
-    pathname.startsWith('/creator-studio/');
+  const handleMessagesClick = useCallback(() => {
+    if (isAuthenticated) {
+      toggleChat('expanded');
+    } else {
+      router.push('/login?redirect=/chat');
+    }
+  }, [isAuthenticated, router, toggleChat]);
 
-  if (isInternalProfile) {
+  // Ocultar em rotas específicas (dashboard, reviewer, chat, etc.)
+  if (shouldHideMobileNav(pathname)) {
     return null;
   }
-
-  if (pathname?.startsWith('/dashboard')) {
-    return null;
-  }
-
-  if (
-    pathname === '/review-dashboard' ||
-    pathname?.startsWith('/review-dashboard/')
-  ) {
-    return null;
-  }
-
-  const isHomeActive = pathname === '/';
-
-  const isCompaniesActive =
-    pathname.startsWith('/companies');
-
-  const isCompareActive =
-    pathname.startsWith('/products/compare') ||
-    pathname === '/compare' ||
-    pathname.startsWith('/compare/');
-
-  const isMessagesActive =
-    pathname.startsWith('/messages');
 
   const commonItemClass =
-    'group relative flex min-w-0 flex-col items-center justify-center ' +
-    'gap-[2px] outline-none transition-all duration-200 ' +
-    'focus-visible:ring-2 focus-visible:ring-blue-500/40 ' +
-    'focus-visible:ring-offset-1 focus-visible:ring-offset-white';
+    'group relative flex h-full w-full min-w-0 flex-col items-center justify-center ' +
+    'gap-1 py-1 outline-none transition-colors duration-200 ' +
+    'focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 ' +
+    'focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded-xl';
 
   return (
     <nav
+      role="navigation"
       aria-label="Navegação principal"
+      data-testid="mobile-bottom-nav"
       className={cn(
-        'fixed inset-x-0 bottom-0 z-[1000] md:hidden',
-
-        /*
-         * FooterBar branca, limpa e premium.
-         */
-        'h-[64px]',
-        'bg-white/95',
-        'border-t border-slate-200/80',
-        'backdrop-blur-xl',
-
-        /*
-         * Sombra leve para separar do conteúdo.
-         */
-        'shadow-[0_-8px_30px_-18px_rgba(15,23,42,0.32)]',
-
-        /*
-         * Safe area para iOS / PWA.
-         */
-        'pb-[max(0.125rem,var(--sab,env(safe-area-inset-bottom)))]'
+        'fixed inset-x-0 bottom-0 z-50 md:hidden',
+        'bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl',
+        'border-t border-slate-200/80 dark:border-slate-800',
+        'shadow-[0_-4px_20px_-4px_rgba(15,23,42,0.08)] dark:shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.4)]',
+        'transition-transform duration-200 ease-out',
+        isKeyboardOpen && 'translate-y-full opacity-0 pointer-events-none'
       )}
     >
-      {/* Linha superior sutil */}
+      {/* Linha superior com gradiente sutil */}
       <div
         aria-hidden="true"
-        className="
-          pointer-events-none
-          absolute inset-x-0 top-0 h-px
-          bg-gradient-to-r
-          from-transparent
-          via-slate-300/60
-          to-transparent
-        "
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent"
       />
 
+      {/* Grid de 5 colunas com altura fixa e compacta */}
       <div
-        className="
-          relative
-          mx-auto
-          grid
-          h-full
-          max-w-md
-          grid-cols-5
-          items-end
-          px-2
-        "
+        className="relative mx-auto grid max-w-md grid-cols-5 items-center px-1"
+        style={{ height: `${MOBILE_NAV_HEIGHT}px` }}
       >
         {/* ======================================================
             1. INÍCIO
@@ -141,27 +108,25 @@ export default function MobileBottomNav() {
         <Link
           href="/"
           aria-current={isHomeActive ? 'page' : undefined}
-          className={cn(
-            commonItemClass,
-            'h-[56px] rounded-xl pb-[6px] pt-[7px]',
-
-            isHomeActive
-              ? 'text-blue-600'
-              : 'text-slate-600 hover:text-slate-950'
-          )}
+          aria-label="Ir para a página inicial"
+          data-testid="mobile-nav-home"
+          className={commonItemClass}
         >
           <Home
-            className="h-[20px] w-[20px]"
-            strokeWidth={isHomeActive ? 2.25 : 1.8}
+            className={cn(
+              'h-5 w-5 transition-transform duration-150 group-active:scale-90',
+              isHomeActive
+                ? 'text-blue-600 dark:text-blue-400 stroke-[2.25]'
+                : 'text-slate-500 dark:text-slate-400 stroke-[1.75] group-hover:text-slate-800 dark:group-hover:text-slate-200'
+            )}
           />
 
           <span
             className={cn(
-              'truncate text-[9px] leading-none',
-
+              'truncate text-[11px] leading-tight transition-colors',
               isHomeActive
-                ? 'font-semibold text-blue-600'
-                : 'font-medium text-slate-600'
+                ? 'font-semibold text-blue-600 dark:text-blue-400'
+                : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'
             )}
           >
             Início
@@ -170,14 +135,7 @@ export default function MobileBottomNav() {
           {isHomeActive && (
             <span
               aria-hidden="true"
-              className="
-                absolute
-                bottom-[1px]
-                h-[2px]
-                w-[14px]
-                rounded-full
-                bg-blue-600
-              "
+              className="absolute bottom-1 h-[2.5px] w-4 rounded-full bg-blue-600 dark:bg-blue-400"
             />
           )}
         </Link>
@@ -188,27 +146,25 @@ export default function MobileBottomNav() {
         <Link
           href="/companies"
           aria-current={isCompaniesActive ? 'page' : undefined}
-          className={cn(
-            commonItemClass,
-            'h-[56px] rounded-xl pb-[6px] pt-[7px]',
-
-            isCompaniesActive
-              ? 'text-blue-600'
-              : 'text-slate-600 hover:text-slate-950'
-          )}
+          aria-label="Explorar empresas de energia solar"
+          data-testid="mobile-nav-companies"
+          className={commonItemClass}
         >
           <Building2
-            className="h-[20px] w-[20px]"
-            strokeWidth={isCompaniesActive ? 2.25 : 1.8}
+            className={cn(
+              'h-5 w-5 transition-transform duration-150 group-active:scale-90',
+              isCompaniesActive
+                ? 'text-blue-600 dark:text-blue-400 stroke-[2.25]'
+                : 'text-slate-500 dark:text-slate-400 stroke-[1.75] group-hover:text-slate-800 dark:group-hover:text-slate-200'
+            )}
           />
 
           <span
             className={cn(
-              'truncate text-[9px] leading-none',
-
+              'truncate text-[11px] leading-tight transition-colors',
               isCompaniesActive
-                ? 'font-semibold text-blue-600'
-                : 'font-medium text-slate-600'
+                ? 'font-semibold text-blue-600 dark:text-blue-400'
+                : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'
             )}
           >
             Empresas
@@ -217,178 +173,71 @@ export default function MobileBottomNav() {
           {isCompaniesActive && (
             <span
               aria-hidden="true"
-              className="
-                absolute
-                bottom-[1px]
-                h-[2px]
-                w-[14px]
-                rounded-full
-                bg-blue-600
-              "
+              className="absolute bottom-1 h-[2.5px] w-4 rounded-full bg-blue-600 dark:bg-blue-400"
             />
           )}
         </Link>
 
         {/* ======================================================
-            3. BUSCAR
-            ÚNICA ASSIMETRIA DA FOOTERBAR
+            3. BUSCAR (Botão Central Elevado)
         ====================================================== */}
-        <div
-          className="
-            relative
-            flex
-            h-[64px]
-            min-w-0
-            flex-col
-            items-center
-          "
+        <button
+          type="button"
+          onClick={handleSearchClick}
+          aria-label="Buscar empresas, produtos e categorias"
+          aria-current={isSearchActive ? 'page' : undefined}
+          data-testid="mobile-nav-search"
+          className={cn(
+            commonItemClass,
+            'justify-center pt-0 pb-1'
+          )}
         >
-          {/*
-            Peça branca que cria o efeito de encaixe/curva
-            exclusivamente no Buscar.
-          */}
-          <div
-            aria-hidden="true"
-            className="
-              pointer-events-none
-              absolute
-              -top-[17px]
-
-              h-[66px]
-              w-[78px]
-
-              rounded-[50%]
-
-              bg-white
-
-              border-t
-              border-slate-200/80
-
-              shadow-[0_-5px_14px_-12px_rgba(15,23,42,0.20)]
-            "
-          />
-
-          <button
-            type="button"
-            onClick={() =>
-              router.push('/companies?focus=search')
-            }
-            aria-label="Buscar empresas e categorias"
+          <span
             className={cn(
-              'absolute -top-[10px] z-10',
-
-              'flex h-[48px] w-[48px]',
-              'items-center justify-center',
-
-              'rounded-full',
-
-              'bg-gradient-to-b',
-              'from-[#3B82F6]',
-              'via-[#2563EB]',
-              'to-[#1D4ED8]',
-
-              'text-white',
-
-              /*
-               * Ring branco integra o FAB à FooterBar.
-               */
-              'ring-[4px] ring-white',
-
-              /*
-               * Sombra azul controlada.
-               */
-              'shadow-[0_7px_18px_rgba(37,99,235,0.30)]',
-
-              'outline-none',
-
-              'transition-[transform,box-shadow] duration-200 ease-out',
-
-              'hover:shadow-[0_9px_22px_rgba(37,99,235,0.36)]',
-
-              'active:scale-[0.94]',
-
-              'focus-visible:outline',
-              'focus-visible:outline-2',
-              'focus-visible:outline-offset-2',
-              'focus-visible:outline-blue-500'
+              'flex h-11 w-11 -mt-4 items-center justify-center rounded-full',
+              'bg-gradient-to-tr from-blue-600 via-blue-600 to-indigo-600',
+              'text-white ring-4 ring-white dark:ring-slate-900',
+              'shadow-[0_4px_14px_rgba(37,99,235,0.35)]',
+              'transition-all duration-150 ease-out active:scale-90',
+              'group-hover:shadow-[0_6px_18px_rgba(37,99,235,0.45)]'
             )}
           >
-            <Search
-              className="h-[21px] w-[21px]"
-              strokeWidth={2.25}
-            />
-
-            {/* Reflexo superior */}
-            <span
-              aria-hidden="true"
-              className="
-                pointer-events-none
-                absolute
-                left-[12px]
-                right-[12px]
-                top-[5px]
-                h-px
-                rounded-full
-                bg-white/35
-              "
-            />
-          </button>
+            <Search className="h-5 w-5 stroke-[2.25]" />
+          </span>
 
           <span
-            className="
-              absolute
-              bottom-[6px]
-              text-[9px]
-              font-semibold
-              leading-none
-              text-slate-900
-            "
+            className={cn(
+              'truncate text-[11px] leading-tight mt-0.5 transition-colors',
+              isSearchActive
+                ? 'font-semibold text-blue-600 dark:text-blue-400'
+                : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'
+            )}
           >
             Buscar
           </span>
-        </div>
+
+          {isSearchActive && (
+            <span
+              aria-hidden="true"
+              className="absolute bottom-1 h-[2.5px] w-4 rounded-full bg-blue-600 dark:bg-blue-400"
+            />
+          )}
+        </button>
 
         {/* ======================================================
-          4. COMPARAR
-          Circunferência compacta sem encostar na label.
+            4. COMPARAR
         ====================================================== */}
         <button
           type="button"
           onClick={handleComparisonClick}
-          aria-label={`Comparar: ${count} de ${maxComparison} empresas selecionadas`}
-          aria-disabled={count === 0}
-          className={cn(
-            commonItemClass,
-
-            /*
-             * Mantém o mesmo alinhamento dos outros itens.
-             */
-            'h-[56px] rounded-xl pb-[6px] pt-[7px]',
-
-            isCompareActive
-              ? 'text-blue-600'
-              : 'text-slate-600 hover:text-slate-950'
-          )}
+          aria-label={`Comparar: ${count} empresas selecionadas`}
+          aria-current={isCompareActive ? 'page' : undefined}
+          data-testid="mobile-nav-compare"
+          className={commonItemClass}
         >
-          <span
-            className="
-              relative
-
-              mb-[4px]
-
-              flex
-
-              h-[19px]
-              w-[26px]
-
-              shrink-0
-
-              items-center
-              justify-center
-            "
-          >
+          <span className="relative flex h-5 w-5 items-center justify-center">
             <AnimatedCompareIcon
-              size={19}
+              size={20}
               variant="default"
               animated
               intensity={count > 0 ? 'strong' : 'subtle'}
@@ -396,55 +245,28 @@ export default function MobileBottomNav() {
               aria-hidden="true"
             />
 
-            {/* Badge compacto */}
             {count > 0 && (
               <span
                 aria-live="polite"
-                className="
-                  absolute
-
-                  -right-[1px]
-                  -top-[4px]
-
-                  z-20
-
-                  flex
-                  h-[12px]
-                  min-w-[12px]
-                  items-center
-                  justify-center
-
-                  rounded-full
-
-                  bg-blue-600
-                  px-[2px]
-
-                  text-[7px]
-                  font-bold
-                  leading-none
-                  text-white
-
-                  ring-[1.5px]
-                  ring-white
-
-                  shadow-[0_1px_4px_rgba(37,99,235,0.20)]
-                "
+                aria-label={`${count} empresas selecionadas`}
+                data-testid="compare-badge"
+                className={cn(
+                  'absolute -top-1 -right-2 z-10 flex h-4 min-w-4 px-1 items-center justify-center',
+                  'rounded-full bg-blue-600 text-white text-[10px] font-bold leading-none',
+                  'ring-2 ring-white dark:ring-slate-900 shadow-sm animate-in zoom-in-75 duration-200'
+                )}
               >
-                {count}
+                {count > 9 ? '9+' : count}
               </span>
             )}
           </span>
 
           <span
             className={cn(
-              /*
-               * Label fica em seu próprio plano vertical.
-               */
-              'relative z-10 truncate text-[9px] leading-none',
-
+              'truncate text-[11px] leading-tight transition-colors',
               isCompareActive
-                ? 'font-semibold text-blue-600'
-                : 'font-medium text-slate-600'
+                ? 'font-semibold text-blue-600 dark:text-blue-400'
+                : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'
             )}
           >
             Comparar
@@ -453,14 +275,7 @@ export default function MobileBottomNav() {
           {isCompareActive && (
             <span
               aria-hidden="true"
-              className="
-                absolute
-                bottom-[1px]
-                h-[2px]
-                w-[14px]
-                rounded-full
-                bg-blue-600
-              "
+              className="absolute bottom-1 h-[2.5px] w-4 rounded-full bg-blue-600 dark:bg-blue-400"
             />
           )}
         </button>
@@ -470,62 +285,48 @@ export default function MobileBottomNav() {
         ====================================================== */}
         <button
           type="button"
-          onClick={() => toggleChat('expanded')}
-          aria-label="Abrir mensagens"
-          className={cn(
-            commonItemClass,
-            'h-[56px] rounded-xl pb-[6px] pt-[7px]',
-
-            isMessagesActive
-              ? 'text-blue-600'
-              : 'text-slate-600 hover:text-slate-950'
-          )}
+          onClick={handleMessagesClick}
+          aria-label={
+            unreadMessagesCount > 0
+              ? `Mensagens: ${unreadMessagesCount} não lidas`
+              : 'Abrir mensagens e atendimento'
+          }
+          aria-current={isMessagesActive ? 'page' : undefined}
+          data-testid="mobile-nav-messages"
+          className={commonItemClass}
         >
-          <span
-            className="
-              relative
-              flex
-              h-[22px]
-              w-[28px]
-              items-center
-              justify-center
-            "
-          >
+          <span className="relative flex h-5 w-5 items-center justify-center">
             <MessageCircle
-              className="h-[20px] w-[20px]"
-              strokeWidth={isMessagesActive ? 2.25 : 1.8}
+              className={cn(
+                'h-5 w-5 transition-transform duration-150 group-active:scale-90',
+                isMessagesActive
+                  ? 'text-blue-600 dark:text-blue-400 stroke-[2.25]'
+                  : 'text-slate-500 dark:text-slate-400 stroke-[1.75] group-hover:text-slate-800 dark:group-hover:text-slate-200'
+              )}
             />
 
             {unreadMessagesCount > 0 && (
               <span
                 aria-live="polite"
                 aria-label={`${unreadMessagesCount} mensagens não lidas`}
-                className="
-                  absolute
-                  -right-[1px]
-                  -top-[1px]
-
-                  h-[6px]
-                  w-[6px]
-
-                  rounded-full
-
-                  bg-blue-600
-
-                  ring-[1.5px]
-                  ring-white
-                "
-              />
+                data-testid="messages-badge"
+                className={cn(
+                  'absolute -top-1 -right-2 z-10 flex h-4 min-w-4 px-1 items-center justify-center',
+                  'rounded-full bg-blue-600 text-white text-[10px] font-bold leading-none',
+                  'ring-2 ring-white dark:ring-slate-900 shadow-sm animate-in zoom-in-75 duration-200'
+                )}
+              >
+                {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+              </span>
             )}
           </span>
 
           <span
             className={cn(
-              'truncate text-[9px] leading-none',
-
+              'truncate text-[11px] leading-tight transition-colors',
               isMessagesActive
-                ? 'font-semibold text-blue-600'
-                : 'font-medium text-slate-600'
+                ? 'font-semibold text-blue-600 dark:text-blue-400'
+                : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'
             )}
           >
             Mensagens
@@ -534,18 +335,17 @@ export default function MobileBottomNav() {
           {isMessagesActive && (
             <span
               aria-hidden="true"
-              className="
-                absolute
-                bottom-[1px]
-                h-[2px]
-                w-[14px]
-                rounded-full
-                bg-blue-600
-              "
+              className="absolute bottom-1 h-[2.5px] w-4 rounded-full bg-blue-600 dark:bg-blue-400"
             />
           )}
         </button>
       </div>
+
+      {/* Safe Area Spacer: garante continuidade do fundo branco em dispositivos com Home Indicator sem comprimir a barra */}
+      <div
+        aria-hidden="true"
+        className="h-[var(--safe-area-inset-bottom,0px)] w-full pointer-events-none"
+      />
     </nav>
   );
 }
