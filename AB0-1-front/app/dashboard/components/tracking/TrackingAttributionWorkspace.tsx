@@ -48,7 +48,7 @@ export default function TrackingAttributionWorkspace({ companyId }: Props) {
   const data = query.data;
   const unavailable = query.isError || data?.status === 'unavailable' || data?.status === 'error';
   const processing = data?.status === 'processing';
-  const advanced = Boolean(data?.capabilities.advanced);
+  const advanced = Boolean(data?.capabilities?.advanced);
   const statusMessage = useMemo(() => {
     if (processing) return 'A mensuração está sendo processada.';
     if (unavailable) return 'A mensuração está indisponível no momento.';
@@ -62,7 +62,7 @@ export default function TrackingAttributionWorkspace({ companyId }: Props) {
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="max-w-3xl">
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[hsl(var(--dashboard-subtle))] px-3 py-1 text-xs font-semibold text-[hsl(var(--dashboard-muted))]">
+              <span className="rounded-full bg-[hsl(var(--dashboard-surface))] px-3 py-1 text-xs font-semibold text-[hsl(var(--dashboard-muted))]">
                 CORE + PREMIUM
               </span>
               <span className="inline-flex items-center gap-1 text-xs text-[hsl(var(--dashboard-muted))]">
@@ -128,8 +128,8 @@ export default function TrackingAttributionWorkspace({ companyId }: Props) {
               className={
                 'border-b-2 px-3 py-3 text-sm font-medium transition-colors ' +
                 (activeTab === tab.id
-                  ? 'border-[hsl(var(--dashboard-primary))] text-[hsl(var(--dashboard-text))]'
-                  : 'border-transparent text-[hsl(var(--dashboard-muted))] hover:text-[hsl(var(--dashboard-text))]')
+                  ? 'border-[hsl(var(--dashboard-accent))] text-[hsl(var(--dashboard-ink))]'
+                  : 'border-transparent text-[hsl(var(--dashboard-muted))] hover:text-[hsl(var(--dashboard-ink))]')
               }
             >
               {tab.label}

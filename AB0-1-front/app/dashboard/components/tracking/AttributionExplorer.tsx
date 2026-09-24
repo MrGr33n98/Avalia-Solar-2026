@@ -97,7 +97,7 @@ export default function AttributionExplorer({ data, advanced, model, onModelChan
           ].map(([label, metric]) => (
             <div
               key={label}
-              className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-subtle))] p-4"
+              className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] p-4"
             >
               <p className="text-xs text-[hsl(var(--dashboard-muted))]">{label}</p>
               <p className="mt-1 text-2xl font-semibold">{metric}</p>

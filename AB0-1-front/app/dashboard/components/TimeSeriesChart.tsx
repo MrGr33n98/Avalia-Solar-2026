@@ -54,14 +54,11 @@ export default function TimeSeriesChart({
   data,
   loading = false,
   dataStatus = 'ready',
-  themeMode = 'dark',
   title = 'Métricas ao Longo do Tempo',
   description = 'Acompanhe a evolução das suas métricas nos últimos dias',
   chartType = 'line',
   showLines = ['views', 'cta_clicks', 'leads'],
 }: TimeSeriesChartProps) {
-  const isDark = themeMode !== 'light';
-
   // Transform data for Recharts
   const chartData = useMemo(() => {
     return data.map((point) => ({
@@ -182,13 +179,13 @@ export default function TimeSeriesChart({
             <AreaChart {...commonProps}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke={isDark ? "#ffffff" : "#64748B"}
+                stroke="hsl(var(--dashboard-chart-grid))"
                 opacity={0.08}
                 vertical={false}
               />
               <XAxis
                 dataKey="date"
-                stroke={isDark ? "#ffffff" : "#64748B"}
+                stroke="hsl(var(--dashboard-muted))"
                 opacity={0.4}
                 style={{ fontSize: '10px', fontWeight: 'bold' }}
                 tickLine={false}
@@ -196,7 +193,7 @@ export default function TimeSeriesChart({
                 dy={10}
               />
               <YAxis
-                stroke={isDark ? "#ffffff" : "#64748B"}
+                stroke="hsl(var(--dashboard-muted))"
                 opacity={0.4}
                 style={{ fontSize: '10px', fontWeight: 'bold' }}
                 tickLine={false}
@@ -212,7 +209,7 @@ export default function TimeSeriesChart({
                 }}
                 itemStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}
                 labelStyle={{ color: 'hsl(var(--dashboard-muted))', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
-                cursor={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.06)', strokeWidth: 1 }}
+                cursor={{ stroke: 'hsl(var(--dashboard-chart-grid))', strokeWidth: 1 }}
               />
               <Legend
                 verticalAlign="top"
@@ -238,7 +235,7 @@ export default function TimeSeriesChart({
                   fillOpacity={0.1}
                   strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 4, stroke: isDark ? '#ffffff' : 'hsl(var(--dashboard-chart-1))', strokeWidth: 2 }}
+                  activeDot={{ r: 4, stroke: 'hsl(var(--dashboard-ink))', strokeWidth: 2 }}
                 />
               ))}
             </AreaChart>
@@ -246,13 +243,13 @@ export default function TimeSeriesChart({
             <LineChart {...commonProps}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke={isDark ? "#ffffff" : "#64748B"}
+                stroke="hsl(var(--dashboard-chart-grid))"
                 opacity={0.08}
                 vertical={false}
               />
               <XAxis
                 dataKey="date"
-                stroke={isDark ? "#ffffff" : "#64748B"}
+                stroke="hsl(var(--dashboard-muted))"
                 opacity={0.4}
                 style={{ fontSize: '10px', fontWeight: 'bold' }}
                 tickLine={false}
@@ -260,7 +257,7 @@ export default function TimeSeriesChart({
                 dy={10}
               />
               <YAxis
-                stroke={isDark ? "#ffffff" : "#64748B"}
+                stroke="hsl(var(--dashboard-muted))"
                 opacity={0.4}
                 style={{ fontSize: '10px', fontWeight: 'bold' }}
                 tickLine={false}
@@ -276,7 +273,7 @@ export default function TimeSeriesChart({
                 }}
                 itemStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase' }}
                 labelStyle={{ color: 'hsl(var(--dashboard-muted))', fontWeight: 'bold', fontSize: '10px', marginBottom: '8px' }}
-                cursor={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.06)', strokeWidth: 1 }}
+                cursor={{ stroke: 'hsl(var(--dashboard-chart-grid))', strokeWidth: 1 }}
               />
               <Legend
                 verticalAlign="top"
@@ -300,7 +297,7 @@ export default function TimeSeriesChart({
                   stroke={config.stroke}
                   strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 4, stroke: isDark ? '#ffffff' : 'hsl(var(--dashboard-chart-1))', strokeWidth: 2 }}
+                  activeDot={{ r: 4, stroke: 'hsl(var(--dashboard-ink))', strokeWidth: 2 }}
                 />
               ))}
             </LineChart>

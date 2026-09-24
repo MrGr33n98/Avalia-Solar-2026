@@ -87,7 +87,7 @@ export default function AttributionOverview({ companyId, from: requestedFrom, to
       {summary ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {(['visits', 'cta_clicks', 'leads', 'attribution_coverage_pct'] as const).map((key) => (
-            <div key={key} className="rounded-lg bg-[hsl(var(--dashboard-subtle))] p-3">
+            <div key={key} className="rounded-lg bg-[hsl(var(--dashboard-surface))] p-3">
               <p className="text-xs text-[hsl(var(--dashboard-muted))]">{labels[key]}</p>
               <p className="mt-1 text-xl font-bold">
                 {key === 'attribution_coverage_pct' ? `${summary[key]}%` : summary[key]}

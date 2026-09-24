@@ -223,9 +223,11 @@ test.describe('Hotfix visual P0/P1', () => {
   };
 
   async function mockDashboard(page: Page) {
+    const baseUrl = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
+    const cookieUrl = new URL(baseUrl).origin;
     await page.context().addCookies([
-      { name: 'jwt_token', value: 'e2e-dashboard-token', url: 'http://localhost:3000' },
-      { name: 'active_company_id', value: '1', url: 'http://localhost:3000' },
+      { name: 'jwt_token', value: 'e2e-dashboard-token', url: cookieUrl },
+      { name: 'active_company_id', value: '1', url: cookieUrl },
     ]);
     await page.addInitScript(
       ({ user, company }) => {
@@ -242,14 +244,14 @@ test.describe('Hotfix visual P0/P1', () => {
       { user: mockUser, company: mockCompany }
     );
 
-    await page.route('**/graphql*', (route) =>
+    await page.route(/\/graphql/, (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ data: { me: mockUser } }),
       })
     );
-    await page.route('**/api/v1/**', async (route) => {
+    await page.route(/\/api\/v1\//, async (route) => {
       const pathname = new URL(route.request().url()).pathname;
       let payload: unknown = {};
       if (pathname.endsWith('/auth/me') || pathname.endsWith('/users/me'))
@@ -288,6 +290,34 @@ test.describe('Hotfix visual P0/P1', () => {
         };
       else if (pathname.endsWith('/company_dashboard/analytics/top_campaigns'))
         payload = { campaigns: [] };
+      else if (pathname.endsWith('/company_dashboard/analytics/tracking_workspace'))
+        payload = {
+          version: 'tracking-attribution-v1',
+          status: 'empty',
+          data_source: 'analytics_events',
+          data_status: 'empty',
+          range: { from: '2026-08-01', to: '2026-08-30' },
+          summary: null,
+          channels: [],
+          campaigns: [],
+          cta_matrix: [],
+          landing_pages: [],
+          health: { status: 'not_configured', healthy: 0, total: 6, items: [] },
+          diagnostics: { event_count: 0, unknown_event_count: 0, components: [] },
+          capabilities: {
+            core: true,
+            advanced: true,
+            saved_links: false,
+            export: true,
+            conversion_tracking: 'not_configured',
+          },
+          policy: {
+            inbound_source: 'configurable',
+            outbound_source: 'avaliasolar',
+            ads_source: 'avaliasolar_ads',
+            internal_identity: 'click_id/impression_id/delivery_id',
+          },
+        };
       else if (pathname.endsWith('/company_dashboard/intent_summary'))
         payload = { total_signals: 0, intent_distribution: {} };
       else if (pathname.endsWith('/company_dashboard/notifications'))
@@ -300,11 +330,26 @@ test.describe('Hotfix visual P0/P1', () => {
       });
     });
   }
+  test('?tab=tracking-attribution monta o workspace e consulta a API', async ({ page }) => {
+    await mockDashboard(page);
+    const trackingRequest = page.waitForRequest((request) =>
+      request.url().includes('/api/v1/company_dashboard/analytics/tracking_workspace')
+    );
+
+    await page.goto('/dashboard?company_id=1&tab=tracking-attribution');
+
+    await expect(
+      page.getByRole('heading', { name: 'Tracking & Atribuição', exact: true })
+    ).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Gerador de links' })).toBeVisible();
+    const request = await trackingRequest;
+    expect(new URL(request.url()).searchParams.get('company_id')).toBe('1');
+  });
   for (const viewport of [
     { width: 375, height: 812, name: 'mobile' },
     { width: 768, height: 1024, name: 'tablet' },
   ]) {
-    for (const theme of ['light', 'dark'] as const) {
+    for (const theme of ['light', 'darkmodern', 'monokai'] as const) {
       test(`${viewport.name} ${theme}: drawer rotulado, tema consistente e sem sobreposição`, async ({
         page,
       }) => {

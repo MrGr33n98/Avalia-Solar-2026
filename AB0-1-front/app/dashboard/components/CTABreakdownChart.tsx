@@ -68,7 +68,7 @@ export default function CTABreakdownChart({
       {
         name: 'WhatsApp',
         value: data.whatsapp_clicks,
-        color: '#28A745',
+        color: 'hsl(var(--dashboard-positive))',
         icon: MessageSquare,
       },
       {
@@ -80,7 +80,7 @@ export default function CTABreakdownChart({
       {
         name: 'Telefone',
         value: data.phone_clicks,
-        color: '#FCEE21',
+        color: 'hsl(var(--dashboard-warning))',
         icon: Phone,
       },
       {
@@ -98,7 +98,7 @@ export default function CTABreakdownChart({
       {
         name: 'Outros',
         value: data.other_clicks,
-        color: '#94A3B8',
+        color: 'hsl(var(--dashboard-muted))',
         icon: Shapes,
       },
     ].sort((a, b) => b.value - a.value); 
@@ -203,7 +203,7 @@ export default function CTABreakdownChart({
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#ffffff"
+              stroke="hsl(var(--dashboard-chart-grid))"
               opacity={0.05}
               vertical={orientation === 'horizontal'}
               horizontal={orientation !== 'horizontal'}
@@ -212,7 +212,7 @@ export default function CTABreakdownChart({
               <>
                 <XAxis
                   type="number"
-                  stroke="#ffffff"
+                  stroke="hsl(var(--dashboard-muted))"
                   opacity={0.3}
                   style={{ fontSize: '10px', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}
                   tickLine={false}
@@ -221,7 +221,7 @@ export default function CTABreakdownChart({
                 <YAxis
                   type="category"
                   dataKey="name"
-                  stroke="#ffffff"
+                  stroke="hsl(var(--dashboard-muted))"
                   opacity={0.3}
                   style={{ fontSize: '10px', fontWeight: 'bold' }}
                   width={70}
@@ -233,7 +233,7 @@ export default function CTABreakdownChart({
               <>
                 <XAxis
                   dataKey="name"
-                  stroke="#ffffff"
+                  stroke="hsl(var(--dashboard-muted))"
                   opacity={0.3}
                   style={{ fontSize: '10px', fontWeight: 'bold' }}
                   tickLine={false}
@@ -241,7 +241,7 @@ export default function CTABreakdownChart({
                 />
                 <YAxis
                   type="number"
-                  stroke="#ffffff"
+                  stroke="hsl(var(--dashboard-muted))"
                   opacity={0.3}
                   style={{ fontSize: '10px', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}
                   tickLine={false}
@@ -249,7 +249,7 @@ export default function CTABreakdownChart({
                 />
               </>
             )}
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--dashboard-chart-grid) / 0.25)' }} />
             <Bar dataKey="value" radius={[0, 4, 4, 0]}>
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.8} />

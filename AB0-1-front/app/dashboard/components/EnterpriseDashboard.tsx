@@ -224,7 +224,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const { resolvedTheme } = useTheme();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const themeMode: 'light' | 'dark' = resolvedTheme === 'dark' ? 'dark' : 'light';
+  const themeMode: 'light' | 'dark' = resolvedTheme === 'light' ? 'light' : 'dark';
   const dashboardCompany = company;
   const dashboardPlanId = dashboardCompany?.plan_id;
   const dashboardPlanTier = dashboardCompany?.plan_tier;

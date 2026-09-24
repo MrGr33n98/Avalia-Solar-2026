@@ -46,7 +46,7 @@ export default function TrackingHealth({ health }: Props) {
           </p>
           <h2
             id="tracking-health-title"
-            className="text-xl font-semibold text-[hsl(var(--dashboard-text))]"
+            className="text-xl font-semibold text-[hsl(var(--dashboard-ink))]"
           >
             Saúde da mensuração
           </h2>
@@ -75,7 +75,7 @@ export default function TrackingHealth({ health }: Props) {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="font-medium text-[hsl(var(--dashboard-text))]">{item.label}</h3>
+                  <h3 className="font-medium text-[hsl(var(--dashboard-ink))]">{item.label}</h3>
                   <p className={'mt-1 text-xs font-medium ' + meta.tone}>{meta.label}</p>
                 </div>
                 <Icon className={'h-5 w-5 ' + meta.tone} aria-label={meta.label} />
