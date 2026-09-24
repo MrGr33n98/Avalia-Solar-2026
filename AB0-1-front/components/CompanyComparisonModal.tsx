@@ -21,20 +21,7 @@ import { track } from '@/lib/analytics/lazy';
 import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { cn } from '@/lib/utils';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
-
-const getCoverageCount = (company: ComparisonCompany) => {
-  const cities = Array.isArray(company.coverage_cities)
-    ? company.coverage_cities
-    : String(company.coverage_cities || '')
-        .split(',')
-        .filter(Boolean);
-  const states = Array.isArray(company.coverage_states)
-    ? company.coverage_states
-    : String(company.coverage_states || '')
-        .split(',')
-        .filter(Boolean);
-  return cities.length || states.length * 10 || 0;
-};
+import { getCoverageLabel } from '@/lib/company/coverage-label';
 
 const getSpeedBadge = (time?: string) => {
   if (!time || time === 'Consultar') return null;
@@ -64,6 +51,12 @@ interface ComparisonCompany {
   total_reviews?: number;
   coverage_cities?: string | string[];
   coverage_states?: string | string[];
+  service_areas?: Array<{
+    coverage_type: 'city' | 'state' | 'national' | 'radius';
+    state_code?: string | null;
+    city_name?: string | null;
+    radius_km?: number | null;
+  }>;
   delivered_projects_score?: number;
   response_time_sla?: string;
   warranty_years?: number;
@@ -145,11 +138,10 @@ function MobileComparisonContent({
       label: 'Abrangência',
       detail: 'Atuação',
       render: (company: ComparisonCompany) => {
-        const coverageCount = getCoverageCount(company);
         return (
           <>
             <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">{[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}</span>
-            <span className="text-[10px] text-slate-400">{coverageCount > 0 ? `+${coverageCount} regiões` : 'Sob consulta'}</span>
+            <span className="text-[10px] text-slate-400">{getCoverageLabel(company)}</span>
           </>
         );
       },
@@ -728,7 +720,6 @@ export default function CompanyComparisonModal({
                       </div>
                     </div>
                     {companies.slice(0, 4).map((company) => {
-                      const coverageCount = getCoverageCount(company);
                       const isHighlighted = company.id === highestRatedCompanyId;
                       return (
                         <div
@@ -743,7 +734,7 @@ export default function CompanyComparisonModal({
                               'Consultar'}
                           </span>
                           <span className="mt-0.5 text-[10px] text-slate-400">
-                            {coverageCount > 0 ? `+${coverageCount} regiões` : 'Sob consulta'}
+                            {getCoverageLabel(company)}
                           </span>
                         </div>
                       );
