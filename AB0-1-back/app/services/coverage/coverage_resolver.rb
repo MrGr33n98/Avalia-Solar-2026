@@ -4,6 +4,12 @@ module Coverage
   class CoverageResolver
     attr_reader :company, :purpose
 
+    def self.resolve(company, city: nil, state: nil, target_city: nil, target_state: nil, target_territory: nil, purpose: :ranking)
+      c = target_city || city
+      s = target_state || state
+      new(company, purpose: purpose).resolve(target_city: c, target_state: s, target_territory: target_territory)
+    end
+
     def initialize(company, purpose: :ranking)
       @company = company
       @purpose = purpose.to_sym

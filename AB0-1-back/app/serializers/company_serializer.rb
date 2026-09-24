@@ -5,7 +5,7 @@ class CompanySerializer < ActiveModel::Serializer
   attributes :id, :name, :description, :website,
              :slug, :seo_title, :seo_description, :meta_description, :seo_keywords,
              :state, :city, :address, :phone, :whatsapp, :latitude, :longitude,
-             :coverage_states, :coverage_cities, :service_areas, :local_solar_path,
+             :coverage_states, :coverage_cities, :service_areas, :canonical_coverage, :local_solar_path,
              :email_public, :featured, :verified,
              :media_upload_allowed,
              :rating_avg, :rating_count,
@@ -212,6 +212,18 @@ class CompanySerializer < ActiveModel::Serializer
         radius_km: area.radius_km
       }
     end
+  end
+
+  def canonical_coverage
+    areas = object.respond_to?(:company_service_areas) ? object.company_service_areas.active : []
+    {
+      national: areas.any? { |a| a.coverage_type == 'national' },
+      states: areas.select { |a| a.coverage_type == 'state' && a.state_code.present? }.map { |a| a.state_code.upcase }.uniq,
+      cities: areas.select { |a| a.coverage_type == 'city' && a.city_name.present? }.map do |a|
+        { state: a.state_code&.upcase, city: a.city_name }
+      end,
+      unsupported_radius_count: areas.count { |a| a.coverage_type == 'radius' }
+    }
   end
 
   def local_solar_path

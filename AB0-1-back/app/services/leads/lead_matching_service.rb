@@ -51,8 +51,8 @@ module Leads
       value = 0
       value += 40 if @preferred_company_id.to_i == company.id
       value += 25 if company.verified?
-      value += 20 if @lead.city.present? && company.serves_city?(@lead.city, @lead.state)
-      value += 10 if @lead.state.present? && company.serves_state?(@lead.state)
+      value += 20 if @lead.city.present? && Coverage::ConsumerAdapter.serves_city?(company, @lead.city, @lead.state, consumer: 'leads')
+      value += 10 if @lead.state.present? && Coverage::ConsumerAdapter.serves_state?(company, @lead.state, consumer: 'leads')
       value += [company.rating_avg.to_f * 2, 10].min
       value.to_i
     end
@@ -61,8 +61,8 @@ module Leads
       reasons = []
       reasons << 'preferred_company' if @preferred_company_id.to_i == company.id
       reasons << 'verified' if company.verified?
-      reasons << 'city_coverage' if @lead.city.present? && company.serves_city?(@lead.city, @lead.state)
-      reasons << 'state_coverage' if @lead.state.present? && company.serves_state?(@lead.state)
+      reasons << 'city_coverage' if @lead.city.present? && Coverage::ConsumerAdapter.serves_city?(company, @lead.city, @lead.state, consumer: 'leads')
+      reasons << 'state_coverage' if @lead.state.present? && Coverage::ConsumerAdapter.serves_state?(company, @lead.state, consumer: 'leads')
       reasons
     end
   end
