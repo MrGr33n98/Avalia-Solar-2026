@@ -108,8 +108,26 @@ module CompanyDashboard
     end
 
     def diagnostics(events, health)
-      result = { checked_at: Time.current.iso8601, event_count: events.length,
-                 unknown_event_count: unknown_event_count(events), components: health[:items] }
+      canonical = events.select { |e| canonical_event?(e) }
+      eligibility_results = canonical.map { |e| Analytics::EventEligibility.call(e, context: :acquisition) }
+      eligible_count = eligibility_results.count(&:eligible?)
+      excluded = eligibility_results.reject(&:eligible?)
+
+      excluded_breakdown = excluded.group_by(&:reason).map do |reason, group|
+        { reason: reason.to_s, count: group.length }
+      end.sort_by { |item| -item[:count] }
+
+      result = {
+        checked_at: Time.current.iso8601,
+        event_count: events.length,
+        raw_event_count: events.length,
+        canonical_event_count: canonical.length,
+        acquisition_eligible_count: eligible_count,
+        acquisition_excluded_count: excluded.length,
+        excluded_breakdown: excluded_breakdown,
+        unknown_event_count: unknown_event_count(events),
+        components: health[:items]
+      }
       return result unless @advanced
 
       result.merge(advanced_diagnostics(events))

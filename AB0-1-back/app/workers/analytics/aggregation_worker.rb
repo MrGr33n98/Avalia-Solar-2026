@@ -78,6 +78,8 @@ module Analytics
       filter_leads = count_filter(event_type_in(LEAD_EVENTS), is_pg)
       filter_reviews = count_filter(event_type_in(REVIEW_EVENTS), is_pg)
 
+      eligibility_filter = Analytics::EventEligibility.sql_predicate(context: :organic_engagement, json_column: 'payload', is_pg: is_pg)
+
       if is_pg
         <<~SQL
           INSERT INTO company_daily_stats (company_id, day, profile_views, cta_clicks, whatsapp_clicks, email_clicks, phone_clicks, website_clicks, leads, reviews, updated_at, created_at)
@@ -85,6 +87,7 @@ module Analytics
             company_id, occurred_at::date, #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_leads}, #{filter_reviews}, NOW(), NOW()
           FROM platform_events
           WHERE occurred_at >= '#{from.iso8601}' AND occurred_at < '#{to.iso8601}' AND company_id IS NOT NULL
+            AND #{eligibility_filter}
           GROUP BY 1, 2
           ON CONFLICT (company_id, day) DO UPDATE SET
             profile_views = company_daily_stats.profile_views + EXCLUDED.profile_views,
@@ -106,6 +109,7 @@ module Analytics
             company_id, date(occurred_at), #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_leads}, #{filter_reviews}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           FROM platform_events
           WHERE occurred_at >= '#{from.iso8601}' AND occurred_at < '#{to.iso8601}' AND company_id IS NOT NULL
+            AND #{eligibility_filter}
           GROUP BY 1, 2
         SQL
       end

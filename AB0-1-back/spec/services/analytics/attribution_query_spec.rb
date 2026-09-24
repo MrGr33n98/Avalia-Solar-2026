@@ -85,4 +85,52 @@ RSpec.describe Analytics::AttributionQuery do
 
     expect(empty[:summary]).to include(visits: 0, ctr: nil, profile_to_lead_conversion: nil, cta_to_lead_rate: nil)
   end
+
+  it 'filtra estritamente o fixture canônico: 25 raw -> 15 aquisição elegível (12 ChatGPT + 3 Google)' do
+    fixture_company = create(:company)
+    f_start = from_time + 1.day
+
+    # 12 ChatGPT
+    12.times do |i|
+      event(company: fixture_company, type: 'profile_view', at: f_start + i.minutes,
+            metadata: { session_id: "s-chatgpt-#{i}", referrer: 'https://chatgpt.com', landing_path: '/companies/solar' })
+    end
+
+    # 6 Avalia Solar interno
+    6.times do |i|
+      event(company: fixture_company, type: 'profile_view', at: f_start + 20.minutes + i.minutes,
+            metadata: { session_id: "s-internal-#{i}", referrer: 'https://avaliasolar.com.br', landing_path: '/companies/solar' })
+    end
+
+    # 3 Google Organic
+    3.times do |i|
+      event(company: fixture_company, type: 'profile_view', at: f_start + 30.minutes + i.minutes,
+            metadata: { session_id: "s-google-#{i}", referrer: 'https://www.google.com/search?q=solar', landing_path: '/companies/solar' })
+    end
+
+    # 3 CRM interno
+    3.times do |i|
+      event(company: fixture_company, type: 'profile_view', at: f_start + 40.minutes + i.minutes,
+            metadata: { session_id: "s-crm-#{i}", referrer: 'https://crm.avaliasolar.com.br', landing_path: '/companies/solar' })
+    end
+
+    # 1 Google Accounts/Auth
+    event(company: fixture_company, type: 'profile_view', at: f_start + 50.minutes,
+          metadata: { session_id: 's-auth-1', referrer: 'https://accounts.google.com/o/oauth2/auth', landing_path: '/auth/callback' })
+
+    result = described_class.call(company_id: fixture_company.id, from_time: f_start, to_time: f_start + 2.hours)
+
+    expect(result[:summary][:visits]).to eq(15)
+    channel_groups = result[:channels].map { |c| c[:channel_group] }
+    expect(channel_groups).not_to include('Internal', 'System/Auth')
+    expect(channel_groups).to contain_exactly('AI Referral', 'Organic Search')
+
+    chatgpt_channel = result[:channels].find { |c| c[:channel_group] == 'AI Referral' }
+    expect(chatgpt_channel[:visits]).to eq(12)
+    expect(chatgpt_channel[:acquisition_share_pct]).to eq(80.0)
+
+    google_channel = result[:channels].find { |c| c[:channel_group] == 'Organic Search' }
+    expect(google_channel[:visits]).to eq(3)
+    expect(google_channel[:acquisition_share_pct]).to eq(20.0)
+  end
 end

@@ -8,19 +8,22 @@ module Analytics
     SOCIAL_HOSTS = %w[instagram.com facebook.com linkedin.com t.co x.com twitter.com].freeze
     AUTH_HOSTS = %w[accounts.google.com appleid.apple.com login.microsoftonline.com auth.avaliasolar.com.br].freeze
     INTERNAL_HOSTS = %w[avaliasolar.com.br www.avaliasolar.com.br app.avaliasolar.com.br crm.avaliasolar.com.br].freeze
+    AI_HOSTS = %w[chatgpt.com openai.com claude.ai anthropic.com perplexity.ai].freeze
     PAID_SEARCH_MEDIA = %w[cpc ppc paid_search paid-search search_paid].freeze
     PAID_SOCIAL_MEDIA = %w[paid_social paid-social social_paid social-ads].freeze
 
-    def self.call(metadata)
+    def self.call(metadata = {})
       new(metadata).call
     end
 
-    def initialize(metadata)
+    def initialize(metadata = {})
+      @raw_metadata = metadata
       @metadata = metadata.is_a?(Hash) ? metadata.stringify_keys : nil
     end
 
     def call
-      return unknown unless @metadata
+      return unknown if !@raw_metadata.nil? && !@raw_metadata.is_a?(Hash)
+      return direct if @metadata.nil? || @metadata.empty?
 
       source = clean(@metadata['utm_source'])
       medium = clean(@metadata['utm_medium'])
@@ -31,6 +34,7 @@ module Analytics
       return direct if referrer_host.blank?
       return system_auth(referrer_host) if auth_host?(referrer_host)
       return internal_traffic_host(referrer_host) if internal_host?(referrer_host)
+      return ai_referral(referrer_host) if ai_host?(referrer_host)
       return organic_search(referrer_host) if search_host?(referrer_host)
       return organic_social(referrer_host) if social_host?(referrer_host)
 
@@ -90,6 +94,25 @@ module Analytics
 
     def internal_host?(value)
       INTERNAL_HOSTS.any? { |host| value == host || value.end_with?(".#{host}") }
+    end
+
+    def ai_host?(value)
+      return false if auth_host?(value) || internal_host?(value)
+
+      AI_HOSTS.any? { |host| value == host || value.end_with?(".#{host}") }
+    end
+
+    def ai_referral(host)
+      source = host.sub(/\A(?:www\.)?/, '')
+      source_label = case source
+                     when /chatgpt|openai/ then 'chatgpt.com'
+                     when /claude|anthropic/ then 'claude.ai'
+                     when /perplexity/ then 'perplexity.ai'
+                     else source
+                     end
+
+      { channel_group: 'AI Referral', source: source_label, medium: 'referral', campaign: nil,
+        content: nil, term: nil, attribution_quality: 'referrer' }
     end
 
     def system_auth(host)

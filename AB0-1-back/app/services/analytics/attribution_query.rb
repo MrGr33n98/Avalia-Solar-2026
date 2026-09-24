@@ -23,7 +23,11 @@ module Analytics
 
     def call
       events = filtered_events.to_a
-      rows = events.reject { |event| internal_traffic?(event) }.map { |event| row_for(event, events) }
+      eligible_events = events.select { |event| Analytics::EventEligibility.call(event, context: :acquisition).eligible? }
+      rows = eligible_events.map { |event| row_for(event, events) }
+      # Garantir que mesmo após classificação de touch herdado, canais técnicos/internos não passem
+      rows.reject! { |row| row[:classification][:channel_group].in?(%w[Internal System/Auth]) }
+
       { summary: summary(rows), channels: grouped(rows, :channel), campaigns: grouped(rows, :campaign),
         cta_matrix: grouped(rows, :cta), landing_pages: grouped(rows, :landing_pages) }
     end
@@ -39,16 +43,7 @@ module Analytics
     end
 
     def internal_traffic?(event)
-      metadata = event_metadata(event).to_h
-      return true if %w[is_internal is_employee is_admin].any? { |key| metadata[key].to_s == 'true' }
-
-      surface = metadata['surface'].to_s.downcase
-      return true if NON_COMMERCIAL_SURFACES.include?(surface)
-
-      path = clean_path(metadata['landing_path'] || metadata['page_path'] || metadata['path']).to_s
-      return true if path.present? && NON_COMMERCIAL_PATHS.any? { |prefix| path == prefix || path.start_with?("#{prefix}/") }
-
-      false
+      !Analytics::EventEligibility.call(event, context: :acquisition).eligible?
     end
 
     def row_for(event, events)
@@ -137,7 +132,8 @@ module Analytics
 
     def grouped(rows, kind)
       rows = rows.reject { |row| kind == :campaign && row[:classification][:campaign].blank? }
-      records = rows.group_by { |row| group_key(row, kind) }.map { |key, values| aggregate(key, values, kind) }
+      total_visits = rows.count { |row| row[:event_type] == 'profile_view' }
+      records = rows.group_by { |row| group_key(row, kind) }.map { |key, values| aggregate(key, values, kind, total_visits) }
       records.sort_by { |row| [-row[:leads].to_i, -row[:visits].to_i] }.first(@limit)
     end
 
@@ -151,7 +147,7 @@ module Analytics
       end
     end
 
-    def aggregate(key, values, kind)
+    def aggregate(key, values, kind, total_visits = 0)
       visits = values.count { |row| row[:event_type] == 'profile_view' }
       clicks = values.count { |row| row[:event_type] == 'cta_click' }
       leads = values.count { |row| row[:event_type] == 'lead_created' }
@@ -159,6 +155,7 @@ module Analytics
         visits: visits,
         cta_clicks: clicks,
         leads: leads,
+        acquisition_share_pct: percentage(visits, total_visits),
         ctr: percentage(clicks, visits),
         profile_to_lead_conversion: percentage(leads, visits),
         cta_to_lead_rate: percentage(leads, clicks),
