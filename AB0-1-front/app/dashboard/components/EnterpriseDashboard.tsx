@@ -502,6 +502,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent
+                value="tracking-attribution"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="tracking-attribution"
+              >
+                <TrackingAttributionWorkspace companyId={companyId} />
+              </TabsContent>
+
+              <TabsContent
                 value="analytics"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="analytics"

@@ -41,6 +41,18 @@ RSpec.describe Analytics::AttributionQuery do
     expect(result[:summary][:cta_to_lead_rate]).to eq(50.0)
   end
 
+  it 'correlaciona touch quando conversão carrega lead e session ids' do
+    event(company: company, type: 'profile_view', at: from_time + 5.hours,
+          metadata: { session_id: 'session-c', utm_source: 'newsletter', utm_medium: 'email' })
+    event(company: company, type: 'lead_created', at: from_time + 6.hours,
+          metadata: { session_id: 'session-c', lead_id: 'lead-c' })
+
+    result = described_class.call(company_id: company.id, from_time:, to_time:, attribution_model: 'first_touch')
+    newsletter = result[:channels].find { |row| row[:source] == 'newsletter' }
+
+    expect(newsletter[:leads]).to eq(1)
+  end
+
   it 'returns nil rates when there is no denominator' do
     empty = described_class.call(company_id: company.id, from_time: from_time + 10.days, to_time: to_time + 10.days)
 

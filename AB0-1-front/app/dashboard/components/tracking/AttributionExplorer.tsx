@@ -1,6 +1,6 @@
 'use client';
 
-import { Lock } from 'lucide-react';
+import { Download, Lock } from 'lucide-react';
 import type { AttributionModel, TrackingWorkspaceResponse } from '@/lib/api';
 
 type Props = {
@@ -13,8 +13,44 @@ type Props = {
 const value = (item: number | null | undefined, suffix = '') =>
   item === null || item === undefined ? 'Indisponível' : String(item) + suffix;
 
+const csvCell = (value: string) => {
+  const safeValue = /^[=+\-@]/.test(value) ? "'" + value : value;
+  return '"' + safeValue.replaceAll('"', '""') + '"';
+};
+
 export default function AttributionExplorer({ data, advanced, model, onModelChange }: Props) {
   const summary = data.summary;
+  const exportCsv = () => {
+    const rows = [
+      ['tipo', 'origem', 'meio', 'campanha', 'visitas', 'ctas', 'leads'],
+      ...data.channels.map((row) => [
+        'canal',
+        row.source,
+        row.medium,
+        '',
+        row.visits,
+        row.cta_clicks,
+        row.leads,
+      ]),
+      ...data.campaigns.map((row) => [
+        'campanha',
+        row.source,
+        row.medium,
+        row.campaign,
+        row.visits,
+        row.cta_clicks,
+        row.leads,
+      ]),
+    ];
+    const csv = rows
+      .map((row) => row.map((item) => csvCell(String(item ?? ''))).join(','))
+      .join('\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    link.download = 'tracking-atribuicao.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
   return (
     <section aria-labelledby="attribution-title" className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -40,6 +76,16 @@ export default function AttributionExplorer({ data, advanced, model, onModelChan
             <option value="first_touch">First Touch</option>
           </select>
         </label>
+        {advanced ? (
+          <button
+            type="button"
+            onClick={exportCsv}
+            className="inline-flex items-center rounded-lg border border-[hsl(var(--dashboard-border))] px-3 py-2 text-sm font-medium"
+          >
+            <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+            Exportar CSV
+          </button>
+        ) : null}
       </div>
       {summary ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

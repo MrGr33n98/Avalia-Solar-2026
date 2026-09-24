@@ -38,7 +38,7 @@ const normalize = (value: string) =>
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9_.-]/g, '');
+    .replace(/[^\p{L}\p{N}_.-]/gu, '');
 
 export default function UtmLinkBuilder({ companyId }: Props) {
   const [form, setForm] = useState<FormState>(initialForm);
@@ -50,29 +50,36 @@ export default function UtmLinkBuilder({ companyId }: Props) {
   }, []);
 
   const generatedUrl = useMemo(() => {
-    const base = origin || 'https://www.avaliasolar.com.br';
-    const url = new URL(form.destination || '/companies', base);
-    const params = new URLSearchParams();
-    const values = {
-      utm_source: form.source,
-      utm_medium: form.medium,
-      utm_campaign: form.campaign,
-      utm_content: form.content,
-      utm_term: form.term,
-    };
-    Object.entries(values).forEach(([key, value]) => {
-      const normalized = normalize(value);
-      if (normalized) params.set(key, normalized);
-    });
-    params.set('company_id', companyId);
-    url.search = params.toString();
-    return url.toString();
+    try {
+      const base = origin || 'https://www.avaliasolar.com.br';
+      const destination = form.destination.trim();
+      const url = destination.startsWith('/') ? new URL(destination, base) : new URL(destination);
+      if (!['http:', 'https:'].includes(url.protocol)) return '';
+      const params = new URLSearchParams();
+      const values = {
+        utm_source: form.source,
+        utm_medium: form.medium,
+        utm_campaign: form.campaign,
+        utm_content: form.content,
+        utm_term: form.term,
+      };
+      Object.entries(values).forEach(([key, value]) => {
+        const normalized = normalize(value);
+        if (normalized) params.set(key, normalized);
+      });
+      params.set('company_id', companyId);
+      url.search = params.toString();
+      return url.toString();
+    } catch {
+      return '';
+    }
   }, [companyId, form, origin]);
 
   const update = (key: keyof FormState, value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
 
   const copyUrl = async () => {
+    if (!generatedUrl) return;
     await navigator.clipboard.writeText(generatedUrl);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
@@ -141,7 +148,7 @@ export default function UtmLinkBuilder({ companyId }: Props) {
             value={generatedUrl}
             aria-describedby="tracking-url-help"
           />
-          <Button type="button" onClick={copyUrl} className="shrink-0">
+          <Button type="button" onClick={copyUrl} className="shrink-0" disabled={!generatedUrl}>
             <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
             {copied ? 'Copiado' : 'Copiar'}
           </Button>
@@ -150,11 +157,17 @@ export default function UtmLinkBuilder({ companyId }: Props) {
             variant="outline"
             className="shrink-0"
             onClick={() => window.open(generatedUrl, '_blank', 'noopener,noreferrer')}
+            disabled={!generatedUrl}
           >
             <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
             Abrir
           </Button>
         </div>
+        {!generatedUrl ? (
+          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+            Destino precisa ser um caminho interno ou uma URL http(s).
+          </p>
+        ) : null}
         <p id="tracking-url-help" className="text-xs text-[hsl(var(--dashboard-muted))]">
           A empresa é vinculada por company_id. Não inclua PII em parâmetros UTM.
         </p>

@@ -1870,7 +1870,7 @@ export interface AttributionSummary {
   attributed_visits: number;
   direct_visits: number;
   unknown_visits: number;
-  attribution_coverage_pct: number;
+  attribution_coverage_pct: number | null;
   conversion_rate: number | null;
   ctr: number | null;
   profile_to_lead_conversion: number | null;
@@ -1961,8 +1961,8 @@ export interface TrackingHealthItem {
 
 export interface TrackingHealth {
   status: TrackingHealthStatus;
-  healthy: number;
-  total: number;
+  healthy: number | null;
+  total: number | null;
   items: TrackingHealthItem[];
 }
 

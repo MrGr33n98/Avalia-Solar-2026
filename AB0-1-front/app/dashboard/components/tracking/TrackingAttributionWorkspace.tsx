@@ -46,13 +46,15 @@ export default function TrackingAttributionWorkspace({ companyId }: Props) {
   });
 
   const data = query.data;
+  const unavailable = query.isError || data?.status === 'unavailable' || data?.status === 'error';
+  const processing = data?.status === 'processing';
   const advanced = Boolean(data?.capabilities.advanced);
   const statusMessage = useMemo(() => {
-    if (query.isError || data?.status === 'unavailable' || data?.status === 'error')
-      return 'A mensuração está indisponível no momento.';
+    if (processing) return 'A mensuração está sendo processada.';
+    if (unavailable) return 'A mensuração está indisponível no momento.';
     if (data?.status === 'empty') return 'Ainda não há eventos atribuíveis neste período.';
     return 'Dados canônicos da plataforma, com estado explícito de disponibilidade.';
-  }, [data?.status, query.isError]);
+  }, [data?.status, processing, unavailable]);
 
   return (
     <main className="space-y-6" aria-labelledby="tracking-workspace-title">
@@ -145,6 +147,32 @@ export default function TrackingAttributionWorkspace({ companyId }: Props) {
             <Skeleton className="h-36 rounded-xl" />
           </div>
         </div>
+      ) : processing ? (
+        <section
+          role="status"
+          className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-blue-950 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-100"
+        >
+          <h2 className="text-lg font-semibold">Mensuração em processamento</h2>
+          <p className="mt-2 text-sm">
+            Os eventos chegaram, mas a consolidação ainda não terminou.
+          </p>
+        </section>
+      ) : unavailable ? (
+        <section
+          role="alert"
+          aria-labelledby="tracking-unavailable-title"
+          className="rounded-2xl border border-amber-300 bg-amber-50 p-5 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"
+        >
+          <h2 id="tracking-unavailable-title" className="text-lg font-semibold">
+            Mensuração indisponível
+          </h2>
+          <p className="mt-2 text-sm">
+            Não foi possível consultar os sinais deste período. Nenhum zero foi inferido.
+          </p>
+          <Button type="button" variant="outline" className="mt-4" onClick={() => query.refetch()}>
+            Tentar novamente
+          </Button>
+        </section>
       ) : data ? (
         <>
           {activeTab === 'overview' ? (

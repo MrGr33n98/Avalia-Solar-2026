@@ -5,6 +5,7 @@ module Analytics
     EVENT_TYPES = %w[profile_view cta_click lead_created].freeze
     CATEGORIES = %w[visits cta_clicks leads].freeze
     TOUCH_EVENTS = %w[profile_view cta_click].freeze
+    JOURNEY_KEYS = %w[lead_id session_id anonymous_id user_id].freeze
 
     def self.call(company_id:, from_time:, to_time:, attribution_model: 'last_touch', limit: 20)
       new(company_id:, from_time:, to_time:, attribution_model:, limit:).call
@@ -66,24 +67,28 @@ module Analytics
 
     def journey_events(event, events)
       metadata = event_metadata(event)
-      key = journey_key(metadata)
-      return [] if key.blank?
+      return [] if journey_identifiers(metadata).empty?
 
       events.select do |candidate|
         candidate_metadata = event_metadata(candidate)
         next false unless TOUCH_EVENTS.include?(Analytics::EventTaxonomy.canonical(candidate.event_type))
-        next false unless journey_key(candidate_metadata) == key
+        next false unless shared_journey_identifier?(metadata, candidate_metadata)
 
         candidate.tracked_at <= event.tracked_at
       end.sort_by { |candidate| [candidate.tracked_at, candidate.id] }
     end
 
-    def journey_key(metadata)
-      %w[lead_id session_id anonymous_id user_id].each do |key|
+    def journey_identifiers(metadata)
+      JOURNEY_KEYS.filter_map do |key|
         value = metadata.to_h[key].presence
-        return "#{key}:#{value}" if value
-      end
-      nil
+        [key, value] if value
+      end.to_h
+    end
+
+    def shared_journey_identifier?(left, right)
+      left_ids = journey_identifiers(left)
+      right_ids = journey_identifiers(right)
+      JOURNEY_KEYS.any? { |key| left_ids[key].present? && left_ids[key] == right_ids[key] }
     end
 
     def event_metadata(event)
@@ -159,7 +164,7 @@ module Analytics
     end
 
     def clean_path(path)
-      value = path.to_s.split(/[?#]/).first
+      value = path.to_s.split(/[?#]/).first.to_s
       value.start_with?('/') ? value : nil
     end
   end

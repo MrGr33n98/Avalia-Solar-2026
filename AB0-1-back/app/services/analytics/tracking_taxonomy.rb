@@ -35,6 +35,8 @@ module Analytics
       )
     end
 
+    # Campos espelham contrato público de tracking; manter detecção estrita de typo.
+    # rubocop:disable Metrics/ParameterLists
     def outbound_params(surface:, placement:, sponsored:, campaign: nil, content: nil, click_id: nil)
       surface_key = normalize(surface, 64)
       raise ArgumentError, 'surface inválida' unless SURFACES.include?(surface_key)
@@ -47,9 +49,10 @@ module Analytics
         click_id: normalize(click_id, 128)
       )
     end
+    # rubocop:enable Metrics/ParameterLists
 
     def normalize(value, limit)
-      normalized = value.to_s.strip.downcase.gsub(/\s+/, '_').gsub(/[^a-z0-9_.-]/, '')
+      normalized = value.to_s.strip.downcase.gsub(/\s+/, '_').gsub(/[^\p{L}\p{N}_.-]/u, '')
       normalized[0, limit]
     end
 

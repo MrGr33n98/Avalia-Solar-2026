@@ -8,6 +8,7 @@ module Api
       before_action :authenticate_company_user_or_admin!
       before_action :set_company
       before_action :authorize_dashboard_access!
+      before_action :authorize_tracking_workspace_access!, only: %i[analytics_tracking_workspace]
       before_action :enforce_intent_summary_feature_access!, only: %i[intent_summary]
 
       # GET /api/v1/company_dashboard/analytics/overview
@@ -256,7 +257,6 @@ module Api
 
       # GET /api/v1/company_dashboard/analytics/tracking_workspace
       def analytics_tracking_workspace
-        authorize @company, :view_analytics?
         range = analytics_date_range(default_days: 30)
         return render_invalid_analytics_range unless range
 
@@ -275,23 +275,7 @@ module Api
         ), status: :ok
       rescue StandardError => e
         log_analytics_error('tracking_workspace', e)
-        render json: {
-          version: Analytics::TrackingTaxonomy::VERSION,
-          status: 'unavailable',
-          data_source: 'analytics_events_unavailable',
-          data_status: 'unavailable',
-          range: analytics_range_payload(range || analytics_date_range(default_days: 30)),
-          summary: nil,
-          channels: [],
-          campaigns: [],
-          cta_matrix: [],
-          landing_pages: [],
-          health: { status: 'unavailable', healthy: 0, total: 0, items: [] },
-          diagnostics: { components: [] },
-          capabilities: { core: true, advanced: false, saved_links: false, export: false, conversion_tracking: 'unavailable' },
-          error: { code: 'TRACKING_WORKSPACE_UNAVAILABLE', request_id: request.request_id },
-          is_premium_analytics: false
-        }, status: :ok
+        render_tracking_workspace_unavailable(range)
       end
 
       # GET /api/v1/company_dashboard/analytics/reputation
@@ -1767,6 +1751,10 @@ module Api
         enforce_feature_access!(:intent_scores, company: @company)
       end
 
+      def authorize_tracking_workspace_access!
+        authorize @company, :view_analytics?
+      end
+
       def set_company
         @company =
           if current_user&.admin?
@@ -2207,6 +2195,31 @@ module Api
           "company_id=#{@company&.id} user_id=#{current_user&.id}"
         )
         Rails.logger.error("[CompanyDashboard#analytics_#{action}] backtrace=#{error.backtrace&.first(5)&.join(' | ')}")
+      end
+
+      def render_tracking_workspace_unavailable(range)
+        safe_range = range || analytics_date_range(default_days: 30)
+        render json: {
+          version: Analytics::TrackingTaxonomy::VERSION,
+          attribution_model: attribution_model,
+          status: 'unavailable',
+          data_source: 'analytics_events_unavailable',
+          data_status: 'unavailable',
+          range: analytics_range_payload(safe_range),
+          summary: nil,
+          channels: [],
+          campaigns: [],
+          cta_matrix: [],
+          landing_pages: [],
+          health: { status: 'unavailable', healthy: nil, total: nil, items: [] },
+          diagnostics: { components: [] },
+          capabilities: {
+            core: true, advanced: false, saved_links: false, export: false, conversion_tracking: 'unavailable'
+          },
+          policy: ::CompanyDashboard::TrackingWorkspaceService::POLICY,
+          error: { code: 'TRACKING_WORKSPACE_UNAVAILABLE', request_id: request.request_id },
+          is_premium_analytics: false
+        }, status: :ok
       end
 
       def format_magic_quadrant(category_rankings)

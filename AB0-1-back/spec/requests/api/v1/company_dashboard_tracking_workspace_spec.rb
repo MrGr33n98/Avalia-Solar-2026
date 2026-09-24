@@ -38,4 +38,17 @@ RSpec.describe 'GET /api/v1/company_dashboard/analytics/tracking_workspace', typ
     expect(payload['capabilities']).to include('advanced' => true, 'export' => true)
     expect(payload['diagnostics']).to have_key('utm_coverage_pct')
   end
+
+  it 'mantém envelope completo quando a fonte fica indisponível' do
+    allow(EntitlementService).to receive(:explain).and_return(allowed: true)
+    allow(CompanyDashboard::TrackingWorkspaceService).to receive(:call).and_raise(StandardError, 'falha simulada')
+
+    get '/api/v1/company_dashboard/analytics/tracking_workspace', params: { company_id: company.id }
+
+    expect(response).to have_http_status(:ok)
+    payload = JSON.parse(response.body)
+    expect(payload['status']).to eq('unavailable')
+    expect(payload['policy']).to include('outbound_source' => 'avaliasolar', 'ads_source' => 'avaliasolar_ads')
+    expect(payload['error']['code']).to eq('TRACKING_WORKSPACE_UNAVAILABLE')
+  end
 end
