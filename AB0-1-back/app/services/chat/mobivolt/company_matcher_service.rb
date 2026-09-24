@@ -86,9 +86,9 @@ module Chat
       # ─── Location helpers ───────────────────────────────────────────────────
 
       def supports_location?(company, city, state)
-        return true if city.present? && company.serves_city?(city, state)
+        return true if city.present? && Coverage::ConsumerAdapter.serves_city?(company, city, state, consumer: 'mobivolt')
 
-        return true if state.present? && company.serves_state?(state)
+        return true if state.present? && Coverage::ConsumerAdapter.serves_state?(company, state, consumer: 'mobivolt')
 
         false
       end

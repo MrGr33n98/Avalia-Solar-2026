@@ -11,19 +11,10 @@ import { Button } from '@/components/ui/button';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import type { Company } from '@/lib/api';
+import { getCoverageLabel } from '@/lib/company/coverage-label';
 
 type HomeComparisonPreviewProps = {
   companies: Company[];
-};
-
-const getCoverageCount = (company: Company) => {
-  const cities = Array.isArray(company.coverage_cities)
-    ? company.coverage_cities
-    : String(company.coverage_cities || '').split(',').filter(Boolean);
-  const states = Array.isArray(company.coverage_states)
-    ? company.coverage_states
-    : String(company.coverage_states || '').split(',').filter(Boolean);
-  return cities.length || states.length * 10 || 0;
 };
 
 const getSpeedBadge = (time?: string) => {
@@ -153,7 +144,6 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
               const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
               const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
               const speed = getSpeedBadge(company.response_time_sla);
-              const coverageCount = getCoverageCount(company);
               const projects = company.delivered_projects_score || 0;
               const warranty = company.warranty_years || 0;
 
@@ -294,7 +284,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                           {[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}
                         </span>
                         <span className="mt-0.5 line-clamp-1 text-[8px] text-slate-500 md:text-[10px]">
-                          {coverageCount > 0 ? `+${coverageCount} cidades atendidas` : 'Sob consulta'}
+                          {getCoverageLabel(company)}
                         </span>
                       </div>
                     </div>

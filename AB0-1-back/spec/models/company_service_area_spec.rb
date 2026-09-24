@@ -54,7 +54,7 @@ RSpec.describe CompanyServiceArea, type: :model do
       expect(area.covers?(city: 'Blumenau', state: 'SC')).to be false
     end
 
-    it 'returns true for radius coverage when state matches' do
+    it 'documents that legacy radius coverage matches every location in the same state' do
       area = described_class.new(company: company, coverage_type: 'radius', state_code: 'SC', radius_km: 100, is_active: true)
       expect(area.covers?(city: nil, state: 'SC')).to be true
       expect(area.covers?(city: 'Florianópolis', state: 'SC')).to be true
