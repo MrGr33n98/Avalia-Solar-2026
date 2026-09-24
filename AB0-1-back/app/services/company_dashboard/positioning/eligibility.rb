@@ -10,8 +10,9 @@ module CompanyDashboard
       def call(points)
         distinct_x = distinct_values(points, :x_score)
         distinct_y = distinct_values(points, :y_score)
+        zero_y = points.count { |p| p[:y_score].to_f.zero? }
         population = points.length
-        flags = quality_flags(population, distinct_x, distinct_y)
+        flags = quality_flags(population, distinct_x, distinct_y, zero_y)
 
         {
           status: status_for(population, flags),
@@ -19,6 +20,7 @@ module CompanyDashboard
           minimum_population: @minimum_population,
           distinct_x: distinct_x,
           distinct_y: distinct_y,
+          zero_count_y: zero_y,
           quality_flags: flags
         }
       end
@@ -29,11 +31,12 @@ module CompanyDashboard
         points.map { |point| point[key].to_f }.uniq.length
       end
 
-      def quality_flags(population, distinct_x, distinct_y)
+      def quality_flags(population, distinct_x, distinct_y, zero_y = 0)
         [].tap do |flags|
           flags << 'insufficient_population' if population < @minimum_population
           flags << 'degenerate_x_distribution' if population.positive? && distinct_x < 2
           flags << 'degenerate_y_distribution' if population.positive? && distinct_y < 2
+          flags << 'zero_inflated_y' if population.positive? && (zero_y.to_f / population) >= 0.5
         end
       end
 

@@ -27,13 +27,20 @@ module CompanyDashboard
       return empty_payload if scores.empty?
       return insufficient_sample_payload(scores.length) if scores.length < @minimum_population
 
+      p50 = percentile(scores, 50)
+      p75 = percentile(scores, 75)
+      p90 = percentile(scores, 90)
+      collision = (p75 == p90)
+
       {
         status: 'ready',
         population: scores.length,
         minimum_population: @minimum_population,
-        median_score: percentile(scores, 50),
-        p75_score: percentile(scores, 75),
-        p90_score: percentile(scores, 90),
+        median_score: p50,
+        p75_score: p75,
+        p90_score: p90,
+        quantile_collision: collision,
+        collision_message: collision ? 'A distribuição apresenta empate no corte superior (P75 = P90).' : nil,
         distribution: distribution_for(scores)
       }
     end
@@ -48,6 +55,8 @@ module CompanyDashboard
         median_score: nil,
         p75_score: nil,
         p90_score: nil,
+        quantile_collision: false,
+        collision_message: nil,
         distribution: nil
       }
     end
@@ -60,6 +69,8 @@ module CompanyDashboard
         median_score: nil,
         p75_score: nil,
         p90_score: nil,
+        quantile_collision: false,
+        collision_message: nil,
         distribution: nil
       }
     end

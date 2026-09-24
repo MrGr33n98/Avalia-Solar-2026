@@ -592,8 +592,8 @@ module CompanyDashboard
       record = population.find { |candidate| candidate.id == company.id }
       breakdown = normalized_breakdown(record&.ranking_breakdown || snapshot&.breakdown)
       items = [
-        score_driver('trust_score', 'Trust Score', breakdown['base_trust']),
-        score_driver('recent_engagement', 'Engajamento recente', breakdown['recent_engagement'])
+        score_driver('trust_score', 'Trust Score', breakdown['base_trust'], bounded: true, max: 100.0, unit: 'pts'),
+        score_driver('recent_engagement', 'Engajamento recente', breakdown['recent_engagement'], bounded: false, max: nil, unit: 'pts')
       ].compact
 
       {
@@ -613,10 +613,18 @@ module CompanyDashboard
       {}
     end
 
-    def score_driver(code, label, value)
+    def score_driver(code, label, value, bounded: true, max: 100.0, unit: 'pts')
       return if value.nil?
 
-      { code: code, label: label, value: value.to_f.round(2) }
+      {
+        code: code,
+        label: label,
+        value: value.to_f.round(2),
+        raw_value: value.to_f.round(2),
+        bounded: bounded,
+        max: max,
+        unit: unit
+      }
     end
 
     def gaps_for(population)
@@ -676,9 +684,9 @@ module CompanyDashboard
           evidence: { company_value: nil },
           action_url: "/dashboard?company_id=#{company.id}&tab=reviews"
         )
-      end
-
-      next_action = opportunities.first || strengths.first
+      # Não usar strengths como fallback para next_best_action.
+      # Se não houver oportunidade prioritária comprovada, retornar nil.
+      next_action = opportunities.first
       {
         strengths: strengths,
         opportunities: opportunities,

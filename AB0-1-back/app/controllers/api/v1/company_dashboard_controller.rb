@@ -616,8 +616,9 @@ module Api
         if state.present? && !::CompanyDashboard::RankingEligibilityScope.new(state: normalized_state).relation.exists?
           errors[:state] = 'UF sem empresas ativas elegíveis para comparação.'
         end
+        errors[:city] = 'Cidade requer a seleção prévia de um Estado (UF).' if city.present? && state.blank?
         errors[:city] = 'Cidade deve ter no máximo 120 caracteres.' if city.to_s.length > 120
-        errors[:sector] = 'Setor inválido.' if sector.present? && !::Company::PROJECT_TYPES.include?(sector)
+        errors[:sector] = 'Tipo de projeto inválido.' if sector.present? && !::Company::PROJECT_TYPES.include?(sector)
         if quadrant_mode.present? && !%w[default reviews].include?(quadrant_mode)
           errors[:quadrant_mode] = 'Modo de mapa inválido.'
         end

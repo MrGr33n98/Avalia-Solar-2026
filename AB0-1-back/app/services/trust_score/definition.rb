@@ -35,7 +35,7 @@ module TrustScore
         penalty: 0.0
       }
 
-      score = WEIGHTS.keys.sum { |key| components.fetch(key) }.clamp(0.0, 100.0)
+      score = WEIGHTS.keys.sum { |key| components.fetch(key) }.clamp(0.0, 100.0).round(2)
       { score: score, components: components }
     end
 
@@ -49,7 +49,7 @@ module TrustScore
     def self.normalized_log(value)
       return 0.0 if value.to_f <= 0
 
-      raw = Math.log1p([value.to_f, MAX_VALUES[:engagement]].min) / Math.log1p(MAX_VALUES[:engagement])
+      raw = Math.log(1.0 + [value.to_f, MAX_VALUES[:engagement]].min) / Math.log(1.0 + MAX_VALUES[:engagement])
       raw * WEIGHTS[:engagement]
     end
     private_class_method :normalized_log
