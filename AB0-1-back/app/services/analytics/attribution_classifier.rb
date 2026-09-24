@@ -6,6 +6,8 @@ module Analytics
   class AttributionClassifier
     SEARCH_HOSTS = %w[google.com google.com.br bing.com duckduckgo.com yahoo.com].freeze
     SOCIAL_HOSTS = %w[instagram.com facebook.com linkedin.com t.co x.com twitter.com].freeze
+    AUTH_HOSTS = %w[accounts.google.com appleid.apple.com login.microsoftonline.com auth.avaliasolar.com.br].freeze
+    INTERNAL_HOSTS = %w[avaliasolar.com.br www.avaliasolar.com.br app.avaliasolar.com.br crm.avaliasolar.com.br].freeze
     PAID_SEARCH_MEDIA = %w[cpc ppc paid_search paid-search search_paid].freeze
     PAID_SOCIAL_MEDIA = %w[paid_social paid-social social_paid social-ads].freeze
 
@@ -27,6 +29,8 @@ module Analytics
 
       referrer_host = normalize_host(@metadata['referrer_host'] || @metadata['referrer'])
       return direct if referrer_host.blank?
+      return system_auth(referrer_host) if auth_host?(referrer_host)
+      return internal_traffic_host(referrer_host) if internal_host?(referrer_host)
       return organic_search(referrer_host) if search_host?(referrer_host)
       return organic_social(referrer_host) if social_host?(referrer_host)
 
@@ -69,11 +73,33 @@ module Analytics
     end
 
     def search_host?(value)
+      return false if auth_host?(value) || internal_host?(value)
+
       SEARCH_HOSTS.any? { |host| value == host || value.end_with?(".#{host}") }
     end
 
     def social_host?(value)
+      return false if auth_host?(value) || internal_host?(value)
+
       SOCIAL_HOSTS.any? { |host| value == host || value.end_with?(".#{host}") }
+    end
+
+    def auth_host?(value)
+      AUTH_HOSTS.any? { |host| value == host || value.end_with?(".#{host}") }
+    end
+
+    def internal_host?(value)
+      INTERNAL_HOSTS.any? { |host| value == host || value.end_with?(".#{host}") }
+    end
+
+    def system_auth(host)
+      { channel_group: 'System/Auth', source: host, medium: 'auth', campaign: nil,
+        content: nil, term: nil, attribution_quality: 'system' }
+    end
+
+    def internal_traffic_host(host)
+      { channel_group: 'Internal', source: host, medium: 'internal', campaign: nil,
+        content: nil, term: nil, attribution_quality: 'internal' }
     end
 
     def organic_search(host)

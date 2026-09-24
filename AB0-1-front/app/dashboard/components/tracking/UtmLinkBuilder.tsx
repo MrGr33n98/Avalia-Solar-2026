@@ -1,28 +1,34 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Check, Copy, ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SITE } from '@/lib/site-core';
+import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
 
-type Props = { companyId: string };
+type CompanyProps = {
+  id?: number | string;
+  slug?: string | null;
+  name?: string | null;
+};
+
+type Props = {
+  companyId: string;
+  company?: CompanyProps;
+};
+
+type DestinationMode = 'company_profile' | 'quote_request' | 'custom';
+
 type FormState = {
-  destination: string;
+  destinationMode: DestinationMode;
+  customPath: string;
   source: string;
   medium: string;
   campaign: string;
   content: string;
   term: string;
-};
-
-const initialForm: FormState = {
-  destination: '/companies',
-  source: 'google',
-  medium: 'cpc',
-  campaign: '',
-  content: '',
-  term: '',
 };
 
 const presets = [
@@ -40,21 +46,44 @@ const normalize = (value: string) =>
     .replace(/\s+/g, '_')
     .replace(/[^\p{L}\p{N}_.-]/gu, '');
 
-export default function UtmLinkBuilder({ companyId }: Props) {
+export default function UtmLinkBuilder({ companyId, company }: Props) {
+  const defaultPath = useMemo(() => {
+    return buildCompanyPath(company?.slug, company?.name, companyId);
+  }, [company?.slug, company?.name, companyId]);
+
+  const quotePath = useMemo(() => {
+    return buildCompanySubPath(company?.slug, company?.name, 'quote', companyId);
+  }, [company?.slug, company?.name, companyId]);
+
+  const initialForm: FormState = useMemo(
+    () => ({
+      destinationMode: 'company_profile',
+      customPath: defaultPath,
+      source: 'google',
+      medium: 'cpc',
+      campaign: '',
+      content: '',
+      term: '',
+    }),
+    [defaultPath]
+  );
+
   const [form, setForm] = useState<FormState>(initialForm);
   const [copied, setCopied] = useState(false);
-  const [origin, setOrigin] = useState('');
 
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
+  const selectedPath = useMemo(() => {
+    if (form.destinationMode === 'company_profile') return defaultPath;
+    if (form.destinationMode === 'quote_request') return quotePath;
+    return form.customPath.trim() || defaultPath;
+  }, [form.destinationMode, form.customPath, defaultPath, quotePath]);
 
   const generatedUrl = useMemo(() => {
     try {
-      const base = origin || 'https://www.avaliasolar.com.br';
-      const destination = form.destination.trim();
+      const base = SITE.url;
+      const destination = selectedPath.trim();
       const url = destination.startsWith('/') ? new URL(destination, base) : new URL(destination);
       if (!['http:', 'https:'].includes(url.protocol)) return '';
+
       const params = new URLSearchParams();
       const values = {
         utm_source: form.source,
@@ -67,15 +96,15 @@ export default function UtmLinkBuilder({ companyId }: Props) {
         const normalized = normalize(value);
         if (normalized) params.set(key, normalized);
       });
-      params.set('company_id', companyId);
+
       url.search = params.toString();
       return url.toString();
     } catch {
       return '';
     }
-  }, [companyId, form, origin]);
+  }, [selectedPath, form.source, form.medium, form.campaign, form.content, form.term]);
 
-  const update = (key: keyof FormState, value: string) =>
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
   const copyUrl = async () => {
@@ -98,10 +127,38 @@ export default function UtmLinkBuilder({ companyId }: Props) {
           Gerador de links UTM
         </h2>
         <p className="mt-1 text-sm text-[hsl(var(--dashboard-muted))]">
-          Monte um link rastreável para campanhas de entrada. A origem de entrada é editável e o
-          link não é salvo automaticamente.
+          Monte um link rastreável para campanhas de entrada na superfície pública da plataforma.
         </p>
       </div>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="destination-mode-select">Destino da campanha</Label>
+          <select
+            id="destination-mode-select"
+            value={form.destinationMode}
+            onChange={(e) => update('destinationMode', e.target.value as DestinationMode)}
+            className="w-full rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] px-3 py-2 text-sm text-[hsl(var(--dashboard-ink))]"
+          >
+            <option value="company_profile">Perfil público da empresa ({defaultPath})</option>
+            <option value="quote_request">Solicitar orçamento ({quotePath})</option>
+            <option value="custom">Caminho personalizado</option>
+          </select>
+        </div>
+
+        {form.destinationMode === 'custom' ? (
+          <div className="space-y-2">
+            <Label htmlFor="utm-custom-path">Caminho personalizado</Label>
+            <Input
+              id="utm-custom-path"
+              value={form.customPath}
+              placeholder="Ex.: /companies/minha-empresa"
+              onChange={(e) => update('customPath', e.target.value)}
+            />
+          </div>
+        ) : null}
+      </div>
+
       <div className="flex flex-wrap gap-2" aria-label="Presets de campanha">
         {presets.map((preset) => (
           <Button
@@ -117,10 +174,10 @@ export default function UtmLinkBuilder({ companyId }: Props) {
           </Button>
         ))}
       </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         {(
           [
-            ['destination', 'Destino', 'Ex.: /companies/minha-empresa'],
             ['source', 'utm_source', 'Ex.: google'],
             ['medium', 'utm_medium', 'Ex.: cpc'],
             ['campaign', 'utm_campaign', 'Ex.: black-friday'],
@@ -139,8 +196,9 @@ export default function UtmLinkBuilder({ companyId }: Props) {
           </div>
         ))}
       </div>
+
       <div className="space-y-2">
-        <Label htmlFor="generated-tracking-url">Link gerado</Label>
+        <Label htmlFor="generated-tracking-url">Link público gerado</Label>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             id="generated-tracking-url"
@@ -169,13 +227,15 @@ export default function UtmLinkBuilder({ companyId }: Props) {
           </p>
         ) : null}
         <p id="tracking-url-help" className="text-xs text-[hsl(var(--dashboard-muted))]">
-          A empresa é vinculada por company_id. Não inclua PII em parâmetros UTM.
+          Links apontam para a superfície pública www.avaliasolar.com.br. Não inclua PII em parâmetros UTM.
         </p>
       </div>
+
       <Button type="button" variant="ghost" onClick={() => setForm(initialForm)}>
         <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
         Limpar
       </Button>
+
       {copied ? (
         <p
           role="status"

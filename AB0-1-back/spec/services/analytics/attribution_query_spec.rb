@@ -12,13 +12,13 @@ RSpec.describe Analytics::AttributionQuery do
 
   before do
     event(company: company, type: 'profile_view', at: from_time + 1.hour,
-          metadata: { session_id: 'session-a', utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'touch-a' })
+          metadata: { session_id: 'session-a', utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'touch-a', landing_path: '/companies/weg' })
     event(company: company, type: 'cta_click', at: from_time + 2.hours,
-          metadata: { session_id: 'session-a', cta_type: 'whatsapp', utm_source: 'meta', utm_medium: 'paid_social', utm_campaign: 'touch-b' })
+          metadata: { session_id: 'session-a', cta_type: 'whatsapp', utm_source: 'meta', utm_medium: 'paid_social', utm_campaign: 'touch-b', landing_path: '/companies/weg' })
     event(company: company, type: 'lead_created', at: from_time + 3.hours,
           metadata: { session_id: 'session-a', lead_id: 'lead-a' })
     event(company: company, type: 'cta_click', at: from_time + 4.hours,
-          metadata: { session_id: 'session-a', cta_type: 'email', utm_source: 'later', utm_medium: 'email', utm_campaign: 'touch-c' })
+          metadata: { session_id: 'session-a', cta_type: 'email', utm_source: 'later', utm_medium: 'email', utm_campaign: 'touch-c', landing_path: '/companies/weg' })
     event(company: other_company, type: 'profile_view', at: from_time + 1.hour,
           metadata: { session_id: 'session-b', utm_source: 'other-company', utm_campaign: 'other' })
   end
@@ -43,7 +43,7 @@ RSpec.describe Analytics::AttributionQuery do
 
   it 'correlaciona touch quando conversão carrega lead e session ids' do
     event(company: company, type: 'profile_view', at: from_time + 5.hours,
-          metadata: { session_id: 'session-c', utm_source: 'newsletter', utm_medium: 'email' })
+          metadata: { session_id: 'session-c', utm_source: 'newsletter', utm_medium: 'email', landing_path: '/companies/weg' })
     event(company: company, type: 'lead_created', at: from_time + 6.hours,
           metadata: { session_id: 'session-c', lead_id: 'lead-c' })
 
@@ -51,6 +51,33 @@ RSpec.describe Analytics::AttributionQuery do
     newsletter = result[:channels].find { |row| row[:source] == 'newsletter' }
 
     expect(newsletter[:leads]).to eq(1)
+  end
+
+  it 'exclui rotas não comerciais como /auth/callback e /logout de landing_pages' do
+    event(company: company, type: 'profile_view', at: from_time + 7.hours,
+          metadata: { session_id: 'session-auth', landing_path: '/auth/callback' })
+    event(company: company, type: 'profile_view', at: from_time + 8.hours,
+          metadata: { session_id: 'session-logout', landing_path: '/logout' })
+
+    result = described_class.call(company_id: company.id, from_time:, to_time:)
+    landing_paths = result[:landing_pages].map { |row| row[:landing_path] }
+
+    expect(landing_paths).not_to include('/auth/callback', '/logout')
+  end
+
+  it 'preserva touch externo quando há navegação interna ou callback de auth posterior' do
+    event(company: company, type: 'profile_view', at: from_time + 8.hours,
+          metadata: { session_id: 'session-d', utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'kw-solar', landing_path: '/companies/weg' })
+    event(company: company, type: 'profile_view', at: from_time + 8.hours + 5.minutes,
+          metadata: { session_id: 'session-d', referrer_host: 'accounts.google.com', landing_path: '/auth/callback' })
+    event(company: company, type: 'lead_created', at: from_time + 9.hours,
+          metadata: { session_id: 'session-d', lead_id: 'lead-d' })
+
+    result = described_class.call(company_id: company.id, from_time:, to_time:, attribution_model: 'last_touch')
+    google_cpc = result[:campaigns].find { |c| c[:campaign] == 'kw-solar' }
+
+    expect(google_cpc).not_to be_nil
+    expect(google_cpc[:leads]).to eq(1)
   end
 
   it 'returns nil rates when there is no denominator' do

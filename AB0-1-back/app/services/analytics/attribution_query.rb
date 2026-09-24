@@ -6,6 +6,8 @@ module Analytics
     CATEGORIES = %w[visits cta_clicks leads].freeze
     TOUCH_EVENTS = %w[profile_view cta_click].freeze
     JOURNEY_KEYS = %w[lead_id session_id anonymous_id user_id].freeze
+    NON_COMMERCIAL_PATHS = %w[/auth /logout /dashboard /admin /api /health /_next].freeze
+    NON_COMMERCIAL_SURFACES = %w[app admin auth system].freeze
 
     def self.call(company_id:, from_time:, to_time:, attribution_model: 'last_touch', limit: 20)
       new(company_id:, from_time:, to_time:, attribution_model:, limit:).call
@@ -38,7 +40,15 @@ module Analytics
 
     def internal_traffic?(event)
       metadata = event_metadata(event).to_h
-      %w[is_internal is_employee is_admin].any? { |key| metadata[key].to_s == 'true' }
+      return true if %w[is_internal is_employee is_admin].any? { |key| metadata[key].to_s == 'true' }
+
+      surface = metadata['surface'].to_s.downcase
+      return true if NON_COMMERCIAL_SURFACES.include?(surface)
+
+      path = clean_path(metadata['landing_path'] || metadata['page_path'] || metadata['path']).to_s
+      return true if path.present? && NON_COMMERCIAL_PATHS.any? { |prefix| path == prefix || path.start_with?("#{prefix}/") }
+
+      false
     end
 
     def row_for(event, events)
@@ -48,7 +58,7 @@ module Analytics
         event_type: Analytics::EventTaxonomy.canonical(event.event_type),
         classification: classification,
         cta_type: Analytics::EventTaxonomy.cta_type(event.event_type, event_metadata(event).to_h).presence || 'other',
-        landing_path: clean_path(metadata.to_h['landing_path'] || metadata.to_h['path'])
+        landing_path: clean_path(metadata.to_h['landing_path'] || metadata.to_h['page_path'] || metadata.to_h['path'])
       }
     end
 
@@ -57,7 +67,15 @@ module Analytics
       candidates = journey_events(event, events)
       return metadata if candidates.empty?
 
-      selected = @model == 'first_touch' ? candidates.first : candidates.last
+      # Preferir touches de aquisição externa sobre self-referral/sistema
+      external_candidates = candidates.select do |candidate|
+        c_meta = event_metadata(candidate)
+        c_class = Analytics::AttributionClassifier.call(c_meta)
+        !c_class[:channel_group].in?(%w[System/Auth Internal])
+      end
+      pool = external_candidates.any? ? external_candidates : candidates
+
+      selected = @model == 'first_touch' ? pool.first : pool.last
       selected_metadata = event_metadata(selected)
       attribution = selected_metadata.dig('attribution', @model)
       values = attribution.is_a?(Hash) && attribution['values'].is_a?(Hash) ? attribution['values'] : {}
@@ -70,6 +88,7 @@ module Analytics
       return [] if journey_identifiers(metadata).empty?
 
       events.select do |candidate|
+        next false if internal_traffic?(candidate)
         candidate_metadata = event_metadata(candidate)
         next false unless TOUCH_EVENTS.include?(Analytics::EventTaxonomy.canonical(candidate.event_type))
         next false unless shared_journey_identifier?(metadata, candidate_metadata)

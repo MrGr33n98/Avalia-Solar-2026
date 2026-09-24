@@ -21,6 +21,17 @@ RSpec.describe Analytics::AttributionClassifier do
     expect(described_class.call([])[:channel_group]).to eq('Unknown')
   end
 
+  it 'não classifica accounts.google.com como Organic Search' do
+    result = described_class.call(referrer: 'https://accounts.google.com/o/oauth2/auth')
+    expect(result[:channel_group]).to eq('System/Auth')
+    expect(result[:channel_group]).not_to eq('Organic Search')
+  end
+
+  it 'classifica domínios internos da plataforma como Internal' do
+    expect(described_class.call(referrer: 'https://app.avaliasolar.com.br/dashboard')[:channel_group]).to eq('Internal')
+    expect(described_class.call(referrer: 'https://www.avaliasolar.com.br/companies')[:channel_group]).to eq('Internal')
+  end
+
   it 'não transforma fbclid isolado em paid social' do
     expect(described_class.call(fbclid: 'abc')[:channel_group]).to eq('Direct')
   end

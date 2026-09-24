@@ -10,7 +10,13 @@ import TrackingHealth from './TrackingHealth';
 import UtmLinkBuilder from './UtmLinkBuilder';
 import AttributionExplorer from './AttributionExplorer';
 
-type Props = { companyId: string };
+type CompanyProps = {
+  id?: number | string;
+  slug?: string | null;
+  name?: string | null;
+};
+
+type Props = { companyId: string; company?: CompanyProps };
 type WorkspaceTab = 'overview' | 'builder' | 'attribution' | 'diagnostics' | 'settings';
 
 const tabs: Array<{ id: WorkspaceTab; label: string }> = [
@@ -23,7 +29,7 @@ const tabs: Array<{ id: WorkspaceTab; label: string }> = [
 
 const dateValue = (date: Date) => date.toISOString().slice(0, 10);
 
-export default function TrackingAttributionWorkspace({ companyId }: Props) {
+export default function TrackingAttributionWorkspace({ companyId, company }: Props) {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('overview');
   const [days, setDays] = useState(30);
   const [model, setModel] = useState<AttributionModel>('last_touch');
@@ -184,7 +190,7 @@ export default function TrackingAttributionWorkspace({ companyId }: Props) {
               </div>
             </div>
           ) : null}
-          {activeTab === 'builder' ? <UtmLinkBuilder companyId={companyId} /> : null}
+          {activeTab === 'builder' ? <UtmLinkBuilder companyId={companyId} company={company} /> : null}
           {activeTab === 'attribution' ? (
             <AttributionExplorer
               data={data}
