@@ -1942,6 +1942,71 @@ export interface AttributionResponse {
   last_aggregated_at?: string | null;
 }
 
+export type TrackingHealthStatus =
+  | 'healthy'
+  | 'attention'
+  | 'unavailable'
+  | 'not_configured'
+  | 'processing'
+  | 'error';
+
+export interface TrackingHealthItem {
+  key: string;
+  label: string;
+  status: TrackingHealthStatus;
+  observed: number;
+  last_observed_at?: string | null;
+  detail: string;
+}
+
+export interface TrackingHealth {
+  status: TrackingHealthStatus;
+  healthy: number;
+  total: number;
+  items: TrackingHealthItem[];
+}
+
+export interface TrackingWorkspaceResponse {
+  version: string;
+  status: 'ready' | 'empty' | 'unavailable' | 'processing' | 'error';
+  data_source: string;
+  range?: AnalyticsDateRange;
+  summary: AttributionSummary | null;
+  channels: AttributionChannelRow[];
+  campaigns: AttributionCampaignRow[];
+  cta_matrix: AttributionCtaMatrixRow[];
+  landing_pages: AttributionLandingPageRow[];
+  health: TrackingHealth;
+  diagnostics: {
+    checked_at?: string;
+    event_count?: number;
+    unknown_event_count?: number;
+    identity_coverage_pct?: number | null;
+    utm_coverage_pct?: number | null;
+    click_id_count?: number;
+    surface_count?: number;
+    placement_count?: number;
+    components: TrackingHealthItem[];
+  };
+  capabilities: {
+    core: boolean;
+    advanced: boolean;
+    saved_links: boolean;
+    export: boolean;
+    conversion_tracking: 'configured' | 'not_configured' | 'unavailable';
+  };
+  policy: {
+    inbound_source: 'configurable';
+    outbound_source: string;
+    ads_source: string;
+    internal_identity: string;
+  };
+  data_status?: 'ready' | 'empty' | 'unavailable' | 'processing' | 'error';
+  is_premium_analytics?: boolean;
+  attribution_model?: AttributionModel;
+  error?: { code: string; request_id?: string };
+}
+
 // Trust Health Types
 export interface TrustHealth {
   trust_score: number;
@@ -2314,6 +2379,13 @@ export const companyDashboardApi = {
     query: AnalyticsQueryParams & { attribution_model?: AttributionModel; limit?: number } = {}
   ) =>
     fetchApi<AttributionResponse>('/company_dashboard/analytics/attribution', {
+      params: { company_id: companyId, ...query },
+    }),
+  getTrackingWorkspace: (
+    companyId?: string | number,
+    query: AnalyticsQueryParams & { attribution_model?: AttributionModel } = {}
+  ) =>
+    fetchApi<TrackingWorkspaceResponse>('/company_dashboard/analytics/tracking_workspace', {
       params: { company_id: companyId, ...query },
     }),
 

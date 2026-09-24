@@ -254,6 +254,46 @@ module Api
         render json: { summary: nil, channels: [], campaigns: [], cta_matrix: [], landing_pages: [], attribution_model: attribution_model, data_source: 'analytics_events_unavailable', data_status: 'unavailable', range: analytics_range_payload(range), is_premium_analytics: true }.merge(::CompanyDashboard::FreshnessProvider.call), status: :ok
       end
 
+      # GET /api/v1/company_dashboard/analytics/tracking_workspace
+      def analytics_tracking_workspace
+        authorize @company, :view_analytics?
+        range = analytics_date_range(default_days: 30)
+        return render_invalid_analytics_range unless range
+
+        advanced = EntitlementService.explain(company: @company, feature: 'advanced_analytics')[:allowed]
+        payload = ::CompanyDashboard::TrackingWorkspaceService.call(
+          company: @company,
+          from_time: range[:from_day].beginning_of_day,
+          to_time: range[:to_day].end_of_day,
+          advanced: advanced,
+          attribution_model: params[:attribution_model].presence || 'last_touch'
+        )
+        render json: payload.merge(
+          range: analytics_range_payload(range),
+          data_status: payload[:status],
+          is_premium_analytics: advanced
+        ), status: :ok
+      rescue StandardError => e
+        log_analytics_error('tracking_workspace', e)
+        render json: {
+          version: Analytics::TrackingTaxonomy::VERSION,
+          status: 'unavailable',
+          data_source: 'analytics_events_unavailable',
+          data_status: 'unavailable',
+          range: analytics_range_payload(range || analytics_date_range(default_days: 30)),
+          summary: nil,
+          channels: [],
+          campaigns: [],
+          cta_matrix: [],
+          landing_pages: [],
+          health: { status: 'unavailable', healthy: 0, total: 0, items: [] },
+          diagnostics: { components: [] },
+          capabilities: { core: true, advanced: false, saved_links: false, export: false, conversion_tracking: 'unavailable' },
+          error: { code: 'TRACKING_WORKSPACE_UNAVAILABLE', request_id: request.request_id },
+          is_premium_analytics: false
+        }, status: :ok
+      end
+
       # GET /api/v1/company_dashboard/analytics/reputation
       def analytics_reputation
         authorize @company, :view_analytics?

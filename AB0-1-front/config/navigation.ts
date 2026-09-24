@@ -71,6 +71,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         description: 'Métricas e estatísticas',
       },
       {
+        id: 'tracking-attribution',
+        label: 'Tracking & Atribuição',
+        icon: Link2,
+        context: ['operational'],
+        description: 'Origem, links rastreados e saúde da mensuração',
+      },
+      {
         id: 'ranking-performance',
         label: 'Ranking',
         icon: Trophy,

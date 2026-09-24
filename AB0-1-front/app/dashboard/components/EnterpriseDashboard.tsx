@@ -90,6 +90,12 @@ const BadgesManagement = dynamic(() => import('./BadgesManagement'), {
 const RankingPerformanceTab = dynamic(() => import('./RankingPerformanceTab'), {
   loading: () => <DashboardTabSkeleton />,
 });
+const TrackingAttributionWorkspace = dynamic(
+  () => import('./tracking/TrackingAttributionWorkspace'),
+  {
+    loading: () => <DashboardTabSkeleton />,
+  }
+);
 const WebhooksManagement = dynamic(() => import('./WebhooksManagement'), {
   loading: () => <DashboardTabSkeleton />,
 });
