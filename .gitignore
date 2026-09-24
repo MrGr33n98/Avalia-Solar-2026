@@ -102,6 +102,19 @@ docs/groups/*
 !docs/adr/
 docs/adr/*
 !docs/adr/ADR_GROUP_POST_MODEL.md
+!docs/adr/0001-base-geografica-do-ranking.md
+!docs/adr/0002-hierarquia-fallback-geografico.md
+!docs/adr/0003-fonte-canonica-cobertura-atendimento.md
+!docs/adr/0004-politica-confianca-cobertura.md
+!docs/adr/0005-evidencia-confianca-cobertura.md
+!docs/adr/0006-identidade-territorial-canonica.md
+!docs/adr/0007-identidade-rankingscope.md
+!docs/adr/0008-quality-gates-ranking.md
+!docs/adr/0009-calibracao-populacao-quality.md
+!docs/adr/0010-governanca-versionamento-metodologia.md
+!docs/adr/0011-relacao-ranking-organico-ias.md
+!docs/ranking-v2/
+!docs/ranking-v2/*
 !docs/architecture/
 !docs/architecture/*
 

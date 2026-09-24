@@ -847,4 +847,14 @@ Veja `.env.example` para a lista completa. As mais críticas:
 - Respeite safe-area e navegação `expo-router`.
 - Antes de finalizar mudanças de UI, execute `npm run ui-audit` e os testes pertinentes.
 
+## Agent skills
+
+### Issue tracker
+
+Issues e especificações deste repositório são mantidas no GitHub Issues. Veja `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Layout single-context: `CONTEXT.md` na raiz quando existir e decisões em `docs/adr/`. Veja `docs/agents/domain.md`.
+
 ### 1
