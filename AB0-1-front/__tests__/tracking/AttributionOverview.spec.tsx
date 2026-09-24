@@ -41,7 +41,7 @@ describe('AttributionOverview', () => {
     render(<AttributionOverview companyId="42" premium />);
 
     expect(screen.getByText('Origem & Atribuição')).toBeInTheDocument();
-    expect(screen.getByText('Visitas')).toBeInTheDocument();
+    expect(screen.getByText('Visitas de aquisição')).toBeInTheDocument();
     expect(screen.getAllByText('CTAs').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Leads').length).toBeGreaterThan(0);
     expect(screen.getByText('Cobertura de atribuição')).toBeInTheDocument();

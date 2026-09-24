@@ -273,8 +273,8 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
             ))}
           </FilterSelect>
 
-          <FilterSelect label="Setor" value={selectedSector} onChange={setSelectedSector}>
-            <SelectItem value="all">Todos os setores</SelectItem>
+          <FilterSelect label="Tipo de projeto" value={selectedSector} onChange={setSelectedSector}>
+            <SelectItem value="all">Todos os tipos de projeto</SelectItem>
             {(filterOptions?.sectors || []).map((sector) => (
               <SelectItem key={sector} value={sector}>
                 {sector}

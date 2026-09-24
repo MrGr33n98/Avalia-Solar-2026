@@ -2195,6 +2195,8 @@ export interface RankingData {
     median_score: number | null;
     p75_score: number | null;
     p90_score: number | null;
+    quantile_collision?: boolean;
+    collision_message?: string | null;
     distribution?: {
       min_score: number;
       max_score: number;
@@ -2215,7 +2217,15 @@ export interface RankingData {
     status: 'ready' | 'unavailable';
     source: 'official_snapshot' | 'current_ranking_score' | null;
     score: number | null;
-    items: Array<{ code: string; label: string; value: number }>;
+    items: Array<{
+      code: string;
+      label: string;
+      value: number;
+      raw_value?: number;
+      bounded?: boolean;
+      max?: number | null;
+      unit?: string;
+    }>;
   };
   gaps?: Array<{
     code: string;

@@ -18,7 +18,7 @@ type Props = {
 };
 
 const labels: Record<string, string> = {
-  visits: 'Visitas',
+  visits: 'Visitas de aquisição',
   cta_clicks: 'CTAs',
   leads: 'Leads',
   attribution_coverage_pct: 'Cobertura de atribuição',
@@ -172,7 +172,16 @@ export default function AttributionOverview({
             <div key={key} className="rounded-lg bg-[hsl(var(--dashboard-surface))] p-3">
               <div className="flex items-center gap-1">
                 <p className="text-xs text-[hsl(var(--dashboard-muted))]">{labels[key]}</p>
-                {key === 'attribution_coverage_pct' ? (
+                {key === 'visits' ? (
+                  <span
+                    title="Visualizações comerciais elegíveis para análise de aquisição. Navegação interna, autenticação, administradores e superfícies técnicas são excluídos."
+                    tabIndex={0}
+                    aria-label="Ajuda sobre Visitas de aquisição"
+                    className="cursor-help text-[hsl(var(--dashboard-muted))]"
+                  >
+                    <HelpCircle className="h-3 w-3" aria-hidden="true" />
+                  </span>
+                ) : key === 'attribution_coverage_pct' ? (
                   <span
                     title="Percentual de eventos em que foi possível identificar uma origem por UTM, referência ou acesso direto. Não representa cobertura de UTM."
                     tabIndex={0}

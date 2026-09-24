@@ -274,7 +274,7 @@ export default function MagicQuadrant({
 
   return (
     <div
-      className="relative h-[400px] w-full select-none overflow-hidden rounded-xl border border-slate-200 bg-slate-50 px-2 dark:border-slate-800 dark:bg-slate-950"
+      className="relative h-[400px] w-full select-none overflow-hidden rounded-xl border border-border bg-card px-2 text-card-foreground"
       role="img"
       aria-label={textSummary}
     >
@@ -330,27 +330,31 @@ export default function MagicQuadrant({
           />
           {xThreshold != null && yThreshold != null && (
             <>
-              <ReferenceArea
-                x1={0}
-                x2={xThreshold}
-                y1={yThreshold}
-                y2={100}
-                fill="hsl(var(--muted) / 0.42)"
-                strokeOpacity={0}
-              />
-              <ReferenceArea
-                x1={xThreshold}
-                x2={100}
-                y1={yThreshold}
-                y2={100}
-                fill="hsl(var(--primary) / 0.08)"
-                strokeOpacity={0}
-              />
+              {yThreshold > 0 && (
+                <>
+                  <ReferenceArea
+                    x1={0}
+                    x2={xThreshold}
+                    y1={yThreshold}
+                    y2={100}
+                    fill="hsl(var(--muted) / 0.42)"
+                    strokeOpacity={0}
+                  />
+                  <ReferenceArea
+                    x1={xThreshold}
+                    x2={100}
+                    y1={yThreshold}
+                    y2={100}
+                    fill="hsl(var(--primary) / 0.08)"
+                    strokeOpacity={0}
+                  />
+                </>
+              )}
               <ReferenceArea
                 x1={0}
                 x2={xThreshold}
                 y1={0}
-                y2={yThreshold}
+                y2={yThreshold > 0 ? yThreshold : 100}
                 fill="hsl(var(--muted) / 0.24)"
                 strokeOpacity={0}
               />
@@ -358,7 +362,7 @@ export default function MagicQuadrant({
                 x1={xThreshold}
                 x2={100}
                 y1={0}
-                y2={yThreshold}
+                y2={yThreshold > 0 ? yThreshold : 100}
                 fill="hsl(var(--accent) / 0.08)"
                 strokeOpacity={0}
               />
@@ -374,18 +378,20 @@ export default function MagicQuadrant({
                   fontSize: 9,
                 }}
               />
-              <ReferenceLine
-                y={yThreshold}
-                stroke="hsl(var(--primary))"
-                strokeDasharray="4 4"
-                strokeOpacity={0.65}
-                label={{
-                  value: 'Mediana ' + yThreshold.toFixed(1),
-                  position: 'insideLeft',
-                  fill: 'hsl(var(--muted-foreground))',
-                  fontSize: 9,
-                }}
-              />
+              {yThreshold > 0 && (
+                <ReferenceLine
+                  y={yThreshold}
+                  stroke="hsl(var(--primary))"
+                  strokeDasharray="4 4"
+                  strokeOpacity={0.65}
+                  label={{
+                    value: 'Mediana ' + yThreshold.toFixed(1),
+                    position: 'insideLeft',
+                    fill: 'hsl(var(--muted-foreground))',
+                    fontSize: 9,
+                  }}
+                />
+              )}
             </>
           )}
           <Scatter
@@ -405,21 +411,23 @@ export default function MagicQuadrant({
               top: Math.min(Math.max(yLabelPosition - 12, 6), 74) + '%',
             }}
           >
-            <span className="rounded-md border border-blue-100 bg-blue-50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-blue-600 shadow-sm">
-              Referências
+            <span className="rounded-md border border-primary/20 bg-primary/10 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-primary shadow-xs">
+              {yThreshold > 0 ? 'Referências' : 'Líderes de Visão'}
             </span>
           </div>
-          <div
-            className="pointer-events-none absolute"
-            style={{
-              left: Math.min(Math.max(xLabelPosition + 3, 8), 78) + '%',
-              top: Math.min(Math.max(yLabelPosition + 18, 24), 82) + '%',
-            }}
-          >
-            <span className="rounded-md border border-slate-200 bg-white/50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
-              Especialistas
-            </span>
-          </div>
+          {yThreshold > 0 && (
+            <div
+              className="pointer-events-none absolute"
+              style={{
+                left: Math.min(Math.max(xLabelPosition + 3, 8), 78) + '%',
+                top: Math.min(Math.max(yLabelPosition + 18, 24), 82) + '%',
+              }}
+            >
+              <span className="rounded-md border border-border bg-muted/60 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-muted-foreground shadow-xs">
+                Especialistas
+              </span>
+            </div>
+          )}
           <div
             className="pointer-events-none absolute"
             style={{
@@ -427,21 +435,23 @@ export default function MagicQuadrant({
               top: Math.min(Math.max(yLabelPosition - 12, 6), 74) + '%',
             }}
           >
-            <span className="rounded-md border border-slate-200 bg-white/50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
-              Em expansão
+            <span className="rounded-md border border-border bg-muted/60 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-muted-foreground shadow-xs">
+              {yThreshold > 0 ? 'Em expansão' : 'Base Comparada'}
             </span>
           </div>
-          <div
-            className="pointer-events-none absolute"
-            style={{
-              left: Math.min(Math.max(xLabelPosition - 28, 4), 62) + '%',
-              top: Math.min(Math.max(yLabelPosition + 18, 24), 82) + '%',
-            }}
-          >
-            <span className="rounded-md border border-slate-200 bg-white/50 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
-              Em desenvolvimento
-            </span>
-          </div>
+          {yThreshold > 0 && (
+            <div
+              className="pointer-events-none absolute"
+              style={{
+                left: Math.min(Math.max(xLabelPosition - 28, 4), 62) + '%',
+                top: Math.min(Math.max(yLabelPosition + 18, 24), 82) + '%',
+              }}
+            >
+              <span className="rounded-md border border-border bg-muted/60 px-3 py-1 text-[8px] font-bold uppercase tracking-widest text-muted-foreground shadow-xs">
+                Em desenvolvimento
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

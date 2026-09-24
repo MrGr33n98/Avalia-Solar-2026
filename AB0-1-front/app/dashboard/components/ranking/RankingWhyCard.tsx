@@ -92,7 +92,7 @@ export function RankingWhyCard({ data }: Props) {
                     <div>
                       <p className="font-semibold text-slate-900 dark:text-slate-100">{driver.label}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {driver.value.toFixed(1)} / 100 pts
+                        {driver.value.toFixed(1)} {driver.bounded !== false ? '/ 100 pts' : 'pts'}
                       </p>
                     </div>
                     <Badge
@@ -192,6 +192,11 @@ export function RankingWhyCard({ data }: Props) {
                 <span>Top 10% (P90)</span>
                 <span className="font-semibold">{p90 != null ? `${p90.toFixed(1)} pts` : '—'}</span>
               </div>
+              {benchmarks?.quantile_collision && (
+                <div className="pt-1 text-[11px] text-amber-600 dark:text-amber-400">
+                  {benchmarks.collision_message || 'A distribuição apresenta empate no corte superior (P75 = P90).'}
+                </div>
+              )}
             </div>
           </div>
 

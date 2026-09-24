@@ -51,11 +51,17 @@ export function RankingExecutiveHero({
   const changes = data?.changes?.changes;
   const posChange = changes?.position; // backend computes previous - current (+ is improvement)
 
-  // Percentil inverso amigável: se percentil for 93.5%, significa que está entre os 6.5% melhores
-  const topPercent = percentile != null ? Math.max(0.1, +(100 - percentile).toFixed(1)) : null;
+  // Posição no topo da população: posição / população total elegível
+  // Ex: #1 de 81 empresas => 1 / 81 * 100 = 1.2% (e não 0.1% artificial)
+  const topPercent =
+    position != null && population != null && population > 0
+      ? Math.max(0.1, +((position / population) * 100).toFixed(1))
+      : percentile != null
+        ? Math.max(0.1, +(100 - percentile).toFixed(1))
+        : null;
 
   return (
-    <Card className="relative overflow-hidden border-slate-200/80 bg-gradient-to-br from-white via-slate-50/50 to-blue-50/30 shadow-xs dark:border-slate-800 dark:from-slate-900 dark:via-slate-900/80 dark:to-blue-950/20">
+    <Card className="relative overflow-hidden border-border bg-card text-card-foreground shadow-xs">
       {/* Decorative gradient overlay */}
       <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
 
