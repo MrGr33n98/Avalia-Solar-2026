@@ -684,6 +684,8 @@ module CompanyDashboard
           evidence: { company_value: nil },
           action_url: "/dashboard?company_id=#{company.id}&tab=reviews"
         )
+      end
+
       # Não usar strengths como fallback para next_best_action.
       # Se não houver oportunidade prioritária comprovada, retornar nil.
       next_action = opportunities.first
