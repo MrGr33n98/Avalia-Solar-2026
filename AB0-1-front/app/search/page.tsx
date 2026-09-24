@@ -2,19 +2,16 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Building2,
   ChevronRight,
   FileText,
-  MapPin,
   Package,
   Search,
   SlidersHorizontal,
   Star,
   Tag,
-  X,
 } from 'lucide-react';
 import { BannerSlot } from '@/components/banners/BannerSlot';
 import { SearchCompanyListCard } from '@/components/search/SearchCompanyListCard';
@@ -116,6 +113,7 @@ function SearchPageContent() {
   const query = searchParams.get('q') || '';
   const urlCity = searchParams.get('city') || '';
   const urlVerified = searchParams.get('verified') === 'true';
+  const urlCategory = searchParams.get('category') || '';
   const pageParam = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
   const tabParam = searchParams.get('tab');
   const sortParam = searchParams.get('sort');
@@ -138,6 +136,7 @@ function SearchPageContent() {
     ...defaultSearchFilters,
     city: urlCity,
     verifiedOnly: urlVerified,
+    category: urlCategory,
   });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [productFavorites, setProductFavorites] = useState<Set<number>>(new Set());
@@ -146,8 +145,13 @@ function SearchPageContent() {
   useEffect(() => {
     setSearchTerm(query);
     setLocationTerm(urlCity);
-    setFilters((current) => ({ ...current, city: urlCity, verifiedOnly: urlVerified }));
-  }, [query, urlCity, urlVerified]);
+    setFilters((current) => ({
+      ...current,
+      city: urlCity,
+      verifiedOnly: urlVerified,
+      category: urlCategory,
+    }));
+  }, [query, urlCity, urlVerified, urlCategory]);
 
   useEffect(() => {
     setActiveTab(isSearchTab(tabParam) ? tabParam : 'all');
@@ -375,12 +379,26 @@ function SearchPageContent() {
     router.replace(`/search?${params.toString()}`, { scroll: false });
   };
 
+  const handleCategorySelect = (categoryName: string) => {
+    const nextCategory =
+      filters.category.toLowerCase() === categoryName.toLowerCase() ? '' : categoryName;
+    setFilters((current) => ({ ...current, category: nextCategory }));
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextCategory) params.set('category', nextCategory);
+    else params.delete('category');
+    params.delete('page');
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  };
+
   const handleApplyFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
     if (filters.city.trim()) params.set('city', filters.city.trim());
     else params.delete('city');
     if (filters.verifiedOnly) params.set('verified', 'true');
     else params.delete('verified');
+    if (filters.category.trim()) params.set('category', filters.category.trim());
+    else params.delete('category');
+    params.delete('page');
     router.replace(`/search?${params.toString()}`, { scroll: false });
     setMobileFiltersOpen(false);
   };
@@ -422,11 +440,14 @@ function SearchPageContent() {
         onSearchTermChange={setSearchTerm}
         onLocationTermChange={setLocationTerm}
         onSubmit={handleSubmit}
+        categories={categories}
+        selectedCategory={filters.category}
+        onSelectCategory={handleCategorySelect}
       />
 
-      <BannerSlot placement="search_top" className="mx-auto my-4 max-w-[1240px]" limit={2} />
+      <BannerSlot placement="search_top" className="mx-auto my-3 max-w-[1240px]" limit={2} />
 
-      <section className="mx-auto max-w-[1240px] px-4 py-7 sm:px-6">
+      <section className="mx-auto max-w-[1240px] px-4 pt-3 pb-8 sm:px-6">
         {error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
             <p>{error}</p>
