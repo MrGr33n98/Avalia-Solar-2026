@@ -662,17 +662,37 @@ module CompanyDashboard
       strengths = []
       opportunities = []
       current_score = ranking[:score]
+      p90 = benchmarks[:p90_score]
+
       if benchmarks[:status] == 'ready' && current_score
         target = benchmarks[:median_score]
-        collection = current_score >= target ? strengths : opportunities
-        collection << insight(
-          current_score >= target ? 'ranking_score_above_median' : 'ranking_score_below_median',
-          current_score >= target ? 'Pontuação acima da mediana' : 'Pontuação abaixo da mediana',
-          current_score >= target ? 'A pontuação orgânica atual está na mediana ou acima da população comparável.' :
+        if current_score >= target
+          strengths << insight(
+            'ranking_score_above_median',
+            'Pontuação acima da mediana',
+            'A pontuação orgânica atual está na mediana ou acima da população comparável.',
+            metric: 'ranking_score',
+            evidence: { company_value: current_score, benchmark_median: target }
+          )
+
+          if p90 && current_score < p90
+            opportunities << insight(
+              'ranking_score_below_p90',
+              'Alcançar o Top 10% (P90)',
+              'A pontuação orgânica atual está acima da mediana, mas abaixo do grupo líder (Top 10%). Aumente avaliações verificadas e engajamento recente para fechar este gap.',
+              metric: 'ranking_score',
+              evidence: { company_value: current_score, benchmark_p90: p90 }
+            )
+          end
+        else
+          opportunities << insight(
+            'ranking_score_below_median',
+            'Pontuação abaixo da mediana',
             'A pontuação orgânica atual está abaixo da mediana da população comparável.',
-          metric: 'ranking_score',
-          evidence: { company_value: current_score, benchmark_median: target }
-        )
+            metric: 'ranking_score',
+            evidence: { company_value: current_score, benchmark_median: target }
+          )
+        end
       end
 
       if !trust_scores_by_company.key?(company.id)
@@ -686,9 +706,17 @@ module CompanyDashboard
         )
       end
 
-      # Não usar strengths como fallback para next_best_action.
-      # Se não houver oportunidade prioritária comprovada, retornar nil.
-      next_action = opportunities.first
+      leadership_action = if current_score && benchmarks[:status] == 'ready' && (p90.nil? || current_score >= p90)
+                            insight(
+                              'ranking_maintain_leadership',
+                              'Sustentar liderança de mercado',
+                              'Mantenha avaliações recentes ativas e verificação em dia para sustentar sua posição líder.',
+                              metric: 'ranking_score',
+                              evidence: { company_value: current_score, benchmark_p90: p90 }
+                            )
+                          end
+
+      next_action = opportunities.first || leadership_action
       {
         strengths: strengths,
         opportunities: opportunities,

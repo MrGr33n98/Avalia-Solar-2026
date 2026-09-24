@@ -8,6 +8,8 @@ AllCops:
     - 'bin/**/*'
     - 'vendor/**/*'
     - 'tmp/**/*'
+    - 'test_slack.rb'
+    - 'verify_analytics.rb'
 
 Style/Documentation:
   Enabled: false
