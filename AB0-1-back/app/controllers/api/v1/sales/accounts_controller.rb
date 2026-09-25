@@ -144,20 +144,14 @@ module Api
 
         def timeline
           account = scoped_accounts.find(params[:id])
-          events = ::Sales::TimelineBuilder.for_account(account)
+          events = ::Sales::TimelineBuilder.for_account(account, scope: current_tenant_scope)
           render json: { timeline: events }
         end
 
         private
 
         def scoped_accounts
-          return ::Sales::Account.all if current_user.admin?
-          if current_user.company_id.present?
-            user_ids = User.where(company_id: current_user.company_id).pluck(:id)
-            ::Sales::Account.where(owner_id: user_ids).or(::Sales::Account.where(company_id: current_user.company_id))
-          else
-            ::Sales::Account.where(owner_id: current_user.id)
-          end
+          current_tenant_scope.accounts
         end
 
         def account_params
@@ -169,18 +163,20 @@ module Api
           account_ids = accounts.map(&:id)
           return [] if account_ids.empty?
 
-          last_activity_times = ::Sales::Activity.where(sales_account_id: account_ids)
+          activity_scope = current_tenant_scope.activities.where(sales_account_id: account_ids)
+          task_scope = current_tenant_scope.tasks.where(sales_account_id: account_ids)
+          last_activity_times = activity_scope
                                                   .group(:sales_account_id)
                                                   .maximum(:occurred_at)
-          activity_counts = ::Sales::Activity.where(sales_account_id: account_ids)
+          activity_counts = activity_scope
                                              .group(:sales_account_id)
                                              .count
-          next_task_dates = ::Sales::Task.where(sales_account_id: account_ids)
+          next_task_dates = task_scope
                                          .where('due_at >= ?', Time.current)
                                          .where(completed_at: nil)
                                          .group(:sales_account_id)
                                          .minimum(:due_at)
-          overdue_task_counts = ::Sales::Task.where(sales_account_id: account_ids)
+          overdue_task_counts = task_scope
                                              .where('due_at < ?', Time.current)
                                              .where(completed_at: nil)
                                              .group(:sales_account_id)

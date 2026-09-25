@@ -127,6 +127,7 @@ module Api
           message: message
         }
         payload[:details] = details if details.present?
+        payload[:error] = payload.slice(:code, :message, :details)
 
         response_headers = {}
         response_headers['Retry-After'] = retry_after.to_s if retry_after

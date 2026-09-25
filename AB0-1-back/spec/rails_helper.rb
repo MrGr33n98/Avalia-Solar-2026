@@ -4,7 +4,19 @@ ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 # Prevent database truncation if the environment is production
 abort('The Rails environment is running in production mode!') if Rails.env.production?
+abort('RSpec requires RAILS_ENV=test.') unless Rails.env.test?
+
+test_database = ActiveRecord::Base.connection_db_config.configuration_hash.symbolize_keys
+test_database_name = test_database[:database].to_s
+abort('RSpec requires an explicitly isolated test database.') unless test_database_name.match?(/(?:^|[_-])test(?:$|[_-])/i)
+
+production_database = Rails.application.config.database_configuration.fetch('production', {}).symbolize_keys
+same_host = test_database[:host].to_s == production_database[:host].to_s
+same_database = test_database_name == production_database[:database].to_s
+abort('RSpec database configuration matches production.') if same_host && same_database
+
 require 'rspec/rails'
+require 'factory_bot_rails'
 require 'shoulda/matchers'
 
 Shoulda::Matchers.configure do |config|

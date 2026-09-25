@@ -10,12 +10,24 @@ RSpec.describe 'Api::V1::Sales::Campaigns', type: :request do
   let(:campaign_a) { create(:sales_campaign, company: company_a, user: user_a, status: 'draft') }
   let(:campaign_b) { create(:sales_campaign, company: company_b, user: user_b, status: 'draft') }
 
-  let(:auth_headers_a) { { 'Authorization' => "Bearer #{user_a.generate_jwt}" } }
+  let(:sales_role) do
+    Sales::Role.create!(name: "Campanhas #{SecureRandom.hex(4)}", slug: "campaigns_#{SecureRandom.hex(4)}", system: true)
+  end
+
+  before do
+    Sales::UserRole.create!(user: user_a, role: sales_role)
+    Sales::UserRole.create!(user: user_b, role: sales_role)
+  end
+
+  let(:auth_headers_a) do
+    token = JWT.encode({ user_id: user_a.id, typ: 'access', exp: 1.day.from_now.to_i }, Rails.application.secret_key_base, 'HS256')
+    { 'Authorization' => "Bearer #{token}" }
+  end
 
   describe 'PUT /api/v1/sales/campaigns/:id' do
     context 'when campaign is draft' do
       it 'allows updating audience and template' do
-        new_template = create(:sales_email_template, company: company_a)
+        new_template = create(:sales_email_template, company: company_a, user: user_a)
         put "/api/v1/sales/campaigns/#{campaign_a.id}", params: { campaign: { email_template_id: new_template.id } }, headers: auth_headers_a
 
         expect(response).to have_http_status(:ok)
@@ -45,6 +57,10 @@ RSpec.describe 'Api::V1::Sales::Campaigns', type: :request do
   describe 'POST /api/v1/sales/campaigns/:id/schedule' do
     it 'schedules draft campaign for valid future date' do
       future_time = 2.hours.from_now.iso8601
+      allow(Sales::Campaigns::Preflight).to receive(:call).with(campaign: campaign_a).and_return(ready: true)
+      allow(Sales::Campaigns::SnapshotService).to receive(:call).with(campaign: campaign_a).and_return(
+        { status: 'created', recipient_count: 1 }
+      )
       post "/api/v1/sales/campaigns/#{campaign_a.id}/schedule", params: { scheduled_at: future_time }, headers: auth_headers_a
 
       expect(response).to have_http_status(:ok)

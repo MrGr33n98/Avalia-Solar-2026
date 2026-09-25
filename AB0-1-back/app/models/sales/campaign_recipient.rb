@@ -10,7 +10,7 @@ module Sales
     belongs_to :account, class_name: 'Sales::Account', foreign_key: :sales_account_id, optional: true
     belongs_to :email_message, class_name: 'Sales::EmailMessage', foreign_key: :sales_email_message_id, optional: true
 
-    STATUSES = %w[pending queued sent delivered failed bounced unsubscribed].freeze
+    STATUSES = %w[pending queued sent delivered opened clicked failed bounced unsubscribed].freeze
 
     validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
     validates :status, inclusion: { in: STATUSES }
@@ -20,8 +20,9 @@ module Sales
     scope :sent, -> { where(status: %w[sent delivered opened clicked]) }
 
     def mark_sent!(message)
+      next_status = %w[delivered opened clicked bounced unsubscribed].include?(status) ? status : 'sent'
       update!(
-        status: 'sent',
+        status: next_status,
         sales_email_message_id: message.id,
         sent_at: Time.current,
         error_message: nil

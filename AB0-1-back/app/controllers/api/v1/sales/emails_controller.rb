@@ -37,13 +37,10 @@ module Api
           end
 
           if email_params[:sales_contact_id].present?
-            contact = if account
-                        account.contacts.find_by(id: email_params[:sales_contact_id])
-                      else
-                        scoped_contacts.find_by(id: email_params[:sales_contact_id])
-                      end
+            contact = scoped_contacts.find_by(id: email_params[:sales_contact_id])
             unless contact
-              return render json: { error: 'Contato não encontrado', code: 'CONTACT_NOT_FOUND' }, status: :not_found
+              log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Contact')
+              return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
             end
           end
 
@@ -65,14 +62,29 @@ module Api
 
           # Se opportunity_id foi fornecido, preenche account e contact se ainda vazios
           if email_params[:sales_opportunity_id].present?
-            opp = ::Sales::Opportunity.find_by(id: email_params[:sales_opportunity_id])
+            opp = current_tenant_scope.opportunities.find_by(id: email_params[:sales_opportunity_id])
             if opp
               account ||= opp.account
               contact ||= opp.primary_contact
+            else
+              log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Opportunity')
+              return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
             end
           end
 
-          company_id = account&.company_id || current_user.company_id
+          account ||= contact&.account || opp&.account
+          if (contact.present? || opp.present?) && account.nil?
+            return render_relation_conflict(resource: 'EmailMessage')
+          end
+          if account.present? && !current_tenant_scope.valid_relation?(account: account, contact: contact, opportunity: opp)
+            return render_relation_conflict(resource: 'EmailMessage')
+          end
+
+          company_id = account&.company_id || account&.owner&.company_id || current_user.company_id
+          if account.present? && company_id != current_user.company_id && !current_user.admin?
+            log_sales_denial(reason: 'company_anchor_mismatch', resource: 'EmailMessage')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
           unless company_id.present?
             return render json: { error: 'Empresa não configurada', code: 'COMPANY_REQUIRED' }, status: :forbidden
           end
@@ -80,6 +92,10 @@ module Api
             return render json: { error: "Destinatário suprimido", code: "EMAIL_SUPPRESSED" }, status: :unprocessable_entity
           end
 
+          unless ::Sales::Messaging::SendingGate.enabled?
+            return render_error_response(message: 'Envio de e-mail desabilitado.', status: :service_unavailable,
+                                         code: 'EMAIL_SENDING_DISABLED')
+          end
 
           email = nil
           ::Sales::EmailMessage.transaction do
@@ -142,15 +158,17 @@ module Api
             end
           end
 
-          # Launch background delivery job com fallback síncrono quando Redis/Sidekiq desativado
-          if ENV.fetch('REDIS_ENABLED', 'true') == 'false' || ENV.fetch('EXECUTE_JOBS_INLINE', 'false') == 'true'
+          if ENV.fetch('EXECUTE_JOBS_INLINE', 'false') == 'true' && !Rails.env.production?
             ::Sales::SendEmailJob.perform_now(email.id)
           else
             begin
               ::Sales::SendEmailJob.perform_later(email.id)
             rescue StandardError => e
-              Rails.logger.warn("[EmailsController] Fallback inline devido a erro no Sidekiq: #{e.message}")
-              ::Sales::SendEmailJob.perform_now(email.id)
+              Rails.logger.error({ event: 'sales_email_enqueue_failed', email_message_id: email.id,
+                                   tenant_id: email.company_id, error_class: e.class.name }.to_json)
+              email.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => 'QUEUE_UNAVAILABLE'))
+              return render_error_response(message: 'Fila de envio indisponível; o e-mail foi salvo para revisão.',
+                                           status: :service_unavailable, code: 'EMAIL_QUEUE_UNAVAILABLE')
             end
           end
 
@@ -199,18 +217,15 @@ module Api
         end
 
         def scoped_accounts
-          return ::Sales::Account.all if current_user.admin?
-          ::Sales::Account.where(company_id: current_user.company_id)
+          current_tenant_scope.accounts
         end
 
         def scoped_contacts
-          return ::Sales::Contact.all if current_user.admin?
-          ::Sales::Contact.where(company_id: current_user.company_id)
+          current_tenant_scope.contacts
         end
 
         def scoped_emails
-          return ::Sales::EmailMessage.all if current_user.admin?
-          ::Sales::EmailMessage.where(company_id: current_user.company_id)
+          current_tenant_scope.email_messages
         end
 
         def email_params

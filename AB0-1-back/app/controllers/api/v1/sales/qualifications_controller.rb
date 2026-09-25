@@ -5,10 +5,12 @@ module Api
         before_action :authenticate_api_user
         before_action :require_internal_sales
         def show
-          render json: { qualification: ::Sales::Qualification.find_by!(sales_opportunity_id: params[:opportunity_id]) }
+          opportunity = current_tenant_scope.opportunities.find(params[:opportunity_id])
+          render json: { qualification: ::Sales::Qualification.find_by(sales_opportunity_id: opportunity.id) }
         end
         def upsert
-          qualification = ::Sales::Qualification.find_or_initialize_by(sales_opportunity_id: params[:opportunity_id])
+          opportunity = current_tenant_scope.opportunities.find(params[:opportunity_id])
+          qualification = ::Sales::Qualification.find_or_initialize_by(sales_opportunity_id: opportunity.id)
           qualification.assign_attributes(qualification_params)
           qualification.save!
           render json: { qualification: qualification }

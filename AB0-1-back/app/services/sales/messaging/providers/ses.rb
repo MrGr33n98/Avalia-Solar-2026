@@ -14,8 +14,11 @@ module Sales
       class Ses < Base
         def send_message(email_message, options = {})
           region = ENV['AWS_REGION'].presence || ENV['SPACES_REGION'].presence || 'us-east-1'
-          access_key = ENV['AWS_ACCESS_KEY_ID'].presence || ENV['SPACES_ACCESS_KEY_ID'].presence
-          secret_key = ENV['AWS_SECRET_ACCESS_KEY'].presence || ENV['SPACES_SECRET_ACCESS_KEY'].presence
+          access_key = ENV['AWS_ACCESS_KEY_ID'].presence
+          secret_key = ENV['AWS_SECRET_ACCESS_KEY'].presence
+          if Rails.env.test? && access_key.blank? && secret_key.blank?
+            return Result.new(success?: false, error_code: 'SES_NOT_CONFIGURED', error_message: 'AWS SES não configurado para teste.')
+          end
 
           tracking_pixel = if email_message.open_tracking_enabled
                              "<img src=\"#{ENV['APP_HOST'] || 'https://crm.avaliasolar.com.br'}/t/email/open/#{email_message.tracking_token}.gif\" width=\"1\" height=\"1\" alt=\"\" style=\"display:none;\" />"
@@ -29,13 +32,11 @@ module Sales
 
           provider_id = nil
 
-          if access_key.present? && secret_key.present? && defined?(Aws::SESV2::Client)
+          if defined?(Aws::SESV2::Client) && (access_key.blank? == secret_key.blank?)
             begin
-              client = Aws::SESV2::Client.new(
-                region: region,
-                access_key_id: access_key,
-                secret_access_key: secret_key
-              )
+              client_options = { region: region }
+              client_options.merge!(access_key_id: access_key, secret_access_key: secret_key) if access_key.present?
+              client = Aws::SESV2::Client.new(**client_options)
 
               participants = email_message.participants.group_by(&:participant_type)
               to_addresses = participants['to'].present? ? participants['to'].map(&:email) : [email_message.to_email].compact_blank
@@ -50,15 +51,7 @@ module Sales
               request = {
                 from_email_address: email_message.from_email,
                 destination: destination,
-                content: email_message.attachments.any? { |attachment| attachment.file.attached? } ? { raw: { data: raw_message(email_message, html_with_tracking) } } : {
-                  simple: {
-                    subject: { data: email_message.subject, charset: 'UTF-8' },
-                    body: {
-                      html: { data: html_with_tracking, charset: 'UTF-8' },
-                      text: { data: email_message.body_text || '', charset: 'UTF-8' }
-                    }
-                  }
-                }
+                content: { raw: { data: raw_message(email_message, html_with_tracking) } }
               }
               request[:configuration_set_name] = ENV['AWS_SES_CONFIGURATION_SET'].presence if ENV['AWS_SES_CONFIGURATION_SET'].present?
               resp = client.send_email(request)
@@ -67,11 +60,11 @@ module Sales
                 return Result.new(success?: false, error_code: 'SES_INVALID_RESPONSE', error_message: 'AWS SES não retornou message_id.')
               end
             rescue StandardError => e
-              Rails.logger.error("[Sales::Messaging::Providers::Ses] Erro ao enviar e-mail via AWS SES V2: #{e.message}")
-              return Result.new(success?: false, error_code: 'SES_SEND_ERROR', error_message: e.message)
+              Rails.logger.error({ event: 'sales_email_provider_send_failed', error_class: e.class.name }.to_json)
+              return Result.new(success?: false, error_code: 'SES_SEND_ERROR', error_message: e.class.name)
             end
           else
-            return Result.new(success?: false, error_code: 'SES_NOT_CONFIGURED', error_message: 'AWS SES não configurado.')
+            return Result.new(success?: false, error_code: 'SES_NOT_CONFIGURED', error_message: 'Credenciais AWS SES incompletas ou SDK não configurado.')
           end
 
           Result.new(
@@ -79,10 +72,11 @@ module Sales
             provider_message_id: provider_id
           )
         rescue StandardError => e
+          Rails.logger.error({ event: 'sales_email_provider_send_failed', error_class: e.class.name }.to_json)
           Result.new(
             success?: false,
             error_code: 'SES_SEND_ERROR',
-            error_message: e.message
+            error_message: e.class.name
           )
         end
 
@@ -99,14 +93,22 @@ module Sales
 
           mixed_boundary = "mixed-#{SecureRandom.hex(12)}"
           alternative_boundary = "alternative-#{SecureRandom.hex(12)}"
+          participants = email_message.participants.group_by(&:participant_type)
+          to = participants['to'].present? ? participants['to'].map(&:email) : [email_message.to_email].compact_blank
+          cc = participants['cc'].to_a.map(&:email)
+          unsubscribe_token = ::Sales::Messaging::UnsubscribeToken.generate(email_message)
+          app_host = ENV['APP_HOST'].presence || 'https://crm.avaliasolar.com.br'
+          unsubscribe_url = "#{app_host.sub(%r{/+$}, '')}/t/email/unsubscribe/#{unsubscribe_token}"
           headers = [
             "From: #{header_value(email_message.from_email)}",
-            "To: #{header_value(email_message.to_email)}",
-            "Subject: #{header_value(email_message.subject)}",
-            "Message-ID: #{header_value(email_message.message_id)}",
+            "To: #{to.map { |address| header_value(address) }.join(', ')}",
+            ("Cc: #{cc.map { |address| header_value(address) }.join(', ')}" if cc.any?),
+            "Subject: #{encoded_header(email_message.subject)}",
+            "List-Unsubscribe: <#{unsubscribe_url}>",
+            'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
             'MIME-Version: 1.0',
             "Content-Type: multipart/mixed; boundary=\"#{mixed_boundary}\""
-          ]
+          ].compact
           parts = [
             "--#{mixed_boundary}\r\nContent-Type: multipart/alternative; boundary=\"#{alternative_boundary}\"\r\n\r\n",
             "--#{alternative_boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n#{email_message.body_text}\r\n",
@@ -119,6 +121,11 @@ module Sales
             parts << "Content-Type: #{header_value(attachment.content_type)}; name=\"#{filename}\"\r\nContent-Disposition: attachment; filename=\"#{filename}\"\r\nContent-Transfer-Encoding: base64\r\n\r\n#{encoded}\r\n--#{mixed_boundary}\r\n"
           end
           (headers + [''] + parts + ["--#{mixed_boundary}--\r\n"]).join("\r\n")
+        end
+
+        def encoded_header(value)
+          sanitized = header_value(value)
+          return sanitized.ascii_only? ? sanitized : "=?UTF-8?B?#{Base64.strict_encode64(sanitized)}?="
         end
       end
     end

@@ -8,6 +8,12 @@ RSpec.describe 'Sales Email Templates API', type: :request do
   let!(:user) { create(:user, company: company) }
   let!(:other_user) { create(:user, company: other_company) }
 
+  before do
+    role = Sales::Role.create!(name: "Templates #{SecureRandom.hex(4)}", slug: "templates_#{SecureRandom.hex(4)}", system: true)
+    Sales::UserRole.create!(user: user, role: role)
+    allow(Sales::Messaging::SendingGate).to receive(:enabled?).and_return(true)
+  end
+
   let!(:template1) do
     ::Sales::EmailTemplate.create!(
       company: company,

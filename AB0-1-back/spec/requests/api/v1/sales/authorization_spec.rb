@@ -19,11 +19,17 @@ RSpec.describe 'Api::V1::Sales Authorization & Surface Isolation', type: :reques
           password: 'Password123!',
           role: 'company',
           city: 'São Paulo',
-          state: 'SP'
+          state: 'SP',
+          terms_accepted: true
         )
 
-        get '/api/v1/sales/leads', headers: { 'Authorization' => "Bearer #{company_user.id}" }
-        expect(response.status).to eq(401).or eq(403)
+        token = JWT.encode(
+          { user_id: company_user.id, typ: 'access', exp: 24.hours.from_now.to_i },
+          Rails.application.secret_key_base,
+          'HS256'
+        )
+        get '/api/v1/sales/leads', headers: { 'Authorization' => "Bearer #{token}" }
+        expect(response).to have_http_status(:forbidden)
       end
     end
   end

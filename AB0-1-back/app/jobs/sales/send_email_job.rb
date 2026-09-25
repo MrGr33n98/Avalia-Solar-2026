@@ -5,18 +5,15 @@ module Sales
     queue_as :default
 
     def perform(email_message_id)
-      email = ::Sales::EmailMessage.find_by(id: email_message_id)
-      return unless email && (email.status == 'queued' || email.status == 'draft')
+      return unless ::Sales::Messaging::SendingGate.enabled?
 
-      # Send-Time Suppression Check (P0)
-      if ::Sales::Messaging::SuppressionChecker.blocked?(company_id: email.company_id, email: email.to_email)
-        Rails.logger.warn("[SendEmailJob] Prevenindo envio para #{email.to_email}: endereço suprimido para a empresa #{email.company_id}.")
-        email.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => 'SUPPRESSED_AT_SEND_TIME'))
-        if email.campaign_recipient.present?
-          email.campaign_recipient.update!(status: 'unsubscribed', error_message: 'SUPPRESSED_AT_SEND_TIME')
-        end
+      email, claimed, suppressed = claim_message(email_message_id)
+      return unless email
+      if suppressed
+        stop_suppressed_sequence(email)
         return
       end
+      return unless claimed
 
       # 1. Render through Fail-Closed Renderer
       rendered = ::Sales::Messaging::Renderer.render(
@@ -67,19 +64,67 @@ module Sales
             occurred_at: now
           )
         end
+        safely_advance_sequence(email)
       else
         email.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => result.error_message))
         email.register_event!(event_type: 'failed', occurred_at: Time.current, payload: { error: result.error_message })
+        safely_fail_sequence_step(email)
       end
     rescue ::Sales::Messaging::Renderer::EmailRenderError => e
-      Rails.logger.error("[SendEmailJob] Fail-Closed Renderer bloqueou o envio: #{e.message}")
-      email&.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => e.message))
+      Rails.logger.error({ event: 'sales_email_render_failed', email_message_id: email&.id,
+                           tenant_id: email&.company_id, error_class: e.class.name }.to_json)
+      email&.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => e.class.name))
+      safely_fail_sequence_step(email)
     rescue StandardError => e
-      email&.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => e.message))
+      email&.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => e.class.name))
+      safely_fail_sequence_step(email)
       raise e
     end
 
     private
+
+    def claim_message(email_message_id)
+      email = nil
+      claimed = false
+      suppressed = false
+      ::Sales::EmailMessage.transaction do
+        email = ::Sales::EmailMessage.lock.find_by(id: email_message_id)
+        next unless email && %w[queued draft].include?(email.status)
+
+        if ::Sales::Messaging::SuppressionChecker.blocked?(company_id: email.company_id, email: email.to_email)
+          Rails.logger.warn("[SendEmailJob] Envio bloqueado por suppression para tenant #{email.company_id}.")
+          email.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => 'SUPPRESSED_AT_SEND_TIME'))
+          email.campaign_recipient&.update!(status: 'unsubscribed', error_message: 'SUPPRESSED_AT_SEND_TIME')
+          suppressed = true
+        else
+          email.update!(status: 'sending')
+          claimed = true
+        end
+      end
+      [email, claimed, suppressed]
+    end
+
+    def stop_suppressed_sequence(email)
+      return unless email.contact
+
+      ::Sales::EmailSequences::EnrollmentProcessor.stop_for_contact(contact: email.contact, reason: 'suppressed')
+    end
+
+    def safely_advance_sequence(email)
+      ::Sales::EmailSequences::EnrollmentProcessor.email_sent(email)
+    rescue StandardError => e
+      Rails.logger.error({ event: 'sales_sequence_advance_failed', enrollment_step_id: email.sales_email_sequence_enrollment_step_id,
+                           error_class: e.class.name }.to_json)
+    end
+
+    def safely_fail_sequence_step(email)
+      return unless email
+
+      ::Sales::EmailSequences::EnrollmentProcessor.email_failed(email)
+    rescue StandardError => e
+      Rails.logger.error({ event: 'sales_sequence_failure_persist_failed', enrollment_step_id: email.sales_email_sequence_enrollment_step_id,
+                           error_class: e.class.name }.to_json)
+    end
 
     def signature_for(email)
       return nil unless email.sender_user_id.present? && email.company_id.present?

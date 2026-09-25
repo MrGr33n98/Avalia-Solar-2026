@@ -20,4 +20,11 @@ RSpec.describe Sales::Campaigns::Preflight do
     expect(result[:audience][:estimated_count]).to eq(1)
     expect(result[:warnings].map { |item| item[:code] }).to include('SMALL_AUDIENCE')
   end
+
+  it 'não considera presença de credenciais ou ambiente de teste como prova de provider operacional' do
+    result = described_class.call(campaign: campaign)
+
+    expect(result[:provider][:status]).to eq('not_configured')
+    expect(result[:blockers].map { |item| item[:code] }).to include('EMAIL_SENDING_DISABLED', 'PROVIDER_NOT_OPERATIONAL')
+  end
 end

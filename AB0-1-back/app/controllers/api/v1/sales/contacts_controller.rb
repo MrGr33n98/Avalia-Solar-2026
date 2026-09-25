@@ -55,13 +55,13 @@ module Api
 
         def engagement
           contact = scoped_contacts.find(params[:id])
-          emails = contact.email_messages
+          emails = current_tenant_scope.email_messages.where(sales_contact_id: contact.id)
           render json: { engagement: { sent: emails.where.not(sent_at: nil).count, delivered: emails.where(status: "delivered").count, opens: emails.sum(:open_count), clicks: emails.sum(:click_count), last_opened_at: emails.maximum(:last_opened_at), last_clicked_at: emails.maximum(:last_clicked_at) } }
         end
 
         def timeline
           contact = scoped_contacts.find(params[:id])
-          timeline = ::Sales::Contacts::TimelineBuilder.build(contact)
+          timeline = ::Sales::Contacts::TimelineBuilder.build(contact, scope: current_tenant_scope)
           timeline = timeline.select { |event| event[:type].to_s == params[:type].to_s } if params[:type].present?
           page = [params.fetch(:page, 1).to_i, 1].max
           per_page = [[params.fetch(:per_page, 50).to_i, 1].max, 100].min
@@ -71,19 +71,33 @@ module Api
 
         def create
           account_id = params[:account_id] || params[:sales_account_id] || contact_params[:sales_account_id]
+          if params[:account_id].present? && contact_params[:sales_account_id].present? &&
+             params[:account_id].to_s != contact_params[:sales_account_id].to_s
+            return render_relation_conflict(resource: 'Contact')
+          end
           company_name = params[:company_name] || params[:account_name] || contact_params[:company_name]
 
           if account_id.present?
-            account = ::Sales::TenantScope.for(current_user).accounts.find_by(id: account_id)
+            account = current_tenant_scope.accounts.find_by(id: account_id)
             return render json: { error: 'Account not found or access denied' }, status: :not_found unless account
           elsif company_name.present?
             c_name = company_name.to_s.strip
             if c_name.present?
-              account = ::Sales::TenantScope.for(current_user).accounts.find_or_create_by!(name: c_name) do |a|
+              account = current_tenant_scope.accounts.find_or_create_by!(name: c_name) do |a|
                 a.owner = current_user
+                a.company_id = current_user.company_id
               end
               account_id = account.id
             end
+          end
+
+          unless account_id.present?
+            return render_error_response(message: 'Conta é obrigatória.', status: :unprocessable_entity, code: 'ACCOUNT_REQUIRED')
+          end
+          account ||= current_tenant_scope.accounts.find_by(id: account_id)
+          unless account
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Account')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
           end
 
           contact = if contact_params[:email].present? && account_id.present?
@@ -91,19 +105,49 @@ module Api
                     else
                       ::Sales::Contact.new
                     end
-          attrs = contact_params.except(:company_name)
-          attrs[:user_id] = params[:owner_id] if params[:owner_id].present?
+          attrs = contact_params.except(:company_name, :user_id, :owner_id)
+          owner_id = params[:owner_id].presence || contact_params[:owner_id].presence || contact_params[:user_id].presence
+          if owner_id.present?
+            owner_user = User.find_by(id: owner_id)
+            unless current_tenant_scope.valid_owner?(owner_user, account: account)
+              log_sales_denial(reason: 'owner_out_of_scope', resource: 'Contact')
+              return render_error_response(message: 'Responsável inválido.', status: :unprocessable_entity, code: 'INVALID_OWNER')
+            end
+            attrs[:user_id] = owner_user.id
+          else
+            attrs[:user_id] = current_user.id
+          end
+
           contact.assign_attributes(attrs)
-          contact.sales_account_id = account_id if account_id.present?
-          contact.user ||= current_user
+          contact.sales_account_id = account.id
           contact.save!
           render json: { contact: serialize_detailed(contact) }, status: contact.previously_new_record? ? :created : :ok
         end
 
         def update
           contact = scoped_contacts.find(params[:id])
-          attrs = contact_params.except(:company_name)
-          attrs[:user_id] = params[:owner_id] if params[:owner_id].present?
+          attrs = contact_params.except(:company_name, :user_id, :owner_id)
+          target_account = contact.account
+
+          if contact_params[:sales_account_id].present? && contact_params[:sales_account_id].to_i != contact.sales_account_id
+            target_account = current_tenant_scope.accounts.find_by(id: contact_params[:sales_account_id])
+            unless target_account
+              log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Account')
+              return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+            end
+            attrs[:sales_account_id] = target_account.id
+          end
+
+          owner_id = params[:owner_id].presence || contact_params[:owner_id].presence || contact_params[:user_id].presence
+          if owner_id.present?
+            owner_user = User.find_by(id: owner_id)
+            unless current_tenant_scope.valid_owner?(owner_user, account: target_account)
+              log_sales_denial(reason: 'owner_out_of_scope', resource: 'Contact')
+              return render_error_response(message: 'Responsável inválido.', status: :unprocessable_entity, code: 'INVALID_OWNER')
+            end
+            attrs[:user_id] = owner_user.id
+          end
+
           contact.update!(attrs)
           render json: { contact: serialize_detailed(contact) }
         end
@@ -118,14 +162,16 @@ module Api
         end
 
         def serialize(contact)
-          last_contact = ::Sales::Contacts::LastContactResolver.resolve(contact)
-          next_action = ::Sales::Contacts::NextActionResolver.resolve(contact)
+          last_contact = ::Sales::Contacts::LastContactResolver.resolve(contact, scope: current_tenant_scope)
+          next_action = ::Sales::Contacts::NextActionResolver.resolve(contact, scope: current_tenant_scope)
+          owner = contact.user
+          owner = nil if owner && !current_user.admin? && !current_tenant_scope.tenant_user_ids.include?(owner.id)
 
           {
             id: contact.id,
             sales_account_id: contact.sales_account_id,
             owner_id: contact.user_id,
-            owner_name: contact.user&.name || 'Vendedor Responsável',
+            owner_name: owner&.name || 'Vendedor Responsável',
             first_name: contact.first_name,
             last_name: contact.last_name,
             name: [contact.first_name, contact.last_name].compact.join(' '),
@@ -147,9 +193,19 @@ module Api
         end
 
         def serialize_detailed(contact)
+          scope = current_tenant_scope
+          safe_employments = contact.contact_employments.select { |employment| scope.accounts.exists?(id: employment.sales_account_id) && scope.valid_employment?(contact: contact, account: employment.account) }
+          safe_opportunity_contacts = contact.opportunity_contacts.select do |membership|
+            opportunity = membership.opportunity
+            opportunity.present? && scope.opportunities.exists?(id: opportunity.id) &&
+              scope.valid_relation?(account: opportunity.account, contact: contact, opportunity: opportunity)
+          end
+          safe_activities = scope.activities.where(sales_contact_id: contact.id).order(occurred_at: :desc).limit(10)
+          safe_tasks = scope.tasks.where(sales_contact_id: contact.id)
+
           serialize(contact).merge(
             account: contact.account ? { id: contact.account.id, name: contact.account.name, city: contact.account.city, state: contact.account.state } : nil,
-            employments: contact.contact_employments.map do |e|
+            employments: safe_employments.map do |e|
               {
                 id: e.id,
                 sales_account_id: e.sales_account_id,
@@ -162,7 +218,7 @@ module Api
                 is_primary: e.is_primary
               }
             end,
-            buying_opportunities: contact.opportunity_contacts.includes(:opportunity).map do |oc|
+            buying_opportunities: safe_opportunity_contacts.map do |oc|
               {
                 id: oc.id,
                 opportunity_id: oc.sales_opportunity_id,
@@ -173,10 +229,10 @@ module Api
                 is_primary: oc.is_primary
               }
             end,
-            activities: contact.activities.order(occurred_at: :desc).limit(10).map do |a|
+            activities: safe_activities.map do |a|
               { id: a.id, activity_type: a.activity_type, subject: a.subject, occurred_at: a.occurred_at }
             end,
-            tasks: contact.tasks.map do |t|
+            tasks: safe_tasks.map do |t|
               { id: t.id, title: t.title, due_at: t.due_at, completed_at: t.completed_at }
             end
           )

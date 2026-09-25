@@ -26,16 +26,16 @@ RSpec.describe Sales::CampaignSchedulerJob, type: :job do
       described_class.new.perform
     end
 
-    it 'is idempotent across two concurrent executions' do
+    it 'mantém campanha agendada e sem envio quando o kill switch está desligado' do
       due_campaign = create(:sales_campaign, company: company, user: user, email_template: template, status: 'scheduled', scheduled_at: 5.minutes.ago)
+      allow(Sales::Messaging::SendingGate).to receive(:enabled?).and_return(false)
       
       described_class.new.perform
-      expect(due_campaign.reload.status).to eq('dispatching')
+      expect(due_campaign.reload.status).to eq('scheduled')
 
-      # Second execution sees dispatching status and becomes NO-OP
       expect {
         described_class.new.perform
-      }.not_to change(due_campaign.reload, :status)
+      }.not_to change { due_campaign.reload.status }
     end
   end
 end

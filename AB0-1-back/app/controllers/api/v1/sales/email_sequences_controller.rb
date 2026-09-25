@@ -13,7 +13,10 @@ module Api
         end
 
         def create
-          sequence = scoped_sequences.create!(sequence_params.merge(company_id: current_user.company_id, user_id: current_user.id))
+          attributes = sequence_params
+          return render_hidden_template unless sequence_templates_accessible?(attributes[:steps_attributes])
+
+          sequence = scoped_sequences.create!(attributes.merge(company_id: current_user.company_id, user_id: current_user.id))
           render json: { sequence: serialize(sequence) }, status: :created
         rescue ActiveRecord::RecordInvalid => e
           render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
@@ -21,7 +24,10 @@ module Api
 
         def update
           sequence = scoped_sequences.find(params[:id])
-          sequence.update!(sequence_params)
+          attributes = sequence_params
+          return render_hidden_template unless sequence_templates_accessible?(attributes[:steps_attributes])
+
+          sequence.update!(attributes)
           render json: { sequence: serialize(sequence) }
         end
 
@@ -38,6 +44,21 @@ module Api
 
         def sequence_params
           params.require(:sequence).permit(:name, :description, :active, steps_attributes: %i[id position delay_days step_type email_template_id _destroy])
+        end
+
+        def sequence_templates_accessible?(steps_attributes)
+          steps = steps_attributes.respond_to?(:values) ? steps_attributes.values : Array(steps_attributes)
+          template_ids = steps.filter_map { |step| step[:email_template_id].presence }.map(&:to_s).uniq
+          return true if template_ids.empty?
+
+          ::Sales::EmailTemplate.where(company_id: current_user.company_id)
+                                .where(user_id: [nil, current_user.id])
+                                .where(id: template_ids).count == template_ids.size
+        end
+
+        def render_hidden_template
+          log_sales_denial(reason: 'template_out_of_scope', resource: 'EmailTemplate')
+          render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
         end
 
         def serialize(sequence)

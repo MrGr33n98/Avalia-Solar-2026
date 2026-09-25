@@ -61,6 +61,21 @@ module Sales
           .map { |r, a| "sales.#{r}.#{a}" }
       end
 
+      # Validate strict relation parity across entities (reject cross-tenant linkages even for platform admin)
+      def validate_relation_parity?(account:, contact: nil, opportunity: nil)
+        return false if account.nil?
+        if contact.present?
+          is_primary = contact.sales_account_id == account.id
+          has_employment = defined?(::Sales::ContactEmployment) &&
+                           ::Sales::ContactEmployment.where(sales_contact_id: contact.id, sales_account_id: account.id, is_current: true).exists?
+          return false unless is_primary || has_employment
+        end
+        if opportunity.present?
+          return false unless opportunity.sales_account_id == account.id
+        end
+        true
+      end
+
       private
 
       def platform_admin?(user)

@@ -35,7 +35,7 @@ module Sales
         mapping = {}
 
         @headers.each do |header|
-          clean_header = header.strip.downcase.gsub(/[^a-z0-9_áàâãéèêíïóôõöúçñ\s]/, '')
+          clean_header = header.strip.downcase.gsub(/[^a-z0-9_áàâãéèêíïóôõöúçñ\s]/, '').gsub(/\s+/, '_')
 
           ALIASES.each do |canonical_field, alias_list|
             next if mapping.value?(canonical_field.to_s)

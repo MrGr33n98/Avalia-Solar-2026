@@ -10,6 +10,8 @@ RSpec.describe Sales::CampaignBatchProcessorJob, type: :job do
   let(:recipient) { create(:sales_campaign_recipient, campaign: campaign, email: 'lead@exemplo.com.br', status: 'pending') }
 
   describe '#perform' do
+    before { allow(Sales::Messaging::SendingGate).to receive(:enabled?).and_return(true) }
+
     it 'processes only when campaign is dispatching' do
       campaign.update!(status: 'paused')
       described_class.new.perform(campaign.id, [recipient.id])

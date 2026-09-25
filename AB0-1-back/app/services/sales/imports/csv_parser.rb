@@ -50,9 +50,9 @@ module Sales
 
       def extract_content(file_or_content)
         if file_or_content.respond_to?(:read)
-          file_or_content.read.force_encoding('UTF-8').encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+          file_or_content.read.dup.force_encoding('UTF-8').encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
         else
-          file_or_content.to_s.force_encoding('UTF-8').encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
+          file_or_content.to_s.dup.force_encoding('UTF-8').encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
         end
       end
 

@@ -14,6 +14,12 @@ RSpec.describe 'Sales email template preview API', type: :request do
     ::Sales::EmailTemplate.create!(company: other_company, name: 'Outro', subject_template: 'Olá', body_html: '<p>Oi</p>')
   end
 
+  before do
+    role = Sales::Role.create!(name: "Preview #{SecureRandom.hex(4)}", slug: "preview_#{SecureRandom.hex(4)}", system: true)
+    Sales::UserRole.create!(user: user, role: role)
+    Sales::UserRole.create!(user: other_user, role: role)
+  end
+
   def auth_headers(account)
     token = JWT.encode({ user_id: account.id, typ: 'access', exp: 1.day.from_now.to_i }, Rails.application.secret_key_base, 'HS256')
     { 'Authorization' => "Bearer #{token}" }
