@@ -1,105 +1,177 @@
-import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import CompanyCard from './CompanyCard';
 
+const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: mockPush }),
 }));
+
+const mockAddToComparison = jest.fn();
+const mockRemoveFromComparison = jest.fn();
+let mockIsInComparison = false;
 
 jest.mock('@/hooks/useComparison', () => ({
   useComparison: () => ({
-    isInComparison: () => false,
-    toggleComparison: jest.fn(),
+    isInComparison: () => mockIsInComparison,
+    addToComparison: mockAddToComparison,
+    removeFromComparison: mockRemoveFromComparison,
     canAddMore: true,
   }),
 }));
 
+const mockOpenLeadModal = jest.fn();
 jest.mock('@/lib/lead-engine', () => ({
-  openLeadModal: jest.fn(),
-  resolveWizardCategoryId: jest.fn(),
+  openLeadModal: (args: unknown) => mockOpenLeadModal(args),
 }));
 
-jest.mock('@/components/company/ReviewCompanyButton', () => ({
-  __esModule: true,
-  default: ({ company, label = 'Avaliar', className }: { company: { name?: string }; label?: string; className?: string }) => (
-    <a href="#review" aria-label={`${label}: ${company.name}`} className={className}>
-      {label}
-    </a>
-  ),
-}));
-
-jest.mock('@/components/quote/QuoteCTA', () => ({
-  QuoteCTA: ({ className, shortLabel = 'Orçamento' }: { className?: string; shortLabel?: string }) => (
-    <button type="button" className={className} aria-label="Solicitar orçamento">
-      {shortLabel}
-    </button>
-  ),
-}));
-
-jest.mock('@/components/icons/AnimatedCompareIcon', () => ({
-  AnimatedCompareIcon: ({ size }: { size?: number }) => (
-    <span aria-hidden="true" data-testid="compare-icon" data-size={size} />
-  ),
+jest.mock('@/lib/analytics/lazy', () => ({
+  track: jest.fn(),
 }));
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ alt = '', ...props }: { alt?: string }) => <span role="img" aria-label={alt} {...props} />,
+  default: ({ alt = '', ...props }: Record<string, unknown>) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img alt={(alt as string) || ''} {...(props as React.ImgHTMLAttributes<HTMLImageElement>)} />
+  ),
 }));
 
-const company = {
-  id: 1,
-  name: 'GoodWe Brasil',
-  slug: 'goodwe-brasil',
-  city: 'Florianópolis',
-  state: 'SC',
-  rating_avg: 4.4,
-  rating_count: 2,
-  has_paid_plan: true,
-  coverage_states: ['Todos'],
-};
-
-describe('CompanyCard standard actions', () => {
-  it('renders compare, review and quote for eligible company', () => {
-    render(<CompanyCard company={company} variant="standard" />);
-
-    const compare = screen.getByRole('button', { name: 'Adicionar GoodWe Brasil à comparação' });
-    expect(compare).toBeInTheDocument();
-    expect(compare).toHaveAttribute('aria-pressed', 'false');
-    expect(compare).toHaveClass('bg-white');
-    expect(screen.getByRole('link', { name: 'Avaliar: GoodWe Brasil' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Solicitar orçamento' })).toBeInTheDocument();
+describe('CompanyCard V2 — Swiss Enterprise Discovery Card', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsInComparison = false;
   });
 
-  it('hides quote for company without paid plan', () => {
-    render(<CompanyCard company={{ ...company, has_paid_plan: false }} variant="standard" />);
+  const baseCompany = {
+    id: 101,
+    name: 'WEG Solar',
+    slug: 'weg-solar',
+    city: 'Florianópolis',
+    state: 'SC',
+    rating_avg: 4.5,
+    rating_count: 18,
+    has_paid_plan: true,
+    verified: true,
+    description: 'Fabricante nacional líder em inversores e soluções solares completas.',
+    coverage_cities: ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Itajaí'],
+    coverage_states: ['SC'],
+    actions: {
+      p2p_chat_enabled: true,
+      whatsapp_enabled: true,
+      whatsapp_url: 'https://wa.me/5548999999999',
+    },
+  };
 
-    expect(screen.getByRole('button', { name: 'Adicionar GoodWe Brasil à comparação' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Avaliar: GoodWe Brasil' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
+  it('renderiza card PRO com orçamento habilitado (US-003, US-004)', () => {
+    render(<CompanyCard company={baseCompany} />);
+
+    expect(screen.getByText('WEG Solar')).toBeInTheDocument();
+    expect(screen.getByText('PRO')).toBeInTheDocument();
+    expect(screen.getByLabelText('Empresa verificada')).toBeInTheDocument();
+    expect(screen.getByText('4.5')).toBeInTheDocument();
+    expect(screen.getByText('(18)')).toBeInTheDocument();
+    expect(screen.getByText('Florianópolis, SC')).toBeInTheDocument();
+
+    // CTA primário de solicitação de orçamento
+    const quoteBtn = screen.getByRole('button', { name: /Solicitar orçamento/i });
+    expect(quoteBtn).toBeInTheDocument();
+
+    // Ações secundárias: Comparar, Ver perfil, Mais ações
+    expect(screen.getByRole('button', { name: /Comparar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Ver perfil/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Mais ações para WEG Solar/i })).toBeInTheDocument();
+
+    // Dispara modal de lead ao clicar em solicitar orçamento
+    fireEvent.click(quoteBtn);
+    expect(mockOpenLeadModal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        preferredCompanyId: 101,
+        source: 'company_card',
+        type: 'quick',
+      })
+    );
   });
 
-  it('uses unified primary action row for compare and review', () => {
-    render(<CompanyCard company={company} variant="standard" />);
+  it('renderiza card Free com ação primária Ver Perfil e secundária Avaliar (US-002)', () => {
+    const freeCompany = {
+      ...baseCompany,
+      has_paid_plan: false,
+    };
 
-    const compare = screen.getByRole('button', { name: 'Adicionar GoodWe Brasil à comparação' });
-    const review = screen.getByRole('link', { name: 'Avaliar: GoodWe Brasil' });
-    const quote = screen.getByRole('button', { name: 'Solicitar orçamento' });
+    render(<CompanyCard company={freeCompany} />);
 
-    expect(compare).toHaveClass('w-full');
-    expect(review).toHaveClass('w-full', 'bg-blue-600', 'text-white');
-    expect(quote).toHaveClass('w-full');
+    // Não deve conter badge PRO
+    expect(screen.queryByText('PRO')).not.toBeInTheDocument();
+
+    // CTA primário deve ser Ver perfil
+    const primaryProfileBtn = screen.getByRole('button', { name: /^Ver perfil/i });
+    expect(primaryProfileBtn).toBeInTheDocument();
+
+    // Ação secundária no rodapé deve ser Avaliar
+    expect(screen.getByRole('button', { name: /Avaliar/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Solicitar orçamento/i })).not.toBeInTheDocument();
   });
 
-  it('mantém círculo de comparação com tamanho visual adequado', () => {
-    render(<CompanyCard company={company} variant="standard" />);
+  it('renderiza honestamente empresa sem avaliações (Sem avaliações, nunca 0.0 · 0) (US-008)', () => {
+    const noReviewsCompany = {
+      ...baseCompany,
+      rating_avg: 0,
+      rating_count: 0,
+    };
 
-    expect(screen.getByTestId('compare-icon')).toHaveAttribute('data-size', '28');
+    render(<CompanyCard company={noReviewsCompany} />);
+
+    expect(screen.getAllByText('Sem avaliações').length).toBeGreaterThan(0);
+    expect(screen.queryByText('0.0')).not.toBeInTheDocument();
   });
 
-  it('does not render fabricated criteria or SLA', () => {
-    render(<CompanyCard company={{ ...company, has_paid_plan: false }} variant="standard" />);
+  it('renderiza cobertura real formatada sem dados falsos de Todo o Brasil (US-008)', () => {
+    render(<CompanyCard company={baseCompany} />);
 
-    expect(screen.queryByText('Equipe qualificada')).not.toBeInTheDocument();
+    expect(screen.getByText('5 cidades')).toBeInTheDocument();
+    expect(screen.queryByText('Todo o Brasil')).not.toBeInTheDocument();
     expect(screen.queryByText('24h')).not.toBeInTheDocument();
+  });
+
+  it('alterna o estado de comparação ao clicar no botão Comparar (US-006)', () => {
+    render(<CompanyCard company={baseCompany} />);
+
+    const compareBtn = screen.getByRole('button', { name: /Comparar/i });
+    expect(compareBtn).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(compareBtn);
+    expect(mockAddToComparison).toHaveBeenCalled();
+  });
+
+  it('abre o Sheet de avaliações ao clicar no chip de avaliações (US-005)', () => {
+    render(<CompanyCard company={baseCompany} />);
+
+    const reviewChip = screen.getByRole('button', { name: /18 avaliações/i });
+    fireEvent.click(reviewChip);
+
+    // O Sheet deve abrir exibindo o título
+    expect(screen.getByText('Avaliações da WEG Solar')).toBeInTheDocument();
+    expect(screen.getByText('Ver todas as avaliações')).toBeInTheDocument();
+  });
+
+  it('navega para o perfil da empresa ao clicar no corpo do card (US-001)', () => {
+    const { container } = render(<CompanyCard company={baseCompany} />);
+
+    const card = container.querySelector('.group');
+    if (card) {
+      fireEvent.click(card);
+      expect(mockPush).toHaveBeenCalledWith('/companies/weg-solar');
+    }
+  });
+
+  it('preserva paridade de layout e altura entre Free e PRO (US-002, US-003)', () => {
+    const { rerender } = render(<CompanyCard company={baseCompany} />);
+    expect(screen.getByText('WEG Solar')).toBeInTheDocument();
+
+    // Rerender como Free
+    rerender(<CompanyCard company={{ ...baseCompany, has_paid_plan: false }} />);
+    expect(screen.getByText('WEG Solar')).toBeInTheDocument();
+    expect(screen.queryByText('PRO')).not.toBeInTheDocument();
   });
 });

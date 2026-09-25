@@ -1,56 +1,40 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Star,
   MapPin,
-  Building,
-  Share2,
-  Check,
-  Info,
-  Trophy,
-  MessageCircle,
-  ShieldCheck,
-  Zap,
-  Shield,
-  HelpCircle,
-  Heart,
-  PhoneCall,
   BadgeCheck,
-  CheckCircle,
-  ChevronRight,
-  User,
+  MessageCircle,
+  BookOpen,
+  ArrowRight,
+  ArrowLeftRight,
+  Building2,
+  MoreHorizontal,
+  MessageSquare,
+  PhoneCall,
+  PenSquare,
+  Check,
+  FileText,
 } from 'lucide-react';
-import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
-import PremiumBadge from '@/components/PremiumBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
-import { CompanyChatButton } from '@/components/company/CompanyChatButton';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/lib/utils';
-import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
-
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from '@/components/ui/card';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-import { Company } from '@/lib/api';
-import { getFullImageUrl } from '@/utils/image';
-import { COMPANY_BANNER_FALLBACK_SRC, resolveCompanyBannerSrc } from '@/utils/company-banner';
-import { buildCompanyPath, buildCompanySubPath } from '@/lib/slug';
-import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
-import { CTAPrimaryButton } from '@/components/ui/CTAPrimaryButton';
-import WhatsappButton from '@/components/WhatsappButton';
+import { CompanyReviewsSummarySheet } from '@/components/company/CompanyReviewsSummarySheet';
+import { buildCompanyPath } from '@/lib/slug';
+import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
-import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { QuoteCTA } from '@/components/quote/QuoteCTA';
-import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
-import { isFeatureEnabled, hasPaidPlan } from '@/lib/feature-access';
-import { openSignupGate } from '@/lib/signup-gate';
+import { hasPaidPlan, canUsePaidConversion, type FeatureAccessMap } from '@/lib/feature-access';
 import { useComparison } from '@/hooks/useComparison';
 
 export interface CompanyCardData {
@@ -58,13 +42,13 @@ export interface CompanyCardData {
   name: string;
   slug: string;
   logo_url?: string;
-  featured: boolean;
-  sponsored: boolean;
+  featured?: boolean;
+  sponsored?: boolean;
+  verified?: boolean;
+  has_paid_plan?: boolean;
   distance_km?: number | null;
-  badges?: any[];
-  /** Feature access map — controla features pagas liberadas via ActiveAdmin/planos */
-  feature_access?: Record<string, { state: string; value?: any }>;
-  /** Top critérios de avaliação reais (ex: ['Equipe qualificada', 'Atendimento']). */
+  badges?: { image_url?: string | null; name?: string | null }[] | null;
+  feature_access?: FeatureAccessMap;
   top_criteria?: string[];
   identity: {
     name: string;
@@ -75,8 +59,8 @@ export interface CompanyCardData {
     state?: string;
   };
   trust: {
-    is_claimed: boolean;
-    verification_status: 'unverified' | 'pending' | 'verified' | 'premium';
+    is_claimed?: boolean;
+    verification_status?: 'unverified' | 'pending' | 'verified' | 'premium';
     verified_at?: string;
     verification_method?: string;
   };
@@ -84,44 +68,46 @@ export interface CompanyCardData {
     rating_avg: number;
     rating_count: number;
     nps_score?: number;
-    nps_responses: number;
-    recommendation_rate?: number;
+    nps_responses?: number;
+    recommendation_rate?: number | null;
     sentiment?: {
       positive: number;
       neutral: number;
       negative: number;
-    };
+    } | null;
     recent_reviewer_avatars?: { name: string; url: string | null }[];
   };
-  operations: {
-    delivered_projects: number;
+  operations?: {
+    delivered_projects?: number;
     sla_label?: string;
     sla_minutes?: number;
     warranty_years?: number;
-    engineering_insurance: boolean;
-    updated_at: string;
+    engineering_insurance?: boolean;
+    updated_at?: string;
   };
   coverage: {
     states: string[];
     cities: string[];
   };
-  actions: {
+  actions?: {
     whatsapp_url?: string;
-    whatsapp_enabled: boolean;
-    p2p_chat_enabled: boolean;
+    whatsapp_enabled?: boolean;
+    p2p_chat_enabled?: boolean;
   };
 }
 
-interface Props {
+export interface CompanyCardProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   company: any;
   className?: string;
-  compact?: boolean; // Legado
+  compact?: boolean;
   variant?: 'compact' | 'standard' | 'expanded';
   lang?: 'pt-BR' | 'en-US' | 'es-ES';
   isLoading?: boolean;
   schemaEnabled?: boolean;
   rank?: number;
   category?: string;
+  isSponsored?: boolean;
   onAnalyticsEvent?: (event: {
     type: string;
     companyId: number;
@@ -132,98 +118,112 @@ interface Props {
   onMouseLeave?: () => void;
 }
 
-const DICTIONARY = {
-  'pt-BR': {
-    whatsapp: 'WhatsApp',
-    budget: 'Orçamento',
-    review: 'Avaliar',
-    verified: 'PREMIUM',
-    reviews: 'avaliações',
-    noReviews: 'Seja o primeiro a avaliar',
-    viewServices: 'Ver serviços e soluções oferecidas',
-  },
-  'en-US': {
-    whatsapp: 'WhatsApp',
-    budget: 'Get Quote',
-    review: 'Review',
-    verified: 'Verified',
-    reviews: 'reviews',
-    noReviews: 'Be the first to review',
-    viewServices: 'View offered services and solutions',
-  },
-  'es-ES': {
-    whatsapp: 'WhatsApp',
-    budget: 'Presupuesto',
-    review: 'Evaluar',
-    verified: 'Verificada',
-    reviews: 'evaluaciones',
-    noReviews: 'Sé el primero en evaluar',
-    viewServices: 'Ver servicios y soluções oferecidas',
-  },
-} as const;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const normalizeCompanyData = (raw: any): CompanyCardData => {
+  const comp = raw || {};
+  const isStructured = Boolean(
+    comp && comp.identity && comp.trust && comp.reputation && comp.coverage
+  );
 
-/**
- * Extrai os top critérios de avaliação de um objeto bruto de empresa.
- * Usa services_offered, project_types ou criteria_breakdown da API.
- */
-const extractTopCriteria = (comp: any): string[] => {
-  // Tenta usar top_criteria já resolvido (do CompanyCardSerializer)
-  if (Array.isArray(comp?.top_criteria) && comp.top_criteria.length > 0) {
-    return comp.top_criteria.slice(0, 4);
-  }
-  // Usa serviços oferecidos como proxy de critérios visíveis
-  if (Array.isArray(comp?.services_offered) && comp.services_offered.length > 0) {
-    return comp.services_offered.slice(0, 4);
-  }
-  if (Array.isArray(comp?.services) && comp.services.length > 0) {
-    return comp.services.slice(0, 4);
-  }
-  // Sem dados reais de critérios/serviços: retorna array vazio (não fabrica tags fictícias)
-  return [];
-};
+  const rating = Number(
+    comp?.reputation?.rating_avg ??
+      comp?.rating_avg ??
+      comp?.average_rating ??
+      comp?.rating ??
+      0
+  );
+  const reviewsCount = Number(
+    comp?.reputation?.rating_count ??
+      comp?.rating_count ??
+      comp?.reviews_count ??
+      comp?.total_reviews ??
+      0
+  );
 
-/**
- * Verifica se uma feature paga está habilitada no feature_access.
- * Fonte primária: feature_access (gerenciado via ActiveAdmin/planos).
- * O fallback só deve ser usado quando a chamada fornecer uma regra explícita.
- */
-export const isCardFeatureEnabled = (
-  featureAccess: Record<string, { state: string; value?: unknown }> | undefined | null,
-  key: string,
-  fallback: boolean = false
-): boolean => {
-  if (!featureAccess) return fallback;
-  const entry = featureAccess[key];
-  if (!entry) return fallback;
-  if (!['enabled', 'limited', 'trial'].includes(entry.state)) return false;
-  if (entry.value === false || entry.value === null) return false;
-  if (typeof entry.value === 'number') return entry.value > 0;
-  return true;
-};
+  const rawSentiment = comp?.reputation?.sentiment ?? comp?.sentiment;
+  const sentiment =
+    rawSentiment && typeof rawSentiment.positive === 'number'
+      ? {
+          positive: Number(rawSentiment.positive),
+          neutral: Number(rawSentiment.neutral || 0),
+          negative: Number(rawSentiment.negative || 0),
+        }
+      : null;
 
-const normalizeCompanyData = (comp: any): CompanyCardData => {
-  // Se já está no formato estruturado (vindo do CompanyCardSerializer / CompanyListSerializer atualizado)
-  if (comp && comp.identity && comp.trust && comp.reputation && comp.operations) {
+  const rawRecommendation =
+    comp?.reputation?.recommendation_rate ?? comp?.recommendation_rate;
+  const recommendationRate =
+    rawRecommendation != null && !isNaN(Number(rawRecommendation))
+      ? Number(rawRecommendation)
+      : null;
+
+  const coverageCities =
+    comp?.coverage?.cities ??
+    (Array.isArray(comp?.coverage_cities)
+      ? comp.coverage_cities.map(String).map((s: string) => s.trim()).filter(Boolean)
+      : String(comp?.coverage_cities || '')
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean));
+
+  const coverageStates =
+    comp?.coverage?.states ??
+    (Array.isArray(comp?.coverage_states)
+      ? comp.coverage_states.map(String).map((s: string) => s.trim()).filter(Boolean)
+      : String(comp?.coverage_states || '')
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean));
+
+  const isVerified =
+    comp?.trust?.verification_status === 'verified' ||
+    comp?.trust?.verification_status === 'premium' ||
+    comp?.verified === true;
+
+  if (isStructured) {
     return {
-      ...(comp as CompanyCardData),
-      // Garante top_criteria mesmo no formato estruturado
-      top_criteria: comp.top_criteria ?? [],
-      // Garante feature_access mesmo que venha como {} vazio
-      feature_access: comp.feature_access ?? {},
+      id: comp.id,
+      name: comp.name || comp.identity.name,
+      slug: comp.slug || comp.identity.slug,
+      logo_url: comp.logo_url || comp.identity.logo_url,
+      featured: comp.featured === true,
+      sponsored: comp.sponsored === true,
+      verified: isVerified,
+      has_paid_plan: hasPaidPlan(comp),
+      badges: comp.badges || [],
+      feature_access: comp.feature_access || {},
+      top_criteria: comp.top_criteria || [],
+      identity: {
+        name: comp.identity.name || comp.name || '',
+        slug: comp.identity.slug || comp.slug || '',
+        logo_url: comp.identity.logo_url || comp.logo_url,
+        description: comp.identity.description || comp.description,
+        city: comp.identity.city || comp.city,
+        state: comp.identity.state || comp.state,
+      },
+      trust: {
+        is_claimed: comp.trust.is_claimed,
+        verification_status: isVerified ? 'verified' : 'unverified',
+        verified_at: comp.trust.verified_at,
+        verification_method: comp.trust.verification_method,
+      },
+      reputation: {
+        rating_avg: rating,
+        rating_count: reviewsCount,
+        nps_score: comp.reputation.nps_score,
+        nps_responses: comp.reputation.nps_responses,
+        recommendation_rate: recommendationRate,
+        sentiment: sentiment,
+        recent_reviewer_avatars: comp.reputation.recent_reviewer_avatars || [],
+      },
+      operations: comp.operations,
+      coverage: {
+        states: coverageStates,
+        cities: coverageCities,
+      },
+      actions: comp.actions,
     };
   }
-
-  // Formato legado (resposta plana da API antiga)
-  const rating = Number(comp?.rating_avg ?? comp?.average_rating ?? comp?.rating ?? 0);
-  const reviews = Number(comp?.rating_count ?? comp?.reviews_count ?? comp?.total_reviews ?? 0);
-
-  // Sentiment: prioriza dados reais da API, nunca fabrica se não há avaliações
-  const apiSentiment = comp?.reputation?.sentiment ?? comp?.sentiment ?? null;
-  const sentimentData = apiSentiment ?? (reviews > 0 ? undefined : null);
-
-  // recommendation_rate: prioriza real da API
-  const apiRecommendation =
-    comp?.reputation?.recommendation_rate ?? comp?.recommendation_rate ?? null;
 
   return {
     id: comp?.id || 0,
@@ -232,10 +232,11 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
     logo_url: comp?.logo_url,
     featured: comp?.featured === true,
     sponsored: comp?.sponsored === true,
-    distance_km: comp?.distance_km == null ? null : Number(comp.distance_km),
-    feature_access: comp?.feature_access ?? {},
+    verified: isVerified,
+    has_paid_plan: hasPaidPlan(comp),
     badges: comp?.badges || [],
-    top_criteria: extractTopCriteria(comp),
+    feature_access: comp?.feature_access || {},
+    top_criteria: Array.isArray(comp?.top_criteria) ? comp.top_criteria : [],
     identity: {
       name: comp?.name || '',
       slug: comp?.slug || '',
@@ -246,737 +247,532 @@ const normalizeCompanyData = (comp: any): CompanyCardData => {
     },
     trust: {
       is_claimed: comp?.active_admin === true,
-      verification_status: comp?.verified ? 'verified' : 'unverified',
+      verification_status: isVerified ? 'verified' : 'unverified',
       verified_at: comp?.verified_at,
       verification_method: comp?.verification_method,
     },
     reputation: {
       rating_avg: rating,
-      rating_count: reviews,
-      nps_score: comp?.nps_score,
-      nps_responses: comp?.nps_responses || 0,
-      recommendation_rate: apiRecommendation,
-      sentiment: sentimentData,
-      recent_reviewer_avatars:
-        comp?.reputation?.recent_reviewer_avatars || comp?.recent_reviewer_avatars || [],
-    },
-    operations: {
-      delivered_projects:
-        comp?.operations?.delivered_projects ??
-        comp?.delivered_projects_count ??
-        comp?.delivered_projects_score ??
-        0,
-      sla_label: comp?.operations?.sla_label ?? comp?.response_time_sla,
-      sla_minutes: comp?.operations?.sla_minutes ?? comp?.response_sla_minutes,
-      warranty_years:
-        comp?.operations?.warranty_years ??
-        comp?.warranty_years ??
-        comp?.installation_warranty_years,
-      engineering_insurance:
-        comp?.operations?.engineering_insurance ?? comp?.engineering_insurance === true,
-      updated_at:
-        comp?.operations?.updated_at ?? comp?.updated_at ?? comp?.operational_data_updated_at ?? '',
+      rating_count: reviewsCount,
+      recommendation_rate: recommendationRate,
+      sentiment: sentiment,
+      recent_reviewer_avatars: [],
     },
     coverage: {
-      states:
-        comp?.coverage?.states ??
-        (Array.isArray(comp?.coverage_states)
-          ? comp.coverage_states
-              .map(String)
-              .map((s: string) => s.trim())
-              .filter(Boolean)
-          : String(comp?.coverage_states || '')
-              .split(',')
-              .map((s: string) => s.trim())
-              .filter(Boolean)),
-      cities:
-        comp?.coverage?.cities ??
-        (Array.isArray(comp?.coverage_cities)
-          ? comp.coverage_cities
-              .map(String)
-              .map((s: string) => s.trim())
-              .filter(Boolean)
-          : String(comp?.coverage_cities || '')
-              .split(',')
-              .map((s: string) => s.trim())
-              .filter(Boolean)),
+      states: coverageStates,
+      cities: coverageCities,
     },
     actions: {
-      whatsapp_url: comp?.actions?.whatsapp_url ?? comp?.whatsapp_url ?? comp?.cta_whatsapp_url,
-      whatsapp_enabled:
-        comp?.actions?.whatsapp_enabled ??
-        (comp?.whatsapp_enabled === true || comp?.cta_whatsapp_enabled === true),
-      p2p_chat_enabled: comp?.actions?.p2p_chat_enabled ?? comp?.p2p_chat_enabled === true,
+      whatsapp_url: comp?.whatsapp_url || comp?.cta_whatsapp_url,
+      whatsapp_enabled: comp?.whatsapp_enabled === true || comp?.cta_whatsapp_enabled === true,
+      p2p_chat_enabled: comp?.p2p_chat_enabled === true,
     },
   };
 };
 
 export default function CompanyCard({
   company: rawCompany,
-  className = '',
+  className,
   compact = false,
-  variant: propVariant,
-  lang = 'pt-BR',
+  variant = 'standard',
   isLoading = false,
-  schemaEnabled = true,
-  rank,
+  schemaEnabled = false,
+  rank: _rank,
   category,
+  isSponsored = false,
   onAnalyticsEvent,
-  index: _index = 0,
+  index,
   onMouseEnter,
   onMouseLeave,
-}: Props) {
+}: CompanyCardProps) {
   const router = useRouter();
-  const text = DICTIONARY[lang] || DICTIONARY['pt-BR'];
-  const { isInComparison, toggleComparison, canAddMore } = useComparison();
+  const [isReviewsSheetOpen, setIsReviewsSheetOpen] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  // Resolve a variante com fallback para a prop legado 'compact'
-  const variant = propVariant || (compact ? 'compact' : 'standard');
+  const {
+    isInComparison,
+    addToComparison,
+    removeFromComparison,
+    canAddMore,
+  } = useComparison();
 
-  const company = useMemo(() => normalizeCompanyData(rawCompany), [rawCompany]);
-  const { id, name, slug } = company;
-  const intentCompanyId = String(id);
+  const data = normalizeCompanyData(rawCompany || {});
+  const { id, name, slug, logo_url } = data;
+  const companyPath = buildCompanyPath(slug || String(id));
 
-  const companyPath = useMemo(() => buildCompanyPath(slug, name, id), [slug, name, id]);
-  const companyReviewPath = useMemo(
-    () => buildCompanySubPath(slug, name, 'reviews', id),
-    [slug, name, id]
-  );
+  // Entitlements estritos — Zero Fake Data
+  const isPro = data.has_paid_plan === true;
+  const isVerified = data.verified === true;
+  const isCompanySponsored = Boolean(isSponsored || data.sponsored);
+  const canRequestQuote = isPro && canUsePaidConversion(data, 'quote');
 
-  const hasWhatsapp = company.actions.whatsapp_enabled && company.actions.whatsapp_url;
-  const p2pChatEnabled =
-    company.actions.p2p_chat_enabled === true || (company as any)?.p2p_chat_enabled === true;
-  const selectedInComparison = isInComparison(id);
+  const p2pChatEnabled = Boolean(data.actions?.p2p_chat_enabled);
+  const hasWhatsapp = Boolean(data.actions?.whatsapp_enabled && data.actions?.whatsapp_url);
 
-  // ── Feature gates controlados via planos pagos ──
-  // hasPaidPlan: única fonte de verdade para verificar se a empresa tem plano pago.
-  const featureAccessMap = company.feature_access ?? {};
-  const canRequestQuote = hasPaidPlan({ ...rawCompany, feature_access: featureAccessMap });
+  // Localização
+  const locationText = [data.identity.city, data.identity.state].filter(Boolean).join(', ');
 
-  // Critérios reais de avaliação
-  const topCriteria = company.top_criteria ?? [];
+  // Cobertura canônica
+  const coverageText = (() => {
+    const states = data.coverage.states || [];
+    const cities = data.coverage.cities || [];
+    if (states.some((s) => s.toLowerCase() === 'todos' || s.toLowerCase() === 'nacional') || states.length >= 27) {
+      return 'Cobertura nacional';
+    }
+    if (cities.length > 0) {
+      return `${cities.length} ${cities.length === 1 ? 'cidade' : 'cidades'}`;
+    }
+    if (states.length > 0) {
+      return `${states.length} ${states.length === 1 ? 'estado' : 'estados'}`;
+    }
+    return 'Cobertura: Consulte';
+  })();
 
-  const handleCardClick = () => {
-    track('company_card_click', {
+  // Analytics de impressão (DATA-P1-006)
+  useEffect(() => {
+    if (!id) return;
+    track('company_card_impression', {
       company_id: id,
       company_name: name,
-      variant,
+      verified: isVerified,
+      view_mode: compact ? 'list' : 'grid',
+      company_slug: slug,
+      category,
     });
-    router.push(companyPath);
-  };
-
-  const decisionContext = {
-    source: 'list' as const,
-    view_mode: 'list' as const,
-    result_position: _index + 1,
-    filter_context: {},
-  };
-
-  const handleCompareClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!selectedInComparison && !canAddMore) return;
-    toggleComparison(rawCompany);
-    track(selectedInComparison ? 'comparison_remove' : 'comparison_add', {
+    track('company_cta_impression', {
       company_id: id,
       company_name: name,
-      source: 'company_card_expanded',
+      company_slug: slug,
+      category,
     });
-  };
+  }, [id, name, isVerified, compact, slug, category]);
 
-  const renderPrimaryActions = (wrapperClass?: string) => (
-    <div className={cn('flex flex-col gap-2 w-full', wrapperClass)}>
-      <div className="grid grid-cols-2 gap-2 w-full">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={handleCompareClick}
-          disabled={!selectedInComparison && !canAddMore}
-          aria-pressed={selectedInComparison}
-          aria-label={
-            selectedInComparison
-              ? `Remover ${name} da comparação`
-              : `Adicionar ${name} à comparação`
-          }
-          className={cn(
-            'min-w-0 w-full min-h-11 h-11 @[500px]/card:min-h-8 @[500px]/card:h-8 inline-flex items-center justify-start @[500px]/card:justify-center gap-2.5 px-0 @[500px]/card:px-2 text-sm @[500px]/card:text-[10px] font-semibold transition-colors focus-visible:ring-0',
-            'border-0 bg-transparent shadow-none hover:bg-transparent text-slate-800 active:scale-[0.98]',
-            selectedInComparison
-              ? '@[500px]/card:text-white @[500px]/card:border-blue-600 @[500px]/card:bg-blue-600 hover:@[500px]/card:bg-blue-700 hover:@[500px]/card:border-blue-700 @[500px]/card:shadow-sm @[500px]/card:border'
-              : '@[500px]/card:text-slate-700 @[500px]/card:border-slate-200 hover:@[500px]/card:border-blue-300 hover:@[500px]/card:text-blue-700 hover:@[500px]/card:bg-slate-50/50 @[500px]/card:border'
-          )}
-        >
-          <div
-            className={cn(
-              'w-10 h-10 rounded-full border flex items-center justify-center shrink-0 transition-colors duration-200',
-              selectedInComparison
-                ? 'bg-blue-50 border-blue-500 text-blue-600'
-                : 'bg-white border-blue-200 text-blue-600',
-              '@[500px]/card:w-auto @[500px]/card:h-auto @[500px]/card:border-0 @[500px]/card:bg-transparent @[500px]/card:p-0 @[500px]/card:rounded-none',
-              selectedInComparison ? '@[500px]/card:text-white' : '@[500px]/card:text-slate-700'
-            )}
-          >
-            {selectedInComparison ? (
-              <Check className="h-4 w-4 @[500px]/card:h-3 @[500px]/card:w-3 shrink-0" />
-            ) : (
-              <div className="flex items-center justify-center @[500px]/card:scale-[0.85] shrink-0">
-                <AnimatedCompareIcon
-                  size={20}
-                  active={false}
-                  selected={false}
-                  disabled={!canAddMore}
-                  className="text-blue-600 @[500px]/card:text-slate-750"
-                  aria-hidden="true"
-                />
-              </div>
-            )}
-          </div>
-          <span className="truncate">{selectedInComparison ? 'Selecionada' : 'Comparar'}</span>
-        </Button>
-
-        <ReviewCompanyButton
-          company={company}
-          label="Avaliar"
-          className="min-w-0 w-full min-h-11 h-11 @[500px]/card:min-h-8 @[500px]/card:h-8 rounded-xl @[500px]/card:rounded-lg px-2 text-[11px] @[500px]/card:text-[10px] bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-          iconClassName="h-[14px] w-[14px] @[500px]/card:h-3 @[500px]/card:w-3"
-          stopPropagation
-        />
-      </div>
-
-      {canRequestQuote ? (
-        <QuoteCTA
-          context="compact"
-          source="company-card-expanded"
-          className="w-full"
-          onRequest={() =>
-            openLeadModal({
-              preferredCompanyId: id,
-              source: 'list',
-              decisionContext,
-              type: 'quick',
-            })
-          }
-        />
-      ) : null}
-    </div>
-  );
-
-  if (isLoading) {
+  if (isLoading || !rawCompany) {
     return (
-      <Card className={cn('animate-pulse border-brand-border bg-white p-4 shadow-sm', className)}>
+      <Card className={cn('h-[300px] w-full rounded-xl border border-slate-200/80 bg-white p-4 animate-pulse dark:border-slate-800 dark:bg-slate-950', className)}>
         <div className="flex items-center gap-3">
-          <Skeleton className="h-12 w-12 rounded-full" />
+          <div className="h-12 w-12 rounded-lg bg-slate-200 dark:bg-slate-800" />
           <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-3 w-1/2" />
+            <div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-800" />
+            <div className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-800" />
           </div>
+        </div>
+        <div className="mt-4 space-y-2">
+          <div className="h-3 w-full rounded bg-slate-200 dark:bg-slate-800" />
+          <div className="h-3 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
+        </div>
+        <div className="mt-6 h-10 w-full rounded-lg bg-slate-200 dark:bg-slate-800" />
+        <div className="mt-3 flex gap-2">
+          <div className="h-9 flex-1 rounded-lg bg-slate-200 dark:bg-slate-800" />
+          <div className="h-9 flex-1 rounded-lg bg-slate-200 dark:bg-slate-800" />
+          <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-800" />
         </div>
       </Card>
     );
   }
 
-  // ── Variante 1: Compact ──
-  if (variant === 'compact') {
-    // Check if company has badges for layout adjustments
-    const hasBadges = company.badges && company.badges.length > 0;
+  // Handlers
+  const handleCardClick = () => {
+    track('company_card_click', {
+      company_id: id,
+      company_name: name,
+      is_pro: isPro,
+      is_sponsored: isCompanySponsored,
+      source: category || 'list',
+      index,
+    });
+    onAnalyticsEvent?.({
+      type: 'company_card_click',
+      companyId: id,
+      meta: { index, category },
+    });
+    router.push(companyPath);
+  };
 
+  const handleCompareToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isInComparison(id)) {
+      removeFromComparison(id);
+      track('comparison_remove', { company_id: id, company_name: name, source: 'company_card' });
+    } else {
+      if (!canAddMore) return;
+      addToComparison(data as unknown as Parameters<typeof addToComparison>[0]);
+      track('comparison_add', { company_id: id, company_name: name, source: 'company_card' });
+    }
+  };
+
+  const handleQuoteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    track('quote_cta_click', { company_id: id, company_name: name, source: 'company_card' });
+    openLeadModal({
+      preferredCompanyId: id,
+      source: 'company_card',
+      type: 'quick',
+    });
+  };
+
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(companyPath);
+  };
+
+  const handleReviewClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`${companyPath}#review`);
+  };
+
+  const handleChatClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/chat?company_id=${id}`);
+  };
+
+  const handleWhatsappClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (data.actions?.whatsapp_url) {
+      window.open(data.actions.whatsapp_url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const openReviewsSheet = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setIsReviewsSheetOpen(true);
+  };
+
+  // ─── VARIANTE COMPACTA (LEGADA / CAROUSELS) ──────────────────────────────────
+  if (compact || variant === 'compact') {
     return (
       <Card
-        itemScope
-        itemType="https://schema.org/Organization"
+        ref={cardRef}
         className={cn(
-          'group relative flex flex-col justify-between overflow-hidden rounded-xl border border-slate-100 bg-white transition-all duration-200 hover:border-slate-200 hover:shadow-md cursor-pointer',
-          // Add extra top padding when badges are present to prevent overlap
-          hasBadges ? 'pt-6 pb-4' : 'pt-4 pb-4',
+          'group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white p-3.5 transition-all duration-150 hover:border-slate-300 hover:shadow-xs dark:border-slate-800 dark:bg-slate-950 cursor-pointer',
           className
         )}
         onClick={handleCardClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        {/* TOP SECTION: Logo & Title */}
-        <div className="flex items-center gap-3 px-4">
-          <div data-testid="company-logo" className="relative shrink-0">
-            <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" badges={company.badges} />
+        <div className="space-y-2.5">
+          <div className="flex items-start gap-2.5">
+            <div className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 p-0.5 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-center">
+              <CompanyLogo logoUrl={logo_url} name={name} size="sm" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <h3 className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                  {name}
+                </h3>
+                {isVerified && (
+                  <BadgeCheck
+                    className="h-3.5 w-3.5 fill-blue-600 text-white shrink-0"
+                    aria-label="Empresa verificada"
+                  />
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
+                {data.reputation.rating_count > 0 && data.reputation.rating_avg > 0 ? (
+                  <span className="flex items-center gap-0.5 font-semibold text-slate-800 dark:text-slate-200 tabular-nums">
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                    {data.reputation.rating_avg.toFixed(1)}
+                  </span>
+                ) : (
+                  <span>Sem avaliações</span>
+                )}
+                {locationText && (
+                  <>
+                    <span className="text-slate-300 dark:text-slate-700">·</span>
+                    <span className="truncate">{locationText}</span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="min-w-0 flex-1 flex items-center gap-1.5">
-            <h3
-              itemProp="name"
-              className={cn(
-                'text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors',
-                // Adjust truncation to account for badge overflow on the right side
-                hasBadges ? 'truncate pr-3' : 'truncate'
-              )}
+        </div>
+
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 mt-3 flex items-center gap-2">
+          {canRequestQuote ? (
+            <Button
+              size="sm"
+              className="w-full h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+              onClick={handleQuoteClick}
             >
-              {name}
-            </h3>
-            {company.trust.verification_status === 'verified' && (
-              <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
-            )}
-          </div>
+              Orçamento
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full h-8 rounded-lg border-slate-200 dark:border-slate-800 text-xs font-semibold"
+              onClick={handleProfileClick}
+            >
+              Ver perfil
+            </Button>
+          )}
         </div>
-
-        {/* MIDDLE SECTION: 3-Column Stats */}
-        <div className="mt-4 border-y border-slate-100 grid grid-cols-3 divide-x divide-slate-100 text-center">
-          {/* Rating */}
-          <div className="py-2.5 px-1 flex flex-col items-center justify-center">
-            <div className="flex items-center gap-1 font-bold text-slate-800 text-xs">
-              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-              <span>
-                {company.reputation.rating_count > 0 && company.reputation.rating_avg > 0
-                  ? company.reputation.rating_avg.toFixed(1)
-                  : 'S/N'}
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-500 font-medium mt-0.5 line-clamp-2 leading-tight">
-              {company.reputation.rating_count > 0
-                ? `${company.reputation.rating_count} avaliações`
-                : 'Sem avaliações'}
-            </span>
-          </div>
-          {/* Response Time */}
-          <div className="py-2.5 px-1 flex flex-col items-center justify-center">
-            <div className="flex items-center gap-1 font-bold text-slate-800 text-xs">
-              <Clock3Icon className="h-3 w-3 text-slate-400" />
-              <span className="truncate max-w-[50px]">
-                {company.operations.sla_label || 'Sem dados'}
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate w-full px-1">
-              Resposta
-            </span>
-          </div>
-          {/* Projects */}
-          <div className="py-2.5 px-1 flex flex-col items-center justify-center">
-            <div className="font-bold text-slate-800 text-xs">
-              {company.operations.delivered_projects > 0
-                ? company.operations.delivered_projects
-                : 'S/N'}
-            </div>
-            <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate w-full px-1">
-              Projetos
-            </span>
-          </div>
-        </div>
-
-        {/* BOTTOM SECTION: Buttons */}
-        <div className="px-4 pb-4">{renderPrimaryActions('mt-4')}</div>
       </Card>
     );
   }
 
-  // ── Variante Unificada (Responsiva via Container Queries) ──
-  const sentiment =
-    company.reputation?.sentiment ??
-    (company.reputation?.rating_count > 0 ? { positive: 85, neutral: 10, negative: 5 } : null);
-
-  const radius = 20;
-  const circumference = 2 * Math.PI * radius;
-  const recommendationRate = company.reputation?.recommendation_rate ?? null;
-  const recentReviewers =
-    company.reputation?.recent_reviewer_avatars || (company as any).recent_reviewer_avatars || [];
-  const strokeDashoffset =
-    recommendationRate !== null
-      ? circumference - (recommendationRate / 100) * circumference
-      : circumference;
-
-  const hasBadges = company.badges && company.badges.length > 0;
-
+  // ─── VARIANTE STANDARD V2 (SWISS SAAS ENTERPRISE DISCOVERY) ──────────────────
   return (
-    <Card
-      className={cn(
-        '@container/card group relative overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:shadow-xl cursor-pointer',
-        hasBadges ? 'pt-6 px-4 pb-4' : 'p-4',
-        className
-      )}
-      onClick={handleCardClick}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      {/* 1. CABEÇALHO */}
-      <div className="flex flex-col @[500px]/card:flex-row justify-between items-start gap-4">
-        {/* Esquerda: Logo + Identidade */}
-        <div className="flex items-start gap-3 min-w-0 w-full @[500px]/card:flex-1">
-          <div data-testid="company-logo" className="shrink-0 relative">
-            <CompanyLogo logoUrl={company.logo_url} name={name} size="sm" badges={company.badges} />
-          </div>
-          <div className="min-w-0 space-y-0.5 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <h3
-                className={cn(
-                  'text-sm font-black text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors inline-flex items-center gap-1',
-                  hasBadges ? 'truncate pr-3' : 'truncate'
+    <>
+      <Card
+        ref={cardRef}
+        className={cn(
+          'group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white p-4 transition-all duration-150 hover:border-slate-300 hover:shadow-xs dark:border-slate-800 dark:bg-slate-950 cursor-pointer h-full',
+          isCompanySponsored && 'ring-1 ring-blue-500/20 bg-blue-50/10 dark:bg-blue-950/10',
+          className
+        )}
+        onClick={handleCardClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        {...(schemaEnabled
+          ? {
+              itemScope: true,
+              itemType: 'https://schema.org/Organization',
+            }
+          : {})}
+      >
+        <div className="space-y-3">
+          {/* IDENTIDADE + TRUST + PRO BADGE */}
+          <div className="flex items-start gap-3">
+            <div
+              data-testid="company-logo"
+              className="h-12 w-12 rounded-lg border border-slate-200/80 dark:border-slate-800 p-1 bg-white dark:bg-slate-900 flex items-center justify-center shrink-0"
+            >
+              <CompanyLogo logoUrl={logo_url} name={name} size="sm" badges={data.badges} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-1">
+                <div className="min-w-0 flex items-center gap-1.5">
+                  <h3
+                    itemProp="name"
+                    className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate group-hover:text-blue-600 transition-colors"
+                  >
+                    {name}
+                  </h3>
+                  {isVerified && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            tabIndex={0}
+                            aria-label="Empresa verificada"
+                            className="inline-flex shrink-0 focus:outline-none"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-xs bg-slate-900 text-white border-none">
+                          Empresa verificada pela equipe Avalia Solar
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+
+                {isPro && (
+                  <Badge
+                    variant="secondary"
+                    className="h-5 px-1.5 text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border-none shrink-0"
+                  >
+                    PRO
+                  </Badge>
                 )}
+              </div>
+
+              {/* RATING + LOCALIZAÇÃO */}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {data.reputation.rating_count > 0 && data.reputation.rating_avg > 0 ? (
+                  <button
+                    type="button"
+                    onClick={openReviewsSheet}
+                    className="inline-flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200 hover:text-blue-600 transition-colors tabular-nums"
+                  >
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <span>{data.reputation.rating_avg.toFixed(1)}</span>
+                    <span className="text-slate-500 font-normal">
+                      ({data.reputation.rating_count})
+                    </span>
+                  </button>
+                ) : (
+                  <span className="text-slate-400">Sem avaliações</span>
+                )}
+
+                {locationText && (
+                  <span className="inline-flex items-center gap-1 truncate text-slate-500">
+                    <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
+                    <span className="truncate">{locationText}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* DESCRIÇÃO OBJETIVA (MÁXIMO 2 LINHAS — ZERO FAKE DATA) */}
+          <div className="min-h-[36px] max-h-[40px] overflow-hidden">
+            {data.identity.description ? (
+              <p
+                itemProp="description"
+                className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed"
               >
-                {name}
-                {company.trust.verification_status === 'verified' && (
-                  <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
-                )}
-              </h3>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
-              <div className="flex items-center gap-0.5 font-bold text-slate-800">
-                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                <span>{company.reputation.rating_avg.toFixed(1)}</span>
-                <span className="font-medium text-slate-300">|</span>
-                <span className="font-medium text-slate-600">
-                  {company.reputation.rating_count} aval.
-                </span>
-              </div>
-              {company.identity.city && (
-                <div className="flex items-center gap-0.5 font-medium text-slate-600">
-                  <MapPin className="h-3 w-3 text-blue-500" />
-                  <span>
-                    {company.identity.city}, {company.identity.state}
-                  </span>
-                </div>
-              )}
-            </div>
-            {/* Em telas muito estreitas, exibimos os KPIs aqui, abaixo do nome */}
-            <div className="mt-2 block @[500px]/card:hidden w-full">
-              <div className="grid grid-cols-2 gap-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50/50 text-center w-full">
-                <div className="border-r border-slate-100 py-1">
-                  <span className="block text-[8px] text-slate-600 font-bold uppercase tracking-wider">
-                    Respostas
-                  </span>
-                  <span className="text-[10px] font-black text-slate-900 block">
-                    {company.operations.sla_label || 'Sem dados'}
-                  </span>
-                </div>
-                <div className="py-1">
-                  <span className="block text-[8px] text-slate-600 font-bold uppercase tracking-wider">
-                    Cobertura
-                  </span>
-                  <span className="text-[10px] font-black text-slate-900 block truncate px-1">
-                    {company.coverage.cities.length > 0
-                      ? `${company.coverage.cities.length} reg.`
-                      : 'Consulte'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Direita: CTAs + KPIs (KPIs apenas no desktop) */}
-        <div className="flex flex-col items-end gap-2 shrink-0 w-full @[500px]/card:w-[160px]">
-          {/* Box de KPIs mini (escondido em mobile) */}
-          <div className="hidden @[500px]/card:grid grid-cols-2 gap-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50/50 text-center w-full">
-            <div className="border-r border-slate-100 py-1">
-              <span className="block text-[8px] text-slate-600 font-bold uppercase tracking-wider">
-                Respostas
-              </span>
-              <span className="text-[10px] font-black text-slate-900 block">
-                {company.operations.sla_label || 'Sem dados'}
-              </span>
-            </div>
-            <div className="py-1">
-              <span className="block text-[8px] text-slate-600 font-bold uppercase tracking-wider">
-                Cobertura
-              </span>
-              <span className="text-[10px] font-black text-slate-900 block truncate px-1">
-                {company.coverage.cities.length > 0
-                  ? `${company.coverage.cities.length} reg.`
-                  : 'Consulte'}
-              </span>
-            </div>
-          </div>
-
-          {renderPrimaryActions('mt-2 @[500px]/card:mt-0')}
-        </div>
-      </div>
-
-      {/* 2. DESCRIÇÃO + CHIPS OPERACIONAIS */}
-      <div className="mt-4 @[500px]/card:mt-3 flex flex-col @[500px]/card:flex-row @[500px]/card:items-center gap-2 @[500px]/card:gap-6">
-        <p className="text-[11px] text-slate-500 leading-relaxed font-medium flex-1 min-w-0">
-          {(() => {
-            const desc =
-              company.identity.description ||
-              `A ${name} oferece soluções completas em energia solar com tecnologia de ponta.`;
-            return desc.length > 110 ? desc.slice(0, 110) + '...' : desc;
-          })()}
-        </p>
-        <div className="flex flex-wrap items-center gap-3 shrink-0 text-[10px] font-bold text-slate-500">
-          <div className="inline-flex items-center gap-1">
-            <Shield className="h-3 w-3 text-slate-400" />
-            <span>Todo o Brasil</span>
-          </div>
-          {company.operations.delivered_projects > 0 && (
-            <div className="inline-flex items-center gap-1">
-              <Zap className="h-3 w-3 text-slate-400" />
-              <span>+{company.operations.delivered_projects} projetos</span>
-            </div>
-          )}
-          <div className="inline-flex items-center gap-1">
-            <Clock3Icon className="h-3 w-3 text-slate-400" />
-            <span>Resp: {company.operations.sla_label || 'Sem dados'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. PAINEL DE REPUTAÇÃO */}
-      {company.reputation.rating_count > 0 && (
-        <div className="mt-4 @[500px]/card:mt-3 border border-slate-100 rounded-xl bg-white grid grid-cols-1 @[400px]/card:grid-cols-3 divide-y @[400px]/card:divide-y-0 @[400px]/card:divide-x divide-slate-100 overflow-hidden">
-          {/* Col 1: Avaliação Geral */}
-          <div className="p-3 flex items-center gap-3 @[400px]/card:flex-col @[400px]/card:items-center @[400px]/card:text-center">
-            <span className="text-2xl font-black text-slate-900 leading-none">
-              {company.reputation.rating_avg.toFixed(1)}
-            </span>
-            <div className="flex flex-col gap-0.5">
-              <div data-testid="rating-stars-container" className="flex items-center gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={cn(
-                      'h-3 w-3',
-                      i < Math.floor(company.reputation.rating_avg)
-                        ? 'fill-amber-400 text-amber-400'
-                        : 'text-slate-200 fill-slate-200'
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="text-[10px] text-slate-600 font-bold">
-                {company.reputation.rating_count} avaliações
-              </span>
-            </div>
-          </div>
-
-          {/* Col 2: Review Sentiment */}
-          <div className="p-3 flex flex-col justify-center">
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wider">
-                Review Sentiment
-              </span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Entender como o sentimento das avaliações é calculado"
-                      className="flex h-11 w-11 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Info className="h-4 w-4 cursor-help" aria-hidden="true" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-slate-900 text-white border-none p-2.5 rounded-lg max-w-xs shadow-xl text-[10px] space-y-1 leading-relaxed z-50">
-                    <p className="font-bold text-slate-200">Review Sentiment</p>
-                    <p>Classificação baseada nas notas: 4-5★ positivo, 3★ neutro, 1-2★ negativo.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            {sentiment ? (
-              <>
-                <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-slate-100 mt-2">
-                  <div
-                    style={{ width: `${sentiment.positive}%` }}
-                    className="bg-emerald-500 h-full"
-                  />
-                  <div style={{ width: `${sentiment.neutral}%` }} className="bg-amber-400 h-full" />
-                  <div style={{ width: `${sentiment.negative}%` }} className="bg-rose-500 h-full" />
-                </div>
-                <div className="grid grid-cols-3 gap-1 mt-1.5 text-center">
-                  <div>
-                    <span className="text-[10px] font-black text-emerald-600">
-                      {sentiment.positive}%
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-amber-700">
-                      {sentiment.neutral}%
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-rose-500">
-                      {sentiment.negative}%
-                    </span>
-                  </div>
-                </div>
-              </>
+                {data.identity.description}
+              </p>
             ) : (
-              <div className="mt-2 text-[10px] text-slate-600 font-medium">
-                Dados em processamento
-              </div>
+              <p className="text-xs text-slate-400 dark:text-slate-500 italic line-clamp-2 leading-relaxed">
+                Informações detalhadas disponíveis no perfil da empresa.
+              </p>
             )}
           </div>
 
-          {/* Col 3: Índice de recomendação */}
-          <div className="p-3 flex items-center gap-3">
-            <div className="relative shrink-0">
-              <svg className="w-11 h-11 transform -rotate-90">
-                <circle
-                  className="text-slate-100"
-                  strokeWidth="3.5"
-                  stroke="currentColor"
-                  fill="transparent"
-                  r={radius}
-                  cx="22"
-                  cy="22"
-                />
-                <circle
-                  className="text-emerald-500 transition-all duration-300"
-                  strokeWidth="3.5"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="transparent"
-                  r={radius}
-                  cx="22"
-                  cy="22"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                {recentReviewers.length > 0 ? (
-                  <Avatar className="h-7 w-7 border-2 border-white shadow-sm bg-slate-50 text-[10px]">
-                    <AvatarImage
-                      src={
-                        recentReviewers[0]?.url ||
-                        `https://ui-avatars.com/api/?name=${encodeURIComponent(recentReviewers[0]?.name || 'Cliente')}&background=0D8ABC&color=fff&size=128`
-                      }
-                      alt={recentReviewers[0]?.name || 'Reviewer'}
-                    />
-                    <AvatarFallback className="bg-slate-100 text-slate-600 font-bold uppercase">
-                      {getInitials(recentReviewers[0]?.name || 'U')}
-                    </AvatarFallback>
-                  </Avatar>
+          {/* ESSENTIAL PROOF ROW (MÁXIMO 2 CHIPS COMPACTOS COM ÍCONES) */}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={openReviewsSheet}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-md px-2 py-1"
+            >
+              <MessageCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span>
+                {data.reputation.rating_count > 0 ? (
+                  <>
+                    <span>{data.reputation.rating_count}</span>{' '}
+                    <span>{data.reputation.rating_count === 1 ? 'avaliação' : 'avaliações'}</span>
+                  </>
                 ) : (
-                  <Avatar className="h-7 w-7 border-2 border-white shadow-sm bg-slate-50 text-[10px]">
-                    <AvatarFallback className="bg-blue-100 text-blue-700 font-extrabold text-[10px]">
-                      <User className="h-3.5 w-3.5 text-blue-600" />
-                    </AvatarFallback>
-                  </Avatar>
+                  'Sem avaliações'
                 )}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wider block">
-                Recomendação
               </span>
-              {recommendationRate !== null ? (
-                <p className="text-[10px] text-slate-600 font-bold mt-0.5 leading-snug">
-                  <span className="text-emerald-600 font-black">{recommendationRate}%</span>{' '}
-                  recomendam
-                </p>
-              ) : (
-                <p className="text-[10px] text-slate-600 font-medium mt-0.5">Sem dados</p>
-              )}
+            </button>
+
+            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-md px-2 py-1 truncate">
+              <BookOpen className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span className="truncate">{coverageText}</span>
             </div>
           </div>
         </div>
-      )}
 
-      {/* 4. CHIPS DE CRITÉRIOS */}
-      <div className="mt-4 @[500px]/card:mt-3 flex flex-row flex-nowrap items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
-        {topCriteria.slice(0, 4).map((chip) => (
-          <Badge
-            key={chip}
-            variant="secondary"
-            className="bg-slate-50 border border-slate-100 text-slate-600 text-[10px] font-bold py-0.5 px-2 rounded-lg inline-flex items-center gap-1 shadow-none shrink-0"
-          >
-            <CheckCircle className="h-3 w-3 text-emerald-500 fill-emerald-50" />
-            {chip}
-          </Badge>
-        ))}
-        {topCriteria.length > 4 && (
-          <span
-            className="text-[10px] text-slate-400 font-bold ml-0.5 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(companyPath);
-            }}
-          >
-            Ver mais
-          </span>
-        )}
-      </div>
+        {/* PARTE INFERIOR: CTA PRINCIPAL + AÇÕES SECUNDÁRIAS (ALTURA EQUALIZADA) */}
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+          {/* CTA PRINCIPAL (SLOT DE 40px) */}
+          <div className="h-10">
+            {canRequestQuote ? (
+              <Button
+                className="w-full h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 shadow-none transition-all active:scale-[0.98]"
+                onClick={handleQuoteClick}
+              >
+                <FileText className="h-4 w-4" />
+                <span>Solicitar orçamento</span>
+                <ArrowRight className="h-3.5 w-3.5 ml-0.5" />
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full h-10 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 hover:text-blue-600 dark:hover:bg-slate-900 font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 shadow-none transition-all active:scale-[0.98]"
+                onClick={handleProfileClick}
+              >
+                <span>Ver perfil</span>
+                <ArrowRight className="h-3.5 w-3.5 ml-0.5" />
+              </Button>
+            )}
+          </div>
 
-      {/* 5. RODAPÉ */}
-      <div className="mt-4 @[500px]/card:mt-3 pt-4 @[500px]/card:pt-3 border-t border-slate-100 flex flex-col @[400px]/card:flex-row items-stretch @[400px]/card:items-center justify-between gap-3 @[400px]/card:gap-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Button
-            variant="outline"
-            className="flex-1 @[400px]/card:flex-none rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-9 @[400px]/card:h-7 px-2.5"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(companyPath);
-            }}
-          >
-            <Building className="h-3.5 w-3.5 @[400px]/card:h-3 @[400px]/card:w-3 mr-1 text-slate-400" />
-            Ver perfil
-          </Button>
-
-          {hasWhatsapp && (
-            <WhatsappButton
-              href={company.actions.whatsapp_url}
-              companyId={id}
-              label="WhatsApp"
-              trackingSource="list"
-              className="flex-1 @[400px]/card:flex-none rounded-lg border-[#E2E8F0] font-bold text-[10px] h-9 @[400px]/card:h-7 px-2.5"
-              preset="brandSolid"
-            />
-          )}
-
-          {p2pChatEnabled && (
-            <CompanyChatButton companyId={id} companyName={name} variant="compact" />
-          )}
-
-          {canRequestQuote && (
+          {/* AÇÕES SECUNDÁRIAS (GRADE DE 3 COLUNAS, H=36px) */}
+          <div className="grid grid-cols-3 gap-2">
+            {/* 1. COMPARAR */}
             <Button
               variant="outline"
-              className="flex-1 @[400px]/card:flex-none rounded-lg border-slate-200 text-slate-600 font-bold text-[10px] h-9 @[400px]/card:h-7 px-2.5"
-              onClick={(e) => {
-                e.stopPropagation();
-                openLeadModal({
-                  preferredCompanyId: id,
-                  source: 'list',
-                  decisionContext,
-                  type: 'quick',
-                });
-              }}
+              aria-label={`Comparar ${name}`}
+              aria-pressed={isInComparison(id)}
+              className={cn(
+                'w-full h-9 rounded-lg text-xs font-medium inline-flex items-center justify-center gap-1 transition-colors px-1',
+                isInComparison(id)
+                  ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-300'
+                  : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
+              )}
+              onClick={handleCompareToggle}
             >
-              <PhoneCall className="h-3.5 w-3.5 @[400px]/card:h-3 @[400px]/card:w-3 mr-1 text-slate-400" />
-              Contato
+              {isInComparison(id) ? (
+                <Check className="h-3.5 w-3.5 text-blue-600" />
+              ) : (
+                <ArrowLeftRight className="h-3.5 w-3.5 text-slate-500" />
+              )}
+              <span className="truncate">Comparar</span>
             </Button>
-          )}
+
+            {/* 2. VER PERFIL (SE PRO COM QUOTE) OU AVALIAR (SE FREE) */}
+            {canRequestQuote ? (
+              <Button
+                variant="outline"
+                className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
+                onClick={handleProfileClick}
+              >
+                <Building2 className="h-3.5 w-3.5 text-slate-500" />
+                <span className="truncate">Ver perfil</span>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
+                onClick={handleReviewClick}
+              >
+                <Star className="h-3.5 w-3.5 text-slate-500" />
+                <span className="truncate">Avaliar</span>
+              </Button>
+            )}
+
+            {/* 3. MENU DE MAIS AÇÕES (•••) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  aria-label={`Mais ações para ${name}`}
+                  className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 p-0 flex items-center justify-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52 text-xs">
+                {p2pChatEnabled && (
+                  <DropdownMenuItem onClick={handleChatClick} className="gap-2 cursor-pointer">
+                    <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
+                    <span>Conversar no chat</span>
+                  </DropdownMenuItem>
+                )}
+                {hasWhatsapp && (
+                  <DropdownMenuItem onClick={handleWhatsappClick} className="gap-2 cursor-pointer">
+                    <PhoneCall className="h-3.5 w-3.5 text-slate-500" />
+                    <span>Ver contato</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={openReviewsSheet} className="gap-2 cursor-pointer">
+                  <Star className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Ver avaliações</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleReviewClick} className="gap-2 cursor-pointer">
+                  <PenSquare className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Avaliar empresa</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
+      </Card>
 
-        <Button
-          className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs @[400px]/card:text-[10px] h-11 @[400px]/card:h-7 px-4 @[400px]/card:px-3 inline-flex items-center gap-1.5"
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push(`${companyPath}?tab=reviews`);
-          }}
-        >
-          Ver avaliações
-          <Badge className="bg-white/20 hover:bg-white/20 text-white text-[10px] @[400px]/card:text-[9px] font-bold rounded px-1.5 @[400px]/card:px-1 shadow-none border-none">
-            {company.reputation.rating_count}
-          </Badge>
-          <ChevronRight className="h-4 w-4 @[400px]/card:h-3 @[400px]/card:w-3" />
-        </Button>
-      </div>
-    </Card>
-  );
-}
-
-// Helper Clock icon since we renamed Lucide icon
-function Clock3Icon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
+      {/* REVIEWS SUMMARY SHEET */}
+      <CompanyReviewsSummarySheet
+        isOpen={isReviewsSheetOpen}
+        onOpenChange={setIsReviewsSheetOpen}
+        companyName={name}
+        logoUrl={logo_url}
+        ratingAvg={data.reputation.rating_avg}
+        ratingCount={data.reputation.rating_count}
+        sentiment={data.reputation.sentiment}
+        recommendationRate={data.reputation.recommendation_rate}
+        reviewsPath={`${companyPath}#reviews`}
+      />
+    </>
   );
 }
