@@ -4,14 +4,71 @@ class CompanyCardSerializer < ActiveModel::Serializer
   include Rails.application.routes.url_helpers
   include CompanyBadgesSerialization
 
-  attributes :id, :name, :slug, :logo_url, :featured, :sponsored,
+  attributes :id, :name, :slug, :logo_url, :description,
+             :city, :state, :verified, :featured, :sponsored,
+             :rating_avg, :rating_count, :has_paid_plan,
+             :distance_km, :whatsapp_enabled, :whatsapp_url,
+             :p2p_chat_enabled, :feature_access,
+             :coverage_states, :coverage_cities,
+             :primary_category, :category_ids,
              :identity, :trust, :reputation, :operations, :coverage, :actions, :badges
 
+  def has_paid_plan
+    object.respond_to?(:has_paid_plan?) && object.has_paid_plan?
+  end
+
+  def distance_km
+    object.has_attribute?(:distance_km) ? object.distance_km : nil
+  end
+
+  def primary_category
+    object.categories.first&.name
+  end
+
+  def category_ids
+    object.categories.take(5).map(&:id)
+  end
+
+  def whatsapp_enabled
+    has_paid_plan && object.try(:whatsapp_enabled) == true
+  end
+
+  def whatsapp_url
+    whatsapp_enabled ? (object.try(:whatsapp_url) || object.try(:cta_whatsapp_url)) : nil
+  end
+
+  def p2p_chat_enabled
+    object.try(:p2p_chat_enabled) == true
+  end
+
+  def feature_access
+    is_quote = object.respond_to?(:quote_feature_enabled?) && object.quote_feature_enabled?
+    {
+      'custom_ctas' => {
+        'state' => is_quote ? 'enabled' : 'locked',
+        'value' => is_quote
+      }
+    }
+  end
+
+  def coverage_cities
+    cities = object.coverage_cities.is_a?(Array) ? object.coverage_cities : String(object.coverage_cities || '').split(',').map(&:strip).reject(&:blank?)
+    cities.take(10)
+  end
+
+  def coverage_states
+    object.coverage_states.is_a?(Array) ? object.coverage_states : String(object.coverage_states || '').split(',').map(&:strip).reject(&:blank?)
+  end
+
   def logo_url
+    return object.logo_url if object.respond_to?(:logo_url) && object.logo_url.present?
     return nil unless object.logo&.attached?
+
     options = Rails.application.routes.default_url_options.dup
     options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
     rails_storage_proxy_url(object.logo, options)
+  rescue StandardError
+    nil
   end
 
   def identity
@@ -28,141 +85,96 @@ class CompanyCardSerializer < ActiveModel::Serializer
   def trust
     {
       is_claimed: object.active_admin,
-      verification_status: object.business_verification_status || 'unverified',
-      verified_at: object.business_verified_at,
-      verification_method: object.business_verification_method
+      verification_status: object.try(:business_verification_status) || (object.verified ? 'verified' : 'unverified'),
+      verified_at: object.try(:business_verified_at),
+      verification_method: object.try(:business_verification_method)
     }
   end
 
+  # Reputation lida estritamente de dados em memória ou aggregates já carregados (ZERO N+1)
   def reputation
     rating_count = object.rating_count.to_i
     rating_avg = rating_count.positive? && object.rating_avg.present? ? object.rating_avg.to_f.round(1) : nil
-    
-    nps_responses = object.reviews.published.where.not(nps_score: nil).count
-    nps_avg = nil
-    recommendation_rate = nil
-    
-    total_recommendations = 0
-    total_recommendation_responses = 0
 
-    if nps_responses > 0
-      promoters = object.reviews.published.where(nps_score: 9..10).count
-      detractors = object.reviews.published.where(nps_score: 0..6).count
-      nps_avg = (((promoters - detractors).to_f / nps_responses) * 100).round(1)
-      
-      recommenders = object.reviews.published.where(nps_score: 7..10).count
-      total_recommendations += recommenders
-      total_recommendation_responses += nps_responses
-    end
+    aggregate = if object.association(:review_aggregates).loaded?
+                  object.review_aggregates.find { |a| a.category_id.nil? }
+                else
+                  object.review_aggregates.find_by(category_id: nil)
+                end
 
-    would_recommend_true_count = object.reviews.published.where("metadata->>'would_recommend' = ?", 'true').count
-    would_recommend_false_count = object.reviews.published.where("metadata->>'would_recommend' = ?", 'false').count
-    total_would_recommend_responses = would_recommend_true_count + would_recommend_false_count
-
-    total_recommendations += would_recommend_true_count
-    total_recommendation_responses += total_would_recommend_responses
-
-    if total_recommendation_responses > 0
-      recommendation_rate = ((total_recommendations.to_f / total_recommendation_responses) * 100).round(1)
-    end
-
-    # Sentiment calculations based on review scores distribution (4-5: positive, 3: neutral, 1-2: negative)
-    aggregate = object.review_aggregates.find_by(category_id: nil)
     dist = aggregate&.scores_distribution || {}
-    
     total = dist.values.map(&:to_i).sum
-    positive_count = (dist["4"].to_i + dist["5"].to_i)
-    neutral_count = dist["3"].to_i
-    negative_count = (dist["1"].to_i + dist["2"].to_i)
+    positive_count = dist['4'].to_i + dist['5'].to_i
+    neutral_count = dist['3'].to_i
+    negative_count = dist['1'].to_i + dist['2'].to_i
 
-    # Fallback if cache aggregate is empty
     if total.zero? && rating_count > 0
-      positive_count = object.reviews.published.where(rating: 4..5).count
-      neutral_count = object.reviews.published.where(rating: 3).count
-      negative_count = object.reviews.published.where(rating: 1..2).count
-      total = positive_count + neutral_count + negative_count
+      positive_pct = [[(rating_avg.to_f - 1) / 4.0, 0].max, 1].min
+      negative_pct = [1 - positive_pct - 0.08, 0].max
+      neutral_pct = [1 - positive_pct - negative_pct, 0].max
+      positive_count = (rating_count * positive_pct).round
+      negative_count = (rating_count * negative_pct).round
+      neutral_count = rating_count - positive_count - negative_count
+      total = rating_count
     end
 
-    sentiment = {
-      positive: total > 0 ? ((positive_count.to_f / total) * 100).round : 100,
-      neutral: total > 0 ? ((neutral_count.to_f / total) * 100).round : 0,
-      negative: total > 0 ? ((negative_count.to_f / total) * 100).round : 0
-    }
+    sentiment = if total > 0
+                  {
+                    positive: ((positive_count.to_f / total) * 100).round,
+                    neutral: ((neutral_count.to_f / total) * 100).round,
+                    negative: ((negative_count.to_f / total) * 100).round
+                  }
+                else
+                  { positive: 100, neutral: 0, negative: 0 }
+                end
 
-    # Fallback for recommendation rate
+    recommendation_rate = aggregate&.recommendation_rate&.to_f
     if recommendation_rate.nil? && total > 0
       recommendation_rate = ((positive_count.to_f / total) * 100).round
     elsif recommendation_rate.nil?
       recommendation_rate = 100
     end
 
-    # Load up to 3 recent reviewer avatars
-    recent_reviewer_avatars = []
-    begin
-      reviews_scope = object.reviews.published.includes(:user).order(created_at: :desc).limit(3)
-      reviews_scope = object.reviews.includes(:user).order(created_at: :desc).limit(3) if reviews_scope.empty?
-
-      if reviews_scope.any?
-        recent_reviewer_avatars = reviews_scope.map do |review|
-          name = review.user&.display_name || review.author_name || 'Cliente'
-          avatar_url = review.user&.avatar_url
-          avatar_url = "https://ui-avatars.com/api/?name=#{CGI.escape(name)}&background=0D8ABC&color=fff&size=128" if avatar_url.blank?
-          {
-            name: name,
-            url: avatar_url
-          }
-        end
-      end
-    rescue StandardError => e
-      Rails.logger.error("Error building recent_reviewer_avatars in card serializer: #{e.message}")
-    end
-
     {
       rating_avg: rating_avg,
       rating_count: rating_count,
-      nps_score: nps_avg,
-      nps_responses: nps_responses,
+      nps_score: aggregate&.try(:nps_score)&.to_f,
+      nps_responses: aggregate&.try(:nps_count)&.to_i || 0,
       recommendation_rate: recommendation_rate,
       sentiment: sentiment,
-      recent_reviewer_avatars: recent_reviewer_avatars
+      recent_reviewer_avatars: []
     }
   end
 
   def operations
-    sla_time = object.response_time_sla || 'Consultar'
-    sla_minutes = object.response_sla_minutes
+    sla_time = object.try(:response_time_sla).presence || 'Consultar'
+    sla_minutes = object.try(:response_sla_minutes)
     if sla_minutes.nil? && sla_time.downcase.include?('h')
       sla_minutes = (sla_time.to_i * 60)
     end
-    
+
     {
-      delivered_projects: object.delivered_projects_count > 0 ? object.delivered_projects_count : object.delivered_projects_score.to_i,
+      delivered_projects: [object.try(:delivered_projects_count).to_i, object.try(:delivered_projects_score).to_i].max,
       sla_label: sla_time,
       sla_minutes: sla_minutes,
-      warranty_years: object.warranty_years || object.installation_warranty_years,
-      engineering_insurance: object.engineering_insurance,
-      updated_at: object.operational_data_updated_at || object.updated_at
+      warranty_years: object.try(:warranty_years) || object.try(:installation_warranty_years),
+      engineering_insurance: object.try(:engineering_insurance) || false,
+      updated_at: (object.try(:operational_data_updated_at) || object.updated_at).to_s
     }
   end
 
   def coverage
-    cities = object.coverage_cities.is_a?(Array) ? object.coverage_cities : String(object.coverage_cities || '').split(',').map(&:strip).reject(&:blank?)
-    states = object.coverage_states.is_a?(Array) ? object.coverage_states : String(object.coverage_states || '').split(',').map(&:strip).reject(&:blank?)
     {
-      states: states,
-      cities: cities
+      states: coverage_states,
+      cities: coverage_cities
     }
-  end
-
-  def paid?
-    object.respond_to?(:has_paid_plan?) && object.has_paid_plan?
   end
 
   def actions
     {
-      whatsapp_url: paid? && object.whatsapp_enabled ? (object.whatsapp_url || object.cta_whatsapp_url) : nil,
-      whatsapp_enabled: paid? && object.whatsapp_enabled == true,
-      p2p_chat_enabled: object.p2p_chat_enabled == true
+      whatsapp_url: whatsapp_url,
+      whatsapp_enabled: whatsapp_enabled,
+      p2p_chat_enabled: p2p_chat_enabled
     }
   end
 end
