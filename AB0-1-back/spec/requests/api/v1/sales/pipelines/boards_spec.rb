@@ -75,5 +75,44 @@ RSpec.describe 'Api::V1::Sales::Pipelines::Boards', type: :request do
       json = JSON.parse(response.body, symbolize_names: true)
       expect(json[:pipeline][:id]).to eq(pipeline.id)
     end
+
+    it 'handles opportunity with activity without error' do
+      Sales::Activity.create!(
+        account: account,
+        opportunity: opportunity,
+        actor: user,
+        activity_type: 'call',
+        subject: 'Ligação de Apresentação',
+        body: 'Discutido proposta técnica de 500kWp',
+        occurred_at: Time.current
+      )
+
+      get "/api/v1/sales/pipelines/#{pipeline.id}/board", headers: headers
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body, symbolize_names: true)
+      card = json[:cards].first
+      expect(card[:last_activity]).not_to be_nil
+      expect(card[:last_activity][:type]).to eq('call')
+      expect(card[:last_activity][:description]).to eq('Discutido proposta técnica de 500kWp')
+    end
+
+    it 'handles opportunity with qualification without error' do
+      Sales::Qualification.create!(
+        opportunity: opportunity,
+        situation: 'Cliente usa gerador diesel',
+        spin_completion: 80,
+        bant_completion: 60
+      )
+
+      get "/api/v1/sales/pipelines/#{pipeline.id}/board", headers: headers
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body, symbolize_names: true)
+      card = json[:cards].first
+      expect(card[:qualification]).not_to be_nil
+      expect(card[:qualification][:spin_completion]).to eq(80)
+      expect(card[:qualification][:bant_completion]).to eq(60)
+    end
   end
 end
