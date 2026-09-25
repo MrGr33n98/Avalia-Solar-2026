@@ -1,32 +1,15 @@
 import { useState, useEffect } from 'react';
 import { StateOption, CityOption } from './types';
 import { companiesApiSafe } from '@/lib/api-client';
+import { BRAZIL_STATES_OPTIONS } from '@/lib/company-options';
+
+const STATIC_STATES_OPTIONS: StateOption[] = BRAZIL_STATES_OPTIONS.map((s) => ({
+  state: s.state,
+  count: 0,
+})).sort((a, b) => a.state.localeCompare(b.state));
 
 export function useStatesOptions() {
-  const [states, setStates] = useState<StateOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    async function fetchStates() {
-      try {
-        const data = await companiesApiSafe.getStates();
-        const normalizedData: StateOption[] = Array.isArray(data)
-          ? data.map((state) => ({ state, count: 0 }))
-          : [];
-          
-        setStates(normalizedData.sort((a, b) => a.state.localeCompare(b.state)));
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Erro desconhecido'));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchStates();
-  }, []);
-
-  return { states, loading, error };
+  return { states: STATIC_STATES_OPTIONS, loading: false, error: null };
 }
 
 export function useCitiesOptions(selectedStates: string[]) {

@@ -115,16 +115,6 @@ export async function middleware(request: NextRequest) {
   const isRscRequest =
     request.headers.get('rsc') === '1' || request.nextUrl.searchParams.has('_rsc');
   const isServerActionRequest = request.headers.has('next-action');
-  const shouldDisableCache = isRscRequest || isServerActionRequest;
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[Middleware] Request to: ${pathname}`, {
-      hasToken: !!token,
-      cookieCount: request.cookies.getAll().length,
-      isRscRequest,
-      isServerActionRequest,
-    });
-  }
 
   // Define protected routes
   const protectedPaths = ['/dashboard', '/profile', '/company-dashboard', '/review-dashboard', '/creator-studio'];
@@ -134,8 +124,40 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(path.replace('[id]', ''))
   );
 
+  const isPublicCacheableRoute =
+    pathname === '/companies' ||
+    pathname.startsWith('/companies/categorias') ||
+    pathname === '/' ||
+    pathname === '/categories' ||
+    pathname.startsWith('/categories/') ||
+    pathname === '/products' ||
+    pathname.startsWith('/products/');
+
+  const shouldDisableCache =
+    isServerActionRequest ||
+    isProtectedRoute ||
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/company-dashboard') ||
+    (isRscRequest && !isPublicCacheableRoute);
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Middleware] Request to: ${pathname}`, {
+      hasToken: !!token,
+      cookieCount: request.cookies.getAll().length,
+      isRscRequest,
+      isServerActionRequest,
+      shouldDisableCache,
+    });
+  }
+
   const applyNoStoreHeaders = (response: NextResponse) => {
-    if (!shouldDisableCache) return response;
+    if (!shouldDisableCache) {
+      if (isRscRequest && isPublicCacheableRoute) {
+        response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+      }
+      return response;
+    }
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');

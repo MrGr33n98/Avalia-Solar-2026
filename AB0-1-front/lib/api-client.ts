@@ -548,6 +548,12 @@ export const companiesApiSafe = {
   }): Promise<number | null> => {
     try {
       const { signal, ...countParams } = params || {};
+      const countRes = await fetchApiSafe<{ count: number }>(`companies/count${buildQueryParams(countParams)}`, { signal });
+      if (typeof countRes?.count === 'number') {
+        return countRes.count;
+      }
+
+      // Fallback
       const response = await companiesApiSafe.getAllPaginated({
         ...countParams,
         page: 1,

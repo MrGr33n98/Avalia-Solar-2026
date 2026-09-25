@@ -145,17 +145,38 @@ const logFetchFailure = (label: string, err: unknown) => {
   });
 };
 
+let cachedCategoriesTree: CategoryTreeNode[] | null = null;
+let cachedDataSource: 'tree' | 'cards' | 'static' | 'error' = 'tree';
+let inFlightTreePromise: Promise<{ categories: CategoryTreeNode[]; source: 'tree' | 'cards' | 'static' | 'error' }> | null = null;
+
 export function useCategoriesTree() {
-  const [categories, setCategories] = useState<CategoryTreeNode[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<CategoryTreeNode[]>(() => cachedCategoriesTree || []);
+  const [loading, setLoading] = useState(() => !cachedCategoriesTree);
   const [error, setError] = useState<Error | null>(null);
-  const [dataSource, setDataSource] = useState<'tree' | 'cards' | 'static' | 'error'>('tree');
+  const [dataSource, setDataSource] = useState<'tree' | 'cards' | 'static' | 'error'>(() => cachedDataSource);
 
-  const fetchTree = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchTree = useCallback(async (force = false) => {
+    if (!force && cachedCategoriesTree && cachedCategoriesTree.length > 0) {
+      setCategories(cachedCategoriesTree);
+      setDataSource(cachedDataSource);
+      setLoading(false);
+      return;
+    }
 
+    if (inFlightTreePromise) {
+      try {
+        const result = await inFlightTreePromise;
+        setCategories(result.categories);
+        setDataSource(result.source);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to fetch categories tree'));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    inFlightTreePromise = (async () => {
       let capturedError: Error | null = null;
       let resolvedCategories: CategoryTreeNode[] = [];
       let resolvedSource: 'tree' | 'cards' | 'static' | 'error' = 'error';
@@ -205,23 +226,29 @@ export function useCategoriesTree() {
       if (resolvedCategories.length === 0) {
         resolvedCategories = getStaticFallbackTree();
         resolvedSource = 'static';
-        console.error('[useCategoriesTree] API indisponível; fallback estático ativado', {
-          data_source: resolvedSource,
-        });
       }
 
-      if (capturedError) {
-        setError(capturedError);
-      }
+      cachedCategoriesTree = resolvedCategories;
+      cachedDataSource = resolvedSource;
 
-      setCategories(resolvedCategories);
-      setDataSource(resolvedSource);
+      return { categories: resolvedCategories, source: resolvedSource };
+    })();
+
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await inFlightTreePromise;
+      setCategories(result.categories);
+      setDataSource(result.source);
     } catch (err) {
       console.error('[useCategoriesTree] Critical error in hook logic:', err);
       setError(err instanceof Error ? err : new Error('Failed to process categories tree'));
       setDataSource('static');
-      setCategories(getStaticFallbackTree());
+      const fallback = getStaticFallbackTree();
+      cachedCategoriesTree = fallback;
+      setCategories(fallback);
     } finally {
+      inFlightTreePromise = null;
       setLoading(false);
     }
   }, []);
