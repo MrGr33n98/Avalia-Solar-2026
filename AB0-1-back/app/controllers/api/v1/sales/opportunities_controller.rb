@@ -74,7 +74,7 @@ module Api
               id: "act-#{act.id}",
               type: act.activity_type == 'call' ? 'call' : 'activity',
               title: act.activity_type == 'call' ? 'Chamada Telefônica Registrada' : 'Atividade Comercial',
-              description: act.description,
+              description: act.body.presence || act.subject.presence,
               occurred_at: act.occurred_at || act.created_at
             }
           end
@@ -103,12 +103,27 @@ module Api
 
           # 5. Email messages
           current_tenant_scope.email_messages.where(sales_opportunity_id: @opportunity.id).find_each do |em|
+            open_status = if em.open_count.to_i > 0
+                            "👁️ Lido #{em.open_count}x (última abertura em #{em.last_opened_at&.strftime('%d/%m às %H:%M')})"
+                          else
+                            "Enviado (Aguardando leitura)"
+                          end
+
             events << {
               id: "email-#{em.id}",
               type: 'email',
               title: "E-mail: #{em.subject}",
-              description: "Para: #{em.to_email} | Status: #{em.status}",
-              occurred_at: em.sent_at || em.created_at
+              description: "Para: #{em.to_email} | #{open_status}",
+              occurred_at: em.sent_at || em.created_at,
+              metadata: {
+                open_count: em.open_count.to_i,
+                click_count: em.click_count.to_i,
+                first_opened_at: em.first_opened_at,
+                last_opened_at: em.last_opened_at,
+                first_clicked_at: em.first_clicked_at,
+                last_clicked_at: em.last_clicked_at,
+                status: em.status
+              }
             }
           end
 

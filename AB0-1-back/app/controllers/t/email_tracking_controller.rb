@@ -8,8 +8,15 @@ module T
 
     def open
       email = ::Sales::EmailMessage.find_by(tracking_token: params[:token])
-      email&.register_event!(event_type: 'open', user_agent: request.user_agent,
-                              payload: { ip: request.remote_ip }) if email&.open_tracking_enabled
+      if email&.open_tracking_enabled
+        user_agent = request.user_agent.to_s
+        is_bot = user_agent.match?(/(GoogleImageProxy|AppleMessageFrame|Outlook-Express|Spider|Crawler|Bot)/i)
+        email.register_event!(
+          event_type: 'open',
+          user_agent: user_agent,
+          payload: { ip: request.remote_ip, is_bot: is_bot }
+        )
+      end
       send_data GIF_1X1, type: 'image/gif', disposition: 'inline'
     end
 

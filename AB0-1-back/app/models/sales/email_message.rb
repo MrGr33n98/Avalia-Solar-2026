@@ -107,17 +107,26 @@ module Sales
     end
 
     def record_timeline_event!(event_type, occurred_at)
-      return unless %w[delivered bounce complaint].include?(event_type)
-      return unless sales_account_id.present? && sender_user_id.present?
+      return unless %w[delivered bounce complaint open click].include?(event_type.to_s)
+      return unless sales_account_id.present? || sales_opportunity_id.present?
+
+      actor_id = sender_user_id || company&.users&.first&.id
+      return unless actor_id.present?
+
+      title_suffix = case event_type.to_s
+                     when 'open' then 'lido'
+                     when 'click' then 'link clicado'
+                     else event_type
+                     end
 
       ::Sales::Activity.create!(
         sales_account_id: sales_account_id,
         sales_contact_id: sales_contact_id,
         sales_opportunity_id: sales_opportunity_id,
-        actor_id: sender_user_id,
+        actor_id: actor_id,
         activity_type: "email_#{event_type}",
         direction: 'outbound',
-        subject: "E-mail #{event_type}: #{subject}",
+        subject: "E-mail #{title_suffix}: #{subject}",
         occurred_at: occurred_at,
         metadata: { email_message_id: id }
       )

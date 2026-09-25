@@ -942,6 +942,7 @@ Rails.application.routes.draw do
 
   # Tracking de Engajamento de E-mail (Abertura Pixel + Clique Link)
   get '/t/email/open/:token.gif', to: 't/email_tracking#open'
+  get '/t/email/open/:token', to: 't/email_tracking#open'
   get '/t/email/unsubscribe/:token', to: 't/email_tracking#unsubscribe'
   post '/t/email/unsubscribe/:token', to: 't/email_tracking#unsubscribe'
   get '/t/email/click/:token', to: 't/email_tracking#click'
