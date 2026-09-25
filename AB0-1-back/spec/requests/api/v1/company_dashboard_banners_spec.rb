@@ -76,6 +76,19 @@ RSpec.describe 'Api::V1::CompanyDashboardBanners', type: :request do
         expect(banner.reload.moderation_status).to eq('submitted')
       end
 
+      it 'atualiza target_states e target_cities' do
+        banner = create(:banner, company: company, moderation_status: 'draft')
+
+        patch "/api/v1/company_dashboard/banners/#{banner.id}",
+              params: { title: 'Novo Banner SP', target_states: ['SP', 'MG'], target_cities: ['São Paulo', 'Campinas'] },
+              headers: headers
+
+        expect(response).to have_http_status(:ok)
+        banner.reload
+        expect(banner.target_states).to eq(['SP', 'MG'])
+        expect(banner.target_cities).to eq(['São Paulo', 'Campinas'])
+      end
+
       context 'regression: with a realistic Plan that does not respond to max_banners' do
         let(:plan) { create(:plan, name: 'Pro', price: 100) }
         let(:company) { create(:company, plan: plan) }

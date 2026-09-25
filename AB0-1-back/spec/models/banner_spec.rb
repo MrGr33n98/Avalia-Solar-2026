@@ -363,6 +363,12 @@ RSpec.describe Banner, type: :model do
         banner.submit_for_review!
         expect(banner.active).to be false
       end
+
+      it 'clears rejected_reason' do
+        banner.update(rejected_reason: 'Imagem inadequada')
+        banner.submit_for_review!
+        expect(banner.rejected_reason).to be_nil
+      end
     end
 
     describe '#approve!' do

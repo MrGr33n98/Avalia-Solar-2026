@@ -119,7 +119,9 @@ class Banner < ApplicationRecord
   end
 
   def submit_for_review!
-    update!(moderation_status: 'submitted', active: false)
+    attrs = { moderation_status: 'submitted', active: false }
+    attrs[:rejected_reason] = nil if self.class.column_names.include?('rejected_reason')
+    update!(attrs)
   end
 
   def approve!(admin_user)

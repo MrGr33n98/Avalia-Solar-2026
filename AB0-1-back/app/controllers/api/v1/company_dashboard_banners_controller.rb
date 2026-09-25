@@ -78,6 +78,8 @@ module Api
             rejected_reason: b.rejected_reason,
             position: b.position,
             slot_key: b.slot_key,
+            target_states: Array(b.target_states),
+            target_cities: Array(b.target_cities),
             starts_at: b.start_date,
             ends_at: b.end_date,
             days_remaining: b.end_date ? (b.end_date.to_date - Date.today).to_i : nil,
@@ -317,7 +319,22 @@ module Api
       end
 
       def current_company
-        current_user&.company
+        @current_company ||= if current_user&.admin?
+                               company_id = params[:company_id] || cookies.signed[:active_company_id]
+                               (company_id.present? && ::Company.find_by(id: company_id)) || current_user&.company
+                             else
+                               company_id = params[:company_id]
+                               if company_id.present? && current_user&.active_membership_for?(company_id)
+                                 ::Company.find_by(id: company_id)
+                               else
+                                 cookie_company_id = cookies.signed[:active_company_id] || current_user&.company_id
+                                 if cookie_company_id.present? && current_user&.active_membership_for?(cookie_company_id)
+                                   ::Company.find_by(id: cookie_company_id)
+                                 else
+                                   current_user&.company || current_user&.active_member_companies&.first
+                                 end
+                               end
+                             end
       end
 
       def authorize_feature!(feature_name)
@@ -343,17 +360,37 @@ module Api
       end
 
       def banner_params
-        params.permit(
+        permitted = params.permit(
           :title,
           :link,
           :active,
           :sponsored,
           :banner_type,
           :position,
+          :slot_key,
           :category_id,
           :start_date,
-          :end_date
+          :end_date,
+          target_states: [],
+          target_cities: []
         )
+        if params[:target_states].is_a?(String)
+          parsed = begin
+            JSON.parse(params[:target_states])
+          rescue StandardError
+            params[:target_states].split(',')
+          end
+          permitted[:target_states] = Array(parsed).map(&:to_s).map(&:strip).reject(&:blank?)
+        end
+        if params[:target_cities].is_a?(String)
+          parsed = begin
+            JSON.parse(params[:target_cities])
+          rescue StandardError
+            params[:target_cities].split(',')
+          end
+          permitted[:target_cities] = Array(parsed).map(&:to_s).map(&:strip).reject(&:blank?)
+        end
+        permitted
       end
 
       def attach_image!(banner)

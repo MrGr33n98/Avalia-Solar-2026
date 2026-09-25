@@ -19,6 +19,8 @@ import {
   Send,
   Trash2,
   DollarSign,
+  Globe,
+  MapPin,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -79,6 +81,8 @@ type CompanyBanner = {
   rejected_reason?: string | null;
   position: string;
   slot_key: string;
+  target_states?: string[];
+  target_cities?: string[];
   starts_at?: string | null;
   ends_at?: string | null;
   days_remaining?: number | null;
@@ -677,16 +681,24 @@ function AddonCheckoutDialog({ banner, trigger }: { banner: CompanyBanner; trigg
   );
 }
 
+const BRAZIL_UFS = [
+  'SP', 'MG', 'RJ', 'PR', 'RS', 'SC', 'BA', 'GO', 'DF', 'ES',
+  'PE', 'CE', 'MT', 'MS', 'PA', 'AM', 'MA', 'RN', 'PB', 'AL',
+  'SE', 'PI', 'TO', 'RO', 'AC', 'AP', 'RR'
+] as const;
+
 function BannerFormDialog({
   banner,
   trigger,
   onSaved,
   placements,
+  companyId,
 }: {
   banner?: CompanyBanner;
   trigger: ReactNode;
   onSaved: () => Promise<void>;
   placements?: PlacementOption[];
+  companyId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const placementOptions = placements || [];
@@ -695,8 +707,60 @@ function BannerFormDialog({
   const [position, setPosition] = useState(banner?.position || 'home_top');
   const [bannerType, setBannerType] = useState(banner?.banner_type || 'rectangular_large');
   const [image, setImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(banner?.thumbnail_url || null);
+
+  const initialScope = (banner?.target_cities && banner.target_cities.length > 0)
+    ? 'cities'
+    : (banner?.target_states && banner.target_states.length > 0)
+      ? 'regional'
+      : 'national';
+
+  const [targetScope, setTargetScope] = useState<'national' | 'regional' | 'cities'>(initialScope);
+  const [targetStates, setTargetStates] = useState<string[]>(banner?.target_states || []);
+  const [targetCities, setTargetCities] = useState<string>((banner?.target_cities || []).join(', '));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setTitle(banner?.title || '');
+      setLink(banner?.link_url || '');
+      setPosition(banner?.position || 'home_top');
+      setBannerType(banner?.banner_type || 'rectangular_large');
+      setImage(null);
+      setPreviewUrl(banner?.thumbnail_url || null);
+      const scope = (banner?.target_cities && banner.target_cities.length > 0)
+        ? 'cities'
+        : (banner?.target_states && banner.target_states.length > 0)
+          ? 'regional'
+          : 'national';
+      setTargetScope(scope);
+      setTargetStates(banner?.target_states || []);
+      setTargetCities((banner?.target_cities || []).join(', '));
+      setError(null);
+    }
+  }, [open, banner]);
+
+  const selectedPlacement = placementOptions.find((p) => p.key === position);
+  const placementDims = selectedPlacement?.dimensions
+    ? `${selectedPlacement.dimensions[0]}×${selectedPlacement.dimensions[1]} px`
+    : null;
+
+  const toggleState = (uf: string) => {
+    setTargetStates((prev) =>
+      prev.includes(uf) ? prev.filter((item) => item !== uf) : [...prev, uf]
+    );
+  };
+
+  const handleImageChange = (file: File | null) => {
+    setImage(file);
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(banner?.thumbnail_url || null);
+    }
+  };
 
   const save = async () => {
     if (!title.trim() || !link.trim() || (!banner && !image)) {
@@ -717,9 +781,26 @@ function BannerFormDialog({
     body.set('banner_type', bannerType);
     if (image) body.set('image', image);
 
+    if (targetScope === 'national') {
+      body.set('target_states', JSON.stringify([]));
+      body.set('target_cities', JSON.stringify([]));
+    } else if (targetScope === 'regional') {
+      body.set('target_states', JSON.stringify(targetStates));
+      body.set('target_cities', JSON.stringify([]));
+    } else {
+      body.set('target_states', JSON.stringify(targetStates));
+      const citiesList = targetCities
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      body.set('target_cities', JSON.stringify(citiesList));
+    }
+
     try {
+      const params = companyId ? { company_id: companyId } : undefined;
       await fetchBannerApi(`/company_dashboard/banners${banner ? `/${banner.id}` : ''}`, {
         method: banner ? 'PATCH' : 'POST',
+        params,
         body,
       });
       await onSaved();
@@ -745,29 +826,30 @@ function BannerFormDialog({
         </DialogHeader>
         <div className="grid gap-5 py-4">
           <div className="space-y-2">
-            <Label htmlFor={`banner-title-${banner?.id || 'new'}`}>Título</Label>
+            <Label htmlFor={`banner-title-${banner?.id || 'new'}`}>Título da Campanha</Label>
             <Input
               id={`banner-title-${banner?.id || 'new'}`}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
+              placeholder="Ex: Promoção Inversores e Módulos Q4"
               maxLength={120}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`banner-link-${banner?.id || 'new'}`}>Link de destino</Label>
+            <Label htmlFor={`banner-link-${banner?.id || 'new'}`}>Link de Destino (URL com UTM)</Label>
             <Input
               id={`banner-link-${banner?.id || 'new'}`}
               type="url"
               value={link}
               onChange={(event) => setLink(event.target.value)}
-              placeholder="https://suaempresa.com.br/oferta"
+              placeholder="https://suaempresa.com.br/oferta?utm_source=avaliasolar"
               required
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Posição</Label>
+              <Label>Posição / Zona do Anúncio</Label>
               <Select value={position} onValueChange={setPosition}>
                 <SelectTrigger aria-label="Posição do banner">
                   <SelectValue />
@@ -785,6 +867,11 @@ function BannerFormDialog({
                   })}
                 </SelectContent>
               </Select>
+              {placementDims && (
+                <p className="text-[11px] font-semibold text-brand-blue">
+                  Dimensão recomendada: {placementDims}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Formato</Label>
@@ -799,19 +886,166 @@ function BannerFormDialog({
               </Select>
             </div>
           </div>
+
+          {/* Geographic Targeting Section */}
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-brand-blue" />
+                Alcance Geográfico (Segmentação)
+              </Label>
+              <span className="text-[11px] text-slate-400">Onde seu banner será exibido</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-200/60 dark:bg-slate-800 rounded-xl text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setTargetScope('national')}
+                className={`py-1.5 px-2 rounded-lg transition-all text-center ${
+                  targetScope === 'national'
+                    ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-blue font-bold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                Brasil Inteiro
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetScope('regional')}
+                className={`py-1.5 px-2 rounded-lg transition-all text-center ${
+                  targetScope === 'regional'
+                    ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-blue font-bold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                Por Estados (UF)
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetScope('cities')}
+                className={`py-1.5 px-2 rounded-lg transition-all text-center ${
+                  targetScope === 'cities'
+                    ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-blue font-bold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                }`}
+              >
+                Cidades
+              </button>
+            </div>
+
+            {targetScope === 'national' && (
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Seu anúncio será veiculado para visitantes de todo o território nacional que acessarem as zonas selecionadas.
+              </p>
+            )}
+
+            {(targetScope === 'regional' || targetScope === 'cities') && (
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-400 font-medium">
+                    Selecione os Estados ({targetStates.length} selecionados):
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTargetStates(['SP', 'MG', 'RJ', 'ES'])}
+                      className="text-[10px] text-brand-blue font-semibold hover:underline"
+                    >
+                      + Sudeste
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTargetStates(['PR', 'SC', 'RS'])}
+                      className="text-[10px] text-brand-blue font-semibold hover:underline"
+                    >
+                      + Sul
+                    </button>
+                    {targetStates.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setTargetStates([])}
+                        className="text-[10px] text-destructive font-semibold hover:underline"
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1">
+                  {BRAZIL_UFS.map((uf) => {
+                    const selected = targetStates.includes(uf);
+                    return (
+                      <button
+                        key={uf}
+                        type="button"
+                        onClick={() => toggleState(uf)}
+                        className={`text-xs px-2.5 py-1 rounded-lg border font-bold transition-all ${
+                          selected
+                            ? 'bg-brand-blue text-white border-brand-blue shadow-sm'
+                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-brand-blue'
+                        }`}
+                      >
+                        {uf}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {targetScope === 'cities' && (
+              <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <Label htmlFor="target-cities-input" className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-brand-blue" />
+                  Cidades Alvo (separadas por vírgula)
+                </Label>
+                <Input
+                  id="target-cities-input"
+                  value={targetCities}
+                  onChange={(e) => setTargetCities(e.target.value)}
+                  placeholder="Ex: Campinas, Ribeirão Preto, Sorocaba, São José dos Campos"
+                  className="text-xs"
+                />
+                <p className="text-[11px] text-slate-400">
+                  Deixe vazio para cobrir todos os municípios dos estados selecionados acima.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Creative Image */}
           <div className="space-y-2">
             <Label htmlFor={`banner-image-${banner?.id || 'new'}`}>
-              Imagem {banner ? '(opcional)' : ''}
+              Imagem do Banner {banner ? '(opcional se mantiver atual)' : ''}
             </Label>
             <Input
               id={`banner-image-${banner?.id || 'new'}`}
               type="file"
               accept="image/png,image/jpeg,image/webp"
-              onChange={(event) => setImage(event.target.files?.[0] || null)}
+              onChange={(event) => handleImageChange(event.target.files?.[0] || null)}
               required={!banner}
             />
-            <p className="text-xs text-slate-500">PNG, JPEG ou WebP. Máximo 5 MB.</p>
+            <p className="text-xs text-slate-500">Formatos aceitos: PNG, JPEG ou WebP. Máximo 5 MB.</p>
+
+            {previewUrl && (
+              <div className="mt-3 relative rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 p-2 overflow-hidden">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  Pré-visualização do Criativo:
+                </p>
+                <div className="relative h-28 w-full rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-800">
+                  <Image
+                    src={previewUrl}
+                    alt="Preview do banner"
+                    fill
+                    unoptimized
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+            )}
           </div>
+
           {error && (
             <p role="alert" className="text-sm font-medium text-destructive">
               {error}
@@ -856,14 +1090,14 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
 
   const loadData = useCallback(async () => {
     if (!allowed) return;
-    void companyId;
 
     setLoading(true);
     setError(null);
     try {
+      const params = companyId ? { company_id: companyId } : undefined;
       const [resp, alerts] = await Promise.all([
-        fetchBannerApi<DashboardPayload>('/company_dashboard/banners'),
-        fetchBannerApi<{ alerts?: ExportAlert[] }>('/company_dashboard/banners/export_alerts'),
+        fetchBannerApi<DashboardPayload>('/company_dashboard/banners', { params }),
+        fetchBannerApi<{ alerts?: ExportAlert[] }>('/company_dashboard/banners/export_alerts', { params }),
       ]);
       setData(resp);
       setExportAlerts(alerts.alerts ?? []);
@@ -1024,6 +1258,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
         <div className="flex items-center gap-4">
           <BannerFormDialog
             placements={data?.placements}
+            companyId={companyId}
             onSaved={loadData}
             trigger={
               <Button
@@ -1583,9 +1818,44 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                     </div>
                     <CardContent className="p-6">
                       <h4 className="font-bold text-lg mb-1">{banner.title}</h4>
-                      <p className="text-xs text-slate-500 uppercase font-semibold tracking-wider mb-6">
-                        Posição: {banner.position}
-                      </p>
+                      {(() => {
+                        const placementInfo = data.placements?.find((p) => p.key === banner.position);
+                        const placementLabel = placementInfo?.label || banner.position.replaceAll('_', ' ');
+                        const placementDims = placementInfo?.dimensions
+                          ? `${placementInfo.dimensions[0]}×${placementInfo.dimensions[1]} px`
+                          : null;
+                        const hasCities = banner.target_cities && banner.target_cities.length > 0;
+                        const hasStates = banner.target_states && banner.target_states.length > 0;
+
+                        return (
+                          <div className="space-y-1.5 mb-5">
+                            <p className="text-xs text-slate-500 font-semibold tracking-wide flex items-center gap-1.5 flex-wrap">
+                              <span className="text-slate-700 dark:text-slate-300 font-bold">{placementLabel}</span>
+                              {placementDims && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                  {placementDims}
+                                </span>
+                              )}
+                            </p>
+                            {hasCities ? (
+                              <p className="text-xs text-brand-blue font-medium flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                <span>Cidades: {banner.target_cities!.slice(0, 3).join(', ')}{banner.target_cities!.length > 3 ? ` (+${banner.target_cities!.length - 3})` : ''}</span>
+                              </p>
+                            ) : hasStates ? (
+                              <p className="text-xs text-brand-blue font-medium flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                <span>Estados: {banner.target_states!.join(', ')}</span>
+                              </p>
+                            ) : (
+                              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                                <Globe className="w-3.5 h-3.5 shrink-0" />
+                                <span>Brasil Inteiro (Nacional)</span>
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {banner.delivery_health && (
                         <div
@@ -1714,6 +1984,7 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
                             <BannerFormDialog
                               banner={banner}
                               placements={data.placements}
+                              companyId={companyId}
                               onSaved={loadData}
                               trigger={
                                 <Button
