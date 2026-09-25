@@ -9,7 +9,11 @@ interface FooterProps {
 
 export const OpportunityCardFooter: React.FC<FooterProps> = ({ card }) => {
   const agingDays = `${card.aging.days_in_stage}d`;
-  const qualSummary = card.qualification?.bant_summary || card.qualification?.spin_summary || (card.qualification?.score ? `SPIN ${card.qualification.score}%` : null);
+  const qualSummary =
+    card.qualification?.bant_summary ||
+    card.qualification?.spin_summary ||
+    (card.qualification?.spin_completion !== undefined ? `SPIN ${card.qualification.spin_completion}%` : null) ||
+    (card.qualification?.score ? `SPIN ${card.qualification.score}%` : null);
   const sourceName = card.source;
 
   return (

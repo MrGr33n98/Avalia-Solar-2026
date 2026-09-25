@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   BarChart3,
   Download,
@@ -21,6 +22,7 @@ import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateLeadModal from './create/CreateLeadModal';
 import SalesCommandCenter from '@/components/sales/SalesCommandCenter';
 import { SalesLead } from '@/lib/api/sales/types';
+import { salesKeys } from '@/lib/api/sales/queryKeys';
 
 export default function LeadsWorkspace() {
   const searchParams = useSearchParams();
@@ -32,9 +34,13 @@ export default function LeadsWorkspace() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | undefined>();
   const [boardRefreshVersion, setBoardRefreshVersion] = useState(0);
+  const queryClient = useQueryClient();
 
   const handleLeadCreated = (lead: SalesLead) => {
     if (lead.sales_pipeline_id) setSelectedPipelineId(lead.sales_pipeline_id);
+    void queryClient.invalidateQueries({ queryKey: salesKeys.pipelines() });
+    void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
+    setBoardRefreshVersion((current) => current + 1);
   };
 
   return (
@@ -152,7 +158,10 @@ export default function LeadsWorkspace() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setBoardRefreshVersion((current) => current + 1)}
+              onClick={() => {
+                void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
+                setBoardRefreshVersion((current) => current + 1);
+              }}
               className="h-8 text-xs text-slate-500"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -167,6 +176,9 @@ export default function LeadsWorkspace() {
             pipelineOnly
             pipelineId={selectedPipelineId}
             refreshVersion={boardRefreshVersion}
+            initialView={view === 'list' ? 'table' : 'kanban'}
+            searchQuery={search}
+            activeQuickFilter={activeFilter}
           />
         ) : view === 'map' ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-slate-500 space-y-2">

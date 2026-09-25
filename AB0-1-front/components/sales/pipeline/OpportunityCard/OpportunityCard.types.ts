@@ -35,7 +35,9 @@ export interface PipelineCardStage {
 }
 
 export interface PipelineCardQualification {
-  score: number;
+  spin_completion?: number;
+  bant_completion?: number;
+  score?: number;
   bant_summary?: string;
   spin_summary?: string;
 }
