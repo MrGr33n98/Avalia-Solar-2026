@@ -14,7 +14,6 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { Trophy, Zap, TrendingUp, Target } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { PositioningThresholds, PositioningPoint } from '@/lib/api';
 
 export interface VisualQuadrantData extends PositioningPoint {
@@ -629,11 +628,15 @@ export default function MagicQuadrant({
         )}
       </div>
 
-      {/* SUB-RÓTULO METODOLÓGICO NO RODAPÉ DO EIXO X */}
-      <div className="mt-1 text-center">
-        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-          {xAxisDefinition}
-        </p>
+      {/* SUB-RÓTULOS METODOLÓGICOS NO RODAPÉ */}
+      <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-[11px] text-slate-500 dark:text-slate-400">
+        <span>
+          <strong className="font-semibold text-slate-700 dark:text-slate-300">Eixo Horizontal:</strong> {xAxisDefinition}
+        </span>
+        <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+        <span>
+          <strong className="font-semibold text-slate-700 dark:text-slate-300">Eixo Vertical:</strong> {yAxisDefinition}
+        </span>
       </div>
     </div>
   );
