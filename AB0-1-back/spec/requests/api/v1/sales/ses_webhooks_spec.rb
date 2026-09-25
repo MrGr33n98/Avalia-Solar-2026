@@ -64,7 +64,17 @@ RSpec.describe 'POST /api/v1/sales/ses_webhooks', type: :request do
   before do
     allow(ENV).to receive(:[]).and_call_original
     allow(ENV).to receive(:[]).with('AWS_SNS_TOPIC_ARN').and_return(topic_arn)
-    allow(Net::HTTP).to receive(:get).and_return(cert.to_pem)
+    certificate_response = double('certificate response', body: cert.to_pem)
+    allow(certificate_response).to receive(:is_a?).with(Net::HTTPSuccess).and_return(true)
+    confirmation_response = instance_double(Net::HTTPSuccess)
+    allow(Net::HTTP).to receive(:start) do |_host, _port, **_options, &block|
+      client = double('SNS HTTP client')
+      allow(client).to receive(:get) do |path|
+        path.end_with?('.pem') ? certificate_response : confirmation_response
+      end
+      block.call(client)
+    end
+    allow(confirmation_response).to receive(:is_a?).with(Net::HTTPSuccess).and_return(true)
   end
 
   def build_payload(type: 'Notification', topic: topic_arn, cert_url: 'https://sns.us-east-2.amazonaws.com/cert.pem', message: nil, subscribe_url: nil, token: nil)
@@ -96,13 +106,6 @@ RSpec.describe 'POST /api/v1/sales/ses_webhooks', type: :request do
     context 'SubscriptionConfirmation' do
       it 'confirma assinatura com sucesso e retorna 200' do
         subscribe_url = 'https://sns.us-east-2.amazonaws.com/?Action=ConfirmSubscription&TopicArn=arn:aws:sns:us-east-2:431636668039:avalia-solar-ses-events&Token=123'
-        http_double = instance_double(Net::HTTP)
-        response_double = instance_double(Net::HTTPSuccess)
-
-        allow(Net::HTTP).to receive(:start).with('sns.us-east-2.amazonaws.com', 443, use_ssl: true, open_timeout: 5, read_timeout: 5).and_yield(http_double)
-        allow(http_double).to receive(:get).and_return(response_double)
-        allow(response_double).to receive(:is_a?).with(Net::HTTPSuccess).and_return(true)
-
         payload = build_payload(type: 'SubscriptionConfirmation', subscribe_url: subscribe_url)
 
         post '/api/v1/sales/ses_webhooks', params: payload.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
@@ -164,7 +167,7 @@ RSpec.describe 'POST /api/v1/sales/ses_webhooks', type: :request do
         expect(response).to have_http_status(:ok)
         event = Sales::EmailEvent.last
         expect(event.event_type).to eq('delivered')
-        expect(event.provider_event_id).to eq('ses-ses-msg-999-delivered')
+        expect(event.provider_event_id).to eq('sns-msg-123')
         expect(email_message.reload.status).to eq('delivered')
       end
 
@@ -241,6 +244,26 @@ RSpec.describe 'POST /api/v1/sales/ses_webhooks', type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)).to eq({ 'status' => 'success' })
+      end
+
+      it 'propaga delivery idempotente para recipient, campanha e timeline' do
+        campaign = Sales::Campaign.create!(company_id: company.id, user_id: user.id, name: 'Campanha teste',
+                                           campaign_type: 'email_broadcast', status: 'dispatching', total_recipients: 1)
+        recipient = Sales::CampaignRecipient.create!(company_id: company.id, campaign: campaign, email: contact.email,
+                                                     status: 'sent', sales_contact_id: contact.id,
+                                                     sales_account_id: account.id, sales_email_message_id: email_message.id)
+        email_message.update!(sales_campaign_id: campaign.id, sales_campaign_recipient_id: recipient.id)
+        payload = build_payload(message: '{"eventType":"Delivery","mail":{"messageId":"ses-msg-999","timestamp":"2026-09-25T10:00:00Z"}}')
+
+        expect {
+          post '/api/v1/sales/email_events/provider', params: payload.to_json,
+                                                    headers: { 'CONTENT_TYPE' => 'application/json' }
+        }.to change(Sales::Activity, :count).by(1)
+
+        expect(response).to have_http_status(:ok)
+        expect(recipient.reload.status).to eq('delivered')
+        expect(campaign.reload.delivered_count).to eq(1)
+        expect(Sales::Activity.last.activity_type).to eq('email_delivered')
       end
     end
   end

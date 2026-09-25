@@ -60,6 +60,8 @@ module Sales
         owner = record.owner
         qual = record.qualification
 
+        last_act_desc = latest_activity ? (latest_activity.body.presence || latest_activity.subject.presence || 'Atividade registrada') : nil
+
         {
           id: record.id,
           name: record.name,
@@ -91,14 +93,13 @@ module Sales
           temperature: record.temperature || 'warm',
           source: record.source ? record.source.name : nil,
           qualification: qual ? {
-            score: qual.score || 0,
-            bant_summary: qual.bant_status || "BANT #{qual.score_bant}/4",
-            spin_summary: qual.spin_status || 'SPIN ok'
+            spin_completion: qual.spin_completion.to_i,
+            bant_completion: qual.bant_completion.to_i
           } : nil,
           last_activity: latest_activity ? {
             id: latest_activity.id,
             type: latest_activity.activity_type || 'activity',
-            description: latest_activity.description || 'Atividade registrada',
+            description: last_act_desc,
             occurred_at: latest_activity.occurred_at || latest_activity.created_at
           } : nil,
           next_action: next_task ? {

@@ -82,8 +82,12 @@ Rails.application.routes.draw do
         end
         resources :site_surveys, controller: 'sales/site_surveys'
         resources :forms, controller: 'sales/forms'
+        post 'forms/:id/submit', to: 'sales/forms#submit'
         resources :tracking_sessions, controller: 'sales/tracking_sessions'
         resources :tracking_events, controller: 'sales/tracking_events'
+        resources :tracking_sites, only: %i[index create update], controller: 'sales/tracking_sites' do
+          post :rotate_key, on: :member
+        end
         post 'tracking_identity', to: 'sales/tracking_identity#create'
         get 'rbac', to: 'sales/rbac#index'
         post 'rbac', to: 'sales/rbac#create'
@@ -91,7 +95,7 @@ Rails.application.routes.draw do
         get 'rbac/permissions', to: 'sales/rbac#permissions'
         resources :user_roles, only: %i[index create destroy], controller: 'sales/user_roles'
         resources :consents, only: %i[index create], controller: 'sales/consents'
-        post 'consent_revocations', to: 'sales/consent_revocations#create'
+        post 'consent_revocations', to: 'sales/consent_revocations#update'
         resources :saved_views, only: %i[index create update destroy], controller: 'sales/saved_views' do
           post :pin, on: :member
         end
@@ -159,9 +163,16 @@ Rails.application.routes.draw do
           end
         end
         resources :email_sequences, only: %i[index show create update destroy], controller: 'sales/email_sequences'
+        resources :email_sequence_enrollments, only: %i[index show create], controller: 'sales/email_sequence_enrollments' do
+          member do
+            post :pause
+            post :resume
+            post :stop
+          end
+        end
         resources :email_suppressions, only: %i[index create destroy], controller: 'sales/email_suppressions'
         resources :email_signatures, only: %i[index create update destroy], controller: 'sales/email_signatures'
-        post 'email_events/provider', to: 'sales/email_events#create'
+        post 'email_events/provider', to: 'sales/ses_webhooks#create'
         resources :pipelines, only: %i[index show], controller: 'sales/pipelines' do
           get :board, to: 'sales/pipelines/boards#show', on: :member
         end
@@ -216,6 +227,14 @@ Rails.application.routes.draw do
           post :lost, to: 'sales/closures#lost'
           get :timeline, to: 'sales/opportunities#timeline'
         end
+      end
+
+      scope :public do
+        get 'sales/tracking/:public_key.js', to: 'public/sales/tracking#script', defaults: { format: :js }
+        post 'sales/tracking/:public_key/sessions', to: 'public/sales/tracking#create_session'
+        post 'sales/tracking/:public_key/events', to: 'public/sales/tracking#create_event'
+        match 'sales/tracking/:public_key/sessions', to: 'public/sales/tracking#options', via: :options
+        match 'sales/tracking/:public_key/events', to: 'public/sales/tracking#options', via: :options
       end
 
       resources :push_subscriptions, only: [:create] do
@@ -924,6 +943,7 @@ Rails.application.routes.draw do
   # Tracking de Engajamento de E-mail (Abertura Pixel + Clique Link)
   get '/t/email/open/:token.gif', to: 't/email_tracking#open'
   get '/t/email/unsubscribe/:token', to: 't/email_tracking#unsubscribe'
+  post '/t/email/unsubscribe/:token', to: 't/email_tracking#unsubscribe'
   get '/t/email/click/:token', to: 't/email_tracking#click'
   post '/api/v1/sales/ses_webhooks', to: 'api/v1/sales/ses_webhooks#create'
 

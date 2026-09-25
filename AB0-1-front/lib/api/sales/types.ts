@@ -137,12 +137,13 @@ export interface CreateLeadPayload {
 export interface PipelineBoardParams {
   search?: string;
   status?: string;
-  owner_id?: number | 'unassigned';
+  owner_id?: number | 'unassigned' | 'me';
   temperature?: string;
   stage_key?: string;
   value_min?: number;
   value_max?: number;
   tag_ids?: number[];
+  closing_this_week?: boolean | string;
 }
 
 export interface ApiPipelineBoardCard {
@@ -160,7 +161,13 @@ export interface ApiPipelineBoardCard {
   priority: string;
   temperature: 'cold' | 'warm' | 'hot' | string;
   source?: string | null;
-  qualification?: { score: number; bant_summary?: string; spin_summary?: string } | null;
+  qualification?: {
+    spin_completion?: number;
+    bant_completion?: number;
+    score?: number;
+    bant_summary?: string;
+    spin_summary?: string;
+  } | null;
   last_activity?: { id: number; type: string; description: string; occurred_at: string } | null;
   next_action?: { id: number; type: string; title: string; due_at?: string; overdue: boolean } | null;
   aging: { days_in_stage: number; stage_entered_at: string; stale: boolean };

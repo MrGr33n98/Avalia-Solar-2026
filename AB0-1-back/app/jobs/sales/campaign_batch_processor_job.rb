@@ -7,6 +7,10 @@ module Sales
     def perform(campaign_id, recipient_ids)
       campaign = ::Sales::Campaign.find_by(id: campaign_id)
       return unless campaign && campaign.status == 'dispatching'
+      unless ::Sales::Messaging::SendingGate.enabled?
+        campaign.update!(status: 'paused')
+        return
+      end
 
       recipients = ::Sales::CampaignRecipient.where(id: recipient_ids, sales_campaign_id: campaign_id, status: %w[pending failed])
       return if recipients.empty?
@@ -32,6 +36,10 @@ module Sales
         # Reload campaign status to respect pause/cancel in real-time
         campaign.reload
         break unless campaign.status == 'dispatching'
+        unless ::Sales::Messaging::SendingGate.enabled?
+          campaign.update!(status: 'paused')
+          break
+        end
 
         begin
           recipient.with_lock do
@@ -80,8 +88,9 @@ module Sales
             end
           end
         rescue StandardError => e
-          Rails.logger.error("[CampaignBatchProcessorJob] Erro ao enviar para #{recipient.email}: #{e.message}")
-          recipient.mark_failed!(e.message)
+          Rails.logger.error({ event: 'sales_campaign_recipient_send_failed', campaign_id: campaign.id,
+                               recipient_id: recipient.id, error_class: e.class.name }.to_json)
+          recipient.mark_failed!(e.class.name)
         end
       end
     end

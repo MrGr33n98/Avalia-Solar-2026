@@ -10,6 +10,26 @@ class Rack::Attack
 
   ### Throttle Configurations ###
 
+  throttle('sales_forms/submissions/ip', limit: 10, period: 1.minute) do |req|
+    req.ip if req.path.match?(%r{\A/api/v1/sales/forms/[^/]+/submit\z}) && req.post?
+  end
+
+  throttle('sales_forms/submissions/form', limit: 5, period: 10.minutes) do |req|
+    if req.path.match?(%r{\A/api/v1/sales/forms/[^/]+/submit\z}) && req.post?
+      Digest::SHA256.hexdigest(req.path.split('/').last(2).first)
+    end
+  end
+
+  throttle('sales_tracking/public/ip', limit: 60, period: 1.minute) do |req|
+    req.ip if req.path.match?(%r{\A/api/v1/public/sales/tracking/[^/]+/(sessions|events)\z}) && req.post?
+  end
+
+  throttle('sales_tracking/public/key', limit: 600, period: 1.minute) do |req|
+    if req.path.match?(%r{\A/api/v1/public/sales/tracking/[^/]+/(sessions|events)\z}) && req.post?
+      Digest::SHA256.hexdigest(req.path.split('/')[-2])
+    end
+  end
+
   # === Fase 1: Banner Events Tracking Protection ===
   
   # Limite: 100 requests por minuto por IP em banner_events

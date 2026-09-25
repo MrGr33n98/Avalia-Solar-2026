@@ -87,6 +87,8 @@ module Api
 
         def preview
           template = params[:id].present? ? scoped_templates.find(params[:id]) : nil
+          context = resolve_sales_context
+          return unless context
           draft = draft_params
 
           subject = draft[:subject_template].presence || template&.subject_template || 'Sem Assunto'
@@ -95,9 +97,10 @@ module Api
           body_html = draft[:body_html].presence || (draft[:body_json].blank? ? template&.body_html : nil)
 
           resolved_context = ::Sales::Messaging::ContextResolver.resolve(
-            company_id: current_user.company_id,
+            company_id: context[:company_id],
             current_user: current_user,
-            context_ids: parse_context_ids,
+            context_ids: context[:ids],
+            tenant_scope: current_tenant_scope,
             raw_context: preview_context
           )
 
@@ -134,6 +137,11 @@ module Api
         end
 
         def test_send
+          unless ::Sales::Messaging::SendingGate.enabled?
+            return render_error_response(message: 'Envio de e-mail desabilitado.', status: :service_unavailable,
+                                         code: 'EMAIL_SENDING_DISABLED')
+          end
+
           target_email = params[:to_email].presence || current_user.email
 
           if defined?(::Sales::EmailSuppression) && ::Sales::EmailSuppression.exists?(email: target_email, company_id: current_user.company_id)
@@ -145,6 +153,8 @@ module Api
           end
 
           template = params[:id].present? ? scoped_templates.find(params[:id]) : nil
+          context = resolve_sales_context
+          return unless context
           draft = draft_params
 
           subject = draft[:subject_template].presence || template&.subject_template || 'Sem Assunto'
@@ -152,11 +162,11 @@ module Api
           body_json = draft[:body_json].presence || (draft[:body_html].blank? ? template&.body_json : nil)
           body_html = draft[:body_html].presence || (draft[:body_json].blank? ? template&.body_html : nil)
 
-          c_ids = parse_context_ids
           resolved_context = ::Sales::Messaging::ContextResolver.resolve(
-            company_id: current_user.company_id,
+            company_id: context[:company_id],
             current_user: current_user,
-            context_ids: c_ids,
+            context_ids: context[:ids],
+            tenant_scope: current_tenant_scope,
             raw_context: preview_context
           )
 
@@ -179,9 +189,9 @@ module Api
             body_text: rendered[:body_text],
             body_json: body_json,
             status: 'queued',
-            sales_contact_id: c_ids[:contact_id],
-            sales_account_id: c_ids[:account_id],
-            sales_opportunity_id: c_ids[:opportunity_id]
+            sales_contact_id: context[:contact]&.id,
+            sales_account_id: context[:account]&.id,
+            sales_opportunity_id: context[:opportunity]&.id
           )
 
           ::Sales::SendEmailJob.perform_now(email_message.id)
@@ -245,6 +255,38 @@ module Api
           return {} unless c_ids.respond_to?(:permit)
 
           c_ids.permit(:contact_id, :account_id, :opportunity_id).to_h.symbolize_keys
+        end
+
+        def resolve_sales_context
+          ids = parse_context_ids
+          scope = current_tenant_scope
+          account = scope.accounts.find_by(id: ids[:account_id]) if ids[:account_id].present?
+          contact = scope.contacts.find_by(id: ids[:contact_id]) if ids[:contact_id].present?
+          opportunity = scope.opportunities.find_by(id: ids[:opportunity_id]) if ids[:opportunity_id].present?
+          records = {
+            Account: [ids[:account_id], account],
+            Contact: [ids[:contact_id], contact],
+            Opportunity: [ids[:opportunity_id], opportunity]
+          }
+          records.each do |resource, (id, record)|
+            next if id.blank? || record
+
+            log_sales_denial(reason: 'template_context_out_of_scope', resource: resource.to_s)
+            raise ActiveRecord::RecordNotFound
+          end
+
+          account ||= opportunity&.account || contact&.account
+          if account && !scope.valid_relation?(account: account, contact: contact, opportunity: opportunity)
+            render_relation_conflict(resource: 'EmailTemplateContext')
+            return nil
+          end
+          company_id = account&.company_id || account&.owner&.company_id || current_user.company_id
+          if account && !current_user.admin? && company_id != current_user.company_id
+            log_sales_denial(reason: 'template_context_out_of_scope', resource: 'Account')
+            raise ActiveRecord::RecordNotFound
+          end
+
+          { ids: ids, account: account, contact: contact, opportunity: opportunity, company_id: company_id }
         end
 
         def preview_context

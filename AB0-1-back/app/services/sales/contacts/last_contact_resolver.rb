@@ -1,9 +1,11 @@
 module Sales
   module Contacts
     class LastContactResolver
-      def self.resolve(contact)
-        latest_act = contact.activities.order(occurred_at: :desc).first
-        latest_task = contact.tasks.where.not(completed_at: nil).order(completed_at: :desc).first
+      def self.resolve(contact, scope: nil)
+        activities = scope ? scope.activities.where(sales_contact_id: contact.id) : contact.activities
+        tasks = scope ? scope.tasks.where(sales_contact_id: contact.id) : contact.tasks
+        latest_act = activities.order(occurred_at: :desc).first
+        latest_task = tasks.where.not(completed_at: nil).order(completed_at: :desc).first
 
         candidates = []
 

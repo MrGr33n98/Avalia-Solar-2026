@@ -1,32 +1,40 @@
 module Sales
   module Contacts
     class TimelineBuilder
-      def self.build(contact)
+      def self.build(contact, scope: nil)
         events = []
 
-        contact.activities.order(occurred_at: :desc).each do |act|
+        activities = scope ? scope.activities.where(sales_contact_id: contact.id) : contact.activities
+        tasks = scope ? scope.tasks.where(sales_contact_id: contact.id) : contact.tasks
+        opportunity_contacts = contact.opportunity_contacts
+        if scope
+          allowed_opportunity_ids = scope.opportunities.select(:id)
+          opportunity_contacts = opportunity_contacts.where(sales_opportunity_id: allowed_opportunity_ids)
+        end
+
+        activities.includes(:actor).order(occurred_at: :desc).each do |act|
           events << {
             id: "act-#{act.id}",
             type: act.activity_type == 'call' ? 'call' : 'activity',
             title: act.activity_type == 'call' ? 'Chamada Registrada' : 'Atividade Comercial',
             description: act.description || act.body,
             occurred_at: act.occurred_at || act.created_at,
-            actor: act.user ? { id: act.user.id, name: act.user.name } : nil
+            actor: act.actor ? { id: act.actor.id, name: act.actor.name } : nil
           }
         end
 
-        contact.tasks.each do |t|
+        tasks.includes(:owner).each do |t|
           events << {
             id: "task-#{t.id}",
             type: 'task',
             title: "Tarefa: #{t.title}",
             description: "Status: #{t.status || (t.completed_at ? 'Concluída' : 'Pendente')}",
             occurred_at: t.completed_at || t.due_at || t.created_at,
-            actor: t.user ? { id: t.user.id, name: t.user.name } : nil
+            actor: t.owner ? { id: t.owner.id, name: t.owner.name } : nil
           }
         end
 
-        contact.opportunity_contacts.includes(:opportunity).each do |oc|
+        opportunity_contacts.includes(:opportunity).each do |oc|
           if oc.opportunity
             events << {
               id: "opp-#{oc.id}",
@@ -38,11 +46,7 @@ module Sales
           end
         end
 
-        emails_query = if contact.email.present?
-                         Sales::EmailMessage.where('sales_contact_id = ? OR LOWER(to_email) = ?', contact.id, contact.email.downcase.strip)
-                       else
-                         contact.email_messages
-                       end
+        emails_query = scope ? scope.email_messages.where(sales_contact_id: contact.id) : contact.email_messages
 
         emails_query.includes(:events, :sender_user).order(created_at: :desc).each do |email|
           opens = email.respond_to?(:open_count) ? email.open_count.to_i : email.events.count { |ev| ev.event_type == 'open' }

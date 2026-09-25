@@ -156,14 +156,20 @@ export default function SalesCommandCenter({
   hideLayout = false,
   pipelineId,
   refreshVersion = 0,
+  initialView = 'kanban',
+  searchQuery = '',
+  activeQuickFilter = 'all',
 }: {
   pipelineOnly?: boolean;
   hideLayout?: boolean;
   pipelineId?: number;
   refreshVersion?: number;
+  initialView?: 'kanban' | 'table';
+  searchQuery?: string;
+  activeQuickFilter?: string;
 }) {
-  const [view, setView] = useState<'kanban' | 'table'>('kanban');
-  const [search, setSearch] = useState('');
+  const [view, setView] = useState<'kanban' | 'table'>(initialView);
+  const [search, setSearch] = useState(searchQuery);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [isNewDealOpen, setIsNewDealOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -173,19 +179,45 @@ export default function SalesCommandCenter({
   const [columnDialogOpen, setColumnDialogOpen] = useState(false);
   const [columns, setColumns] = useState({ company: true, opportunity: true, stage: true, value: true, contact: true });
 
+  useEffect(() => {
+    setView(initialView);
+  }, [initialView]);
+
+  useEffect(() => {
+    setSearch(searchQuery);
+  }, [searchQuery]);
+
   const { data: pipelines = [], isPending: pipelinesLoading, error: pipelinesError } = useSalesPipelines();
   const resolvedPipelineId = pipelineId ?? pipelines.find((pipeline) => pipeline.active)?.id ?? pipelines[0]?.id;
+
+  const quickFilterParams = useMemo<Partial<PipelineBoardParams>>(() => {
+    switch (activeQuickFilter) {
+      case 'my_leads':
+        return { owner_id: 'me' };
+      case 'hot':
+        return { temperature: 'hot' };
+      case 'closing_this_week':
+        return { closing_this_week: true };
+      case 'unassigned':
+        return { owner_id: 'unassigned' };
+      default:
+        return {};
+    }
+  }, [activeQuickFilter]);
+
   const boardParams = useMemo<PipelineBoardParams>(
     () => ({
       search: search || undefined,
       status: leadFilters.status,
-      owner_id: leadFilters.owner_id,
+      owner_id: quickFilterParams.owner_id ?? leadFilters.owner_id,
+      temperature: quickFilterParams.temperature ?? (leadFilters as any).temperature,
+      closing_this_week: quickFilterParams.closing_this_week,
       stage_key: leadFilters.stage_key,
       value_min: leadFilters.value_min,
       value_max: leadFilters.value_max,
       tag_ids: leadFilters.tag_ids,
     }),
-    [leadFilters, search]
+    [leadFilters, search, quickFilterParams]
   );
   const {
     data: boardData,
@@ -235,6 +267,17 @@ export default function SalesCommandCenter({
         : boardError
           ? 'error'
           : 'success';
+
+  const errorDiagnostics = useMemo(() => {
+    if (boardError instanceof SalesApiError) {
+      const parts = [];
+      if (boardError.status) parts.push(`Status HTTP: ${boardError.status}`);
+      if (boardError.code) parts.push(`Código: ${boardError.code}`);
+      if (boardError.requestId) parts.push(`Request ID: ${boardError.requestId}`);
+      return parts.length > 0 ? parts.join(' • ') : boardError.message;
+    }
+    return boardError instanceof Error ? boardError.message : null;
+  }, [boardError]);
 
   const toggleSelected = (id: number) => setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
 
@@ -400,10 +443,15 @@ export default function SalesCommandCenter({
         )}
 
         {fetchState === 'error' && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4" data-testid="pipeline-error">
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-center" data-testid="pipeline-error">
             <AlertCircle className="h-10 w-10 text-red-600" />
             <p className="font-semibold text-slate-900">Não foi possível carregar as oportunidades.</p>
-            <Button onClick={() => void refreshBoard()} variant="outline" className="font-bold">
+            {errorDiagnostics && (
+              <p className="text-xs font-mono text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg max-w-md">
+                {errorDiagnostics}
+              </p>
+            )}
+            <Button onClick={() => void refreshBoard()} variant="outline" className="font-bold mt-2">
               Tentar Novamente
             </Button>
           </div>

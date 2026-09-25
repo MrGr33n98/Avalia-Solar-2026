@@ -46,7 +46,7 @@ else
   echo "✅ Database already exists"
   
   # Check for pending migrations
-  if bundle exec rails db:migrate:status | grep -q "down"; then
+  if bundle exec rails db:migrate:status 2>&1 | grep "down" > /dev/null 2>&1; then
     echo "🔄 Running pending migrations..."
     bundle exec rails db:migrate
   else

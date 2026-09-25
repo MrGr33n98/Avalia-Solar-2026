@@ -43,7 +43,9 @@ RSpec.describe Sales::Messaging::SnsMessageVerifier do
 
   context 'Host validation for certificate URI' do
     before do
-      allow(Net::HTTP).to receive(:get).and_return(cert.to_pem)
+      response = Net::HTTPOK.new('1.1', '200', 'OK')
+      allow(response).to receive(:body).and_return(cert.to_pem)
+      allow(Net::HTTP).to receive(:start).and_yield(double(get: response))
     end
 
     it 'aceita sns.us-east-2.amazonaws.com' do

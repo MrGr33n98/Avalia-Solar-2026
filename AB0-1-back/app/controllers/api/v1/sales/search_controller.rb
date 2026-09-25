@@ -10,9 +10,9 @@ module Api
 
           term = "%#{query.downcase}%"
 
-          accounts = ::Sales::Account.where('LOWER(name) LIKE ? OR LOWER(city) LIKE ? OR LOWER(domain) LIKE ?', term, term, term).limit(5)
-          contacts = ::Sales::Contact.where('LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(email) LIKE ?', term, term, term).limit(5)
-          opportunities = ::Sales::Opportunity.where('LOWER(name) LIKE ?', term).limit(5)
+          accounts = current_tenant_scope.accounts.where('LOWER(name) LIKE ? OR LOWER(city) LIKE ? OR LOWER(domain) LIKE ?', term, term, term).limit(5)
+          contacts = current_tenant_scope.contacts.where('LOWER(first_name) LIKE ? OR LOWER(last_name) LIKE ? OR LOWER(email) LIKE ?', term, term, term).limit(5)
+          opportunities = current_tenant_scope.opportunities.where('LOWER(name) LIKE ?', term).limit(5)
 
           results = []
 

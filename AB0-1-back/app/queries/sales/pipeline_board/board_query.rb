@@ -61,7 +61,19 @@ module Sales
         end
 
         if @params[:owner_id].present?
-          scope = scope.where(owner_id: @params[:owner_id])
+          if @params[:owner_id].to_s == 'unassigned'
+            scope = scope.where(owner_id: nil)
+          elsif @params[:owner_id].to_s == 'me' && @current_user.present?
+            scope = scope.where(owner_id: @current_user.id)
+          else
+            scope = scope.where(owner_id: @params[:owner_id])
+          end
+        end
+
+        if @params[:closing_this_week].to_s == 'true' || @params[:closing_this_week] == true
+          beginning = Date.current.beginning_of_week
+          ending = Date.current.end_of_week
+          scope = scope.where(expected_close_date: beginning..ending)
         end
 
         if @params[:temperature].present?

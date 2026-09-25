@@ -28,8 +28,15 @@ module Sales
             )
           end
 
+          tenant_scope = ::Sales::TenantScope.for(@actor)
+          account = tenant_scope.accounts.find_by(id: account_id)
+          raise InvalidRelationError unless account
+          raise InvalidRelationError unless tenant_scope.valid_owner?(@actor, account: account)
+
           contact_id = resolve_contact(account_id)
-          validate_contact_account_consistency!(contact_id, account_id) if contact_id.present?
+          contact = tenant_scope.contacts.find_by(id: contact_id) if contact_id.present?
+          raise InvalidRelationError if contact_id.present? && contact.nil?
+          raise InvalidRelationError if contact && !tenant_scope.valid_relation?(account: account, contact: contact)
 
           pipeline = resolve_pipeline
           stage = resolve_stage(pipeline)
@@ -59,8 +66,8 @@ module Sales
 
           Result.new(success?: true, opportunity: opportunity)
         end
-      rescue CustomerAccountMismatchError => e
-        Result.new(success?: false, code: 'CONTACT_ACCOUNT_MISMATCH', message: e.message)
+      rescue InvalidRelationError
+        Result.new(success?: false, code: 'INVALID_RELATION', message: 'Uma ou mais referências comerciais são inválidas ou incompatíveis.')
       rescue PipelineNotConfiguredError => e
         Result.new(success?: false, code: 'CRM_PIPELINE_NOT_CONFIGURED', message: e.message)
       rescue StagePipelineMismatchError => e
@@ -88,9 +95,9 @@ module Sales
 
       private
 
-      class CustomerAccountMismatchError < StandardError; end
       class PipelineNotConfiguredError < StandardError; end
       class StagePipelineMismatchError < StandardError; end
+      class InvalidRelationError < StandardError; end
 
       def resolve_account
         return @attributes[:sales_account_id] if @attributes[:sales_account_id].present?
@@ -107,7 +114,12 @@ module Sales
       end
 
       def resolve_contact(account_id)
-        return @attributes[:primary_contact_id] if @attributes[:primary_contact_id].present?
+        if @attributes[:primary_contact_id].present?
+          contact = ::Sales::TenantScope.for(@actor).contacts.find_by(id: @attributes[:primary_contact_id])
+          raise InvalidRelationError unless contact
+
+          return contact.id
+        end
 
         if @inline_contact.present? && @inline_contact[:first_name].present? && account_id.present?
           new_contact = ::Sales::Contact.create!(
@@ -120,15 +132,6 @@ module Sales
         end
 
         nil
-      end
-
-      def validate_contact_account_consistency!(contact_id, account_id)
-        contact = ::Sales::Contact.find_by(id: contact_id)
-        return if contact.nil?
-
-        if contact.sales_account_id.present? && contact.sales_account_id != account_id.to_i
-          raise CustomerAccountMismatchError, "O contato ##{contact_id} pertence à conta ##{contact.sales_account_id}, não à conta ##{account_id} selecionada."
-        end
       end
 
       def resolve_pipeline

@@ -17,6 +17,7 @@ module Sales
         check_name
         check_template
         check_sender
+        check_sending_gate
         check_provider
         check_audience
         check_status
@@ -64,9 +65,18 @@ module Sales
       end
 
       def check_provider
-        return if provider_summary[:status] == 'configured'
+        return if provider_summary[:status] == 'operational'
 
-        @blockers << { code: 'PROVIDER_UNVERIFIED', message: 'O provedor de e-mail ainda não está verificado para envio.' }
+        @blockers << {
+          code: 'PROVIDER_NOT_OPERATIONAL',
+          message: provider_summary[:message]
+        }
+      end
+
+      def check_sending_gate
+        return if ::Sales::Messaging::SendingGate.enabled?
+
+        @blockers << { code: 'EMAIL_SENDING_DISABLED', message: 'O envio de e-mail está desabilitado pela configuração operacional.' }
       end
 
       def check_audience
@@ -101,17 +111,8 @@ module Sales
         }
       end
 
-      def provider_configured?
-        return true if Rails.env.test?
-
-        ENV['AWS_ACCESS_KEY_ID'].present? && ENV['AWS_SECRET_ACCESS_KEY'].present?
-      end
-
       def provider_summary
-        {
-          provider: 'aws_ses',
-          status: provider_configured? ? 'configured' : 'unverified'
-        }
+        @provider_summary ||= ::Sales::Messaging::Providers::HealthCheck.call(from_email: sender_summary[:from_email])
       end
     end
   end

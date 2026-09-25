@@ -8,7 +8,11 @@ module Api
         before_action :require_internal_sales
 
         def index
-          scope = ::Sales::Task.includes(:account, :contact).where(owner: current_user)
+          scope = current_tenant_scope.tasks.where(owner_id: current_user.id).includes(:account, :contact)
+          if params[:account_id].present?
+            account = current_tenant_scope.accounts.find(params[:account_id])
+            scope = scope.where(sales_account_id: account.id)
+          end
 
           if params[:status].present? && params[:status] != 'all'
             if params[:status] == 'completed'
@@ -42,7 +46,43 @@ module Api
         end
 
         def create
-          task = ::Sales::Task.new(task_params.merge(owner: current_user))
+          attrs = task_params.to_h.symbolize_keys
+          if params[:account_id].present? && attrs[:sales_account_id].present? &&
+             attrs[:sales_account_id].to_s != params[:account_id].to_s
+            return render_relation_conflict(resource: 'Task')
+          end
+          acc_id = params[:account_id].presence || attrs[:sales_account_id]
+          opp_id = attrs[:sales_opportunity_id]
+          cnt_id = attrs[:sales_contact_id]
+
+          account = current_tenant_scope.accounts.find_by(id: acc_id) if acc_id.present?
+          opportunity = current_tenant_scope.opportunities.find_by(id: opp_id) if opp_id.present?
+          contact = current_tenant_scope.contacts.find_by(id: cnt_id) if cnt_id.present?
+
+          unless acc_id.present?
+            return render_error_response(message: 'Conta é obrigatória.', status: :unprocessable_entity, code: 'ACCOUNT_REQUIRED')
+          end
+          if account.nil?
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Account')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+
+          if opp_id.present? && opportunity.nil?
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Opportunity')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+
+          if cnt_id.present? && contact.nil?
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Contact')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+
+          if !current_tenant_scope.valid_relation?(account: account, contact: contact, opportunity: opportunity)
+            return render_relation_conflict(resource: 'Task')
+          end
+          return render_relation_conflict(resource: 'Task') unless current_tenant_scope.valid_owner?(current_user, account: account)
+
+          task = ::Sales::Task.new(attrs.merge(owner: current_user, sales_account_id: account&.id))
           task.save!
           render json: { task: task_json(task.reload) }, status: :created
         rescue ActiveRecord::RecordInvalid => e
@@ -56,13 +96,43 @@ module Api
         end
 
         def update
-          task = ::Sales::Task.where(owner: current_user).find(params[:id])
-          task.update!(task_params)
+          task = current_tenant_scope.tasks.where(owner_id: current_user.id).find(params[:id])
+          attrs = task_params.to_h.symbolize_keys
+          acc_id = attrs[:sales_account_id].presence || task.sales_account_id
+          opp_id = attrs.key?(:sales_opportunity_id) ? attrs[:sales_opportunity_id] : task.sales_opportunity_id
+          cnt_id = attrs.key?(:sales_contact_id) ? attrs[:sales_contact_id] : task.sales_contact_id
+
+          account = current_tenant_scope.accounts.find_by(id: acc_id) if acc_id.present?
+          opportunity = current_tenant_scope.opportunities.find_by(id: opp_id) if opp_id.present?
+          contact = current_tenant_scope.contacts.find_by(id: cnt_id) if cnt_id.present?
+
+          if acc_id.present? && account.nil?
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Account')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+
+          if opp_id.present? && opportunity.nil?
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Opportunity')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+
+          if cnt_id.present? && contact.nil?
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Contact')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+
+          if account.nil? || !current_tenant_scope.valid_relation?(account: account, contact: contact, opportunity: opportunity)
+            return render_relation_conflict(resource: 'Task')
+          end
+          return render_relation_conflict(resource: 'Task') unless current_tenant_scope.valid_owner?(current_user, account: account)
+
+          task.update!(attrs)
           if (task.status == 'completed' || task.status == 'done') && task.completed_at.blank?
             task.update!(completed_at: Time.current)
           elsif task.status == 'pending' && task.completed_at.present?
             task.update!(completed_at: nil)
           end
+          ::Sales::EmailSequences::EnrollmentProcessor.task_completed(task) if task.completed_at.present?
           render json: { task: task_json(task.reload) }
         rescue ActiveRecord::RecordNotFound => e
           render_error_response(message: 'Tarefa não encontrada.', status: :not_found, code: 'NOT_FOUND')
@@ -88,7 +158,13 @@ module Api
         end
 
         def task_json(task)
+          scope = current_tenant_scope
           contact = task.contact
+          opportunity = task.opportunity
+          if !scope.valid_relation?(account: task.account, contact: contact, opportunity: opportunity)
+            contact = nil
+            opportunity = nil
+          end
           {
             id: task.id,
             title: task.title,
@@ -100,7 +176,7 @@ module Api
             completed_at: task.completed_at,
             owner_id: task.owner_id,
             sales_account_id: task.sales_account_id,
-            sales_opportunity_id: task.sales_opportunity_id,
+            sales_opportunity_id: opportunity&.id,
             sales_contact_id: task.sales_contact_id,
             account_name: task.account&.name,
             contact_name: contact ? [contact.first_name, contact.last_name].compact.join(' ') : nil,

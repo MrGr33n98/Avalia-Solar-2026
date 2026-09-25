@@ -10,8 +10,8 @@ RSpec.describe Sales::TenantScope do
   let(:user_b) { create(:user, company: company_b) }
   let(:admin_user) { create(:user, role: 'admin') }
 
-  let!(:account_a) { create(:sales_account, owner: user_a) }
-  let!(:account_b) { create(:sales_account, owner: user_b) }
+  let!(:account_a) { create(:sales_account, owner: user_a, company: company_a) }
+  let!(:account_b) { create(:sales_account, owner: user_b, company: company_b) }
 
   describe '#accounts' do
     it 'returns accounts owned by tenant A users for user_a' do

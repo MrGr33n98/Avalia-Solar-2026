@@ -119,6 +119,20 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       credentials: true,
       max_age: 3600
   end
+
+  # Tracking público: origem autorizada por site/chave no banco, sem wildcard
+  # nos demais endpoints da API.
+  allow do
+    origins lambda { |origin, env|
+      match = env['PATH_INFO'].to_s.match(%r{\A/api/v1/public/sales/tracking/([A-Za-z0-9_-]+)(?:\.js|/(?:sessions|events))\z})
+      next false unless match && origin.present?
+
+      ::Sales::TrackingSite.where(public_key: match[1], active: true)
+                           .where('allowed_origins @> ?', [origin].to_json).exists?
+    }
+    resource '/api/v1/public/sales/tracking/*', headers: :any, methods: %i[get post options],
+                                                 credentials: false, max_age: 600
+  end
 end
 
 # Log configuração em desenvolvimento

@@ -21,6 +21,17 @@ RSpec.describe Sales::SendEmailJob, type: :job do
   end
 
   describe '#perform' do
+    before { allow(Sales::Messaging::SendingGate).to receive(:enabled?).and_return(true) }
+
+    it 'mantém a mensagem queued e não chama provider com a kill switch desligada' do
+      allow(Sales::Messaging::SendingGate).to receive(:enabled?).and_return(false)
+      expect(Sales::Messaging::Providers::Ses).not_to receive(:new)
+
+      described_class.new.perform(email_message.id)
+
+      expect(email_message.reload.status).to eq('queued')
+    end
+
     context 'send-time suppression check' do
       it 'prevents provider dispatch and marks email failed / recipient unsubscribed if suppressed' do
         Sales::EmailSuppression.create!(company: company, email: recipient.email, reason: 'unsubscribe')
