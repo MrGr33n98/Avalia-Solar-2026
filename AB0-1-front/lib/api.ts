@@ -2213,6 +2213,25 @@ export interface RankingData {
     opportunities: RankingInsight[];
     next_best_action?: RankingInsight | null;
   };
+  readiness?: {
+    total_steps: number;
+    completed_steps: number;
+    completion_percentage: number;
+    is_eligible: boolean;
+    next_action?: {
+      step_id: string;
+      title: string;
+      description?: string;
+      action_url?: string;
+    } | null;
+    items: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      status: 'completed' | 'pending';
+      action_url?: string;
+    }>;
+  };
   score_drivers?: {
     status: 'ready' | 'unavailable';
     source: 'official_snapshot' | 'current_ranking_score' | null;

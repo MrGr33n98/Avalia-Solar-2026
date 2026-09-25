@@ -5,15 +5,15 @@ module TrustScore
   # materializados na empresa, o que permite que o recálculo unitário e o lote
   # diário produzam exatamente o mesmo resultado.
   class Definition
-    VERSION = 'trust-score-v1'
+    VERSION = 'trust-score-v2'
 
     WEIGHTS = {
-      base: 50.0,
-      verification: 20.0,
+      base: 30.0,
+      verification: 25.0,
       rating: 20.0,
-      reviews: 10.0,
-      engagement: 10.0,
-      leads: 10.0
+      reviews: 15.0,
+      engagement: 5.0,
+      leads: 5.0
     }.freeze
 
     MAX_VALUES = {

@@ -105,6 +105,7 @@ module CompanyDashboard
         score_drivers: score_drivers_for(snapshot: snapshot, ranking: ranking, population: population, preview: preview),
         gaps: gaps_for(population),
         changes: changes_for(history_items),
+        readiness: readiness_payload,
         error: nil,
 
         # Compatibilidade temporária do contrato anterior.
@@ -787,6 +788,10 @@ module CompanyDashboard
 
     def effective_positioning_version
       @positioning_version.to_s.include?('v2') ? Positioning::Definition::VERSION_V2 : Positioning::Definition::VERSION
+    end
+
+    def readiness_payload
+      RankingReadinessService.new(company: company).call
     end
 
     def positioning_calculator_class

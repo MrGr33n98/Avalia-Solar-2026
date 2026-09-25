@@ -5,10 +5,10 @@ module CompanyDashboard
     class CalculatorV2 < Calculator
       def y_breakdown_for(record, criterion_signal)
         base = {
-          leads: normalize_log(record.leads_count.to_f, Definition::CAPS_V2[:execution_leads_max]) * 35.0,
+          leads: normalize_log(record.leads_count.to_f, Definition::CAPS_V2[:execution_leads_max]) * 30.0,
           engagement: blended_engagement_score_for(record) * 25.0,
           conversion_efficiency: conversion_efficiency_score_for(record) * 20.0,
-          operational_maturity: operational_maturity_score_for(record) * 10.0
+          operational_maturity: operational_maturity_score_for(record) * 15.0
         }
         multiplier = @criterion_slug.present? ? 1.0 : (100.0 / 90.0)
         breakdown = base.transform_values { |value| value * multiplier }

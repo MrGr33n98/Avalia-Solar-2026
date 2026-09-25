@@ -1,19 +1,25 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import {
+  AlertCircle,
   ArrowDown,
   ArrowUp,
   Award,
+  CheckCircle2,
+  Clock,
   Equal,
   Globe2,
   HelpCircle,
   MapPinned,
   ShieldCheck,
   Sparkles,
+  TrendingUp,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { RankingData } from '@/lib/api';
@@ -24,6 +30,7 @@ interface Props {
   comparisonLabel?: string | null;
   heroTitle?: string;
   onOpenMethodology?: () => void;
+  onScrollToOpportunities?: () => void;
 }
 
 export function RankingExecutiveHero({
@@ -32,6 +39,7 @@ export function RankingExecutiveHero({
   comparisonLabel,
   heroTitle,
   onOpenMethodology,
+  onScrollToOpportunities,
 }: Props) {
   const currentMetric = data?.ranking;
   const officialMetric = data?.official_ranking || data?.ranking;
@@ -41,18 +49,24 @@ export function RankingExecutiveHero({
   const score = currentMetric?.score != null ? Number(currentMetric.score) : null;
   const percentile = currentMetric?.percentile != null ? Number(currentMetric.percentile) : null;
 
+  const readiness = data?.readiness;
+  const isEligible = readiness?.is_eligible ?? (position != null && position > 0);
+
   const title =
     heroTitle ||
     (isPreview && comparisonLabel
       ? `Desempenho em ${comparisonLabel}`
       : 'Desempenho no Mercado');
 
-  // Delta de posição nos últimos 30/90 dias
+  // Delta de posição nos últimos snapshots
   const changes = data?.changes?.changes;
   const posChange = changes?.position; // backend computes previous - current (+ is improvement)
 
+  // Mediana regional / nacional para comparativo defensável
+  const median = data?.benchmarks?.median_score != null ? Number(data.benchmarks.median_score) : null;
+  const deltaMedian = score != null && median != null ? +(score - median).toFixed(1) : null;
+
   // Posição no topo da população: posição / população total elegível
-  // Ex: #1 de 81 empresas => 1 / 81 * 100 = 1.2% (e não 0.1% artificial)
   const topPercent =
     position != null && population != null && population > 0
       ? Math.max(0.1, +((position / population) * 100).toFixed(1))
@@ -78,7 +92,7 @@ export function RankingExecutiveHero({
                   Market Position Intelligence
                 </h2>
                 <Badge variant="outline" className="text-[10px] font-semibold border-blue-200 bg-blue-50/60 text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300">
-                  Oficial
+                  {isPreview ? 'Comparativo' : 'Oficial'}
                 </Badge>
               </div>
               <h2 id="ranking-title" className="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-xl">
@@ -118,92 +132,237 @@ export function RankingExecutiveHero({
           </TooltipProvider>
         </div>
 
-        {/* Núcleo Central: Destaque em 5 Segundos */}
-        <div className="grid gap-6 md:grid-cols-12 md:items-center">
+        {/* Núcleo Central: Destaque em 5 Segundos + Status vs Mediana */}
+        <div className="grid gap-6 lg:grid-cols-12 lg:items-center">
           {/* Posição Principal e Escopo */}
-          <div className="space-y-2 md:col-span-5">
-            <div className="flex items-baseline gap-3">
-              <span className="text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">
-                {position != null ? `#${position}` : '—'}
-              </span>
-              {population && (
-                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                  de {population} empresas
-                </span>
-              )}
-            </div>
-
-            {/* Delta de Posição Recente */}
-            {posChange != null && (
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className={`flex items-center gap-1 text-xs font-semibold ${
-                    posChange > 0
-                      ? 'border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
-                      : posChange < 0
-                        ? 'border-rose-500/30 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
-                        : 'border-slate-200 text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  {posChange > 0 ? (
-                    <ArrowUp className="h-3 w-3" />
-                  ) : posChange < 0 ? (
-                    <ArrowDown className="h-3 w-3" />
-                  ) : (
-                    <Equal className="h-3 w-3" />
+          <div className="space-y-3 lg:col-span-5">
+            {isEligible ? (
+              <>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">
+                    {position != null ? `#${position}` : '—'}
+                  </span>
+                  {population && (
+                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      de {population} empresas
+                    </span>
                   )}
-                  {posChange > 0
-                    ? `Subiu ${posChange} ${posChange === 1 ? 'posição' : 'posições'}`
-                    : posChange < 0
-                      ? `Caiu ${Math.abs(posChange)} ${Math.abs(posChange) === 1 ? 'posição' : 'posições'}`
-                      : 'Posição estável'}{' '}
-                  nos últimos snapshots
-                </Badge>
+                </div>
+
+                {/* Delta de Posição Recente */}
+                {posChange != null && (
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`flex items-center gap-1 text-xs font-semibold ${
+                        posChange > 0
+                          ? 'border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                          : posChange < 0
+                            ? 'border-rose-500/30 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
+                            : 'border-slate-200 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      {posChange > 0 ? (
+                        <ArrowUp className="h-3 w-3" />
+                      ) : posChange < 0 ? (
+                        <ArrowDown className="h-3 w-3" />
+                      ) : (
+                        <Equal className="h-3 w-3" />
+                      )}
+                      {posChange > 0
+                        ? `Subiu ${posChange} ${posChange === 1 ? 'posição' : 'posições'}`
+                        : posChange < 0
+                          ? `Caiu ${Math.abs(posChange)} ${Math.abs(posChange) === 1 ? 'posição' : 'posições'}`
+                          : 'Posição estável'}{' '}
+                      nos últimos snapshots
+                    </Badge>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <AlertCircle className="h-5 w-5" />
+                  <span className="font-bold text-base">Qualificação em Andamento</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Conclua os passos de verificação e cobertura para que sua empresa entre na listagem oficial e ganhe visibilidade pública.
+                </p>
               </div>
             )}
-          </div>
 
-          {/* Score e Percentil */}
-          <div className="space-y-3 rounded-xl border border-slate-100 bg-white/70 p-4 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/60 md:col-span-7">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Pontuação Orgânica
-                </span>
-                <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                  {score != null ? `${score.toFixed(1)} pontos` : '—'}
-                </p>
+            {/* Score e Percentil */}
+            <div className="space-y-2 rounded-xl border border-slate-100 bg-white/70 p-3.5 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/60">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Pontuação Orgânica (IAS)
+                  </span>
+                  <p className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    {score != null ? `${score.toFixed(1)} pontos` : '—'}
+                  </p>
+                </div>
+
+                {percentile != null && (
+                  <div className="text-right">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Posicionamento
+                    </span>
+                    <p className="flex items-center justify-end gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Top {topPercent}% do mercado
+                    </p>
+                  </div>
+                )}
               </div>
 
               {percentile != null && (
-                <div className="text-right">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    Posicionamento Relativo
-                  </span>
-                  <p className="flex items-center justify-end gap-1.5 text-sm font-bold text-blue-600 dark:text-blue-400">
-                    <Sparkles className="h-4 w-4" />
-                    Top {topPercent}% do mercado
-                  </p>
+                <div className="space-y-1">
+                  <Progress value={percentile} className="h-2 bg-slate-100 dark:bg-slate-800" />
+                  <div className="flex justify-between text-[10px] text-slate-400">
+                    <span>Base (0%)</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                      Percentil {percentile.toFixed(1)}%
+                    </span>
+                    <span>Top 10% Líderes</span>
+                  </div>
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Barra de Progresso do Percentil */}
-            {percentile != null && (
-              <div className="space-y-1">
-                <Progress value={percentile} className="h-2.5 bg-slate-100 dark:bg-slate-800" />
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span>Base da População (0%)</span>
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">
-                    Percentil {percentile.toFixed(1)}%
-                  </span>
-                  <span>Top Líderes (100%)</span>
+          {/* Card de Status vs Mediana do Mercado (Fiel ao Blueprint) */}
+          <div className="lg:col-span-7">
+            {deltaMedian != null && deltaMedian >= 0 ? (
+              <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-50/90 via-emerald-50/50 to-white p-5 shadow-xs dark:border-emerald-500/30 dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-slate-900/50">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-sm text-emerald-950 dark:text-emerald-100">
+                        Sua empresa está bem posicionada!
+                      </h3>
+                      <Badge className="bg-emerald-600 text-white hover:bg-emerald-700 text-[10px] py-0 px-2">
+                        +{deltaMedian} pts vs mediana
+                      </Badge>
+                    </div>
+                    <p className="text-xs leading-relaxed text-emerald-900/80 dark:text-emerald-200/80">
+                      Você está <strong>{deltaMedian} pontos</strong> acima da mediana do mercado ({median != null ? `${median.toFixed(1)} pts` : ''}).
+                      Continue com boa taxa de resposta e gerando novas avaliações verificadas para sustentar a liderança regional.
+                    </p>
+
+                    <div className="pt-2">
+                      {onScrollToOpportunities ? (
+                        <button
+                          type="button"
+                          onClick={onScrollToOpportunities}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200 hover:underline"
+                        >
+                          Ver oportunidades de crescimento →
+                        </button>
+                      ) : (
+                        <a
+                          href="#modulo-insights"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200 hover:underline"
+                        >
+                          Ver oportunidades de crescimento →
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
+            ) : deltaMedian != null ? (
+              <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-50/90 via-blue-50/50 to-white p-5 shadow-xs dark:border-blue-500/30 dark:from-blue-950/40 dark:via-blue-950/20 dark:to-slate-900/50">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-sm text-blue-950 dark:text-blue-100">
+                        Oportunidade de Ganho de Patamar
+                      </h3>
+                      <Badge className="bg-blue-600 text-white hover:bg-blue-700 text-[10px] py-0 px-2">
+                        {Math.abs(deltaMedian)} pts para a mediana
+                      </Badge>
+                    </div>
+                    <p className="text-xs leading-relaxed text-blue-900/80 dark:text-blue-200/80">
+                      Sua pontuação está a <strong>{Math.abs(deltaMedian)} pontos</strong> da mediana competitiva ({median != null ? `${median.toFixed(1)} pts` : ''}).
+                      Ativando sua prova social e respondendo contatos rapidamente você sobe de patamar no ranking.
+                    </p>
+                    <div className="pt-2">
+                      <a
+                        href="#modulo-insights"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200 hover:underline"
+                      >
+                        Ver principais alavancas →
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
+
+        {/* Checklist Horizontal de Onboarding & Qualificação (Módulo 01 Blueprint) */}
+        {readiness && (
+          <div className="rounded-xl border border-slate-200/70 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200/50 dark:border-slate-800/50">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                  Checklist de Onboarding e Qualificação
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  ({readiness.completed_steps} de {readiness.total_steps} etapas concluídas · {readiness.completion_percentage}%)
+                </span>
+              </div>
+
+              {readiness.next_action && !readiness.is_eligible && (
+                <Link href={readiness.next_action.action_url || '/dashboard?tab=company-info'}>
+                  <Button size="sm" variant="default" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium">
+                    {readiness.next_action.title || 'Concluir pendências'} →
+                  </Button>
+                </Link>
+              )}
+            </div>
+
+            {/* Barra de Progresso Horizontal */}
+            <div className="py-2.5">
+              <Progress value={readiness.completion_percentage} className="h-1.5 bg-slate-200 dark:bg-slate-800" />
+            </div>
+
+            {/* Grade com as 6 Etapas */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6 pt-1 text-xs">
+              {readiness.items.map((step) => {
+                const isCompleted = step.status === 'completed';
+                return (
+                  <div
+                    key={step.id}
+                    className={`flex items-center gap-2 rounded-lg p-2 transition-colors ${
+                      isCompleted
+                        ? 'bg-emerald-50/50 text-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-200'
+                        : 'bg-white/60 text-slate-600 dark:bg-slate-900/40 dark:text-slate-400'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    ) : (
+                      <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                    )}
+                    <span className={`truncate text-[11px] ${isCompleted ? 'font-medium' : 'font-normal'}`}>
+                      {step.title}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Comparação Selecionada vs Ranking Oficial (quando houver filtro regional ativo) */}
         {isPreview && officialMetric && (
@@ -239,3 +398,4 @@ export function RankingExecutiveHero({
     </Card>
   );
 }
+
