@@ -125,6 +125,7 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
         description: item.description,
         timestamp: item.occurred_at || new Date().toISOString(),
         actor: item.actor || 'Sistema',
+        metadata: item.metadata || {},
       }));
       setEvents(formattedEvents);
 

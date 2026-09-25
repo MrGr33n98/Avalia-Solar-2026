@@ -49,12 +49,17 @@ export default function UnifiedTimeline({ events, loading = false, onRefresh }: 
   });
 
   const getEventBadge = (event: TimelineEvent) => {
-    const { type, metadata } = event;
-    if (type === 'email' && metadata?.open_count && metadata.open_count > 0) {
+    const { type, metadata, description } = event;
+    const matchCount = description?.match(/Lido (\d+)x/);
+    const parsedCount = matchCount ? parseInt(matchCount[1], 10) : 0;
+    const openCount = (metadata?.open_count && metadata.open_count > 0) ? metadata.open_count : parsedCount;
+
+    if (type === 'email' && (openCount > 0 || description?.includes('👁️ Lido'))) {
+      const displayCount = openCount > 0 ? openCount : 1;
       return {
         icon: Eye,
         color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold',
-        label: `Lido (${metadata.open_count}x)`,
+        label: `👁️ Lido (${displayCount}x)`,
       };
     }
     switch (type) {

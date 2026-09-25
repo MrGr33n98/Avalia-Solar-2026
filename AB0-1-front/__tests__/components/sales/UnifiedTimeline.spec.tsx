@@ -21,7 +21,7 @@ describe('UnifiedTimeline component', () => {
     render(<UnifiedTimeline events={mockEvents} />);
 
     expect(screen.getByText('E-mail: Convite Avalia Solar')).toBeInTheDocument();
-    expect(screen.getByText('Lido (2x)')).toBeInTheDocument();
+    expect(screen.getByText('👁️ Lido (2x)')).toBeInTheDocument();
     expect(screen.getByText(/Para: felipe@exemplo.com/)).toBeInTheDocument();
   });
 
