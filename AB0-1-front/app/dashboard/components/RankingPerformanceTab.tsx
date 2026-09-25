@@ -358,9 +358,27 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
       <RankingEvidence data={data} />
 
       {/* 05. MAPA DE POSICIONAMENTO ESTRATÉGICO (MAGIC QUADRANT) & COMPETIDORES */}
-      <section className="grid gap-5 xl:grid-cols-[1.25fr_1fr]" aria-label="Mapa Estratégico e Competidores">
-        <RankingPositioningMap quadrant={data?.quadrant} />
-        <div className="space-y-5">
+      <section className="space-y-6" aria-label="Mapa Estratégico e Competidores">
+        <RankingPositioningMap
+          quadrant={data?.quadrant}
+          company={company}
+          filterOptions={filterOptions}
+          selectedState={selectedState}
+          onSelectState={(state) => {
+            setSelectedState(state);
+            setSelectedCity('');
+          }}
+          selectedCategoryId={selectedCategoryId}
+          onSelectCategory={(categoryId) => {
+            setSelectedCategoryId(categoryId);
+            setSelectedCriterionSlug('all');
+          }}
+          selectedSector={selectedSector}
+          onSelectSector={setSelectedSector}
+        />
+
+        {/* EMPRESAS PRÓXIMAS NO RANKING — REPOSICIONADO IMEDIATAMENTE ABAIXO */}
+        <div className="max-w-4xl">
           <RankingNearbyCompetitors
             leaders={data?.leaders}
             neighbors={data?.neighbors}

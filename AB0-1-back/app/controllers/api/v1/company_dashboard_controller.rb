@@ -364,7 +364,8 @@ module Api
             city: city,
             sector: sector,
             history_days: history_days,
-            quadrant_mode: quadrant_mode
+            quadrant_mode: quadrant_mode,
+            positioning_version: params[:positioning_version]
           )
           data = service.ranking_data
           payload = ranking_payload(data).merge(

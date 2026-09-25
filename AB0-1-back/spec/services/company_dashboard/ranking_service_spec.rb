@@ -241,6 +241,21 @@ RSpec.describe CompanyDashboard::RankingService do
       expect(current_point).to include(:ranking_position, :ranking_score, :score_distance)
       expect(current_point[:score_distance]).to eq(0.0)
     end
+
+    it 'supports positioning-v2 with enriched distribution and v2 methodology metadata' do
+      8.times do |index|
+        competitor = create(:company, leads_count: index + 1, profile_views_count: (index + 1) * 10)
+        ActiveRecord::Base.connection.execute(
+          "INSERT INTO company_ranking_score (company_id, score, breakdown, computed_at, created_at, updated_at) VALUES (#{competitor.id}, #{index + 2}, '{\"recent_engagement\": #{index * 10}}', NOW(), NOW(), NOW())"
+        )
+        CompanyTrustScore.create!(company: competitor, score: index + 2, components: {}, computed_at: Time.current)
+      end
+      result = described_class.new(company: company, state: company.state, positioning_version: 'positioning-v2').ranking_data
+
+      expect(result.dig(:quadrant, :methodology, :version)).to eq('positioning-v2')
+      expect(result.dig(:quadrant, :meta, :methodology_version)).to eq('positioning-v2')
+      expect(result.dig(:quadrant, :distribution)).to include(:p50_y, :p90_y, :floor_ratio_y)
+    end
   end
 
   private

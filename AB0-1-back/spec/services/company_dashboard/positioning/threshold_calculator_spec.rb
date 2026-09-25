@@ -21,4 +21,16 @@ RSpec.describe CompanyDashboard::Positioning::ThresholdCalculator do
     result = described_class.new([]).call
     expect(result).to include(x_threshold: nil, y_threshold: nil, population_size: 0)
   end
+
+  it 'diagnostica collapsed_y como true quando mediana Y <= 2.5 (eliminação de dead code)' do
+    y_values = [1.8, 1.9, 2.0, 2.1, 2.2, 2.2, 2.3, 2.5, 3.0, 3.2]
+    pts = y_values.each_with_index.map { |y, idx| [(idx + 1) * 8.0, y] }
+    result = described_class.new(points(pts)).call
+
+    expect(result[:y_threshold]).to eq(2.2)
+    expect(result[:collapsed_y]).to be(true)
+    expect(result[:floor_ratio_y]).to be >= 0.5
+    expect(result[:iqr_y]).to be_present
+    expect(result[:effective_range_y]).to be_present
+  end
 end

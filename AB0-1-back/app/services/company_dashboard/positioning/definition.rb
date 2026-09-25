@@ -6,6 +6,7 @@ module CompanyDashboard
     # pela empresa nem por parâmetros enviados ao endpoint.
     module Definition
       VERSION = 'positioning-v1'
+      VERSION_V2 = 'positioning-v2'
       THRESHOLD_METHOD = 'median'
 
       X_AXIS = {
@@ -27,6 +28,17 @@ module CompanyDashboard
         review_volume_max: 200.0,
         badges_max: 10.0,
         execution_leads_max: 100.0,
+        execution_views_max: 2_000.0,
+        execution_clicks_max: 300.0,
+        view_to_click_cap: 0.35,
+        click_to_lead_cap: 0.60
+      }.freeze
+
+      CAPS_V2 = {
+        review_volume_max: 200.0,
+        badges_max: 10.0,
+        execution_leads_max: 50.0,
+        execution_engagement_max: 250.0,
         execution_views_max: 2_000.0,
         execution_clicks_max: 300.0,
         view_to_click_cap: 0.35,

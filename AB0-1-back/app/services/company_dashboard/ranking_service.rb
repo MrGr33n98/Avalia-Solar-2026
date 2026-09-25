@@ -15,10 +15,10 @@ module CompanyDashboard
     QUADRANT_LEADERS_LIMIT = 5
     QUADRANT_NEIGHBORS_LIMIT = 5
 
-    attr_reader :company, :category_id, :criterion_slug, :history_days, :state, :city, :sector, :quadrant_mode
+    attr_reader :company, :category_id, :criterion_slug, :history_days, :state, :city, :sector, :quadrant_mode, :positioning_version
 
     def initialize(company:, category_id: nil, criterion_slug: nil, state: nil, city: nil, sector: nil,
-                   history_days: 90, quadrant_mode: nil)
+                   history_days: 90, quadrant_mode: nil, positioning_version: nil)
       @company = company
       @category_id = category_id.presence
       @criterion_slug = criterion_slug.to_s.strip.presence
@@ -27,6 +27,7 @@ module CompanyDashboard
       @sector = sector.to_s.strip.presence
       @history_days = [[history_days.to_i, 7].max, 365].min
       @quadrant_mode = quadrant_mode == 'reviews' ? 'reviews' : 'default'
+      @positioning_version = positioning_version.to_s.strip.presence || Positioning::Definition::VERSION
     end
 
     def ad_hoc_preview?
@@ -87,7 +88,7 @@ module CompanyDashboard
           preview: preview,
           points: quadrant[:points],
           meta: quadrant_meta(quadrant),
-          methodology: { version: Positioning::Definition::VERSION, threshold_method: Positioning::Definition::THRESHOLD_METHOD },
+          methodology: { version: effective_positioning_version, threshold_method: Positioning::Definition::THRESHOLD_METHOD },
           requested_scope: quadrant[:requested_scope],
           resolved_scope: quadrant[:resolved_scope],
           fallback: { active: quadrant[:fallback] == true, reason: quadrant[:fallback_reason] },
@@ -338,7 +339,7 @@ module CompanyDashboard
       end
       points_for = lambda do |records|
         key = records.map(&:id)
-        calculator_cache[key] ||= Positioning::Calculator.new(
+        calculator_cache[key] ||= positioning_calculator_class.new(
           trust_scores: trust_scores_for(records),
           category_id: category_id,
           criterion_slug: criterion_slug,
@@ -386,7 +387,7 @@ module CompanyDashboard
           displayed: assessment[:status] == "ready" ? selection[:displayed_count] : 0,
           minimum_required: minimum_population
         },
-        distribution: thresholds.slice(:distinct_x, :distinct_y),
+        distribution: thresholds.slice(:distinct_x, :distinct_y, :p10_x, :p10_y, :p50_x, :p50_y, :p90_x, :p90_y, :iqr_x, :iqr_y, :zero_ratio_y, :floor_ratio_y),
         quality_flags: (resolved[:assessment][:quality_flags].to_a + assessment[:quality_flags]).uniq
       )
     end
@@ -500,7 +501,7 @@ module CompanyDashboard
         criterion_slug: criterion_slug,
         criterion_title: criterion_title,
         mode: quadrant_mode,
-        methodology_version: Positioning::Definition::VERSION,
+        methodology_version: effective_positioning_version,
         threshold_method: Positioning::Definition::THRESHOLD_METHOD,
         methodology: 'O mapa de posicionamento usa eixos próprios e não determina a posição do ranking orgânico oficial.',
         x_axis_label: x_label,
@@ -782,6 +783,14 @@ module CompanyDashboard
 
     def business_date
       Time.current.in_time_zone('America/Sao_Paulo').to_date
+    end
+
+    def effective_positioning_version
+      @positioning_version.to_s.include?('v2') ? Positioning::Definition::VERSION_V2 : Positioning::Definition::VERSION
+    end
+
+    def positioning_calculator_class
+      @positioning_version.to_s.include?('v2') ? Positioning::CalculatorV2 : Positioning::Calculator
     end
 
     def monotonic_time
