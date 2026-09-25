@@ -318,6 +318,7 @@ Rails.application.routes.draw do
           get :locations
           get :featured
           get :mine
+          get :count
           get 'by_slug/:slug', to: 'companies#show_by_slug'
         end
 

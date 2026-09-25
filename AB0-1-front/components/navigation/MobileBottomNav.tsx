@@ -145,6 +145,7 @@ export default function MobileBottomNav() {
         ====================================================== */}
         <Link
           href="/companies"
+          prefetch={true}
           aria-current={isCompaniesActive ? 'page' : undefined}
           aria-label="Explorar empresas de energia solar"
           data-testid="mobile-nav-companies"

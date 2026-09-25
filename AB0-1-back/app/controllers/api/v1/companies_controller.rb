@@ -34,6 +34,7 @@ module Api
           fetch_companies_data
         end
 
+        expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
         render json: result if stale?(etag: result, public: true)
       rescue StandardError => e
         Rails.logger.error("Error in companies#index: #{e.message}")
@@ -55,6 +56,20 @@ module Api
         return unless stale?(etag: companies_json, public: true)
 
         render json: companies_json
+      end
+
+      # GET /api/v1/companies/count
+      def count
+        cache_key = "companies:count:v1:#{Digest::MD5.hexdigest(params.permit!.to_h.sort.to_h.to_json)}"
+        count_val = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+          ::Companies::CompanySearchQuery.call(params.except(:page, :per_page, :limit, :offset, :fields)).count
+        end
+
+        expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
+        render json: { count: count_val }
+      rescue StandardError => e
+        Rails.logger.error("Error in companies#count: #{e.message}")
+        render json: { error: 'Internal server error' }, status: :internal_server_error
       end
 
       # GET /api/v1/companies/mine
@@ -589,9 +604,12 @@ module Api
 
       # Serializer usado pelos endpoints de busca, listagem e destaques (index/featured)
       def company_json_attributes(company)
-        if params[:fields].to_s == 'map'
+        case params[:fields].to_s
+        when 'map'
           company_map_attributes(company)
-        elsif params[:fields].to_s == 'detail'
+        when 'card'
+          CompanyCardSerializer.new(company).as_json
+        when 'detail'
           company_detail_payload(company)
         else
           # Usa o CompanyListSerializer (payload reduzido e sem N+1 de FAQs/Financiamento)

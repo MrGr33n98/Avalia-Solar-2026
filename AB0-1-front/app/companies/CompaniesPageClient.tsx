@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState, useRef, Suspense, useCallback } from 'react';
+import dynamic from 'next/dynamic';
+import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
 import {
   Search,
@@ -16,9 +18,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
-import SearchMapPanel from '@/components/search/SearchMapPanel';
+import CompaniesLoading from './loading';
 import type { MapCompany } from '@/components/search/MapProvider';
-import { companiesApiSafe, type Company } from '@/lib/api-client';
+import { companiesApiSafe } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,7 +31,23 @@ import { parseQueryParams, stringifyQueryParams } from '@/components/filters/que
 import { ActiveFiltersSummary } from '@/components/filters/ActiveFiltersSummary';
 import { CompanyFilters, DEFAULT_FILTERS } from '@/components/filters/types';
 import MobileCompanyFilterBar from '@/components/companies/filters/MobileCompanyFilterBar';
-import MobileCompanyFiltersSheet from '@/components/companies/filters/MobileCompanyFiltersSheet';
+
+const SearchMapPanel = dynamic(() => import('@/components/search/SearchMapPanel'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[calc(100dvh-13rem)] min-h-[520px] w-full rounded-2xl bg-slate-100 flex items-center justify-center animate-pulse md:h-[600px]">
+      <div className="flex flex-col items-center gap-2 text-slate-400">
+        <MapIcon className="h-8 w-8 animate-bounce" />
+        <span className="text-sm font-medium">Carregando mapa...</span>
+      </div>
+    </div>
+  ),
+});
+
+const MobileCompanyFiltersSheet = dynamic(
+  () => import('@/components/companies/filters/MobileCompanyFiltersSheet'),
+  { ssr: false }
+);
 import { useCompanyGeolocation } from '@/hooks/useCompanyGeolocation';
 import { CompanyCategoryPicker } from '@/components/companies/filters/CompanyCategoryPicker';
 import {
@@ -64,11 +82,7 @@ export function CompaniesContent({
     title: 'Empresas de Energia Solar - Avalia Solar',
   });
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -82,11 +96,7 @@ export function CompaniesContent({
     [activeForcedCategoryIds, pathname]
   );
   const pathSlugById = useMemo(() => extractCategorySlugByIdFromPath(pathname), [pathname]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
-  const [totalCount, setTotalCount] = useState(0);
   const [showMobileLocationGate, setShowMobileLocationGate] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const { detectingGps: detectingLocation, gpsError, getCoordinates } = useCompanyGeolocation();
@@ -119,7 +129,7 @@ export function CompaniesContent({
     return `${filters.category_ids.length} categorias`;
   }, [categoryNames, filters.category_ids]);
   const [searchInput, setSearchInput] = useState(filters.search || '');
-  const debouncedSearchInput = useDebounce(searchInput, 400);
+  const debouncedSearchInput = useDebounce(searchInput, 250);
   const requestParams = useMemo(
     () => ({
       status: 'active' as const,
@@ -160,6 +170,36 @@ export function CompaniesContent({
       viewMode,
     ]
   );
+
+  const {
+    data: companiesResponse,
+    isLoading: loading,
+    isFetching,
+    error: queryError,
+  } = useQuery({
+    queryKey: ['companies', requestParams],
+    queryFn: async ({ signal }) => {
+      if (typeof window !== 'undefined' && 'performance' in window) {
+        performance.mark('companies_fetch_start');
+      }
+      const res = await companiesApiSafe.getAllPaginated({
+        ...requestParams,
+        signal,
+      });
+      if (typeof window !== 'undefined' && 'performance' in window) {
+        performance.mark('companies_api_received');
+      }
+      return res;
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  const companies = useMemo(() => companiesResponse?.data || [], [companiesResponse?.data]);
+  const totalCount = companiesResponse?.meta?.pagination?.total ?? companies.length;
+  const error = queryError instanceof Error ? queryError.message : null;
 
   const buildTargetUrl = useCallback(
     (nextFilters: CompanyFilters): string => {
@@ -303,38 +343,11 @@ export function CompaniesContent({
   }, [debouncedSearchInput]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await companiesApiSafe.getAllPaginated(requestParams);
-
-        if (!cancelled) {
-          setCompanies(response.data || []);
-          setTotalCount(response.meta?.pagination?.total || response.data?.length || 0);
-        }
-      } catch (err) {
-        console.error('[Companies] Fetch error:', err);
-        const errorMsg = err instanceof Error ? err.message : 'Erro ao carregar empresas';
-        const detailedError = `${errorMsg}. Verifique se o backend está rodando em http://localhost:3001`;
-        if (!cancelled) {
-          setError(detailedError);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [requestParams]);
+    if (companies.length > 0 && typeof window !== 'undefined' && 'performance' in window) {
+      performance.mark('companies_first_card_painted');
+      performance.mark('companies_ready');
+    }
+  }, [companies.length]);
 
   // Track filter changes (skip first mount)
   const isFirstMount = useRef(true);
@@ -466,6 +479,31 @@ export function CompaniesContent({
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.max(1, filters.page || 1);
+
+  const prefetchNextPage = useCallback(() => {
+    if (currentPage < totalPages) {
+      const nextParams = { ...requestParams, page: currentPage + 1 };
+      queryClient.prefetchQuery({
+        queryKey: ['companies', nextParams],
+        queryFn: ({ signal }) => companiesApiSafe.getAllPaginated({ ...nextParams, signal }),
+        staleTime: 60 * 1000,
+      });
+    }
+  }, [currentPage, queryClient, requestParams, totalPages]);
+
+  useEffect(() => {
+    if (!loading && typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      type IdleCallbackWindow = Window & {
+        requestIdleCallback: (cb: () => void) => number;
+        cancelIdleCallback: (id: number) => void;
+      };
+      const idleWindow = window as unknown as IdleCallbackWindow;
+      const handle = idleWindow.requestIdleCallback(() => {
+        prefetchNextPage();
+      });
+      return () => idleWindow.cancelIdleCallback(handle);
+    }
+  }, [loading, prefetchNextPage]);
 
   const goToPage = (page: number) => {
     const nextPage = Math.min(Math.max(page, 1), totalPages);
@@ -608,17 +646,6 @@ export function CompaniesContent({
     );
   }
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="text-sm text-slate-500 font-medium">Carregando empresas...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-slate-50/50">
       {/* Swiss Style: Barra de alerta de localização */}
@@ -688,8 +715,13 @@ export function CompaniesContent({
                   <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                     {pageHeading}
                   </h1>
-                  <p className="text-slate-500 text-sm mt-1">
-                    Encontramos {totalCount} empresas que atendem aos seus critérios
+                  <p className="text-slate-500 text-sm mt-1 flex items-center gap-2">
+                    <span>Encontramos {totalCount} empresas que atendem aos seus critérios</span>
+                    {isFetching && !loading && (
+                      <span className="inline-flex items-center text-xs text-blue-600 font-medium animate-pulse">
+                        • Atualizando...
+                      </span>
+                    )}
                   </p>
                 </div>
 
@@ -937,6 +969,8 @@ export function CompaniesContent({
                           variant="outline"
                           className="rounded-full border-slate-200 text-slate-600 hover:text-slate-900"
                           onClick={() => goToPage(currentPage + 1)}
+                          onMouseEnter={prefetchNextPage}
+                          onFocus={prefetchNextPage}
                           disabled={currentPage >= totalPages}
                         >
                           Próxima
@@ -992,29 +1026,22 @@ export function CompaniesContent({
           </div>
         </div>
       </div>
-      <MobileCompanyFiltersSheet
-        open={isFiltersOpen}
-        onClose={() => setIsFiltersOpen(false)}
-        filters={filters}
-        onApply={handleApplyFilters}
-        initialGpsError={gpsError}
-      />
+      {isFiltersOpen && (
+        <MobileCompanyFiltersSheet
+          open={isFiltersOpen}
+          onClose={() => setIsFiltersOpen(false)}
+          filters={filters}
+          onApply={handleApplyFilters}
+          initialGpsError={gpsError}
+        />
+      )}
     </div>
   );
 }
 
 export default function CompaniesPageClient(props: CompaniesPageClientProps) {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-slate-50/50 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <p className="text-sm text-slate-500 font-medium">Carregando empresas...</p>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<CompaniesLoading />}>
       <CompaniesContent {...props} />
     </Suspense>
   );

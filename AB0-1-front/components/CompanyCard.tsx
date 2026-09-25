@@ -328,23 +328,73 @@ export default function CompanyCard({
     return 'Cobertura: Consulte';
   })();
 
-  // Analytics de impressão (DATA-P1-006)
+  const impressionTrackedRef = useRef(false);
+
+  // Analytics de impressão (DATA-P1-006): Disparar apenas quando >=50% visível por >=200ms
   useEffect(() => {
-    if (!id) return;
-    track('company_card_impression', {
-      company_id: id,
-      company_name: name,
-      verified: isVerified,
-      view_mode: compact ? 'list' : 'grid',
-      company_slug: slug,
-      category,
-    });
-    track('company_cta_impression', {
-      company_id: id,
-      company_name: name,
-      company_slug: slug,
-      category,
-    });
+    if (!id || impressionTrackedRef.current) return;
+    const element = cardRef.current;
+
+    if (!element || typeof IntersectionObserver === 'undefined') {
+      track('company_card_impression', {
+        company_id: id,
+        company_name: name,
+        verified: isVerified,
+        view_mode: compact ? 'list' : 'grid',
+        company_slug: slug,
+        category,
+      });
+      track('company_cta_impression', {
+        company_id: id,
+        company_name: name,
+        company_slug: slug,
+        category,
+      });
+      impressionTrackedRef.current = true;
+      return;
+    }
+
+    let timer: NodeJS.Timeout | null = null;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting && entry.intersectionRatio >= 0.5) {
+          if (!timer && !impressionTrackedRef.current) {
+            timer = setTimeout(() => {
+              if (impressionTrackedRef.current) return;
+              impressionTrackedRef.current = true;
+              track('company_card_impression', {
+                company_id: id,
+                company_name: name,
+                verified: isVerified,
+                view_mode: compact ? 'list' : 'grid',
+                company_slug: slug,
+                category,
+              });
+              track('company_cta_impression', {
+                company_id: id,
+                company_name: name,
+                company_slug: slug,
+                category,
+              });
+              observer.disconnect();
+            }, 200);
+          }
+        } else if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+      },
+      { threshold: [0.5] }
+    );
+
+    observer.observe(element);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      observer.disconnect();
+    };
   }, [id, name, isVerified, compact, slug, category]);
 
   if (isLoading || !rawCompany) {

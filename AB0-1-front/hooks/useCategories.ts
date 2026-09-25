@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { categoriesApiSafe } from '@/lib/api-client';
 import { Category } from '@/lib/api';
 
@@ -9,39 +9,65 @@ type UseCategoriesOptions = {
   skipFetch?: boolean;
 };
 
+const categoriesCache = new Map<string, Category[]>();
+const categoriesInFlight = new Map<string, Promise<Category[]>>();
+
 export function useCategories(fetchAll: boolean = false, options?: UseCategoriesOptions) {
-  const initialCategories = options?.initialCategories ?? [];
+  const cacheKey = fetchAll ? 'all' : 'featured';
+  const initialCategories = useMemo(
+    () => options?.initialCategories ?? categoriesCache.get(cacheKey) ?? [],
+    [cacheKey, options?.initialCategories]
+  );
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [loading, setLoading] = useState(initialCategories.length === 0);
   const [error, setError] = useState<Error | null>(null);
 
-  const loadCategories = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
+  const loadCategories = useCallback(async (force = false) => {
+    if (!force && categoriesCache.has(cacheKey)) {
+      setCategories(categoriesCache.get(cacheKey)!);
+      setLoading(false);
+      return;
+    }
+
+    if (categoriesInFlight.has(cacheKey)) {
+      try {
+        const data = await categoriesInFlight.get(cacheKey)!;
+        setCategories(data);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Erro interno no servidor'));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    const fetchPromise = (async () => {
       const params = fetchAll 
         ? { status: 'active' } 
         : { featured: true, status: 'active', limit: 8 };
       
-      console.log('[useCategories] Loading with params:', params);
       const data = await categoriesApiSafe.getAll(params);
-      console.log('[useCategories] Received data:', data);
-      
-      if (!data || data.length === 0) {
-        console.warn('Nenhuma categoria encontrada');
-        setCategories([]);
-        return;
-      }
+      const safeData = Array.isArray(data) ? data : [];
+      categoriesCache.set(cacheKey, safeData);
+      return safeData;
+    })();
+
+    categoriesInFlight.set(cacheKey, fetchPromise);
+
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchPromise;
       setCategories(data);
     } catch (err) {
       console.error('Falha ao carregar categorias:', err);
       setError(err instanceof Error ? err : new Error('Erro interno no servidor'));
       setCategories([]);
     } finally {
+      categoriesInFlight.delete(cacheKey);
       setLoading(false);
     }
-  }, [fetchAll]);
+  }, [cacheKey, fetchAll]);
 
   useEffect(() => {
     if (initialCategories.length > 0) {

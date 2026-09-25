@@ -134,6 +134,7 @@ export default function Navbar() {
           <div className="ml-auto flex h-full shrink-0 items-center gap-0.5 xl:gap-1" aria-label="Navegação principal">
             <Link
               href={primaryLinks[0].href}
+              prefetch={true}
               className="inline-flex h-[38px] xl:h-[40px] items-center whitespace-nowrap rounded-md px-1.5 xl:px-2.5 text-xs xl:text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
             >
               {primaryLinks[0].label}

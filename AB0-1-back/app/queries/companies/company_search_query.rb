@@ -29,17 +29,28 @@ module Companies
     private
 
     def apply_includes(scope)
-      scope.includes(
-        :categories,
-        :company_faqs,
-        :company_buttons,
-        :plan,
-        :company_financing_profile,
-        badges: { image_attachment: :blob },
-        review_aggregates: [:category],
-        company_financing_partners: { logo_attachment: :blob },
-        company_financing_offers: []
-      )
+      if @params[:fields].to_s == 'map'
+        scope
+      elsif @params[:fields].to_s == 'card'
+        scope.includes(
+          :categories,
+          :plan,
+          badges: { image_attachment: :blob },
+          review_aggregates: [:category]
+        )
+      else
+        scope.includes(
+          :categories,
+          :company_faqs,
+          :company_buttons,
+          :plan,
+          :company_financing_profile,
+          badges: { image_attachment: :blob },
+          review_aggregates: [:category],
+          company_financing_partners: { logo_attachment: :blob },
+          company_financing_offers: []
+        )
+      end
     end
 
     def apply_status(scope)
@@ -164,8 +175,7 @@ module Companies
                           ::Category.find_by(slug: cat_param)&.id || ::Category.find_by(seo_url: cat_param)&.id
                         end
         if target_cat_id.present?
-          cat_company_ids = ::Company.joins(:categories).where(categories: { id: target_cat_id }).pluck(:id).uniq
-          scope = scope.where(id: cat_company_ids)
+          scope = scope.where(id: ::Company.joins(:categories).where(categories: { id: target_cat_id }).select(:id))
         end
       end
 
@@ -174,8 +184,7 @@ module Companies
           v.to_s.split(',')
         end.map(&:to_i).select(&:positive?)
         if category_ids.any?
-          cats_company_ids = ::Company.joins(:categories).where(categories: { id: category_ids }).pluck(:id).uniq
-          scope = scope.where(id: cats_company_ids)
+          scope = scope.where(id: ::Company.joins(:categories).where(categories: { id: category_ids }).select(:id))
         end
       end
 

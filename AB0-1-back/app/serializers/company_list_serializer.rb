@@ -108,38 +108,13 @@ class CompanyListSerializer < ActiveModel::Serializer
                 end
 
     recommendation_rate = aggregate&.recommendation_rate&.to_f
-    if recommendation_rate.nil? && rating_count > 0
-      would_recommend_true = object.reviews.published.where("metadata->>'would_recommend' = ?", 'true').count
-      would_recommend_false = object.reviews.published.where("metadata->>'would_recommend' = ?", 'false').count
-      total_would_recommend = would_recommend_true + would_recommend_false
-      
-      if total_would_recommend > 0
-        recommendation_rate = ((would_recommend_true.to_f / total_would_recommend) * 100).round
-      else
-        recommendation_rate = total > 0 ? ((positive_count.to_f / total) * 100).round : (rating_avg >= 3.5 ? 100 : 80)
-      end
+    if recommendation_rate.nil? && total > 0
+      recommendation_rate = ((positive_count.to_f / total) * 100).round
+    elsif recommendation_rate.nil?
+      recommendation_rate = rating_avg.present? && rating_avg >= 3.5 ? 100 : 80
     end
 
-    # Load up to 3 recent reviewer avatars
     recent_reviewer_avatars = []
-    begin
-      reviews_scope = object.reviews.published.includes(:user).order(created_at: :desc).limit(3)
-      reviews_scope = object.reviews.includes(:user).order(created_at: :desc).limit(3) if reviews_scope.empty?
-
-      if reviews_scope.any?
-        recent_reviewer_avatars = reviews_scope.map do |review|
-          name = review.user&.display_name || review.author_name || 'Cliente'
-          avatar_url = review.user&.avatar_url
-          avatar_url = "https://ui-avatars.com/api/?name=#{CGI.escape(name)}&background=0D8ABC&color=fff&size=128" if avatar_url.blank?
-          {
-            name: name,
-            url: avatar_url
-          }
-        end
-      end
-    rescue StandardError => e
-      Rails.logger.error("Error building recent_reviewer_avatars: #{e.message}")
-    end
 
     {
       rating_avg:          rating_avg,
