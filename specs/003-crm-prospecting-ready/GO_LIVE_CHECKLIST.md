@@ -13,11 +13,11 @@ Data: 2026-09-25. Branch: `feat/crm-prospecting-ready`. Não liberar prospecçã
 | G6 CRM UI | PARTIAL | Cadências e tracking usam APIs reais; tela configura origins e apresenta snippet tenant-scoped; TypeScript e ESLint focados passaram. | Jest Sales tem 2 falhas em `SalesCommandCenter` (provider ausente no helper e assertions incompatíveis com a UI atual); E2E e confirmação de Lead→Kanban após reload, Today, templates/inbox/analytics completos. |
 | G7 Full Sales Suite | PARTIAL | RSpec Sales: comando listado abaixo, 279 exemplos, 0 falhas. Jest Sales: 9/10 suítes, 46/48 testes passaram. `npm run build` concluiu, com warnings de OpenTelemetry/Browserslist e cache warm sem backend. | Corrigir setup/contrato dos testes `SalesCommandCenter`; Playwright pendente; RuboCop focado reportou 97 offenses em 19 arquivos inspecionados. |
 | G8 E2E Operational | BLOCKED | Nenhum E2E com provider/inbox de staging executado. | Caminho sintético descrito pelo prompt ainda precisa ser rodado em staging. |
-| G9 Production Readiness | BLOCKED | Nenhuma migration aplicada em produção; nenhuma integração externa de produção validada. | Todos os gates críticos PASS, limites, observabilidade, runbooks e aprovação de deploy. |
+| G9 Production Readiness | BLOCKED | Deploy `36174818305` concluiu com sucesso; log confirma as três migrations Sales aplicadas em produção. Builds, Zeitwerk/boot e gates de ranking passaram. | CI de qualidade falhou em RuboCop; SES, delivery/webhooks e E2E comercial continuam sem validação. Fechar os gates críticos e revisar operação pós-deploy. |
 
 ## Decisão
 
-**CRM CORE READY: não declarado ainda. EMAIL GO-LIVE BLOCKED.** Não utilizar prospects reais nem habilitar `SALES_EMAIL_SENDING_ENABLED` até fechar G2/G3/G4/G5/G8 e validar ambiente alvo. As três migrations foram aplicadas apenas em PostgreSQL descartável de teste; nenhuma migration de produção foi executada.
+**CRM CORE READY: não declarado ainda. EMAIL GO-LIVE BLOCKED.** Não utilizar prospects reais nem habilitar `SALES_EMAIL_SENDING_ENABLED` até fechar G2/G3/G4/G5/G8 e validar ambiente alvo. O deploy `36174818305` (`dc8f8f79d274eb7d762fffaff012800850275e19`) aplicou as migrations de enrollment, chave pública de forms e tracking sites em produção; isso não comprova a operação comercial ponta a ponta.
 
 ### Comandos de validação registrados
 

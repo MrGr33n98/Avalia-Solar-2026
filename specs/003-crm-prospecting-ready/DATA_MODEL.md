@@ -8,7 +8,7 @@ Migration `20260925090000_create_sales_email_sequence_enrollments.rb` cria:
 - `sales_email_sequence_enrollment_steps`: execução por enrollment/definition step, posição, status, tentativas, próximo retry, conclusão e código de erro.
 - FK opcional em `sales_email_messages` e `sales_tasks` para ligar cada execução à mensagem/tarefa criada.
 
-Constraints/índices incluem FKs para tenant e registros referenciados, unicidade de enrollment ativo/pausado por sequence/contact, unicidade de step por enrollment e uma mensagem/tarefa por execução de step. A migration foi aplicada no banco temporário `avalia_solar_test`; não em produção.
+Constraints/índices incluem FKs para tenant e registros referenciados, unicidade de enrollment ativo/pausado por sequence/contact, unicidade de step por enrollment e uma mensagem/tarefa por execução de step. As três migrations foram validadas em PostgreSQL temporário e aplicadas no deploy de produção `36174818305`; não executar novamente manualmente.
 
 Migration `20260925100000_add_public_key_to_sales_forms.rb` adiciona chave URL-safe aleatória, não nula e globalmente única em `sales_forms`; forms existentes recebem valor no backfill. Submissions públicas não criam Lead ou Contact automaticamente.
 
