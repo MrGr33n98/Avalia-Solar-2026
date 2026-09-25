@@ -5,6 +5,7 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Eye,
   FileText,
   Mail,
   MessageSquare,
@@ -47,7 +48,15 @@ export default function UnifiedTimeline({ events, loading = false, onRefresh }: 
     return true;
   });
 
-  const getEventBadge = (type: TimelineEvent['type']) => {
+  const getEventBadge = (event: TimelineEvent) => {
+    const { type, metadata } = event;
+    if (type === 'email' && metadata?.open_count && metadata.open_count > 0) {
+      return {
+        icon: Eye,
+        color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold',
+        label: `Lido (${metadata.open_count}x)`,
+      };
+    }
     switch (type) {
       case 'call':
         return { icon: Phone, color: 'bg-emerald-100 text-emerald-800 border-emerald-200', label: 'Ligação' };
@@ -113,7 +122,7 @@ export default function UnifiedTimeline({ events, loading = false, onRefresh }: 
       ) : (
         <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
           {filteredEvents.map((event) => {
-            const badge = getEventBadge(event.type);
+            const badge = getEventBadge(event);
             const IconComp = badge.icon;
             return (
               <div key={event.id} className="relative flex items-start gap-3 text-xs group">
