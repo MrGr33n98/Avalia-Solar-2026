@@ -9,7 +9,7 @@ import {
   TrendingUp,
   Users,
   Target,
-  MousePointerClick,
+  MousePointer,
   AlertCircle,
   BarChart3,
   Activity,
@@ -18,13 +18,48 @@ import {
   Play,
   Send,
   Trash2,
-  DollarSign,
   Globe,
   MapPin,
+  Eye,
+  Info,
+  BookOpen,
+  Lightbulb,
+  Megaphone,
+  Search,
+  MoreHorizontal,
+  ChevronRight,
+  ArrowRight,
+  Edit3,
+  Calendar as CalendarIcon,
+  Layers,
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCompanyFeatures } from '@/hooks/useCompanyFeatures';
 import { isFeatureEnabled } from '@/lib/feature-access';
 import {
@@ -102,7 +137,10 @@ type BannerQuota = {
   active_remaining: number | null;
   can_activate: boolean;
   can_create_draft: boolean;
-  can_create: boolean; // legacy
+  can_create?: boolean; // legacy
+  used?: number;
+  limit?: number | null;
+  remaining?: number | null;
 };
 
 type OperationalHealth = {
@@ -164,6 +202,7 @@ type DashboardPayload = {
   operational_health?: OperationalHealth;
   placements?: PlacementOption[];
   banners: CompanyBanner[];
+  time_series?: Array<{ day: string; impressions: number; clicks: number; leads?: number }>;
 };
 
 type BannerAddon = {
@@ -242,7 +281,7 @@ function downloadIncidentExport(incidents: ExportIncident[], format: 'csv' | 'js
   URL.revokeObjectURL(url);
 }
 
-const STATUS_LABELS: Record<string, string> = {
+export const STATUS_LABELS: Record<string, string> = {
   active: 'Ativo',
   approved: 'Aprovado',
   draft: 'Rascunho',
@@ -253,7 +292,7 @@ const STATUS_LABELS: Record<string, string> = {
   submitted: 'Em análise',
 };
 
-const ACTIVE_BANNER_POSITIONS = new Set([
+export const ACTIVE_BANNER_POSITIONS = new Set([
   'home_top',
   'categories_top',
   'compare_hero',
@@ -266,7 +305,7 @@ const ACTIVE_BANNER_POSITIONS = new Set([
   'pricing_advertise_section',
 ]);
 
-const BANNER_POSITIONS = [
+export const BANNER_POSITIONS = [
   ['navbar', 'Barra de navegação'],
   ['sidebar', 'Barra lateral'],
   ['home_top', 'Topo da página inicial'],
@@ -1070,6 +1109,126 @@ function BannerFormDialog({
   );
 }
 
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; className: string }
+> = {
+  active: {
+    label: 'Ativa',
+    className:
+      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800',
+  },
+  scheduled: {
+    label: 'Agendada',
+    className:
+      'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800',
+  },
+  paused: {
+    label: 'Pausada',
+    className:
+      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800',
+  },
+  submitted: {
+    label: 'Em Revisão',
+    className:
+      'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-400 dark:border-purple-800',
+  },
+  draft: {
+    label: 'Rascunho',
+    className:
+      'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+  },
+  rejected: {
+    label: 'Rejeitada',
+    className:
+      'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800',
+  },
+  expired: {
+    label: 'Finalizada',
+    className:
+      'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-800',
+  },
+};
+
+function formatCampaignPeriod(startsAt?: string | null, endsAt?: string | null) {
+  if (!startsAt && !endsAt) return 'Contínuo';
+  const start = startsAt
+    ? new Date(startsAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+    : 'Início';
+  const end = endsAt
+    ? new Date(endsAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+    : 'Contínuo';
+  return `${start} - ${end}`;
+}
+
+function formatCampaignLocation(banner: CompanyBanner) {
+  if (banner.target_cities && banner.target_cities.length > 0) {
+    const states =
+      banner.target_states && banner.target_states.length > 0
+        ? `${banner.target_states.join(', ')} • `
+        : '';
+    return `${states}${banner.target_cities.slice(0, 2).join(', ')}${
+      banner.target_cities.length > 2 ? ` (+${banner.target_cities.length - 2})` : ''
+    }`;
+  }
+  if (banner.target_states && banner.target_states.length > 0) {
+    return banner.target_states.join(', ');
+  }
+  return 'Brasil Inteiro (Nacional)';
+}
+
+function QuickGuideDialog({ trigger }: { trigger: ReactNode }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-brand-blue" />
+            Guia rápido de campanhas
+          </DialogTitle>
+          <DialogDescription>
+            Boas práticas para aproveitar ao máximo o Avalia Solar Ads.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3.5 py-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+          <div className="p-3 rounded-lg bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40">
+            <h5 className="font-semibold text-slate-900 dark:text-white mb-1">
+              1. Proposta de valor clara
+            </h5>
+            <p className="text-slate-600 dark:text-slate-400">
+              Destaque seu principal diferencial competitivo nos primeiros 3 segundos de leitura.
+            </p>
+          </div>
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <h5 className="font-semibold text-slate-900 dark:text-white mb-1">
+              2. Segmentação geográfica assertiva
+            </h5>
+            <p className="text-slate-600 dark:text-slate-400">
+              Se você atua em estados ou cidades específicas, configure o alcance regional para não dispersar impressões.
+            </p>
+          </div>
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <h5 className="font-semibold text-slate-900 dark:text-white mb-1">
+              3. Acompanhe a entrega e otimize
+            </h5>
+            <p className="text-slate-600 dark:text-slate-400">
+              Revise CTR e leads gerados semanalmente. Pause ou ajuste criativos com baixa conversão.
+            </p>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" type="button" size="sm">
+              Fechar
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function BannersSponsorship({ companyId }: BannersSponsorshipProps) {
   const { features } = useCompanyFeatures(companyId);
   const allowed = useMemo(() => isFeatureEnabled(features, 'promo_banner'), [features]);
@@ -1087,6 +1246,8 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
   const [exportAuditsLoading, setExportAuditsLoading] = useState(false);
   const [exportAlerts, setExportAlerts] = useState<ExportAlert[]>([]);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const loadData = useCallback(async () => {
     if (!allowed) return;
@@ -1206,22 +1367,78 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
     downloadIncidentExport(filteredIncidentHistory, format);
   };
 
+  const [chartPeriod, setChartPeriod] = useState<'7' | '30' | '90'>('30');
+
+  const featuredCampaign = useMemo(() => {
+    if (!data?.banners || data.banners.length === 0) return null;
+    return (
+      data.banners.find((b) => b.operational_status === 'active') ||
+      data.banners.find((b) => b.operational_status === 'scheduled') ||
+      data.banners[0] ||
+      null
+    );
+  }, [data?.banners]);
+
+  const filteredBanners = useMemo(() => {
+    if (!data?.banners) return [];
+    return data.banners.filter((banner) => {
+      const matchesStatus =
+        statusFilter === 'all' || banner.operational_status === statusFilter;
+      if (!matchesStatus) return false;
+      if (!searchQuery.trim()) return true;
+
+      const query = searchQuery.toLowerCase().trim();
+      const titleMatch = banner.title.toLowerCase().includes(query);
+      const positionMatch = banner.position.toLowerCase().includes(query);
+      const statesMatch = (banner.target_states ?? []).some((s) =>
+        s.toLowerCase().includes(query)
+      );
+      const citiesMatch = (banner.target_cities ?? []).some((c) =>
+        c.toLowerCase().includes(query)
+      );
+      return titleMatch || positionMatch || statesMatch || citiesMatch;
+    });
+  }, [data?.banners, searchQuery, statusFilter]);
+
+  const filteredTimeSeries = useMemo(() => {
+    const series = data?.time_series ?? [];
+    if (!series.length) return [];
+    const latestDay = Math.max(...series.map((point) => new Date(point.day).getTime()));
+    const cutoff = new Date(latestDay);
+    cutoff.setDate(cutoff.getDate() - Number(chartPeriod) + 1);
+    return series.filter((point) => new Date(point.day) >= cutoff);
+  }, [chartPeriod, data?.time_series]);
+
+  const quota = useMemo(() => {
+    if (!data?.quota) return null;
+    const used = data.quota.active_used ?? data.quota.used ?? 0;
+    const limit = data.quota.active_limit ?? data.quota.limit ?? null;
+    const remaining =
+      data.quota.active_remaining ??
+      data.quota.remaining ??
+      (limit !== null ? Math.max(0, limit - used) : null);
+    const canActivate = data.quota.can_activate ?? (limit === null || used < limit);
+    const canCreate = data.quota.can_create_draft ?? data.quota.can_create ?? true;
+    const percent = limit && limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+    return { used, limit, remaining, canActivate, canCreate, percent };
+  }, [data?.quota]);
+
   if (!allowed) {
     return (
       <div className="space-y-6">
-        <div className="flex flex-col items-center justify-center py-32 bg-slate-50 dark:bg-white/[0.02] rounded-[3rem] border border-dashed border-slate-200 dark:border-white/5">
-          <div className="h-24 w-24 rounded-[2rem] bg-rose-500/5 flex items-center justify-center mb-8">
-            <Lock className="h-10 w-10 text-rose-500/20" />
+        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+          <div className="h-16 w-16 rounded-xl bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center mb-4">
+            <Lock className="h-8 w-8 text-rose-500" />
           </div>
-          <h3 className="text-xl font-black uppercase tracking-widest text-slate-900 dark:text-white mb-2">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
             Recurso Bloqueado
           </h3>
-          <p className="text-sm text-slate-500 dark:text-white/30 font-medium max-w-xs text-center mb-8">
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm text-center mb-6">
             Faça upgrade para plano com Avalia Solar Ads e libere banners patrocinados.
           </p>
           <Button
             type="button"
-            className="h-12 px-8 rounded-2xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
+            className="h-10 px-5 rounded-lg bg-brand-blue hover:bg-blue-600 text-white font-medium text-sm shadow-xs transition-all active:scale-[0.98]"
             onClick={() => {
               const url = new URL(window.location.href);
               url.searchParams.set('tab', 'product-pricing');
@@ -1236,839 +1453,1303 @@ export default function BannersSponsorship({ companyId }: BannersSponsorshipProp
   }
 
   return (
-    <div className="space-y-12">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-brand-blue mb-1">
-            <Sparkles className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">
-              Avalia Solar Ads
-            </span>
-          </div>
-          <h2 className="text-4xl font-black tracking-tighter uppercase text-slate-900 dark:text-white leading-none">
-            Campanhas <span className="text-brand-blue">Patrocinadas</span>
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-white/40 max-w-md font-medium leading-relaxed">
-            Gerencie seus anúncios de destaque.{' '}
-            {data?.quota &&
-              `Você tem ${data.quota.active_used} de ${data.quota.active_limit ?? 'ilimitados'} anúncios ativos.`}
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="space-y-1">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium mb-1">
+          <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+            <Layers className="h-3.5 w-3.5 text-brand-blue" />
+            Divulgação
+          </span>
+          <ChevronRight className="h-3 w-3 text-slate-400" />
+          <span className="text-slate-900 dark:text-white font-semibold">Campanhas Patrocinadas</span>
+        </nav>
 
-        <div className="flex items-center gap-4">
-          <BannerFormDialog
-            placements={data?.placements}
-            companyId={companyId}
-            onSaved={loadData}
-            trigger={
-              <Button
-                disabled={!data?.quota?.can_create_draft}
-                className="h-12 px-8 rounded-2xl bg-brand-blue hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-brand-blue/20 transition-all active:scale-95"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Nova campanha
-              </Button>
-            }
-          />
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button type="button" variant="outline" className="h-12 rounded-2xl font-black uppercase tracking-widest text-[10px]">
-                Guia rápido
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Guia rápido de campanhas</DialogTitle>
-                <DialogDescription>Boas práticas para aproveitar melhor seu investimento.</DialogDescription>
-              </DialogHeader>
-              <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                <li><strong>Use uma mensagem objetiva:</strong> destaque um diferencial em poucos segundos.</li>
-                <li><strong>Escolha a posição certa:</strong> combine o público da página com sua oferta.</li>
-                <li><strong>Acompanhe a performance:</strong> revise impressões, cliques e leads antes de ajustar.</li>
-              </ul>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline" type="button">Fechar</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Campanhas Patrocinadas
+              </h1>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Sobre Campanhas Patrocinadas"
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    Posicionamento patrocinado nos resultados de busca, catálogo de integradores e simulador solar.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Gerencie suas campanhas patrocinadas e acompanhe os resultados em tempo real.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            {/* Seletor do Período do gráfico - para E2E e alinhamento visual */}
+            <Select value={chartPeriod} onValueChange={(val) => setChartPeriod(val as '7' | '30' | '90')}>
+              <SelectTrigger aria-label="Período do gráfico" className="h-9 sm:h-10 text-xs px-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-lg font-medium text-slate-700 dark:text-slate-300">
+                <CalendarIcon className="h-3.5 w-3.5 mr-2 text-slate-500" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <BannerFormDialog
+              placements={data?.placements}
+              companyId={companyId}
+              onSaved={loadData}
+              trigger={
+                <Button
+                  disabled={quota ? !quota.canCreate : false}
+                  className="h-9 sm:h-10 px-4 rounded-lg bg-brand-blue hover:bg-blue-600 text-white font-medium text-xs sm:text-sm shadow-xs transition-all active:scale-[0.98]"
+                >
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Nova campanha
+                </Button>
+              }
+            />
+
+            <QuickGuideDialog
+              trigger={
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9 sm:h-10 px-3.5 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-medium text-xs sm:text-sm hover:bg-slate-50 dark:hover:bg-slate-800/60 shadow-xs"
+                >
+                  <BookOpen className="h-4 w-4 mr-1.5 text-slate-500" />
+                  Guia rápido
+                </Button>
+              }
+            />
+          </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="space-y-8 animate-pulse">
-          <div className="h-32 bg-slate-100 dark:bg-white/5 rounded-3xl" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-64 rounded-3xl bg-slate-100 dark:bg-white/5" />
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
             ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8 space-y-6">
+              <Skeleton className="h-48 rounded-xl" />
+              <Skeleton className="h-72 rounded-xl" />
+            </div>
+            <div className="lg:col-span-4 space-y-6">
+              <Skeleton className="h-32 rounded-xl" />
+              <Skeleton className="h-40 rounded-xl" />
+            </div>
           </div>
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center py-32 bg-rose-50/50 dark:bg-rose-500/5 rounded-[3rem] border border-rose-100 dark:border-rose-500/10">
-          <h3 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+        <Alert variant="destructive" className="rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-950/20 text-rose-900 dark:text-rose-300 p-5">
+          <AlertCircle className="h-5 w-5 text-rose-600" />
+          <AlertTitle className="text-sm font-bold">Falha ao carregar campanhas</AlertTitle>
+          <AlertDescription className="text-xs mt-1 text-rose-800 dark:text-rose-400">
             {error}
-          </h3>
-          <Button variant="outline" className="mt-6" onClick={loadData}>
+          </AlertDescription>
+          <Button variant="outline" size="sm" className="mt-4 text-xs" onClick={loadData}>
             Tentar novamente
           </Button>
-        </div>
+        </Alert>
       ) : data ? (
         <>
           {actionError && (
-            <div
-              role="alert"
-              className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-800"
-            >
-              {actionError}
-            </div>
+            <Alert variant="destructive" className="rounded-xl">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{actionError}</AlertDescription>
+            </Alert>
           )}
 
-          {/* Summary KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 mb-2">
-                  <div className="p-2 bg-brand-blue/10 text-brand-blue rounded-xl">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-wider">Impressões</span>
+          {/* 4 Primary KPI Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-4 sm:p-5 transition-colors hover:border-slate-300 dark:hover:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-brand-blue shrink-0">
+                  <Eye className="h-5 w-5" />
                 </div>
-                <div className="text-3xl font-black tracking-tight">
-                  {data.summary.impressions.toLocaleString('pt-BR')}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 mb-2">
-                  <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl">
-                    <MousePointerClick className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-wider">Cliques (CTR)</span>
-                </div>
-                <div className="text-3xl font-black tracking-tight">
-                  {data.summary.clicks.toLocaleString('pt-BR')}{' '}
-                  <span className="text-sm font-semibold text-slate-400">
-                    ({data.summary.ctr}%)
+                <div className="min-w-0">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
+                    Impressões
+                  </span>
+                  <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                    {data.summary.impressions.toLocaleString('pt-BR')}
                   </span>
                 </div>
-              </CardContent>
+              </div>
             </Card>
-            <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 mb-2">
-                  <div className="p-2 bg-orange-500/10 text-orange-500 rounded-xl">
-                    <Target className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-wider">Leads</span>
-                </div>
-                <div className="text-3xl font-black tracking-tight">
-                  {data.summary.leads.toLocaleString('pt-BR')}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 mb-2">
-                  <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
-                    <DollarSign className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-wider">CPL</span>
-                </div>
-                <div className="text-3xl font-black tracking-tight">
-                  {data.summary.leads > 0
-                    ? formatMoney((data.summary.investment_cents ?? 0) / data.summary.leads)
-                    : '—'}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">
-                      Quota de campanhas
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {data.quota.active_limit === null ? 'Campanhas ilimitadas' : 'Campanhas disponíveis no plano'}
-                    </p>
-                  </div>
-                  <Badge variant={data.quota.can_activate ? 'default' : 'secondary'}>
-                    {data.quota.can_activate ? 'Disponível' : 'Limite atingido'}
-                  </Badge>
+            <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-4 sm:p-5 transition-colors hover:border-slate-300 dark:hover:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-purple-50 dark:bg-purple-950/50 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+                  <MousePointer className="h-5 w-5" />
                 </div>
-                <div className="mt-5 flex items-end justify-between gap-4">
-                  <div className="text-3xl font-black tracking-tight">
-                    {data.quota.active_used}{' '}
-                    <span className="text-sm font-semibold text-slate-400">
-                      de {data.quota.active_limit ?? '∞'} usadas
+                <div className="min-w-0">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
+                    Cliques (CTR)
+                  </span>
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                      {data.summary.clicks.toLocaleString('pt-BR')}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      ({data.summary.ctr}%)
                     </span>
                   </div>
-                  <span className="text-xs font-bold text-brand-blue">
-                    {data.quota.active_remaining ?? '∞'} restantes
+                </div>
+              </div>
+            </Card>
+
+            <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-4 sm:p-5 transition-colors hover:border-slate-300 dark:hover:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
+                    Leads
+                  </span>
+                  <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                    {data.summary.leads.toLocaleString('pt-BR')}
                   </span>
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="rounded-3xl border border-brand-blue/10 bg-brand-blue/5 shadow-sm dark:bg-brand-blue/10">
-              <CardContent className="flex items-start gap-3 p-6">
-                <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-brand-blue" aria-hidden="true" />
-                <div>
-                  <p className="text-xs font-black uppercase tracking-widest text-brand-blue">
-                    Dica de boas práticas
-                  </p>
-                  <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300">
-                    Prefira uma oferta clara e uma imagem legível. Depois, compare cliques e leads para decidir quais campanhas manter ativas.
-                  </p>
-                </div>
-              </CardContent>
+              </div>
             </Card>
 
-          </div>
-
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowDiagnostics(!showDiagnostics)}
-              className="text-xs font-bold text-slate-500 hover:text-brand-blue"
-            >
-              {showDiagnostics ? "Ocultar Diagnóstico Técnico" : "Ver Diagnóstico Técnico"}
-            </Button>
-          </div>
-
-          {showDiagnostics && (
-            <div className="space-y-6">
-              {exportAlerts.filter((alert) => alert.status === 'open').length ? (
-                <div
-                  role="status"
-                  data-testid="banner-export-alerts"
-                  className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
-                >
-                  <strong>Atenção operacional:</strong> foram detectadas exportações acima do limiar
-                  configurado ({exportAlerts.filter((alert) => alert.status === 'open')[0].count} em
-                  24h).
-                  <span className="ml-1">Consulte o administrador para investigação.</span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="ml-3"
-                    onClick={() =>
-                      acknowledgeExportAlert(
-                        exportAlerts.filter((alert) => alert.status === 'open')[0].id
-                      )
-                    }
-                  >
-                    Marcar como visto
-                  </Button>
+            <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-4 sm:p-5 transition-colors hover:border-slate-300 dark:hover:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                  <TrendingUp className="h-5 w-5" />
                 </div>
-              ) : null}
+                <div className="min-w-0">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block truncate">
+                    CTR
+                  </span>
+                  <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                    {data.summary.ctr}%
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </div>
 
-              {(() => {
-                const health = data.operational_health;
-                const labels = {
-                  healthy: ['Operação normal', 'border-emerald-200 bg-emerald-50 text-emerald-800'],
-                  degraded: ['Qualidade degradada', 'border-amber-200 bg-amber-50 text-amber-800'],
-                  stale: ['Dados atrasados', 'border-rose-200 bg-rose-50 text-rose-800'],
-                  unknown: ['Aguardando dados', 'border-slate-200 bg-slate-50 text-slate-700'],
-                } as const;
-                const [label, tone] = labels[health?.status ?? 'unknown'];
-                const discardRate = health?.discard_rate_24h ?? 0;
-                const topDiscardReason = Object.entries(health?.discard_reasons_24h ?? {}).sort(
-                  ([, a], [, b]) => b - a
-                )[0];
-                return (
-                  <Card className={`rounded-3xl border shadow-sm ${tone}`}>
-                    <CardContent className="p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <Activity className="h-5 w-5" aria-hidden="true" />
-                          <div>
-                            <p className="text-xs font-black uppercase tracking-widest">
-                              Saúde da medição
-                            </p>
-                            <p className="text-sm font-bold">{label}</p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
-                          <span>
-                            Eventos válidos 24h: <strong>{health?.reportable_events_24h ?? 0}</strong>
-                          </span>
-                          <span>
-                            Descartados: <strong>{health?.discarded_events_24h ?? 0}</strong>
-                          </span>
-                          <span>
-                            Taxa: <strong>{discardRate.toFixed(2)}%</strong>
-                          </span>
-                          <span>
-                            Atraso:{' '}
-                            <strong>
-                              {health?.lag_minutes == null ? 'n/d' : `${health.lag_minutes} min`}
-                            </strong>
-                          </span>
-                          <span>
-                            Divergências: <strong>{health?.divergent_banners_yesterday ?? 0}</strong>
-                          </span>
-                          <span>
-                            Motivo principal:{' '}
-                            <strong>
-                              {topDiscardReason
-                                ? `${topDiscardReason[0]} (${topDiscardReason[1]})`
-                                : 'n/d'}
-                            </strong>
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })()}
-
-              {data.operational_health?.quality_history?.length ? (
-                <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
-                  <CardContent className="p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-widest text-slate-500">
-                          Qualidade nos últimos 7 dias
-                        </p>
-                        <p className="text-sm text-slate-500">Eventos válidos x descartados</p>
-                      </div>
-                      <Activity className="h-5 w-5 text-brand-blue" aria-hidden="true" />
-                    </div>
-                    <div className="grid grid-cols-7 gap-2" data-testid="banner-quality-history">
-                      {data.operational_health.quality_history.map((day) => {
-                        const total = day.reportable_events + day.discarded_events;
-                        const validWidth = total ? (day.reportable_events / total) * 100 : 0;
-                        return (
-                          <div
-                            key={day.date}
-                            className="min-w-0"
-                            title={`${day.date}: ${day.discard_rate}% descartados`}
-                          >
-                            <div className="flex h-16 flex-col justify-end overflow-hidden rounded-lg bg-slate-100">
-                              <div className="bg-rose-400" style={{ height: `${100 - validWidth}%` }} />
-                              <div className="bg-emerald-400" style={{ height: `${validWidth}%` }} />
-                            </div>
-                            <p className="mt-1 truncate text-center text-[10px] text-slate-500">
-                              {day.date.slice(5)}
-                            </p>
-                            <p className="text-center text-[10px] font-bold text-slate-700">
-                              {day.discard_rate.toFixed(1)}%
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              {data.operational_health?.incident_history?.length ? (
-                <Card className="rounded-3xl border-none bg-white shadow-sm dark:bg-slate-900">
-                  <CardContent className="p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-widest text-slate-500">
-                          Incidentes recentes
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          Sinais que exigem investigação operacional
-                        </p>
-                      </div>
-                      <AlertCircle className="h-5 w-5 text-amber-500" aria-hidden="true" />
-                    </div>
-                    <div className="mb-4 grid gap-2 sm:grid-cols-3">
-                      <select
-                        aria-label="Período dos incidentes"
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
-                        value={incidentDays}
-                        onChange={(event) => setIncidentDays(event.target.value as '3' | '7')}
-                      >
-                        <option value="7">Últimos 7 dias</option>
-                        <option value="3">Últimos 3 dias</option>
-                      </select>
-                      <select
-                        aria-label="Tipo de incidente"
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
-                        value={incidentType}
-                        onChange={(event) => setIncidentType(event.target.value)}
-                      >
-                        <option value="all">Todos os tipos</option>
-                        <option value="discard_rate_high">Descarte alto</option>
-                        <option value="reconciliation_divergence">Divergência</option>
-                        <option value="aggregate_missing">Agregado ausente</option>
-                      </select>
-                      <select
-                        aria-label="Banner afetado"
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs"
-                        value={incidentBanner}
-                        onChange={(event) => setIncidentBanner(event.target.value)}
-                      >
-                        <option value="all">Todos os banners</option>
-                        {incidentOptions.map(([id, title]) => (
-                          <option key={id} value={id}>
-                            {title}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => exportFilteredIncidents('csv')}
-                        disabled={filteredIncidentHistory.length === 0}
-                      >
-                        <Download className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                        Exportar CSV
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => exportFilteredIncidents('json')}
-                        disabled={filteredIncidentHistory.length === 0}
-                      >
-                        <Download className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                        Exportar JSON
-                      </Button>
-                    </div>
-                    <div className="mb-4">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={loadExportAudits}
-                        disabled={exportAuditsLoading}
-                      >
-                        <Activity className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
-                        {exportAuditsLoading ? 'Carregando histórico…' : 'Histórico de exportações'}
-                      </Button>
-                    </div>
-                    {exportAuditsOpen ? (
-                      <div
-                        className="mb-4 rounded-xl border border-slate-200 p-3"
-                        data-testid="banner-export-audit-history"
-                      >
-                        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Downloads auditados
-                        </p>
-                        {exportAudits.length ? (
-                          exportAudits.map((audit) => (
-                            <div
-                              key={audit.id}
-                              className="flex flex-wrap justify-between gap-2 border-b border-slate-100 py-2 text-xs last:border-0"
-                            >
-                              <span>
-                                {audit.format?.toUpperCase()} · {audit.record_count} incidentes · ator #
-                                {audit.actor_id ?? '—'}
-                              </span>
-                              <time dateTime={audit.created_at}>
-                                {new Date(audit.created_at).toLocaleString('pt-BR')}
-                              </time>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-xs text-slate-500">Nenhuma exportação registrada.</p>
-                        )}
-                      </div>
-                    ) : null}
-                    <ol className="space-y-2" data-testid="banner-incident-history">
-                      {filteredIncidentHistory
-                        .slice(-5)
-                        .reverse()
-                        .map((incident, index) => {
-                          const label =
-                            incident.type === 'discard_rate_high'
-                              ? 'Taxa de descarte alta'
-                              : incident.type === 'reconciliation_divergence'
-                                ? 'Divergência de reconciliação'
-                                : 'Agregado ausente';
-                          return (
-                            <li
-                              key={`${incident.date}-${incident.type}-${index}`}
-                              className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-xs"
-                            >
-                              <button
-                                type="button"
-                                className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left"
-                                onClick={() =>
-                                  setExpandedIncident(
-                                    expandedIncident === `${incident.date}-${incident.type}`
-                                      ? null
-                                      : `${incident.date}-${incident.type}`
-                                  )
-                                }
-                                aria-expanded={expandedIncident === `${incident.date}-${incident.type}`}
-                              >
-                                <span className="font-semibold text-slate-700">{label}</span>
-                                <span className="text-slate-500">
-                                  {incident.date} · {incident.value}
-                                </span>
-                              </button>
-                              {expandedIncident === `${incident.date}-${incident.type}` && (
-                                <div className="basis-full border-t border-slate-200 pt-2 text-[11px] text-slate-500">
-                                  {incident.affected_banners?.length
-                                    ? incident.affected_banners.map((banner) => (
-                                        <div key={banner.id}>
-                                          {banner.title}
-                                          {banner.event_count ? ` · ${banner.event_count} eventos` : ''}
-                                        </div>
-                                      ))
-                                    : 'Nenhum banner identificado'}
-                                </div>
-                              )}
-                            </li>
-                          );
-                        })}
-                    </ol>
-                  </CardContent>
-                </Card>
-              ) : null}
-            </div>
-          )}
-
-          {/* Funnel */}
-          <Card className="rounded-3xl border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h3 className="text-sm font-black uppercase tracking-widest">
-                    Funil de campanha
+          {/* Main 2-Column Cockpit Layout (8 cols / 4 cols) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Coluna Esquerda - 8 colunas */}
+            <div className="lg:col-span-8 space-y-6 min-w-0">
+              {/* Card Spotlight: Campanha em Destaque */}
+              <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-5 overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Campanha em destaque
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Eventos reportáveis no período atual
-                  </p>
+                  {featuredCampaign && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700 dark:hover:text-white">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Opções da campanha em destaque</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <PerformanceDialog
+                          banner={featuredCampaign}
+                          trigger={
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              <BarChart3 className="h-3.5 w-3.5 mr-2 text-brand-blue" />
+                              Ver performance
+                            </DropdownMenuItem>
+                          }
+                        />
+                        {featuredCampaign.allowed_actions.includes('edit') && (
+                          <BannerFormDialog
+                            banner={featuredCampaign}
+                            placements={data.placements}
+                            companyId={companyId}
+                            onSaved={loadData}
+                            trigger={
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Edit3 className="h-3.5 w-3.5 mr-2" />
+                                Editar campanha
+                              </DropdownMenuItem>
+                            }
+                          />
+                        )}
+                        {featuredCampaign.allowed_actions.includes('buy_addon') && (
+                          <AddonCheckoutDialog
+                            banner={featuredCampaign}
+                            trigger={
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Sparkles className="h-3.5 w-3.5 mr-2 text-amber-500" />
+                                Impulsionar
+                              </DropdownMenuItem>
+                            }
+                          />
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
-                <BarChart3 className="h-5 w-5 text-brand-blue" />
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  ['Impressões', data.summary.impressions, 'bg-brand-blue'],
-                  ['Cliques', data.summary.clicks, 'bg-emerald-500'],
-                  ['Leads', data.summary.leads, 'bg-orange-500'],
-                  ['CTR', `${data.summary.ctr}%`, 'bg-purple-500'],
-                ].map(([label, value, color]) => (
-                  <div
-                    key={String(label)}
-                    className="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800 p-4"
-                  >
-                    <div className={`absolute inset-y-0 left-0 w-1 ${color}`} />
-                    <div className="pl-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      {label}
-                    </div>
-                    <div className="pl-2 mt-2 text-xl font-black">
-                      {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {data.summary.clicks > 0 && (
-                <p className="mt-4 text-xs font-semibold text-slate-500">
-                  Conversão clique para lead:{' '}
-                  {((data.summary.leads / data.summary.clicks) * 100).toFixed(2)}%
-                </p>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Banner List */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-              Seus Anúncios
-            </h3>
-            {data.banners.length === 0 ? (
-              <div className="text-center p-12 bg-slate-50 dark:bg-white/5 rounded-3xl">
-                Nenhum anúncio criado.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {data.banners.map((banner) => (
-                  <Card
-                    key={banner.id}
-                    className="rounded-3xl overflow-hidden border-slate-200 dark:border-slate-800"
-                  >
-                    <div className="h-32 bg-slate-100 dark:bg-slate-900 relative">
-                      {banner.thumbnail_url && (
+                {featuredCampaign ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+                    {/* Imagem do Banner */}
+                    <div className="sm:col-span-4 relative aspect-[16/10] bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden border border-slate-200/60 dark:border-slate-800">
+                      {featuredCampaign.thumbnail_url ? (
                         <Image
-                          src={banner.thumbnail_url}
-                          alt={banner.title}
+                          src={featuredCampaign.thumbnail_url}
+                          alt={featuredCampaign.title}
                           fill
                           unoptimized
-                          sizes="(max-width: 1024px) 100vw, 33vw"
+                          sizes="(max-width: 640px) 100vw, 250px"
                           className="object-cover"
                         />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                          <Eye className="h-6 w-6 mb-1 opacity-50" />
+                          <span className="text-[10px] font-medium">Criativo da Campanha</span>
+                        </div>
                       )}
-                      <div className="absolute top-4 right-4 flex gap-2">
+                      <div className="absolute top-2 left-2">
                         <Badge
-                          variant={banner.operational_status === 'active' ? 'default' : 'secondary'}
-                          className="uppercase text-[9px] font-black tracking-widest px-3 py-1"
+                          variant="outline"
+                          className={`text-[10px] font-medium px-2 py-0.5 border ${
+                            STATUS_CONFIG[featuredCampaign.operational_status]?.className ?? 'bg-slate-50 text-slate-700'
+                          }`}
                         >
-                          {STATUS_LABELS[banner.operational_status] || banner.operational_status}
+                          {STATUS_CONFIG[featuredCampaign.operational_status]?.label ?? featuredCampaign.operational_status}
                         </Badge>
                       </div>
                     </div>
-                    <CardContent className="p-6">
-                      <h4 className="font-bold text-lg mb-1">{banner.title}</h4>
-                      {(() => {
-                        const placementInfo = data.placements?.find((p) => p.key === banner.position);
-                        const placementLabel = placementInfo?.label || banner.position.replaceAll('_', ' ');
-                        const placementDims = placementInfo?.dimensions
-                          ? `${placementInfo.dimensions[0]}×${placementInfo.dimensions[1]} px`
-                          : null;
-                        const hasCities = banner.target_cities && banner.target_cities.length > 0;
-                        const hasStates = banner.target_states && banner.target_states.length > 0;
 
-                        return (
-                          <div className="space-y-1.5 mb-5">
-                            <p className="text-xs text-slate-500 font-semibold tracking-wide flex items-center gap-1.5 flex-wrap">
-                              <span className="text-slate-700 dark:text-slate-300 font-bold">{placementLabel}</span>
-                              {placementDims && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
-                                  {placementDims}
-                                </span>
-                              )}
-                            </p>
-                            {hasCities ? (
-                              <p className="text-xs text-brand-blue font-medium flex items-center gap-1">
-                                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                                <span>Cidades: {banner.target_cities!.slice(0, 3).join(', ')}{banner.target_cities!.length > 3 ? ` (+${banner.target_cities!.length - 3})` : ''}</span>
-                              </p>
-                            ) : hasStates ? (
-                              <p className="text-xs text-brand-blue font-medium flex items-center gap-1">
-                                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                                <span>Estados: {banner.target_states!.join(', ')}</span>
-                              </p>
-                            ) : (
-                              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                                <Globe className="w-3.5 h-3.5 shrink-0" />
-                                <span>Brasil Inteiro (Nacional)</span>
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })()}
-
-                      {banner.delivery_health && (
-                        <div
-                          className={`mb-6 rounded-xl border p-3 ${
-                            banner.delivery_health.status === 'healthy'
-                              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10'
-                              : 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest">
-                              Saúde da entrega
-                            </span>
-                            <Badge variant="secondary" className="text-[9px] uppercase">
-                              {banner.delivery_health.status === 'healthy' ? 'Normal' : 'Bloqueado'}
-                            </Badge>
-                          </div>
-                          {banner.delivery_health.blockers.length > 0 && (
-                            <p className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-300">
-                              Bloqueios: {banner.delivery_health.blockers.join(', ')}
-                            </p>
+                    {/* Detalhes Centrais */}
+                    <div className="sm:col-span-5 space-y-2 min-w-0">
+                      <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
+                        {featuredCampaign.title}
+                      </h4>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <CalendarIcon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          {formatCampaignPeriod(featuredCampaign.starts_at, featuredCampaign.ends_at)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          {featuredCampaign.target_cities?.length || featuredCampaign.target_states?.length ? (
+                            <MapPin className="h-3.5 w-3.5 text-brand-blue shrink-0" />
+                          ) : (
+                            <Globe className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                           )}
-                        </div>
-                      )}
-
-                      {banner.moderation_status === 'rejected' && banner.rejected_reason && (
-                        <div className="mb-6 p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20">
-                          <div className="flex items-center gap-2 mb-1">
-                            <AlertCircle className="w-4 h-4 text-rose-500" />
-                            <span className="text-sm font-bold text-rose-900 dark:text-rose-500">
-                              Banner Rejeitado
-                            </span>
-                          </div>
-                          <p className="text-xs text-rose-700 dark:text-rose-400 font-medium">
-                            {banner.rejected_reason}
-                          </p>
-                          <BannerFormDialog
-                            banner={banner}
-                            placements={data.placements}
-                            onSaved={loadData}
-                            trigger={
-                              <Button
-                                variant="outline"
-                                className="mt-2 w-full text-[10px] uppercase font-bold text-rose-700 border-rose-200"
-                              >
-                                Corrigir banner
-                              </Button>
-                            }
-                          />
-                        </div>
-                      )}
-
-                      {/* Add-ons */}
-                      {banner.active_addons.length > 0 && (
-                        <div className="mb-6 space-y-2">
-                          {banner.active_addons.map((addon) => (
-                            <div
-                              key={addon.id}
-                              className="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20"
-                            >
-                              <div className="flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-amber-500" />
-                                <span className="text-sm font-bold text-amber-900 dark:text-amber-500">
-                                  {addon.name}
-                                </span>
-                              </div>
-                              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                                {Math.max(addon.days_remaining ?? 0, 0)} dias
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Metrics */}
-                      <div className="grid grid-cols-2 gap-2 mb-6">
-                        <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
-                          <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
-                            Impressões
-                          </div>
-                          <div className="font-black text-sm">{banner.performance.impressions}</div>
-                        </div>
-                        <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
-                          <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
-                            Cliques (CTR)
-                          </div>
-                          <div className="font-black text-sm">
-                            {banner.performance.clicks}{' '}
-                            <span className="text-[10px] font-semibold text-slate-400">
-                              ({banner.performance.ctr}%)
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
-                          <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
-                            Leads
-                          </div>
-                          <div className="font-black text-sm">{banner.performance.leads}</div>
-                        </div>
-                        <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-900">
-                          <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
-                            CPL
-                          </div>
-                          <div className="font-black text-sm">
-                            {banner.performance.leads > 0
-                              ? formatMoney((banner.performance.investment_cents ?? 0) / banner.performance.leads)
-                              : '—'}
-                          </div>
-                        </div>
+                          <span className="truncate max-w-[160px]">{formatCampaignLocation(featuredCampaign)}</span>
+                        </span>
                       </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                        Divulgue sua marca para clientes e integradores que buscam soluções em energia solar.
+                      </p>
 
-                      {/* Actions */}
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          {banner.allowed_actions.includes('buy_addon') && (
-                            <AddonCheckoutDialog
-                              banner={banner}
-                              trigger={
-                                <Button className="flex-1 bg-brand-blue hover:bg-blue-700 text-white font-bold uppercase tracking-wider text-[10px] h-10 rounded-xl">
-                                  Impulsionar
-                                </Button>
-                              }
-                            />
-                          )}
-                          {banner.allowed_actions.includes('edit') && (
-                            <BannerFormDialog
-                              banner={banner}
-                              placements={data.placements}
-                              companyId={companyId}
-                              onSaved={loadData}
-                              trigger={
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 font-bold uppercase tracking-wider text-[10px] h-10 rounded-xl"
-                                >
-                                  Editar
-                                </Button>
-                              }
-                            />
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          className="w-full font-bold uppercase tracking-wider text-[10px] h-10 rounded-xl"
-                          onClick={() => {
-                            window.open(
-                              `/api/v1/company_dashboard/banners/${banner.id}/export.csv`,
-                              '_blank',
-                              'noopener,noreferrer'
-                            );
-                          }}
-                        >
-                          <Download className="mr-2 h-3.5 w-3.5" />
-                          Exportar CSV
-                        </Button>
-                        <div className="grid grid-cols-2 gap-2">
-                          {banner.allowed_actions.includes('submit') && (
-                            <Button
-                              variant="outline"
-                              disabled={actionBannerId === banner.id}
-                              onClick={() => runAction(banner, 'submit')}
-                            >
-                              <Send className="mr-2 h-4 w-4" /> Enviar
-                            </Button>
-                          )}
-                          {banner.allowed_actions.includes('pause') && (
-                            <Button
-                              variant="outline"
-                              disabled={actionBannerId === banner.id}
-                              onClick={() => runAction(banner, 'pause')}
-                            >
-                              <Pause className="mr-2 h-4 w-4" /> Pausar
-                            </Button>
-                          )}
-                          {banner.allowed_actions.includes('resume') && (
-                            <Button
-                              variant="outline"
-                              disabled={actionBannerId === banner.id}
-                              onClick={() => runAction(banner, 'resume')}
-                            >
-                              <Play className="mr-2 h-4 w-4" /> Retomar
-                            </Button>
-                          )}
-                          {banner.allowed_actions.includes('delete') && (
-                            <Button
-                              variant="outline"
-                              className="text-destructive"
-                              disabled={actionBannerId === banner.id}
-                              onClick={() => runAction(banner, 'delete')}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                            </Button>
-                          )}
-                        </div>
-
+                      <div className="flex items-center gap-3 pt-1">
+                        {featuredCampaign.days_remaining != null && featuredCampaign.days_remaining > 0 && (
+                          <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                            {featuredCampaign.days_remaining} dias restantes
+                          </span>
+                        )}
                         <PerformanceDialog
-                          banner={banner}
+                          banner={featuredCampaign}
                           trigger={
                             <Button
-                              variant="secondary"
-                              className="w-full font-bold uppercase tracking-wider text-[10px] h-10 rounded-xl"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs font-semibold text-brand-blue hover:text-blue-700 p-0 hover:bg-transparent"
                             >
-                              <BarChart3 className="w-4 h-4 mr-2" />
-                              Ver Performance Detalhada
+                              Ver detalhes <ArrowRight className="h-3.5 w-3.5 ml-1" />
                             </Button>
                           }
                         />
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    </div>
+
+                    {/* Métricas Compactas à Direita */}
+                    <div className="sm:col-span-3 border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-800 pt-3 sm:pt-0 sm:pl-4 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Impressões</span>
+                        <span className="font-bold text-slate-900 dark:text-white tabular-nums">
+                          {featuredCampaign.performance.impressions.toLocaleString('pt-BR')}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Cliques (CTR)</span>
+                        <span className="font-bold text-slate-900 dark:text-white tabular-nums">
+                          {featuredCampaign.performance.clicks}{' '}
+                          <span className="text-[11px] font-normal text-slate-400">
+                            ({featuredCampaign.performance.ctr}%)
+                          </span>
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Leads</span>
+                        <span className="font-bold text-slate-900 dark:text-white tabular-nums">
+                          {featuredCampaign.performance.leads}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">CPL</span>
+                        <span className="font-bold text-slate-900 dark:text-white tabular-nums">
+                          {featuredCampaign.performance.leads > 0
+                            ? formatMoney((featuredCampaign.performance.investment_cents ?? 0) / featuredCampaign.performance.leads)
+                            : '—'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-slate-500 text-xs">
+                    Nenhuma campanha ativa no momento.{' '}
+                    {quota?.canCreate && (
+                      <span className="text-brand-blue font-medium cursor-pointer">
+                        Crie uma nova campanha acima.
+                      </span>
+                    )}
+                  </div>
+                )}
+              </Card>
+
+              {/* Tabela Datatable: Minhas Campanhas */}
+              <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+                <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Minhas campanhas
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Acompanhe o desempenho de todas as suas campanhas.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="relative w-44 sm:w-56">
+                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                      <Input
+                        placeholder="Buscar campanha..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-8 pl-8 text-xs bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 rounded-lg"
+                      />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="h-8 text-xs w-[130px] rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent align="end">
+                        <SelectItem value="all">Todas as campanhas</SelectItem>
+                        <SelectItem value="active">Ativas</SelectItem>
+                        <SelectItem value="scheduled">Agendadas</SelectItem>
+                        <SelectItem value="paused">Pausadas</SelectItem>
+                        <SelectItem value="draft">Rascunhos</SelectItem>
+                        <SelectItem value="submitted">Em Revisão</SelectItem>
+                        <SelectItem value="rejected">Rejeitadas</SelectItem>
+                        <SelectItem value="expired">Finalizadas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {filteredBanners.length === 0 ? (
+                  <div className="py-12 text-center text-slate-500 text-xs">
+                    Nenhum anúncio encontrado para os filtros selecionados.
+                  </div>
+                ) : (
+                  <>
+                    {/* Visualização Desktop (Table) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                            <TableHead className="w-[30%]">Nome da campanha</TableHead>
+                            <TableHead className="w-[18%]">Período</TableHead>
+                            <TableHead className="w-[12%]">Status</TableHead>
+                            <TableHead className="w-[12%] text-right">Impressões</TableHead>
+                            <TableHead className="w-[14%] text-right">Cliques (CTR)</TableHead>
+                            <TableHead className="w-[8%] text-right">Leads</TableHead>
+                            <TableHead className="w-[6%] text-center">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredBanners.map((banner) => (
+                            <TableRow
+                              key={banner.id}
+                              className="border-slate-100 dark:border-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                            >
+                              <TableCell className="py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-9 w-12 rounded bg-slate-100 dark:bg-slate-800 relative overflow-hidden shrink-0 border border-slate-200/50 dark:border-slate-700">
+                                    {banner.thumbnail_url ? (
+                                      <Image
+                                        src={banner.thumbnail_url}
+                                        alt={banner.title}
+                                        fill
+                                        unoptimized
+                                        sizes="48px"
+                                        className="object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                        <Eye className="h-3.5 w-3.5" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-xs text-slate-900 dark:text-white truncate max-w-[200px]">
+                                      {banner.title}
+                                    </p>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate max-w-[200px]">
+                                      {banner.target_cities?.length || banner.target_states?.length ? (
+                                        <MapPin className="h-3 w-3 text-brand-blue shrink-0" />
+                                      ) : (
+                                        <Globe className="h-3 w-3 text-emerald-600 shrink-0" />
+                                      )}
+                                      <span className="truncate">{formatCampaignLocation(banner)}</span>
+                                    </p>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs text-slate-600 dark:text-slate-400 tabular-nums">
+                                {formatCampaignPeriod(banner.starts_at, banner.ends_at)}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] font-medium border ${
+                                    STATUS_CONFIG[banner.operational_status]?.className ?? 'bg-slate-50 text-slate-700'
+                                  }`}
+                                >
+                                  {STATUS_CONFIG[banner.operational_status]?.label ?? banner.operational_status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-xs text-right font-medium text-slate-900 dark:text-white tabular-nums">
+                                {banner.performance.impressions.toLocaleString('pt-BR')}
+                              </TableCell>
+                              <TableCell className="text-xs text-right font-medium text-slate-900 dark:text-white tabular-nums">
+                                {banner.performance.clicks}{' '}
+                                <span className="text-[11px] font-normal text-slate-400">
+                                  ({banner.performance.ctr}%)
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-xs text-right font-medium text-slate-900 dark:text-white tabular-nums">
+                                {banner.performance.leads}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label={`Ações da campanha ${banner.title}`}
+                                      className="h-8 w-8 text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48 text-xs">
+                                    <PerformanceDialog
+                                      banner={banner}
+                                      trigger={
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                          <BarChart3 className="h-3.5 w-3.5 mr-2 text-brand-blue" />
+                                          Ver performance
+                                        </DropdownMenuItem>
+                                      }
+                                    />
+                                    {banner.allowed_actions.includes('edit') && (
+                                      <BannerFormDialog
+                                        banner={banner}
+                                        placements={data.placements}
+                                        companyId={companyId}
+                                        onSaved={loadData}
+                                        trigger={
+                                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                            <Edit3 className="h-3.5 w-3.5 mr-2" />
+                                            Editar
+                                          </DropdownMenuItem>
+                                        }
+                                      />
+                                    )}
+                                    {banner.allowed_actions.includes('buy_addon') && (
+                                      <AddonCheckoutDialog
+                                        banner={banner}
+                                        trigger={
+                                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                            <Sparkles className="h-3.5 w-3.5 mr-2 text-amber-500" />
+                                            Impulsionar
+                                          </DropdownMenuItem>
+                                        }
+                                      />
+                                    )}
+                                    {banner.allowed_actions.includes('submit') && (
+                                      <DropdownMenuItem
+                                        disabled={actionBannerId === banner.id}
+                                        onClick={() => runAction(banner, 'submit')}
+                                      >
+                                        <Send className="h-3.5 w-3.5 mr-2 text-blue-600" />
+                                        Enviar para moderação
+                                      </DropdownMenuItem>
+                                    )}
+                                    {banner.allowed_actions.includes('pause') && (
+                                      <DropdownMenuItem
+                                        disabled={actionBannerId === banner.id}
+                                        onClick={() => runAction(banner, 'pause')}
+                                      >
+                                        <Pause className="h-3.5 w-3.5 mr-2 text-amber-600" />
+                                        Pausar veiculação
+                                      </DropdownMenuItem>
+                                    )}
+                                    {banner.allowed_actions.includes('resume') && (
+                                      <DropdownMenuItem
+                                        disabled={actionBannerId === banner.id}
+                                        onClick={() => runAction(banner, 'resume')}
+                                      >
+                                        <Play className="h-3.5 w-3.5 mr-2 text-emerald-600" />
+                                        Retomar veiculação
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        window.open(
+                                          `/api/v1/company_dashboard/banners/${banner.id}/export.csv`,
+                                          '_blank',
+                                          'noopener,noreferrer'
+                                        );
+                                      }}
+                                    >
+                                      <Download className="h-3.5 w-3.5 mr-2 text-slate-500" />
+                                      Exportar CSV
+                                    </DropdownMenuItem>
+                                    {banner.allowed_actions.includes('delete') && (
+                                      <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          className="text-rose-600 focus:text-rose-600 dark:text-rose-400"
+                                          disabled={actionBannerId === banner.id}
+                                          onClick={() => runAction(banner, 'delete')}
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                          Excluir campanha
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Visualização Mobile (Card List) */}
+                    <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredBanners.map((banner) => (
+                        <div key={banner.id} className="p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="h-10 w-14 rounded bg-slate-100 dark:bg-slate-800 relative overflow-hidden shrink-0 border border-slate-200/50">
+                                {banner.thumbnail_url ? (
+                                  <Image
+                                    src={banner.thumbnail_url}
+                                    alt={banner.title}
+                                    fill
+                                    unoptimized
+                                    sizes="56px"
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    <Eye className="h-4 w-4" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">
+                                  {banner.title}
+                                </p>
+                                <p className="text-[11px] text-slate-500 truncate">
+                                  {formatCampaignLocation(banner)}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={`text-[9px] font-medium shrink-0 ${
+                                STATUS_CONFIG[banner.operational_status]?.className ?? 'bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              {STATUS_CONFIG[banner.operational_status]?.label ?? banner.operational_status}
+                            </Badge>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 py-2 px-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-center text-xs">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">Impressões</span>
+                              <span className="font-bold tabular-nums">
+                                {banner.performance.impressions}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">Cliques</span>
+                              <span className="font-bold tabular-nums">
+                                {banner.performance.clicks} ({banner.performance.ctr}%)
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">Leads</span>
+                              <span className="font-bold tabular-nums">{banner.performance.leads}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-[11px] text-slate-400">
+                              {formatCampaignPeriod(banner.starts_at, banner.ends_at)}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <PerformanceDialog
+                                banner={banner}
+                                trigger={
+                                  <Button variant="outline" size="sm" className="h-7 text-xs px-2.5">
+                                    Performance
+                                  </Button>
+                                }
+                              />
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="text-xs">
+                                  {banner.allowed_actions.includes('edit') && (
+                                    <BannerFormDialog
+                                      banner={banner}
+                                      placements={data.placements}
+                                      companyId={companyId}
+                                      onSaved={loadData}
+                                      trigger={
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                          <Edit3 className="h-3.5 w-3.5 mr-2" />
+                                          Editar
+                                        </DropdownMenuItem>
+                                      }
+                                    />
+                                  )}
+                                  {banner.allowed_actions.includes('buy_addon') && (
+                                    <AddonCheckoutDialog
+                                      banner={banner}
+                                      trigger={
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                          <Sparkles className="h-3.5 w-3.5 mr-2 text-amber-500" />
+                                          Impulsionar
+                                        </DropdownMenuItem>
+                                      }
+                                    />
+                                  )}
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      window.open(
+                                        `/api/v1/company_dashboard/banners/${banner.id}/export.csv`,
+                                        '_blank',
+                                        'noopener,noreferrer'
+                                      );
+                                    }}
+                                  >
+                                    <Download className="h-3.5 w-3.5 mr-2" />
+                                    Exportar CSV
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </Card>
+
+              {/* Informative Growth Banner */}
+              <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-xs">
+                <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
+                  <Info className="h-4 w-4 text-brand-blue shrink-0" />
+                  <span>
+                    Seus anúncios serão exibidos para empresas que demonstraram interesse em energia solar, com base em localização, categoria e comportamento de navegação.
+                  </span>
+                </div>
+                <QuickGuideDialog
+                  trigger={
+                    <button
+                      type="button"
+                      className="font-semibold text-brand-blue hover:text-blue-700 dark:hover:text-blue-400 shrink-0"
+                    >
+                      Entender como funciona →
+                    </button>
+                  }
+                />
               </div>
-            )}
+
+              {/* Seção Retrátil: Análise Avançada & Diagnóstico Técnico */}
+              <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Análise avançada & Diagnóstico
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Funil de conversão completo e telemetria operacional de entrega.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowDiagnostics(!showDiagnostics)}
+                    className="h-8 text-xs font-semibold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+                  >
+                    {showDiagnostics ? "Ocultar Diagnóstico Técnico" : "Ver Diagnóstico Técnico"}
+                  </Button>
+                </div>
+
+                {/* Funil de Campanha */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <BarChart3 className="h-4 w-4 text-brand-blue" />
+                      Funil de campanha
+                    </span>
+                    {data.summary.clicks > 0 && (
+                      <span className="text-[11px] text-slate-500 font-normal">
+                        Conversão clique para lead: <strong className="text-slate-700 dark:text-slate-200">{((data.summary.leads / data.summary.clicks) * 100).toFixed(2)}%</strong>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Impressões</span>
+                      <span className="text-base font-bold text-slate-900 dark:text-white tabular-nums mt-0.5 block">
+                        {data.summary.impressions.toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Cliques</span>
+                      <span className="text-base font-bold text-slate-900 dark:text-white tabular-nums mt-0.5 block">
+                        {data.summary.clicks.toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Leads</span>
+                      <span className="text-base font-bold text-slate-900 dark:text-white tabular-nums mt-0.5 block">
+                        {data.summary.leads.toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">CTR Médio</span>
+                      <span className="text-base font-bold text-slate-900 dark:text-white tabular-nums mt-0.5 block">
+                        {data.summary.ctr}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {filteredTimeSeries.length > 0 && (
+                    <div className="pt-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-medium text-slate-500">Impressões diárias no período</span>
+                        <span className="text-[11px] font-semibold text-brand-blue tabular-nums">
+                          {filteredTimeSeries.reduce((acc, p) => acc + p.impressions, 0).toLocaleString('pt-BR')} total
+                        </span>
+                      </div>
+                      <div
+                        role="img"
+                        aria-label={`Gráfico de impressões dos últimos ${filteredTimeSeries.length} dias`}
+                        className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 h-24 flex items-end justify-between gap-1"
+                      >
+                        {filteredTimeSeries.map((ts, i) => {
+                          const max = Math.max(...filteredTimeSeries.map((t) => t.impressions)) || 1;
+                          const height = (ts.impressions / max) * 100;
+                          return (
+                            <div
+                              key={i}
+                              tabIndex={0}
+                              aria-label={`${new Date(ts.day).toLocaleDateString('pt-BR')}: ${ts.impressions} impressões`}
+                              className="flex-1 flex flex-col items-center justify-end h-full group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
+                            >
+                              <div
+                                className="w-full bg-brand-blue/80 hover:bg-brand-blue rounded-t transition-all"
+                                style={{ height: `${Math.max(height, 8)}%` }}
+                              />
+                              <span className="text-[9px] text-slate-400 mt-1 truncate">
+                                {ts.day.slice(8)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Diagnóstico Técnico Expandido */}
+                {showDiagnostics && (
+                  <div className="space-y-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    {exportAlerts.filter((alert) => alert.status === 'open').length > 0 && (
+                      <div
+                        role="status"
+                        data-testid="banner-export-alerts"
+                        className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 p-3.5 text-xs text-amber-900 dark:text-amber-200 flex items-center justify-between gap-3"
+                      >
+                        <div>
+                          <strong>Atenção operacional:</strong> foram detectadas exportações acima do limiar configurado ({exportAlerts.filter((alert) => alert.status === 'open')[0].count} em 24h).
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs shrink-0"
+                          onClick={() =>
+                            acknowledgeExportAlert(
+                              exportAlerts.filter((alert) => alert.status === 'open')[0].id
+                            )
+                          }
+                        >
+                          Marcar como visto
+                        </Button>
+                      </div>
+                    )}
+
+                    {(() => {
+                      const health = data.operational_health;
+                      const labels = {
+                        healthy: ['Operação normal', 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300'],
+                        degraded: ['Qualidade degradada', 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300'],
+                        stale: ['Dados atrasados', 'border-rose-200 bg-rose-50/50 dark:bg-rose-950/20 text-rose-800 dark:text-rose-300'],
+                        unknown: ['Aguardando dados', 'border-slate-200 bg-slate-50 text-slate-700 dark:text-slate-300'],
+                      } as const;
+                      const [label, tone] = labels[health?.status ?? 'unknown'];
+                      const discardRate = health?.discard_rate_24h ?? 0;
+                      const topDiscardReason = Object.entries(health?.discard_reasons_24h ?? {}).sort(
+                        ([, a], [, b]) => b - a
+                      )[0];
+                      return (
+                        <div className={`p-4 rounded-xl border ${tone}`}>
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                              <Activity className="h-5 w-5" />
+                              <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider">
+                                  Saúde da medição
+                                </p>
+                                <p className="text-sm font-bold">{label}</p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-1 text-xs">
+                              <span>Eventos válidos 24h: <strong>{health?.reportable_events_24h ?? 0}</strong></span>
+                              <span>Descartados: <strong>{health?.discarded_events_24h ?? 0}</strong></span>
+                              <span>Taxa: <strong>{discardRate.toFixed(2)}%</strong></span>
+                              <span>Atraso: <strong>{health?.lag_minutes == null ? 'n/d' : `${health.lag_minutes} min`}</strong></span>
+                              <span>Divergências: <strong>{health?.divergent_banners_yesterday ?? 0}</strong></span>
+                              <span>Motivo principal: <strong>{topDiscardReason ? `${topDiscardReason[0]} (${topDiscardReason[1]})` : 'n/d'}</strong></span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Qualidade 7 dias */}
+                    {data.operational_health?.quality_history?.length ? (
+                      <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900">
+                        <div className="mb-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                              Qualidade nos últimos 7 dias
+                            </p>
+                            <p className="text-[11px] text-slate-500">Eventos válidos x descartados</p>
+                          </div>
+                          <Activity className="h-4 w-4 text-brand-blue" />
+                        </div>
+                        <div className="grid grid-cols-7 gap-2" data-testid="banner-quality-history">
+                          {data.operational_health.quality_history.map((day) => {
+                            const total = day.reportable_events + day.discarded_events;
+                            const validWidth = total ? (day.reportable_events / total) * 100 : 0;
+                            return (
+                              <div key={day.date} className="min-w-0" title={`${day.date}: ${day.discard_rate}% descartados`}>
+                                <div className="flex h-14 flex-col justify-end overflow-hidden rounded bg-slate-100 dark:bg-slate-800">
+                                  <div className="bg-rose-400" style={{ height: `${100 - validWidth}%` }} />
+                                  <div className="bg-emerald-400" style={{ height: `${validWidth}%` }} />
+                                </div>
+                                <p className="mt-1 truncate text-center text-[10px] text-slate-500">{day.date.slice(5)}</p>
+                                <p className="text-center text-[10px] font-bold text-slate-700 dark:text-slate-300">{day.discard_rate.toFixed(1)}%</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Incidentes Recentes */}
+                    {data.operational_health?.incident_history?.length ? (
+                      <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900">
+                        <div className="mb-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Incidentes recentes</p>
+                            <p className="text-[11px] text-slate-500">Sinais para investigação operacional</p>
+                          </div>
+                          <AlertCircle className="h-4 w-4 text-amber-500" />
+                        </div>
+                        <div className="mb-3 grid gap-2 sm:grid-cols-3">
+                          <select
+                            aria-label="Período dos incidentes"
+                            className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs"
+                            value={incidentDays}
+                            onChange={(e) => setIncidentDays(e.target.value as '3' | '7')}
+                          >
+                            <option value="7">Últimos 7 dias</option>
+                            <option value="3">Últimos 3 dias</option>
+                          </select>
+                          <select
+                            aria-label="Tipo de incidente"
+                            className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs"
+                            value={incidentType}
+                            onChange={(e) => setIncidentType(e.target.value)}
+                          >
+                            <option value="all">Todos os tipos</option>
+                            <option value="discard_rate_high">Descarte alto</option>
+                            <option value="reconciliation_divergence">Divergência</option>
+                            <option value="aggregate_missing">Agregado ausente</option>
+                          </select>
+                          <select
+                            aria-label="Banner afetado"
+                            className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs"
+                            value={incidentBanner}
+                            onChange={(e) => setIncidentBanner(e.target.value)}
+                          >
+                            <option value="all">Todos os banners</option>
+                            {incidentOptions.map(([id, title]) => (
+                              <option key={id} value={id}>
+                                {title}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => exportFilteredIncidents('csv')}
+                            disabled={filteredIncidentHistory.length === 0}
+                          >
+                            <Download className="mr-1.5 h-3 w-3" /> Exportar CSV
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => exportFilteredIncidents('json')}
+                            disabled={filteredIncidentHistory.length === 0}
+                          >
+                            <Download className="mr-1.5 h-3 w-3" /> Exportar JSON
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={loadExportAudits}
+                            disabled={exportAuditsLoading}
+                          >
+                            <Activity className="mr-1.5 h-3 w-3" />
+                            {exportAuditsLoading ? 'Carregando histórico…' : 'Histórico de exportações'}
+                          </Button>
+                        </div>
+
+                        {exportAuditsOpen && (
+                          <div className="mb-3 rounded-lg border border-slate-200 dark:border-slate-800 p-2.5 text-xs" data-testid="banner-export-audit-history">
+                            <p className="mb-1 font-bold text-[10px] uppercase text-slate-500">Downloads auditados</p>
+                            {exportAudits.length ? (
+                              exportAudits.map((audit) => (
+                                <div key={audit.id} className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 last:border-0 text-[11px]">
+                                  <span>{audit.format?.toUpperCase()} · {audit.record_count} incidentes</span>
+                                  <time dateTime={audit.created_at}>{new Date(audit.created_at).toLocaleString('pt-BR')}</time>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-slate-400">Nenhuma exportação registrada.</p>
+                            )}
+                          </div>
+                        )}
+
+                        <ol className="space-y-1.5" data-testid="banner-incident-history">
+                          {filteredIncidentHistory.slice(-5).reverse().map((incident, index) => {
+                            const label =
+                              incident.type === 'discard_rate_high'
+                                ? 'Taxa de descarte alta'
+                                : incident.type === 'reconciliation_divergence'
+                                  ? 'Divergência de reconciliação'
+                                  : 'Agregado ausente';
+                            return (
+                              <li key={`${incident.date}-${incident.type}-${index}`} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs">
+                                <button
+                                  type="button"
+                                  className="w-full flex items-center justify-between text-left font-medium"
+                                  onClick={() =>
+                                    setExpandedIncident(
+                                      expandedIncident === `${incident.date}-${incident.type}`
+                                        ? null
+                                        : `${incident.date}-${incident.type}`
+                                    )
+                                  }
+                                >
+                                  <span>{label}</span>
+                                  <span className="text-slate-400 text-[11px]">{incident.date} · {incident.value}</span>
+                                </button>
+                                {expandedIncident === `${incident.date}-${incident.type}` && (
+                                  <div className="mt-1 pt-1 border-t border-slate-200 dark:border-slate-700 text-[11px] text-slate-500">
+                                    {incident.affected_banners?.length
+                                      ? incident.affected_banners.map((b) => (
+                                          <div key={b.id}>{b.title} {b.event_count ? `(${b.event_count} eventos)` : ''}</div>
+                                        ))
+                                      : 'Nenhum banner identificado'}
+                                  </div>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </Card>
+            </div>
+
+            {/* Coluna Direita - 4 colunas (Sidebar / Rail) */}
+            <div className="lg:col-span-4 space-y-6">
+              {/* Widget: Dica de Boas Práticas */}
+              <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-5">
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-brand-blue shrink-0">
+                    <Lightbulb className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-1.5 min-w-0">
+                    <h4 className="font-bold text-xs text-slate-900 dark:text-white">
+                      Dica de boas práticas
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Mantenha o conteúdo da sua campanha sempre atualizado e com uma proposta de valor clara. Isso aumenta o engajamento e melhora o CTR.
+                    </p>
+                    <QuickGuideDialog
+                      trigger={
+                        <button
+                          type="button"
+                          className="text-xs font-semibold text-brand-blue hover:text-blue-700 dark:hover:text-blue-400 block pt-1"
+                        >
+                          Ver guia completo →
+                        </button>
+                      }
+                    />
+                  </div>
+                </div>
+              </Card>
+
+              {/* Widget: Seu Plano & Quota */}
+              <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-5 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-brand-blue" />
+                    <h4 className="font-bold text-xs text-slate-900 dark:text-white">
+                      Seu plano
+                    </h4>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-semibold text-brand-blue border-brand-blue/30 bg-blue-50/50 dark:bg-blue-950/40">
+                    {quota?.canActivate ? 'Plano Ativo' : 'Limite Atingido'}
+                  </Badge>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Quota de campanhas
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {quota?.limit === null
+                      ? 'Campanhas ilimitadas disponíveis no plano'
+                      : `Você pode criar até ${quota?.limit} campanhas ativas simultaneamente.`}
+                  </p>
+                </div>
+
+                {quota && (
+                  <div className="space-y-1.5 pt-1">
+                    <Progress value={quota.percent} className="h-2 bg-slate-100 dark:bg-slate-800" />
+                    <div className="flex items-center justify-between text-xs text-slate-500 tabular-nums">
+                      <span>{quota.used} de {quota.limit ?? '∞'} usadas</span>
+                      <span className="font-semibold text-brand-blue">{quota.remaining ?? '∞'} restantes</span>
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs font-semibold border-slate-200 dark:border-slate-800 mt-2"
+                  onClick={() => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', 'product-pricing');
+                    window.location.href = url.toString();
+                  }}
+                >
+                  Gerenciar plano →
+                </Button>
+              </Card>
+
+              {/* Widget: Seus Anúncios (Ações Rápidas) */}
+              <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-5 space-y-3.5">
+                <div className="flex items-center gap-2">
+                  <Megaphone className="h-4 w-4 text-brand-blue" />
+                  <h4 className="font-bold text-xs text-slate-900 dark:text-white">
+                    Seus anúncios
+                  </h4>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Visualize, edite e gerencie seus anúncios patrocinados.
+                </p>
+
+                {featuredCampaign && (
+                  <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                    <div className="h-10 w-14 rounded bg-slate-200 dark:bg-slate-700 relative overflow-hidden shrink-0">
+                      {featuredCampaign.thumbnail_url ? (
+                        <Image
+                          src={featuredCampaign.thumbnail_url}
+                          alt={featuredCampaign.title}
+                          fill
+                          unoptimized
+                          sizes="56px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <Eye className="h-3.5 w-3.5" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {featuredCampaign.title}
+                      </p>
+                      <p className="text-[11px] text-slate-500 truncate">
+                        {formatCampaignLocation(featuredCampaign)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {featuredCampaign && featuredCampaign.allowed_actions.includes('edit') ? (
+                    <BannerFormDialog
+                      banner={featuredCampaign}
+                      placements={data.placements}
+                      companyId={companyId}
+                      onSaved={loadData}
+                      trigger={
+                        <Button className="h-8 text-xs font-medium bg-brand-blue hover:bg-blue-600 text-white">
+                          <Edit3 className="h-3.5 w-3.5 mr-1" />
+                          Editar
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <BannerFormDialog
+                      placements={data.placements}
+                      companyId={companyId}
+                      onSaved={loadData}
+                      trigger={
+                        <Button
+                          disabled={quota ? !quota.canCreate : false}
+                          className="h-8 text-xs font-medium bg-brand-blue hover:bg-blue-600 text-white"
+                        >
+                          <Plus className="h-3.5 w-3.5 mr-1" />
+                          Criar
+                        </Button>
+                      }
+                    />
+                  )}
+
+                  <Button
+                    variant="outline"
+                    className="h-8 text-xs font-medium border-slate-200 dark:border-slate-800"
+                    onClick={() => {
+                      if (featuredCampaign) {
+                        window.open(
+                          `/api/v1/company_dashboard/banners/${featuredCampaign.id}/export.csv`,
+                          '_blank',
+                          'noopener,noreferrer'
+                        );
+                      } else {
+                        window.open(
+                          `/api/v1/company_dashboard/banners`,
+                          '_blank',
+                          'noopener,noreferrer'
+                        );
+                      }
+                    }}
+                  >
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    Exportar CSV
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Widget: Saúde da Medição (Status Compacto) */}
+              <Card className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-emerald-500" />
+                    <h4 className="font-bold text-xs text-slate-900 dark:text-white">
+                      Saúde da medição
+                    </h4>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800">
+                    Operação normal
+                  </Badge>
+                </div>
+                <div className="text-xs text-slate-500 space-y-1">
+                  <p>
+                    Eventos válidos 24h: <strong className="text-slate-700 dark:text-slate-300">{data.operational_health?.reportable_events_24h ?? 0}</strong>
+                  </p>
+                  <p>
+                    Atraso na fila: <strong className="text-slate-700 dark:text-slate-300">{data.operational_health?.lag_minutes ?? 0} min</strong>
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full h-8 text-xs font-semibold text-brand-blue hover:text-blue-700 p-0"
+                  onClick={() => setShowDiagnostics(true)}
+                >
+                  Ver Diagnóstico Técnico →
+                </Button>
+              </Card>
+            </div>
           </div>
         </>
       ) : null}
