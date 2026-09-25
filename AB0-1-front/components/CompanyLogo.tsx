@@ -126,7 +126,7 @@ export function CompanyLogo({
             src={resolvedUrl!}
             alt={name ? `Logo da empresa ${name}` : 'Logo da empresa'}
             fill
-            sizes="(max-width: 768px) 90px, 140px"
+            sizes="(max-width: 768px) 48px, 64px"
             priority={priority}
             className={cn(
               'h-full w-full object-contain object-center transition-opacity duration-300 p-0',
