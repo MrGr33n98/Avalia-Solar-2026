@@ -70,6 +70,8 @@ RSpec.describe 'Sales API - Emails', type: :request do
   end
 
   describe 'POST /api/v1/sales/emails' do
+    before { allow(Sales::Messaging::SendingGate).to receive(:enabled?).and_return(true) }
+
     context 'Com conta e contato' do
       it 'cria e-mail e enfileira job retornando 201 Created' do
         payload = {
@@ -118,6 +120,18 @@ RSpec.describe 'Sales API - Emails', type: :request do
     end
 
     context 'Validações' do
+      it 'bloqueia envio sem criar registro quando a kill switch está desligada' do
+        allow(Sales::Messaging::SendingGate).to receive(:enabled?).and_return(false)
+        payload = { email: { to_email: 'prospect@example.test', subject: 'Teste', body_text: 'Olá' } }
+
+        expect {
+          post '/api/v1/sales/emails', params: payload.to_json, headers: headers
+        }.not_to change(Sales::EmailMessage, :count)
+
+        expect(response).to have_http_status(:service_unavailable)
+        expect(JSON.parse(response.body)['code']).to eq('EMAIL_SENDING_DISABLED')
+      end
+
       it 'retorna 422 EMAIL_RECIPIENT_REQUIRED se destinatário for ausente' do
         payload = {
           email: {
@@ -158,6 +172,8 @@ RSpec.describe 'Sales API - Emails', type: :request do
           }
         }
 
+        role = Sales::Role.create!(name: 'Email Sales', slug: "email_sales_#{SecureRandom.hex(4)}", system: true)
+        Sales::UserRole.create!(user: user, role: role)
         user.update_column(:role, 'company')
 
         post '/api/v1/sales/emails', params: payload.to_json, headers: headers

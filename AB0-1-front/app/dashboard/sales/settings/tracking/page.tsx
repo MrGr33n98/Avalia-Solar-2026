@@ -1,11 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { Activity, Copy, Check, ShieldCheck, Globe, UserCheck, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Activity, Copy, Check, Globe, UserCheck, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import OrganizationSettingLayout from '@/components/sales/settings/OrganizationSettingLayout';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
+
+interface TrackingSite {
+  configured: boolean;
+  id?: number;
+  public_key?: string;
+  allowed_origins?: string[];
+  active?: boolean;
+  snippet_url?: string;
+}
 
 export default function SalesTrackingPage() {
   const [sessionId, setSessionId] = useState('');
@@ -13,22 +22,33 @@ export default function SalesTrackingPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  // Whitelisted Domains
-  const [domains, setDomains] = useState<string[]>([
-    'www.avaliasolar.com.br',
-    'simulador.avaliasolar.com.br',
-  ]);
+  const [site, setSite] = useState<TrackingSite | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [domains, setDomains] = useState<string[]>([]);
   const [newDomainInput, setNewDomainInput] = useState('');
+  const [savingDomains, setSavingDomains] = useState(false);
 
-  const trackingSnippet = `<!-- Avalia Solar Web Tracking Pixel -->
-<script>
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'avalia.start':
-  new Date().getTime(),event:'avalia.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='avalia'?'&l='+l:'';j.async=true;
-  j.src='https://crm.avaliasolar.com.br/pixel.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','avaliaLayer','AS-PIXEL-2026-LIVE');
-</script>`;
+  useEffect(() => {
+    let active = true;
+    fetch('/api/v1/sales/tracking_sites', { credentials: 'include' })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error?.message || data?.message || 'Falha ao carregar tracking.');
+        return data.tracking_site as TrackingSite;
+      })
+      .then((result) => {
+        if (!active) return;
+        setSite(result);
+        setDomains(result.allowed_origins || []);
+      })
+      .catch((error: Error) => { if (active) setMessage(error.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  const trackingSnippet = site?.snippet_url
+    ? `<script async src="${site.snippet_url}"></script>`
+    : '';
 
   const identify = async () => {
     setSaving(true);
@@ -38,14 +58,15 @@ export default function SalesTrackingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ tracking_session_id: sessionId, sales_contact_id: contactId }),
+        body: JSON.stringify({ session_id: sessionId, contact_id: contactId }),
       });
-      if (!response.ok) throw new Error();
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error?.message || data?.message || 'Erro ao associar identidade.');
       setMessage('Identidade associada com sucesso! Eventos anteriores vinculados ao contato.');
       setSessionId('');
       setContactId('');
-    } catch {
-      setMessage('Erro ao associar identidade.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Erro ao associar identidade.');
     } finally {
       setSaving(false);
     }
@@ -53,28 +74,74 @@ export default function SalesTrackingPage() {
 
   const handleAddDomain = () => {
     if (!newDomainInput.trim()) return;
-    const cleanDomain = newDomainInput.trim().replace(/^https?:\/\//, '');
-    if (!domains.includes(cleanDomain)) {
-      setDomains((prev) => [...prev, cleanDomain]);
+    try {
+      const parsed = new URL(newDomainInput.includes('://') ? newDomainInput : `https://${newDomainInput}`);
+      if (!['https:', 'http:'].includes(parsed.protocol) || (parsed.protocol === 'http:' && !['localhost', '127.0.0.1'].includes(parsed.hostname))) {
+        throw new Error('Use uma origem HTTPS válida. HTTP só é permitido em localhost.');
+      }
+      const origin = parsed.origin;
+      if (!domains.includes(origin)) setDomains((prev) => [...prev, origin]);
+      setNewDomainInput('');
+      setMessage(null);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Origem inválida.');
     }
-    setNewDomainInput('');
   };
 
   const handleRemoveDomain = (d: string) => {
     setDomains((prev) => prev.filter((item) => item !== d));
   };
 
+  const saveDomains = async () => {
+    setSavingDomains(true);
+    setMessage(null);
+    try {
+      const response = await fetch(site?.id ? `/api/v1/sales/tracking_sites/${site.id}` : '/api/v1/sales/tracking_sites', {
+        method: site?.id ? 'PUT' : 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tracking_site: { allowed_origins: domains } }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error?.message || data?.message || 'Não foi possível salvar as origens.');
+      setSite(data.tracking_site);
+      setMessage('Origens autorizadas salvas.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível salvar as origens.');
+    } finally {
+      setSavingDomains(false);
+    }
+  };
+
+  const rotateKey = async () => {
+    if (!site?.id) return;
+    setSavingDomains(true);
+    try {
+      const response = await fetch(`/api/v1/sales/tracking_sites/${site.id}/rotate_key`, {
+        method: 'POST', credentials: 'include',
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error?.message || data?.message || 'Não foi possível rotacionar a chave.');
+      setSite(data.tracking_site);
+      setMessage('Chave rotacionada. Atualize o snippet instalado no site.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível rotacionar a chave.');
+    } finally {
+      setSavingDomains(false);
+    }
+  };
+
   return (
     <SalesLayoutWrapper>
       <OrganizationSettingLayout
         title="Rastreamento Web & Atribuição de Leads (Web Tracking)"
-        subtitle="Monitore a jornada digital dos clientes no seu site institucional e atribua navegação anônima a contatos do CRM"
+        subtitle="Configure origens web, capture eventos allowlisted e associe sessão a contato por ação autenticada no CRM"
         helpTitle="Atribuição Multi-Toque"
-        helpDescription="O Pixel do Avalia Solar captura UTMs de campanhas (Google Ads, Meta Ads), páginas visitadas e simulações solares para atribuir a origem exata da venda."
+        helpDescription="O snippet registra páginas, formulários e UTMs permitidos para este tenant. Ele não identifica automaticamente uma pessoa nem prova conversão comercial."
         extraHelpCards={[
           {
             title: 'Instalação Simples',
-            content: 'Cole o snippet de rastreamento na tag <head> do seu site ou via Google Tag Manager (GTM).',
+            content: 'Configure e salve uma origem autorizada antes de instalar o snippet no site.',
           },
         ]}
       >
@@ -82,13 +149,13 @@ export default function SalesTrackingPage() {
           {/* Seção 1: Snippet JS de Rastreamento */}
           <div className="space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="font-semibold text-slate-800 text-sm flex items-center gap-1.5">
+                <span className="font-semibold text-slate-800 text-sm flex items-center gap-1.5">
                 <Activity className="w-4 h-4 text-sky-600" />
                 Pixel de Rastreamento JavaScript (Snippet)
               </span>
             </div>
 
-            <div className="p-3.5 bg-slate-900 rounded-md text-slate-100 space-y-2.5">
+            {loading ? <p className="text-slate-500">Carregando configuração…</p> : site?.configured && trackingSnippet ? <div className="p-3.5 bg-slate-900 rounded-md text-slate-100 space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-mono text-sky-400">código de inserção no site (&lt;head&gt;)</span>
                 <Button
@@ -107,7 +174,7 @@ export default function SalesTrackingPage() {
               <pre className="font-mono text-[10px] leading-relaxed overflow-x-auto text-slate-300 bg-slate-950 p-2.5 rounded border border-slate-800">
                 {trackingSnippet}
               </pre>
-            </div>
+            </div> : <p className="rounded border border-amber-200 bg-amber-50 p-3 text-amber-900">Adicione uma origem e salve para gerar a chave e o snippet deste tenant.</p>}
           </div>
 
           {/* Seção 2: Domínios Autorizados */}
@@ -145,6 +212,15 @@ export default function SalesTrackingPage() {
                   </button>
                 </div>
               ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" onClick={saveDomains} disabled={savingDomains || loading || domains.length === 0} className="h-8 text-xs">
+                {savingDomains ? 'Salvando…' : site?.configured ? 'Salvar origens' : 'Criar configuração'}
+              </Button>
+              {site?.configured && <Button size="sm" variant="outline" onClick={rotateKey} disabled={savingDomains} className="h-8 text-xs">
+                Rotacionar chave
+              </Button>}
+              {message && <span role="status" className="text-xs font-medium text-slate-700">{message}</span>}
             </div>
           </div>
 
@@ -189,7 +265,7 @@ export default function SalesTrackingPage() {
                 >
                   {saving ? 'Associando…' : 'Associar Contato à Navegação'}
                 </Button>
-                {message && <span className="text-xs font-medium text-emerald-700">{message}</span>}
+                {message && <span role="status" className="text-xs font-medium text-slate-700">{message}</span>}
               </div>
             </div>
           </div>

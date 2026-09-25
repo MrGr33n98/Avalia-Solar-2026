@@ -9,11 +9,18 @@ module Api
         end
 
         def create
-          if quote_params[:opportunity_id].present? && !current_tenant_scope.opportunities.exists?(id: quote_params[:opportunity_id])
-            return render_error_response(message: 'Oportunidade fora do escopo do tenant', status: :forbidden, code: 'UNAUTHORIZED_RELATION')
+          opportunity = current_tenant_scope.opportunities.find(quote_params[:opportunity_id])
+          if quote_params[:solar_project_id].present?
+            project = ::Sales::SolarProject.find_by(id: quote_params[:solar_project_id])
+            unless project && current_tenant_scope.accounts.exists?(id: project.account_id)
+              log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'SolarProject')
+              return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+            end
+            return render_relation_conflict(resource: 'Quote') unless project.account_id == opportunity.sales_account_id &&
+              (project.opportunity_id.blank? || project.opportunity_id == opportunity.id)
           end
 
-          quote = ::Sales::Quote.create!(quote_params.merge(created_by: current_user))
+          quote = ::Sales::Quote.create!(quote_params.merge(opportunity: opportunity, created_by: current_user))
           render json: { quote: serialize(quote) }, status: :created
         end
 

@@ -143,7 +143,7 @@ module Api
 
               when 'assign_owner'
                 target_owner = User.find_by(id: params[:value])
-                if target_owner
+                if target_owner && current_tenant_scope.valid_owner?(target_owner, account: lead.account)
                   lead.update!(owner: target_owner)
                   updated_count += 1
                 else
@@ -152,7 +152,8 @@ module Api
                 end
 
               when 'add_tag'
-                tag = ::Sales::Tag.find_by(id: params[:value]) || ::Sales::Tag.find_by(name: params[:value])
+                tag_scope = current_user.admin? ? ::Sales::Tag.all : current_tenant_scope.tags
+                tag = tag_scope.find_by(id: params[:value]) || tag_scope.find_by(name: params[:value])
                 if tag
                   lead.tags << tag unless lead.tags.include?(tag)
                   updated_count += 1
@@ -162,7 +163,8 @@ module Api
                 end
 
               when 'remove_tag'
-                tag = ::Sales::Tag.find_by(id: params[:value]) || ::Sales::Tag.find_by(name: params[:value])
+                tag_scope = current_user.admin? ? ::Sales::Tag.all : current_tenant_scope.tags
+                tag = tag_scope.find_by(id: params[:value]) || tag_scope.find_by(name: params[:value])
                 if tag
                   lead.tags.delete(tag)
                   updated_count += 1
@@ -177,7 +179,7 @@ module Api
               end
             rescue => e
               failed_count += 1
-              failures << { id: lead.id, error: e.message }
+              failures << { id: lead.id, error: 'Ação não pôde ser aplicada a este registro.' }
             end
           end
 
@@ -193,6 +195,8 @@ module Api
         private
 
         def serialize_lead(opp)
+          contact = opp.primary_contact
+          contact = nil unless contact && current_tenant_scope.valid_relation?(account: opp.account, contact: contact, opportunity: opp)
           {
             id: opp.id,
             name: opp.name,
@@ -203,7 +207,7 @@ module Api
             stage_key: opp.stage&.key || opp.stage_key,
             sales_account_id: opp.sales_account_id,
             sales_pipeline_id: opp.sales_pipeline_id,
-            primary_contact_id: opp.primary_contact_id,
+            primary_contact_id: contact&.id,
             account: opp.account ? { id: opp.account.id, name: opp.account.name } : nil,
             stage: opp.stage ? { id: opp.stage.id, key: opp.stage.key, name: opp.stage.name } : nil,
             source: opp.source ? { id: opp.source.id, name: opp.source.name } : nil,

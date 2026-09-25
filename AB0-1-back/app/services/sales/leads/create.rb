@@ -27,26 +27,26 @@ module Sales
             )
           end
 
-          if @actor.present?
-            tenant_scope = ::Sales::TenantScope.for(@actor)
-            unless tenant_scope.admin?
-              if account_id.present? && !tenant_scope.accounts.where(id: account_id).exists?
-                return Result.new(
-                  success?: false,
-                  code: 'FORBIDDEN',
-                  message: 'Empresa inválida ou inacessível para esta organização.'
-                )
-              end
+          tenant_scope = ::Sales::TenantScope.for(@actor)
+          account = tenant_scope.accounts.find_by(id: account_id)
+          raise RelationalReferenceError unless account
+          raise RelationalReferenceError unless tenant_scope.valid_owner?(@actor, account: account)
 
-              cnt_id = @attributes[:primary_contact_id]
-              if cnt_id.present? && !tenant_scope.contacts.where(id: cnt_id).exists?
-                return Result.new(
-                  success?: false,
-                  code: 'FORBIDDEN',
-                  message: 'Contato principal inválido ou inacessível para esta organização.'
-                )
-              end
-            end
+          primary_contact_id = @attributes[:primary_contact_id]
+          if primary_contact_id.blank? && @inline_contact.present? && @inline_contact[:first_name].present?
+            primary_contact_id = ::Sales::Contact.create!(
+              sales_account_id: account.id,
+              first_name: @inline_contact[:first_name],
+              email: @inline_contact[:email],
+              user: @actor
+            ).id
+          end
+          contact_ids = ([primary_contact_id] + Array(@attributes[:contact_ids])).compact_blank.map(&:to_s).uniq
+          contacts = contact_ids.index_with do |contact_id|
+            contact = tenant_scope.contacts.find_by(id: contact_id)
+            raise RelationalReferenceError unless contact && tenant_scope.valid_relation?(account: account, contact: contact)
+
+            contact
           end
 
           pipeline = resolve_pipeline
@@ -60,7 +60,7 @@ module Sales
           opportunity = ::Sales::Opportunity.new(
             clean_attrs.merge(
               sales_account_id: account_id,
-              primary_contact_id: @attributes[:primary_contact_id],
+              primary_contact_id: primary_contact_id,
               owner: @actor,
               pipeline: pipeline,
               stage: stage,
@@ -85,7 +85,7 @@ module Sales
           # Link Contacts if provided
           if @attributes[:contact_ids].is_a?(Array)
             @attributes[:contact_ids].each do |cnt_id|
-              opportunity.opportunity_contacts.find_or_create_by!(sales_contact_id: cnt_id)
+              opportunity.opportunity_contacts.find_or_create_by!(sales_contact_id: contacts.fetch(cnt_id.to_s).id)
             end
           end
 
@@ -109,11 +109,13 @@ module Sales
         Result.new(success?: false, code: 'CRM_PIPELINE_NOT_CONFIGURED', message: e.message)
       rescue StagePipelineMismatchError => e
         Result.new(success?: false, code: 'STAGE_PIPELINE_MISMATCH', message: e.message)
+      rescue RelationalReferenceError
+        Result.new(success?: false, code: 'INVALID_RELATION', message: 'Uma ou mais referências comerciais são inválidas ou incompatíveis.')
       rescue StandardError => e
         Result.new(
           success?: false,
           code: 'INTERNAL_ERROR',
-          message: e.message
+          message: 'Não foi possível concluir a operação do lead.'
         )
       end
 
@@ -121,6 +123,7 @@ module Sales
 
       class PipelineNotConfiguredError < StandardError; end
       class StagePipelineMismatchError < StandardError; end
+      class RelationalReferenceError < StandardError; end
 
       def resolve_account
         return @attributes[:sales_account_id] if @attributes[:sales_account_id].present?

@@ -69,7 +69,7 @@ module Api
           end
 
           # 2. Activities
-          ::Sales::Activity.where(sales_opportunity_id: @opportunity.id).find_each do |act|
+          current_tenant_scope.activities.where(sales_opportunity_id: @opportunity.id, sales_account_id: @opportunity.sales_account_id).find_each do |act|
             events << {
               id: "act-#{act.id}",
               type: act.activity_type == 'call' ? 'call' : 'activity',
@@ -80,7 +80,7 @@ module Api
           end
 
           # 3. Tasks
-          ::Sales::Task.where(sales_opportunity_id: @opportunity.id).find_each do |t|
+          current_tenant_scope.tasks.where(sales_opportunity_id: @opportunity.id, sales_account_id: @opportunity.sales_account_id).find_each do |t|
             events << {
               id: "task-#{t.id}",
               type: 'task',
@@ -91,7 +91,7 @@ module Api
           end
 
           # 4. Notes
-          ::Sales::Note.where(opportunity_id: @opportunity.id).find_each do |n|
+          current_tenant_scope.notes.where(opportunity_id: @opportunity.id).find_each do |n|
             events << {
               id: "note-#{n.id}",
               type: 'note',
@@ -102,7 +102,7 @@ module Api
           end
 
           # 5. Email messages
-          ::Sales::EmailMessage.where(sales_opportunity_id: @opportunity.id).find_each do |em|
+          current_tenant_scope.email_messages.where(sales_opportunity_id: @opportunity.id).find_each do |em|
             events << {
               id: "email-#{em.id}",
               type: 'email',
@@ -113,7 +113,7 @@ module Api
           end
 
           # 6. Quotes
-          ::Sales::Quote.where(opportunity_id: @opportunity.id).find_each do |q|
+          current_tenant_scope.quotes.where(opportunity_id: @opportunity.id).find_each do |q|
             events << {
               id: "quote-#{q.id}",
               type: 'quote',
@@ -160,6 +160,21 @@ module Api
         end
 
         def update
+          attrs = opportunity_update_params.to_h.symbolize_keys
+          account_id = attrs[:sales_account_id].presence || @opportunity.sales_account_id
+          account = current_tenant_scope.accounts.find_by(id: account_id)
+          unless account
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Account')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+          contact_id = attrs.key?(:primary_contact_id) ? attrs[:primary_contact_id] : @opportunity.primary_contact_id
+          contact = current_tenant_scope.contacts.find_by(id: contact_id) if contact_id.present?
+          if contact_id.present? && contact.nil?
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Contact')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+          return render_relation_conflict(resource: 'Opportunity') unless current_tenant_scope.valid_relation?(account: account, contact: contact, opportunity: @opportunity)
+
           ActiveRecord::Base.transaction do
             if params.dig(:opportunity, :stage_key).present? || params.dig(:opportunity, :sales_stage_id).present?
               stage = if params.dig(:opportunity, :stage_key).present?
@@ -172,12 +187,12 @@ module Api
 
               ::Sales::Opportunities::ChangeStage.call(opportunity: @opportunity, stage:, actor: current_user)
             else
-              @opportunity.update!(opportunity_update_params)
+              @opportunity.update!(attrs)
             end
           end
           render json: { opportunity: opportunity_json(@opportunity.reload) }
         rescue ActiveRecord::RecordNotFound => e
-          render_error_response(message: e.message, status: :unprocessable_entity, code: 'STAGE_NOT_FOUND')
+          render_error_response(message: 'Estágio não pertence ao pipeline da oportunidade.', status: :unprocessable_entity, code: 'STAGE_NOT_FOUND')
         rescue ArgumentError => e
           render_error_response(message: e.message, status: :unprocessable_entity, code: 'INVALID_STAGE_TRANSITION')
         rescue ActiveRecord::RecordInvalid => e
@@ -201,7 +216,10 @@ module Api
           when 'status'
             record.update!(status: params[:value].to_s)
           when 'owner'
-            record.update!(owner_id: Integer(params[:value]))
+            new_owner_id = Integer(params[:value])
+            target_user = User.find_by(id: new_owner_id)
+            raise ActiveRecord::RecordNotFound unless current_tenant_scope.valid_owner?(target_user, account: record.account)
+            record.update!(owner_id: new_owner_id)
           when 'remove_tag'
             tag_scope = current_user.admin? ? ::Sales::Tag.all : ::Sales::Tag.where(company_id: current_user.company_id)
             tag = tag_scope.find(params[:value])
@@ -292,6 +310,9 @@ module Api
 
         def opportunity_json(opportunity)
           contact = opportunity.primary_contact
+          unless contact && current_tenant_scope.valid_relation?(account: opportunity.account, contact: contact, opportunity: opportunity)
+            contact = nil
+          end
           {
             id: opportunity.id,
             name: opportunity.name,

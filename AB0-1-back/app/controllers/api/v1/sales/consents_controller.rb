@@ -3,12 +3,15 @@ module Api
     module Sales
       class ConsentsController < BaseController
         def index
-          consents = ::Sales::Consent.where(contact_id: params[:contact_id]).order(created_at: :desc)
+          contact = current_tenant_scope.contacts.find(params[:contact_id])
+          consents = ::Sales::Consent.where(contact_id: contact.id).order(created_at: :desc)
           render json: { consents: consents.map { |consent| serialize(consent) } }
         end
 
         def create
-          consent = ::Sales::Consent.create!(consent_params.merge(granted_at: Time.current))
+          contact_id = consent_params[:contact_id] || params[:contact_id]
+          contact = current_tenant_scope.contacts.find(contact_id)
+          consent = ::Sales::Consent.create!(consent_params.merge(contact_id: contact.id, granted_at: Time.current))
           render json: { consent: serialize(consent) }, status: :created
         end
 

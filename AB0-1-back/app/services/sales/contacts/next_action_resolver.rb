@@ -1,8 +1,9 @@
 module Sales
   module Contacts
     class NextActionResolver
-      def self.resolve(contact)
-        next_task = contact.tasks.where(completed_at: nil).order(due_at: :asc, created_at: :asc).first
+      def self.resolve(contact, scope: nil)
+        tasks = scope ? scope.tasks.where(sales_contact_id: contact.id) : contact.tasks
+        next_task = tasks.where(completed_at: nil).order(due_at: :asc, created_at: :asc).first
 
         unless next_task
           return { next_action_at: nil, next_action_type: nil, next_action_title: nil }

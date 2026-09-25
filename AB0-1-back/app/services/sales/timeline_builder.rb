@@ -2,8 +2,8 @@
 
 module Sales
   class TimelineBuilder
-    def self.for_account(account)
-      new(account: account).build
+    def self.for_account(account, scope: nil)
+      new(account: account, scope: scope).build
     end
 
     def self.for_contact(contact)
@@ -14,10 +14,11 @@ module Sales
       new(opportunity: opportunity).build
     end
 
-    def initialize(account: nil, contact: nil, opportunity: nil)
+    def initialize(account: nil, contact: nil, opportunity: nil, scope: nil)
       @account = account
       @contact = contact
       @opportunity = opportunity
+      @scope = scope
     end
 
     def build
@@ -31,7 +32,7 @@ module Sales
           title: act.subject.presence || (act.activity_type == 'call' ? 'Chamada Registrada' : 'Atividade Comercial'),
           description: act.description || act.body,
           occurred_at: act.occurred_at || act.created_at,
-          actor_name: act.user&.name || 'Vendedor'
+          actor_name: act.actor&.name || 'Vendedor'
         }
       end
 
@@ -111,11 +112,11 @@ module Sales
 
     def activities
       if @account
-        @account.activities.includes(:user)
+        (@scope ? @scope.activities.where(sales_account_id: @account.id) : @account.activities).includes(:actor)
       elsif @contact
-        Sales::Activity.where(sales_contact_id: @contact.id).includes(:user)
+        Sales::Activity.where(sales_contact_id: @contact.id).includes(:actor)
       elsif @opportunity
-        Sales::Activity.where(sales_opportunity_id: @opportunity.id).includes(:user)
+        Sales::Activity.where(sales_opportunity_id: @opportunity.id).includes(:actor)
       else
         []
       end
@@ -123,7 +124,7 @@ module Sales
 
     def tasks
       if @account
-        @account.tasks.includes(:owner)
+        (@scope ? @scope.tasks.where(sales_account_id: @account.id) : @account.tasks).includes(:owner)
       elsif @contact
         Sales::Task.where(sales_contact_id: @contact.id).includes(:owner)
       elsif @opportunity
@@ -135,7 +136,7 @@ module Sales
 
     def opportunities
       if @account
-        @account.opportunities.includes(:stage)
+        (@scope ? @scope.opportunities.where(sales_account_id: @account.id) : @account.opportunities).includes(:stage)
       elsif @contact
         Sales::Opportunity.where(primary_contact_id: @contact.id).includes(:stage)
       elsif @opportunity
@@ -147,7 +148,7 @@ module Sales
 
     def emails
       if @account
-        Sales::EmailMessage.where(sales_account_id: @account.id).includes(:events, :sender_user)
+        (@scope ? @scope.email_messages : Sales::EmailMessage.all).where(sales_account_id: @account.id).includes(:events, :sender_user)
       elsif @contact
         if @contact.email.present?
           Sales::EmailMessage.where('sales_contact_id = ? OR LOWER(to_email) = ?', @contact.id, @contact.email.to_s.downcase.strip).includes(:events, :sender_user)

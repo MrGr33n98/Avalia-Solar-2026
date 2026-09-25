@@ -3,10 +3,11 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Sales::Pipelines', type: :request do
-  let(:user) { create(:user) }
+  let(:user) { create(:user, company: create(:company)) }
 
   before do
-    sign_in user, scope: :user
+    role = Sales::Role.create!(name: "Pipeline #{SecureRandom.hex(4)}", slug: "pipeline_#{SecureRandom.hex(4)}", system: true)
+    Sales::UserRole.create!(user: user, role: role)
   end
 
   describe 'GET /api/v1/sales/pipelines' do
@@ -15,7 +16,8 @@ RSpec.describe 'Api::V1::Sales::Pipelines', type: :request do
       pipeline.stages.create!(name: 'Prospect', key: 'prospect', position: 1, probability: 20)
       pipeline.stages.create!(name: 'Fechado', key: 'won', position: 2, probability: 100)
 
-      get '/api/v1/sales/pipelines', headers: { 'ACCEPT' => 'application/json' }
+      token = JWT.encode({ user_id: user.id, typ: 'access', exp: 1.day.from_now.to_i }, Rails.application.secret_key_base, 'HS256')
+      get '/api/v1/sales/pipelines', headers: { 'ACCEPT' => 'application/json', 'Authorization' => "Bearer #{token}" }
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)

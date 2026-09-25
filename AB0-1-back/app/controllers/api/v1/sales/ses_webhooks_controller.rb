@@ -8,6 +8,11 @@ module Api
     module Sales
       class SesWebhooksController < ActionController::API
         def create
+          unless request.media_type == 'application/json'
+            log_failure(nil, 'SNS JSON envelope required', status: 401)
+            return render json: { error: 'Unauthorized webhook request' }, status: :unauthorized
+          end
+
           envelope = JSON.parse(request.body.read)
           ::Sales::Messaging::SnsMessageVerifier.verify!(envelope)
 
@@ -24,14 +29,27 @@ module Api
           if normalized_type.present? && message_id.present?
             email = ::Sales::EmailMessage.find_by(provider_message_id: message_id)
             if email
-              provider_event_id = "ses-#{message_id}-#{normalized_type}"
-              email.register_event!(event_type: normalized_type, provider_event_id: provider_event_id, payload: payload)
+              provider_event_id = "sns-#{envelope.fetch('MessageId')}"
+              email.register_event!(
+                event_type: normalized_type,
+                provider_event_id: provider_event_id,
+                occurred_at: event_time(payload),
+                payload: safe_event_payload(payload)
+              )
               if %w[bounce complaint].include?(normalized_type)
                 ::Sales::EmailSuppression.find_or_create_by!(company_id: email.company_id, email: email.to_email) do |item|
                   item.reason = normalized_type
                   item.suppressed_at = Time.current
                 end
+                if email.contact
+                  ::Sales::EmailSequences::EnrollmentProcessor.stop_for_contact(
+                    contact: email.contact, reason: normalized_type
+                  )
+                end
               end
+            else
+              log_failure(envelope, 'provider_message_not_persisted_yet', status: 503)
+              return render json: { error: 'Message ainda não foi persistido.' }, status: :service_unavailable
             end
           end
 
@@ -43,7 +61,7 @@ module Api
           log_failure(nil, "Malformed JSON: #{e.message}", status: 400)
           render json: { error: 'Malformed webhook payload' }, status: :bad_request
         rescue StandardError => e
-          log_failure(envelope, "Internal error: #{e.message}", status: 500)
+          log_failure(envelope, "Internal error: #{e.class.name}", status: 500)
           render json: { error: 'Webhook processing failed' }, status: :internal_server_error
         end
 
@@ -86,6 +104,25 @@ module Api
             Rails.logger.info("[SesWebhooksController] Evento SES desconhecido/ignorado: #{event_type}")
             nil
           end
+        end
+
+        def event_time(payload)
+          Time.iso8601(payload.dig('mail', 'timestamp').to_s)
+        rescue ArgumentError
+          Time.current
+        end
+
+        def safe_event_payload(payload)
+          mail = payload['mail'].is_a?(Hash) ? payload['mail'] : {}
+          detail_key = %w[bounce complaint delivery reject].find { |key| payload[key].is_a?(Hash) }
+          event_details = payload[detail_key] || {}
+          {
+            event_type: payload['eventType'] || payload['notificationType'],
+            provider_message_id: mail['messageId'],
+            occurred_at: mail['timestamp'],
+            bounce_type: event_details['bounceType'],
+            complaint_type: event_details['complaintFeedbackType']
+          }.compact
         end
 
         def confirm_subscription!(subscribe_url)

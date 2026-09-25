@@ -6,32 +6,55 @@ module Api
         before_action :require_internal_sales
 
         def index
-          opportunity = ::Sales::Opportunity.find(params[:opportunity_id])
-          contacts = opportunity.opportunity_contacts.includes(:contact)
+          opportunity = current_tenant_scope.opportunities.find(params[:opportunity_id])
+          contacts = scoped_memberships(opportunity)
           render json: {
             contacts: contacts.map { |oc| serialize(oc) },
-            coverage_score: opportunity.committee_coverage_score
+            coverage_score: committee_coverage_score(contacts)
           }
         end
 
         def create
-          opportunity = ::Sales::Opportunity.find(params[:opportunity_id])
-          op_contact = opportunity.opportunity_contacts.new(opportunity_contact_params)
+          opportunity = current_tenant_scope.opportunities.find(params[:opportunity_id])
+          contact = current_tenant_scope.contacts.find_by(id: opportunity_contact_params[:sales_contact_id])
+          unless contact
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Contact')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+          unless current_tenant_scope.valid_relation?(account: opportunity.account, contact: contact, opportunity: opportunity)
+            return render_relation_conflict(resource: 'OpportunityContact')
+          end
+          op_contact = opportunity.opportunity_contacts.new(opportunity_contact_params.merge(sales_contact_id: contact.id))
           op_contact.save!
-          render json: { contact: serialize(op_contact), coverage_score: opportunity.reload.committee_coverage_score }, status: :created
+          render json: { contact: serialize(op_contact), coverage_score: committee_coverage_score(scoped_memberships(opportunity.reload)) }, status: :created
         end
 
         def update
-          op_contact = ::Sales::OpportunityContact.find(params[:id])
-          op_contact.update!(opportunity_contact_params)
-          render json: { contact: serialize(op_contact), coverage_score: op_contact.opportunity.committee_coverage_score }
+          opportunity = current_tenant_scope.opportunities.find(params[:opportunity_id])
+          op_contact = opportunity.opportunity_contacts.find(params[:id])
+          attrs = opportunity_contact_params
+          contact_id = attrs[:sales_contact_id].presence || op_contact.sales_contact_id
+          contact = current_tenant_scope.contacts.find_by(id: contact_id)
+          unless contact
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Contact')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+          return render_relation_conflict(resource: 'OpportunityContact') unless current_tenant_scope.valid_relation?(account: opportunity.account, contact: contact, opportunity: opportunity)
+          op_contact.update!(attrs)
+          render json: { contact: serialize(op_contact), coverage_score: committee_coverage_score(scoped_memberships(opportunity.reload)) }
         end
 
         def destroy
-          op_contact = ::Sales::OpportunityContact.find(params[:id])
+          opportunity = current_tenant_scope.opportunities.find(params[:opportunity_id])
+          op_contact = opportunity.opportunity_contacts.find(params[:id])
+          contact = current_tenant_scope.contacts.find_by(id: op_contact.sales_contact_id)
+          unless contact && current_tenant_scope.valid_relation?(account: opportunity.account, contact: contact, opportunity: opportunity)
+            log_sales_denial(reason: 'child_out_of_scope', resource: 'OpportunityContact')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
           opportunity = op_contact.opportunity
           op_contact.destroy!
-          render json: { message: 'Contato removido do comitê com sucesso.', coverage_score: opportunity.reload.committee_coverage_score }
+          render json: { message: 'Contato removido do comitê com sucesso.', coverage_score: committee_coverage_score(scoped_memberships(opportunity.reload)) }
         end
 
         private
@@ -42,6 +65,22 @@ module Api
           params.require(:opportunity_contact).permit(
             :sales_contact_id, :role, :influence, :support_level, :is_primary, :notes
           )
+        end
+
+        def scoped_memberships(opportunity)
+          opportunity.opportunity_contacts.includes(:contact).select do |membership|
+            membership.contact.present? && current_tenant_scope.valid_relation?(
+              account: opportunity.account,
+              contact: membership.contact,
+              opportunity: opportunity
+            )
+          end
+        end
+
+        def committee_coverage_score(memberships)
+          required_roles = %w[decision_maker economic_buyer champion approver]
+          matched = (required_roles & memberships.map(&:role)).size
+          ((matched.to_f / required_roles.size) * 100).round
         end
 
         def serialize(oc)

@@ -92,6 +92,10 @@ module Api
           end
 
           attributes = campaign_params.to_h
+          if attributes[:email_template_id].present? && !template_available_for_company?(attributes[:email_template_id], company.id)
+            log_sales_denial(reason: 'template_out_of_scope', resource: 'EmailTemplate')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
           audience = attributes[:audience_id].present? ? ::Sales::Audience.find_by(id: attributes[:audience_id], company_id: company.id, active: true) : nil
           if attributes[:audience_id].present? && audience.nil?
             render json: { errors: ['Audiência inválida ou não autorizada.'] }, status: :unprocessable_entity
@@ -129,6 +133,11 @@ module Api
             return
           end
 
+          if attributes[:email_template_id].present? && !template_available_for_company?(attributes[:email_template_id], @campaign.company_id)
+            log_sales_denial(reason: 'template_out_of_scope', resource: 'EmailTemplate')
+            return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
+          end
+
           updated_successfully = false
           invalid_audience = false
 
@@ -163,7 +172,7 @@ module Api
 
             if is_structural
               @campaign.recipients.delete_all
-              @campaign.template_snapshot = nil
+              @campaign.template_snapshot = {}
               @campaign.template_snapshot_at = nil
               @campaign.total_recipients = 0
             end
@@ -329,6 +338,10 @@ module Api
         end
 
         private
+
+        def template_available_for_company?(template_id, company_id)
+          ::Sales::EmailTemplate.where(company_id: company_id).where(user_id: [nil, current_user.id]).exists?(id: template_id)
+        end
 
         def set_campaign
           @campaign = scoped_campaigns.find(params[:id])

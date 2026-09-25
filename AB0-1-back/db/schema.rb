@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_25_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -2829,28 +2829,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
     t.index ["occurred_at"], name: "idx_platform_events_brin_time", using: :brin
   end
 
-  create_table "platform_events_y2026m07", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2026m07_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2026m07_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m07_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2026m07_occurred_at_idx", using: :brin
-  end
-
   create_table "platform_events_y2026m08", id: false, force: :cascade do |t|
     t.bigint "id", null: false
     t.text "event_id", null: false
@@ -3003,6 +2981,28 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
     t.index ["event_id"], name: "platform_events_y2027m02_event_id_idx"
     t.index ["event_type", "occurred_at"], name: "platform_events_y2027m02_event_type_occurred_at_idx", order: { occurred_at: :desc }
     t.index ["occurred_at"], name: "platform_events_y2027m02_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2027m03", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2027m03_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2027m03_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m03_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2027m03_occurred_at_idx", using: :brin
   end
 
   create_table "poll_options", force: :cascade do |t|
@@ -4007,6 +4007,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
     t.string "message_id"
     t.bigint "sales_campaign_id"
     t.bigint "sales_campaign_recipient_id"
+    t.bigint "sales_email_sequence_enrollment_step_id"
     t.index ["company_id", "message_id"], name: "idx_sales_email_messages_company_message_id", unique: true, where: "(message_id IS NOT NULL)"
     t.index ["company_id"], name: "index_sales_email_messages_on_company_id"
     t.index ["provider_message_id"], name: "index_sales_email_messages_on_provider_message_id"
@@ -4015,6 +4016,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
     t.index ["sales_campaign_recipient_id"], name: "idx_sales_email_messages_recipient_unique", unique: true, where: "(sales_campaign_recipient_id IS NOT NULL)"
     t.index ["sales_contact_id"], name: "index_sales_email_messages_on_sales_contact_id"
     t.index ["sales_email_account_id"], name: "index_sales_email_messages_on_sales_email_account_id"
+    t.index ["sales_email_sequence_enrollment_step_id"], name: "idx_sales_email_messages_sequence_step_unique", unique: true, where: "(sales_email_sequence_enrollment_step_id IS NOT NULL)"
     t.index ["sales_email_thread_id"], name: "index_sales_email_messages_on_sales_email_thread_id"
     t.index ["sales_opportunity_id"], name: "index_sales_email_messages_on_sales_opportunity_id"
     t.index ["sender_user_id"], name: "index_sales_email_messages_on_sender_user_id"
@@ -4036,6 +4038,53 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
     t.index ["sales_contact_id"], name: "index_sales_email_participants_on_sales_contact_id"
     t.index ["sales_email_message_id", "participant_type"], name: "idx_email_participants_type"
     t.index ["sales_email_message_id"], name: "index_sales_email_participants_on_sales_email_message_id"
+  end
+
+  create_table "sales_email_sequence_enrollment_steps", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_email_sequence_enrollment_id", null: false
+    t.bigint "sales_email_sequence_step_id", null: false
+    t.integer "position", null: false
+    t.string "status", default: "queued", null: false
+    t.integer "attempt_count", default: 0, null: false
+    t.datetime "next_attempt_at"
+    t.datetime "completed_at"
+    t.string "error_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "status", "next_attempt_at"], name: "idx_sales_sequence_enrollment_steps_pending"
+    t.index ["company_id"], name: "idx_sales_seq_enrollment_steps_company"
+    t.index ["sales_email_sequence_enrollment_id", "sales_email_sequence_step_id"], name: "idx_sales_sequence_enrollment_step_unique", unique: true
+    t.index ["sales_email_sequence_enrollment_id"], name: "idx_sales_seq_enrollment_steps_enrollment"
+    t.index ["sales_email_sequence_step_id"], name: "idx_sales_seq_enrollment_steps_definition"
+  end
+
+  create_table "sales_email_sequence_enrollments", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_email_sequence_id", null: false
+    t.bigint "sales_contact_id", null: false
+    t.bigint "sales_account_id", null: false
+    t.bigint "sales_opportunity_id"
+    t.bigint "owner_id", null: false
+    t.string "status", default: "active", null: false
+    t.integer "current_step", default: 0, null: false
+    t.datetime "enrolled_at", null: false
+    t.datetime "next_action_at"
+    t.datetime "paused_at"
+    t.datetime "stopped_at"
+    t.string "stop_reason"
+    t.datetime "completed_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "status", "next_action_at"], name: "idx_sales_sequence_enrollments_due"
+    t.index ["company_id"], name: "idx_sales_seq_enroll_company"
+    t.index ["owner_id"], name: "idx_sales_seq_enroll_owner"
+    t.index ["sales_account_id"], name: "idx_sales_seq_enroll_account"
+    t.index ["sales_contact_id"], name: "idx_sales_seq_enroll_contact"
+    t.index ["sales_email_sequence_id", "sales_contact_id"], name: "idx_sales_sequence_enrollments_active_contact", unique: true, where: "((status)::text = ANY ((ARRAY['active'::character varying, 'paused'::character varying])::text[]))"
+    t.index ["sales_email_sequence_id"], name: "idx_sales_seq_enroll_sequence"
+    t.index ["sales_opportunity_id"], name: "idx_sales_seq_enroll_opportunity"
   end
 
   create_table "sales_email_sequence_steps", force: :cascade do |t|
@@ -4164,9 +4213,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
     t.jsonb "fields", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "public_key", null: false
     t.index ["campaign_id"], name: "index_sales_forms_on_campaign_id"
     t.index ["company_id", "slug"], name: "index_sales_forms_on_company_id_and_slug", unique: true
     t.index ["company_id"], name: "index_sales_forms_on_company_id"
+    t.index ["public_key"], name: "index_sales_forms_on_public_key", unique: true
   end
 
   create_table "sales_founder_inbox_items", force: :cascade do |t|
@@ -4686,10 +4737,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "idempotency_key"
+    t.bigint "sales_email_sequence_enrollment_step_id"
     t.index ["owner_id"], name: "index_sales_tasks_on_owner_id"
     t.index ["sales_account_id", "idempotency_key"], name: "idx_sales_tasks_idempotency", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["sales_account_id"], name: "index_sales_tasks_on_sales_account_id"
     t.index ["sales_contact_id"], name: "index_sales_tasks_on_sales_contact_id"
+    t.index ["sales_email_sequence_enrollment_step_id"], name: "idx_sales_tasks_sequence_step_unique", unique: true, where: "(sales_email_sequence_enrollment_step_id IS NOT NULL)"
     t.index ["sales_opportunity_id"], name: "index_sales_tasks_on_sales_opportunity_id"
   end
 
@@ -4716,7 +4769,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
     t.datetime "occurred_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "company_id"
+    t.string "event_uuid"
     t.index ["account_id"], name: "index_sales_tracking_events_on_account_id"
+    t.index ["company_id", "session_id", "event_uuid"], name: "index_sales_tracking_events_on_public_event_idempotency", unique: true, where: "(event_uuid IS NOT NULL)"
+    t.index ["company_id"], name: "index_sales_tracking_events_on_company_id"
     t.index ["contact_id"], name: "index_sales_tracking_events_on_contact_id"
     t.index ["session_id", "occurred_at"], name: "index_sales_tracking_events_on_session_id_and_occurred_at"
   end
@@ -4733,9 +4790,26 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
     t.datetime "ended_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "company_id"
+    t.string "referrer_host"
+    t.string "landing_path"
+    t.string "traffic_class", default: "commercial", null: false
     t.index ["account_id"], name: "index_sales_tracking_sessions_on_account_id"
+    t.index ["company_id", "started_at"], name: "index_sales_tracking_sessions_on_company_and_started"
+    t.index ["company_id"], name: "index_sales_tracking_sessions_on_company_id"
     t.index ["contact_id"], name: "index_sales_tracking_sessions_on_contact_id"
     t.index ["session_id"], name: "index_sales_tracking_sessions_on_session_id", unique: true
+  end
+
+  create_table "sales_tracking_sites", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.string "public_key", null: false
+    t.jsonb "allowed_origins", default: [], null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_sales_tracking_sites_on_company_id", unique: true
+    t.index ["public_key"], name: "index_sales_tracking_sites_on_public_key", unique: true
   end
 
   create_table "sales_user_roles", force: :cascade do |t|
@@ -5253,12 +5327,22 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
   add_foreign_key "sales_email_messages", "sales_accounts"
   add_foreign_key "sales_email_messages", "sales_contacts"
   add_foreign_key "sales_email_messages", "sales_email_accounts"
+  add_foreign_key "sales_email_messages", "sales_email_sequence_enrollment_steps", on_delete: :nullify
   add_foreign_key "sales_email_messages", "sales_email_threads"
   add_foreign_key "sales_email_messages", "sales_opportunities"
   add_foreign_key "sales_email_messages", "users", column: "sender_user_id"
   add_foreign_key "sales_email_participants", "companies"
   add_foreign_key "sales_email_participants", "sales_contacts"
   add_foreign_key "sales_email_participants", "sales_email_messages"
+  add_foreign_key "sales_email_sequence_enrollment_steps", "companies"
+  add_foreign_key "sales_email_sequence_enrollment_steps", "sales_email_sequence_enrollments", on_delete: :cascade
+  add_foreign_key "sales_email_sequence_enrollment_steps", "sales_email_sequence_steps"
+  add_foreign_key "sales_email_sequence_enrollments", "companies"
+  add_foreign_key "sales_email_sequence_enrollments", "sales_accounts"
+  add_foreign_key "sales_email_sequence_enrollments", "sales_contacts"
+  add_foreign_key "sales_email_sequence_enrollments", "sales_email_sequences"
+  add_foreign_key "sales_email_sequence_enrollments", "sales_opportunities"
+  add_foreign_key "sales_email_sequence_enrollments", "users", column: "owner_id"
   add_foreign_key "sales_email_sequence_steps", "sales_email_sequences", column: "email_sequence_id"
   add_foreign_key "sales_email_sequence_steps", "sales_email_templates", column: "email_template_id"
   add_foreign_key "sales_email_sequences", "companies"
@@ -5342,13 +5426,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_22_140000) do
   add_foreign_key "sales_tags", "users", column: "created_by_id"
   add_foreign_key "sales_tasks", "sales_accounts"
   add_foreign_key "sales_tasks", "sales_contacts"
+  add_foreign_key "sales_tasks", "sales_email_sequence_enrollment_steps", on_delete: :nullify
   add_foreign_key "sales_tasks", "sales_opportunities"
   add_foreign_key "sales_tasks", "users", column: "owner_id"
   add_foreign_key "sales_taxonomies", "companies"
+  add_foreign_key "sales_tracking_events", "companies"
   add_foreign_key "sales_tracking_events", "sales_accounts", column: "account_id"
   add_foreign_key "sales_tracking_events", "sales_contacts", column: "contact_id"
+  add_foreign_key "sales_tracking_sessions", "companies"
   add_foreign_key "sales_tracking_sessions", "sales_accounts", column: "account_id"
   add_foreign_key "sales_tracking_sessions", "sales_contacts", column: "contact_id"
+  add_foreign_key "sales_tracking_sites", "companies"
   add_foreign_key "sales_user_roles", "sales_roles", column: "role_id"
   add_foreign_key "sales_user_roles", "users"
   add_foreign_key "sales_webhook_deliveries", "sales_webhook_endpoints", column: "endpoint_id"

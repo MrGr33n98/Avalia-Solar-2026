@@ -8,15 +8,11 @@ module Api
         def index
           from_date = params[:from].presence || 30.days.ago
 
-          sessions = if current_user.admin?
-                       ::Sales::TrackingSession.all
-                     else
-                       acc_ids = ::Sales::TenantScope.for(current_user).accounts.select(:id)
-                       cnt_ids = ::Sales::TenantScope.for(current_user).contacts.select(:id)
-                       ::Sales::TrackingSession.where(account_id: acc_ids).or(::Sales::TrackingSession.where(contact_id: cnt_ids))
-                     end
+          sessions = attribution_sessions
 
-          sessions = sessions.where('started_at >= ?', from_date)
+          all_sessions = sessions.where('started_at >= ?', from_date)
+          internal_count = all_sessions.where(traffic_class: 'internal').count
+          sessions = all_sessions.where(traffic_class: ['commercial', nil])
           grouped = sessions.group(:utm_source, :utm_medium, :utm_campaign).count
           data = grouped.map do |keys, count|
             {
@@ -27,7 +23,20 @@ module Api
             }
           end.sort_by { |item| -item[:sessions] }
 
-          render json: { attribution: data, sessions: data }
+          render json: { attribution: data, sessions: data, internal_sessions: internal_count }
+        end
+
+        private
+
+        def attribution_sessions
+          return ::Sales::TrackingSession.all if current_user.admin?
+
+          scope = ::Sales::TenantScope.for(current_user)
+          legacy = ::Sales::TrackingSession.where(account_id: scope.accounts.select(:id))
+                                           .or(::Sales::TrackingSession.where(contact_id: scope.contacts.select(:id)))
+          return legacy if current_user.company_id.blank?
+
+          legacy.or(::Sales::TrackingSession.where(company_id: current_user.company_id))
         end
       end
     end

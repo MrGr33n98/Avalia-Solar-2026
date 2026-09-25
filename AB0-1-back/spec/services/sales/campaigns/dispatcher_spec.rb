@@ -8,6 +8,15 @@ RSpec.describe Sales::Campaigns::Dispatcher, type: :service do
   let(:campaign) { create(:sales_campaign, company: company, user: user, status: 'draft') }
 
   describe '#call' do
+    before do
+      allow(Sales::Messaging::SendingGate).to receive(:enabled?).and_return(true)
+      allow(Sales::Messaging::Providers::HealthCheck).to receive(:call).and_return(
+        provider: 'aws_ses', status: 'operational', message: 'Provider stubbed for state-machine unit tests.'
+      )
+      allow(Sales::Campaigns::Preflight).to receive(:call).and_return(ready: true, blockers: [], warnings: [])
+      allow(Sales::Campaigns::SnapshotService).to receive(:call).and_return(recipients_count: 0)
+    end
+
     context 'when transitioning states' do
       it 'allows dispatch from draft to dispatching' do
         result = described_class.call(campaign: campaign, action: 'dispatch')
@@ -48,9 +57,9 @@ RSpec.describe Sales::Campaigns::Dispatcher, type: :service do
 
       it 'does not duplicate batch jobs on concurrent dispatch calls' do
         campaign.update!(status: 'dispatching', started_at: Time.current)
-        expect {
-          described_class.call(campaign: campaign, action: 'dispatch')
-        }.not_to change(Sales::CampaignBatchProcessorJob.jobs, :size)
+        expect(Sales::CampaignBatchProcessorJob).not_to receive(:perform_later)
+
+        described_class.call(campaign: campaign, action: 'dispatch')
       end
     end
 
@@ -80,7 +89,7 @@ RSpec.describe Sales::Campaigns::Dispatcher, type: :service do
                            sales_campaign_id: campaign.id,
                            sales_campaign_recipient_id: recipient.id,
                            status: 'failed')
-        Sales::EmailSuppression.create!(company: company, email: recipient.email, reason: 'unsubscribed')
+        Sales::EmailSuppression.create!(company: company, email: recipient.email, reason: 'unsubscribe')
 
         result = described_class.call(campaign: campaign, action: 'retry_failed')
         expect(result[:retried_count]).to eq(0)

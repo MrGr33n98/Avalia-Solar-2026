@@ -5,6 +5,8 @@ module Sales
     belongs_to :opportunity, class_name: 'Sales::Opportunity', foreign_key: :sales_opportunity_id, optional: true
     belongs_to :contact, class_name: 'Sales::Contact', foreign_key: :sales_contact_id, optional: true
     belongs_to :owner, class_name: 'User'
+    belongs_to :sequence_enrollment_step, class_name: 'Sales::EmailSequenceEnrollmentStep',
+               foreign_key: :sales_email_sequence_enrollment_step_id, optional: true
     validates :task_type, :title, :status, presence: true
     scope :pending, -> { where(status: 'pending') }
     scope :overdue, -> { pending.where('due_at < ?', Time.current) }

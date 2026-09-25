@@ -3,8 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe Sales::Imports::LeadRowValidator do
-  let(:company) { Company.create!(name: 'Empresa Teste', domain: 'teste.com') }
-  let(:user) { User.create!(email: "user_#{SecureRandom.hex(4)}@test.com", password: 'Password123!', name: 'Felipe', company: company) }
+  let(:company) { create(:company, name: 'Empresa Teste') }
+  let(:user) { create(:user, company: company, name: 'Felipe') }
   let!(:pipeline) { Sales::Pipeline.create!(name: 'Avalia Solar B2B Sales', key: "b2b_#{SecureRandom.hex(4)}", active: true) }
   let!(:stage_prospect) { pipeline.stages.create!(name: 'Prospect', key: 'prospect', position: 0) }
   let!(:stage_qualified) { pipeline.stages.create!(name: 'Qualified', key: 'qualified', position: 1) }

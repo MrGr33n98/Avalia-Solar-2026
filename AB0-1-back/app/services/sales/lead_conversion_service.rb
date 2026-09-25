@@ -4,17 +4,16 @@ module Sales
   class LeadConversionService
     def self.call(opportunity:, actor:, deal_name: nil, pipeline_id: nil, stage_id: nil, contact_params: nil)
       ActiveRecord::Base.transaction do
+        tenant_scope = ::Sales::TenantScope.for(actor)
+        opportunity = tenant_scope.opportunities.find_by(id: opportunity.id) || raise(ActiveRecord::RecordNotFound)
         account = opportunity.account
-        unless account
-          account = ::Sales::Account.create!(
-            name: opportunity.name,
-            owner: actor,
-            status: 'active'
-          )
-          opportunity.update!(account: account)
-        end
+        raise ActiveRecord::RecordNotFound unless account && tenant_scope.accounts.exists?(id: account.id)
+        raise ArgumentError, 'A conta não permite atribuir este responsável.' unless tenant_scope.valid_owner?(actor, account: account)
 
         contact = opportunity.primary_contact
+        if contact && !tenant_scope.valid_relation?(account: account, contact: contact, opportunity: opportunity)
+          raise ArgumentError, 'As referências comerciais são incompatíveis.'
+        end
         if contact.nil? && contact_params.is_a?(Hash) && (contact_params[:first_name].present? || contact_params[:email].present?)
           c_email = contact_params[:email].to_s.strip.downcase.presence
           contact = ::Sales::Contact.create!(
