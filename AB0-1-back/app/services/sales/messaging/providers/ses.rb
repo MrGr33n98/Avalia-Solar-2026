@@ -21,7 +21,7 @@ module Sales
           end
 
           tracking_pixel = if email_message.open_tracking_enabled
-                             "<img src=\"#{ENV['APP_HOST'] || 'https://crm.avaliasolar.com.br'}/t/email/open/#{email_message.tracking_token}.gif\" width=\"1\" height=\"1\" alt=\"\" style=\"display:none;\" />"
+                             "<img src=\"#{ENV['APP_HOST'] || 'https://crm.avaliasolar.com.br'}/t/email/open/#{email_message.tracking_token}\" width=\"1\" height=\"1\" alt=\"\" style=\"display:none;outline:none;\" />"
                            end
           html_body = "#{email_message.body_html}#{tracking_pixel}"
           html_with_tracking = if email_message.click_tracking_enabled
