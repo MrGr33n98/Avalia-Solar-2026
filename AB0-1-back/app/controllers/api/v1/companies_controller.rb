@@ -616,10 +616,13 @@ module Api
           serialized = CompanyListSerializer.new(company).as_json
 
           categories_array = company.categories.to_a
-          primary_category = categories_array.first
+          primary_category = company.primary_category
 
           serialized.merge!(
             primary_category: primary_category&.name,
+            identity: serialized[:identity].merge(primary_category: primary_category && {
+              id: primary_category.id, name: primary_category.name, slug: primary_category.seo_url
+            }),
             category_ids: categories_array.take(5).map(&:id),
             feature_access: company.respond_to?(:feature_access) ? company.feature_access : {},
             distance_km: company.has_attribute?(:distance_km) ? company.distance_km : nil,
@@ -756,6 +759,7 @@ module Api
             coverage_state_codes: [], coverage_city_names: [] }
         ]
 
+        permitted << :primary_category_id
         permitted += %i[featured status verified plan_id plan_status social_proof_enabled] if current_user&.admin?
 
         params.require(:company).permit(*permitted)

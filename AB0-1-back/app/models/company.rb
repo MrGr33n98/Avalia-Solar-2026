@@ -152,6 +152,7 @@ end
 has_and_belongs_to_many :categories, join_table: :categories_companies,
                                      after_add: [:update_category_metrics, :expire_local_pages_cache_from_category],
                                      after_remove: [:update_category_metrics, :expire_local_pages_cache_from_category]
+  belongs_to :primary_category, class_name: 'Category', optional: true
 
 def update_category_metrics(category)
   category.update_metrics! if category.respond_to?(:update_metrics!)
@@ -255,6 +256,7 @@ end
   validate :validate_featured_requires_active
   validate :validate_category_ids_format
   validate :validate_category_ids_exist
+  validate :validate_primary_category_belongs_to_company
   validate :validate_attachments
 
   validates :website,
@@ -569,6 +571,12 @@ end
     existing_ids = Category.where(id: requested_ids).pluck(:id)
     invalid_ids = requested_ids - existing_ids
     errors.add(:category_ids, 'contém categorias inexistentes') if invalid_ids.any?
+  end
+
+  def validate_primary_category_belongs_to_company
+    return if primary_category_id.blank? || categories.any? { |category| category.id == primary_category_id }
+
+    errors.add(:primary_category_id, 'deve pertencer às categorias da empresa')
   end
 
   def normalize_company_fields

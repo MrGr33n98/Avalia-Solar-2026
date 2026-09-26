@@ -30,7 +30,7 @@ class CompanySerializer < ActiveModel::Serializer
              :financing_partners,
              :financing_offers,
              :categories,
-             :category_info,
+             :category_info, :identity,
              :sector_ratings_enabled,
              :sector_rating_avg,
              :sector_rating_count,
@@ -105,13 +105,29 @@ class CompanySerializer < ActiveModel::Serializer
                        else
                          object.categories.limit(1).to_a
                        end
-    category = categories_array.first
+    category = object.primary_category
     return nil unless category
 
     {
       id: category.id,
       name: category.name,
       seo_url: category.seo_url
+    }
+  end
+
+  def identity
+    category = object.primary_category
+    verification_status = object.business_verification_status
+    {
+      name: object.name,
+      slug: object.slug,
+      primary_category: category && { id: category.id, name: category.name, slug: category.seo_url },
+      verification: {
+        status: verification_status,
+        verified: verification_status == 'verified',
+        verified_at: object.business_verified_at,
+        method: object.business_verification_method
+      }
     }
   end
 

@@ -22,7 +22,7 @@ class CompanyCardSerializer < ActiveModel::Serializer
   end
 
   def primary_category
-    object.categories.first&.name
+    object.primary_category&.name
   end
 
   def category_ids
@@ -78,14 +78,33 @@ class CompanyCardSerializer < ActiveModel::Serializer
       logo_url: logo_url,
       description: object.description,
       city: object.city,
-      state: object.state
+      state: object.state,
+      primary_category: primary_category_payload,
+      verification: verification_payload
+    }
+  end
+
+  def primary_category_payload
+    category = object.primary_category
+    return unless category
+
+    { id: category.id, name: category.name, slug: category.seo_url }
+  end
+
+  def verification_payload
+    status = object.business_verification_status.presence || (object.verified ? 'verified' : 'unverified')
+    {
+      status: status,
+      verified: status == 'verified',
+      verified_at: object.business_verified_at,
+      method: object.business_verification_method
     }
   end
 
   def trust
     {
       is_claimed: object.active_admin,
-      verification_status: object.try(:business_verification_status) || (object.verified ? 'verified' : 'unverified'),
+      verification_status: verification_payload[:status],
       verified_at: object.try(:business_verified_at),
       verification_method: object.try(:business_verification_method)
     }

@@ -85,7 +85,7 @@ ActiveAdmin.register Company do
     permitted = [
       :name, :slug, :website, :phone, :address,
       :state, :city, :banner, :logo, :verified_badge, :featured, :verified,
-      :priority_score, :sponsored, :segment,
+      :priority_score, :sponsored, :segment, :primary_category_id,
       :cnpj, :email, :whatsapp,
       :working_hours, :payment_methods,
       :certifications, :status, :founded_year, :employees_count,
