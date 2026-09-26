@@ -15,6 +15,7 @@ import {
   PipelineBoardParams,
   SalesLead,
 } from './types';
+import type { SalesTimelineResponse } from './timeline-types';
 
 export class SalesApiError extends Error {
   status: number;
@@ -424,14 +425,22 @@ export const salesApi = {
     return res.opportunity;
   },
 
-  async getOpportunityTimeline(id: number): Promise<any[]> {
+  async getOpportunityTimeline(
+    id: number,
+    options: { after?: string | null; force?: boolean } = {}
+  ): Promise<SalesTimelineResponse> {
     const cacheKey = `opp_timeline:${id}`;
-    const cached = getCached<any[]>(cacheKey);
-    if (cached) return cached;
+    if (!options.after && !options.force) {
+      const cached = getCached<SalesTimelineResponse>(cacheKey);
+      if (cached) return cached;
+    }
 
-    const res = await request<{ timeline: any[] }>(`/api/v1/sales/opportunities/${id}/timeline`);
-    const data = res.timeline ?? [];
-    setCache(cacheKey, data);
+    const query = options.after ? `?after=${encodeURIComponent(options.after)}` : '';
+    const res = await request<Partial<SalesTimelineResponse> & { meta?: { cursor?: string } }>(
+      `/api/v1/sales/opportunities/${id}/timeline${query}`
+    );
+    const data = { timeline: res.timeline ?? [], meta: { cursor: res.meta?.cursor ?? '0' } };
+    if (!options.after) setCache(cacheKey, data);
     return data;
   },
 

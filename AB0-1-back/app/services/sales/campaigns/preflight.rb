@@ -18,6 +18,7 @@ module Sales
         check_template
         check_sender
         check_sending_gate
+        check_tracking_host
         check_provider
         check_audience
         check_status
@@ -77,6 +78,12 @@ module Sales
         return if ::Sales::Messaging::SendingGate.enabled?
 
         @blockers << { code: 'EMAIL_SENDING_DISABLED', message: 'O envio de e-mail está desabilitado pela configuração operacional.' }
+      end
+
+      def check_tracking_host
+        return if ::Sales::Messaging::TrackingHost.configured?
+
+        @blockers << { code: 'EMAIL_TRACKING_HOST_MISSING', message: 'O host HTTPS de tracking de email não está configurado.' }
       end
 
       def check_audience

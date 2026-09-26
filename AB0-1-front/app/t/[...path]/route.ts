@@ -109,8 +109,6 @@ async function proxyTrackingRequest(request: NextRequest, context: RouteContext)
       ? undefined
       : await request.arrayBuffer();
 
-  let lastError: unknown;
-
   for (let index = 0; index < upstreamBases.length; index += 1) {
     const upstreamBase = upstreamBases[index];
     const upstreamUrl = buildUpstreamUrl(upstreamBase, pathSegments, request.nextUrl.search);
@@ -140,24 +138,30 @@ async function proxyTrackingRequest(request: NextRequest, context: RouteContext)
 
       const responseHeaders = new Headers(upstreamResponse.headers);
       HOP_BY_HOP_RESPONSE_HEADERS.forEach((header) => responseHeaders.delete(header));
+      responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+      responseHeaders.set('Pragma', 'no-cache');
+      responseHeaders.set('Expires', '0');
 
       return new Response(upstreamResponse.body, {
         status: upstreamResponse.status,
         statusText: upstreamResponse.statusText,
         headers: responseHeaders,
       });
-    } catch (error) {
-      lastError = error;
+    } catch {
       if (hasFallback) {
         continue;
       }
     }
   }
 
-  const message = lastError instanceof Error ? lastError.message : 'Tracking upstream request failed';
-  return new Response(JSON.stringify({ error: message }), {
+  return new Response(JSON.stringify({ error: 'Tracking upstream request failed' }), {
     status: 502,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      Pragma: 'no-cache',
+      Expires: '0',
+    },
   });
 }
 

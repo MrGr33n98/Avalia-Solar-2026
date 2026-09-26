@@ -21,7 +21,8 @@ module Sales
           end
 
           tracking_pixel = if email_message.open_tracking_enabled
-                             "<img src=\"#{ENV['APP_HOST'] || 'https://crm.avaliasolar.com.br'}/t/email/open/#{email_message.tracking_token}\" width=\"1\" height=\"1\" alt=\"\" style=\"display:none;outline:none;\" />"
+                             "<img src=\"#{tracking_url("/t/email/open/#{email_message.tracking_token}")}\" " \
+                               'width="1" height="1" alt="" style="width:1px;height:1px;border:0;opacity:0;" />'
                            end
           html_body = "#{email_message.body_html}#{tracking_pixel}"
           html_with_tracking = if email_message.click_tracking_enabled
@@ -97,8 +98,7 @@ module Sales
           to = participants['to'].present? ? participants['to'].map(&:email) : [email_message.to_email].compact_blank
           cc = participants['cc'].to_a.map(&:email)
           unsubscribe_token = ::Sales::Messaging::UnsubscribeToken.generate(email_message)
-          app_host = ENV['APP_HOST'].presence || 'https://crm.avaliasolar.com.br'
-          unsubscribe_url = "#{app_host.sub(%r{/+$}, '')}/t/email/unsubscribe/#{unsubscribe_token}"
+          unsubscribe_url = tracking_url("/t/email/unsubscribe/#{unsubscribe_token}")
           headers = [
             "From: #{header_value(email_message.from_email)}",
             "To: #{to.map { |address| header_value(address) }.join(', ')}",
@@ -117,7 +117,7 @@ module Sales
           ]
           attachments.each do |attachment|
             encoded = Base64.strict_encode64(attachment.file.download).scan(/.{1,76}/).join("\r\n")
-            filename = header_value(attachment.file_name).gsub(/[\"\\]/, '_')
+            filename = header_value(attachment.file_name).gsub(/["\\]/, '_')
             parts << "Content-Type: #{header_value(attachment.content_type)}; name=\"#{filename}\"\r\nContent-Disposition: attachment; filename=\"#{filename}\"\r\nContent-Transfer-Encoding: base64\r\n\r\n#{encoded}\r\n--#{mixed_boundary}\r\n"
           end
           (headers + [''] + parts + ["--#{mixed_boundary}--\r\n"]).join("\r\n")
@@ -126,6 +126,10 @@ module Sales
         def encoded_header(value)
           sanitized = header_value(value)
           return sanitized.ascii_only? ? sanitized : "=?UTF-8?B?#{Base64.strict_encode64(sanitized)}?="
+        end
+
+        def tracking_url(path)
+          "#{::Sales::Messaging::TrackingHost.origin}#{path}"
         end
       end
     end

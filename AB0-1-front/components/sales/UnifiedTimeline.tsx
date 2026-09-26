@@ -1,172 +1,155 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Calendar,
-  CheckCircle2,
   Clock,
-  Eye,
-  FileText,
-  Mail,
   MessageSquare,
   Phone,
   RotateCw,
-  Sparkles,
   Tag,
   User,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import EmailTimelineCard from '@/components/sales/EmailTimelineCard';
+import type { SalesTimelineEvent } from '@/lib/api/sales/timeline-types';
 
-export interface TimelineEvent {
-  id: string | number;
-  type: 'activity' | 'call' | 'email' | 'note' | 'task' | 'stage_changed' | 'quote' | 'won' | 'lost' | 'website';
-  title: string;
-  description?: string;
-  actor?: string;
-  timestamp: string;
-  metadata?: Record<string, any>;
-}
+export type TimelineEvent = SalesTimelineEvent;
 
 interface UnifiedTimelineProps {
   events: TimelineEvent[];
   loading?: boolean;
   onRefresh?: () => void;
+  liveStatus?: 'connected' | 'fallback' | 'disconnected';
 }
 
-export default function UnifiedTimeline({ events, loading = false, onRefresh }: UnifiedTimelineProps) {
+export default function UnifiedTimeline({ events, loading = false, onRefresh, liveStatus = 'disconnected' }: UnifiedTimelineProps) {
   const [filter, setFilter] = useState<string>('all');
+  const [creator, setCreator] = useState('all');
+  const [activityType, setActivityType] = useState('all');
+  const [period, setPeriod] = useState('all');
+
+  const creators = useMemo(
+    () => Array.from(new Map(events.filter((event) => event.actor).map((event) => [event.actor!.id, event.actor!.name])).entries()),
+    [events]
+  );
+  const activityTypes = Array.from(new Set(events.map((event) => event.activity_type).filter(Boolean))) as string[];
 
   const filteredEvents = events.filter((ev) => {
-    if (filter === 'all') return true;
-    if (filter === 'activity') return ev.type === 'activity' || ev.type === 'call';
-    if (filter === 'email') return ev.type === 'email';
-    if (filter === 'note') return ev.type === 'note';
-    if (filter === 'task') return ev.type === 'task';
-    if (filter === 'quote') return ev.type === 'quote';
-    if (filter === 'system') return ev.type === 'stage_changed' || ev.type === 'won' || ev.type === 'lost' || ev.type === 'website';
-    return true;
+    const kindMatches = filter === 'all' ||
+      (filter === 'activity' && ['activity', 'call'].includes(ev.kind)) ||
+      (filter === 'system' && ['stage_changed', 'won', 'lost', 'website'].includes(ev.kind)) ||
+      ev.kind === filter;
+    const creatorMatches = creator === 'all' || String(ev.actor?.id) === creator;
+    const activityTypeMatches = activityType === 'all' || ev.activity_type === activityType;
+    const withinPeriod = period === 'all' || Date.now() - new Date(ev.occurred_at).getTime() <= Number(period) * 86400000;
+    return kindMatches && activityTypeMatches && creatorMatches && withinPeriod;
   });
 
-  const getEventBadge = (event: TimelineEvent) => {
-    const { type, metadata, description } = event;
-    const matchCount = description?.match(/Lido (\d+)x/);
-    const parsedCount = matchCount ? parseInt(matchCount[1], 10) : 0;
-    const openCount = (metadata?.open_count && metadata.open_count > 0) ? metadata.open_count : parsedCount;
-
-    if (type === 'email' && (openCount > 0 || description?.includes('👁️ Lido'))) {
-      const displayCount = openCount > 0 ? openCount : 1;
-      return {
-        icon: Eye,
-        color: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold',
-        label: `👁️ Lido (${displayCount}x)`,
-      };
-    }
-    switch (type) {
-      case 'call':
-        return { icon: Phone, color: 'bg-emerald-100 text-emerald-800 border-emerald-200', label: 'Ligação' };
-      case 'email':
-        return { icon: Mail, color: 'bg-sky-100 text-sky-800 border-sky-200', label: 'E-mail' };
-      case 'note':
-        return { icon: MessageSquare, color: 'bg-amber-100 text-amber-800 border-amber-200', label: 'Nota' };
-      case 'task':
-        return { icon: CheckCircle2, color: 'bg-indigo-100 text-indigo-800 border-indigo-200', label: 'Tarefa' };
-      case 'quote':
-        return { icon: FileText, color: 'bg-purple-100 text-purple-800 border-purple-200', label: 'Proposta' };
-      case 'stage_changed':
-        return { icon: Tag, color: 'bg-blue-100 text-blue-800 border-blue-200', label: 'Estágio' };
-      case 'won':
-        return { icon: Sparkles, color: 'bg-emerald-600 text-white border-emerald-700', label: 'Ganho' };
-      case 'lost':
-        return { icon: Clock, color: 'bg-red-100 text-red-800 border-red-200', label: 'Perdido' };
-      default:
-        return { icon: Calendar, color: 'bg-slate-100 text-slate-700 border-slate-200', label: 'Atividade' };
-    }
-  };
+  const statusLabel = liveStatus === 'connected' ? 'Ao vivo' : liveStatus === 'fallback' ? 'Atualização automática' : 'Reconectando…';
 
   return (
-    <div className="space-y-4 font-sans">
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+    <div className="space-y-4 font-sans" aria-live="polite">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div className="flex flex-wrap gap-1 text-xs">
           {[
             { id: 'all', label: 'Todos' },
-            { id: 'activity', label: 'Ligações' },
-            { id: 'email', label: 'E-mails' },
+            { id: 'email', label: 'Emails' },
+            { id: 'call', label: 'Ligações' },
             { id: 'note', label: 'Notas' },
             { id: 'task', label: 'Tarefas' },
             { id: 'quote', label: 'Propostas' },
             { id: 'system', label: 'Sistema' },
           ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setFilter(item.id)}
-              className={`px-2.5 py-1 rounded-md transition-colors font-medium ${
+            <button key={item.id} type="button" onClick={() => setFilter(item.id)}
+              aria-pressed={filter === item.id}
+              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
                 filter === item.id ? 'bg-blue-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
+              }`}>
               {item.label}
             </button>
           ))}
         </div>
-
-        {onRefresh && (
-          <Button variant="ghost" size="sm" onClick={onRefresh} className="h-7 text-xs text-slate-500">
-            <RotateCw className={`w-3.5 h-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} /> Atualizar
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="sr-only" htmlFor="timeline-activity-type">Tipo de atividade</label>
+          <select id="timeline-activity-type" value={activityType} onChange={(event) => setActivityType(event.target.value)}
+            className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700">
+            <option value="all">Atividade: todos</option>
+            {activityTypes.map((type) => <option key={type} value={type}>{type.replaceAll('_', ' ')}</option>)}
+          </select>
+          <label className="sr-only" htmlFor="timeline-creator">Criador</label>
+          <select id="timeline-creator" value={creator} onChange={(event) => setCreator(event.target.value)}
+            className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700">
+            <option value="all">Criador: todos</option>
+            {creators.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+          </select>
+          <label className="sr-only" htmlFor="timeline-period">Período</label>
+          <select id="timeline-period" value={period} onChange={(event) => setPeriod(event.target.value)}
+            className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700">
+            <option value="all">Período: todo</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+          </select>
+          <span className="inline-flex items-center gap-1 text-xs text-slate-500" role="status">
+            <span className={`h-2 w-2 rounded-full ${liveStatus === 'connected' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            {statusLabel}
+          </span>
+          {onRefresh && (
+            <Button variant="ghost" size="sm" onClick={onRefresh} className="h-7 text-xs text-slate-500">
+              <RotateCw className={`mr-1 h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Atualizar
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Timeline Stream */}
       {loading ? (
         <div className="py-8 text-center text-xs text-slate-500">Carregando linha do tempo...</div>
       ) : filteredEvents.length === 0 ? (
-        <div className="py-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
+        <div className="rounded-lg border border-dashed border-slate-200 py-8 text-center text-xs text-slate-400">
           Nenhuma interação encontrada para os filtros selecionados.
         </div>
       ) : (
-        <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+        <ol className="relative space-y-4 pl-6 before:absolute before:bottom-2 before:left-2.5 before:top-2 before:w-0.5 before:bg-slate-200">
           {filteredEvents.map((event) => {
-            const badge = getEventBadge(event);
-            const IconComp = badge.icon;
+            const isEmail = event.kind === 'email' && event.email && event.engagement;
+            const initials = event.actor?.name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('') || '?';
+            const title = event.title || (isEmail ? event.email?.subject : event.kind);
+            const verb = event.kind === 'email' ? (event.email?.direction === 'inbound' ? 'recebeu um email' : 'enviou um email') : event.kind === 'call' ? 'registrou uma ligação' :
+              event.kind === 'note' ? 'adicionou uma nota' : event.kind === 'task' ? 'criou uma tarefa' : 'registrou uma atividade';
             return (
-              <div key={event.id} className="relative flex items-start gap-3 text-xs group">
-                <div className="absolute -left-6 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white ring-4 ring-slate-50">
-                  <div className={`h-3 w-3 rounded-full ${badge.color}`} />
+              <li key={event.id} className="relative text-xs">
+                <span className="absolute -left-6 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white ring-4 ring-slate-50">
+                  {event.kind === 'email' ? <MailIcon /> : event.kind === 'call' ? <Phone className="h-3 w-3 text-slate-600" /> :
+                    event.kind === 'note' ? <MessageSquare className="h-3 w-3 text-amber-700" /> :
+                      event.kind === 'stage_changed' ? <Tag className="h-3 w-3 text-blue-700" /> :
+                        event.kind === 'task' ? <Clock className="h-3 w-3 text-indigo-700" /> :
+                          <Calendar className="h-3 w-3 text-slate-600" />}
+                </span>
+                <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+                  <time>{new Date(event.occurred_at).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</time>
+                  <span>·</span>
+                  <span className="font-medium text-slate-700">{event.actor?.name || 'Atividade automática'}</span>
+                  <span>{verb}</span>
                 </div>
-
-                <div className="flex-1 rounded-lg border border-slate-200 bg-white p-3 shadow-2xs hover:border-slate-300 transition-colors">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Badge className={`border text-[10px] px-1.5 py-0.5 ${badge.color}`}>
-                        <IconComp className="w-3 h-3 mr-1" /> {badge.label}
-                      </Badge>
-                      <span className="font-bold text-slate-900">{event.title}</span>
-                    </div>
-                    <span className="text-[11px] text-slate-400 font-mono">
-                      {new Date(event.timestamp).toLocaleString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-
-                  {event.description && <p className="mt-1.5 text-slate-600 leading-relaxed">{event.description}</p>}
-
-                  {event.actor && (
-                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400 border-t border-slate-100 pt-1.5">
-                      <User className="w-3 h-3" />
-                      <span>{event.actor}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+                {isEmail ? (
+                  <EmailTimelineCard email={event.email!} engagement={event.engagement!} lifecycle={event.lifecycle || []} actorInitials={initials} />
+                ) : (
+                  <article className={`rounded-lg border border-slate-200 bg-white p-3 shadow-2xs ${event.kind === 'note' ? 'border-l-4 border-l-amber-400' : ''}`}>
+                    <h3 className="font-semibold text-slate-900">{title}</h3>
+                    {event.preview && <p className="mt-1 text-slate-600">{event.preview}</p>}
+                    {event.actor && <span className="mt-2 inline-flex items-center gap-1 text-[11px] text-slate-400"><User className="h-3 w-3" />{event.actor.name}</span>}
+                  </article>
+                )}
+              </li>
             );
           })}
-        </div>
+        </ol>
       )}
     </div>
   );
+}
+
+function MailIcon() {
+  return <span className="text-[11px]" aria-hidden="true">✉</span>;
 }

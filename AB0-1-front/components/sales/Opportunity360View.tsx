@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Building2,
@@ -42,6 +42,7 @@ import CreateTaskModal from '@/components/sales/create/CreateTaskModal';
 import SendEmailModal from '@/components/sales/create/SendEmailModal';
 import AttachCompanyPersonModal from '@/components/sales/create/AttachCompanyPersonModal';
 import { salesApi } from '@/lib/api/sales/client';
+import { subscribeSalesTimeline } from '@/lib/cable';
 
 interface Opportunity360ViewProps {
   opportunityId: number | null;
@@ -63,6 +64,8 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
   const [recapSubTab, setRecapSubTab] = useState<'next_steps' | 'recent' | 'dossier' | 'open_questions'>('next_steps');
   
   const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const timelineCursorRef = useRef('0');
+  const [timelineLiveStatus, setTimelineLiveStatus] = useState<'connected' | 'fallback' | 'disconnected'>('disconnected');
   const [quotes, setQuotes] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
@@ -91,10 +94,10 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
     if (!opp) setLoading(true);
     try {
       // Parallel execution of all required APIs to eliminate waterfall latency
-      const [data, fetchedPipelines, rawTimeline] = await Promise.all([
+      const [data, fetchedPipelines, timelineResponse] = await Promise.all([
         salesApi.getOpportunity(id),
         salesApi.getPipelines(),
-        salesApi.getOpportunityTimeline(id),
+        salesApi.getOpportunityTimeline(id, { force: true }),
       ]);
 
       setOpp(data);
@@ -118,21 +121,18 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
         setActivePipeline(fetchedPipelines[0] || null);
       }
 
-      const formattedEvents: TimelineEvent[] = (rawTimeline || []).map((item: any) => ({
-        id: String(item.id),
-        type: item.type,
-        title: item.title,
-        description: item.description,
-        timestamp: item.occurred_at || new Date().toISOString(),
-        actor: item.actor || 'Sistema',
-        metadata: item.metadata || {},
-      }));
+      const formattedEvents = (timelineResponse.timeline || []) as TimelineEvent[];
+      timelineCursorRef.current = timelineResponse.meta.cursor || '0';
       setEvents(formattedEvents);
 
-      setTasks((rawTimeline || []).filter((t: any) => t.type === 'task'));
-      setActivities((rawTimeline || []).filter((t: any) => t.type === 'call' || t.type === 'activity'));
-      setEmails((rawTimeline || []).filter((t: any) => t.type === 'email'));
-      setQuotes((rawTimeline || []).filter((t: any) => t.type === 'quote'));
+      setTasks(formattedEvents.filter((event) => event.kind === 'task'));
+      setActivities(formattedEvents.filter((event) => event.kind === 'call' || event.kind === 'activity'));
+      setEmails(formattedEvents.filter((event) => event.kind === 'email').map((event) => ({
+        id: event.id,
+        title: event.email?.subject || 'Email',
+        description: `Para: ${event.email?.to.join(', ') || ''}`,
+      })));
+      setQuotes(formattedEvents.filter((event) => event.kind === 'quote'));
     } catch (err) {
       console.error('Erro ao carregar Oportunidade 360:', err);
     } finally {
@@ -150,6 +150,62 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
       fetchOpportunityData(opportunityId);
     }
   }, [opportunityId]);
+
+  useEffect(() => {
+    if (!opportunityId || activeTab !== 'timeline') {
+      setTimelineLiveStatus('disconnected');
+      return;
+    }
+
+    let connected = false;
+    let active = true;
+    const refreshDelta = async () => {
+      try {
+        const result = await salesApi.getOpportunityTimeline(opportunityId, {
+          after: timelineCursorRef.current,
+          force: true,
+        });
+        if (!active) return;
+        timelineCursorRef.current = result.meta.cursor || timelineCursorRef.current;
+        if (result.timeline.length > 0) {
+          setEvents((current) => {
+            const merged = new Map(current.map((event) => [event.id, event]));
+            result.timeline.forEach((event: TimelineEvent) => merged.set(event.id, event));
+            return Array.from(merged.values()).sort(
+              (left, right) => new Date(right.occurred_at).getTime() - new Date(left.occurred_at).getTime()
+            );
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar eventos da timeline:', error);
+      }
+    };
+
+    const subscription = subscribeSalesTimeline(
+      opportunityId,
+      () => void refreshDelta(),
+      (status) => {
+        connected = status === 'connected';
+        setTimelineLiveStatus(connected ? 'connected' : 'fallback');
+        if (connected) void refreshDelta();
+      }
+    );
+
+    const interval = window.setInterval(() => {
+      if (!connected && document.visibilityState === 'visible') void refreshDelta();
+    }, 20000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') void refreshDelta();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [opportunityId, activeTab]);
 
   if (!opportunityId) return null;
 
@@ -610,7 +666,13 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
                   )}
 
                   {/* TAB 6: TIMELINE */}
-                  {activeTab === 'timeline' && <UnifiedTimeline events={events} />}
+                  {activeTab === 'timeline' && (
+                    <UnifiedTimeline
+                      events={events}
+                      liveStatus={timelineLiveStatus}
+                      onRefresh={() => void fetchOpportunityData(opportunityId)}
+                    />
+                  )}
                 </div>
 
                 {/* RIGHT SIDEBAR (4 COLS / ~35% WIDTH - Nutshell Sidebar Cards) */}

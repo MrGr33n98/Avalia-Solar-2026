@@ -99,6 +99,7 @@ Rails.application.configure do
   # Action Cable (WebSocket) - habilita conexões do domínio público
   config.action_cable.url = ENV.fetch('ACTION_CABLE_URL', 'wss://api.avaliasolar.com.br/cable')
   config.action_cable.allowed_request_origins = [
+    'https://crm.avaliasolar.com.br',
     'https://avaliasolar.com.br',
     'https://www.avaliasolar.com.br',
     'http://avaliasolar.com.br',

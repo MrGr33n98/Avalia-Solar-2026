@@ -20,7 +20,7 @@ module Sales
       end
 
       def self.tracking_host
-        ENV.fetch('APP_HOST', 'https://crm.avaliasolar.com.br').sub(%r{/\z}, '')
+        ::Sales::Messaging::TrackingHost.origin
       end
       private_class_method :tracking_host
     end
