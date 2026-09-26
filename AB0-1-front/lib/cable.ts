@@ -17,6 +17,18 @@ type DashboardMessage = {
   }
 }
 
+export type SalesTimelineMessage = {
+  schema_version: 1
+  type: 'sales.timeline.changed'
+  event_id: number
+  cursor: string
+  opportunity_id: number
+  resource_type: 'email_message'
+  resource_id: number
+  change: string
+  occurred_at: string
+}
+
 let consumer: Cable | null = null
 const PROD_API_ORIGIN = 'https://api.avaliasolar.com.br'
 
@@ -134,4 +146,38 @@ export function subscribeCompanyDashboard(
   return {
     unsubscribe: () => c.subscriptions.remove(subscription),
   }
+}
+
+export function subscribeSalesTimeline(
+  opportunityId: number,
+  onMessage: (message: SalesTimelineMessage) => void,
+  onStatus: (status: 'connected' | 'disconnected') => void
+) {
+  const c = getConsumer()
+  if (!c) {
+    onStatus('disconnected')
+    return { unsubscribe: () => {} }
+  }
+
+  const subscription = c.subscriptions.create(
+    { channel: 'SalesTimelineChannel', opportunity_id: opportunityId },
+    {
+      connected() {
+        onStatus('connected')
+      },
+      disconnected() {
+        onStatus('disconnected')
+      },
+      rejected() {
+        onStatus('disconnected')
+      },
+      received(message: SalesTimelineMessage) {
+        if (message.type === 'sales.timeline.changed' && message.opportunity_id === opportunityId) {
+          onMessage(message)
+        }
+      },
+    }
+  )
+
+  return { unsubscribe: () => c.subscriptions.remove(subscription) }
 }

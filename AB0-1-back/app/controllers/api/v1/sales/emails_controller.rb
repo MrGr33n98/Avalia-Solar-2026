@@ -96,6 +96,10 @@ module Api
             return render_error_response(message: 'Envio de e-mail desabilitado.', status: :service_unavailable,
                                          code: 'EMAIL_SENDING_DISABLED')
           end
+          unless ::Sales::Messaging::TrackingHost.configured?
+            return render_error_response(message: 'Tracking de e-mail não está configurado.', status: :service_unavailable,
+                                         code: 'EMAIL_TRACKING_HOST_MISSING')
+          end
 
           email = nil
           ::Sales::EmailMessage.transaction do
@@ -156,6 +160,9 @@ module Api
               attachment.file.attach(uploaded_file)
               attachment.save!
             end
+
+            email.register_event!(event_type: 'queued', source: 'sales_crm', dedupe_key: "queued:#{email.id}",
+                                  occurred_at: email.created_at)
           end
 
           if ENV.fetch('EXECUTE_JOBS_INLINE', 'false') == 'true' && !Rails.env.production?

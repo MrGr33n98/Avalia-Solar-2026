@@ -3,45 +3,42 @@ import { render, screen } from '@testing-library/react';
 import UnifiedTimeline, { TimelineEvent } from '@/components/sales/UnifiedTimeline';
 
 describe('UnifiedTimeline component', () => {
-  it('renders read email event with emerald badge when open_count is greater than 0', () => {
+  it('renders an open signal without claiming a human read the message', () => {
     const mockEvents: TimelineEvent[] = [
       {
-        id: 'email-1',
-        type: 'email',
-        title: 'E-mail: Convite Avalia Solar',
-        description: 'Para: felipe@exemplo.com | 👁️ Lido 2x (última abertura em 25/09 às 17:58)',
-        timestamp: '2026-09-25T17:58:00Z',
-        metadata: {
-          open_count: 2,
-          last_opened_at: '2026-09-25T17:58:00Z',
-        },
+        id: 'email:1',
+        kind: 'email',
+        occurred_at: '2026-09-25T17:58:00Z',
+        actor: { id: 1, name: 'Felipe' },
+        email: { id: 1, direction: 'outbound', subject: 'Convite Avalia Solar', preview: 'Olá!', from: 'vendas@example.test', to: ['felipe@exemplo.com'], delivery_status: 'delivered', engagement_status: 'open_signal' },
+        engagement: { raw_open_signals: 2, unique_open_signals: 1, human_likely_open_signals: 0, proxy_open_signals: 1, bot_open_signals: 0, scanner_open_signals: 0, raw_clicks: 0, unique_clicks: 0, replies: 0 },
+        lifecycle: [{ type: 'open_signal', occurred_at: '2026-09-25T17:58:00Z', signal_class: 'proxy' }],
       },
     ];
 
     render(<UnifiedTimeline events={mockEvents} />);
 
-    expect(screen.getByText('E-mail: Convite Avalia Solar')).toBeInTheDocument();
-    expect(screen.getByText('👁️ Lido (2x)')).toBeInTheDocument();
+    expect(screen.getByText('Convite Avalia Solar')).toBeInTheDocument();
+    expect(screen.getByText(/Abertura detectada/)).toBeInTheDocument();
+    expect(screen.queryByText(/Lido/)).not.toBeInTheDocument();
     expect(screen.getByText(/Para: felipe@exemplo.com/)).toBeInTheDocument();
   });
 
-  it('renders unread email event with default email badge when open_count is 0', () => {
+  it('renders an email with no open signal', () => {
     const mockEvents: TimelineEvent[] = [
       {
-        id: 'email-2',
-        type: 'email',
-        title: 'E-mail: Proposta Comercial',
-        description: 'Para: felipe@exemplo.com | Enviado (Aguardando leitura)',
-        timestamp: '2026-09-25T17:00:00Z',
-        metadata: {
-          open_count: 0,
-        },
+        id: 'email:2',
+        kind: 'email',
+        occurred_at: '2026-09-25T17:00:00Z',
+        email: { id: 2, direction: 'outbound', subject: 'Proposta Comercial', preview: '', from: 'vendas@example.test', to: ['felipe@exemplo.com'], delivery_status: 'sent', engagement_status: 'none' },
+        engagement: { raw_open_signals: 0, unique_open_signals: 0, human_likely_open_signals: 0, proxy_open_signals: 0, bot_open_signals: 0, scanner_open_signals: 0, raw_clicks: 0, unique_clicks: 0, replies: 0 },
       },
     ];
 
     render(<UnifiedTimeline events={mockEvents} />);
 
-    expect(screen.getByText('E-mail: Proposta Comercial')).toBeInTheDocument();
-    expect(screen.getByText('E-mail')).toBeInTheDocument();
+    expect(screen.getByText('Proposta Comercial')).toBeInTheDocument();
+    expect(screen.getByText('Sem sinal de abertura')).toBeInTheDocument();
+    expect(screen.queryByText(/Aguardando leitura|Lido/)).not.toBeInTheDocument();
   });
 });

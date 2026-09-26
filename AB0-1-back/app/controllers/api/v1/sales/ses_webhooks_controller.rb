@@ -33,6 +33,8 @@ module Api
               email.register_event!(
                 event_type: normalized_type,
                 provider_event_id: provider_event_id,
+                dedupe_key: provider_event_id,
+                source: 'aws_ses_sns',
                 occurred_at: event_time(payload),
                 payload: safe_event_payload(payload)
               )
@@ -78,8 +80,8 @@ module Api
           'complaint' => 'complaint',
           'reject' => 'reject',
           'rejected' => 'reject',
-          'open' => 'open',
-          'click' => 'click'
+          'open' => 'provider_open_signal',
+          'click' => 'provider_click_signal'
         }.freeze
 
         def log_failure(envelope, reason, status:)

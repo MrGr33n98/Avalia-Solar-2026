@@ -2,7 +2,11 @@
 
 module T
   class EmailTrackingController < ActionController::Base
-    GIF_1X1 = "\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b".b.freeze
+    GIF_1X1 = [
+      "\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00".b,
+      "\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x01\x00\x00\x00\x00".b,
+      "\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b".b
+    ].join.freeze
 
     skip_forgery_protection only: :unsubscribe
 
@@ -10,13 +14,15 @@ module T
       email = ::Sales::EmailMessage.find_by(tracking_token: params[:token])
       if email&.open_tracking_enabled
         user_agent = request.user_agent.to_s
-        is_bot = user_agent.match?(/(GoogleImageProxy|AppleMessageFrame|Outlook-Express|Spider|Crawler|Bot)/i)
+        classification = ::Sales::Messaging::OpenSignalClassifier.call(user_agent)
         email.register_event!(
-          event_type: 'open',
-          user_agent: user_agent,
-          payload: { ip: request.remote_ip, is_bot: is_bot }
+          event_type: 'open_signal',
+          source: 'avalia_pixel',
+          signal_class: classification[:signal_class],
+          classification_reasons: classification[:reasons]
         )
       end
+      set_pixel_cache_headers
       send_data GIF_1X1, type: 'image/gif', disposition: 'inline'
     end
 
@@ -31,7 +37,12 @@ module T
           item.reason = 'unsubscribe'
           item.suppressed_at = Time.current
         end
-        ::Sales::EmailSequences::EnrollmentProcessor.stop_for_contact(contact: email.contact, reason: 'unsubscribe') if email.contact
+        email.register_event!(event_type: 'unsubscribed', source: 'unsubscribe',
+                              dedupe_key: "unsubscribe:#{email.id}")
+        if email.contact
+          ::Sales::EmailSequences::EnrollmentProcessor.stop_for_contact(contact: email.contact,
+                                                                        reason: 'unsubscribe')
+        end
         return head :no_content
       end
 
@@ -47,16 +58,28 @@ module T
         return redirect_to '/', allow_other_host: false
       end
 
-      link.increment!(:click_count)
-      link.update_columns(first_clicked_at: Time.current) if link.first_clicked_at.blank?
-      link.update_columns(last_clicked_at: Time.current)
-      link.email_message.register_event!(event_type: 'click', url: target_url,
-                                          user_agent: request.user_agent,
-                                          payload: { ip: request.remote_ip, link_id: link.id })
+      occurred_at = Time.current
+      classification = ::Sales::Messaging::OpenSignalClassifier.call(request.user_agent)
+      link.with_lock do
+        link.increment!(:click_count)
+        link.update!(first_clicked_at: occurred_at) if link.first_clicked_at.blank?
+        link.update!(last_clicked_at: occurred_at)
+      end
+      link.email_message.register_event!(
+        event_type: 'click', source: 'avalia_link', signal_class: classification[:signal_class],
+        classification_reasons: classification[:reasons], url: target_url, occurred_at: occurred_at,
+        payload: { email_link_id: link.id }
+      )
       redirect_to target_url, allow_other_host: true
     end
 
     private
+
+    def set_pixel_cache_headers
+      response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+      response.headers['Pragma'] = 'no-cache'
+      response.headers['Expires'] = '0'
+    end
 
     def unsubscribe_confirmation(email)
       token = ERB::Util.html_escape(params[:token])

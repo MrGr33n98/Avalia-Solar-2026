@@ -23,7 +23,8 @@ class HealthController < ActionController::API
     checks = {
       database: check_database,
       redis: check_redis,
-      sidekiq: check_sidekiq
+      sidekiq: check_sidekiq,
+      email_tracking: check_email_tracking
     }
 
     all_healthy = checks.values.all? { |check| check[:status] == 'ok' }
@@ -64,6 +65,7 @@ class HealthController < ActionController::API
         database: check_database,
         redis: check_redis,
         sidekiq: check_sidekiq,
+        email_tracking: check_email_tracking,
         active_storage: check_active_storage
       }
     }, status: :ok
@@ -89,6 +91,21 @@ class HealthController < ActionController::API
   end
 
   private
+
+  def check_email_tracking
+    configured = ::Sales::Messaging::TrackingHost.configured?
+    access_key_present = ENV['AWS_ACCESS_KEY_ID'].present?
+    secret_key_present = ENV['AWS_SECRET_ACCESS_KEY'].present?
+    {
+      status: configured ? 'ok' : 'error',
+      tracking_host_configured: configured,
+      sns_topic_configured: ENV['AWS_SNS_TOPIC_ARN'].present?,
+      ses_credentials_configured: access_key_present && secret_key_present,
+      ses_sender_identity_configured: ENV['AWS_SES_SENDER_IDENTITY'].present?,
+      ses_health: 'not_probed',
+      action_cable_configured: ENV['ACTION_CABLE_URL'].present? || Rails.application.config.action_cable.url.present?
+    }
+  end
 
   # Check database connectivity and basic statistics
   def check_database

@@ -44,39 +44,32 @@ module Sales
         now = Time.current
         email.update!(
           status: 'sent',
+          delivery_status: 'sent',
           provider_message_id: result.provider_message_id,
           sent_at: now
         )
 
-        email.register_event!(event_type: 'sent', provider_event_id: "evt-sent-#{email.id}", occurred_at: now)
+        email.register_event!(event_type: 'provider_accepted', source: 'aws_ses_api',
+                              dedupe_key: "provider-accepted:#{result.provider_message_id}", occurred_at: now,
+                              payload: { provider_message_id: result.provider_message_id })
 
-        # 3. Timeline Activity Persistence (support nil account/contact/opportunity)
-        if email.sales_account_id.present? || email.sales_contact_id.present? || email.sales_opportunity_id.present?
-          ::Sales::Activity.create!(
-            sales_account_id: email.sales_account_id,
-            sales_contact_id: email.sales_contact_id,
-            sales_opportunity_id: email.sales_opportunity_id,
-            actor_id: email.sender_user_id,
-            activity_type: 'email_sent',
-            direction: 'outbound',
-            subject: "E-mail Enviado: #{email.subject}",
-            body: email.body_text || email.body_html,
-            occurred_at: now
-          )
-        end
         safely_advance_sequence(email)
       else
-        email.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => result.error_message))
-        email.register_event!(event_type: 'failed', occurred_at: Time.current, payload: { error: result.error_message })
+        email.update!(status: 'failed', delivery_status: 'failed',
+                      metadata: (email.metadata || {}).merge('error' => result.error_message))
+        email.register_event!(event_type: 'failed', source: 'aws_ses_api',
+                              dedupe_key: "failed:#{email.id}:#{email.updated_at.to_i}", occurred_at: Time.current)
         safely_fail_sequence_step(email)
       end
     rescue ::Sales::Messaging::Renderer::EmailRenderError => e
       Rails.logger.error({ event: 'sales_email_render_failed', email_message_id: email&.id,
                            tenant_id: email&.company_id, error_class: e.class.name }.to_json)
-      email&.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => e.class.name))
+      email&.update!(status: 'failed', delivery_status: 'failed',
+                     metadata: (email.metadata || {}).merge('error' => e.class.name))
       safely_fail_sequence_step(email)
     rescue StandardError => e
-      email&.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => e.class.name))
+      email&.update!(status: 'failed', delivery_status: 'failed',
+                     metadata: (email.metadata || {}).merge('error' => e.class.name))
       safely_fail_sequence_step(email)
       raise e
     end
@@ -93,11 +86,12 @@ module Sales
 
         if ::Sales::Messaging::SuppressionChecker.blocked?(company_id: email.company_id, email: email.to_email)
           Rails.logger.warn("[SendEmailJob] Envio bloqueado por suppression para tenant #{email.company_id}.")
-          email.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => 'SUPPRESSED_AT_SEND_TIME'))
+          email.update!(status: 'failed', delivery_status: 'failed',
+                        metadata: (email.metadata || {}).merge('error' => 'SUPPRESSED_AT_SEND_TIME'))
           email.campaign_recipient&.update!(status: 'unsubscribed', error_message: 'SUPPRESSED_AT_SEND_TIME')
           suppressed = true
         else
-          email.update!(status: 'sending')
+          email.update!(status: 'sending', delivery_status: 'sending')
           claimed = true
         end
       end

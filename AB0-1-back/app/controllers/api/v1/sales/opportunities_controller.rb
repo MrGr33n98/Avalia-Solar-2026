@@ -55,101 +55,11 @@ module Api
         end
 
         def timeline
-          events = []
+          after = params[:after].presence
+          return render_error_response(message: 'Cursor inválido.', status: :unprocessable_entity, code: 'INVALID_CURSOR') if after && !after.match?(/\A\d+\z/)
 
-          # 1. Stage histories
-          @opportunity.stage_histories.includes(:to_stage, :actor).each do |sh|
-            events << {
-              id: "sh-#{sh.id}",
-              type: 'stage_changed',
-              title: "Estágio alterado para #{sh.to_stage&.name || 'Novo Estágio'}",
-              description: sh.actor ? "Alterado por #{sh.actor.name rescue 'Usuário'}" : nil,
-              occurred_at: sh.entered_at || sh.created_at
-            }
-          end
-
-          # 2. Activities
-          current_tenant_scope.activities.where(sales_opportunity_id: @opportunity.id, sales_account_id: @opportunity.sales_account_id).find_each do |act|
-            events << {
-              id: "act-#{act.id}",
-              type: act.activity_type == 'call' ? 'call' : 'activity',
-              title: act.activity_type == 'call' ? 'Chamada Telefônica Registrada' : 'Atividade Comercial',
-              description: act.body.presence || act.subject.presence,
-              occurred_at: act.occurred_at || act.created_at
-            }
-          end
-
-          # 3. Tasks
-          current_tenant_scope.tasks.where(sales_opportunity_id: @opportunity.id, sales_account_id: @opportunity.sales_account_id).find_each do |t|
-            events << {
-              id: "task-#{t.id}",
-              type: 'task',
-              title: "Tarefa: #{t.title}",
-              description: "Status: #{t.status} | Prioridade: #{t.priority}",
-              occurred_at: t.created_at
-            }
-          end
-
-          # 4. Notes
-          current_tenant_scope.notes.where(opportunity_id: @opportunity.id).find_each do |n|
-            events << {
-              id: "note-#{n.id}",
-              type: 'note',
-              title: 'Anotação Interna',
-              description: n.body,
-              occurred_at: n.created_at
-            }
-          end
-
-          # 5. Email messages
-          current_tenant_scope.email_messages.where(sales_opportunity_id: @opportunity.id).find_each do |em|
-            open_status = if em.open_count.to_i > 0
-                            "👁️ Lido #{em.open_count}x (última abertura em #{em.last_opened_at&.strftime('%d/%m às %H:%M')})"
-                          else
-                            "Enviado (Aguardando leitura)"
-                          end
-
-            events << {
-              id: "email-#{em.id}",
-              type: 'email',
-              title: "E-mail: #{em.subject}",
-              description: "Para: #{em.to_email} | #{open_status}",
-              occurred_at: em.sent_at || em.created_at,
-              metadata: {
-                open_count: em.open_count.to_i,
-                click_count: em.click_count.to_i,
-                first_opened_at: em.first_opened_at,
-                last_opened_at: em.last_opened_at,
-                first_clicked_at: em.first_clicked_at,
-                last_clicked_at: em.last_clicked_at,
-                status: em.status
-              }
-            }
-          end
-
-          # 6. Quotes
-          current_tenant_scope.quotes.where(opportunity_id: @opportunity.id).find_each do |q|
-            events << {
-              id: "quote-#{q.id}",
-              type: 'quote',
-              title: "Proposta Comercial ##{q.number}",
-              description: "Status: #{q.status} | Potência: #{q.system_size_kwp || '—'} kWp",
-              occurred_at: q.created_at
-            }
-          end
-
-          # 7. Opportunity creation
-          events << {
-            id: "opp-create-#{@opportunity.id}",
-            type: 'website',
-            title: 'Oportunidade Criada no CRM',
-            description: "Oportunidade #{@opportunity.name} iniciada.",
-            occurred_at: @opportunity.created_at
-          }
-
-          events.sort_by! { |e| e[:occurred_at] || Time.current }.reverse!
-
-          render json: { timeline: events }
+          result = ::Sales::Timeline::Query.new(opportunity: @opportunity, user: current_user, after: after).call
+          render json: result
         end
 
         def create
