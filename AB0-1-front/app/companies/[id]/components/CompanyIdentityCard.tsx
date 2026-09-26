@@ -112,9 +112,9 @@ export default function CompanyIdentityCard({
         {/* Lado Esquerdo: Logo + Dados */}
         <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-start sm:gap-5">
           {/* Box da Logo (Overlapping no Banner) */}
-          <div className="relative shrink-0 -mt-12 sm:-mt-14 lg:-mt-16 overflow-visible z-30">
-            <div className="relative h-[92px] w-[92px] rounded-[20px] border-2 border-white bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.12)] sm:h-[104px] sm:w-[104px] lg:h-[112px] lg:w-[112px]">
-              <div className="relative h-full w-full overflow-hidden rounded-[15px] bg-white flex items-center justify-center">
+          <div className="relative shrink-0 -mt-8 sm:-mt-12 lg:-mt-16 overflow-visible z-30">
+            <div className="relative h-[68px] w-[68px] rounded-2xl border-2 border-white bg-white p-1 shadow-md sm:h-[92px] sm:w-[92px] lg:h-[104px] lg:w-[104px]">
+              <div className="relative h-full w-full overflow-hidden rounded-xl bg-white flex items-center justify-center">
                 {hasLogo ? (
                   <OptimizedImage
                     src={logoUrl!}
@@ -131,7 +131,7 @@ export default function CompanyIdentityCard({
                     onError={() => setLogoError(true)}
                   />
                 ) : (
-                  <div className="flex h-full w-full select-none items-center justify-center rounded-[15px] bg-gradient-to-br from-blue-600 to-indigo-600 text-2xl font-black text-white">
+                  <div className="flex h-full w-full select-none items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-xl font-black text-white sm:text-2xl">
                     {initialLetter}
                   </div>
                 )}
@@ -139,7 +139,7 @@ export default function CompanyIdentityCard({
             </div>
             {badgeImageUrl && !badgeImageError && (
               <div
-                className="pointer-events-none absolute left-0 top-0 z-40 h-9 w-8 -translate-x-[18%] -translate-y-[32%] overflow-visible bg-transparent drop-shadow-[0_2px_4px_rgba(15,23,42,0.25)] sm:h-11 sm:w-9"
+                className="pointer-events-none absolute left-0 top-0 z-40 h-8 w-7 -translate-x-[18%] -translate-y-[28%] overflow-visible bg-transparent drop-shadow-[0_2px_4px_rgba(15,23,42,0.25)] sm:h-10 sm:w-8"
                 title={badgeToRender?.name || 'Selo de conquista'}
               >
                 <Image
@@ -147,7 +147,7 @@ export default function CompanyIdentityCard({
                   alt={badgeToRender?.name || 'Selo'}
                   fill
                   className="object-contain bg-transparent"
-                  sizes="(max-width: 640px) 32px, 36px"
+                  sizes="(max-width: 640px) 28px, 36px"
                   unoptimized
                   onError={() => setBadgeImageError(true)}
                 />
@@ -156,27 +156,32 @@ export default function CompanyIdentityCard({
           </div>
 
           {/* Informações da empresa estilo WEG */}
-          <div className="min-w-0 space-y-1 pt-1 sm:pt-2">
-            {/* Nome + Verificado + Plano Comercial */}
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="truncate text-xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
+          <div className="min-w-0 space-y-1 pt-0.5 sm:pt-2">
+            {/* Nome + Verificado + Categoria (Fabricante, etc.) */}
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
                 {company.name}
               </h1>
               {isVerified && (
-                <BadgeCheck className="h-5 w-5 shrink-0 fill-blue-600 text-white sm:h-6 sm:w-6" aria-label="Empresa verificada" />
+                <BadgeCheck className="h-4.5 w-4.5 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
+              )}
+              {categoryName && (
+                <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-700 border border-purple-100/80">
+                  {categoryName}
+                </span>
               )}
               <PremiumHighlightBadge company={company} />
             </div>
 
             {/* Descrição curta (1 linha) */}
             {(company.description || company.about) && (
-              <p className="truncate text-xs font-medium text-slate-500 max-w-xl">
+              <p className="line-clamp-2 text-xs font-medium text-slate-500 max-w-xl leading-snug">
                 {company.description || company.about}
               </p>
             )}
 
             {/* Linha de Metadados (Localização, Atuação, Fundação, Website) */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1.5 text-xs font-semibold text-slate-600">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[11px] font-semibold text-slate-600 sm:text-xs">
               {locationLabel && (
                 <div className="flex items-center gap-1">
                   <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
@@ -214,7 +219,7 @@ export default function CompanyIdentityCard({
               )}
 
               {/* Avaliações + visualizações em linha compacta */}
-              <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 sm:text-xs">
                 <span className="text-slate-300" aria-hidden="true">|</span>
                 {hasReviews && ratingFormatted ? (
                   <div className="flex items-center gap-1 font-bold text-slate-950">
@@ -225,7 +230,7 @@ export default function CompanyIdentityCard({
                     </span>
                   </div>
                 ) : (
-                  <span>Sem avaliações</span>
+                  <span>Sem avaliações · Seja o primeiro</span>
                 )}
                 <span className="text-slate-300" aria-hidden="true">·</span>
                 <CompanyViewCounter companyId={company.id} />

@@ -25,7 +25,7 @@ export default function CompanyPremiumHero({
       id="company-premium-hero"
       className="relative w-full overflow-hidden bg-slate-900"
     >
-      <div className="relative h-[145px] w-full sm:h-[165px] md:h-[185px] lg:h-[195px]">
+      <div className="relative h-[132px] w-full sm:h-[165px] md:h-[185px] lg:h-[195px]">
         {showPlaceholder ? (
           <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
         ) : (

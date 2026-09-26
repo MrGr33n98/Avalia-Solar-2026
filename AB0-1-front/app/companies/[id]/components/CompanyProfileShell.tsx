@@ -146,7 +146,7 @@ export default function CompanyProfileShell({
       </header>
 
       {/* Grid Principal responsivo de 12 colunas */}
-      <main className="mx-auto w-full max-w-[430px] px-4 py-6 md:max-w-[1240px] md:px-6 md:py-8">
+      <main className="mx-auto w-full max-w-[430px] px-4 py-4 md:max-w-[1240px] md:px-6 md:py-8">
         <Tabs value={activeTab} className="w-full">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {/* Coluna da Esquerda (8 Colunas) — Aba Ativa */}

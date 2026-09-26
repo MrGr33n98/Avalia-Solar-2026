@@ -138,7 +138,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
         type="button"
         size="default"
         onClick={handleRequestQuote}
-        className="h-10 flex-1 min-w-[140px] inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700 sm:flex-initial lg:flex-none"
+        className="h-9 flex-1 min-w-[130px] inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700 sm:flex-initial lg:flex-none"
       >
         <Send className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
         <span>Solicitar contato</span>
@@ -150,7 +150,7 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
         variant="outline"
         size="default"
         onClick={handleToggleComparison}
-        className={`h-10 flex-1 min-w-[110px] inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-colors sm:flex-initial lg:flex-none ${
+        className={`h-9 flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-colors sm:flex-initial lg:flex-none ${
           isCompared
             ? 'border-blue-600 bg-blue-50 text-blue-700'
             : 'border-blue-500/80 bg-white text-blue-600 hover:bg-blue-50'
@@ -160,55 +160,58 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
         <span>{isCompared ? 'Comparando' : 'Comparar'}</span>
       </Button>
 
-      {/* 3. Favoritar (♡ Coração estilo WEG) */}
-      <button
-        type="button"
-        onClick={handleToggleFavorite}
-        aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
-        title={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
-        className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors ${
-          isFav
-            ? 'border-red-200 bg-red-50 text-red-600'
-            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-        }`}
-      >
-        <Heart className={`h-4 w-4 ${isFav ? 'fill-current text-red-600' : 'text-slate-600'}`} aria-hidden="true" />
-      </button>
-
-      {/* 4. Compartilhar (↗ Compartilhar estilo WEG) */}
-      <button
-        type="button"
-        onClick={handleShare}
-        disabled={isSharing}
-        aria-label="Compartilhar empresa"
-        title="Compartilhar empresa"
-        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-      >
-        <Share2 className="h-4 w-4 text-slate-600" aria-hidden="true" />
-      </button>
-
-      {/* WhatsApp (Secundário/Preservado) */}
-      {showWhatsApp && (
-        <Button
+      {/* Quick Actions Wrapper */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {/* 3. Favoritar (♡ Coração estilo WEG) */}
+        <button
           type="button"
-          size="default"
-          onClick={handleWhatsApp}
-          className="h-10 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-emerald-600"
+          onClick={handleToggleFavorite}
+          aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
+          title={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
+          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+            isFav
+              ? 'border-red-200 bg-red-50 text-red-600'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+          }`}
         >
-          <MessageCircle className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
-          <span className="hidden sm:inline">WhatsApp</span>
-        </Button>
-      )}
+          <Heart className={`h-4 w-4 ${isFav ? 'fill-current text-red-600' : 'text-slate-600'}`} aria-hidden="true" />
+        </button>
 
-      {/* Avaliar (Link Secundário) */}
-      <Link
-        href={reviewPath}
-        aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
-        className="inline-flex h-10 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50"
-      >
-        <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
-        <span className="hidden xl:inline">Avaliar</span>
-      </Link>
+        {/* 4. Compartilhar (↗ Compartilhar estilo WEG) */}
+        <button
+          type="button"
+          onClick={handleShare}
+          disabled={isSharing}
+          aria-label="Compartilhar empresa"
+          title="Compartilhar empresa"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+        >
+          <Share2 className="h-4 w-4 text-slate-600" aria-hidden="true" />
+        </button>
+
+        {/* WhatsApp (Secundário/Preservado) */}
+        {showWhatsApp && (
+          <Button
+            type="button"
+            size="default"
+            onClick={handleWhatsApp}
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-emerald-600"
+          >
+            <MessageCircle className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
+            <span className="hidden sm:inline">WhatsApp</span>
+          </Button>
+        )}
+
+        {/* Avaliar (Link Secundário) */}
+        <Link
+          href={reviewPath}
+          aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
+          className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+        >
+          <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
+          <span className="hidden xl:inline">Avaliar</span>
+        </Link>
+      </div>
     </div>
   );
 }

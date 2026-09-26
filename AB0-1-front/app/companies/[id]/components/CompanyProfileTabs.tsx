@@ -80,8 +80,8 @@ export default function CompanyProfileTabs({
   return (
     <>
       {/* Mobile tab rail */}
-      <div id="company-profile-tabs" className="relative z-30 mt-5 w-full md:hidden">
-        <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+      <div id="company-profile-tabs" className="relative z-30 mt-2.5 w-full md:hidden">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <nav aria-label="Seções do perfil da empresa">
             <div className="flex min-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {mobileTabs.map((tab, index) => {
@@ -108,15 +108,15 @@ export default function CompanyProfileTabs({
                       }
                     }}
                     className={cn(
-                      'relative flex h-[100px] basis-1/4 shrink-0 snap-start flex-col items-center justify-center gap-2 px-1 text-center transition-colors',
+                      'relative flex h-[52px] basis-1/4 shrink-0 snap-start flex-col items-center justify-center gap-0.5 px-1 text-center transition-colors',
                       index > 0 && 'border-l border-slate-100',
                       isActive
-                        ? 'text-blue-600'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                        ? 'text-blue-600 font-semibold'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
                     )}
                   >
-                    <tab.icon className="h-6 w-6 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="flex max-w-[82px] items-center justify-center gap-0.5 text-[11px] font-semibold leading-[1.2]">
+                    <tab.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                    <span className="flex max-w-[82px] items-center justify-center gap-0.5 text-[11px] leading-tight">
                       <span>{tab.label}</span>
                       {tabHasMenu ? (
                         <ChevronDown
@@ -130,7 +130,7 @@ export default function CompanyProfileTabs({
                     </span>
                     {isActive ? (
                       <span
-                        className="absolute bottom-0 h-[3px] w-[62%] rounded-t-full bg-blue-600"
+                        className="absolute bottom-0 h-[2.5px] w-[60%] rounded-t-full bg-blue-600"
                         aria-hidden="true"
                       />
                     ) : null}

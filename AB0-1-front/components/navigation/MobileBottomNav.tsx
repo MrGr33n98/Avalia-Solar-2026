@@ -180,7 +180,7 @@ export default function MobileBottomNav() {
         </Link>
 
         {/* ======================================================
-            3. BUSCAR (Botão Central Elevado)
+            3. BUSCAR
         ====================================================== */}
         <button
           type="button"
@@ -188,27 +188,20 @@ export default function MobileBottomNav() {
           aria-label="Buscar empresas, produtos e categorias"
           aria-current={isSearchActive ? 'page' : undefined}
           data-testid="mobile-nav-search"
-          className={cn(
-            commonItemClass,
-            'justify-center pt-0 pb-1'
-          )}
+          className={commonItemClass}
         >
-          <span
+          <Search
             className={cn(
-              'flex h-11 w-11 -mt-4 items-center justify-center rounded-full',
-              'bg-gradient-to-tr from-blue-600 via-blue-600 to-indigo-600',
-              'text-white ring-4 ring-white dark:ring-slate-900',
-              'shadow-[0_4px_14px_rgba(37,99,235,0.35)]',
-              'transition-all duration-150 ease-out active:scale-90',
-              'group-hover:shadow-[0_6px_18px_rgba(37,99,235,0.45)]'
+              'h-5 w-5 transition-transform duration-150 group-active:scale-90',
+              isSearchActive
+                ? 'text-blue-600 dark:text-blue-400 stroke-[2.25]'
+                : 'text-slate-500 dark:text-slate-400 stroke-[1.75] group-hover:text-slate-800 dark:group-hover:text-slate-200'
             )}
-          >
-            <Search className="h-5 w-5 stroke-[2.25]" />
-          </span>
+          />
 
           <span
             className={cn(
-              'truncate text-[11px] leading-tight mt-0.5 transition-colors',
+              'truncate text-[11px] leading-tight transition-colors',
               isSearchActive
                 ? 'font-semibold text-blue-600 dark:text-blue-400'
                 : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'
