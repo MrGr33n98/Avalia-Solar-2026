@@ -3,9 +3,8 @@
 import React, { useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Building2, Home, MessageCircle, Search } from 'lucide-react';
+import { ArrowRightLeft, Building2, Home, MessageCircle, Search } from 'lucide-react';
 
-import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { useComparison } from '@/hooks/useComparison';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVirtualKeyboard } from '@/hooks/useVirtualKeyboard';
@@ -230,13 +229,13 @@ export default function MobileBottomNav() {
           className={commonItemClass}
         >
           <span className="relative flex h-5 w-5 items-center justify-center">
-            <AnimatedCompareIcon
-              size={20}
-              variant="default"
-              animated
-              intensity={count > 0 ? 'strong' : 'subtle'}
-              active={isCompareActive}
-              aria-hidden="true"
+            <ArrowRightLeft
+              className={cn(
+                'h-5 w-5 transition-transform duration-150 group-active:scale-90',
+                isCompareActive
+                  ? 'text-blue-600 dark:text-blue-400 stroke-[2.25]'
+                  : 'text-slate-500 dark:text-slate-400 stroke-[1.75] group-hover:text-slate-800 dark:group-hover:text-slate-200'
+              )}
             />
 
             {count > 0 && (

@@ -3,8 +3,8 @@
  * Avalia Solar — PWA Mobile Bottom Navigation
  */
 
-export const MOBILE_NAV_HEIGHT = 56; // 56px compact visual height (excluding safe-area)
-export const MOBILE_NAV_FAB_SIZE = 44; // 44px elevated central search button
+export const MOBILE_NAV_HEIGHT = 54; // 54px compact visual height (excluding safe-area)
+export const MOBILE_NAV_FAB_SIZE = 44; // legacy token fallback
 export const MOBILE_NAV_ICON_SIZE = 20; // 20px refined icon size
 export const MOBILE_NAV_Z_INDEX = 50; // z-50 for proper overlay stacking
 
