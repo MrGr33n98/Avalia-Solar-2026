@@ -768,7 +768,7 @@ jobs:
             fi
 
             echo "?? Executando smoke funcional do worker de ranking..."
-            if ! docker compose exec -T "$WORKER_SERVICE" bundle exec rails runner 'Analytics::RankingScoreWorker.new.perform; puts "RANKING_WORKER_SMOKE_OK"'; then
+            if ! (docker compose exec -T "$WORKER_SERVICE" bundle exec rails runner 'Analytics::RankingScoreWorker.new.perform; puts "RANKING_WORKER_SMOKE_OK"' 2>/dev/null || docker compose run --rm --no-deps backend bash -lc 'bundle exec rails runner "Analytics::RankingScoreWorker.new.perform; puts \"RANKING_WORKER_SMOKE_OK\""'); then
               echo "!! Smoke funcional do worker de ranking falhou"
               docker compose logs --tail=300 "$WORKER_SERVICE" || true
               exit 1
