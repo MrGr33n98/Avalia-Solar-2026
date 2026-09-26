@@ -55,6 +55,7 @@ module Types
     # Associações
     field :categories, [Types::CategoryType], null: true
     field :badges, [String], null: true
+    field :recognitions, [Types::BadgeType], null: true
     field :reviews, [Types::ReviewType], null: true do
       argument :limit, Integer, required: false, default_value: 5
     end
@@ -120,7 +121,6 @@ module Types
     end
 
     def distance_km
-      # O search service injeta distance_km via define_singleton_method ou como atributo virtual
       if object.respond_to?(:distance_km)
         object.distance_km
       elsif object.respond_to?(:read_attribute)
@@ -128,6 +128,14 @@ module Types
       end
     rescue StandardError
       nil
+    end
+
+    def recognitions
+      if object.association(:badges).loaded?
+        object.badges.select(&:active?).sort_by { |b| [b.position || Float::INFINITY, b.id] }
+      else
+        object.badges.active.order(position: :asc, id: :asc)
+      end
     end
   end
 end

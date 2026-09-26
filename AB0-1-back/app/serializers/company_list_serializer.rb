@@ -18,7 +18,16 @@ class CompanyListSerializer < ActiveModel::Serializer
              :has_paid_plan, :feature_access,
              :response_time_sla, :delivered_projects_score, :warranty_years,
              :coverage_cities, :coverage_states,
-             :identity, :trust, :reputation, :badges
+             :identity, :commercial_status, :distribution, :recognitions,
+             :trust, :reputation, :badges
+
+  def commercial_status
+    object.commercial_status
+  end
+
+  def distribution
+    object.distribution
+  end
 
   def has_paid_plan = object.has_paid_plan?
 

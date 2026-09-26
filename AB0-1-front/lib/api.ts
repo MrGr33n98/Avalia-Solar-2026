@@ -195,12 +195,53 @@ export interface Company {
     id?: number;
     name?: string;
     description?: string;
+    position?: number;
     category?: string;
     year?: number | string;
     edition?: number | string;
     public_slug?: string;
     image_url?: string | null;
+    verification_url?: string | null;
+    verifiable_url?: string | null;
   }>;
+  recognitions?: Array<{
+    id?: number;
+    name?: string;
+    description?: string;
+    position?: number;
+    category?: string;
+    year?: number | string;
+    edition?: number | string;
+    public_slug?: string;
+    image_url?: string | null;
+    verification_url?: string | null;
+    verifiable_url?: string | null;
+  }>;
+  identity?: {
+    name?: string;
+    slug?: string;
+    logo_url?: string | null;
+    primary_category?: {
+      id: number;
+      name: string;
+      slug: string;
+    } | null;
+    verification?: {
+      status: string;
+      verified: boolean;
+      verified_at?: string | null;
+      method?: string | null;
+    };
+  };
+  commercial_status?: {
+    tier: 'free' | 'pro' | 'enterprise' | string;
+    status: 'active' | 'inactive' | string;
+    paid: boolean;
+  };
+  distribution?: {
+    featured: boolean;
+    sponsored: boolean;
+  };
   buttons?: CompanyButton[];
   rating?: number;
   total_reviews?: number;
@@ -978,6 +1019,7 @@ export interface Badge {
   image?: string;
   image_url?: string;
   public_slug?: string;
+  verification_url?: string;
   verifiable_url?: string;
   created_at?: string;
   updated_at?: string;
@@ -3019,22 +3061,9 @@ export const articlesApi = {
 };
 
 export const badgesApi = {
-  getAll: () => fetchApi('/badges'),
-  getById: (id: number) => fetchApi(`/badges/${id}`),
   getByCompany: (companyId: number | string) => fetchApi<Badge[]>(`/companies/${companyId}/badges`),
   getBySlug: (slug: string) =>
     fetchApi<{ badge: Badge; featured_companies: any[] }>(`/badges/${slug}`),
-  create: (badge: Partial<Badge>) =>
-    fetchApi('/badges', {
-      method: 'POST',
-      body: JSON.stringify({ badge }),
-    }),
-  update: (id: number, badge: Partial<Badge>) =>
-    fetchApi(`/badges/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ badge }),
-    }),
-  delete: (id: number) => fetchApi(`/badges/${id}`, { method: 'DELETE' }),
 };
 
 export const usersApi = {

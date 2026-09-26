@@ -588,3 +588,38 @@ export const publicLocalSolarPagesApi = {
     });
   },
 };
+
+export type PublicBadgeResponse = {
+  badge: {
+    id: number;
+    name: string;
+    description?: string | null;
+    category?: string | null;
+    year?: number | string | null;
+    edition?: number | string | null;
+    public_slug?: string;
+    image_url?: string | null;
+    verification_url?: string | null;
+    verifiable_url?: string | null;
+  };
+  featured_companies: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    logo_url?: string | null;
+  }>;
+};
+
+export const publicBadgesApi = {
+  getBySlug: async (
+    slug: string,
+    options?: PublicFetchOptions<PublicBadgeResponse | null>
+  ): Promise<PublicBadgeResponse | null> => {
+    return fetchApiPublic<PublicBadgeResponse, null>(`badges/${encodeURIComponent(slug)}`, {
+      revalidate: options?.revalidate ?? 3600,
+      tags: options?.tags || [`badge-${slug}`, 'badges'],
+      fallback: null,
+      silent: options?.silent ?? true,
+    });
+  },
+};

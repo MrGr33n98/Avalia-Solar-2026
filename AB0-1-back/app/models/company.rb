@@ -574,9 +574,33 @@ end
   end
 
   def validate_primary_category_belongs_to_company
-    return if primary_category_id.blank? || categories.any? { |category| category.id == primary_category_id }
+    return if primary_category_id.blank?
+
+    assigned_ids = if categories.loaded?
+                     categories.map(&:id)
+                   else
+                     category_ids.map(&:to_i)
+                   end
+    return if assigned_ids.include?(primary_category_id.to_i)
 
     errors.add(:primary_category_id, 'deve pertencer às categorias da empresa')
+  end
+
+  def commercial_status
+    tier = inferred_plan_tier
+    status = respond_to?(:plan_status) && plan_status.present? ? plan_status : (has_paid_plan? ? 'active' : 'inactive')
+    {
+      tier: tier,
+      status: status,
+      paid: has_paid_plan?
+    }
+  end
+
+  def distribution
+    {
+      featured: featured == true,
+      sponsored: sponsored == true
+    }
   end
 
   def normalize_company_fields

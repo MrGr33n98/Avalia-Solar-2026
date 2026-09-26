@@ -25,6 +25,13 @@ class Badge < ApplicationRecord
     %w[companies company_badges image_attachment image_blob]
   end
 
+  def verification_url
+    return nil if public_slug.blank?
+
+    base_url = ENV.fetch('FRONTEND_URL', 'https://avaliasolar.com.br').chomp('/')
+    "#{base_url}/badges/#{public_slug}"
+  end
+
   def image_url
     return nil unless image.attached?
 

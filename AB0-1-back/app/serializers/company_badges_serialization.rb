@@ -11,12 +11,18 @@ module CompanyBadgesSerialization
         year: badge.year,
         edition: badge.edition,
         public_slug: badge.public_slug,
-        image_url: badge.image_url
+        image_url: badge.image_url,
+        verification_url: badge.verification_url,
+        verifiable_url: badge.verification_url
       }
     rescue StandardError => e
       Rails.logger.error("Error serializing badge #{badge&.id} for company #{object.id}: #{e.message}")
       nil
     end
+  end
+
+  def recognitions
+    badges
   end
 
   private

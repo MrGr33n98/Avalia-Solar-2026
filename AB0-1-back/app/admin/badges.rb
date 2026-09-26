@@ -1,5 +1,5 @@
 ActiveAdmin.register Badge do
-  menu false
+  menu parent: 'Reputação', label: 'Selos e Reconhecimentos', priority: 6
   permit_params :name, :description, :position, :year, :edition, :category_label, :active, :public_slug, :image,
                 company_ids: []
 

@@ -44,6 +44,10 @@ module Search
         logo_url: attachment_url(company.logo),
         banner_url: attachment_url(company.banner),
         badges: badges,
+        recognitions: recognitions,
+        identity: identity_payload,
+        commercial_status: company.commercial_status,
+        distribution: company.distribution,
         category_info: category_info,
         categories: categories,
         feature_access: feature_access
@@ -51,6 +55,23 @@ module Search
     end
 
     private
+
+    def identity_payload
+      primary_cat = company.primary_category
+      status = company.business_verification_status.presence || (company.verified ? 'verified' : 'unverified')
+      {
+        name: company.name,
+        slug: company.slug,
+        logo_url: attachment_url(company.logo),
+        primary_category: primary_cat && { id: primary_cat.id, name: primary_cat.name, slug: primary_cat.seo_url },
+        verification: {
+          status: status,
+          verified: status == 'verified',
+          verified_at: company.business_verified_at,
+          method: company.business_verification_method
+        }
+      }
+    end
 
     attr_reader :company
 

@@ -11,7 +11,16 @@ class CompanyCardSerializer < ActiveModel::Serializer
              :p2p_chat_enabled, :feature_access,
              :coverage_states, :coverage_cities,
              :primary_category, :category_ids,
-             :identity, :trust, :reputation, :operations, :coverage, :actions, :badges
+             :identity, :commercial_status, :distribution, :recognitions,
+             :trust, :reputation, :operations, :coverage, :actions, :badges
+
+  def commercial_status
+    object.commercial_status
+  end
+
+  def distribution
+    object.distribution
+  end
 
   def has_paid_plan
     object.respond_to?(:has_paid_plan?) && object.has_paid_plan?

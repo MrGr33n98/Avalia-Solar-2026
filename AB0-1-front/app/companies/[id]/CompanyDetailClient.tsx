@@ -509,13 +509,21 @@ export default function CompanyDetailClient({
                     value="overview"
                     className="mt-0 space-y-6 focus-visible:outline-none"
                   >
-                    {(currentCompany as any).priority_score >= 100 && (
-                      <WinnerBadge
-                        companyName={currentCompany.name}
-                        rank={1}
-                        city={currentCompany.city || 'Sua Região'}
-                      />
-                    )}
+                    {(() => {
+                      const recognitions = currentCompany.recognitions || currentCompany.badges || [];
+                      const winnerRecognition = recognitions.find(
+                        (b) => b?.position && [1, 2, 3].includes(b.position)
+                      );
+                      if (!winnerRecognition) return null;
+                      return (
+                        <WinnerBadge
+                          companyName={currentCompany.name}
+                          rank={winnerRecognition.position || 1}
+                          city={currentCompany.city || 'Sua Região'}
+                          year={typeof winnerRecognition.year === 'number' ? winnerRecognition.year : 2026}
+                        />
+                      );
+                    })()}
                     <CompanyOverview
                       company={currentCompany}
                       reviews={reviews}

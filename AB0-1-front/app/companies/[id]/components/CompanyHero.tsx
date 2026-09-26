@@ -9,6 +9,9 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
 import { Company } from '@/lib/api';
+import PrimaryCategoryBadge from '@/components/company/PrimaryCategoryBadge';
+import VerificationBadge from '@/components/company/VerificationBadge';
+import CommercialPlanBadge from '@/components/company/CommercialPlanBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
@@ -103,9 +106,18 @@ export default function CompanyHero({
   const heroBadgeUrl = useMemo(() => {
     const isValidImageUrl = (url: string) =>
       IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
-    const companyBadges = Array.isArray(company.badges) ? company.badges : [];
+    const companyBadges = Array.isArray(company.recognitions) && company.recognitions.length > 0
+      ? company.recognitions
+      : (Array.isArray(company.badges) ? company.badges : []);
 
-    const badgeImageFromBadges = companyBadges
+    const sortedBadges = [...companyBadges].sort((a, b) => {
+      const posA = a?.position ?? Number.POSITIVE_INFINITY;
+      const posB = b?.position ?? Number.POSITIVE_INFINITY;
+      if (posA !== posB) return posA - posB;
+      return (Number(a?.id) || 0) - (Number(b?.id) || 0);
+    });
+
+    const badgeImageFromBadges = sortedBadges
       .map((badge) => badge?.image_url)
       .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
       .map((url) => getFullImageUrl(url))
@@ -118,7 +130,7 @@ export default function CompanyHero({
       .find((url) => isValidImageUrl(url) && !url.toLowerCase().endsWith('.svg'));
 
     return fallbackVerifiedBadge || null;
-  }, [company.badges, company.verified_badge_image_url, company.verified_badge_url]);
+  }, [company.recognitions, company.badges, company.verified_badge_image_url, company.verified_badge_url]);
 
   useEffect(() => {
     setBadgeImageError(false);
@@ -279,24 +291,35 @@ export default function CompanyHero({
 
                 {/* Informações da empresa */}
                 <div className="min-w-0 flex-1 pt-1 sm:pt-2">
-                  {/* Nome + verificado + premium (mobile, inline) */}
+                  {/* Nome + verificado + categoria + plano (mobile/desktop, inline) */}
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <h1 className="min-w-0 line-clamp-2 text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-950 sm:text-2xl">
                       {company.name}
                     </h1>
-                    {company.verified && (
-                      <BadgeCheck
-                        className="h-5 w-5 shrink-0 fill-emerald-100 text-emerald-600 sm:h-[22px] sm:w-[22px]"
-                        aria-label="Empresa verificada"
-                      />
-                    )}
-                    {/* Premium é um atributo do perfil e permanece junto ao nome. */}
-                    {company.has_paid_plan === true && (
-                      <div className="inline-flex h-6 w-fit shrink-0 items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2 text-[10px] font-bold tracking-[0.04em] text-violet-700">
-                        <Diamond className="h-3 w-3" />
-                        PREMIUM
-                      </div>
-                    )}
+                    <VerificationBadge
+                      verification={company.identity?.verification}
+                      verified={company.verified}
+                    />
+                    <PrimaryCategoryBadge
+                      category={
+                        company.identity?.primary_category ||
+                        (company.primary_category
+                          ? {
+                              name: company.primary_category,
+                              slug: company.categories?.[0]?.seo_url || company.categories?.[0]?.slug,
+                            }
+                          : company.categories?.[0]
+                            ? {
+                                name: company.categories[0].name,
+                                slug: company.categories[0].seo_url || company.categories[0].slug,
+                              }
+                            : null)
+                      }
+                    />
+                    <CommercialPlanBadge
+                      commercialStatus={company.commercial_status}
+                      hasPaidPlan={company.has_paid_plan}
+                    />
                   </div>
 
                   {/* Localização */}
