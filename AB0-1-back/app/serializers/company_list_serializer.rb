@@ -18,7 +18,16 @@ class CompanyListSerializer < ActiveModel::Serializer
              :has_paid_plan, :feature_access,
              :response_time_sla, :delivered_projects_score, :warranty_years,
              :coverage_cities, :coverage_states,
-             :identity, :trust, :reputation, :badges
+             :identity, :commercial_status, :distribution, :recognitions,
+             :trust, :reputation, :badges
+
+  def commercial_status
+    object.commercial_status
+  end
+
+  def distribution
+    object.distribution
+  end
 
   def has_paid_plan = object.has_paid_plan?
 
@@ -51,7 +60,26 @@ class CompanyListSerializer < ActiveModel::Serializer
       logo_url:    object.logo_url,
       description: object.description,
       city:        object.city,
-      state:       object.state
+      state:       object.state,
+      primary_category: primary_category_payload,
+      verification: verification_payload
+    }
+  end
+
+  def primary_category_payload
+    category = object.primary_category
+    return unless category
+
+    { id: category.id, name: category.name, slug: category.seo_url }
+  end
+
+  def verification_payload
+    status = object.business_verification_status.presence || (object.verified ? 'verified' : 'unverified')
+    {
+      status: status,
+      verified: status == 'verified',
+      verified_at: object.business_verified_at,
+      method: object.business_verification_method
     }
   end
 
@@ -59,7 +87,7 @@ class CompanyListSerializer < ActiveModel::Serializer
   def trust
     {
       is_claimed:          object.active_admin,
-      verification_status: object.try(:business_verification_status) || (object.verified ? 'verified' : 'unverified'),
+      verification_status: verification_payload[:status],
       verified_at:         object.try(:business_verified_at),
       verification_method: object.try(:business_verification_method)
     }

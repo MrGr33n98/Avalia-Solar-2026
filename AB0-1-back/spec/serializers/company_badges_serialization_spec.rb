@@ -19,6 +19,10 @@ RSpec.describe CompanyBadgesSerialization do
     def active?
       active
     end
+
+    def verification_url
+      public_slug ? "https://avaliasolar.com.br/badges/#{public_slug}" : nil
+    end
   end
 
   let(:serializer_class) do
@@ -60,7 +64,9 @@ RSpec.describe CompanyBadgesSerialization do
       category: "Inversores",
       image_url: "/top-brand.png",
       public_slug: "top-brand-2026",
+      verification_url: "https://avaliasolar.com.br/badges/top-brand-2026",
       year: 2026
     )
+    expect(serializer_class.new(company).recognitions).to eq(result)
   end
 end

@@ -24,6 +24,7 @@ import SponsoredBanner from './SponsoredBanner';
 import { RatingStars } from '@/components/RatingStars';
 import { projectTypeVisualFor } from '@/lib/company-project-visuals';
 import { getFullImageUrl } from '@/utils/image';
+import CompanyAwardsCard from './CompanyAwardsCard';
 
 interface CompanyOverviewProps {
   company: Company;
@@ -120,6 +121,9 @@ export default function CompanyOverview({
             )}
           </div>
         </section>
+
+        {/* Selos e Reconhecimentos Oficiais */}
+        <CompanyAwardsCard company={company} />
 
         <AnswerBlock
           tone="slate"
@@ -408,6 +412,9 @@ function MobileCompanyOverview({ company }: { company: Company }) {
           })}
         </div>
       </section>
+
+      {/* Selos e Reconhecimentos Oficiais Mobile */}
+      <CompanyAwardsCard company={company} />
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 text-sm font-bold text-slate-800">

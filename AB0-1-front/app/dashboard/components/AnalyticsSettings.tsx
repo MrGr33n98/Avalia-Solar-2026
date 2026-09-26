@@ -409,7 +409,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                                 </SelectTrigger>
                                 <SelectContent className="bg-[#002B4D] border-white/10">
                                   <SelectItem value="declared">Declarado</SelectItem>
-                                  <SelectItem value="verified">Premium</SelectItem>
+                                  <SelectItem value="verified">Verificado</SelectItem>
                                   <SelectItem value="calculated">Calculado</SelectItem>
                                 </SelectContent>
                               </Select>

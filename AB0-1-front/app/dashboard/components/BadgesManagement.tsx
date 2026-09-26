@@ -118,7 +118,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
           icon={Layers}
         />
         <MetricCard
-          title="Selo Premium Ativo"
+          title="Selos Oficiais Ativos"
           value={verifiableCount.toString()}
           icon={Diamond}
           color="blue"
@@ -185,54 +185,59 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
 
                   <CardContent className="p-8 pt-0 mt-auto space-y-6">
                     {/* Integrated Distribution */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-white/30">Protocolo de Incorporação</label>
-                         <ShieldCheck className="h-3.5 w-3.5 text-brand-green/50" />
-                      </div>
-                      <div className="relative group/snippet">
-                        <pre className="p-4 bg-slate-100 dark:bg-black/40 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] overflow-hidden border border-slate-200 dark:border-white/5 leading-relaxed font-mono select-all">
-                          {`<a href="${badge.verifiable_url || ''}"><img src="${badge.image_url || ''}" width="150" alt="${badge.name}" /></a>`}
-                        </pre>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="absolute right-2 top-2 h-10 w-10 bg-white border border-slate-200 dark:bg-white/5 dark:border-transparent hover:bg-primary hover:text-white rounded-xl text-slate-500 dark:text-white/30 transition-all opacity-0 group-hover/snippet:opacity-100"
-                          onClick={() => copyToClipboard(
-                            `<a href="${badge.verifiable_url || ''}"><img src="${badge.image_url || ''}" width="150" alt="${badge.name}" /></a>`,
-                            badge.id,
-                            'snippet'
-                          )}
-                        >
-                          {copiedId === badge.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                        <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-11 rounded-xl border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.05] text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white"
-                        onClick={() => copyToClipboard(badge.image_url || '', badge.id, 'url')}
-                      >
-                        <Activity className="h-3.5 w-3.5 mr-2" />
-                        Source Link
-                      </Button>
-                      <Button asChild size="sm" className="h-11 rounded-xl bg-primary border-none text-white dark:bg-white/[0.02] dark:border dark:border-white/5 hover:bg-primary/90 dark:hover:bg-primary dark:text-white text-[10px] font-black uppercase tracking-widest transition-all">
-                        <a href={badge.verifiable_url} target="_blank" rel="noreferrer">
-                          <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                          Authority
-                        </a>
-                      </Button>
-                    </div>
+                    {(() => {
+                      const verificationUrl = badge.verification_url || badge.verifiable_url || '';
+                      return (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-white/30">Protocolo de Incorporação</label>
+                             <ShieldCheck className="h-3.5 w-3.5 text-brand-green/50" />
+                          </div>
+                          <div className="relative group/snippet">
+                            <pre className="p-4 bg-slate-100 dark:bg-black/40 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] overflow-hidden border border-slate-200 dark:border-white/5 leading-relaxed font-mono select-all">
+                              {`<a href="${verificationUrl}"><img src="${badge.image_url || ''}" width="150" alt="${badge.name}" /></a>`}
+                            </pre>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="absolute right-2 top-2 h-10 w-10 bg-white border border-slate-200 dark:bg-white/5 dark:border-transparent hover:bg-primary hover:text-white rounded-xl text-slate-500 dark:text-white/30 transition-all opacity-0 group-hover/snippet:opacity-100"
+                              onClick={() => copyToClipboard(
+                                `<a href="${verificationUrl}"><img src="${badge.image_url || ''}" width="150" alt="${badge.name}" /></a>`,
+                                badge.id,
+                                'snippet'
+                              )}
+                            >
+                              {copiedId === badge.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-11 rounded-xl border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.05] text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white"
+                              onClick={() => copyToClipboard(badge.image_url || '', badge.id, 'url')}
+                            >
+                              <Activity className="h-3.5 w-3.5 mr-2" />
+                              Source Link
+                            </Button>
+                            <Button asChild size="sm" className="h-11 rounded-xl bg-primary border-none text-white dark:bg-white/[0.02] dark:border dark:border-white/5 hover:bg-primary/90 dark:hover:bg-primary dark:text-white text-[10px] font-black uppercase tracking-widest transition-all">
+                              <a href={verificationUrl} target="_blank" rel="noreferrer">
+                                <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                                Authority
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </CardContent>
                   
                   {/* Status Bar */}
                   <div className="px-8 py-4 bg-slate-50 dark:bg-white/[0.01] border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
                      <div className="flex items-center gap-2">
-                        <PremiumBadge size="xs" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30">ATIVO PREMIUM</span>
+                        <PremiumBadge size="xs" label="PRO" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30">ATIVO OFICIAL</span>
                      </div>
                      <Trophy className="h-3 w-3 text-amber-500/30" />
                   </div>

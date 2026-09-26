@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -212,9 +212,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.boolean "featured"
     t.integer "views_count"
     t.bigint "author_id"
+    t.string "seo_keywords"
     t.string "seo_title"
     t.text "seo_description"
-    t.string "seo_keywords"
     t.index ["author_id"], name: "index_articles_on_author_id"
     t.index ["category_id"], name: "index_articles_on_category_id"
     t.index ["company_id", "sponsored"], name: "index_articles_on_company_sponsored"
@@ -617,7 +617,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["product_id"], name: "index_campaign_reviews_on_product_id"
     t.index ["status"], name: "index_campaign_reviews_on_status"
     t.check_constraint "start_at IS NULL OR end_at IS NULL OR end_at >= start_at", name: "chk_campaign_reviews_period"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'finished'::character varying::text, 'canceled'::character varying::text]))", name: "campaign_reviews_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'finished'::character varying, 'canceled'::character varying]::text[]))", name: "campaign_reviews_status_allowed"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -1049,8 +1049,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.integer "delivered_projects_count", default: 0, null: false
     t.integer "response_sla_minutes"
     t.datetime "operational_data_updated_at"
-    t.text "seo_description"
     t.string "seo_keywords"
+    t.text "seo_description"
+    t.bigint "primary_category_id"
     t.index "to_tsvector('portuguese'::regconfig, (((((((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)) || ' '::text) || (COALESCE(city, ''::character varying))::text) || ' '::text) || (COALESCE(state, ''::character varying))::text))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
     t.index ["cnpj"], name: "index_companies_on_cnpj", unique: true, where: "(cnpj IS NOT NULL)"
@@ -1070,6 +1071,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["notification_preferences"], name: "index_companies_on_notification_preferences", using: :gin
     t.index ["plan_id"], name: "index_companies_on_plan_id"
     t.index ["plan_status"], name: "index_companies_on_plan_status"
+    t.index ["primary_category_id"], name: "index_companies_on_primary_category_id"
     t.index ["priority_score"], name: "index_companies_on_priority_score"
     t.index ["profile_views_count"], name: "index_companies_on_profile_views_count"
     t.index ["project_types"], name: "index_companies_on_project_types_gin", using: :gin
@@ -1090,7 +1092,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["whatsapp_clicks_count"], name: "index_companies_on_whatsapp_clicks_count"
     t.check_constraint "cnpj IS NULL OR length(cnpj::text) = 14 AND cnpj::text ~ '^[0-9]+$'::text", name: "ck_companies_valid_cnpj"
     t.check_constraint "email IS NULL OR email::text ~ '^[^@]+@[^@]+\\.[^@]+$'::text", name: "ck_companies_valid_email"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'inactive'::character varying::text, 'pending'::character varying::text, 'blocked'::character varying::text])", name: "companies_status_allowed"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'inactive'::character varying, 'pending'::character varying, 'blocked'::character varying]::text[])", name: "companies_status_allowed"
   end
 
   create_table "company_access_requests", force: :cascade do |t|
@@ -1107,7 +1109,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["company_id"], name: "index_company_access_requests_on_company_id"
     t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
     t.index ["status"], name: "index_company_access_requests_on_status"
-    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text]))"
+    t.index ["user_id", "company_id"], name: "index_company_access_requests_on_user_company_active", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying])::text[]))"
     t.index ["user_id"], name: "index_company_access_requests_on_user_id"
   end
 
@@ -1575,7 +1577,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["session_id", "consented_at"], name: "index_consent_logs_on_session_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id", "consented_at"], name: "index_consent_logs_on_user_id_and_consented_at", order: { consented_at: :desc }
     t.index ["user_id"], name: "index_consent_logs_on_user_id"
-    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying::text, 'marketing'::character varying::text, 'functional'::character varying::text, 'all'::character varying::text, 'none'::character varying::text])", name: "consent_logs_type_check"
+    t.check_constraint "consent_type::text = ANY (ARRAY['analytics'::character varying, 'marketing'::character varying, 'functional'::character varying, 'all'::character varying, 'none'::character varying]::text[])", name: "consent_logs_type_check"
   end
 
   create_table "content", force: :cascade do |t|
@@ -2115,7 +2117,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["product_id"], name: "index_forum_questions_on_product_id"
     t.index ["status"], name: "index_forum_questions_on_status"
     t.index ["user_id"], name: "index_forum_questions_on_user_id"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text]))", name: "forum_questions_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[]))", name: "forum_questions_status_allowed"
   end
 
   create_table "gated_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -2808,7 +2810,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
   end
 
   create_table "platform_events", id: false, force: :cascade do |t|
-    t.bigserial "id", null: false
+    t.bigint "id", null: false
     t.text "event_id", null: false
     t.text "event_type", null: false
     t.integer "schema_version", default: 1
@@ -2827,6 +2829,50 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["event_id"], name: "idx_platform_events_event_id"
     t.index ["event_type", "occurred_at"], name: "idx_platform_events_type_time", order: { occurred_at: :desc }
     t.index ["occurred_at"], name: "idx_platform_events_brin_time", using: :brin
+  end
+
+  create_table "platform_events_y2026m05", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2026m05_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2026m05_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m05_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2026m05_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2026m06", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2026m06_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2026m06_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m06_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2026m06_occurred_at_idx", using: :brin
   end
 
   create_table "platform_events_y2026m07", id: false, force: :cascade do |t|
@@ -2959,50 +3005,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["event_id"], name: "platform_events_y2026m12_event_id_idx"
     t.index ["event_type", "occurred_at"], name: "platform_events_y2026m12_event_type_occurred_at_idx", order: { occurred_at: :desc }
     t.index ["occurred_at"], name: "platform_events_y2026m12_occurred_at_idx", using: :brin
-  end
-
-  create_table "platform_events_y2027m01", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2027m01_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2027m01_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m01_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2027m01_occurred_at_idx", using: :brin
-  end
-
-  create_table "platform_events_y2027m02", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2027m02_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2027m02_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m02_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2027m02_occurred_at_idx", using: :brin
   end
 
   create_table "poll_options", force: :cascade do |t|
@@ -3139,7 +3141,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["company_id"], name: "index_products_on_company_id"
     t.index ["sku"], name: "index_products_on_sku", unique: true
     t.index ["status"], name: "index_products_on_status"
-    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'archived'::character varying::text, 'disabled'::character varying::text]))", name: "products_status_allowed"
+    t.check_constraint "status IS NULL OR (status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'archived'::character varying, 'disabled'::character varying]::text[]))", name: "products_status_allowed"
   end
 
   create_table "publication_entities", force: :cascade do |t|
@@ -3949,18 +3951,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "company_id", null: false
-    t.string "source", default: "legacy", null: false
-    t.datetime "received_at", null: false
-    t.string "dedupe_key"
-    t.string "signal_class", default: "unknown", null: false
-    t.jsonb "classification_reasons", default: [], null: false
-    t.integer "schema_version", default: 1, null: false
-    t.bigint "timeline_sequence"
-    t.index ["company_id", "dedupe_key"], name: "idx_sales_email_events_company_dedupe", unique: true, where: "(dedupe_key IS NOT NULL)"
     t.index ["company_id"], name: "index_sales_email_events_on_company_id"
     t.index ["provider_event_id"], name: "index_sales_email_events_on_provider_event_id", unique: true, where: "(provider_event_id IS NOT NULL)"
     t.index ["sales_email_message_id", "event_type"], name: "idx_sales_email_events_msg_event"
-    t.index ["sales_email_message_id", "timeline_sequence"], name: "idx_sales_email_events_message_timeline_sequence"
     t.index ["sales_email_message_id"], name: "index_sales_email_events_on_sales_email_message_id"
   end
 
@@ -3981,7 +3974,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.bigint "sales_account_id"
     t.bigint "sales_contact_id"
     t.bigint "sales_opportunity_id"
-    t.bigint "sender_user_id"
+    t.bigint "sender_user_id", null: false
     t.string "provider", default: "aws_ses", null: false
     t.string "provider_message_id"
     t.string "from_email", null: false
@@ -4016,23 +4009,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.string "message_id"
     t.bigint "sales_campaign_id"
     t.bigint "sales_campaign_recipient_id"
-    t.bigint "sales_email_sequence_enrollment_step_id"
-    t.string "direction", default: "outbound", null: false
-    t.string "delivery_status", default: "queued", null: false
-    t.string "engagement_status", default: "none", null: false
-    t.integer "raw_open_signals", default: 0, null: false
-    t.integer "unique_open_signals", default: 0, null: false
-    t.integer "human_likely_open_signals", default: 0, null: false
-    t.integer "proxy_open_signals", default: 0, null: false
-    t.integer "bot_open_signals", default: 0, null: false
-    t.integer "scanner_open_signals", default: 0, null: false
-    t.integer "raw_clicks", default: 0, null: false
-    t.integer "unique_clicks", default: 0, null: false
-    t.integer "bot_clicks", default: 0, null: false
-    t.integer "scanner_clicks", default: 0, null: false
-    t.datetime "delayed_at"
-    t.datetime "rejected_at"
-    t.datetime "replied_at"
     t.index ["company_id", "message_id"], name: "idx_sales_email_messages_company_message_id", unique: true, where: "(message_id IS NOT NULL)"
     t.index ["company_id"], name: "index_sales_email_messages_on_company_id"
     t.index ["provider_message_id"], name: "index_sales_email_messages_on_provider_message_id"
@@ -4041,7 +4017,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["sales_campaign_recipient_id"], name: "idx_sales_email_messages_recipient_unique", unique: true, where: "(sales_campaign_recipient_id IS NOT NULL)"
     t.index ["sales_contact_id"], name: "index_sales_email_messages_on_sales_contact_id"
     t.index ["sales_email_account_id"], name: "index_sales_email_messages_on_sales_email_account_id"
-    t.index ["sales_email_sequence_enrollment_step_id"], name: "idx_sales_email_messages_sequence_step_unique", unique: true, where: "(sales_email_sequence_enrollment_step_id IS NOT NULL)"
     t.index ["sales_email_thread_id"], name: "index_sales_email_messages_on_sales_email_thread_id"
     t.index ["sales_opportunity_id"], name: "index_sales_email_messages_on_sales_opportunity_id"
     t.index ["sender_user_id"], name: "index_sales_email_messages_on_sender_user_id"
@@ -4063,53 +4038,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.index ["sales_contact_id"], name: "index_sales_email_participants_on_sales_contact_id"
     t.index ["sales_email_message_id", "participant_type"], name: "idx_email_participants_type"
     t.index ["sales_email_message_id"], name: "index_sales_email_participants_on_sales_email_message_id"
-  end
-
-  create_table "sales_email_sequence_enrollment_steps", force: :cascade do |t|
-    t.bigint "company_id", null: false
-    t.bigint "sales_email_sequence_enrollment_id", null: false
-    t.bigint "sales_email_sequence_step_id", null: false
-    t.integer "position", null: false
-    t.string "status", default: "queued", null: false
-    t.integer "attempt_count", default: 0, null: false
-    t.datetime "next_attempt_at"
-    t.datetime "completed_at"
-    t.string "error_code"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["company_id", "status", "next_attempt_at"], name: "idx_sales_sequence_enrollment_steps_pending"
-    t.index ["company_id"], name: "idx_sales_seq_enrollment_steps_company"
-    t.index ["sales_email_sequence_enrollment_id", "sales_email_sequence_step_id"], name: "idx_sales_sequence_enrollment_step_unique", unique: true
-    t.index ["sales_email_sequence_enrollment_id"], name: "idx_sales_seq_enrollment_steps_enrollment"
-    t.index ["sales_email_sequence_step_id"], name: "idx_sales_seq_enrollment_steps_definition"
-  end
-
-  create_table "sales_email_sequence_enrollments", force: :cascade do |t|
-    t.bigint "company_id", null: false
-    t.bigint "sales_email_sequence_id", null: false
-    t.bigint "sales_contact_id", null: false
-    t.bigint "sales_account_id", null: false
-    t.bigint "sales_opportunity_id"
-    t.bigint "owner_id", null: false
-    t.string "status", default: "active", null: false
-    t.integer "current_step", default: 0, null: false
-    t.datetime "enrolled_at", null: false
-    t.datetime "next_action_at"
-    t.datetime "paused_at"
-    t.datetime "stopped_at"
-    t.string "stop_reason"
-    t.datetime "completed_at"
-    t.jsonb "metadata", default: {}, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["company_id", "status", "next_action_at"], name: "idx_sales_sequence_enrollments_due"
-    t.index ["company_id"], name: "idx_sales_seq_enroll_company"
-    t.index ["owner_id"], name: "idx_sales_seq_enroll_owner"
-    t.index ["sales_account_id"], name: "idx_sales_seq_enroll_account"
-    t.index ["sales_contact_id"], name: "idx_sales_seq_enroll_contact"
-    t.index ["sales_email_sequence_id", "sales_contact_id"], name: "idx_sales_sequence_enrollments_active_contact", unique: true, where: "((status)::text = ANY ((ARRAY['active'::character varying, 'paused'::character varying])::text[]))"
-    t.index ["sales_email_sequence_id"], name: "idx_sales_seq_enroll_sequence"
-    t.index ["sales_opportunity_id"], name: "idx_sales_seq_enroll_opportunity"
   end
 
   create_table "sales_email_sequence_steps", force: :cascade do |t|
@@ -4238,11 +4166,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.jsonb "fields", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "public_key", null: false
     t.index ["campaign_id"], name: "index_sales_forms_on_campaign_id"
     t.index ["company_id", "slug"], name: "index_sales_forms_on_company_id_and_slug", unique: true
     t.index ["company_id"], name: "index_sales_forms_on_company_id"
-    t.index ["public_key"], name: "index_sales_forms_on_public_key", unique: true
   end
 
   create_table "sales_founder_inbox_items", force: :cascade do |t|
@@ -4425,7 +4351,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.datetime "updated_at", null: false
     t.string "temperature", default: "cold", null: false
     t.bigint "source_id"
-    t.bigint "sales_timeline_sequence", default: 0, null: false
     t.index ["expected_close_date"], name: "idx_sales_opp_expected_close"
     t.index ["next_activity_at"], name: "index_sales_opportunities_on_next_activity_at"
     t.index ["owner_id", "status"], name: "idx_sales_opp_owner_status"
@@ -4763,12 +4688,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "idempotency_key"
-    t.bigint "sales_email_sequence_enrollment_step_id"
     t.index ["owner_id"], name: "index_sales_tasks_on_owner_id"
     t.index ["sales_account_id", "idempotency_key"], name: "idx_sales_tasks_idempotency", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["sales_account_id"], name: "index_sales_tasks_on_sales_account_id"
     t.index ["sales_contact_id"], name: "index_sales_tasks_on_sales_contact_id"
-    t.index ["sales_email_sequence_enrollment_step_id"], name: "idx_sales_tasks_sequence_step_unique", unique: true, where: "(sales_email_sequence_enrollment_step_id IS NOT NULL)"
     t.index ["sales_opportunity_id"], name: "index_sales_tasks_on_sales_opportunity_id"
   end
 
@@ -4795,11 +4718,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.datetime "occurred_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "company_id"
-    t.string "event_uuid"
     t.index ["account_id"], name: "index_sales_tracking_events_on_account_id"
-    t.index ["company_id", "session_id", "event_uuid"], name: "index_sales_tracking_events_on_public_event_idempotency", unique: true, where: "(event_uuid IS NOT NULL)"
-    t.index ["company_id"], name: "index_sales_tracking_events_on_company_id"
     t.index ["contact_id"], name: "index_sales_tracking_events_on_contact_id"
     t.index ["session_id", "occurred_at"], name: "index_sales_tracking_events_on_session_id_and_occurred_at"
   end
@@ -4816,26 +4735,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
     t.datetime "ended_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "company_id"
-    t.string "referrer_host"
-    t.string "landing_path"
-    t.string "traffic_class", default: "commercial", null: false
     t.index ["account_id"], name: "index_sales_tracking_sessions_on_account_id"
-    t.index ["company_id", "started_at"], name: "index_sales_tracking_sessions_on_company_and_started"
-    t.index ["company_id"], name: "index_sales_tracking_sessions_on_company_id"
     t.index ["contact_id"], name: "index_sales_tracking_sessions_on_contact_id"
     t.index ["session_id"], name: "index_sales_tracking_sessions_on_session_id", unique: true
-  end
-
-  create_table "sales_tracking_sites", force: :cascade do |t|
-    t.bigint "company_id", null: false
-    t.string "public_key", null: false
-    t.jsonb "allowed_origins", default: [], null: false
-    t.boolean "active", default: true, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["company_id"], name: "index_sales_tracking_sites_on_company_id", unique: true
-    t.index ["public_key"], name: "index_sales_tracking_sites_on_public_key", unique: true
   end
 
   create_table "sales_user_roles", force: :cascade do |t|
@@ -5164,6 +5066,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
   add_foreign_key "comments", "comments", column: "parent_id"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
+  add_foreign_key "companies", "categories", column: "primary_category_id"
   add_foreign_key "companies", "plans"
   add_foreign_key "company_access_requests", "admin_users", column: "reviewed_by_admin_user_id"
   add_foreign_key "company_access_requests", "companies"
@@ -5353,22 +5256,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
   add_foreign_key "sales_email_messages", "sales_accounts"
   add_foreign_key "sales_email_messages", "sales_contacts"
   add_foreign_key "sales_email_messages", "sales_email_accounts"
-  add_foreign_key "sales_email_messages", "sales_email_sequence_enrollment_steps", on_delete: :nullify
   add_foreign_key "sales_email_messages", "sales_email_threads"
   add_foreign_key "sales_email_messages", "sales_opportunities"
   add_foreign_key "sales_email_messages", "users", column: "sender_user_id"
   add_foreign_key "sales_email_participants", "companies"
   add_foreign_key "sales_email_participants", "sales_contacts"
   add_foreign_key "sales_email_participants", "sales_email_messages"
-  add_foreign_key "sales_email_sequence_enrollment_steps", "companies"
-  add_foreign_key "sales_email_sequence_enrollment_steps", "sales_email_sequence_enrollments", on_delete: :cascade
-  add_foreign_key "sales_email_sequence_enrollment_steps", "sales_email_sequence_steps"
-  add_foreign_key "sales_email_sequence_enrollments", "companies"
-  add_foreign_key "sales_email_sequence_enrollments", "sales_accounts"
-  add_foreign_key "sales_email_sequence_enrollments", "sales_contacts"
-  add_foreign_key "sales_email_sequence_enrollments", "sales_email_sequences"
-  add_foreign_key "sales_email_sequence_enrollments", "sales_opportunities"
-  add_foreign_key "sales_email_sequence_enrollments", "users", column: "owner_id"
   add_foreign_key "sales_email_sequence_steps", "sales_email_sequences", column: "email_sequence_id"
   add_foreign_key "sales_email_sequence_steps", "sales_email_templates", column: "email_template_id"
   add_foreign_key "sales_email_sequences", "companies"
@@ -5452,17 +5345,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_120000) do
   add_foreign_key "sales_tags", "users", column: "created_by_id"
   add_foreign_key "sales_tasks", "sales_accounts"
   add_foreign_key "sales_tasks", "sales_contacts"
-  add_foreign_key "sales_tasks", "sales_email_sequence_enrollment_steps", on_delete: :nullify
   add_foreign_key "sales_tasks", "sales_opportunities"
   add_foreign_key "sales_tasks", "users", column: "owner_id"
   add_foreign_key "sales_taxonomies", "companies"
-  add_foreign_key "sales_tracking_events", "companies"
   add_foreign_key "sales_tracking_events", "sales_accounts", column: "account_id"
   add_foreign_key "sales_tracking_events", "sales_contacts", column: "contact_id"
-  add_foreign_key "sales_tracking_sessions", "companies"
   add_foreign_key "sales_tracking_sessions", "sales_accounts", column: "account_id"
   add_foreign_key "sales_tracking_sessions", "sales_contacts", column: "contact_id"
-  add_foreign_key "sales_tracking_sites", "companies"
   add_foreign_key "sales_user_roles", "sales_roles", column: "role_id"
   add_foreign_key "sales_user_roles", "users"
   add_foreign_key "sales_webhook_deliveries", "sales_webhook_endpoints", column: "endpoint_id"

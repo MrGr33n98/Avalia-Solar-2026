@@ -28,7 +28,8 @@ import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { cn } from '@/lib/utils';
 import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
 import { useProductTracking } from './useProductTracking';
-import PremiumBadge from '@/components/PremiumBadge';
+import VerificationBadge from '@/components/company/VerificationBadge';
+import CommercialPlanBadge from '@/components/company/CommercialPlanBadge';
 import { ProductReviewModal } from './components/ProductReviewModal';
 import ProjectsGallery from '@/app/companies/[id]/components/ProjectsGallery';
 import {
@@ -983,9 +984,14 @@ export default function ProductDetailClient({
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {company?.verified ? (
-                        <PremiumBadge />
+                        <VerificationBadge verified={company.verified} />
                       ) : null}
-                      {company?.plan_status === 'active' ? <SemanticBadge>Parceiro premium</SemanticBadge> : null}
+                      {(company?.commercial_status?.paid || company?.has_paid_plan) ? (
+                        <CommercialPlanBadge
+                          commercialStatus={company?.commercial_status}
+                          hasPaidPlan={company?.has_paid_plan}
+                        />
+                      ) : null}
                       {(company?.badges || product.company?.badges)?.map((badge, idx) => (
                         <span
                           key={badge.id || idx}

@@ -1,0 +1,21 @@
+# Checklist de Produção — Spec 005
+
+- [ ] **Pré-deploy:**
+  - [ ] Backup do banco de dados PostgreSQL validado.
+  - [ ] Migration reversível testada em ambiente de CI/staging (`rails db:migrate` e `rails db:rollback`).
+  - [ ] Typecheck do frontend (`tsc --noEmit`) 100% verde com zero erros.
+  - [ ] Linter do backend (`rubocop`) e frontend (`eslint`) sem violações nas alterações.
+- [ ] **Deploy Fase 1 (Backend):**
+  - [ ] Executar migration `AddPrimaryCategoryToCompanies`.
+  - [ ] Executar script de diagnóstico de categorias para empresas cadastradas.
+  - [ ] Validar healthchecks do backend: `GET /health/liveness` e `GET /api/v1/badges/:slug`.
+- [ ] **Deploy Fase 2 (Frontend & Rota Pública):**
+  - [ ] Build e deploy do Next.js 14 com a nova rota `/badges/[slug]`.
+  - [ ] Validar SSR e status 200 para badges existentes e status 404 para slugs inválidos.
+  - [ ] Validar ausência de chamadas a endpoints REST fantasmas no cliente.
+- [ ] **Pós-deploy & Smoke Testing:**
+  - [ ] Acessar página de detalhes de uma empresa (`/companies/:slug`).
+  - [ ] Confirmar que empresa Free verificada exibe apenas o selo de verificação (sem PRO/Premium).
+  - [ ] Confirmar que empresa Pro exibe badge `PRO`.
+  - [ ] Confirmar que badge de categoria primária aponta para `/categories/:slug` correto.
+  - [ ] Clicar em um selo de reconhecimento e confirmar abertura da página de verificação oficial.

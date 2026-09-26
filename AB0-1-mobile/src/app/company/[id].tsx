@@ -26,6 +26,9 @@ import {
   MessageSquare,
   Send,
   Sun,
+  Award,
+  Tag,
+  ExternalLink,
 } from 'lucide-react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -126,6 +129,16 @@ export default function CompanyDetailScreen() {
     );
   }
 
+  const primaryCategoryName =
+    company.identity?.primary_category?.name ||
+    company.primary_category ||
+    (company.categories && company.categories.length > 0 ? company.categories[0].name : null);
+
+  const isVerified = company.identity?.verification ? company.identity.verification.verified : Boolean(company.verified);
+  const isPaid = company.commercial_status?.paid ?? company.has_paid_plan ?? false;
+  const commercialTier = isPaid ? (company.commercial_status?.tier?.toUpperCase() || 'PRO') : null;
+  const recognitions = company.recognitions || company.badges || [];
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -161,8 +174,23 @@ export default function CompanyDetailScreen() {
                 <ThemedText type="subtitle" style={styles.companyName}>
                   {company.name}
                 </ThemedText>
-                {company.verified && (
-                  <ShieldCheck size={18} color={colors.success} style={{ marginLeft: 6 }} />
+                {isVerified && (
+                  <ShieldCheck size={18} color="#2563EB" style={{ marginLeft: 6 }} />
+                )}
+              </View>
+
+              <View style={styles.tagsRow}>
+                {primaryCategoryName && (
+                  <View style={[styles.categoryBadge, { backgroundColor: colors.backgroundElement }]}>
+                    <ThemedText style={styles.categoryBadgeText}>{primaryCategoryName}</ThemedText>
+                  </View>
+                )}
+                {commercialTier && (
+                  <View style={[styles.planBadge, { backgroundColor: commercialTier === 'ENTERPRISE' ? '#0F172A' : '#EDE9FE' }]}>
+                    <ThemedText style={[styles.planBadgeText, { color: commercialTier === 'ENTERPRISE' ? '#F8FAFC' : '#6D28D9' }]}>
+                      {commercialTier}
+                    </ThemedText>
+                  </View>
                 )}
               </View>
               
@@ -205,6 +233,46 @@ export default function CompanyDetailScreen() {
             {company.description || 'Esta empresa parceira do Avalia Solar ainda não adicionou uma descrição detalhada de seus serviços. Entre em contato para saber mais sobre seus projetos e instalações.'}
           </ThemedText>
         </View>
+
+        {/* Selos e Reconhecimentos Oficiais */}
+        {recognitions.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.servicesHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Award size={18} color={colors.tint} />
+                <ThemedText type="subtitle" style={styles.sectionTitle}>Selos Oficiais</ThemedText>
+              </View>
+            </View>
+            <View style={styles.badgesContainer}>
+              {recognitions.map((badge, idx) => {
+                const verificationUrl = badge.verification_url || `https://avaliasolar.com.br/badges/${badge.public_slug}`;
+                return (
+                  <TouchableOpacity
+                    key={`${badge.id || idx}`}
+                    style={[styles.badgeCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}
+                    onPress={() => openLink(verificationUrl)}
+                    activeOpacity={0.7}
+                  >
+                    {badge.image_url ? (
+                      <Image source={{ uri: badge.image_url }} style={styles.badgeThumbnail} resizeMode="contain" />
+                    ) : (
+                      <Award size={24} color={colors.tint} />
+                    )}
+                    <View style={styles.badgeInfo}>
+                      <ThemedText style={styles.badgeName} numberOfLines={1}>
+                        {badge.name}
+                      </ThemedText>
+                      <ThemedText style={styles.badgeMeta} themeColor="textSecondary">
+                        {[badge.category, badge.year ? `Ano ${badge.year}` : null].filter(Boolean).join(' · ') || 'Selo Oficial'}
+                      </ThemedText>
+                    </View>
+                    <ExternalLink size={14} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {/* Seção de Serviços Rápidos */}
         <View style={styles.section}>
@@ -678,5 +746,60 @@ const styles = StyleSheet.create({
     color: colors.tint,
     fontSize: 13,
     fontWeight: 'bold',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  categoryBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  categoryBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  planBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  planBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  badgesContainer: {
+    gap: Spacing.two,
+  },
+  badgeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.two,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
+    gap: Spacing.two,
+  },
+  badgeThumbnail: {
+    width: 36,
+    height: 36,
+    borderRadius: 4,
+  },
+  badgeInfo: {
+    flex: 1,
+  },
+  badgeName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  badgeMeta: {
+    fontSize: 11,
   },
 });

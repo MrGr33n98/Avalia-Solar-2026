@@ -806,48 +806,59 @@ module Api
       # Returns badge/certification progress and pending verifications
       def certification_progress
         authorize @company, :view_analytics?
-        begin
-          badges = @company.badges
-          all_badges = Badge.all
+        badges = @company.badges.active.order(position: :asc, id: :asc)
+        all_active_badges = Badge.active.order(position: :asc, id: :asc)
+        company_badges_by_id = @company.company_badges.index_by(&:badge_id)
 
-          # Current badges
-          earned_badges = badges.map do |badge|
-            {
-              id: badge.id,
-              name: badge.name,
-              description: badge.description,
-              icon_url: badge.icon_url,
-              earned_at: @company.company_badges.find_by(badge_id: badge.id)&.created_at&.iso8601,
-              verified: @company.company_badges.find_by(badge_id: badge.id)&.verified?
-            }
-          end
-
-          # Available badges not yet earned
-          available_badges = all_badges.where.not(id: badges.ids).map do |badge|
-            {
-              id: badge.id,
-              name: badge.name,
-              description: badge.description,
-              requirements: badge.requirements,
-              category: badge.badge_type
-            }
-          end
-
-          # Verification status
-          pending_verifications = @company.company_badges.where(verified: false).count
-
-          render json: {
-            earned_badges: earned_badges,
-            available_badges: available_badges,
-            total_badges: all_badges.count,
-            earned_count: earned_badges.count,
-            pending_verifications: pending_verifications,
-            verification_progress: calculate_verification_progress(earned_badges, all_badges)
+        # Current earned badges
+        earned_badges = badges.map do |badge|
+          company_badge = company_badges_by_id[badge.id]
+          {
+            id: badge.id,
+            name: badge.name,
+            description: badge.description,
+            category: badge.category_label,
+            year: badge.year,
+            edition: badge.edition,
+            public_slug: badge.public_slug,
+            image_url: badge.image_url,
+            verification_url: badge.verification_url,
+            earned_at: company_badge&.created_at&.iso8601
           }
-        rescue StandardError => e
-          log_analytics_error('certification_progress', e)
-          render json: { earned_badges: [], available_badges: [], earned_count: 0 }
         end
+
+        # Available badges not yet earned
+        available_badges = all_active_badges.where.not(id: badges.ids).map do |badge|
+          {
+            id: badge.id,
+            name: badge.name,
+            description: badge.description,
+            category: badge.category_label,
+            year: badge.year,
+            edition: badge.edition,
+            image_url: badge.image_url
+          }
+        end
+
+        # Company-level verification status
+        is_verified = @company.business_verification_status == 'verified' || @company.verified?
+        pending_verifications = is_verified ? 0 : 1
+
+        render json: {
+          earned_badges: earned_badges,
+          available_badges: available_badges,
+          total_badges: all_active_badges.count,
+          earned_count: earned_badges.count,
+          pending_verifications: pending_verifications,
+          verification_progress: calculate_verification_progress(earned_badges, all_active_badges)
+        }, status: :ok
+      rescue StandardError => e
+        log_analytics_error('certification_progress', e)
+        render json: {
+          error: 'certification_progress_error',
+          message: 'Não foi possível carregar o progresso de certificação',
+          details: Rails.env.development? ? e.message : nil
+        }, status: :internal_server_error
       end
 
       # GET /api/v1/company_dashboard/assets

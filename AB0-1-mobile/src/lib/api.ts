@@ -57,6 +57,54 @@ export interface Company {
   longitude?: number | null;
   distanceKm?: number | null;
   categories?: Category[];
+  primary_category?: string | null;
+  identity?: {
+    name?: string;
+    slug?: string;
+    logo_url?: string | null;
+    primary_category?: {
+      id: number;
+      name: string;
+      slug: string;
+    } | null;
+    verification?: {
+      status: string;
+      verified: boolean;
+      verified_at?: string | null;
+      method?: string | null;
+    };
+  };
+  commercial_status?: {
+    tier: string;
+    status: string;
+    paid: boolean;
+  };
+  distribution?: {
+    featured: boolean;
+    sponsored: boolean;
+  };
+  recognitions?: Array<{
+    id: number;
+    name: string;
+    description?: string | null;
+    category?: string | null;
+    year?: number | string | null;
+    edition?: number | string | null;
+    public_slug?: string;
+    image_url?: string | null;
+    verification_url?: string | null;
+  }>;
+  badges?: Array<{
+    id: number;
+    name: string;
+    description?: string | null;
+    category?: string | null;
+    year?: number | string | null;
+    edition?: number | string | null;
+    public_slug?: string;
+    image_url?: string | null;
+    verification_url?: string | null;
+  }>;
 }
 
 export interface Review {

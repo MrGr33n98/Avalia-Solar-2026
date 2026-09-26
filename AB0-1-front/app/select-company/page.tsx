@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { normalizeCompanySelectionList } from './company-selection';
 import Image from 'next/image';
-import { PremiumBadge } from '@/components/PremiumBadge';
+import VerificationBadge from '@/components/company/VerificationBadge';
 import { SearchEmptyPanel, SearchInitialPanel, SearchLoadingPanel } from './FlowPanels';
 import { track } from '@/lib/analytics';
 
@@ -549,7 +549,7 @@ function SelectCompanyContent() {
                   <p className="text-[10px] text-[#60708f]">
                     {company.city || '-'}, {company.state || '-'}
                   </p>
-                  {company.verified && <PremiumBadge className="mt-1 px-1 py-0" />}
+                  {company.verified && <VerificationBadge verified={company.verified} className="mt-1" />}
                 </div>
                 <Button
                   size="sm"
