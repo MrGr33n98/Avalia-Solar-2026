@@ -46,7 +46,6 @@ export default function CompanyIdentityCard({
     company.verified || company.trust?.verification_status === 'verified'
   );
 
-  const categoryName = company.category_info?.name || company.categories?.[0]?.name;
 
   const cleanWebsite = useMemo(() => {
     if (!company.website) return null;
@@ -157,18 +156,13 @@ export default function CompanyIdentityCard({
 
           {/* Informações da empresa estilo WEG */}
           <div className="min-w-0 space-y-1 pt-0.5 sm:pt-2">
-            {/* Nome + Verificado + Categoria (Fabricante, etc.) */}
+            {/* Nome + Verificado + Plano Comercial */}
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
                 {company.name}
               </h1>
               {isVerified && (
                 <BadgeCheck className="h-4.5 w-4.5 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
-              )}
-              {categoryName && (
-                <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-700 border border-purple-100/80">
-                  {categoryName}
-                </span>
               )}
               <PremiumHighlightBadge company={company} />
             </div>
