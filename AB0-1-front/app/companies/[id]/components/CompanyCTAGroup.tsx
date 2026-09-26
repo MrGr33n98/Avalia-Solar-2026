@@ -131,44 +131,47 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
   return (
     <div
       id="company-cta-group"
-      className="flex w-full flex-wrap items-center justify-start gap-2 sm:gap-2.5 lg:w-auto lg:justify-end"
+      className="grid w-full gap-2 lg:flex lg:w-auto lg:items-center lg:gap-2.5"
     >
-      {/* 1. Solicitar contato (Primário Azul estilo WEG) */}
-      <Button
-        type="button"
-        size="default"
-        onClick={handleRequestQuote}
-        className="h-9 flex-1 min-w-[130px] inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700 sm:flex-initial lg:flex-none"
-      >
-        <Send className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
-        <span>Solicitar contato</span>
-      </Button>
+      {/* Linha 1 no Mobile: CTAs Principais (Solicitar Contato + Comparar) em Grid 2 Colunas */}
+      <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-2 lg:flex lg:items-center lg:gap-2">
+        {/* 1. Solicitar contato (Primário Azul) */}
+        <Button
+          type="button"
+          size="default"
+          onClick={handleRequestQuote}
+          className="h-9.5 min-h-[38px] w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700 whitespace-nowrap lg:h-9 lg:w-auto lg:min-w-[130px]"
+        >
+          <Send className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
+          <span>Solicitar contato</span>
+        </Button>
 
-      {/* 2. Comparar (Outline estilo WEG) */}
-      <Button
-        type="button"
-        variant="outline"
-        size="default"
-        onClick={handleToggleComparison}
-        className={`h-9 flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-colors sm:flex-initial lg:flex-none ${
-          isCompared
-            ? 'border-blue-600 bg-blue-50 text-blue-700'
-            : 'border-blue-500/80 bg-white text-blue-600 hover:bg-blue-50'
-        }`}
-      >
-        <Layers className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <span>{isCompared ? 'Comparando' : 'Comparar'}</span>
-      </Button>
+        {/* 2. Comparar (Outline Azul) */}
+        <Button
+          type="button"
+          variant="outline"
+          size="default"
+          onClick={handleToggleComparison}
+          className={`h-9.5 min-h-[38px] w-full inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-bold transition-colors whitespace-nowrap lg:h-9 lg:w-auto lg:min-w-[100px] ${
+            isCompared
+              ? 'border-blue-600 bg-blue-50 text-blue-700'
+              : 'border-blue-500/80 bg-white text-blue-600 hover:bg-blue-50'
+          }`}
+        >
+          <Layers className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>{isCompared ? 'Comparando' : 'Comparar'}</span>
+        </Button>
+      </div>
 
-      {/* Quick Actions Wrapper */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        {/* 3. Favoritar (♡ Coração estilo WEG) */}
+      {/* Linha 2 no Mobile: Quick Actions (Favoritar, Compartilhar, WhatsApp, Avaliar) alinhadas à direita */}
+      <div className="flex items-center justify-end gap-1.5 pt-0.5 lg:justify-start lg:pt-0">
+        {/* 3. Favoritar (Coração) */}
         <button
           type="button"
           onClick={handleToggleFavorite}
           aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
           title={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
-          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+          className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors after:absolute after:-inset-1 after:content-[''] ${
             isFav
               ? 'border-red-200 bg-red-50 text-red-600'
               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
@@ -177,19 +180,19 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
           <Heart className={`h-4 w-4 ${isFav ? 'fill-current text-red-600' : 'text-slate-600'}`} aria-hidden="true" />
         </button>
 
-        {/* 4. Compartilhar (↗ Compartilhar estilo WEG) */}
+        {/* 4. Compartilhar */}
         <button
           type="button"
           onClick={handleShare}
           disabled={isSharing}
           aria-label="Compartilhar empresa"
           title="Compartilhar empresa"
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+          className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 after:absolute after:-inset-1 after:content-['']"
         >
           <Share2 className="h-4 w-4 text-slate-600" aria-hidden="true" />
         </button>
 
-        {/* WhatsApp (Secundário/Preservado) */}
+        {/* 5. WhatsApp (quando habilitado) */}
         {showWhatsApp && (
           <Button
             type="button"
@@ -202,14 +205,15 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
           </Button>
         )}
 
-        {/* Avaliar (Link Secundário) */}
+        {/* 6. Avaliar */}
         <Link
           href={reviewPath}
           aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
-          className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+          title="Avaliar empresa"
+          className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 after:absolute after:-inset-1 after:content-[''] lg:w-auto lg:px-2.5 lg:gap-1"
         >
-          <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
-          <span className="hidden xl:inline">Avaliar</span>
+          <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
+          <span className="hidden lg:inline text-xs font-semibold text-slate-600">Avaliar</span>
         </Link>
       </div>
     </div>
