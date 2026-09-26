@@ -157,18 +157,13 @@ export default function CompanyIdentityCard({
 
           {/* Informações da empresa estilo WEG */}
           <div className="min-w-0 space-y-1 pt-1 sm:pt-2">
-            {/* Nome + Verificado + Categoria (Fabricante, etc.) */}
+            {/* Nome + Verificado + Plano Comercial */}
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="truncate text-xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
                 {company.name}
               </h1>
               {isVerified && (
                 <BadgeCheck className="h-5 w-5 shrink-0 fill-blue-600 text-white sm:h-6 sm:w-6" aria-label="Empresa verificada" />
-              )}
-              {categoryName && (
-                <span className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-semibold text-purple-700 border border-purple-100/80">
-                  {categoryName}
-                </span>
               )}
               <PremiumHighlightBadge company={company} />
             </div>

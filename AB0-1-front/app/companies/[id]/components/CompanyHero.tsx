@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
 import { Company } from '@/lib/api';
-import PrimaryCategoryBadge from '@/components/company/PrimaryCategoryBadge';
 import VerificationBadge from '@/components/company/VerificationBadge';
 import CommercialPlanBadge from '@/components/company/CommercialPlanBadge';
 import { useEffect, useMemo, useState } from 'react';
@@ -291,7 +290,7 @@ export default function CompanyHero({
 
                 {/* Informações da empresa */}
                 <div className="min-w-0 flex-1 pt-1 sm:pt-2">
-                  {/* Nome + verificado + categoria + plano (mobile/desktop, inline) */}
+                  {/* Nome + verificado + plano (mobile/desktop, inline) */}
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <h1 className="min-w-0 line-clamp-2 text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-950 sm:text-2xl">
                       {company.name}
@@ -299,22 +298,6 @@ export default function CompanyHero({
                     <VerificationBadge
                       verification={company.identity?.verification}
                       verified={company.verified}
-                    />
-                    <PrimaryCategoryBadge
-                      category={
-                        company.identity?.primary_category ||
-                        (company.primary_category
-                          ? {
-                              name: company.primary_category,
-                              slug: company.categories?.[0]?.seo_url || company.categories?.[0]?.slug,
-                            }
-                          : company.categories?.[0]
-                            ? {
-                                name: company.categories[0].name,
-                                slug: company.categories[0].seo_url || company.categories[0].slug,
-                              }
-                            : null)
-                      }
                     />
                     <CommercialPlanBadge
                       commercialStatus={company.commercial_status}

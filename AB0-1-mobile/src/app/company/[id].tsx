@@ -180,11 +180,6 @@ export default function CompanyDetailScreen() {
               </View>
 
               <View style={styles.tagsRow}>
-                {primaryCategoryName && (
-                  <View style={[styles.categoryBadge, { backgroundColor: colors.backgroundElement }]}>
-                    <ThemedText style={styles.categoryBadgeText}>{primaryCategoryName}</ThemedText>
-                  </View>
-                )}
                 {commercialTier && (
                   <View style={[styles.planBadge, { backgroundColor: commercialTier === 'ENTERPRISE' ? '#0F172A' : '#EDE9FE' }]}>
                     <ThemedText style={[styles.planBadgeText, { color: commercialTier === 'ENTERPRISE' ? '#F8FAFC' : '#6D28D9' }]}>
