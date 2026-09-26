@@ -120,7 +120,7 @@ export default function FeaturedProductsSection({
                   md:text-[9px]
                 "
               >
-                Premium
+                Destaque
               </span>
             </div>
 

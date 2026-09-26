@@ -142,8 +142,8 @@ export default function WidgetBadge({
             <h3 className={`text-sm font-bold truncate ${textColor}`}>{companyData.name}</h3>
             {companyData.verified && (
               <div className="flex items-center gap-1 mt-1">
-                <PremiumBadge size="xs" />
-                <span className={`text-[10px] font-bold ${mutedColor}`}>Premium</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span className={`text-[10px] font-bold ${mutedColor}`}>Verificada</span>
               </div>
             )}
           </div>
@@ -221,8 +221,8 @@ export default function WidgetBadge({
           <h3 className={`text-sm font-bold truncate ${textColor}`}>{companyData.name}</h3>
           {companyData.verified && (
             <div className="flex items-center gap-1 mt-0.5">
-              <PremiumBadge size="xs" />
-              <span className={`text-[10px] font-bold ${mutedColor}`}>Premium</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span className={`text-[10px] font-bold ${mutedColor}`}>Verificada</span>
             </div>
           )}
         </div>

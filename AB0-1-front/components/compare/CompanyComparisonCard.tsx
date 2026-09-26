@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, MapPin, Clock, ChevronDown, Trophy, Zap, CircleDollarSign, Briefcase } from 'lucide-react';
 import PremiumBadge from '@/components/PremiumBadge';
+import VerificationBadge from '@/components/company/VerificationBadge';
+import CommercialPlanBadge from '@/components/company/CommercialPlanBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { Company } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
@@ -92,11 +94,17 @@ export default function CompanyComparisonCard({
           <span className="font-semibold">{company.city}, {company.state}</span>
         </div>
 
-        {company.verified && (
-          <div className="flex items-center gap-2">
-            <PremiumBadge className="h-6" />
-          </div>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {company.verified && (
+            <VerificationBadge verified={company.verified} />
+          )}
+          {(company.commercial_status?.paid || company.has_paid_plan) && (
+            <CommercialPlanBadge 
+              commercialStatus={company.commercial_status}
+              hasPaidPlan={company.has_paid_plan} 
+            />
+          )}
+        </div>
 
         {getYearsInMarket() && (
           <div className="flex items-center gap-2 text-sm text-slate-600">

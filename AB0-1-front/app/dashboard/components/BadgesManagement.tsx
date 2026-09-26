@@ -118,7 +118,7 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
           icon={Layers}
         />
         <MetricCard
-          title="Selo Premium Ativo"
+          title="Selos Oficiais Ativos"
           value={verifiableCount.toString()}
           icon={Diamond}
           color="blue"
@@ -236,8 +236,8 @@ export default function BadgesManagement({ companyId }: BadgesManagementProps) {
                   {/* Status Bar */}
                   <div className="px-8 py-4 bg-slate-50 dark:bg-white/[0.01] border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
                      <div className="flex items-center gap-2">
-                        <PremiumBadge size="xs" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30">ATIVO PREMIUM</span>
+                        <PremiumBadge size="xs" label="PRO" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30">ATIVO OFICIAL</span>
                      </div>
                      <Trophy className="h-3 w-3 text-amber-500/30" />
                   </div>

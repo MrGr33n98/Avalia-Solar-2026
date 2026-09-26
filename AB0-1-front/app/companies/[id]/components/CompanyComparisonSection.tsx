@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Company } from '@/lib/api';
+import CommercialPlanBadge from '@/components/company/CommercialPlanBadge';
 import { useComparison } from '@/hooks/useComparison';
 import { companiesApiSafe } from '@/lib/api-client';
 import { getFullImageUrl } from '@/utils/image';
@@ -257,13 +258,14 @@ export default function CompanyComparisonSection({
               />
 
               <ComparisonRow 
-                label="Selo Premium" 
+                label="Plano Comercial" 
                 companies={displayedCompanies} 
                 value={(c) => (
-                  c.featured ? (
-                    <div className="inline-flex items-center gap-2 text-orange-600 bg-orange-50 px-4 py-1.5 rounded-xl text-xs font-black">
-                      <Zap className="h-3.5 w-3.5 fill-current" /> Premium
-                    </div>
+                  (c.commercial_status?.paid || c.has_paid_plan) ? (
+                    <CommercialPlanBadge 
+                      commercialStatus={c.commercial_status}
+                      hasPaidPlan={c.has_paid_plan}
+                    />
                   ) : <span className="text-slate-300 font-medium">—</span>
                 )} 
               />

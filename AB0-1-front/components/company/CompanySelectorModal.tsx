@@ -16,7 +16,7 @@ import { useCompanyContext } from '@/context/CompanyContext';
 import { AlertCircle, Building2, Loader2, Plus, Search } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { PremiumBadge } from '@/components/PremiumBadge';
+import VerificationBadge from '@/components/company/VerificationBadge';
 
 interface CompanySelectorModalProps {
   open: boolean;
@@ -135,7 +135,7 @@ export function CompanySelectorModal({ open, onOpenChange }: CompanySelectorModa
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-gray-900 truncate">{company.name}</span>
                             {company.verified && (
-                              <PremiumBadge className="px-1.5 py-0.5" />
+                              <VerificationBadge verified={company.verified} className="h-5" />
                             )}
                           </div>
                           <span className="text-sm text-gray-500 font-medium">{company.city}, {company.state}</span>
@@ -188,7 +188,7 @@ export function CompanySelectorModal({ open, onOpenChange }: CompanySelectorModa
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold text-gray-900 truncate">{suggestion.name}</span>
                           {suggestion.verified && (
-                            <PremiumBadge className="px-1.5 py-0.5" />
+                            <VerificationBadge verified={suggestion.verified} className="h-5" />
                           )}
                           {suggestion.special && (
                             <div className="w-4 h-4 rounded-full border-2 border-amber-400" />
