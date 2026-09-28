@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,10 +8,14 @@ import {
   ActivityIndicator,
   useColorScheme,
   Linking,
-  TextInput,
   Alert,
+  Platform,
+  Vibration,
+  Animated,
+  Dimensions,
+  FlatList,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -22,22 +26,75 @@ import {
   Mail,
   Globe,
   MapPin,
-  ClipboardList,
   MessageSquare,
   Send,
   Sun,
   Award,
-  Tag,
   ExternalLink,
+  Bookmark,
+  Share2,
+  ChevronRight,
+  Building2,
+  Package,
+  UserCheck,
+  Calendar,
+  Truck,
+  TextIcon,
 } from 'lucide-react-native';
+import { TextInput } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Spacing, Radius, Shadows } from '@/constants/theme';
 import { companiesApi, reviewsApi, Company, Review } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useTracking } from '@/hooks/useTracking';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Banner height 3:1 ratio compacto
+const BANNER_HEIGHT = Math.round(SCREEN_WIDTH / 3);
+// Logo flutuante
+const LOGO_SIZE = 56;
+const LOGO_OFFSET = LOGO_SIZE / 2;
+
+// ─── Haptic helper ────────────────────────────────────────────────────────────
+function haptic() {
+  if (Platform.OS !== 'web') {
+    try {
+      Vibration.vibrate(10);
+    } catch (_) {
+      // silently ignore
+    }
+  }
+}
+
+// ─── Link externo com confirmação ─────────────────────────────────────────────
+function openExternalLink(url: string, label?: string) {
+  const target = url.startsWith('http') ? url : `https://${url}`;
+  Alert.alert(
+    'Abrir link externo',
+    `Deseja abrir ${label || target}?`,
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Abrir',
+        onPress: () => Linking.openURL(target).catch(() => {}),
+      },
+    ]
+  );
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+const TABS = [
+  { key: 'overview', label: 'Visão Geral', icon: Building2 },
+  { key: 'services', label: 'Serviços', icon: Package },
+  { key: 'reviews', label: 'Avaliações', icon: Star },
+  { key: 'contact', label: 'Contato', icon: Phone },
+] as const;
+
+type TabKey = (typeof TABS)[number]['key'];
+
+// ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 export default function CompanyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const scheme = useColorScheme();
@@ -46,55 +103,60 @@ export default function CompanyDetailScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { trackLeadSent } = useTracking();
+  const insets = useSafeAreaInsets();
   const canUseP2PChat = user?.role === 'review';
 
-  // Estado para novo review
+  const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  const [descExpanded, setDescExpanded] = useState(false);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
 
-  // Buscar dados da empresa por ID
-  const { data: company, isLoading: isLoadingCompany } = useQuery({
+  const scrollRef = useRef<ScrollView>(null);
+  const tabsScrollRef = useRef<ScrollView>(null);
+
+  // ── Queries ──────────────────────────────────────────────────────────────
+  const { data: company, isLoading } = useQuery({
     queryKey: ['company-detail', id],
     queryFn: () => companiesApi.getByIdOrSlug(id),
     enabled: !!id,
   });
 
-  // Buscar reviews da empresa
   const { data: reviews = [], isLoading: isLoadingReviews } = useQuery({
     queryKey: ['company-reviews', id],
     queryFn: () => (id ? reviewsApi.getByCompany(Number(id)) : Promise.resolve([])),
     enabled: !!id,
   });
 
-  // Mutação para enviar novo review
+  // ── Mutation ──────────────────────────────────────────────────────────────
   const createReviewMutation = useMutation({
-    mutationFn: (data: { rating: number; title: string; comment: string; reviewer_name: string }) =>
+    mutationFn: (data: {
+      rating: number;
+      title: string;
+      comment: string;
+      reviewer_name: string;
+    }) =>
       reviewsApi.create({
         company_id: Number(id),
-        rating: data.rating,
-        title: data.title,
-        comment: data.comment,
-        reviewer_name: data.reviewer_name,
+        ...data,
       }),
     onSuccess: () => {
-      // Invalidar cache para recarregar reviews e nota da empresa
       queryClient.invalidateQueries({ queryKey: ['company-reviews', id] });
       queryClient.invalidateQueries({ queryKey: ['company-detail', id] });
-      Alert.alert('Sucesso', 'Sua avaliação foi enviada com sucesso!');
+      Alert.alert('Sucesso', 'Sua avaliação foi enviada!');
       setNewComment('');
       setNewTitle('');
       setShowReviewForm(false);
     },
     onError: (err: any) => {
-      Alert.alert('Erro', err.message || 'Falha ao enviar avaliação. Tente novamente.');
+      Alert.alert('Erro', err.message || 'Falha ao enviar avaliação.');
     },
   });
 
   const handleCreateReview = () => {
     if (!newComment.trim()) {
-      Alert.alert('Erro', 'Por favor, escreva um comentário para sua avaliação.');
+      Alert.alert('Erro', 'Por favor, escreva um comentário.');
       return;
     }
     createReviewMutation.mutate({
@@ -105,15 +167,18 @@ export default function CompanyDetailScreen() {
     });
   };
 
-  const openLink = (url: string) => {
-    Linking.openURL(url).catch((err) => console.error('Erro ao abrir link:', err));
-  };
+  // ── Tab change ────────────────────────────────────────────────────────────
+  const handleTabChange = useCallback((tab: TabKey) => {
+    haptic();
+    setActiveTab(tab);
+  }, []);
 
-  if (isLoadingCompany) {
+  // ─── Loading / Not found ────────────────────────────────────────────────────
+  if (isLoading) {
     return (
       <ThemedView style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.tint} />
-        <ThemedText style={{ marginTop: Spacing.three }}>Carregando dados da empresa...</ThemedText>
+        <ThemedText style={{ marginTop: Spacing.three }}>Carregando...</ThemedText>
       </ThemedView>
     );
   }
@@ -122,337 +187,595 @@ export default function CompanyDetailScreen() {
     return (
       <ThemedView style={styles.centerContainer}>
         <ThemedText type="subtitle">Empresa não encontrada</ThemedText>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={[styles.backBtn, { backgroundColor: colors.tint }]} onPress={() => router.back()}>
           <ThemedText style={styles.backBtnText}>Voltar</ThemedText>
         </TouchableOpacity>
       </ThemedView>
     );
   }
 
-  const primaryCategoryName =
-    company.identity?.primary_category?.name ||
-    company.primary_category ||
-    (company.categories && company.categories.length > 0 ? company.categories[0].name : null);
-
-  const isVerified = company.identity?.verification ? company.identity.verification.verified : Boolean(company.verified);
+  // ── Derived data ──────────────────────────────────────────────────────────
+  const isVerified = company.identity?.verification
+    ? company.identity.verification.verified
+    : Boolean(company.verified);
   const isPaid = company.commercial_status?.paid ?? company.has_paid_plan ?? false;
-  const commercialTier = isPaid ? (company.commercial_status?.tier?.toUpperCase() || 'PRO') : null;
+  const commercialTier = isPaid
+    ? company.commercial_status?.tier?.toUpperCase() || 'PRO'
+    : null;
   const recognitions = company.recognitions || company.badges || [];
 
+  const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
+
+  const coverageLabel = (() => {
+    const ext = company as any;
+    const areas = company.service_areas || [];
+    const national = areas.some((a: any) => a.coverage_type === 'national') || ext.coverage_national;
+    if (national) return 'Todo o Brasil';
+    const states: string[] = Array.isArray(ext.coverage_states) ? ext.coverage_states : [];
+    if (states.length > 0) return `Atende ${states.slice(0, 2).join(', ')}`;
+    return company.city && company.state ? 'Atuação regional' : null;
+  })();
+
+  const desc = company.description || '';
+  const SHORT_DESC_LIMIT = 120;
+  const descTruncated = !descExpanded && desc.length > SHORT_DESC_LIMIT;
+  const displayDesc = descTruncated ? desc.slice(0, SHORT_DESC_LIMIT) + '…' : desc;
+
+  const cleanWebsite = company.website
+    ? company.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
+    : null;
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  //  RENDER
+  // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        
-        {/* Cover / Header Image */}
-        <View style={styles.coverContainer}>
+    <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
+      {/* ── ScrollView principal ─────────────────────────────────────────── */}
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        // Espaço inferior para não ficar atrás do sticky CTA bar
+        contentContainerStyle={{ paddingBottom: 80 + insets.bottom }}
+        style={{ flex: 1 }}
+      >
+        {/* ── BANNER COMPACTO (3:1) ─────────────────────────────────────── */}
+        <View style={[styles.bannerContainer, { height: BANNER_HEIGHT }]}>
           {company.cover_url ? (
-            <Image source={{ uri: company.cover_url }} style={styles.coverImage} />
+            <Image source={{ uri: company.cover_url }} style={styles.bannerImage} />
           ) : (
-            <View style={[styles.coverPlaceholder, { backgroundColor: colors.tint }]}>
-              <Sun color={colors.backgroundElement} size={48} />
+            <View style={[styles.bannerPlaceholder, { backgroundColor: colors.brandActiveBlue }]}>
+              <Sun color="#fff" size={40} />
             </View>
           )}
-          
-          <TouchableOpacity style={styles.iconBack} onPress={() => router.back()}>
-            <ArrowLeft color={colors.backgroundElement} size={24} />
-          </TouchableOpacity>
-        </View>
 
-        {/* Informações Principais */}
-        <View style={styles.profileSection}>
-          <View style={styles.logoAndTitleRow}>
-            {company.logo_url ? (
-              <Image source={{ uri: company.logo_url }} style={styles.logoImage} />
-            ) : (
-              <View style={[styles.logoPlaceholder, { backgroundColor: colors.backgroundSelected }]}>
-                <ThemedText style={styles.placeholderLetter}>{company.name[0]}</ThemedText>
-              </View>
-            )}
+          {/* Gradiente overlay */}
+          <View style={styles.bannerGradient} pointerEvents="none" />
 
-            <View style={styles.titleInfo}>
-              <View style={styles.nameRow}>
-                <ThemedText type="subtitle" style={styles.companyName}>
-                  {company.name}
-                </ThemedText>
-                {isVerified && (
-                  <ShieldCheck size={18} color="#2563EB" style={{ marginLeft: 6 }} />
-                )}
-              </View>
-
-              <View style={styles.tagsRow}>
-                {commercialTier && (
-                  <View style={[styles.planBadge, { backgroundColor: commercialTier === 'ENTERPRISE' ? '#0F172A' : '#EDE9FE' }]}>
-                    <ThemedText style={[styles.planBadgeText, { color: commercialTier === 'ENTERPRISE' ? '#F8FAFC' : '#6D28D9' }]}>
-                      {commercialTier}
-                    </ThemedText>
-                  </View>
-                )}
-              </View>
-              
-              <View style={styles.ratingRow}>
-                <Star size={14} color={colors.starYellow} fill={colors.starYellow} />
-                <ThemedText style={styles.ratingText}>
-                  {company.rating ? company.rating.toFixed(1) : '5.0'}
-                </ThemedText>
-                <ThemedText style={styles.reviewCountText}>
-                  ({company.review_count || 0} avaliações)
-                </ThemedText>
-              </View>
-            </View>
-          </View>
-
-          {/* Localização */}
-          <View style={styles.locationContainer}>
-            <MapPin size={14} color={colors.textSecondary} />
-            <ThemedText style={styles.locationText} themeColor="textSecondary">
-              {company.address ? `${company.address}, ` : ''}{company.city} - {company.state}
-            </ThemedText>
-          </View>
-        </View>
-
-        {/* CTA Solicitar Orçamento: somente entitlement pago */}
-        {company.has_paid_plan === true && <View style={styles.ctaContainer}>
+          {/* Botão Voltar */}
           <TouchableOpacity
-            style={[styles.ctaButton, { backgroundColor: colors.tint }]}
-            onPress={() => router.push(`/company/${company.id}/lead`)}
+            style={styles.iconBack}
+            onPress={() => router.back()}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <ClipboardList size={18} color={colors.backgroundElement} />
-            <ThemedText style={styles.ctaButtonText}>Solicitar Orçamento Grátis</ThemedText>
+            <ArrowLeft color="#fff" size={20} />
           </TouchableOpacity>
-        </View>}
 
-        {/* Descrição / Sobre */}
-        <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Sobre a Empresa</ThemedText>
-          <ThemedText style={styles.descriptionText} themeColor="textSecondary">
-            {company.description || 'Esta empresa parceira do Avalia Solar ainda não adicionou uma descrição detalhada de seus serviços. Entre em contato para saber mais sobre seus projetos e instalações.'}
-          </ThemedText>
-        </View>
-
-        {/* Selos e Reconhecimentos Oficiais */}
-        {recognitions.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.servicesHeaderRow}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Award size={18} color={colors.tint} />
-                <ThemedText type="subtitle" style={styles.sectionTitle}>Selos Oficiais</ThemedText>
-              </View>
-            </View>
-            <View style={styles.badgesContainer}>
-              {recognitions.map((badge, idx) => {
-                const verificationUrl = badge.verification_url || `https://avaliasolar.com.br/badges/${badge.public_slug}`;
-                return (
-                  <TouchableOpacity
-                    key={`${badge.id || idx}`}
-                    style={[styles.badgeCard, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}
-                    onPress={() => openLink(verificationUrl)}
-                    activeOpacity={0.7}
-                  >
-                    {badge.image_url ? (
-                      <Image source={{ uri: badge.image_url }} style={styles.badgeThumbnail} resizeMode="contain" />
-                    ) : (
-                      <Award size={24} color={colors.tint} />
-                    )}
-                    <View style={styles.badgeInfo}>
-                      <ThemedText style={styles.badgeName} numberOfLines={1}>
-                        {badge.name}
-                      </ThemedText>
-                      <ThemedText style={styles.badgeMeta} themeColor="textSecondary">
-                        {[badge.category, badge.year ? `Ano ${badge.year}` : null].filter(Boolean).join(' · ') || 'Selo Oficial'}
-                      </ThemedText>
-                    </View>
-                    <ExternalLink size={14} color={colors.textSecondary} />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        )}
-
-        {/* Seção de Serviços Rápidos */}
-        <View style={styles.section}>
-          <View style={styles.servicesHeaderRow}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Serviços</ThemedText>
-            <TouchableOpacity onPress={() => router.push(`/company/${company.id}/services`)}>
-              <ThemedText style={styles.viewServicesLink}>Ver Detalhes</ThemedText>
+          {/* Ações secundárias no canto superior direito */}
+          <View style={styles.topRightActions}>
+            <TouchableOpacity style={styles.iconCircle} onPress={() => haptic()}>
+              <Bookmark color="#fff" size={16} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconCircle} onPress={() => haptic()}>
+              <Share2 color="#fff" size={16} />
             </TouchableOpacity>
           </View>
-          <View style={styles.servicesGrid}>
-            {['On-Grid', 'Off-Grid', 'Manutenção', 'Limpeza'].map((service, idx) => (
-              <View key={idx} style={[styles.serviceChip, { backgroundColor: colors.backgroundElement }]}>
-                <ThemedText style={styles.serviceChipText}>{service}</ThemedText>
-              </View>
-            ))}
-          </View>
         </View>
 
-        {/* Canais de Contato */}
-        <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Canais de Contato</ThemedText>
-          
-          <View style={styles.contactList}>
-            {company.p2p_chat_enabled && canUseP2PChat && (
-              <TouchableOpacity
-                style={[styles.contactItem, { backgroundColor: '#F97316' }]}
-                onPress={() => router.push(`/p2p_chat?company_id=${company.id}`)}
-              >
-                <MessageSquare size={16} color={colors.backgroundElement} />
-                <ThemedText style={[styles.contactItemText, { color: colors.backgroundElement, fontWeight: 'bold' }]}>
-                  Chat Direto (OLX Style)
-                </ThemedText>
-              </TouchableOpacity>
-            )}
+        {/* ── LOGO flutuante ────────────────────────────────────────────── */}
+        <View style={[styles.logoWrapper, { top: BANNER_HEIGHT - LOGO_OFFSET }]}>
+          {company.logo_url ? (
+            <Image
+              source={{ uri: company.logo_url }}
+              style={[styles.logoImage, { borderColor: colors.backgroundElement }]}
+            />
+          ) : (
+            <View
+              style={[
+                styles.logoPlaceholder,
+                { borderColor: colors.backgroundElement, backgroundColor: colors.tint },
+              ]}
+            >
+              <ThemedText style={styles.logoLetter}>{company.name[0]}</ThemedText>
+            </View>
+          )}
+        </View>
 
-            {company.phone && (
+        {/* ── CABEÇALHO INFO ───────────────────────────────────────────── */}
+        <View style={[styles.headerInfo, { marginTop: LOGO_OFFSET + 8 }]}>
+          {/* Nome + verificado + plano */}
+          <View style={styles.nameRow}>
+            <ThemedText type="subtitle" style={styles.companyName} numberOfLines={2}>
+              {company.name}
+            </ThemedText>
+            {isVerified && <ShieldCheck size={16} color="#2563EB" style={{ marginLeft: 6 }} />}
+            {commercialTier && (
+              <View
+                style={[
+                  styles.planBadge,
+                  {
+                    backgroundColor:
+                      commercialTier === 'ENTERPRISE' ? '#0F172A' : '#EDE9FE',
+                  },
+                ]}
+              >
+                <ThemedText
+                  style={[
+                    styles.planBadgeText,
+                    { color: commercialTier === 'ENTERPRISE' ? '#F8FAFC' : '#6D28D9' },
+                  ]}
+                >
+                  {commercialTier}
+                </ThemedText>
+              </View>
+            )}
+          </View>
+
+          {/* Rating inline */}
+          <View style={styles.ratingRow}>
+            <Star size={13} color={colors.starYellow} fill={colors.starYellow} />
+            <ThemedText style={styles.ratingText}>
+              {company.rating ? company.rating.toFixed(1) : '5.0'}
+            </ThemedText>
+            <ThemedText style={[styles.ratingMeta, { color: colors.textSecondary }]}>
+              · {company.review_count || 0} avaliações
+            </ThemedText>
+          </View>
+
+          {/* ── METADADOS EM CHIPS ─────────────────────────────────────── */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chipsScroll}
+            contentContainerStyle={styles.chipsContent}
+          >
+            {locationLabel ? (
+              <View style={[styles.chip, { backgroundColor: colors.surfaceSubtle }]}>
+                <MapPin size={11} color={colors.textSecondary} />
+                <ThemedText style={styles.chipText} themeColor="textSecondary">
+                  {locationLabel}
+                </ThemedText>
+              </View>
+            ) : null}
+
+            {coverageLabel ? (
+              <View style={[styles.chip, { backgroundColor: colors.surfaceSubtle }]}>
+                <Truck size={11} color={colors.textSecondary} />
+                <ThemedText style={styles.chipText} themeColor="textSecondary">
+                  {coverageLabel}
+                </ThemedText>
+              </View>
+            ) : null}
+
+            {company.founded_year ? (
+              <View style={[styles.chip, { backgroundColor: colors.surfaceSubtle }]}>
+                <Calendar size={11} color={colors.textSecondary} />
+                <ThemedText style={styles.chipText} themeColor="textSecondary">
+                  Fundada em {company.founded_year}
+                </ThemedText>
+              </View>
+            ) : null}
+
+            {cleanWebsite ? (
               <TouchableOpacity
-                style={[styles.contactItem, { backgroundColor: colors.backgroundElement }]}
+                style={[styles.chip, { backgroundColor: '#EFF6FF' }]}
+                onPress={() =>
+                  openExternalLink(company.website!, cleanWebsite)
+                }
+                activeOpacity={0.7}
+              >
+                <Globe size={11} color="#2563EB" />
+                <ThemedText style={[styles.chipText, { color: '#2563EB', fontWeight: '700' }]}>
+                  {cleanWebsite}
+                </ThemedText>
+                <ExternalLink size={10} color="#2563EB" />
+              </TouchableOpacity>
+            ) : null}
+          </ScrollView>
+        </View>
+
+        {/* ── SCROLLABLE TABS ──────────────────────────────────────────── */}
+        <View
+          style={[
+            styles.tabBar,
+            { borderBottomColor: colors.border, backgroundColor: colors.backgroundElement },
+          ]}
+        >
+          <ScrollView
+            ref={tabsScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabBarContent}
+          >
+            {TABS.map(({ key, label, icon: Icon }) => {
+              const isActive = activeTab === key;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={styles.tabItem}
+                  onPress={() => handleTabChange(key)}
+                  activeOpacity={0.7}
+                >
+                  <Icon
+                    size={15}
+                    color={isActive ? colors.tint : colors.textSecondary}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.tabLabel,
+                      {
+                        color: isActive ? colors.tint : colors.textSecondary,
+                        fontWeight: isActive ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    {label}
+                  </ThemedText>
+                  {isActive && (
+                    <View style={[styles.tabIndicator, { backgroundColor: colors.tint }]} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ── CONTEÚDO DAS TABS ─────────────────────────────────────────── */}
+        <View style={styles.tabContent}>
+          {/* ── VISÃO GERAL ─────────────────────────────────────────────── */}
+          {activeTab === 'overview' && (
+            <View>
+              {/* Descrição com "Ler mais" */}
+              <View style={[styles.section, { borderBottomColor: colors.border }]}>
+                <ThemedText style={styles.sectionTitle}>Sobre a Empresa</ThemedText>
+                {desc ? (
+                  <>
+                    <ThemedText style={styles.descriptionText} themeColor="textSecondary">
+                      {displayDesc}
+                    </ThemedText>
+                    {desc.length > SHORT_DESC_LIMIT && (
+                      <TouchableOpacity
+                        onPress={() => setDescExpanded((v) => !v)}
+                        style={styles.readMoreBtn}
+                      >
+                        <ThemedText style={[styles.readMoreText, { color: colors.tint }]}>
+                          {descExpanded ? 'Ler menos' : 'Ler mais'}
+                        </ThemedText>
+                        <ChevronRight
+                          size={13}
+                          color={colors.tint}
+                          style={{ transform: [{ rotate: descExpanded ? '-90deg' : '90deg' }] }}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </>
+                ) : (
+                  <ThemedText style={styles.descriptionText} themeColor="textSecondary">
+                    Esta empresa parceira do Avalia Solar ainda não adicionou uma descrição.
+                  </ThemedText>
+                )}
+              </View>
+
+              {/* Selos Oficiais */}
+              {recognitions.length > 0 && (
+                <View style={[styles.section, { borderBottomColor: colors.border }]}>
+                  <View style={styles.sectionRow}>
+                    <Award size={16} color={colors.tint} />
+                    <ThemedText style={styles.sectionTitle}>Selos Oficiais</ThemedText>
+                  </View>
+                  <View style={styles.badgesContainer}>
+                    {recognitions.map((badge: any, idx: number) => {
+                      const verificationUrl =
+                        badge.verification_url ||
+                        `https://avaliasolar.com.br/badges/${badge.public_slug}`;
+                      return (
+                        <TouchableOpacity
+                          key={`${badge.id || idx}`}
+                          style={[
+                            styles.badgeCard,
+                            {
+                              backgroundColor: colors.backgroundElement,
+                              borderColor: colors.border,
+                            },
+                          ]}
+                          onPress={() => openExternalLink(verificationUrl, badge.name)}
+                          activeOpacity={0.7}
+                        >
+                          {badge.image_url ? (
+                            <Image
+                              source={{ uri: badge.image_url }}
+                              style={styles.badgeThumbnail}
+                              resizeMode="contain"
+                            />
+                          ) : (
+                            <Award size={22} color={colors.tint} />
+                          )}
+                          <View style={styles.badgeInfo}>
+                            <ThemedText style={styles.badgeName} numberOfLines={1}>
+                              {badge.name}
+                            </ThemedText>
+                            <ThemedText style={styles.badgeMeta} themeColor="textSecondary">
+                              {[badge.category, badge.year ? `Ano ${badge.year}` : null]
+                                .filter(Boolean)
+                                .join(' · ') || 'Selo Oficial'}
+                            </ThemedText>
+                          </View>
+                          <ExternalLink size={13} color={colors.textSecondary} />
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Nota de rodapé / disclaimer */}
+              <View style={[styles.disclaimerBox, { borderColor: colors.border }]}>
+                <ThemedText style={styles.disclaimerText} themeColor="textSecondary">
+                  As informações desta página são baseadas em dados públicos e avaliações de clientes verificados pelo Avalia Solar. Este perfil é de responsabilidade da empresa.
+                </ThemedText>
+              </View>
+            </View>
+          )}
+
+          {/* ── SERVIÇOS ────────────────────────────────────────────────── */}
+          {activeTab === 'services' && (
+            <View style={styles.section}>
+              <View style={styles.servicesGrid}>
+                {['On-Grid', 'Off-Grid', 'Híbrido', 'Manutenção', 'Limpeza', 'Financiamento'].map(
+                  (service, idx) => (
+                    <View
+                      key={idx}
+                      style={[styles.serviceChip, { backgroundColor: colors.surfaceSubtle }]}
+                    >
+                      <ThemedText style={styles.serviceChipText}>{service}</ThemedText>
+                    </View>
+                  )
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* ── AVALIAÇÕES ──────────────────────────────────────────────── */}
+          {activeTab === 'reviews' && (
+            <View style={styles.section}>
+              {/* Botão avaliar */}
+              <TouchableOpacity
+                style={[styles.evalBtn, { borderColor: colors.tint }]}
                 onPress={() => {
-                  trackLeadSent(company.id, 'whatsapp');
-                  openLink(`tel:${company.phone}`);
+                  haptic();
+                  setShowReviewForm((v) => !v);
                 }}
               >
-                <Phone size={16} color={colors.tint} />
-                <ThemedText style={styles.contactItemText}>{company.phone}</ThemedText>
+                <Star size={15} color={colors.tint} />
+                <ThemedText style={[styles.evalBtnText, { color: colors.tint }]}>
+                  {showReviewForm ? 'Cancelar avaliação' : 'Avaliar esta empresa'}
+                </ThemedText>
               </TouchableOpacity>
-            )}
 
-            {company.email && (
-              <TouchableOpacity
-                style={[styles.contactItem, { backgroundColor: colors.backgroundElement }]}
-                onPress={() => openLink(`mailto:${company.email}`)}
-              >
-                <Mail size={16} color={colors.tint} />
-                <ThemedText style={styles.contactItemText}>{company.email}</ThemedText>
-              </TouchableOpacity>
-            )}
-
-            {company.website && (
-              <TouchableOpacity
-                style={[styles.contactItem, { backgroundColor: colors.backgroundElement }]}
-                onPress={() => openLink(company.website!.startsWith('http') ? company.website! : `https://${company.website}`)}
-              >
-                <Globe size={16} color={colors.tint} />
-                <ThemedText style={styles.contactItemText}>{company.website}</ThemedText>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Seção de Avaliações (Reviews) */}
-        <View style={[styles.section, { marginBottom: Spacing.six }]}>
-          <View style={styles.reviewsHeaderRow}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Avaliações</ThemedText>
-            <TouchableOpacity onPress={() => setShowReviewForm(!showReviewForm)}>
-              <ThemedText style={styles.addReviewLink}>Avaliar Empresa</ThemedText>
-            </TouchableOpacity>
-          </View>
-
-          {/* Form para adicionar nova avaliação */}
-          {showReviewForm && (
-            <View style={[styles.reviewForm, { backgroundColor: colors.backgroundElement }]}>
-              <ThemedText style={styles.formLabel}>Sua nota para a empresa:</ThemedText>
-              <View style={styles.starsRow}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity key={star} onPress={() => setNewRating(star)}>
-                    <Star
-                      size={28}
-                      color={colors.starYellow}
-                      fill={star <= newRating ? colors.starYellow : 'transparent'}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <TextInput
-                placeholder="Título da avaliação (ex: Excelente serviço!)"
-                placeholderTextColor={colors.textSecondary}
-                style={[styles.formInput, { color: colors.text, borderColor: colors.backgroundSelected }]}
-                value={newTitle}
-                onChangeText={setNewTitle}
-              />
-
-              <TextInput
-                placeholder="Escreva seu comentário detalhado sobre a empresa..."
-                placeholderTextColor={colors.textSecondary}
-                style={[styles.formTextarea, { color: colors.text, borderColor: colors.backgroundSelected }]}
-                multiline
-                numberOfLines={4}
-                value={newComment}
-                onChangeText={setNewComment}
-              />
-
-              <TouchableOpacity
-                style={[styles.submitReviewBtn, { backgroundColor: colors.tint }]}
-                onPress={handleCreateReview}
-                disabled={createReviewMutation.isPending}
-              >
-                {createReviewMutation.isPending ? (
-                  <ActivityIndicator color={colors.backgroundElement} />
-                ) : (
-                  <>
-                    <Send size={14} color={colors.backgroundElement} />
-                    <ThemedText style={styles.submitReviewBtnText}>Enviar Avaliação</ThemedText>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Listagem de Reviews */}
-          {isLoadingReviews ? (
-            <ActivityIndicator color={colors.tint} />
-          ) : reviews.length === 0 ? (
-            <ThemedText style={styles.emptyReviewsText} themeColor="textSecondary">
-              Nenhuma avaliação para esta empresa ainda. Seja o primeiro a avaliar!
-            </ThemedText>
-          ) : (
-            <View style={styles.reviewsList}>
-              {reviews.slice(0, 3).map((review: Review) => (
-                <View key={review.id} style={[styles.reviewCard, { borderBottomColor: colors.backgroundElement }]}>
-                  <View style={styles.reviewHeader}>
-                    <ThemedText style={styles.reviewerName}>{review.reviewer_name}</ThemedText>
-                    <View style={styles.reviewStars}>
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star
-                          key={s}
-                          size={12}
-                          color={colors.starYellow}
-                          fill={s <= review.rating ? colors.starYellow : 'transparent'}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                  {review.title ? (
-                    <ThemedText style={styles.reviewTitle}>{review.title}</ThemedText>
-                  ) : null}
-                  {review.comment ? (
-                    <ThemedText style={styles.reviewComment} themeColor="textSecondary">
-                      {review.comment}
-                    </ThemedText>
-                  ) : null}
-                  <ThemedText style={styles.reviewDate} themeColor="textSecondary">
-                    {review.created_at}
-                  </ThemedText>
-                </View>
-              ))}
-              
-              {reviews.length > 3 && (
-                <TouchableOpacity
-                  style={[styles.viewAllReviewsBtn, { backgroundColor: colors.backgroundElement }]}
-                  onPress={() => router.push(`/company/${company.id}/reviews`)}
+              {/* Form review */}
+              {showReviewForm && (
+                <View
+                  style={[
+                    styles.reviewForm,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                 >
-                  <ThemedText style={styles.viewAllReviewsText}>Ver todas as {reviews.length} avaliações</ThemedText>
-                </TouchableOpacity>
+                  <ThemedText style={styles.formLabel}>Sua nota:</ThemedText>
+                  <View style={styles.starsRow}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <TouchableOpacity key={star} onPress={() => setNewRating(star)}>
+                        <Star
+                          size={26}
+                          color={colors.starYellow}
+                          fill={star <= newRating ? colors.starYellow : 'transparent'}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <TextInput
+                    placeholder="Título (ex: Excelente serviço!)"
+                    placeholderTextColor={colors.textSecondary}
+                    style={[
+                      styles.formInput,
+                      { color: colors.text, borderColor: colors.border },
+                    ]}
+                    value={newTitle}
+                    onChangeText={setNewTitle}
+                  />
+
+                  <TextInput
+                    placeholder="Seu comentário detalhado..."
+                    placeholderTextColor={colors.textSecondary}
+                    style={[
+                      styles.formTextarea,
+                      { color: colors.text, borderColor: colors.border },
+                    ]}
+                    multiline
+                    numberOfLines={4}
+                    value={newComment}
+                    onChangeText={setNewComment}
+                  />
+
+                  <TouchableOpacity
+                    style={[styles.submitReviewBtn, { backgroundColor: colors.tint }]}
+                    onPress={handleCreateReview}
+                    disabled={createReviewMutation.isPending}
+                  >
+                    {createReviewMutation.isPending ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <>
+                        <Send size={13} color="#fff" />
+                        <ThemedText style={styles.submitReviewBtnText}>Enviar Avaliação</ThemedText>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Lista reviews */}
+              {isLoadingReviews ? (
+                <ActivityIndicator color={colors.tint} style={{ marginTop: 16 }} />
+              ) : reviews.length === 0 ? (
+                <ThemedText style={styles.emptyText} themeColor="textSecondary">
+                  Nenhuma avaliação ainda. Seja o primeiro!
+                </ThemedText>
+              ) : (
+                <View style={styles.reviewsList}>
+                  {reviews.slice(0, 5).map((review: Review) => (
+                    <View
+                      key={review.id}
+                      style={[styles.reviewCard, { borderColor: colors.border }]}
+                    >
+                      <View style={styles.reviewHeader}>
+                        <ThemedText style={styles.reviewerName}>
+                          {review.reviewer_name}
+                        </ThemedText>
+                        <View style={styles.reviewStars}>
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              size={11}
+                              color={colors.starYellow}
+                              fill={s <= review.rating ? colors.starYellow : 'transparent'}
+                            />
+                          ))}
+                        </View>
+                      </View>
+                      {review.title ? (
+                        <ThemedText style={styles.reviewTitle}>{review.title}</ThemedText>
+                      ) : null}
+                      {(review as any).comment ? (
+                        <ThemedText style={styles.reviewComment} themeColor="textSecondary">
+                          {(review as any).comment}
+                        </ThemedText>
+                      ) : null}
+                    </View>
+                  ))}
+                  {reviews.length > 5 && (
+                    <TouchableOpacity
+                      style={[styles.viewAllBtn, { backgroundColor: colors.surfaceSubtle }]}
+                      onPress={() => router.push(`/company/${company.id}/reviews` as any)}
+                    >
+                      <ThemedText style={[styles.viewAllText, { color: colors.tint }]}>
+                        Ver todas as {reviews.length} avaliações
+                      </ThemedText>
+                    </TouchableOpacity>
+                  )}
+                </View>
               )}
             </View>
           )}
-        </View>
 
+          {/* ── CONTATO ─────────────────────────────────────────────────── */}
+          {activeTab === 'contact' && (
+            <View style={styles.section}>
+              <View style={styles.contactList}>
+                {company.p2p_chat_enabled && canUseP2PChat && (
+                  <TouchableOpacity
+                    style={[styles.contactItem, { backgroundColor: '#F97316' }]}
+                    onPress={() => router.push(`/p2p_chat?company_id=${company.id}` as any)}
+                  >
+                    <MessageSquare size={16} color="#fff" />
+                    <ThemedText style={[styles.contactItemText, { color: '#fff', fontWeight: 'bold' }]}>
+                      Chat Direto
+                    </ThemedText>
+                  </TouchableOpacity>
+                )}
+
+                {company.phone && (
+                  <TouchableOpacity
+                    style={[styles.contactItem, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}
+                    onPress={() => {
+                      trackLeadSent(company.id, 'phone');
+                      Linking.openURL(`tel:${company.phone}`);
+                    }}
+                  >
+                    <Phone size={16} color={colors.tint} />
+                    <ThemedText style={styles.contactItemText}>{company.phone}</ThemedText>
+                  </TouchableOpacity>
+                )}
+
+                {company.email && (
+                  <TouchableOpacity
+                    style={[styles.contactItem, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}
+                    onPress={() => Linking.openURL(`mailto:${company.email}`)}
+                  >
+                    <Mail size={16} color={colors.tint} />
+                    <ThemedText style={styles.contactItemText}>{company.email}</ThemedText>
+                  </TouchableOpacity>
+                )}
+
+                {company.website && (
+                  <TouchableOpacity
+                    style={[styles.contactItem, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}
+                    onPress={() => openExternalLink(company.website!, cleanWebsite || company.website!)}
+                  >
+                    <Globe size={16} color={colors.tint} />
+                    <ThemedText style={styles.contactItemText}>
+                      {cleanWebsite || company.website}
+                    </ThemedText>
+                    <ExternalLink size={13} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
+        </View>
       </ScrollView>
+
+      {/* ── STICKY BOTTOM CTA BAR ────────────────────────────────────────── */}
+      {isPaid && (
+        <View
+          style={[
+            styles.stickyBar,
+            {
+              backgroundColor: colors.backgroundElement,
+              borderTopColor: colors.border,
+              paddingBottom: Math.max(insets.bottom, 12),
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={[styles.ctaPrimary, { backgroundColor: colors.tint }]}
+            onPress={() => {
+              haptic();
+              router.push(`/company/${company.id}/lead` as any);
+            }}
+            activeOpacity={0.85}
+          >
+            <ThemedText style={styles.ctaPrimaryText}>Solicitar Orçamento Grátis</ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.ctaSecondary, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
+            onPress={() => {
+              haptic();
+              router.push(`/compare?company_id=${company.id}` as any);
+            }}
+            activeOpacity={0.85}
+          >
+            <UserCheck size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      )}
     </ThemedView>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  STYLES
+// ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -466,168 +789,304 @@ const styles = StyleSheet.create({
   backBtn: {
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
-    backgroundColor: colors.tint,
+    borderRadius: Radius.md,
   },
   backBtnText: {
-    color: colors.backgroundElement,
+    color: '#fff',
     fontWeight: 'bold',
   },
-  coverContainer: {
-    height: 180,
+
+  // Banner
+  bannerContainer: {
     width: '100%',
     position: 'relative',
+    overflow: 'hidden',
   },
-  coverImage: {
+  bannerImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
-  coverPlaceholder: {
-    width: '100%',
-    height: '100%',
+  bannerPlaceholder: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  bannerGradient: {
+    position: 'absolute',
+    inset: 0,
+    // Simula gradiente escuro nos cantos via opacidade
+    backgroundColor: 'rgba(0,0,0,0.18)',
   },
   iconBack: {
     position: 'absolute',
-    top: 40,
+    top: 12,
     left: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileSection: {
-    paddingHorizontal: Spacing.four,
-    marginTop: -30,
-    marginBottom: Spacing.three,
-  },
-  logoAndTitleRow: {
+  topRightActions: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.three,
+    gap: 8,
+  },
+  iconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Logo flutuante
+  logoWrapper: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 20,
   },
   logoImage: {
-    width: 80,
-    height: 80,
-    borderRadius: Spacing.two,
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    borderRadius: Radius.md,
     borderWidth: 3,
-    borderColor: colors.backgroundElement,
-    backgroundColor: colors.backgroundElement,
+    backgroundColor: '#fff',
   },
   logoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: Spacing.two,
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    borderRadius: Radius.md,
     borderWidth: 3,
-    borderColor: colors.backgroundElement,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  placeholderLetter: {
-    fontSize: 36,
+  logoLetter: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: colors.tint,
+    color: '#fff',
   },
-  titleInfo: {
-    flex: 1,
-    paddingBottom: Spacing.one,
+
+  // Header info
+  headerInfo: {
+    paddingBottom: Spacing.two,
+    // Padding esquerdo respeitando a logo flutuante + padding direito normal
+    paddingLeft: LOGO_SIZE + 24,
+    paddingRight: Spacing.four,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
+    gap: 4,
   },
   companyName: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    flexShrink: 1,
+  },
+  planBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  planBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
+    gap: 3,
+    marginTop: 3,
   },
   ratingText: {
-    fontSize: 13,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '700',
   },
-  reviewCountText: {
-    fontSize: 13,
-    color: colors.textSecondary,
+  ratingMeta: {
+    fontSize: 12,
   },
-  locationContainer: {
+
+  // Chips de metadados — full width ignorando o offset do logo
+  chipsScroll: {
+    marginTop: 8,
+    marginLeft: -(LOGO_SIZE + 8), // recua até a borda esquerda real
+    marginRight: -Spacing.four,
+  },
+  chipsContent: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    marginTop: Spacing.three,
+    paddingLeft: 16,
+    paddingRight: 16,
   },
-  locationText: {
-    fontSize: 13,
-  },
-  ctaContainer: {
-    paddingHorizontal: Spacing.four,
-    marginVertical: Spacing.two,
-  },
-  ctaButton: {
-    height: 50,
-    borderRadius: Spacing.three,
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
   },
-  ctaButtonText: {
-    color: colors.backgroundElement,
-    fontSize: 16,
-    fontWeight: 'bold',
+  chipText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  // Tab bar
+  tabBar: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginTop: 12,
+  },
+  tabBarContent: {
+    paddingHorizontal: 12,
+    gap: 0,
+  },
+  tabItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    position: 'relative',
+  },
+  tabLabel: {
+    fontSize: 13,
+    letterSpacing: 0.1,
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 8,
+    right: 8,
+    height: 2,
+    borderRadius: 2,
+  },
+
+  // Tab content
+  tabContent: {
+    flex: 1,
   },
   section: {
     paddingHorizontal: Spacing.four,
-    marginVertical: Spacing.three,
+    paddingVertical: Spacing.three,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: Spacing.two,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
   },
+  sectionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+
+  // Descrição
   descriptionText: {
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
   },
-  contactList: {
-    gap: Spacing.two,
-  },
-  contactItem: {
+  readMoreBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    gap: Spacing.three,
+    gap: 2,
+    marginTop: 6,
   },
-  contactItemText: {
+  readMoreText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  reviewsHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+
+  // Disclaimer
+  disclaimerBox: {
+    marginHorizontal: Spacing.four,
     marginBottom: Spacing.three,
+    padding: Spacing.three,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  addReviewLink: {
-    color: colors.tint,
+  disclaimerText: {
+    fontSize: 11,
+    lineHeight: 16,
+    fontStyle: 'italic',
+  },
+
+  // Badges
+  badgesContainer: {
+    gap: 8,
+  },
+  badgeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 10,
+  },
+  badgeThumbnail: {
+    width: 32,
+    height: 32,
+    borderRadius: 4,
+  },
+  badgeInfo: {
+    flex: 1,
+  },
+  badgeName: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '700',
+  },
+  badgeMeta: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+
+  // Serviços
+  servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  serviceChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+  },
+  serviceChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // Avaliações
+  evalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    marginBottom: 16,
+  },
+  evalBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   reviewForm: {
-    padding: Spacing.four,
-    borderRadius: Spacing.three,
-    gap: Spacing.two,
-    marginBottom: Spacing.three,
+    padding: 16,
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 10,
+    marginBottom: 16,
   },
   formLabel: {
     fontSize: 13,
@@ -635,48 +1094,48 @@ const styles = StyleSheet.create({
   },
   starsRow: {
     flexDirection: 'row',
-    gap: Spacing.two,
-    marginVertical: Spacing.one,
+    gap: 8,
   },
   formInput: {
     height: 40,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.sm,
     borderWidth: 1,
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: 12,
     fontSize: 13,
   },
   formTextarea: {
-    borderRadius: Spacing.two,
+    borderRadius: Radius.sm,
     borderWidth: 1,
-    padding: Spacing.three,
+    padding: 12,
     fontSize: 13,
     textAlignVertical: 'top',
+    minHeight: 80,
   },
   submitReviewBtn: {
     height: 40,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    marginTop: Spacing.one,
   },
   submitReviewBtnText: {
-    color: colors.backgroundElement,
+    color: '#fff',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
-  emptyReviewsText: {
+  emptyText: {
     fontSize: 13,
     fontStyle: 'italic',
-    paddingVertical: Spacing.two,
+    paddingVertical: 8,
+    textAlign: 'center',
   },
   reviewsList: {
-    gap: Spacing.three,
+    gap: 12,
   },
   reviewCard: {
-    paddingVertical: Spacing.three,
-    borderBottomWidth: 1,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   reviewHeader: {
     flexDirection: 'row',
@@ -686,7 +1145,7 @@ const styles = StyleSheet.create({
   },
   reviewerName: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   reviewStars: {
     flexDirection: 'row',
@@ -701,100 +1160,70 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  reviewDate: {
-    fontSize: 10,
-    marginTop: Spacing.two,
-  },
-  servicesHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  viewAllBtn: {
+    paddingVertical: 12,
+    borderRadius: Radius.md,
     alignItems: 'center',
-    marginBottom: Spacing.two,
+    marginTop: 8,
   },
-  viewServicesLink: {
-    color: colors.tint,
+  viewAllText: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
-  servicesGrid: {
+
+  // Contato
+  contactList: {
+    gap: 10,
+  },
+  contactItem: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 12,
   },
-  serviceChip: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
-  },
-  serviceChipText: {
-    fontSize: 12,
+  contactItemText: {
+    fontSize: 13,
     fontWeight: '500',
-  },
-  viewAllReviewsBtn: {
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.two,
-  },
-  viewAllReviewsText: {
-    color: colors.tint,
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 4,
-    marginBottom: 4,
-  },
-  categoryBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  categoryBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  planBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  planBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  badgesContainer: {
-    gap: Spacing.two,
-  },
-  badgeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.two,
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-    gap: Spacing.two,
-  },
-  badgeThumbnail: {
-    width: 36,
-    height: 36,
-    borderRadius: 4,
-  },
-  badgeInfo: {
     flex: 1,
   },
-  badgeName: {
-    fontSize: 13,
-    fontWeight: 'bold',
+
+  // Sticky bottom bar
+  stickyBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingTop: 10,
+    paddingHorizontal: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    // Blur não é suportado nativamente via StyleSheet; usar na web
   },
-  badgeMeta: {
-    fontSize: 11,
+  ctaPrimary: {
+    flex: 1,
+    height: 48,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.md,
+  },
+  ctaPrimaryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.1,
+  },
+  ctaSecondary: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
 });
