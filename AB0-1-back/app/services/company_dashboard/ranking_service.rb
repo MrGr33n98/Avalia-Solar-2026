@@ -27,7 +27,7 @@ module CompanyDashboard
       @sector = sector.to_s.strip.presence
       @history_days = [[history_days.to_i, 7].max, 365].min
       @quadrant_mode = quadrant_mode == 'reviews' ? 'reviews' : 'default'
-      @positioning_version = positioning_version.to_s.strip.presence || Positioning::Definition::VERSION
+      @positioning_version = positioning_version.to_s.strip.presence || Positioning::Definition::DEFAULT_VERSION
     end
 
     def ad_hoc_preview?

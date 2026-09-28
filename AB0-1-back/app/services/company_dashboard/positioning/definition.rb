@@ -7,6 +7,7 @@ module CompanyDashboard
     module Definition
       VERSION = 'positioning-v1'
       VERSION_V2 = 'positioning-v2'
+      DEFAULT_VERSION = VERSION_V2
       THRESHOLD_METHOD = 'median'
 
       X_AXIS = {

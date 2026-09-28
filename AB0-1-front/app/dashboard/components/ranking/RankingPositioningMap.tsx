@@ -90,7 +90,7 @@ export function RankingPositioningMap({
   const resolvedLabel = scopeLabel(quadrant?.resolved_scope);
   const population = quadrant?.population;
   const methodologyVersion =
-    quadrant?.methodology?.version || meta?.methodology_version || 'positioning-v1';
+    quadrant?.methodology?.version || meta?.methodology_version || 'positioning-v2';
 
   // Objeto da empresa selecionada para o Inspector lateral (default para current company)
   const selectedPoint =

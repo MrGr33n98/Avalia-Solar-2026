@@ -5,6 +5,7 @@ require 'rails_helper'
 RSpec.describe CompanyDashboard::Positioning::Definition do
   it 'mantém a versão e os pesos governados pela plataforma' do
     expect(described_class::VERSION).to eq('positioning-v1')
+    expect(described_class::DEFAULT_VERSION).to eq('positioning-v2')
     expect(described_class::X_AXIS.values.sum).to eq(1.0)
     expect(described_class::Y_AXIS.values.sum).to eq(0.9)
     expect(described_class::CAPS).to be_frozen

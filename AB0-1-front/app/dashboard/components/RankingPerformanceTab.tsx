@@ -120,7 +120,7 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
   const rankingQuery = useQuery({
     queryKey: [
       'company-analytics-ranking', company.id, selectedCategoryId, selectedCriterionSlug, selectedState,
-      debouncedCity, selectedSector, quadrantMode, historyDays,
+      debouncedCity, selectedSector, quadrantMode, historyDays, 'positioning-v2',
     ],
     queryFn: () => companyDashboardApi.getRanking(
       company.id,
@@ -130,7 +130,8 @@ export default function RankingPerformanceTab({ company, stats: _stats, themeMod
       debouncedCity || undefined,
       selectedSector === 'all' ? undefined : selectedSector,
       quadrantMode,
-      Number(historyDays)
+      Number(historyDays),
+      'positioning-v2'
     ),
     enabled: Boolean(company.id),
     staleTime: 30_000,

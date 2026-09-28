@@ -2481,7 +2481,8 @@ export const companyDashboardApi = {
     city?: string,
     sector?: string,
     quadrantMode?: 'default' | 'reviews',
-    historyDays: number = 90
+    historyDays: number = 90,
+    positioningVersion: string = 'positioning-v2'
   ) =>
     fetchApi<unknown>('/company_dashboard/analytics/ranking', {
       params: {
@@ -2493,6 +2494,7 @@ export const companyDashboardApi = {
         sector: sector,
         quadrant_mode: quadrantMode,
         history_days: historyDays,
+        positioning_version: positioningVersion,
       },
     }).then(parseRankingData),
   getRankingFilterOptions: (companyId?: string | number, state?: string) =>

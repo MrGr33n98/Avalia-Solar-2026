@@ -548,12 +548,12 @@ export default function MagicQuadrant({
                   strokeWidth={1.5}
                   label={{
                     value: `Mediana Execução: ${yThreshold.toFixed(1)}`,
-                    position: yThreshold < 15 ? 'insideTopLeft' : 'insideLeft',
+                    position: yThreshold < 15 ? 'insideTopRight' : 'insideLeft',
                     fill: '#1d4ed8',
                     fontSize: 10,
                     fontWeight: 600,
                     dy: yThreshold < 15 ? -10 : 0,
-                    dx: 10,
+                    dx: yThreshold < 15 ? -14 : 10,
                   }}
                 />
               </>
