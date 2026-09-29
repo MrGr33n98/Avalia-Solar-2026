@@ -172,10 +172,24 @@ export function PremiumBannerCarousel({
           <>
             {/* Arrows: Always visible on mobile, hover on desktop */}
             <div className="absolute inset-y-0 left-0 z-10 flex items-center px-1 opacity-100 transition-opacity duration-300 md:px-2 md:opacity-0 md:group-hover:opacity-100">
-              <CarouselPrevious className="relative left-0 h-8 w-8 border border-white/40 !bg-black/20 p-1 text-white shadow-none backdrop-blur-sm hover:!bg-black/35 hover:text-white [&>svg]:h-6 [&>svg]:w-6 md:h-9 md:w-9" />
+              <CarouselPrevious
+                className={cn(
+                  'relative left-0 border border-white/40 !bg-black/30 p-1 text-white shadow-none backdrop-blur-sm hover:!bg-black/50 hover:text-white',
+                  compactControls
+                    ? 'h-6 w-6 [&>svg]:h-3.5 [&>svg]:w-3.5 md:h-7 md:w-7 md:[&>svg]:h-4 md:[&>svg]:w-4'
+                    : 'h-7 w-7 [&>svg]:h-4 [&>svg]:w-4 md:h-8 md:w-8 md:[&>svg]:h-4.5 md:[&>svg]:w-4.5'
+                )}
+              />
             </div>
             <div className="absolute inset-y-0 right-0 z-10 flex items-center px-1 opacity-100 transition-opacity duration-300 md:px-2 md:opacity-0 md:group-hover:opacity-100">
-              <CarouselNext className="relative right-0 h-8 w-8 border border-white/40 !bg-black/20 p-1 text-white shadow-none backdrop-blur-sm hover:!bg-black/35 hover:text-white [&>svg]:h-6 [&>svg]:w-6 md:h-9 md:w-9" />
+              <CarouselNext
+                className={cn(
+                  'relative right-0 border border-white/40 !bg-black/30 p-1 text-white shadow-none backdrop-blur-sm hover:!bg-black/50 hover:text-white',
+                  compactControls
+                    ? 'h-6 w-6 [&>svg]:h-3.5 [&>svg]:w-3.5 md:h-7 md:w-7 md:[&>svg]:h-4 md:[&>svg]:w-4'
+                    : 'h-7 w-7 [&>svg]:h-4 [&>svg]:w-4 md:h-8 md:w-8 md:[&>svg]:h-4.5 md:[&>svg]:w-4.5'
+                )}
+              />
             </div>
 
             {/* On desktop the progress control stays inside the banner. */}
