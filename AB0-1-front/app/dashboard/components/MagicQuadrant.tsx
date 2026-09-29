@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
-import React from 'react';
+import React, { useMemo, useState, useRef, useCallback, useId } from 'react';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -9,16 +10,38 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ReferenceArea,
   ReferenceLine,
+  ReferenceArea,
 } from 'recharts';
-import { Trophy, Zap, TrendingUp, Target } from 'lucide-react';
+import {
+  Trophy,
+  Zap,
+  TrendingUp,
+  Target,
+  Star,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  X,
+  CheckCircle2,
+} from 'lucide-react';
 import type { PositioningThresholds, PositioningPoint } from '@/lib/api';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface VisualQuadrantData extends PositioningPoint {
   display_x: number;
   display_y: number;
+  raw_x: number;
+  raw_y: number;
+  cluster_id?: string;
+}
+
+interface ClusterNode {
+  id: string;
+  cx: number;
+  cy: number;
+  members: VisualQuadrantData[];
 }
 
 interface Props {
@@ -35,337 +58,429 @@ interface Props {
   onSelectCompany?: (point: PositioningPoint) => void;
 }
 
-interface TooltipPayload {
-  payload: VisualQuadrantData;
-}
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-interface QuadrantTooltipProps {
-  active?: boolean;
-  payload?: TooltipPayload[];
-  criterionTitle?: string;
-  xAxisLabel: string;
-  yAxisLabel: string;
-}
+const COLLISION_RADIUS = 4.5;
+const CLUSTER_THRESHOLD = 4;
+const FORCE_ITERATIONS = 40;
+const FORCE_STRENGTH = 0.55;
+const MIN_DIST = 5.5;
 
-interface CompanyLogoShapeProps {
-  cx?: number;
-  cy?: number;
-  payload?: VisualQuadrantData;
-  selectedCompanyId?: number | null;
-  onSelectCompany?: (point: PositioningPoint) => void;
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getCompanyInitials(name: string) {
   return name
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0])
+    .map((p) => p[0])
     .join('')
     .toUpperCase();
 }
 
-const CustomTooltip = ({
-  active,
-  payload,
-  criterionTitle,
-  xAxisLabel,
-  yAxisLabel,
-}: QuadrantTooltipProps) => {
-  const data = payload?.[0]?.payload;
-  if (active && data) {
-    const xScore = data.x_score ?? data.completeness_of_vision ?? 0;
-    const yScore = data.y_score ?? data.ability_to_execute ?? 0;
-    return (
-      <div className="min-w-[190px] rounded-xl border border-slate-200/90 bg-white/95 p-3 text-xs shadow-xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200 dark:border-slate-800 dark:bg-slate-900/95">
-        <div className="mb-2 flex items-center gap-2.5 border-b border-slate-100 pb-2 dark:border-slate-800">
-          {data.logo_url ? (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200/80 bg-white p-1 shadow-xs dark:border-slate-700">
-              <Image
-                src={data.logo_url}
-                alt={data.name}
-                width={32}
-                height={32}
-                className="h-full w-full object-contain"
-              />
-            </div>
-          ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-[11px] font-bold text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
-              {getCompanyInitials(data.name)}
-            </div>
-          )}
-          <div className="min-w-0">
-            <p className="truncate font-bold tracking-tight text-slate-900 dark:text-white">
-              {data.name}
-            </p>
-            <p className="text-[10px] font-semibold text-slate-400">
-              {data.is_current_company ? 'SUA EMPRESA' : 'EMPRESA COMPARADA'}
-            </p>
-          </div>
-        </div>
-        <div className="space-y-1.5 text-[11px]">
-          <div className="flex justify-between text-slate-600 dark:text-slate-400">
-            <span>{xAxisLabel}:</span>
-            <span className="font-mono font-bold text-slate-900 dark:text-white">
-              {xScore.toFixed(1)}
-            </span>
-          </div>
-          <div className="flex justify-between text-slate-600 dark:text-slate-400">
-            <span>{yAxisLabel}:</span>
-            <span className="font-mono font-bold text-slate-900 dark:text-white">
-              {yScore.toFixed(1)}
-            </span>
-          </div>
-          {criterionTitle && data.criterion_score != null && (
-            <div className="flex justify-between text-slate-600 dark:text-slate-400">
-              <span>{criterionTitle}:</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-white">
-                {Number(data.criterion_score).toFixed(2)}
-              </span>
-            </div>
-          )}
-          {data.quadrant_label && (
-            <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800 flex justify-between text-[10px] text-slate-500">
-              <span>Quadrante:</span>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">
-                {data.quadrant_label}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
+function quadrantOf(
+  x: number,
+  y: number,
+  xT: number,
+  yT: number
+): 'leaders' | 'expanding' | 'specialists' | 'developing' {
+  if (x >= xT && y >= yT) return 'leaders';
+  if (x < xT && y >= yT) return 'expanding';
+  if (x >= xT && y < yT) return 'specialists';
+  return 'developing';
+}
 
-const CompanyLogoShape = ({
-  cx = 0,
-  cy = 0,
-  payload,
-  selectedCompanyId,
-  onSelectCompany,
-}: CompanyLogoShapeProps) => {
-  if (!payload) return null;
+// ─── Force-based anti-collision ───────────────────────────────────────────────
 
-  const isCurrent = payload.is_current_company;
-  const isSelected = selectedCompanyId != null && payload.id === selectedCompanyId;
-  const hasLogo = Boolean(payload.logo_url);
-  const size = isCurrent ? 44 : hasLogo ? 34 : 14;
-  const halfSize = size / 2;
+export function applyForceRepulsion(
+  points: PositioningPoint[]
+): { nodes: VisualQuadrantData[]; clusters: ClusterNode[] } {
+  if (!points || points.length === 0) return { nodes: [], clusters: [] };
 
-  // Pontos de fundo simples (nuvem comparada de mercado sem logo)
-  if (!hasLogo && !isCurrent) {
-    return (
-      <g
-        className="cursor-pointer transition-transform hover:scale-125"
-        onClick={() => onSelectCompany?.(payload)}
-        role="button"
-        tabIndex={0}
-        aria-label={payload.name}
-      >
-        <circle
-          cx={cx}
-          cy={cy}
-          r={isSelected ? 6 : 4.5}
-          fill="hsl(217, 91%, 60%)"
-          fillOpacity={0.65}
-          stroke={isSelected ? '#2563eb' : '#93c5fd'}
-          strokeWidth={isSelected ? 2 : 1}
-        />
-      </g>
-    );
-  }
-
-  // Pontos com logo ou Current Company
-  const ringColor = isCurrent
-    ? '#10b981'
-    : isSelected
-      ? '#2563eb'
-      : '#cbd5e1';
-
-  return (
-    <g
-      className="cursor-pointer transition-all duration-200"
-      onClick={() => onSelectCompany?.(payload)}
-      role="button"
-      tabIndex={0}
-      aria-label={payload.name}
-    >
-      {/* Halo brilhante no nó da empresa atual */}
-      {isCurrent && (
-        <circle
-          cx={cx}
-          cy={cy}
-          r={halfSize + 8}
-          fill="rgba(16, 185, 129, 0.15)"
-          className="motion-safe:animate-pulse"
-        />
-      )}
-
-      {/* Halo de seleção em nós de concorrentes */}
-      {isSelected && !isCurrent && (
-        <circle
-          cx={cx}
-          cy={cy}
-          r={halfSize + 6}
-          fill="rgba(37, 99, 235, 0.12)"
-        />
-      )}
-
-      {/* Disco branco de fundo com sombra e contorno */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={halfSize + 1.5}
-        fill="#ffffff"
-        stroke={ringColor}
-        strokeWidth={isCurrent || isSelected ? 2.5 : 1.5}
-        className="drop-shadow-sm filter"
-      />
-
-      {/* Conteúdo interno: Logo ou iniciais */}
-      {payload.logo_url ? (
-        <foreignObject
-          x={cx - halfSize + 2}
-          y={cy - halfSize + 2}
-          width={size - 4}
-          height={size - 4}
-        >
-          <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white p-1">
-            <Image
-              src={payload.logo_url}
-              alt={payload.name}
-              width={size - 4}
-              height={size - 4}
-              className="h-full w-full object-contain"
-            />
-          </div>
-        </foreignObject>
-      ) : (
-        <text
-          x={cx}
-          y={cy}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className="pointer-events-none text-[9px] font-black uppercase fill-slate-700"
-        >
-          {getCompanyInitials(payload.name)}
-        </text>
-      )}
-
-      {/* CALLOUT VISUAL "Sua empresa" (Pílula verde idêntica à referência) */}
-      {isCurrent && (
-        <g transform={`translate(${cx + halfSize + 4}, ${cy - 10})`}>
-          <rect
-            x={0}
-            y={0}
-            width={74}
-            height={20}
-            rx={10}
-            fill="#059669"
-            className="filter drop-shadow-sm"
-          />
-          <text
-            x={37}
-            y={14}
-            textAnchor="middle"
-            fill="#ffffff"
-            fontSize={10}
-            fontWeight="bold"
-            className="pointer-events-none"
-          >
-            Sua empresa
-          </text>
-        </g>
-      )}
-
-      {/* NOME DA EMPRESA LÍDER IMPRESSO AO LADO (Discreto, se houver logo e não for a current) */}
-      {!isCurrent && hasLogo && (
-        <text
-          x={cx + halfSize + 5}
-          y={cy + 3.5}
-          fontSize={10}
-          fontWeight="bold"
-          className="pointer-events-none fill-slate-800 dark:fill-slate-100"
-        >
-          {payload.name}
-        </text>
-      )}
-    </g>
-  );
-};
-
-export function applyDeterministicJitter(points: PositioningPoint[]): VisualQuadrantData[] {
-  if (!points || points.length === 0) return [];
-
-  const prepared: VisualQuadrantData[] = points.map((p) => {
-    const rawX = p.x_score ?? p.completeness_of_vision ?? 0;
-    const rawY = p.y_score ?? p.ability_to_execute ?? 0;
-    return {
-      ...p,
-      x_score: rawX,
-      y_score: rawY,
-      display_x: rawX,
-      display_y: rawY,
-    };
+  const nodes: VisualQuadrantData[] = points.map((p) => {
+    const rawX = p.x_score ?? (p as any).completeness_of_vision ?? 0;
+    const rawY = p.y_score ?? (p as any).ability_to_execute ?? 0;
+    return { ...p, x_score: rawX, y_score: rawY, display_x: rawX, display_y: rawY, raw_x: rawX, raw_y: rawY };
   });
 
-  const COLLISION_RADIUS = 3.6;
-  const clusters: VisualQuadrantData[][] = [];
-  const assigned = new Set<number>();
+  const assignedToCluster = new Set<number>();
+  const clusters: ClusterNode[] = [];
 
-  for (let i = 0; i < prepared.length; i++) {
-    if (assigned.has(prepared[i].id)) continue;
-    const cluster: VisualQuadrantData[] = [prepared[i]];
-    assigned.add(prepared[i].id);
-
-    for (let j = i + 1; j < prepared.length; j++) {
-      if (assigned.has(prepared[j].id)) continue;
-      const dx = prepared[i].x_score! - prepared[j].x_score!;
-      const dy = prepared[i].y_score! - prepared[j].y_score!;
-      const dist = Math.hypot(dx, dy);
-      if (dist < COLLISION_RADIUS) {
-        cluster.push(prepared[j]);
-        assigned.add(prepared[j].id);
+  for (let i = 0; i < nodes.length; i++) {
+    if (assignedToCluster.has(nodes[i].id)) continue;
+    const nearby = nodes.filter((n) => {
+      if (n.id === nodes[i].id || assignedToCluster.has(n.id)) return false;
+      return Math.hypot(nodes[i].raw_x - n.raw_x, nodes[i].raw_y - n.raw_y) < COLLISION_RADIUS;
+    });
+    if (nearby.length + 1 >= CLUSTER_THRESHOLD && !nodes[i].is_current_company) {
+      const members = [nodes[i], ...nearby].filter((n) => !n.is_current_company);
+      if (members.length >= CLUSTER_THRESHOLD) {
+        const cid = `cluster-${i}`;
+        const cx = members.reduce((s, n) => s + n.raw_x, 0) / members.length;
+        const cy = members.reduce((s, n) => s + n.raw_y, 0) / members.length;
+        clusters.push({ id: cid, cx, cy, members });
+        members.forEach((m) => { assignedToCluster.add(m.id); m.cluster_id = cid; });
       }
     }
-    clusters.push(cluster);
   }
 
-  clusters.forEach((cluster) => {
-    if (cluster.length <= 1) return;
+  const activeNodes = nodes.filter((n) => !assignedToCluster.has(n.id));
 
-    const currentIdx = cluster.findIndex((p) => p.is_current_company);
-    let others: VisualQuadrantData[];
-
-    if (currentIdx !== -1) {
-      others = cluster.filter((_, idx) => idx !== currentIdx);
-    } else {
-      others = cluster.slice(1);
+  for (let iter = 0; iter < FORCE_ITERATIONS; iter++) {
+    for (let i = 0; i < activeNodes.length; i++) {
+      for (let j = i + 1; j < activeNodes.length; j++) {
+        const dx = activeNodes[i].display_x - activeNodes[j].display_x;
+        const dy = activeNodes[i].display_y - activeNodes[j].display_y;
+        const dist = Math.hypot(dx, dy) || 0.001;
+        if (dist < MIN_DIST) {
+          const overlap = (MIN_DIST - dist) / 2;
+          const nx = (dx / dist) * overlap * FORCE_STRENGTH;
+          const ny = (dy / dist) * overlap * FORCE_STRENGTH;
+          if (!activeNodes[i].is_current_company) {
+            activeNodes[i].display_x = Math.max(2, Math.min(98, activeNodes[i].display_x + nx));
+            activeNodes[i].display_y = Math.max(2, Math.min(98, activeNodes[i].display_y + ny));
+          }
+          if (!activeNodes[j].is_current_company) {
+            activeNodes[j].display_x = Math.max(2, Math.min(98, activeNodes[j].display_x - nx));
+            activeNodes[j].display_y = Math.max(2, Math.min(98, activeNodes[j].display_y - ny));
+          }
+        }
+      }
     }
+  }
 
-    others.sort((a, b) => a.id - b.id);
-    const count = others.length;
-    const dispersionRadius = Math.min(4.0, 2.4 + count * 0.25);
-
-    others.forEach((p, idx) => {
-      const angle = (2 * Math.PI * idx) / count - Math.PI / 2;
-      const offsetX = Math.cos(angle) * dispersionRadius;
-      const offsetY = Math.sin(angle) * dispersionRadius;
-
-      p.display_x = Math.max(4, Math.min(96, +(p.x_score! + offsetX).toFixed(2)));
-      p.display_y = Math.max(4, Math.min(96, +(p.y_score! + offsetY).toFixed(2)));
-    });
-  });
-
-  // Current company renders LAST (highest SVG stacking order, visible on top)
-  return prepared.sort((a, b) => {
+  const sorted = activeNodes.sort((a, b) => {
     if (a.is_current_company && !b.is_current_company) return 1;
     if (!a.is_current_company && b.is_current_company) return -1;
     return a.id - b.id;
   });
+
+  return { nodes: sorted, clusters };
 }
+
+/** @deprecated use applyForceRepulsion */
+export const applyDeterministicJitter = (points: PositioningPoint[]) =>
+  applyForceRepulsion(points).nodes;
+
+// ─── Quadrant configs ─────────────────────────────────────────────────────────
+
+const QUADRANT_CONFIG = {
+  leaders: {
+    label: 'Referências',
+    icon: Trophy,
+    pill: 'border-emerald-200/90 bg-emerald-50/95 text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/50 dark:text-emerald-300',
+    iconCls: 'text-emerald-600',
+    fill: 'rgba(16, 185, 129, 0.038)',
+  },
+  expanding: {
+    label: 'Em Expansão',
+    icon: Zap,
+    pill: 'border-amber-200/90 bg-amber-50/95 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/50 dark:text-amber-300',
+    iconCls: 'text-amber-500',
+    fill: 'rgba(245, 158, 11, 0.028)',
+  },
+  specialists: {
+    label: 'Especialistas',
+    icon: Target,
+    pill: 'border-purple-200/90 bg-purple-50/95 text-purple-900 dark:border-purple-900/40 dark:bg-purple-950/50 dark:text-purple-300',
+    iconCls: 'text-purple-600',
+    fill: 'rgba(147, 51, 234, 0.028)',
+  },
+  developing: {
+    label: 'Em Desenvolvimento',
+    icon: TrendingUp,
+    pill: 'border-slate-200/90 bg-slate-100/95 text-slate-700 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300',
+    iconCls: 'text-slate-500',
+    fill: 'rgba(100, 116, 139, 0.022)',
+  },
+};
+
+// ─── Rich Tooltip ─────────────────────────────────────────────────────────────
+
+function RichTooltip({
+  point,
+  xAxisLabel,
+  yAxisLabel,
+  xThreshold,
+  yThreshold,
+  onClose,
+  onSelectCompany,
+}: {
+  point: VisualQuadrantData;
+  xAxisLabel: string;
+  yAxisLabel: string;
+  xThreshold: number | null;
+  yThreshold: number | null;
+  onClose: () => void;
+  onSelectCompany?: (p: PositioningPoint) => void;
+}) {
+  const x = point.x_score ?? 0;
+  const y = point.y_score ?? 0;
+  const quadrant = quadrantOf(x, y, xThreshold ?? 50, yThreshold ?? 50);
+  const qConfig = QUADRANT_CONFIG[quadrant];
+  const QIcon = qConfig.icon;
+  const rating = (point as any).rating ?? (point as any).trust_score ?? null;
+  const reviewCount = (point as any).review_count ?? (point as any).reviews_count ?? null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92, y: 6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.92, y: 6 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      className="w-64 rounded-xl border border-slate-200/60 bg-white/95 p-4 shadow-2xl backdrop-blur-xl dark:border-slate-700/60 dark:bg-zinc-900/95"
+    >
+      <div className="mb-3 flex items-start gap-2.5 border-b border-slate-100 pb-3 dark:border-slate-800">
+        <div className="relative shrink-0">
+          {point.logo_url ? (
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200/80 bg-white p-1 shadow-md dark:border-slate-700">
+              <Image src={point.logo_url} alt={point.name} width={36} height={36} className="h-full w-full object-contain" />
+            </div>
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-[11px] font-black text-white">
+              {getCompanyInitials(point.name)}
+            </div>
+          )}
+          {point.is_current_company && (
+            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900">
+              <CheckCircle2 className="h-2.5 w-2.5 text-white" />
+            </span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold tracking-tight text-slate-900 dark:text-white">{point.name}</p>
+          <div className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${qConfig.pill}`}>
+            <QIcon className={`h-2.5 w-2.5 ${qConfig.iconCls}`} />
+            {qConfig.label}
+          </div>
+        </div>
+        <button className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={onClose} aria-label="Fechar">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="mb-3 space-y-2.5">
+        {[{ label: xAxisLabel, val: x, color: 'bg-blue-500' }, { label: yAxisLabel, val: y, color: 'bg-emerald-500' }].map(({ label, val, color }) => (
+          <div key={label}>
+            <div className="mb-1 flex justify-between text-[11px]">
+              <span className="font-medium text-slate-500 dark:text-slate-400">{label}</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-white">{val.toFixed(1)}</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <motion.div className={`h-full rounded-full ${color}`} initial={{ width: 0 }} animate={{ width: `${val}%` }} transition={{ duration: 0.5 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {(rating != null || reviewCount != null) && (
+        <div className="mb-3 flex items-center gap-1.5 rounded-lg border border-amber-100 bg-amber-50/60 px-2.5 py-2 text-[11px] dark:border-amber-900/30 dark:bg-amber-950/20">
+          <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" />
+          {rating != null && <span className="font-bold text-slate-800 dark:text-white">{Number(rating).toFixed(1)}</span>}
+          {reviewCount != null && <span className="text-slate-500 dark:text-slate-400">· {reviewCount} avaliações</span>}
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300" onClick={() => onSelectCompany?.(point)}>
+          Ver ficha técnica
+        </button>
+        <button className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-300">
+          + Comparar
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Cluster Expand Panel ─────────────────────────────────────────────────────
+
+function ClusterExpandPanel({ members, onClose, onSelectCompany }: { members: VisualQuadrantData[]; onClose: () => void; onSelectCompany?: (p: PositioningPoint) => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 16 }}
+      transition={{ duration: 0.2 }}
+      className="absolute bottom-4 left-1/2 z-50 w-72 -translate-x-1/2 rounded-2xl border border-slate-200/60 bg-white/96 p-4 shadow-2xl backdrop-blur-xl dark:border-slate-700/60 dark:bg-zinc-900/96"
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-sm font-bold text-slate-800 dark:text-white">{members.length} empresas nesta região</p>
+        <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-4 w-4" /></button>
+      </div>
+      <ul className="max-h-48 space-y-2 overflow-y-auto">
+        {members.map((m) => (
+          <li key={m.id}>
+            <button className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800" onClick={() => { onSelectCompany?.(m); onClose(); }}>
+              {m.logo_url
+                ? <Image src={m.logo_url} alt={m.name} width={24} height={24} className="h-6 w-6 rounded-full object-contain border border-slate-200" />
+                : <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-[9px] font-black text-blue-700">{getCompanyInitials(m.name)}</div>
+              }
+              <div className="min-w-0">
+                <p className="truncate text-[12px] font-semibold text-slate-800 dark:text-white">{m.name}</p>
+                <p className="text-[10px] text-slate-500">X: {(m.x_score ?? 0).toFixed(1)} · Y: {(m.y_score ?? 0).toFixed(1)}</p>
+              </div>
+              <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-slate-400" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </motion.div>
+  );
+}
+
+// ─── Node Shape ───────────────────────────────────────────────────────────────
+
+function NodeShape({
+  cx = 0, cy = 0, payload,
+  selectedId, hoveredId,
+  onHover, onClick,
+  xThreshold, yThreshold,
+  onNodePosition,
+}: {
+  cx?: number; cy?: number;
+  payload?: VisualQuadrantData;
+  selectedId: number | null; hoveredId: number | null;
+  onHover: (p: VisualQuadrantData | null) => void;
+  onClick: (p: VisualQuadrantData) => void;
+  xThreshold: number | null; yThreshold: number | null;
+  onNodePosition: (x: number, y: number) => void;
+}) {
+  if (!payload || payload.cluster_id) return null;
+
+  const isCurrent = payload.is_current_company;
+  const isSelected = selectedId != null && payload.id === selectedId;
+  const isHovered = hoveredId != null && payload.id === hoveredId;
+  const hasLogo = Boolean(payload.logo_url);
+  const isPaid = Boolean((payload as any).has_paid_plan || (payload as any).commercial_status?.paid);
+  const isVerified = Boolean((payload as any).is_verified || (payload as any).verified);
+  const size = isCurrent ? 46 : 36;
+  const hs = size / 2;
+
+  const ddx = payload.display_x - payload.raw_x;
+  const ddy = payload.display_y - payload.raw_y;
+  const displaced = Math.hypot(ddx, ddy) > 2.5;
+
+  const strokeColor = isCurrent ? '#10b981' : isPaid ? '#f59e0b' : isSelected || isHovered ? '#3b82f6' : '#cbd5e1';
+  const strokeWidth = isCurrent || isPaid ? 2.5 : isSelected || isHovered ? 2 : 1.5;
+
+  const handleClick = useCallback(() => {
+    onClick(payload!);
+    onNodePosition(cx, cy);
+  }, [cx, cy, onClick, onNodePosition, payload]);
+
+  return (
+    <g
+      className="cursor-pointer"
+      onClick={handleClick}
+      onMouseEnter={() => onHover(payload)}
+      onMouseLeave={() => onHover(null)}
+      role="button"
+      tabIndex={0}
+      aria-label={payload.name}
+      onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+    >
+      {displaced && (
+        <line
+          x1={cx} y1={cy}
+          x2={cx - (ddx / (Math.abs(ddx) || 1)) * (hs + 20)}
+          y2={cy - (ddy / (Math.abs(ddy) || 1)) * (hs + 20)}
+          stroke="#cbd5e1" strokeDasharray="3 3" strokeWidth={1} strokeOpacity={0.6}
+          className="pointer-events-none dark:stroke-zinc-700"
+        />
+      )}
+
+      {(isCurrent || isHovered || isSelected) && (
+        <circle cx={cx} cy={cy} r={hs + 9}
+          fill={isCurrent ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.10)'}
+          className={isCurrent ? 'animate-pulse' : undefined}
+        />
+      )}
+
+      <circle cx={cx} cy={cy} r={hs + 2}
+        fill="#ffffff" stroke={strokeColor} strokeWidth={strokeWidth}
+        className="drop-shadow-sm filter transition-all duration-200 dark:fill-slate-900"
+      />
+
+      {hasLogo ? (
+        <foreignObject x={cx - hs + 2} y={cy - hs + 2} width={size - 4} height={size - 4}>
+          <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white p-0.5 dark:bg-slate-900">
+            <Image src={payload.logo_url!} alt={payload.name} width={size - 6} height={size - 6} className="h-full w-full object-contain" />
+          </div>
+        </foreignObject>
+      ) : (
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central"
+          fontSize={isCurrent ? 11 : 9} fontWeight="900"
+          className="pointer-events-none fill-slate-700 dark:fill-slate-200">
+          {getCompanyInitials(payload.name)}
+        </text>
+      )}
+
+      {isPaid && !isCurrent && <circle cx={cx + hs - 2} cy={cy - hs + 2} r={5} fill="#f59e0b" stroke="#fff" strokeWidth={1.2} />}
+      {isVerified && !isPaid && !isCurrent && <circle cx={cx + hs - 2} cy={cy - hs + 2} r={5} fill="#3b82f6" stroke="#fff" strokeWidth={1.2} />}
+
+      {isCurrent && (
+        <g transform={`translate(${cx - 34}, ${cy + hs + 5})`}>
+          <rect x={0} y={0} width={68} height={17} rx={8.5} fill="#059669" className="drop-shadow-sm filter" />
+          <text x={34} y={12} textAnchor="middle" fill="#fff" fontSize={9} fontWeight="800" letterSpacing={0.5}>SUA EMPRESA</text>
+        </g>
+      )}
+
+      {!isCurrent && hasLogo && (
+        <foreignObject x={cx + hs + 4} y={cy - 9} width={100} height={18}>
+          <div className="pointer-events-none max-w-[96px] overflow-hidden truncate rounded-md border border-slate-100 bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold tracking-tight text-slate-700 shadow-xs backdrop-blur-sm dark:border-slate-700 dark:bg-zinc-900/90 dark:text-zinc-200">
+            {payload.name}
+          </div>
+        </foreignObject>
+      )}
+    </g>
+  );
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function MapHeader({ viewMode, setViewMode, populationSize, resolvedScope }: {
+  viewMode: 'map' | 'table';
+  setViewMode: (v: 'map' | 'table') => void;
+  populationSize: number;
+  resolvedScope?: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+      <div>
+        <p className="text-sm font-bold text-slate-800 dark:text-white">Mapa de Posicionamento</p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">{populationSize} empresas{resolvedScope ? ` · ${resolvedScope}` : ''}</p>
+      </div>
+      <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800">
+        {(['map', 'table'] as const).map((mode) => (
+          <button key={mode} onClick={() => setViewMode(mode)}
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${viewMode === mode ? 'bg-white text-slate-800 shadow-xs dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>
+            {mode === 'map' ? <LayoutGrid className="h-3.5 w-3.5" /> : <List className="h-3.5 w-3.5" />}
+            <span className="hidden sm:inline">{mode === 'map' ? 'Mapa' : 'Ranking'}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function QuadrantBadge({ cfg, position }: {
+  cfg: (typeof QUADRANT_CONFIG)[keyof typeof QUADRANT_CONFIG];
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+}) {
+  const Icon = cfg.icon;
+  const posClass = { 'top-left': 'left-10 top-10', 'top-right': 'right-8 top-10', 'bottom-left': 'bottom-14 left-10', 'bottom-right': 'bottom-14 right-8' }[position];
+  return (
+    <div className={`absolute ${posClass}`}>
+      <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider shadow-2xs backdrop-blur-sm ${cfg.pill}`}>
+        <Icon className={`h-2.5 w-2.5 ${cfg.iconCls}`} />
+        {cfg.label}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function MagicQuadrant({
   data,
@@ -377,266 +492,173 @@ export default function MagicQuadrant({
   thresholds,
   populationSize,
   resolvedScope,
-  selectedCompanyId,
+  selectedCompanyId: externalSelectedId,
   onSelectCompany,
 }: Props) {
-  const chartData = applyDeterministicJitter(data);
-  const currentCompany = chartData.find((item) => item.is_current_company);
+  const [viewMode, setViewMode] = useState<'map' | 'table'>('map');
+  const [hoveredPoint, setHoveredPoint] = useState<VisualQuadrantData | null>(null);
+  const [selectedPoint, setSelectedPoint] = useState<VisualQuadrantData | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+  const [clusterExpanded, setClusterExpanded] = useState<VisualQuadrantData[] | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selectedId = externalSelectedId ?? selectedPoint?.id ?? null;
   const xThreshold = thresholds?.x_threshold ?? null;
   const yThreshold = thresholds?.y_threshold ?? null;
-  const xValue = currentCompany
-    ? (currentCompany.x_score ?? currentCompany.completeness_of_vision)
-    : null;
-  const yValue = currentCompany
-    ? (currentCompany.y_score ?? currentCompany.ability_to_execute)
-    : null;
+
+  const { nodes: chartData, clusters } = useMemo(() => applyForceRepulsion(data), [data]);
+  const currentCompany = chartData.find((d) => d.is_current_company);
+
+  const handleNodeClick = useCallback((point: VisualQuadrantData) => {
+    setSelectedPoint(point);
+    onSelectCompany?.(point);
+  }, [onSelectCompany]);
+
+  const handleNodePosition = useCallback((svgX: number, svgY: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setTooltipPos({ x: Math.min(svgX + 10, rect.width - 280), y: Math.max(svgY - 200, 8) });
+  }, []);
+
+  const MARGIN = { top: 36, right: 32, bottom: 52, left: 40 };
 
   const textSummary = currentCompany
-    ? 'Mapa com ' +
-      (populationSize ?? data.length) +
-      ' empresas elegíveis' +
-      (resolvedScope ? ' no escopo ' + resolvedScope : '') +
-      '. ' +
-      currentCompany.name +
-      ' está em ' +
-      xValue?.toFixed(1) +
-      ' de ' +
-      xAxisLabel +
-      ' e ' +
-      yValue?.toFixed(1) +
-      ' de ' +
-      yAxisLabel +
-      (xThreshold != null && yThreshold != null
-        ? '. Medianas: ' + xThreshold.toFixed(1) + ' e ' + yThreshold.toFixed(1) + '.'
-        : '.')
-    : 'Mapa com ' +
-      (populationSize ?? data.length) +
-      ' empresas comparadas nos eixos ' +
-      xAxisLabel +
-      ' e ' +
-      yAxisLabel +
-      '.';
+    ? `Mapa com ${populationSize ?? data.length} empresas${resolvedScope ? ' em ' + resolvedScope : ''}. ${currentCompany.name}: X=${(currentCompany.x_score ?? 0).toFixed(1)} / Y=${(currentCompany.y_score ?? 0).toFixed(1)}.`
+    : `Mapa com ${populationSize ?? data.length} empresas comparadas.`;
 
+  // Table mode
+  if (viewMode === 'table') {
+    const sorted = [...chartData].sort((a, b) => (b.x_score ?? 0) + (b.y_score ?? 0) - ((a.x_score ?? 0) + (a.y_score ?? 0)));
+    return (
+      <div className="relative flex w-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <MapHeader viewMode={viewMode} setViewMode={setViewMode} populationSize={populationSize ?? data.length} resolvedScope={resolvedScope} />
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr className="border-b border-slate-100 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <th className="px-4 py-2.5">#</th>
+                <th className="px-4 py-2.5">Empresa</th>
+                <th className="px-4 py-2.5">{xAxisLabel}</th>
+                <th className="px-4 py-2.5">{yAxisLabel}</th>
+                <th className="px-4 py-2.5">Quadrante</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((p, idx) => {
+                const q = xThreshold != null && yThreshold != null ? quadrantOf(p.x_score ?? 0, p.y_score ?? 0, xThreshold, yThreshold) : null;
+                const qc = q ? QUADRANT_CONFIG[q] : null;
+                return (
+                  <tr key={p.id} className={`border-b border-slate-50 hover:bg-slate-50/60 dark:border-slate-800 dark:hover:bg-slate-800/40 ${p.is_current_company ? 'bg-emerald-50/40 dark:bg-emerald-950/20' : ''}`}>
+                    <td className="px-4 py-2.5 font-mono text-slate-400">{idx + 1}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center gap-2">
+                        {p.logo_url ? <Image src={p.logo_url} alt={p.name} width={20} height={20} className="h-5 w-5 rounded-full object-contain border border-slate-200" /> : <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-[8px] font-black text-blue-700">{getCompanyInitials(p.name)}</div>}
+                        <span className={`font-semibold ${p.is_current_company ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-800 dark:text-white'}`}>
+                          {p.name}
+                          {p.is_current_company && <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">VOCÊ</span>}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5 font-mono font-bold text-slate-700 dark:text-slate-300">{(p.x_score ?? 0).toFixed(1)}</td>
+                    <td className="px-4 py-2.5 font-mono font-bold text-slate-700 dark:text-slate-300">{(p.y_score ?? 0).toFixed(1)}</td>
+                    <td className="px-4 py-2.5">
+                      {qc && <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${qc.pill}`}>{qc.label}</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  // Map mode
   return (
-    <div
-      className="relative flex h-[540px] sm:h-[580px] lg:h-[620px] w-full select-none flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 text-card-foreground shadow-xs dark:border-slate-800 dark:bg-slate-900"
-      role="img"
-      aria-label={textSummary}
-    >
+    <div ref={containerRef} className="relative flex w-full select-none flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900" role="img" aria-label={textSummary}>
       <p className="sr-only">{textSummary}</p>
+      <MapHeader viewMode={viewMode} setViewMode={setViewMode} populationSize={populationSize ?? data.length} resolvedScope={resolvedScope} />
 
-      {/* GRÁFICO RECHARTS */}
-      <div className="relative h-full w-full flex-1">
+      <div className="relative h-[460px] w-full flex-1 sm:h-[520px] lg:h-[580px]">
         <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 40, right: 30, bottom: 45, left: 35 }}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="#e2e8f0"
-              strokeOpacity={0.8}
-              className="dark:stroke-slate-800"
-            />
+          <ScatterChart margin={MARGIN}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.6} className="dark:stroke-slate-800" />
+            <XAxis type="number" dataKey="display_x" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickLine={false}
+              axisLine={{ stroke: '#cbd5e1', strokeWidth: 1 }} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 500 }}
+              label={{ value: `${xAxisLabel} →`, position: 'bottom', offset: 18, fill: '#475569', fontSize: 11, fontWeight: 700 }} />
+            <YAxis type="number" dataKey="display_y" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickLine={false}
+              axisLine={{ stroke: '#cbd5e1', strokeWidth: 1 }} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 500 }}
+              label={{ value: yAxisLabel, angle: -90, position: 'insideLeft', offset: -8, fill: '#475569', fontSize: 11, fontWeight: 700 }} />
 
-            <XAxis
-              type="number"
-              dataKey="display_x"
-              domain={[0, 100]}
-              ticks={[0, 20, 40, 60, 80, 100]}
-              tickLine={false}
-              axisLine={{ stroke: '#cbd5e1', strokeWidth: 1.5 }}
-              tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }}
-              label={{
-                value: `${xAxisLabel} →`,
-                position: 'bottom',
-                offset: 14,
-                fill: '#1e293b',
-                fontSize: 12,
-                fontWeight: 700,
-              }}
-            />
-
-            <YAxis
-              type="number"
-              dataKey="display_y"
-              domain={[0, 100]}
-              ticks={[0, 20, 40, 60, 80, 100]}
-              tickLine={false}
-              axisLine={{ stroke: '#cbd5e1', strokeWidth: 1.5 }}
-              tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }}
-              label={{
-                value: yAxisLabel,
-                angle: -90,
-                position: 'insideLeft',
-                offset: -10,
-                fill: '#1e293b',
-                fontSize: 12,
-                fontWeight: 700,
-              }}
-            />
-
-            <RechartsTooltip
-              content={
-                <CustomTooltip
-                  criterionTitle={criterionTitle}
-                  xAxisLabel={xAxisLabel}
-                  yAxisLabel={yAxisLabel}
-                />
-              }
-              cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }}
-            />
-
-            {/* ÁREAS COLORIDAS DOS 4 QUADRANTES (SUAVES) */}
             {xThreshold != null && yThreshold != null && (
               <>
-                {/* Top-Right: Referências (Azul suave) */}
-                <ReferenceArea
-                  x1={xThreshold}
-                  x2={100}
-                  y1={yThreshold}
-                  y2={100}
-                  fill="rgba(59, 130, 246, 0.035)"
-                  strokeOpacity={0}
-                />
-                {/* Top-Left: Em Expansão (Âmbar suave) */}
-                <ReferenceArea
-                  x1={0}
-                  x2={xThreshold}
-                  y1={yThreshold}
-                  y2={100}
-                  fill="rgba(245, 158, 11, 0.03)"
-                  strokeOpacity={0}
-                />
-                {/* Bottom-Left: Em Desenvolvimento (Slate suave) */}
-                <ReferenceArea
-                  x1={0}
-                  x2={xThreshold}
-                  y1={0}
-                  y2={yThreshold}
-                  fill="rgba(100, 116, 139, 0.025)"
-                  strokeOpacity={0}
-                />
-                {/* Bottom-Right: Especialistas (Roxo suave) */}
-                <ReferenceArea
-                  x1={xThreshold}
-                  x2={100}
-                  y1={0}
-                  y2={yThreshold}
-                  fill="rgba(147, 51, 234, 0.03)"
-                  strokeOpacity={0}
-                />
-
-                {/* LINHA MEDIANA X COM PÍLULA */}
-                <ReferenceLine
-                  x={xThreshold}
-                  stroke="#60a5fa"
-                  strokeDasharray="4 4"
-                  strokeWidth={1.5}
-                  label={{
-                    value: `Mediana Autoridade: ${xThreshold.toFixed(1)}`,
-                    position: xThreshold < 18 ? 'insideTopRight' : 'insideTop',
-                    fill: '#1d4ed8',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    dy: -18,
-                  }}
-                />
-
-                {/* LINHA MEDIANA Y COM PÍLULA E SAFE OFFSET */}
-                <ReferenceLine
-                  y={yThreshold}
-                  stroke="#60a5fa"
-                  strokeDasharray="4 4"
-                  strokeWidth={1.5}
-                  label={{
-                    value: `Mediana Execução: ${yThreshold.toFixed(1)}`,
-                    position: yThreshold < 15 ? 'insideTopRight' : 'insideLeft',
-                    fill: '#1d4ed8',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    dy: yThreshold < 15 ? -10 : 0,
-                    dx: yThreshold < 15 ? -14 : 10,
-                  }}
-                />
+                <ReferenceArea x1={xThreshold} x2={100} y1={yThreshold} y2={100} fill={QUADRANT_CONFIG.leaders.fill} strokeOpacity={0} />
+                <ReferenceArea x1={0} x2={xThreshold} y1={yThreshold} y2={100} fill={QUADRANT_CONFIG.expanding.fill} strokeOpacity={0} />
+                <ReferenceArea x1={xThreshold} x2={100} y1={0} y2={yThreshold} fill={QUADRANT_CONFIG.specialists.fill} strokeOpacity={0} />
+                <ReferenceArea x1={0} x2={xThreshold} y1={0} y2={yThreshold} fill={QUADRANT_CONFIG.developing.fill} strokeOpacity={0} />
+                <ReferenceLine x={xThreshold} stroke="#93c5fd" strokeDasharray="5 4" strokeWidth={1.5}
+                  label={{ value: `${xThreshold.toFixed(0)}`, position: xThreshold < 20 ? 'insideTopRight' : 'insideTop', fill: '#3b82f6', fontSize: 9, fontWeight: 700, dy: -4 }} />
+                <ReferenceLine y={yThreshold} stroke="#93c5fd" strokeDasharray="5 4" strokeWidth={1.5}
+                  label={{ value: `${yThreshold.toFixed(0)}`, position: 'insideTopRight', fill: '#3b82f6', fontSize: 9, fontWeight: 700, dx: 4, dy: -4 }} />
               </>
             )}
 
-            <Scatter
-              name="Empresas"
-              data={chartData}
-              shape={
-                <CompanyLogoShape
-                  selectedCompanyId={selectedCompanyId}
-                  onSelectCompany={onSelectCompany}
-                />
-              }
-              isAnimationActive
+            <Scatter name="Empresas" data={chartData}
+              shape={(props: any) => (
+                <NodeShape {...props} selectedId={selectedId} hoveredId={hoveredPoint?.id ?? null}
+                  onHover={setHoveredPoint} onClick={handleNodeClick}
+                  xThreshold={xThreshold} yThreshold={yThreshold}
+                  onNodePosition={handleNodePosition} />
+              )}
+              isAnimationActive={false}
             />
           </ScatterChart>
         </ResponsiveContainer>
 
-        {/* CARDS VISUAIS DOS 4 QUADRANTES (MARCAS D'ÁGUA ELEGANTES NOS 4 CANTOS) */}
         {xThreshold != null && yThreshold != null && (
-          <div aria-hidden="true" className="pointer-events-none select-none">
-            {/* QUADRANTE SUPERIOR ESQUERDO: EM EXPANSÃO OU BASE COMPARADA */}
-            <div className="absolute left-10 top-4 max-w-[200px]">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/90 bg-amber-50/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-900 shadow-2xs backdrop-blur-xs dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
-                <Zap className="h-3 w-3 text-amber-600 fill-amber-500" />
-                <span>{yThreshold > 0 ? 'Em expansão' : 'Base Comparada'}</span>
-              </div>
-              <p className="mt-1 hidden text-[10px] leading-tight text-slate-500 sm:block dark:text-slate-400">
-                Alto potencial de crescimento e boa capacidade de execução.
-              </p>
-            </div>
-
-            {/* QUADRANTE SUPERIOR DIREITO: REFERÊNCIAS OU LÍDERES DE VISÃO */}
-            <div className="absolute right-8 top-4 max-w-[200px] text-right">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200/90 bg-blue-50/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-900 shadow-2xs backdrop-blur-xs dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300">
-                <Trophy className="h-3 w-3 text-blue-600" />
-                <span>{yThreshold > 0 ? 'Referências' : 'Líderes de Visão'}</span>
-              </div>
-              <p className="mt-1 hidden text-[10px] leading-tight text-slate-500 sm:block dark:text-slate-400">
-                Líderes do mercado com alta autoridade e forte execução.
-              </p>
-            </div>
-
-            {/* QUADRANTES INFERIORES: SOMENTE SE Y > 0 */}
-            {yThreshold > 0 && (
-              <>
-                {/* QUADRANTE INFERIOR ESQUERDO: EM DESENVOLVIMENTO */}
-                <div className="absolute bottom-12 left-10 max-w-[200px]">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-100/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-800 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-200">
-                    <TrendingUp className="h-3 w-3 text-slate-600 dark:text-slate-400" />
-                    <span>Em desenvolvimento</span>
-                  </div>
-                  <p className="mt-1 hidden text-[10px] leading-tight text-slate-500 sm:block dark:text-slate-400">
-                    Empresas em fase inicial com oportunidades de crescimento.
-                  </p>
-                </div>
-
-                {/* QUADRANTE INFERIOR DIREITO: ESPECIALISTAS */}
-                <div className="absolute bottom-12 right-8 max-w-[200px] text-right">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-200/90 bg-purple-50/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-900 shadow-2xs backdrop-blur-xs dark:border-purple-900/50 dark:bg-purple-950/40 dark:text-purple-300">
-                    <Target className="h-3 w-3 text-purple-600" />
-                    <span>Especialistas</span>
-                  </div>
-                  <p className="mt-1 hidden text-[10px] leading-tight text-slate-500 sm:block dark:text-slate-400">
-                    Alta autoridade em nichos específicos e execução consistente.
-                  </p>
-                </div>
-              </>
-            )}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none">
+            <QuadrantBadge cfg={QUADRANT_CONFIG.leaders} position="top-right" />
+            <QuadrantBadge cfg={QUADRANT_CONFIG.expanding} position="top-left" />
+            {yThreshold > 2 && <QuadrantBadge cfg={QUADRANT_CONFIG.specialists} position="bottom-right" />}
+            {yThreshold > 2 && <QuadrantBadge cfg={QUADRANT_CONFIG.developing} position="bottom-left" />}
           </div>
         )}
+
+        <AnimatePresence>
+          {(selectedPoint || hoveredPoint) && tooltipPos && (
+            <div className="pointer-events-none absolute inset-0" style={{ zIndex: 50 }}>
+              <div className="pointer-events-auto absolute" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
+                <RichTooltip
+                  point={(selectedPoint ?? hoveredPoint)!}
+                  xAxisLabel={xAxisLabel} yAxisLabel={yAxisLabel}
+                  xThreshold={xThreshold} yThreshold={yThreshold}
+                  onClose={() => { setSelectedPoint(null); setTooltipPos(null); }}
+                  onSelectCompany={onSelectCompany}
+                />
+              </div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {clusterExpanded && (
+            <ClusterExpandPanel members={clusterExpanded} onClose={() => setClusterExpanded(null)} onSelectCompany={onSelectCompany} />
+          )}
+        </AnimatePresence>
+
+        <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 sm:hidden">
+          <span className="rounded-full bg-slate-900/60 px-3 py-1 text-[10px] font-medium text-white/80 backdrop-blur-sm">
+            Toque para ver detalhes · Pinche para zoom
+          </span>
+        </div>
       </div>
 
-      {/* SUB-RÓTULOS METODOLÓGICOS NO RODAPÉ */}
-      <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-[11px] text-slate-500 dark:text-slate-400">
-        <span>
-          <strong className="font-semibold text-slate-700 dark:text-slate-300">Eixo Horizontal:</strong> {xAxisDefinition}
-        </span>
-        <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
-        <span>
-          <strong className="font-semibold text-slate-700 dark:text-slate-300">Eixo Vertical:</strong> {yAxisDefinition}
-        </span>
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 border-t border-slate-100 px-4 py-2.5 text-center text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <span><strong className="font-semibold text-slate-700 dark:text-slate-300">Horizontal:</strong> {xAxisDefinition}</span>
+        <span className="hidden text-slate-300 sm:inline dark:text-slate-700">•</span>
+        <span><strong className="font-semibold text-slate-700 dark:text-slate-300">Vertical:</strong> {yAxisDefinition}</span>
+        {populationSize != null && <><span className="hidden text-slate-300 sm:inline dark:text-slate-700">•</span><span>{populationSize} empresas elegíveis</span></>}
       </div>
     </div>
   );
