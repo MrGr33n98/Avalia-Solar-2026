@@ -26,6 +26,7 @@ interface OptimizedImageProps {
   quality?: number;
   sizes?: string;
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  objectPosition?: string;
   fallbackSrc?: string;
   placeholder?: 'blur' | 'empty';
   blurDataURL?: string;
@@ -107,6 +108,7 @@ export function OptimizedImage({
   quality = 85,
   sizes,
   objectFit = 'cover',
+  objectPosition,
   fallbackSrc = '/images/placeholder.png',
   placeholder = 'blur',
   blurDataURL,
@@ -155,7 +157,7 @@ export function OptimizedImage({
       isLoading ? 'opacity-0' : 'opacity-100',
       className
     ),
-    style: { objectFit },
+    style: { objectFit, objectPosition },
     sizes,
     placeholder,
     blurDataURL: placeholder === 'blur' ? blurDataURL || DEFAULT_BLUR_DATA_URL : undefined,
