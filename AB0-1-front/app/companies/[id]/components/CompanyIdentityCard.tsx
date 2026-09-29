@@ -95,24 +95,24 @@ export default function CompanyIdentityCard({
     <section
       id="company-identity-card"
       aria-label="Card da empresa com ações"
-      className="relative overflow-visible bg-white px-4 pb-4 pt-0 sm:px-6 lg:px-7"
+      className="relative overflow-visible bg-white px-3.5 pb-3 pt-0 sm:px-6 sm:pb-4 lg:px-7"
     >
       {/* Silhueta com Curva Côncava na Shelf da Logo/Nome (Estilo WEG) */}
       <div className="pointer-events-none absolute -top-6 left-0 z-20 hidden h-6 lg:flex lg:items-end px-6">
         <div className="flex items-end">
-          <div className="h-6 w-52 bg-white rounded-tl-2xl" />
+          <div className="h-6 w-44 bg-white rounded-tl-2xl" />
           <svg viewBox="0 0 36 24" className="h-6 w-9 text-white fill-current shrink-0" preserveAspectRatio="none" aria-hidden="true">
             <path d="M 0,0 C 18,0 18,24 36,24 L 0,24 Z" />
           </svg>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
-        {/* Lado Esquerdo: Logo + Dados */}
-        <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-start sm:gap-5">
+      <div className="flex flex-col gap-3.5 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
+        {/* Lado Esquerdo: Logo + Dados (flex-row desde 320px no mobile) */}
+        <div className="flex min-w-0 flex-row items-start gap-3 sm:gap-4 lg:gap-5">
           {/* Box da Logo (Overlapping no Banner) */}
-          <div className="relative shrink-0 -mt-8 sm:-mt-12 lg:-mt-16 overflow-visible z-30">
-            <div className="relative h-[68px] w-[68px] rounded-2xl border-2 border-white bg-white p-1 shadow-md sm:h-[92px] sm:w-[92px] lg:h-[104px] lg:w-[104px]">
+          <div className="relative shrink-0 -mt-7 sm:-mt-11 lg:-mt-15 overflow-visible z-30">
+            <div className="relative h-[68px] w-[68px] rounded-2xl border-2 border-white bg-white p-1 shadow-md sm:h-[88px] sm:w-[88px] lg:h-[100px] lg:w-[100px]">
               <div className="relative h-full w-full overflow-hidden rounded-xl bg-white flex items-center justify-center">
                 {hasLogo ? (
                   <OptimizedImage
@@ -155,14 +155,14 @@ export default function CompanyIdentityCard({
           </div>
 
           {/* Informações da empresa estilo WEG */}
-          <div className="min-w-0 space-y-1 pt-0.5 sm:pt-2">
+          <div className="min-w-0 flex-1 space-y-1 pt-1 sm:pt-2">
             {/* Nome + Verificado + Plano Comercial */}
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
+              <h1 className="truncate text-base font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
                 {company.name}
               </h1>
               {isVerified && (
-                <BadgeCheck className="h-4.5 w-4.5 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
+                <BadgeCheck className="h-4 w-4 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
               )}
               <PremiumHighlightBadge company={company} />
             </div>
@@ -175,7 +175,7 @@ export default function CompanyIdentityCard({
             )}
 
             {/* Linha de Metadados (Localização, Atuação, Fundação, Website) */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[11px] font-semibold text-slate-600 sm:text-xs">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 pt-0.5 text-[11px] font-semibold text-slate-600 sm:text-xs">
               {locationLabel && (
                 <div className="flex items-center gap-1">
                   <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
