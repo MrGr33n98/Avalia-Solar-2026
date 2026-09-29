@@ -27,7 +27,7 @@ export const BANNER_PLACEMENT_ASPECT_RATIOS: Record<string, string> = {
   compare_page_bottom: '15/2',
   search_top: '20/3',
   home_top: '15/2',
-  company_profile_about_inline: '15/2',
+  company_profile_about_inline: '4/1',
   company_profile_sidebar_sponsored: '1/2',
   companies_top: '15/2',
   search_mid: '15/2',
@@ -40,6 +40,40 @@ export const BANNER_PLACEMENT_ASPECT_RATIOS: Record<string, string> = {
   comparison_floating_bar: '6/1',
   groups_right_rail: '1/2',
 };
+
+export interface PlacementDisplaySpec {
+  aspectRatioClass?: string;
+  defaultAspectRatio?: string;
+  mobileAspectRatio?: string;
+  tabletAspectRatio?: string;
+  desktopAspectRatio?: string;
+  mobileMinHeight?: number;
+  tabletMinHeight?: number;
+  desktopMaxHeight?: number;
+  fit?: 'contain' | 'cover';
+  ambientBackground?: boolean;
+  ignoreCreativeDimensions?: boolean;
+}
+
+export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec> = {
+  company_profile_about_inline: {
+    aspectRatioClass: 'aspect-[4/1] md:aspect-[5/1] lg:aspect-[6/1]',
+    defaultAspectRatio: '4/1',
+    mobileAspectRatio: '4/1',
+    tabletAspectRatio: '5/1',
+    desktopAspectRatio: '6/1',
+    mobileMinHeight: 84,
+    desktopMaxHeight: 200,
+    fit: 'contain',
+    ambientBackground: true,
+    ignoreCreativeDimensions: true,
+  },
+};
+
+export function getPlacementDisplaySpec(position?: string): PlacementDisplaySpec | undefined {
+  if (!position) return undefined;
+  return BANNER_PLACEMENT_DISPLAY_SPECS[position];
+}
 
 export type BannerLocation =
   | typeof BANNER_PLACEMENTS.CATEGORY.TOP
@@ -64,3 +98,4 @@ export type BannerLocation =
   | 'company_profile_sidebar_sponsored'
   | 'company_profile_related_carousel'
   | 'groups_right_rail';
+

@@ -7,7 +7,7 @@ import { track } from '@/lib/analytics/lazy';
 import { getBannerAudienceKey } from '@/lib/banner-audience';
 import { cn } from '@/lib/utils';
 import { resolveBannerAspectRatio } from '@/lib/banners/aspect-ratio';
-import { BANNER_PLACEMENT_ASPECT_RATIOS } from '@/lib/banners/placements';
+import { BANNER_PLACEMENT_ASPECT_RATIOS, getPlacementDisplaySpec } from '@/lib/banners/placements';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 import { BannerMedia } from '@/components/banners/BannerMedia';
 
@@ -41,10 +41,12 @@ function BannerImage({
   banner,
   sizes,
   priority,
+  ambientBackground,
 }: {
   banner: BannerData;
   sizes: string;
   priority?: boolean;
+  ambientBackground?: boolean;
 }) {
   const src = banner.image_url || FALLBACK_BANNER_SRC;
 
@@ -55,6 +57,7 @@ function BannerImage({
       priority={priority}
       sizes={sizes}
       quality={100}
+      ambientBackground={ambientBackground}
       // Banners usam dimensões comerciais fixas; contain preserva a arte completa no responsivo.
       className="absolute inset-0"
     />
@@ -203,6 +206,7 @@ export function BannerContainer({
   }
 
   try {
+    const displaySpec = position ? getPlacementDisplaySpec(position) : undefined;
     const hasSponsoredBanner = displayBanners.some((banner) => Boolean(banner.sponsored));
     const isCompactControls = position ? [
       'company_profile_about_inline',
@@ -248,7 +252,12 @@ export function BannerContainer({
 
     const renderBannerContent = (banner: BannerData, isPriority = false) => (
       <>
-        <BannerImage banner={banner} priority={isPriority} sizes={getSizes(position)} />
+        <BannerImage
+          banner={banner}
+          priority={isPriority}
+          sizes={getSizes(position)}
+          ambientBackground={displaySpec?.ambientBackground}
+        />
         {banner.sponsored && (
           <span className="absolute bottom-2 right-2 z-10 rounded-none bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
             Patrocinado
@@ -283,21 +292,24 @@ export function BannerContainer({
     const items = displayBanners.map((banner, idx) =>
       renderBannerItem(banner, priority && idx === 0)
     );
-    const aspectRatios = displayBanners.map((banner) =>
-      resolveBannerAspectRatio({
-        position,
-        sourcePosition: banner.position,
-        width: banner.width,
-        height: banner.height,
-      })
-    );
+
+    const aspectRatios = displaySpec?.aspectRatioClass
+      ? undefined
+      : displayBanners.map((banner) =>
+          resolveBannerAspectRatio({
+            position,
+            sourcePosition: banner.position,
+            width: banner.width,
+            height: banner.height,
+          })
+        );
 
     return (
       <div ref={containerRef} className={cn('m-0 w-full min-w-0 max-w-full overflow-hidden p-0', className)}>
         <PremiumBannerCarousel
           items={items}
           aspectRatios={aspectRatios}
-          aspectRatio={BANNER_PLACEMENT_ASPECT_RATIOS[position || '']}
+          aspectRatio={displaySpec?.aspectRatioClass || BANNER_PLACEMENT_ASPECT_RATIOS[position || '']}
           autoplayDelay={4000}
           onActiveIndexChange={(index) => {
             activeIndexRef.current = index;

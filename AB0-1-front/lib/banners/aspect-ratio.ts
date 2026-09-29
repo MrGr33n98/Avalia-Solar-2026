@@ -1,4 +1,4 @@
-import { BANNER_PLACEMENT_ASPECT_RATIOS } from './placements';
+import { BANNER_PLACEMENT_ASPECT_RATIOS, getPlacementDisplaySpec } from './placements';
 
 interface ResolveBannerAspectRatioOptions {
   position?: string;
@@ -32,7 +32,8 @@ function formatAspectRatio(width: number, height: number): string {
 }
 
 /**
- * Resolve a creative's CSS aspect-ratio without tying geometry to a request location.
+ * Resolve a creative's CSS aspect-ratio.
+ * Placements with an explicit display spec (e.g. company_profile_about_inline) control their UI geometry.
  * Fallback creatives use their source placement defaults.
  */
 export function resolveBannerAspectRatio({
@@ -41,6 +42,13 @@ export function resolveBannerAspectRatio({
   height,
   sourcePosition,
 }: ResolveBannerAspectRatioOptions): string {
+  const targetPos = sourcePosition || position || '';
+  const spec = getPlacementDisplaySpec(targetPos) || getPlacementDisplaySpec(position || '');
+
+  if (spec?.ignoreCreativeDimensions) {
+    return spec.defaultAspectRatio || BANNER_PLACEMENT_ASPECT_RATIOS[targetPos] || '4/1';
+  }
+
   if (isPositiveDimension(width) && isPositiveDimension(height)) {
     return formatAspectRatio(width, height);
   }
