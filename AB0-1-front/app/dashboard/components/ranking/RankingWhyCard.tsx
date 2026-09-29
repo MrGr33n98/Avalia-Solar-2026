@@ -59,10 +59,10 @@ export function RankingWhyCard({ data }: Props) {
     }
   }
 
-  // Posição percentual na régua (0 a 100)
+  // Posição percentual na régua (0 a 100) com clamp de segurança (4% a 96%)
   const calculateMarkerPos = (val: number | null) => {
     if (val == null) return 0;
-    return Math.min(100, Math.max(0, val));
+    return Math.min(96, Math.max(4, val));
   };
 
   return (
@@ -175,75 +175,72 @@ export function RankingWhyCard({ data }: Props) {
 
         <CardContent className="space-y-4">
           {/* Régua Gráfica Horizontal de Patamares (Fiel ao Blueprint) */}
-          <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900/80">
+          <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-3.5 sm:p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900/80">
             <div className="flex justify-between items-center text-xs">
               <span className="font-semibold text-slate-500 dark:text-slate-400">Régua Competitiva</span>
-              <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
+              <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                 Sua nota: {currentScore != null ? `${currentScore.toFixed(1)} pts` : '—'}
               </span>
             </div>
 
-            {/* Trilha da Régua */}
-            <div className="relative pt-6 pb-2">
-              <div className="h-3 w-full rounded-full bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+            {/* Canvas Interno do Termômetro com Padding Seguro */}
+            <div className="relative mt-2.5 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-6 sm:px-4 dark:border-slate-800 dark:bg-slate-950/40">
+              <div className="relative h-2.5 w-full rounded-full bg-slate-200/70 dark:bg-slate-800 overflow-hidden">
                 {/* Faixa até a mediana (0-50%) */}
                 <div className="absolute left-0 top-0 bottom-0 bg-blue-500/20" style={{ width: `${calculateMarkerPos(median)}%` }} />
                 {/* Faixa P75-P90 */}
                 <div className="absolute top-0 bottom-0 bg-emerald-500/20" style={{ left: `${calculateMarkerPos(p75)}%`, right: `${100 - calculateMarkerPos(p90)}%` }} />
               </div>
 
-              {/* Marcador da Mediana */}
+              {/* Marcador da Mediana (P50) */}
               {median != null && (
                 <div
-                  className="absolute top-1 -translate-x-1/2 flex flex-col items-center"
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none"
                   style={{ left: `${calculateMarkerPos(median)}%` }}
                 >
-                  <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">Mediana</span>
-                  <div className="h-5 w-0.5 bg-slate-400 dark:bg-slate-600 mt-0.5" />
-                  <span className="text-[9px] font-semibold text-slate-600 dark:text-slate-300">{median.toFixed(0)}</span>
+                  <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">P50</span>
+                  <div className="h-4 w-0.5 bg-slate-400 dark:bg-slate-600 mt-0.5" />
                 </div>
               )}
 
               {/* Marcador P75 */}
               {p75 != null && (
                 <div
-                  className="absolute top-1 -translate-x-1/2 flex flex-col items-center"
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none"
                   style={{ left: `${calculateMarkerPos(p75)}%` }}
                 >
-                  <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">Top 25%</span>
-                  <div className="h-5 w-0.5 bg-blue-500 mt-0.5" />
-                  <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-300">{p75.toFixed(0)}</span>
+                  <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">P75</span>
+                  <div className="h-4 w-0.5 bg-blue-500 mt-0.5" />
                 </div>
               )}
 
               {/* Marcador P90 */}
               {p90 != null && (
                 <div
-                  className="absolute top-1 -translate-x-1/2 flex flex-col items-center"
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none"
                   style={{ left: `${calculateMarkerPos(p90)}%` }}
                 >
-                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">Top 10%</span>
-                  <div className="h-5 w-0.5 bg-emerald-500 mt-0.5" />
-                  <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-300">{p90.toFixed(0)}</span>
+                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">P90</span>
+                  <div className="h-4 w-0.5 bg-emerald-500 mt-0.5" />
                 </div>
               )}
 
-              {/* Pino "Você" */}
+              {/* Pino "VOCÊ" */}
               {currentScore != null && (
                 <div
-                  className="absolute -top-1 -translate-x-1/2 flex flex-col items-center z-10"
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center z-10 pointer-events-none"
                   style={{ left: `${calculateMarkerPos(currentScore)}%` }}
                 >
-                  <div className="rounded-full bg-emerald-600 px-1.5 py-0.5 text-[8px] font-black text-white shadow-xs">
+                  <div className="rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-bold text-white shadow-xs">
                     VOCÊ
                   </div>
-                  <div className="h-7 w-1 bg-emerald-600 rounded-full mt-0.5 shadow-sm" />
+                  <div className="h-3 w-3 rounded-full bg-emerald-600 ring-4 ring-emerald-100 dark:ring-emerald-950/60 mt-0.5" />
                 </div>
               )}
             </div>
 
             {/* Badges de Distância para Patamares */}
-            <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
               <div className="rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50">
                 <span className="block text-[10px] text-slate-500 dark:text-slate-400">Mediana (P50)</span>
                 <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
