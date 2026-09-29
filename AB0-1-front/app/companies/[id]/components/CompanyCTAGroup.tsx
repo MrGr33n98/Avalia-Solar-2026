@@ -132,16 +132,16 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
   return (
     <div
       id="company-cta-group"
-      className="grid w-full min-w-0 grid-cols-[1.45fr_0.90fr_1.15fr] gap-1.5 pt-1.5 min-[400px]:gap-2 lg:flex lg:w-auto lg:items-center lg:gap-2.5"
+      className="grid w-full min-w-0 grid-cols-[1.38fr_0.85fr_1.17fr] gap-1.5 pt-1.5 min-[430px]:grid-cols-[1.40fr_0.88fr_1.18fr] min-[430px]:gap-2 lg:flex lg:w-auto lg:items-center lg:gap-2.5"
     >
       {/* 1. Solicitar contato (Primário Azul) */}
       <Button
         type="button"
         size="default"
         onClick={handleRequestQuote}
-        className="h-[46px] min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-2 text-[13px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 whitespace-nowrap min-[400px]:gap-1.5 min-[400px]:px-2.5 min-[400px]:text-[14px] sm:px-3 lg:h-10 lg:w-auto lg:min-w-[145px]"
+        className="h-[46px] min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-[7px] text-[12px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 whitespace-nowrap min-[430px]:px-2.5 min-[430px]:text-[13px] sm:px-3 lg:h-10 lg:w-auto lg:min-w-[145px]"
       >
-        <Send className="h-4 w-4 shrink-0 fill-current" aria-hidden="true" />
+        <Send className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
         <span className="whitespace-nowrap">Solicitar contato</span>
       </Button>
 
@@ -152,13 +152,13 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
         size="default"
         onClick={handleToggleComparison}
         className={cn(
-          'h-[46px] min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl border px-1.5 text-[13px] font-semibold leading-4 transition-colors whitespace-nowrap min-[400px]:gap-1.5 min-[400px]:px-2 min-[400px]:text-[14px] sm:px-3 lg:h-10 lg:w-auto lg:min-w-[100px]',
+          'h-[46px] min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl border px-[7px] text-[12px] font-semibold leading-4 transition-colors whitespace-nowrap min-[430px]:px-2.5 min-[430px]:text-[13px] sm:px-3 lg:h-10 lg:w-auto lg:min-w-[100px]',
           isCompared
             ? 'border-blue-600 bg-blue-50 text-blue-700'
             : 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
         )}
       >
-        <Layers className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+        <Layers className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-hidden="true" />
         <span className="whitespace-nowrap">{isCompared ? 'Comparando' : 'Comparar'}</span>
       </Button>
 
@@ -167,9 +167,9 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
         href={reviewPath}
         aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
         title="Avaliar empresa"
-        className="h-[46px] min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-1.5 text-[13px] font-semibold leading-4 text-slate-900 transition-colors hover:bg-amber-500/[0.12] whitespace-nowrap min-[400px]:gap-1.5 min-[400px]:px-2 min-[400px]:text-[14px] sm:px-3 lg:h-10 lg:w-auto lg:min-w-[130px]"
+        className="h-[46px] min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-[7px] text-[12px] font-semibold leading-4 text-slate-900 transition-colors hover:bg-amber-500/[0.12] whitespace-nowrap min-[430px]:px-2.5 min-[430px]:text-[13px] sm:px-3 lg:h-10 lg:w-auto lg:min-w-[130px]"
       >
-        <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
+        <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
         <span className="whitespace-nowrap text-slate-900">Avaliar empresa</span>
       </Link>
     </div>

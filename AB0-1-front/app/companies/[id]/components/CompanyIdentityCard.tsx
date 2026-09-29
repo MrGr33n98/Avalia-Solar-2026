@@ -143,7 +143,7 @@ export default function CompanyIdentityCard({
     <section
       id="company-identity-card"
       aria-label="Card da empresa com ações"
-      className="relative overflow-visible bg-white px-3.5 pb-3 pt-0 sm:px-6 sm:pb-4 lg:px-7"
+      className="relative overflow-visible bg-white px-3 min-[412px]:px-3.5 pb-3 pt-0 sm:px-6 sm:pb-4 lg:px-7"
     >
       {/* Silhueta com Curva Côncava na Shelf da Logo/Nome (Estilo WEG) */}
       <div className="pointer-events-none absolute -top-6 left-0 z-20 hidden h-6 lg:flex lg:items-end px-6">
