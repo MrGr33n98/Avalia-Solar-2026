@@ -58,8 +58,8 @@ export function RankingEvidenceTabs({ data, isPreview = false, historyDays = '90
       <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800/80">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-slate-100">
-              <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+              <Activity className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
               Evidências & Análise Competitiva
             </CardTitle>
             <CardDescription className="text-xs">
@@ -69,30 +69,34 @@ export function RankingEvidenceTabs({ data, isPreview = false, historyDays = '90
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 sm:p-6">
+      <CardContent className="p-3 sm:p-6">
         <Tabs defaultValue="competitors" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 sm:inline-flex sm:w-auto h-9 bg-slate-100 dark:bg-slate-800">
-            <TabsTrigger value="competitors" className="text-xs flex items-center gap-1.5">
-              <UsersRound className="h-3.5 w-3.5" />
-              <span>Empresas Próximas ({nearbyRows.length})</span>
+          <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:inline-flex sm:w-auto sm:overflow-visible dark:bg-slate-800">
+            <TabsTrigger value="competitors" className="h-9 shrink-0 whitespace-nowrap px-3 text-[11px] sm:text-xs flex items-center gap-1.5">
+              <UsersRound className="h-3.5 w-3.5 shrink-0" />
+              <span className="sm:hidden">Empresas ({nearbyRows.length})</span>
+              <span className="hidden sm:inline">Empresas Próximas ({nearbyRows.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="text-xs flex items-center gap-1.5">
-              <History className="h-3.5 w-3.5" />
-              <span>Evolução Temporal</span>
+            <TabsTrigger value="history" className="h-9 shrink-0 whitespace-nowrap px-3 text-[11px] sm:text-xs flex items-center gap-1.5">
+              <History className="h-3.5 w-3.5 shrink-0" />
+              <span className="sm:hidden">Evolução</span>
+              <span className="hidden sm:inline">Evolução Temporal</span>
             </TabsTrigger>
-            <TabsTrigger value="changes" className="text-xs flex items-center gap-1.5">
-              <LineChart className="h-3.5 w-3.5" />
-              <span>O Que Mudou</span>
+            <TabsTrigger value="changes" className="h-9 shrink-0 whitespace-nowrap px-3 text-[11px] sm:text-xs flex items-center gap-1.5">
+              <LineChart className="h-3.5 w-3.5 shrink-0" />
+              <span className="sm:hidden">Mudanças</span>
+              <span className="hidden sm:inline">O Que Mudou</span>
             </TabsTrigger>
-            <TabsTrigger value="quality" className="text-xs flex items-center gap-1.5">
-              <Info className="h-3.5 w-3.5" />
-              <span>Qualidade & Integridade</span>
+            <TabsTrigger value="quality" className="h-9 shrink-0 whitespace-nowrap px-3 text-[11px] sm:text-xs flex items-center gap-1.5">
+              <Info className="h-3.5 w-3.5 shrink-0" />
+              <span className="sm:hidden">Integridade</span>
+              <span className="hidden sm:inline">Qualidade & Integridade</span>
             </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: EMPRESAS PRÓXIMAS */}
           <TabsContent value="competitors" className="space-y-3 pt-2">
-            <div className="flex items-center justify-between text-xs text-slate-500">
+            <div className="flex flex-col gap-1 text-[11px] text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-xs">
               <span>Vizinhos competitivos na mesma população elegível</span>
               <span>Posição e IAS Score</span>
             </div>
@@ -104,11 +108,11 @@ export function RankingEvidenceTabs({ data, isPreview = false, historyDays = '90
                   const isAbove = currentPosition != null && point.ranking_position != null && point.ranking_position < currentPosition;
 
                   return (
-                    <div key={point.id} className="flex items-center justify-between gap-3 p-3 text-sm hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors">
-                      <div className="min-w-0">
+                    <div key={point.id} className="flex items-center justify-between gap-2 px-2.5 py-2.5 text-xs sm:text-sm sm:gap-3 sm:p-3 hover:bg-slate-50/50 dark:hover:bg-slate-900/40 transition-colors">
+                      <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold text-slate-900 dark:text-slate-100">{point.name}</p>
                         {diff != null ? (
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                             {diff > 0 ? (
                               <span className="text-amber-600 dark:text-amber-400 font-medium">▲ {diff.toFixed(1)} pts à frente</span>
                             ) : diff < 0 ? (
@@ -118,13 +122,13 @@ export function RankingEvidenceTabs({ data, isPreview = false, historyDays = '90
                             )}
                           </p>
                         ) : currentPosition != null && point.ranking_position != null ? (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-[11px] sm:text-xs text-slate-500">
                             {isAbove ? '▲ à sua frente no ranking' : '▼ atrás de você no ranking'}
                           </p>
                         ) : null}
                       </div>
 
-                      <div className="shrink-0 text-right">
+                      <div className="w-[64px] sm:w-[72px] shrink-0 text-right">
                         <span className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
                           #{point.ranking_position ?? '—'}
                         </span>
@@ -145,14 +149,14 @@ export function RankingEvidenceTabs({ data, isPreview = false, historyDays = '90
 
           {/* TAB 2: EVOLUÇÃO TEMPORAL */}
           <TabsContent value="history" className="space-y-4 pt-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-xs text-slate-500">
                 {isPreview
                   ? 'A comparação regional atual é calculada em tempo real; exibindo histórico oficial nacional.'
                   : `Snapshots oficiais persistidos · ${historyLabel}`}
               </span>
 
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5 shrink-0">
                 {(['position', 'percentile', 'score'] as const).map((metric) => (
                   <Button
                     key={metric}
