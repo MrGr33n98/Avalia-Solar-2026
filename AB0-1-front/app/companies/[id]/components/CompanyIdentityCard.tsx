@@ -107,7 +107,7 @@ export default function CompanyIdentityCard({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3.5 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
         {/* Lado Esquerdo: Logo + Dados (flex-row desde 320px no mobile) */}
         <div className="flex min-w-0 flex-row items-start gap-3 sm:gap-4 lg:gap-5">
           {/* Box da Logo (Overlapping no Banner) */}
@@ -124,7 +124,7 @@ export default function CompanyIdentityCard({
                     entityName={company.name}
                     locationLabel={locationLabel}
                     objectFit="contain"
-                    className="p-1"
+                    className="p-0"
                     containerClassName="absolute inset-0 h-full w-full"
                     fallbackSrc="/images/logo-placeholder.svg"
                     onError={() => setLogoError(true)}
@@ -174,13 +174,17 @@ export default function CompanyIdentityCard({
               </p>
             )}
 
-            {/* Linha de Metadados (Localização, Atuação, Fundação, Website) */}
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 pt-0.5 text-[11px] font-semibold text-slate-600 sm:text-xs">
+            {/* Linha 1 de Metadados: Localização, Atuação e Fundação */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5 text-[11px] font-semibold text-slate-600 sm:text-xs">
               {locationLabel && (
                 <div className="flex items-center gap-1">
                   <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
                   <span className="truncate">{locationLabel}</span>
                 </div>
+              )}
+
+              {locationLabel && (coverageLabel || company.founded_year) && (
+                <span className="text-slate-300 select-none" aria-hidden="true">·</span>
               )}
 
               {coverageLabel && (
@@ -190,45 +194,52 @@ export default function CompanyIdentityCard({
                 </div>
               )}
 
+              {coverageLabel && company.founded_year && (
+                <span className="text-slate-300 select-none" aria-hidden="true">·</span>
+              )}
+
               {company.founded_year && (
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
                   <span>Fundada em {company.founded_year}</span>
                 </div>
               )}
+            </div>
 
+            {/* Linha 2 de Metadados: Website, Avaliações e Visualizações */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-medium text-slate-500 sm:text-xs">
               {cleanWebsite && websiteHref && (
-                <div className="flex items-center gap-1">
-                  <Globe className="h-3.5 w-3.5 text-blue-600 shrink-0" aria-hidden="true" />
-                  <a
-                    href={websiteHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-blue-600 hover:underline inline-flex items-center gap-0.5"
-                  >
-                    <span>{cleanWebsite}</span>
-                    <ExternalLink className="h-3 w-3 shrink-0" />
-                  </a>
-                </div>
+                <>
+                  <div className="flex items-center gap-1">
+                    <Globe className="h-3.5 w-3.5 text-blue-600 shrink-0" aria-hidden="true" />
+                    <a
+                      href={websiteHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                    >
+                      <span>{cleanWebsite}</span>
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </div>
+                  <span className="text-slate-300 select-none" aria-hidden="true">·</span>
+                </>
               )}
 
-              {/* Avaliações + visualizações em linha compacta */}
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 sm:text-xs">
-                <span className="text-slate-300" aria-hidden="true">|</span>
-                {hasReviews && ratingFormatted ? (
-                  <div className="flex items-center gap-1 font-bold text-slate-950">
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 shrink-0" strokeWidth={0} aria-hidden="true" />
-                    <span>{ratingFormatted}</span>
-                    <span className="font-normal text-slate-500">
-                      ({companyStats.reviewCount})
-                    </span>
-                  </div>
-                ) : (
-                  <span>Sem avaliações · Seja o primeiro</span>
-                )}
-                <span className="text-slate-300" aria-hidden="true">·</span>
-                <CompanyViewCounter companyId={company.id} />
-              </div>
+              {hasReviews && ratingFormatted ? (
+                <div className="flex items-center gap-1 font-bold text-slate-950">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 shrink-0" strokeWidth={0} aria-hidden="true" />
+                  <span>{ratingFormatted}</span>
+                  <span className="font-normal text-slate-500">
+                    ({companyStats.reviewCount})
+                  </span>
+                </div>
+              ) : (
+                <span>Sem avaliações · Seja o primeiro</span>
+              )}
+
+              <span className="text-slate-300 select-none" aria-hidden="true">·</span>
+              <CompanyViewCounter companyId={company.id} />
             </div>
           </div>
         </div>

@@ -132,10 +132,10 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
   return (
     <div
       id="company-cta-group"
-      className="grid w-full gap-2 lg:flex lg:w-auto lg:items-center lg:gap-2.5"
+      className="grid w-full gap-1.5 sm:gap-2 lg:flex lg:w-auto lg:items-center lg:gap-2.5"
     >
-      {/* Linha 1 no Mobile: Quick Actions (Favoritar, Compartilhar, WhatsApp, Avaliar) alinhadas à direita */}
-      <div className="flex items-center justify-end gap-2 lg:order-2 lg:justify-start">
+      {/* Linha 1 no Mobile: Quick Actions (Favoritar, Compartilhar, WhatsApp, Avaliar) */}
+      <div className="flex items-center justify-start sm:justify-end gap-1.5 sm:gap-2 lg:order-2 lg:justify-start">
         {/* 1. Favoritar (♡) */}
         <button
           type="button"
