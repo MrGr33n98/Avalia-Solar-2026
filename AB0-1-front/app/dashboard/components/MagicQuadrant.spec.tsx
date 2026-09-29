@@ -134,12 +134,12 @@ describe('MagicQuadrant Component & Jitter Algorithm', () => {
       );
 
       expect(screen.getByText('Referências')).toBeInTheDocument();
-      expect(screen.getByText('Em expansão')).toBeInTheDocument();
+      expect(screen.getByText('Em Expansão')).toBeInTheDocument();
       expect(screen.getByText('Especialistas')).toBeInTheDocument();
-      expect(screen.getByText('Em desenvolvimento')).toBeInTheDocument();
+      expect(screen.getByText('Em Desenvolvimento')).toBeInTheDocument();
     });
 
-    it('renders fallback labels when yThreshold is 0', () => {
+    it('renders top quadrant badges when yThreshold is 0', () => {
       render(
         <MagicQuadrant
           data={basePoints}
@@ -155,8 +155,8 @@ describe('MagicQuadrant Component & Jitter Algorithm', () => {
         />
       );
 
-      expect(screen.getByText('Líderes de Visão')).toBeInTheDocument();
-      expect(screen.getByText('Base Comparada')).toBeInTheDocument();
+      expect(screen.getByText('Referências')).toBeInTheDocument();
+      expect(screen.getByText('Em Expansão')).toBeInTheDocument();
     });
 
     it('includes accessible aria-label with un-jittered raw scores', () => {
@@ -177,7 +177,7 @@ describe('MagicQuadrant Component & Jitter Algorithm', () => {
       const chart = screen.getByRole('img');
       expect(chart).toHaveAttribute(
         'aria-label',
-        expect.stringContaining('Empresa Alvo está em 70.1 de Autoridade de Confiança e 6.5 de Poder de Execução')
+        expect.stringContaining('Empresa Alvo: X=70.1 / Y=6.5')
       );
     });
   });

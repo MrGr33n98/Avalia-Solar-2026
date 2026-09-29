@@ -27,6 +27,9 @@ import {
 } from 'lucide-react';
 import type { PositioningThresholds, PositioningPoint } from '@/lib/api';
 
+import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/useIsMobile';
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface VisualQuadrantData extends PositioningPoint {
@@ -130,8 +133,12 @@ export function applyForceRepulsion(
   for (let iter = 0; iter < FORCE_ITERATIONS; iter++) {
     for (let i = 0; i < activeNodes.length; i++) {
       for (let j = i + 1; j < activeNodes.length; j++) {
-        const dx = activeNodes[i].display_x - activeNodes[j].display_x;
-        const dy = activeNodes[i].display_y - activeNodes[j].display_y;
+        let dx = activeNodes[i].display_x - activeNodes[j].display_x;
+        let dy = activeNodes[i].display_y - activeNodes[j].display_y;
+        if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) {
+          dx = (i % 2 === 0 ? 0.1 : -0.1) * (i + 1);
+          dy = (j % 2 === 0 ? 0.1 : -0.1) * (j + 1);
+        }
         const dist = Math.hypot(dx, dy) || 0.001;
         if (dist < MIN_DIST) {
           const overlap = (MIN_DIST - dist) / 2;
@@ -335,13 +342,13 @@ function ClusterExpandPanel({ members, onClose, onSelectCompany }: { members: Vi
 
 function NodeShape({
   cx = 0, cy = 0, payload,
-  selectedId, hoveredId,
+  selectedId, hoveredId, isCompact,
   onHover, onClick,
   onNodePosition,
 }: {
   cx?: number; cy?: number;
   payload?: VisualQuadrantData;
-  selectedId: number | null; hoveredId: number | null;
+  selectedId: number | null; hoveredId: number | null; isCompact?: boolean;
   onHover: (p: VisualQuadrantData | null) => void;
   onClick: (p: VisualQuadrantData) => void;
   onNodePosition: (x: number, y: number) => void;
@@ -363,7 +370,7 @@ function NodeShape({
     payloadRecord.has_paid_plan || (payloadRecord.commercial_status as Record<string, boolean> | undefined)?.paid
   );
   const isVerified = Boolean(payloadRecord.is_verified || payloadRecord.verified);
-  const size = isCurrent ? 46 : 36;
+  const size = isCurrent ? (isCompact ? 38 : 46) : (isCompact ? 28 : 36);
   const hs = size / 2;
 
   const ddx = payload.display_x - payload.raw_x;
@@ -395,7 +402,7 @@ function NodeShape({
       )}
 
       {(isCurrent || isHovered || isSelected) && (
-        <circle cx={cx} cy={cy} r={hs + 9}
+        <circle cx={cx} cy={cy} r={hs + (isCompact ? 6 : 9)}
           fill={isCurrent ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.10)'}
           className={isCurrent ? 'animate-pulse' : undefined}
         />
@@ -414,23 +421,23 @@ function NodeShape({
         </foreignObject>
       ) : (
         <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central"
-          fontSize={isCurrent ? 11 : 9} fontWeight="900"
+          fontSize={isCurrent ? (isCompact ? 10 : 11) : (isCompact ? 8 : 9)} fontWeight="900"
           className="pointer-events-none fill-slate-700 dark:fill-slate-200">
           {getCompanyInitials(payload.name)}
         </text>
       )}
 
-      {isPaid && !isCurrent && <circle cx={cx + hs - 2} cy={cy - hs + 2} r={5} fill="#f59e0b" stroke="#fff" strokeWidth={1.2} />}
-      {isVerified && !isPaid && !isCurrent && <circle cx={cx + hs - 2} cy={cy - hs + 2} r={5} fill="#3b82f6" stroke="#fff" strokeWidth={1.2} />}
+      {isPaid && !isCurrent && <circle cx={cx + hs - 2} cy={cy - hs + 2} r={isCompact ? 4 : 5} fill="#f59e0b" stroke="#fff" strokeWidth={1.2} />}
+      {isVerified && !isPaid && !isCurrent && <circle cx={cx + hs - 2} cy={cy - hs + 2} r={isCompact ? 4 : 5} fill="#3b82f6" stroke="#fff" strokeWidth={1.2} />}
 
       {isCurrent && (
-        <g transform={`translate(${cx - 34}, ${cy + hs + 5})`}>
-          <rect x={0} y={0} width={68} height={17} rx={8.5} fill="#059669" className="drop-shadow-sm filter" />
-          <text x={34} y={12} textAnchor="middle" fill="#fff" fontSize={9} fontWeight="800" letterSpacing={0.5}>SUA EMPRESA</text>
+        <g transform={`translate(${cx - (isCompact ? 28 : 34)}, ${cy + hs + 4})`}>
+          <rect x={0} y={0} width={isCompact ? 56 : 68} height={isCompact ? 15 : 17} rx={isCompact ? 7.5 : 8.5} fill="#059669" className="drop-shadow-sm filter" />
+          <text x={isCompact ? 28 : 34} y={isCompact ? 10.5 : 12} textAnchor="middle" fill="#fff" fontSize={isCompact ? 8 : 9} fontWeight="800" letterSpacing={0.5}>VOCÊ</text>
         </g>
       )}
 
-      {!isCurrent && hasLogo && (
+      {!isCurrent && hasLogo && !isCompact && (
         <foreignObject x={cx + hs + 4} y={cy - 9} width={100} height={18}>
           <div className="pointer-events-none max-w-[96px] overflow-hidden truncate rounded-md border border-slate-100 bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold tracking-tight text-slate-700 shadow-xs backdrop-blur-sm dark:border-slate-700 dark:bg-zinc-900/90 dark:text-zinc-200">
             {payload.name}
@@ -473,10 +480,15 @@ function QuadrantBadge({ cfg, position }: {
   position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 }) {
   const Icon = cfg.icon;
-  const posClass = { 'top-left': 'left-10 top-10', 'top-right': 'right-8 top-10', 'bottom-left': 'bottom-14 left-10', 'bottom-right': 'bottom-14 right-8' }[position];
+  const posClass = {
+    'top-left': 'left-2 top-3 sm:left-5 sm:top-6 lg:left-10 lg:top-10',
+    'top-right': 'right-2 top-3 sm:right-5 sm:top-6 lg:right-8 lg:top-10',
+    'bottom-left': 'bottom-8 left-2 sm:bottom-10 sm:left-5 lg:bottom-14 lg:left-10',
+    'bottom-right': 'bottom-8 right-2 sm:bottom-10 sm:right-5 lg:bottom-14 lg:right-8',
+  }[position];
   return (
     <div className={`absolute ${posClass}`}>
-      <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider shadow-2xs backdrop-blur-sm ${cfg.pill}`}>
+      <div className={cn('inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.04em] shadow-2xs backdrop-blur-sm sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[9px] sm:tracking-wider', cfg.pill)}>
         <Icon className={`h-2.5 w-2.5 ${cfg.iconCls}`} />
         {cfg.label}
       </div>
@@ -499,6 +511,7 @@ export default function MagicQuadrant({
   selectedCompanyId: externalSelectedId,
   onSelectCompany,
 }: Props) {
+  const isCompact = useIsMobile(640);
   const [viewMode, setViewMode] = useState<'map' | 'table'>('map');
   const [hoveredPoint, setHoveredPoint] = useState<VisualQuadrantData | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<VisualQuadrantData | null>(null);
@@ -524,7 +537,9 @@ export default function MagicQuadrant({
     setTooltipPos({ x: Math.min(svgX + 10, rect.width - 280), y: Math.max(svgY - 200, 8) });
   }, []);
 
-  const MARGIN = { top: 36, right: 32, bottom: 52, left: 40 };
+  const MARGIN = isCompact
+    ? { top: 24, right: 12, bottom: 38, left: 24 }
+    : { top: 36, right: 32, bottom: 52, left: 40 };
 
   const textSummary = currentCompany
     ? `Mapa com ${populationSize ?? data.length} empresas${resolvedScope ? ' em ' + resolvedScope : ''}. ${currentCompany.name}: X=${(currentCompany.x_score ?? 0).toFixed(1)} / Y=${(currentCompany.y_score ?? 0).toFixed(1)}.`
@@ -584,16 +599,17 @@ export default function MagicQuadrant({
       <p className="sr-only">{textSummary}</p>
       <MapHeader viewMode={viewMode} setViewMode={setViewMode} populationSize={populationSize ?? data.length} resolvedScope={resolvedScope} />
 
-      <div className="relative h-[460px] w-full flex-1 sm:h-[520px] lg:h-[580px]">
+      {/* ÁREA CARTESIANA RESPONSIVA SEM FLEX-1 */}
+      <div className="relative h-[340px] min-h-[340px] w-full shrink-0 min-[390px]:h-[360px] min-[390px]:min-h-[360px] sm:h-[440px] sm:min-h-[440px] lg:h-[580px] lg:min-h-[580px]">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={MARGIN}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.6} className="dark:stroke-slate-800" />
             <XAxis type="number" dataKey="display_x" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickLine={false}
               axisLine={{ stroke: '#cbd5e1', strokeWidth: 1 }} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 500 }}
-              label={{ value: `${xAxisLabel} →`, position: 'bottom', offset: 18, fill: '#475569', fontSize: 11, fontWeight: 700 }} />
+              label={{ value: `${xAxisLabel} →`, position: 'bottom', offset: isCompact ? 10 : 18, fill: '#475569', fontSize: isCompact ? 10 : 11, fontWeight: 700 }} />
             <YAxis type="number" dataKey="display_y" domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tickLine={false}
               axisLine={{ stroke: '#cbd5e1', strokeWidth: 1 }} tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 500 }}
-              label={{ value: yAxisLabel, angle: -90, position: 'insideLeft', offset: -8, fill: '#475569', fontSize: 11, fontWeight: 700 }} />
+              label={{ value: yAxisLabel, angle: -90, position: 'insideLeft', offset: isCompact ? -4 : -8, fill: '#475569', fontSize: isCompact ? 10 : 11, fontWeight: 700 }} />
 
             {xThreshold != null && yThreshold != null && (
               <>
@@ -614,6 +630,7 @@ export default function MagicQuadrant({
                   {...(props as Record<string, unknown>)}
                   selectedId={selectedId}
                   hoveredId={hoveredPoint?.id ?? null}
+                  isCompact={isCompact}
                   onHover={setHoveredPoint}
                   onClick={handleNodeClick}
                   onNodePosition={handleNodePosition}
@@ -634,7 +651,7 @@ export default function MagicQuadrant({
         )}
 
         <AnimatePresence>
-          {(selectedPoint || hoveredPoint) && tooltipPos && (
+          {!isCompact && (selectedPoint || hoveredPoint) && tooltipPos && (
             <div className="pointer-events-none absolute inset-0" style={{ zIndex: 50 }}>
               <div className="pointer-events-auto absolute" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
                 <RichTooltip
@@ -654,19 +671,39 @@ export default function MagicQuadrant({
             <ClusterExpandPanel members={clusterExpanded} onClose={() => setClusterExpanded(null)} onSelectCompany={onSelectCompany} />
           )}
         </AnimatePresence>
-
-        <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 sm:hidden">
-          <span className="rounded-full bg-slate-900/60 px-3 py-1 text-[10px] font-medium text-white/80 backdrop-blur-sm">
-            Toque para ver detalhes · Pinche para zoom
-          </span>
-        </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 border-t border-slate-100 px-4 py-2.5 text-center text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400">
-        <span><strong className="font-semibold text-slate-700 dark:text-slate-300">Horizontal:</strong> {xAxisDefinition}</span>
-        <span className="hidden text-slate-300 sm:inline dark:text-slate-700">•</span>
-        <span><strong className="font-semibold text-slate-700 dark:text-slate-300">Vertical:</strong> {yAxisDefinition}</span>
-        {populationSize != null && <><span className="hidden text-slate-300 sm:inline dark:text-slate-700">•</span><span>{populationSize} empresas elegíveis</span></>}
+      {/* DICA MOBILE DE INTERAÇÃO APENAS COM SELEÇÃO DE NODE (FORA DO PLOT) */}
+      <div className="flex items-center justify-center bg-slate-50/50 py-1.5 sm:hidden dark:bg-slate-800/40">
+        <span className="rounded-full bg-slate-900/60 px-3 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-xs">
+          Toque em uma empresa para ver detalhes
+        </span>
+      </div>
+
+      {/* FOOTER DOS EIXOS: COMPACTO NO MOBILE / DETALHADO NO DESKTOP */}
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-slate-100 px-4 py-2.5 text-center text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <div className="hidden sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-3 sm:gap-y-0.5">
+          <span><strong className="font-semibold text-slate-700 dark:text-slate-300">Horizontal:</strong> {xAxisDefinition}</span>
+          <span className="text-slate-300 dark:text-slate-700">•</span>
+          <span><strong className="font-semibold text-slate-700 dark:text-slate-300">Vertical:</strong> {yAxisDefinition}</span>
+          {populationSize != null && (
+            <>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
+              <span>{populationSize} empresas elegíveis</span>
+            </>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-x-2 text-[10px] sm:hidden">
+          <span><strong className="font-semibold text-slate-700 dark:text-slate-300">X:</strong> Autoridade</span>
+          <span className="text-slate-300 dark:text-slate-700">•</span>
+          <span><strong className="font-semibold text-slate-700 dark:text-slate-300">Y:</strong> Execução</span>
+          {populationSize != null && (
+            <>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
+              <span>{populationSize} empresas</span>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
