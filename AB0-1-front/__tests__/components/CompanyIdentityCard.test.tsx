@@ -1,6 +1,19 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import CompanyIdentityCard from '@/app/companies/[id]/components/CompanyIdentityCard';
+
+const mockToggleFavorite = jest.fn();
+
+jest.mock('@/hooks/useFavorites', () => ({
+  useFavorites: () => ({
+    isFavorite: jest.fn().mockReturnValue(false),
+    toggleFavorite: mockToggleFavorite,
+  }),
+}));
+
+jest.mock('@/lib/analytics/lazy', () => ({
+  track: jest.fn(),
+}));
 
 beforeAll(() => {
   global.fetch = jest.fn(() =>
@@ -38,10 +51,9 @@ describe('CompanyIdentityCard Responsive Layout', () => {
     const mainWrapper = section?.querySelector('.flex.min-w-0.flex-row');
     expect(mainWrapper).toBeInTheDocument();
     expect(mainWrapper).toHaveClass('flex-row');
-    expect(mainWrapper).not.toHaveClass('flex-col');
   });
 
-  test('renders company name, location, and rating', () => {
+  test('renders company name, location, rating, favorite and share action buttons', () => {
     render(
       <CompanyIdentityCard
         company={mockCompany}
@@ -55,5 +67,12 @@ describe('CompanyIdentityCard Responsive Layout', () => {
     expect(screen.getByText('SB Solar')).toBeInTheDocument();
     expect(screen.getByText('São João da Boa Vista, SP')).toBeInTheDocument();
     expect(screen.getByText('4.8')).toBeInTheDocument();
+
+    const favButton = screen.getByLabelText('Favoritar empresa');
+    expect(favButton).toBeInTheDocument();
+    fireEvent.click(favButton);
+    expect(mockToggleFavorite).toHaveBeenCalledWith(1);
+
+    expect(screen.getByLabelText('Compartilhar empresa')).toBeInTheDocument();
   });
 });

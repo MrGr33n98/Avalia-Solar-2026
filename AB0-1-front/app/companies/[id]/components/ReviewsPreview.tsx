@@ -9,6 +9,8 @@ import { Company, Review } from '@/lib/api';
 import { RatingStars } from '@/components/RatingStars';
 import { getFullImageUrl } from '@/utils/image';
 
+import { buildCompanySubPath } from '@/lib/slug';
+
 interface ReviewsPreviewProps {
   company: Company;
   reviews: Review[];
@@ -33,6 +35,8 @@ export default function ReviewsPreview({
     companyStats.rating_count ?? companyStats.total_reviews ?? companyStats.reviews_count ?? 0
   );
 
+  const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
+
   const recentReviews = reviews
     .filter((review) => {
       const content = String(review.comment ?? review.body ?? '').trim();
@@ -53,17 +57,27 @@ export default function ReviewsPreview({
               </p>
             </div>
           </div>
-          {ratingCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onTabChange('reviews')}
-              className="inline-flex min-h-11 items-center gap-1 rounded-lg px-3 text-xs font-bold text-blue-700 hover:bg-slate-50 hover:text-blue-900 focus-visible:ring-2 focus-visible:ring-blue-600"
+          <div className="flex items-center gap-2">
+            <Link
+              href={reviewPath}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-3 text-xs font-bold text-slate-900 transition-colors hover:bg-amber-500/[0.12]"
             >
-              Ver todas
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Button>
-          )}
+              <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
+              <span className="hidden sm:inline">Avaliar empresa</span>
+              <span className="sm:hidden">Avaliar</span>
+            </Link>
+            {ratingCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onTabChange('reviews')}
+                className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2.5 text-xs font-bold text-blue-700 hover:bg-slate-50 hover:text-blue-900 focus-visible:ring-2 focus-visible:ring-blue-600"
+              >
+                Ver todas
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Resumo de Reputação Geral */}

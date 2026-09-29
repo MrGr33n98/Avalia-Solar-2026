@@ -132,94 +132,46 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
   return (
     <div
       id="company-cta-group"
-      className="grid w-full gap-1.5 sm:gap-2 lg:flex lg:w-auto lg:items-center lg:gap-2.5"
+      className="grid w-full grid-cols-[1.55fr_0.9fr_1.15fr] gap-2 pt-1.5 sm:gap-2.5 lg:flex lg:w-auto lg:items-center"
     >
-      {/* Linha 1 no Mobile: Quick Actions (Favoritar, Compartilhar, WhatsApp, Avaliar) */}
-      <div className="flex items-center justify-start sm:justify-end gap-1.5 sm:gap-2 lg:order-2 lg:justify-start">
-        {/* 1. Favoritar (♡) */}
-        <button
-          type="button"
-          onClick={handleToggleFavorite}
-          aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
-          title={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
-          className={cn(
-            'relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl border transition-colors after:absolute after:-inset-1 after:content-[\'\'] sm:h-10 sm:w-10',
-            isFav
-              ? 'border-red-200 bg-red-50 text-red-600'
-              : 'border-slate-200/90 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-          )}
-        >
-          <Heart className={cn('h-4 w-4', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
-        </button>
+      {/* 1. Solicitar contato (Primário Azul) */}
+      <Button
+        type="button"
+        size="default"
+        onClick={handleRequestQuote}
+        className="h-[46px] min-h-[44px] w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-2 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-blue-700 whitespace-nowrap sm:px-4 sm:text-sm lg:h-10 lg:w-auto lg:min-w-[145px]"
+      >
+        <Send className="h-4 w-4 shrink-0 fill-current" aria-hidden="true" />
+        <span className="whitespace-nowrap truncate">Solicitar contato</span>
+      </Button>
 
-        {/* 2. Compartilhar (↗) */}
-        <button
-          type="button"
-          onClick={handleShare}
-          disabled={isSharing}
-          aria-label="Compartilhar empresa"
-          title="Compartilhar empresa"
-          className="relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 after:absolute after:-inset-1 after:content-[''] sm:h-10 sm:w-10"
-        >
-          <Share2 className="h-4 w-4 text-slate-600" aria-hidden="true" />
-        </button>
-
-        {/* 3. WhatsApp (quando habilitado) */}
-        {showWhatsApp && (
-          <button
-            type="button"
-            onClick={handleWhatsApp}
-            aria-label="Contato via WhatsApp"
-            title="Contato via WhatsApp"
-            className="relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl bg-emerald-500 text-white transition-colors hover:bg-emerald-600 after:absolute after:-inset-1 after:content-[''] sm:h-10 sm:w-10 lg:w-auto lg:px-2.5 lg:gap-1.5"
-          >
-            <MessageCircle className="h-4 w-4 fill-current shrink-0" aria-hidden="true" />
-            <span className="hidden lg:inline text-xs font-bold">WhatsApp</span>
-          </button>
+      {/* 2. Comparar (Secundário Outline Azul) */}
+      <Button
+        type="button"
+        variant="outline"
+        size="default"
+        onClick={handleToggleComparison}
+        className={cn(
+          'h-[46px] min-h-[44px] w-full inline-flex items-center justify-center gap-1 rounded-xl border px-1.5 text-[13px] font-bold transition-colors whitespace-nowrap sm:px-3 sm:text-sm lg:h-10 lg:w-auto lg:min-w-[110px]',
+          isCompared
+            ? 'border-blue-600 bg-blue-50 text-blue-700'
+            : 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
         )}
+      >
+        <Layers className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+        <span className="whitespace-nowrap truncate">{isCompared ? 'Comparando' : 'Comparar'}</span>
+      </Button>
 
-        {/* 4. Avaliar (★) */}
-        <Link
-          href={reviewPath}
-          aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
-          title="Avaliar empresa"
-          className="relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 after:absolute after:-inset-1 after:content-[''] sm:h-10 sm:w-10 lg:w-auto lg:px-2.5 lg:gap-1"
-        >
-          <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
-          <span className="hidden lg:inline text-xs font-semibold text-slate-600">Avaliar</span>
-        </Link>
-      </div>
-
-      {/* Linha 2 no Mobile: Primary CTAs (Solicitar Contato + Comparar) em Grid 2 Colunas */}
-      <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] gap-2 lg:order-1 lg:flex lg:items-center lg:gap-2">
-        {/* 5. Solicitar contato (Primário Azul) */}
-        <Button
-          type="button"
-          size="default"
-          onClick={handleRequestQuote}
-          className="h-10.5 min-h-[42px] w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700 whitespace-nowrap sm:px-4 sm:text-sm lg:h-9.5 lg:w-auto lg:min-w-[130px]"
-        >
-          <Send className="h-4 w-4 shrink-0 fill-current" aria-hidden="true" />
-          <span className="whitespace-nowrap">Solicitar contato</span>
-        </Button>
-
-        {/* 6. Comparar (Outline Azul) */}
-        <Button
-          type="button"
-          variant="outline"
-          size="default"
-          onClick={handleToggleComparison}
-          className={cn(
-            'h-10.5 min-h-[42px] w-full inline-flex items-center justify-center gap-1.5 rounded-xl border px-2.5 text-xs font-bold transition-colors whitespace-nowrap sm:px-3 sm:text-sm lg:h-9.5 lg:w-auto lg:min-w-[100px]',
-            isCompared
-              ? 'border-blue-600 bg-blue-50 text-blue-700'
-              : 'border-blue-500/80 bg-white text-blue-600 hover:bg-blue-50'
-          )}
-        >
-          <Layers className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span className="whitespace-nowrap">{isCompared ? 'Comparando' : 'Comparar'}</span>
-        </Button>
-      </div>
+      {/* 3. Avaliar empresa (Review CTA Warm Light Accent) */}
+      <Link
+        href={reviewPath}
+        aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
+        title="Avaliar empresa"
+        className="h-[46px] min-h-[44px] w-full inline-flex items-center justify-center gap-1 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-1.5 text-[13px] font-bold text-slate-900 transition-colors hover:bg-amber-500/[0.12] whitespace-nowrap sm:px-3 sm:text-sm lg:h-10 lg:w-auto lg:min-w-[130px]"
+      >
+        <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
+        <span className="whitespace-nowrap truncate text-slate-900">Avaliar empresa</span>
+      </Link>
     </div>
   );
 }

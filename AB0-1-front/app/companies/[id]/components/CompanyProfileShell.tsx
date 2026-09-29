@@ -9,6 +9,7 @@ import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { Company, Product, Review } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
 
+import CompanyMobileHeader from './CompanyMobileHeader';
 import CompanyPremiumHero from './CompanyPremiumHero';
 import CompanyIdentityCard from './CompanyIdentityCard';
 import CompanyCTAGroup from './CompanyCTAGroup';
@@ -91,11 +92,16 @@ export default function CompanyProfileShell({
   // Checagem de entitlements para abas e blocos (showFaq is passed via props)
 
   return (
-    <div id="company-profile-shell" data-company-layout="premium-shell" className="min-h-screen bg-slate-50/40 text-slate-900 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
+    <div id="company-profile-shell" data-company-layout="premium-shell" className="min-h-screen bg-[#f7f9fc] text-slate-900 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
+      {/* Header Mobile PWA */}
+      <CompanyMobileHeader />
+
       {/* Cabeçalho & Hero Premium */}
       <header className="bg-transparent border-none">
-        <div className="mx-auto w-full max-w-[430px] px-4 pt-4 md:max-w-[1240px] md:px-6">
-          <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
+        <div className="mx-auto w-full max-w-[480px] px-3 pt-2 sm:px-4 sm:pt-4 md:max-w-[1240px] md:px-6">
+          <div className="hidden md:block">
+            <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
+          </div>
 
           {/* Compound Hero Container estilo WEG */}
           <div
@@ -146,7 +152,7 @@ export default function CompanyProfileShell({
       </header>
 
       {/* Grid Principal responsivo de 12 colunas */}
-      <main className="mx-auto w-full max-w-[430px] px-4 py-4 md:max-w-[1240px] md:px-6 md:py-8">
+      <main className="mx-auto w-full max-w-[480px] px-3 py-3 md:max-w-[1240px] md:px-6 md:py-8">
         <Tabs value={activeTab} className="w-full">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {/* Coluna da Esquerda (8 Colunas) — Aba Ativa */}

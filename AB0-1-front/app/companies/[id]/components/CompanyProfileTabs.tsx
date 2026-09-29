@@ -80,8 +80,8 @@ export default function CompanyProfileTabs({
   return (
     <>
       {/* Mobile tab rail */}
-      <div id="company-profile-tabs" className="relative z-30 mt-2.5 w-full md:hidden">
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div id="company-profile-tabs" className="sticky top-14 z-30 mt-2.5 w-full md:hidden">
+        <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs">
           <nav aria-label="Seções do perfil da empresa">
             <div className="flex min-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {mobileTabs.map((tab, index) => {

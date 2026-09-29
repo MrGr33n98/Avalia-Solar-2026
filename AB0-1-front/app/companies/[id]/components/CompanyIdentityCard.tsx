@@ -2,11 +2,15 @@
 
 import { useMemo, useState } from 'react';
 import { ReactNode } from 'react';
-import { MapPin, Star, BadgeCheck, Truck, Calendar, Globe, ExternalLink } from 'lucide-react';
+import { MapPin, Star, BadgeCheck, Truck, Calendar, Globe, ExternalLink, Heart, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Company } from '@/lib/api';
 import Image from 'next/image';
 import { getFullImageUrl } from '@/utils/image';
+import { useFavorites } from '@/hooks/useFavorites';
+import { track } from '@/lib/analytics/lazy';
+import { cn } from '@/lib/utils';
 import PremiumHighlightBadge from './PremiumHighlightBadge';
 import CompanyViewCounter from './CompanyViewCounter';
 
@@ -31,6 +35,50 @@ export default function CompanyIdentityCard({
   children,
 }: CompanyIdentityCardProps) {
   const [badgeImageError, setBadgeImageError] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const companyIdNum = Number(company.id);
+  const isFav = isFavorite(companyIdNum);
+
+  const handleToggleFavorite = () => {
+    track('company_favorite_click', {
+      company_id: company.id,
+      company_name: company.name,
+      action: isFav ? 'remove' : 'add',
+    });
+    toggleFavorite(companyIdNum);
+    if (isFav) {
+      toast.info('Empresa removida dos favoritos.');
+    } else {
+      toast.success('Empresa adicionada aos favoritos!');
+    }
+  };
+
+  const handleShare = async () => {
+    track('company_share_click', {
+      company_id: company.id,
+      company_name: company.name,
+      element_type: 'button',
+      action_type: 'click',
+    });
+    setIsSharing(true);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: company.name,
+          text: company.description,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copiado para a área de transferência!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    } finally {
+      setIsSharing(false);
+    }
+  };
   const hasLogo = Boolean(logoUrl) && !logoError;
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
 
@@ -156,15 +204,42 @@ export default function CompanyIdentityCard({
 
           {/* Informações da empresa estilo WEG */}
           <div className="min-w-0 flex-1 space-y-1 pt-1 sm:pt-2">
-            {/* Nome + Verificado + Plano Comercial */}
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <h1 className="truncate text-base font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
-                {company.name}
-              </h1>
-              {isVerified && (
-                <BadgeCheck className="h-4 w-4 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
-              )}
-              <PremiumHighlightBadge company={company} />
+            {/* Nome + Verificado + Plano Comercial + Ações Favorito/Compartilhar */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
+                <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
+                  {company.name}
+                </h1>
+                {isVerified && (
+                  <BadgeCheck className="h-4.5 w-4.5 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
+                )}
+                <PremiumHighlightBadge company={company} />
+              </div>
+
+              {/* Botões de Ação Topo Direito (Favoritar e Compartilhar) */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleToggleFavorite}
+                  aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
+                  className={cn(
+                    'flex h-9 w-9 items-center justify-center rounded-xl border transition-colors sm:h-10 sm:w-10',
+                    isFav
+                      ? 'border-red-200 bg-red-50 text-red-600'
+                      : 'border-slate-200/90 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                  )}
+                >
+                  <Heart className={cn('h-4 w-4', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  aria-label="Compartilhar empresa"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 sm:h-10 sm:w-10"
+                >
+                  <Share2 className="h-4 w-4 text-slate-600" aria-hidden="true" />
+                </button>
+              </div>
             </div>
 
             {/* Descrição curta (1 linha) */}
