@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -71,11 +71,38 @@ export const AnimatedCompareIcon = React.forwardRef<
 
     if (selected) {
       return (
-        <Check
-          className={cn('text-emerald-600', className)}
-          size={pxSize}
+        <div
+          ref={ref}
+          className={cn(
+            'inline-flex shrink-0 items-center justify-center rounded-full',
+            className
+          )}
+          style={{ width: pxSize, height: pxSize }}
           aria-hidden={ariaHidden}
-        />
+          aria-label={ariaLabel}
+          {...props}
+        >
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {/* Fundo */}
+            <circle cx="12" cy="12" r="8.25" fill="#FFFFFF" />
+            {/* Borda verde */}
+            <circle cx="12" cy="12" r="8.75" fill="none" stroke="#10B981" strokeWidth="0.9" opacity="0.8" />
+            {/* Checkmark */}
+            <polyline
+              points="8,12.5 11,15.5 16,9"
+              stroke="#10B981"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
       );
     }
 

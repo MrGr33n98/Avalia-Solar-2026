@@ -119,10 +119,11 @@ export default function ComparisonToggleButton({
     },
     minimal: {
       button: cn(
-        'rounded-full border-2 aspect-square shrink-0 transition-all duration-300 hover:scale-110',
+        // Hit-area pura: sem border, sem bg — o AnimatedCompareIcon é o único visual
+        'rounded-full aspect-square shrink-0 transition-all duration-300 hover:scale-110',
         isSelected
-          ? 'bg-blue-600 border-blue-600 text-white shadow-lg'
-          : 'bg-white border-slate-200 text-slate-600 hover:border-blue-300',
+          ? 'text-white'
+          : 'text-slate-600',
         size === 'sm' && 'h-8 w-8 min-h-8 min-w-8 p-0',
         size === 'default' && 'h-9 w-9 min-h-9 min-w-9 p-0',
         size === 'lg' && 'h-11 w-11 min-h-11 min-w-11 p-0'
@@ -182,9 +183,10 @@ export default function ComparisonToggleButton({
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
-              className="flex items-center justify-center"
+              className="relative flex items-center justify-center"
             >
-              <Check className={iconClass} />
+              {/* Círculo+check via AnimatedCompareIcon: zero camadas extras */}
+              <AnimatedCompareIcon selected size="sm" />
               {showPosition && position && (
                 <Badge
                   variant="secondary"
@@ -201,7 +203,7 @@ export default function ComparisonToggleButton({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0 }}
             >
-              <AnimatedCompareIcon className={iconClass} size="sm" intensity="strong" />
+              <AnimatedCompareIcon size="sm" intensity="strong" />
             </motion.div>
           )}
         </AnimatePresence>

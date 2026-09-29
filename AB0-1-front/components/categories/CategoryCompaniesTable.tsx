@@ -1347,7 +1347,7 @@ function CategoryCompanyActions({
 
           size="sm"
 
-          className="h-10 w-10 min-h-10 min-w-10 shrink-0 rounded-full border border-slate-200 bg-white p-0 text-blue-600 shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition-all duration-200 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-[0_4px_12px_rgba(37,99,235,0.12)]"
+          className="h-10 w-10 min-h-10 min-w-10 shrink-0 p-0"
 
         />
 
