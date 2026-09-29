@@ -173,39 +173,37 @@ export function PremiumBannerCarousel({
               bg-white/90, backdrop-blur, shadow-sm, min-w-[48px] indesejados.
               Área de toque: 44×44px (WCAG 2.5.5); visual: círculo 18px.
             */}
-            <div className="absolute inset-y-0 left-0 z-10 flex items-center opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
+            {/* Prev: oculto no mobile, hover no desktop */}
+            <div className="absolute inset-y-0 left-0 z-10 hidden items-center transition-opacity duration-300 md:flex md:opacity-0 md:group-hover:opacity-100">
               <button
                 type="button"
                 onClick={() => api?.scrollPrev()}
                 aria-label="Slide anterior"
-                className="flex h-11 w-11 items-center justify-center bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:h-9 md:w-9"
+                className="flex h-9 w-9 items-center justify-center bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 <span className={cn(
                   'pointer-events-none flex items-center justify-center rounded-full border border-white/40 bg-black/30 backdrop-blur-sm',
-                  compactControls
-                    ? 'h-[18px] w-[18px] md:h-5 md:w-5'
-                    : 'h-[18px] w-[18px] md:h-6 md:w-6'
+                  compactControls ? 'h-5 w-5' : 'h-6 w-6'
                 )}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white" aria-hidden="true">
                     <polyline points="15 18 9 12 15 6" />
                   </svg>
                 </span>
               </button>
             </div>
-            <div className="absolute inset-y-0 right-0 z-10 flex items-center opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
+            {/* Next: oculto no mobile, hover no desktop */}
+            <div className="absolute inset-y-0 right-0 z-10 hidden items-center transition-opacity duration-300 md:flex md:opacity-0 md:group-hover:opacity-100">
               <button
                 type="button"
                 onClick={() => api?.scrollNext()}
                 aria-label="Próximo slide"
-                className="flex h-11 w-11 items-center justify-center bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:h-9 md:w-9"
+                className="flex h-9 w-9 items-center justify-center bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 <span className={cn(
                   'pointer-events-none flex items-center justify-center rounded-full border border-white/40 bg-black/30 backdrop-blur-sm',
-                  compactControls
-                    ? 'h-[18px] w-[18px] md:h-5 md:w-5'
-                    : 'h-[18px] w-[18px] md:h-6 md:w-6'
+                  compactControls ? 'h-5 w-5' : 'h-6 w-6'
                 )}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white" aria-hidden="true">
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </span>
