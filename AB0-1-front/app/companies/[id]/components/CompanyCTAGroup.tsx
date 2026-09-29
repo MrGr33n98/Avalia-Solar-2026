@@ -132,17 +132,17 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
   return (
     <div
       id="company-cta-group"
-      className="grid w-full grid-cols-[1.55fr_0.9fr_1.15fr] gap-2 pt-1.5 sm:gap-2.5 lg:flex lg:w-auto lg:items-center"
+      className="grid w-full min-w-0 grid-cols-[1.45fr_0.90fr_1.15fr] gap-1.5 pt-1.5 min-[400px]:gap-2 lg:flex lg:w-auto lg:items-center lg:gap-2.5"
     >
       {/* 1. Solicitar contato (Primário Azul) */}
       <Button
         type="button"
         size="default"
         onClick={handleRequestQuote}
-        className="h-[46px] min-h-[44px] w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-2 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-blue-700 whitespace-nowrap sm:px-4 sm:text-sm lg:h-10 lg:w-auto lg:min-w-[145px]"
+        className="h-[46px] min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-2 text-[13px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 whitespace-nowrap min-[400px]:gap-1.5 min-[400px]:px-2.5 min-[400px]:text-[14px] sm:px-3 lg:h-10 lg:w-auto lg:min-w-[145px]"
       >
         <Send className="h-4 w-4 shrink-0 fill-current" aria-hidden="true" />
-        <span className="whitespace-nowrap truncate">Solicitar contato</span>
+        <span className="whitespace-nowrap">Solicitar contato</span>
       </Button>
 
       {/* 2. Comparar (Secundário Outline Azul) */}
@@ -152,14 +152,14 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
         size="default"
         onClick={handleToggleComparison}
         className={cn(
-          'h-[46px] min-h-[44px] w-full inline-flex items-center justify-center gap-1 rounded-xl border px-1.5 text-[13px] font-bold transition-colors whitespace-nowrap sm:px-3 sm:text-sm lg:h-10 lg:w-auto lg:min-w-[110px]',
+          'h-[46px] min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl border px-1.5 text-[13px] font-semibold leading-4 transition-colors whitespace-nowrap min-[400px]:gap-1.5 min-[400px]:px-2 min-[400px]:text-[14px] sm:px-3 lg:h-10 lg:w-auto lg:min-w-[100px]',
           isCompared
             ? 'border-blue-600 bg-blue-50 text-blue-700'
             : 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
         )}
       >
         <Layers className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
-        <span className="whitespace-nowrap truncate">{isCompared ? 'Comparando' : 'Comparar'}</span>
+        <span className="whitespace-nowrap">{isCompared ? 'Comparando' : 'Comparar'}</span>
       </Button>
 
       {/* 3. Avaliar empresa (Review CTA Warm Light Accent) */}
@@ -167,10 +167,10 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
         href={reviewPath}
         aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
         title="Avaliar empresa"
-        className="h-[46px] min-h-[44px] w-full inline-flex items-center justify-center gap-1 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-1.5 text-[13px] font-bold text-slate-900 transition-colors hover:bg-amber-500/[0.12] whitespace-nowrap sm:px-3 sm:text-sm lg:h-10 lg:w-auto lg:min-w-[130px]"
+        className="h-[46px] min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-1.5 text-[13px] font-semibold leading-4 text-slate-900 transition-colors hover:bg-amber-500/[0.12] whitespace-nowrap min-[400px]:gap-1.5 min-[400px]:px-2 min-[400px]:text-[14px] sm:px-3 lg:h-10 lg:w-auto lg:min-w-[130px]"
       >
         <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
-        <span className="whitespace-nowrap truncate text-slate-900">Avaliar empresa</span>
+        <span className="whitespace-nowrap text-slate-900">Avaliar empresa</span>
       </Link>
     </div>
   );
