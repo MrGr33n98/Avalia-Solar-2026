@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
@@ -13,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
-import { Star, X, ShieldCheck, Building2 } from 'lucide-react';
+import { Star, X, ShieldCheck, Building2, ExternalLink, Plus } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
 import { hasPaidPlan } from '@/lib/feature-access';
 import { openLeadModal } from '@/lib/lead-engine';
@@ -22,9 +23,10 @@ import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { cn } from '@/lib/utils';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { getCoverageLabel } from '@/lib/company/coverage-label';
+import { COMPARISON_LIMITS } from '@/lib/comparison/config';
 
 const getSpeedBadge = (time?: string) => {
-  if (!time || time === 'Consultar') return null;
+  if (!time || time === 'Consultar' || time === 'Sob consulta') return null;
   const lower = time.toLowerCase();
   if (lower.includes('h')) {
     const hours = parseInt(lower) || 0;
@@ -42,6 +44,7 @@ interface ComparisonCompany {
   city: string;
   state: string;
   verified: boolean;
+  verification_status?: string;
   logo_url?: string | null;
   rating?: number;
   rating_avg?: number;
@@ -57,9 +60,11 @@ interface ComparisonCompany {
     city_name?: string | null;
     radius_km?: number | null;
   }>;
+  delivered_projects_count?: number;
   delivered_projects_score?: number;
   response_time_sla?: string;
   warranty_years?: number;
+  installation_warranty_years?: number;
   has_paid_plan?: boolean | null;
   cta_whatsapp_enabled?: boolean | null;
   whatsapp?: string | null;
@@ -90,57 +95,75 @@ function MobileComparisonContent({
   onAddCompany,
   onQuote,
 }: MobileComparisonContentProps) {
-  const visibleCompanies = companies.slice(0, 2);
-  const mobileGridColumns = 'grid-cols-[110px_minmax(0,1fr)_minmax(0,1fr)]';
+  const visibleCompanies = companies.slice(0, COMPARISON_LIMITS.mobile);
+  const mobileGridColumns = 'grid-cols-[88px_minmax(0,1fr)_minmax(0,1fr)]';
+
+  const getVerificationText = (company: ComparisonCompany) => {
+    if (company.verified) return 'Verificada';
+    if (company.verification_status === 'pending') return 'Em análise';
+    return 'Não verificada';
+  };
 
   const rows = [
     {
       label: 'Reputação',
-      detail: 'Avaliação',
+      detail: 'Avaliação geral',
       render: (company: ComparisonCompany) => {
         const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
         const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
         return (
           <>
             <span className="text-sm font-extrabold text-slate-950">{rating > 0 ? rating.toFixed(1) : '—'}</span>
-            <span className="text-[10px] text-amber-500">{rating > 0 ? '★★★★★' : 'Sem avaliações'}</span>
-            {reviews > 0 && <span className="text-[10px] text-slate-400">{reviews} avaliação{reviews === 1 ? '' : 'ões'}</span>}
+            <span className="text-[11px] text-amber-500" aria-hidden="true">{rating > 0 ? '★★★★★' : ''}</span>
+            <span className="text-[10px] text-slate-500">
+              {reviews > 0 ? `${reviews} avaliação${reviews === 1 ? '' : 'ões'}` : 'Sem avaliações'}
+            </span>
           </>
         );
       },
     },
     {
-      label: 'Certificações',
-      detail: 'Documentação',
+      label: 'Certificação',
+      detail: 'Status auditado',
       render: (company: ComparisonCompany) => (
         <>
-          <span className={cn('text-xs font-bold', company.verified ? 'text-emerald-700' : 'text-slate-500')}>
-            {company.verified ? 'Verificada' : 'Em análise'}
+          <span className={cn('text-xs font-bold', company.verified ? 'text-emerald-700' : 'text-slate-600')}>
+            {getVerificationText(company)}
           </span>
-          <span className="text-[10px] text-slate-400">{company.verified ? 'Dados auditados' : 'Pendente'}</span>
+          <span className="text-[10px] text-slate-400">
+            {company.verified ? 'Dados auditados' : 'Documentação em análise'}
+          </span>
         </>
       ),
     },
     {
       label: 'SLA',
-      detail: 'Resposta',
+      detail: 'Tempo resposta',
       render: (company: ComparisonCompany) => {
         const speed = getSpeedBadge(company.response_time_sla);
         return (
           <>
-            <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">{company.response_time_sla || 'Consultar'}</span>
-            {speed && <span className={cn('w-fit rounded border px-1 py-0.5 text-[9px] font-bold', speed.color)}>{speed.label}</span>}
+            <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">
+              {company.response_time_sla || 'Sob consulta'}
+            </span>
+            {speed && (
+              <span className={cn('w-fit rounded border px-1 py-0.5 text-[10px] font-bold', speed.color)}>
+                {speed.label}
+              </span>
+            )}
           </>
         );
       },
     },
     {
       label: 'Abrangência',
-      detail: 'Atuação',
+      detail: 'Área de atuação',
       render: (company: ComparisonCompany) => {
         return (
           <>
-            <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">{[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}</span>
+            <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">
+              {[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}
+            </span>
             <span className="text-[10px] text-slate-400">{getCoverageLabel(company)}</span>
           </>
         );
@@ -149,83 +172,139 @@ function MobileComparisonContent({
     {
       label: 'Volume',
       detail: 'Projetos',
-      render: (company: ComparisonCompany) => (
-        <>
-          <span className="text-xs font-bold text-slate-950">{company.delivered_projects_score ? `+${company.delivered_projects_score}` : 'Consultar'}</span>
-        </>
-      ),
+      render: (company: ComparisonCompany) => {
+        const count = company.delivered_projects_count ?? company.delivered_projects_score ?? 0;
+        return (
+          <span className="text-xs font-bold text-slate-950">
+            {count > 0 ? `+${count} projetos` : 'Consultar'}
+          </span>
+        );
+      },
     },
     {
       label: 'Garantia',
       detail: 'Pós-instalação',
-      render: (company: ComparisonCompany) => (
-        <>
-          <span className="text-xs font-bold text-slate-950">{company.warranty_years ? `${company.warranty_years} anos` : 'Consultar'}</span>
-        </>
-      ),
+      render: (company: ComparisonCompany) => {
+        const years = company.warranty_years ?? company.installation_warranty_years ?? 0;
+        return (
+          <span className="text-xs font-bold text-slate-950">
+            {years > 0 ? `${years} anos` : 'Consultar'}
+          </span>
+        );
+      },
     },
   ];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1 pb-1 pt-0 md:hidden">
-      <div className={cn('mb-1 grid min-w-0', mobileGridColumns, 'border-b border-slate-200 bg-white')}>
-          <div className="min-w-0 bg-slate-50/70 p-1.5" aria-hidden="true" />
-          {visibleCompanies.map((company) => {
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-1 pt-1 md:hidden">
+      {/* Cards de cabeçalho das empresas no PWA */}
+      <div className={cn('mb-1.5 grid min-w-0 gap-1.5', mobileGridColumns)}>
+        <div className="min-w-0 rounded-lg bg-slate-100/80 p-2 flex items-center justify-center" aria-hidden="true">
+          <span className="text-[10px] font-bold uppercase text-slate-500">Empresas</span>
+        </div>
+        {visibleCompanies.map((company) => {
           const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
           const isHighlighted = company.id === highestRatedCompanyId;
           return (
-            <div key={company.id} className={cn('relative min-w-0 rounded border bg-white p-1 pr-5 shadow-sm', isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200')}>
-              <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
-                {logoUrl ? <Image src={logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" /> : <Building2 className="m-auto h-3.5 w-3.5 text-slate-300" />}
+            <div
+              key={company.id}
+              className={cn(
+                'relative min-w-0 rounded-lg border bg-white p-2 pr-6 shadow-xs min-h-[64px] flex flex-col justify-between',
+                isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200'
+              )}
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
+                  {logoUrl ? (
+                    <Image src={logoUrl} alt="" fill sizes="28px" className="object-contain p-0.5" />
+                  ) : (
+                    <Building2 className="m-auto h-4 w-4 text-slate-300" />
+                  )}
+                </div>
+                <Link href={`/companies/${company.slug || company.id}`} className="min-w-0 flex-1">
+                  <span className="line-clamp-1 break-normal text-xs font-bold leading-tight text-slate-900">
+                    {company.name}
+                  </span>
+                  <span className="block truncate text-[10px] leading-tight text-slate-400">
+                    {[company.city, company.state].filter(Boolean).join(', ') || 'Localização n/i'}
+                  </span>
+                </Link>
               </div>
-              <Link href={`/companies/${company.slug || company.id}`} className="block min-w-0 pr-1 pt-0.5">
-                <span className="line-clamp-2 break-normal text-[9px] font-bold leading-tight text-slate-900">{company.name}</span>
-                <span className="mt-0.5 block break-normal text-[8px] leading-tight text-slate-400">{[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}</span>
-              </Link>
-              <button onClick={() => onRemoveCompany(company.id)} aria-label={`Remover ${company.name} da comparação`} className="absolute right-1 top-1 flex h-[18px] w-[18px] items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 active:bg-red-50 active:text-red-500">
-                <X className="h-3 w-3" aria-hidden="true" />
+              <button
+                onClick={() => onRemoveCompany(company.id)}
+                aria-label={`Remover ${company.name} da comparação`}
+                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
             </div>
           );
-          })}
-          {visibleCompanies.length < 2 && (
-            <button onClick={onAddCompany} className="flex min-h-[58px] min-w-0 items-center justify-center rounded border border-dashed border-blue-300 bg-blue-50/50 text-[10px] font-bold text-blue-700">
-              Adicionar
-            </button>
-          )}
-        </div>
+        })}
+        {visibleCompanies.length < COMPARISON_LIMITS.mobile && (
+          <button
+            onClick={onAddCompany}
+            className="flex min-h-[64px] min-w-0 flex-col items-center justify-center rounded-lg border-2 border-dashed border-blue-300 bg-blue-50/50 p-2 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100/50"
+          >
+            <Plus className="h-4 w-4 mb-0.5" />
+            Adicionar
+          </button>
+        )}
+      </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-white">
+      {/* Tabela de critérios no PWA */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white shadow-xs">
         {rows.map((row) => (
           <div key={row.label} className={cn('grid min-w-0', mobileGridColumns, 'border-b border-slate-100 last:border-b-0')}>
-            <div className="min-w-0 bg-slate-50/70 px-1.5 py-2">
-              <span className="block break-normal text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-800">{row.label}</span>
-              <span className="block break-normal text-[9px] leading-tight text-slate-400">{row.detail}</span>
+            <div className="min-w-0 bg-slate-50/80 px-2 py-2.5">
+              <span className="block break-normal text-[11px] font-bold uppercase leading-tight tracking-wide text-slate-800">
+                {row.label}
+              </span>
+              <span className="block break-normal text-[10px] leading-tight text-slate-400">
+                {row.detail}
+              </span>
             </div>
-            {visibleCompanies.map((company) => <div key={`${row.label}-${company.id}`} className={cn('flex min-w-0 flex-col items-start justify-start gap-1 overflow-hidden px-1.5 py-2 break-normal whitespace-normal', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>{row.render(company)}</div>)}
+            {visibleCompanies.map((company) => (
+              <div
+                key={`${row.label}-${company.id}`}
+                className={cn(
+                  'flex min-w-0 flex-col items-start justify-center gap-0.5 px-2 py-2.5 break-words whitespace-normal',
+                  company.id === highestRatedCompanyId && 'bg-blue-50/20'
+                )}
+              >
+                {row.render(company)}
+              </div>
+            ))}
           </div>
         ))}
+        {/* Linha de Orçamento */}
         <div className={cn('grid min-w-0', mobileGridColumns, 'bg-slate-50/50')}>
-          <span className="min-w-0 px-1.5 py-2 text-[9px] font-bold uppercase leading-tight tracking-wide text-slate-400">Orçamento</span>
+          <div className="min-w-0 bg-slate-100/60 px-2 py-2.5">
+            <span className="block text-[11px] font-bold uppercase leading-tight tracking-wide text-slate-700">
+              Orçamento
+            </span>
+          </div>
           {visibleCompanies.map((company) => {
             const showWhatsApp = hasPaidPlan(company) && Boolean(company.cta_whatsapp_enabled);
             const whatsappHref = company.whatsapp_url || company.whatsapp || company.phone || undefined;
 
             return (
-              <div key={`mobile-cta-${company.id}`} className={cn('min-w-0 px-1.5 py-2', company.id === highestRatedCompanyId && 'bg-blue-50/40')}>
+              <div
+                key={`mobile-cta-${company.id}`}
+                className={cn('min-w-0 px-1.5 py-2 flex items-center justify-center', company.id === highestRatedCompanyId && 'bg-blue-50/20')}
+              >
                 {hasPaidPlan(company) ? (
                   showWhatsApp ? (
                     <WhatsappButton
                       href={whatsappHref}
                       companyId={company.id}
                       label="WhatsApp"
-                      className="h-8 rounded-md px-1 text-[9px] font-bold leading-tight"
+                      className="h-8 rounded-md px-2 text-xs font-bold leading-tight"
                     />
                   ) : (
                     <QuoteCTA context="comparison" shortLabel="Orçamento" onRequest={() => onQuote(company.id)} />
                   )
                 ) : (
-                  <span className="block px-1 py-2 text-center text-[9px] font-medium text-slate-400">Indisponível</span>
+                  <span className="block px-1 py-1.5 text-center text-xs font-medium text-slate-400">Indisponível</span>
                 )}
               </div>
             );
@@ -243,6 +322,8 @@ export default function CompanyComparisonModal({
   onRemoveCompany,
   onClearAll,
 }: CompanyComparisonModalProps) {
+  const router = useRouter();
+
   const highestRatedCompanyId = companies.reduce((prev, current) => {
     const prevRating = Number(prev.average_rating ?? prev.rating_avg ?? 0);
     const currRating = Number(current.average_rating ?? current.rating_avg ?? 0);
@@ -257,11 +338,10 @@ export default function CompanyComparisonModal({
         company_names: companies.map((c) => c.name),
       });
 
-      // Dispara sinal de intenção de compra (Buyer Intent) para cada empresa comparada
       companies.forEach((company) => {
         sendIntentSignal({
           company_id: company.id,
-          signal_type: companies.length >= 3 ? 'comparison_third_added' : 'comparison_view',
+          signal_type: companies.length >= COMPARISON_LIMITS.desktop ? 'comparison_third_added' : 'comparison_view',
           signal_category: 'research_intent',
           element_type: 'comparison_modal',
           metadata: {
@@ -285,608 +365,413 @@ export default function CompanyComparisonModal({
     openLeadModal({ preferredCompanyId: companyId, source: 'comparison-modal', type: 'quick' });
   };
 
+  const desktopVisibleCompanies = companies.slice(0, COMPARISON_LIMITS.desktop);
+
   return (
-    <Dialog modal={false} open={isOpen} onOpenChange={onClose}>
+    <Dialog modal={true} open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        overlayClassName="pointer-events-none bg-black/35"
-        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[75dvh] !w-[calc(100vw-32px)] !max-w-[480px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 via-white to-cyan-50 p-0 shadow-lg transition-all duration-300 md:!max-h-[80vh] md:!w-[calc(100vw-64px)] md:!max-w-[960px] md:rounded-lg md:border md:shadow-xl"
+        overlayClassName="bg-slate-950/40 backdrop-blur-xs"
+        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[90dvh] !w-[calc(100vw-20px)] !max-w-[440px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl transition-all duration-300 md:!max-h-[85vh] md:!w-[calc(100vw-64px)] md:!max-w-[1024px] md:rounded-xl"
       >
-        {/* Swiss Design Header */}
-        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-blue-500/30 bg-gradient-to-r from-blue-800 via-blue-700 to-cyan-700 px-2.5 py-2 md:px-5 md:py-2.5 md:pr-12">
-          <div className="mb-1 flex items-center justify-between md:hidden">
-            <div className="flex min-w-0 items-center gap-2 text-left">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/15 text-white" aria-hidden="true">
+        {/* Header Modal */}
+        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-blue-900/10 bg-gradient-to-r from-blue-900 via-blue-800 to-slate-900 px-3 py-3 md:px-6 md:py-3.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 text-left">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white" aria-hidden="true">
                 ⇄
               </span>
-              <div className="min-w-0">
-                <DialogTitle className="truncate text-sm font-semibold text-white">
+              <div>
+                <DialogTitle className="text-base font-bold text-white md:text-lg">
                   Comparar empresas
                 </DialogTitle>
-                <DialogDescription className="mt-0.5 text-[10px] text-blue-100">
-                  {Math.min(companies.length, 2)} empresas selecionadas
+                <DialogDescription className="mt-0.5 text-xs text-blue-100">
+                  <span className="md:hidden">
+                    {Math.min(companies.length, COMPARISON_LIMITS.mobile)} de {COMPARISON_LIMITS.mobile} empresas no celular
+                  </span>
+                  <span className="hidden md:inline">
+                    {Math.min(companies.length, COMPARISON_LIMITS.desktop)} de {COMPARISON_LIMITS.desktop} empresas selecionadas
+                  </span>
                 </DialogDescription>
               </div>
             </div>
-            <div className="ml-auto flex shrink-0 items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                aria-label="Minimizar comparação"
-                className="h-6 w-6 rounded-md border border-blue-200 bg-blue-50 p-0 text-blue-700 hover:bg-blue-100"
-                title="Minimizar comparação"
-              >
-                <span aria-hidden="true" className="text-sm font-bold leading-none">−</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                aria-label="Fechar comparação"
-                className="h-6 w-6 rounded-md border border-white/30 p-0 text-white hover:bg-white/15"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-          <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center">
-            <div className="hidden flex-wrap items-center gap-1.5 md:flex">
-              <DialogTitle className="sr-only">Comparar empresas</DialogTitle>
-              <DialogDescription className="sr-only">
-                Selecione até 4 empresas para comparar
-              </DialogDescription>
 
-              <span className="text-sm font-bold text-white">
-                Sua comparação:
-              </span>
-
-              {companies.map((comp) => {
+            {/* Ações Desktop do Header */}
+            <div className="hidden items-center gap-2 md:flex">
+              {desktopVisibleCompanies.map((comp) => {
                 const logoUrl = comp.logo_url ? getFullImageUrl(comp.logo_url) : null;
                 return (
                   <div
                     key={comp.id}
-                    className="flex min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-white py-0.5 pl-0.5 pr-1.5 text-[10px] font-bold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 py-1 pl-1 pr-2 text-xs font-semibold text-white backdrop-blur-xs"
                   >
-                    <div className="relative w-5 h-5 rounded-full overflow-hidden border border-slate-100 bg-white flex items-center justify-center shrink-0">
+                    <div className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white">
                       {logoUrl ? (
-                        <Image
-                          src={logoUrl}
-                          alt=""
-                          fill
-                          className="object-contain p-0.5"
-                          sizes="20px"
-                        />
+                        <Image src={logoUrl} alt="" fill className="object-contain p-0.5" sizes="20px" />
                       ) : (
-                        <Building2 className="w-2.5 h-2.5 text-slate-400" />
+                        <Building2 className="m-auto h-3 w-3 text-slate-400" />
                       )}
                     </div>
-                    <span className="truncate max-w-[120px]">{comp.name}</span>
+                    <span className="max-w-[110px] truncate">{comp.name}</span>
                     <button
                       onClick={() => onRemoveCompany(comp.id)}
-                      className="ml-1 text-slate-400 hover:text-red-500 transition-colors"
+                      className="ml-0.5 rounded-full p-0.5 text-blue-200 transition-colors hover:bg-white/20 hover:text-white"
                       title="Remover"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 );
               })}
 
-              {companies.length < 3 && (
+              {companies.length < COMPARISON_LIMITS.desktop && (
                 <button
-                  onClick={onClose}
-                  className="flex items-center justify-center w-7 h-7 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-sm"
+                  onClick={() => {
+                    onClose();
+                    router.push('/search?tab=companies');
+                  }}
+                  className="flex h-8 items-center gap-1 rounded-full border border-dashed border-white/40 bg-white/10 px-3 text-xs font-medium text-white transition-all hover:bg-white/20"
                   title="Adicionar mais empresas"
                 >
-                  <span className="text-base font-semibold leading-none">+</span>
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Adicionar</span>
                 </button>
               )}
-            </div>
 
-            <div className="hidden items-center gap-1.5 md:flex">
+              {companies.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClearAll}
+                  className="h-8 rounded-lg bg-white/10 px-2.5 text-xs font-semibold text-blue-100 transition-all hover:bg-red-500/20 hover:text-red-200"
+                >
+                  <X className="mr-1 h-3.5 w-3.5" />
+                  Limpar
+                </Button>
+              )}
+
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
                 aria-label="Minimizar comparação"
-                className="h-8 w-8 rounded-md border border-blue-200 bg-blue-50/80 p-0 text-blue-700 transition-all hover:bg-blue-100 hover:text-blue-800 shadow-xs"
-                title="Minimizar comparação"
+                className="h-8 w-8 rounded-lg border border-white/20 p-0 text-white hover:bg-white/15"
+                title="Minimizar"
               >
-                <span aria-hidden="true" className="text-lg font-bold leading-none">−</span>
+                <span aria-hidden="true" className="text-base font-bold leading-none">−</span>
               </Button>
+            </div>
 
+            {/* Ações Mobile do Header */}
+            <div className="flex items-center gap-1.5 md:hidden">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onClearAll}
-                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 transition-all hover:bg-red-50 hover:text-red-600"
+                onClick={onClose}
+                aria-label="Minimizar comparação"
+                className="h-8 w-8 rounded-lg border border-white/20 p-0 text-white hover:bg-white/15"
+                title="Minimizar"
               >
-                <X className="h-3.5 w-3.5 mr-1" />
-                Limpar Análise
+                <span aria-hidden="true" className="text-base font-bold leading-none">−</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                aria-label="Fechar modal de comparação"
+                className="h-8 w-8 rounded-lg border border-white/20 p-0 text-white hover:bg-white/15"
+              >
+                <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </DialogHeader>
 
-        {/* Comparison Grid */}
-        <div className="hidden min-h-0 overflow-y-auto md:block">
-          <div className="p-1.5 md:p-4 md:pb-8">
-            <p className="mb-2 flex items-center justify-end gap-1 text-[11px] font-medium text-blue-700 md:hidden">
-              {companies.length > 2 ? (
-                <>
-                  Deslize para ver mais empresas <span aria-hidden="true">→</span>
-                </>
-              ) : (
-                'Empresas lado a lado'
-              )}
-            </p>
-            <div className="relative overflow-hidden rounded-none border border-slate-200 bg-white shadow-none max-w-full">
-              <div className="w-full touch-auto overflow-x-auto overscroll-x-contain scroll-smooth scrollbar-none max-w-full">
-                <div className="mobile-comparison-table flex w-full min-w-[530px] flex-col divide-y divide-slate-100 md:min-w-[960px] max-w-full">
-                  {/* Header Row: Company Logos & Names */}
-                  <div className="sticky top-0 z-30 grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
-                    <div className="flex flex-col justify-end bg-slate-50/50 p-2 md:p-4">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        CRITÉRIOS
-                      </span>
-                    </div>
+        {/* Desktop View: Grid de 3 empresas */}
+        <div className="hidden min-h-0 overflow-y-auto md:block p-6">
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+            <div className="flex w-full flex-col divide-y divide-slate-100">
+              {/* Header Row Desktop */}
+              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-slate-50/80">
+                <div className="flex flex-col justify-end p-4">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Critérios
+                  </span>
+                </div>
 
-                    <AnimatePresence mode="popLayout">
-                      {companies.slice(0, 4).map((company) => {
-                        const isHighlighted = company.id === highestRatedCompanyId;
-                        const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
-                        const rating = Number(
-                          company.average_rating ?? company.rating_avg ?? company.rating ?? 0
-                        );
-                        const reviews = Number(
-                          company.rating_count ??
-                            company.reviews_count ??
-                            company.total_reviews ??
-                            0
-                        );
+                {desktopVisibleCompanies.map((company) => {
+                  const isHighlighted = company.id === highestRatedCompanyId;
+                  const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
+                  const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
 
-                        return (
-                          <motion.div
-                            key={company.id}
-                            layout
-                            initial={{ opacity: 0, scale: 0.98 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.98 }}
-                            className={cn(
-                              'group relative flex flex-col bg-white p-2 pt-10 transition-colors md:p-5 md:pt-10',
-                              isHighlighted && 'bg-blue-50/10 ring-1 ring-blue-500 ring-inset z-10'
-                            )}
-                          >
-                            {/* Swiss Label Destaque */}
-                            {isHighlighted && (
-                              <div className="absolute inset-x-1.5 top-2 z-20 inline-flex items-center justify-center whitespace-nowrap rounded bg-blue-600 px-1 py-1 text-[9px] font-bold leading-none tracking-tight text-white shadow-sm md:left-5 md:right-auto md:px-2.5 md:py-0.5 md:text-[10px] md:uppercase md:tracking-widest">
-                                Melhor avaliada
-                              </div>
-                            )}
+                  return (
+                    <div
+                      key={company.id}
+                      className={cn(
+                        'relative flex flex-col justify-between bg-white p-4',
+                        isHighlighted && 'bg-blue-50/20'
+                      )}
+                    >
+                      {isHighlighted && (
+                        <div className="absolute right-3 top-3 inline-flex items-center rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-xs">
+                          Melhor avaliada
+                        </div>
+                      )}
 
-                            <button
-                              onClick={() => onRemoveCompany(company.id)}
-                              aria-label={`Remover ${company.name} da comparação`}
-                              className="absolute right-1 top-9 rounded bg-slate-50 p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 focus:outline-none md:right-3 md:top-3"
-                              title="Remover"
-                            >
-                              <X className="h-3.5 w-3.5" aria-hidden="true" />
-                            </button>
-
-                            <div className="flex flex-col items-start gap-1 md:mt-2 md:flex-row md:justify-between md:gap-4">
-                              {/* Logo Container */}
-                              <div className="relative flex h-9 w-11 items-center justify-center overflow-hidden rounded border border-slate-100 bg-white p-1 md:h-10 md:w-16">
-                                {logoUrl ? (
-                                  <Image
-                                    src={logoUrl}
-                                    alt={`Logo da ${company.name}`}
-                                    fill
-                                    sizes="64px"
-                                    className="object-contain"
-                                  />
-                                ) : (
-                                  <Building2
-                                    className="h-4 w-4 text-slate-300"
-                                    aria-hidden="true"
-                                  />
-                                )}
-                              </div>
-
-                              {/* Status Badge */}
-                              {company.verified ? (
-                                <span className="inline-flex items-center rounded border border-emerald-200 bg-emerald-50 px-1 py-0.5 text-[10px] font-bold uppercase tracking-tight text-emerald-800 md:px-1.5 md:tracking-wider">
-                                  Verificada
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-1 py-0.5 text-[10px] font-bold uppercase tracking-tight text-slate-500 md:px-1.5 md:tracking-wider">
-                                  Em análise
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="mt-2 md:mt-4">
-                              <Link
-                                href={`/companies/${company.slug || company.id}`}
-                                className="hover:text-blue-600 block"
-                              >
-                                <h4 className="text-xs font-bold uppercase tracking-tight leading-snug line-clamp-1 text-slate-900">
-                                  {company.name}
-                                </h4>
-                              </Link>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <div className="flex text-amber-400">
-                                  {[1, 2, 3, 4, 5].map((i) => {
-                                    const filled = i <= Math.round(rating);
-                                    return (
-                                      <Star
-                                        key={i}
-                                        className={`h-2.5 w-2.5 md:h-3 md:w-3 ${filled ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`}
-                                      />
-                                    );
-                                  })}
-                                </div>
-                                <span className="text-[10px] font-bold text-slate-900">
-                                  {rating > 0 ? rating.toFixed(1) : '—'}
-                                </span>
-                                {reviews > 0 && (
-                                  <span className="text-[10px] text-slate-400">({reviews})</span>
-                                )}
-                              </div>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </AnimatePresence>
-
-                    {/* Empty Slots */}
-                    {Array.from({ length: 4 - Math.min(companies.length, 4) }).map((_, i) => (
-                      <div
-                        key={`empty-${i}`}
-                        className="flex flex-col items-center justify-center bg-slate-50/20 p-2 md:p-5"
+                      <button
+                        onClick={() => onRemoveCompany(company.id)}
+                        aria-label={`Remover ${company.name} da comparação`}
+                        className="absolute left-3 top-3 rounded-full bg-slate-100 p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                        title="Remover"
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                          Livre
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                        <X className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
 
-                  {/* 1. Reputação Row */}
-                  <div className="grid grid-cols-[72px_repeat(4,106px)] divide-x divide-slate-100 bg-white md:grid-cols-[136px_repeat(4,minmax(0,1fr))]">
-                    <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
-                      <div>
-                        <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
-                          Reputação
-                        </h5>
-                        <p className="text-[10px] leading-tight text-slate-400">
-                          Avaliação geral de clientes
-                        </p>
-                      </div>
-                    </div>
-                    {companies.slice(0, 4).map((company) => {
-                      const rating = Number(
-                        company.average_rating ?? company.rating_avg ?? company.rating ?? 0
-                      );
-                      const reviews = Number(
-                        company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0
-                      );
-                      const isHighlighted = company.id === highestRatedCompanyId;
-
-                      return (
-                        <div
-                          key={`rep-${company.id}`}
-                          className={cn(
-                            'flex flex-col justify-center gap-1 p-2 md:p-4',
-                            isHighlighted && 'bg-blue-50/5'
-                          )}
-                        >
-                          {rating > 0 ? (
-                            <>
-                              <div className="flex items-baseline gap-0.5">
-                                <span className="text-sm font-extrabold text-slate-950">
-                                  {rating.toFixed(1)}
-                                </span>
-                                <span className="text-[10px] text-slate-400">/ 5.0</span>
-                              </div>
-                              <div className="w-full bg-slate-100 rounded-full h-1 overflow-hidden">
-                                <div
-                                  className={cn(
-                                    'h-1 rounded-full',
-                                    isHighlighted ? 'bg-blue-600' : 'bg-slate-800'
-                                  )}
-                                  style={{ width: `${(rating / 5) * 100}%` }}
-                                />
-                              </div>
-                              <span className="text-[10px] text-slate-400">
-                                {reviews} depoimentos
-                              </span>
-                            </>
+                      <div className="mt-6 flex items-center gap-3">
+                        <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-1">
+                          {logoUrl ? (
+                            <Image src={logoUrl} alt="" fill sizes="64px" className="object-contain p-1" />
                           ) : (
-                            <span className="text-[10px] font-medium text-slate-400">
-                              Sem avaliações
-                            </span>
+                            <Building2 className="m-auto h-6 w-6 text-slate-300" />
                           )}
                         </div>
-                      );
-                    })}
-                    {Array.from({ length: 4 - Math.min(companies.length, 4) }).map((_, i) => (
-                      <div key={`empty-rep-${i}`} className="bg-slate-50/5 p-2 md:p-4"></div>
-                    ))}
-                  </div>
-
-                  {/* 2. Verificação Row */}
-                  <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
-                    <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
-                      <div>
-                        <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
-                          Certificações
-                        </h5>
-                        <p className="text-[10px] leading-tight text-slate-400">
-                          Documentação e verificação
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <Link href={`/companies/${company.slug || company.id}`} className="hover:text-blue-600 block">
+                            <h4 className="line-clamp-1 text-sm font-bold text-slate-900">
+                              {company.name}
+                            </h4>
+                          </Link>
+                          <span className="block truncate text-xs text-slate-500">
+                            {[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    {companies.slice(0, 4).map((company) => {
-                      const isHighlighted = company.id === highestRatedCompanyId;
-                      return (
-                        <div
-                          key={`ver-${company.id}`}
-                          className={cn(
-                            'flex flex-col justify-center p-2 md:p-4',
-                            isHighlighted && 'bg-blue-50/5'
-                          )}
-                        >
-                          <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
-                            {company.verified ? (
-                              <>
-                                <span className="text-emerald-700 text-[11px] font-bold">
-                                  Verificada
-                                </span>
-                                <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                              </>
-                            ) : (
-                              <span className="text-slate-500 text-[11px] font-bold">
-                                Em análise
-                              </span>
-                            )}
-                          </div>
-                          <span className="mt-0.5 text-[10px] text-slate-400">
-                            {company.verified ? 'Dados auditados' : 'Documentação pendente'}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {Array.from({ length: 4 - Math.min(companies.length, 4) }).map((_, i) => (
-                      <div key={`empty-ver-${i}`} className="bg-slate-50/5 p-2 md:p-4"></div>
-                    ))}
-                  </div>
+                  );
+                })}
 
-                  {/* 3. Tempo de Resposta Row */}
-                  <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
-                    <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
-                      <div>
-                        <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
-                          SLA de Contato
-                        </h5>
-                        <p className="text-[10px] leading-tight text-slate-400">
-                          Tempo médio de resposta
-                        </p>
-                      </div>
-                    </div>
-                    {companies.slice(0, 4).map((company) => {
-                      const speed = getSpeedBadge(company.response_time_sla);
-                      const isHighlighted = company.id === highestRatedCompanyId;
-                      return (
-                        <div
-                          key={`time-${company.id}`}
-                          className={cn(
-                            'flex flex-col justify-center p-2 md:p-4',
-                            isHighlighted && 'bg-blue-50/5'
-                          )}
-                        >
-                          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                            <span className="line-clamp-2 min-w-0 break-words text-xs font-bold leading-tight text-slate-900">
-                              {company.response_time_sla || 'Sob consulta'}
-                            </span>
-                            {speed && (
-                              <span
-                                className={`inline-flex rounded border px-1.5 py-0.5 text-[10px] font-bold ${speed.color}`}
-                              >
-                                {speed.label}
-                              </span>
-                            )}
-                          </div>
-                          <span className="mt-0.5 text-[10px] text-slate-400">
-                            SLA de atendimento
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {Array.from({ length: 4 - Math.min(companies.length, 4) }).map((_, i) => (
-                      <div key={`empty-time-${i}`} className="bg-slate-50/5 p-2 md:p-4"></div>
-                    ))}
+                {/* Slots vazios Desktop */}
+                {Array.from({ length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length }).map((_, i) => (
+                  <div key={`empty-desk-${i}`} className="flex flex-col items-center justify-center bg-slate-50/40 p-6 text-center">
+                    <span className="text-xs font-semibold text-slate-400">Slot Livre</span>
+                    <button
+                      onClick={() => {
+                        onClose();
+                        router.push('/search?tab=companies');
+                      }}
+                      className="mt-2 flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Adicionar empresa
+                    </button>
                   </div>
-
-                  {/* 4. Cobertura Row */}
-                  <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
-                    <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
-                      <div>
-                        <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
-                          Abrangência
-                        </h5>
-                        <p className="text-[10px] leading-tight text-slate-400">
-                          Região de atuação
-                        </p>
-                      </div>
-                    </div>
-                    {companies.slice(0, 4).map((company) => {
-                      const isHighlighted = company.id === highestRatedCompanyId;
-                      return (
-                        <div
-                          key={`cov-${company.id}`}
-                          className={cn(
-                            'flex flex-col justify-center p-2 md:p-4',
-                            isHighlighted && 'bg-blue-50/5'
-                          )}
-                        >
-                          <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">
-                            {[company.city, company.state].filter(Boolean).join(', ') ||
-                              'Consultar'}
-                          </span>
-                          <span className="mt-0.5 text-[10px] text-slate-400">
-                            {getCoverageLabel(company)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {Array.from({ length: 4 - Math.min(companies.length, 4) }).map((_, i) => (
-                      <div key={`empty-cov-${i}`} className="bg-slate-50/5 p-2 md:p-4"></div>
-                    ))}
-                  </div>
-
-                  {/* 5. Projetos Realizados Row */}
-                  <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
-                    <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
-                      <div>
-                        <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
-                          Volume
-                        </h5>
-                        <p className="text-[10px] leading-tight text-slate-400">
-                          Projetos entregues
-                        </p>
-                      </div>
-                    </div>
-                    {companies.slice(0, 4).map((company) => {
-                      const projects = company.delivered_projects_score || 0;
-                      const isHighlighted = company.id === highestRatedCompanyId;
-                      return (
-                        <div
-                          key={`proj-${company.id}`}
-                          className={cn(
-                            'flex flex-col justify-center p-2 md:p-4',
-                            isHighlighted && 'bg-blue-50/5'
-                          )}
-                        >
-                          <span className="text-xs font-bold text-slate-950">
-                            {projects > 0 ? `+${projects} projetos` : 'Consultar'}
-                          </span>
-                          <span className="mt-0.5 text-[10px] text-slate-400">
-                            Histórico verificado
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {Array.from({ length: 4 - Math.min(companies.length, 4) }).map((_, i) => (
-                      <div key={`empty-proj-${i}`} className="bg-slate-50/5 p-2 md:p-4"></div>
-                    ))}
-                  </div>
-
-                  {/* 6. Garantia Oferecida Row */}
-                  <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-white md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
-                    <div className="flex items-center bg-slate-50/30 p-2 md:p-4">
-                      <div>
-                        <h5 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
-                          Garantia
-                        </h5>
-                        <p className="text-[10px] leading-tight text-slate-400">
-                          Cobertura pós-instalação
-                        </p>
-                      </div>
-                    </div>
-                    {companies.slice(0, 4).map((company) => {
-                      const warranty = company.warranty_years || 0;
-                      const isHighlighted = company.id === highestRatedCompanyId;
-                      return (
-                        <div
-                          key={`gar-${company.id}`}
-                          className={cn(
-                            'flex flex-col justify-center p-2 md:p-4',
-                            isHighlighted && 'bg-blue-50/5'
-                          )}
-                        >
-                          <span className="text-xs font-bold text-slate-950">
-                            {warranty > 0 ? `${warranty} anos` : 'Consultar'}
-                          </span>
-                          <span className="mt-0.5 text-[10px] text-slate-400">Tempo médio</span>
-                        </div>
-                      );
-                    })}
-                    {Array.from({ length: 4 - Math.min(companies.length, 4) }).map((_, i) => (
-                      <div key={`empty-gar-${i}`} className="bg-slate-50/5 p-2 md:p-4"></div>
-                    ))}
-                  </div>
-
-                  {/* Action Row */}
-                  <div className="grid grid-cols-[82px_repeat(4,112px)] divide-x divide-slate-100 bg-slate-50/30 md:grid-cols-[160px_repeat(4,minmax(0,1fr))]">
-                    <div className="flex items-center p-2 md:p-4">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Cotação
-                      </span>
-                    </div>
-                    {companies.slice(0, 4).map((company) => {
-                      const isHighlighted = company.id === highestRatedCompanyId;
-                      return (
-                        <div
-                          key={`cta-${company.id}`}
-                          className={cn('p-2 md:p-4', isHighlighted && 'bg-blue-50/5')}
-                        >
-                          {hasPaidPlan(company) ? (
-                            <Button
-                              className={cn(
-                                'h-9 w-full rounded-md border text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all md:h-11',
-                                'bg-[#FFF7ED] hover:bg-[#FFEED5] border-[#FDBA74] text-[#C2410C]',
-                                'dark:bg-orange-950/20 dark:hover:bg-orange-950/40 dark:border-orange-800 dark:text-orange-400'
-                              )}
-                              onClick={() => handleQuoteClick(company.id)}
-                              aria-label={`Solicitar orçamento da ${company.name}`}
-                            >
-                              Solicitar orçamento
-                            </Button>
-                          ) : (
-                            <span className="block text-center text-[10px] text-slate-300">Indisponível</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {Array.from({ length: 4 - Math.min(companies.length, 4) }).map((_, i) => (
-                      <div key={`empty-cta-${i}`} className="bg-slate-50/5 p-2 md:p-4"></div>
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
-              {companies.length > 2 && (
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-y-0 right-0 flex w-7 items-center justify-end bg-gradient-to-l from-white via-white/70 to-transparent pr-1 text-sm font-bold text-blue-600 md:hidden"
-                >
-                  →
+
+              {/* Linha 1: Reputação */}
+              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
+                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">Reputação</span>
+                  <span className="text-xs text-slate-400">Avaliação de clientes</span>
                 </div>
-              )}
+                {desktopVisibleCompanies.map((company) => {
+                  const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
+                  const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
+                  return (
+                    <div key={`rep-desk-${company.id}`} className="p-4 flex flex-col justify-center">
+                      {rating > 0 ? (
+                        <>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-base font-extrabold text-slate-950">{rating.toFixed(1)}</span>
+                            <div className="flex text-amber-400" aria-hidden="true">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star key={s} className={cn('h-3.5 w-3.5', s <= Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200')} />
+                              ))}
+                            </div>
+                          </div>
+                          <span className="text-xs text-slate-500 mt-0.5">
+                            {reviews > 0 ? `${reviews} avaliações` : 'Sem avaliações'}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs font-medium text-slate-400">Sem avaliações</span>
+                      )}
+                    </div>
+                  );
+                })}
+                {Array.from({ length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length }).map((_, i) => (
+                  <div key={`empty-rep-${i}`} className="p-4 bg-slate-50/20" />
+                ))}
+              </div>
+
+              {/* Linha 2: Certificações */}
+              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
+                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">Certificação</span>
+                  <span className="text-xs text-slate-400">Status de auditoria</span>
+                </div>
+                {desktopVisibleCompanies.map((company) => (
+                  <div key={`ver-desk-${company.id}`} className="p-4 flex flex-col justify-center">
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn('text-xs font-bold', company.verified ? 'text-emerald-700' : 'text-slate-600')}>
+                        {company.verified ? 'Verificada' : company.verification_status === 'pending' ? 'Em análise' : 'Não verificada'}
+                      </span>
+                      {company.verified && <ShieldCheck className="h-4 w-4 text-emerald-600" />}
+                    </div>
+                    <span className="text-xs text-slate-400 mt-0.5">
+                      {company.verified ? 'Dados auditados' : 'Documentação em análise'}
+                    </span>
+                  </div>
+                ))}
+                {Array.from({ length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length }).map((_, i) => (
+                  <div key={`empty-ver-${i}`} className="p-4 bg-slate-50/20" />
+                ))}
+              </div>
+
+              {/* Linha 3: SLA */}
+              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
+                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">SLA de Contato</span>
+                  <span className="text-xs text-slate-400">Tempo de resposta</span>
+                </div>
+                {desktopVisibleCompanies.map((company) => {
+                  const speed = getSpeedBadge(company.response_time_sla);
+                  return (
+                    <div key={`sla-desk-${company.id}`} className="p-4 flex flex-col justify-center">
+                      <span className="text-xs font-bold text-slate-900">{company.response_time_sla || 'Sob consulta'}</span>
+                      {speed && (
+                        <span className={cn('mt-1 w-fit rounded border px-1.5 py-0.5 text-xs font-bold', speed.color)}>
+                          {speed.label}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+                {Array.from({ length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length }).map((_, i) => (
+                  <div key={`empty-sla-${i}`} className="p-4 bg-slate-50/20" />
+                ))}
+              </div>
+
+              {/* Linha 4: Abrangência */}
+              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
+                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">Abrangência</span>
+                  <span className="text-xs text-slate-400">Região de atendimento</span>
+                </div>
+                {desktopVisibleCompanies.map((company) => (
+                  <div key={`cov-desk-${company.id}`} className="p-4 flex flex-col justify-center">
+                    <span className="text-xs font-bold text-slate-900">
+                      {[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}
+                    </span>
+                    <span className="text-xs text-slate-400 mt-0.5">{getCoverageLabel(company)}</span>
+                  </div>
+                ))}
+                {Array.from({ length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length }).map((_, i) => (
+                  <div key={`empty-cov-${i}`} className="p-4 bg-slate-50/20" />
+                ))}
+              </div>
+
+              {/* Linha 5: Volume de Projetos */}
+              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
+                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">Volume</span>
+                  <span className="text-xs text-slate-400">Projetos entregues</span>
+                </div>
+                {desktopVisibleCompanies.map((company) => {
+                  const count = company.delivered_projects_count ?? company.delivered_projects_score ?? 0;
+                  return (
+                    <div key={`vol-desk-${company.id}`} className="p-4 flex flex-col justify-center">
+                      <span className="text-xs font-bold text-slate-900">{count > 0 ? `+${count} projetos` : 'Consultar'}</span>
+                    </div>
+                  );
+                })}
+                {Array.from({ length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length }).map((_, i) => (
+                  <div key={`empty-vol-${i}`} className="p-4 bg-slate-50/20" />
+                ))}
+              </div>
+
+              {/* Linha 6: Garantia */}
+              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
+                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">Garantia</span>
+                  <span className="text-xs text-slate-400">Pós-instalação</span>
+                </div>
+                {desktopVisibleCompanies.map((company) => {
+                  const years = company.warranty_years ?? company.installation_warranty_years ?? 0;
+                  return (
+                    <div key={`gar-desk-${company.id}`} className="p-4 flex flex-col justify-center">
+                      <span className="text-xs font-bold text-slate-900">{years > 0 ? `${years} anos` : 'Consultar'}</span>
+                    </div>
+                  );
+                })}
+                {Array.from({ length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length }).map((_, i) => (
+                  <div key={`empty-gar-${i}`} className="p-4 bg-slate-50/20" />
+                ))}
+              </div>
+
+              {/* Linha 7: Orçamento CTA */}
+              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-slate-50/50">
+                <div className="p-4 flex items-center">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">Orçamento</span>
+                </div>
+                {desktopVisibleCompanies.map((company) => (
+                  <div key={`cta-desk-${company.id}`} className="p-4">
+                    {hasPaidPlan(company) ? (
+                      <Button
+                        className="h-10 w-full rounded-lg bg-orange-600 text-xs font-bold text-white hover:bg-orange-700 shadow-xs"
+                        onClick={() => handleQuoteClick(company.id)}
+                      >
+                        Solicitar Orçamento
+                      </Button>
+                    ) : (
+                      <span className="block text-center text-xs font-medium text-slate-400 py-2">Indisponível</span>
+                    )}
+                  </div>
+                ))}
+                {Array.from({ length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length }).map((_, i) => (
+                  <div key={`empty-cta-${i}`} className="p-4 bg-slate-50/20" />
+                ))}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Mobile View */}
         <MobileComparisonContent
           companies={companies}
           highestRatedCompanyId={highestRatedCompanyId}
           onRemoveCompany={onRemoveCompany}
-          onAddCompany={onClose}
+          onAddCompany={() => {
+            onClose();
+            router.push('/search?tab=companies');
+          }}
           onQuote={handleQuoteClick}
         />
-        <div className="sticky bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-blue-500/30 bg-gradient-to-r from-blue-800 via-blue-700 to-cyan-700 px-2 py-2 pb-[calc(env(safe-area-inset-bottom)+8px)] md:hidden">
-          <Button variant="outline" className="h-9 rounded-md border-white/70 bg-white px-2 text-[11px] font-bold text-blue-800 hover:bg-blue-50" onClick={onClose}>
-            Adicionar empresa
+
+        {/* Footer Mobile */}
+        <div className="sticky bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-slate-200 bg-white px-3 py-2.5 pb-[calc(env(safe-area-inset-bottom)+8px)] md:hidden">
+          <Button
+            variant="outline"
+            disabled={companies.length >= COMPARISON_LIMITS.mobile}
+            className="h-10 rounded-lg border-slate-300 bg-white px-2 text-xs font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+            onClick={() => {
+              onClose();
+              router.push('/search?tab=companies');
+            }}
+          >
+            + Adicionar empresa
           </Button>
           <Button
-            className="h-9 rounded-md bg-white px-2 text-[11px] font-bold text-blue-800 hover:bg-blue-50"
+            className="h-10 rounded-lg bg-blue-700 px-2 text-xs font-bold text-white hover:bg-blue-800"
             onClick={() => {
               track('comparison_modal_compare_confirm', { companies_count: companies.length });
               onClose();
+              router.push('/compare');
             }}
           >
-            Comparar {Math.min(companies.length, 3)} {Math.min(companies.length, 3) === 1 ? 'empresa' : 'empresas'}
+            Ver comparação completa →
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+

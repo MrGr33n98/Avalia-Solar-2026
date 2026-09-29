@@ -56,7 +56,10 @@ import { absoluteUrl } from '@/lib/site';
 import { canUsePaidConversion } from '@/lib/feature-access';
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 
-const MAX_COMPANIES = 4;
+import {
+  COMPARISON_LIMITS,
+  COMPARISON_LIMIT_MESSAGES,
+} from '@/lib/comparison/config';
 
 const selectionFromParams = (params: URLSearchParams): string[] => {
   const value = params.get('companies') || params.get('slugs') || params.get('company') || '';
@@ -64,7 +67,7 @@ const selectionFromParams = (params: URLSearchParams): string[] => {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
-    .slice(0, MAX_COMPANIES);
+    .slice(0, COMPARISON_LIMITS.desktop);
 };
 
 export default function ComparePage() {
@@ -86,12 +89,15 @@ function ComparePageContent() {
   const requestKey = requestedCompanies.join(',');
   const {
     comparisonList,
+    visibleList,
     addToComparison,
     removeFromComparison,
     replaceComparison,
     clearComparison,
     isLoading: isStorageLoading,
     canAddMore,
+    maxComparison,
+    experience,
   } = useComparison();
   const detailCacheRef = useRef(new Map<string, Company>());
   const summaryCacheRef = useRef(new Map<number, Company>());
@@ -102,8 +108,8 @@ function ComparePageContent() {
   const deferredQuery = useDeferredValue(query);
 
   const companies = useMemo(
-    () => comparisonList.slice(0, MAX_COMPANIES).map(mapCompanyToCompareCompany),
-    [comparisonList]
+    () => visibleList.map(mapCompanyToCompareCompany),
+    [visibleList]
   );
   const selectedIds = useMemo(() => companies.map((company) => company.id), [companies]);
   const contextCity = searchParams.get('city') || user?.city || companies[0]?.city || null;
@@ -201,7 +207,7 @@ function ComparePageContent() {
   useEffect(() => {
     if (isStorageLoading || isResolvingUrl || loadError) return;
     const slugs = comparisonList
-      .slice(0, MAX_COMPANIES)
+      .slice(0, maxComparison)
       .map((company) => company.slug || String(company.id))
       .filter(Boolean);
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -214,18 +220,18 @@ function ComparePageContent() {
     const nextUrl = nextQuery ? `/compare?${nextQuery}` : '/compare';
     const currentUrl = currentQuery ? `/compare?${currentQuery}` : '/compare';
     if (nextUrl !== currentUrl) router.replace(nextUrl, { scroll: false });
-  }, [comparisonList, isResolvingUrl, isStorageLoading, loadError, router, searchParams]);
+  }, [comparisonList, isResolvingUrl, isStorageLoading, loadError, maxComparison, router, searchParams]);
 
   const handleAdd = useCallback(
     (company: CompareCompany) => {
       if (!canAddMore) {
-        toast.warning('Você pode comparar até 4 empresas por vez.');
+        toast.warning(COMPARISON_LIMIT_MESSAGES[experience]);
         return;
       }
       addToComparison(company);
       setQuery('');
     },
-    [addToComparison, canAddMore]
+    [addToComparison, canAddMore, experience]
   );
 
   const handleReplace = useCallback(
@@ -319,6 +325,7 @@ function ComparePageContent() {
           <div className="space-y-5">
             <SelectedCompaniesPanel
               companies={companies}
+              maxComparison={maxComparison}
               onRemove={removeFromComparison}
               onClear={clearComparison}
             />
@@ -334,7 +341,7 @@ function ComparePageContent() {
                     <div className="mb-3 flex items-end justify-between gap-3">
                       <div>
                         <h2 id="side-by-side-title" className="text-lg font-semibold text-slate-950">Comparação lado a lado</h2>
-                        <p className="mt-0.5 text-xs text-slate-500">{companies.length} de 4 empresas selecionadas</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{companies.length} de {maxComparison} empresas selecionadas</p>
                       </div>
                       <Button size="sm" variant="outline" onClick={handleShare} aria-label="Compartilhar comparação" className="rounded-none">
                         <Share2 className="mr-2 h-4 w-4" aria-hidden="true" /> Compartilhar
@@ -361,6 +368,7 @@ function ComparePageContent() {
                   onQueryChange={setQuery}
                   results={searchResults}
                   selectedCompanies={companies}
+                  maxComparison={maxComparison}
                   isSearching={searchQuery.isFetching}
                   searchError={searchQuery.isError}
                   canAddMore={canAddMore}
@@ -420,8 +428,7 @@ function CompareHero() {
               Compare antes de decidir.
             </h1>
             <p className="mt-1.5 max-w-xl text-sm leading-5 text-slate-600">
-              Coloque até três empresas lado a lado e avalie reputação, verificação, cobertura e
-              condições comerciais.
+              Coloque até três empresas no computador e até duas no celular lado a lado para avaliar reputação, verificação, cobertura e condições comerciais.
             </p>
           </div>
           <div className="flex w-full justify-center lg:justify-end">
@@ -490,10 +497,12 @@ function EmptyComparisonState() {
 
 function SelectedCompaniesPanel({
   companies,
+  maxComparison,
   onRemove,
   onClear,
 }: {
   companies: CompareCompany[];
+  maxComparison: number;
   onRemove: (id: number) => void;
   onClear: () => void;
 }) {
@@ -501,11 +510,11 @@ function SelectedCompaniesPanel({
     <section aria-labelledby="selected-companies-title">
       <div className="mb-2 flex items-center justify-between gap-3">
         <h2 id="selected-companies-title" className="text-base font-semibold text-slate-950">
-          Empresas selecionadas <span className="text-xs font-normal text-slate-500">({companies.length} de 4)</span>
+          Empresas selecionadas <span className="text-xs font-normal text-slate-500">({companies.length} de {maxComparison})</span>
         </h2>
         {companies.length > 0 && <Button variant="outline" size="sm" onClick={onClear} className="rounded-none">Limpar comparação</Button>}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {companies.map((company) => (
           <article key={company.id} className="flex min-h-[84px] items-center gap-3 border border-slate-200 bg-white p-3">
             <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
@@ -516,7 +525,7 @@ function SelectedCompaniesPanel({
             <button type="button" onClick={() => onRemove(company.id)} aria-label={`Remover ${company.name} da comparação`} className="flex h-8 w-8 items-center justify-center border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"><X className="h-3.5 w-3.5" /></button>
           </article>
         ))}
-        {companies.length < MAX_COMPANIES && (
+        {companies.length < maxComparison && (
           <a href="#company-search-title" className="flex min-h-[84px] items-center justify-center gap-2 border border-dashed border-slate-300 bg-white p-3 text-sm font-medium text-blue-700 hover:border-blue-400 hover:bg-blue-50/40">
             <Plus className="h-4 w-4" /> Adicionar empresa
           </a>
@@ -532,6 +541,7 @@ interface SearchPanelProps {
   onQueryChange: (value: string) => void;
   results: CompareCompany[];
   selectedCompanies: CompareCompany[];
+  maxComparison: number;
   isSearching: boolean;
   searchError: boolean;
   canAddMore: boolean;
@@ -545,6 +555,7 @@ function CompanySearchPanel({
   onQueryChange,
   results,
   selectedCompanies,
+  maxComparison,
   isSearching,
   searchError,
   canAddMore,
@@ -563,10 +574,10 @@ function CompanySearchPanel({
         Adicionar empresa
       </h2>
       <p className="mt-1 text-xs leading-5 text-slate-500">
-        Busque e selecione até 4 empresas para comparar lado a lado.
+        Busque e selecione até {maxComparison} empresas para comparar lado a lado.
       </p>
       <p className="mt-2 text-xs font-bold text-slate-700">
-        {selectedCompanies.length} de 4 selecionadas
+        {selectedCompanies.length} de {maxComparison} selecionadas
       </p>
       <label htmlFor="compare-company-search" className="sr-only">
         Buscar empresa ou cidade
@@ -592,9 +603,9 @@ function CompanySearchPanel({
       </div>
       {!canAddMore && (
         <div className="mt-3 rounded-none border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-900">
-          <strong>Você atingiu o limite de empresas.</strong>
+          <strong>Você atingiu o limite de empresas ({maxComparison}).</strong>
           <br />
-          Remova uma empresa ou substitua por uma recomendada.
+          Remova uma empresa para adicionar outra.
         </div>
       )}
       {query.trim().length >= 2 && (

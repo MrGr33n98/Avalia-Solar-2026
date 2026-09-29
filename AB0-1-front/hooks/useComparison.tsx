@@ -1,12 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Company } from '@/lib/api';
 import { toast } from 'sonner';
 import { CheckCircle2, Info, AlertTriangle, Trash2 } from 'lucide-react';
+import {
+  COMPARISON_LIMITS,
+  COMPARISON_LIMIT_MESSAGES,
+  getComparisonLimit,
+  getComparisonExperience,
+  ComparisonExperience,
+} from '@/lib/comparison/config';
 
 const STORAGE_KEY = 'ab01_comparison_list';
-const MAX_COMPARISON = 4;
 
 // Event system for cross-component communication
 const comparisonEvents = new EventTarget();
@@ -14,7 +20,20 @@ const comparisonEvents = new EventTarget();
 export function useComparison() {
   const [comparisonList, setComparisonList] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const skipEmitRef = useRef(false); // evita loop de eventos entre instâncias
+  const [windowWidth, setWindowWidth] = useState<number>(
+    typeof window !== 'undefined' ? window.innerWidth : 1024
+  );
+  const skipEmitRef = useRef(false);
+
+  // Monitor viewport width
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const experience: ComparisonExperience = getComparisonExperience(windowWidth);
+  const maxComparison = getComparisonLimit(windowWidth);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -22,7 +41,6 @@ export function useComparison() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Validate the data structure - more flexible validation
         if (Array.isArray(parsed)) {
           const validCompanies = parsed.filter(
             (item) =>
@@ -30,24 +48,32 @@ export function useComparison() {
               (typeof item.id === 'number' || typeof item.id === 'string') &&
               typeof item.name === 'string'
           );
-          setComparisonList(validCompanies.slice(0, MAX_COMPARISON));
+          // Deduplicate by id and limit to max desktop allowed (3)
+          const deduped: Company[] = [];
+          const seen = new Set();
+          for (const item of validCompanies) {
+            if (!seen.has(item.id)) {
+              seen.add(item.id);
+              deduped.push(item);
+            }
+          }
+          setComparisonList(deduped.slice(0, COMPARISON_LIMITS.desktop));
         } else {
           localStorage.removeItem(STORAGE_KEY);
         }
       }
     } catch (e) {
       console.error('Failed to parse comparison list', e);
-      localStorage.removeItem(STORAGE_KEY); // Clear corrupted data
+      localStorage.removeItem(STORAGE_KEY);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Save to localStorage when list changes (evitando re-emissão em updates sincronizados)
+  // Save to localStorage when list changes
   useEffect(() => {
     if (isLoading) return;
 
-    // Atualização veio de outro hook via evento, apenas consome e sai
     if (skipEmitRef.current) {
       skipEmitRef.current = false;
       return;
@@ -66,13 +92,12 @@ export function useComparison() {
     }
   }, [comparisonList, isLoading]);
 
-  // Sincroniza instâncias do hook na mesma aba via EventTarget
+  // Sync hook instances across components
   useEffect(() => {
     const handleSync = (event: Event) => {
       const detail = (event as CustomEvent)?.detail?.companies as Company[] | undefined;
       if (!detail) return;
 
-      // Evita sobrescrever quando lista já está igual
       const sameLength = detail.length === comparisonList.length;
       const sameIds = sameLength && detail.every((c, idx) => comparisonList[idx]?.id === c.id);
       if (sameLength && sameIds) return;
@@ -87,55 +112,64 @@ export function useComparison() {
     };
   }, [comparisonList]);
 
-  const addToComparison = useCallback((company: Company) => {
-    setComparisonList((prev) => {
-      // Check if already exists
-      if (prev.find((c) => c.id === company.id)) {
-        toast.info('Empresa já adicionada', {
-          description: `${company.name} já está na sua lista de comparação.`,
-          duration: 3500,
-          icon: <Info className="h-5 w-5 text-blue-600" />,
+  const addToComparison = useCallback(
+    (company: Company) => {
+      setComparisonList((prev) => {
+        if (prev.find((c) => c.id === company.id)) {
+          toast.info('Empresa já adicionada', {
+            description: `${company.name} já está na sua lista de comparação.`,
+            duration: 3500,
+            icon: <Info className="h-5 w-5 text-blue-600" />,
+          });
+          return prev;
+        }
+
+        const currentLimit = getComparisonLimit(
+          typeof window !== 'undefined' ? window.innerWidth : 1024
+        );
+        const currentExp = getComparisonExperience(
+          typeof window !== 'undefined' ? window.innerWidth : 1024
+        );
+
+        if (prev.length >= currentLimit) {
+          toast.warning('Limite atingido', {
+            description: COMPARISON_LIMIT_MESSAGES[currentExp],
+            duration: 4500,
+            icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+          });
+          return prev;
+        }
+
+        const newList = [...prev, company];
+
+        toast.success('Empresa adicionada à comparação', {
+          description: `${company.name} • ${newList.length}/${currentLimit}`,
+          duration: 2000,
+          icon: <CheckCircle2 className="h-4 w-4 text-blue-600" />,
+          classNames: {
+            toast:
+              '!rounded-lg !border-blue-200 !bg-blue-50 !text-blue-950 !shadow-sm',
+            description: '!text-blue-700',
+          },
         });
-        return prev;
-      }
 
-      // Check limit
-      if (prev.length >= MAX_COMPARISON) {
-        toast.warning('Limite atingido', {
-          description: `Você só pode comparar até ${MAX_COMPARISON} empresas. Remova uma antes.`,
-          duration: 4500,
-          icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
-        });
-        return prev;
-      }
-
-      // Add company
-      const newList = [...prev, company];
-
-      // Success message - compacta, sem botões, auto-dismiss 2s
-      toast.success('Empresa adicionada à comparação', {
-        description: `${company.name} • ${newList.length}/${MAX_COMPARISON}`,
-        duration: 2000,
-        icon: <CheckCircle2 className="h-4 w-4 text-blue-600" />,
-        classNames: {
-          toast:
-            '!rounded-lg !border-blue-200 !bg-blue-50 !text-blue-950 !shadow-sm',
-          description: '!text-blue-700',
-        },
+        return newList;
       });
-
-      return newList;
-    });
-  }, []);
+    },
+    []
+  );
 
   const removeFromComparison = useCallback((companyId: number) => {
     setComparisonList((prev) => {
       const company = prev.find((c) => c.id === companyId);
       const newList = prev.filter((c) => c.id !== companyId);
+      const currentLimit = getComparisonLimit(
+        typeof window !== 'undefined' ? window.innerWidth : 1024
+      );
 
       if (company) {
         toast.info('Empresa removida', {
-          description: `${company.name} foi removida • ${newList.length}/${MAX_COMPARISON} restantes`,
+          description: `${company.name} foi removida • ${newList.length}/${currentLimit} restantes`,
           duration: 3000,
         });
       }
@@ -158,12 +192,15 @@ export function useComparison() {
   }, []);
 
   const replaceComparison = useCallback((companies: Company[]) => {
+    const currentLimit = getComparisonLimit(
+      typeof window !== 'undefined' ? window.innerWidth : 1024
+    );
     const uniqueCompanies = companies
       .filter(
         (company, index, list) =>
           company && list.findIndex((item) => item.id === company.id) === index
       )
-      .slice(0, MAX_COMPARISON);
+      .slice(0, currentLimit);
 
     setComparisonList(uniqueCompanies);
   }, []);
@@ -193,17 +230,23 @@ export function useComparison() {
     [comparisonList]
   );
 
-  const canAddMore = comparisonList.length < MAX_COMPARISON;
-  const isEmpty = comparisonList.length === 0;
-  const isFull = comparisonList.length >= MAX_COMPARISON;
+  const visibleList = useMemo(
+    () => comparisonList.slice(0, maxComparison),
+    [comparisonList, maxComparison]
+  );
 
-  // Get premium companies count
+  const hiddenCount = Math.max(0, comparisonList.length - maxComparison);
+  const canAddMore = comparisonList.length < maxComparison;
+  const isEmpty = comparisonList.length === 0;
+  const isFull = comparisonList.length >= maxComparison;
+
   const premiumCount = comparisonList.filter(
     (company) => company.featured || company.plan_status === 'active' || company.has_paid_plan
   ).length;
 
   return {
     comparisonList,
+    visibleList,
     addToComparison,
     removeFromComparison,
     clearComparison,
@@ -215,16 +258,17 @@ export function useComparison() {
     canAddMore,
     isEmpty,
     isFull,
-    maxComparison: MAX_COMPARISON,
+    maxComparison,
+    experience,
     count: comparisonList.length,
+    visibleCount: visibleList.length,
+    hiddenCount,
     premiumCount,
-    // Computed properties for UI
-    progressPercentage: (comparisonList.length / MAX_COMPARISON) * 100,
-    remainingSlots: MAX_COMPARISON - comparisonList.length,
+    progressPercentage: Math.min(100, (comparisonList.length / maxComparison) * 100),
+    remainingSlots: Math.max(0, maxComparison - comparisonList.length),
   };
 }
 
-// Hook for listening to comparison events
 export function useComparisonEvents() {
   type ComparisonEvent =
     | { type: 'update'; data: { companies?: Company[] } }
@@ -258,3 +302,4 @@ export function useComparisonEvents() {
 
   return { lastEvent };
 }
+

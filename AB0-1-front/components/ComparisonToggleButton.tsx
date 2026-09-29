@@ -40,6 +40,7 @@ export default function ComparisonToggleButton({
     getCompanyPosition,
     canAddMore,
     count,
+    maxComparison,
   } = useComparison();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -279,7 +280,7 @@ export default function ComparisonToggleButton({
         isSelected
           ? `Remover ${company.name} da comparação`
           : !canAddMore
-            ? 'Limite máximo de empresas atingido (3/3)'
+            ? `Limite máximo de empresas atingido (${count}/${maxComparison})`
             : `Adicionar ${company.name} à comparação`
       }
     >
