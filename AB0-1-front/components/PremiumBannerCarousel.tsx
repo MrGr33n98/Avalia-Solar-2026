@@ -170,26 +170,73 @@ export function PremiumBannerCarousel({
 
         {items.length > 1 && (
           <>
-            {/* Arrows: Always visible on mobile, hover on desktop */}
-            <div className="absolute inset-y-0 left-0 z-10 flex items-center px-1 opacity-100 transition-opacity duration-300 md:px-2 md:opacity-0 md:group-hover:opacity-100">
+            {/* Arrows: área de toque invisível 44px, círculo visual pequeno */}
+            {/* Prev */}
+            <div className="absolute inset-y-0 left-0 z-10 flex items-center opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
               <CarouselPrevious
                 className={cn(
-                  'relative left-0 border border-white/40 !bg-black/30 p-1 text-white shadow-none backdrop-blur-sm hover:!bg-black/50 hover:text-white',
-                  compactControls
-                    ? 'h-6 w-6 [&>svg]:h-3.5 [&>svg]:w-3.5 md:h-7 md:w-7 md:[&>svg]:h-4 md:[&>svg]:w-4'
-                    : 'h-7 w-7 [&>svg]:h-4 [&>svg]:w-4 md:h-8 md:w-8 md:[&>svg]:h-4.5 md:[&>svg]:w-4.5'
+                  // Área de toque real: invisível, 44×44px no mobile, 36px no desktop
+                  'relative left-0 flex items-center justify-center !bg-transparent !border-0 shadow-none p-0',
+                  'h-11 w-11 md:h-9 md:w-9'
                 )}
-              />
+              >
+                {/* Círculo visual: 18px mobile / 24px desktop */}
+                <span className={cn(
+                  'pointer-events-none flex items-center justify-center rounded-full border border-white/40 bg-black/30 backdrop-blur-sm transition-colors',
+                  compactControls
+                    ? 'h-[18px] w-[18px] md:h-[20px] md:w-[20px]'
+                    : 'h-[18px] w-[18px] md:h-6 md:w-6'
+                )}>
+                  {/* Seta esquerda: 9px no mobile, 10px no desktop */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="9"
+                    height="9"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-white md:h-[10px] md:w-[10px]"
+                    aria-hidden="true"
+                  >
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </span>
+              </CarouselPrevious>
             </div>
-            <div className="absolute inset-y-0 right-0 z-10 flex items-center px-1 opacity-100 transition-opacity duration-300 md:px-2 md:opacity-0 md:group-hover:opacity-100">
+            {/* Next */}
+            <div className="absolute inset-y-0 right-0 z-10 flex items-center opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
               <CarouselNext
                 className={cn(
-                  'relative right-0 border border-white/40 !bg-black/30 p-1 text-white shadow-none backdrop-blur-sm hover:!bg-black/50 hover:text-white',
-                  compactControls
-                    ? 'h-6 w-6 [&>svg]:h-3.5 [&>svg]:w-3.5 md:h-7 md:w-7 md:[&>svg]:h-4 md:[&>svg]:w-4'
-                    : 'h-7 w-7 [&>svg]:h-4 [&>svg]:w-4 md:h-8 md:w-8 md:[&>svg]:h-4.5 md:[&>svg]:w-4.5'
+                  'relative right-0 flex items-center justify-center !bg-transparent !border-0 shadow-none p-0',
+                  'h-11 w-11 md:h-9 md:w-9'
                 )}
-              />
+              >
+                <span className={cn(
+                  'pointer-events-none flex items-center justify-center rounded-full border border-white/40 bg-black/30 backdrop-blur-sm transition-colors',
+                  compactControls
+                    ? 'h-[18px] w-[18px] md:h-[20px] md:w-[20px]'
+                    : 'h-[18px] w-[18px] md:h-6 md:w-6'
+                )}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="9"
+                    height="9"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-white md:h-[10px] md:w-[10px]"
+                    aria-hidden="true"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </span>
+              </CarouselNext>
             </div>
 
             {/* On desktop the progress control stays inside the banner. */}

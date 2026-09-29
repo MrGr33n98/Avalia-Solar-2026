@@ -217,7 +217,7 @@ CarouselItem.displayName = 'CarouselItem';
 const CarouselPrevious = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
->(({ className, variant = 'outline', size = 'icon', ...props }, ref) => {
+>(({ className, variant = 'outline', size = 'icon', children, ...props }, ref) => {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel();
 
   return (
@@ -238,8 +238,12 @@ const CarouselPrevious = React.forwardRef<
       aria-label="Slide anterior"
       {...props}
     >
-      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-      <span className="sr-only">Slide anterior</span>
+      {children ?? (
+        <>
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Slide anterior</span>
+        </>
+      )}
     </Button>
   );
 });
@@ -248,7 +252,7 @@ CarouselPrevious.displayName = 'CarouselPrevious';
 const CarouselNext = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
->(({ className, variant = 'outline', size = 'icon', ...props }, ref) => {
+>(({ className, variant = 'outline', size = 'icon', children, ...props }, ref) => {
   const { orientation, scrollNext, canScrollNext } = useCarousel();
 
   return (
@@ -269,8 +273,12 @@ const CarouselNext = React.forwardRef<
       aria-label="Próximo slide"
       {...props}
     >
-      <ArrowRight className="h-4 w-4" aria-hidden="true" />
-      <span className="sr-only">Próximo slide</span>
+      {children ?? (
+        <>
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Próximo slide</span>
+        </>
+      )}
     </Button>
   );
 });
