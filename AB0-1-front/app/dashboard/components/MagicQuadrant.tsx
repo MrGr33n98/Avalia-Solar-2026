@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useMemo, useState, useRef, useCallback, useId } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -98,8 +98,9 @@ export function applyForceRepulsion(
   if (!points || points.length === 0) return { nodes: [], clusters: [] };
 
   const nodes: VisualQuadrantData[] = points.map((p) => {
-    const rawX = p.x_score ?? (p as any).completeness_of_vision ?? 0;
-    const rawY = p.y_score ?? (p as any).ability_to_execute ?? 0;
+    const pRecord = p as unknown as Record<string, number | undefined>;
+    const rawX = p.x_score ?? pRecord.completeness_of_vision ?? 0;
+    const rawY = p.y_score ?? pRecord.ability_to_execute ?? 0;
     return { ...p, x_score: rawX, y_score: rawY, display_x: rawX, display_y: rawY, raw_x: rawX, raw_y: rawY };
   });
 
@@ -219,8 +220,9 @@ function RichTooltip({
   const quadrant = quadrantOf(x, y, xThreshold ?? 50, yThreshold ?? 50);
   const qConfig = QUADRANT_CONFIG[quadrant];
   const QIcon = qConfig.icon;
-  const rating = (point as any).rating ?? (point as any).trust_score ?? null;
-  const reviewCount = (point as any).review_count ?? (point as any).reviews_count ?? null;
+  const pointRecord = point as unknown as Record<string, number | null | undefined>;
+  const rating = pointRecord.rating ?? pointRecord.trust_score ?? null;
+  const reviewCount = pointRecord.review_count ?? pointRecord.reviews_count ?? null;
 
   return (
     <motion.div
@@ -335,7 +337,6 @@ function NodeShape({
   cx = 0, cy = 0, payload,
   selectedId, hoveredId,
   onHover, onClick,
-  xThreshold, yThreshold,
   onNodePosition,
 }: {
   cx?: number; cy?: number;
@@ -343,17 +344,25 @@ function NodeShape({
   selectedId: number | null; hoveredId: number | null;
   onHover: (p: VisualQuadrantData | null) => void;
   onClick: (p: VisualQuadrantData) => void;
-  xThreshold: number | null; yThreshold: number | null;
   onNodePosition: (x: number, y: number) => void;
 }) {
+  const handleClick = useCallback(() => {
+    if (!payload) return;
+    onClick(payload);
+    onNodePosition(cx, cy);
+  }, [cx, cy, onClick, onNodePosition, payload]);
+
   if (!payload || payload.cluster_id) return null;
 
   const isCurrent = payload.is_current_company;
   const isSelected = selectedId != null && payload.id === selectedId;
   const isHovered = hoveredId != null && payload.id === hoveredId;
   const hasLogo = Boolean(payload.logo_url);
-  const isPaid = Boolean((payload as any).has_paid_plan || (payload as any).commercial_status?.paid);
-  const isVerified = Boolean((payload as any).is_verified || (payload as any).verified);
+  const payloadRecord = payload as unknown as Record<string, unknown>;
+  const isPaid = Boolean(
+    payloadRecord.has_paid_plan || (payloadRecord.commercial_status as Record<string, boolean> | undefined)?.paid
+  );
+  const isVerified = Boolean(payloadRecord.is_verified || payloadRecord.verified);
   const size = isCurrent ? 46 : 36;
   const hs = size / 2;
 
@@ -363,11 +372,6 @@ function NodeShape({
 
   const strokeColor = isCurrent ? '#10b981' : isPaid ? '#f59e0b' : isSelected || isHovered ? '#3b82f6' : '#cbd5e1';
   const strokeWidth = isCurrent || isPaid ? 2.5 : isSelected || isHovered ? 2 : 1.5;
-
-  const handleClick = useCallback(() => {
-    onClick(payload!);
-    onNodePosition(cx, cy);
-  }, [cx, cy, onClick, onNodePosition, payload]);
 
   return (
     <g
@@ -488,7 +492,7 @@ export default function MagicQuadrant({
   yAxisLabel = 'Poder de Execução',
   xAxisDefinition = 'Reputação, Credibilidade e Presença de Mercado',
   yAxisDefinition = 'Entrega, Engajamento e Conversão',
-  criterionTitle,
+  criterionTitle: _criterionTitle,
   thresholds,
   populationSize,
   resolvedScope,
@@ -506,7 +510,7 @@ export default function MagicQuadrant({
   const xThreshold = thresholds?.x_threshold ?? null;
   const yThreshold = thresholds?.y_threshold ?? null;
 
-  const { nodes: chartData, clusters } = useMemo(() => applyForceRepulsion(data), [data]);
+  const { nodes: chartData } = useMemo(() => applyForceRepulsion(data), [data]);
   const currentCompany = chartData.find((d) => d.is_current_company);
 
   const handleNodeClick = useCallback((point: VisualQuadrantData) => {
@@ -605,11 +609,15 @@ export default function MagicQuadrant({
             )}
 
             <Scatter name="Empresas" data={chartData}
-              shape={(props: any) => (
-                <NodeShape {...props} selectedId={selectedId} hoveredId={hoveredPoint?.id ?? null}
-                  onHover={setHoveredPoint} onClick={handleNodeClick}
-                  xThreshold={xThreshold} yThreshold={yThreshold}
-                  onNodePosition={handleNodePosition} />
+              shape={(props: unknown) => (
+                <NodeShape
+                  {...(props as Record<string, unknown>)}
+                  selectedId={selectedId}
+                  hoveredId={hoveredPoint?.id ?? null}
+                  onHover={setHoveredPoint}
+                  onClick={handleNodeClick}
+                  onNodePosition={handleNodePosition}
+                />
               )}
               isAnimationActive={false}
             />
