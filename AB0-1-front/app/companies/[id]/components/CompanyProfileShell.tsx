@@ -9,7 +9,6 @@ import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { Company, Product, Review } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
 
-import CompanyMobileHeader from './CompanyMobileHeader';
 import CompanyPremiumHero from './CompanyPremiumHero';
 import CompanyIdentityCard from './CompanyIdentityCard';
 import CompanyCTAGroup from './CompanyCTAGroup';
@@ -93,15 +92,10 @@ export default function CompanyProfileShell({
 
   return (
     <div id="company-profile-shell" data-company-layout="premium-shell" className="min-h-screen bg-[#f7f9fc] text-slate-900 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
-      {/* Header Mobile PWA */}
-      <CompanyMobileHeader />
-
       {/* Cabeçalho & Hero Premium */}
       <header className="bg-transparent border-none">
         <div className="mx-auto w-full max-w-[480px] px-3 pt-2 sm:px-4 sm:pt-4 md:max-w-[1240px] md:px-6">
-          <div className="hidden md:block">
-            <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
-          </div>
+          <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
 
           {/* Compound Hero Container estilo WEG */}
           <div
