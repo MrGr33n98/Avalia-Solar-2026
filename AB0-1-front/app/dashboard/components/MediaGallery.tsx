@@ -34,7 +34,7 @@ import { toast } from '@/hooks/use-toast';
 import { fetchApi } from '@/lib/api';
 import { useImageGalleryWatch } from '@/lib/analytics/hooks/useIntentTracking';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGalleryContext7 } from '@/app/context7/provider';
+import { useGalleryContext7, Context7Provider } from '@/app/context7/provider';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getFullImageUrl } from '@/utils/image';
@@ -88,7 +88,7 @@ const SYSTEM_FOLDERS: FolderData[] = [
 type WidgetMediaType = 'all' | 'photos' | 'videos';
 type WidgetSortOption = 'recent' | 'old' | 'name';
 
-export default function MediaGallery({
+function MediaGalleryContent({
   companyId,
   showControls = true,
   showHeader = true,
@@ -1025,5 +1025,13 @@ export default function MediaGallery({
       </Dialog>
 
     </div>
+  );
+}
+
+export default function MediaGallery(props: MediaGalleryProps): React.JSX.Element {
+  return (
+    <Context7Provider>
+      <MediaGalleryContent {...props} />
+    </Context7Provider>
   );
 }

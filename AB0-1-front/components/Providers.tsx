@@ -5,8 +5,7 @@ import dynamic from 'next/dynamic';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CompanyProvider } from '@/context/CompanyContext';
 import { QueryProvider } from '@/lib/QueryProvider';
-import { Context7Provider } from '@/app/context7/provider';
-// P1 PERF FIX: ApolloProvider removido do global provider.
+// P1 PERF FIX: ApolloProvider e Context7Provider removidos do global provider.
 // Apollo só é necessário em /dashboard, /compare, /review-dashboard.
 // Rotas públicas (/categories, /companies, /blog, /) não usam Apollo.
 // ApolloProvider é montado nos layouts específicos dessas rotas.
@@ -45,6 +44,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     pathname?.startsWith('/chat') || pathname?.startsWith('/review-dashboard')
   );
   const [hasCookieDecision, setHasCookieDecision] = useState(false);
+  const [showDeferredModals, setShowDeferredModals] = useState(false);
   const analyticsLoadedRef = useRef(false);
 
   const loadAnalytics = useCallback((reason: string) => {
@@ -61,6 +61,43 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     setHasCookieDecision(Boolean(getConsent()));
     const cleanup = onConsentChange(() => setHasCookieDecision(true));
     return cleanup;
+  }, []);
+
+  useEffect(() => {
+    type WindowWithIdleCallback = Window & {
+      cancelIdleCallback?: (handle: number) => void;
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+    };
+
+    const win = typeof window !== 'undefined' ? (window as WindowWithIdleCallback) : null;
+    let timerId: number | undefined;
+    let idleId: number | undefined;
+
+    const enableModals = () => setShowDeferredModals(true);
+
+    const handleInteraction = () => {
+      enableModals();
+    };
+
+    window.addEventListener('pointerdown', handleInteraction, { once: true });
+    window.addEventListener('keydown', handleInteraction, { once: true });
+
+    if (win?.requestIdleCallback) {
+      idleId = win.requestIdleCallback(enableModals, { timeout: 2500 });
+    } else if (win) {
+      timerId = win.setTimeout(enableModals, 1500);
+    }
+
+    return () => {
+      window.removeEventListener('pointerdown', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
+      if (idleId !== undefined && win?.cancelIdleCallback) {
+        win.cancelIdleCallback(idleId);
+      }
+      if (timerId !== undefined && win) {
+        win.clearTimeout(timerId);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -167,23 +204,25 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <PostHogProvider>
       <QueryProvider>
-        <Context7Provider>
-          <AuthProvider>
-            <CompanyProvider>
-              {children}
-              <QuoteWizardModal />
-              <QuickLeadModal />
-              <DynamicLeadWizardModal />
-              <SignupGateModalHost />
-              <Toaster />
-              {!isAppSurface && <CookieConsent />}
-              {isFeatureFlagEnabled('CHAT') &&
-                !isAppSurface &&
-                hasCookieDecision &&
-                (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
-            </CompanyProvider>
-          </AuthProvider>
-        </Context7Provider>
+        <AuthProvider>
+          <CompanyProvider>
+            {children}
+            {showDeferredModals && (
+              <>
+                <QuoteWizardModal />
+                <QuickLeadModal />
+                <DynamicLeadWizardModal />
+                <SignupGateModalHost />
+              </>
+            )}
+            <Toaster />
+            {!isAppSurface && <CookieConsent />}
+            {isFeatureFlagEnabled('CHAT') &&
+              !isAppSurface &&
+              hasCookieDecision &&
+              (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
+          </CompanyProvider>
+        </AuthProvider>
       </QueryProvider>
     </PostHogProvider>
   );

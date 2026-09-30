@@ -34,6 +34,8 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       return companiesApi.mine().then(res => res as Company[]);
     },
     enabled: hasPossibleAuthSession(),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
     retry: 1,
   });
 

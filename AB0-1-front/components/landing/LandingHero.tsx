@@ -80,9 +80,35 @@ export default function LandingHero(props: LandingHeroProps) {
   }, []);
 
   useEffect(() => {
-    fetchActiveCampaign();
-    subscribeToUpdates();
-    return () => unsubscribeFromUpdates();
+    type WindowWithIdleCallback = Window & {
+      cancelIdleCallback?: (handle: number) => void;
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+    };
+
+    const win = typeof window !== 'undefined' ? (window as WindowWithIdleCallback) : null;
+    let timerId: number | undefined;
+    let idleId: number | undefined;
+
+    const startCampaignRealtime = () => {
+      fetchActiveCampaign();
+      subscribeToUpdates();
+    };
+
+    if (win?.requestIdleCallback) {
+      idleId = win.requestIdleCallback(startCampaignRealtime, { timeout: 3000 });
+    } else if (win) {
+      timerId = win.setTimeout(startCampaignRealtime, 2000);
+    }
+
+    return () => {
+      if (idleId !== undefined && win?.cancelIdleCallback) {
+        win.cancelIdleCallback(idleId);
+      }
+      if (timerId !== undefined && win) {
+        win.clearTimeout(timerId);
+      }
+      unsubscribeFromUpdates();
+    };
   }, [fetchActiveCampaign, subscribeToUpdates, unsubscribeFromUpdates]);
 
   const targetLink = activeCampaign?.target_url || '#';

@@ -150,6 +150,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
 
+    if (!hasPossibleAuthSession()) {
+      setUser(null);
+      setLoading(false);
+      return null;
+    }
+
     try {
       const userData = await authApi.me();
       if (requestId === authRequestId.current) {

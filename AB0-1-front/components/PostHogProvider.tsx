@@ -1,9 +1,7 @@
 'use client';
 
-import posthog from 'posthog-js';
-import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import * as Sentry from '@sentry/nextjs';
 
 import { hasAnalyticsConsent, onConsentChange } from '@/lib/analytics/consent';
@@ -22,20 +20,20 @@ type NavigatorWithConnection = Navigator & {
   connection?: NetworkInformationLike;
 };
 
-function exposeAnalyticsBridge() {
+function exposeAnalyticsBridge(posthogInstance: any) {
   window.__analyticsPosthog = {
-    alias: (newId) => posthog.alias(newId),
+    alias: (newId) => posthogInstance.alias(newId),
     capture: (eventName, properties = {}) => {
-      posthog.capture(
+      posthogInstance.capture(
         eventName,
         sanitizeAnalyticsProperties(properties) as Record<string, unknown>
       );
     },
     identify: (userId, traits = {}) => {
-      posthog.identify(userId, sanitizeAnalyticsProperties(traits) as Record<string, unknown>);
+      posthogInstance.identify(userId, sanitizeAnalyticsProperties(traits) as Record<string, unknown>);
     },
-    isLoaded: () => posthog.__loaded,
-    reset: () => posthog.reset(),
+    isLoaded: () => Boolean(posthogInstance.__loaded),
+    reset: () => posthogInstance.reset(),
   };
 }
 
@@ -68,14 +66,13 @@ function getPageAnalyticsProperties(pathname: string) {
  * Rastreia pageviews automaticamente em todas as rotas do Next.js App Router.
  * Separado em componente filho para poder usar useSearchParams dentro de Suspense.
  */
-function PostHogPageView() {
+function PostHogPageView({ posthog }: { posthog: any }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isMounted = useRef(false);
 
   useEffect(() => {
-    if (!POSTHOG_KEY) return;
-    if (!posthog.__loaded) return;
+    if (!POSTHOG_KEY || !posthog || !posthog.__loaded) return;
 
     // Task 6: Session Replay cirúrgico (Lead, Wizard, Compare, Chat, Login). Nunca gravar Admin/Dashboard.
     const isAllowedReplayPage =
@@ -118,25 +115,18 @@ function PostHogPageView() {
     if (process.env.NODE_ENV === 'development') {
       console.log('[PostHog] $pageview:', url);
     }
-  }, [pathname, searchParams]);
+  }, [pathname, searchParams, posthog]);
 
   return null;
 }
 
 /**
- * PostHogProvider — integra PostHog com o Next.js 14 App Router.
- *
- * Funcionalidades:
- * - Inicializa PostHog respeitando consentimento LGPD
- * - Rastreia page views automaticamente em todas as rotas
- * - Ativa/desativa captura conforme mudança de consentimento
- * - Session recording com mascaramento de inputs
- * - Autocapture desativado (eventos manuais via lib/analytics)
+ * PostHogProvider — integra PostHog com o Next.js 14 App Router de forma diferida.
  */
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    exposeAnalyticsBridge();
+  const [phState, setPhState] = useState<{ client: any; Provider: any } | null>(null);
 
+  useEffect(() => {
     if (!POSTHOG_KEY) {
       if (process.env.NODE_ENV === 'development') {
         console.warn('[PostHog] NEXT_PUBLIC_POSTHOG_KEY não configurado.');
@@ -144,130 +134,125 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Evita dupla inicialização (hot-reload em dev, StrictMode, etc.)
-    if (posthog.__loaded) return;
+    let cancelled = false;
 
-    const hasConsent = hasAnalyticsConsent();
+    Promise.all([
+      import('posthog-js'),
+      import('posthog-js/react'),
+    ])
+      .then(([phModule, phReactModule]) => {
+        if (cancelled) return;
+        const posthog = phModule.default;
+        const PHProvider = phReactModule.PostHogProvider;
 
-    // Session recording só ativa com consentimento explícito + desktop + conexão rápida.
-    // Evita carregar posthog-recorder.js (62 KiB) e dead-clicks-autocapture.js (5 KiB)
-    // no critical path — esses scripts causam 195ms+ de long task bloqueando a thread.
-    const isMobile = window.innerWidth < 768;
-    const navConn = (navigator as NavigatorWithConnection).connection;
-    const isSaveData = navConn?.saveData === true;
-    const isSlowConn = ['slow-2g', '2g', '3g'].includes(navConn?.effectiveType ?? '');
-    const shouldEnableRecording = hasConsent && !isMobile && !isSaveData && !isSlowConn;
+        exposeAnalyticsBridge(posthog);
 
-    posthog.init(POSTHOG_KEY, {
-      api_host: POSTHOG_HOST,
-      // @ts-ignore
-      cookie_domain: window.location.hostname === 'localhost' ? 'localhost' : undefined,
+        if (!posthog.__loaded) {
+          const hasConsent = hasAnalyticsConsent();
 
-      // Perfis apenas para usuários identificados (não anônimos por padrão)
-      person_profiles: 'identified_only',
+          const isMobile = window.innerWidth < 768;
+          const navConn = (navigator as NavigatorWithConnection).connection;
+          const isSaveData = navConn?.saveData === true;
+          const isSlowConn = ['slow-2g', '2g', '3g'].includes(navConn?.effectiveType ?? '');
+          const shouldEnableRecording = hasConsent && !isMobile && !isSaveData && !isSlowConn;
 
-      // Page views manuais via PostHogPageView (necessário para Next.js App Router)
-      capture_pageview: false,
+          posthog.init(POSTHOG_KEY, {
+            api_host: POSTHOG_HOST,
+            // @ts-ignore
+            cookie_domain: window.location.hostname === 'localhost' ? 'localhost' : undefined,
 
-      // Captura saída de página (bounce rate, session duration)
-      capture_pageleave: true,
+            person_profiles: 'identified_only',
+            capture_pageview: false,
+            capture_pageleave: true,
+            autocapture: false,
 
-      // Autocapture desativado — todos os eventos são explícitos
-      autocapture: false,
+            // @ts-ignore
+            disable_dead_clicks: true,
+            // @ts-ignore
+            __preview_remote_config: false,
 
-      // PERFORMANCE P0: Bloquear dead-clicks-autocapture.js (12.2s CPU observado via Lighthouse).
-      // O PostHog SDK v1.x carrega esse plugin via remote config mesmo com autocapture:false.
-      // disable_dead_clicks impede o carregamento do chunk dead-clicks-autocapture.js.
-      // @ts-ignore — opção válida no SDK mas sem tipagem no @types
-      disable_dead_clicks: true,
+            opt_out_capturing_by_default: !hasConsent,
 
-      // Bloquear remote config override de autocapture/dead-clicks.
-      // Sem isso, o dashboard do PostHog pode sobrescrever configurações locais.
-      // @ts-ignore
-      __preview_remote_config: false,
+            disable_session_recording: !shouldEnableRecording,
+            session_recording: shouldEnableRecording
+              ? {
+                  maskAllInputs: true,
+                  maskTextSelector: '[data-ph-no-capture]',
+                }
+              : undefined,
 
-      // LGPD: não captura nada até consentimento explícito
-      opt_out_capturing_by_default: !hasConsent,
+            loaded: (ph: any) => {
+              if (ph.config) {
+                ph.config.disable_dead_clicks = true;
+                ph.config.autocapture = false;
+              }
 
-      // Recording: desativado por padrão — scripts (posthog-recorder.js, dead-clicks-autocapture.js)
-      // só carregam se o usuário deu consentimento explícito + está em desktop + boa conexão
-      disable_session_recording: !shouldEnableRecording,
-      session_recording: shouldEnableRecording
-        ? {
-            maskAllInputs: true,
-            maskTextSelector: '[data-ph-no-capture]',
-          }
-        : undefined,
+              if (hasConsent) {
+                ph.capture('$pageview', {
+                  $current_url: window.location.origin + window.location.pathname,
+                  ...getPageAnalyticsProperties(window.location.pathname),
+                });
+              }
 
-      // Bootstrap: usa $pageview no load inicial
-      loaded: (ph) => {
-        // PERFORMANCE P0: Garantir que dead-clicks e autocapture estejam desabilitados
-        // mesmo que remote config tente sobrescrever após init.
-        // @ts-ignore
-        if (ph.config) {
-          // @ts-ignore
-          ph.config.disable_dead_clicks = true;
-          // @ts-ignore
-          ph.config.autocapture = false;
-        }
+              const distinctId = ph.get_distinct_id();
+              const sessionId = ph.get_session_id();
+              if (distinctId) Sentry.setTag('posthog_distinct_id', distinctId);
+              if (sessionId) Sentry.setTag('posthog_session_id', sessionId);
 
-        if (hasConsent) {
-          ph.capture('$pageview', {
-            $current_url: window.location.origin + window.location.pathname,
-            ...getPageAnalyticsProperties(window.location.pathname),
+              if (process.env.NODE_ENV === 'development') {
+                console.log('[PostHog] Inicializado. ID:', ph.get_distinct_id());
+              }
+            },
           });
         }
 
-        // Task 2.2: Integração Sentry + PostHog
-        const distinctId = ph.get_distinct_id();
-        const sessionId = ph.get_session_id();
-        if (distinctId) Sentry.setTag('posthog_distinct_id', distinctId);
-        if (sessionId) Sentry.setTag('posthog_session_id', sessionId);
+        setPhState({ client: posthog, Provider: PHProvider });
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[PostHog] Inicializado. ID:', ph.get_distinct_id());
-        }
-      },
-    });
+        const cleanup = onConsentChange((consent) => {
+          if (!posthog.__loaded) return;
 
-    // Escuta mudanças de consentimento e ativa/desativa captura dinamicamente
-    const cleanup = onConsentChange((consent) => {
-      if (!posthog.__loaded) return;
+          if (consent.analytics) {
+            posthog.opt_in_capturing();
+            posthog.capture('$pageview', {
+              $current_url: window.location.origin + window.location.pathname,
+              ...getPageAnalyticsProperties(window.location.pathname),
+            });
 
-      if (consent.analytics) {
-        posthog.opt_in_capturing();
-        // Registra pageview ao dar consentimento (caso ainda não tenha sido capturado)
-        posthog.capture('$pageview', {
-          $current_url: window.location.origin + window.location.pathname,
-          ...getPageAnalyticsProperties(window.location.pathname),
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[PostHog] Captura ativada (consentimento dado).');
+            }
+          } else {
+            posthog.opt_out_capturing();
+
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[PostHog] Captura desativada (consentimento revogado).');
+            }
+          }
         });
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[PostHog] Captura ativada (consentimento dado).');
-        }
-      } else {
-        posthog.opt_out_capturing();
+        return cleanup;
+      })
+      .catch((err) => {
+        console.error('[PostHog] Error dynamically loading posthog-js:', err);
+      });
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[PostHog] Captura desativada (consentimento revogado).');
-        }
-      }
-    });
-
-    return cleanup;
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  if (!POSTHOG_KEY) {
+  if (!POSTHOG_KEY || !phState) {
     return <>{children}</>;
   }
 
+  const { client, Provider } = phState;
+
   return (
-    <PHProvider client={posthog}>
-      {/* Suspense necessário para useSearchParams no Next.js 14 App Router */}
+    <Provider client={client}>
       <Suspense fallback={null}>
-        <PostHogPageView />
+        <PostHogPageView posthog={client} />
       </Suspense>
       {children}
-    </PHProvider>
+    </Provider>
   );
 }
