@@ -7,7 +7,7 @@ module Analytics
       cta_click click CTA\ Clicked cta_clicked company_cta_clicked
       company_cta_whatsapp company_cta_email company_cta_phone company_cta_website company_cta_quote
       whatsapp_click WhatsApp\ CTA\ Clicked email_click Email\ CTA\ Clicked phone_click Phone\ CTA\ Clicked
-      website_click Website\ CTA\ Clicked
+      website_click Website\ CTA\ Clicked quote_click Quote\ Request\ CTA\ Clicked request_quote quote_request
     ].freeze
     LEAD_EVENTS = %w[lead lead_created Lead\ Form\ Submitted].freeze
 
@@ -22,7 +22,8 @@ module Analytics
       'email_click' => 'cta_click', 'Email CTA Clicked' => 'cta_click',
       'phone_click' => 'cta_click', 'Phone CTA Clicked' => 'cta_click',
       'website_click' => 'cta_click', 'Website CTA Clicked' => 'cta_click',
-      'Quote Request CTA Clicked' => 'cta_click',
+      'Quote Request CTA Clicked' => 'cta_click', 'quote_click' => 'cta_click',
+      'request_quote' => 'cta_click', 'quote_request' => 'cta_click',
       'lead' => 'lead_created', 'Lead Form Submitted' => 'lead_created'
     }.freeze
 
@@ -31,7 +32,8 @@ module Analytics
       'company_cta_email' => 'email', 'email_click' => 'email', 'Email CTA Clicked' => 'email',
       'company_cta_phone' => 'phone', 'phone_click' => 'phone', 'Phone CTA Clicked' => 'phone',
       'company_cta_website' => 'website', 'website_click' => 'website', 'Website CTA Clicked' => 'website',
-      'company_cta_quote' => 'quote', 'Quote Request CTA Clicked' => 'quote'
+      'company_cta_quote' => 'quote', 'Quote Request CTA Clicked' => 'quote', 'quote_click' => 'quote',
+      'request_quote' => 'quote', 'quote_request' => 'quote'
     }.freeze
 
     module_function
@@ -41,7 +43,16 @@ module Analytics
     end
 
     def cta_type(raw_type, metadata = {})
-      metadata['cta_type'].presence || CTA_TYPES[raw_type.to_s]
+      raw_cta = metadata['cta_type'].presence
+      return CTA_TYPES[raw_cta.to_s] || raw_cta if raw_cta.present?
+
+      CTA_TYPES[raw_type.to_s]
+    end
+
+    def canonical_cta_type(raw_cta_type)
+      return nil if raw_cta_type.blank?
+
+      CTA_TYPES.fetch(raw_cta_type.to_s, raw_cta_type.to_s)
     end
 
     def aliases_for(canonical_type)

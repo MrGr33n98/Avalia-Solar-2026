@@ -73,4 +73,67 @@ RSpec.describe Analytics::AggregationWorker, type: :worker do
     expect(stats['cta_clicks'].to_i).to eq(1)
     expect(stats['whatsapp_clicks'].to_i).to eq(1)
   end
+
+  it 'agrega quote_clicks e alias request_quote/quote_request sem duplicar cta_clicks total' do
+    skip 'Tabela platform_events não disponível neste ambiente' unless ActiveRecord::Base.connection.table_exists?('platform_events')
+
+    now = Time.current.beginning_of_day + 11.hours
+
+    # 1. Evento quote canônico
+    insert_event(
+      event_type: 'cta_click',
+      payload: { 'cta_type' => 'quote', 'is_internal' => false },
+      occurred_at: now
+    )
+
+    # 2. Evento request_quote (legacy alias)
+    insert_event(
+      event_type: 'cta_click',
+      payload: { 'cta_type' => 'request_quote', 'is_internal' => false },
+      occurred_at: now + 2.minutes
+    )
+
+    # Executar agregação
+    worker.send(:aggregate_to_table, 'company_daily_stats', now.beginning_of_day, now.end_of_day, is_pg)
+
+    stats = ActiveRecord::Base.connection.select_one(
+      "SELECT * FROM company_daily_stats WHERE company_id = #{company.id} AND day = '#{now.to_date}'"
+    )
+
+    expect(stats).not_to be_nil
+    expect(stats['cta_clicks'].to_i).to eq(2)
+    expect(stats['quote_clicks'].to_i).to eq(2)
+    expect(stats['whatsapp_clicks'].to_i).to eq(0)
+  end
+
+  it 'agrega os 5 tipos canônicos de CTA mantendo a invariante typed <= cta_clicks' do
+    skip 'Tabela platform_events não disponível neste ambiente' unless ActiveRecord::Base.connection.table_exists?('platform_events')
+
+    now = Time.current.beginning_of_day + 12.hours
+
+    %w[whatsapp email phone website quote].each_with_index do |cta_type, idx|
+      insert_event(
+        event_type: 'cta_click',
+        payload: { 'cta_type' => cta_type, 'is_internal' => false },
+        occurred_at: now + idx.minutes
+      )
+    end
+
+    worker.send(:aggregate_to_table, 'company_daily_stats', now.beginning_of_day, now.end_of_day, is_pg)
+
+    stats = ActiveRecord::Base.connection.select_one(
+      "SELECT * FROM company_daily_stats WHERE company_id = #{company.id} AND day = '#{now.to_date}'"
+    )
+
+    expect(stats['cta_clicks'].to_i).to eq(5)
+    expect(stats['whatsapp_clicks'].to_i).to eq(1)
+    expect(stats['email_clicks'].to_i).to eq(1)
+    expect(stats['phone_clicks'].to_i).to eq(1)
+    expect(stats['website_clicks'].to_i).to eq(1)
+    expect(stats['quote_clicks'].to_i).to eq(1)
+
+    typed = stats['whatsapp_clicks'].to_i + stats['email_clicks'].to_i + stats['phone_clicks'].to_i + stats['website_clicks'].to_i + stats['quote_clicks'].to_i
+    expect(typed).to eq(5)
+    expect(typed).to be <= stats['cta_clicks'].to_i
+  end
 end

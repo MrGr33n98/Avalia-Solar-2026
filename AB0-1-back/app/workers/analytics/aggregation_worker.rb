@@ -10,11 +10,12 @@ module Analytics
     PIPELINE = 'main_aggregation'
     LOCK_ID = Zlib.crc32(PIPELINE)
     PROFILE_VIEW_EVENTS = ['profile_view', 'Company Profile Viewed', 'company_profile_viewed'].freeze
-    CTA_CLICK_EVENTS = ['cta_click', 'CTA Clicked', 'cta_clicked', 'company_cta_clicked', 'company_cta_quote'].freeze
+    CTA_CLICK_EVENTS = ['cta_click', 'CTA Clicked', 'cta_clicked', 'company_cta_clicked', 'company_cta_quote', 'Quote Request CTA Clicked'].freeze
     WHATSAPP_CLICK_EVENTS = ['whatsapp_click', 'WhatsApp CTA Clicked', 'company_cta_whatsapp'].freeze
     EMAIL_CLICK_EVENTS = ['Email CTA Clicked', 'email_click', 'company_cta_email'].freeze
     PHONE_CLICK_EVENTS = ['Phone CTA Clicked', 'phone_click', 'company_cta_phone'].freeze
     WEBSITE_CLICK_EVENTS = ['Website CTA Clicked', 'website_click', 'company_cta_website'].freeze
+    QUOTE_CLICK_EVENTS = ['company_cta_quote', 'Quote Request CTA Clicked', 'quote_click'].freeze
     LEAD_EVENTS = ['lead_created', 'Lead Form Submitted'].freeze
     REVIEW_EVENTS = ['review_created'].freeze
 
@@ -75,6 +76,7 @@ module Analytics
       filter_email = count_filter("#{event_type_in(EMAIL_CLICK_EVENTS)} OR #{cta_type_condition('email', is_pg)}", is_pg)
       filter_phone = count_filter("#{event_type_in(PHONE_CLICK_EVENTS)} OR #{cta_type_condition('phone', is_pg)}", is_pg)
       filter_website = count_filter("#{event_type_in(WEBSITE_CLICK_EVENTS)} OR #{cta_type_condition('website', is_pg)}", is_pg)
+      filter_quote = count_filter("#{event_type_in(QUOTE_CLICK_EVENTS)} OR #{cta_type_condition('quote', is_pg)} OR #{cta_type_condition('request_quote', is_pg)} OR #{cta_type_condition('quote_request', is_pg)}", is_pg)
       filter_leads = count_filter(event_type_in(LEAD_EVENTS), is_pg)
       filter_reviews = count_filter(event_type_in(REVIEW_EVENTS), is_pg)
 
@@ -82,9 +84,9 @@ module Analytics
 
       if is_pg
         <<~SQL
-          INSERT INTO company_daily_stats (company_id, day, profile_views, cta_clicks, whatsapp_clicks, email_clicks, phone_clicks, website_clicks, leads, reviews, updated_at, created_at)
+          INSERT INTO company_daily_stats (company_id, day, profile_views, cta_clicks, whatsapp_clicks, email_clicks, phone_clicks, website_clicks, quote_clicks, leads, reviews, updated_at, created_at)
           SELECT 
-            company_id, occurred_at::date, #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_leads}, #{filter_reviews}, NOW(), NOW()
+            company_id, occurred_at::date, #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_quote}, #{filter_leads}, #{filter_reviews}, NOW(), NOW()
           FROM platform_events
           WHERE occurred_at >= '#{from.iso8601}' AND occurred_at < '#{to.iso8601}' AND company_id IS NOT NULL
             AND #{eligibility_filter}
@@ -96,6 +98,7 @@ module Analytics
             email_clicks = company_daily_stats.email_clicks + EXCLUDED.email_clicks,
             phone_clicks = company_daily_stats.phone_clicks + EXCLUDED.phone_clicks,
             website_clicks = company_daily_stats.website_clicks + EXCLUDED.website_clicks,
+            quote_clicks = company_daily_stats.quote_clicks + EXCLUDED.quote_clicks,
             leads = company_daily_stats.leads + EXCLUDED.leads,
             reviews = company_daily_stats.reviews + EXCLUDED.reviews,
             updated_at = NOW()
@@ -104,9 +107,9 @@ module Analytics
       else
         # SQLite version (simplified - doesn't handle conflict perfectly in this snippet but works for test)
         <<~SQL
-          INSERT INTO company_daily_stats (company_id, day, profile_views, cta_clicks, whatsapp_clicks, email_clicks, phone_clicks, website_clicks, leads, reviews, updated_at, created_at)
+          INSERT INTO company_daily_stats (company_id, day, profile_views, cta_clicks, whatsapp_clicks, email_clicks, phone_clicks, website_clicks, quote_clicks, leads, reviews, updated_at, created_at)
           SELECT 
-            company_id, date(occurred_at), #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_leads}, #{filter_reviews}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            company_id, date(occurred_at), #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_quote}, #{filter_leads}, #{filter_reviews}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           FROM platform_events
           WHERE occurred_at >= '#{from.iso8601}' AND occurred_at < '#{to.iso8601}' AND company_id IS NOT NULL
             AND #{eligibility_filter}

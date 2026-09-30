@@ -449,4 +449,37 @@ namespace :analytics do
 
     puts "✅ Generated 30 days of test data for #{company.name}"
   end
+
+  desc 'Idempotent non-additive partial backfill of company_daily_stats (DRY_RUN=true by default)'
+  task partial_backfill_daily_stats: :environment do
+    dry_run = ENV.fetch('DRY_RUN', 'true') != 'false'
+    company_id = ENV['COMPANY_ID'].presence
+    from_day = ENV['FROM_DAY'].presence ? Date.iso8601(ENV['FROM_DAY']) : 90.days.ago.to_date
+    to_day = ENV['TO_DAY'].presence ? Date.iso8601(ENV['TO_DAY']) : Date.current
+
+    unless company_id
+      puts '❌ COMPANY_ID= required (e.g. COMPANY_ID=372 rake analytics:partial_backfill_daily_stats)'
+      exit 1
+    end
+
+    puts "[Analytics] Starting partial backfill for company_id=#{company_id} (DRY_RUN=#{dry_run})..."
+    res = Analytics::PartialBackfillService.call(
+      company_id: company_id,
+      from_day: from_day,
+      to_day: to_day,
+      dry_run: dry_run
+    )
+
+    if res.ok
+      puts "✅ Backfill complete (dry_run=#{res.dry_run}): #{res.updated_days} of #{res.processed_days} days updated."
+      res.report.each do |row|
+        next unless row[:changed]
+
+        puts "  - Day #{row[:day]}: total=#{row[:total_before]}, quote_before=#{row[:quote_before]} -> quote_after=#{row[:quote_after]}, residual_other=#{row[:residual_other_after]}"
+      end
+    else
+      puts "❌ Backfill failed: #{res.error}"
+      exit 1
+    end
+  end
 end
