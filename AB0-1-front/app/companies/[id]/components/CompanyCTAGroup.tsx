@@ -58,27 +58,29 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
   return (
     <div
       id="company-cta-group"
-      className="flex w-full min-w-0 items-center gap-1 pt-1.5 min-[360px]:gap-1.5 min-[430px]:gap-2 lg:w-auto lg:justify-end lg:gap-2.5"
+      className="grid w-full min-w-0 grid-cols-[minmax(0,1.25fr)_minmax(0,0.9fr)_minmax(0,1.1fr)] gap-1 pt-1.5 min-[360px]:gap-1.5 lg:flex lg:w-auto lg:items-center lg:justify-end lg:gap-2.5"
     >
-      {/* 1. Solicitar contato (Primário Azul - flex-[1.25]) */}
+      {/* 1. Solicitar contato (Primário Azul - Proporção 1.25fr) */}
       <Button
         type="button"
         size="default"
         onClick={handleRequestQuote}
-        className="h-10 min-h-[38px] min-w-0 flex-[1.25] inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-1.5 text-[11px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 min-[360px]:px-2 min-[375px]:text-xs sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[145px]"
+        className="h-10 min-h-[38px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-1 text-[11px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[145px]"
       >
         <Send className="h-3 w-3 shrink-0 fill-current min-[360px]:h-3.5 min-[360px]:w-3.5" aria-hidden="true" />
-        <span className="truncate">Solicitar contato</span>
+        <span className="truncate">
+          Solicitar<span className="hidden min-[380px]:inline"> contato</span>
+        </span>
       </Button>
 
-      {/* 2. Comparar (Secundário Outline Azul - flex-1) */}
+      {/* 2. Comparar (Secundário Outline Azul - Proporção 0.9fr) */}
       <Button
         type="button"
         variant="outline"
         size="default"
         onClick={handleToggleComparison}
         className={cn(
-          'h-10 min-h-[38px] min-w-0 flex-1 inline-flex items-center justify-center gap-1 rounded-xl border px-1.5 text-[11px] font-semibold leading-4 transition-colors min-[360px]:px-2 min-[375px]:text-xs sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[100px]',
+          'h-10 min-h-[38px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl border px-1 text-[11px] font-semibold leading-4 transition-colors min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[100px]',
           isCompared
             ? 'border-blue-600 bg-blue-50 text-blue-700'
             : 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
@@ -88,16 +90,16 @@ export default function CompanyCTAGroup({ company, canRequestQuote: _canRequestQ
         <span className="truncate">{isCompared ? 'Comparando' : 'Comparar'}</span>
       </Button>
 
-      {/* 3. Avaliar empresa (Review CTA Warm Light Accent - flex-1) */}
+      {/* 3. Avaliar empresa (Review CTA Warm Light Accent - Proporção 1.1fr) */}
       <Link
         href={reviewPath}
         aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
         title="Avaliar empresa"
-        className="h-10 min-h-[38px] min-w-0 flex-1 inline-flex items-center justify-center gap-1 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-1.5 text-[11px] font-semibold leading-4 text-slate-900 transition-colors hover:bg-amber-500/[0.12] min-[360px]:px-2 min-[375px]:text-xs sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[130px]"
+        className="h-10 min-h-[38px] w-full min-w-0 inline-flex items-center justify-center gap-1 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-1 text-[11px] font-semibold leading-4 text-slate-900 transition-colors hover:bg-amber-500/[0.12] min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[130px]"
       >
         <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400 min-[360px]:h-3.5 min-[360px]:w-3.5" aria-hidden="true" />
         <span className="truncate text-slate-900">
-          Avaliar<span className="hidden min-[340px]:inline"> empresa</span>
+          Avaliar<span className="hidden min-[390px]:inline"> empresa</span>
         </span>
       </Link>
     </div>
