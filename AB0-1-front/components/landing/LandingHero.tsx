@@ -33,6 +33,8 @@ const FRAMES_MOBILE_DIR = '/videos/raio-x-fluxo-energia-frames-mobile';
 const TOTAL_FRAMES = 120;
 const REDUCED_MOTION_VIDEO = '/videos/O_Raio_X_e_Fluxo_de_Energi.mp4';
 const STATIC_FALLBACK = `${FRAMES_DESKTOP_DIR}/frame_000.webp`;
+const USE_VIDEO_SCRUB_HERO = true;
+const HERO_SCRUB_VIDEO = '/videos/raio-x-fluxo-energia-pingpong.mp4';
 
 type AnimationLoadState = 'pending' | 'enabled' | 'disabled';
 
@@ -65,6 +67,7 @@ export default function LandingHero(props: LandingHeroProps) {
     useAdvertisingStore();
   const isMobile = useIsMobile();
   const travelRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [animationLoadState, setAnimationLoadState] = useState<AnimationLoadState>('pending');
 
@@ -131,7 +134,11 @@ export default function LandingHero(props: LandingHeroProps) {
 
   // O fallback é imediato. Os frames só passam a competir por banda e CPU após o navegador
   // concluir o trabalho crítico da primeira dobra.
-  const shouldLoadCanvas = animationLoadState === 'enabled' && !isMobile && shouldAnimateHero;
+  const shouldLoadCanvas =
+    !USE_VIDEO_SCRUB_HERO &&
+    animationLoadState === 'enabled' &&
+    !isMobile &&
+    shouldAnimateHero;
 
   /* ────────────────────────────────────────────────────────────────
      Scroll-Driven 3D Canvas (desktop only, lg breakpoint: 1024px+)
@@ -224,22 +231,36 @@ export default function LandingHero(props: LandingHeroProps) {
                       />
                     ) : null}
 
-                    {/* Canvas em loop independente do scroll (120 frames WebP) */}
-                    <canvas
-                      ref={canvasRef}
-                      width={1280}
-                      height={720}
-                      style={{
-                        mixBlendMode: 'multiply',
-                        imageRendering: 'auto',
-                        zIndex: 1,
-                      }}
-                      className={`absolute inset-0 h-full w-full object-contain object-right-bottom select-none pointer-events-none transition-opacity duration-300 relative ${
-                        hasRenderedValidFrame ? 'opacity-100' : 'opacity-0'
-                      }`}
-                      role="img"
-                      aria-label="Animação interativa 3D de Raio X e Fluxo de Energia Solar"
-                    />
+                    {/* POC: vídeo otimizado substitui o motor de 120 frames quando a flag está ativa */}
+                    {USE_VIDEO_SCRUB_HERO && !isMobile && shouldAnimateHero ? (
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        src={HERO_SCRUB_VIDEO}
+                        className="absolute inset-0 h-full w-full object-contain object-right-bottom mix-blend-multiply z-[1]"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <canvas
+                        ref={canvasRef}
+                        width={1280}
+                        height={720}
+                        style={{
+                          mixBlendMode: 'multiply',
+                          imageRendering: 'auto',
+                          zIndex: 1,
+                        }}
+                        className={`absolute inset-0 h-full w-full object-contain object-right-bottom select-none pointer-events-none transition-opacity duration-300 relative ${
+                          hasRenderedValidFrame ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        role="img"
+                        aria-label="Animação interativa 3D de Raio X e Fluxo de Energia Solar"
+                      />
+                    )}
 
                     {/* Fallback para prefers-reduced-motion: vídeo autoplay */}
                     {prefersReducedMotion ? (
