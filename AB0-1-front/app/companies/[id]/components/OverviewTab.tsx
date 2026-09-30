@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquare, ShieldCheck, Zap } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Company, Review, Product } from "@/lib/api";
+import { Company, Review } from "@/lib/api";
 import { companiesApiSafe } from "@/lib/api-client";
 
 import ReviewsPreview from "./ReviewsPreview";
@@ -31,7 +30,7 @@ interface OverviewTabProps {
 
 export default function OverviewTab({
   company,
-  companyStats,
+  companyStats: _companyStats,
   reviews,
   reviewsLoading,
   onTabChange,
@@ -60,7 +59,7 @@ export default function OverviewTab({
           status: 'active'
         });
         
-        let filtered = (response.data || []).filter(c => c.id !== company.id);
+        const filtered = (response.data || []).filter(c => c.id !== company.id);
         setRelatedCompanies(filtered);
       } catch (error) {
         console.error("Erro ao buscar empresas relacionadas:", error);
@@ -122,6 +121,7 @@ export default function OverviewTab({
           <FeaturedProductsSection 
             company={company} 
             products={company.featured_products ?? []} 
+            onTabChange={onTabChange}
           />
         ) : showAds ? (
           <BannerSlot 

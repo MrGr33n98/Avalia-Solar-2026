@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Package } from "lucide-react";
+import { ChevronRight, Package } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { FeaturedProduct } from "@/lib/api";
 import { getFullImageUrl } from "@/utils/image";
@@ -18,16 +18,6 @@ export default function FeaturedProductCard({
     ? getFullImageUrl(product.image_url)
     : null;
 
-  /**
-   * IMPORTANTE:
-   * Não depender obrigatoriamente de slug.
-   * Se houver slug, usa.
-   * Caso contrário, usa o ID.
-   *
-   * Confirme que /products/:id é aceito pela rota atual.
-   * Se a rota só aceitar slug, remova o fallback e ajuste conforme
-   * o contrato canônico do projeto.
-   */
   const productHref = product.slug
     ? `/products/${product.slug}`
     : `/products/${product.id}`;
@@ -40,128 +30,123 @@ export default function FeaturedProductCard({
         : null;
 
   return (
-    <Card
-      className="
-        group
-        flex
-        h-full
-        min-w-0
-        flex-col
-        overflow-hidden
-        rounded-lg
-        border
-        border-slate-200
-        bg-white
-        shadow-none
-        transition-colors
-        duration-200
-        hover:border-blue-200
-      "
+    <Link
+      href={productHref}
+      className="group block h-full w-full min-w-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
-      {/* Imagem compacta */}
-      <div
+      <Card
         className="
-          relative
-          h-28
+          flex
+          h-full
           w-full
+          min-w-0
+          flex-col
           overflow-hidden
-          border-b
-          border-slate-100
+          rounded-lg
+          border
+          border-slate-200
           bg-white
-          md:h-32
-          lg:h-36
+          shadow-none
+          transition-all
+          duration-150
+          group-hover:border-blue-300
+          group-hover:shadow-sm
+          active:scale-[0.98]
         "
       >
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={product.name || "Produto"}
-            fill
-            sizes="
-              (max-width: 767px) 255px,
-              (max-width: 1279px) 50vw,
-              33vw
-            "
-            className="
-              object-contain
-              p-2.5
-              transition-transform
-              duration-200
-              group-hover:scale-[1.02]
-            "
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-slate-50">
-            <Package className="h-8 w-8 text-slate-300" />
-          </div>
-        )}
-      </div>
-
-      {/* Conteúdo */}
-      <div className="flex flex-1 flex-col p-2.5 md:p-3">
-        <div className="flex-1">
-          <h4
-            className="
-              line-clamp-2
-              text-xs
-              font-bold
-              leading-4
-              text-slate-900
-              md:text-[13px]
-            "
-          >
-            {product.name}
-          </h4>
-
-          {product.short_description && (
-            <p
+        {/* Container da Imagem Compacta */}
+        <div
+          className="
+            relative
+            h-14
+            xs:h-16
+            sm:h-20
+            md:h-28
+            w-full
+            shrink-0
+            overflow-hidden
+            border-b
+            border-slate-100
+            bg-slate-50/50
+          "
+        >
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={product.name || "Produto"}
+              fill
+              sizes="(max-width: 767px) 25vw, 25vw"
               className="
-                mt-1
-                line-clamp-2
-                text-[10px]
-                leading-4
-                text-slate-500
-                md:text-[11px]
+                object-contain
+                p-1
+                sm:p-1.5
+                md:p-2.5
+                transition-transform
+                duration-200
+                group-hover:scale-105
               "
-            >
-              {product.short_description}
-            </p>
-          )}
-
-          {/* Preço / status */}
-          {priceLabel && (
-            <div className="mt-1.5">
-              <span className="text-[10px] font-semibold text-blue-700">
-                {priceLabel}
-              </span>
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-slate-50">
+              <Package className="h-5 w-5 sm:h-6 sm:w-6 text-slate-300" />
             </div>
           )}
         </div>
 
-        {/* CTA compacto */}
-        <Link
-          href={productHref}
-          className="
-            mt-2
-            inline-flex
-            w-fit
-            items-center
-            gap-1
-            text-[11px]
-            font-semibold
-            text-blue-600
-            transition-colors
-            hover:text-blue-700
-            focus-visible:outline-none
-            focus-visible:ring-2
-            focus-visible:ring-blue-500
-            focus-visible:ring-offset-2
-          "
-        >
-          Ver detalhes
-          <ArrowRight className="h-3 w-3" />
-        </Link>
-      </div>
-    </Card>
+        {/* Conteúdo Textual Compacto */}
+        <div className="flex flex-1 flex-col justify-between p-1.5 sm:p-2 md:p-2.5 min-w-0">
+          <div className="min-w-0">
+            <h4
+              className="
+                line-clamp-2
+                text-[10px]
+                leading-[1.25]
+                font-semibold
+                text-slate-900
+                sm:text-[11px]
+                md:text-xs
+                group-hover:text-blue-600
+                transition-colors
+                break-words
+              "
+              title={product.name}
+            >
+              {product.name}
+            </h4>
+
+            {/* Descrição Visível Apenas em Telas Maiores */}
+            {product.short_description && (
+              <p
+                className="
+                  mt-1
+                  hidden
+                  line-clamp-2
+                  text-[10px]
+                  leading-4
+                  text-slate-500
+                  md:block
+                "
+              >
+                {product.short_description}
+              </p>
+            )}
+
+            {/* Preço / Status em Telas Maiores ou quando disponível */}
+            {priceLabel && (
+              <div className="mt-1 hidden sm:block">
+                <span className="text-[9px] font-medium text-blue-700 truncate block">
+                  {priceLabel}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Chevron Indicador no Rodapé do Card */}
+          <div className="mt-1 flex items-center justify-end">
+            <ChevronRight className="h-3 w-3 shrink-0 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </div>
+      </Card>
+    </Link>
   );
 }
