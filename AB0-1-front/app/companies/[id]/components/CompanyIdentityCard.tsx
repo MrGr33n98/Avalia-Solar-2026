@@ -155,98 +155,100 @@ export default function CompanyIdentityCard({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
-        {/* Lado Esquerdo: Identidade + Metadados */}
-        <div className="flex flex-col min-w-0 flex-1">
-          {/* Linha 1 de Identidade: Logo + Nome/Badges/Ações */}
-          <div className="flex min-w-0 flex-row items-start gap-3 sm:gap-4 lg:gap-5">
-            {/* Box da Logo (Overlapping no Banner) */}
-            <div className="relative shrink-0 -mt-7 sm:-mt-11 lg:-mt-15 overflow-visible z-30">
-              <div className="relative h-[68px] w-[68px] rounded-2xl border-2 border-white bg-white p-1 shadow-md sm:h-[88px] sm:w-[88px] lg:h-[100px] lg:w-[100px]">
-                <div className="relative h-full w-full overflow-hidden rounded-xl bg-white flex items-center justify-center">
-                  {hasLogo ? (
-                    <OptimizedImage
-                      src={logoUrl!}
-                      alt={company.name}
-                      fill
-                      priority
-                      imageContext="company-logo"
-                      entityName={company.name}
-                      locationLabel={locationLabel}
-                      objectFit="contain"
-                      className="p-0"
-                      containerClassName="absolute inset-0 h-full w-full"
-                      fallbackSrc="/images/logo-placeholder.svg"
-                      onError={() => setLogoError(true)}
-                    />
-                  ) : (
-                    <div className="flex h-full w-full select-none items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-xl font-black text-white sm:text-2xl">
-                      {initialLetter}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {badgeImageUrl && !badgeImageError && (
-                <div
-                  className="pointer-events-none absolute left-0 top-0 z-40 h-8 w-7 -translate-x-[18%] -translate-y-[28%] overflow-visible bg-transparent drop-shadow-[0_2px_4px_rgba(15,23,42,0.25)] sm:h-10 sm:w-8"
-                  title={badgeToRender?.name || 'Selo de conquista'}
-                >
-                  <Image
-                    src={badgeImageUrl}
-                    alt={badgeToRender?.name || 'Selo'}
+      {/* Linha Principal de Identidade: Logo + Nome/Badges (Esquerda) + Ações (Direita) */}
+      <div className="flex w-full items-start justify-between gap-2 sm:gap-4">
+        {/* Lado Esquerdo: Logo + Nome + Badges */}
+        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4 lg:gap-5">
+          {/* Box da Logo (Overlapping no Banner) */}
+          <div className="relative shrink-0 -mt-7 sm:-mt-11 lg:-mt-15 overflow-visible z-30">
+            <div className="relative h-[68px] w-[68px] rounded-2xl border-2 border-white bg-white p-1 shadow-md sm:h-[88px] sm:w-[88px] lg:h-[100px] lg:w-[100px]">
+              <div className="relative h-full w-full overflow-hidden rounded-xl bg-white flex items-center justify-center">
+                {hasLogo ? (
+                  <OptimizedImage
+                    src={logoUrl!}
+                    alt={company.name}
                     fill
-                    className="object-contain bg-transparent"
-                    sizes="(max-width: 640px) 28px, 36px"
-                    unoptimized
-                    onError={() => setBadgeImageError(true)}
+                    priority
+                    imageContext="company-logo"
+                    entityName={company.name}
+                    locationLabel={locationLabel}
+                    objectFit="contain"
+                    className="p-0"
+                    containerClassName="absolute inset-0 h-full w-full"
+                    fallbackSrc="/images/logo-placeholder.svg"
+                    onError={() => setLogoError(true)}
                   />
-                </div>
-              )}
-            </div>
-
-            {/* Header: Nome + Verificado + Plano Comercial + Ações Favorito/Compartilhar */}
-            <div className="min-w-0 flex-1 pt-1 sm:pt-2">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
-                  <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
-                    {company.name}
-                  </h1>
-                  {isVerified && (
-                    <BadgeCheck className="h-4.5 w-4.5 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
-                  )}
-                  <PremiumHighlightBadge company={company} />
-                </div>
-
-                {/* Botões de Ação Topo Direito (Favoritar e Compartilhar) */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleToggleFavorite}
-                    aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
-                    className={cn(
-                      'flex h-9 w-9 items-center justify-center rounded-xl border transition-colors sm:h-10 sm:w-10',
-                      isFav
-                        ? 'border-red-200 bg-red-50 text-red-600'
-                        : 'border-slate-200/90 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-                    )}
-                  >
-                    <Heart className={cn('h-4 w-4', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleShare}
-                    aria-label="Compartilhar empresa"
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 sm:h-10 sm:w-10"
-                  >
-                    <Share2 className="h-4 w-4 text-slate-600" aria-hidden="true" />
-                  </button>
-                </div>
+                ) : (
+                  <div className="flex h-full w-full select-none items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-xl font-black text-white sm:text-2xl">
+                    {initialLetter}
+                  </div>
+                )}
               </div>
             </div>
+            {badgeImageUrl && !badgeImageError && (
+              <div
+                className="pointer-events-none absolute left-0 top-0 z-40 h-8 w-7 -translate-x-[18%] -translate-y-[28%] overflow-visible bg-transparent drop-shadow-[0_2px_4px_rgba(15,23,42,0.25)] sm:h-10 sm:w-8"
+                title={badgeToRender?.name || 'Selo de conquista'}
+              >
+                <Image
+                  src={badgeImageUrl}
+                  alt={badgeToRender?.name || 'Selo'}
+                  fill
+                  className="object-contain bg-transparent"
+                  sizes="(max-width: 640px) 28px, 36px"
+                  unoptimized
+                  onError={() => setBadgeImageError(true)}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Linha 2: Bloco de Metadados (Descrição, Localização, Cobertura, Site, Avaliações) Alinhado ao Início da Logo */}
-          <div className="mt-2.5 space-y-1.5 w-full">
+          {/* Header: Nome + Verificado + Plano Comercial */}
+          <div className="min-w-0 flex-1 pt-1 sm:pt-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
+              <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
+                {company.name}
+              </h1>
+              {isVerified && (
+                <BadgeCheck className="h-4.5 w-4.5 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
+              )}
+              <PremiumHighlightBadge company={company} />
+            </div>
+          </div>
+        </div>
+
+        {/* Lado Direito: Botões de Ação Topo Direito (Favoritar e Compartilhar) Ancorados na Borda Direita */}
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 pt-1 sm:pt-2">
+          <button
+            type="button"
+            onClick={handleToggleFavorite}
+            aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
+            className={cn(
+              'flex h-9 w-9 items-center justify-center rounded-xl border transition-colors sm:h-10 sm:w-10',
+              isFav
+                ? 'border-red-200 bg-red-50 text-red-600'
+                : 'border-slate-200/90 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+            )}
+          >
+            <Heart className={cn('h-4 w-4', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={handleShare}
+            disabled={isSharing}
+            aria-label="Compartilhar empresa"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 sm:h-10 sm:w-10"
+          >
+            <Share2 className="h-4 w-4 text-slate-600" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      {/* Linha 2: Metadados (Esquerda) + CTA Shelf (Direita no Desktop) */}
+      <div className="mt-1 flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
+        {/* Lado Esquerdo: Metadados */}
+        <div className="flex flex-col min-w-0 flex-1">
+          <div className="mt-1 space-y-1.5 w-full">
             {/* Descrição curta */}
             {(company.description || company.about) && (
               <p className="line-clamp-2 text-xs font-medium text-slate-500 max-w-2xl leading-snug">
