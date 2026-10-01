@@ -31,6 +31,12 @@ class CompanyListSerializer < ActiveModel::Serializer
 
   def has_paid_plan = object.has_paid_plan?
 
+  def banner_url
+    return nil unless object.custom_banner_entitled?
+
+    object.banner_url
+  end
+
   def whatsapp
     has_paid_plan ? object.whatsapp : nil
   end

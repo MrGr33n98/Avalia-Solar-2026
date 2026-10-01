@@ -1102,6 +1102,14 @@ end
     generate_attachment_url(banner)
   end
 
+  # Attachment não concede direito comercial ao banner customizado.
+  def custom_banner_entitled?
+    entitled?(:promo_banner)
+  rescue StandardError => e
+    Rails.logger.warn("[Company#custom_banner_entitled?] company_id=#{id} error=#{e.class}: #{e.message}")
+    false
+  end
+
   def logo_url
     generate_attachment_url(logo)
   end

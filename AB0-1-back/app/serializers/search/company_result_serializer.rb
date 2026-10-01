@@ -42,7 +42,7 @@ module Search
         reviews_count: company.rating_count,
         total_reviews: company.rating_count,
         logo_url: attachment_url(company.logo),
-        banner_url: attachment_url(company.banner),
+        banner_url: custom_banner_url,
         badges: badges,
         recognitions: recognitions,
         identity: identity_payload,
@@ -77,6 +77,12 @@ module Search
 
     def paid?
       company.respond_to?(:has_paid_plan?) && company.has_paid_plan?
+    end
+
+    def custom_banner_url
+      return nil unless company.respond_to?(:custom_banner_entitled?) && company.custom_banner_entitled?
+
+      attachment_url(company.banner)
     end
 
     def object

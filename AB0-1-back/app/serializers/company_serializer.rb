@@ -174,6 +174,8 @@ class CompanySerializer < ActiveModel::Serializer
   end
 
   def banner_url
+    return nil unless object.custom_banner_entitled?
+
     generate_attachment_url(object.banner)
   end
 

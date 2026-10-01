@@ -28,14 +28,19 @@ describe('CompanyHero — enquadramento do banner', () => {
   it('preserva a imagem inteira com object-fit contain', () => {
     render(
       <CompanyHero
-        company={{
-          id: 1,
-          name: 'Empresa Teste',
-          slug: 'empresa-teste',
-          description: 'Descrição',
-          verified: false,
-          active_admin: true,
-        } as any}
+        company={
+          {
+            id: 1,
+            name: 'Empresa Teste',
+            slug: 'empresa-teste',
+            description: 'Descrição',
+            verified: false,
+            active_admin: true,
+            feature_access: {
+              promo_banner: { state: 'enabled', value: true },
+            },
+          } as any
+        }
         companyStats={{ rating: 4.5, reviewCount: 10 }}
         bannerUrl="https://example.com/banner.png"
         bannerError={false}

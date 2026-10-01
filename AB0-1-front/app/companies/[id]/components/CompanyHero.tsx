@@ -2,6 +2,8 @@
 
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
+import CompanyFreeBannerPlaceholder from './CompanyFreeBannerPlaceholder';
+import { resolveCompanyHeroBannerState } from '@/utils/company-banner';
 import { useRouter } from 'next/navigation';
 import { MessageCircle, Share2, ArrowLeft, MapPin, Star, BadgeCheck, Diamond } from 'lucide-react';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
@@ -72,7 +74,9 @@ export default function CompanyHero({
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
   const [badgeImageError, setBadgeImageError] = useState(false);
-  const showBannerPlaceholder = !bannerUrl || bannerError;
+  const bannerState = resolveCompanyHeroBannerState(company, bannerUrl, bannerError);
+  const showTechnicalPlaceholder =
+    bannerState.kind === 'paid-empty' || bannerState.kind === 'paid-load-error';
   const { user, isAuthenticated } = useAuth();
   const canUseBuyerChat = isAuthenticated && user?.role === 'review';
   const directChatAvailable =
@@ -105,9 +109,12 @@ export default function CompanyHero({
   const heroBadgeUrl = useMemo(() => {
     const isValidImageUrl = (url: string) =>
       IMAGE_FILE_EXT_RE.test(url) || ACTIVE_STORAGE_RE.test(url);
-    const companyBadges = Array.isArray(company.recognitions) && company.recognitions.length > 0
-      ? company.recognitions
-      : (Array.isArray(company.badges) ? company.badges : []);
+    const companyBadges =
+      Array.isArray(company.recognitions) && company.recognitions.length > 0
+        ? company.recognitions
+        : Array.isArray(company.badges)
+          ? company.badges
+          : [];
 
     const sortedBadges = [...companyBadges].sort((a, b) => {
       const posA = a?.position ?? Number.POSITIVE_INFINITY;
@@ -129,7 +136,12 @@ export default function CompanyHero({
       .find((url) => isValidImageUrl(url) && !url.toLowerCase().endsWith('.svg'));
 
     return fallbackVerifiedBadge || null;
-  }, [company.recognitions, company.badges, company.verified_badge_image_url, company.verified_badge_url]);
+  }, [
+    company.recognitions,
+    company.badges,
+    company.verified_badge_image_url,
+    company.verified_badge_url,
+  ]);
 
   useEffect(() => {
     setBadgeImageError(false);
@@ -192,9 +204,9 @@ export default function CompanyHero({
         {/* 1. HERO BANNER */}
         <div className="relative h-[160px] w-full overflow-hidden rounded-t-2xl bg-slate-950 sm:h-[190px] md:h-[230px] lg:h-[230px]">
           {/* Background Blur Fill Layer */}
-          {!showBannerPlaceholder && (
+          {bannerState.kind === 'company-banner' && (
             <OptimizedImage
-              src={bannerUrl}
+              src={bannerState.src}
               alt=""
               fill
               aria-hidden="true"
@@ -204,11 +216,11 @@ export default function CompanyHero({
           )}
 
           {/* Banner Image */}
-          {showBannerPlaceholder ? (
-            <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
-          ) : (
+          {bannerState.kind === 'free-plan-placeholder' ? (
+            <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
+          ) : bannerState.kind === 'company-banner' ? (
             <OptimizedImage
-              src={bannerUrl}
+              src={bannerState.src}
               alt={company.name}
               fill
               priority
@@ -226,12 +238,14 @@ export default function CompanyHero({
               height={900}
               onError={() => setBannerError(true)}
             />
+          ) : (
+            <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
           )}
 
           {/* Overlay sutil — apenas para transição visual, sem texto sobreposto */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
 
-          {showBannerPlaceholder && (
+          {showTechnicalPlaceholder && (
             <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
               <span className="absolute top-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-slate-600 backdrop-blur">
                 Imagem ilustrativa

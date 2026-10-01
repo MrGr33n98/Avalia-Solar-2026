@@ -3,6 +3,8 @@
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Company } from '@/lib/api';
 import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
+import CompanyFreeBannerPlaceholder from './CompanyFreeBannerPlaceholder';
+import { resolveCompanyHeroBannerState } from '@/utils/company-banner';
 
 interface CompanyPremiumHeroProps {
   company: Company;
@@ -18,7 +20,9 @@ export default function CompanyPremiumHero({
   setBannerError,
 }: CompanyPremiumHeroProps) {
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
-  const showPlaceholder = !bannerUrl || bannerError;
+  const bannerState = resolveCompanyHeroBannerState(company, bannerUrl, bannerError);
+  const showTechnicalPlaceholder =
+    bannerState.kind === 'paid-empty' || bannerState.kind === 'paid-load-error';
 
   return (
     <div
@@ -26,11 +30,11 @@ export default function CompanyPremiumHero({
       className="relative w-full overflow-hidden bg-slate-900 rounded-2xl md:rounded-3xl"
     >
       <div className="relative h-[160px] w-full sm:h-[185px] md:h-[230px] lg:h-[270px]">
-        {showPlaceholder ? (
-          <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
-        ) : (
+        {bannerState.kind === 'free-plan-placeholder' ? (
+          <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
+        ) : bannerState.kind === 'company-banner' ? (
           <OptimizedImage
-            src={bannerUrl}
+            src={bannerState.src}
             alt={company.name}
             fill
             priority
@@ -48,8 +52,10 @@ export default function CompanyPremiumHero({
             height={900}
             onError={() => setBannerError(true)}
           />
+        ) : (
+          <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
         )}
-        {showPlaceholder && (
+        {showTechnicalPlaceholder && (
           <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
             <span className="absolute bottom-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-slate-600 backdrop-blur">
               Imagem ilustrativa

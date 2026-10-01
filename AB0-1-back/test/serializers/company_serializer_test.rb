@@ -16,4 +16,12 @@ class CompanySerializerTest < ActiveSupport::TestCase
     assert json.key?(:name)
     assert json.key?(:rating_avg)
   end
+
+  test 'does not expose historical banner attachment for free company' do
+    @company.banner.attach(io: StringIO.new('legacy-banner'), filename: 'legacy.png', content_type: 'image/png')
+
+    @company.stub(:custom_banner_entitled?, false) do
+      assert_nil CompanySerializer.new(@company).as_json[:banner_url]
+    end
+  end
 end
