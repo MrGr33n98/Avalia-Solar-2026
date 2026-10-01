@@ -29,7 +29,7 @@ export default function CompanyPremiumHero({
       id="company-premium-hero"
       className="relative w-full overflow-hidden bg-slate-900 rounded-2xl md:rounded-3xl"
     >
-      <div className="relative h-[160px] w-full sm:h-[185px] md:h-[230px] lg:h-[270px]">
+      <div className="relative aspect-[3/1] w-full">
         {bannerState.kind === 'free-plan-placeholder' ? (
           <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
         ) : bannerState.kind === 'company-banner' ? (

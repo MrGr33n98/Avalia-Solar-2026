@@ -202,7 +202,7 @@ export default function CompanyHero({
         className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
       >
         {/* 1. HERO BANNER */}
-        <div className="relative h-[160px] w-full overflow-hidden rounded-t-2xl bg-slate-950 sm:h-[190px] md:h-[230px] lg:h-[230px]">
+        <div className="relative aspect-[3/1] w-full overflow-hidden rounded-t-2xl bg-slate-950">
           {/* Background Blur Fill Layer */}
           {bannerState.kind === 'company-banner' && (
             <OptimizedImage

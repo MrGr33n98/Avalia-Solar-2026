@@ -19,10 +19,10 @@ export default function CompanyFreeBannerPlaceholder({
       fill
       priority={priority}
       objectFit="contain"
-      width={1600}
+      width={1200}
       containerClassName="h-full w-full"
       useAspectRatio={false}
-      height={900}
+      height={400}
     />
   );
 }
