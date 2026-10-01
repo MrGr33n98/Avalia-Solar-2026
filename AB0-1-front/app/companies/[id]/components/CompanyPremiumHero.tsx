@@ -29,7 +29,8 @@ export default function CompanyPremiumHero({
       id="company-premium-hero"
       className="relative w-full overflow-hidden bg-slate-900 rounded-2xl md:rounded-3xl"
     >
-      <div className="relative aspect-[3/1] w-full">
+      <div className="relative w-full aspect-[3/1] md:aspect-auto md:h-[200px] lg:h-[220px] xl:h-[230px]">
+        {/* Mobile mantém 3:1; desktop limita altura para preservar primeira dobra. */}
         {bannerState.kind === 'free-plan-placeholder' ? (
           <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
         ) : bannerState.kind === 'company-banner' ? (
@@ -42,8 +43,8 @@ export default function CompanyPremiumHero({
             imageContext="company-banner"
             entityName={company.name}
             locationLabel={locationLabel}
-            objectFit="cover"
-            className="object-center object-cover"
+            objectFit="contain"
+            className="object-center object-contain"
             containerClassName="h-full w-full"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1240px"
             fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"

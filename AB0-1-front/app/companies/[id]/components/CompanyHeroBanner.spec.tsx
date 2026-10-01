@@ -52,6 +52,14 @@ describe('CompanyHero — enquadramento do banner', () => {
         ctaUrl={null}
       />
     );
+    const heroBanner = document.querySelector('[data-company-layout="standard-hero"] > div');
+    expect(heroBanner).toHaveClass(
+      'aspect-[3/1]',
+      'md:aspect-auto',
+      'md:h-[200px]',
+      'lg:h-[220px]',
+      'xl:h-[230px]'
+    );
 
     const banner = screen
       .getAllByAltText('Empresa Teste')
