@@ -3,7 +3,7 @@
 import { OptimizedImage } from '@/components/ui/optimized-image';
 
 const FREE_COMPANY_BANNER_SRC =
-  '/assets/avalia-solar-icon-pack/avalia-solar-banner-placeholder.png';
+  '/assets/avaliasolar_reports_icon_assets/avalia-solar-banner-placeholder.png';
 
 export default function CompanyFreeBannerPlaceholder({
   alt,
