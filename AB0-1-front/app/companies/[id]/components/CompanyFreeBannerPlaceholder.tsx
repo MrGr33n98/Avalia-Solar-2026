@@ -8,9 +8,11 @@ const FREE_COMPANY_BANNER_SRC =
 export default function CompanyFreeBannerPlaceholder({
   alt,
   priority = false,
+  desktopCover = false,
 }: {
   alt: string;
   priority?: boolean;
+  desktopCover?: boolean;
 }) {
   return (
     <OptimizedImage
@@ -19,6 +21,7 @@ export default function CompanyFreeBannerPlaceholder({
       fill
       priority={priority}
       objectFit="contain"
+      className={desktopCover ? 'md:!object-cover' : undefined}
       width={1200}
       containerClassName="h-full w-full"
       useAspectRatio={false}

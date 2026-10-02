@@ -32,7 +32,11 @@ export default function CompanyPremiumHero({
       <div className="relative w-full aspect-[3/1] md:aspect-auto md:h-[200px] lg:h-[220px] xl:h-[230px]">
         {/* Mobile mantém 3:1; desktop limita altura para preservar primeira dobra. */}
         {bannerState.kind === 'free-plan-placeholder' ? (
-          <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
+          <CompanyFreeBannerPlaceholder
+            alt="Banner institucional Avalia Solar"
+            priority
+            desktopCover
+          />
         ) : bannerState.kind === 'company-banner' ? (
           <OptimizedImage
             src={bannerState.src}
