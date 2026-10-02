@@ -38,6 +38,13 @@ import { openSignupGate } from '@/lib/signup-gate';
 
 type MobileMenuView = 'main' | 'categories';
 
+const MOBILE_NAV_ICON_SIZE = 26;
+const MOBILE_NAV_ICON_WRAPPER_CLASS = 'flex h-8 w-8 shrink-0 items-center justify-center';
+const MOBILE_NAV_ICON_CLASS = 'h-[26px] w-[26px] shrink-0 text-slate-950';
+const MOBILE_NAV_CHEVRON_CLASS = 'h-5 w-5 shrink-0 text-slate-400';
+const MOBILE_NAV_ITEM_CLASS =
+  'flex min-h-[50px] items-center gap-3.5 border-b border-slate-100 px-2';
+
 interface MobileCategoriesDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -270,18 +277,20 @@ function DrawerLink({
     <Link
       href={href}
       onClick={onClose}
-      className="flex min-h-12 items-center gap-3 border-b border-slate-100 px-1 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500"
+      className={`${MOBILE_NAV_ITEM_CLASS} text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500`}
     >
-      <Icon className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
+      <span className={MOBILE_NAV_ICON_WRAPPER_CLASS} aria-hidden="true">
+        <Icon className={MOBILE_NAV_ICON_CLASS} size={MOBILE_NAV_ICON_SIZE} strokeWidth={1.8} />
+      </span>
       <span className="min-w-0 flex-1">{label}</span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+      <ChevronRight className={MOBILE_NAV_CHEVRON_CLASS} strokeWidth={1.75} aria-hidden="true" />
     </Link>
   );
 }
 
 function DrawerSectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-1 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+    <p className="px-2 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
       {children}
     </p>
   );
@@ -374,11 +383,21 @@ function MainMenu({
           type="button"
           onClick={onOpenCategories}
           data-testid="mobile-drawer-categories"
-          className="flex min-h-12 w-full items-center gap-3 border-b border-slate-100 px-1 text-left text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500"
+          className={`${MOBILE_NAV_ITEM_CLASS} w-full text-left text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500`}
         >
-          <Grid2X2 className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
+          <span className={MOBILE_NAV_ICON_WRAPPER_CLASS} aria-hidden="true">
+            <Grid2X2
+              className={MOBILE_NAV_ICON_CLASS}
+              size={MOBILE_NAV_ICON_SIZE}
+              strokeWidth={1.8}
+            />
+          </span>
           <span className="min-w-0 flex-1">Categorias</span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+          <ChevronRight
+            className={MOBILE_NAV_CHEVRON_CLASS}
+            strokeWidth={1.75}
+            aria-hidden="true"
+          />
         </button>
       </nav>
 
@@ -419,9 +438,15 @@ function MainMenu({
             type="button"
             onClick={() => void onLogout()}
             data-testid="mobile-drawer-logout"
-            className="flex min-h-12 w-full items-center gap-3 px-1 text-left text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500"
+            className={`${MOBILE_NAV_ITEM_CLASS} w-full text-left text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500`}
           >
-            <LogOut className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
+            <span className={MOBILE_NAV_ICON_WRAPPER_CLASS} aria-hidden="true">
+              <LogOut
+                className={MOBILE_NAV_ICON_CLASS}
+                size={MOBILE_NAV_ICON_SIZE}
+                strokeWidth={1.8}
+              />
+            </span>
             <span className="min-w-0 flex-1">Sair</span>
           </button>
         )}
@@ -507,7 +532,7 @@ function MainCategoriesView({
         );
 
         const cardClassName =
-          'flex min-h-[58px] w-full items-center gap-2.5 border-b border-slate-100 bg-white px-2.5 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500';
+          'flex min-h-[58px] w-full items-center gap-3.5 border-b border-slate-100 bg-white px-2.5 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500';
 
         if (hasChildren) {
           return (
@@ -551,15 +576,25 @@ function SubcategoryView({
       <Link
         href={getCategoryHref(category)}
         onClick={onClose}
-        className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-neutral-200 bg-[#f0f0f0] px-3 text-neutral-900 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-white"
+        className="flex min-h-[64px] items-center gap-3.5 rounded-2xl border border-neutral-200 bg-[#f0f0f0] px-3 text-neutral-900 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-white"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-neutral-700 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
-          <Grid2X2 className="h-[18px] w-[18px]" aria-hidden="true" />
+        <span
+          className={
+            MOBILE_NAV_ICON_WRAPPER_CLASS +
+            ' rounded-2xl border border-neutral-200 bg-white text-neutral-700 shadow-[0_2px_8px_rgba(0,0,0,0.03)]'
+          }
+        >
+          <Grid2X2
+            className={MOBILE_NAV_ICON_CLASS}
+            size={MOBILE_NAV_ICON_SIZE}
+            strokeWidth={1.8}
+            aria-hidden="true"
+          />
         </span>
         <p className="min-w-0 flex-1 text-[15px] font-medium leading-tight">
           Ver tudo em {category.name}
         </p>
-        <ChevronRight className="h-5 w-5 shrink-0" aria-hidden="true" />
+        <ChevronRight className={MOBILE_NAV_CHEVRON_CLASS} strokeWidth={1.75} aria-hidden="true" />
       </Link>
 
       {subcategories.map((subcategory) => {
@@ -572,7 +607,7 @@ function SubcategoryView({
             key={subcategory.id}
             href={getCategoryHref(subcategory)}
             onClick={onClose}
-            className="flex min-h-[56px] items-center gap-2.5 border-b border-slate-100 bg-white px-2.5 transition-colors hover:bg-slate-50"
+            className="flex min-h-[56px] items-center gap-3.5 border-b border-slate-100 bg-white px-2.5 transition-colors hover:bg-slate-50"
           >
             <CategoryIcon
               iconSrc={iconSrc}
@@ -588,7 +623,11 @@ function SubcategoryView({
                 {subcategory.companies_count}
               </span>
             )}
-            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+            <ChevronRight
+              className={MOBILE_NAV_CHEVRON_CLASS}
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
           </Link>
         );
       })}
@@ -607,7 +646,7 @@ function CategoryIcon({
   slug?: string | null;
   size?: 'sm' | 'md';
 }) {
-  const dimensions = size === 'sm' ? 'h-8 w-8' : 'h-9 w-9';
+  const dimensions = 'h-8 w-8';
 
   return (
     <span
@@ -618,7 +657,7 @@ function CategoryIcon({
         slug={slug}
         name={name}
         iconUrl={iconSrc}
-        size={size === 'sm' ? 28 : 32}
+        size={size === 'sm' ? 26 : 28}
         motionMode="interactive"
       />
     </span>
