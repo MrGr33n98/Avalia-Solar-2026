@@ -2,7 +2,19 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Tag, ChevronDown, X, Star, MapPin, Shield, Clock, ExternalLink, Zap, Briefcase, ArrowRight } from 'lucide-react';
+import {
+  Tag,
+  ChevronDown,
+  X,
+  Star,
+  MapPin,
+  Shield,
+  Clock,
+  ExternalLink,
+  Zap,
+  Briefcase,
+  ArrowRight,
+} from 'lucide-react';
 import { Company } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { getFullImageUrl } from '@/utils/image';
@@ -11,11 +23,12 @@ import Image from 'next/image';
 import { track } from '@/lib/analytics/lazy';
 import { openLeadModal } from '@/lib/lead-engine';
 import { cn } from '@/lib/utils';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import TrustScoreDial from '../TrustScoreDial';
-import { 
-  formatCompanyYears, 
-  getCompanySignals, 
-  getCompanyTrustScore 
+import {
+  formatCompanyYears,
+  getCompanySignals,
+  getCompanyTrustScore,
 } from '../compare-company-utils';
 
 interface PremiumBannerMobileProps {
@@ -36,8 +49,11 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
   const signals = getCompanySignals(company).slice(0, 3);
   const highlightText = company.highlights || company.about || company.description;
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
+  const canRequestQuote = canUsePaidConversion(company, 'quote');
 
   const handleQuoteClick = () => {
+    if (!canRequestQuote) return;
+
     track('premium_banner_clicked', {
       company_id: company.id,
       cta_type: 'quote',
@@ -59,12 +75,7 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
       <div className="absolute inset-0 z-0 overflow-hidden">
         {bannerUrl ? (
           <>
-            <Image 
-              src={bannerUrl} 
-              alt="" 
-              fill 
-              className="object-cover opacity-30 brightness-110" 
-            />
+            <Image src={bannerUrl} alt="" fill className="object-cover opacity-30 brightness-110" />
             <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px]" />
             <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-white/95" />
           </>
@@ -75,7 +86,7 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
 
       {/* Header */}
       <div className="relative z-10 mb-4 flex items-center justify-between gap-3">
-        <div 
+        <div
           className="inline-flex items-center gap-2 rounded-full border border-amber-200/50 bg-amber-500/10 backdrop-blur-md px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-amber-700 shadow-sm"
           role="status"
         >
@@ -104,7 +115,7 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
               </div>
             </div>
           )}
-          
+
           <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-[1.2rem] border border-white/40 bg-white/95 p-0 shadow-xl clay-surface clay-convex">
             <img
               src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
@@ -121,17 +132,12 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
                 {company.name}
               </h3>
               <div className="flex items-center gap-2 flex-wrap">
-                <div 
-                  className="flex items-center gap-1 text-[11px]"
-                  role="img"
-                >
+                <div className="flex items-center gap-1 text-[11px]" role="img">
                   <Star className="h-3 w-3 fill-current text-amber-500" aria-hidden="true" />
                   <span className="font-black text-slate-700">
                     {formatRating(company.rating_avg || company.average_rating)}
                   </span>
-                  <span className="text-slate-400 font-bold">
-                    ({company.rating_count || 0})
-                  </span>
+                  <span className="text-slate-400 font-bold">({company.rating_count || 0})</span>
                 </div>
 
                 {company.verified && (
@@ -147,7 +153,7 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
               aria-expanded={isExpanded}
               className="rounded-full bg-white/50 p-2 text-slate-500 backdrop-blur-sm border border-white/30 shadow-sm"
             >
-              <ChevronDown 
+              <ChevronDown
                 className={`h-5 w-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
               />
             </button>
@@ -176,9 +182,11 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
               <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-slate-600">
                 <div className="flex items-center gap-2 bg-white/40 p-2 rounded-xl border border-white/30">
                   <MapPin className="h-3.5 w-3.5 text-blue-500" />
-                  <span className="truncate">{company.city}, {company.state}</span>
+                  <span className="truncate">
+                    {company.city}, {company.state}
+                  </span>
                 </div>
-                
+
                 {company.response_time_sla && (
                   <div className="flex items-center gap-2 bg-white/40 p-2 rounded-xl border border-white/30">
                     <Zap className="h-3.5 w-3.5 text-indigo-500" />
@@ -211,24 +219,29 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
       </AnimatePresence>
 
       {/* Footer Actions */}
-      <div className="relative z-10 mt-5 grid grid-cols-2 gap-3">
+      <div
+        className={cn(
+          'relative z-10 mt-5 grid gap-3',
+          canRequestQuote ? 'grid-cols-2' : 'grid-cols-1'
+        )}
+      >
         <Button
           asChild
           variant="outline"
           className="h-11 rounded-2xl border-white/60 bg-white/40 backdrop-blur-md px-4 text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-white/60"
         >
-          <Link href={`/companies/${company.slug}`}>
-            Ver Perfil
-          </Link>
+          <Link href={`/companies/${company.slug}`}>Ver Perfil</Link>
         </Button>
 
-        <Button
-          onClick={handleQuoteClick}
-          className="h-11 rounded-2xl bg-blue-600 px-4 text-[11px] font-black uppercase tracking-widest text-white shadow-[0_10px_20px_-5px_rgba(37,99,235,0.4)] hover:bg-blue-700 clay-btn-primary"
-        >
-          Cotar Agora
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        {canRequestQuote && (
+          <Button
+            onClick={handleQuoteClick}
+            className="h-11 rounded-2xl bg-blue-600 px-4 text-[11px] font-black uppercase tracking-widest text-white shadow-[0_10px_20px_-5px_rgba(37,99,235,0.4)] hover:bg-blue-700 clay-btn-primary"
+          >
+            Cotar Agora
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

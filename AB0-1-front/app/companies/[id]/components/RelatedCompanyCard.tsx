@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Star, Clock3, LayoutGrid, Check, BadgeCheck } from 'lucide-react';
 import { Company } from '@/lib/api';
-import { hasPaidPlan } from '@/lib/feature-access';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import { buildCompanyPath } from '@/lib/slug';
 import { track } from '@/lib/analytics/lazy';
 import { useComparison } from '@/hooks/useComparison';
@@ -31,7 +31,7 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
   const slug = company.slug || '';
   const isVerified = company.verified === true;
   const logoUrl = company.logo_url;
-  
+
   // Try to find a meaningful category name
   let categoryName = null;
   if (company.categories && company.categories.length > 0) {
@@ -46,15 +46,23 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
   const rep = (company as any).reputation || {};
   const ops = (company as any).operations || {};
 
-  const ratingAvg = Number(rep.rating_avg ?? (company as any).rating_avg ?? (company as any).rating ?? 0);
-  const ratingCount = Number(rep.rating_count ?? (company as any).rating_count ?? (company as any).reviews_count ?? 0);
-  
-  const slaLabel = ops.sla_label ?? (company as any).response_time_sla ?? (company as any).response_sla_minutes;
-  const projects = ops.delivered_projects ?? (company as any).delivered_projects_count ?? (company as any).delivered_projects_score ?? 0;
+  const ratingAvg = Number(
+    rep.rating_avg ?? (company as any).rating_avg ?? (company as any).rating ?? 0
+  );
+  const ratingCount = Number(
+    rep.rating_count ?? (company as any).rating_count ?? (company as any).reviews_count ?? 0
+  );
+
+  const slaLabel =
+    ops.sla_label ?? (company as any).response_time_sla ?? (company as any).response_sla_minutes;
+  const projects =
+    ops.delivered_projects ??
+    (company as any).delivered_projects_count ??
+    (company as any).delivered_projects_score ??
+    0;
 
   // 2. Feature Gating
-  const featureAccessMap = (company as any).feature_access ?? {};
-  const canRequestQuote = hasPaidPlan(company as { has_paid_plan?: boolean | null });
+  const canRequestQuote = canUsePaidConversion(company, 'quote');
 
   // 3. Routing & Analytics
   const companyPath = buildCompanyPath(slug, name, id);
@@ -108,14 +116,17 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
               <CompanyLogo logoUrl={logoUrl} name={name} size="sm" />
             </div>
           </div>
-          
+
           <div className="flex min-w-0 flex-1 flex-col justify-center">
             <div className="flex items-center gap-1.5">
               <h3 className="truncate whitespace-nowrap text-[14px] sm:text-[15px] font-bold text-slate-950">
                 {name}
               </h3>
               {isVerified && (
-                <BadgeCheck className="h-[18px] w-[18px] shrink-0 fill-blue-600 text-white" aria-label="Verificada" />
+                <BadgeCheck
+                  className="h-[18px] w-[18px] shrink-0 fill-blue-600 text-white"
+                  aria-label="Verificada"
+                />
               )}
             </div>
             {categoryName && (
@@ -132,7 +143,7 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
       <div className="mt-4 px-4">
         {/* DIVIDER */}
         <div className="h-px w-full bg-slate-100" />
-        
+
         {/* REPUTATION / OPERATIONS GRID */}
         <div className="grid grid-cols-3 divide-x divide-slate-100 py-3">
           {/* Rating */}
@@ -152,9 +163,7 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
               <Clock3 className="h-3.5 w-3.5 text-slate-400" />
               <span className="truncate max-w-[60px]">{slaLabel || 'Sem dados'}</span>
             </div>
-            <span className="mt-0.5 text-[10px] font-bold text-slate-500">
-              Resposta
-            </span>
+            <span className="mt-0.5 text-[10px] font-bold text-slate-500">Resposta</span>
           </div>
 
           {/* Projects */}
@@ -163,9 +172,7 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
               <LayoutGrid className="h-3.5 w-3.5 text-slate-400" />
               <span className="truncate max-w-[60px]">{projects > 0 ? projects : 'S/N'}</span>
             </div>
-            <span className="mt-0.5 text-[10px] font-bold text-slate-500">
-              Projetos
-            </span>
+            <span className="mt-0.5 text-[10px] font-bold text-slate-500">Projetos</span>
           </div>
         </div>
 
@@ -186,15 +193,15 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
             className={cn(
               'flex-1 min-h-[38px] sm:min-h-[40px] h-[44px] sm:h-[40px] px-2 rounded-xl text-[13px] font-bold transition-all',
               'hover:bg-transparent active:scale-[0.98]',
-              selectedInComparison
-                ? 'text-blue-700'
-                : 'text-slate-600 hover:text-slate-900'
+              selectedInComparison ? 'text-blue-700' : 'text-slate-600 hover:text-slate-900'
             )}
           >
-            <div className={cn(
-              "flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full mr-2",
-              selectedInComparison ? "bg-blue-50 text-blue-600" : "bg-transparent text-slate-500"
-            )}>
+            <div
+              className={cn(
+                'flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full mr-2',
+                selectedInComparison ? 'bg-blue-50 text-blue-600' : 'bg-transparent text-slate-500'
+              )}
+            >
               {selectedInComparison ? (
                 <Check className="h-3.5 w-3.5" />
               ) : (
@@ -216,7 +223,7 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
             company={{
               id: id,
               name: name,
-              slug: slug
+              slug: slug,
             }}
             label="Avaliar"
             className="flex-1 min-h-[38px] sm:min-h-[40px] h-[44px] sm:h-[40px] rounded-xl px-2 text-[13px] bg-white text-blue-700 border border-blue-200 hover:border-blue-300 hover:bg-blue-50/50 shadow-sm"

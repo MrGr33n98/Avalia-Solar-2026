@@ -9,7 +9,7 @@ import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import CompanyViewCounter from '@/app/companies/[id]/components/CompanyViewCounter';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { cn } from '@/lib/utils';
-import { hasPaidPlan } from '@/lib/feature-access';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 interface FeaturedCompanyCardProps {
   company: Company;
@@ -23,7 +23,7 @@ export default function FeaturedCompanyCard({
   isFirst = false,
 }: FeaturedCompanyCardProps) {
   const showFeaturedBadge = isFirst && company.has_paid_plan === true;
-  const canRequestQuote = hasPaidPlan(company);
+  const canRequestQuote = canUsePaidConversion(company, 'quote');
   const isVerified = Boolean(
     company.verified || (company as any).trust?.verification_status === 'verified'
   );

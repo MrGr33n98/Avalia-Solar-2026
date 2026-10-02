@@ -17,7 +17,7 @@ interface CompanyCTAGroupProps {
 
 export default function CompanyCTAGroup({
   company,
-  canRequestQuote: _canRequestQuote,
+  canRequestQuote = false,
 }: CompanyCTAGroupProps) {
   const wizardCategoryId = resolveWizardCategoryId(company);
   const companyIdNum = Number(company.id);
@@ -61,21 +61,28 @@ export default function CompanyCTAGroup({
   return (
     <div
       id="company-cta-group"
-      className="grid w-full min-w-0 grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] gap-1 pt-1.5 min-[360px]:gap-1.5 min-[414px]:gap-2 lg:flex lg:w-auto lg:items-center lg:justify-end lg:gap-2.5"
+      className={cn(
+        'grid w-full min-w-0 gap-1 pt-1.5 min-[360px]:gap-1.5 min-[414px]:gap-2 lg:flex lg:w-auto lg:items-center lg:justify-end lg:gap-2.5',
+        canRequestQuote
+          ? 'grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)_minmax(0,1.2fr)]'
+          : 'grid-cols-2'
+      )}
     >
       {/* 1. Solicitar contato (Primário Azul - Proporção 1.3fr) */}
-      <Button
-        type="button"
-        size="default"
-        onClick={handleRequestQuote}
-        className="h-12 min-h-[48px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl bg-blue-600 px-0.5 text-[10px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[145px]"
-      >
-        <Send
-          className="h-[18px] w-[18px] shrink-0 fill-current min-[390px]:h-5 min-[390px]:w-5"
-          aria-hidden="true"
-        />
-        <span className="whitespace-nowrap">Solicitar contato</span>
-      </Button>
+      {canRequestQuote && (
+        <Button
+          type="button"
+          size="default"
+          onClick={handleRequestQuote}
+          className="h-12 min-h-[48px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl bg-blue-600 px-0.5 text-[10px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[145px]"
+        >
+          <Send
+            className="h-[18px] w-[18px] shrink-0 fill-current min-[390px]:h-5 min-[390px]:w-5"
+            aria-hidden="true"
+          />
+          <span className="whitespace-nowrap">Solicitar contato</span>
+        </Button>
+      )}
 
       {/* 2. Comparar (Secundário Outline Azul - Proporção 0.9fr) */}
       <Button

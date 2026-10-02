@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 type Value = string | number | boolean | null;
 interface Criterion {
@@ -234,14 +235,14 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                     className="min-w-[200px] border-l border-slate-200 p-3 align-top"
                   >
                     {/* Botão de orçamento: apenas para empresas em plano pago */}
-                    {company.premium && (
+                    {canUsePaidConversion(company, 'quote') && (
                       <QuoteCTA context="comparison" onRequest={() => onQuote(company)} />
                     )}
                     <Button
                       asChild
                       size="sm"
                       variant="ghost"
-                      className={`mt-1 w-full text-blue-700 ${company.premium ? '' : 'col-span-2'}`}
+                      className={`mt-1 w-full text-blue-700 ${canUsePaidConversion(company, 'quote') ? '' : 'col-span-2'}`}
                     >
                       <Link href={`/companies/${company.slug || company.id}`}>
                         Ver perfil completo

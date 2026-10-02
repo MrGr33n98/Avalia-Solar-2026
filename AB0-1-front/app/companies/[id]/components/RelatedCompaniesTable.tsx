@@ -19,7 +19,7 @@ import { CompanyLogo } from '@/components/CompanyLogo';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { hasPaidPlan } from '@/lib/feature-access';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import { openLeadModal } from '@/lib/lead-engine';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import {
@@ -89,7 +89,10 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
   }
 
   return (
-    <section id="related-companies-table-section" className="space-y-6 pt-8 border-t border-slate-100 mt-8">
+    <section
+      id="related-companies-table-section"
+      className="space-y-6 pt-8 border-t border-slate-100 mt-8"
+    >
       {/* Title & Page Selector bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
@@ -121,11 +124,21 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
         <table className="w-full table-fixed border-collapse text-left text-sm text-slate-600">
           <thead className="border-b border-slate-200/80 bg-slate-50/80 text-[10.5px] font-bold uppercase tracking-[0.08em] text-slate-500">
             <tr>
-              <th scope="col" className="w-10 px-3 py-4 text-center">#</th>
-              <th scope="col" className="w-[34%] px-4 py-4">Empresa</th>
-              <th scope="col" className="w-[20%] px-3 py-4">Localização</th>
-              <th scope="col" className="w-[18%] px-3 py-4">Avaliação</th>
-              <th scope="col" className="w-[14%] px-3 py-4 font-bold text-emerald-700">Verificado</th>
+              <th scope="col" className="w-10 px-3 py-4 text-center">
+                #
+              </th>
+              <th scope="col" className="w-[34%] px-4 py-4">
+                Empresa
+              </th>
+              <th scope="col" className="w-[20%] px-3 py-4">
+                Localização
+              </th>
+              <th scope="col" className="w-[18%] px-3 py-4">
+                Avaliação
+              </th>
+              <th scope="col" className="w-[14%] px-3 py-4 font-bold text-emerald-700">
+                Verificado
+              </th>
               <th scope="col" className="w-[180px] px-3 py-4 text-right">
                 <span className="sr-only">Ações</span>
               </th>
@@ -135,15 +148,21 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
             {paginatedCompanies.map((comp, index) => {
               const globalIndex = startIndex + index + 1;
               const rating = Number(comp.rating_avg || comp.rating || comp.average_rating || 0);
-              const reviewCount = comp.rating_count || comp.reviews_count || comp.total_reviews || 0;
+              const reviewCount =
+                comp.rating_count || comp.reviews_count || comp.total_reviews || 0;
               const location = [comp.city, comp.state].filter(Boolean).join(', ');
               const href = comp.slug ? `/companies/${comp.slug}` : `/companies/${comp.id}`;
-              const isVerified = Boolean(comp.verified || (comp as any).trust?.verification_status === 'verified');
+              const isVerified = Boolean(
+                comp.verified || (comp as any).trust?.verification_status === 'verified'
+              );
 
               return (
-                <tr key={comp.id} className="group/row transition-colors duration-200 hover:bg-blue-50/10">
+                <tr
+                  key={comp.id}
+                  className="group/row transition-colors duration-200 hover:bg-blue-50/10"
+                >
                   <td className="py-4 px-4 text-center font-bold text-slate-400">{globalIndex}</td>
-                  
+
                   {/* Logo + Name */}
                   <td className="px-3 py-4">
                     <div className="flex items-center gap-3">
@@ -153,7 +172,9 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
                           name={comp.name}
                           size="sm"
                           badges={comp.badges}
-                          verifiedBadgeUrl={comp.verified_badge_image_url || comp.verified_badge_url}
+                          verifiedBadgeUrl={
+                            comp.verified_badge_image_url || comp.verified_badge_url
+                          }
                           className="border border-slate-200/80 bg-white"
                         />
                       </Link>
@@ -212,17 +233,16 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
       {/* Mobile Card Grid */}
       <div className="grid grid-cols-1 gap-3 lg:hidden">
         {paginatedCompanies.map((comp, index) => (
-          <RelatedCompanyCard
-            key={comp.id}
-            company={comp}
-            position={startIndex + index + 1}
-          />
+          <RelatedCompanyCard key={comp.id} company={comp} position={startIndex + index + 1} />
         ))}
       </div>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <nav aria-label="Navegação da listagem" className="flex items-center justify-center gap-1 mt-6">
+        <nav
+          aria-label="Navegação da listagem"
+          className="flex items-center justify-center gap-1 mt-6"
+        >
           <Button
             variant="outline"
             size="sm"
@@ -238,7 +258,10 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
             {renderPaginationRange().map((p, idx) => {
               if (p === '...') {
                 return (
-                  <span key={`dots-${idx}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-xs font-bold select-none">
+                  <span
+                    key={`dots-${idx}`}
+                    className="w-9 h-9 flex items-center justify-center text-slate-400 text-xs font-bold select-none"
+                  >
                     ...
                   </span>
                 );
@@ -298,7 +321,10 @@ function RelatedCompanyCard({ company, position }: { company: Company; position:
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <Link href={href} className="block truncate text-sm font-bold tracking-[-0.01em] text-slate-955 hover:text-blue-700">
+              <Link
+                href={href}
+                className="block truncate text-sm font-bold tracking-[-0.01em] text-slate-955 hover:text-blue-700"
+              >
                 {company.name}
               </Link>
               <span className="shrink-0 text-[10px] font-semibold text-slate-400">#{position}</span>
@@ -320,7 +346,12 @@ function RelatedCompanyCard({ company, position }: { company: Company; position:
             ) : (
               <span className="text-xs font-medium text-slate-400">Sem avaliações</span>
             )}
-            <span className={cn('inline-flex items-center gap-1 font-semibold', isVerified ? 'text-emerald-600' : 'text-slate-500')}>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 font-semibold',
+                isVerified ? 'text-emerald-600' : 'text-slate-500'
+              )}
+            >
               {isVerified && <BadgeCheck className="h-4 w-4" />}
               {isVerified ? 'Verificada' : 'Padrão'}
             </span>
@@ -332,11 +363,22 @@ function RelatedCompanyCard({ company, position }: { company: Company; position:
   );
 }
 
-function RelatedCompanyActions({ company, mobile = false }: { company: Company; mobile?: boolean }) {
-  const canRequestQuote = hasPaidPlan(company as any);
+function RelatedCompanyActions({
+  company,
+  mobile = false,
+}: {
+  company: Company;
+  mobile?: boolean;
+}) {
+  const canRequestQuote = canUsePaidConversion(company, 'quote');
 
   return (
-    <div className={cn('flex items-center justify-end gap-2.5', mobile ? 'mt-4 flex-col-reverse items-stretch' : '')}>
+    <div
+      className={cn(
+        'flex items-center justify-end gap-2.5',
+        mobile ? 'mt-4 flex-col-reverse items-stretch' : ''
+      )}
+    >
       {!mobile && (
         <ComparisonToggleButton
           company={company as any}
@@ -356,7 +398,10 @@ function RelatedCompanyActions({ company, mobile = false }: { company: Company; 
               type: 'quick',
             })
           }
-          className={cn('h-10 whitespace-nowrap rounded-xl px-4 shadow-[0_2px_8px_rgba(37,99,235,0.1)]', mobile && 'w-full')}
+          className={cn(
+            'h-10 whitespace-nowrap rounded-xl px-4 shadow-[0_2px_8px_rgba(37,99,235,0.1)]',
+            mobile && 'w-full'
+          )}
         />
       )}
     </div>

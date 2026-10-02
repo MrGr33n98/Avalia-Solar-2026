@@ -52,6 +52,9 @@ describe('CompanyCard V2 — Swiss Enterprise Discovery Card', () => {
     rating_avg: 4.5,
     rating_count: 18,
     has_paid_plan: true,
+    feature_access: {
+      custom_ctas: { state: 'enabled', value: true },
+    },
     verified: true,
     description: 'Fabricante nacional líder em inversores e soluções solares completas.',
     coverage_cities: ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Itajaí'],

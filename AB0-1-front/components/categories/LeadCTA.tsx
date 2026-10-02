@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics/lazy';
 import { Zap } from 'lucide-react';
 import { Company } from '@/lib/api';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 interface LeadCTAProps {
   company: Company;
@@ -18,6 +19,8 @@ export default function LeadCTA({
   variant = 'compact',
   onLeadModalOpen,
 }: LeadCTAProps) {
+  if (!canUsePaidConversion(company, 'quote')) return null;
+
   const c = company as any;
   // Regra A: Empresa FREE → Lead Interno
   if (!c.direct_lead_enabled) {

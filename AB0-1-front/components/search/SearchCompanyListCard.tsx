@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { buildCompanyPath } from '@/lib/slug';
 import { openLeadModal } from '@/lib/lead-engine';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
-import { hasPaidPlan } from '@/lib/feature-access';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 interface SearchCompanyListCardProps {
@@ -34,8 +34,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
     (company as any).operations?.sla_label || (company as any).response_time_sla || '24h';
   const coverageLabel = 'Consulte'; // Could map from API if available
 
-  // hasPaidPlan: única fonte de verdade — evitar duplicar os critérios de plano aqui.
-  const canRequestQuote = hasPaidPlan(company);
+  const canRequestQuote = canUsePaidConversion(company, 'quote');
 
   return (
     <article

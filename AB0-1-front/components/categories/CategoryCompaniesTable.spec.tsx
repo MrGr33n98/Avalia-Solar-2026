@@ -10,7 +10,16 @@ jest.mock(
     )
 );
 jest.mock('@/lib/feature-access', () => ({
-  hasPaidPlan: (company: { has_paid_plan?: boolean }) => Boolean(company.has_paid_plan),
+  canUsePaidConversion: (
+    company: {
+      has_paid_plan?: boolean;
+      feature_access?: Record<string, { state: string; value?: boolean }>;
+    },
+    feature: string
+  ) =>
+    feature === 'quote' &&
+    company.has_paid_plan === true &&
+    company.feature_access?.custom_ctas?.state === 'enabled',
 }));
 jest.mock('@/lib/lead-engine', () => ({ openLeadModal: jest.fn() }));
 
@@ -29,6 +38,7 @@ const company = (id: number, paid: boolean) =>
     created_at: '',
     updated_at: '',
     has_paid_plan: paid,
+    feature_access: paid ? { custom_ctas: { state: 'enabled', value: true } } : {},
   }) as any;
 
 describe('CategoryCompaniesTable ações', () => {

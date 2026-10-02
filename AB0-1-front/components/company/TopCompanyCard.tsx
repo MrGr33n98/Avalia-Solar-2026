@@ -16,7 +16,7 @@ import { buildCompanyPath } from '@/lib/slug';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
-import { hasPaidPlan } from '@/lib/feature-access';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { CompanyChatButton } from '@/components/company/CompanyChatButton';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
@@ -47,17 +47,24 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
   const topCompany = company as TopCompanyCardCompany;
   const { id, name, city, state, description } = company;
   const sponsored = topCompany.sponsored === true;
-  const rating_count = Number(topCompany.rating_count ?? topCompany.reviews_count ?? topCompany.total_reviews ?? 0);
-  const average_rating = parseFloat(String(topCompany.rating_avg ?? topCompany.average_rating ?? topCompany.rating ?? 0));
+  const rating_count = Number(
+    topCompany.rating_count ?? topCompany.reviews_count ?? topCompany.total_reviews ?? 0
+  );
+  const average_rating = parseFloat(
+    String(topCompany.rating_avg ?? topCompany.average_rating ?? topCompany.rating ?? 0)
+  );
 
-  // hasPaidPlan: única fonte de verdade — evitar duplicar os critérios de plano aqui.
-  const canRequestQuote = hasPaidPlan(company);
-  
+  const canRequestQuote = canUsePaidConversion(company, 'quote');
+
   const p2pChatEnabled =
-    company.p2p_chat_enabled === true ||
-    (company as any)?.actions?.p2p_chat_enabled === true;
-  
-  const rankStyle = RANK_COLORS[rank as keyof typeof RANK_COLORS] || { border: 'border-gray-200', bg: 'bg-gray-50', text: 'text-gray-400', label: `#${rank}` };
+    company.p2p_chat_enabled === true || (company as any)?.actions?.p2p_chat_enabled === true;
+
+  const rankStyle = RANK_COLORS[rank as keyof typeof RANK_COLORS] || {
+    border: 'border-gray-200',
+    bg: 'bg-gray-50',
+    text: 'text-gray-400',
+    label: `#${rank}`,
+  };
   const companyPath = buildCompanyPath(company.slug || String(id));
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
 
@@ -66,7 +73,7 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
       company_id: id,
       rank: rank,
       company_name: name,
-      source: 'top_ranking_card'
+      source: 'top_ranking_card',
     });
   };
 
@@ -80,10 +87,14 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
       )}
     >
       {/* Rank Badge / Trophy */}
-      <div className={cn(
-        "absolute -top-3 -left-3 z-30 flex items-center justify-center w-10 h-10 rounded-full shadow-lg border-2",
-        rankStyle.bg, rankStyle.border, rankStyle.text
-      )}>
+      <div
+        className={cn(
+          'absolute -top-3 -left-3 z-30 flex items-center justify-center w-10 h-10 rounded-full shadow-lg border-2',
+          rankStyle.bg,
+          rankStyle.border,
+          rankStyle.text
+        )}
+      >
         <Trophy className="w-5 h-5 fill-current" />
       </div>
 
@@ -93,12 +104,18 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="secondary" className="bg-white/95 backdrop-blur-sm text-[10px] font-bold py-0 h-5 border-slate-200 text-slate-700 cursor-help shadow-sm">
+                <Badge
+                  variant="secondary"
+                  className="bg-white/95 backdrop-blur-sm text-[10px] font-bold py-0 h-5 border-slate-200 text-slate-700 cursor-help shadow-sm"
+                >
                   PATROCINADO <Info className="ml-1 w-3 h-3" />
                 </Badge>
               </TooltipTrigger>
               <TooltipContent className="max-w-[200px] text-[11px] bg-slate-900 text-white border-none shadow-xl">
-                <p>Destaque Patrocinado – empresa que investe na qualidade e visibilidade no AvaliaSolar.</p>
+                <p>
+                  Destaque Patrocinado – empresa que investe na qualidade e visibilidade no
+                  AvaliaSolar.
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -121,7 +138,7 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         </AspectRatio>
-        
+
         <div className="absolute bottom-3 left-4 right-4 flex items-end gap-3">
           <CompanyLogo
             logoUrl={company.logo_url}
@@ -147,27 +164,40 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
         </div>
 
         <p className="text-xs text-slate-600 line-clamp-2 min-h-[2.5rem] leading-relaxed">
-          {description || "Especialista em soluções energéticas de alta performance."}
+          {description || 'Especialista em soluções energéticas de alta performance.'}
         </p>
 
         <div className="mt-auto pt-2 grid grid-cols-2 gap-2">
           {p2pChatEnabled && (
-            <CompanyChatButton companyId={id} companyName={name} variant="button" className="h-10 rounded-xl text-xs" />
+            <CompanyChatButton
+              companyId={id}
+              companyName={name}
+              variant="button"
+              className="h-10 rounded-xl text-xs"
+            />
           )}
           <Button
             variant="outline"
             className="h-10 rounded-xl border-slate-300 text-slate-800 font-bold text-xs hover:bg-slate-50"
             asChild
           >
-            <Link href={companyPath} title={`Ver detalhes de ${name}`}>Ver Perfil</Link>
+            <Link href={companyPath} title={`Ver detalhes de ${name}`}>
+              Ver Perfil
+            </Link>
           </Button>
           {canRequestQuote ? (
-            <QuoteCTA context="card" source="top-company-card" onRequest={() => openLeadModal({ preferredCompanyId: id, source: 'top-company-card', type: 'quick' })} />
+            <QuoteCTA
+              context="card"
+              source="top-company-card"
+              onRequest={() =>
+                openLeadModal({ preferredCompanyId: id, source: 'top-company-card', type: 'quick' })
+              }
+            />
           ) : null}
           <ReviewCompanyButton
             company={company}
             label="Avaliar"
-            className={cn("h-10 rounded-xl text-xs", canRequestQuote ? "" : "col-span-2")}
+            className={cn('h-10 rounded-xl text-xs', canRequestQuote ? '' : 'col-span-2')}
             iconClassName="h-3.5 w-3.5"
             stopPropagation
           />

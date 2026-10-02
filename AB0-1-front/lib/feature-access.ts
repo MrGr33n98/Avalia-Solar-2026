@@ -39,9 +39,7 @@ export const isFeatureLocked = (featureAccess: FeatureAccessMap, key: string): b
  * Usa exclusivamente a decisão do backend sobre o plano pago.
  * Na ausência do campo, falha de forma segura e mantém o CTA oculto.
  */
-export function hasPaidPlan(company: {
-  has_paid_plan?: boolean | null;
-}): boolean {
+export function hasPaidPlan(company: { has_paid_plan?: boolean | null }): boolean {
   return company.has_paid_plan === true;
 }
 
@@ -49,14 +47,17 @@ export function hasPaidPlan(company: {
  * Verifica se a empresa pode exibir anúncios (Banner Ads) no perfil público.
  * Retorna false para empresas com plano pago ativo.
  */
-export function canShowCompanyProfileAds(company: {
-  has_paid_plan?: boolean | null;
-}): boolean {
+export function canShowCompanyProfileAds(company: { has_paid_plan?: boolean | null }): boolean {
   return !hasPaidPlan(company);
 }
 
-
 export type ConversionFeature = 'quote' | 'whatsapp' | 'custom_cta';
+
+const PAID_CONVERSION_FEATURE_KEYS: Record<ConversionFeature, string> = {
+  quote: 'custom_ctas',
+  whatsapp: 'custom_ctas',
+  custom_cta: 'custom_ctas',
+};
 
 /** Paid conversion entitlement. Missing entitlement fails closed. */
 export function canUsePaidConversion(
@@ -64,7 +65,7 @@ export function canUsePaidConversion(
   feature: ConversionFeature
 ): boolean {
   if (!hasPaidPlan(company)) return false;
-  const featureKey = feature === 'custom_cta' ? 'custom_ctas' : feature;
+  const featureKey = PAID_CONVERSION_FEATURE_KEYS[feature];
   const entry = getFeatureAccessEntry(company.feature_access, featureKey);
-  return !entry || isFeatureEnabledEntry(entry);
+  return Boolean(entry && isFeatureEnabledEntry(entry));
 }

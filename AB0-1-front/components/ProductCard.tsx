@@ -3,10 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Star,
-  Info,
-} from 'lucide-react';
+import { Star, Info } from 'lucide-react';
 import type { Product } from '@/lib/api';
 import { ProductQuickView } from '@/components/products/ProductQuickView';
 import { track } from '@/lib/analytics/lazy';
@@ -24,10 +21,7 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
   const [imageError, setImageError] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const brandContext = resolveBrandContext(product);
-  const canRequestQuote = canUsePaidConversion(
-    product.company as { has_paid_plan?: boolean | null },
-    'quote'
-  );
+  const canRequestQuote = product.company ? canUsePaidConversion(product.company, 'quote') : false;
 
   const [visible, setVisible] = useState(false);
   const cardRef = React.useCallback(
@@ -64,7 +58,6 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
       : product.status === 'disabled' || product.status === 'archived'
         ? 'Indisponível'
         : 'Sob Consulta';
-
 
   const displayImage = !imageError && product.image_url ? product.image_url : '';
 
@@ -274,7 +267,12 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
 
             {/* Favorite Icon (Coração) no topo direito do card */}
             <div className="absolute right-4 top-4 z-10">
-              <FavoriteButton favoritableType="Product" favoritableId={product.id} source="product_card" className="h-8 w-8 bg-white text-slate-400 shadow-sm hover:text-red-500" />
+              <FavoriteButton
+                favoritableType="Product"
+                favoritableId={product.id}
+                source="product_card"
+                className="h-8 w-8 bg-white text-slate-400 shadow-sm hover:text-red-500"
+              />
             </div>
           </Card>
 
@@ -342,7 +340,12 @@ export default function ProductCard({ product, layout = 'vertical' }: ProductCar
 
             {/* Favorite Icon (Coração) */}
             <div className="absolute right-3 top-3 z-10">
-              <FavoriteButton favoritableType="Product" favoritableId={product.id} source="product_card" className="h-8 w-8 bg-white/95 text-slate-400 shadow-sm hover:text-red-500" />
+              <FavoriteButton
+                favoritableType="Product"
+                favoritableId={product.id}
+                source="product_card"
+                className="h-8 w-8 bg-white/95 text-slate-400 shadow-sm hover:text-red-500"
+              />
             </div>
           </div>
 

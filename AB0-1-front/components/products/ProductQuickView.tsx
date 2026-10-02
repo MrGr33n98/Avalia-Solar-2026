@@ -14,6 +14,7 @@ import Image from 'next/image';
 import type { Product } from '@/lib/api';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { track } from '@/lib/analytics/lazy';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 interface ProductQuickViewProps {
   product: Product;
@@ -27,8 +28,13 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
   const companyName = product.company?.name || 'Fornecedor não informado';
   const displayImage = product.image_url || '';
   const companyLocation = [product.company?.city, product.company?.state].filter(Boolean).join(', ');
+  const canRequestQuote = product.company
+    ? canUsePaidConversion(product.company, 'quote')
+    : false;
 
   const handleQuoteRequest = () => {
+    if (!canRequestQuote) return;
+
     track('product_cta_click', {
       product_id: product.id,
       product_name: product.name,
@@ -124,11 +130,13 @@ export function ProductQuickView({ product, open, onOpenChange }: ProductQuickVi
             </div>
 
             {/* Footer Actions */}
-            <div className="mt-8 grid grid-cols-2 gap-3">
+            <div className={canRequestQuote ? 'mt-8 grid grid-cols-2 gap-3' : 'mt-8'}>
                 <Button variant="outline" onClick={() => onOpenChange(false)}>
                     Continuar navegando
                 </Button>
-                <QuoteCTA context="card" source="product-quick-view" onRequest={handleQuoteRequest} />
+                {canRequestQuote && (
+                  <QuoteCTA context="card" source="product-quick-view" onRequest={handleQuoteRequest} />
+                )}
             </div>
           </div>
         </div>

@@ -610,6 +610,8 @@ export interface Product {
       | 'rating_avg'
       | 'reviews_count'
       | 'review_aggregates'
+      | 'has_paid_plan'
+      | 'feature_access'
       | 'badges'
     >
   > | null;

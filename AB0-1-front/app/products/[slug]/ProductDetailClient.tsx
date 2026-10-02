@@ -26,6 +26,7 @@ import { buildCategoryPath, buildCompanyPath, buildProductPath } from '@/lib/slu
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { cn } from '@/lib/utils';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
 import { useProductTracking } from './useProductTracking';
 import VerificationBadge from '@/components/company/VerificationBadge';
@@ -416,6 +417,8 @@ export default function ProductDetailClient({
   const categoryPath = category ? buildCategoryPath(category.seo_url, category.id) : '/products';
   const categoryName = category?.name || product.categories?.[0]?.name || product.category?.name || 'Produtos';
   const categoryId = category?.id || product.categories?.[0]?.id || product.category?.id || product.category_id;
+  const quoteCompany = company || product.company;
+  const canRequestQuote = quoteCompany ? canUsePaidConversion(quoteCompany, 'quote') : false;
   const summary = reviewsData?.summary || getCompanyAggregate(company, categoryId);
   const criteriaEntries = Object.entries(summary?.criteria_breakdown || {}).slice(0, 6);
 
@@ -508,6 +511,8 @@ export default function ProductDetailClient({
   };
 
   const handleQuoteRequest = () => {
+    if (!canRequestQuote) return;
+
     trackCTA('request_quote');
     openQuoteWizard({
       preferredCompanyId: company?.id || product.company?.id,
@@ -968,9 +973,12 @@ export default function ProductDetailClient({
                   </div>
                 ) : null}
 
-                <QuoteCTA context="card" source="product-detail" onRequest={handleQuoteRequest} />
-
-                <p className={hintClass}>O contato é iniciado no fluxo de lead do marketplace.</p>
+                {canRequestQuote && (
+                  <>
+                    <QuoteCTA context="card" source="product-detail" onRequest={handleQuoteRequest} />
+                    <p className={hintClass}>O contato é iniciado no fluxo de lead do marketplace.</p>
+                  </>
+                )}
               </div>
             </SidebarCard>
 
@@ -1076,17 +1084,19 @@ export default function ProductDetailClient({
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t-[0.5px] border-[var(--color-border-tertiary)] bg-[var(--color-background-primary)] p-4 lg:hidden">
-        <div className="mx-auto flex max-w-[1280px] items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] text-[var(--color-text-secondary)]">{product.name}</p>
-            <p className="text-[15px] font-medium text-[#f5a623]">
-              {priceAvailable ? formatCurrency(priceValue) : 'Consultar preço'}
-            </p>
+      {canRequestQuote && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t-[0.5px] border-[var(--color-border-tertiary)] bg-[var(--color-background-primary)] p-4 lg:hidden">
+          <div className="mx-auto flex max-w-[1280px] items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] text-[var(--color-text-secondary)]">{product.name}</p>
+              <p className="text-[15px] font-medium text-[#f5a623]">
+                {priceAvailable ? formatCurrency(priceValue) : 'Consultar preço'}
+              </p>
+            </div>
+            <QuoteCTA context="sticky" source="product-detail-sticky" onRequest={handleQuoteRequest} />
           </div>
-          <QuoteCTA context="sticky" source="product-detail-sticky" onRequest={handleQuoteRequest} />
         </div>
-      </div>
+      )}
 
       <script
         type="application/ld+json"

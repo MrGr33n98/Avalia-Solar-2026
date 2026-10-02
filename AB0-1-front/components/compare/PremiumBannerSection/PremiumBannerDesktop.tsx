@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { track } from '@/lib/analytics/lazy';
 import { openLeadModal } from '@/lib/lead-engine';
 import { cn } from '@/lib/utils';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import TrustScoreDial from '../TrustScoreDial';
 import { useHoverIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import {
@@ -23,7 +24,11 @@ interface PremiumBannerDesktopProps {
   className?: string;
 }
 
-export default function PremiumBannerDesktop({ company, onDismiss, className }: PremiumBannerDesktopProps) {
+export default function PremiumBannerDesktop({
+  company,
+  onDismiss,
+  className,
+}: PremiumBannerDesktopProps) {
   const formatRating = (value: unknown) => {
     const numericValue = Number(value);
     return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
@@ -33,6 +38,7 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
   const signals = getCompanySignals(company).slice(0, 2);
   const scoreLabel = score !== null ? `${score}%` : 'Sem score';
   const yearsLabel = formatCompanyYears(company);
+  const canRequestQuote = canUsePaidConversion(company, 'quote');
   const toneClasses = {
     blue: 'border-blue-100/50 bg-blue-50/40 text-blue-700 backdrop-blur-md',
     emerald: 'border-emerald-100/50 bg-emerald-50/40 text-emerald-700 backdrop-blur-md',
@@ -41,6 +47,8 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
   } as const;
 
   const handleQuoteClick = () => {
+    if (!canRequestQuote) return;
+
     track('premium_banner_clicked', {
       company_id: company.id,
       cta_type: 'quote',
@@ -53,21 +61,21 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
     company.id,
     'premium_banner_detail',
     1500, // 1.5s reading time
-    { 
+    {
       elementSelector: `premium-banner-${company.slug}`,
-      metadata: { context: 'comparison_premium_banner' }
+      metadata: { context: 'comparison_premium_banner' },
     }
   );
 
   const bannerUrl = getFullImageUrl(company.banner_url || undefined);
 
   return (
-    <div 
+    <div
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={cn(
-        "group relative flex items-center gap-4 overflow-hidden rounded-[2.2rem] border border-white/20 p-4 pr-16 shadow-[0_32px_64px_-24px_rgba(0,0,0,0.2)] transition-all hover:shadow-[0_45px_85px_-30px_rgba(37,99,235,0.25)]",
-        "clay-surface clay-convex",
+        'group relative flex items-center gap-4 overflow-hidden rounded-[2.2rem] border border-white/20 p-4 pr-16 shadow-[0_32px_64px_-24px_rgba(0,0,0,0.2)] transition-all hover:shadow-[0_45px_85px_-30px_rgba(37,99,235,0.25)]',
+        'clay-surface clay-convex',
         className
       )}
     >
@@ -75,11 +83,11 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
       <div className="absolute inset-0 z-0 overflow-hidden">
         {bannerUrl ? (
           <>
-            <Image 
-              src={bannerUrl} 
-              alt="" 
-              fill 
-              className="object-cover transition-transform duration-1000 group-hover:scale-110 opacity-40 brightness-110" 
+            <Image
+              src={bannerUrl}
+              alt=""
+              fill
+              className="object-cover transition-transform duration-1000 group-hover:scale-110 opacity-40 brightness-110"
             />
             {/* Glassmorphism Overlays */}
             <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] transition-all duration-300 group-hover:backdrop-blur-none group-hover:bg-white/40" />
@@ -114,29 +122,36 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
           {score !== null ? (
             <>
               <div className="relative p-1 rounded-full bg-white/40 backdrop-blur-xl shadow-inner border border-white/30">
-                <TrustScoreDial 
-                  score={score} 
-                  size="md" 
+                <TrustScoreDial
+                  score={score}
+                  size="md"
                   showLabel={false}
                   className="cursor-help transition-transform hover:scale-105"
                 />
               </div>
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-white/50 bg-white/95 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-tight text-slate-700 shadow-xl backdrop-blur-md whitespace-nowrap text-center">
-                {scoreLabel} <span className="text-[7px] opacity-40 block -mt-1 uppercase font-bold">Confiança</span>
+                {scoreLabel}{' '}
+                <span className="text-[7px] opacity-40 block -mt-1 uppercase font-bold">
+                  Confiança
+                </span>
               </div>
             </>
           ) : (
             <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full border border-white/30 bg-white/40 backdrop-blur-xl text-slate-400 shadow-inner clay-surface clay-convex">
               <span className="text-xl font-black text-slate-700">—</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Score</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                Score
+              </span>
             </div>
           )}
         </div>
 
-        <div className={cn(
-          "flex h-[4.8rem] w-[4.8rem] items-center justify-center overflow-hidden rounded-[1.65rem] border border-white/40 bg-white/95 p-0",
-          "clay-surface clay-convex shadow-2xl transition-all duration-500 hover:scale-[1.08] hover:-rotate-2"
-        )}>
+        <div
+          className={cn(
+            'flex h-[4.8rem] w-[4.8rem] items-center justify-center overflow-hidden rounded-[1.65rem] border border-white/40 bg-white/95 p-0',
+            'clay-surface clay-convex shadow-2xl transition-all duration-500 hover:scale-[1.08] hover:-rotate-2'
+          )}
+        >
           <img
             src={getFullImageUrl(company.logo_url || undefined) || '/images/logo-placeholder.svg'}
             alt={`Logo da ${company.name}`}
@@ -151,17 +166,19 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
           <h3 className="text-2xl font-black leading-none tracking-tight text-slate-900 transition-colors group-hover:text-blue-600 xl:text-[2rem]">
             {company.name}
           </h3>
-          
+
           {company.verified && (
             <div className="flex items-center gap-1.5 rounded-full border border-emerald-100/50 bg-emerald-500/10 backdrop-blur-md px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600 shadow-sm">
               <Shield className="h-3 w-3 fill-current" />
               Verificada
             </div>
           )}
-          
+
           <div className="flex items-center gap-1 rounded-full border border-amber-100/50 bg-amber-500/10 backdrop-blur-md px-3 py-1 text-amber-500">
             <Star className="h-3.5 w-3.5 fill-current" />
-            <span className="text-xs font-black">{formatRating(company.rating_avg || company.average_rating)}</span>
+            <span className="text-xs font-black">
+              {formatRating(company.rating_avg || company.average_rating)}
+            </span>
           </div>
         </div>
 
@@ -170,7 +187,7 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
             <span
               key={signal.key}
               className={cn(
-                "rounded-full border px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] shadow-sm transition-all hover:scale-105",
+                'rounded-full border px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] shadow-sm transition-all hover:scale-105',
                 toneClasses[signal.tone]
               )}
             >
@@ -205,19 +222,21 @@ export default function PremiumBannerDesktop({ company, onDismiss, className }: 
 
       {/* CTA Section */}
       <div className="relative z-20 flex shrink-0 flex-col items-end gap-2 pr-1">
-        <Button
-          onClick={handleQuoteClick}
-          className={cn(
-            "h-12 rounded-[1.3rem] border-t border-white/30 bg-blue-600 px-8 text-white font-black uppercase tracking-widest text-[11px]",
-            "shadow-[0_15px_30_rgba(37,99,235,0.4)] transition-all active:scale-95 hover:bg-blue-700 hover:-translate-y-0.5",
-            "clay-btn-primary"
-          )}
-        >
-          Cotar Agora
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        {canRequestQuote && (
+          <Button
+            onClick={handleQuoteClick}
+            className={cn(
+              'h-12 rounded-[1.3rem] border-t border-white/30 bg-blue-600 px-8 text-white font-black uppercase tracking-widest text-[11px]',
+              'shadow-[0_15px_30px_rgba(37,99,235,0.4)] transition-all active:scale-95 hover:bg-blue-700 hover:-translate-y-0.5',
+              'clay-btn-primary'
+            )}
+          >
+            Cotar Agora
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
 
-        <Link 
+        <Link
           href={`/companies/${company.slug}`}
           className="flex items-center gap-2 pr-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors hover:text-blue-600"
         >

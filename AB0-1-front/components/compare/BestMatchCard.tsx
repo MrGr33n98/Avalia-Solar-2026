@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { getBestMatch } from './compare-insights';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 interface BestMatchCardProps {
   companies: CompareCompany[];
@@ -38,7 +39,7 @@ export default function BestMatchCard({ companies, city, onQuote }: BestMatchCar
           <Link href={`/companies/${company.slug || company.id}`}>Ver perfil</Link>
         </Button>
         {/* Botão de orçamento: apenas para empresas em plano pago */}
-        {company.premium && (
+        {canUsePaidConversion(company, 'quote') && (
           <QuoteCTA context="comparison" onRequest={() => onQuote(company)} />
         )}
       </div>

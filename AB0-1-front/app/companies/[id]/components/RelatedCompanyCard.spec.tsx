@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 import RelatedCompanyCard from './RelatedCompanyCard';
 import { Company } from '@/lib/api';
 import { useComparison } from '@/hooks/useComparison';
-import { hasPaidPlan } from '@/lib/feature-access';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -21,7 +21,7 @@ jest.mock('@/hooks/useComparison', () => ({
 }));
 
 jest.mock('@/lib/feature-access', () => ({
-  hasPaidPlan: jest.fn(),
+  canUsePaidConversion: jest.fn(),
 }));
 
 jest.mock('@/components/CompanyLogo', () => ({
@@ -36,7 +36,9 @@ const mockCompany = {
   rating_avg: 4.5,
   rating_count: 100,
   logo_url: 'logo.png',
-  categories: [{ id: 1, name: 'Energia Solar', seo_url: 'energia-solar', status: 'active', featured: false }],
+  categories: [
+    { id: 1, name: 'Energia Solar', seo_url: 'energia-solar', status: 'active', featured: false },
+  ],
   reputation: {
     rating_avg: 4.5,
     rating_count: 100,
@@ -56,7 +58,7 @@ describe('RelatedCompanyCard', () => {
       toggleComparison: jest.fn(),
       canAddMore: true,
     });
-    (hasPaidPlan as jest.Mock).mockReturnValue(false);
+    (canUsePaidConversion as jest.Mock).mockReturnValue(false);
   });
 
   it('renders company name, verified badge and category', () => {
@@ -90,13 +92,13 @@ describe('RelatedCompanyCard', () => {
   });
 
   it('does not render QuoteCTA when free plan', () => {
-    (hasPaidPlan as jest.Mock).mockReturnValue(false);
+    (canUsePaidConversion as jest.Mock).mockReturnValue(false);
     render(<RelatedCompanyCard company={mockCompany} />);
     expect(screen.queryByText(/Solicitar orçamento/i)).not.toBeInTheDocument();
   });
 
   it('renders QuoteCTA when paid plan', () => {
-    (hasPaidPlan as jest.Mock).mockReturnValue(true);
+    (canUsePaidConversion as jest.Mock).mockReturnValue(true);
     render(<RelatedCompanyCard company={mockCompany} />);
     expect(screen.getByText(/Solicitar orçamento/i)).toBeInTheDocument();
   });

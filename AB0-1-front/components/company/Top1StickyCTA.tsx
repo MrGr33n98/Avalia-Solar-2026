@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
-import { hasPaidPlan } from '@/lib/feature-access';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 interface Props {
   company: Company;
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function Top1StickyCTA({ company, rank }: Props) {
-  if (rank !== 1 || !hasPaidPlan(company)) return null;
+  if (rank !== 1 || !canUsePaidConversion(company, 'quote')) return null;
 
   return (
     <AnimatePresence>
@@ -38,7 +38,7 @@ export default function Top1StickyCTA({ company, rank }: Props) {
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={() =>
               openQuoteWizard({
                 source: 'top1-sticky-cta',

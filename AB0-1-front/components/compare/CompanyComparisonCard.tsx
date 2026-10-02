@@ -11,6 +11,7 @@ import { Company } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 interface CompanyComparisonCardProps {
   company: Company;
@@ -28,6 +29,7 @@ export default function CompanyComparisonCard({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const isPremium = company.featured || company.plan_status === 'active' || company.has_paid_plan;
+  const canRequestQuote = canUsePaidConversion(company, 'quote');
 
   const formatRating = (value: unknown) => {
     const numericValue = Number(value);
@@ -200,7 +202,9 @@ export default function CompanyComparisonCard({
       </AnimatePresence>
 
       {/* CTA */}
-      <QuoteCTA context="comparison" onRequest={() => onQuote(company.id)} className="mt-6" />
+      {canRequestQuote && (
+        <QuoteCTA context="comparison" onRequest={() => onQuote(company.id)} className="mt-6" />
+      )}
     </motion.div>
   );
 }
