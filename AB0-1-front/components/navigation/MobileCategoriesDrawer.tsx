@@ -1,19 +1,42 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, Grid2X2, Search, X, Zap, RefreshCw, LogIn } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRightLeft,
+  BookOpen,
+  Building2,
+  ChevronRight,
+  Grid2X2,
+  HelpCircle,
+  Home,
+  Info,
+  LogOut,
+  Megaphone,
+  RefreshCw,
+  Search,
+  Settings,
+  Star,
+  X,
+  Zap,
+} from 'lucide-react';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useCategoriesTree, type CategoryTreeNode } from '@/hooks/useCategoriesTree';
 import { normalizeCategoryKey } from '@/lib/categoryIcons';
 import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
+import { getFullImageUrl } from '@/utils/image';
 import { CategoryMotionIcon } from '../categories/CategoryMotionIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import { openSignupGate } from '@/lib/signup-gate';
+
+type MobileMenuView = 'main' | 'categories';
 
 interface MobileCategoriesDrawerProps {
   isOpen: boolean;
@@ -59,9 +82,10 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
   onClose,
   id = 'mobile-categories-drawer',
 }) => {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const { categories, loading, error } = useCategoriesTree();
+  const [view, setView] = useState<MobileMenuView>('main');
   const [selectedCategory, setSelectedCategory] = useState<CategoryTreeNode | null>(null);
   const [query, setQuery] = useState('');
 
@@ -91,6 +115,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
 
   const closeDrawer = () => {
     onClose();
+    setView('main');
     setSelectedCategory(null);
     setQuery('');
   };
@@ -100,9 +125,24 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
     setQuery('');
   };
 
-  const goBack = () => {
+  const openCategories = () => {
+    setView('categories');
     setSelectedCategory(null);
     setQuery('');
+  };
+
+  const goBack = () => {
+    if (selectedCategory) {
+      setSelectedCategory(null);
+    } else {
+      setView('main');
+    }
+    setQuery('');
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    closeDrawer();
   };
 
   return (
@@ -110,83 +150,70 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
       <SheetContent
         id={id}
         side="left"
-        className="bottom-0 top-0 flex h-dvh max-h-dvh w-[92vw] max-w-[430px] flex-col gap-0 rounded-2xl border-r border-neutral-200 bg-[#fafafa] p-0 shadow-[8px_0_24px_rgba(0,0,0,0.08)] sm:w-[420px] [&>button]:hidden"
+        className="bottom-0 top-0 flex h-dvh max-h-dvh w-[min(320px,84vw)] max-w-[calc(100vw-48px)] flex-col gap-0 rounded-r-2xl border-r border-neutral-200 bg-[#fafafa] p-0 shadow-[8px_0_24px_rgba(0,0,0,0.08)] sm:w-[320px] [&>button]:hidden"
       >
         <header className="shrink-0 border-b border-slate-200 px-4 pb-4 pt-[max(1rem,var(--safe-area-inset-top))]">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex min-h-10 items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              {selectedCategory && (
+              {view === 'categories' && (
                 <button
                   type="button"
                   onClick={goBack}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 text-slate-950 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
-                  aria-label="Voltar para categorias principais"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-950 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
+                  aria-label={
+                    selectedCategory ? 'Voltar para categorias' : 'Voltar ao menu principal'
+                  }
                 >
-                  <ArrowLeft className="h-[18px] w-[18px]" aria-hidden="true" />
+                  <ArrowLeft className="h-5 w-5" aria-hidden="true" />
                 </button>
               )}
-              <h2 className="truncate text-xl font-semibold tracking-tight text-slate-950">
-                {selectedCategory ? selectedCategory.name : 'Categorias'}
-              </h2>
+              {view === 'main' ? (
+                <BrandLogo className="h-7" sizes="120px" />
+              ) : (
+                <h2 className="truncate text-lg font-semibold tracking-tight text-slate-950">
+                  {selectedCategory ? selectedCategory.name : 'Categorias'}
+                </h2>
+              )}
             </div>
 
             <button
               type="button"
               onClick={closeDrawer}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-900 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
-              aria-label="Fechar menu de categorias"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-neutral-900 transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
+              aria-label="Fechar menu principal"
             >
-              <X className="h-[18px] w-[18px]" aria-hidden="true" />
+              <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
 
-          <label className="mt-4 flex h-11 items-center gap-2.5 rounded-2xl border border-neutral-300 bg-white px-3.5 text-neutral-500 shadow-[0_2px_8px_rgba(0,0,0,0.03)] focus-within:border-neutral-900 focus-within:ring-2 focus-within:ring-neutral-500/20">
-            <Search className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={
-                selectedCategory ? `Buscar em ${selectedCategory.name}` : 'Buscar categorias'
-              }
-              aria-label={
-                selectedCategory ? `Buscar em ${selectedCategory.name}` : 'Buscar categorias'
-              }
-              className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-950 outline-none placeholder:text-slate-400"
-            />
-          </label>
+          {view === 'categories' && (
+            <label className="mt-4 flex h-11 items-center gap-2.5 rounded-xl border border-neutral-300 bg-white px-3.5 text-neutral-500 focus-within:border-neutral-900 focus-within:ring-2 focus-within:ring-neutral-500/20">
+              <Search className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={
+                  selectedCategory ? `Buscar em ${selectedCategory.name}` : 'Buscar categorias'
+                }
+                aria-label={
+                  selectedCategory ? `Buscar em ${selectedCategory.name}` : 'Buscar categorias'
+                }
+                className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-950 outline-none placeholder:text-slate-400"
+              />
+            </label>
+          )}
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-24 pt-4">
-          {!isAuthenticated && !selectedCategory && (
-            <div className="mb-4 flex flex-col gap-2.5 rounded-2xl border border-neutral-200 bg-[#f0f0f0] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
-              <p className="text-xs font-semibold leading-relaxed text-slate-700">
-                Acesse sua conta para comparar propostas e acompanhar avaliações.
-              </p>
-              <div className="flex gap-2 mt-1">
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  className="h-9 flex-1 border-neutral-300 bg-white text-xs font-semibold text-neutral-900 shadow-none hover:bg-neutral-100"
-                >
-                  <Link href="/login" onClick={closeDrawer}>
-                    Entrar
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  className="h-9 flex-1 bg-gradient-to-br from-neutral-900 to-neutral-700 text-xs font-semibold text-white shadow-[0_3px_10px_rgba(0,0,0,0.1)] hover:from-black hover:to-neutral-800"
-                >
-                  <Link href="/register" onClick={closeDrawer}>
-                    Criar conta
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {loading ? (
+          {view === 'main' ? (
+            <MainMenu
+              user={user}
+              isAuthenticated={isAuthenticated}
+              onClose={closeDrawer}
+              onOpenCategories={openCategories}
+              onLogout={handleLogout}
+            />
+          ) : loading ? (
             <LoadingList />
           ) : error && categories.length === 0 ? (
             <ErrorState />
@@ -205,20 +232,203 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
           )}
         </div>
 
-        <div className="shrink-0 border-t border-neutral-200 bg-[#fafafa] px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">
-          <button
-            type="button"
-            onClick={handleViewAllCategories}
-            className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-br from-neutral-900 to-neutral-700 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition-colors hover:from-black hover:to-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
-          >
-            <Grid2X2 className="h-[18px] w-[18px]" aria-hidden="true" />
-            {isAuthenticated ? 'Ver todas as categorias' : 'Entrar para ver categorias'}
-          </button>
-        </div>
+        {view === 'categories' && (
+          <div className="shrink-0 border-t border-neutral-200 bg-[#fafafa] px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3">
+            <button
+              type="button"
+              onClick={handleViewAllCategories}
+              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-br from-neutral-900 to-neutral-700 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition-colors hover:from-black hover:to-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
+            >
+              <Grid2X2 className="h-[18px] w-[18px]" aria-hidden="true" />
+              {isAuthenticated ? 'Ver todas as categorias' : 'Entrar para ver categorias'}
+            </button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
 };
+function initialsFromName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'US';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+function DrawerLink({
+  href,
+  label,
+  icon: Icon,
+  onClose,
+}: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  onClose: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClose}
+      className="flex min-h-12 items-center gap-3 border-b border-slate-100 px-1 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500"
+    >
+      <Icon className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
+      <span className="min-w-0 flex-1">{label}</span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+    </Link>
+  );
+}
+
+function DrawerSectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="px-1 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+      {children}
+    </p>
+  );
+}
+
+function MainMenu({
+  user,
+  isAuthenticated,
+  onClose,
+  onOpenCategories,
+  onLogout,
+}: {
+  user: ReturnType<typeof useAuth>['user'];
+  isAuthenticated: boolean;
+  onClose: () => void;
+  onOpenCategories: () => void;
+  onLogout: () => Promise<void>;
+}) {
+  const marketplaceLinks = [
+    { href: '/', label: 'Início', icon: Home },
+    { href: '/companies', label: 'Empresas', icon: Building2 },
+    { href: '/compare', label: 'Comparar empresas', icon: ArrowRightLeft },
+  ];
+
+  const accountLinks = [
+    { href: '/review-dashboard', label: 'Meu painel', icon: Home },
+    { href: '/review-dashboard/favorites', label: 'Empresas salvas', icon: Building2 },
+    { href: '/review-dashboard/reviews', label: 'Minhas avaliações', icon: Star },
+    { href: '/review-dashboard/proposals', label: 'Minhas propostas', icon: Megaphone },
+    { href: '/review-dashboard/settings', label: 'Configurações', icon: Settings },
+  ];
+
+  return (
+    <div data-testid="mobile-main-menu" className="pb-4">
+      {isAuthenticated && user ? (
+        <div className="mb-2 flex items-center gap-3 border-b border-slate-200 px-1 pb-4">
+          {user.avatar_url ? (
+            <Image
+              src={getFullImageUrl(user.avatar_url)}
+              alt={user.name}
+              width={40}
+              height={40}
+              unoptimized
+              className="h-10 w-10 rounded-full border border-slate-200 object-cover"
+            />
+          ) : (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-950">
+              {initialsFromName(user.name)}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-950">{user.name}</p>
+            <p className="truncate text-xs text-slate-500">{user.email}</p>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+        </div>
+      ) : (
+        <div className="mb-3 border-b border-slate-200 pb-4">
+          <p className="max-w-[270px] text-sm leading-relaxed text-slate-600">
+            Entre para salvar empresas, comparar propostas e acompanhar avaliações.
+          </p>
+          <div className="mt-3 grid gap-2">
+            <Button
+              asChild
+              className="h-11 bg-blue-600 text-sm font-semibold text-white shadow-none hover:bg-blue-700"
+            >
+              <Link href="/login" onClick={onClose}>
+                Entrar na conta
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 border-slate-300 bg-white text-sm font-semibold text-slate-900 shadow-none hover:bg-slate-50"
+            >
+              <Link href="/register" onClick={onClose}>
+                Criar conta
+              </Link>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <DrawerSectionLabel>Marketplace</DrawerSectionLabel>
+      <nav aria-label="Navegação do marketplace">
+        {marketplaceLinks.map((link) => (
+          <DrawerLink key={link.href} {...link} onClose={onClose} />
+        ))}
+        <button
+          type="button"
+          onClick={onOpenCategories}
+          data-testid="mobile-drawer-categories"
+          className="flex min-h-12 w-full items-center gap-3 border-b border-slate-100 px-1 text-left text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500"
+        >
+          <Grid2X2 className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
+          <span className="min-w-0 flex-1">Categorias</span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+        </button>
+      </nav>
+
+      {isAuthenticated && user?.role === 'review' && (
+        <>
+          <DrawerSectionLabel>Minha conta</DrawerSectionLabel>
+          <nav aria-label="Minha conta">
+            {accountLinks.map((link) => (
+              <DrawerLink key={link.href} {...link} onClose={onClose} />
+            ))}
+          </nav>
+        </>
+      )}
+
+      <DrawerSectionLabel>Descoberta</DrawerSectionLabel>
+      <nav aria-label="Descoberta">
+        <DrawerLink href="/#como-funciona" label="Como funciona" icon={Info} onClose={onClose} />
+        <DrawerLink href="/blog" label="Conteúdo" icon={BookOpen} onClose={onClose} />
+      </nav>
+
+      <DrawerSectionLabel>Para empresas</DrawerSectionLabel>
+      <nav aria-label="Para empresas">
+        <DrawerLink
+          href="/register"
+          label="Anunciar no Avalia Solar"
+          icon={Megaphone}
+          onClose={onClose}
+        />
+        <DrawerLink href="/pricing" label="Planos e benefícios" icon={Settings} onClose={onClose} />
+      </nav>
+
+      <DrawerSectionLabel>Institucional</DrawerSectionLabel>
+      <nav aria-label="Institucional">
+        <DrawerLink href="/help" label="Ajuda e suporte" icon={HelpCircle} onClose={onClose} />
+        <DrawerLink href="/about" label="Sobre o Avalia Solar" icon={Info} onClose={onClose} />
+        {isAuthenticated && (
+          <button
+            type="button"
+            onClick={() => void onLogout()}
+            data-testid="mobile-drawer-logout"
+            className="flex min-h-12 w-full items-center gap-3 px-1 text-left text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-500"
+          >
+            <LogOut className="h-[18px] w-[18px] shrink-0 text-slate-950" aria-hidden="true" />
+            <span className="min-w-0 flex-1">Sair</span>
+          </button>
+        )}
+      </nav>
+    </div>
+  );
+}
 
 function LoadingList() {
   return (
@@ -271,30 +481,8 @@ function MainCategoriesView({
   onOpenCategory: (category: CategoryTreeNode) => void;
   onClose: () => void;
 }) {
-  const { isAuthenticated } = useAuth();
   return (
     <div className="border-t border-slate-200">
-      <nav
-        aria-label="Navegação principal"
-        className="grid grid-cols-2 gap-2 border-b border-slate-200 py-3"
-      >
-        {[
-          { href: '/companies', label: 'Empresas' },
-          { href: '/categories', label: 'Categorias' },
-          { href: '/#como-funciona', label: 'Como funciona' },
-          { href: '/blog', label: 'Conteúdo' },
-        ].map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            onClick={onClose}
-            className="flex min-h-11 items-center rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0] hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500"
-          >
-            {link.label}
-          </Link>
-        ))}
-      </nav>
-
       {categories.map((category) => {
         const iconSrc = getCategoryVisualAsset(category.slug || category.seo_url, category.name);
         const hasChildren = category.children && category.children.length > 0;
@@ -345,42 +533,6 @@ function MainCategoriesView({
           </Link>
         );
       })}
-
-      {isAuthenticated ? (
-        <Link
-          href="/categories"
-          onClick={onClose}
-          className="flex min-h-[68px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0]"
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-[#f0f0f0] text-neutral-700">
-            <Grid2X2 className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-medium text-slate-950">Ver todas as categorias</p>
-            <p className="mt-0.5 text-xs font-normal text-slate-500">
-              Explore todas as opções disponíveis
-            </p>
-          </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-        </Link>
-      ) : (
-        <Link
-          href="/login"
-          onClick={onClose}
-          className="flex min-h-[68px] items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-colors hover:border-neutral-300 hover:bg-[#f0f0f0]"
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-blue-50 text-blue-600">
-            <LogIn className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-semibold text-slate-950">Login / Entrar</p>
-            <p className="mt-0.5 text-xs font-normal text-slate-500">
-              Acesse sua conta para ver mais
-            </p>
-          </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-        </Link>
-      )}
     </div>
   );
 }

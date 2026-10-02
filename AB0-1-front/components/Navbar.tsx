@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Menu, Search, User as UserIcon, Bell, MessageSquare } from 'lucide-react';
+import { ChevronDown, Menu, User as UserIcon, Bell, MessageSquare } from 'lucide-react';
 
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import LocationSearch from '@/components/LocationSearch';
@@ -47,13 +47,19 @@ export default function Navbar() {
   const [megaMenuMounted, setMegaMenuMounted] = useState(false);
   const [mobileDrawerMounted, setMobileDrawerMounted] = useState(false);
   const megaMenuRef = useRef<HTMLDivElement | null>(null);
-  const { user, isAuthenticated } = useAuth();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const categoriesMegaMenuId = 'categories-mega-menu';
   const mobileCategoriesDrawerId = 'mobile-categories-drawer';
 
-  const { unreadCount, unreadMessagesCount, fetchUnreadCount, fetchUnreadMessagesCount, toggleChat } = useNotificationStore();
+  const {
+    unreadCount,
+    unreadMessagesCount,
+    fetchUnreadCount,
+    fetchUnreadMessagesCount,
+    toggleChat,
+  } = useNotificationStore();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -110,10 +116,7 @@ export default function Navbar() {
           aria-label="Home Avalia Solar"
           className="flex shrink-0 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2"
         >
-          <BrandLogo
-            className="h-7 sm:h-8 dashboard:h-7 xl:h-[30px]"
-            priority={pathname === '/'}
-          />
+          <BrandLogo className="h-7 sm:h-8 dashboard:h-7 xl:h-[30px]" priority={pathname === '/'} />
         </Link>
 
         <div className="hidden min-w-0 flex-1 items-center gap-2 dashboard:flex xl:gap-3 2xl:gap-4">
@@ -131,7 +134,10 @@ export default function Navbar() {
             />
           </div>
 
-          <div className="ml-auto flex h-full shrink-0 items-center gap-0.5 xl:gap-1" aria-label="Navegação principal">
+          <div
+            className="ml-auto flex h-full shrink-0 items-center gap-0.5 xl:gap-1"
+            aria-label="Navegação principal"
+          >
             <Link
               href={primaryLinks[0].href}
               prefetch={true}
@@ -160,7 +166,10 @@ export default function Navbar() {
               >
                 Categorias
                 <ChevronDown
-                  className={cn('ml-1 h-3.5 w-3.5 transition-transform', isMegaMenuOpen && 'rotate-180')}
+                  className={cn(
+                    'ml-1 h-3.5 w-3.5 transition-transform',
+                    isMegaMenuOpen && 'rotate-180'
+                  )}
                   aria-hidden="true"
                 />
               </Button>
@@ -188,20 +197,30 @@ export default function Navbar() {
           <div className="flex shrink-0 items-center gap-1 xl:gap-1.5 border-l border-brand-borderSoft pl-2 xl:pl-3">
             {!isAuthenticated ? (
               <>
-                <Button asChild variant="ghost" className="h-[38px] xl:h-[40px] rounded-md px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold text-slate-700">
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="h-[38px] xl:h-[40px] rounded-md px-2 xl:px-2.5 text-xs xl:text-[13px] font-semibold text-slate-700"
+                >
                   <Link href="/login">
                     <UserIcon className="mr-1 h-3.5 w-3.5 xl:h-4 xl:w-4" aria-hidden="true" />
                     Entrar
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="h-[38px] xl:h-[40px] rounded-md border-blue-300 px-2 xl:px-3 text-[11px] xl:text-xs font-semibold text-blue-700 shadow-none">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-[38px] xl:h-[40px] rounded-md border-blue-300 px-2 xl:px-3 text-[11px] xl:text-xs font-semibold text-blue-700 shadow-none"
+                >
                   <Link href="/register">Para empresas</Link>
                 </Button>
               </>
             ) : (
               <div className="flex items-center gap-2">
-                {user?.role !== 'review' ? <CompanySwitcher className="hidden h-9 w-40 lg:block" /> : null}
-                
+                {user?.role !== 'review' ? (
+                  <CompanySwitcher className="hidden h-9 w-40 lg:block" />
+                ) : null}
+
                 <button
                   className="relative rounded-full bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-600"
                   aria-label="Mensagens"
@@ -219,7 +238,11 @@ export default function Navbar() {
 
                 {/* Notification Icon */}
                 <Link
-                  href={user?.role === 'review' ? '/review-dashboard/notifications' : '/dashboard/notifications'}
+                  href={
+                    user?.role === 'review'
+                      ? '/review-dashboard/notifications'
+                      : '/dashboard/notifications'
+                  }
                   className="relative flex items-center justify-center p-2 text-slate-700 transition-colors hover:bg-slate-100 hover:text-blue-600 rounded-lg focus:outline-none"
                   aria-label="Notificações"
                 >
@@ -240,46 +263,27 @@ export default function Navbar() {
         </div>
 
         <div className="ml-auto flex min-w-0 items-center justify-end gap-2 dashboard:hidden">
-          <Button asChild variant="outline" size="icon" className="h-[44px] w-[44px] shrink-0 rounded-lg border-brand-border bg-white text-slate-700 shadow-none">
-            <Link href="/search" aria-label="Buscar no site">
-              <Search className="h-5 w-5" aria-hidden="true" />
-            </Link>
-          </Button>
-
-          <div className="hidden w-[190px] min-w-0 sm:block md:w-[220px]">
-            <LocationSearch
-              className="h-[44px] w-full border-brand-border bg-white"
-              onLocationSelect={handleLocationSelect}
+          {authLoading ? (
+            <div
+              aria-label="Carregando sessão"
+              className="h-[44px] w-[44px] shrink-0 rounded-full bg-slate-100"
             />
-          </div>
-
-          {isAuthenticated ? (
-            <UserAvatarDropdown />
+          ) : isAuthenticated ? (
+            <UserAvatarDropdown compact onCompactClick={openMobileDrawer} />
           ) : (
             <Button
-              asChild
-              variant="ghost"
-              className="h-[44px] rounded-lg px-2 text-xs font-semibold text-slate-700 sm:px-3 sm:text-sm hover:bg-slate-50 shadow-none border-0"
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={openMobileDrawer}
+              aria-label={isMobileDrawerOpen ? 'Fechar menu principal' : 'Abrir menu principal'}
+              aria-expanded={isMobileDrawerOpen}
+              aria-controls={mobileDrawerMounted ? mobileCategoriesDrawerId : undefined}
+              className="h-[44px] w-[44px] shrink-0 rounded-lg border-brand-border bg-white text-slate-700 shadow-none"
             >
-              <Link href="/login" className="inline-flex items-center">
-                <UserIcon className="mr-1 h-4 w-4" aria-hidden="true" />
-                Entrar
-              </Link>
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </Button>
           )}
-
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={openMobileDrawer}
-            aria-label={isMobileDrawerOpen ? 'Fechar menu principal' : 'Abrir menu principal'}
-            aria-expanded={isMobileDrawerOpen}
-            aria-controls={mobileDrawerMounted ? mobileCategoriesDrawerId : undefined}
-            className="h-[44px] w-[44px] shrink-0 rounded-lg border-brand-border bg-white text-slate-700 shadow-none"
-          >
-            <Menu className="h-5 w-5" aria-hidden="true" />
-          </Button>
         </div>
       </div>
 

@@ -190,8 +190,32 @@ describe('Navbar', () => {
 
     // Check for new components
     expect(screen.getByTestId('navbar-search')).toBeInTheDocument();
-    expect(screen.getAllByTestId('location-search')).toHaveLength(2);
+    expect(screen.getAllByTestId('location-search')).toHaveLength(1);
     expect(screen.getByRole('button', { name: /Categorias/i })).toBeInTheDocument();
+  });
+
+  it('mantém hamburger para visitante e avatar compacto para usuário autenticado', () => {
+    const { rerender } = render(<Navbar />);
+
+    expect(screen.getByRole('button', { name: 'Abrir menu principal' })).toBeInTheDocument();
+
+    (useAuth as jest.Mock).mockReturnValue({
+      user: {
+        id: 7,
+        name: 'Pessoa Autenticada',
+        email: 'pessoa@example.com',
+        role: 'review',
+        avatar_url: null,
+        created_at: '2026-01-01T00:00:00Z',
+      },
+      loading: false,
+      isAuthenticated: true,
+      logout: jest.fn(),
+    });
+    rerender(<Navbar />);
+
+    expect(screen.getByRole('button', { name: 'Abrir menu da conta' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Abrir menu principal' })).not.toBeInTheDocument();
   });
 
   it('renders login and register buttons', () => {

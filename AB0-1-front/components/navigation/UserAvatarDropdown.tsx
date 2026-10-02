@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getFullImageUrl } from '@/utils/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 function initialsFromName(name: string) {
   const parts = name.split(' ').filter(Boolean);
@@ -34,7 +35,13 @@ function formatMonthYear(dateStr: string) {
   return `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
 }
 
-export function UserAvatarDropdown() {
+export function UserAvatarDropdown({
+  compact = false,
+  onCompactClick,
+}: {
+  compact?: boolean;
+  onCompactClick?: () => void;
+}) {
   const { user, logout, reviewerProfile } = useAuth();
   const router = useRouter();
 
@@ -45,7 +52,6 @@ export function UserAvatarDropdown() {
     router.push('/login');
   };
 
-  const isReviewer = user.role === 'review';
   const isCreator = reviewerProfile?.creator_enabled === true;
   const creatorSlug = reviewerProfile?.public_slug;
 
@@ -54,7 +60,17 @@ export function UserAvatarDropdown() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="group flex h-[44px] max-w-[110px] items-center gap-1 rounded-lg border border-brand-border bg-white p-1 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 xl:h-[40px] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+          aria-label={compact ? 'Abrir menu da conta' : undefined}
+          onClick={(event) => {
+            if (compact && onCompactClick) {
+              event.preventDefault();
+              onCompactClick();
+            }
+          }}
+          className={cn(
+            'group flex h-[44px] items-center gap-1 rounded-lg border border-brand-border bg-white p-1 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 xl:h-[40px] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10',
+            compact ? 'w-[44px] justify-center' : 'max-w-[110px]'
+          )}
         >
           {user.avatar_url ? (
             <Image
@@ -73,14 +89,22 @@ export function UserAvatarDropdown() {
               {initialsFromName(user.name)}
             </div>
           )}
-          <span className="hidden max-w-[54px] truncate text-xs font-semibold text-slate-700 dark:text-white/80 sm:block">
+          <span
+            className={cn(
+              'max-w-[54px] truncate text-xs font-semibold text-slate-700 dark:text-white/80',
+              compact ? 'hidden' : 'hidden sm:block'
+            )}
+          >
             {user.name.split(' ')[0]}
           </span>
           <ChevronDown className="h-3.5 w-3.5 text-slate-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
         </button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-80 rounded-2xl border-slate-200/80 p-0 shadow-2xl overflow-hidden bg-white z-[2000]">
+      <PopoverContent
+        align="end"
+        className="w-80 rounded-2xl border-slate-200/80 p-0 shadow-2xl overflow-hidden bg-white z-[2000]"
+      >
         {/* Card de Perfil */}
         <div className="flex flex-col items-center p-6 text-center bg-slate-50/50">
           <div className="relative mb-3">
@@ -107,7 +131,6 @@ export function UserAvatarDropdown() {
           <p className="text-xs text-slate-400 mt-0.5">
             Membro desde {formatMonthYear(user.created_at)}
           </p>
-
         </div>
 
         <Separator />
