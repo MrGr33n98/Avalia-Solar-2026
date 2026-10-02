@@ -1,3 +1,5 @@
+import { openQuoteWizard } from '@/lib/quote-wizard';
+
 export type LeadEnginePayload = {
   preferredCompanyId?: number;
   categoryId?: number;
@@ -14,12 +16,8 @@ export type LeadEnginePayload = {
 
 export const openLeadModal = (payload: LeadEnginePayload = { type: 'quick' }) => {
   if (typeof window === 'undefined') return;
-  
-  if (payload.type === 'wizard') {
-    window.dispatchEvent(new CustomEvent('open-dynamic-lead-wizard', { detail: payload }));
-  } else {
-    window.dispatchEvent(new CustomEvent('open-quick-lead', { detail: payload }));
-  }
+
+  openQuoteWizard(payload);
 };
 
 type WizardCategoryCandidate = {
@@ -34,7 +32,9 @@ type CompanyCategorySource = {
   categories?: WizardCategoryCandidate[];
 };
 
-export const resolveWizardCategoryId = (company?: CompanyCategorySource | null): number | undefined => {
+export const resolveWizardCategoryId = (
+  company?: CompanyCategorySource | null
+): number | undefined => {
   if (!company) return undefined;
 
   const candidates = [
@@ -48,9 +48,6 @@ export const resolveWizardCategoryId = (company?: CompanyCategorySource | null):
   });
 
   return (
-    financingCategory?.id ||
-    company.category_info?.id ||
-    company.category_id ||
-    candidates[0]?.id
+    financingCategory?.id || company.category_info?.id || company.category_id || candidates[0]?.id
   );
 };

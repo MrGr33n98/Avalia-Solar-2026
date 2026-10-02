@@ -1,5 +1,5 @@
 import { companiesApiSafe } from '@/lib/api-client';
-import QuoteForm from '@/components/QuoteForm';
+import QuoteWizardLauncher from '@/app/quote-wizard/QuoteWizardLauncher';
 import { notFound, redirect } from 'next/navigation';
 
 export default async function Page({ params }: { params: { id: string } }) {
@@ -18,9 +18,12 @@ export default async function Page({ params }: { params: { id: string } }) {
       <div className="max-w-5xl mx-auto">
         <h1 className="text-2xl font-bold mb-4">Solicitar Orçamento</h1>
         <p className="text-muted-foreground mb-6">
-          Preencha o formulário abaixo para solicitar um orçamento da empresa {company?.name}.
+          O fluxo atualizado será aberto para solicitar um orçamento da empresa {company?.name}.
         </p>
-        <QuoteForm companyName={company?.name || ''} companyId={company.id} />
+        <QuoteWizardLauncher
+          preferredCompanyId={Number(company.id)}
+          source="legacy-company-quote"
+        />
       </div>
     </div>
   );

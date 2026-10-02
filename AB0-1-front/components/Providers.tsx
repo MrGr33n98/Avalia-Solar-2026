@@ -13,10 +13,6 @@ import { isFeatureFlagEnabled } from '@/lib/feature-flags';
 
 // Lazy load heavy client-side modals and floating components
 const QuoteWizardModal = dynamic(() => import('@/components/QuoteWizardModal'), { ssr: false });
-const QuickLeadModal = dynamic(() => import('@/components/QuickLeadModal'), { ssr: false });
-const DynamicLeadWizardModal = dynamic(() => import('@/components/DynamicLeadWizardModal'), {
-  ssr: false,
-});
 const SignupGateModalHost = dynamic(() => import('@/components/SignupGateModalHost'), {
   ssr: false,
 });
@@ -210,8 +206,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             {showDeferredModals && (
               <>
                 <QuoteWizardModal />
-                <QuickLeadModal />
-                <DynamicLeadWizardModal />
                 <SignupGateModalHost />
               </>
             )}

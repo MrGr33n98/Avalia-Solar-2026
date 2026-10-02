@@ -3,6 +3,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -11,16 +12,21 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { cn } from '@/lib/utils';
-import { leadsWizardApi } from '@/lib/api-client';
+import { companiesApiSafe, leadsWizardApi } from '@/lib/api-client';
 import { CategoryMotionIcon } from './categories/CategoryMotionIcon';
-import { trackWizardStart, trackWizardContactSubmitted, trackLeadSuccess } from '@/lib/analytics/consolidated';
+import {
+  trackWizardStart,
+  trackWizardContactSubmitted,
+  trackLeadSuccess,
+} from '@/lib/analytics/consolidated';
 import {
   useBillValueIntent,
   useQuoteWizardTracking,
 } from '@/lib/analytics/hooks/useIntentTracking';
 import { normalizeWizardError } from '@/src/modules/leadWizard/errors/normalizeWizardError';
-import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft, Star } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft, Star, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 type WizardCompany = {
   id: number;
@@ -42,36 +48,60 @@ type WizardFormState = {
   billValue: string;
   monthlyKwh: string;
   decisionTimeline: string;
+  zipcode: string;
   addressFull: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressComplement: string;
+  city: string;
+  state: string;
   fullName: string;
   email: string;
   phone: string;
+  preferredChannel: string;
+  notes: string;
   consent: boolean;
   nickname: string;
 };
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 4;
 const INITIAL_FORM: WizardFormState = {
-  productVertical: '', projectProfile: '', quoteType: '', systemSizeChoice: '',
-  billValue: '', monthlyKwh: '', decisionTimeline: '', addressFull: '',
-  fullName: '', email: '', phone: '', consent: false, nickname: ''
+  productVertical: '',
+  projectProfile: '',
+  quoteType: '',
+  systemSizeChoice: '',
+  billValue: '',
+  monthlyKwh: '',
+  decisionTimeline: '',
+  zipcode: '',
+  addressFull: '',
+  addressStreet: '',
+  addressNumber: '',
+  addressComplement: '',
+  city: '',
+  state: '',
+  fullName: '',
+  email: '',
+  phone: '',
+  preferredChannel: 'WhatsApp',
+  notes: '',
+  consent: false,
+  nickname: '',
 };
 
 type QuoteWizardOpenDetail = {
   preferredCompanyId?: number;
   source?: string;
   categoryId?: number;
+  decisionContext?: Record<string, unknown>;
 };
 
 const STEP_KICKERS: Record<number, string> = {
-  1: '01 - Categoria',
-  2: '02 - Perfil',
-  3: '03 - Orcamento',
-  4: '04 - Sistema',
-  5: '05 - Prazo',
-  6: '06 - Endereco',
-  7: '07 - Contato',
-  8: '08 - Validacao',
+  1: 'Empresa e contexto',
+  2: 'Dados do local',
+  3: 'Detalhes do consumo',
+  4: 'Contato e preferências',
+  5: 'Verificação',
 };
 
 export default function QuoteWizardModal() {
@@ -80,6 +110,10 @@ export default function QuoteWizardModal() {
   const [form, setForm] = useState<WizardFormState>(INITIAL_FORM);
   const [leadId, setLeadId] = useState<number | null>(null);
   const [preferredCompanyId, setPreferredCompanyId] = useState<number | undefined>(undefined);
+  const [preferredCompany, setPreferredCompany] = useState<WizardCompany | null>(null);
+  const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
+  const [decisionContext, setDecisionContext] = useState<Record<string, unknown>>({});
+  const [source, setSource] = useState('external_trigger');
   const [otpCode, setOtpCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +121,7 @@ export default function QuoteWizardModal() {
   const [companies, setCompanies] = useState<WizardCompany[]>([]);
   const [verificationHint, setVerificationHint] = useState('');
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  const { user } = useAuth();
   const formatRating = (rating: unknown) => {
     const parsed = Number(rating ?? 0);
     return Number.isFinite(parsed) ? parsed.toFixed(1) : '0.0';
@@ -98,30 +133,89 @@ export default function QuoteWizardModal() {
     useQuoteWizardTracking(companyIdForTracking);
   const { trackBillValue } = useBillValueIntent(companyIdForTracking);
 
-  const progressValue = useMemo(() => Math.min(100, Math.round((step / TOTAL_STEPS) * 100)), [step]);
+  const progressValue = useMemo(
+    () => Math.min(100, Math.round((step / TOTAL_STEPS) * 100)),
+    [step]
+  );
 
   const resetWizard = useCallback(() => {
-    setStep(1); setForm(INITIAL_FORM); setLeadId(null); setOtpCode('');
-    setError(null); setSubmitting(false); setResendCooldown(0);
-    setCompanies([]); setVerificationHint(''); setIdempotencyKey(crypto.randomUUID());
+    setStep(1);
+    setForm(INITIAL_FORM);
+    setLeadId(null);
+    setOtpCode('');
+    setCategoryId(undefined);
+    setDecisionContext({});
+    setSource('external_trigger');
+    setError(null);
+    setSubmitting(false);
+    setResendCooldown(0);
+    setCompanies([]);
+    setVerificationHint('');
+    setIdempotencyKey(crypto.randomUUID());
     resetTracking();
   }, [resetTracking]);
 
-  const handleOpenRequest = useCallback((detail: QuoteWizardOpenDetail) => {
-    setPreferredCompanyId(detail.preferredCompanyId);
-    resetWizard();
-    setOpen(true);
-    trackWizardStart('main_quote_wizard', detail.source || 'external_trigger', detail.categoryId);
-  }, [resetWizard]);
+  const handleOpenRequest = useCallback(
+    (detail: QuoteWizardOpenDetail) => {
+      resetWizard();
+      setPreferredCompanyId(detail.preferredCompanyId);
+      setCategoryId(detail.categoryId);
+      setDecisionContext(detail.decisionContext || {});
+      setSource(detail.source || 'external_trigger');
+      setOpen(true);
+      trackWizardStart('main_quote_wizard', detail.source || 'external_trigger', detail.categoryId);
+    },
+    [resetWizard]
+  );
 
   useEffect(() => {
     const handler = (event: Event) => {
-      const detail = ((event as CustomEvent<QuoteWizardOpenDetail>).detail || {}) as QuoteWizardOpenDetail;
+      const detail = ((event as CustomEvent<QuoteWizardOpenDetail>).detail ||
+        {}) as QuoteWizardOpenDetail;
+      delete (window as Window & { __avaliaPendingQuoteWizard?: QuoteWizardOpenDetail })
+        .__avaliaPendingQuoteWizard;
       handleOpenRequest(detail);
     };
     window.addEventListener('open-quote-wizard', handler as EventListener);
+    const pending = (window as Window & { __avaliaPendingQuoteWizard?: QuoteWizardOpenDetail })
+      .__avaliaPendingQuoteWizard;
+    if (pending) {
+      delete (window as Window & { __avaliaPendingQuoteWizard?: QuoteWizardOpenDetail })
+        .__avaliaPendingQuoteWizard;
+      handleOpenRequest(pending);
+    }
     return () => window.removeEventListener('open-quote-wizard', handler as EventListener);
   }, [handleOpenRequest]);
+
+  useEffect(() => {
+    if (!open || !user) return;
+    setForm((previous) => ({
+      ...previous,
+      fullName: previous.fullName || user.name || '',
+      email: previous.email || user.email || '',
+      phone: previous.phone || user.phone || '',
+      city: previous.city || user.city || '',
+      state: previous.state || user.state || '',
+    }));
+  }, [open, user]);
+
+  useEffect(() => {
+    if (!open || !preferredCompanyId) return;
+    let active = true;
+    companiesApiSafe.getById(preferredCompanyId).then((company) => {
+      if (!active || !company) return;
+      setPreferredCompany({
+        id: Number(company.id),
+        name: company.name,
+        city: company.city,
+        state: company.state,
+        logo_url: company.logo_url,
+      });
+    });
+    return () => {
+      active = false;
+    };
+  }, [open, preferredCompanyId]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -144,28 +238,69 @@ export default function QuoteWizardModal() {
     }
   };
 
-  const updateForm = (patch: Partial<WizardFormState>) => setForm((prev) => ({ ...prev, ...patch }));
+  const updateForm = (patch: Partial<WizardFormState>) =>
+    setForm((prev) => ({ ...prev, ...patch }));
 
   const computeSystemSizeBand = () => {
     if (form.systemSizeChoice !== 'unknown') return form.systemSizeChoice;
     const bill = parseNumber(form.billValue);
     const kwh = parseNumber(form.monthlyKwh);
-    return ((kwh && kwh >= 1200) || (bill && bill >= 1000)) ? '8 kWp ou mais' : 'Ate 7 kWp';
+    return (kwh && kwh >= 1200) || (bill && bill >= 1000) ? '8 kWp ou mais' : 'Ate 7 kWp';
+  };
+  const buildAddressFull = () => {
+    const street = [form.addressStreet.trim(), form.addressNumber.trim()]
+      .filter(Boolean)
+      .join(', ');
+    const locality = [form.city.trim(), form.state.trim()].filter(Boolean).join('/');
+    return [street, form.addressComplement.trim(), locality, form.zipcode.trim()]
+      .filter(Boolean)
+      .join(' - ');
+  };
+
+  const lookupZipcode = async () => {
+    const zipcode = form.zipcode.replace(/\D/g, '');
+    if (zipcode.length !== 8) {
+      setError('Informe um CEP válido com 8 números.');
+      return;
+    }
+    setError(null);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${zipcode}/json/`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) throw new Error('cep_lookup_failed');
+      const data = await response.json();
+      if (data.erro) throw new Error('cep_not_found');
+      updateForm({
+        addressStreet: data.logradouro || form.addressStreet,
+        city: data.localidade || form.city,
+        state: data.uf || form.state,
+      });
+    } catch {
+      setError('CEP não encontrado. Preencha o endereço manualmente.');
+    }
   };
 
   const handleNext = async () => {
     setError(null);
-    if (step === 1 && !form.productVertical) return setError('Selecione uma opção.');
-    if (step === 2 && !form.projectProfile) return setError('Selecione o perfil.');
-    if (step === 3 && !form.quoteType) return setError('Selecione o tipo.');
+    if (step === 1 && (!form.productVertical || !form.projectProfile || !form.quoteType))
+      return setError('Selecione as opções do projeto.');
+    if (
+      step === 2 &&
+      (!form.addressStreet.trim() || !form.city.trim() || !form.state.trim()) &&
+      form.zipcode.replace(/\D/g, '').length !== 8
+    )
+      return setError('Informe CEP ou endereço completo.');
+    if (
+      step === 3 &&
+      (!form.systemSizeChoice ||
+        !form.decisionTimeline ||
+        (!form.billValue.trim() && !form.monthlyKwh.trim()))
+    )
+      return setError('Informe consumo, tamanho e prazo.');
     if (step === 4) {
-      if (!form.systemSizeChoice) return setError('Selecione o tamanho.');
-      if (form.systemSizeChoice === 'unknown' && !form.billValue) return setError('Informe a conta de luz.');
-    }
-    if (step === 5 && !form.decisionTimeline) return setError('Selecione o prazo.');
-    if (step === 6 && !form.addressFull.trim()) return setError('Informe o endereço.');
-    if (step === 7) {
-      if (!form.fullName.trim() || !form.email.trim() || !form.phone.trim()) return setError('Preencha os dados.');
+      if (!form.fullName.trim() || !form.email.trim() || !form.phone.trim())
+        return setError('Preencha nome, e-mail e WhatsApp.');
       if (!isValidEmail(form.email)) return setError('E-mail inválido.');
       if (!form.consent) return setError('O consentimento é obrigatório.');
 
@@ -173,6 +308,7 @@ export default function QuoteWizardModal() {
       try {
         const payload = {
           lead: {
+            category_id: categoryId,
             product_vertical: form.productVertical,
             project_profile: form.projectProfile,
             quote_type: form.quoteType,
@@ -180,22 +316,33 @@ export default function QuoteWizardModal() {
             bill_value: form.billValue || null,
             monthly_kwh: form.monthlyKwh || null,
             decision_timeline: form.decisionTimeline,
-            address_full: form.addressFull.trim(),
+            zipcode: form.zipcode || null,
+            city: form.city || null,
+            state: form.state || null,
+            address_full: buildAddressFull() || form.addressFull.trim(),
             full_name: form.fullName,
             email: form.email,
             phone: form.phone,
+            preferred_channel: form.preferredChannel,
+            notes: form.notes || null,
             consent: form.consent,
-            nickname: form.nickname
+            nickname: form.nickname,
           },
-          preferred_company_id: preferredCompanyId
+          preferred_company_id: preferredCompanyId,
+          category_id: categoryId,
+          decision_context: decisionContext,
+          source,
         };
         const response = await leadsWizardApi.create(payload, idempotencyKey);
         setLeadId(response.lead_id);
         setVerificationHint(response.email_hint || form.email);
         setResendCooldown(60);
         trackWizardContactSubmitted(String(response.lead_id), preferredCompanyId || '');
-        trackStep(8, TOTAL_STEPS, { action: 'lead_created', product_vertical: form.productVertical });
-        setStep(8);
+        trackStep(TOTAL_STEPS, TOTAL_STEPS, {
+          action: 'lead_created',
+          product_vertical: form.productVertical,
+        });
+        setStep(5);
       } catch (err: unknown) {
         setError(normalizeWizardError(err, 'Erro ao iniciar orçamento.').message);
       } finally {
@@ -213,7 +360,10 @@ export default function QuoteWizardModal() {
     setStep(nextStep);
   };
 
-  const handleBack = () => { setError(null); setStep((prev) => Math.max(prev - 1, 1)); };
+  const handleBack = () => {
+    setError(null);
+    setStep((prev) => Math.max(prev - 1, 1));
+  };
 
   const handleVerifyOtp = async () => {
     setError(null);
@@ -221,17 +371,15 @@ export default function QuoteWizardModal() {
     setSubmitting(true);
     try {
       const response = await leadsWizardApi.verifyEmailCode(leadId, otpCode);
-      if (response && response.companies) {
-        setCompanies(response.companies);
-        trackSubmission(true, leadId);
-        trackLeadSuccess({
-          lead_id: String(leadId),
-          company_id: preferredCompanyId,
-          category: form.productVertical,
-          city: form.addressFull,
-        });
-        setStep(9);
-      }
+      setCompanies(Array.isArray(response?.companies) ? response.companies : []);
+      trackSubmission(true, leadId);
+      trackLeadSuccess({
+        lead_id: String(leadId),
+        company_id: preferredCompanyId,
+        category: form.productVertical,
+        city: form.city,
+      });
+      setStep(6);
     } catch (err: unknown) {
       trackSubmission(false, leadId);
       setError(normalizeWizardError(err, 'Erro na validação.').message);
@@ -244,9 +392,9 @@ export default function QuoteWizardModal() {
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        if (!v && step < 9 && step > 1) {
+        if (!v && step < 6 && step > 1) {
           // Wizard fechado antes de completar — abandono
-          trackAbandonment(step, TOTAL_STEPS);
+          trackAbandonment(Math.min(step, TOTAL_STEPS), TOTAL_STEPS);
         }
         setOpen(v);
         if (!v) resetWizard();
@@ -256,8 +404,8 @@ export default function QuoteWizardModal() {
         overlayClassName="bg-black/65 backdrop-blur-md"
         className={cn(
           'z-[10000] flex max-h-[90dvh] max-w-[500px] flex-col overflow-hidden border-none p-0 rounded-2xl md:rounded-2xl bg-white shadow-2xl',
-          'max-md:left-1/2 max-md:top-1/2 max-md:translate-x-[-50%] max-md:translate-y-[-50%] max-md:w-[min(calc(100vw-32px),420px)]',
-          'max-md:max-h-[min(72dvh,720px)]',
+          'max-md:inset-x-0 max-md:bottom-0 max-md:top-auto max-md:w-full max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-t-3xl max-md:rounded-b-none',
+          'max-md:max-h-[calc(100dvh-var(--sat))]',
           'max-md:grid max-md:grid-rows-[auto_minmax(0,1fr)_auto]',
           'max-md:gap-0 max-md:border max-md:border-slate-200 max-md:bg-white',
           'max-md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.45),0_12px_30px_-6px_rgba(0,0,0,0.15)]',
@@ -267,13 +415,17 @@ export default function QuoteWizardModal() {
         {/* Progress Header */}
         <div className="bg-[#0B1B36] px-4 py-3 md:px-6 md:py-4 text-white rounded-t-2xl pt-[calc(0.5rem+var(--sat))] safe-x">
           <div className="mb-2 md:mb-3 flex items-center justify-between gap-3">
-             <DialogTitle className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] text-white/72">
-               {step < 9 ? `Etapa ${step} de ${TOTAL_STEPS}` : 'Concluído'}
-             </DialogTitle>
-             <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-[#22C55E]">
-                <ShieldCheck className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                100% SEGURO
-             </div>
+            <DialogTitle className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] text-white/72">
+              {step <= TOTAL_STEPS
+                ? `Etapa ${step} de ${TOTAL_STEPS}`
+                : step === 5
+                  ? 'Verificação'
+                  : 'Concluído'}
+            </DialogTitle>
+            <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-[#22C55E]">
+              <ShieldCheck className="w-3 h-3 md:w-3.5 md:h-3.5" />
+              100% SEGURO
+            </div>
           </div>
           <Progress value={progressValue} className="h-1.5 rounded-full bg-[#19315E]" />
         </div>
@@ -281,15 +433,27 @@ export default function QuoteWizardModal() {
         <div className="flex-grow overflow-y-auto px-4 py-4 md:px-6 md:py-5 overscroll-contain safe-x">
           {step === 1 && (
             <div className="space-y-4">
-              <WizardHeading kicker={STEP_KICKERS[1]} title="O que você deseja comparar?" subtitle="Selecione a solução ideal para você." />
+              <WizardHeading
+                kicker={STEP_KICKERS[1]}
+                title="O que você deseja comparar?"
+                subtitle="Selecione a solução ideal para você."
+              />
               <div className="grid grid-cols-1 gap-2 md:gap-3">
-                {['Energia Solar e/ou Baterias', 'Bombas de Calor', 'Carregadores Veiculares (EV)'].map(v => {
+                {[
+                  'Energia Solar e/ou Baterias',
+                  'Bombas de Calor',
+                  'Carregadores Veiculares (EV)',
+                ].map((v) => {
                   let slug = '';
                   if (v.includes('Solar')) slug = 'solar-residencial';
                   if (v.includes('Bombas')) slug = 'solar-rural';
                   if (v.includes('Carregadores')) slug = 'wallbox-residencial';
                   return (
-                    <OptionButton key={v} selected={form.productVertical === v} onClick={() => { updateForm({ productVertical: v }); handleNext(); }}>
+                    <OptionButton
+                      key={v}
+                      selected={form.productVertical === v}
+                      onClick={() => updateForm({ productVertical: v })}
+                    >
                       <div className="flex items-center gap-3">
                         <CategoryMotionIcon
                           slug={slug}
@@ -306,153 +470,334 @@ export default function QuoteWizardModal() {
             </div>
           )}
 
+          {step === 1 && preferredCompanyId && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-bold text-blue-900">
+              {preferredCompany?.name
+                ? `Solicitação para ${preferredCompany.name}`
+                : 'Empresa de origem selecionada'}
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-4">
+              <WizardHeading
+                kicker="Contexto"
+                title="Qual é o seu projeto?"
+                subtitle="Escolha o perfil da instalação e o tipo de orçamento."
+              />
+              <FieldGroup label="Perfil da instalação">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {['Residencial', 'Condominio', 'Comercial'].map((value) => (
+                    <OptionButton
+                      key={value}
+                      selected={form.projectProfile === value}
+                      onClick={() => updateForm({ projectProfile: value })}
+                    >
+                      {value}
+                    </OptionButton>
+                  ))}
+                </div>
+              </FieldGroup>
+              <FieldGroup label="Tipo de orçamento">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {['Energia Solar', 'Solar + Bateria', 'Apenas Bateria'].map((value) => (
+                    <OptionButton
+                      key={value}
+                      selected={form.quoteType === value}
+                      onClick={() => updateForm({ quoteType: value })}
+                    >
+                      {value}
+                    </OptionButton>
+                  ))}
+                </div>
+              </FieldGroup>
+            </div>
+          )}
+
           {step === 2 && (
             <div className="space-y-4">
-              <WizardHeading kicker={STEP_KICKERS[2]} title="Qual o tipo de projeto?" subtitle="Selecione o perfil da instalação." />
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
-                {['Residencial', 'Condominio', 'Comercial'].map(v => (
-                  <OptionButton key={v} selected={form.projectProfile === v} onClick={() => { updateForm({ projectProfile: v }); handleNext(); }}>
-                    {v}
-                  </OptionButton>
-                ))}
+              <WizardHeading
+                kicker="Local"
+                title="Onde será o projeto?"
+                subtitle="Informe o endereço para empresas prepararem uma proposta adequada."
+              />
+              <div className="flex gap-2">
+                <Input
+                  value={form.zipcode}
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  onChange={(event) => updateForm({ zipcode: event.target.value })}
+                  placeholder="CEP"
+                  className="h-12 rounded-xl"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={lookupZipcode}
+                  className="h-12 shrink-0 rounded-xl"
+                >
+                  Buscar CEP
+                </Button>
               </div>
+              <div className="grid gap-3 md:grid-cols-[1fr_120px]">
+                <Input
+                  value={form.addressStreet}
+                  autoComplete="street-address"
+                  onChange={(event) => updateForm({ addressStreet: event.target.value })}
+                  placeholder="Rua ou avenida"
+                  className="h-12 rounded-xl"
+                />
+                <Input
+                  value={form.addressNumber}
+                  onChange={(event) => updateForm({ addressNumber: event.target.value })}
+                  placeholder="Número"
+                  className="h-12 rounded-xl"
+                />
+              </div>
+              <Input
+                value={form.addressComplement}
+                onChange={(event) => updateForm({ addressComplement: event.target.value })}
+                placeholder="Complemento (opcional)"
+                className="h-12 rounded-xl"
+              />
+              <div className="grid grid-cols-[1fr_90px] gap-3">
+                <Input
+                  value={form.city}
+                  autoComplete="address-level2"
+                  onChange={(event) => updateForm({ city: event.target.value })}
+                  placeholder="Cidade"
+                  className="h-12 rounded-xl"
+                />
+                <Input
+                  value={form.state}
+                  maxLength={2}
+                  autoComplete="address-level1"
+                  onChange={(event) => updateForm({ state: event.target.value.toUpperCase() })}
+                  placeholder="UF"
+                  className="h-12 rounded-xl uppercase"
+                />
+              </div>
+              <p className="flex items-center gap-2 text-xs text-slate-500">
+                <MapPin className="h-4 w-4 text-blue-600" /> Você poderá revisar os dados antes de
+                enviar.
+              </p>
             </div>
           )}
 
           {step === 3 && (
             <div className="space-y-4">
-              <WizardHeading kicker={STEP_KICKERS[3]} title="Tipo de Orçamento" subtitle="Escolha o que deseja cotar." />
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
-                {['Energia Solar', 'Solar + Bateria', 'Apenas Bateria'].map(v => (
-                  <OptionButton key={v} selected={form.quoteType === v} onClick={() => { updateForm({ quoteType: v }); handleNext(); }}>
-                    {v}
-                  </OptionButton>
-                ))}
+              <WizardHeading
+                kicker="Consumo"
+                title="Sobre seu consumo"
+                subtitle="Informe pelo menos uma referência para melhorar as propostas."
+              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label>Valor médio da conta (R$)</Label>
+                  <Input
+                    value={form.billValue}
+                    inputMode="decimal"
+                    onChange={(event) => {
+                      updateForm({ billValue: event.target.value });
+                      trackBillValue(event.target.value);
+                    }}
+                    placeholder="Ex.: 350"
+                    className="h-12 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Consumo mensal (kWh)</Label>
+                  <Input
+                    value={form.monthlyKwh}
+                    inputMode="decimal"
+                    onChange={(event) => updateForm({ monthlyKwh: event.target.value })}
+                    placeholder="Ex.: 450"
+                    className="h-12 rounded-xl"
+                  />
+                </div>
               </div>
+              <FieldGroup label="Tamanho estimado do sistema">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {['Ate 7 kWp', '8 kWp ou mais', 'unknown'].map((value) => (
+                    <OptionButton
+                      key={value}
+                      selected={form.systemSizeChoice === value}
+                      onClick={() => updateForm({ systemSizeChoice: value })}
+                    >
+                      {value === 'unknown' ? 'Não sei' : value}
+                    </OptionButton>
+                  ))}
+                </div>
+              </FieldGroup>
+              <FieldGroup label="Quando pretende realizar o projeto?">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {['Agora', 'Em até 6 meses', 'Mais de 6 meses'].map((value) => (
+                    <OptionButton
+                      key={value}
+                      selected={form.decisionTimeline === value}
+                      onClick={() => updateForm({ decisionTimeline: value })}
+                    >
+                      {value}
+                    </OptionButton>
+                  ))}
+                </div>
+              </FieldGroup>
             </div>
           )}
 
           {step === 4 && (
             <div className="space-y-4">
-              <WizardHeading kicker={STEP_KICKERS[4]} title="Tamanho do Sistema" subtitle="Você já sabe a potência necessária?" />
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
-                {['Ate 7 kWp', '8 kWp ou mais', 'unknown'].map(v => (
-                  <OptionButton key={v} selected={form.systemSizeChoice === v} onClick={() => updateForm({ systemSizeChoice: v })}>
-                    {v === 'unknown' ? 'Não sei' : v}
-                  </OptionButton>
-                ))}
+              <WizardHeading
+                kicker="Contato"
+                title="Seus dados de contato"
+                subtitle="Usaremos seus dados somente para esta solicitação."
+              />
+              <Input
+                value={form.fullName}
+                autoComplete="name"
+                onChange={(event) => updateForm({ fullName: event.target.value })}
+                placeholder="Nome completo"
+                className="h-12 rounded-xl"
+              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  type="email"
+                  value={form.email}
+                  autoComplete="email"
+                  onChange={(event) => updateForm({ email: event.target.value })}
+                  placeholder="E-mail"
+                  className="h-12 rounded-xl"
+                />
+                <Input
+                  type="tel"
+                  value={form.phone}
+                  autoComplete="tel"
+                  onChange={(event) => updateForm({ phone: event.target.value })}
+                  placeholder="WhatsApp"
+                  className="h-12 rounded-xl"
+                />
               </div>
-              {form.systemSizeChoice === 'unknown' && (
-                <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Média da conta de luz (R$)</Label>
-                    <Input
-                      value={form.billValue}
-                      onChange={(e) => {
-                        updateForm({ billValue: e.target.value });
-                        trackBillValue(e.target.value);
-                      }}
-                      placeholder="Ex: 420"
-                      className="h-11 rounded-xl"
-                    />
-                  </div>
-                </div>
-              )}
+              <select
+                aria-label="Canal preferido"
+                value={form.preferredChannel}
+                onChange={(event) => updateForm({ preferredChannel: event.target.value })}
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
+              >
+                <option>WhatsApp</option>
+                <option>E-mail</option>
+                <option>WhatsApp e E-mail</option>
+              </select>
+              <textarea
+                value={form.notes}
+                onChange={(event) => updateForm({ notes: event.target.value })}
+                placeholder="Observações (opcional)"
+                className="min-h-20 w-full rounded-xl border border-slate-200 p-3 text-sm"
+              />
+              <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                <Checkbox
+                  checked={form.consent}
+                  onCheckedChange={(value) => updateForm({ consent: Boolean(value) })}
+                />
+                <Label className="text-xs leading-relaxed">
+                  Aceito compartilhar meus dados com empresas relevantes para receber propostas. *
+                </Label>
+              </div>
             </div>
           )}
 
           {step === 5 && (
-            <div className="space-y-4">
-              <WizardHeading kicker={STEP_KICKERS[5]} title="Quando pretende decidir?" subtitle="Ajude as empresas a priorizarem seu contato." />
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
-                {['Agora', 'Em ate 6 meses', 'Mais de 6 meses'].map(v => (
-                  <OptionButton key={v} selected={form.decisionTimeline === v} onClick={() => { updateForm({ decisionTimeline: v }); handleNext(); }}>
-                    {v}
-                  </OptionButton>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {step === 6 && (
-            <div className="space-y-4">
-              <WizardHeading kicker={STEP_KICKERS[6]} title="Onde será a instalação?" subtitle="Informe o endereço completo." />
-              <div className="space-y-1.5">
-                <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Endereço Completo</Label>
-                <Input value={form.addressFull} onChange={(e) => updateForm({ addressFull: e.target.value })} placeholder="Rua, número - Cidade/UF" className="h-12 rounded-xl" />
-              </div>
-            </div>
-          )}
-
-          {step === 7 && (
-            <div className="space-y-4">
-              <WizardHeading kicker={STEP_KICKERS[7]} title="Seus Dados de Contato" subtitle="Quase lá! Como as empresas podem falar com você?" />
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nome Completo</Label>
-                  <Input value={form.fullName} onChange={(e) => updateForm({ fullName: e.target.value })} placeholder="Seu nome" className="h-11 rounded-xl" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">E-mail</Label>
-                    <Input type="email" value={form.email} onChange={(e) => updateForm({ email: e.target.value })} placeholder="voce@email.com" className="h-11 rounded-xl" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Telefone</Label>
-                    <Input value={form.phone} onChange={(e) => updateForm({ phone: e.target.value })} placeholder="(00) 00000-0000" className="h-11 rounded-xl" />
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <Checkbox checked={form.consent} onCheckedChange={(v) => updateForm({ consent: Boolean(v) })} className="mt-1" />
-                  <Label className="text-xs text-slate-500 font-bold leading-relaxed cursor-pointer uppercase tracking-tight">
-                    Aceito receber orçamentos de até 3 empresas verificadas.
-                  </Label>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 8 && (
             <div className="space-y-8 py-4 text-center">
-              <WizardHeading kicker={STEP_KICKERS[8]} title="Validação de Segurança" subtitle={`Digitie o código enviado para ${verificationHint || form.email}`} center />
+              <WizardHeading
+                kicker={STEP_KICKERS[8]}
+                title="Validação de Segurança"
+                subtitle={`Digitie o código enviado para ${verificationHint || form.email}`}
+                center
+              />
               <div className="flex flex-col items-center gap-6">
                 <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
                   <InputOTPGroup className="gap-2">
-                    {[0, 1, 2, 3, 4, 5].map(i => <InputOTPSlot key={i} index={i} className="h-12 w-10 md:w-12 rounded-xl border-slate-200 text-lg font-bold" />)}
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot
+                        key={i}
+                        index={i}
+                        className="h-12 w-10 md:w-12 rounded-xl border-slate-200 text-lg font-bold"
+                      />
+                    ))}
                   </InputOTPGroup>
                 </InputOTP>
-                <button onClick={handleResend} disabled={resendCooldown > 0 || submitting} className="text-xs font-bold text-slate-400 hover:text-blue-600">
+                <Button
+                  onClick={handleVerifyOtp}
+                  disabled={submitting || otpCode.length < 6}
+                  className="h-12 min-w-[180px] rounded-xl bg-blue-600 font-bold text-white"
+                >
+                  {submitting ? 'Verificando...' : 'Confirmar código'}
+                </Button>
+                <button
+                  onClick={handleResend}
+                  disabled={resendCooldown > 0 || submitting}
+                  className="text-xs font-bold text-slate-400 hover:text-blue-600"
+                >
                   {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar código'}
                 </button>
               </div>
             </div>
           )}
 
-          {step === 9 && (
+          {step === 6 && (
             <div className="space-y-8">
               <div className="text-center space-y-2">
                 <div className="mx-auto h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                   <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                  <CheckCircle2 className="h-8 w-8 text-emerald-600" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-950 tracking-tight">Sucesso! Orçamento Iniciado.</h2>
-                <p className="text-sm text-slate-500 font-medium">Estas empresas entrarão em contato com você:</p>
+                <h2 className="text-2xl font-black text-slate-950 tracking-tight">
+                  Sucesso! Orçamento Iniciado.
+                </h2>
+                <p className="text-sm text-slate-500 font-medium">
+                  {companies.length > 0
+                    ? 'Estas empresas receberam sua solicitação:'
+                    : 'Sua solicitação foi registrada e seguirá para as empresas elegíveis.'}
+                </p>
               </div>
+              {companies.length === 0 && (
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+                  Acompanhe atualizações e propostas reais em <strong>Minhas propostas</strong>.
+                </div>
+              )}
               <div className="space-y-3">
-                {companies.map(c => (
-                  <div key={c.id} className="flex items-center gap-4 rounded-2xl border border-slate-100 p-4 bg-white shadow-sm hover:shadow-md transition-all">
+                {companies.map((c) => (
+                  <div
+                    key={c.id}
+                    className="flex items-center gap-4 rounded-2xl border border-slate-100 p-4 bg-white shadow-sm hover:shadow-md transition-all"
+                  >
                     <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-100">
-                      {c.logo_url ? <Image src={c.logo_url} alt={c.name} width={48} height={48} className="object-cover" /> : <Zap className="w-5 h-5 text-slate-300" />}
+                      {c.logo_url ? (
+                        <Image
+                          src={c.logo_url}
+                          alt={c.name}
+                          width={48}
+                          height={48}
+                          className="object-cover"
+                        />
+                      ) : (
+                        <Zap className="w-5 h-5 text-slate-300" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-black text-slate-900 truncate uppercase tracking-tight">{c.name}</p>
-                      <p className="text-xs text-slate-500 font-bold">{(c.city || '-') + (c.state ? `, ${c.state}` : '')}</p>
+                      <p className="font-black text-slate-900 truncate uppercase tracking-tight">
+                        {c.name}
+                      </p>
+                      <p className="text-xs text-slate-500 font-bold">
+                        {(c.city || '-') + (c.state ? `, ${c.state}` : '')}
+                      </p>
                     </div>
                     <div className="text-right">
-                       <div className="flex items-center gap-1 text-slate-900 font-black">
-                         <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                         {formatRating(c.rating_avg)}
-                       </div>
-                       <p className="text-[10px] text-slate-400 font-black">{c.reviews_count || 0} AVALIAÇÕES</p>
+                      <div className="flex items-center gap-1 text-slate-900 font-black">
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                        {formatRating(c.rating_avg)}
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-black">
+                        {c.reviews_count || 0} AVALIAÇÕES
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -460,28 +805,59 @@ export default function QuoteWizardModal() {
             </div>
           )}
 
-          {error && <div className="text-xs font-bold text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">{error}</div>}
+          {error && (
+            <div className="text-xs font-bold text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">
+              {error}
+            </div>
+          )}
         </div>
 
         {/* Action Footer */}
         <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 md:px-6 md:py-3 rounded-b-2xl safe-x pb-[calc(0.75rem+var(--sab))]">
           {step <= TOTAL_STEPS ? (
             <>
-              <Button variant="ghost" className="h-12 min-h-[48px] rounded-xl px-3 text-xs font-black tracking-[0.16em] text-[#0B1B36] hover:bg-slate-50 hover:text-[#1268E8] disabled:text-slate-300" onClick={handleBack} disabled={step === 1 || submitting}>
+              <Button
+                variant="ghost"
+                className="h-12 min-h-[48px] rounded-xl px-3 text-xs font-black tracking-[0.16em] text-[#0B1B36] hover:bg-slate-50 hover:text-[#1268E8] disabled:text-slate-300"
+                onClick={handleBack}
+                disabled={step === 1 || submitting}
+              >
                 <ArrowLeft className="w-4 h-4 mr-2" /> VOLTAR
               </Button>
-              {step < 8 ? (
-                <Button onClick={handleNext} disabled={submitting} className="h-12 min-h-[48px] rounded-xl border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-[0_10px_24px_rgba(37,99,235,0.25)] hover:bg-[#0F56C6] active:scale-[0.98]">
+              {step < TOTAL_STEPS ? (
+                <Button
+                  onClick={handleNext}
+                  disabled={submitting}
+                  className="h-12 min-h-[48px] rounded-xl border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-[0_10px_24px_rgba(37,99,235,0.25)] hover:bg-[#0F56C6] active:scale-[0.98]"
+                >
                   AVANÇAR <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={handleVerifyOtp} disabled={submitting} className="h-12 min-h-[48px] rounded-xl border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-[0_10px_24px_rgba(37,99,235,0.25)] hover:bg-[#0F56C6] active:scale-[0.98]">
-                  VALIDAR AGORA
+                <Button
+                  onClick={handleNext}
+                  disabled={submitting}
+                  className="h-12 min-h-[48px] rounded-xl border border-[#1268E8] bg-[#1268E8] px-5 text-xs font-black tracking-[0.16em] text-white shadow-[0_10px_24px_rgba(37,99,235,0.25)] hover:bg-[#0F56C6] active:scale-[0.98]"
+                >
+                  ENVIAR SOLICITAÇÃO
                 </Button>
               )}
             </>
-          ) : (
-            <Button onClick={() => setOpen(false)} className="h-12 min-h-[48px] w-full rounded-xl bg-[#0B1B36] text-xs font-black tracking-[0.16em] shadow-lg active:scale-[0.98]">CONCLUÍDO</Button>
+          ) : step === 5 ? null : (
+            <div className="flex w-full gap-2">
+              <Button
+                asChild
+                variant="outline"
+                className="h-12 min-h-[48px] flex-1 rounded-xl text-xs font-bold"
+              >
+                <Link href="/review-dashboard/proposals">VER MINHAS PROPOSTAS</Link>
+              </Button>
+              <Button
+                onClick={() => setOpen(false)}
+                className="h-12 min-h-[48px] flex-1 rounded-xl bg-[#0B1B36] text-xs font-black tracking-[0.16em] shadow-lg active:scale-[0.98]"
+              >
+                CONCLUÍDO
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>
@@ -500,12 +876,25 @@ const WizardHeading = ({
   center?: boolean;
   kicker?: string;
 }) => (
-  <div className={cn("space-y-1", center && "text-center")}>
+  <div className={cn('space-y-1', center && 'text-center')}>
     {kicker ? (
-      <p className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] text-[#1268E8]">{kicker}</p>
+      <p className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] text-[#1268E8]">
+        {kicker}
+      </p>
     ) : null}
-    <h2 className="text-[18px] md:text-[24px] font-[800] leading-[1.15] tracking-[-0.02em] text-[#0B1B36] uppercase">{title}</h2>
-    <p className="max-w-[32ch] text-[13px] md:text-[14px] leading-[1.4] text-slate-500 font-medium">{subtitle}</p>
+    <h2 className="text-[18px] md:text-[24px] font-[800] leading-[1.15] tracking-[-0.02em] text-[#0B1B36] uppercase">
+      {title}
+    </h2>
+    <p className="max-w-[32ch] text-[13px] md:text-[14px] leading-[1.4] text-slate-500 font-medium">
+      {subtitle}
+    </p>
+  </div>
+);
+
+const FieldGroup = ({ label, children }: { label: string; children: ReactNode }) => (
+  <div className="space-y-2">
+    <Label className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</Label>
+    {children}
   </div>
 );
 
@@ -515,14 +904,19 @@ type OptionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const OptionButton = ({ selected, children, className, ...props }: OptionButtonProps) => (
-  <button type="button" className={cn(
-    'w-full border px-3 md:px-4 min-h-[48px] py-2 md:py-3 text-left text-[12px] md:text-[14px] font-[700] uppercase tracking-tight transition-all active:scale-[0.98]',
-    'rounded-xl border-slate-200 bg-white text-[#0B1B36] shadow-sm',
-    selected
-      ? 'border-[#1268E8] bg-blue-50/70 text-[#0B1B36] ring-2 ring-blue-500/10 shadow-md'
-      : 'hover:border-blue-300 hover:bg-slate-50 hover:shadow',
-    className
-  )} aria-pressed={selected} {...props}>
+  <button
+    type="button"
+    className={cn(
+      'w-full border px-3 md:px-4 min-h-[48px] py-2 md:py-3 text-left text-[12px] md:text-[14px] font-[700] uppercase tracking-tight transition-all active:scale-[0.98]',
+      'rounded-xl border-slate-200 bg-white text-[#0B1B36] shadow-sm',
+      selected
+        ? 'border-[#1268E8] bg-blue-50/70 text-[#0B1B36] ring-2 ring-blue-500/10 shadow-md'
+        : 'hover:border-blue-300 hover:bg-slate-50 hover:shadow',
+      className
+    )}
+    aria-pressed={selected}
+    {...props}
+  >
     <div className="flex items-center justify-between">
       {children}
       {selected && <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0" />}
