@@ -68,7 +68,7 @@ export default function CompanyCTAGroup({
         type="button"
         size="default"
         onClick={handleRequestQuote}
-        className="h-14 min-h-[56px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl bg-blue-600 px-0.5 text-[10px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[390px]:text-xs min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[145px]"
+        className="h-12 min-h-[48px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl bg-blue-600 px-0.5 text-[10px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[145px]"
       >
         <Send
           className="h-[18px] w-[18px] shrink-0 fill-current min-[390px]:h-5 min-[390px]:w-5"
@@ -84,7 +84,7 @@ export default function CompanyCTAGroup({
         size="default"
         onClick={handleToggleComparison}
         className={cn(
-          'h-14 min-h-[56px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl border px-0.5 text-[10px] font-semibold leading-4 transition-colors min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[390px]:text-xs min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[100px]',
+          'h-12 min-h-[48px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl border px-0.5 text-[10px] font-semibold leading-4 transition-colors min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[100px]',
           isCompared
             ? 'border-blue-600 bg-blue-50 text-blue-700'
             : 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
@@ -102,7 +102,7 @@ export default function CompanyCTAGroup({
         href={reviewPath}
         aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
         title="Avaliar empresa"
-        className="h-14 min-h-[56px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-0.5 text-[10px] font-semibold leading-4 text-slate-900 transition-colors hover:bg-amber-500/[0.12] min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[390px]:text-xs min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[130px]"
+        className="h-12 min-h-[48px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-0.5 text-[10px] font-semibold leading-4 text-slate-900 transition-colors hover:bg-amber-500/[0.12] min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[130px]"
       >
         <Star
           className="h-[18px] w-[18px] shrink-0 fill-amber-400 text-amber-400 min-[390px]:h-5 min-[390px]:w-5"

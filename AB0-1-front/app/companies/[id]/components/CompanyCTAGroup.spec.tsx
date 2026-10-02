@@ -60,25 +60,25 @@ describe('CompanyCTAGroup', () => {
     expect(screen.queryByText('Avaliar...')).not.toBeInTheDocument();
   });
 
-  it('aplica densidade mobile de 56px e preserva overrides desktop', () => {
+  it('aplica densidade mobile de 48px e preserva overrides desktop', () => {
     render(<CompanyCTAGroup company={company} />);
 
     const group = document.getElementById('company-cta-group');
     expect(group).toHaveClass('grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)_minmax(0,1.2fr)]');
 
     expect(screen.getByRole('button', { name: 'Solicitar contato' })).toHaveClass(
-      'h-14',
-      'min-h-[56px]',
+      'h-12',
+      'min-h-[48px]',
       'lg:h-10'
     );
     expect(screen.getByRole('button', { name: 'Comparar' })).toHaveClass(
-      'h-14',
-      'min-h-[56px]',
+      'h-12',
+      'min-h-[48px]',
       'lg:h-10'
     );
     expect(screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' })).toHaveClass(
-      'h-14',
-      'min-h-[56px]',
+      'h-12',
+      'min-h-[48px]',
       'lg:h-10'
     );
   });
