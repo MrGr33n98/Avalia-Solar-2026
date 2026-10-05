@@ -99,6 +99,8 @@ export default function RoleBasedDashboardLayout({
       router.push('/dashboard/icp');
     } else if (tab === 'quote-form') {
       router.push(`/dashboard/quote-form?company_id=${companyId}`);
+    } else if (tab === 'proposals') {
+      router.push('/dashboard/proposals');
     } else {
       router.push(`/dashboard?tab=${tab}`);
     }

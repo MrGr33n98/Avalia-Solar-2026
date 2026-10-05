@@ -1,0 +1,241 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe 'Marketplace proposals API', type: :request do
+  let(:company) { create(:company, status: 'active', p2p_chat_enabled: true) }
+  let(:other_company) { create(:company, status: 'active') }
+  let(:buyer) do
+    create(:user, role: 'review', company: nil, status: :active, confirmed_at: Time.current,
+                  city: 'São Paulo', state: 'SP')
+  end
+  let(:company_user) do
+    create(:user, role: 'company', company: nil, status: :active, confirmed_at: Time.current)
+  end
+
+  before do
+    create(:company_member, company: company, user: company_user, role: 'owner', status: 'active')
+  end
+
+  def headers_for(user)
+    token = JWT.encode(
+      { user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i },
+      Rails.application.secret_key_base,
+      'HS256'
+    )
+    { 'Authorization' => "Bearer #{token}", 'Content-Type' => 'application/json' }
+  end
+
+  def add_published_version(proposal, name: 'Sistema fotovoltaico', total_cents: 26_900_00)
+    version = proposal.versions.create!(
+      number: 1,
+      title: 'Proposta completa',
+      summary: 'Solução dimensionada para o projeto.',
+      status: 'published',
+      total_cents: total_cents,
+      published_at: Time.current
+    )
+    version.items.create!(
+      kind: 'equipment',
+      name: name,
+      quantity: 1,
+      unit: 'un',
+      unit_price_cents: total_cents,
+      total_cents: total_cents,
+      position: 0
+    )
+    proposal.update!(current_version_number: 1, total_cents: total_cents, published_at: Time.current)
+    proposal
+  end
+
+  describe 'buyer journey' do
+    let!(:lead) { create(:lead, company: nil, email: buyer.email, name: buyer.name) }
+    let!(:distribution) do
+      created = create(:lead_distribution, lead: lead, company: company, status: 'sent')
+      created.accept!
+      created
+    end
+    let!(:proposal) do
+      add_published_version(
+        create(:marketplace_proposal, lead: lead, company: company, lead_distribution: distribution, buyer_user: buyer,
+                                      status: 'sent')
+      )
+    end
+
+    it 'lista proposta publicada, rejeita rascunho e aceita a escolhida' do
+      draft_distribution = create(:lead_distribution, lead: lead, company: other_company, status: 'sent')
+      draft_distribution.accept!
+      draft = create(:marketplace_proposal, lead: lead, company: other_company, lead_distribution: draft_distribution,
+                                            buyer_user: buyer, status: 'draft')
+
+      get '/api/v1/proposals', headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body['proposals'].map { |item| item['id'] }).to include(proposal.id)
+      expect(body['proposals'].map { |item| item['id'] }).not_to include(draft.id)
+
+      post "/api/v1/proposals/#{proposal.id}/accept", headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      expect(proposal.reload.status).to eq('accepted')
+      expect(proposal.project).to be_present
+      expect(proposal.project.milestones.count).to eq(6)
+    end
+
+    it 'registra visualização, comparação e solicitação de reunião' do
+      post "/api/v1/proposals/#{proposal.id}/view", headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      expect(proposal.reload.status).to eq('viewed')
+
+      get '/api/v1/proposals/compare', params: { ids: proposal.id }, headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)['proposals'].map { |item| item['id'] }).to include(proposal.id)
+
+      post "/api/v1/proposals/#{proposal.id}/meetings",
+           params: { meeting_type: 'video', scheduled_at: 2.days.from_now.iso8601,
+                     notes: 'Revisar equipamentos' }.to_json,
+           headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:created)
+      expect(proposal.reload.status).to eq('meeting_scheduled')
+      expect(proposal.meetings.last.status).to eq('requested')
+    end
+
+    it 'registra pedido de alteração e recusa com decisão auditável' do
+      post "/api/v1/proposals/#{proposal.id}/request_change",
+           params: { reason: 'Ajustar prazo de instalação' }.to_json,
+           headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      expect(proposal.reload.status).to eq('negotiating')
+      expect(proposal.decisions.last.kind).to eq('request_change')
+
+      declined = add_published_version(
+        create(:marketplace_proposal, lead: lead, company: other_company, buyer_user: buyer, status: 'sent'),
+        total_cents: 27_500_00
+      )
+      post "/api/v1/proposals/#{declined.id}/decline",
+           params: { reason: 'Condições fora do orçamento' }.to_json,
+           headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      expect(declined.reload.status).to eq('declined')
+      expect(declined.decisions.last.reason).to eq('Condições fora do orçamento')
+    end
+
+    it 'mantém o contexto da proposta ao abrir a conversa' do
+      allow_any_instance_of(Company).to receive(:feature_access).and_wrap_original do |method|
+        method.call.merge('p2p_chat' => { 'state' => 'enabled' })
+      end
+
+      post '/api/v1/conversations',
+           params: { company_id: company.id, marketplace_proposal_id: proposal.id }.to_json,
+           headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      conversation = Conversation.find(JSON.parse(response.body)['id'])
+      expect(conversation.marketplace_proposal_id).to eq(proposal.id)
+    end
+  end
+
+  describe 'company workspace' do
+    let!(:lead) { create(:lead, company: nil) }
+    let!(:distribution) { create(:lead_distribution, lead: lead, company: company, status: 'sent') }
+
+    it 'cria, publica e lista a proposta no tenant da empresa' do
+      post '/api/v1/company_dashboard/proposals',
+           params: { company_id: company.id, lead_distribution_id: distribution.id }.to_json,
+           headers: headers_for(company_user)
+
+      expect(response).to have_http_status(:created)
+      proposal_id = JSON.parse(response.body).dig('proposal', 'id')
+
+      patch "/api/v1/company_dashboard/proposals/#{proposal_id}",
+            params: { company_id: company.id, proposal: {
+              title: 'Proposta comercial',
+              summary: 'Condições comerciais e técnicas.',
+              items: [{ kind: 'service', name: 'Instalação solar', quantity: 1, unit: 'un',
+                        unit_price_cents: 28_500_00, position: 0 }]
+            } }.to_json,
+            headers: headers_for(company_user)
+      expect(response).to have_http_status(:ok)
+
+      post "/api/v1/company_dashboard/proposals/#{proposal_id}/send",
+           params: { company_id: company.id }.to_json,
+           headers: headers_for(company_user)
+      expect(response).to have_http_status(:ok)
+      expect(MarketplaceProposal.find(proposal_id).status).to eq('sent')
+      expect(lead.reload.wizard_status).to eq('proposal_sent')
+    end
+
+    it 'cria uma nova versão preservando o histórico da proposta' do
+      proposal = add_published_version(
+        create(:marketplace_proposal, lead: lead, company: company, lead_distribution: distribution, status: 'draft'),
+        total_cents: 28_500_00
+      )
+
+      post "/api/v1/company_dashboard/proposals/#{proposal.id}/new_version",
+           params: { company_id: company.id }.to_json,
+           headers: headers_for(company_user)
+
+      expect(response).to have_http_status(:created)
+      expect(proposal.reload.status).to eq('draft')
+      expect(proposal.versions.order(:number).pluck(:number)).to eq([1, 2])
+      expect(JSON.parse(response.body).dig('proposal', 'versions').length).to eq(2)
+    end
+
+    it 'atualiza reunião, projeto e milestone no tenant da empresa' do
+      proposal = add_published_version(
+        create(:marketplace_proposal, lead: lead, company: company, lead_distribution: distribution,
+                                      status: 'accepted'),
+        total_cents: 28_500_00
+      )
+      meeting = proposal.meetings.create!(
+        buyer_user: company_user,
+        company: company,
+        meeting_type: 'video',
+        status: 'requested'
+      )
+
+      patch "/api/v1/company_dashboard/proposals/#{proposal.id}/meetings/#{meeting.id}",
+            params: { company_id: company.id, status: 'confirmed' }.to_json,
+            headers: headers_for(company_user)
+
+      expect(response).to have_http_status(:ok)
+      expect(meeting.reload.status).to eq('confirmed')
+
+      patch "/api/v1/company_dashboard/proposals/#{proposal.id}/project",
+            params: { company_id: company.id, status: 'in_progress' }.to_json,
+            headers: headers_for(company_user)
+
+      expect(response).to have_http_status(:ok)
+      project = proposal.reload.project
+      expect(project.status).to eq('in_progress')
+
+      milestone = project.milestones.create!(
+        key: 'site_visit',
+        title: 'Visita técnica',
+        position: 0,
+        status: 'pending'
+      )
+      patch "/api/v1/company_dashboard/proposals/#{proposal.id}/project/milestones/#{milestone.id}",
+            params: { company_id: company.id, status: 'current', notes: 'Agendada com o cliente' }.to_json,
+            headers: headers_for(company_user)
+
+      expect(response).to have_http_status(:ok)
+      expect(milestone.reload.status).to eq('current')
+      expect(milestone.notes).to eq('Agendada com o cliente')
+    end
+
+    it 'impede que uma empresa consulte outro tenant' do
+      get '/api/v1/company_dashboard/proposals',
+          params: { company_id: other_company.id },
+          headers: headers_for(company_user)
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+end

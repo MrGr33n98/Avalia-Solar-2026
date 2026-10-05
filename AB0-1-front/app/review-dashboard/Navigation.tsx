@@ -100,7 +100,7 @@ export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }
   {
     title: 'Oportunidades',
     items: [
-      { label: 'Minhas Propostas', href: '/review-dashboard#opportunities', icon: MessageCircle },
+      { label: 'Minhas Propostas', href: '/review-dashboard/proposals', icon: MessageCircle },
     ],
   },
   {
@@ -143,7 +143,7 @@ export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }
 const bottomNav: DashboardNavItem[] = [
   { label: 'Dashboard', href: '/review-dashboard', icon: Home },
   { label: 'Avaliações', href: '/review-dashboard/reviews', icon: ClipboardList },
-  { label: 'Propostas', href: '/review-dashboard#opportunities', icon: MessageCircle },
+  { label: 'Propostas', href: '/review-dashboard/proposals', icon: MessageCircle },
   { label: 'Reputação', href: '/review-dashboard#reputation', icon: Award },
   { label: 'Perfil', href: '/review-dashboard/profile', icon: UserRound },
 ];
@@ -404,9 +404,9 @@ export const sidebarMenuGroups: SidebarCollapsibleGroup[] = [
     label: 'Propostas',
     icon: MessageCircle,
     items: [
-      { label: 'Todas as propostas', href: '/review-dashboard#proposals' },
-      { label: 'Em andamento', href: '/review-dashboard#proposals-progress' },
-      { label: 'Concluídas', href: '/review-dashboard#proposals-done' },
+      { label: 'Todas as propostas', href: '/review-dashboard/proposals' },
+      { label: 'Em andamento', href: '/review-dashboard/proposals?status=progress' },
+      { label: 'Concluídas', href: '/review-dashboard/proposals?status=done' },
     ],
   },
   {

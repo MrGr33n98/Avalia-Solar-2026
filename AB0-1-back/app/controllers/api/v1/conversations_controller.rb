@@ -10,7 +10,7 @@ module Api
         scope = if current_user.company_user?
                   company_conversations_scope
                 else
-                  current_user.conversations.includes(:company, :direct_messages)
+                  current_user.conversations.includes(:company, :direct_messages, :marketplace_proposal)
                 end
 
         scope = scope.ordered_for_inbox
@@ -70,7 +70,9 @@ module Api
         enforce_feature_access!(:p2p_chat, company: company)
         return if performed?
 
+        proposal = marketplace_proposal_for(company)
         @conversation = ::Conversation.find_or_initialize_by(user_id: current_user.id, company_id: company.id)
+        @conversation.marketplace_proposal ||= proposal if proposal
 
         if @conversation.new_record?
           @conversation.save!
@@ -148,11 +150,22 @@ module Api
         companies = current_user.active_member_companies
         companies = ::Company.where(id: current_user.company&.id) if companies.blank? && current_user.company.present?
 
-        ::Conversation.where(company_id: companies.select(:id)).includes(:user, :company, :direct_messages)
+        ::Conversation.where(company_id: companies.select(:id)).includes(:user, :company, :direct_messages, :marketplace_proposal)
       end
 
       def conversation_json(conversation)
         P2pChat::Serializer.conversation(conversation, viewer: current_user)
+      end
+
+      def marketplace_proposal_for(company)
+        return unless params[:marketplace_proposal_id].present?
+
+        proposal = MarketplaceProposal.find_by(id: params[:marketplace_proposal_id], company_id: company.id)
+        return render json: { error: 'Proposta não encontrada' }, status: :not_found unless proposal
+        return proposal if proposal.lead.email.to_s.casecmp?(current_user.email.to_s)
+
+        render json: { error: 'Proposta inválida para esta conversa' }, status: :forbidden
+        nil
       end
 
       def company_actor?

@@ -4,6 +4,7 @@ class Conversation < ApplicationRecord
 
   belongs_to :user
   belongs_to :company
+  belongs_to :marketplace_proposal, optional: true
   has_many :direct_messages, dependent: :destroy
   has_many :conversation_events, dependent: :destroy
   has_many :conversation_reports, dependent: :destroy

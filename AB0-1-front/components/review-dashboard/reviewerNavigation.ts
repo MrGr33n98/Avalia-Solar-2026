@@ -9,6 +9,7 @@ import {
   Gift,
   Trophy,
   Zap,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -64,6 +65,16 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     section: 'main',
     mobilePriority: 5,
     analyticsKey: 'reviewer_nav_favorites',
+  },
+  {
+    id: 'proposals',
+    label: 'Minhas propostas',
+    href: '/review-dashboard/proposals',
+    icon: FileText,
+    matchPath: '/review-dashboard/proposals',
+    section: 'main',
+    mobilePriority: 5,
+    analyticsKey: 'reviewer_nav_proposals',
   },
 
   {
@@ -130,14 +141,10 @@ export const reviewerNavItems: ReviewerNavItem[] = [
 ];
 
 /** Items para o bottom nav mobile (mobilePriority 1-4 + "Mais") */
-export const mobileBottomNavItems = reviewerNavItems.filter(
-  (item) => item.mobilePriority <= 4
-);
+export const mobileBottomNavItems = reviewerNavItems.filter((item) => item.mobilePriority <= 4);
 
 /** Items para o drawer "Mais" no mobile */
-export const mobileDrawerItems = reviewerNavItems.filter(
-  (item) => item.mobilePriority > 4
-);
+export const mobileDrawerItems = reviewerNavItems.filter((item) => item.mobilePriority > 4);
 
 /** Verifica se um pathname está ativo para um item de navegação */
 export function isNavItemActive(pathname: string, item: ReviewerNavItem): boolean {

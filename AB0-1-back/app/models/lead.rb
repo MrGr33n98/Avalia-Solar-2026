@@ -5,6 +5,7 @@ class Lead < ApplicationRecord
   belongs_to :category, optional: true
   belongs_to :lead_wizard_version, optional: true
   has_many :lead_distributions, dependent: :destroy
+  has_many :marketplace_proposals, dependent: :restrict_with_exception
   has_many :distributed_companies, through: :lead_distributions, source: :company
 
   enum wizard_status: {

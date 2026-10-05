@@ -498,6 +498,19 @@ Rails.application.routes.draw do
         patch 'social_proof_reviews/:id/verification', to: 'company_dashboard#update_review_verification'
         get 'social_proof_stats', to: 'company_dashboard#social_proof_stats'
         get 'market_insights', to: 'company_dashboard/market_insights#index'
+        get 'lead_distributions', to: 'company_admin/proposals#lead_distributions'
+        resources :proposals, controller: 'company_admin/proposals', only: %i[index show create update] do
+          member do
+            post :send, action: :send_proposal
+            post :new_version
+            post :withdraw
+            get :meetings
+            patch 'meetings/:meeting_id', action: :update_meeting
+            get :project
+            patch :project, action: :update_project
+            patch 'project/milestones/:milestone_id', action: :update_milestone
+          end
+        end
 
         resources :sector_questions, controller: 'company_sector_questions', only: %i[index create update destroy]
 
@@ -706,6 +719,18 @@ Rails.application.routes.draw do
           post :resend_otp
           post :verify_otp
           get :wizard_result
+        end
+      end
+
+      resources :proposals, only: %i[index show], controller: 'marketplace_proposals' do
+        collection { get :compare }
+        member do
+          post :view
+          post :accept
+          post :decline
+          post :request_change
+          get :meetings
+          post :meetings, action: :create_meeting
         end
       end
 

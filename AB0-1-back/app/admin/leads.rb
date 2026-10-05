@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register Lead do
-  menu false
+  menu label: 'Leads do marketplace', priority: 6
 
   permit_params :name, :email, :phone, :company, :message, :project_type, :estimated_budget,
                 :location, :company_id, :product_vertical, :project_profile, :quote_type,

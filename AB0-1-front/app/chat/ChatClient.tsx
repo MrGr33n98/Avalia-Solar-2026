@@ -64,7 +64,7 @@ export default function ChatClient() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch conversations
-  const fetchConversations = useCallback(async (preferredCompanyId?: number, preferredConvId?: number) => {
+  const fetchConversations = useCallback(async (preferredCompanyId?: number, preferredConvId?: number, preferredProposalId?: number) => {
     try {
       setLoading(true);
       setErrorMessage(null);
@@ -81,12 +81,12 @@ export default function ChatClient() {
       }
 
       if (preferredCompanyId) {
-        const existing = list.find((c) => c.company_id === preferredCompanyId);
+        const existing = list.find((c) => c.company_id === preferredCompanyId && (!preferredProposalId || !c.marketplace_proposal_id || c.marketplace_proposal_id === preferredProposalId));
         if (existing) {
           setActiveConversation(existing);
           setIsMobileOpen(true);
         } else {
-          const created = await conversationsApi.create(preferredCompanyId);
+          const created = await conversationsApi.create(preferredCompanyId, preferredProposalId);
           setConversations((prev) => [created, ...prev]);
           setActiveConversation(created);
           setIsMobileOpen(true);
@@ -111,10 +111,12 @@ export default function ChatClient() {
 
     const companyIdParam = searchParams.get('company_id');
     const convIdParam = searchParams.get('conversation_id');
+    const proposalIdParam = searchParams.get('marketplace_proposal_id');
 
     fetchConversations(
       companyIdParam ? Number(companyIdParam) : undefined,
-      convIdParam ? Number(convIdParam) : undefined
+      convIdParam ? Number(convIdParam) : undefined,
+      proposalIdParam ? Number(proposalIdParam) : undefined
     );
   }, [authLoading, isAuthenticated, searchParams, router, fetchConversations]);
 

@@ -1,1 +1,5 @@
-export { default } from '@/app/dashboard/reviewer/proposals/page';
+import { MarketplaceProposalsWorkspace } from '@/components/reviewer/MarketplaceProposalsWorkspace';
+
+export default function ReviewDashboardProposalsPage() {
+  return <MarketplaceProposalsWorkspace />;
+}

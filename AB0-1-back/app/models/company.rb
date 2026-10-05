@@ -183,6 +183,7 @@ end
   has_many :leads, dependent: :destroy
   has_many :lead_wizard_versions, dependent: :destroy, inverse_of: :company
   has_many :lead_distributions, dependent: :destroy
+  has_many :marketplace_proposals, dependent: :restrict_with_exception
   has_many :campaigns, dependent: :destroy
   has_many :company_buttons, dependent: :destroy
   accepts_nested_attributes_for :company_buttons, allow_destroy: true

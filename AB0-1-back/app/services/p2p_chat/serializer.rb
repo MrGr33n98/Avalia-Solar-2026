@@ -18,6 +18,8 @@ module P2pChat
           id: conversation.id,
           user_id: conversation.user_id,
           company_id: conversation.company_id,
+          marketplace_proposal_id: conversation.marketplace_proposal_id,
+          marketplace_proposal_reference: conversation.marketplace_proposal&.reference,
           created_at: conversation.created_at,
           updated_at: conversation.updated_at,
           user_name: conversation.user&.name,

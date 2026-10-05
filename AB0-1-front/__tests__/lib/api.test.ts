@@ -1,4 +1,4 @@
-import { api, fetchApi } from '../../lib/api';
+import { api, fetchApi, leadsApi } from '../../lib/api';
 import { ApiError } from '../../lib/api-error';
 
 // Mock fetch
@@ -48,7 +48,9 @@ describe('API Logic', () => {
     it('preserves one-attempt behavior when retries is one', async () => {
       (global.fetch as jest.Mock).mockRejectedValue(new Error('Network request failed'));
 
-      await expect(api.request({ url: '/one-attempt', retries: 1 })).rejects.toBeInstanceOf(ApiError);
+      await expect(api.request({ url: '/one-attempt', retries: 1 })).rejects.toBeInstanceOf(
+        ApiError
+      );
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
@@ -137,6 +139,22 @@ describe('API Logic', () => {
       await expect(fetchApi('/test-404')).rejects.toThrow(
         /\[404\] O recurso solicitado não foi encontrado/
       );
+    });
+  });
+  describe('leadsApi.mine', () => {
+    it('normaliza o envelope Rails antes de a página consumir a lista', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: [{ id: 42, created_at: '2026-10-02T12:00:00Z' }],
+            meta: { total_count: 1 },
+          }),
+      });
+
+      await expect(leadsApi.mine()).resolves.toEqual([
+        { id: 42, created_at: '2026-10-02T12:00:00Z' },
+      ]);
     });
   });
 });

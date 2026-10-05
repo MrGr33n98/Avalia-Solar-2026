@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_10_02_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -212,9 +212,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.boolean "featured"
     t.integer "views_count"
     t.bigint "author_id"
-    t.string "seo_keywords"
     t.string "seo_title"
     t.text "seo_description"
+    t.string "seo_keywords"
     t.index ["author_id"], name: "index_articles_on_author_id"
     t.index ["category_id"], name: "index_articles_on_category_id"
     t.index ["company_id", "sponsored"], name: "index_articles_on_company_sponsored"
@@ -1049,8 +1049,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.integer "delivered_projects_count", default: 0, null: false
     t.integer "response_sla_minutes"
     t.datetime "operational_data_updated_at"
-    t.string "seo_keywords"
     t.text "seo_description"
+    t.string "seo_keywords"
     t.bigint "primary_category_id"
     t.index "to_tsvector('portuguese'::regconfig, (((((((COALESCE(name, ''::character varying))::text || ' '::text) || COALESCE(description, ''::text)) || ' '::text) || (COALESCE(city, ''::character varying))::text) || ' '::text) || (COALESCE(state, ''::character varying))::text))", name: "index_companies_on_full_text_search", using: :gin
     t.index ["api_key"], name: "index_companies_on_api_key"
@@ -1750,9 +1750,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.bigint "blocked_by_id"
     t.text "block_reason"
     t.integer "report_count", default: 0, null: false
+    t.bigint "marketplace_proposal_id"
     t.index ["blocked_by_type", "blocked_by_id"], name: "index_conversations_on_blocked_by"
     t.index ["company_id"], name: "index_conversations_on_company_id"
     t.index ["last_message_at"], name: "index_conversations_on_last_message_at"
+    t.index ["marketplace_proposal_id", "user_id"], name: "index_conversations_on_marketplace_proposal_id_and_user_id"
+    t.index ["marketplace_proposal_id"], name: "index_conversations_on_marketplace_proposal_id"
     t.index ["sla_due_at"], name: "index_conversations_on_sla_due_at"
     t.index ["status"], name: "index_conversations_on_status"
     t.index ["user_id", "company_id"], name: "index_conversations_on_user_id_and_company_id_unique", unique: true
@@ -2517,6 +2520,148 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.check_constraint "wizard_status::text = ANY (ARRAY['draft'::text, 'routing'::text, 'pending_otp'::text, 'verified'::text, 'matched'::text, 'open'::text, 'in_progress'::text, 'distributed'::text, 'unmatched'::text, 'converted'::text, 'closed'::text, 'proposal_submitted'::text, 'proposal_processing'::text, 'proposal_sent'::text, 'proposal_failed'::text])", name: "ck_leads_valid_status"
   end
 
+  create_table "marketplace_project_milestones", force: :cascade do |t|
+    t.bigint "project_id", null: false
+    t.string "key", null: false
+    t.string "title", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "scheduled_at"
+    t.datetime "completed_at"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "key"], name: "index_marketplace_project_milestones_on_project_id_and_key", unique: true
+    t.index ["project_id"], name: "index_marketplace_project_milestones_on_project_id"
+  end
+
+  create_table "marketplace_projects", force: :cascade do |t|
+    t.bigint "proposal_id", null: false
+    t.bigint "lead_id", null: false
+    t.bigint "company_id", null: false
+    t.bigint "buyer_user_id"
+    t.string "status", default: "not_started", null: false
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_user_id"], name: "index_marketplace_projects_on_buyer_user_id"
+    t.index ["company_id"], name: "index_marketplace_projects_on_company_id"
+    t.index ["lead_id"], name: "index_marketplace_projects_on_lead_id"
+    t.index ["proposal_id"], name: "index_marketplace_projects_on_proposal_id", unique: true
+  end
+
+  create_table "marketplace_proposal_decisions", force: :cascade do |t|
+    t.bigint "proposal_id", null: false
+    t.bigint "buyer_user_id"
+    t.string "kind", null: false
+    t.text "reason"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_user_id"], name: "index_marketplace_proposal_decisions_on_buyer_user_id"
+    t.index ["proposal_id"], name: "index_marketplace_proposal_decisions_on_proposal_id"
+  end
+
+  create_table "marketplace_proposal_events", force: :cascade do |t|
+    t.bigint "proposal_id", null: false
+    t.bigint "actor_id"
+    t.string "event_type", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_marketplace_proposal_events_on_actor_id"
+    t.index ["proposal_id", "occurred_at"], name: "idx_marketplace_events_proposal_time"
+    t.index ["proposal_id"], name: "index_marketplace_proposal_events_on_proposal_id"
+  end
+
+  create_table "marketplace_proposal_items", force: :cascade do |t|
+    t.bigint "version_id", null: false
+    t.string "kind", default: "service", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.decimal "quantity", precision: 12, scale: 3, default: "1.0", null: false
+    t.string "unit", default: "un", null: false
+    t.integer "unit_price_cents", default: 0, null: false
+    t.integer "total_cents", default: 0, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["version_id"], name: "index_marketplace_proposal_items_on_version_id"
+  end
+
+  create_table "marketplace_proposal_meetings", force: :cascade do |t|
+    t.bigint "proposal_id", null: false
+    t.bigint "buyer_user_id"
+    t.bigint "company_id", null: false
+    t.string "meeting_type", default: "video", null: false
+    t.string "status", default: "requested", null: false
+    t.datetime "scheduled_at"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_user_id"], name: "index_marketplace_proposal_meetings_on_buyer_user_id"
+    t.index ["company_id"], name: "index_marketplace_proposal_meetings_on_company_id"
+    t.index ["proposal_id"], name: "index_marketplace_proposal_meetings_on_proposal_id"
+  end
+
+  create_table "marketplace_proposal_terms", force: :cascade do |t|
+    t.bigint "version_id", null: false
+    t.string "key", null: false
+    t.string "label", null: false
+    t.text "value", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["version_id"], name: "index_marketplace_proposal_terms_on_version_id"
+  end
+
+  create_table "marketplace_proposal_versions", force: :cascade do |t|
+    t.bigint "proposal_id", null: false
+    t.integer "number", null: false
+    t.string "status", default: "draft", null: false
+    t.string "title", null: false
+    t.text "summary"
+    t.integer "total_cents", default: 0, null: false
+    t.string "currency", default: "BRL", null: false
+    t.date "valid_until"
+    t.datetime "published_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["proposal_id", "number"], name: "index_marketplace_proposal_versions_on_proposal_id_and_number", unique: true
+    t.index ["proposal_id"], name: "index_marketplace_proposal_versions_on_proposal_id"
+  end
+
+  create_table "marketplace_proposals", force: :cascade do |t|
+    t.bigint "lead_id", null: false
+    t.bigint "lead_distribution_id", null: false
+    t.bigint "company_id", null: false
+    t.bigint "buyer_user_id"
+    t.bigint "created_by_id"
+    t.string "reference", null: false
+    t.string "status", default: "draft", null: false
+    t.string "currency", default: "BRL", null: false
+    t.integer "total_cents", default: 0, null: false
+    t.datetime "expires_at"
+    t.datetime "published_at"
+    t.datetime "viewed_at"
+    t.datetime "accepted_at"
+    t.datetime "declined_at"
+    t.datetime "withdrawn_at"
+    t.integer "current_version_number", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buyer_user_id", "status"], name: "index_marketplace_proposals_on_buyer_user_id_and_status"
+    t.index ["buyer_user_id"], name: "index_marketplace_proposals_on_buyer_user_id"
+    t.index ["company_id"], name: "index_marketplace_proposals_on_company_id"
+    t.index ["created_by_id"], name: "index_marketplace_proposals_on_created_by_id"
+    t.index ["lead_distribution_id"], name: "index_marketplace_proposals_on_lead_distribution_id"
+    t.index ["lead_id", "company_id"], name: "index_marketplace_proposals_on_lead_id_and_company_id", unique: true
+    t.index ["lead_id"], name: "index_marketplace_proposals_on_lead_id"
+    t.index ["reference"], name: "index_marketplace_proposals_on_reference", unique: true
+  end
+
   create_table "material_downloads", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.bigint "company_id", null: false
     t.bigint "company_material_id", null: false
@@ -2831,94 +2976,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.index ["occurred_at"], name: "idx_platform_events_brin_time", using: :brin
   end
 
-  create_table "platform_events_y2026m05", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2026m05_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2026m05_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m05_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2026m05_occurred_at_idx", using: :brin
-  end
-
-  create_table "platform_events_y2026m06", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2026m06_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2026m06_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m06_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2026m06_occurred_at_idx", using: :brin
-  end
-
-  create_table "platform_events_y2026m07", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2026m07_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2026m07_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m07_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2026m07_occurred_at_idx", using: :brin
-  end
-
-  create_table "platform_events_y2026m08", id: false, force: :cascade do |t|
-    t.bigint "id", null: false
-    t.text "event_id", null: false
-    t.text "event_type", null: false
-    t.integer "schema_version", default: 1
-    t.text "source"
-    t.text "anonymous_id"
-    t.text "session_id"
-    t.bigint "user_id"
-    t.bigint "company_id"
-    t.text "subject_type"
-    t.bigint "subject_id"
-    t.jsonb "payload", default: {}
-    t.jsonb "context", default: {}
-    t.timestamptz "occurred_at", null: false
-    t.timestamptz "created_at", default: -> { "now()" }, null: false
-    t.index ["context"], name: "platform_events_y2026m08_context_idx", using: :gin
-    t.index ["event_id"], name: "platform_events_y2026m08_event_id_idx"
-    t.index ["event_type", "occurred_at"], name: "platform_events_y2026m08_event_type_occurred_at_idx", order: { occurred_at: :desc }
-    t.index ["occurred_at"], name: "platform_events_y2026m08_occurred_at_idx", using: :brin
-  end
-
   create_table "platform_events_y2026m09", id: false, force: :cascade do |t|
     t.bigint "id", null: false
     t.text "event_id", null: false
@@ -3005,6 +3062,94 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.index ["event_id"], name: "platform_events_y2026m12_event_id_idx"
     t.index ["event_type", "occurred_at"], name: "platform_events_y2026m12_event_type_occurred_at_idx", order: { occurred_at: :desc }
     t.index ["occurred_at"], name: "platform_events_y2026m12_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2027m01", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2027m01_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2027m01_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m01_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2027m01_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2027m02", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2027m02_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2027m02_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m02_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2027m02_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2027m03", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2027m03_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2027m03_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m03_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2027m03_occurred_at_idx", using: :brin
+  end
+
+  create_table "platform_events_y2027m04", id: false, force: :cascade do |t|
+    t.bigint "id", null: false
+    t.text "event_id", null: false
+    t.text "event_type", null: false
+    t.integer "schema_version", default: 1
+    t.text "source"
+    t.text "anonymous_id"
+    t.text "session_id"
+    t.bigint "user_id"
+    t.bigint "company_id"
+    t.text "subject_type"
+    t.bigint "subject_id"
+    t.jsonb "payload", default: {}
+    t.jsonb "context", default: {}
+    t.timestamptz "occurred_at", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["context"], name: "platform_events_y2027m04_context_idx", using: :gin
+    t.index ["event_id"], name: "platform_events_y2027m04_event_id_idx"
+    t.index ["event_type", "occurred_at"], name: "platform_events_y2027m04_event_type_occurred_at_idx", order: { occurred_at: :desc }
+    t.index ["occurred_at"], name: "platform_events_y2027m04_occurred_at_idx", using: :brin
   end
 
   create_table "poll_options", force: :cascade do |t|
@@ -3951,9 +4096,18 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "company_id", null: false
+    t.string "source", default: "legacy", null: false
+    t.datetime "received_at", null: false
+    t.string "dedupe_key"
+    t.string "signal_class", default: "unknown", null: false
+    t.jsonb "classification_reasons", default: [], null: false
+    t.integer "schema_version", default: 1, null: false
+    t.bigint "timeline_sequence"
+    t.index ["company_id", "dedupe_key"], name: "idx_sales_email_events_company_dedupe", unique: true, where: "(dedupe_key IS NOT NULL)"
     t.index ["company_id"], name: "index_sales_email_events_on_company_id"
     t.index ["provider_event_id"], name: "index_sales_email_events_on_provider_event_id", unique: true, where: "(provider_event_id IS NOT NULL)"
     t.index ["sales_email_message_id", "event_type"], name: "idx_sales_email_events_msg_event"
+    t.index ["sales_email_message_id", "timeline_sequence"], name: "idx_sales_email_events_message_timeline_sequence"
     t.index ["sales_email_message_id"], name: "index_sales_email_events_on_sales_email_message_id"
   end
 
@@ -3974,7 +4128,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.bigint "sales_account_id"
     t.bigint "sales_contact_id"
     t.bigint "sales_opportunity_id"
-    t.bigint "sender_user_id", null: false
+    t.bigint "sender_user_id"
     t.string "provider", default: "aws_ses", null: false
     t.string "provider_message_id"
     t.string "from_email", null: false
@@ -4009,6 +4163,23 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.string "message_id"
     t.bigint "sales_campaign_id"
     t.bigint "sales_campaign_recipient_id"
+    t.bigint "sales_email_sequence_enrollment_step_id"
+    t.string "direction", default: "outbound", null: false
+    t.string "delivery_status", default: "queued", null: false
+    t.string "engagement_status", default: "none", null: false
+    t.integer "raw_open_signals", default: 0, null: false
+    t.integer "unique_open_signals", default: 0, null: false
+    t.integer "human_likely_open_signals", default: 0, null: false
+    t.integer "proxy_open_signals", default: 0, null: false
+    t.integer "bot_open_signals", default: 0, null: false
+    t.integer "scanner_open_signals", default: 0, null: false
+    t.integer "raw_clicks", default: 0, null: false
+    t.integer "unique_clicks", default: 0, null: false
+    t.integer "bot_clicks", default: 0, null: false
+    t.integer "scanner_clicks", default: 0, null: false
+    t.datetime "delayed_at"
+    t.datetime "rejected_at"
+    t.datetime "replied_at"
     t.index ["company_id", "message_id"], name: "idx_sales_email_messages_company_message_id", unique: true, where: "(message_id IS NOT NULL)"
     t.index ["company_id"], name: "index_sales_email_messages_on_company_id"
     t.index ["provider_message_id"], name: "index_sales_email_messages_on_provider_message_id"
@@ -4017,6 +4188,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.index ["sales_campaign_recipient_id"], name: "idx_sales_email_messages_recipient_unique", unique: true, where: "(sales_campaign_recipient_id IS NOT NULL)"
     t.index ["sales_contact_id"], name: "index_sales_email_messages_on_sales_contact_id"
     t.index ["sales_email_account_id"], name: "index_sales_email_messages_on_sales_email_account_id"
+    t.index ["sales_email_sequence_enrollment_step_id"], name: "idx_sales_email_messages_sequence_step_unique", unique: true, where: "(sales_email_sequence_enrollment_step_id IS NOT NULL)"
     t.index ["sales_email_thread_id"], name: "index_sales_email_messages_on_sales_email_thread_id"
     t.index ["sales_opportunity_id"], name: "index_sales_email_messages_on_sales_opportunity_id"
     t.index ["sender_user_id"], name: "index_sales_email_messages_on_sender_user_id"
@@ -4038,6 +4210,53 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.index ["sales_contact_id"], name: "index_sales_email_participants_on_sales_contact_id"
     t.index ["sales_email_message_id", "participant_type"], name: "idx_email_participants_type"
     t.index ["sales_email_message_id"], name: "index_sales_email_participants_on_sales_email_message_id"
+  end
+
+  create_table "sales_email_sequence_enrollment_steps", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_email_sequence_enrollment_id", null: false
+    t.bigint "sales_email_sequence_step_id", null: false
+    t.integer "position", null: false
+    t.string "status", default: "queued", null: false
+    t.integer "attempt_count", default: 0, null: false
+    t.datetime "next_attempt_at"
+    t.datetime "completed_at"
+    t.string "error_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "status", "next_attempt_at"], name: "idx_sales_sequence_enrollment_steps_pending"
+    t.index ["company_id"], name: "idx_sales_seq_enrollment_steps_company"
+    t.index ["sales_email_sequence_enrollment_id", "sales_email_sequence_step_id"], name: "idx_sales_sequence_enrollment_step_unique", unique: true
+    t.index ["sales_email_sequence_enrollment_id"], name: "idx_sales_seq_enrollment_steps_enrollment"
+    t.index ["sales_email_sequence_step_id"], name: "idx_sales_seq_enrollment_steps_definition"
+  end
+
+  create_table "sales_email_sequence_enrollments", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_email_sequence_id", null: false
+    t.bigint "sales_contact_id", null: false
+    t.bigint "sales_account_id", null: false
+    t.bigint "sales_opportunity_id"
+    t.bigint "owner_id", null: false
+    t.string "status", default: "active", null: false
+    t.integer "current_step", default: 0, null: false
+    t.datetime "enrolled_at", null: false
+    t.datetime "next_action_at"
+    t.datetime "paused_at"
+    t.datetime "stopped_at"
+    t.string "stop_reason"
+    t.datetime "completed_at"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "status", "next_action_at"], name: "idx_sales_sequence_enrollments_due"
+    t.index ["company_id"], name: "idx_sales_seq_enroll_company"
+    t.index ["owner_id"], name: "idx_sales_seq_enroll_owner"
+    t.index ["sales_account_id"], name: "idx_sales_seq_enroll_account"
+    t.index ["sales_contact_id"], name: "idx_sales_seq_enroll_contact"
+    t.index ["sales_email_sequence_id", "sales_contact_id"], name: "idx_sales_sequence_enrollments_active_contact", unique: true, where: "((status)::text = ANY ((ARRAY['active'::character varying, 'paused'::character varying])::text[]))"
+    t.index ["sales_email_sequence_id"], name: "idx_sales_seq_enroll_sequence"
+    t.index ["sales_opportunity_id"], name: "idx_sales_seq_enroll_opportunity"
   end
 
   create_table "sales_email_sequence_steps", force: :cascade do |t|
@@ -4166,9 +4385,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.jsonb "fields", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "public_key", null: false
     t.index ["campaign_id"], name: "index_sales_forms_on_campaign_id"
     t.index ["company_id", "slug"], name: "index_sales_forms_on_company_id_and_slug", unique: true
     t.index ["company_id"], name: "index_sales_forms_on_company_id"
+    t.index ["public_key"], name: "index_sales_forms_on_public_key", unique: true
   end
 
   create_table "sales_founder_inbox_items", force: :cascade do |t|
@@ -4351,6 +4572,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.datetime "updated_at", null: false
     t.string "temperature", default: "cold", null: false
     t.bigint "source_id"
+    t.bigint "sales_timeline_sequence", default: 0, null: false
     t.index ["expected_close_date"], name: "idx_sales_opp_expected_close"
     t.index ["next_activity_at"], name: "index_sales_opportunities_on_next_activity_at"
     t.index ["owner_id", "status"], name: "idx_sales_opp_owner_status"
@@ -4688,10 +4910,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "idempotency_key"
+    t.bigint "sales_email_sequence_enrollment_step_id"
     t.index ["owner_id"], name: "index_sales_tasks_on_owner_id"
     t.index ["sales_account_id", "idempotency_key"], name: "idx_sales_tasks_idempotency", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["sales_account_id"], name: "index_sales_tasks_on_sales_account_id"
     t.index ["sales_contact_id"], name: "index_sales_tasks_on_sales_contact_id"
+    t.index ["sales_email_sequence_enrollment_step_id"], name: "idx_sales_tasks_sequence_step_unique", unique: true, where: "(sales_email_sequence_enrollment_step_id IS NOT NULL)"
     t.index ["sales_opportunity_id"], name: "index_sales_tasks_on_sales_opportunity_id"
   end
 
@@ -4718,7 +4942,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.datetime "occurred_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "company_id"
+    t.string "event_uuid"
     t.index ["account_id"], name: "index_sales_tracking_events_on_account_id"
+    t.index ["company_id", "session_id", "event_uuid"], name: "index_sales_tracking_events_on_public_event_idempotency", unique: true, where: "(event_uuid IS NOT NULL)"
+    t.index ["company_id"], name: "index_sales_tracking_events_on_company_id"
     t.index ["contact_id"], name: "index_sales_tracking_events_on_contact_id"
     t.index ["session_id", "occurred_at"], name: "index_sales_tracking_events_on_session_id_and_occurred_at"
   end
@@ -4735,9 +4963,26 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
     t.datetime "ended_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "company_id"
+    t.string "referrer_host"
+    t.string "landing_path"
+    t.string "traffic_class", default: "commercial", null: false
     t.index ["account_id"], name: "index_sales_tracking_sessions_on_account_id"
+    t.index ["company_id", "started_at"], name: "index_sales_tracking_sessions_on_company_and_started"
+    t.index ["company_id"], name: "index_sales_tracking_sessions_on_company_id"
     t.index ["contact_id"], name: "index_sales_tracking_sessions_on_contact_id"
     t.index ["session_id"], name: "index_sales_tracking_sessions_on_session_id", unique: true
+  end
+
+  create_table "sales_tracking_sites", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.string "public_key", null: false
+    t.jsonb "allowed_origins", default: [], null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_sales_tracking_sites_on_company_id", unique: true
+    t.index ["public_key"], name: "index_sales_tracking_sites_on_public_key", unique: true
   end
 
   create_table "sales_user_roles", force: :cascade do |t|
@@ -5113,6 +5358,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
   add_foreign_key "conversation_reports", "conversations"
   add_foreign_key "conversation_reports", "users", column: "reporter_id"
   add_foreign_key "conversations", "companies"
+  add_foreign_key "conversations", "marketplace_proposals"
   add_foreign_key "conversations", "users"
   add_foreign_key "creator_leads", "reviewer_publications", column: "publication_id"
   add_foreign_key "creator_leads", "users", column: "creator_user_id"
@@ -5159,6 +5405,26 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
   add_foreign_key "leads", "chat_sessions"
   add_foreign_key "leads", "companies"
   add_foreign_key "leads", "lead_wizard_versions"
+  add_foreign_key "marketplace_project_milestones", "marketplace_projects", column: "project_id"
+  add_foreign_key "marketplace_projects", "companies"
+  add_foreign_key "marketplace_projects", "leads"
+  add_foreign_key "marketplace_projects", "marketplace_proposals", column: "proposal_id"
+  add_foreign_key "marketplace_projects", "users", column: "buyer_user_id"
+  add_foreign_key "marketplace_proposal_decisions", "marketplace_proposals", column: "proposal_id"
+  add_foreign_key "marketplace_proposal_decisions", "users", column: "buyer_user_id"
+  add_foreign_key "marketplace_proposal_events", "marketplace_proposals", column: "proposal_id"
+  add_foreign_key "marketplace_proposal_events", "users", column: "actor_id"
+  add_foreign_key "marketplace_proposal_items", "marketplace_proposal_versions", column: "version_id"
+  add_foreign_key "marketplace_proposal_meetings", "companies"
+  add_foreign_key "marketplace_proposal_meetings", "marketplace_proposals", column: "proposal_id"
+  add_foreign_key "marketplace_proposal_meetings", "users", column: "buyer_user_id"
+  add_foreign_key "marketplace_proposal_terms", "marketplace_proposal_versions", column: "version_id"
+  add_foreign_key "marketplace_proposal_versions", "marketplace_proposals", column: "proposal_id"
+  add_foreign_key "marketplace_proposals", "companies"
+  add_foreign_key "marketplace_proposals", "lead_distributions"
+  add_foreign_key "marketplace_proposals", "leads"
+  add_foreign_key "marketplace_proposals", "users", column: "buyer_user_id"
+  add_foreign_key "marketplace_proposals", "users", column: "created_by_id"
   add_foreign_key "material_downloads", "companies"
   add_foreign_key "material_downloads", "company_materials"
   add_foreign_key "material_downloads", "content_lead_forms"
@@ -5256,12 +5522,22 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
   add_foreign_key "sales_email_messages", "sales_accounts"
   add_foreign_key "sales_email_messages", "sales_contacts"
   add_foreign_key "sales_email_messages", "sales_email_accounts"
+  add_foreign_key "sales_email_messages", "sales_email_sequence_enrollment_steps", on_delete: :nullify
   add_foreign_key "sales_email_messages", "sales_email_threads"
   add_foreign_key "sales_email_messages", "sales_opportunities"
   add_foreign_key "sales_email_messages", "users", column: "sender_user_id"
   add_foreign_key "sales_email_participants", "companies"
   add_foreign_key "sales_email_participants", "sales_contacts"
   add_foreign_key "sales_email_participants", "sales_email_messages"
+  add_foreign_key "sales_email_sequence_enrollment_steps", "companies"
+  add_foreign_key "sales_email_sequence_enrollment_steps", "sales_email_sequence_enrollments", on_delete: :cascade
+  add_foreign_key "sales_email_sequence_enrollment_steps", "sales_email_sequence_steps"
+  add_foreign_key "sales_email_sequence_enrollments", "companies"
+  add_foreign_key "sales_email_sequence_enrollments", "sales_accounts"
+  add_foreign_key "sales_email_sequence_enrollments", "sales_contacts"
+  add_foreign_key "sales_email_sequence_enrollments", "sales_email_sequences"
+  add_foreign_key "sales_email_sequence_enrollments", "sales_opportunities"
+  add_foreign_key "sales_email_sequence_enrollments", "users", column: "owner_id"
   add_foreign_key "sales_email_sequence_steps", "sales_email_sequences", column: "email_sequence_id"
   add_foreign_key "sales_email_sequence_steps", "sales_email_templates", column: "email_template_id"
   add_foreign_key "sales_email_sequences", "companies"
@@ -5345,13 +5621,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_26_000000) do
   add_foreign_key "sales_tags", "users", column: "created_by_id"
   add_foreign_key "sales_tasks", "sales_accounts"
   add_foreign_key "sales_tasks", "sales_contacts"
+  add_foreign_key "sales_tasks", "sales_email_sequence_enrollment_steps", on_delete: :nullify
   add_foreign_key "sales_tasks", "sales_opportunities"
   add_foreign_key "sales_tasks", "users", column: "owner_id"
   add_foreign_key "sales_taxonomies", "companies"
+  add_foreign_key "sales_tracking_events", "companies"
   add_foreign_key "sales_tracking_events", "sales_accounts", column: "account_id"
   add_foreign_key "sales_tracking_events", "sales_contacts", column: "contact_id"
+  add_foreign_key "sales_tracking_sessions", "companies"
   add_foreign_key "sales_tracking_sessions", "sales_accounts", column: "account_id"
   add_foreign_key "sales_tracking_sessions", "sales_contacts", column: "contact_id"
+  add_foreign_key "sales_tracking_sites", "companies"
   add_foreign_key "sales_user_roles", "sales_roles", column: "role_id"
   add_foreign_key "sales_user_roles", "users"
   add_foreign_key "sales_webhook_deliveries", "sales_webhook_endpoints", column: "endpoint_id"

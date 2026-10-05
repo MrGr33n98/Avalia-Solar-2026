@@ -1,6 +1,7 @@
 class LeadDistribution < ApplicationRecord
   belongs_to :lead
   belongs_to :company
+  has_one :marketplace_proposal, dependent: :restrict_with_exception
 
   enum status: {
     queued: 'queued',
@@ -84,7 +85,7 @@ class LeadDistribution < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[company lead]
+    %w[company lead marketplace_proposal]
   end
 
   def rule_explanation

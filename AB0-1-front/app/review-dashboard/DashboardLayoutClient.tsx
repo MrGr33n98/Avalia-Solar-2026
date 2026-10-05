@@ -135,6 +135,7 @@ interface DashboardContextType {
   reviewsLoading: boolean;
   reviewsError: string | null;
   leadsLoading: boolean;
+  leadsError: string | null;
 }
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
@@ -172,6 +173,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewsError, setReviewsError] = useState<string | null>(null);
+  const [leadsError, setLeadsError] = useState<string | null>(null);
   const [leadsLoading, setLeadsLoading] = useState(true);
 
   const [commandOpen, setCommandOpen] = useState(false);
@@ -238,6 +240,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
       };
       const loadLeads = async () => {
         setLeadsLoading(true);
+        setLeadsError(null);
         try {
           if (pathname === '/review-dashboard') {
             setLeads([]);
@@ -251,6 +254,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           );
         } catch (err) {
           console.warn('[ReviewDashboard] Leads unavailable', err);
+          setLeadsError('Não foi possível carregar suas propostas.');
         } finally {
           setLeadsLoading(false);
         }
@@ -409,6 +413,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         addSolution,
         removeSolution,
         removingSolutionId,
+        leadsError,
         summaryLoading,
         reviewsLoading,
         reviewsError,

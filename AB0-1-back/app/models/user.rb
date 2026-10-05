@@ -24,6 +24,7 @@ class User < ApplicationRecord
   has_many :review_upload_sessions, dependent: :destroy
   has_many :review_media, class_name: 'ReviewMedia', dependent: :destroy
   has_many :reviewer_solutions, dependent: :destroy
+  has_many :marketplace_proposals, foreign_key: :buyer_user_id, dependent: :nullify
   has_many :reviewer_publications, dependent: :destroy
   has_many :group_memberships, dependent: :destroy
   has_many :group_posts, dependent: :restrict_with_error

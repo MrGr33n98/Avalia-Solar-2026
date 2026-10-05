@@ -141,6 +141,8 @@ export interface Conversation {
   blocked_by_id?: number | null;
   block_reason?: string | null;
   report_count?: number;
+  marketplace_proposal_id?: number | null;
+  marketplace_proposal_reference?: string | null;
 }
 
 export interface DirectMessageAttachment {
@@ -648,6 +650,18 @@ export interface Lead {
   company_logo_url?: string | null;
   created_at: string;
   updated_at?: string;
+}
+
+export type LeadMineResponse =
+  | Lead[]
+  | { data?: Lead[] | null; leads?: Lead[] | null; proposals?: Lead[] | null };
+
+export function normalizeLeadMineResponse(response: LeadMineResponse): Lead[] {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response.data)) return response.data;
+  if (Array.isArray(response.leads)) return response.leads;
+  if (Array.isArray(response.proposals)) return response.proposals;
+  return [];
 }
 
 export interface CreatorLead {
@@ -2774,7 +2788,13 @@ export const categoriesApi = {
 
 export const leadsApi = {
   getAll: () => fetchApi('/leads'),
-  mine: (): Promise<Lead[]> => fetchApi<Lead[]>('/leads/mine', { timeout: 5000, retries: 0 }),
+  mine: async (): Promise<Lead[]> => {
+    const response = await fetchApi<LeadMineResponse>('/leads/mine', {
+      timeout: 5000,
+      retries: 0,
+    });
+    return normalizeLeadMineResponse(response);
+  },
   getById: (id: number) => fetchApi(`/leads/${id}`),
   create: (lead: Partial<Lead>) =>
     fetchApi('/leads', {
@@ -3338,10 +3358,13 @@ export const adminApi = {
 export const conversationsApi = {
   getAll: (options?: { silent?: boolean; silentStatusCodes?: number[] }) =>
     fetchApi<Conversation[]>('/conversations', options),
-  create: (companyId: number) =>
+  create: (companyId: number, marketplaceProposalId?: number) =>
     fetchApi<Conversation>('/conversations', {
       method: 'POST',
-      body: JSON.stringify({ company_id: companyId }),
+      body: JSON.stringify({
+        company_id: companyId,
+        ...(marketplaceProposalId ? { marketplace_proposal_id: marketplaceProposalId } : {}),
+      }),
     }),
   getMessages: (conversationId: number) =>
     fetchApi<DirectMessage[]>(`/conversations/${conversationId}/direct_messages`),
@@ -3460,4 +3483,207 @@ export const reviewerProfileApi = {
     return fetchApi('/reviewer/profile/public_banner', { method: 'POST', body });
   },
   removeAvatar: () => fetchApi('/reviewer/profile/avatar', { method: 'DELETE' }),
+};
+
+
+
+
+export type MarketplaceProposalItem = {
+  id: number;
+  kind: string;
+  name: string;
+  description?: string | null;
+  quantity: number;
+  unit: string;
+  unit_price_cents: number;
+  total_cents: number;
+  position: number;
+};
+
+export type MarketplaceProposalTerm = {
+  id: number;
+  key: string;
+  label: string;
+  value: string;
+  position: number;
+};
+
+export type MarketplaceProposalVersion = {
+  id?: number;
+  number: number;
+  status?: string;
+  title: string;
+  summary?: string | null;
+  total_cents: number;
+  currency: string;
+  valid_until?: string | null;
+  published_at?: string | null;
+  items: MarketplaceProposalItem[];
+  terms: MarketplaceProposalTerm[];
+};
+
+export type MarketplaceProposalMilestone = {
+  id: number;
+  key: string;
+  title: string;
+  status: string;
+  position: number;
+  scheduled_at?: string | null;
+  completed_at?: string | null;
+  notes?: string | null;
+};
+
+export type MarketplaceProposalProject = {
+  id: number;
+  status: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  milestones: MarketplaceProposalMilestone[];
+};
+
+export type MarketplaceProposal = {
+  id: number;
+  reference: string;
+  status: string;
+  total_cents: number;
+  currency: string;
+  expires_at?: string | null;
+  published_at?: string | null;
+  created_at: string;
+  company: { id: number; name: string; logo_url?: string | null };
+  request?: {
+    id: number;
+    vertical?: string | null;
+    project_profile?: string | null;
+    city?: string | null;
+    state?: string | null;
+    created_at?: string | null;
+  };
+  lead?: {
+    id: number;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    product_vertical?: string | null;
+    project_profile?: string | null;
+    city?: string | null;
+    state?: string | null;
+    address_full?: string | null;
+    monthly_kwh?: number | null;
+    bill_value?: number | null;
+  };
+  lead_distribution_id?: number;
+  version?: MarketplaceProposalVersion | null;
+  versions?: MarketplaceProposalVersion[];
+  project?: MarketplaceProposalProject | null;
+  meetings?: Array<{
+    id: number;
+    meeting_type: string;
+    status: string;
+    scheduled_at?: string | null;
+    notes?: string | null;
+    created_at: string;
+  }>;
+};
+
+export type MarketplaceProposalListResponse = { proposals: MarketplaceProposal[] };
+export type MarketplaceProposalResponse = { proposal: MarketplaceProposal };
+
+export const marketplaceProposalsApi = {
+  list: () => fetchApi<MarketplaceProposalListResponse>('/proposals'),
+  get: (id: number | string) => fetchApi<MarketplaceProposalResponse>('/proposals/' + id),
+  compare: (ids: Array<number | string>) =>
+    fetchApi<MarketplaceProposalListResponse>('/proposals/compare', {
+      params: { ids: ids.join(',') },
+    }),
+  view: (id: number | string) =>
+    fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/view', { method: 'POST' }),
+  accept: (id: number | string) =>
+    fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/accept', { method: 'POST' }),
+  decline: (id: number | string, reason?: string) =>
+    fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/decline', {
+      method: 'POST',
+      body: { reason },
+    }),
+  requestChange: (id: number | string, reason: string) =>
+    fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/request_change', {
+      method: 'POST',
+      body: { reason },
+    }),
+  createMeeting: (
+    id: number | string,
+    payload: { meeting_type?: string; scheduled_at?: string; notes?: string }
+  ) =>
+    fetchApi<{ meeting: NonNullable<MarketplaceProposal['meetings']>[number] }>(
+      '/proposals/' + id + '/meetings',
+      { method: 'POST', body: payload }
+    ),
+};
+
+export const companyMarketplaceProposalsApi = {
+  list: (companyId?: string | number) =>
+    fetchApi<MarketplaceProposalListResponse>('/company_dashboard/proposals', {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  distributions: (companyId?: string | number) =>
+    fetchApi<{
+      distributions: Array<{
+        id: number;
+        status: string;
+        assigned_at?: string;
+        lead: MarketplaceProposal['lead'];
+      }>;
+    }>('/company_dashboard/lead_distributions', {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  create: (leadDistributionId: number | string) =>
+    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals', {
+      method: 'POST',
+      body: { lead_distribution_id: leadDistributionId },
+    }),
+  update: (
+    id: number | string,
+    proposal: Omit<Partial<MarketplaceProposalVersion>, 'items' | 'terms'> & { items?: Array<Partial<MarketplaceProposalItem>>; terms?: Array<Partial<MarketplaceProposalTerm>> }
+  ) =>
+    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id, {
+      method: 'PATCH',
+      body: { proposal },
+    }),
+  send: (id: number | string) =>
+    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/send', {
+      method: 'POST',
+    }),
+  newVersion: (id: number | string) =>
+    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/new_version', {
+      method: 'POST',
+    }),
+  withdraw: (id: number | string) =>
+    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/withdraw', {
+      method: 'POST',
+    }),
+  meetings: (id: number | string) =>
+    fetchApi<{ meetings: NonNullable<MarketplaceProposal['meetings']> }>(
+      '/company_dashboard/proposals/' + id + '/meetings'
+    ),
+  updateMeeting: (id: number | string, meetingId: number | string, payload: { status?: string; scheduled_at?: string; notes?: string }) =>
+    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/meetings/' + meetingId, {
+      method: 'PATCH',
+      body: payload,
+    }),
+  project: (id: number | string) =>
+    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/project'),
+  updateProject: (id: number | string, payload: { status?: string; started_at?: string; completed_at?: string }) =>
+    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/project', {
+      method: 'PATCH',
+      body: payload,
+    }),
+  updateMilestone: (
+    id: number | string,
+    milestoneId: number | string,
+    payload: { status?: string; scheduled_at?: string; completed_at?: string; notes?: string }
+  ) =>
+    fetchApi<MarketplaceProposalResponse>(
+      '/company_dashboard/proposals/' + id + '/project/milestones/' + milestoneId,
+      { method: 'PATCH', body: payload }
+    ),
 };

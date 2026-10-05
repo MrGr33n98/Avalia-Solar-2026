@@ -1,5 +1,4 @@
 import {
-  BarChart3,
   Star,
   Database,
   Edit3,
@@ -146,6 +145,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         context: ['operational', 'quick_access'],
         badge: true,
         description: 'Atender leads em tempo real',
+      },
+      {
+        id: 'proposals',
+        label: 'Propostas',
+        icon: FileText,
+        context: ['operational', 'quick_access'],
+        description: 'Montar e acompanhar propostas enviadas aos clientes',
       },
       {
         id: 'quote-form',
