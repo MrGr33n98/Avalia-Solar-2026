@@ -4,54 +4,58 @@ module Api
     module CompanyDashboard
       class MarketInsightsController < CompanyDashboardController
         def index
-          # Identifica a categoria principal da empresa (HABTM)
+          authorize @company, :view_leads?
           category = @company.categories.first
-          category_id = category&.id
-          category_name = category&.name || 'Sua Categoria'
+          market_leads = market_leads_for(category&.id)
+          my_lead_ids = lead_ids_for_company
+          enabled = leads_enabled?
 
-          # 1. Leads totais da categoria (últimos 30 dias)
-          market_leads_scope = Lead.where(created_at: 30.days.ago..Time.current)
-          market_leads_scope = market_leads_scope.where(category_id: category_id) if category_id
+          render json: market_payload(category, market_leads, my_lead_ids, enabled)
+        end
 
-          total_market_leads = market_leads_scope.count
+        private
 
-          # 2. Meus leads na categoria
-          my_leads_count = market_leads_scope.where(company_id: @company.id).count
+        def leads_enabled?
+          EntitlementService.entitled?(company: @company, feature: :leads_marketplace)
+        end
 
-          # 3. Oportunidades (Leads que não foram para mim)
-          opportunities_count = total_market_leads - my_leads_count
+        def market_leads_for(category_id)
+          return Lead.none if category_id.blank?
 
-          # 4. Amostra de Oportunidades (Leads recentes da categoria)
-          # Se não for premium, o frontend vai borrar os detalhes
-          recent_opportunities = market_leads_scope
-                                 .where.not(company_id: @company.id)
-                                 .order(created_at: :desc)
-                                 .limit(10)
-                                 .map do |lead|
-                                   {
-                                     id: lead.id,
-                                     city: lead.city || 'Local não identificado',
-                                     state: lead.state,
-                                     product_vertical: lead.product_vertical,
-                                     created_at: lead.created_at,
-                                     # Dados sensíveis que serão borrados no frontend se não for premium
-                                     name: lead.name,
-                                     email: lead.email,
-                                     phone: lead.phone
-                                   }
-                                 end
+          Lead.where(created_at: 30.days.ago..Time.current, category_id: category_id)
+        end
 
-          render json: {
-            category_name: category_name,
-            stats: {
-              total_market_leads: total_market_leads,
-              my_leads_count: my_leads_count,
-              opportunities_count: opportunities_count,
-              market_share_percent: total_market_leads.positive? ? ((my_leads_count.to_f / total_market_leads) * 100).round(1) : 0
-            },
-            opportunities: recent_opportunities,
-            is_premium: @company.has_paid_plan?
+        def lead_ids_for_company
+          distributed_ids = @company.lead_distributions.select(:lead_id)
+          Lead.where(company_id: @company.id).or(Lead.where(id: distributed_ids)).select(:id)
+        end
+
+        def market_payload(category, market_leads, my_lead_ids, enabled)
+          total = market_leads.count
+          mine = market_leads.where(id: my_lead_ids).count
+
+          {
+            category_name: category&.name || 'Sua Categoria',
+            stats: market_stats(total, mine),
+            opportunities: enabled ? opportunity_payload(market_leads, my_lead_ids) : [],
+            is_premium: enabled
           }
+        end
+
+        def market_stats(total, mine)
+          {
+            total_market_leads: total,
+            my_leads_count: mine,
+            opportunities_count: total - mine,
+            market_share_percent: total.positive? ? ((mine.to_f / total) * 100).round(1) : 0
+          }
+        end
+
+        def opportunity_payload(market_leads, my_lead_ids)
+          market_leads.where.not(id: my_lead_ids).order(created_at: :desc).limit(10).map do |lead|
+            { id: lead.id, city: lead.city || 'Local não identificado', state: lead.state,
+              product_vertical: lead.product_vertical, created_at: lead.created_at }
+          end
         end
       end
     end

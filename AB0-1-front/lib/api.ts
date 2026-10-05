@@ -2438,8 +2438,10 @@ export interface RankingFilterOptions {
 }
 
 export const companyDashboardApi = {
-  getLeads: () =>
-    fetchApi<{ data: Array<Record<string, unknown>>; meta?: unknown }>('/dashboard/leads'),
+  getLeads: (companyId?: string | number) =>
+    fetchApi<{ data: Array<Record<string, unknown>>; meta?: unknown }>('/dashboard/leads', {
+      params: { company_id: companyId },
+    }),
   getAnalyticsOverview: (companyId?: string | number, query: AnalyticsQueryParams = {}) =>
     fetchApi<CompanyAnalyticsOverview>('/company_dashboard/analytics/overview', {
       params: { company_id: companyId, ...query },

@@ -55,7 +55,7 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
     try {
       setLoading(true);
       const [response, insightsData] = await Promise.all([
-        companyDashboardApi.getLeads(),
+        companyDashboardApi.getLeads(companyId),
         fetchApi<MarketInsights>('/company_dashboard/market_insights', { params: { company_id: companyId } }),
       ]);
       setLeads(response.data || []);
@@ -227,7 +227,7 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
                         onClick={() => window.location.href='/pricing'} 
                         className="w-full rounded-xl font-bold uppercase tracking-widest text-[10px] bg-brand-blue hover:bg-blue-700 text-white h-12 shadow-md group transition-all"
                       >
-                        Upgrade para Plano Enterprise
+                        Conhecer planos com acesso a leads
                         <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     </div>
@@ -239,7 +239,7 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
                 "grid grid-cols-1 gap-4 transition-all duration-1000", 
                 !marketData?.is_premium && "blur-[12px] grayscale pointer-events-none opacity-30 select-none"
               )}>
-                {marketData?.opportunities.map((opp, idx) => (
+                {marketData?.opportunities?.map((opp, idx) => (
                   <LeadCard 
                     key={String(opp.id)}
                     lead={opp} 
