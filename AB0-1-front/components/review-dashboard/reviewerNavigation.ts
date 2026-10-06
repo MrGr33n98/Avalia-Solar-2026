@@ -73,7 +73,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     icon: FileText,
     matchPath: '/review-dashboard/proposals',
     section: 'main',
-    mobilePriority: 5,
+    mobilePriority: 3,
     analyticsKey: 'reviewer_nav_proposals',
   },
 
@@ -84,7 +84,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     icon: Zap,
     matchPath: '/review-dashboard/solutions',
     section: 'main',
-    mobilePriority: 3,
+    mobilePriority: 5,
     analyticsKey: 'reviewer_nav_solutions',
   },
   {
@@ -166,5 +166,5 @@ export const legacyRedirects: Record<string, string> = {
   '/review-dashboard/companies': '/companies',
   '/review-dashboard/green-score': '/review-dashboard',
   '/review-dashboard/journey': '/review-dashboard',
-  '/review-dashboard/proposals': '/review-dashboard',
+  '/dashboard/reviewer/proposals': '/review-dashboard/proposals',
 };

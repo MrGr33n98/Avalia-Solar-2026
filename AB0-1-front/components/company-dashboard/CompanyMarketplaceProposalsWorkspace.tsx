@@ -9,6 +9,7 @@ import {
 } from '@/lib/api';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { cn } from '@/lib/utils';
+import { technicalFields } from '@/lib/marketplace-proposals';
 
 type Distribution = {
   id: number;
@@ -134,6 +135,9 @@ function ProposalEditor({ proposal, onSaved }: { proposal: MarketplaceProposal; 
   const version = proposal.version;
   const [title, setTitle] = useState(version?.title || '');
   const [summary, setSummary] = useState(version?.summary || '');
+  const [validUntil, setValidUntil] = useState(version?.valid_until?.slice(0, 10) || '');
+  const [terms, setTerms] = useState(version?.terms || []);
+  const [editorError, setEditorError] = useState<string | null>(null);
   const [itemName, setItemName] = useState('');
   const [itemPrice, setItemPrice] = useState('');
   const [items, setItems] = useState<NonNullable<MarketplaceProposalVersion['items']>>(version?.items || []);
@@ -141,13 +145,16 @@ function ProposalEditor({ proposal, onSaved }: { proposal: MarketplaceProposal; 
   const editable = proposal.status === 'draft';
   const canCreateVersion = ['sent', 'viewed', 'under_review', 'negotiating', 'meeting_scheduled'].includes(proposal.status);
   const canWithdraw = canCreateVersion;
+  const payload = () => ({ title, summary, valid_until: validUntil || null, terms: terms.filter((term) => term.value.trim()).map((term, position) => ({ key: term.key, label: term.label, value: term.value, position })), items: items.map((item, position) => ({ name: item.name, description: item.description, quantity: item.quantity, unit: item.unit, unit_price_cents: item.unit_price_cents, kind: item.kind, position })) });
 
   const save = async () => {
     setBusy('save');
+    setEditorError(null);
     try {
-      const response = await companyMarketplaceProposalsApi.update(proposal.id, { title, summary, items: items.map((item, index) => ({ name: item.name, description: item.description, quantity: item.quantity, unit: item.unit, unit_price_cents: item.unit_price_cents, kind: item.kind, position: index })) });
+      const response = await companyMarketplaceProposalsApi.update(proposal.id, payload());
       onSaved(response.proposal);
     } catch {
+      setEditorError('Não foi possível salvar a proposta. Revise os campos e tente novamente.');
       setBusy(null);
       return;
     }
@@ -156,10 +163,13 @@ function ProposalEditor({ proposal, onSaved }: { proposal: MarketplaceProposal; 
 
   const send = async () => {
     setBusy('send');
+    setEditorError(null);
     try {
+      await companyMarketplaceProposalsApi.update(proposal.id, payload());
       const response = await companyMarketplaceProposalsApi.send(proposal.id);
       onSaved(response.proposal);
     } catch {
+      setEditorError('Não foi possível publicar a proposta. Revise os campos e tente novamente.');
       setBusy(null);
       return;
     }
@@ -204,6 +214,9 @@ function ProposalEditor({ proposal, onSaved }: { proposal: MarketplaceProposal; 
       <div className="mt-6 space-y-4">
         <label className="block text-sm font-bold text-slate-800">Título<input disabled={!editable} value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1 h-12 w-full rounded-xl border border-slate-200 px-3 font-normal" /></label>
         <label className="block text-sm font-bold text-slate-800">Resumo<textarea disabled={!editable} value={summary} onChange={(event) => setSummary(event.target.value)} className="mt-1 min-h-28 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal" /></label>
+        <label className="block text-sm font-bold text-slate-800">Válida até<input type="date" disabled={!editable || busy !== null} value={validUntil} onChange={(event) => setValidUntil(event.target.value)} className="mt-1 h-12 w-full rounded-xl border border-slate-200 px-3 font-normal" /></label>
+        <fieldset disabled={!editable || busy !== null} className="space-y-3"><legend className="mb-3 text-sm font-semibold">Dados técnicos e condições para comparação</legend><p className="text-xs text-slate-500">Informe valores com as unidades, como kWp, kWh/mês e R$/mês. Os dados serão exibidos ao cliente.</p><div className="grid gap-3 sm:grid-cols-2">{[...technicalFields, { label: 'Premissas e observações', keys: ['assumptions'] }].map((field) => <label key={field.keys[0]} className="text-sm font-medium text-slate-800">{field.label}<input value={terms.find((term) => field.keys.includes(term.key))?.value || ''} onChange={(event) => setTerms((current) => { const existing = current.find((term) => field.keys.includes(term.key)); return existing ? current.map((term) => term.key === existing.key ? { ...term, value: event.target.value } : term) : [...current, { id: Date.now(), key: field.keys[0], label: field.label, value: event.target.value, position: current.length }]; })} maxLength={1000} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 font-normal" /></label>)}</div></fieldset>
+        {editorError && <p role="alert" className="text-sm text-rose-700">{editorError}</p>}
         <div><div className="flex items-center justify-between"><h3 className="text-sm font-black text-slate-900">Itens e condições comerciais</h3><span className="text-sm font-black text-blue-700">{money(items.reduce((sum, item) => sum + item.total_cents, 0))}</span></div><div className="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200">{items.map((item, index) => <div key={item.id || index} className="flex items-center justify-between gap-3 p-3 text-sm"><span><span className="block font-bold text-slate-900">{item.name}</span><span className="text-xs text-slate-500">{money(item.total_cents)}</span></span>{editable && <button type="button" aria-label="Remover item" onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-700"><X className="h-4 w-4" /></button>}</div>)}{!items.length && <p className="p-4 text-sm text-slate-500">Adicione os itens que compõem a proposta.</p>}</div></div>
         {editable && <div className="grid gap-2 sm:grid-cols-[1fr_160px_auto]"><input value={itemName} onChange={(event) => setItemName(event.target.value)} placeholder="Ex.: Sistema fotovoltaico" className="h-11 rounded-xl border border-slate-200 px-3 text-sm" /><input value={itemPrice} onChange={(event) => setItemPrice(event.target.value)} inputMode="decimal" placeholder="Valor em R$" className="h-11 rounded-xl border border-slate-200 px-3 text-sm" /><button type="button" onClick={addItem} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-blue-200 bg-blue-50 px-3 text-sm font-bold text-blue-700"><Plus className="h-4 w-4" /> Adicionar</button></div>}
         {editable && <div className="flex flex-wrap gap-3"><button type="button" onClick={() => void save()} disabled={busy !== null} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-bold text-slate-800">{busy === 'save' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Salvar rascunho</button><button type="button" onClick={() => void send()} disabled={busy !== null || !items.length} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-black text-white disabled:opacity-50">{busy === 'send' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Publicar proposta</button></div>}

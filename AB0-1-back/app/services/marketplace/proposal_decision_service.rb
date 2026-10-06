@@ -1,14 +1,15 @@
 module Marketplace
   class ProposalDecisionService
-    def initialize(proposal:, buyer:, kind:, reason: nil)
+    def initialize(proposal:, buyer:, kind:, reason: nil, version_id: nil)
       @proposal = proposal
       @buyer = buyer
       @kind = kind.to_s
       @reason = reason
+      @version_id = version_id
     end
 
     def call
-      MarketplaceProposal.transaction do
+      @proposal.lead.with_lock do
         @proposal.with_lock do
           case @kind
           when 'accepted' then accept!
@@ -30,6 +31,9 @@ module Marketplace
 
     def accept!
       ensure_status! %w[sent viewed under_review negotiating meeting_scheduled]
+      if @version_id.present? && @proposal.current_version&.id != @version_id.to_i
+        raise ArgumentError, 'A proposta foi atualizada. Confira a versão atual antes de escolher.'
+      end
       @proposal.decisions.create!(buyer_user: @buyer, kind: 'accepted')
       @proposal.update!(status: 'accepted', accepted_at: Time.current)
       @proposal.record_event('proposal.accepted', actor: @buyer)
@@ -52,6 +56,8 @@ module Marketplace
     end
 
     def ensure_status!(allowed)
+      raise ArgumentError, 'Esta proposta expirou. Solicite uma atualização à empresa.' if @proposal.expired_for_decision?
+
       return if allowed.include?(@proposal.status)
 
       raise ArgumentError, 'Esta proposta não aceita mais decisões neste momento'

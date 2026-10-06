@@ -4,4 +4,5 @@ class MarketplaceProposalMeeting < ApplicationRecord
   belongs_to :company
   STATUSES = %w[requested confirmed cancelled completed].freeze
   validates :status, inclusion: { in: STATUSES }
+  validates :meeting_type, inclusion: { in: %w[video phone site_visit] }
 end

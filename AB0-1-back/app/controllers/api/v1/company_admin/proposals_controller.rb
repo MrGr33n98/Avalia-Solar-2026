@@ -95,9 +95,11 @@ module Api
           version = @proposal.current_version || @proposal.versions.create!(number: 1,
                                                                             title: 'Proposta para seu projeto')
           payload = proposal_params
-          version.update!(payload.slice(:title, :summary, :valid_until))
-          replace_items(version, payload[:items]) if payload.key?(:items)
-          replace_terms(version, payload[:terms]) if payload.key?(:terms)
+          @proposal.with_lock do
+            version.update!(payload.slice(:title, :summary, :valid_until))
+            replace_items(version, payload[:items]) if payload.key?(:items)
+            replace_terms(version, payload[:terms]) if payload.key?(:terms)
+          end
           render json: { proposal: serialize(@proposal.reload) }
         rescue ActiveRecord::RecordInvalid => e
           render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
@@ -114,6 +116,11 @@ module Api
 
         def new_version
           authorize @proposal, :new_version?
+          if %w[accepted declined withdrawn not_selected closed_after_selection].include?(@proposal.status)
+            return render json: { error: 'Esta proposta já foi encerrada para negociação' },
+                          status: :unprocessable_entity
+          end
+
           current = @proposal.current_version
           number = @proposal.versions.maximum(:number).to_i + 1
           version = @proposal.versions.create!(

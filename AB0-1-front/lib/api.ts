@@ -3552,7 +3552,8 @@ export type MarketplaceProposal = {
   expires_at?: string | null;
   published_at?: string | null;
   created_at: string;
-  company: { id: number; name: string; logo_url?: string | null };
+  company: { id: number; name: string; logo_url?: string | null; slug?: string | null; verified?: boolean; rating_avg?: number | null; reviews_count?: number; city?: string | null; state?: string | null; founded_year?: number | null };
+  revision_pending?: boolean;
   request?: {
     id: number;
     vertical?: string | null;
@@ -3600,8 +3601,10 @@ export const marketplaceProposalsApi = {
     }),
   view: (id: number | string) =>
     fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/view', { method: 'POST' }),
-  accept: (id: number | string) =>
-    fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/accept', { method: 'POST' }),
+  accept: (id: number | string, versionId?: number) =>
+    fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/accept', {
+      method: 'POST', body: versionId ? { version_id: versionId } : undefined,
+    }),
   decline: (id: number | string, reason?: string) =>
     fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/decline', {
       method: 'POST',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createConsumer } from '@rails/actioncable';
 import {
@@ -81,31 +82,31 @@ export default function ChatClient() {
       }
 
       if (preferredCompanyId) {
-        const existing = list.find((c) => c.company_id === preferredCompanyId && (!preferredProposalId || !c.marketplace_proposal_id || c.marketplace_proposal_id === preferredProposalId));
+        const existing = list.find((c) => c.company_id === preferredCompanyId && (!preferredProposalId || c.marketplace_proposal_id === preferredProposalId));
         if (existing) {
           setActiveConversation(existing);
           setIsMobileOpen(true);
         } else {
           const created = await conversationsApi.create(preferredCompanyId, preferredProposalId);
-          setConversations((prev) => [created, ...prev]);
+          setConversations((prev) => [created, ...prev.filter((conversation) => conversation.id !== created.id)]);
           setActiveConversation(created);
           setIsMobileOpen(true);
         }
-      } else if (list.length > 0 && !activeConversation) {
-        setActiveConversation(list[0]);
+      } else if (list.length > 0) {
+        setActiveConversation((current) => current || list[0]);
       }
     } catch (err: any) {
       setErrorMessage('Não foi possível carregar suas conversas no momento.');
     } finally {
       setLoading(false);
     }
-  }, [activeConversation]);
+  }, []);
 
   // Initial load
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
-      router.push('/login?redirect=/chat');
+      router.push('/login?redirect=' + encodeURIComponent('/chat?' + searchParams.toString()));
       return;
     }
 
@@ -323,7 +324,8 @@ export default function ChatClient() {
       : activeConversation?.company?.logo_url || activeConversation?.company_logo_url || undefined;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-white">
+    <div className="relative flex h-[calc(100dvh-var(--app-navbar-height))] w-full overflow-hidden bg-white pb-[var(--safe-area-inset-bottom)]">
+      {errorMessage && <div role="alert" className="absolute inset-x-3 top-3 z-20 rounded-xl border border-rose-200 bg-white p-4 text-sm text-rose-800">{errorMessage}<Button variant="outline" className="ml-3" onClick={() => void fetchConversations(Number(searchParams.get('company_id')) || undefined, undefined, Number(searchParams.get('marketplace_proposal_id')) || undefined)}>Tentar novamente</Button></div>}
       {/* Sidebar: Conversation List */}
       <div
         className={cn(
@@ -358,8 +360,9 @@ export default function ChatClient() {
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   type="button"
+                  aria-label="Voltar às conversas"
                   onClick={() => setIsMobileOpen(false)}
-                  className="md:hidden p-1 text-slate-500 hover:text-slate-900"
+                  className="md:hidden min-h-11 min-w-11 p-1 text-slate-500 hover:text-slate-900"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
@@ -376,7 +379,7 @@ export default function ChatClient() {
                   <div className="flex items-center gap-2 text-[10px] text-slate-500">
                     <span className="capitalize">{activeConversation.status || 'aberta'}</span>
                     <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                    <span className="text-emerald-600 font-bold">{realtimeStatus}</span>
+                    <span className="text-emerald-600 font-bold">{realtimeStatus === 'connected' ? 'Conectado' : 'Mensagens'}</span>
                   </div>
                 </div>
               </div>
@@ -423,6 +426,8 @@ export default function ChatClient() {
               </div>
             </div>
 
+            {activeConversation.marketplace_proposal_id && <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-blue-50 px-4 py-2 text-xs"><span className="font-medium text-blue-800">Proposta {activeConversation.marketplace_proposal_reference || activeConversation.marketplace_proposal_id}</span><Link href={'/review-dashboard/proposals?proposal=' + activeConversation.marketplace_proposal_id} className="inline-flex min-h-11 items-center font-semibold text-blue-700">Ver proposta</Link><p className="w-full text-slate-600">Conversa com a empresa, incluindo o histórico de atendimentos anteriores.</p></div>}
+            {loadingMessages && <p role="status" className="px-4 py-2 text-xs text-slate-500">Carregando mensagens…</p>}
             {/* Timeline */}
             <MessageTimeline
               messages={messages}
@@ -434,9 +439,11 @@ export default function ChatClient() {
 
             {/* Composer */}
             <MessageComposer
+              key={activeConversation.id}
               onSendMessage={handleSendMessage}
               disabled={activeConversation.status === 'blocked'}
               allowSavedReplies={viewerRole === 'Company'}
+              suggestions={viewerRole === 'User' && activeConversation.marketplace_proposal_id ? ['Quais equipamentos estão incluídos na proposta?', 'Esse preço pode melhorar?', 'Qual é o prazo de instalação?', 'Vocês fazem visita técnica?'] : undefined}
             />
           </>
         ) : (

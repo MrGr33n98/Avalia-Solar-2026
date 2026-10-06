@@ -4,7 +4,10 @@ import { MarketplaceProposalsWorkspace } from '@/components/reviewer/Marketplace
 export default function ReviewerProposalsPage() {
   return (
     <ReviewerShell>
-      <MarketplaceProposalsWorkspace />
+      <Suspense fallback={<p role="status">Carregando propostas…</p>}>
+        <MarketplaceProposalsWorkspace />
+      </Suspense>
     </ReviewerShell>
   );
 }
+import { Suspense } from 'react';

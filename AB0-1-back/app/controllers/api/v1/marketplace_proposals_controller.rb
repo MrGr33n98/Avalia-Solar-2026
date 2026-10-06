@@ -8,8 +8,8 @@ module Api
       before_action :ensure_buyer_access!, only: %i[show view accept decline request_change meetings create_meeting]
 
       def index
-        proposals = visible_buyer_scope.order(created_at: :desc).includes(:company, :lead, :versions, :project)
-        render json: { proposals: proposals.map { |proposal| serialize(proposal) } }
+        proposals = with_details(visible_buyer_scope.order(created_at: :desc))
+        render json: { proposals: proposals.map { |proposal| serialize(proposal, detailed: true) } }
       end
 
       def show
@@ -19,7 +19,7 @@ module Api
       def compare
         raw_ids = params[:ids] || params[:proposal_ids]
         ids = (raw_ids.is_a?(String) ? raw_ids.split(',') : Array(raw_ids)).map(&:to_i).uniq.first(5)
-        proposals = visible_buyer_scope.where(id: ids).includes(:company, :lead, :versions)
+        proposals = with_details(visible_buyer_scope.where(id: ids))
         render json: { proposals: proposals.map { |proposal| serialize(proposal, detailed: true) } }
       end
 
@@ -45,18 +45,15 @@ module Api
       end
 
       def create_meeting
-        meeting = @proposal.meetings.create!(
-          buyer_user: current_user,
-          company: @proposal.company,
-          meeting_type: params[:meeting_type].presence || 'video',
-          scheduled_at: parse_time(params[:scheduled_at]),
-          notes: params[:notes].to_s.truncate(1000)
-        )
-        @proposal.update!(status: 'meeting_scheduled') unless @proposal.status == 'accepted'
-        @proposal.record_event('meeting.requested', actor: current_user, metadata: { meeting_id: meeting.id })
+        meeting = Marketplace::ProposalMeetingService.new(
+          proposal: @proposal, buyer: current_user, attributes: {
+            meeting_type: params[:meeting_type].presence || 'video',
+            scheduled_at: parse_time(params[:scheduled_at]), notes: params[:notes].to_s.truncate(1000)
+          }
+        ).call
         render json: { meeting: meeting_json(meeting) }, status: :created
-      rescue ArgumentError
-        render json: { error: 'Horário inválido' }, status: :unprocessable_entity
+      rescue ArgumentError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       rescue ActiveRecord::RecordInvalid => e
         render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
       end
@@ -64,13 +61,19 @@ module Api
       private
 
       def set_proposal
-        @proposal = MarketplaceProposal.includes(:lead, :company, :versions, :project, :meetings).find(params[:id])
+        @proposal = with_details(MarketplaceProposal.all).find(params[:id])
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Proposta não encontrada' }, status: :not_found
       end
 
       def visible_buyer_scope
-        buyer_scope.where.not(status: 'draft')
+        buyer_scope.where.not(status: 'draft').or(
+          buyer_scope.where(id: MarketplaceProposalVersion.where(status: 'published').select(:proposal_id))
+        )
+      end
+
+      def with_details(scope)
+        scope.includes(:company, :lead, :meetings, versions: %i[items terms], project: :milestones)
       end
 
       def buyer_scope
@@ -84,14 +87,14 @@ module Api
       def ensure_buyer_access!
         action = %w[create_meeting meetings].include?(action_name) ? :meeting? : :show?
         authorize @proposal, action
-        return if @proposal.status != 'draft' && (current_user&.admin? || buyer_scope.where(id: @proposal.id).exists?)
+        return if visible_buyer_scope.where(id: @proposal.id).exists?
 
         render json: { error: 'Você não tem acesso a esta proposta' }, status: :forbidden
       end
 
       def perform_decision(kind, reason = nil)
         proposal = Marketplace::ProposalDecisionService.new(
-          proposal: @proposal, buyer: current_user, kind: kind, reason: reason
+          proposal: @proposal, buyer: current_user, kind: kind, reason: reason, version_id: params[:version_id]
         ).call
         render json: { proposal: serialize(proposal, detailed: true) }
       rescue ArgumentError => e
@@ -106,7 +109,7 @@ module Api
 
         payload.merge(
           project: project_json(proposal.project),
-          meetings: proposal.meetings.order(created_at: :desc).map { |meeting| meeting_json(meeting) }
+          meetings: proposal.meetings.sort_by(&:created_at).reverse.map { |meeting| meeting_json(meeting) }
         )
       end
 
@@ -114,7 +117,8 @@ module Api
         {
           id: proposal.id,
           reference: proposal.reference,
-          status: proposal.status,
+          status: proposal.status == 'draft' ? 'negotiating' : proposal.status,
+          revision_pending: proposal.status == 'draft',
           total_cents: proposal.total_cents,
           currency: proposal.currency,
           expires_at: proposal.expires_at,
@@ -122,7 +126,7 @@ module Api
           created_at: proposal.created_at,
           company: company_payload(proposal),
           request: request_payload(proposal),
-          version: version_json(proposal.current_version),
+          version: version_json(published_versions(proposal).first),
           versions: versions_json(proposal)
         }
       end
@@ -131,7 +135,14 @@ module Api
         {
           id: proposal.company_id,
           name: proposal.company.name,
-          logo_url: proposal.company.try(:logo_url)
+          logo_url: proposal.company.try(:logo_url),
+          slug: proposal.company.slug,
+          verified: proposal.company.verified?,
+          rating_avg: proposal.company.rating_avg,
+          reviews_count: proposal.company.reviews_count,
+          city: proposal.company.city,
+          state: proposal.company.state,
+          founded_year: proposal.company.founded_year
         }
       end
 
@@ -147,9 +158,11 @@ module Api
       end
 
       def versions_json(proposal)
-        proposal.versions.where(status: 'published').order(number: :desc).map do |version|
-          version_json(version)
-        end
+        published_versions(proposal).map { |version| version_json(version) }
+      end
+
+      def published_versions(proposal)
+        proposal.versions.select { |version| version.status == 'published' }.sort_by(&:number).reverse
       end
 
       def version_json(version)
@@ -165,10 +178,10 @@ module Api
           currency: version.currency,
           valid_until: version.valid_until,
           published_at: version.published_at,
-          items: version.items.order(:position, :id).map do |item|
+          items: version.items.sort_by { |item| [item.position, item.id] }.map do |item|
             item.as_json(only: %i[id kind name description quantity unit unit_price_cents total_cents position])
           end,
-          terms: version.terms.order(:position, :id).map do |term|
+          terms: version.terms.sort_by { |term| [term.position, term.id] }.map do |term|
             term.as_json(only: %i[id key label value position])
           end
         }
@@ -182,7 +195,7 @@ module Api
           status: project.status,
           started_at: project.started_at,
           completed_at: project.completed_at,
-          milestones: project.milestones.order(:position, :id).map do |milestone|
+          milestones: project.milestones.sort_by { |milestone| [milestone.position, milestone.id] }.map do |milestone|
             milestone.as_json(only: %i[id key title status position scheduled_at completed_at notes])
           end
         }

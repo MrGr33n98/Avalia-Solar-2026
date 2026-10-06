@@ -1,457 +1,607 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
-  CalendarClock,
-  Check,
+  ArrowLeft,
+  ArrowRight,
   CheckCircle2,
-  ChevronRight,
-  CircleDollarSign,
   FileText,
-  Loader2,
-  MessageCircle,
+  GitCompareArrows,
+  Info,
   RefreshCw,
-  ShieldCheck,
-  Sparkles,
-  X,
 } from 'lucide-react';
-import {
-  marketplaceProposalsApi,
-  type MarketplaceProposal,
-  type MarketplaceProposalProject,
-} from '@/lib/api';
+import { marketplaceProposalsApi, type MarketplaceProposal } from '@/lib/api';
+import { canDecide, formatDate, formatMoney, isProjectComplete } from '@/lib/marketplace-proposals';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { CompanyMark, ProposalSummary, StatusBadge } from './proposals/ProposalSummary';
+import { ProposalComparison } from './proposals/ProposalComparison';
+import { ProposalMeeting } from './proposals/ProposalMeeting';
+import { ProposalNegotiation } from './proposals/ProposalNegotiation';
+import { ProposalProject } from './proposals/ProposalProject';
 
-const statusLabels: Record<string, { label: string; tone: string; step: number }> = {
-  draft: { label: 'Rascunho', tone: 'bg-slate-100 text-slate-700', step: 0 },
-  sent: { label: 'Recebida', tone: 'bg-blue-50 text-blue-700', step: 1 },
-  viewed: { label: 'Visualizada', tone: 'bg-blue-50 text-blue-700', step: 1 },
-  under_review: { label: 'Em análise', tone: 'bg-violet-50 text-violet-700', step: 2 },
-  negotiating: { label: 'Negociação', tone: 'bg-amber-50 text-amber-700', step: 2 },
-  meeting_scheduled: { label: 'Reunião agendada', tone: 'bg-amber-50 text-amber-700', step: 3 },
-  accepted: { label: 'Escolhida', tone: 'bg-emerald-50 text-emerald-700', step: 4 },
-  declined: { label: 'Recusada', tone: 'bg-slate-100 text-slate-600', step: 4 },
-  not_selected: { label: 'Outra proposta escolhida', tone: 'bg-slate-100 text-slate-600', step: 4 },
-  withdrawn: { label: 'Retirada', tone: 'bg-slate-100 text-slate-600', step: 4 },
+type Screen = 'summary' | 'meeting' | 'negotiation' | 'project' | 'compare';
+type Filter = 'all' | 'active' | 'completed' | 'closed';
+const screens: Screen[] = ['summary', 'meeting', 'negotiation', 'project', 'compare'];
+const screenTitles: Record<Screen, string> = {
+  summary: 'Detalhes da proposta',
+  meeting: 'Agendar reunião',
+  negotiation: 'Negociação da proposta',
+  project: 'Acompanhamento do projeto',
+  compare: 'Comparar propostas',
 };
-
-const journeySteps = [
-  { label: 'Proposta recebida', icon: FileText },
-  { label: 'Em análise', icon: ShieldCheck },
-  { label: 'Negociação', icon: MessageCircle },
-  { label: 'Escolher proposta', icon: CheckCircle2 },
-  { label: 'Projeto em andamento', icon: Sparkles },
+const filters: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'Todas' },
+  { id: 'active', label: 'Em andamento' },
+  { id: 'completed', label: 'Concluídas' },
+  { id: 'closed', label: 'Encerradas' },
 ];
 
-function money(cents = 0, currency = 'BRL') {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(cents / 100);
-}
-
-function date(value?: string | null) {
-  if (!value) return '—';
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('pt-BR');
-}
-
-function statusOf(status: string) {
-  return statusLabels[status] || { label: 'Atualizando', tone: 'bg-slate-100 text-slate-700', step: 1 };
-}
-
-function companyInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
-}
-
-function CompanyMark({ proposal }: { proposal: MarketplaceProposal }) {
+function matchesFilter(proposal: MarketplaceProposal, filter: Filter) {
+  const completed = isProjectComplete(proposal.project);
+  const active =
+    canDecide(proposal) ||
+    (proposal.status === 'accepted' && !completed && proposal.project?.status !== 'cancelled');
   return (
-    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-sm font-black text-blue-700 ring-1 ring-blue-100">
-      {companyInitials(proposal.company.name)}
-    </span>
-  );
-}
-
-function ProgressRail({ status, project }: { status: string; project?: MarketplaceProposalProject | null }) {
-  const active = project ? 4 : statusOf(status).step;
-  return (
-    <ol className="grid grid-cols-5 gap-1" aria-label="Progresso da proposta">
-      {journeySteps.map((step, index) => {
-        const Icon = step.icon;
-        const done = index < active;
-        const current = index === active;
-        return (
-          <li key={step.label} className="min-w-0 text-center">
-            <span
-              className={cn(
-                'mx-auto flex h-8 w-8 items-center justify-center rounded-full border',
-                done || current
-                  ? 'border-blue-600 bg-blue-600 text-white'
-                  : 'border-slate-200 bg-white text-slate-400'
-              )}
-            >
-              {done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
-            </span>
-            <span className="mt-1 block truncate text-[10px] font-semibold text-slate-600">{step.label}</span>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
-function ProposalCard({
-  proposal,
-  selected,
-  compared,
-  onSelect,
-  onCompare,
-}: {
-  proposal: MarketplaceProposal;
-  selected: boolean;
-  compared: boolean;
-  onSelect: () => void;
-  onCompare: () => void;
-}) {
-  const status = statusOf(proposal.status);
-  return (
-    <article
-      className={cn(
-        'rounded-2xl border bg-white p-4 shadow-sm transition',
-        selected ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'
-      )}
-    >
-      <button type="button" onClick={onSelect} className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
-        <span className="flex items-start gap-3">
-          <CompanyMark proposal={proposal} />
-          <span className="min-w-0 flex-1">
-            <span className="flex items-start justify-between gap-2">
-              <span className="min-w-0">
-                <span className="block truncate font-bold text-slate-950">{proposal.company.name}</span>
-                <span className="mt-1 block text-xs text-slate-500">
-                  {proposal.reference} · Atualizada {date(proposal.published_at || proposal.created_at)}
-                </span>
-              </span>
-              <span className={cn('shrink-0 rounded-full px-2 py-1 text-[11px] font-bold', status.tone)}>
-                {status.label}
-              </span>
-            </span>
-            <span className="mt-3 flex items-center justify-between gap-2">
-              <span className="font-black text-blue-700">
-                {proposal.total_cents ? money(proposal.total_cents, proposal.currency) : 'Aguardando valor'}
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-            </span>
-          </span>
-        </span>
-      </button>
-      <label className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 text-xs font-semibold text-slate-600">
-        <input type="checkbox" checked={compared} onChange={onCompare} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
-        Comparar proposta
-      </label>
-    </article>
+    filter === 'all' ||
+    (filter === 'completed' && completed) ||
+    (filter === 'active' && active) ||
+    (filter === 'closed' && !active && !completed)
   );
 }
 
 export function MarketplaceProposalsWorkspace() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const selectedId = Number(params.get('proposal')) || null;
+  const requestedScreen = params.get('view') as Screen;
+  const screen = screens.includes(requestedScreen) ? requestedScreen : 'summary';
   const [proposals, setProposals] = useState<MarketplaceProposal[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [compareIds, setCompareIds] = useState<number[]>([]);
+  const [filter, setFilter] = useState<Filter>('all');
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [reason, setReason] = useState('');
-  const [meetingDate, setMeetingDate] = useState('');
-  const [meetingNotes, setMeetingNotes] = useState('');
-  const [showCompare, setShowCompare] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState('');
+  const [detailAttempt, setDetailAttempt] = useState(0);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [choosing, setChoosing] = useState<MarketplaceProposal | null>(null);
+  const [declining, setDeclining] = useState(false);
+  const [decisionError, setDecisionError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  const selected = proposals.find((proposal) => proposal.id === selectedId);
+  const showingDetail = Boolean(selectedId) || screen === 'compare';
+  const comparisonIds = (params.get('compare') || '')
+    .split(',')
+    .map(Number)
+    .filter((id) => Number.isSafeInteger(id) && id > 0)
+    .slice(0, 3);
 
-  const selected = useMemo(
-    () => proposals.find((proposal) => proposal.id === selectedId) || proposals[0],
-    [proposals, selectedId]
-  );
+  const updateProposal = useCallback((proposal: MarketplaceProposal) => {
+    setProposals((current) =>
+      current.some((item) => item.id === proposal.id)
+        ? current.map((item) => (item.id === proposal.id ? proposal : item))
+        : [...current, proposal]
+    );
+  }, []);
 
-  const load = async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async () => {
+    setRefreshing(true);
+    setError('');
     try {
       const response = await marketplaceProposalsApi.list();
-      setProposals(response.proposals || []);
-      setSelectedId((current) => current || response.proposals?.[0]?.id || null);
+      setProposals(response.proposals);
+      setCompareIds((current) =>
+        current.filter((id) => response.proposals.some((proposal) => proposal.id === id))
+      );
     } catch {
-      setError('Não foi possível carregar suas propostas.');
+      setError('Não foi possível carregar suas propostas. Confira sua conexão e tente novamente.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
-  const updateProposal = (proposal: MarketplaceProposal) => {
-    setProposals((current) => current.map((item) => (item.id === proposal.id ? proposal : item)));
-    setSelectedId(proposal.id);
-  };
+  useEffect(() => {
+    if (!selectedId) return;
+    let current = true;
+    setDetailLoading(true);
+    setDetailError('');
+    (async () => {
+      try {
+        const response = await marketplaceProposalsApi.get(selectedId);
+        const proposal =
+          response.proposal.status === 'sent'
+            ? (await marketplaceProposalsApi.view(selectedId)).proposal
+            : response.proposal;
+        if (current) updateProposal(proposal);
+      } catch {
+        if (current)
+          setDetailError(
+            'Não foi possível abrir esta proposta. Ela pode não estar mais disponível para sua conta.'
+          );
+      } finally {
+        if (current) setDetailLoading(false);
+      }
+    })();
+    return () => {
+      current = false;
+    };
+  }, [selectedId, detailAttempt, updateProposal]);
 
-  const run = async (key: string, action: () => Promise<{ proposal: MarketplaceProposal }>) => {
-    setBusy(key);
-    setError(null);
+  useEffect(() => {
+    if (showingDetail) detailHeading.current?.focus({ preventScroll: true });
+  }, [selectedId, screen, showingDetail, detailLoading]);
+
+  function navigate(id: number | null, view: Screen = 'summary') {
+    const query = new URLSearchParams(params.toString());
+    query.delete('compare');
+    if (id) query.set('proposal', String(id));
+    else query.delete('proposal');
+    if (view !== 'summary') query.set('view', view);
+    else query.delete('view');
+    const search = query.toString();
+    router.push(pathname + (search ? '?' + search : ''), { scroll: false });
+  }
+
+  function openProposal(proposal: MarketplaceProposal) {
+    updateProposal(proposal);
+    navigate(proposal.id, proposal.status === 'accepted' ? 'project' : 'summary');
+  }
+
+  function toggleCompare(id: number) {
+    setNotice('');
+    if (compareIds.includes(id)) setCompareIds((current) => current.filter((item) => item !== id));
+    else if (compareIds.length < 3) setCompareIds((current) => [...current, id]);
+    else setNotice('Você pode comparar até 3 propostas. Desmarque uma para incluir outra.');
+  }
+
+  async function decide(kind: 'accept' | 'decline') {
+    const proposal = kind === 'accept' ? choosing : selected;
+    if (!proposal || submitting.current) return;
+    submitting.current = true;
+    setBusy(true);
+    setDecisionError('');
     try {
-      updateProposal((await action()).proposal);
-    } catch {
-      setError('Não foi possível concluir essa ação. Tente novamente.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const toggleCompare = (id: number) => {
-    setCompareIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : current.length < 3 ? [...current, id] : current));
-  };
-
-  const requestMeeting = async () => {
-    if (!selected) return;
-    setBusy('meeting');
-    try {
-      await marketplaceProposalsApi.createMeeting(selected.id, {
-        meeting_type: 'video',
-        scheduled_at: meetingDate ? new Date(meetingDate).toISOString() : undefined,
-        notes: meetingNotes,
-      });
+      const response =
+        kind === 'accept'
+          ? await marketplaceProposalsApi.accept(proposal.id, proposal.version?.id)
+          : await marketplaceProposalsApi.decline(proposal.id);
+      updateProposal(response.proposal);
+      setChoosing(null);
+      setDeclining(false);
+      navigate(proposal.id, kind === 'accept' ? 'project' : 'summary');
+      // A escolha encerra as propostas concorrentes da mesma solicitação no servidor.
       await load();
-      setMeetingNotes('');
     } catch {
-      setError('Não foi possível solicitar a reunião.');
+      setDecisionError(
+        'Não foi possível registrar sua decisão. Atualize a proposta e tente novamente.'
+      );
     } finally {
-      setBusy(null);
+      submitting.current = false;
+      setBusy(false);
     }
-  };
-
-  if (loading) {
-    return <div className="flex min-h-[360px] items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-blue-600" /></div>;
   }
 
-  if (error && proposals.length === 0) {
+  if (loading)
     return (
-      <section className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-center">
-        <p className="font-bold text-rose-800">{error}</p>
-        <button type="button" onClick={() => void load()} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 font-bold text-white">
-          <RefreshCw className="h-4 w-4" /> Tentar novamente
-        </button>
-      </section>
+      <div role="status" className="space-y-4 py-5">
+        <span className="sr-only">Carregando propostas…</span>
+        {[1, 2, 3].map((item) => (
+          <div
+            key={item}
+            className="h-28 animate-pulse rounded-2xl bg-muted motion-reduce:animate-none"
+          />
+        ))}
+      </div>
     );
-  }
-
-  if (!proposals.length) {
-    return (
-      <section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <CircleDollarSign className="mx-auto h-10 w-10 text-blue-600" />
-        <h1 className="mt-4 text-2xl font-black text-slate-950">Minhas propostas</h1>
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">Quando uma empresa responder à sua solicitação, a proposta aparecerá aqui.</p>
-        <Link href="/" className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-5 font-bold text-white">Encontrar empresas</Link>
-      </section>
-    );
-  }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-bold text-blue-700">Área do consumidor</p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Minhas propostas</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">Compare condições, converse com as empresas e acompanhe seu projeto até a conclusão.</p>
+    <section
+      className="mx-auto w-full min-w-0 max-w-7xl pb-6 text-foreground"
+      aria-label="Jornada de propostas"
+    >
+      <header
+        className={cn(
+          'mb-6 flex items-start justify-between gap-3',
+          showingDetail && 'hidden lg:flex'
+        )}
+      >
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Minhas propostas</h1>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+            Da primeira conversa ao projeto concluído. Compare e acompanhe tudo por aqui.
+          </p>
         </div>
-        <button type="button" onClick={() => void load()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm">
-          <RefreshCw className="h-4 w-4" /> Atualizar
-        </button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => void load()}
+          disabled={refreshing}
+          aria-label="Atualizar propostas"
+        >
+          <RefreshCw
+            className={cn('h-4 w-4', refreshing && 'animate-spin motion-reduce:animate-none')}
+          />
+        </Button>
       </header>
-
-      {error && <p role="alert" className="mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">{error}</p>}
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(300px,0.8fr)_minmax(0,1.4fr)]">
-        <section aria-label="Lista de propostas" className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-500">{proposals.length} recebida(s)</h2>
-            <span className="text-xs text-slate-500">Até 3 para comparar</span>
-          </div>
-          {proposals.map((proposal) => (
-            <ProposalCard
-              key={proposal.id}
-              proposal={proposal}
-              selected={selected?.id === proposal.id}
-              compared={compareIds.includes(proposal.id)}
-              onSelect={() => {
-                setSelectedId(proposal.id);
-                if (proposal.status === 'sent') void run('view-' + proposal.id, () => marketplaceProposalsApi.view(proposal.id));
-              }}
-              onCompare={() => toggleCompare(proposal.id)}
-            />
-          ))}
-          <button
-            type="button"
-            disabled={compareIds.length < 2}
-            onClick={() => setShowCompare(true)}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-bold text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 space-y-3 rounded-xl border border-destructive/30 bg-card p-4"
+        >
+          <p className="text-sm text-destructive">{error}</p>
+          <Button variant="outline" onClick={() => void load()} disabled={refreshing}>
+            Tentar novamente
+          </Button>
+        </div>
+      )}
+      {!proposals.length && !error && !showingDetail ? (
+        <div className="rounded-2xl border border-border bg-card px-5 py-12 text-center">
+          <FileText className="mx-auto h-10 w-10 text-primary" />
+          <h2 className="mt-4 text-lg font-semibold">Suas propostas ficam aqui</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Quando uma empresa responder à sua solicitação, você poderá comparar as condições e dar
+            o próximo passo.
+          </p>
+          <Button asChild className="mt-6">
+            <Link href="/companies">Encontrar empresas</Link>
+          </Button>
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'grid min-w-0 gap-6',
+            showingDetail &&
+              screen !== 'compare' &&
+              'lg:grid-cols-[minmax(260px,0.75fr)_minmax(0,1.4fr)]'
+          )}
+        >
+          <section
+            aria-label="Lista de propostas"
+            className={cn(
+              'min-w-0 space-y-4',
+              showingDetail && 'hidden lg:block',
+              screen === 'compare' && 'lg:hidden'
+            )}
           >
-            <CircleDollarSign className="h-4 w-4" /> Comparar selecionadas ({compareIds.length})
-          </button>
-        </section>
-
-        {selected && (
-          <section className="space-y-5">
-            <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <CompanyMark proposal={selected} />
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Detalhes da proposta</p>
-                    <h2 className="mt-1 text-2xl font-black text-slate-950">{selected.company.name}</h2>
-                    <p className="mt-1 text-sm text-slate-500">{selected.reference} · {selected.request?.city || 'Local não informado'}{selected.request?.state ? ', ' + selected.request.state : ''}</p>
-                  </div>
-                </div>
-                <span className={cn('rounded-full px-3 py-1.5 text-xs font-bold', statusOf(selected.status).tone)}>{statusOf(selected.status).label}</span>
-              </div>
-
-              <div className="mt-6"><ProgressRail status={selected.status} project={selected.project} /></div>
-
-              {selected.version ? (
-                <div className="mt-7 grid gap-4 md:grid-cols-[1fr_220px]">
-                  <div>
-                    <h3 className="text-lg font-black text-slate-950">{selected.version.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{selected.version.summary || 'A empresa ainda não adicionou um resumo.'}</p>
-                    <div className="mt-5 divide-y divide-slate-100 rounded-2xl border border-slate-200">
-                      {selected.version.items.length ? selected.version.items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                          <div><p className="font-bold text-slate-900">{item.name}</p><p className="text-xs text-slate-500">{item.quantity} {item.unit}</p></div>
-                          <span className="font-bold text-slate-900">{money(item.total_cents, selected.currency)}</span>
-                        </div>
-                      )) : <p className="p-4 text-sm text-slate-500">Itens detalhados ainda não publicados.</p>}
-                    </div>
-                  </div>
-                  <aside className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Valor total</p>
-                    <p className="mt-2 text-2xl font-black text-blue-700">{money(selected.version.total_cents || selected.total_cents, selected.currency)}</p>
-                    <p className="mt-2 text-xs text-slate-500">Válida até {date(selected.version.valid_until || selected.expires_at)}</p>
-                    {selected.version.terms.length > 0 && (
-                      <dl className="mt-5 space-y-3 border-t border-slate-200 pt-4">
-                        {selected.version.terms.map((term) => <div key={term.id}><dt className="text-xs font-bold text-slate-500">{term.label}</dt><dd className="mt-1 text-sm text-slate-800">{term.value}</dd></div>)}
-                      </dl>
-                    )}
-                  </aside>
-                </div>
-              ) : (
-                <div className="mt-6 rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">A empresa está preparando os detalhes desta proposta.</div>
-              )}
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link href={'/chat?company_id=' + selected.company.id + '&marketplace_proposal_id=' + selected.id} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-amber-400 px-4 text-sm font-black text-slate-950">
-                  <MessageCircle className="h-4 w-4" /> Conversar com a empresa
-                </Link>
-                <button type="button" onClick={() => setMeetingDate((current) => current || new Date().toISOString().slice(0, 16))} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-800">
-                  <CalendarClock className="h-4 w-4" /> Agendar reunião
+            <div
+              className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1 sm:grid-cols-4 lg:grid-cols-2"
+              aria-label="Filtrar propostas"
+            >
+              {filters.map((item) => (
+                <button
+                  type="button"
+                  key={item.id}
+                  aria-pressed={filter === item.id}
+                  onClick={() => setFilter(item.id)}
+                  className={cn(
+                    'min-h-11 whitespace-nowrap rounded-lg px-2 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+                    filter === item.id
+                      ? 'bg-card text-primary shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {item.label}{' '}
+                  <span className="ml-1 tabular-nums">
+                    {proposals.filter((p) => matchesFilter(p, item.id)).length}
+                  </span>
                 </button>
-                {selected.status !== 'accepted' && !['declined', 'not_selected', 'withdrawn'].includes(selected.status) && (
-                  <button type="button" disabled={busy === 'accept'} onClick={() => void run('accept', () => marketplaceProposalsApi.accept(selected.id))} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-black text-white disabled:opacity-60">
-                    {busy === 'accept' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Escolher esta proposta
-                  </button>
+              ))}
+            </div>
+            <div className={cn('grid gap-3', !showingDetail && 'md:grid-cols-2 xl:grid-cols-3')}>
+              {proposals
+                .filter((proposal) => matchesFilter(proposal, filter))
+                .map((proposal) => (
+                  <article
+                    key={proposal.id}
+                    className={cn(
+                      'min-w-0 rounded-2xl border bg-card p-4',
+                      selectedId === proposal.id ? 'border-primary' : 'border-border'
+                    )}
+                  >
+                    <button
+                      type="button"
+                      aria-label={'Abrir proposta de ' + proposal.company.name}
+                      onClick={() => openProposal(proposal)}
+                      className="w-full min-w-0 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                    >
+                      <span className="flex items-start gap-3">
+                        <CompanyMark proposal={proposal} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block break-words font-semibold">
+                            {proposal.company.name}
+                          </span>
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            {proposal.reference}
+                          </span>
+                        </span>
+                        <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                      </span>
+                      <span className="mt-3 block">
+                        <StatusBadge proposal={proposal} />
+                      </span>
+                      <span className="mt-3 block text-xl font-semibold tabular-nums text-primary">
+                        {formatMoney(
+                          proposal.version?.total_cents ?? proposal.total_cents,
+                          proposal.currency
+                        )}
+                      </span>
+                      <span className="mt-2 block text-xs text-muted-foreground">
+                        Atualizada em{' '}
+                        {formatDate(
+                          proposal.version?.published_at ||
+                            proposal.published_at ||
+                            proposal.created_at
+                        )}
+                      </span>
+                    </button>
+                    <label className="mt-3 flex min-h-11 cursor-pointer items-center gap-2 border-t border-border pt-3 text-xs font-medium text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={compareIds.includes(proposal.id)}
+                        onChange={() => toggleCompare(proposal.id)}
+                        aria-label={'Comparar proposta de ' + proposal.company.name}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      Comparar proposta
+                    </label>
+                  </article>
+                ))}
+            </div>
+            {!proposals.some((proposal) => matchesFilter(proposal, filter)) && (
+              <p
+                role="status"
+                className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground"
+              >
+                Nenhuma proposta neste status.
+              </p>
+            )}
+            {notice && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {notice}
+              </p>
+            )}
+            <div className="sticky bottom-[calc(var(--reviewer-mobile-nav-height,64px)+0.5rem)] rounded-xl border border-border bg-card p-3 lg:bottom-4">
+              <Button
+                disabled={compareIds.length < 2}
+                className="w-full"
+                onClick={() => {
+                  const query = new URLSearchParams(params.toString());
+                  query.delete('proposal');
+                  query.set('view', 'compare');
+                  query.set('compare', compareIds.join(','));
+                  router.push(pathname + '?' + query.toString(), { scroll: false });
+                }}
+              >
+                <GitCompareArrows className="mr-2 h-4 w-4" />
+                Comparar selecionadas ({compareIds.length})
+              </Button>
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Selecione de 2 a 3 propostas.
+              </p>
+            </div>
+          </section>
+          {showingDetail && (
+            <section className="min-w-0 rounded-2xl border border-border bg-card p-4 sm:p-6">
+              <div className="mb-5 flex items-center justify-between gap-2">
+                <Button
+                  variant="ghost"
+                  className="-ml-3"
+                  onClick={() =>
+                    navigate(screen === 'summary' || screen === 'compare' ? null : selectedId)
+                  }
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {screen === 'summary' || screen === 'compare' ? 'Minhas propostas' : 'Voltar'}
+                </Button>
+                {selectedId && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={detailLoading}
+                    onClick={() => setDetailAttempt((value) => value + 1)}
+                    aria-label="Atualizar proposta"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
-
-              {meetingDate && (
-                <div className="mt-4 grid gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-                  <label className="text-xs font-bold text-slate-700">Data e horário<input type="datetime-local" value={meetingDate} onChange={(event) => setMeetingDate(event.target.value)} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm" /></label>
-                  <label className="text-xs font-bold text-slate-700">Observações<textarea value={meetingNotes} onChange={(event) => setMeetingNotes(event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" placeholder="Opcional" /></label>
-                  <button type="button" onClick={() => void requestMeeting()} disabled={busy === 'meeting'} className="min-h-11 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white disabled:opacity-60">{busy === 'meeting' ? 'Enviando...' : 'Confirmar reunião'}</button>
+              <h2
+                ref={detailHeading}
+                tabIndex={-1}
+                className="text-xl font-semibold tracking-tight outline-none"
+              >
+                {screenTitles[screen]}
+              </h2>
+              {screen === 'compare' ? (
+                <div className="mt-5">
+                  <ProposalComparison
+                    ids={comparisonIds}
+                    onOpen={openProposal}
+                    onChoose={(proposal) => {
+                      setDecisionError('');
+                      setChoosing(proposal);
+                    }}
+                  />
                 </div>
-              )}
-
-              {selected.status !== 'accepted' && !['declined', 'not_selected', 'withdrawn'].includes(selected.status) && (
-                <div className="mt-5 border-t border-slate-100 pt-5">
-                  <label className="block text-sm font-bold text-slate-800">Quer negociar ou pedir uma alteração?</label>
-                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                    <input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Ex.: ajustar prazo ou equipamento" className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm" />
-                    <button type="button" disabled={!reason.trim() || busy === 'change'} onClick={() => void run('change', () => marketplaceProposalsApi.requestChange(selected.id, reason))} className="min-h-11 rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-bold text-amber-800 disabled:opacity-50">Solicitar alteração</button>
-                    <button type="button" disabled={busy === 'decline'} onClick={() => void run('decline', () => marketplaceProposalsApi.decline(selected.id, reason))} className="min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-600">Recusar</button>
+              ) : detailLoading ? (
+                <p role="status" className="py-10 text-sm text-muted-foreground">
+                  Carregando os detalhes da proposta…
+                </p>
+              ) : detailError ? (
+                <div role="alert" className="mt-4 space-y-4">
+                  <p className="text-sm text-destructive">{detailError}</p>
+                  <Button variant="outline" onClick={() => setDetailAttempt((value) => value + 1)}>
+                    Tentar novamente
+                  </Button>
+                </div>
+              ) : selected ? (
+                <>
+                  <div className="my-5 flex flex-wrap items-center gap-3 border-b border-border pb-5">
+                    <CompanyMark proposal={selected} />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="break-words font-semibold">{selected.company.name}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {selected.reference}
+                        {selected.request?.city ? ' · ' + selected.request.city : ''}
+                        {selected.request?.state ? ', ' + selected.request.state : ''}
+                      </p>
+                    </div>
+                    <StatusBadge proposal={selected} />
                   </div>
-                </div>
+                  {screen === 'summary' && (
+                    <ProposalSummary
+                      key={selected.id}
+                      proposal={selected}
+                      onMeeting={() => navigate(selected.id, 'meeting')}
+                      onChoose={() => {
+                        setDecisionError('');
+                        setChoosing(selected);
+                      }}
+                      onNegotiate={() => navigate(selected.id, 'negotiation')}
+                      onProject={() => navigate(selected.id, 'project')}
+                    />
+                  )}
+                  {screen === 'meeting' &&
+                    (canDecide(selected) || selected.status === 'accepted' ? (
+                      <ProposalMeeting
+                        key={selected.id}
+                        proposal={selected}
+                        onSaved={(meeting) =>
+                          updateProposal({
+                            ...selected,
+                            status:
+                              selected.status === 'accepted' ? 'accepted' : 'meeting_scheduled',
+                            meetings: [meeting, ...(selected.meetings || [])],
+                          })
+                        }
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Esta proposta não permite novos agendamentos.
+                      </p>
+                    ))}
+                  {screen === 'negotiation' && (
+                    <ProposalNegotiation
+                      key={selected.id}
+                      proposal={selected}
+                      onUpdated={updateProposal}
+                      onChoose={() => {
+                        setDecisionError('');
+                        setChoosing(selected);
+                      }}
+                    />
+                  )}
+                  {screen === 'project' && (
+                    <ProposalProject
+                      key={selected.id}
+                      proposal={selected}
+                      onViewProposal={() => navigate(selected.id)}
+                    />
+                  )}
+                  {screen === 'summary' && (
+                    <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-4">
+                      <Button variant="ghost" onClick={() => navigate(selected.id, 'negotiation')}>
+                        Histórico de versões
+                      </Button>
+                      {canDecide(selected) && (
+                        <Button
+                          variant="ghost"
+                          className="text-muted-foreground"
+                          onClick={() => {
+                            setDecisionError('');
+                            setDeclining(true);
+                          }}
+                        >
+                          Recusar proposta
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="mt-4 text-sm text-muted-foreground">Proposta não encontrada.</p>
               )}
-            </article>
-
-            {selected.versions && selected.versions.length > 1 && (
-              <ProposalVersionHistory versions={selected.versions} />
-            )}
-            {selected.project && <ProjectTimeline project={selected.project} companyId={selected.company.id} />}
-          </section>
-        )}
-      </div>
-
-      {showCompare && <CompareDialog proposals={proposals.filter((proposal) => compareIds.includes(proposal.id))} onClose={() => setShowCompare(false)} />}
-    </main>
-  );
-}
-
-function ProposalVersionHistory({ versions }: { versions: NonNullable<MarketplaceProposal['versions']> }) {
-  return (
-    <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Negociação da proposta</p>
-      <h3 className="mt-1 text-xl font-black text-slate-950">Histórico de versões</h3>
-      <ol className="mt-5 space-y-3">
-        {versions.map((version, index) => (
-          <li key={version.id || version.number} className="flex gap-3 rounded-2xl border border-slate-200 p-4">
-            <span className={cn('mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black', index === 0 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600')}>
-              {version.number}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <p className="font-bold text-slate-950">{version.title}</p>
-                <span className="font-black text-blue-700">{money(version.total_cents, version.currency)}</span>
-              </div>
-              <p className="mt-1 text-xs text-slate-500">{version.status === 'published' ? 'Enviada ao cliente' : 'Versão interna'}</p>
-              {version.summary && <p className="mt-2 text-sm text-slate-600">{version.summary}</p>}
-            </div>
-          </li>
-        ))}
-      </ol>
-    </article>
-  );
-}
-
-function ProjectTimeline({ project, companyId }: { project: MarketplaceProposalProject; companyId: number }) {
-  const completed = project.milestones.filter((milestone) => milestone.status === 'completed').length;
-  return (
-    <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex items-center justify-between gap-4">
-        <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Acompanhamento do projeto</p><h3 className="mt-1 text-xl font-black text-slate-950">{completed === project.milestones.length ? 'Projeto concluído' : 'Projeto em andamento'}</h3></div>
-        <span className="text-sm font-bold text-blue-700">{completed}/{project.milestones.length} etapas</span>
-      </div>
-      <ol className="mt-5 space-y-4">
-        {project.milestones.map((milestone) => (
-          <li key={milestone.id} className="flex gap-3">
-            <span className={cn('mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full', milestone.status === 'completed' ? 'bg-emerald-500 text-white' : milestone.status === 'current' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500')}>
-              {milestone.status === 'completed' ? <Check className="h-4 w-4" /> : <span className="h-2 w-2 rounded-full bg-current" />}
-            </span>
-            <div><p className="font-bold text-slate-900">{milestone.title}</p><p className="text-xs text-slate-500">{milestone.completed_at ? 'Concluída em ' + date(milestone.completed_at) : milestone.scheduled_at ? 'Agendada para ' + date(milestone.scheduled_at) : 'Aguardando próxima atualização'}</p></div>
-          </li>
-        ))}
-      </ol>
-      {completed === project.milestones.length && <Link href={'/companies/' + companyId + '#review-form'} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white"><Sparkles className="h-4 w-4" /> Avaliar empresa</Link>}
-    </article>
-  );
-}
-
-function CompareDialog({ proposals, onClose }: { proposals: MarketplaceProposal[]; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-3 sm:items-center">
-      <section role="dialog" aria-modal="true" aria-labelledby="compare-title" className="max-h-[90dvh] w-full max-w-5xl overflow-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-6">
-        <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wide text-blue-700">Comparação lado a lado</p><h2 id="compare-title" className="mt-1 text-2xl font-black text-slate-950">Comparar propostas</h2></div><button type="button" aria-label="Fechar comparação" onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200"><X className="h-5 w-5" /></button></div>
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
-          {proposals.map((proposal) => <article key={proposal.id} className="rounded-2xl border border-slate-200 p-4"><div className="flex items-center gap-2"><CompanyMark proposal={proposal} /><h3 className="font-bold text-slate-950">{proposal.company.name}</h3></div><p className="mt-4 text-2xl font-black text-blue-700">{money(proposal.total_cents, proposal.currency)}</p><dl className="mt-4 space-y-3 text-sm">{[['Status', statusOf(proposal.status).label], ['Validade', date(proposal.expires_at || proposal.version?.valid_until)], ['Itens', String(proposal.version?.items.length || 0)]].map(([label, value]) => <div key={label} className="flex justify-between gap-3 border-b border-slate-100 pb-2"><dt className="text-slate-500">{label}</dt><dd className="text-right font-bold text-slate-900">{value}</dd></div>)}</dl></article>)}
+            </section>
+          )}
         </div>
-      </section>
-    </div>
+      )}
+      <Dialog
+        open={Boolean(choosing) || declining}
+        onOpenChange={(open) => {
+          if (!open && !busy) {
+            setChoosing(null);
+            setDeclining(false);
+            setDecisionError('');
+          }
+        }}
+      >
+        <DialogContent
+          className="w-[calc(100%-2rem)] max-w-md px-5 py-6 motion-reduce:animate-none"
+          onEscapeKeyDown={(event) => {
+            if (busy) event.preventDefault();
+          }}
+          onPointerDownOutside={(event) => {
+            if (busy) event.preventDefault();
+          }}
+        >
+          <CheckCircle2 className="h-12 w-12 text-primary" />
+          <DialogTitle>{declining ? 'Recusar esta proposta?' : 'Confirmar interesse?'}</DialogTitle>
+          <DialogDescription>
+            {declining
+              ? 'A proposta será encerrada para você. Para retomar, será necessário conversar com a empresa.'
+              : 'Você deseja avançar com a proposta da ' + choosing?.company.name + '?'}
+          </DialogDescription>
+          {!declining && choosing && (
+            <>
+              <p className="text-2xl font-semibold tabular-nums text-primary">
+                {formatMoney(
+                  choosing.version?.total_cents ?? choosing.total_cents,
+                  choosing.currency
+                )}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                A escolha sinaliza seu interesse em prosseguir. O contrato e o pagamento continuam
+                sendo definidos diretamente com a empresa.
+              </p>
+              <p className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+                <Info className="mt-0.5 h-4 w-4 shrink-0" />
+                As outras propostas desta mesma solicitação serão marcadas como não escolhidas.
+              </p>
+            </>
+          )}
+          {decisionError && (
+            <p role="alert" className="text-sm text-destructive">
+              {decisionError}
+            </p>
+          )}
+          <Button disabled={busy} onClick={() => void decide(declining ? 'decline' : 'accept')}>
+            {busy ? 'Registrando…' : declining ? 'Recusar proposta' : 'Confirmar interesse'}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() => {
+              setChoosing(null);
+              setDeclining(false);
+            }}
+          >
+            Voltar
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </section>
   );
 }

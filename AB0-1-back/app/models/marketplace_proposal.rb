@@ -45,10 +45,17 @@ class MarketplaceProposal < ApplicationRecord
   end
 
   def mark_viewed!(actor: nil)
-    return if %w[accepted declined withdrawn not_selected closed_after_selection].include?(status)
+    with_lock do
+      return unless status == 'sent'
 
-    update!(status: 'viewed', viewed_at: Time.current)
-    record_event('proposal.viewed', actor: actor)
+      update!(status: 'viewed', viewed_at: Time.current)
+      record_event('proposal.viewed', actor: actor)
+    end
+  end
+
+  def expired_for_decision?
+    deadline = expires_at || current_version&.valid_until&.end_of_day
+    deadline.present? && deadline <= Time.current
   end
 
   def request_change!(actor:, reason:)

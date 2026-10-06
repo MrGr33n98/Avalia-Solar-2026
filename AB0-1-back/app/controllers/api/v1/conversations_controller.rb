@@ -71,12 +71,17 @@ module Api
         return if performed?
 
         proposal = marketplace_proposal_for(company)
+        return if performed?
+
         @conversation = ::Conversation.find_or_initialize_by(user_id: current_user.id, company_id: company.id)
-        @conversation.marketplace_proposal ||= proposal if proposal
+        @conversation.marketplace_proposal = proposal if proposal
 
         if @conversation.new_record?
           @conversation.save!
           @conversation.create_event!('conversation.started', actor: current_user)
+          P2pChat::Broadcaster.conversation_updated(@conversation)
+        elsif @conversation.changed?
+          @conversation.save!
           P2pChat::Broadcaster.conversation_updated(@conversation)
         end
 
@@ -162,7 +167,9 @@ module Api
 
         proposal = MarketplaceProposal.find_by(id: params[:marketplace_proposal_id], company_id: company.id)
         return render json: { error: 'Proposta não encontrada' }, status: :not_found unless proposal
-        return proposal if proposal.lead.email.to_s.casecmp?(current_user.email.to_s)
+        visible = proposal.status != 'draft' || proposal.versions.exists?(status: 'published')
+        buyer = proposal.buyer_user_id == current_user.id || proposal.lead.email.to_s.casecmp?(current_user.email.to_s)
+        return proposal if visible && buyer
 
         render json: { error: 'Proposta inválida para esta conversa' }, status: :forbidden
         nil

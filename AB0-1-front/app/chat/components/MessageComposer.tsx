@@ -18,6 +18,7 @@ interface MessageComposerProps {
   disabled?: boolean;
   allowSavedReplies?: boolean;
   className?: string;
+  suggestions?: string[];
 }
 
 export function MessageComposer({
@@ -25,12 +26,14 @@ export function MessageComposer({
   disabled = false,
   allowSavedReplies = true,
   className,
+  suggestions,
 }: MessageComposerProps) {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedRepliesOpen, setSavedRepliesOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -91,6 +94,7 @@ export function MessageComposer({
 
   return (
     <div className={cn('border-t border-slate-200 bg-white p-3 space-y-2', className)}>
+      {!!suggestions?.length && <div aria-label="Sugestões de mensagem" className="flex flex-wrap gap-2">{suggestions.map((suggestion) => <button type="button" key={suggestion} disabled={disabled || isSubmitting} onClick={() => { setText(suggestion); messageInputRef.current?.focus(); }} className="min-h-11 rounded-xl border border-blue-200 px-3 py-2 text-left text-xs text-blue-700 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-50">{suggestion}</button>)}</div>}
       {/* Attachments preview bar */}
       {attachments.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 pt-1 pb-2">
@@ -150,18 +154,21 @@ export function MessageComposer({
         )}
 
         <Input
+          ref={messageInputRef}
+          aria-label="Mensagem para a empresa"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={disabled ? 'Conversa bloqueada ou encerrada' : 'Digite sua mensagem...'}
           disabled={disabled || isSubmitting}
-          className="flex-1 text-xs rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white h-10 px-3.5"
+          className="min-w-0 flex-1 text-xs rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white h-10 px-3.5"
         />
 
         <Button
           type="button"
           disabled={(!text.trim() && attachments.length === 0) || disabled || isSubmitting}
           onClick={handleSubmit}
+          aria-label="Enviar mensagem"
           className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-2xs font-bold"
         >
           <Send className="h-4 w-4" />
