@@ -162,13 +162,6 @@ export function MarketplaceProposalsWorkspace() {
     navigate(proposal.id, proposal.status === 'accepted' ? 'project' : 'summary');
   }
 
-  function toggleCompare(id: number) {
-    setNotice('');
-    if (compareIds.includes(id)) setCompareIds((current) => current.filter((item) => item !== id));
-    else if (compareIds.length < 3) setCompareIds((current) => [...current, id]);
-    else setNotice('Você pode comparar até 3 propostas. Desmarque uma para incluir outra.');
-  }
-
   async function decide(kind: 'accept' | 'decline') {
     const proposal = kind === 'accept' ? choosing : selected;
     if (!proposal || submitting.current) return;
@@ -357,7 +350,26 @@ export function MarketplaceProposalsWorkspace() {
                         <input
                           type="checkbox"
                           checked={compareIds.includes(proposal.id)}
-                          onChange={() => toggleCompare(proposal.id)}
+                          onChange={(event) => {
+                            event.stopPropagation();
+                            if (!event.currentTarget.checked) {
+                              setNotice('');
+                              setCompareIds((current) =>
+                                current.filter((id) => id !== proposal.id)
+                              );
+                              return;
+                            }
+                            if (compareIds.length >= 3 && !compareIds.includes(proposal.id)) {
+                              setNotice(
+                                'Você pode comparar até 3 propostas. Desmarque uma para incluir outra.'
+                              );
+                              return;
+                            }
+                            setNotice('');
+                            setCompareIds((current) =>
+                              current.includes(proposal.id) ? current : [...current, proposal.id]
+                            );
+                          }}
                           aria-label={'Comparar proposta de ' + proposal.company.name}
                           className="h-4 w-4 accent-primary"
                         />

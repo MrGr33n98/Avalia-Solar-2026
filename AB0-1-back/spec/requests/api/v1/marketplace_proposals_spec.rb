@@ -192,6 +192,34 @@ RSpec.describe 'Marketplace proposals API', type: :request do
       expect(lead.reload.wizard_status).to eq('proposal_sent')
     end
 
+    it 'propaga uma resposta real da empresa até a lista do comprador' do
+      lead.update!(email: buyer.email, name: buyer.name)
+      prepared = Marketplace::ProposalBootstrapService.new(distribution: distribution).call
+
+      patch "/api/v1/company_dashboard/proposals/#{prepared.id}",
+            params: { company_id: company.id, proposal: {
+              title: 'Proposta solar publicada',
+              summary: 'Sistema dimensionado para o consumo informado.',
+              items: [{ kind: 'equipment', name: 'Kit fotovoltaico', quantity: 1, unit: 'un',
+                        unit_price_cents: 26_900_00, position: 0 }]
+            } }.to_json,
+            headers: headers_for(company_user)
+      expect(response).to have_http_status(:ok)
+
+      post "/api/v1/company_dashboard/proposals/#{prepared.id}/send",
+           params: { company_id: company.id }.to_json,
+           headers: headers_for(company_user)
+      expect(response).to have_http_status(:ok)
+
+      get '/api/v1/proposals', headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)['proposals'].find { |item| item['id'] == prepared.id }
+      expect(payload).to include('status' => 'sent')
+      expect(payload.dig('version', 'title')).to eq('Proposta solar publicada')
+      expect(payload.dig('company', 'id')).to eq(company.id)
+    end
+
     it 'cria uma nova versão preservando o histórico da proposta' do
       proposal = add_published_version(
         create(:marketplace_proposal, lead: lead, company: company, lead_distribution: distribution, status: 'draft'),

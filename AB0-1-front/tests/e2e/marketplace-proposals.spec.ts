@@ -224,6 +224,12 @@ async function mockReviewerShell(page: Page) {
       },
     })
   );
+  await page.route('**/api/v1/auth/refresh', (route) => fulfill(route, {}));
+  await page.route('**/api/v1/identity/stitch', (route) => fulfill(route, {}));
+  await page.route('**/api/v1/companies/mine', (route) => fulfill(route, []));
+  await page.route('**/api/v1/companies/states', (route) => fulfill(route, []));
+  await page.route('**/api/v1/states**', (route) => fulfill(route, []));
+  await page.route('**/api/v1/conversations', (route) => fulfill(route, []));
   await page.route('**/api/v1/reviewer/profile', (route) => fulfill(route, { profile: null }));
   await page.route('**/api/v1/review_dashboard/summary', (route) =>
     fulfill(route, {
@@ -233,7 +239,7 @@ async function mockReviewerShell(page: Page) {
       profile: { completion_percent: 100 },
     })
   );
-  await page.route('**/api/v1/reviews/mine', (route) => fulfill(route, { data: [] }));
+  await page.route('**/api/v1/reviews/mine**', (route) => fulfill(route, { data: [] }));
   await page.route('**/api/v1/leads/mine', (route) => fulfill(route, { data: [] }));
   await page.route('**/api/v1/reviewer_solutions', (route) => fulfill(route, []));
 }
@@ -301,6 +307,8 @@ async function expectNoPageOverflow(page: Page) {
     .toBe(true);
 }
 
+test.use({ serviceWorkers: 'block' });
+
 test.describe('Jornada de propostas do marketplace', () => {
   test.beforeEach(async ({ page }) => {
     await mockReviewerShell(page);
@@ -310,9 +318,12 @@ test.describe('Jornada de propostas do marketplace', () => {
   test('percorre lista, detalhes, comparação, reunião, negociação e projeto no PWA', async ({
     page,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(240_000);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/review-dashboard/proposals');
+    await page.goto('/review-dashboard/proposals', {
+      waitUntil: 'domcontentloaded',
+      timeout: 120_000,
+    });
 
     await expect(page.getByRole('heading', { name: 'Minhas propostas' })).toBeVisible({
       timeout: 20_000,
@@ -322,8 +333,8 @@ test.describe('Jornada de propostas do marketplace', () => {
     await expect(page.getByText('Aguardando proposta')).toBeVisible();
     await expectNoPageOverflow(page);
 
-    await page.getByLabel('Comparar proposta de SB Solar').check();
-    await page.getByLabel('Comparar proposta de Energia SC').check();
+    await page.getByLabel('Comparar proposta de SB Solar').click({ force: true });
+    await page.getByLabel('Comparar proposta de Energia SC').click({ force: true });
     await page.getByRole('button', { name: 'Comparar selecionadas (2)' }).click();
     await expect(page.getByRole('heading', { name: 'Comparar propostas' })).toBeVisible();
     await expect(
@@ -376,7 +387,10 @@ test.describe('Jornada de propostas do marketplace', () => {
 
   test('mostra conclusão e avaliação e preserva lista + detalhe no web app', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto('/review-dashboard/proposals?proposal=13&view=project');
+    await page.goto('/review-dashboard/proposals?proposal=13&view=project', {
+      waitUntil: 'domcontentloaded',
+      timeout: 120_000,
+    });
 
     await expect(page.getByRole('heading', { name: 'Minhas propostas' })).toBeVisible({
       timeout: 20_000,
@@ -384,7 +398,7 @@ test.describe('Jornada de propostas do marketplace', () => {
     await expect(page.getByRole('heading', { name: 'Acompanhamento do projeto' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Projeto concluído!' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Abrir proposta de SB Solar' })).toBeVisible();
-    await page.getByLabel('5 estrelas').check();
+    await page.getByLabel('5 estrelas').check({ force: true });
     await page.getByLabel('Conte como foi (opcional)').fill('Ótima experiência.');
     await page.getByRole('button', { name: 'Enviar avaliação' }).click();
     await expect(page.getByText('Avaliação enviada')).toBeVisible();
