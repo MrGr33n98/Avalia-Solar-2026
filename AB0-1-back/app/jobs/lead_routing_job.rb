@@ -3,49 +3,74 @@ class LeadRoutingJob < ApplicationJob
 
   def perform(lead_id, preferred_company_id = nil)
     lead = Lead.find(lead_id)
-    active_distributions = lead.lead_distributions.where(status: %w[sent viewed accepted]).count
-    return if active_distributions >= Leads::LeadMatchingService::MAX_DISTRIBUTIONS
+    slots = remaining_slots(lead)
+    return unless slots.positive?
 
-    # Track lead_routing_started
-    if lead.company_id.present?
-      Analytics::TrackEventService.call(
-        company_id: lead.company_id,
-        event_type: 'lead_routing_started',
-        metadata: { lead_id: lead.id }
-      )
-    end
-
-    matches = Leads::LeadMatchingService.call(lead, preferred_company_id: preferred_company_id)
-    matches = matches.first([Leads::LeadMatchingService::MAX_DISTRIBUTIONS - active_distributions, 0].max)
-    
+    track_routing_started(lead)
+    matches = Leads::LeadMatchingService.call(lead, preferred_company_id: preferred_company_id).first(slots)
     LeadDistribution.transaction do
-      matches.each do |match|
-        distribution = LeadDistribution.find_or_initialize_by(lead: lead, company: match[:company])
-        next if distribution.persisted? && !distribution.failed_status? && !distribution.expired_status? && !distribution.rejected_status?
-
-        distribution.assign_attributes(
-          status: 'sent',
-          match_score: match[:match_score],
-          match_reasons: match[:match_reasons],
-          assigned_at: distribution.assigned_at || Time.current,
-          sent_at: distribution.sent_at || Time.current
-        )
-        distribution.save!
-
-        # Schedule SLA expiration in the future
-        LeadDistributionExpirationJob.set(wait: LeadDistribution.acceptance_sla_minutes.minutes).perform_later(distribution.id)
-        
-        # Track lead_distributed
-        Analytics::TrackEventService.call(
-          company_id: distribution.company_id,
-          event_type: 'lead_distributed',
-          metadata: { lead_id: distribution.lead_id, distribution_id: distribution.id }
-        )
-
-        notify_company!(distribution)
-      end
+      matches.each { |match| persist_match!(lead, match) }
       lead.update!(wizard_status: matches.any? ? 'distributed' : 'unmatched')
     end
+  end
+
+  private
+
+  def remaining_slots(lead)
+    active = lead.lead_distributions.where(status: %w[sent viewed accepted]).count
+    Leads::LeadMatchingService::MAX_DISTRIBUTIONS - active
+  end
+
+  def track_routing_started(lead)
+    return if lead.company_id.blank?
+
+    Analytics::TrackEventService.call(
+      company_id: lead.company_id,
+      event_type: 'lead_routing_started',
+      metadata: { lead_id: lead.id }
+    )
+  end
+
+  def persist_match!(lead, match)
+    distribution = LeadDistribution.find_or_initialize_by(lead: lead, company: match[:company])
+    return unless redistributable?(distribution)
+
+    distribution.assign_attributes(distribution_attributes(distribution, match))
+    distribution.save!
+    Marketplace::ProposalBootstrapService.new(distribution: distribution).call
+    schedule_expiration(distribution)
+    track_distribution(distribution)
+    notify_company!(distribution)
+  end
+
+  def redistributable?(distribution)
+    distribution.new_record? ||
+      distribution.failed_status? ||
+      distribution.expired_status? ||
+      distribution.rejected_status?
+  end
+
+  def distribution_attributes(distribution, match)
+    {
+      status: 'sent',
+      match_score: match[:match_score],
+      match_reasons: match[:match_reasons],
+      assigned_at: distribution.assigned_at || Time.current,
+      sent_at: distribution.sent_at || Time.current
+    }
+  end
+
+  def schedule_expiration(distribution)
+    wait = LeadDistribution.acceptance_sla_minutes.minutes
+    LeadDistributionExpirationJob.set(wait: wait).perform_later(distribution.id)
+  end
+
+  def track_distribution(distribution)
+    Analytics::TrackEventService.call(
+      company_id: distribution.company_id,
+      event_type: 'lead_distributed',
+      metadata: { lead_id: distribution.lead_id, distribution_id: distribution.id }
+    )
   end
 
   def notify_company!(distribution)
@@ -61,6 +86,8 @@ class LeadRoutingJob < ApplicationJob
       )
     end
   rescue StandardError => e
-    Rails.logger.warn("[LeadRoutingJob] notification failed distribution_id=#{distribution.id}: #{e.class}: #{e.message}")
+    Rails.logger.warn(
+      "[LeadRoutingJob] notification failed distribution_id=#{distribution.id}: #{e.class}: #{e.message}"
+    )
   end
 end

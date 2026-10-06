@@ -148,6 +148,31 @@ export function ProposalSummary({
   onNegotiate: () => void;
   onProject: () => void;
 }) {
+  if (!proposal.version) {
+    return (
+      <div className="space-y-5">
+        <div className="rounded-2xl border border-border bg-muted/40 p-5">
+          <FileText className="h-9 w-9 text-primary" />
+          <h3 className="mt-4 text-lg font-semibold">Proposta em preparação</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            A empresa recebeu sua solicitação e está preparando os detalhes técnicos e comerciais.
+            Você verá o valor, os equipamentos e as condições aqui assim que a proposta for
+            publicada.
+          </p>
+        </div>
+        <Button
+          asChild
+          className="w-full bg-amber-400 text-slate-950 shadow-none hover:bg-amber-300"
+        >
+          <Link href={proposalChatUrl(proposal)}>
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Conversar com a empresa
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
   const active =
     proposal.status === 'accepted'
       ? 3

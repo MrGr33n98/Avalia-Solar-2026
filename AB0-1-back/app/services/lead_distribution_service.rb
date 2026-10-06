@@ -26,6 +26,7 @@ class LeadDistributionService
           sent_at: distribution.sent_at || Time.current
         )
         distribution.save!
+        Marketplace::ProposalBootstrapService.new(distribution: distribution).call
       end
     end
   end

@@ -3487,9 +3487,6 @@ export const reviewerProfileApi = {
   removeAvatar: () => fetchApi('/reviewer/profile/avatar', { method: 'DELETE' }),
 };
 
-
-
-
 export type MarketplaceProposalItem = {
   id: number;
   kind: string;
@@ -3511,7 +3508,7 @@ export type MarketplaceProposalTerm = {
 };
 
 export type MarketplaceProposalVersion = {
-  id?: number;
+  id: number;
   number: number;
   status?: string;
   title: string;
@@ -3552,7 +3549,18 @@ export type MarketplaceProposal = {
   expires_at?: string | null;
   published_at?: string | null;
   created_at: string;
-  company: { id: number; name: string; logo_url?: string | null; slug?: string | null; verified?: boolean; rating_avg?: number | null; reviews_count?: number; city?: string | null; state?: string | null; founded_year?: number | null };
+  company: {
+    id: number;
+    name: string;
+    logo_url?: string | null;
+    slug?: string | null;
+    verified?: boolean;
+    rating_avg?: number | null;
+    reviews_count?: number;
+    city?: string | null;
+    state?: string | null;
+    founded_year?: number | null;
+  };
   revision_pending?: boolean;
   request?: {
     id: number;
@@ -3601,9 +3609,10 @@ export const marketplaceProposalsApi = {
     }),
   view: (id: number | string) =>
     fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/view', { method: 'POST' }),
-  accept: (id: number | string, versionId?: number) =>
+  accept: (id: number | string, versionId: number) =>
     fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/accept', {
-      method: 'POST', body: versionId ? { version_id: versionId } : undefined,
+      method: 'POST',
+      body: { version_id: versionId },
     }),
   decline: (id: number | string, reason?: string) =>
     fetchApi<MarketplaceProposalResponse>('/proposals/' + id + '/decline', {
@@ -3648,7 +3657,10 @@ export const companyMarketplaceProposalsApi = {
     }),
   update: (
     id: number | string,
-    proposal: Omit<Partial<MarketplaceProposalVersion>, 'items' | 'terms'> & { items?: Array<Partial<MarketplaceProposalItem>>; terms?: Array<Partial<MarketplaceProposalTerm>> }
+    proposal: Omit<Partial<MarketplaceProposalVersion>, 'items' | 'terms'> & {
+      items?: Array<Partial<MarketplaceProposalItem>>;
+      terms?: Array<Partial<MarketplaceProposalTerm>>;
+    }
   ) =>
     fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id, {
       method: 'PATCH',
@@ -3670,14 +3682,24 @@ export const companyMarketplaceProposalsApi = {
     fetchApi<{ meetings: NonNullable<MarketplaceProposal['meetings']> }>(
       '/company_dashboard/proposals/' + id + '/meetings'
     ),
-  updateMeeting: (id: number | string, meetingId: number | string, payload: { status?: string; scheduled_at?: string; notes?: string }) =>
-    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/meetings/' + meetingId, {
-      method: 'PATCH',
-      body: payload,
-    }),
+  updateMeeting: (
+    id: number | string,
+    meetingId: number | string,
+    payload: { status?: string; scheduled_at?: string; notes?: string }
+  ) =>
+    fetchApi<MarketplaceProposalResponse>(
+      '/company_dashboard/proposals/' + id + '/meetings/' + meetingId,
+      {
+        method: 'PATCH',
+        body: payload,
+      }
+    ),
   project: (id: number | string) =>
     fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/project'),
-  updateProject: (id: number | string, payload: { status?: string; started_at?: string; completed_at?: string }) =>
+  updateProject: (
+    id: number | string,
+    payload: { status?: string; started_at?: string; completed_at?: string }
+  ) =>
     fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/project', {
       method: 'PATCH',
       body: payload,

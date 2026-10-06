@@ -62,7 +62,7 @@ RSpec.describe 'Marketplace proposals API', type: :request do
       )
     end
 
-    it 'lista proposta publicada, rejeita rascunho e aceita a escolhida' do
+    it 'lista propostas publicadas e em preparação e aceita a versão escolhida' do
       draft_distribution = create(:lead_distribution, lead: lead, company: other_company, status: 'sent')
       draft_distribution.accept!
       draft = create(:marketplace_proposal, lead: lead, company: other_company, lead_distribution: draft_distribution,
@@ -73,14 +73,30 @@ RSpec.describe 'Marketplace proposals API', type: :request do
       expect(response).to have_http_status(:ok)
       body = JSON.parse(response.body)
       expect(body['proposals'].map { |item| item['id'] }).to include(proposal.id)
-      expect(body['proposals'].map { |item| item['id'] }).not_to include(draft.id)
+      expect(body['proposals'].map { |item| item['id'] }).to include(draft.id)
+      draft_payload = body['proposals'].find { |item| item['id'] == draft.id }
+      expect(draft_payload).to include('status' => 'draft', 'revision_pending' => false, 'version' => nil)
 
-      post "/api/v1/proposals/#{proposal.id}/accept", headers: headers_for(buyer)
+      post "/api/v1/proposals/#{proposal.id}/accept",
+           params: { version_id: proposal.current_version.id }.to_json,
+           headers: headers_for(buyer)
 
       expect(response).to have_http_status(:ok)
       expect(proposal.reload.status).to eq('accepted')
       expect(proposal.project).to be_present
       expect(proposal.project.milestones.count).to eq(6)
+    end
+
+    it 'não permite escolher uma proposta ainda em preparação' do
+      draft_distribution = create(:lead_distribution, lead: lead, company: other_company, status: 'sent')
+      draft = Marketplace::ProposalBootstrapService.new(distribution: draft_distribution).call
+
+      post "/api/v1/proposals/#{draft.id}/accept",
+           params: { version_id: draft.current_version.id }.to_json,
+           headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(draft.reload.status).to eq('draft')
     end
 
     it 'registra visualização, comparação e solicitação de reunião' do
@@ -146,12 +162,17 @@ RSpec.describe 'Marketplace proposals API', type: :request do
     let!(:distribution) { create(:lead_distribution, lead: lead, company: company, status: 'sent') }
 
     it 'cria, publica e lista a proposta no tenant da empresa' do
-      post '/api/v1/company_dashboard/proposals',
-           params: { company_id: company.id, lead_distribution_id: distribution.id }.to_json,
-           headers: headers_for(company_user)
+      prepared = Marketplace::ProposalBootstrapService.new(distribution: distribution).call
+
+      expect do
+        post '/api/v1/company_dashboard/proposals',
+             params: { company_id: company.id, lead_distribution_id: distribution.id }.to_json,
+             headers: headers_for(company_user)
+      end.not_to change(MarketplaceProposal, :count)
 
       expect(response).to have_http_status(:created)
       proposal_id = JSON.parse(response.body).dig('proposal', 'id')
+      expect(proposal_id).to eq(prepared.id)
 
       patch "/api/v1/company_dashboard/proposals/#{proposal_id}",
             params: { company_id: company.id, proposal: {

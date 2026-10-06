@@ -67,9 +67,7 @@ module Api
       end
 
       def visible_buyer_scope
-        buyer_scope.where.not(status: 'draft').or(
-          buyer_scope.where(id: MarketplaceProposalVersion.where(status: 'published').select(:proposal_id))
-        )
+        buyer_scope
       end
 
       def with_details(scope)
@@ -114,11 +112,13 @@ module Api
       end
 
       def base_payload(proposal)
+        published = published_versions(proposal)
+        revision_pending = proposal.status == 'draft' && published.any?
         {
           id: proposal.id,
           reference: proposal.reference,
-          status: proposal.status == 'draft' ? 'negotiating' : proposal.status,
-          revision_pending: proposal.status == 'draft',
+          status: revision_pending ? 'negotiating' : proposal.status,
+          revision_pending: revision_pending,
           total_cents: proposal.total_cents,
           currency: proposal.currency,
           expires_at: proposal.expires_at,
@@ -126,8 +126,8 @@ module Api
           created_at: proposal.created_at,
           company: company_payload(proposal),
           request: request_payload(proposal),
-          version: version_json(published_versions(proposal).first),
-          versions: versions_json(proposal)
+          version: version_json(published.first),
+          versions: published.map { |version| version_json(version) }
         }
       end
 

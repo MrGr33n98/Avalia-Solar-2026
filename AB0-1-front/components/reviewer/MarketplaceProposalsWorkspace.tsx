@@ -44,6 +44,8 @@ function matchesFilter(proposal: MarketplaceProposal, filter: Filter) {
   const completed = isProjectComplete(proposal.project);
   const active =
     canDecide(proposal) ||
+    proposal.status === 'draft' ||
+    Boolean(proposal.revision_pending) ||
     (proposal.status === 'accepted' && !completed && proposal.project?.status !== 'cancelled');
   return (
     filter === 'all' ||
@@ -170,13 +172,17 @@ export function MarketplaceProposalsWorkspace() {
   async function decide(kind: 'accept' | 'decline') {
     const proposal = kind === 'accept' ? choosing : selected;
     if (!proposal || submitting.current) return;
+    if (kind === 'accept' && !proposal.version) {
+      setDecisionError('A empresa ainda não publicou uma versão disponível para escolha.');
+      return;
+    }
     submitting.current = true;
     setBusy(true);
     setDecisionError('');
     try {
       const response =
         kind === 'accept'
-          ? await marketplaceProposalsApi.accept(proposal.id, proposal.version?.id)
+          ? await marketplaceProposalsApi.accept(proposal.id, proposal.version!.id)
           : await marketplaceProposalsApi.decline(proposal.id);
       updateProposal(response.proposal);
       setChoosing(null);
@@ -333,10 +339,9 @@ export function MarketplaceProposalsWorkspace() {
                         <StatusBadge proposal={proposal} />
                       </span>
                       <span className="mt-3 block text-xl font-semibold tabular-nums text-primary">
-                        {formatMoney(
-                          proposal.version?.total_cents ?? proposal.total_cents,
-                          proposal.currency
-                        )}
+                        {proposal.version
+                          ? formatMoney(proposal.version.total_cents, proposal.currency)
+                          : 'Aguardando proposta'}
                       </span>
                       <span className="mt-2 block text-xs text-muted-foreground">
                         Atualizada em{' '}
@@ -347,16 +352,22 @@ export function MarketplaceProposalsWorkspace() {
                         )}
                       </span>
                     </button>
-                    <label className="mt-3 flex min-h-11 cursor-pointer items-center gap-2 border-t border-border pt-3 text-xs font-medium text-muted-foreground">
-                      <input
-                        type="checkbox"
-                        checked={compareIds.includes(proposal.id)}
-                        onChange={() => toggleCompare(proposal.id)}
-                        aria-label={'Comparar proposta de ' + proposal.company.name}
-                        className="h-4 w-4 accent-primary"
-                      />
-                      Comparar proposta
-                    </label>
+                    {proposal.version ? (
+                      <label className="mt-3 flex min-h-11 cursor-pointer items-center gap-2 border-t border-border pt-3 text-xs font-medium text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          checked={compareIds.includes(proposal.id)}
+                          onChange={() => toggleCompare(proposal.id)}
+                          aria-label={'Comparar proposta de ' + proposal.company.name}
+                          className="h-4 w-4 accent-primary"
+                        />
+                        Comparar proposta
+                      </label>
+                    ) : (
+                      <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+                        A empresa recebeu sua solicitação e está preparando as condições.
+                      </p>
+                    )}
                   </article>
                 ))}
             </div>

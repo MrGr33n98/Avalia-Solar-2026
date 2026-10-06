@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'securerandom'
-
 module Api
   module V1
     module CompanyAdmin
@@ -50,8 +48,11 @@ module Api
           distribution = @company.lead_distributions.includes(:lead).find(params[:lead_distribution_id])
           return unavailable_distribution unless distribution_available?(distribution)
 
-          proposal = @company.marketplace_proposals.find_or_initialize_by(lead_id: distribution.lead_id)
-          create_draft_proposal(proposal, distribution) if proposal.new_record?
+          proposal = Marketplace::ProposalBootstrapService.new(
+            distribution: distribution,
+            created_by: current_user
+          ).call
+          distribution.accept! if distribution.sent_status? || distribution.viewed_status?
           render json: { proposal: serialize(proposal.reload) }, status: :created
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'Distribuição não encontrada' }, status: :not_found
@@ -65,24 +66,6 @@ module Api
 
         def distribution_available?(distribution)
           %w[sent viewed accepted].include?(distribution.status)
-        end
-
-        def create_draft_proposal(proposal, distribution)
-          proposal.assign_attributes(
-            lead_distribution: distribution,
-            buyer_user: User.find_by(email: distribution.lead.email),
-            created_by: current_user,
-            reference: "AS-#{Time.current.year}-#{SecureRandom.hex(4).upcase}",
-            status: 'draft'
-          )
-          proposal.save!
-          distribution.accept! if distribution.sent_status? || distribution.viewed_status?
-          proposal.versions.create!(
-            number: 1,
-            title: 'Proposta para seu projeto',
-            summary: 'Descreva aqui a solução proposta.'
-          )
-          proposal.update!(current_version_number: 1)
         end
 
         def update
@@ -116,27 +99,12 @@ module Api
 
         def new_version
           authorize @proposal, :new_version?
-          if %w[accepted declined withdrawn not_selected closed_after_selection].include?(@proposal.status)
-            return render json: { error: 'Esta proposta já foi encerrada para negociação' },
-                          status: :unprocessable_entity
-          end
+          return render_closed_proposal if proposal_closed?
 
           current = @proposal.current_version
-          number = @proposal.versions.maximum(:number).to_i + 1
-          version = @proposal.versions.create!(
-            number: number,
-            title: current&.title || 'Nova versão da proposta',
-            summary: current&.summary,
-            valid_until: current&.valid_until
-          )
-          current&.items&.find_each do |item|
-            version.items.create!(item.attributes.slice('kind', 'name', 'description', 'quantity', 'unit',
-                                                        'unit_price_cents', 'position'))
-          end
-          current&.terms&.find_each do |term|
-            version.terms.create!(term.attributes.slice('key', 'label', 'value', 'position'))
-          end
-          @proposal.update!(status: 'draft', current_version_number: number)
+          version = create_next_version(current)
+          copy_version_content(current, version)
+          @proposal.update!(status: 'draft', current_version_number: version.number)
           render json: { proposal: serialize(@proposal.reload) }, status: :created
         end
 
@@ -202,6 +170,34 @@ module Api
         end
 
         private
+
+        def proposal_closed?
+          %w[accepted declined withdrawn not_selected closed_after_selection].include?(@proposal.status)
+        end
+
+        def render_closed_proposal
+          render json: { error: 'Esta proposta já foi encerrada para negociação' },
+                 status: :unprocessable_entity
+        end
+
+        def create_next_version(current)
+          @proposal.versions.create!(
+            number: @proposal.versions.maximum(:number).to_i + 1,
+            title: current&.title || 'Nova versão da proposta',
+            summary: current&.summary,
+            valid_until: current&.valid_until
+          )
+        end
+
+        def copy_version_content(current, version)
+          current&.items&.find_each do |item|
+            version.items.create!(item.attributes.slice('kind', 'name', 'description', 'quantity', 'unit',
+                                                        'unit_price_cents', 'position'))
+          end
+          current&.terms&.find_each do |term|
+            version.terms.create!(term.attributes.slice('key', 'label', 'value', 'position'))
+          end
+        end
 
         def set_proposal
           @proposal = @company.marketplace_proposals.includes(:lead, :versions, :meetings,

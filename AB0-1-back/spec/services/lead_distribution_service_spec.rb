@@ -6,8 +6,10 @@ RSpec.describe LeadDistributionService do
   end
 
   let(:category) { Category.create!(name: 'Solar', description: 'Categoria de energia solar') }
+  let(:plan) { create(:plan) }
 
   def create_company(attrs = {})
+    @cnpj_sequence = (@cnpj_sequence || 12_345_678_901_200) + 1
     company = Company.new({
       name: 'Solar Company',
       description: 'Descricao da empresa',
@@ -18,8 +20,10 @@ RSpec.describe LeadDistributionService do
       status: 'active',
       verified: true,
       featured: false,
+      active_admin: true,
       plan_status: 'active',
-      cnpj: '12345678901234'
+      plan: plan,
+      cnpj: @cnpj_sequence.to_s
     }.merge(attrs))
     company.categories << category
     company.save!
@@ -30,13 +34,12 @@ RSpec.describe LeadDistributionService do
     create_company(
       name: 'Preferida',
       verified: false,
-      plan_status: 'inactive',
       rating_avg: 2.0
     )
   end
   let!(:company_a) { create_company(name: 'Company A', featured: true, rating_avg: 4.2) }
   let!(:company_b) { create_company(name: 'Company B', featured: false, rating_avg: 4.8) }
-  let!(:company_c) { create_company(name: 'Company C', featured: true, plan_status: 'inactive', rating_avg: 4.9) }
+  let!(:company_c) { create_company(name: 'Company C', featured: true, rating_avg: 4.9) }
 
   let(:lead) do
     Lead.create!(
@@ -63,5 +66,8 @@ RSpec.describe LeadDistributionService do
     expect(companies.first).to eq(preferred)
     expect(companies.size).to eq(3)
     expect(lead.lead_distributions.count).to eq(3)
+    expect(lead.marketplace_proposals.count).to eq(3)
+    expect(lead.marketplace_proposals.pluck(:status).uniq).to eq(['draft'])
+    expect(lead.marketplace_proposals.includes(:versions).all? { |proposal| proposal.versions.one? }).to be(true)
   end
 end

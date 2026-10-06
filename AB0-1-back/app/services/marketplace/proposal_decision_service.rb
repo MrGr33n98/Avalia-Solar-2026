@@ -31,9 +31,16 @@ module Marketplace
 
     def accept!
       ensure_status! %w[sent viewed under_review negotiating meeting_scheduled]
-      if @version_id.present? && @proposal.current_version&.id != @version_id.to_i
+      version = @proposal.current_version
+      unless version&.status == 'published'
+        raise ArgumentError, 'A empresa ainda não publicou uma versão disponível para escolha.'
+      end
+      raise ArgumentError, 'Informe a versão da proposta que deseja escolher.' if @version_id.blank?
+
+      if version.id != @version_id.to_i
         raise ArgumentError, 'A proposta foi atualizada. Confira a versão atual antes de escolher.'
       end
+
       @proposal.decisions.create!(buyer_user: @buyer, kind: 'accepted')
       @proposal.update!(status: 'accepted', accepted_at: Time.current)
       @proposal.record_event('proposal.accepted', actor: @buyer)
@@ -56,7 +63,9 @@ module Marketplace
     end
 
     def ensure_status!(allowed)
-      raise ArgumentError, 'Esta proposta expirou. Solicite uma atualização à empresa.' if @proposal.expired_for_decision?
+      if @proposal.expired_for_decision?
+        raise ArgumentError, 'Esta proposta expirou. Solicite uma atualização à empresa.'
+      end
 
       return if allowed.include?(@proposal.status)
 
