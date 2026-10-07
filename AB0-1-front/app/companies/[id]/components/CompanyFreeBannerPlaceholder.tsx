@@ -36,8 +36,8 @@ export default function CompanyFreeBannerPlaceholder({
         fill
         priority={priority}
         quality={95}
-        objectFit="contain"
-        className={desktopCover ? 'md:!object-cover' : undefined}
+        objectFit="cover"
+        className="object-cover"
         containerClassName={desktopCover ? 'relative z-10 h-full w-full' : 'h-full w-full'}
         sizes="(max-width: 767px) 100vw, 1240px"
         useAspectRatio={false}
