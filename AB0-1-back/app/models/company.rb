@@ -1336,18 +1336,24 @@ end
                              .distinct
 
           active_plans.each do |prod_plan|
-            prod_features = PlanFeatureCatalog.normalize(
-              (prod_plan.respond_to?(:features_json) && prod_plan.features_json.present? ? prod_plan.features_json : (JSON.parse(prod_plan.features.to_s) rescue {})),
-              plan_tier: (prod_plan.respond_to?(:inferred_plan_tier) ? prod_plan.inferred_plan_tier : 'free')
-            )
+            raw_features = if prod_plan.respond_to?(:features_json) && prod_plan.features_json.present?
+                             prod_plan.features_json
+                           else
+                             JSON.parse(prod_plan.features.to_s) rescue {}
+                           end
             
+            inferred_tier = prod_plan.respond_to?(:inferred_plan_tier) ? prod_plan.inferred_plan_tier : 'free'
+            prod_features = PlanFeatureCatalog.normalize(raw_features, plan_tier: inferred_tier)
+
             prod_features.each do |k, v|
               # Only override features to true to not mistakenly disable company defaults
-              overrides[k.to_s] = true if v == true || v == 'true'
+              overrides[k.to_s] = true if [true, 'true'].include?(v)
             end
           end
         rescue StandardError => e
-          Rails.logger.warn("[Company#raw_company_feature_overrides] Failed to process product subscriptions for company_id=#{id}: #{e.message}")
+          Rails.logger.warn(
+            "[Company#raw_company_feature_overrides] Failed to process product subscriptions for company_id=#{id}: #{e.message}"
+          )
         end
       end
     end
