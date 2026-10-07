@@ -177,4 +177,22 @@ describe('CompanyCard V2 — Swiss Enterprise Discovery Card', () => {
     expect(screen.getByText('WEG Solar')).toBeInTheDocument();
     expect(screen.queryByText('PRO')).not.toBeInTheDocument();
   });
+
+  it('renderiza os marcadores de testid e estrutura flex com gap-3 no rodapé de ações (SPEC)', () => {
+    render(<CompanyCard company={baseCompany} />);
+
+    expect(screen.getByTestId('company-card')).toBeInTheDocument();
+    const actions = screen.getByTestId('company-card-actions');
+    expect(actions).toBeInTheDocument();
+    expect(actions).toHaveClass('flex', 'flex-col', 'gap-3');
+    expect(actions).not.toHaveClass('space-y-2');
+
+    const primaryRow = screen.getByTestId('company-card-primary-row');
+    expect(primaryRow).toBeInTheDocument();
+    expect(primaryRow).not.toHaveClass('h-10');
+
+    const secondaryRow = screen.getByTestId('company-card-secondary-row');
+    expect(secondaryRow).toBeInTheDocument();
+    expect(secondaryRow).toHaveClass('grid', 'grid-cols-3', 'gap-2');
+  });
 });

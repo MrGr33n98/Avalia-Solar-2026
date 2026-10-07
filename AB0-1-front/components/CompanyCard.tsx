@@ -411,11 +411,11 @@ export default function CompanyCard({
           <div className="h-3 w-full rounded bg-slate-200 dark:bg-slate-800" />
           <div className="h-3 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
         </div>
-        <div className="mt-6 h-10 w-full rounded-lg bg-slate-200 dark:bg-slate-800" />
+        <div className="mt-6 min-h-12 w-full rounded-lg bg-slate-200 dark:bg-slate-800" />
         <div className="mt-3 flex gap-2">
-          <div className="h-9 flex-1 rounded-lg bg-slate-200 dark:bg-slate-800" />
-          <div className="h-9 flex-1 rounded-lg bg-slate-200 dark:bg-slate-800" />
-          <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-slate-800" />
+          <div className="min-h-12 flex-1 rounded-lg bg-slate-200 dark:bg-slate-800" />
+          <div className="min-h-12 flex-1 rounded-lg bg-slate-200 dark:bg-slate-800" />
+          <div className="min-h-12 w-12 rounded-lg bg-slate-200 dark:bg-slate-800" />
         </div>
       </Card>
     );
@@ -567,6 +567,7 @@ export default function CompanyCard({
     <>
       <Card
         ref={cardRef}
+        data-testid="company-card"
         className={cn(
           'group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white p-3.5 sm:p-4 transition-all duration-150 hover:border-slate-300 hover:shadow-xs dark:border-slate-800 dark:bg-slate-950 cursor-pointer h-full',
           isCompanySponsored && 'ring-1 ring-blue-500/20 bg-blue-50/10 dark:bg-blue-950/10',
@@ -703,13 +704,16 @@ export default function CompanyCard({
           </div>
         </div>
 
-        {/* PARTE INFERIOR: CTA PRINCIPAL + AÇÕES SECUNDÁRIAS (ALTURA EQUALIZADA) */}
-        <div className="mt-3 sm:mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-          {/* CTA PRINCIPAL (SLOT DE 40px) */}
-          <div className="h-10">
+        {/* PARTE INFERIOR: CTA PRINCIPAL + AÇÕES SECUNDÁRIAS (ESPAÇAMENTO RESPONSIVO) */}
+        <div
+          data-testid="company-card-actions"
+          className="mt-3 sm:mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex min-w-0 flex-col gap-3"
+        >
+          {/* CTA PRINCIPAL */}
+          <div data-testid="company-card-primary-row" className="min-w-0">
             {canRequestQuote ? (
               <Button
-                className="w-full h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 shadow-none transition-all active:scale-[0.98]"
+                className="w-full min-h-12 h-auto py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 shadow-none transition-all active:scale-[0.98]"
                 onClick={handleQuoteClick}
               >
                 <FileText className="h-4 w-4 shrink-0" />
@@ -718,7 +722,7 @@ export default function CompanyCard({
               </Button>
             ) : (
               <Button
-                className="w-full h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 shadow-none transition-all active:scale-[0.98]"
+                className="w-full min-h-12 h-auto py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 shadow-none transition-all active:scale-[0.98]"
                 onClick={handleProfileClick}
               >
                 <span className="truncate">Ver perfil</span>
@@ -727,15 +731,15 @@ export default function CompanyCard({
             )}
           </div>
 
-          {/* AÇÕES SECUNDÁRIAS (GRADE DE 3 COLUNAS, H=36px) */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* AÇÕES SECUNDÁRIAS (GRADE DE 3 COLUNAS) */}
+          <div data-testid="company-card-secondary-row" className="grid min-w-0 grid-cols-3 gap-2">
             {/* 1. COMPARAR */}
             <Button
               variant="outline"
               aria-label={`Comparar ${name}`}
               aria-pressed={isInComparison(id)}
               className={cn(
-                'w-full h-9 rounded-lg text-xs font-medium inline-flex items-center justify-center gap-1 transition-colors px-1',
+                'w-full min-h-12 h-auto py-2 rounded-lg text-xs font-medium inline-flex items-center justify-center gap-1 transition-colors px-1',
                 isInComparison(id)
                   ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-300'
                   : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
@@ -754,7 +758,7 @@ export default function CompanyCard({
             {canRequestQuote ? (
               <Button
                 variant="outline"
-                className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
+                className="w-full min-h-12 h-auto py-2 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
                 onClick={handleProfileClick}
               >
                 <Building2 className="h-3.5 w-3.5 text-slate-500 shrink-0" />
@@ -763,7 +767,7 @@ export default function CompanyCard({
             ) : (
               <Button
                 variant="outline"
-                className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
+                className="w-full min-h-12 h-auto py-2 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
                 onClick={handleReviewClick}
               >
                 <Star className="h-3.5 w-3.5 text-slate-500 shrink-0" />
@@ -777,7 +781,7 @@ export default function CompanyCard({
                 <Button
                   variant="outline"
                   aria-label={`Mais ações para ${name}`}
-                  className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
+                  className="w-full min-h-12 h-auto py-2 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreHorizontal className="h-4 w-4 text-slate-500 shrink-0" />

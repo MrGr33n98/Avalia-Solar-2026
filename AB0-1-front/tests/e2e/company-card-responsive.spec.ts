@@ -52,4 +52,27 @@ test.describe('CompanyCard standard responsivo', () => {
     if ((await card.count()) === 0) test.skip(true, 'Nenhum CompanyCard renderizado no ambiente de teste');
     expect(await card.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
   });
+
+  test('mantém separação vertical de no mínimo 11px entre CTA principal e ações secundárias', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 844 });
+    await page.goto('/companies');
+
+    const cardActions = page.getByTestId('company-card-actions').first();
+    if ((await cardActions.count()) === 0) {
+      test.skip(true, 'Nenhum company-card-actions renderizado no ambiente de teste');
+      return;
+    }
+
+    const primaryRow = cardActions.getByTestId('company-card-primary-row');
+    const secondaryRow = cardActions.getByTestId('company-card-secondary-row');
+
+    const primaryBox = await primaryRow.boundingBox();
+    const secondaryBox = await secondaryRow.boundingBox();
+
+    expect(primaryBox).not.toBeNull();
+    expect(secondaryBox).not.toBeNull();
+
+    const actualGap = secondaryBox!.y - (primaryBox!.y + primaryBox!.height);
+    expect(actualGap).toBeGreaterThanOrEqual(11);
+  });
 });
