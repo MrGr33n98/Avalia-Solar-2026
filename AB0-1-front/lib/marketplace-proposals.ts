@@ -102,14 +102,14 @@ export function getProposalLocation(proposal: MarketplaceProposal): string {
 }
 
 export function getProposalDisplayPrice(proposal: MarketplaceProposal) {
-  if (proposal.version?.total_cents != null) {
+  if (proposal.version?.total_cents != null && proposal.version.total_cents > 0) {
     return {
       formatted: formatMoney(proposal.version.total_cents, proposal.version.currency),
       rawCents: proposal.version.total_cents,
       isAvailable: true,
     };
   }
-  if (proposal.total_cents != null) {
+  if (proposal.total_cents != null && proposal.total_cents > 0) {
     return {
       formatted: formatMoney(proposal.total_cents, proposal.currency),
       rawCents: proposal.total_cents,

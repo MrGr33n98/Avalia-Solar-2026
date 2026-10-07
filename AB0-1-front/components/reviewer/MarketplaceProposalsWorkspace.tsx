@@ -113,86 +113,93 @@ function ProposalJourneyRail({
   return (
     <nav
       aria-label="Fluxo da proposta"
-      className="mb-6 rounded-2xl border border-border bg-card p-3 shadow-xs sm:p-4"
+      className="mb-6 w-full max-w-full overflow-hidden rounded-2xl border border-slate-800 bg-[#0B132B] p-4 text-white shadow-md sm:p-5"
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-            Jornada da proposta
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-blue-400">
+              Jornada completa — Propostas (Web App)
+            </h2>
+          </div>
+          <p className="text-xs font-medium text-slate-300 mt-0.5">
+            Página {active} de 10 — {activeStepObj.label} (visão geral)
           </p>
-          <h2 className="mt-0.5 text-xs font-semibold text-foreground sm:text-sm">
-            {proposal ? `Etapa ${active} de 10 — ${activeStepObj.label}` : 'Acompanhe todas as etapas'}
-          </h2>
         </div>
-        <span className="hidden shrink-0 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary sm:inline-flex">
+        <span className="hidden shrink-0 rounded-full bg-blue-500/20 border border-blue-400/30 px-3 py-1 text-[11px] font-bold text-blue-300 sm:inline-flex">
           10 Passos do Projeto
         </span>
       </div>
 
-      {/* Scrollable Step Rail (no text overlap across all screen sizes) */}
-      <ol className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {journeySteps.map((step) => {
-          const isActive = step.id === active;
-          const isDone = step.id < active;
-          const canOpen =
-            Boolean(proposal) &&
-            step.id !== 1 &&
-            (step.id !== 8 || canDecide(proposal!)) &&
-            (step.id !== 4 || canCompare);
+      {/* Scrollable Step Rail (guaranteed no text overlap across screen sizes) */}
+      <div className="w-full max-w-full overflow-x-auto pb-1 pt-0.5 scrollbar-none">
+        <ol className="flex items-center gap-2 min-w-max">
+          {journeySteps.map((step) => {
+            const isActive = step.id === active;
+            const isDone = step.id < active;
+            const canOpen =
+              Boolean(proposal) &&
+              step.id !== 1 &&
+              (step.id !== 8 || canDecide(proposal!)) &&
+              (step.id !== 4 || canCompare);
 
-          const badgeClass = isActive
-            ? 'bg-primary text-primary-foreground shadow-xs ring-2 ring-primary/20'
-            : isDone
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-muted text-muted-foreground';
+            const badgeClass = isActive
+              ? 'bg-blue-600 text-white font-extrabold shadow-sm ring-2 ring-blue-400/40'
+              : isDone
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                : 'bg-slate-800 text-slate-400 border border-slate-700/60';
 
-          const content = (
-            <div className="flex items-center gap-2">
-              <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold', badgeClass)}>
-                {isDone ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : step.id}
+            const buttonStyle = isActive
+              ? 'border-blue-500/60 bg-blue-600/20 text-white font-bold shadow-xs'
+              : isDone
+                ? 'border-emerald-500/40 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-950/60'
+                : 'border-slate-800 bg-slate-900/80 text-slate-400 hover:border-slate-700 hover:text-slate-200';
+
+            const content = (
+              <span className="inline-flex items-center gap-2 shrink-0 whitespace-nowrap">
+                <span className={cn('flex h-5 w-5 shrink-0 flex-none items-center justify-center rounded-full text-[10px] leading-none', badgeClass)}>
+                  {isDone ? <Check className="h-3 w-3 stroke-[3]" /> : step.id}
+                </span>
+                <span className="whitespace-nowrap text-xs font-semibold shrink-0">{step.label}</span>
               </span>
-              <span className="whitespace-nowrap text-xs font-semibold">{step.label}</span>
-            </div>
-          );
+            );
 
-          return (
-            <li key={step.id} className="shrink-0" aria-current={isActive ? 'step' : undefined}>
-              {step.id === 5 && proposal ? (
-                <Link
-                  href={proposalChatUrl(proposal)}
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-xl border px-3 py-2 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
-                    isActive
-                      ? 'border-primary/40 bg-primary/5 text-primary font-semibold'
-                      : 'border-border/60 bg-card text-muted-foreground hover:border-border hover:bg-muted/50'
-                  )}
-                >
-                  {content}
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  disabled={!canOpen && step.id !== 1}
-                  onClick={() => {
-                    if (step.id === 1) onList();
-                    else if (step.id === 8) onChoose();
-                    else if (step.view) onNavigate(step.view);
-                  }}
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-xl border px-3 py-2 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
-                    isActive
-                      ? 'border-primary/40 bg-primary/5 text-primary font-semibold'
-                      : 'border-border/60 bg-card text-muted-foreground hover:border-border hover:bg-muted/50',
-                    !canOpen && step.id !== 1 && 'cursor-not-allowed opacity-50'
-                  )}
-                >
-                  {content}
-                </button>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+            return (
+              <li key={step.id} className="flex-none shrink-0" aria-current={isActive ? 'step' : undefined}>
+                {step.id === 5 && proposal ? (
+                  <Link
+                    href={proposalChatUrl(proposal)}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500',
+                      buttonStyle
+                    )}
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={!canOpen && step.id !== 1}
+                    onClick={() => {
+                      if (step.id === 1) onList();
+                      else if (step.id === 8) onChoose();
+                      else if (step.view) onNavigate(step.view);
+                    }}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500',
+                      buttonStyle,
+                      !canOpen && step.id !== 1 && 'cursor-not-allowed opacity-50'
+                    )}
+                  >
+                    {content}
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
     </nav>
   );
 }
@@ -1053,6 +1060,7 @@ export function MarketplaceProposalsWorkspace() {
                       }}
                       onNegotiate={() => navigate(selected.id, 'negotiation')}
                       onProject={() => navigate(selected.id, 'project')}
+                      onList={() => navigate(null)}
                     />
                   )}
                   {screen === 'meeting' &&
