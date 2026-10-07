@@ -87,3 +87,88 @@ export const technicalFields = [
 export function termValue(proposal: MarketplaceProposal, keys: string[]) {
   return proposal.version?.terms.find((term) => keys.includes(term.key))?.value || 'Não informado';
 }
+
+export function getProposalRawTerm(proposal: MarketplaceProposal, keys: string[]): string | null {
+  const match = proposal.version?.terms.find((term) => keys.includes(term.key));
+  return match && match.value ? match.value : null;
+}
+
+export function getProposalLocation(proposal: MarketplaceProposal): string {
+  const companyLoc = [proposal.company.city, proposal.company.state].filter(Boolean).join(', ');
+  if (companyLoc) return companyLoc;
+  const reqLoc = [proposal.request?.city, proposal.request?.state].filter(Boolean).join(', ');
+  if (reqLoc) return reqLoc;
+  return 'Não informado';
+}
+
+export function getProposalDisplayPrice(proposal: MarketplaceProposal) {
+  if (proposal.version?.total_cents != null) {
+    return {
+      formatted: formatMoney(proposal.version.total_cents, proposal.version.currency),
+      rawCents: proposal.version.total_cents,
+      isAvailable: true,
+    };
+  }
+  if (proposal.total_cents != null) {
+    return {
+      formatted: formatMoney(proposal.total_cents, proposal.currency),
+      rawCents: proposal.total_cents,
+      isAvailable: true,
+    };
+  }
+  return {
+    formatted: 'Aguardando empresa',
+    rawCents: null,
+    isAvailable: false,
+  };
+}
+
+export function getProposalStatusTone(proposal: MarketplaceProposal): {
+  badgeTone: string;
+  dotTone: string;
+} {
+  if (isProjectComplete(proposal.project)) {
+    return { badgeTone: 'bg-emerald-50 text-emerald-800 border-emerald-200', dotTone: 'bg-emerald-500' };
+  }
+  if (proposal.status === 'accepted') {
+    return { badgeTone: 'bg-blue-50 text-blue-800 border-blue-200', dotTone: 'bg-blue-500' };
+  }
+  if (proposal.status === 'sent') {
+    return { badgeTone: 'bg-emerald-50 text-emerald-800 border-emerald-200', dotTone: 'bg-emerald-500' };
+  }
+  if (proposal.status === 'viewed') {
+    return { badgeTone: 'bg-violet-50 text-violet-800 border-violet-200', dotTone: 'bg-violet-500' };
+  }
+  if (proposal.status === 'negotiating' || proposal.status === 'meeting_scheduled') {
+    return { badgeTone: 'bg-amber-50 text-amber-800 border-amber-200', dotTone: 'bg-amber-500' };
+  }
+  if (proposal.status === 'declined' || proposal.status === 'withdrawn') {
+    return { badgeTone: 'bg-rose-50 text-rose-800 border-rose-200', dotTone: 'bg-rose-500' };
+  }
+  return { badgeTone: 'bg-slate-100 text-slate-700 border-slate-200', dotTone: 'bg-slate-400' };
+}
+
+export interface ProposalCardMetric {
+  key: string;
+  label: string;
+  value: string;
+}
+
+export function getProposalCardMetrics(proposal: MarketplaceProposal): ProposalCardMetric[] {
+  const metrics: ProposalCardMetric[] = [];
+
+  const power = getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']);
+  if (power) metrics.push({ key: 'power', label: 'Potência', value: power });
+
+  const gen = getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'estimated_generation', 'geracao']);
+  if (gen) metrics.push({ key: 'generation', label: 'Geração estimada', value: gen });
+
+  const deadline = getProposalRawTerm(proposal, ['installation_deadline', 'installation_time', 'prazo']);
+  if (deadline) metrics.push({ key: 'deadline', label: 'Prazo', value: deadline });
+
+  const warranty = getProposalRawTerm(proposal, ['warranty', 'garantia']);
+  if (warranty && metrics.length < 3) metrics.push({ key: 'warranty', label: 'Garantia', value: warranty });
+
+  return metrics.slice(0, 3);
+}
+

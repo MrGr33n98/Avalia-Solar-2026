@@ -14,8 +14,8 @@
 | ACTIVE | `/review-dashboard/notifications` | `/api/v1/notifications*` | JWT; usuário atual | `Notification` customizada (canônica) | mark-read/archive/preferences | envelope reviewer | sem notificações | notifications request specs |
 | ACTIVE | `/review-dashboard/favorites` | `/api/v1/favorites*` | JWT; usuário atual | `Favorite` persistido | add/remove/status | ownership/validation | nenhum favorito | favorites request/page specs |
 | ACTIVE | `/creator-studio/publications` | `/api/v1/reviewer/publications*` | JWT; `review\|admin`; owner | `ReviewerPublication` | create/update/publish/archive/delete | validation/ownership | nenhuma publicação | publications request specs |
-| ACTIVE | `/creator-studio/leads` | `/api/v1/reviewer/creator_leads*` | JWT; `review\|admin`; creator owner | `CreatorLead` | status | ownership/status | nenhum lead | request coverage necessária |
-| LEGACY_COMPAT | `/review-dashboard/proposals` | `/api/v1/leads/mine` | JWT; identidade atual por email | `Lead` legado | nenhuma na Home | identidade por email | nenhuma proposta | leads access specs |
+| ACTIVE | `/review-dashboard/proposals` | `GET /proposals`, `GET /proposals/:id`, `GET /proposals/compare`, `POST /proposals/:id/*` | JWT; usuário cliente | `MarketplaceProposal` (Jornada 10 passos) | accept, decline, request_change, meetings | envelope marketplace | nenhuma proposta | `tests/e2e/marketplace-proposals.spec.ts` |
+| LEGACY_COMPAT | `ReviewerProposalsWorkspace` (código legado) | `/api/v1/leads/mine` | JWT; identidade por email | `Lead` legado | nenhuma | identidade por email | nenhuma proposta | leads access specs |
 | ACTIVE | upload reviewer | `/api/v1/reviewer/profile/avatar`, `/public_banner`, review upload APIs | JWT; owner | Active Storage | attach/remove | MIME, tamanho, storage | sem mídia | upload request specs |
 
 ## Regras transversais
