@@ -38,10 +38,10 @@ ActiveAdmin.register_page 'Dashboard' do
       column do
         panel 'Estatísticas Globais' do
           div class: 'dashboard-metric', style: 'text-align: center; padding: 20px;' do
-            stats = BannerDailyStat.select('SUM(views_count) as v, SUM(clicks_count) as c, SUM(leads_count) as l').to_a.first
-            v = stats.v.to_i
-            c = stats.c.to_i
-            l = stats.l.to_i
+            v_sum, c_sum, l_sum = BannerDailyStat.pick('SUM(views_count)', 'SUM(clicks_count)', 'SUM(leads_count)')
+            v = v_sum.to_i
+            c = c_sum.to_i
+            l = l_sum.to_i
             ctr = v.positive? ? (c.to_f / v * 100).round(2) : 0.0
             
             div style: 'display: flex; justify-content: space-around; font-size: 1.1em;' do
