@@ -48,4 +48,8 @@ class ApplicationController < ActionController::Base
   def user_signed_in?
     (respond_to?(:current_user) && current_user) || (respond_to?(:current_admin_user) && current_admin_user)
   end
+
+  def access_denied(exception)
+    redirect_to root_path, alert: exception.message
+  end
 end

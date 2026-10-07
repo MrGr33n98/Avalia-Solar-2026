@@ -111,9 +111,6 @@ ActiveAdmin.setup do |config|
   # Method provided here should be defined in application_controller.rb.
   config.on_unauthorized_access = :access_denied
 
-  # Configure ActiveAdmin to use our custom base controller
-  config.base_controller = "Admin::ApplicationController"
-
   # == Current User
   #
   # Active Admin will associate actions with the current
