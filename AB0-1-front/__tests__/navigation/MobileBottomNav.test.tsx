@@ -79,8 +79,9 @@ describe('MobileBottomNav (PWA Mobile Public Navigation)', () => {
     mockUnreadMessagesCount = 0;
   });
 
-  describe('Renderização e Estrutura dos 5 Itens', () => {
-    it('renderiza todos os 5 itens da barra com atributos de acessibilidade', () => {
+  describe('Renderização e Estrutura dos 5 Itens conforme Autenticação', () => {
+    it('renderiza os 5 itens com a aba "Entrar" para usuário não autenticado', () => {
+      mockIsAuthenticated = false;
       render(<MobileBottomNav />);
 
       const nav = screen.getByTestId('mobile-bottom-nav');
@@ -92,16 +93,30 @@ describe('MobileBottomNav (PWA Mobile Public Navigation)', () => {
       expect(screen.getByTestId('mobile-nav-companies')).toBeInTheDocument();
       expect(screen.getByTestId('mobile-nav-search')).toBeInTheDocument();
       expect(screen.getByTestId('mobile-nav-compare')).toBeInTheDocument();
-      expect(screen.getByTestId('mobile-nav-messages')).toBeInTheDocument();
+      expect(screen.getByTestId('mobile-nav-login')).toBeInTheDocument();
+      expect(screen.queryByTestId('mobile-nav-messages')).not.toBeInTheDocument();
 
       expect(screen.getByText('Início')).toBeInTheDocument();
       expect(screen.getByText('Empresas')).toBeInTheDocument();
       expect(screen.getByText('Buscar')).toBeInTheDocument();
       expect(screen.getByText('Comparar')).toBeInTheDocument();
+      expect(screen.getByText('Entrar')).toBeInTheDocument();
+      expect(screen.queryByText('Mensagens')).not.toBeInTheDocument();
+    });
+
+    it('renderiza os 5 itens com a aba "Mensagens" para usuário autenticado', () => {
+      mockIsAuthenticated = true;
+      render(<MobileBottomNav />);
+
+      expect(screen.getByTestId('mobile-nav-messages')).toBeInTheDocument();
+      expect(screen.queryByTestId('mobile-nav-login')).not.toBeInTheDocument();
+
       expect(screen.getByText('Mensagens')).toBeInTheDocument();
+      expect(screen.queryByText('Entrar')).not.toBeInTheDocument();
     });
 
     it('marca o item ativo com aria-current="page" de acordo com a rota atual', () => {
+      mockIsAuthenticated = true;
       mockPathname = '/';
       const { rerender } = render(<MobileBottomNav />);
       expect(screen.getByTestId('mobile-nav-home')).toHaveAttribute('aria-current', 'page');
@@ -123,6 +138,11 @@ describe('MobileBottomNav (PWA Mobile Public Navigation)', () => {
       mockPathname = '/messages';
       rerender(<MobileBottomNav />);
       expect(screen.getByTestId('mobile-nav-messages')).toHaveAttribute('aria-current', 'page');
+
+      mockIsAuthenticated = false;
+      mockPathname = '/login';
+      rerender(<MobileBottomNav />);
+      expect(screen.getByTestId('mobile-nav-login')).toHaveAttribute('aria-current', 'page');
     });
   });
 
@@ -142,13 +162,15 @@ describe('MobileBottomNav (PWA Mobile Public Navigation)', () => {
       expect(badge).toHaveAttribute('aria-label', '3 empresas selecionadas');
     });
 
-    it('não exibe badge de mensagens quando unreadMessagesCount for 0', () => {
+    it('não exibe badge de mensagens quando unreadMessagesCount for 0 (autenticado)', () => {
+      mockIsAuthenticated = true;
       mockUnreadMessagesCount = 0;
       render(<MobileBottomNav />);
       expect(screen.queryByTestId('messages-badge')).not.toBeInTheDocument();
     });
 
-    it('exibe badge de mensagens não lidas quando houver mensagens', () => {
+    it('exibe badge de mensagens não lidas quando houver mensagens (autenticado)', () => {
+      mockIsAuthenticated = true;
       mockUnreadMessagesCount = 2;
       render(<MobileBottomNav />);
       const badge = screen.getByTestId('messages-badge');
@@ -158,6 +180,7 @@ describe('MobileBottomNav (PWA Mobile Public Navigation)', () => {
     });
 
     it('formata contagens maiores que 9 com "9+"', () => {
+      mockIsAuthenticated = true;
       mockComparisonCount = 12;
       mockUnreadMessagesCount = 15;
       render(<MobileBottomNav />);
@@ -199,18 +222,16 @@ describe('MobileBottomNav (PWA Mobile Public Navigation)', () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it('ao clicar em Mensagens não autenticado, redireciona para login seguro', () => {
+    it('ao clicar em Entrar quando não autenticado, direciona para o login público', () => {
       mockIsAuthenticated = false;
       render(<MobileBottomNav />);
 
-      const messagesButton = screen.getByTestId('mobile-nav-messages');
-      fireEvent.click(messagesButton);
-
-      expect(mockPush).toHaveBeenCalledWith('/login?redirect=/chat');
+      const loginLink = screen.getByTestId('mobile-nav-login');
+      expect(loginLink).toHaveAttribute('href', '/login');
       expect(mockToggleChat).not.toHaveBeenCalled();
     });
 
-    it('ao clicar em Mensagens autenticado, expande o chat', () => {
+    it('ao clicar em Mensagens quando autenticado, expande o chat', () => {
       mockIsAuthenticated = true;
       render(<MobileBottomNav />);
 

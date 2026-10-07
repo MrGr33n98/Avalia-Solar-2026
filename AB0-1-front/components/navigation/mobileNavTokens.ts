@@ -9,13 +9,46 @@ export const MOBILE_NAV_ICON_SIZE = 20; // 20px refined icon size
 export const MOBILE_NAV_Z_INDEX = 50; // z-50 for proper overlay stacking
 
 export interface MobileNavItemConfig {
-  id: 'home' | 'companies' | 'search' | 'compare' | 'messages';
+  id: 'home' | 'companies' | 'search' | 'compare' | 'messages' | 'login';
   label: string;
   href?: string;
   ariaLabel: string;
 }
 
-export const MOBILE_NAV_ITEMS: readonly MobileNavItemConfig[] = [
+export const MOBILE_NAV_ITEMS_UNAUTH: readonly MobileNavItemConfig[] = [
+  {
+    id: 'home',
+    label: 'Início',
+    href: '/',
+    ariaLabel: 'Ir para a página inicial',
+  },
+  {
+    id: 'companies',
+    label: 'Empresas',
+    href: '/companies',
+    ariaLabel: 'Explorar empresas de energia solar',
+  },
+  {
+    id: 'search',
+    label: 'Buscar',
+    href: '/search',
+    ariaLabel: 'Buscar empresas, produtos e categorias',
+  },
+  {
+    id: 'compare',
+    label: 'Comparar',
+    href: '/compare',
+    ariaLabel: 'Comparar empresas selecionadas',
+  },
+  {
+    id: 'login',
+    label: 'Entrar',
+    href: '/login',
+    ariaLabel: 'Fazer login ou acessar conta',
+  },
+] as const;
+
+export const MOBILE_NAV_ITEMS_AUTH: readonly MobileNavItemConfig[] = [
   {
     id: 'home',
     label: 'Início',
@@ -47,6 +80,9 @@ export const MOBILE_NAV_ITEMS: readonly MobileNavItemConfig[] = [
     ariaLabel: 'Abrir mensagens e atendimento',
   },
 ] as const;
+
+/** @deprecated Use MOBILE_NAV_ITEMS_AUTH ou MOBILE_NAV_ITEMS_UNAUTH */
+export const MOBILE_NAV_ITEMS = MOBILE_NAV_ITEMS_AUTH;
 
 /**
  * Rotas onde a navegação inferior pública deve ser ocultada para evitar conflito

@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowRightLeft, Building2, Home, MessageCircle, Search } from 'lucide-react';
+import { ArrowRightLeft, Building2, Home, MessageCircle, Search, User } from 'lucide-react';
 
 import { useComparison } from '@/hooks/useComparison';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +33,7 @@ export default function MobileBottomNav() {
     pathname?.startsWith('/compare/') ||
     pathname?.startsWith('/products/compare');
   const isMessagesActive = pathname === '/messages' || pathname?.startsWith('/messages/');
+  const isLoginActive = pathname === '/login' || pathname?.startsWith('/login');
 
   // Ações sem dead-actions
   const handleSearchClick = useCallback(() => {
@@ -61,7 +62,7 @@ export default function MobileBottomNav() {
     if (isAuthenticated) {
       toggleChat('expanded');
     } else {
-      router.push('/login?redirect=/chat');
+      router.push('/login');
     }
   }, [isAuthenticated, router, toggleChat]);
 
@@ -274,64 +275,101 @@ export default function MobileBottomNav() {
         </button>
 
         {/* ======================================================
-            5. MENSAGENS
+            5. ENTRAR (DESLOGADO) / MENSAGENS (LOGADO)
         ====================================================== */}
-        <button
-          type="button"
-          onClick={handleMessagesClick}
-          aria-label={
-            unreadMessagesCount > 0
-              ? `Mensagens: ${unreadMessagesCount} não lidas`
-              : 'Abrir mensagens e atendimento'
-          }
-          aria-current={isMessagesActive ? 'page' : undefined}
-          data-testid="mobile-nav-messages"
-          className={commonItemClass}
-        >
-          <span className="relative flex h-5 w-5 items-center justify-center">
-            <MessageCircle
+        {isAuthenticated ? (
+          <button
+            type="button"
+            onClick={handleMessagesClick}
+            aria-label={
+              unreadMessagesCount > 0
+                ? `Mensagens: ${unreadMessagesCount} não lidas`
+                : 'Abrir mensagens e atendimento'
+            }
+            aria-current={isMessagesActive ? 'page' : undefined}
+            data-testid="mobile-nav-messages"
+            className={commonItemClass}
+          >
+            <span className="relative flex h-5 w-5 items-center justify-center">
+              <MessageCircle
+                className={cn(
+                  'h-5 w-5 transition-transform duration-150 group-active:scale-90',
+                  isMessagesActive
+                    ? 'text-blue-600 dark:text-blue-400 stroke-[2.25]'
+                    : 'text-slate-500 dark:text-slate-400 stroke-[1.75] group-hover:text-slate-800 dark:group-hover:text-slate-200'
+                )}
+              />
+
+              {unreadMessagesCount > 0 && (
+                <span
+                  aria-live="polite"
+                  aria-label={`${unreadMessagesCount} mensagens não lidas`}
+                  data-testid="messages-badge"
+                  className={cn(
+                    'absolute -top-1 -right-2 z-10 flex h-4 min-w-4 px-1 items-center justify-center',
+                    'rounded-full bg-blue-600 text-white text-[10px] font-bold leading-none',
+                    'ring-2 ring-white dark:ring-slate-900 shadow-sm animate-in zoom-in-75 duration-200'
+                  )}
+                >
+                  {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                </span>
+              )}
+            </span>
+
+            <span
+              className={cn(
+                'truncate text-[11px] leading-tight transition-colors',
+                isMessagesActive
+                  ? 'font-semibold text-blue-600 dark:text-blue-400'
+                  : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'
+              )}
+            >
+              Mensagens
+            </span>
+
+            {isMessagesActive && (
+              <span
+                aria-hidden="true"
+                className="absolute bottom-1 h-[2.5px] w-4 rounded-full bg-blue-600 dark:bg-blue-400"
+              />
+            )}
+          </button>
+        ) : (
+          <Link
+            href="/login"
+            aria-current={isLoginActive ? 'page' : undefined}
+            aria-label="Fazer login ou acessar conta"
+            data-testid="mobile-nav-login"
+            className={commonItemClass}
+          >
+            <User
               className={cn(
                 'h-5 w-5 transition-transform duration-150 group-active:scale-90',
-                isMessagesActive
+                isLoginActive
                   ? 'text-blue-600 dark:text-blue-400 stroke-[2.25]'
                   : 'text-slate-500 dark:text-slate-400 stroke-[1.75] group-hover:text-slate-800 dark:group-hover:text-slate-200'
               )}
             />
 
-            {unreadMessagesCount > 0 && (
-              <span
-                aria-live="polite"
-                aria-label={`${unreadMessagesCount} mensagens não lidas`}
-                data-testid="messages-badge"
-                className={cn(
-                  'absolute -top-1 -right-2 z-10 flex h-4 min-w-4 px-1 items-center justify-center',
-                  'rounded-full bg-blue-600 text-white text-[10px] font-bold leading-none',
-                  'ring-2 ring-white dark:ring-slate-900 shadow-sm animate-in zoom-in-75 duration-200'
-                )}
-              >
-                {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
-              </span>
-            )}
-          </span>
-
-          <span
-            className={cn(
-              'truncate text-[11px] leading-tight transition-colors',
-              isMessagesActive
-                ? 'font-semibold text-blue-600 dark:text-blue-400'
-                : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'
-            )}
-          >
-            Mensagens
-          </span>
-
-          {isMessagesActive && (
             <span
-              aria-hidden="true"
-              className="absolute bottom-1 h-[2.5px] w-4 rounded-full bg-blue-600 dark:bg-blue-400"
-            />
-          )}
-        </button>
+              className={cn(
+                'truncate text-[11px] leading-tight transition-colors',
+                isLoginActive
+                  ? 'font-semibold text-blue-600 dark:text-blue-400'
+                  : 'font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200'
+              )}
+            >
+              Entrar
+            </span>
+
+            {isLoginActive && (
+              <span
+                aria-hidden="true"
+                className="absolute bottom-1 h-[2.5px] w-4 rounded-full bg-blue-600 dark:bg-blue-400"
+              />
+            )}
+          </Link>
+        )}
       </div>
 
       {/* Safe Area Spacer: garante continuidade do fundo branco em dispositivos com Home Indicator sem comprimir a barra */}
