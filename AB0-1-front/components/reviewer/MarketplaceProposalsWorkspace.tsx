@@ -6,14 +6,22 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUpDown,
+  Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   FileText,
   GitCompareArrows,
   Info,
+  LayoutGrid,
   MapPin,
+  MessageCircle,
   RefreshCw,
+  Search,
+  SlidersHorizontal,
+  Table,
   Zap,
 } from 'lucide-react';
 import { marketplaceProposalsApi, type MarketplaceProposal } from '@/lib/api';
@@ -39,6 +47,10 @@ import { ProposalProject } from './proposals/ProposalProject';
 
 type Screen = 'summary' | 'complete' | 'meeting' | 'negotiation' | 'project' | 'compare';
 type Filter = 'all' | 'active' | 'completed' | 'closed';
+type PeriodFilter = 'all' | '30d' | '6m' | '12m';
+type SortOption = 'recent' | 'oldest' | 'highest' | 'lowest';
+type ViewLayout = 'cards' | 'table';
+
 const screens: Screen[] = ['summary', 'complete', 'meeting', 'negotiation', 'project', 'compare'];
 const screenTitles: Record<Screen, string> = {
   summary: 'Detalhes da proposta',
@@ -274,6 +286,10 @@ export function MarketplaceProposalsWorkspace() {
   const [proposals, setProposals] = useState<MarketplaceProposal[]>([]);
   const [compareIds, setCompareIds] = useState<number[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('recent');
+  const [viewLayout, setViewLayout] = useState<ViewLayout>('cards');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -511,201 +527,422 @@ export function MarketplaceProposalsWorkspace() {
               screen === 'compare' && 'lg:hidden'
             )}
           >
-            {/* Filter Pills */}
-            <div
-              className="flex items-center gap-1.5 overflow-x-auto rounded-xl bg-muted/60 p-1.5 scrollbar-none"
-              aria-label="Filtrar propostas"
-            >
-              {filters.map((item) => {
-                const count = proposals.filter((p) => matchesFilter(p, item.id)).length;
-                return (
+            {/* Top Toolbar (Search, Status Filter, Period Filter, Advanced Filters) */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search Box */}
+              <div className="relative min-w-[240px] flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar propostas, empresas ou tecnologias..."
+                  className="h-10 w-full rounded-xl border border-border bg-card pl-9 pr-3 text-xs font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+
+              {/* Status Select */}
+              <div className="relative">
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as Filter)}
+                  className="h-10 appearance-none rounded-xl border border-border bg-card pl-3 pr-8 text-xs font-semibold text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="all">Todos os status</option>
+                  <option value="active">Em andamento</option>
+                  <option value="completed">Concluídas</option>
+                  <option value="closed">Encerradas</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
+
+              {/* Period Select */}
+              <div className="relative">
+                <select
+                  value={periodFilter}
+                  onChange={(e) => setPeriodFilter(e.target.value as PeriodFilter)}
+                  className="h-10 appearance-none rounded-xl border border-border bg-card pl-3 pr-8 text-xs font-semibold text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="all">Todos os períodos</option>
+                  <option value="30d">Últimos 30 dias</option>
+                  <option value="6m">Últimos 6 meses</option>
+                  <option value="12m">Últimos 12 meses</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
+
+              {/* Filters Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 gap-1.5 rounded-xl text-xs font-semibold"
+                onClick={() => {
+                  /* Drawer toggle / resetting filters if active */
+                  if (filter !== 'all' || searchQuery || periodFilter !== 'all') {
+                    setFilter('all');
+                    setSearchQuery('');
+                    setPeriodFilter('all');
+                  }
+                }}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Filtros</span>
+              </Button>
+            </div>
+
+            {/* Status Tabs with Counts */}
+            <div className="flex items-center justify-between gap-3 flex-wrap border-b border-border/50 pb-3 pt-1">
+              <div
+                className="flex items-center gap-1.5 overflow-x-auto rounded-xl bg-muted/60 p-1.5 scrollbar-none"
+                aria-label="Filtrar propostas por status"
+              >
+                {filters.map((item) => {
+                  const count = proposals.filter((p) => matchesFilter(p, item.id)).length;
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      aria-pressed={filter === item.id}
+                      onClick={() => setFilter(item.id)}
+                      className={cn(
+                        'flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-xs font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+                        filter === item.id
+                          ? 'bg-card text-primary shadow-xs'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      <span>{item.label}</span>
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums',
+                          filter === item.id
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-background/80 text-muted-foreground'
+                        )}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Layout Toggle (Cards / Tabela) & Sort Dropdown */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center rounded-xl border border-border bg-card p-1">
                   <button
                     type="button"
-                    key={item.id}
-                    aria-pressed={filter === item.id}
-                    onClick={() => setFilter(item.id)}
+                    onClick={() => setViewLayout('cards')}
+                    aria-label="Visualização em Cards"
                     className={cn(
-                      'flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-xs font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
-                      filter === item.id
-                        ? 'bg-card text-primary shadow-xs'
+                      'flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all',
+                      viewLayout === 'cards'
+                        ? 'bg-primary text-primary-foreground shadow-xs'
                         : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
-                    <span>{item.label}</span>
-                    <span
-                      className={cn(
-                        'rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums',
-                        filter === item.id
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-background/80 text-muted-foreground'
-                      )}
-                    >
-                      {count}
-                    </span>
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Cards</span>
                   </button>
-                );
-              })}
+                  <button
+                    type="button"
+                    onClick={() => setViewLayout('table')}
+                    aria-label="Visualização em Tabela"
+                    className={cn(
+                      'flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all',
+                      viewLayout === 'table'
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Table className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Tabela</span>
+                  </button>
+                </div>
+
+                {/* Sort dropdown */}
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="h-9 appearance-none rounded-xl border border-border bg-card pl-3 pr-7 text-xs font-semibold text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="recent">Mais recentes</option>
+                    <option value="oldest">Mais antigas</option>
+                    <option value="highest">Maior valor</option>
+                    <option value="lowest">Menor valor</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                </div>
+              </div>
             </div>
 
-            {/* Proposal Cards Grid */}
-            <div
-              className={cn(
-                'grid gap-4',
-                !showingDetail &&
-                  'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4'
-              )}
-            >
-              {proposals
+            {/* Proposal Rendering (Cards or Table) */}
+            {(() => {
+              const displayProposals = proposals
                 .filter((proposal) => matchesFilter(proposal, filter))
-                .map((proposal) => {
-                  const displayPrice = getProposalDisplayPrice(proposal);
-                  const location = getProposalLocation(proposal);
-                  const metrics = getProposalCardMetrics(proposal);
-                  const isSelected = selectedId === proposal.id;
+                .filter((proposal) => {
+                  if (!searchQuery.trim()) return true;
+                  const query = searchQuery.toLowerCase();
+                  const company = proposal.company.name.toLowerCase();
+                  const ref = proposal.reference.toLowerCase();
+                  const city = (proposal.company.city || '').toLowerCase();
+                  const state = (proposal.company.state || '').toLowerCase();
+                  return company.includes(query) || ref.includes(query) || city.includes(query) || state.includes(query);
+                })
+                .filter((proposal) => {
+                  if (periodFilter === 'all') return true;
+                  const date = new Date(proposal.created_at || proposal.published_at || Date.now());
+                  const now = new Date();
+                  const diffDays = (now.getTime() - date.getTime()) / (1000 * 3600 * 24);
+                  if (periodFilter === '30d') return diffDays <= 30;
+                  if (periodFilter === '6m') return diffDays <= 180;
+                  if (periodFilter === '12m') return diffDays <= 365;
+                  return true;
+                })
+                .sort((a, b) => {
+                  if (sortBy === 'oldest') {
+                    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                  }
+                  if (sortBy === 'highest') {
+                    return (b.total_cents || 0) - (a.total_cents || 0);
+                  }
+                  if (sortBy === 'lowest') {
+                    return (a.total_cents || 0) - (b.total_cents || 0);
+                  }
+                  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                });
 
-                  return (
-                    <article
-                      key={proposal.id}
-                      className={cn(
-                        'group relative flex flex-col justify-between rounded-2xl border bg-card p-4 transition-all duration-200',
-                        isSelected
-                          ? 'border-primary ring-2 ring-primary/20 shadow-sm'
-                          : 'border-border/80 hover:border-primary/50 hover:shadow-md'
-                      )}
-                    >
-                      <button
-                        type="button"
-                        aria-label={'Abrir proposta de ' + proposal.company.name}
-                        onClick={() => openProposal(proposal)}
-                        className="w-full min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              if (!displayProposals.length) {
+                return (
+                  <p
+                    role="status"
+                    className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground"
+                  >
+                    Nenhuma proposta encontrada para os filtros selecionados.
+                  </p>
+                );
+              }
+
+              if (viewLayout === 'table') {
+                return (
+                  <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-xs">
+                    <table className="w-full text-left text-xs">
+                      <thead className="border-b border-border/60 bg-muted/40 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3">Empresa</th>
+                          <th className="px-4 py-3">Referência</th>
+                          <th className="px-4 py-3">Localização</th>
+                          <th className="px-4 py-3">Valor total</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/60">
+                        {displayProposals.map((proposal) => {
+                          const displayPrice = getProposalDisplayPrice(proposal);
+                          const location = getProposalLocation(proposal);
+                          return (
+                            <tr key={proposal.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="px-4 py-3 font-semibold text-foreground">
+                                <div className="flex items-center gap-2">
+                                  <CompanyMark proposal={proposal} />
+                                  <span>{proposal.company.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 font-mono text-muted-foreground">
+                                {proposal.reference}
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">{location}</td>
+                              <td className="px-4 py-3 font-bold tabular-nums text-primary">
+                                {displayPrice.formatted}
+                              </td>
+                              <td className="px-4 py-3">
+                                <StatusBadge proposal={proposal} />
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openProposal(proposal)}
+                                    className="h-8 text-xs font-semibold"
+                                  >
+                                    Ver detalhes
+                                  </Button>
+                                  <Button
+                                    asChild
+                                    size="sm"
+                                    className="h-8 gap-1 text-xs font-semibold"
+                                  >
+                                    <Link href={proposalChatUrl(proposal)}>
+                                      <MessageCircle className="h-3.5 w-3.5" />
+                                      <span>Conversar</span>
+                                    </Link>
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  className={cn(
+                    'grid gap-4',
+                    !showingDetail &&
+                      'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4'
+                  )}
+                >
+                  {displayProposals.map((proposal) => {
+                    const displayPrice = getProposalDisplayPrice(proposal);
+                    const location = getProposalLocation(proposal);
+                    const metrics = getProposalCardMetrics(proposal);
+                    const isSelected = selectedId === proposal.id;
+
+                    return (
+                      <article
+                        key={proposal.id}
+                        className={cn(
+                          'group relative flex flex-col justify-between rounded-2xl border bg-card p-4 transition-all duration-200',
+                          isSelected
+                            ? 'border-primary ring-2 ring-primary/20 shadow-sm'
+                            : 'border-border/80 hover:border-primary/50 hover:shadow-md'
+                        )}
                       >
-                        {/* Header: Logo, Company Name, Status */}
-                        <div className="flex items-start gap-3">
-                          <CompanyMark proposal={proposal} />
-                          <div className="min-w-0 flex-1">
-                            <span className="block truncate font-bold text-foreground group-hover:text-primary transition-colors">
-                              {proposal.company.name}
-                            </span>
-                            <span className="mt-0.5 block text-xs font-mono text-muted-foreground">
-                              {proposal.reference}
-                            </span>
+                        <button
+                          type="button"
+                          aria-label={'Abrir proposta de ' + proposal.company.name}
+                          onClick={() => openProposal(proposal)}
+                          className="w-full min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                        >
+                          {/* Header: Logo, Company Name, Status */}
+                          <div className="flex items-start gap-3">
+                            <CompanyMark proposal={proposal} />
+                            <div className="min-w-0 flex-1">
+                              <span className="block truncate font-bold text-foreground group-hover:text-primary transition-colors">
+                                {proposal.company.name}
+                              </span>
+                              <span className="mt-0.5 block text-xs font-mono text-muted-foreground">
+                                {proposal.reference}
+                              </span>
+                            </div>
+                            <StatusBadge proposal={proposal} />
                           </div>
-                          <StatusBadge proposal={proposal} />
-                        </div>
 
-                        {/* Location & Request context */}
-                        {location !== 'Não informado' && (
-                          <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-                            <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
-                            <span className="truncate">{location}</span>
-                          </div>
-                        )}
-
-                        {/* Display Price Highlight */}
-                        <div className="mt-4 rounded-xl bg-muted/40 p-3 border border-border/40">
-                          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            Valor total
-                          </span>
-                          <span
-                            className={cn(
-                              'mt-0.5 block font-bold tabular-nums',
-                              displayPrice.isAvailable
-                                ? 'text-lg sm:text-xl text-primary'
-                                : 'text-sm text-muted-foreground font-normal'
-                            )}
-                          >
-                            {displayPrice.formatted}
-                          </span>
-                        </div>
-
-                        {/* Technical Metrics Summary (Only if version.terms available) */}
-                        {metrics.length > 0 && (
-                          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
-                            {metrics.map((m) => (
-                              <div key={m.key} className="min-w-0">
-                                <span className="block truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                                  {m.label}
-                                </span>
-                                <span className="block truncate text-xs font-semibold text-foreground">
-                                  {m.value}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Updated timestamp */}
-                        <span className="mt-3 block text-[11px] text-muted-foreground">
-                          Atualizada em{' '}
-                          {formatDate(
-                            proposal.version?.published_at ||
-                              proposal.published_at ||
-                              proposal.created_at
+                          {/* Location & Request context */}
+                          {location !== 'Não informado' && (
+                            <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
+                              <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+                              <span className="truncate">{location}</span>
+                            </div>
                           )}
-                        </span>
-                      </button>
 
-                      {/* Card Footer: Compare Checkbox */}
-                      {proposal.version ? (
-                        <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
-                          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs font-semibold text-foreground select-none">
-                            <input
-                              type="checkbox"
-                              checked={compareIds.includes(proposal.id)}
-                              onChange={(event) => {
-                                event.stopPropagation();
-                                if (!event.currentTarget.checked) {
+                          {/* Display Price Highlight */}
+                          <div className="mt-4 rounded-xl bg-muted/40 p-3 border border-border/40">
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Valor total
+                            </span>
+                            <span
+                              className={cn(
+                                'mt-0.5 block font-bold tabular-nums',
+                                displayPrice.isAvailable
+                                  ? 'text-lg sm:text-xl text-primary'
+                                  : 'text-sm text-muted-foreground font-normal'
+                              )}
+                            >
+                              {displayPrice.formatted}
+                            </span>
+                          </div>
+
+                          {/* Technical Metrics Summary (Only if version.terms available) */}
+                          {metrics.length > 0 && (
+                            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
+                              {metrics.map((m) => (
+                                <div key={m.key} className="min-w-0">
+                                  <span className="block truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                                    {m.label}
+                                  </span>
+                                  <span className="block truncate text-xs font-semibold text-foreground">
+                                    {m.value}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Updated timestamp */}
+                          <span className="mt-3 block text-[11px] text-muted-foreground">
+                            Atualizada em{' '}
+                            {formatDate(
+                              proposal.version?.published_at ||
+                                proposal.published_at ||
+                                proposal.created_at
+                            )}
+                          </span>
+                        </button>
+
+                        {/* Card Footer: Compare Checkbox & Action CTAs */}
+                        {proposal.version ? (
+                          <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
+                            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs font-semibold text-foreground select-none">
+                              <input
+                                type="checkbox"
+                                checked={compareIds.includes(proposal.id)}
+                                onChange={(event) => {
+                                  event.stopPropagation();
+                                  if (!event.currentTarget.checked) {
+                                    setNotice('');
+                                    setCompareIds((current) =>
+                                      current.filter((id) => id !== proposal.id)
+                                    );
+                                    return;
+                                  }
+                                  if (compareIds.length >= 3 && !compareIds.includes(proposal.id)) {
+                                    setNotice(
+                                      'Você pode comparar até 3 propostas. Desmarque uma para incluir outra.'
+                                    );
+                                    return;
+                                  }
                                   setNotice('');
                                   setCompareIds((current) =>
-                                    current.filter((id) => id !== proposal.id)
+                                    current.includes(proposal.id) ? current : [...current, proposal.id]
                                   );
-                                  return;
-                                }
-                                if (compareIds.length >= 3 && !compareIds.includes(proposal.id)) {
-                                  setNotice(
-                                    'Você pode comparar até 3 propostas. Desmarque uma para incluir outra.'
-                                  );
-                                  return;
-                                }
-                                setNotice('');
-                                setCompareIds((current) =>
-                                  current.includes(proposal.id) ? current : [...current, proposal.id]
-                                );
-                              }}
-                              aria-label={'Comparar proposta de ' + proposal.company.name}
-                              className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary"
-                            />
-                            <span>Comparar</span>
-                          </label>
+                                }}
+                                aria-label={'Comparar proposta de ' + proposal.company.name}
+                                className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary"
+                              />
+                              <span>Comparar</span>
+                            </label>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openProposal(proposal)}
-                            className="h-8 gap-1 text-xs font-semibold text-primary hover:text-primary"
-                          >
-                            <span>Ver detalhes</span>
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <p className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-                          A empresa recebeu sua solicitação e está preparando as condições.
-                        </p>
-                      )}
-                    </article>
-                  );
-                })}
-            </div>
-
-            {!proposals.some((proposal) => matchesFilter(proposal, filter)) && (
-              <p
-                role="status"
-                className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground"
-              >
-                Nenhuma proposta neste status.
-              </p>
-            )}
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openProposal(proposal)}
+                                className="h-8 gap-1 text-xs font-semibold text-primary hover:text-primary"
+                              >
+                                <span>Ver detalhes</span>
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                            A empresa recebeu sua solicitação e está preparando as condições.
+                          </p>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {notice && (
               <p role="status" className="text-xs font-medium text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
