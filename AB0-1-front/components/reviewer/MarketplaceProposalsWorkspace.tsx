@@ -32,6 +32,7 @@ import {
   getProposalCardMetrics,
   getProposalDisplayPrice,
   getProposalLocation,
+  getProposalRawTerm,
   getProposalStatusTone,
   isProjectComplete,
   proposalChatUrl,
@@ -128,8 +129,8 @@ function ProposalJourneyRail({
         </span>
       </div>
 
-      {/* Desktop 1-row view (xl+) */}
-      <ol className="hidden xl:flex xl:items-center xl:justify-between xl:gap-1">
+      {/* Scrollable Step Rail (no text overlap across all screen sizes) */}
+      <ol className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         {journeySteps.map((step) => {
           const isActive = step.id === active;
           const isDone = step.id < active;
@@ -150,72 +151,7 @@ function ProposalJourneyRail({
               <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold', badgeClass)}>
                 {isDone ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : step.id}
               </span>
-              <span className="truncate text-xs font-medium">{step.label}</span>
-            </div>
-          );
-
-          return (
-            <li key={step.id} className="flex-1 min-w-0" aria-current={isActive ? 'step' : undefined}>
-              {step.id === 5 && proposal ? (
-                <Link
-                  href={proposalChatUrl(proposal)}
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-xl border px-2.5 py-2 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
-                    isActive
-                      ? 'border-primary/40 bg-primary/5 text-primary font-semibold'
-                      : 'border-transparent text-muted-foreground hover:border-border hover:bg-muted/50'
-                  )}
-                >
-                  {content}
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  disabled={!canOpen && step.id !== 1}
-                  onClick={() => {
-                    if (step.id === 1) onList();
-                    else if (step.id === 8) onChoose();
-                    else if (step.view) onNavigate(step.view);
-                  }}
-                  className={cn(
-                    'flex w-full items-center gap-1.5 rounded-xl border px-2.5 py-2 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
-                    isActive
-                      ? 'border-primary/40 bg-primary/5 text-primary font-semibold'
-                      : 'border-transparent text-muted-foreground hover:border-border hover:bg-muted/50',
-                    !canOpen && step.id !== 1 && 'cursor-not-allowed opacity-50'
-                  )}
-                >
-                  {content}
-                </button>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-
-      {/* Mobile/Tablet Horizontal Scroll View (<xl) */}
-      <ol className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none xl:hidden">
-        {journeySteps.map((step) => {
-          const isActive = step.id === active;
-          const isDone = step.id < active;
-          const canOpen =
-            Boolean(proposal) &&
-            step.id !== 1 &&
-            (step.id !== 8 || canDecide(proposal!)) &&
-            (step.id !== 4 || canCompare);
-
-          const badgeClass = isActive
-            ? 'bg-primary text-primary-foreground shadow-xs'
-            : isDone
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-muted text-muted-foreground';
-
-          const content = (
-            <div className="flex items-center gap-2">
-              <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold', badgeClass)}>
-                {isDone ? <Check className="h-3 w-3 stroke-[3]" /> : step.id}
-              </span>
-              <span className="whitespace-nowrap text-xs font-medium">{step.label}</span>
+              <span className="whitespace-nowrap text-xs font-semibold">{step.label}</span>
             </div>
           );
 
@@ -225,10 +161,10 @@ function ProposalJourneyRail({
                 <Link
                   href={proposalChatUrl(proposal)}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-xl border px-3 py-1.5 transition-all',
+                    'flex items-center gap-1.5 rounded-xl border px-3 py-2 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
                     isActive
                       ? 'border-primary/40 bg-primary/5 text-primary font-semibold'
-                      : 'border-border/60 bg-muted/30 text-muted-foreground'
+                      : 'border-border/60 bg-card text-muted-foreground hover:border-border hover:bg-muted/50'
                   )}
                 >
                   {content}
@@ -243,10 +179,10 @@ function ProposalJourneyRail({
                     else if (step.view) onNavigate(step.view);
                   }}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-left transition-all',
+                    'flex items-center gap-1.5 rounded-xl border px-3 py-2 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
                     isActive
                       ? 'border-primary/40 bg-primary/5 text-primary font-semibold'
-                      : 'border-border/60 bg-muted/30 text-muted-foreground',
+                      : 'border-border/60 bg-card text-muted-foreground hover:border-border hover:bg-muted/50',
                     !canOpen && step.id !== 1 && 'cursor-not-allowed opacity-50'
                   )}
                 >
@@ -802,8 +738,15 @@ export function MarketplaceProposalsWorkspace() {
                   {displayProposals.map((proposal) => {
                     const displayPrice = getProposalDisplayPrice(proposal);
                     const location = getProposalLocation(proposal);
-                    const metrics = getProposalCardMetrics(proposal);
                     const isSelected = selectedId === proposal.id;
+
+                    const powerVal = getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']) || 'Não inf.';
+                    const genVal = getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'estimated_generation', 'geracao']) || 'Não inf.';
+
+                    // Default cover image or company banner/logo
+                    const coverImage =
+                      (proposal.company as { banner_url?: string | null }).banner_url ||
+                      '/energia-solar-avalia-solar.webp';
 
                     return (
                       <article
@@ -815,128 +758,155 @@ export function MarketplaceProposalsWorkspace() {
                             : 'border-border/80 hover:border-primary/50 hover:shadow-md'
                         )}
                       >
-                        <button
-                          type="button"
-                          aria-label={'Abrir proposta de ' + proposal.company.name}
-                          onClick={() => openProposal(proposal)}
-                          className="w-full min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
-                        >
-                          {/* Header: Logo, Company Name, Status */}
-                          <div className="flex items-start gap-3">
-                            <CompanyMark proposal={proposal} />
-                            <div className="min-w-0 flex-1">
-                              <span className="block truncate font-bold text-foreground group-hover:text-primary transition-colors">
-                                {proposal.company.name}
-                              </span>
-                              <span className="mt-0.5 block text-xs font-mono text-muted-foreground">
-                                {proposal.reference}
-                              </span>
+                        <div className="w-full min-w-0">
+                          {/* Top Header: Logo, Company Name, Reference, Received Date, Status Badge */}
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <CompanyMark proposal={proposal} />
+                              <div className="min-w-0">
+                                <span className="block truncate font-bold text-sm text-foreground group-hover:text-primary transition-colors">
+                                  {proposal.company.name}
+                                </span>
+                                <span className="block truncate text-[11px] font-mono text-muted-foreground">
+                                  Proposta {proposal.reference}
+                                </span>
+                                <span className="block truncate text-[10px] text-muted-foreground">
+                                  Recebida em {formatDate(proposal.published_at || proposal.created_at)}
+                                </span>
+                              </div>
                             </div>
                             <StatusBadge proposal={proposal} />
                           </div>
 
-                          {/* Location & Request context */}
-                          {location !== 'Não informado' && (
-                            <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-                              <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
-                              <span className="truncate">{location}</span>
+                          {/* Cover Image Preview (16:9 ratio with rounded corners) */}
+                          <button
+                            type="button"
+                            onClick={() => openProposal(proposal)}
+                            aria-label={'Ver proposta de ' + proposal.company.name}
+                            className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted/60 border border-border/40 my-2 block focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary group-hover:opacity-95 transition-opacity"
+                          >
+                            <img
+                              src={coverImage}
+                              alt=""
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                            <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-white">
+                              <span className="text-xs font-semibold drop-shadow-xs">
+                                {proposal.version?.title || 'Sistema Residencial'}
+                              </span>
+                              <span className="text-[10px] font-medium bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/20">
+                                {proposal.request?.project_profile || 'Residencial'}
+                              </span>
                             </div>
-                          )}
+                          </button>
 
-                          {/* Display Price Highlight */}
-                          <div className="mt-4 rounded-xl bg-muted/40 p-3 border border-border/40">
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                              Valor total
-                            </span>
-                            <span
-                              className={cn(
-                                'mt-0.5 block font-bold tabular-nums',
-                                displayPrice.isAvailable
-                                  ? 'text-lg sm:text-xl text-primary'
-                                  : 'text-sm text-muted-foreground font-normal'
-                              )}
-                            >
-                              {displayPrice.formatted}
-                            </span>
+                          {/* 3-Column Metrics Grid (Potência, Geração estimada, Valor total) */}
+                          <div className="my-3 grid grid-cols-3 gap-1.5 rounded-xl border border-border/60 bg-muted/30 p-2 text-center">
+                            {/* Col 1: Potência */}
+                            <div className="min-w-0 px-1 border-r border-border/40">
+                              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                Potência
+                              </span>
+                              <span className="mt-0.5 block truncate text-xs font-bold text-foreground">
+                                {powerVal}
+                              </span>
+                            </div>
+
+                            {/* Col 2: Geração estimada */}
+                            <div className="min-w-0 px-1 border-r border-border/40">
+                              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                Geração est.
+                              </span>
+                              <span className="mt-0.5 block truncate text-xs font-bold text-foreground">
+                                {genVal}
+                              </span>
+                            </div>
+
+                            {/* Col 3: Valor total */}
+                            <div className="min-w-0 px-1">
+                              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                Valor total
+                              </span>
+                              <span
+                                className={cn(
+                                  'mt-0.5 block truncate text-xs font-bold tabular-nums',
+                                  displayPrice.isAvailable ? 'text-primary' : 'text-muted-foreground'
+                                )}
+                              >
+                                {displayPrice.formatted}
+                              </span>
+                            </div>
                           </div>
+                        </div>
 
-                          {/* Technical Metrics Summary (Only if version.terms available) */}
-                          {metrics.length > 0 && (
-                            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
-                              {metrics.map((m) => (
-                                <div key={m.key} className="min-w-0">
-                                  <span className="block truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                                    {m.label}
-                                  </span>
-                                  <span className="block truncate text-xs font-semibold text-foreground">
-                                    {m.value}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Updated timestamp */}
-                          <span className="mt-3 block text-[11px] text-muted-foreground">
-                            Atualizada em{' '}
-                            {formatDate(
-                              proposal.version?.published_at ||
-                                proposal.published_at ||
-                                proposal.created_at
-                            )}
-                          </span>
-                        </button>
-
-                        {/* Card Footer: Compare Checkbox & Action CTAs */}
-                        {proposal.version ? (
-                          <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
-                            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs font-semibold text-foreground select-none">
-                              <input
-                                type="checkbox"
-                                checked={compareIds.includes(proposal.id)}
-                                onChange={(event) => {
-                                  event.stopPropagation();
-                                  if (!event.currentTarget.checked) {
-                                    setNotice('');
-                                    setCompareIds((current) =>
-                                      current.filter((id) => id !== proposal.id)
-                                    );
-                                    return;
-                                  }
-                                  if (compareIds.length >= 3 && !compareIds.includes(proposal.id)) {
-                                    setNotice(
-                                      'Você pode comparar até 3 propostas. Desmarque uma para incluir outra.'
-                                    );
-                                    return;
-                                  }
-                                  setNotice('');
-                                  setCompareIds((current) =>
-                                    current.includes(proposal.id) ? current : [...current, proposal.id]
-                                  );
-                                }}
-                                aria-label={'Comparar proposta de ' + proposal.company.name}
-                                className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary"
-                              />
-                              <span>Comparar</span>
-                            </label>
-
-                            <div className="flex items-center gap-1.5">
+                        {/* Card Footer: Action Buttons (Ver detalhes & Conversar) + Compare toggle */}
+                        <div className="mt-2 space-y-2 border-t border-border/60 pt-3">
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => openProposal(proposal)}
+                              className="h-9 w-full gap-1 rounded-xl text-xs font-semibold shadow-xs"
+                            >
+                              <span>Ver detalhes</span>
+                            </Button>
+                            {proposal.version ? (
                               <Button
-                                variant="ghost"
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="h-9 w-full gap-1 rounded-xl text-xs font-semibold"
+                              >
+                                <Link href={proposalChatUrl(proposal)}>
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                  <span>Conversar</span>
+                                </Link>
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => openProposal(proposal)}
-                                className="h-8 gap-1 text-xs font-semibold text-primary hover:text-primary"
+                                className="h-9 w-full gap-1 rounded-xl text-xs font-semibold"
                               >
-                                <span>Ver detalhes</span>
-                                <ChevronRight className="h-3.5 w-3.5" />
+                                <span>Acompanhar</span>
                               </Button>
-                            </div>
+                            )}
                           </div>
-                        ) : (
-                          <p className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-                            A empresa recebeu sua solicitação e está preparando as condições.
-                          </p>
-                        )}
+
+                          {proposal.version && (
+                            <div className="flex items-center justify-between pt-1">
+                              <label className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={compareIds.includes(proposal.id)}
+                                  onChange={(event) => {
+                                    event.stopPropagation();
+                                    if (!event.currentTarget.checked) {
+                                      setNotice('');
+                                      setCompareIds((current) =>
+                                        current.filter((id) => id !== proposal.id)
+                                      );
+                                      return;
+                                    }
+                                    if (compareIds.length >= 3 && !compareIds.includes(proposal.id)) {
+                                      setNotice(
+                                        'Você pode comparar até 3 propostas. Desmarque uma para incluir outra.'
+                                      );
+                                      return;
+                                    }
+                                    setNotice('');
+                                    setCompareIds((current) =>
+                                      current.includes(proposal.id) ? current : [...current, proposal.id]
+                                    );
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary accent-primary"
+                                />
+                                <span>Comparar proposta</span>
+                              </label>
+                            </div>
+                          )}
+                        </div>
                       </article>
                     );
                   })}

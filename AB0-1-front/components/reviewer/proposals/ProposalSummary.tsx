@@ -17,6 +17,7 @@ import {
   canDecide,
   formatDate,
   formatMoney,
+  getProposalStatusTone,
   proposalChatUrl,
   proposalStatus,
   technicalFields,
@@ -29,13 +30,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export function CompanyMark({ proposal }: { proposal: MarketplaceProposal }) {
   const [failed, setFailed] = useState(false);
   return (
-    <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-sm font-semibold text-primary">
+    <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-xs font-bold text-primary">
       {proposal.company.logo_url && !failed ? (
         <Image
           src={proposal.company.logo_url}
           alt=""
           fill
-          sizes="44px"
+          sizes="40px"
           className="object-contain p-1"
           onError={() => setFailed(true)}
         />
@@ -51,25 +52,16 @@ export function CompanyMark({ proposal }: { proposal: MarketplaceProposal }) {
 }
 
 export function StatusBadge({ proposal }: { proposal: MarketplaceProposal }) {
-  const tone =
-    proposal.status === 'accepted'
-      ? 'bg-emerald-50 text-emerald-800'
-      : proposal.status === 'sent'
-        ? 'bg-blue-50 text-blue-800'
-        : proposal.status === 'viewed'
-          ? 'bg-violet-50 text-violet-800'
-          : proposal.status === 'negotiating' || proposal.status === 'meeting_scheduled'
-            ? 'bg-amber-50 text-amber-800'
-            : 'bg-muted text-muted-foreground';
+  const { badgeTone, dotTone } = getProposalStatusTone(proposal);
   return (
     <span
       className={cn(
-        'inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
-        tone
+        'inline-flex items-center gap-1.5 shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide',
+        badgeTone
       )}
     >
-      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
-      {proposalStatus(proposal)}
+      <span className={cn('h-1.5 w-1.5 rounded-full', dotTone)} aria-hidden="true" />
+      <span>{proposalStatus(proposal)}</span>
     </span>
   );
 }
