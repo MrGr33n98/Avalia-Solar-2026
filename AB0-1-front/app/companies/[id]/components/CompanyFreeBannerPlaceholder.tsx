@@ -29,15 +29,15 @@ export default function CompanyFreeBannerPlaceholder({
         width={2896}
         height={543}
       />
-      {/* Mobile foreground - enquadrado (contain) */}
+      {/* Mobile foreground - preenchido (cover) */}
       <OptimizedImage
         src={FREE_COMPANY_BANNER_SRC}
         alt={alt}
         fill
         priority={priority}
         quality={95}
-        objectFit="contain"
-        className="object-contain"
+        objectFit="cover"
+        className="object-cover"
         containerClassName={desktopCover ? 'relative z-10 h-full w-full md:hidden' : 'h-full w-full md:hidden'}
         sizes="(max-width: 767px) 100vw, 1240px"
         useAspectRatio={false}
