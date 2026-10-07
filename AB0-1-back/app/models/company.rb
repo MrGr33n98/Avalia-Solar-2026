@@ -1326,23 +1326,20 @@ end
       overrides['webhooks'] = true if respond_to?(:intent_enterprise?) && intent_enterprise?
 
       # Propagate features from active product subscriptions to the company
-      if respond_to?(:products)
+      if respond_to?(:billing_company_subscriptions)
         begin
-          active_plans = Plan.joins(subscription_plans: :product)
-                             .where(products: { company_id: id })
-                             .where(subscription_plans: { status: %w[active trial] })
-                             .where('subscription_plans.start_at IS NULL OR subscription_plans.start_at <= ?', Time.current)
-                             .where('subscription_plans.end_at IS NULL OR subscription_plans.end_at >= ?', Time.current)
-                             .distinct
+          active_subs = billing_company_subscriptions.where(status: %w[active trial trialing enterprise_lead manual])
+          active_subs.each do |sub|
+            plan = sub.plan
+            next unless plan
 
-          active_plans.each do |prod_plan|
-            raw_features = if prod_plan.respond_to?(:features_json) && prod_plan.features_json.present?
-                             prod_plan.features_json
+            raw_features = if plan.respond_to?(:features_json) && plan.features_json.present?
+                             plan.features_json
                            else
-                             JSON.parse(prod_plan.features.to_s) rescue {}
+                             JSON.parse(plan.features.to_s) rescue {}
                            end
             
-            inferred_tier = prod_plan.respond_to?(:inferred_plan_tier) ? prod_plan.inferred_plan_tier : 'free'
+            inferred_tier = plan.respond_to?(:inferred_plan_tier) ? plan.inferred_plan_tier : 'free'
             prod_features = PlanFeatureCatalog.normalize(raw_features, plan_tier: inferred_tier)
 
             prod_features.each do |k, v|
@@ -1352,7 +1349,7 @@ end
           end
         rescue StandardError => e
           Rails.logger.warn(
-            "[Company#raw_company_feature_overrides] Failed to process product subscriptions for company_id=#{id}: #{e.message}"
+            "[Company#raw_company_feature_overrides] Failed to process company subscriptions for company_id=#{id}: #{e.message}"
           )
         end
       end
