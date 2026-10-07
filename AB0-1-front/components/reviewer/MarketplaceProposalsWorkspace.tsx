@@ -1001,6 +1001,18 @@ export function MarketplaceProposalsWorkspace() {
                       setDecisionError('');
                       setChoosing(proposal);
                     }}
+                    onRemoveId={(idToRemove) => {
+                      const newIds = compareIds.filter((id) => id !== idToRemove);
+                      setCompareIds(newIds);
+                      const query = new URLSearchParams(params.toString());
+                      if (newIds.length) {
+                        query.set('compare', newIds.join(','));
+                      } else {
+                        query.delete('compare');
+                        query.delete('view');
+                      }
+                      router.push(pathname + '?' + query.toString(), { scroll: false });
+                    }}
                   />
                 </div>
               ) : detailLoading ? (
