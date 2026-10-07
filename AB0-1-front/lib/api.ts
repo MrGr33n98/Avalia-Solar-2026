@@ -3540,10 +3540,27 @@ export type MarketplaceProposalProject = {
   milestones: MarketplaceProposalMilestone[];
 };
 
+export type MarketplaceProposalStatus =
+  | 'draft'
+  | 'sent'
+  | 'viewed'
+  | 'under_review'
+  | 'negotiating'
+  | 'meeting_scheduled'
+  | 'accepted'
+  | 'declined'
+  | 'not_selected'
+  | 'closed_after_selection'
+  | 'withdrawn'
+  | 'expired'
+  | 'project_in_progress'
+  | 'completed';
+
 export type MarketplaceProposal = {
   id: number;
   reference: string;
-  status: string;
+  status: MarketplaceProposalStatus | string;
+  canonical_status?: MarketplaceProposalStatus;
   total_cents: number;
   currency: string;
   expires_at?: string | null;

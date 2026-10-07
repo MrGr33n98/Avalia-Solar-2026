@@ -17,6 +17,7 @@ RSpec.describe PlanFeatureCatalog do
       normalized = described_class.normalize({}, plan_tier: 'pro')
 
       expect(normalized['custom_ctas']).to be(true)
+      expect(normalized['leads_marketplace']).to be(true)
       expect(normalized['show_alternatives']).to be(false)
       expect(normalized['sector_question_limit']).to eq(10)
     end

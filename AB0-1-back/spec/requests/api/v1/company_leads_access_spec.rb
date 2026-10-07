@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Acesso a leads da empresa selecionada', type: :request do
   let(:plan) do
-    Plan.create!(name: 'Pro Leads Regression', price: 0, features_json: { leads_marketplace: true })
+    Plan.create!(name: 'Pro Leads Regression', price: 99, features_json: {})
   end
   let(:company) { create(:company, plan: plan, status: 'active') }
   let(:primary_company) { create(:company, plan: nil, status: 'active') }

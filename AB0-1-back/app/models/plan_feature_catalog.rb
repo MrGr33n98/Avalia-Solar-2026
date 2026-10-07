@@ -479,6 +479,7 @@ module PlanFeatureCatalog
       'social_proof' => true,
       'faq_block' => true,
       'advanced_analytics' => true,
+      'leads_marketplace' => true,
       'financing_simulation' => true,
       'sector_question_limit' => 10,
       'show_alternatives' => false,
