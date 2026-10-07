@@ -40,6 +40,7 @@ class MarketplaceProposal < ApplicationRecord
       version.publish!
       update!(status: 'sent', published_at: Time.current, total_cents: version.total_cents,
               current_version_number: version.number)
+      lead.update!(wizard_status: 'proposal_sent') if lead.respond_to?(:wizard_status=)
       record_event('proposal.sent')
     end
   end

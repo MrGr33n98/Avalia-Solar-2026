@@ -117,7 +117,9 @@ class Api::V1::LeadsController < Api::V1::BaseController
     apply_utm_to_lead(@lead, utm_data, attribution)
     if @lead.save
       persist_identity_on_lead!(@lead)
-      LeadRoutingJob.perform_later(@lead.id) if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true'
+      if ENV.fetch('LEAD_MARKETPLACE_V1', 'true') == 'true' && @lead.otp_verified_at.present?
+        LeadRoutingJob.perform_later(@lead.id)
+      end
       render json: @lead, status: :created
     else
       render json: { errors: @lead.errors.full_messages }, status: :unprocessable_entity

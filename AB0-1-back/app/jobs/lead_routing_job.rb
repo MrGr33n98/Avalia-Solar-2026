@@ -3,6 +3,8 @@ class LeadRoutingJob < ApplicationJob
 
   def perform(lead_id, preferred_company_id = nil)
     lead = Lead.find(lead_id)
+    return unless lead.otp_verified_at.present?
+
     slots = remaining_slots(lead)
     return unless slots.positive?
 

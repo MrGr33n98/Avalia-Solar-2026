@@ -178,8 +178,10 @@ RSpec.describe 'Marketplace proposals API', type: :request do
             params: { company_id: company.id, proposal: {
               title: 'Proposta comercial',
               summary: 'Condições comerciais e técnicas.',
+              valid_until: 30.days.from_now.to_date,
               items: [{ kind: 'service', name: 'Instalação solar', quantity: 1, unit: 'un',
-                        unit_price_cents: 28_500_00, position: 0 }]
+                        unit_price_cents: 28_500_00, position: 0 }],
+              terms: [{ key: 'warranty', label: 'Garantia', value: '12 anos', position: 0 }]
             } }.to_json,
             headers: headers_for(company_user)
       expect(response).to have_http_status(:ok)
@@ -200,8 +202,10 @@ RSpec.describe 'Marketplace proposals API', type: :request do
             params: { company_id: company.id, proposal: {
               title: 'Proposta solar publicada',
               summary: 'Sistema dimensionado para o consumo informado.',
+              valid_until: 30.days.from_now.to_date,
               items: [{ kind: 'equipment', name: 'Kit fotovoltaico', quantity: 1, unit: 'un',
-                        unit_price_cents: 26_900_00, position: 0 }]
+                        unit_price_cents: 26_900_00, position: 0 }],
+              terms: [{ key: 'warranty', label: 'Garantia', value: '12 anos', position: 0 }]
             } }.to_json,
             headers: headers_for(company_user)
       expect(response).to have_http_status(:ok)

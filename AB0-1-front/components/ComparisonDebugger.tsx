@@ -70,15 +70,18 @@ export default function ComparisonDebugger() {
   } = useComparison();
 
   const isChatRoute = pathname === '/chat' || pathname?.startsWith('/chat/');
+  const enabled = process.env.NEXT_PUBLIC_ENABLE_COMPARISON_DEBUG === 'true';
 
   useEffect(() => {
+    if (!enabled) return;
+
     console.log('[DEBUG] Comparison list updated:', comparisonList);
     console.log('[DEBUG] Count:', count);
     console.log(
       '[DEBUG] List contents:',
       comparisonList.map((c) => ({ id: c.id, name: c.name }))
     );
-  }, [comparisonList, count]);
+  }, [comparisonList, count, enabled]);
 
   const handleTestAdd = (company: Company) => {
     console.log('[DEBUG] Adding company:', company.name);
@@ -95,7 +98,7 @@ export default function ComparisonDebugger() {
     clearComparison();
   };
 
-  if (isChatRoute) return null;
+  if (!enabled || isChatRoute) return null;
 
   return (
     <div className="fixed bottom-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-md z-50">

@@ -91,7 +91,6 @@ module Api
         def send_proposal
           authorize @proposal, :send?
           @proposal.publish!
-          @proposal.lead.update!(wizard_status: 'proposal_sent') if @proposal.lead.respond_to?(:wizard_status=)
           render json: { proposal: serialize(@proposal.reload) }
         rescue ActiveRecord::RecordInvalid => e
           render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity

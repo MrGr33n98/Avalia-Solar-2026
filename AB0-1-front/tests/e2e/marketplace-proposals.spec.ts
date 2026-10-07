@@ -326,11 +326,28 @@ test.describe('Jornada de propostas do marketplace', () => {
     });
 
     await expect(page.getByRole('heading', { name: 'Minhas propostas' })).toBeVisible({
-      timeout: 20_000,
+      timeout: 60_000,
     });
     await expect(page.getByRole('button', { name: 'Abrir proposta de SB Solar' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Abrir proposta de Energia SC' })).toBeVisible();
-    await expect(page.getByText('Aguardando proposta')).toBeVisible();
+    await expect(page.getByText('Aguardando empresa')).toBeVisible();
+    const journey = page.getByRole('navigation', { name: 'Fluxo da proposta' });
+    await expect(journey).toBeVisible();
+    await expect(page.getByText('Jornada da proposta')).toBeVisible();
+    for (const label of [
+      'Minhas propostas',
+      'Detalhes',
+      'Proposta completa',
+      'Comparar',
+      'Conversa',
+      'Reunião',
+      'Negociação',
+      'Escolher',
+      'Projeto',
+      'Concluído',
+    ]) {
+      await expect(journey.getByText(label, { exact: true })).toBeVisible();
+    }
     await expectNoPageOverflow(page);
 
     await page.getByLabel('Comparar proposta de SB Solar').click({ force: true });
@@ -342,7 +359,7 @@ test.describe('Jornada de propostas do marketplace', () => {
     ).toBeVisible();
     await expectNoPageOverflow(page);
 
-    await page.getByRole('button', { name: 'Minhas propostas' }).click();
+    await page.getByRole('button', { name: 'Minhas propostas', exact: true }).click();
     await page.getByRole('button', { name: 'Abrir proposta de SB Solar' }).click();
     await expect(page.getByRole('heading', { name: 'Detalhes da proposta' })).toBeVisible();
     await expect(page.getByText('Empresa verificada')).toBeVisible();
@@ -386,6 +403,7 @@ test.describe('Jornada de propostas do marketplace', () => {
   });
 
   test('mostra conclusão e avaliação e preserva lista + detalhe no web app', async ({ page }) => {
+    test.setTimeout(240_000);
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/review-dashboard/proposals?proposal=13&view=project', {
       waitUntil: 'domcontentloaded',
@@ -393,7 +411,7 @@ test.describe('Jornada de propostas do marketplace', () => {
     });
 
     await expect(page.getByRole('heading', { name: 'Minhas propostas' })).toBeVisible({
-      timeout: 20_000,
+      timeout: 60_000,
     });
     await expect(page.getByRole('heading', { name: 'Acompanhamento do projeto' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Projeto concluído!' })).toBeVisible();

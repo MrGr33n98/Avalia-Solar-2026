@@ -62,7 +62,8 @@ module Marketplace
     end
 
     def buyer
-      @buyer ||= User.where(role: 'review').find_by('LOWER(email) = LOWER(?)', distribution.lead.email.to_s)
+      @buyer ||= User.where(role: 'review', status: :active).where.not(confirmed_at: nil)
+                     .find_by('LOWER(email) = LOWER(?)', distribution.lead.email.to_s)
     end
 
     def reference

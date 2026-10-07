@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { MarketplaceProposalsWorkspace } from '@/components/reviewer/MarketplaceProposalsWorkspace';
 
 export default function ReviewDashboardProposalsPage() {
@@ -7,4 +8,3 @@ export default function ReviewDashboardProposalsPage() {
     </Suspense>
   );
 }
-import { Suspense } from 'react';

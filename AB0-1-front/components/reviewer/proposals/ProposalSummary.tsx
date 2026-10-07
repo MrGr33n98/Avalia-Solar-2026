@@ -51,13 +51,21 @@ export function CompanyMark({ proposal }: { proposal: MarketplaceProposal }) {
 }
 
 export function StatusBadge({ proposal }: { proposal: MarketplaceProposal }) {
+  const tone =
+    proposal.status === 'accepted'
+      ? 'bg-emerald-50 text-emerald-800'
+      : proposal.status === 'sent'
+        ? 'bg-blue-50 text-blue-800'
+        : proposal.status === 'viewed'
+          ? 'bg-violet-50 text-violet-800'
+          : proposal.status === 'negotiating' || proposal.status === 'meeting_scheduled'
+            ? 'bg-amber-50 text-amber-800'
+            : 'bg-muted text-muted-foreground';
   return (
     <span
       className={cn(
         'inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
-        proposal.status === 'accepted'
-          ? 'bg-emerald-50 text-emerald-800'
-          : 'bg-muted text-muted-foreground'
+        tone
       )}
     >
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
@@ -141,12 +149,14 @@ export function ProposalSummary({
   onChoose,
   onNegotiate,
   onProject,
+  initialTab = 'summary',
 }: {
   proposal: MarketplaceProposal;
   onMeeting: () => void;
   onChoose: () => void;
   onNegotiate: () => void;
   onProject: () => void;
+  initialTab?: 'summary' | 'complete' | 'financial';
 }) {
   if (!proposal.version) {
     return (
@@ -162,7 +172,7 @@ export function ProposalSummary({
         </div>
         <Button
           asChild
-          className="w-full bg-amber-400 text-slate-950 shadow-none hover:bg-amber-300"
+          className="w-full bg-[hsl(var(--dashboard-warning))] text-[hsl(var(--dashboard-ink))] shadow-none hover:opacity-90"
         >
           <Link href={proposalChatUrl(proposal)}>
             <MessageCircle className="mr-2 h-4 w-4" />
@@ -220,7 +230,7 @@ export function ProposalSummary({
           </li>
         ))}
       </ol>
-      <Tabs defaultValue="summary">
+      <Tabs defaultValue={initialTab}>
         <TabsList className="grid h-auto w-full grid-cols-3">
           <TabsTrigger value="summary" className="min-h-11 px-1">
             Resumo
@@ -294,7 +304,10 @@ export function ProposalSummary({
         </TabsContent>
       </Tabs>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Button asChild className="bg-amber-400 text-slate-950 shadow-none hover:bg-amber-300">
+        <Button
+          asChild
+          className="bg-[hsl(var(--dashboard-warning))] text-[hsl(var(--dashboard-ink))] shadow-none hover:opacity-90"
+        >
           <Link href={proposalChatUrl(proposal)}>
             <MessageCircle className="mr-2 h-4 w-4" />
             Conversar com a empresa

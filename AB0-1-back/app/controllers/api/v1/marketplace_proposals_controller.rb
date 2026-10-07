@@ -18,7 +18,11 @@ module Api
 
       def compare
         raw_ids = params[:ids] || params[:proposal_ids]
-        ids = (raw_ids.is_a?(String) ? raw_ids.split(',') : Array(raw_ids)).map(&:to_i).uniq.first(5)
+        ids = (raw_ids.is_a?(String) ? raw_ids.split(',') : Array(raw_ids)).map(&:to_i).uniq
+        if ids.length > 3
+          return render json: { error: 'Compare até 3 propostas por vez' }, status: :unprocessable_entity
+        end
+
         proposals = with_details(visible_buyer_scope.where(id: ids))
         render json: { proposals: proposals.map { |proposal| serialize(proposal, detailed: true) } }
       end
@@ -75,11 +79,17 @@ module Api
       end
 
       def buyer_scope
+        return MarketplaceProposal.none unless buyer_identity_valid?
+
         MarketplaceProposal.joins(:lead).where(
           'marketplace_proposals.buyer_user_id = :id OR LOWER(leads.email) = LOWER(:email)',
           id: current_user.id,
           email: current_user.email.to_s
         )
+      end
+
+      def buyer_identity_valid?
+        current_user.active? && current_user.review_user? && current_user.confirmed?
       end
 
       def ensure_buyer_access!

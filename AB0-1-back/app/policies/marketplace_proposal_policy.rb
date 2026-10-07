@@ -30,7 +30,8 @@ class MarketplaceProposalPolicy < ApplicationPolicy
   private
 
   def buyer?
-    record.buyer_user_id == user&.id || record.lead&.email.to_s.casecmp?(user&.email.to_s)
+    user&.active? && user.review_user? && user.confirmed? &&
+      (record.buyer_user_id == user.id || record.lead&.email.to_s.casecmp?(user.email.to_s))
   end
 
   def company_member?

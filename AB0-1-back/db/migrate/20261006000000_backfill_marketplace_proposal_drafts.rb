@@ -44,6 +44,8 @@ class BackfillMarketplaceProposalDrafts < ActiveRecord::Migration[7.0]
           SELECT users.id
           FROM users
           WHERE users.role = 'review'
+            AND users.status = 'active'
+            AND users.confirmed_at IS NOT NULL
             AND LOWER(users.email) = LOWER(leads.email)
           ORDER BY users.id DESC
           LIMIT 1
@@ -162,11 +164,6 @@ class BackfillMarketplaceProposalDrafts < ActiveRecord::Migration[7.0]
       WHERE id IN (
         SELECT proposal_id FROM marketplace_proposal_backfill_rollback_ids
       )
-    SQL
-    execute <<~SQL.squish
-      DELETE FROM marketplace_proposal_events
-      WHERE event_type = 'proposal.prepared'
-        AND metadata->>'source' = '#{MARKER_SOURCE}'
     SQL
   end
 end

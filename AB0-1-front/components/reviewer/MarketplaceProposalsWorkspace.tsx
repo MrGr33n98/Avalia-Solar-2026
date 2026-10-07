@@ -13,7 +13,13 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { marketplaceProposalsApi, type MarketplaceProposal } from '@/lib/api';
-import { canDecide, formatDate, formatMoney, isProjectComplete } from '@/lib/marketplace-proposals';
+import {
+  canDecide,
+  formatDate,
+  formatMoney,
+  isProjectComplete,
+  proposalChatUrl,
+} from '@/lib/marketplace-proposals';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -23,11 +29,12 @@ import { ProposalMeeting } from './proposals/ProposalMeeting';
 import { ProposalNegotiation } from './proposals/ProposalNegotiation';
 import { ProposalProject } from './proposals/ProposalProject';
 
-type Screen = 'summary' | 'meeting' | 'negotiation' | 'project' | 'compare';
+type Screen = 'summary' | 'complete' | 'meeting' | 'negotiation' | 'project' | 'compare';
 type Filter = 'all' | 'active' | 'completed' | 'closed';
-const screens: Screen[] = ['summary', 'meeting', 'negotiation', 'project', 'compare'];
+const screens: Screen[] = ['summary', 'complete', 'meeting', 'negotiation', 'project', 'compare'];
 const screenTitles: Record<Screen, string> = {
   summary: 'Detalhes da proposta',
+  complete: 'Proposta completa',
   meeting: 'Agendar reunião',
   negotiation: 'Negociação da proposta',
   project: 'Acompanhamento do projeto',
@@ -39,6 +46,134 @@ const filters: { id: Filter; label: string }[] = [
   { id: 'completed', label: 'Concluídas' },
   { id: 'closed', label: 'Encerradas' },
 ];
+
+const journeySteps = [
+  { id: 1, label: 'Minhas propostas' },
+  { id: 2, label: 'Detalhes', view: 'summary' as Screen },
+  { id: 3, label: 'Proposta completa', view: 'complete' as Screen },
+  { id: 4, label: 'Comparar', view: 'compare' as Screen },
+  { id: 5, label: 'Conversa' },
+  { id: 6, label: 'Reunião', view: 'meeting' as Screen },
+  { id: 7, label: 'Negociação', view: 'negotiation' as Screen },
+  { id: 8, label: 'Escolher' },
+  { id: 9, label: 'Projeto', view: 'project' as Screen },
+  { id: 10, label: 'Concluído', view: 'project' as Screen },
+];
+
+function activeJourneyStep(proposal: MarketplaceProposal | undefined, screen: Screen) {
+  if (screen === 'compare') return 4;
+  if (!proposal) return 1;
+  if (screen === 'meeting') return 6;
+  if (screen === 'negotiation') return 7;
+  if (isProjectComplete(proposal.project)) return 10;
+  if (screen === 'project' || proposal.status === 'accepted') return 9;
+  if (screen === 'complete') return 3;
+  return 2;
+}
+
+function ProposalJourneyRail({
+  proposal,
+  screen,
+  onNavigate,
+  onList,
+  onChoose,
+  canCompare,
+}: {
+  proposal?: MarketplaceProposal;
+  screen: Screen;
+  onNavigate: (view: Screen) => void;
+  onList: () => void;
+  onChoose: () => void;
+  canCompare: boolean;
+}) {
+  const active = activeJourneyStep(proposal, screen);
+  return (
+    <nav
+      aria-label="Fluxo da proposta"
+      className="mb-5 overflow-hidden rounded-[1.25rem] border border-[hsl(var(--dashboard-border))] bg-card/95 p-3 shadow-sm sm:p-4"
+    >
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+            Jornada da proposta
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {proposal ? `Etapa ${active} de 10` : 'Acompanhe tudo em um só lugar'}
+          </p>
+        </div>
+        <span className="hidden rounded-full bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary sm:inline-flex">
+          PWA + web
+        </span>
+      </div>
+      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        {journeySteps.map((step) => {
+          const isActive = step.id === active;
+          const isDone = step.id < active;
+          const canOpen =
+            Boolean(proposal) &&
+            step.id !== 1 &&
+            (step.id !== 8 || canDecide(proposal!)) &&
+            (step.id !== 4 || canCompare);
+          const content = (
+            <>
+              <span
+                className={cn(
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : isDone
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {isDone ? '✓' : step.id}
+              </span>
+              <span className="min-w-0 truncate text-left text-[11px] font-medium sm:text-xs">
+                {step.label}
+              </span>
+            </>
+          );
+          return (
+            <li key={step.id}>
+              {step.id === 5 && proposal ? (
+                <Link
+                  href={proposalChatUrl(proposal)}
+                  className={cn(
+                    'flex min-h-11 min-w-0 items-center gap-2 rounded-xl border px-2 py-2 text-muted-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+                    isActive
+                      ? 'border-primary/30 bg-primary/5 text-primary'
+                      : 'border-transparent hover:border-border hover:bg-muted'
+                  )}
+                >
+                  {content}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!canOpen && step.id !== 1}
+                  onClick={() => {
+                    if (step.id === 1) onList();
+                    else if (step.id === 8) onChoose();
+                    else if (step.view) onNavigate(step.view);
+                  }}
+                  className={cn(
+                    'flex min-h-11 w-full min-w-0 items-center gap-2 rounded-xl border px-2 py-2 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+                    isActive
+                      ? 'border-primary/30 bg-primary/5 text-primary'
+                      : 'border-transparent text-muted-foreground hover:border-border hover:bg-muted',
+                    !canOpen && step.id !== 1 && 'cursor-not-allowed opacity-60'
+                  )}
+                >
+                  {content}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
 
 function matchesFilter(proposal: MarketplaceProposal, filter: Filter) {
   const completed = isProjectComplete(proposal.project);
@@ -149,6 +284,9 @@ export function MarketplaceProposalsWorkspace() {
   function navigate(id: number | null, view: Screen = 'summary') {
     const query = new URLSearchParams(params.toString());
     query.delete('compare');
+    if (view === 'compare' && compareIds.length >= 2) {
+      query.set('compare', compareIds.join(','));
+    }
     if (id) query.set('proposal', String(id));
     else query.delete('proposal');
     if (view !== 'summary') query.set('view', view);
@@ -246,8 +384,23 @@ export function MarketplaceProposalsWorkspace() {
           </Button>
         </div>
       )}
+      {(proposals.length > 0 || showingDetail) && (
+        <ProposalJourneyRail
+          proposal={selected}
+          screen={screen}
+          canCompare={compareIds.length >= 2}
+          onList={() => navigate(null)}
+          onNavigate={(view) => navigate(selectedId, view)}
+          onChoose={() => {
+            if (selected && canDecide(selected)) {
+              setDecisionError('');
+              setChoosing(selected);
+            }
+          }}
+        />
+      )}
       {!proposals.length && !error && !showingDetail ? (
-        <div className="rounded-2xl border border-border bg-card px-5 py-12 text-center">
+        <div className="rounded-[1.25rem] border border-[hsl(var(--dashboard-border))] bg-card px-5 py-12 text-center shadow-sm">
           <FileText className="mx-auto h-10 w-10 text-primary" />
           <h2 className="mt-4 text-lg font-semibold">Suas propostas ficam aqui</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
@@ -261,7 +414,7 @@ export function MarketplaceProposalsWorkspace() {
       ) : (
         <div
           className={cn(
-            'grid min-w-0 gap-6',
+            'grid min-w-0 gap-5',
             showingDetail &&
               screen !== 'compare' &&
               'lg:grid-cols-[minmax(260px,0.75fr)_minmax(0,1.4fr)]'
@@ -306,8 +459,10 @@ export function MarketplaceProposalsWorkspace() {
                   <article
                     key={proposal.id}
                     className={cn(
-                      'min-w-0 rounded-2xl border bg-card p-4',
-                      selectedId === proposal.id ? 'border-primary' : 'border-border'
+                      'min-w-0 rounded-[1.1rem] border bg-card p-4 shadow-sm transition-[border-color,box-shadow,transform] duration-200',
+                      selectedId === proposal.id
+                        ? 'border-primary shadow-md'
+                        : 'border-[hsl(var(--dashboard-border))] hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md'
                     )}
                   >
                     <button
@@ -326,16 +481,22 @@ export function MarketplaceProposalsWorkspace() {
                             {proposal.reference}
                           </span>
                         </span>
-                        <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="flex shrink-0 items-center gap-2">
+                          <StatusBadge proposal={proposal} />
+                          <ArrowRight className="mt-1 h-4 w-4 text-muted-foreground" />
+                        </span>
                       </span>
-                      <span className="mt-3 block">
-                        <StatusBadge proposal={proposal} />
-                      </span>
-                      <span className="mt-3 block text-xl font-semibold tabular-nums text-primary">
+                      <span className="mt-4 block text-lg font-bold tabular-nums text-primary sm:text-xl">
                         {proposal.version
                           ? formatMoney(proposal.version.total_cents, proposal.currency)
-                          : 'Aguardando proposta'}
+                          : 'Aguardando empresa'}
                       </span>
+                      {proposal.request?.city && (
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {proposal.request.city}
+                          {proposal.request.state ? `, ${proposal.request.state}` : ''}
+                        </span>
+                      )}
                       <span className="mt-2 block text-xs text-muted-foreground">
                         Atualizada em{' '}
                         {formatDate(
@@ -396,7 +557,7 @@ export function MarketplaceProposalsWorkspace() {
                 {notice}
               </p>
             )}
-            <div className="sticky bottom-[calc(var(--reviewer-mobile-nav-height,64px)+0.5rem)] rounded-xl border border-border bg-card p-3 lg:bottom-4">
+            <div className="sticky bottom-[calc(var(--reviewer-mobile-nav-height,64px)+0.5rem)] rounded-[1.1rem] border border-[hsl(var(--dashboard-border))] bg-card/95 p-3 shadow-lg backdrop-blur lg:bottom-4">
               <Button
                 disabled={compareIds.length < 2}
                 className="w-full"
@@ -417,17 +578,23 @@ export function MarketplaceProposalsWorkspace() {
             </div>
           </section>
           {showingDetail && (
-            <section className="min-w-0 rounded-2xl border border-border bg-card p-4 sm:p-6">
+            <section className="min-w-0 rounded-[1.25rem] border border-[hsl(var(--dashboard-border))] bg-card p-4 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center justify-between gap-2">
                 <Button
                   variant="ghost"
                   className="-ml-3"
                   onClick={() =>
-                    navigate(screen === 'summary' || screen === 'compare' ? null : selectedId)
+                    navigate(
+                      screen === 'summary' || screen === 'complete' || screen === 'compare'
+                        ? null
+                        : selectedId
+                    )
                   }
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  {screen === 'summary' || screen === 'compare' ? 'Minhas propostas' : 'Voltar'}
+                  {screen === 'summary' || screen === 'complete' || screen === 'compare'
+                    ? 'Minhas propostas'
+                    : 'Voltar'}
                 </Button>
                 {selectedId && (
                   <Button
@@ -484,10 +651,11 @@ export function MarketplaceProposalsWorkspace() {
                     </div>
                     <StatusBadge proposal={selected} />
                   </div>
-                  {screen === 'summary' && (
+                  {(screen === 'summary' || screen === 'complete') && (
                     <ProposalSummary
-                      key={selected.id}
+                      key={`${selected.id}-${screen}`}
                       proposal={selected}
+                      initialTab={screen === 'complete' ? 'complete' : 'summary'}
                       onMeeting={() => navigate(selected.id, 'meeting')}
                       onChoose={() => {
                         setDecisionError('');
