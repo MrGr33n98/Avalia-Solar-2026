@@ -1324,6 +1324,32 @@ end
       overrides['p2p_chat'] = true if respond_to?(:p2p_chat_enabled) && p2p_chat_enabled
       overrides['intent_scores'] = true if respond_to?(:intent_pro?) && intent_pro?
       overrides['webhooks'] = true if respond_to?(:intent_enterprise?) && intent_enterprise?
+
+      # Propagate features from active product subscriptions to the company
+      if respond_to?(:products)
+        begin
+          active_plans = Plan.joins(subscription_plans: :product)
+                             .where(products: { company_id: id })
+                             .where(subscription_plans: { status: %w[active trial] })
+                             .where('subscription_plans.start_at IS NULL OR subscription_plans.start_at <= ?', Time.current)
+                             .where('subscription_plans.end_at IS NULL OR subscription_plans.end_at >= ?', Time.current)
+                             .distinct
+
+          active_plans.each do |prod_plan|
+            prod_features = PlanFeatureCatalog.normalize(
+              (prod_plan.respond_to?(:features_json) && prod_plan.features_json.present? ? prod_plan.features_json : (JSON.parse(prod_plan.features.to_s) rescue {})),
+              plan_tier: (prod_plan.respond_to?(:inferred_plan_tier) ? prod_plan.inferred_plan_tier : 'free')
+            )
+            
+            prod_features.each do |k, v|
+              # Only override features to true to not mistakenly disable company defaults
+              overrides[k.to_s] = true if v == true || v == 'true'
+            end
+          end
+        rescue StandardError => e
+          Rails.logger.warn("[Company#raw_company_feature_overrides] Failed to process product subscriptions for company_id=#{id}: #{e.message}")
+        end
+      end
     end
   end
 
