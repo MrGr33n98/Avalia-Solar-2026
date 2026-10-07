@@ -443,6 +443,7 @@ module PlanFeatureCatalog
       'social_proof' => true,
       'faq_block' => false,
       'advanced_analytics' => false,
+      'leads_marketplace' => true,
       'financing_simulation' => false,
       'sector_question_limit' => 0,
       'show_alternatives' => false,

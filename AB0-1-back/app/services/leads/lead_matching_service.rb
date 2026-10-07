@@ -22,10 +22,13 @@ module Leads
     private
 
     def eligible_companies
-      scope = Company.where(status: 'active', active_admin: true)
+      scope = Company.where(status: 'active')
       scope = scope.where.not(id: @lead.lead_distributions.select(:company_id)) if @lead.persisted?
       scope.includes(:categories, :company_category_capabilities, :company_service_areas, :plan).to_a.select do |company|
-        category_eligible?(company) && location_eligible?(company) && lead_feature_enabled?(company)
+        (company.try(:active_admin?) || company.has_paid_plan?) &&
+          category_eligible?(company) &&
+          location_eligible?(company) &&
+          lead_feature_enabled?(company)
       end
     end
 

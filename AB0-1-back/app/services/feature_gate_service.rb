@@ -3,8 +3,9 @@
 class FeatureGateService
   FEATURE_ACCESS = {
     free: %w[view_dashboard basic_analytics],
-    pro: %w[view_dashboard basic_analytics advanced_analytics top_campaigns reputation_tracking leads_tracking],
-    enterprise: %w[view_dashboard basic_analytics advanced_analytics top_campaigns reputation_tracking leads_tracking
+    essential: %w[view_dashboard basic_analytics leads_tracking leads_marketplace],
+    pro: %w[view_dashboard basic_analytics advanced_analytics top_campaigns reputation_tracking leads_tracking leads_marketplace],
+    enterprise: %w[view_dashboard basic_analytics advanced_analytics top_campaigns reputation_tracking leads_tracking leads_marketplace
                    api_access webhooks white_label_support priority_support]
   }.freeze
 
