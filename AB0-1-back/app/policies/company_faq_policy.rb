@@ -36,9 +36,6 @@ class CompanyFaqPolicy < ApplicationPolicy
 
     private
 
-    def admin?
-      user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)
-    end
   end
 
   private

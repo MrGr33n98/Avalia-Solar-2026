@@ -30,15 +30,13 @@ class MarketplaceProposalPolicy < ApplicationPolicy
   private
 
   def buyer?
-    user&.active? && user.review_user? && user.confirmed? &&
+    return false unless user.respond_to?(:active?)
+    
+    user.active? && user.review_user? && user.confirmed? &&
       (record.buyer_user_id == user.id || record.lead&.email.to_s.casecmp?(user.email.to_s))
   end
 
   def company_member?
-    user&.admin? || (user&.company_user? && user.active_membership_for?(record.company_id))
-  end
-
-  def admin?
-    user&.admin?
+    admin? || (user.respond_to?(:company_user?) && user.company_user? && user.active_membership_for?(record.company_id))
   end
 end

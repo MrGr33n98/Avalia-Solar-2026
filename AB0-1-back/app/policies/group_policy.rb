@@ -77,9 +77,6 @@ class GroupPolicy < ApplicationPolicy
 
     private
 
-    def admin?
-      user.is_a?(AdminUser) || (user.respond_to?(:admin?) && user.admin?)
-    end
 
     def visible_private_ids
       GroupMembership.where(user_id: user.id, status: 'active').select(:group_id)

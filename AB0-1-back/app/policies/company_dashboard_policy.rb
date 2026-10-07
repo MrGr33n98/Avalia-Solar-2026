@@ -123,9 +123,6 @@ class CompanyDashboardPolicy < ApplicationPolicy
     admin? || company_member_active?
   end
 
-  def admin?
-    user.respond_to?(:admin?) && user.admin?
-  end
 
   def company_member_active?
     return false unless user.respond_to?(:company_members)
