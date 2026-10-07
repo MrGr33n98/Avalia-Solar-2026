@@ -24,7 +24,7 @@ import {
   useQuoteWizardTracking,
 } from '@/lib/analytics/hooks/useIntentTracking';
 import { normalizeWizardError } from '@/src/modules/leadWizard/errors/normalizeWizardError';
-import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft, Star, MapPin } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Zap, ArrowRight, ArrowLeft, Star, MapPin, ChevronDown, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -283,27 +283,18 @@ export default function QuoteWizardModal() {
 
   const handleNext = async () => {
     setError(null);
-    if (step === 1 && (!form.productVertical || !form.projectProfile || !form.quoteType))
+    if (step === 1 && (!form.productVertical || !form.projectProfile))
       return setError('Selecione as opções do projeto.');
-    if (
-      step === 2 &&
-      (!form.addressStreet.trim() || !form.city.trim() || !form.state.trim()) &&
-      form.zipcode.replace(/\D/g, '').length !== 8
-    )
-      return setError('Informe CEP ou endereço completo.');
-    if (
-      step === 3 &&
-      (!form.systemSizeChoice ||
-        !form.decisionTimeline ||
-        (!form.billValue.trim() && !form.monthlyKwh.trim()))
-    )
-      return setError('Informe consumo, tamanho e prazo.');
-    if (step === 4) {
+    if (step === 2 && (!form.billValue || !form.decisionTimeline || !form.zipcode))
+      return setError('Informe consumo, prazo e local.');
+    if (step === 3) {
       if (!form.fullName.trim() || !form.email.trim() || !form.phone.trim())
         return setError('Preencha nome, e-mail e WhatsApp.');
       if (!isValidEmail(form.email)) return setError('E-mail inválido.');
       if (!form.consent) return setError('O consentimento é obrigatório.');
-
+    }
+    
+    if (step === 4) {
       setSubmitting(true);
       try {
         const payload = {
@@ -311,7 +302,7 @@ export default function QuoteWizardModal() {
             category_id: categoryId,
             product_vertical: form.productVertical,
             project_profile: form.projectProfile,
-            quote_type: form.quoteType,
+            quote_type: form.quoteType || 'Energia Solar', // fallback
             system_size_band: computeSystemSizeBand(),
             bill_value: form.billValue || null,
             monthly_kwh: form.monthlyKwh || null,
@@ -324,7 +315,7 @@ export default function QuoteWizardModal() {
             email: form.email,
             phone: form.phone,
             preferred_channel: form.preferredChannel,
-            notes: form.notes || null,
+            notes: (form.notes + ((form as any).installationType ? ` | Tipo de instalação: ${(form as any).installationType}` : '')).trim() || null,
             consent: form.consent,
             nickname: form.nickname,
           },
@@ -403,32 +394,17 @@ export default function QuoteWizardModal() {
       <DialogContent
         overlayClassName="bg-black/65 backdrop-blur-md"
         className={cn(
-          'z-[10000] flex max-h-[85dvh] w-[calc(100%-2rem)] max-w-[500px] flex-col overflow-hidden border-none p-0 rounded-3xl bg-white shadow-2xl mx-auto',
-          '[&>button]:right-4 [&>button]:top-4 [&>button]:rounded-full [&>button]:bg-slate-100 [&>button]:p-2 [&>button]:text-slate-500 hover:[&>button]:bg-slate-200 [&>button]:opacity-100'
+          'z-[10000] flex max-h-[85dvh] w-[calc(100%-2rem)] max-w-[500px] flex-col overflow-hidden border-none p-0 rounded-3xl bg-white shadow-2xl',
+          '[&>button]:right-4 [&>button]:top-4 [&>button]:rounded-full [&>button]:bg-slate-50 hover:[&>button]:bg-slate-100 [&>button]:p-2 [&>button]:text-slate-500 [&>button]:opacity-100 [&>button]:border [&>button]:border-slate-100'
         )}
       >
-        {/* Thin top progress bar */}
-        <Progress value={progressValue} className="h-1.5 w-full rounded-none bg-slate-100 [&>div]:bg-blue-600" />
-
+        <DialogTitle className="sr-only">Solicitar orçamento</DialogTitle>
+        
         {/* Clean Header */}
-        <div className="bg-white px-4 pt-5 pb-3 md:px-6 md:pt-6 md:pb-4 rounded-t-3xl border-b border-slate-100 safe-x">
-          <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
-              {step <= TOTAL_STEPS
-                ? `Etapa ${step} de ${TOTAL_STEPS}`
-                : step === 5
-                  ? 'Verificação'
-                  : 'Concluído'}
-            </DialogTitle>
-            <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.14em] text-[#22C55E]">
-              <ShieldCheck className="w-3 h-3 md:w-3.5 md:h-3.5" />
-              100% SEGURO
-            </div>
-          </div>
-          
-          {step === 1 && preferredCompany && (
-            <div className="flex items-center gap-3 mt-4">
-              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-100 bg-slate-50 shadow-sm flex items-center justify-center">
+        <div className="bg-white px-5 pt-5 pb-4 md:px-6 md:pt-6 md:pb-4 rounded-t-3xl safe-x">
+          {preferredCompany ? (
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-100 bg-slate-50 flex items-center justify-center">
                 {preferredCompany.logo_url ? (
                   <Image src={preferredCompany.logo_url} alt={preferredCompany.name} width={40} height={40} className="object-cover" />
                 ) : (
@@ -436,280 +412,324 @@ export default function QuoteWizardModal() {
                 )}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-black text-slate-900 leading-none">{preferredCompany.name}</span>
-                <span className="text-[11px] font-bold text-slate-500 mt-1 flex items-center gap-1">
-                   <MapPin className="h-3 w-3" /> {(preferredCompany.city || '-') + (preferredCompany.state ? `, ${preferredCompany.state}` : '')}
+                <span className="text-sm font-bold text-slate-900 flex items-center gap-1">
+                  {preferredCompany.name}
+                  {preferredCompany.verified && <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />}
+                </span>
+                <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
+                   {preferredCompany.city ? (
+                     <><MapPin className="h-3 w-3" /> {(preferredCompany.city || '-') + (preferredCompany.state ? `, ${preferredCompany.state}` : '')}</>
+                   ) : (
+                     <><Star className="h-3 w-3" /> {formatRating(preferredCompany.rating_avg)}</>
+                   )}
                 </span>
               </div>
             </div>
+          ) : (
+            <div className="h-10"></div>
           )}
         </div>
 
-        <div className="flex-grow overflow-y-auto px-4 py-4 md:px-6 md:py-5 overscroll-contain safe-x">
+        <div className="overflow-y-auto px-5 pb-5 md:px-6 md:pb-6 overscroll-contain safe-x">
+          
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Solicitar orçamento</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              {step === 4 
+                ? 'Revise as informações e envie sua solicitação.' 
+                : `Receba um contato da ${preferredCompany?.name || 'empresa'} para o seu projeto.`}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between mb-8 relative">
+            <div className="absolute left-0 top-3 w-full h-[2px] bg-slate-100 -z-10"></div>
+            {[
+              { num: 1, label: 'Solução' },
+              { num: 2, label: 'Projeto' },
+              { num: 3, label: 'Contato' },
+              { num: 4, label: 'Confirmação' },
+            ].map((s) => {
+              const isPast = step > s.num;
+              const isCurrent = step === s.num;
+              return (
+                <div key={s.num} className="flex flex-col items-center bg-white px-2">
+                  <div className={cn(
+                    "h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
+                    isPast || isCurrent ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400"
+                  )}>
+                    {isPast ? <CheckCircle2 className="h-3.5 w-3.5" /> : s.num}
+                  </div>
+                  <span className={cn(
+                    "text-[10px] font-medium mt-1.5 transition-colors",
+                    isCurrent ? "text-blue-600" : "text-slate-400"
+                  )}>
+                    {s.label}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
           {step === 1 && (
-            <div className="space-y-4">
-              <WizardHeading
-                kicker={STEP_KICKERS[1]}
-                title="O que você deseja comparar?"
-                subtitle="Selecione a solução ideal para você."
-              />
-              <div className="grid grid-cols-1 gap-2 md:gap-3">
-                {[
-                  'Energia Solar e/ou Baterias',
-                  'Bombas de Calor',
-                  'Carregadores Veiculares (EV)',
-                ].map((v) => {
-                  let slug = '';
-                  if (v.includes('Solar')) slug = 'solar-residencial';
-                  if (v.includes('Bombas')) slug = 'solar-rural';
-                  if (v.includes('Carregadores')) slug = 'wallbox-residencial';
-                  return (
-                    <OptionButton
-                      key={v}
-                      selected={form.productVertical === v}
-                      onClick={() => updateForm({ productVertical: v })}
-                    >
-                      <div className="flex items-center gap-3">
-                        <CategoryMotionIcon
-                          slug={slug}
-                          size={32}
-                          motionMode="interactive"
-                          className="shrink-0 rounded-lg border border-slate-100 bg-slate-50 p-0.5"
-                        />
-                        <span>{v}</span>
+            <div className="space-y-8">
+              <div className="space-y-3">
+                <h3 className="text-base font-bold text-slate-900">O que você deseja comparar?</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {[
+                    { label: 'Energia solar e/ou baterias', slug: 'solar-residencial' },
+                    { label: 'Bombas de calor', slug: 'solar-rural' },
+                    { label: 'Carregadores veiculares (EV)', slug: 'wallbox-residencial' },
+                  ].map((v) => {
+                    const selected = form.productVertical === v.label;
+                    return (
+                      <div
+                        key={v.label}
+                        onClick={() => updateForm({ productVertical: v.label })}
+                        className={cn(
+                          "relative p-3 rounded-2xl border-2 cursor-pointer transition-all",
+                          selected ? "border-blue-600 bg-blue-50/50" : "border-slate-100 hover:border-slate-200 bg-white"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <CategoryMotionIcon
+                            slug={v.slug}
+                            size={24}
+                            motionMode="interactive"
+                            className="shrink-0 rounded-md border border-slate-100 bg-white p-0.5"
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-slate-900 block leading-tight pr-6">
+                          {v.label}
+                        </span>
+                        <div className={cn(
+                          "absolute bottom-3 right-3 h-[18px] w-[18px] rounded-full border-2",
+                          selected ? "border-blue-600 flex items-center justify-center" : "border-slate-200"
+                        )}>
+                          {selected && <div className="h-2.5 w-2.5 bg-blue-600 rounded-full"></div>}
+                        </div>
                       </div>
-                    </OptionButton>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
 
-
-
-          {step === 1 && (
-            <div className="space-y-4">
-              <WizardHeading
-                kicker="Contexto"
-                title="Qual é o seu projeto?"
-                subtitle="Escolha o perfil da instalação e o tipo de orçamento."
-              />
-              <FieldGroup label="Perfil da instalação">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  {['Residencial', 'Condominio', 'Comercial'].map((value) => (
-                    <OptionButton
-                      key={value}
-                      selected={form.projectProfile === value}
-                      onClick={() => updateForm({ projectProfile: value })}
-                    >
-                      {value}
-                    </OptionButton>
-                  ))}
+              <div className="space-y-3">
+                <h3 className="text-base font-bold text-slate-900">Qual é o seu projeto?</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Residencial', icon: 'Home' },
+                    { label: 'Condomínio', icon: 'Building' },
+                    { label: 'Comercial', icon: 'Building2' },
+                  ].map((v) => {
+                    const selected = form.projectProfile === v.label;
+                    return (
+                      <div
+                        key={v.label}
+                        onClick={() => updateForm({ projectProfile: v.label })}
+                        className={cn(
+                          "relative p-3 rounded-2xl border-2 cursor-pointer transition-all",
+                          selected ? "border-blue-600 bg-blue-50/50" : "border-slate-100 hover:border-slate-200 bg-white"
+                        )}
+                      >
+                        <div className="mb-2 text-slate-500">
+                          {/* We will just use an SVG path for simplicity or lucide icons if imported. I'll use simple SVGs to avoid import issues. */}
+                          {v.icon === 'Home' && <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>}
+                          {v.icon === 'Building' && <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>}
+                          {v.icon === 'Building2' && <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>}
+                        </div>
+                        <span className="text-xs font-bold text-slate-900 block leading-tight pr-6">
+                          {v.label}
+                        </span>
+                        <div className={cn(
+                          "absolute bottom-3 right-3 h-[18px] w-[18px] rounded-full border-2",
+                          selected ? "border-blue-600 flex items-center justify-center" : "border-slate-200"
+                        )}>
+                          {selected && <div className="h-2.5 w-2.5 bg-blue-600 rounded-full"></div>}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </FieldGroup>
-              <FieldGroup label="Tipo de orçamento">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  {['Energia Solar', 'Solar + Bateria', 'Apenas Bateria'].map((value) => (
-                    <OptionButton
-                      key={value}
-                      selected={form.quoteType === value}
-                      onClick={() => updateForm({ quoteType: value })}
-                    >
-                      {value}
-                    </OptionButton>
-                  ))}
-                </div>
-              </FieldGroup>
+              </div>
             </div>
           )}
 
           {step === 2 && (
             <div className="space-y-4">
-              <WizardHeading
-                kicker="Local"
-                title="Onde será o projeto?"
-                subtitle="Informe o endereço para empresas prepararem uma proposta adequada."
-              />
-              <div className="flex gap-2">
-                <Input
-                  value={form.zipcode}
-                  inputMode="numeric"
-                  autoComplete="postal-code"
-                  onChange={(event) => updateForm({ zipcode: event.target.value })}
-                  placeholder="CEP"
-                  className="h-12 rounded-xl"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={lookupZipcode}
-                  className="h-12 shrink-0 rounded-xl"
-                >
-                  Buscar CEP
-                </Button>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900">Detalhes do seu projeto</h3>
+                <p className="text-sm text-slate-500">Informe algumas informações para um orçamento mais preciso.</p>
               </div>
-              <div className="grid gap-3 md:grid-cols-[1fr_120px]">
-                <Input
-                  value={form.addressStreet}
-                  autoComplete="street-address"
-                  onChange={(event) => updateForm({ addressStreet: event.target.value })}
-                  placeholder="Rua ou avenida"
-                  className="h-12 rounded-xl"
-                />
-                <Input
-                  value={form.addressNumber}
-                  onChange={(event) => updateForm({ addressNumber: event.target.value })}
-                  placeholder="Número"
-                  className="h-12 rounded-xl"
-                />
+              
+              <div className="space-y-3">
+                <div className="relative">
+                  <div className="absolute left-3 top-[14px] text-slate-400"><Zap className="h-5 w-5" /></div>
+                  <select
+                    value={form.billValue}
+                    onChange={(e) => updateForm({ billValue: e.target.value })}
+                    className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-10 text-sm outline-none focus:border-blue-500"
+                  >
+                    <option value="" disabled>Consumo mensal de energia</option>
+                    <option value="Ate R$ 300">Até R$ 300/mês</option>
+                    <option value="R$ 300 a R$ 500">R$ 300 a R$ 500/mês</option>
+                    <option value="R$ 500 a R$ 1.000">R$ 500 a R$ 1.000/mês</option>
+                    <option value="Acima de R$ 1.000">Acima de R$ 1.000/mês</option>
+                    <option value="Nao sei">Não sei informar</option>
+                  </select>
+                  <div className="absolute right-3 top-[14px] pointer-events-none text-slate-400"><ChevronDown className="h-5 w-5" /></div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute left-3 top-[14px] text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  </div>
+                  <select
+                    value={(form as any).installationType || ''}
+                    onChange={(e) => updateForm({ installationType: e.target.value } as any)}
+                    className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-10 text-sm outline-none focus:border-blue-500"
+                  >
+                    <option value="" disabled>Tipo de instalação</option>
+                    <option value="Telhado Ceramico">Telhado Cerâmico</option>
+                    <option value="Telhado Metalico">Telhado Metálico</option>
+                    <option value="Laje">Laje plana</option>
+                    <option value="Solo">Solo</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                  <div className="absolute right-3 top-[14px] pointer-events-none text-slate-400"><ChevronDown className="h-5 w-5" /></div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute left-3 top-[14px] text-slate-400"><Calendar className="h-5 w-5" /></div>
+                  <select
+                    value={form.decisionTimeline}
+                    onChange={(e) => updateForm({ decisionTimeline: e.target.value })}
+                    className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-10 text-sm outline-none focus:border-blue-500"
+                  >
+                    <option value="" disabled>Prazo desejado</option>
+                    <option value="Agora">O mais rápido possível</option>
+                    <option value="Em até 6 meses">Em até 6 meses</option>
+                    <option value="Mais de 6 meses">Ainda estou pesquisando</option>
+                  </select>
+                  <div className="absolute right-3 top-[14px] pointer-events-none text-slate-400"><ChevronDown className="h-5 w-5" /></div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute left-3 top-[14px] text-slate-400"><MapPin className="h-5 w-5" /></div>
+                  <Input
+                    value={form.zipcode}
+                    onChange={(e) => updateForm({ zipcode: e.target.value })}
+                    placeholder="Local da instalação (Ex.: CEP ou Cidade/UF)"
+                    className="h-12 w-full rounded-xl border-slate-200 pl-10 text-sm focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="relative">
+                  <div className="absolute left-3 top-[14px] text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+                  </div>
+                  <textarea
+                    value={form.notes}
+                    onChange={(e) => updateForm({ notes: e.target.value })}
+                    placeholder="Observações (opcional)"
+                    className="min-h-24 w-full rounded-xl border border-slate-200 pl-10 pr-3 py-3 text-sm outline-none focus:border-blue-500 resize-none"
+                  />
+                </div>
+
               </div>
-              <Input
-                value={form.addressComplement}
-                onChange={(event) => updateForm({ addressComplement: event.target.value })}
-                placeholder="Complemento (opcional)"
-                className="h-12 rounded-xl"
-              />
-              <div className="grid grid-cols-[1fr_90px] gap-3">
-                <Input
-                  value={form.city}
-                  autoComplete="address-level2"
-                  onChange={(event) => updateForm({ city: event.target.value })}
-                  placeholder="Cidade"
-                  className="h-12 rounded-xl"
-                />
-                <Input
-                  value={form.state}
-                  maxLength={2}
-                  autoComplete="address-level1"
-                  onChange={(event) => updateForm({ state: event.target.value.toUpperCase() })}
-                  placeholder="UF"
-                  className="h-12 rounded-xl uppercase"
-                />
-              </div>
-              <p className="flex items-center gap-2 text-xs text-slate-500">
-                <MapPin className="h-4 w-4 text-blue-600" /> Você poderá revisar os dados antes de
-                enviar.
-              </p>
             </div>
           )}
 
           {step === 3 && (
             <div className="space-y-4">
-              <WizardHeading
-                kicker="Consumo"
-                title="Sobre seu consumo"
-                subtitle="Informe pelo menos uma referência para melhorar as propostas."
-              />
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1">
-                  <Label>Valor médio da conta (R$)</Label>
-                  <Input
-                    value={form.billValue}
-                    inputMode="decimal"
-                    onChange={(event) => {
-                      updateForm({ billValue: event.target.value });
-                      trackBillValue(event.target.value);
-                    }}
-                    placeholder="Ex.: 350"
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Consumo mensal (kWh)</Label>
-                  <Input
-                    value={form.monthlyKwh}
-                    inputMode="decimal"
-                    onChange={(event) => updateForm({ monthlyKwh: event.target.value })}
-                    placeholder="Ex.: 450"
-                    className="h-12 rounded-xl"
-                  />
-                </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900">Seus dados de contato</h3>
+                <p className="text-sm text-slate-500">Usaremos seus dados somente para esta solicitação.</p>
               </div>
-              <FieldGroup label="Tamanho estimado do sistema">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  {['Ate 7 kWp', '8 kWp ou mais', 'unknown'].map((value) => (
-                    <OptionButton
-                      key={value}
-                      selected={form.systemSizeChoice === value}
-                      onClick={() => updateForm({ systemSizeChoice: value })}
-                    >
-                      {value === 'unknown' ? 'Não sei' : value}
-                    </OptionButton>
-                  ))}
+
+              <div className="space-y-3">
+                <div className="relative">
+                  <div className="absolute left-3 top-[14px] text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <Input
+                    value={form.fullName}
+                    autoComplete="name"
+                    onChange={(event) => updateForm({ fullName: event.target.value })}
+                    placeholder="Nome completo"
+                    className="h-12 w-full rounded-xl border-slate-200 pl-10 text-sm focus:border-blue-500"
+                  />
                 </div>
-              </FieldGroup>
-              <FieldGroup label="Quando pretende realizar o projeto?">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  {['Agora', 'Em até 6 meses', 'Mais de 6 meses'].map((value) => (
-                    <OptionButton
-                      key={value}
-                      selected={form.decisionTimeline === value}
-                      onClick={() => updateForm({ decisionTimeline: value })}
-                    >
-                      {value}
-                    </OptionButton>
-                  ))}
+                
+                <div className="relative">
+                  <div className="absolute left-3 top-[14px] text-[#25D366]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  </div>
+                  <Input
+                    type="tel"
+                    value={form.phone}
+                    autoComplete="tel"
+                    onChange={(event) => updateForm({ phone: event.target.value })}
+                    placeholder="WhatsApp"
+                    className="h-12 w-full rounded-xl border-slate-200 pl-10 text-sm focus:border-blue-500"
+                  />
                 </div>
-              </FieldGroup>
+
+                <div className="relative">
+                  <div className="absolute left-3 top-[14px] text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  </div>
+                  <Input
+                    type="email"
+                    value={form.email}
+                    autoComplete="email"
+                    onChange={(event) => updateForm({ email: event.target.value })}
+                    placeholder="E-mail"
+                    className="h-12 w-full rounded-xl border-slate-200 pl-10 text-sm focus:border-blue-500"
+                  />
+                </div>
+
+              </div>
+
+              <div className="flex items-start gap-3 mt-4">
+                <Checkbox
+                  checked={form.consent}
+                  onCheckedChange={(value) => updateForm({ consent: Boolean(value) })}
+                  className="mt-0.5"
+                />
+                <Label className="text-xs text-slate-500 leading-relaxed cursor-pointer" onClick={() => updateForm({ consent: !form.consent })}>
+                  Aceito os Termos de Uso e Políticas de Privacidade. Autorizo o envio dos meus dados para empresas relevantes parceiras da plataforma.
+                </Label>
+              </div>
             </div>
           )}
 
           {step === 4 && (
             <div className="space-y-4">
-              <WizardHeading
-                kicker="Contato"
-                title="Seus dados de contato"
-                subtitle="Usaremos seus dados somente para esta solicitação."
-              />
-              <Input
-                value={form.fullName}
-                autoComplete="name"
-                onChange={(event) => updateForm({ fullName: event.target.value })}
-                placeholder="Nome completo"
-                className="h-12 rounded-xl"
-              />
-              <div className="grid gap-3 md:grid-cols-2">
-                <Input
-                  type="email"
-                  value={form.email}
-                  autoComplete="email"
-                  onChange={(event) => updateForm({ email: event.target.value })}
-                  placeholder="E-mail"
-                  className="h-12 rounded-xl"
-                />
-                <Input
-                  type="tel"
-                  value={form.phone}
-                  autoComplete="tel"
-                  onChange={(event) => updateForm({ phone: event.target.value })}
-                  placeholder="WhatsApp"
-                  className="h-12 rounded-xl"
-                />
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900">Quase lá!</h3>
+                <p className="text-sm text-slate-500">Verifique se as informações estão corretas.</p>
               </div>
-              <select
-                aria-label="Canal preferido"
-                value={form.preferredChannel}
-                onChange={(event) => updateForm({ preferredChannel: event.target.value })}
-                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
-              >
-                <option>WhatsApp</option>
-                <option>E-mail</option>
-                <option>WhatsApp e E-mail</option>
-              </select>
-              <textarea
-                value={form.notes}
-                onChange={(event) => updateForm({ notes: event.target.value })}
-                placeholder="Observações (opcional)"
-                className="min-h-20 w-full rounded-xl border border-slate-200 p-3 text-sm"
-              />
-              <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                <Checkbox
-                  checked={form.consent}
-                  onCheckedChange={(value) => updateForm({ consent: Boolean(value) })}
-                />
-                <Label className="text-xs leading-relaxed">
-                  Aceito compartilhar meus dados com empresas relevantes para receber propostas. *
-                </Label>
+
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Solução</span>
+                  <span className="text-sm font-medium text-slate-900">{form.productVertical || 'Não informado'}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Projeto</span>
+                  <span className="text-sm font-medium text-slate-900">{form.projectProfile || 'Não informado'}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Consumo</span>
+                  <span className="text-sm font-medium text-slate-900">{form.billValue || 'Não informado'}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Local</span>
+                  <span className="text-sm font-medium text-slate-900">{form.zipcode || 'Não informado'}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Contato</span>
+                  <span className="text-sm font-medium text-slate-900">{form.fullName || 'Não informado'} ({form.phone || 'Não informado'})</span>
+                </div>
               </div>
             </div>
           )}
