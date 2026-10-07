@@ -568,7 +568,7 @@ export default function CompanyCard({
       <Card
         ref={cardRef}
         className={cn(
-          'group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white p-4 transition-all duration-150 hover:border-slate-300 hover:shadow-xs dark:border-slate-800 dark:bg-slate-950 cursor-pointer h-full',
+          'group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white p-3.5 sm:p-4 transition-all duration-150 hover:border-slate-300 hover:shadow-xs dark:border-slate-800 dark:bg-slate-950 cursor-pointer h-full',
           isCompanySponsored && 'ring-1 ring-blue-500/20 bg-blue-50/10 dark:bg-blue-950/10',
           className
         )}
@@ -582,9 +582,9 @@ export default function CompanyCard({
             }
           : {})}
       >
-        <div className="space-y-3">
+        <div className="space-y-2.5 sm:space-y-3">
           {/* IDENTIDADE + TRUST + PRO BADGE */}
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-2.5 sm:gap-3">
             <div
               data-testid="company-logo"
               className="h-12 w-12 rounded-lg border border-slate-200/80 dark:border-slate-800 p-1 bg-white dark:bg-slate-900 flex items-center justify-center shrink-0"
@@ -633,7 +633,7 @@ export default function CompanyCard({
               </div>
 
               {/* RATING + LOCALIZAÇÃO */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {data.reputation.rating_count > 0 && data.reputation.rating_avg > 0 ? (
                   <button
                     type="button"
@@ -665,12 +665,12 @@ export default function CompanyCard({
             {data.identity.description ? (
               <p
                 itemProp="description"
-                className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed"
+                className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed"
               >
                 {data.identity.description}
               </p>
             ) : (
-              <p className="text-xs text-slate-400 dark:text-slate-500 italic line-clamp-2 leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-slate-400 dark:text-slate-500 italic line-clamp-2 leading-relaxed">
                 Informações detalhadas disponíveis no perfil da empresa.
               </p>
             )}
@@ -681,14 +681,14 @@ export default function CompanyCard({
             <button
               type="button"
               onClick={openReviewsSheet}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-md px-2 py-1"
+              className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-md px-2 py-1"
             >
               <MessageCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" />
               <span>
                 {data.reputation.rating_count > 0 ? (
                   <>
                     <span>{data.reputation.rating_count}</span>{' '}
-                    <span>{data.reputation.rating_count === 1 ? 'avaliação' : 'avaliações'}</span>
+                    <span className="hidden sm:inline">{data.reputation.rating_count === 1 ? 'avaliação' : 'avaliações'}</span>
                   </>
                 ) : (
                   'Sem avaliações'
@@ -696,7 +696,7 @@ export default function CompanyCard({
               </span>
             </button>
 
-            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-md px-2 py-1 truncate">
+            <div className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-md px-2 py-1 truncate">
               <BookOpen className="h-3.5 w-3.5 text-slate-400 shrink-0" />
               <span className="truncate">{coverageText}</span>
             </div>
@@ -704,7 +704,7 @@ export default function CompanyCard({
         </div>
 
         {/* PARTE INFERIOR: CTA PRINCIPAL + AÇÕES SECUNDÁRIAS (ALTURA EQUALIZADA) */}
-        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+        <div className="mt-3 sm:mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
           {/* CTA PRINCIPAL (SLOT DE 40px) */}
           <div className="h-10">
             {canRequestQuote ? (
@@ -712,18 +712,17 @@ export default function CompanyCard({
                 className="w-full h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 shadow-none transition-all active:scale-[0.98]"
                 onClick={handleQuoteClick}
               >
-                <FileText className="h-4 w-4" />
-                <span>Solicitar orçamento</span>
-                <ArrowRight className="h-3.5 w-3.5 ml-0.5" />
+                <FileText className="h-4 w-4 shrink-0" />
+                <span className="truncate">Solicitar orçamento</span>
+                <ArrowRight className="h-3.5 w-3.5 ml-0.5 shrink-0" />
               </Button>
             ) : (
               <Button
-                variant="outline"
-                className="w-full h-10 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 hover:text-blue-600 dark:hover:bg-slate-900 font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 shadow-none transition-all active:scale-[0.98]"
+                className="w-full h-10 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 shadow-none transition-all active:scale-[0.98]"
                 onClick={handleProfileClick}
               >
-                <span>Ver perfil</span>
-                <ArrowRight className="h-3.5 w-3.5 ml-0.5" />
+                <span className="truncate">Ver perfil</span>
+                <ArrowRight className="h-3.5 w-3.5 ml-0.5 shrink-0" />
               </Button>
             )}
           </div>
@@ -744,9 +743,9 @@ export default function CompanyCard({
               onClick={handleCompareToggle}
             >
               {isInComparison(id) ? (
-                <Check className="h-3.5 w-3.5 text-blue-600" />
+                <Check className="h-3.5 w-3.5 text-blue-600 shrink-0" />
               ) : (
-                <ArrowLeftRight className="h-3.5 w-3.5 text-slate-500" />
+                <ArrowLeftRight className="h-3.5 w-3.5 text-slate-500 shrink-0" />
               )}
               <span className="truncate">Comparar</span>
             </Button>
@@ -755,33 +754,34 @@ export default function CompanyCard({
             {canRequestQuote ? (
               <Button
                 variant="outline"
-                className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
+                className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
                 onClick={handleProfileClick}
               >
-                <Building2 className="h-3.5 w-3.5 text-slate-500" />
+                <Building2 className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                 <span className="truncate">Ver perfil</span>
               </Button>
             ) : (
               <Button
                 variant="outline"
-                className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
+                className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
                 onClick={handleReviewClick}
               >
-                <Star className="h-3.5 w-3.5 text-slate-500" />
+                <Star className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                 <span className="truncate">Avaliar</span>
               </Button>
             )}
 
-            {/* 3. MENU DE MAIS AÇÕES (•••) */}
+            {/* 3. MENU DE MAIS AÇÕES (••• Mais) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   aria-label={`Mais ações para ${name}`}
-                  className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 p-0 flex items-center justify-center"
+                  className="w-full h-9 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                  <MoreHorizontal className="h-4 w-4 text-slate-500 shrink-0" />
+                  <span className="truncate">Mais</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 text-xs">
