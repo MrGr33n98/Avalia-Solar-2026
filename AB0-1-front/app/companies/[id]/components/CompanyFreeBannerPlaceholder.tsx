@@ -15,21 +15,36 @@ export default function CompanyFreeBannerPlaceholder({
 }) {
   return (
     <div className="relative h-full w-full overflow-hidden bg-slate-900">
-      {desktopCover && (
-        <OptimizedImage
-          src={FREE_COMPANY_BANNER_SRC}
-          alt=""
-          fill
-          quality={60}
-          objectFit="cover"
-          className="scale-110 blur-lg"
-          containerClassName="absolute inset-0 h-full w-full md:hidden"
-          sizes="100vw"
-          useAspectRatio={false}
-          width={2896}
-          height={543}
-        />
-      )}
+      {/* Background Blur Fill Layer (Mobile only) */}
+      <OptimizedImage
+        src={FREE_COMPANY_BANNER_SRC}
+        alt=""
+        fill
+        quality={60}
+        objectFit="cover"
+        className="scale-110 blur-lg"
+        containerClassName="absolute inset-0 h-full w-full md:hidden"
+        sizes="100vw"
+        useAspectRatio={false}
+        width={2896}
+        height={543}
+      />
+      {/* Mobile foreground - enquadrado (contain) */}
+      <OptimizedImage
+        src={FREE_COMPANY_BANNER_SRC}
+        alt={alt}
+        fill
+        priority={priority}
+        quality={95}
+        objectFit="contain"
+        className="object-contain"
+        containerClassName={desktopCover ? 'relative z-10 h-full w-full md:hidden' : 'h-full w-full md:hidden'}
+        sizes="(max-width: 767px) 100vw, 1240px"
+        useAspectRatio={false}
+        width={2896}
+        height={543}
+      />
+      {/* Desktop foreground - preenchido (cover) */}
       <OptimizedImage
         src={FREE_COMPANY_BANNER_SRC}
         alt={alt}
@@ -38,7 +53,7 @@ export default function CompanyFreeBannerPlaceholder({
         quality={95}
         objectFit="cover"
         className="object-cover"
-        containerClassName={desktopCover ? 'relative z-10 h-full w-full' : 'h-full w-full'}
+        containerClassName={desktopCover ? 'relative z-10 hidden md:block h-full w-full' : 'hidden md:block h-full w-full'}
         sizes="(max-width: 767px) 100vw, 1240px"
         useAspectRatio={false}
         width={2896}

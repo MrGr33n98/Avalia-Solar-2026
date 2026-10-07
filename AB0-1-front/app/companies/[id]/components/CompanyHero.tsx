@@ -204,7 +204,7 @@ export default function CompanyHero({
         {/* 1. HERO BANNER */}
         <div className="relative w-full aspect-[3/1] md:aspect-auto md:h-[200px] lg:h-[220px] xl:h-[230px] overflow-hidden rounded-t-2xl bg-slate-950">
           {/* Mobile mantém 3:1; desktop limita altura para preservar primeira dobra. */}
-          {/* Background Blur Fill Layer */}
+          {/* Background Blur Fill Layer (Mobile only) */}
           {bannerState.kind === 'company-banner' && (
             <OptimizedImage
               src={bannerState.src}
@@ -212,7 +212,7 @@ export default function CompanyHero({
               fill
               aria-hidden="true"
               className="object-cover opacity-40 blur-xl scale-110"
-              containerClassName="absolute inset-0 h-full w-full pointer-events-none"
+              containerClassName="absolute inset-0 h-full w-full pointer-events-none md:hidden"
             />
           )}
 
@@ -220,25 +220,48 @@ export default function CompanyHero({
           {bannerState.kind === 'free-plan-placeholder' ? (
             <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
           ) : bannerState.kind === 'company-banner' ? (
-            <OptimizedImage
-              src={bannerState.src}
-              alt={company.name}
-              fill
-              priority
-              quality={90}
-              imageContext="company-banner"
-              entityName={company.name}
-              locationLabel={locationLabel}
-              objectFit="cover"
-              className="object-center object-cover"
-              containerClassName="h-full w-full"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-              fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
-              useAspectRatio={false}
-              width={1600}
-              height={900}
-              onError={() => setBannerError(true)}
-            />
+            <>
+              {/* Mobile foreground - enquadrado (contain) */}
+              <OptimizedImage
+                src={bannerState.src}
+                alt={company.name}
+                fill
+                priority
+                quality={90}
+                imageContext="company-banner"
+                entityName={company.name}
+                locationLabel={locationLabel}
+                objectFit="contain"
+                className="object-center object-contain"
+                containerClassName="relative z-10 h-full w-full md:hidden"
+                sizes="(max-width: 768px) 100vw, 1240px"
+                fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
+                useAspectRatio={false}
+                width={1600}
+                height={900}
+                onError={() => setBannerError(true)}
+              />
+              {/* Desktop foreground - preenchido (cover) */}
+              <OptimizedImage
+                src={bannerState.src}
+                alt={company.name}
+                fill
+                priority
+                quality={90}
+                imageContext="company-banner"
+                entityName={company.name}
+                locationLabel={locationLabel}
+                objectFit="cover"
+                className="object-center object-cover"
+                containerClassName="relative z-10 hidden md:block h-full w-full"
+                sizes="(min-width: 769px) 100vw, 1240px"
+                fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
+                useAspectRatio={false}
+                width={1600}
+                height={900}
+                onError={() => setBannerError(true)}
+              />
+            </>
           ) : (
             <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
           )}
