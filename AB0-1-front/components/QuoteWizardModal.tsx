@@ -403,19 +403,17 @@ export default function QuoteWizardModal() {
       <DialogContent
         overlayClassName="bg-black/65 backdrop-blur-md"
         className={cn(
-          'z-[10000] flex max-h-[90dvh] max-w-[500px] flex-col overflow-hidden border-none p-0 rounded-2xl md:rounded-2xl bg-white shadow-2xl',
-          'max-md:inset-x-0 max-md:bottom-0 max-md:top-auto max-md:w-full max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-t-3xl max-md:rounded-b-none',
-          'max-md:max-h-[calc(100dvh-var(--sat))]',
-          'max-md:grid max-md:grid-rows-[auto_minmax(0,1fr)_auto]',
-          'max-md:gap-0 max-md:border max-md:border-slate-200 max-md:bg-white',
-          'max-md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.45),0_12px_30px_-6px_rgba(0,0,0,0.15)]',
-          '[&>button]:max-md:right-3 [&>button]:max-md:top-3 [&>button]:max-md:rounded-full [&>button]:max-md:border [&>button]:max-md:border-slate-200 [&>button]:max-md:bg-white [&>button]:max-md:opacity-100 [&>button]:max-md:shadow-md [&>button]:max-md:p-2'
+          'z-[10000] flex max-h-[85dvh] w-[calc(100%-2rem)] max-w-[500px] flex-col overflow-hidden border-none p-0 rounded-3xl bg-white shadow-2xl mx-auto',
+          '[&>button]:right-4 [&>button]:top-4 [&>button]:rounded-full [&>button]:bg-slate-100 [&>button]:p-2 [&>button]:text-slate-500 hover:[&>button]:bg-slate-200 [&>button]:opacity-100'
         )}
       >
-        {/* Progress Header */}
-        <div className="bg-[#0B1B36] px-4 py-3 md:px-6 md:py-4 text-white rounded-t-2xl pt-[calc(0.5rem+var(--sat))] safe-x">
-          <div className="mb-2 md:mb-3 flex items-center justify-between gap-3">
-            <DialogTitle className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] text-white/72">
+        {/* Thin top progress bar */}
+        <Progress value={progressValue} className="h-1.5 w-full rounded-none bg-slate-100 [&>div]:bg-blue-600" />
+
+        {/* Clean Header */}
+        <div className="bg-white px-4 pt-5 pb-3 md:px-6 md:pt-6 md:pb-4 rounded-t-3xl border-b border-slate-100 safe-x">
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
               {step <= TOTAL_STEPS
                 ? `Etapa ${step} de ${TOTAL_STEPS}`
                 : step === 5
@@ -427,7 +425,24 @@ export default function QuoteWizardModal() {
               100% SEGURO
             </div>
           </div>
-          <Progress value={progressValue} className="h-1.5 rounded-full bg-[#19315E]" />
+          
+          {step === 1 && preferredCompany && (
+            <div className="flex items-center gap-3 mt-4">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-100 bg-slate-50 shadow-sm flex items-center justify-center">
+                {preferredCompany.logo_url ? (
+                  <Image src={preferredCompany.logo_url} alt={preferredCompany.name} width={40} height={40} className="object-cover" />
+                ) : (
+                  <Zap className="h-5 w-5 text-slate-300" />
+                )}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-black text-slate-900 leading-none">{preferredCompany.name}</span>
+                <span className="text-[11px] font-bold text-slate-500 mt-1 flex items-center gap-1">
+                   <MapPin className="h-3 w-3" /> {(preferredCompany.city || '-') + (preferredCompany.state ? `, ${preferredCompany.state}` : '')}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex-grow overflow-y-auto px-4 py-4 md:px-6 md:py-5 overscroll-contain safe-x">
@@ -470,13 +485,7 @@ export default function QuoteWizardModal() {
             </div>
           )}
 
-          {step === 1 && preferredCompanyId && (
-            <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-bold text-blue-900">
-              {preferredCompany?.name
-                ? `Solicitação para ${preferredCompany.name}`
-                : 'Empresa de origem selecionada'}
-            </div>
-          )}
+
 
           {step === 1 && (
             <div className="space-y-4">
