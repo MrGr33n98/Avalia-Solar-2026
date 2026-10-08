@@ -242,7 +242,7 @@ export default function QuoteWizardModal() {
     setForm((prev) => ({ ...prev, ...patch }));
 
   const computeSystemSizeBand = () => {
-    if (form.systemSizeChoice !== 'unknown') return form.systemSizeChoice;
+    if (form.systemSizeChoice && form.systemSizeChoice !== 'unknown') return form.systemSizeChoice;
     const bill = parseNumber(form.billValue);
     const kwh = parseNumber(form.monthlyKwh);
     return (kwh && kwh >= 1200) || (bill && bill >= 1000) ? '8 kWp ou mais' : 'Ate 7 kWp';
@@ -306,11 +306,11 @@ export default function QuoteWizardModal() {
             system_size_band: computeSystemSizeBand(),
             bill_value: form.billValue || null,
             monthly_kwh: form.monthlyKwh || null,
-            decision_timeline: form.decisionTimeline,
+            decision_timeline: form.decisionTimeline || 'Agora',
             zipcode: form.zipcode || null,
             city: form.city || null,
             state: form.state || null,
-            address_full: buildAddressFull() || form.addressFull.trim(),
+            address_full: buildAddressFull() || form.addressFull.trim() || form.zipcode.trim() || 'Não informado',
             full_name: form.fullName,
             email: form.email,
             phone: form.phone,
