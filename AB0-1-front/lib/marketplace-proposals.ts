@@ -172,3 +172,58 @@ export function getProposalCardMetrics(proposal: MarketplaceProposal): ProposalC
   return metrics.slice(0, 3);
 }
 
+
+export const projectProfileLabels: Record<string, string> = {
+  residential: 'Sistema residencial',
+  commercial: 'Soluções comerciais',
+  industrial: 'Soluções industriais',
+  rural: 'Soluções rurais',
+};
+
+/** Rótulo i18n do perfil do projeto; retorna null quando não informado ou desconhecido. */
+export function getProposalSolutionLabel(proposal: MarketplaceProposal): string | null {
+  const profile = proposal.request?.project_profile;
+  return (profile && projectProfileLabels[profile]) || null;
+}
+
+/** Data relativa em pt-BR (Hoje, Ontem, dd/mm/aaaa). */
+export function formatRelativeDay(value?: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round((startOf(new Date()) - startOf(date)) / 86_400_000);
+  if (diffDays === 0) return 'hoje';
+  if (diffDays === 1) return 'ontem';
+  return formatDate(value);
+}
+
+export function hasPublishedVersion(proposal: MarketplaceProposal) {
+  return Boolean(proposal.version);
+}
+
+export const closedStatuses = [
+  'declined',
+  'not_selected',
+  'closed_after_selection',
+  'withdrawn',
+  'expired',
+  'cancelled',
+];
+
+export function isProposalActive(proposal: MarketplaceProposal) {
+  return !closedStatuses.includes(proposal.status) && !isProjectComplete(proposal.project);
+}
+
+export function isProposalReceived(proposal: MarketplaceProposal) {
+  return hasPublishedVersion(proposal) && isProposalActive(proposal);
+}
+
+/** Proposta ainda sem versão publicada pela empresa. */
+export function isProposalAwaiting(proposal: MarketplaceProposal) {
+  return !hasPublishedVersion(proposal) && isProposalActive(proposal);
+}
+
+export function isProposalCompleted(proposal: MarketplaceProposal) {
+  return proposal.status === 'completed' || isProjectComplete(proposal.project);
+}

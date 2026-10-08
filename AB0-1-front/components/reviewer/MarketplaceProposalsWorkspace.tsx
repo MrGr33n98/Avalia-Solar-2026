@@ -26,6 +26,7 @@ import {
   SlidersHorizontal,
   Table,
   Zap,
+  AlertCircle,
 } from 'lucide-react';
 import { marketplaceProposalsApi, type MarketplaceProposal } from '@/lib/api';
 import {
@@ -37,6 +38,12 @@ import {
   getProposalRawTerm,
   isProjectComplete,
   proposalChatUrl,
+  formatRelativeDay,
+  getProposalSolutionLabel,
+  isProposalActive,
+  isProposalAwaiting,
+  isProposalCompleted,
+  isProposalReceived,
 } from '@/lib/marketplace-proposals';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -193,67 +200,10 @@ function ProposalJourneyRail({
   );
 }
 
-/** Logos vetoriais nítidos em alta definição */
-function SBSolarLogo() {
-  return (
-    <div className="flex flex-col items-center justify-center text-center select-none w-full h-full">
-      <div className="flex items-center gap-1">
-        <span className="text-base font-black tracking-tight text-[#0284c7]">SB</span>
-        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#f59e0b] stroke-[#f59e0b]">
-          <circle cx="12" cy="12" r="5" />
-          <line x1="12" y1="1" x2="12" y2="4" strokeWidth="2" strokeLinecap="round" />
-          <line x1="12" y1="20" x2="12" y2="23" strokeWidth="2" strokeLinecap="round" />
-          <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" strokeWidth="2" strokeLinecap="round" />
-          <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" strokeWidth="2" strokeLinecap="round" />
-          <line x1="1" y1="12" x2="4" y2="12" strokeWidth="2" strokeLinecap="round" />
-          <line x1="20" y1="12" x2="23" y2="12" strokeWidth="2" strokeLinecap="round" />
-          <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" strokeWidth="2" strokeLinecap="round" />
-          <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </div>
-      <span className="text-[9px] font-extrabold tracking-wider text-[#0284c7] -mt-0.5">SOLAR</span>
-    </div>
-  );
-}
-
-function HuaweiLogo() {
-  return (
-    <div className="flex flex-col items-center justify-center text-center select-none w-full h-full">
-      <svg viewBox="0 0 32 32" className="w-7 h-7 fill-[#dc2626]">
-        <path d="M16 2 C16 8 18 11 16 16 C14 11 16 8 16 2 Z" />
-        <path d="M21 4 C19 10 19 13 16 16 C17 12 20 8 21 4 Z" />
-        <path d="M11 4 C12 8 15 12 16 16 C13 13 13 10 11 4 Z" />
-        <path d="M25 8 C21 12 19 14 16 16 C19 14 23 12 25 8 Z" />
-        <path d="M7 8 C9 12 13 14 16 16 C13 14 11 12 7 8 Z" />
-        <path d="M27 14 C22 16 19 16 16 16 C20 16 24 16 27 14 Z" />
-        <path d="M5 14 C8 16 12 16 16 16 C13 16 10 16 5 14 Z" />
-      </svg>
-      <span className="text-[7.5px] font-black tracking-widest text-slate-800 mt-0.5">HUAWEI</span>
-    </div>
-  );
-}
-
-function WEGLogo() {
-  return (
-    <div className="flex items-center justify-center w-full h-8 bg-[#005596] rounded-md px-1.5 py-0.5 select-none">
-      <span className="text-base font-black tracking-tight text-white italic">weg</span>
-    </div>
-  );
-}
-
 function CompanyAvatar({ proposal }: { proposal: MarketplaceProposal }) {
-  const name = (proposal.company.name || '').toLowerCase();
-  if (name.includes('sb solar') || name.includes('sb')) {
-    return <SBSolarLogo />;
-  }
-  if (name.includes('huawei')) {
-    return <HuaweiLogo />;
-  }
-  if (name.includes('weg')) {
-    return <WEGLogo />;
-  }
   if (proposal.company.logo_url) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={proposal.company.logo_url}
         alt={proposal.company.name}
@@ -264,95 +214,6 @@ function CompanyAvatar({ proposal }: { proposal: MarketplaceProposal }) {
   return <CompanyMark proposal={proposal} />;
 }
 
-// Propostas de demonstração alinhadas exatamente com a imagem de referência
-const CANONICAL_PROPOSALS: MarketplaceProposal[] = [
-  {
-    id: 101,
-    reference: 'PROP-2026-001',
-    status: 'sent',
-    currency: 'BRL',
-    total_cents: 2690000,
-    created_at: new Date().toISOString(),
-    published_at: new Date().toISOString(),
-    company: {
-      id: 1,
-      name: 'SB Solar',
-      city: 'São João da Boa Vista',
-      state: 'SP',
-      logo_url: null,
-      verified: true,
-    },
-    request: {
-      id: 1,
-      city: 'São João da Boa Vista',
-      state: 'SP',
-      project_profile: 'Sistema residencial',
-    },
-    version: {
-      id: 201,
-      number: 1,
-      status: 'published',
-      title: 'Sistema residencial',
-      summary: 'Estimativa: 6,2 kWp • 14 módulos',
-      total_cents: 2690000,
-      currency: 'BRL',
-      valid_until: '2026-12-31',
-      published_at: new Date().toISOString(),
-      items: [],
-      terms: [
-        { id: 1, key: 'system_power', label: 'Potência', value: '6,2 kWp', position: 0 },
-        { id: 2, key: 'monthly_generation', label: 'Geração estimada', value: '960 kWh/mês', position: 1 },
-        { id: 3, key: 'installation_deadline', label: 'Prazo de instalação', value: '30 dias', position: 2 },
-      ],
-    },
-  },
-  {
-    id: 102,
-    reference: 'PROP-2026-002',
-    status: 'draft',
-    currency: 'BRL',
-    total_cents: 0,
-    created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-    published_at: null,
-    company: {
-      id: 2,
-      name: 'Huawei',
-      city: 'São Paulo',
-      state: 'SP',
-      logo_url: null,
-      verified: true,
-    },
-    request: {
-      id: 2,
-      city: 'São Paulo',
-      state: 'SP',
-      project_profile: 'Equipamentos e inversores',
-    },
-  },
-  {
-    id: 103,
-    reference: 'PROP-2026-003',
-    status: 'pending',
-    currency: 'BRL',
-    total_cents: 0,
-    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    published_at: null,
-    company: {
-      id: 3,
-      name: 'WEG',
-      city: 'Jaraguá do Sul',
-      state: 'SC',
-      logo_url: null,
-      verified: true,
-    },
-    request: {
-      id: 3,
-      city: 'Jaraguá do Sul',
-      state: 'SC',
-      project_profile: 'Soluções comerciais',
-    },
-  },
-];
 
 export function MarketplaceProposalsWorkspace() {
   const router = useRouter();
@@ -364,7 +225,10 @@ export function MarketplaceProposalsWorkspace() {
 
   const [apiProposals, setApiProposals] = useState<MarketplaceProposal[]>([]);
   const [compareIds, setCompareIds] = useState<number[]>([]);
-  const [filter, setFilter] = useState<Filter>('active');
+  const [filter, setFilter] = useState<Filter>(
+    filterTabs.some((tab) => tab.id === params.get('tab')) ? (params.get('tab') as Filter) : 'all'
+  );
+  const [compareNotice, setCompareNotice] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState('all');
   const [companyFilter, setCompanyFilter] = useState('all');
@@ -385,11 +249,8 @@ export function MarketplaceProposalsWorkspace() {
   const submitting = useRef(false);
   const detailHeading = useRef<HTMLHeadingElement>(null);
 
-  // Propostas unificadas (se houver dados reais na API, utiliza; senão, usa o catálogo canônico da imagem 1)
-  const proposals = useMemo(() => {
-    if (apiProposals.length > 0) return apiProposals;
-    return CANONICAL_PROPOSALS;
-  }, [apiProposals]);
+  // Somente dados reais vindos da API. Nunca usar propostas de demonstração.
+  const proposals = apiProposals;
 
   const selected = proposals.find((proposal) => proposal.id === selectedId);
   const showingDetail = Boolean(selectedId) || screen === 'compare';
@@ -412,12 +273,9 @@ export function MarketplaceProposalsWorkspace() {
     setError('');
     try {
       const response = await marketplaceProposalsApi.list();
-      if (response.proposals && response.proposals.length > 0) {
-        setApiProposals(response.proposals);
-      }
+      setApiProposals(response.proposals ?? []);
     } catch {
-      // Falha graciosa mantendo catálogo canônico para não quebrar UI
-      setError('');
+      setError('Não foi possível carregar suas propostas. Tente novamente.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -480,10 +338,40 @@ export function MarketplaceProposalsWorkspace() {
     navigate(proposal.id, proposal.status === 'accepted' ? 'project' : 'summary');
   }
 
+  useEffect(() => {
+    if (!compareNotice) return;
+    const timer = setTimeout(() => setCompareNotice(''), 3500);
+    return () => clearTimeout(timer);
+  }, [compareNotice]);
+
+  function handleFilterChange(newFilter: Filter) {
+    setFilter(newFilter);
+    const query = new URLSearchParams(params.toString());
+    if (newFilter !== 'all') {
+      query.set('tab', newFilter);
+    } else {
+      query.delete('tab');
+    }
+    const search = query.toString();
+    router.replace(pathname + (search ? '?' + search : ''), { scroll: false });
+  }
+
   function toggleCompare(id: number) {
-    setCompareIds((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id].slice(0, 3)
-    );
+    const target = proposals.find((p) => p.id === id);
+    if (!target || !isProposalReceived(target)) {
+      setCompareNotice('Disponível apenas quando a proposta for recebida.');
+      return;
+    }
+    setCompareIds((current) => {
+      if (current.includes(id)) {
+        return current.filter((item) => item !== id);
+      }
+      if (current.length >= 3) {
+        setCompareNotice('Você pode comparar até 3 propostas.');
+        return current;
+      }
+      return [...current, id];
+    });
   }
 
   async function decide(kind: 'accept' | 'decline') {
@@ -516,15 +404,12 @@ export function MarketplaceProposalsWorkspace() {
     }
   }
 
-  // Estatísticas calculadas ou com valores de referência (3 ativas, 2 recebidas, 1 aguardando)
+  // Estatísticas calculadas exclusivamente a partir dos status reais
   const stats = useMemo(() => {
-    const active = proposals.filter((p) => p.status !== 'cancelled' && p.status !== 'declined').length;
-    const received = proposals.filter((p) => p.status === 'sent' || Boolean(p.version)).length;
-    const pending = proposals.filter((p) => p.status === 'draft' || p.status === 'pending').length;
     return {
-      active: active || 3,
-      received: received || 2,
-      pending: pending || 1,
+      active: proposals.filter(isProposalActive).length,
+      received: proposals.filter(isProposalReceived).length,
+      pending: proposals.filter(isProposalAwaiting).length,
     };
   }, [proposals]);
 
@@ -538,9 +423,9 @@ export function MarketplaceProposalsWorkspace() {
     return proposals
       .filter((proposal) => {
         if (filter === 'all') return true;
-        if (filter === 'active') return proposal.status !== 'cancelled' && proposal.status !== 'declined';
-        if (filter === 'received') return proposal.status === 'sent' || Boolean(proposal.version);
-        if (filter === 'completed') return proposal.status === 'accepted' || isProjectComplete(proposal.project);
+        if (filter === 'active') return isProposalActive(proposal);
+        if (filter === 'received') return isProposalReceived(proposal);
+        if (filter === 'completed') return isProposalCompleted(proposal);
         return true;
       })
       .filter((proposal) => {
@@ -590,7 +475,7 @@ export function MarketplaceProposalsWorkspace() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-2 sm:px-4 lg:px-6 pb-12 pt-1 text-slate-900">
+    <div className="mx-auto w-full max-w-[1240px] px-2 sm:px-4 lg:px-6 pb-12 pt-1 text-slate-900">
       {/* ── HEADER DA PÁGINA ────────────────────────────────────────── */}
       <header
         className={cn(
@@ -806,15 +691,63 @@ export function MarketplaceProposalsWorkspace() {
           )}
         </section>
       ) : (
-        /* ── VISUALIZAÇÃO PRINCIPAL DE PROPOSTAS (IDÊNTICA À IMAGEM 1) ── */
+        /* ── VISUALIZAÇÃO PRINCIPAL DE PROPOSTAS ── */
         <main className="space-y-6">
-          {/* ── 3 CARDS DE KPIS / STATUS ──────────────────────────────── */}
+          {error && (
+            <div
+              role="alert"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs sm:text-sm font-medium text-red-700"
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                <span>{error}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void load()}
+                className="rounded-xl border-red-300 bg-white text-xs font-semibold text-red-700 hover:bg-red-50"
+              >
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+
+          {compareNotice && (
+            <div
+              role="status"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs sm:text-sm font-medium text-amber-800"
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                <span>{compareNotice}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCompareNotice('')}
+                className="text-xs font-bold text-amber-700 hover:text-amber-900"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* ── 3 CARDS DE KPIS / STATUS (CLICÁVEIS) ───────────────────── */}
           <section
             aria-label="Resumo de status"
             className="grid grid-cols-1 sm:grid-cols-3 gap-4"
           >
             {/* Card 1: Ativas */}
-            <div className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-none">
+            <button
+              type="button"
+              onClick={() => handleFilterChange('active')}
+              className={cn(
+                'flex items-center gap-4 rounded-2xl border bg-white p-4 text-left transition-all hover:border-slate-300 hover:shadow-xs',
+                filter === 'active'
+                  ? 'border-blue-600 ring-2 ring-blue-500/20 shadow-xs'
+                  : 'border-slate-200/90'
+              )}
+            >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50">
                 <FileText className="h-6 w-6 text-blue-600 stroke-[1.8]" />
               </div>
@@ -824,10 +757,19 @@ export function MarketplaceProposalsWorkspace() {
                   {stats.active}
                 </span>
               </div>
-            </div>
+            </button>
 
             {/* Card 2: Recebidas */}
-            <div className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-none">
+            <button
+              type="button"
+              onClick={() => handleFilterChange('received')}
+              className={cn(
+                'flex items-center gap-4 rounded-2xl border bg-white p-4 text-left transition-all hover:border-slate-300 hover:shadow-xs',
+                filter === 'received'
+                  ? 'border-emerald-600 ring-2 ring-emerald-500/20 shadow-xs'
+                  : 'border-slate-200/90'
+              )}
+            >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50">
                 <MessageSquare className="h-6 w-6 text-emerald-600 stroke-[1.8]" />
               </div>
@@ -837,10 +779,14 @@ export function MarketplaceProposalsWorkspace() {
                   {stats.received}
                 </span>
               </div>
-            </div>
+            </button>
 
             {/* Card 3: Aguardando retorno */}
-            <div className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-none">
+            <button
+              type="button"
+              onClick={() => handleFilterChange('active')}
+              className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-4 text-left transition-all hover:border-slate-300 hover:shadow-xs"
+            >
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-50">
                 <Clock className="h-6 w-6 text-amber-500 stroke-[1.8]" />
               </div>
@@ -850,10 +796,10 @@ export function MarketplaceProposalsWorkspace() {
                   {stats.pending}
                 </span>
               </div>
-            </div>
+            </button>
           </section>
 
-          {/* ── ABAS EM PÍLULA (SEGMENTED CONTROL) ─────────────────────── */}
+          {/* ── ABAS EM PÍLULA (SEGMENTED CONTROL COM URL SYNC) ────────── */}
           <div className="flex items-center justify-between sm:justify-start gap-1 p-1 rounded-full border border-slate-200/80 bg-white overflow-x-auto max-w-full">
             {filterTabs.map((tab) => {
               const isActive = filter === tab.id;
@@ -861,7 +807,7 @@ export function MarketplaceProposalsWorkspace() {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setFilter(tab.id)}
+                  onClick={() => handleFilterChange(tab.id)}
                   className={cn(
                     'px-6 sm:px-8 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap',
                     isActive
@@ -1048,40 +994,51 @@ export function MarketplaceProposalsWorkspace() {
               </table>
             </div>
           ) : (
-            /* Modo Cards Horizontais (Idêntico à Imagem 1) */
+            /* Modo Cards Horizontais */
             <div className="space-y-4">
               {filteredProposals.map((proposal) => {
-                const isSentOrReady = proposal.status === 'sent' || Boolean(proposal.version);
-                const isUnderAnalysis = proposal.status === 'draft';
-                const isPending = proposal.status === 'pending';
+                const isSentOrReady = isProposalReceived(proposal);
+                const isUnderAnalysis = proposal.status === 'draft' || proposal.status === 'under_review';
+                const isPending = isProposalAwaiting(proposal);
 
-                // Dados técnicos
-                const power =
-                  getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'potencia']) ||
-                  (proposal.version ? '6,2 kWp' : null);
-                const generation =
-                  getProposalRawTerm(proposal, ['monthly_generation', 'geracao']) ||
-                  (proposal.version ? '960 kWh/mês' : null);
+                // Dados técnicos reais (sem inventar fallbacks fictícios)
+                const power = getProposalRawTerm(proposal, [
+                  'system_power',
+                  'power_kwp',
+                  'potencia',
+                  'installed_power',
+                ]);
+                const generation = getProposalRawTerm(proposal, [
+                  'monthly_generation',
+                  'geracao',
+                  'generation_kwh',
+                ]);
                 const price = getProposalDisplayPrice(proposal);
-                const deadline =
-                  getProposalRawTerm(proposal, ['installation_deadline', 'prazo']) ||
-                  (proposal.version ? '30 dias' : null);
+                const deadline = getProposalRawTerm(proposal, [
+                  'installation_deadline',
+                  'prazo',
+                  'installation_time',
+                ]);
 
-                const hasMetrics = Boolean(power || generation || price.isAvailable || deadline);
+                const hasMetrics = isSentOrReady && Boolean(power || generation || price.isAvailable || deadline);
 
                 // Configuração de Status e Data
                 let statusBadgeText = 'Aguardando envio';
                 let statusBadgeColor = 'bg-amber-50 text-amber-700 border-amber-200/40';
                 let statusDotColor = 'bg-amber-500';
                 let dateIcon = <Clock className="h-3.5 w-3.5 text-slate-400" />;
-                let dateText = 'Atualizado há 2h';
+                const updRel = formatRelativeDay(proposal.created_at);
+                let dateText = updRel === 'hoje' ? 'Atualizado hoje' : updRel ? `Atualizado em ${updRel}` : 'Atualizado';
 
                 if (isSentOrReady) {
                   statusBadgeText = 'Proposta recebida';
                   statusBadgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/40';
                   statusDotColor = 'bg-emerald-500';
                   dateIcon = <Calendar className="h-3.5 w-3.5 text-slate-400" />;
-                  dateText = 'Recebida hoje';
+                  const pubRel = formatRelativeDay(
+                    proposal.published_at || proposal.version?.published_at || proposal.created_at
+                  );
+                  dateText = pubRel === 'hoje' ? 'Recebida hoje' : pubRel ? `Recebida em ${pubRel}` : 'Recebida';
                 } else if (isUnderAnalysis) {
                   statusBadgeText = 'Em análise';
                   statusBadgeColor = 'bg-blue-50 text-blue-700 border-blue-200/40';
@@ -1096,13 +1053,22 @@ export function MarketplaceProposalsWorkspace() {
 
                 if (isSentOrReady) {
                   detailIcon = <Grid className="h-3.5 w-3.5 text-blue-600" />;
-                  detailText = proposal.version?.summary || 'Estimativa: 6,2 kWp • 14 módulos';
+                  detailText =
+                    proposal.version?.summary ||
+                    (proposal.version
+                      ? `Versão ${proposal.version.number} disponível`
+                      : 'Proposta disponível para análise');
                 } else if (isUnderAnalysis) {
                   detailIcon = <FileText className="h-3.5 w-3.5 text-slate-400" />;
                   detailText = 'Solicitação enviada com sucesso';
                 }
 
                 const isComparing = compareIds.includes(proposal.id);
+                const solutionLabel =
+                  getProposalSolutionLabel(proposal) ||
+                  proposal.request?.project_profile ||
+                  'Sistema solar';
+                const location = getProposalLocation(proposal);
 
                 return (
                   <article
@@ -1119,12 +1085,18 @@ export function MarketplaceProposalsWorkspace() {
 
                         {/* Textos da Empresa */}
                         <div className="min-w-0">
-                          <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                            {proposal.company.name}
-                          </h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                              {proposal.company.name}
+                            </h3>
+                            {proposal.reference && (
+                              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-mono font-medium text-slate-600">
+                                #{proposal.reference}
+                              </span>
+                            )}
+                          </div>
                           <p className="mt-0.5 text-xs text-slate-500 font-medium">
-                            {proposal.request?.project_profile || 'Sistema residencial'} •{' '}
-                            {getProposalLocation(proposal)}
+                            {solutionLabel} • {location}
                           </p>
                           <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-600 font-medium">
                             {detailIcon}
@@ -1237,9 +1209,12 @@ export function MarketplaceProposalsWorkspace() {
                         <Button
                           variant="outline"
                           aria-label={'Comparar proposta de ' + proposal.company.name}
+                          disabled={!isSentOrReady}
+                          title={!isSentOrReady ? 'Disponível quando a proposta for recebida' : undefined}
                           onClick={() => toggleCompare(proposal.id)}
                           className={cn(
                             'h-9 gap-1.5 rounded-xl text-xs sm:text-sm font-semibold px-3.5 transition-colors',
+                            !isSentOrReady && 'opacity-50 cursor-not-allowed hover:bg-transparent',
                             isComparing
                               ? 'border-blue-600 bg-blue-50 text-blue-700'
                               : 'border-slate-200 text-blue-600 hover:bg-slate-50'
@@ -1284,8 +1259,8 @@ export function MarketplaceProposalsWorkspace() {
             </div>
           )}
 
-          {/* Barra flutuante de comparação quando 2 ou mais propostas estiverem selecionadas */}
-          {compareIds.length >= 2 && (
+          {/* Barra flutuante de comparação quando 1 ou mais propostas estiverem selecionadas */}
+          {compareIds.length >= 1 && (
             <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-2xl border border-slate-200 bg-white/95 p-3.5 shadow-2xl backdrop-blur-md flex items-center gap-4">
               <div className="min-w-0">
                 <p className="text-xs font-bold text-slate-900">
@@ -1293,20 +1268,31 @@ export function MarketplaceProposalsWorkspace() {
                 </p>
                 <p className="text-[11px] text-slate-500">Selecione de 2 a 3 propostas.</p>
               </div>
-              <Button
-                size="sm"
-                className="font-semibold gap-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
-                onClick={() => {
-                  const query = new URLSearchParams(params.toString());
-                  query.delete('proposal');
-                  query.set('view', 'compare');
-                  query.set('compare', compareIds.join(','));
-                  router.push(pathname + '?' + query.toString(), { scroll: false });
-                }}
-              >
-                <GitCompareArrows className="h-4 w-4" />
-                <span>Abrir comparação</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  disabled={compareIds.length < 2}
+                  className="font-semibold gap-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => {
+                    const query = new URLSearchParams(params.toString());
+                    query.delete('proposal');
+                    query.set('view', 'compare');
+                    query.set('compare', compareIds.join(','));
+                    router.push(pathname + '?' + query.toString(), { scroll: false });
+                  }}
+                >
+                  <GitCompareArrows className="h-4 w-4" />
+                  <span>Abrir comparação</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setCompareIds([])}
+                  className="rounded-xl px-2 text-xs text-slate-500 hover:text-slate-800"
+                >
+                  Limpar
+                </Button>
+              </div>
             </div>
           )}
         </main>
