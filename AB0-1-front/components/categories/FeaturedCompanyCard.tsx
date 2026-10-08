@@ -20,9 +20,8 @@ interface FeaturedCompanyCardProps {
 export default function FeaturedCompanyCard({
   company,
   category,
-  isFirst = false,
+  isFirst: _isFirst = false,
 }: FeaturedCompanyCardProps) {
-  const showFeaturedBadge = isFirst && company.has_paid_plan === true;
   const canRequestQuote = canUsePaidConversion(company, 'quote');
   const isVerified = Boolean(
     company.verified || (company as any).trust?.verification_status === 'verified'
@@ -59,24 +58,12 @@ export default function FeaturedCompanyCard({
 
   return (
     <article
-      className={cn(
-        'relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 h-full',
-        showFeaturedBadge && 'border-amber-200 bg-gradient-to-b from-amber-50/10 to-white'
-      )}
+      className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 h-full"
     >
       {/* Compare Button */}
       <div className="absolute top-3 right-3 z-20">
         <ComparisonToggleButton company={company as any} variant="floating" size="sm" />
       </div>
-
-      {/* O destaque comercial só pode ser exibido para empresas com plano pago. */}
-      {showFeaturedBadge && (
-        <div className="absolute left-0 top-0 overflow-hidden w-24 h-24 pointer-events-none z-10">
-          <div className="absolute transform -rotate-45 bg-amber-500 text-white font-extrabold text-[9px] uppercase tracking-widest text-center py-1.5 w-[140px] -left-[35px] top-[22px] shadow-sm">
-            Destaque
-          </div>
-        </div>
-      )}
 
       <div>
         {/* Header: Logo + Name & Verification */}

@@ -30,14 +30,14 @@ const buildCompany = (hasPaidPlan: boolean): Company =>
   }) as Company;
 
 describe('FeaturedCompanyCard', () => {
-  it('exibe o selo Destaque para a primeira empresa quando ela possui plano pago', () => {
+  it('nao exibe a faixa automatica Destaque para empresa com plano pago e exibe CTA de orcamento', () => {
     render(<FeaturedCompanyCard company={buildCompany(true)} category="solar" isFirst />);
 
-    expect(screen.getByText('Destaque')).toBeInTheDocument();
+    expect(screen.queryByText('Destaque')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Solicitar orçamento' })).toBeInTheDocument();
   });
 
-  it('nao exibe o selo Destaque para empresa sem plano pago', () => {
+  it('nao exibe a faixa Destaque nem CTA de orcamento para empresa sem plano pago', () => {
     render(<FeaturedCompanyCard company={buildCompany(false)} category="solar" isFirst />);
 
     expect(screen.queryByText('Destaque')).not.toBeInTheDocument();

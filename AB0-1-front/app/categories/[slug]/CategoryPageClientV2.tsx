@@ -325,52 +325,49 @@ export default function CategoryPageClient({
               hasBanners ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "grid-cols-1"
             )}>
               <div className="min-w-0 space-y-12">
-                {/* 🏆 Section 1: Featured Companies (Empresas em Destaque) */}
-                <section className="space-y-4">
-                  <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
-                    <div>
-                      <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                        Empresas em destaque
-                      </h2>
-                    </div>
-                    <Link
-                      href="/categories"
-                      className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1"
-                    >
-                      Ver todas as empresas em destaque →
-                    </Link>
-                  </div>
+                {/* 🏆 Section 1: Featured Companies (Empresas em Destaque) — Apenas se houver empresas patrocinadas/destaque autorizadas */}
+                {(() => {
+                  const featuredCompanies = initialCompanies
+                    .filter((c) => {
+                      const sponsoredCompany = c as Company & { sponsored?: boolean };
+                      return (
+                        sponsoredCompany.sponsored ||
+                        initialBanners.some((b) => b.company_id === c.id)
+                      );
+                    })
+                    .slice(0, 4);
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
-                    {(initialCompanies
-                      .filter((c) => {
-                        const sponsoredCompany = c as Company & { sponsored?: boolean };
-                        return (
-                          sponsoredCompany.sponsored ||
-                          initialBanners.some((b) => b.company_id === c.id)
-                        );
-                      })
-                      .slice(0, 4).length > 0
-                      ? initialCompanies
-                          .filter((c) => {
-                            const sponsoredCompany = c as Company & { sponsored?: boolean };
-                            return (
-                              sponsoredCompany.sponsored ||
-                              initialBanners.some((b) => b.company_id === c.id)
-                            );
-                          })
-                          .slice(0, 4)
-                      : initialCompanies.slice(0, 4)
-                    ).map((company, index) => (
-                      <FeaturedCompanyCard
-                        key={company.id}
-                        company={company}
-                        category={slug}
-                        isFirst={index === 0}
-                      />
-                    ))}
-                  </div>
-                </section>
+                  if (featuredCompanies.length === 0) return null;
+
+                  return (
+                    <section className="space-y-4">
+                      <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
+                        <div>
+                          <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                            Empresas em destaque
+                          </h2>
+                        </div>
+                        <Link
+                          href="/categories"
+                          className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1"
+                        >
+                          Ver todas as empresas em destaque →
+                        </Link>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
+                        {featuredCompanies.map((company, index) => (
+                          <FeaturedCompanyCard
+                            key={company.id}
+                            company={company}
+                            category={slug}
+                            isFirst={index === 0}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })()}
 
                 {/* Toolbar & Listing Table */}
                 <div className="space-y-6">

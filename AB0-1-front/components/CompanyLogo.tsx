@@ -16,6 +16,7 @@ interface CompanyLogoProps {
   priority?: boolean;
   badges?: Array<{ image_url?: string | null; name?: string | null }> | null;
   verifiedBadgeUrl?: string | null;
+  showAchievementBadge?: boolean;
 }
 
 export function CompanyLogo({
@@ -28,6 +29,7 @@ export function CompanyLogo({
   priority = false,
   badges,
   verifiedBadgeUrl,
+  showAchievementBadge = false,
 }: CompanyLogoProps) {
   const [error, setError] = useState(false);
 
@@ -99,7 +101,7 @@ export function CompanyLogo({
         className
       )}
     >
-      {badgeImageUrl && !badgeError && (
+      {showAchievementBadge && badgeImageUrl && !badgeError && (
         <div
           data-testid="company-achievement-badge"
           className={cn(

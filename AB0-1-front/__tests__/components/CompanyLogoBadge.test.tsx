@@ -19,7 +19,7 @@ jest.mock('next/image', () => ({
 }));
 
 describe('CompanyLogo', () => {
-  it('exibe o primeiro selo com imagem associado à empresa', () => {
+  it('exibe o primeiro selo com imagem associado à empresa quando showAchievementBadge e true', () => {
     render(
       <CompanyLogo
         name="GoodWe Brasil"
@@ -28,6 +28,7 @@ describe('CompanyLogo', () => {
           { name: 'Selo sem imagem', image_url: null },
           { name: 'Top Brand 2026', image_url: '/images/top-brand.png' },
         ]}
+        showAchievementBadge={true}
       />
     );
 
@@ -38,12 +39,25 @@ describe('CompanyLogo', () => {
     expect(screen.getByRole('img', { name: 'Top Brand 2026' })).toBeInTheDocument();
   });
 
+  it('não exibe selo sobreposto por padrão (showAchievementBadge=false)', () => {
+    render(
+      <CompanyLogo
+        name="GoodWe Brasil"
+        logoUrl="/images/goodwe.png"
+        badges={[{ name: 'Top Brand 2026', image_url: '/images/top-brand.png' }]}
+      />
+    );
+
+    expect(screen.queryByTestId('company-achievement-badge')).not.toBeInTheDocument();
+  });
+
   it('não cria selo quando a empresa não possui selo com imagem', () => {
     render(
       <CompanyLogo
         name="Empresa sem selo"
         logoUrl="/images/company.png"
         badges={[{ name: 'Selo sem imagem', image_url: null }]}
+        showAchievementBadge={true}
       />
     );
 
