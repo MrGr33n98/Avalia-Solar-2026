@@ -34,20 +34,20 @@ export function CompanyIdentityLine({
   );
 
   return (
-    <div className={cn("flex min-w-0 items-center gap-1.5", className)}>
+    <div className={cn("inline-flex max-w-full items-center gap-1.5 min-w-0", className)}>
       {href ? (
-        <Link href={href} className="min-w-0 flex-1 overflow-hidden focus:outline-none group">
+        <Link href={href} className="min-w-0 shrink overflow-hidden focus:outline-none group">
           {NameComponent}
         </Link>
       ) : (
-        <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="min-w-0 shrink overflow-hidden">
           {NameComponent}
         </div>
       )}
       
       {children}
       
-      {verified && <CompanyVerifiedBadge className={badgeClassName} />}
+      {verified && <CompanyVerifiedBadge className={cn("shrink-0", badgeClassName)} />}
       
       {sponsored && (
         <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 border border-amber-200">

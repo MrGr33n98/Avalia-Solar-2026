@@ -60,34 +60,39 @@ export default function FeaturedCompanyCard({
     <article
       className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 h-full"
     >
-      {/* Compare Button */}
-      <div className="absolute top-3 right-3 z-20">
-        <ComparisonToggleButton company={company as any} variant="floating" size="sm" />
-      </div>
-
       <div>
-        {/* Header: Logo + Name & Verification */}
-        <div className="flex items-start gap-4 mb-4">
-          <Link href={href} className="shrink-0">
-            <CompanyLogo
-              logoUrl={company.logo_url}
-              name={company.name}
-              size="md"
-              badges={company.badges}
-              verifiedBadgeUrl={company.verified_badge_image_url || company.verified_badge_url}
-              className="border border-slate-200 shadow-sm bg-white p-1 rounded-xl"
-            />
-          </Link>
-          <div className="min-w-0 flex-1 pt-1 pr-8">
-            <CompanyIdentityLine
-              name={company.name}
-              href={href}
-              verified={isVerified}
-              nameClassName="font-bold text-slate-900 leading-tight hover:text-blue-700 transition-colors text-sm sm:text-base"
-            />
-            {location && (
-              <span className="text-[11px] font-medium text-slate-500 block mt-1">{location}</span>
-            )}
+        {/* Header: Region A (Logo) + Region B (Identity) + Region C (Comparison) */}
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            {/* Region A — Logotipo */}
+            <Link href={href} className="shrink-0">
+              <CompanyLogo
+                logoUrl={company.logo_url}
+                name={company.name}
+                size="md"
+                badges={company.badges}
+                verifiedBadgeUrl={company.verified_badge_image_url || company.verified_badge_url}
+                className="border border-slate-200 shadow-sm bg-white p-1 rounded-xl"
+              />
+            </Link>
+
+            {/* Region B — Identidade */}
+            <div className="min-w-0 flex-1 pt-0.5">
+              <CompanyIdentityLine
+                name={company.name}
+                href={href}
+                verified={isVerified}
+                nameClassName="font-bold text-slate-900 leading-tight hover:text-blue-700 transition-colors text-sm sm:text-base"
+              />
+              {location && (
+                <span className="text-[11px] font-medium text-slate-500 block mt-1">{location}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Region C — Comparação (Coluna dedicada no fluxo do layout) */}
+          <div className="shrink-0 pt-0.5">
+            <ComparisonToggleButton company={company as any} variant="floating" size="sm" />
           </div>
         </div>
 
