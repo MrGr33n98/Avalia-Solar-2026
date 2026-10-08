@@ -105,7 +105,7 @@ export default async function IntentDashboardPage() {
             <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-lg">
               <h3 className="font-bold text-lg mb-2">Desbloqueie o Radar Completo</h3>
               <p className="text-blue-100 text-sm mb-4">
-                Veja exatamente QUAIS empresas estão gerando estes sinais fazendo upgrade para o PRO.
+                Veja exatamente QUAIS empresas estão gerando estes sinais ativando o Selo Verificado.
               </p>
               <button className="w-full bg-white text-blue-800 font-bold py-2 rounded shadow hover:bg-gray-50">
                 Ver Planos

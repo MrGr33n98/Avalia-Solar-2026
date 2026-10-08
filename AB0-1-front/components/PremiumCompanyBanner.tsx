@@ -95,9 +95,9 @@ export default function PremiumCompanyBanner({
 
             {/* Premium Badge */}
             <div className="absolute top-4 left-4 z-10">
-              <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0 shadow-lg text-xs font-black uppercase tracking-wider">
+              <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-lg text-xs font-black uppercase tracking-wider">
                 <Sparkles className="h-3 w-3 mr-1" />
-                Parceiro PRO
+                Empresa Verificada
               </Badge>
             </div>
 
@@ -228,8 +228,8 @@ export default function PremiumCompanyBanner({
                     </span>
                   </div>
                   
-                  <div className="text-violet-600 font-bold uppercase tracking-wider">
-                    Parceiro PRO
+                  <div className="text-blue-600 font-bold uppercase tracking-wider">
+                    Empresa Verificada
                   </div>
                 </div>
               </div>

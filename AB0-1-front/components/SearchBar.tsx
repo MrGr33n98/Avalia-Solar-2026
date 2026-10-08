@@ -25,9 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import debounce from 'lodash/debounce';
 import { track } from '@/lib/analytics/lazy';
 import { buildArticleLink } from '@/lib/blog/article-links';
-import PremiumBadge from '@/components/PremiumBadge';
 import VerificationBadge from '@/components/company/VerificationBadge';
-import CommercialPlanBadge from '@/components/company/CommercialPlanBadge';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -683,13 +681,6 @@ function CompanyResultItem({
             </h4>
             {company.verified && (
               <VerificationBadge verified={company.verified} className="h-5" />
-            )}
-            {(company.commercial_status?.paid || company.has_paid_plan) && (
-              <CommercialPlanBadge
-                commercialStatus={company.commercial_status}
-                hasPaidPlan={company.has_paid_plan}
-                className="h-5"
-              />
             )}
           </div>
           

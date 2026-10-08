@@ -27,7 +27,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
           <View style={styles.headerRight}>
             <View style={styles.statusBadge}>
-              <ThemedText style={styles.statusText}>Plano PRO</ThemedText>
+              <ThemedText style={styles.statusText}>Verificada</ThemedText>
             </View>
           </View>
         </View>

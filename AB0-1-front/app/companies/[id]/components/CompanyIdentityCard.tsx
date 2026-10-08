@@ -11,7 +11,7 @@ import { getFullImageUrl } from '@/utils/image';
 import { useFavorites } from '@/hooks/useFavorites';
 import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
-import PremiumHighlightBadge from './PremiumHighlightBadge';
+
 import CompanyViewCounter from './CompanyViewCounter';
 
 interface CompanyIdentityCardProps {
@@ -203,7 +203,7 @@ export default function CompanyIdentityCard({
             )}
           </div>
 
-          {/* Header: Nome + Verificado + Plano Comercial */}
+          {/* Header: Nome + Verificado */}
           <div className="min-w-0 flex-1 pt-1 sm:pt-2">
             <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
               <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
@@ -212,7 +212,6 @@ export default function CompanyIdentityCard({
               {isVerified && (
                 <BadgeCheck className="h-4.5 w-4.5 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
               )}
-              <PremiumHighlightBadge company={company} />
             </div>
           </div>
         </div>

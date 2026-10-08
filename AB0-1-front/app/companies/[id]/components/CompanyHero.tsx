@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import WhatsappButton from '@/components/WhatsappButton';
 import { Company } from '@/lib/api';
 import VerificationBadge from '@/components/company/VerificationBadge';
-import CommercialPlanBadge from '@/components/company/CommercialPlanBadge';
+
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
@@ -328,7 +328,7 @@ export default function CompanyHero({
 
                 {/* Informações da empresa */}
                 <div className="min-w-0 flex-1 pt-1 sm:pt-2">
-                  {/* Nome + verificado + plano (mobile/desktop, inline) */}
+                  {/* Nome + verificado (mobile/desktop, inline) */}
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <h1 className="min-w-0 line-clamp-2 text-[22px] font-bold leading-tight tracking-[-0.02em] text-slate-950 sm:text-2xl">
                       {company.name}
@@ -336,10 +336,6 @@ export default function CompanyHero({
                     <VerificationBadge
                       verification={company.identity?.verification}
                       verified={company.verified}
-                    />
-                    <CommercialPlanBadge
-                      commercialStatus={company.commercial_status}
-                      hasPaidPlan={company.has_paid_plan}
                     />
                   </div>
 

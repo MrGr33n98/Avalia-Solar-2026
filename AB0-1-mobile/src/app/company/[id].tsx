@@ -292,32 +292,12 @@ export default function CompanyDetailScreen() {
 
         {/* ── CABEÇALHO INFO ───────────────────────────────────────────── */}
         <View style={[styles.headerInfo, { marginTop: LOGO_OFFSET + 8 }]}>
-          {/* Nome + verificado + plano */}
+          {/* Nome + verificado */}
           <View style={styles.nameRow}>
             <ThemedText type="subtitle" style={styles.companyName} numberOfLines={2}>
               {company.name}
             </ThemedText>
             {isVerified && <ShieldCheck size={16} color="#2563EB" style={{ marginLeft: 6 }} />}
-            {commercialTier && (
-              <View
-                style={[
-                  styles.planBadge,
-                  {
-                    backgroundColor:
-                      commercialTier === 'ENTERPRISE' ? '#0F172A' : '#EDE9FE',
-                  },
-                ]}
-              >
-                <ThemedText
-                  style={[
-                    styles.planBadgeText,
-                    { color: commercialTier === 'ENTERPRISE' ? '#F8FAFC' : '#6D28D9' },
-                  ]}
-                >
-                  {commercialTier}
-                </ThemedText>
-              </View>
-            )}
           </View>
 
           {/* Rating inline */}

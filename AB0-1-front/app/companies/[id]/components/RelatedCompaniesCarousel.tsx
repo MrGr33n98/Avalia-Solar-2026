@@ -88,8 +88,8 @@ export default function RelatedCompaniesCarousel({
               </p>
             </div>
           </div>
-          <span className="rounded-full bg-violet-100/80 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-violet-700 border border-violet-200 shrink-0 self-start sm:self-center">
-            Plano PRO
+          <span className="rounded-full bg-blue-100/80 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-blue-700 border border-blue-200 shrink-0 self-start sm:self-center">
+            Verificada
           </span>
         </div>
       </Card>

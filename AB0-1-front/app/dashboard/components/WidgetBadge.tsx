@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Star, ExternalLink, ShieldCheck } from 'lucide-react';
-import PremiumBadge from '@/components/PremiumBadge';
+
 
 interface CompanyData {
   name: string;

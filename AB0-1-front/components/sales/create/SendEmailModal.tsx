@@ -43,7 +43,7 @@ const DEFAULT_TEMPLATES = [
   {
     id: 'first_contact',
     name: 'Primeiro Contato — Selo Verificado Avalia Solar',
-    subject: 'Oportunidade de Selo Verificado e Perfil PRO no Avalia Solar',
+    subject: 'Oportunidade de Selo Verificado no Avalia Solar',
     body: `Olá {{contact_name}},
 
 Verifiquei o perfil da {{company_name}} no Avalia Solar e notei a excelente reputação e relevância no mercado de energia solar.

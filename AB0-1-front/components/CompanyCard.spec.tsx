@@ -66,11 +66,11 @@ describe('CompanyCard V2 — Swiss Enterprise Discovery Card', () => {
     },
   };
 
-  it('renderiza card PRO com orçamento habilitado (US-003, US-004)', () => {
+  it('renderiza card com selo de verificação e orçamento habilitado (US-003, US-004)', () => {
     render(<CompanyCard company={baseCompany} />);
 
     expect(screen.getByText('WEG Solar')).toBeInTheDocument();
-    expect(screen.getByText('PRO')).toBeInTheDocument();
+    expect(screen.queryByText('PRO')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Empresa verificada')).toBeInTheDocument();
     expect(screen.getByText('4.5')).toBeInTheDocument();
     expect(screen.getByText('(18)')).toBeInTheDocument();

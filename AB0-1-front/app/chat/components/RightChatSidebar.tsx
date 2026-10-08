@@ -189,7 +189,7 @@ export function RightChatSidebar({
         <div className="rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 p-4 text-white shadow-lg">
           <div className="flex items-center gap-1.5 text-xs font-bold text-amber-100 mb-1">
             <Sparkles className="h-4 w-4 text-white fill-white" />
-            <span>Selo Ouro Pro</span>
+            <span>Selo Verificado</span>
           </div>
           <h4 className="text-xs font-bold leading-snug">Empresas com Selo Verificado recebem 4x mais leads!</h4>
           <p className="mt-1 text-[11px] text-amber-100 leading-relaxed">
@@ -199,7 +199,7 @@ export function RightChatSidebar({
             size="sm"
             className="mt-3 w-full rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md"
           >
-            Ativar Selo Pro
+            Ativar Selo Verificado
           </Button>
         </div>
       )}
