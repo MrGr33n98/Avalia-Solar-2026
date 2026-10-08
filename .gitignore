@@ -155,3 +155,6 @@ agent/
 !docs/product/*.md
 tmp/
 skills-lock.json
+
+# Skill/ferramenta local
+interface-design/
