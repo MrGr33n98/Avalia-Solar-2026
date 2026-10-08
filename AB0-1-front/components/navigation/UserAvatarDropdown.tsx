@@ -68,8 +68,8 @@ export function UserAvatarDropdown({
             }
           }}
           className={cn(
-            'group flex h-[44px] items-center gap-1 rounded-lg border border-brand-border bg-white p-1 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 xl:h-[40px] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10',
-            compact ? 'w-[44px] justify-center' : 'max-w-[110px]'
+            'group flex items-center gap-1.5 rounded-2xl border border-slate-200/90 bg-white p-1 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10',
+            compact ? 'h-[40px] px-1.5' : 'h-[44px] xl:h-[40px] max-w-[115px]'
           )}
         >
           {user.avatar_url ? (
@@ -79,13 +79,13 @@ export function UserAvatarDropdown({
               width={34}
               height={34}
               unoptimized
-              className="h-[34px] w-[34px] rounded-full border border-slate-200 object-cover xl:h-8 xl:w-8 dark:border-white/10"
+              className="h-8 w-8 rounded-full border border-slate-200 object-cover dark:border-white/10"
               onError={(e) => {
                 (e.currentTarget as HTMLElement).style.display = 'none';
               }}
             />
           ) : (
-            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-semibold text-emerald-700 xl:h-8 xl:w-8 dark:bg-emerald-950 dark:text-emerald-400">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
               {initialsFromName(user.name)}
             </div>
           )}
@@ -97,7 +97,7 @@ export function UserAvatarDropdown({
           >
             {user.name.split(' ')[0]}
           </span>
-          <ChevronDown className="h-3.5 w-3.5 text-slate-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
         </button>
       </PopoverTrigger>
 

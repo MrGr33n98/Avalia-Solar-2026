@@ -21,7 +21,7 @@ export function ReviewerMobileNav() {
         )}
         aria-label="Navegação do painel"
       >
-        <div className="flex min-h-16 items-center justify-around">
+        <div className="flex h-14 items-center justify-around">
           {mobileBottomNavItems.map((item) => {
             const Icon = item.icon;
             const active = isNavItemActive(pathname, item);
@@ -30,12 +30,12 @@ export function ReviewerMobileNav() {
                 key={item.id}
                 href={item.href}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 flex-1 py-2 min-w-[48px] min-h-[48px]',
-                  active ? 'text-blue-600' : 'text-slate-400'
+                  'flex flex-col items-center justify-center gap-0.5 flex-1 py-1 min-w-[48px] min-h-[44px] transition-colors',
+                  active ? 'text-slate-950 font-semibold' : 'text-slate-400 hover:text-slate-600'
                 )}
               >
-                <Icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <Icon className={cn('h-5 w-5', active ? 'stroke-[2]' : 'stroke-[1.6]')} />
+                <span className="text-[10px] leading-tight">{item.label}</span>
               </Link>
             );
           })}
@@ -44,12 +44,12 @@ export function ReviewerMobileNav() {
           <button
             onClick={() => setDrawerOpen(true)}
             className={cn(
-              'flex flex-col items-center justify-center gap-0.5 flex-1 py-2 min-w-[48px] min-h-[48px]',
-              drawerOpen ? 'text-blue-600' : 'text-slate-400'
+              'flex flex-col items-center justify-center gap-0.5 flex-1 py-1 min-w-[48px] min-h-[44px] transition-colors',
+              drawerOpen ? 'text-slate-950 font-semibold' : 'text-slate-400 hover:text-slate-600'
             )}
           >
-            <MoreHorizontal className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Mais</span>
+            <MoreHorizontal className="h-5 w-5 stroke-[1.6]" />
+            <span className="text-[10px] leading-tight">Mais</span>
           </button>
         </div>
       </nav>

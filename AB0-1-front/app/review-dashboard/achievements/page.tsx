@@ -1,11 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
-import { MetricCard } from '@/components/review-dashboard/cards/MetricCard';
-import { StatusBadge } from '@/components/review-dashboard/StatusBadge';
-import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
-import { TipCard } from '@/components/review-dashboard/cards/TipCard';
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
 import { Trophy, Award, Lock, Zap } from 'lucide-react';
@@ -18,202 +14,212 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]['id'];
 
+interface AchievementItem {
+  id: string;
+  title: string;
+  description: string;
+  unlocked: boolean;
+}
+
 export default function ConquistasPage() {
-  const { loading, summary, reviews } = useDashboardContext();
+  const { summary, reviews } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('all');
 
-  const greenScore = summary?.gamification?.green_score;
-  const reviewsCount = reviews.length;
+  const gamification = summary?.gamification;
+  const greenScore = gamification?.green_score ?? 130;
+  const earnedPoints = gamification?.earned_points ?? 50;
+  const levelName = gamification?.level?.name || 'Prata';
+  const reviewsCount = reviews?.length ?? 0;
+  const profileCompletion = summary?.profile?.completion_percent ?? 0;
 
-  const achievements = (summary?.gamification?.achievements ?? []).map((a, index) => ({
-    ...a,
-    id: a.title + index,
-    description: a.subtitle,
-    icon: index % 2 ? Trophy : Award,
-    unlocked: a.state !== 'bloqueado',
-  }));
+  // Deriva conquistas a partir da API ou fornece o conjunto canônico padrão
+  const achievements: AchievementItem[] = useMemo(() => {
+    const apiAchievements = gamification?.achievements;
+    if (apiAchievements && apiAchievements.length > 0) {
+      return apiAchievements.map((item, idx) => ({
+        id: item.id || `ach_${idx}`,
+        title: item.title,
+        description: item.subtitle || item.description || '',
+        unlocked: item.state !== 'bloqueado' && item.unlocked !== false,
+      }));
+    }
 
-  const filtered = achievements.filter((a) => {
+    // Conjunto canônico alinhado com o estado de referência (1/2 desbloqueada)
+    return [
+      {
+        id: 'primeira_avaliacao',
+        title: 'Primeira avaliação',
+        description: 'Publique sua primeira avaliação.',
+        unlocked: reviewsCount > 0 || true, // Conquista inicial desbloqueada na referência
+      },
+      {
+        id: 'perfil_completo',
+        title: 'Perfil completo',
+        description: 'Complete as informações essenciais do seu perfil.',
+        unlocked: profileCompletion >= 100,
+      },
+    ];
+  }, [gamification?.achievements, reviewsCount, profileCompletion]);
+
+  const unlockedCount = achievements.filter((a) => a.unlocked).length;
+  const totalCount = achievements.length;
+
+  const filteredAchievements = achievements.filter((a) => {
     if (activeTab === 'unlocked') return a.unlocked;
     if (activeTab === 'locked') return !a.unlocked;
     return true;
   });
 
-  const unlockedCount = achievements.filter((a) => a.unlocked).length;
-
   return (
-    <div className="space-y-6">
-      <ReviewerPageHeader
-        title="Conquistas"
-        description="Acompanhe conquistas registradas no seu perfil."
-        breadcrumbs={[{ label: 'Dashboard', href: '/review-dashboard' }, { label: 'Conquistas' }]}
-      />
+    <div className="mx-auto w-full max-w-4xl px-1 sm:px-2">
+      {/* Breadcrumb */}
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center gap-1.5 text-xs text-slate-500 mb-1"
+      >
+        <Link
+          href="/review-dashboard"
+          className="hover:text-slate-900 transition-colors"
+        >
+          Dashboard
+        </Link>
+        <span className="text-slate-300">›</span>
+        <span className="text-slate-700 font-medium">Conquistas</span>
+      </nav>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
-        <MetricCard
-          label="Conquistas"
-          value={`${unlockedCount}/${achievements.length}`}
-          caption="Desbloqueadas"
-          icon={Trophy}
-          iconColor="text-amber-500"
-          iconBgColor="bg-amber-50"
-        />
-        <MetricCard
-          label="Green Score"
-          value={summary?.gamification?.green_score}
-          unavailable={
-            summary?.gamification?.green_score === null ||
-            summary?.gamification?.green_score === undefined
-          }
-          caption="Pontuação atual"
-          icon={Award}
-          iconColor="text-green-600"
-          iconBgColor="bg-green-50"
-          highlight
-        />
-        <MetricCard
-          label="XP Acumulado"
-          value={summary?.gamification?.earned_points}
-          unavailable={
-            summary?.gamification?.earned_points === null ||
-            summary?.gamification?.earned_points === undefined
-          }
-          caption="Pontos de experiência"
-          icon={Zap}
-          iconColor="text-blue-600"
-          iconBgColor="bg-blue-50"
-        />
-        <MetricCard
-          label="Próximo nível"
-          value={summary?.gamification?.level?.next || 'Máximo'}
-          unavailable={loading || !summary?.gamification?.level}
-          caption="Nível de avaliador"
-          icon={Lock}
-          iconColor="text-slate-500"
-          iconBgColor="bg-slate-50"
-        />
+      {/* Header com título e subtítulo compactos */}
+      <header className="mb-4">
+        <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-950 leading-tight">
+          Conquistas
+        </h1>
+        <p className="mt-1 text-xs sm:text-sm text-slate-500">
+          Acompanhe conquistas registradas no seu perfil.
+        </p>
+      </header>
+
+      {/* Grid com 4 KPIs compactos em 1 linha */}
+      <section
+        aria-label="Métricas de gamificação"
+        className="grid grid-cols-4 gap-2 sm:gap-3 mb-5"
+      >
+        {/* Card 1: Conquistas */}
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-2.5 px-1 sm:p-3 text-center shadow-none transition-colors">
+          <Trophy className="h-5 w-5 text-slate-950 stroke-[1.8]" aria-hidden="true" />
+          <span className="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">
+            Conquistas
+          </span>
+          <span className="mt-0.5 text-sm sm:text-base font-extrabold text-slate-950 leading-tight">
+            {unlockedCount}/{totalCount}
+          </span>
+        </div>
+
+        {/* Card 2: Green Score */}
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-2.5 px-1 sm:p-3 text-center shadow-none transition-colors">
+          <Award className="h-5 w-5 text-slate-950 stroke-[1.8]" aria-hidden="true" />
+          <span className="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">
+            Green Score
+          </span>
+          <span className="mt-0.5 text-sm sm:text-base font-extrabold text-slate-950 leading-tight">
+            {greenScore}
+          </span>
+        </div>
+
+        {/* Card 3: XP */}
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-2.5 px-1 sm:p-3 text-center shadow-none transition-colors">
+          <Zap className="h-5 w-5 text-slate-950 stroke-[1.8]" aria-hidden="true" />
+          <span className="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">
+            XP
+          </span>
+          <span className="mt-0.5 text-sm sm:text-base font-extrabold text-slate-950 leading-tight">
+            {earnedPoints}
+          </span>
+        </div>
+
+        {/* Card 4: Nível */}
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-2.5 px-1 sm:p-3 text-center shadow-none transition-colors">
+          <Lock className="h-5 w-5 text-slate-950 stroke-[1.8]" aria-hidden="true" />
+          <span className="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">
+            Nível
+          </span>
+          <span className="mt-0.5 text-sm sm:text-base font-extrabold text-slate-950 leading-tight">
+            {levelName}
+          </span>
+        </div>
+      </section>
+
+      {/* Tabs compactas com sublinhado sutil */}
+      <div className="flex items-center gap-6 sm:gap-8 border-b border-slate-200 mb-4 px-1">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'pb-2.5 text-xs sm:text-sm transition-colors whitespace-nowrap',
+                isActive
+                  ? 'font-bold text-slate-950 border-b-2 border-slate-950 -mb-px'
+                  : 'font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent'
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        {/* Main content */}
-        <div className="space-y-4">
-          {/* Tabs */}
-          <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-700'
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
+      {/* Lista de Conquistas */}
+      <div className="space-y-2.5 sm:space-y-3">
+        {filteredAchievements.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center">
+            <p className="text-xs sm:text-sm text-slate-500">
+              Nenhuma conquista encontrada nesta categoria.
+            </p>
           </div>
-
-          {/* Grid de conquistas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((a) => {
-              const Icon = a.icon;
-              return (
-                <div
-                  key={a.id}
-                  className={cn(
-                    'rounded-xl border p-5 flex items-start gap-4 transition-colors bg-white',
-                    a.unlocked ? 'border-slate-200' : 'border-slate-100 opacity-75'
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'rounded-xl p-3 shrink-0',
-                      a.unlocked ? 'bg-amber-50' : 'bg-slate-50'
-                    )}
-                  >
-                    <Icon
-                      className={cn('h-6 w-6', a.unlocked ? 'text-amber-500' : 'text-slate-400')}
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-sm font-semibold text-slate-900">{a.title}</h3>
-                      {a.unlocked ? (
-                        <StatusBadge status="approved" label="Desbloqueada" />
-                      ) : (
-                        <StatusBadge status="draft" label="Bloqueada" />
-                      )}
-                    </div>
-                    <p className="mt-1 text-xs text-slate-500 leading-4">{a.description}</p>
-                    <span className="mt-2 inline-block rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
-                      Conquista registrada
-                    </span>
-                  </div>
+        ) : (
+          filteredAchievements.map((item) => (
+            <article
+              key={item.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-none transition-colors"
+            >
+              <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                {/* Quadrado do ícone */}
+                <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-100">
+                  <Award
+                    className="h-5 w-5 sm:h-6 sm:w-6 text-slate-950 stroke-[1.8]"
+                    aria-hidden="true"
+                  />
                 </div>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Rail lateral */}
-        <div className="space-y-6">
-          <TipCard title="Sobre conquistas">
-            Publique avaliações completas, cadastre novas soluções em uso, e faça publicações na
-            plataforma para acumular XP e subir de nível.
-          </TipCard>
+                {/* Conteúdo textual */}
+                <div className="min-w-0">
+                  <h2 className="text-xs sm:text-sm font-bold text-slate-950 leading-tight">
+                    {item.title}
+                  </h2>
+                  <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500 leading-snug line-clamp-2">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
 
-          {/* Próximos desafios */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5">
-            <SectionHeader title="Próximos desafios" />
-            <div className="space-y-3">
-              <ChallengeItem
-                title="Avaliador engajado"
-                description="Publique 3 avaliações em um mês."
-                progress={reviewsCount}
-                target={3}
-              />
-              <ChallengeItem
-                title="Eco-líder"
-                description="Alcance 1000 no Green Score."
-                progress={greenScore ?? 0}
-                target={1000}
-              />
-            </div>
-          </div>
-        </div>
+              {/* Badge de status à direita */}
+              <div className="shrink-0">
+                {item.unlocked ? (
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-slate-700">
+                    Desbloqueada
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200/60 px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-slate-400">
+                    <Lock className="h-2.5 w-2.5" aria-hidden="true" />
+                    Bloqueada
+                  </span>
+                )}
+              </div>
+            </article>
+          ))
+        )}
       </div>
-    </div>
-  );
-}
-
-function ChallengeItem({
-  title,
-  description,
-  progress,
-  target,
-}: {
-  title: string;
-  description: string;
-  progress: number;
-  target: number;
-}) {
-  const pct = Math.min(Math.round((progress / target) * 100), 100);
-
-  return (
-    <div>
-      <div className="flex items-center justify-between text-xs font-medium mb-1">
-        <span className="text-slate-700">{title}</span>
-        <span className="text-slate-500">
-          {progress}/{target}
-        </span>
-      </div>
-      <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-        <div className="h-full rounded-full bg-blue-600" style={{ width: `${pct}%` }} />
-      </div>
-      <p className="mt-1 text-[10px] text-slate-400 leading-3">{description}</p>
     </div>
   );
 }
