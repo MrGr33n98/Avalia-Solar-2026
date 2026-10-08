@@ -40,6 +40,7 @@ import {
   getProposalLocation,
   getProposalRawTerm,
   getProposalStatusTone,
+  isProposalCompleted,
   proposalChatUrl,
   proposalStatus,
   technicalFields,
@@ -199,10 +200,11 @@ export function ProposalSummary({
     '/estrutura-solar-avalia-solar.webp',
   ];
 
-  const powerVal = getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']) || '8,25 kWp';
-  const genVal = getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'estimated_generation', 'geracao']) || '960 kWh/mês';
-  const deadlineVal = getProposalRawTerm(proposal, ['installation_deadline', 'installation_time', 'prazo']) || '30 dias';
+  const powerVal = getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']);
+  const genVal = getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'estimated_generation', 'geracao']);
+  const deadlineVal = getProposalRawTerm(proposal, ['installation_deadline', 'installation_time', 'prazo']);
   const displayPrice = getProposalDisplayPrice(proposal);
+  const isCompleted = proposal.status === 'accepted' || isProposalCompleted(proposal);
 
   const mockDocuments = [
     { name: `Proposta_Comercial_${proposal.company.name.replace(/\s+/g, '_')}.pdf`, size: '1,4 MB', type: 'pdf' },
@@ -270,6 +272,17 @@ export function ProposalSummary({
               <span>Conversar com a empresa</span>
             </Link>
           </Button>
+
+          {isCompleted && (
+            <Button
+              size="sm"
+              onClick={onProject}
+              className="gap-1.5 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 px-4 shadow-2xs"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              <span>Ver projeto / Instalação</span>
+            </Button>
+          )}
 
           {(canDecide(proposal) || proposal.status === 'accepted') && (
             <Button
@@ -492,7 +505,7 @@ export function ProposalSummary({
                         Potência
                       </span>
                       <span className="mt-0.5 block text-sm font-extrabold text-foreground">
-                        {powerVal}
+                        {powerVal || 'A definir'}
                       </span>
                     </div>
 
@@ -502,7 +515,7 @@ export function ProposalSummary({
                         Geração estimada
                       </span>
                       <span className="mt-0.5 block text-sm font-extrabold text-foreground">
-                        {genVal}
+                        {genVal || 'A calcular'}
                       </span>
                     </div>
 
@@ -512,7 +525,7 @@ export function ProposalSummary({
                         Valor total
                       </span>
                       <span className="mt-0.5 block text-sm font-extrabold text-primary tabular-nums">
-                        {displayPrice.formatted}
+                        {displayPrice.isAvailable ? displayPrice.formatted : 'Sob consulta'}
                       </span>
                     </div>
 
@@ -522,14 +535,14 @@ export function ProposalSummary({
                         Prazo de instalação
                       </span>
                       <span className="mt-0.5 block text-sm font-extrabold text-foreground">
-                        {deadlineVal}
+                        {deadlineVal || 'A combinar'}
                       </span>
                     </div>
                   </div>
 
                   {/* Summary Description Paragraph */}
                   <p className="text-xs leading-relaxed text-muted-foreground bg-muted/30 p-3.5 rounded-xl border border-border/50">
-                    Projeto completo de energia solar residencial com equipamentos de alta eficiência, instalação especializada e garantia estendida.
+                    {proposal.version?.summary || 'Projeto de energia solar com equipamentos homologados, instalação técnica e acompanhamento.'}
                   </p>
 
                   {/* Tags Chips Row */}
@@ -538,19 +551,21 @@ export function ProposalSummary({
                       On-grid
                     </span>
                     <span className="rounded-full bg-muted/80 text-muted-foreground border border-border/60 px-3 py-1 text-xs font-medium">
-                      Telhado metálico
+                      {proposal.request?.project_profile || 'Residencial'}
                     </span>
-                    <span className="rounded-full bg-muted/80 text-muted-foreground border border-border/60 px-3 py-1 text-xs font-medium">
-                      Residencial
-                    </span>
+                    {getProposalLocation(proposal) && (
+                      <span className="rounded-full bg-muted/80 text-muted-foreground border border-border/60 px-3 py-1 text-xs font-medium">
+                        {getProposalLocation(proposal)}
+                      </span>
+                    )}
                     <span className="rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 px-3 py-1 text-xs font-semibold">
-                      Economia de até 95% na conta de luz
+                      Economia estimada de até 95%
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Equipamentos Principais Block (Item 9 in Image 3) */}
+              {/* Equipamentos Principais Block */}
               <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between border-b border-border/60 pb-3">
                   <h4 className="text-base font-extrabold text-foreground">Equipamentos principais</h4>
@@ -564,70 +579,49 @@ export function ProposalSummary({
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3.5 space-y-2 hover:border-primary/40 transition-colors">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                      <Zap className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-xs text-foreground">Jinko Solar 590W</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">Módulo fotovoltaico</p>
-                      <span className="mt-2 inline-block rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground">
-                        14 unidades
-                      </span>
-                    </div>
+                {proposal.version?.items && proposal.version.items.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {proposal.version.items.slice(0, 3).map((item, idx) => {
+                      const IconComp = idx === 0 ? Zap : idx === 1 ? Sparkles : Wrench;
+                      const iconColor = idx === 0 ? 'text-primary bg-primary/10' : idx === 1 ? 'text-blue-500 bg-blue-500/10' : 'text-amber-500 bg-amber-500/10';
+                      return (
+                        <div key={item.id || idx} className="rounded-xl border border-border/60 bg-muted/20 p-3.5 space-y-2 hover:border-primary/40 transition-colors">
+                          <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', iconColor)}>
+                            <IconComp className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-xs text-foreground truncate">{item.name}</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 capitalize">{item.kind || 'Componente'}</p>
+                            <span className="mt-2 inline-block rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground">
+                              {item.quantity} {item.unit || 'un'}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('equipments')}
+                            className="text-[11px] font-bold text-primary hover:underline block pt-1"
+                          >
+                            Ver detalhes
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-border/60 bg-muted/10 p-4 text-xs text-muted-foreground">
+                    <p>Equipamentos e especificações técnicas vinculadas à proposta comercial.</p>
                     <button
                       type="button"
                       onClick={() => setActiveTab('equipments')}
-                      className="text-[11px] font-bold text-primary hover:underline block pt-1"
+                      className="mt-2 font-bold text-primary hover:underline"
                     >
-                      Ver detalhes
+                      Ver especificações na aba Equipamentos →
                     </button>
                   </div>
-
-                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3.5 space-y-2 hover:border-primary/40 transition-colors">
-                    <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
-                      <Sparkles className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-xs text-foreground">Growatt MID 8KTL3-X</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">Inversor</p>
-                      <span className="mt-2 inline-block rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground">
-                        1 unidade
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('equipments')}
-                      className="text-[11px] font-bold text-primary hover:underline block pt-1"
-                    >
-                      Ver detalhes
-                    </button>
-                  </div>
-
-                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3.5 space-y-2 hover:border-primary/40 transition-colors">
-                    <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
-                      <Wrench className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-xs text-foreground">Estrutura de fixação</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">Alumínio</p>
-                      <span className="mt-2 inline-block rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground">
-                        1 conjunto
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('equipments')}
-                      className="text-[11px] font-bold text-primary hover:underline block pt-1"
-                    >
-                      Ver detalhes
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
 
-              {/* Condições e Garantias Block (Item 10 in Image 3) */}
+              {/* Condições e Garantias Block */}
               <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-4">
                 <h4 className="text-base font-extrabold text-foreground border-b border-border/60 pb-3">
                   Condições e garantias
@@ -637,7 +631,9 @@ export function ProposalSummary({
                     <Shield className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                     <div>
                       <p className="font-bold text-foreground">Garantia dos equipamentos</p>
-                      <p className="text-muted-foreground text-[11px] mt-0.5">12 anos (painéis) / 5 anos (inversor)</p>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">
+                        {getProposalRawTerm(proposal, ['equipment_warranty', 'garantia_equipamentos', 'garantia']) || 'Conforme especificação do fabricante'}
+                      </p>
                     </div>
                   </div>
 
@@ -645,7 +641,9 @@ export function ProposalSummary({
                     <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="font-bold text-foreground">Garantia de instalação</p>
-                      <p className="text-muted-foreground text-[11px] mt-0.5">2 anos</p>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">
+                        {getProposalRawTerm(proposal, ['service_warranty', 'installation_warranty', 'garantia_instalacao']) || 'Garantia de mão de obra homologada'}
+                      </p>
                     </div>
                   </div>
 
@@ -653,7 +651,9 @@ export function ProposalSummary({
                     <Clock className="h-5 w-5 text-violet-500 shrink-0 mt-0.5" />
                     <div>
                       <p className="font-bold text-foreground">Prazo de instalação</p>
-                      <p className="text-muted-foreground text-[11px] mt-0.5">30 dias após a aprovação</p>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">
+                        {deadlineVal || 'Prazo acordado na formalização'}
+                      </p>
                     </div>
                   </div>
 
@@ -936,10 +936,10 @@ export function ProposalSummary({
         </div>
       )}
 
-      {proposal.status === 'accepted' && (
+      {isCompleted && (
         <Button size="lg" onClick={onProject} className="w-full gap-2 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 shadow-xs text-white">
           <ShieldCheck className="h-5 w-5" />
-          <span>Acompanhar projeto em andamento</span>
+          <span>Acompanhar projeto / Ver instalação</span>
         </Button>
       )}
     </div>

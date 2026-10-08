@@ -8,6 +8,7 @@ import {
   ArrowRight,
   BarChart2,
   Calendar,
+  Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -335,7 +336,11 @@ export function MarketplaceProposalsWorkspace() {
 
   function openProposal(proposal: MarketplaceProposal) {
     updateProposal(proposal);
-    navigate(proposal.id, proposal.status === 'accepted' ? 'project' : 'summary');
+    const targetScreen =
+      proposal.status === 'accepted' || isProposalCompleted(proposal)
+        ? 'project'
+        : 'summary';
+    navigate(proposal.id, targetScreen);
   }
 
   useEffect(() => {
@@ -480,7 +485,7 @@ export function MarketplaceProposalsWorkspace() {
       <header
         className={cn(
           'mb-6 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-5',
-          showingDetail && 'hidden lg:flex'
+          showingDetail && 'hidden'
         )}
       >
         <div className="min-w-0">
@@ -506,7 +511,7 @@ export function MarketplaceProposalsWorkspace() {
       </header>
 
       {/* Rail da jornada no mobile ou em tela de detalhe */}
-      {showingDetail && (
+      {showingDetail && screen !== 'project' && (
         <ProposalJourneyRail
           proposal={selected}
           screen={screen}
@@ -523,7 +528,14 @@ export function MarketplaceProposalsWorkspace() {
       )}
 
       {/* Visor de detalhes quando uma proposta específica estiver aberta */}
-      {showingDetail ? (
+      {screen === 'project' && selected ? (
+        <ProposalProject
+          key={selected.id}
+          proposal={selected}
+          onViewProposal={() => navigate(selected.id, 'summary')}
+          onList={() => navigate(null)}
+        />
+      ) : showingDetail ? (
         <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
           <div className="mb-5 flex items-center justify-between gap-2 border-b border-slate-100 pb-4">
             <Button
@@ -637,7 +649,7 @@ export function MarketplaceProposalsWorkspace() {
                       updateProposal({
                         ...selected,
                         status:
-                          selected.status === 'accepted' ? 'accepted' : 'meeting_scheduled',
+                           selected.status === 'accepted' ? 'accepted' : 'meeting_scheduled',
                         meetings: [meeting, ...(selected.meetings || [])],
                       })
                     }
@@ -656,13 +668,6 @@ export function MarketplaceProposalsWorkspace() {
                     setDecisionError('');
                     setChoosing(selected);
                   }}
-                />
-              )}
-              {screen === 'project' && (
-                <ProposalProject
-                  key={selected.id}
-                  proposal={selected}
-                  onViewProposal={() => navigate(selected.id)}
                 />
               )}
               {screen === 'summary' && (
@@ -1022,6 +1027,8 @@ export function MarketplaceProposalsWorkspace() {
 
                 const hasMetrics = isSentOrReady && Boolean(power || generation || price.isAvailable || deadline);
 
+                const isCompleted = isProposalCompleted(proposal) || proposal.status === 'accepted';
+
                 // Configuração de Status e Data
                 let statusBadgeText = 'Aguardando envio';
                 let statusBadgeColor = 'bg-amber-50 text-amber-700 border-amber-200/40';
@@ -1030,7 +1037,13 @@ export function MarketplaceProposalsWorkspace() {
                 const updRel = formatRelativeDay(proposal.created_at);
                 let dateText = updRel === 'hoje' ? 'Atualizado hoje' : updRel ? `Atualizado em ${updRel}` : 'Atualizado';
 
-                if (isSentOrReady) {
+                if (isCompleted) {
+                  statusBadgeText = 'Projeto concluído';
+                  statusBadgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/40';
+                  statusDotColor = 'bg-emerald-500';
+                  dateIcon = <Check className="h-3.5 w-3.5 text-emerald-600" />;
+                  dateText = 'Instalação finalizada';
+                } else if (isSentOrReady) {
                   statusBadgeText = 'Proposta recebida';
                   statusBadgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/40';
                   statusDotColor = 'bg-emerald-500';
@@ -1175,7 +1188,16 @@ export function MarketplaceProposalsWorkspace() {
 
                       {/* Botões de Ação */}
                       <div className="flex items-center gap-2.5 self-end md:self-auto shrink-0">
-                        {isSentOrReady ? (
+                        {isCompleted ? (
+                          <Button
+                            aria-label={'Ver projeto de ' + proposal.company.name}
+                            onClick={() => openProposal(proposal)}
+                            className="h-9 gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold px-4 shadow-2xs"
+                          >
+                            <span>Ver projeto</span>
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </Button>
+                        ) : isSentOrReady ? (
                           <Button
                             aria-label={'Abrir proposta de ' + proposal.company.name}
                             onClick={() => openProposal(proposal)}
