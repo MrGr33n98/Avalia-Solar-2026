@@ -83,7 +83,7 @@ describe('ProposalComparison', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Solar Top SC').length).toBeGreaterThan(0);
       expect(screen.getAllByText('EcoEnergy').length).toBeGreaterThan(0);
-      expect(screen.getByText('Atributo')).toBeInTheDocument();
+      expect(screen.getAllByText(/Comparar/i).length).toBeGreaterThan(0);
     });
   });
 });

@@ -56,16 +56,10 @@ import { ProposalNegotiation } from './proposals/ProposalNegotiation';
 import { ProposalProject } from './proposals/ProposalProject';
 import { ProposalConversation } from './proposals/ProposalConversation';
 import { ProposalChoose } from './proposals/ProposalChoose';
+import { ProposalCompleted } from './proposals/ProposalCompleted';
+import { ProposalReview } from './proposals/ProposalReview';
+import { ModernProposalStepper, type Screen } from './proposals/ModernProposalStepper';
 
-type Screen =
-  | 'summary'
-  | 'complete'
-  | 'meeting'
-  | 'negotiation'
-  | 'project'
-  | 'compare'
-  | 'conversation'
-  | 'choose';
 type Filter = 'all' | 'active' | 'received' | 'completed';
 type SortOption = 'recent' | 'oldest' | 'highest' | 'lowest';
 type ViewLayout = 'cards' | 'table';
@@ -79,6 +73,8 @@ const screens: Screen[] = [
   'compare',
   'conversation',
   'choose',
+  'completed',
+  'review',
 ];
 const screenTitles: Record<Screen, string> = {
   summary: 'Detalhes da proposta',
@@ -89,6 +85,8 @@ const screenTitles: Record<Screen, string> = {
   compare: 'Comparar propostas',
   conversation: 'Conversa com a empresa',
   choose: 'Escolher proposta',
+  completed: 'Projeto concluído',
+  review: 'Avaliação e feedback',
 };
 
 const filterTabs: { id: Filter; label: string }[] = [
@@ -120,106 +118,6 @@ function activeJourneyStep(proposal: MarketplaceProposal | undefined, screen: Sc
   if (screen === 'project' || proposal.status === 'accepted') return 9;
   if (screen === 'complete') return 3;
   return 2;
-}
-
-/**
- * Rail de navegação da jornada mantido no mobile ou em tela de detalhe
- * para garantir compatibilidade com o fluxo de 10 passos do projeto.
- */
-function ProposalJourneyRail({
-  proposal,
-  screen,
-  onNavigate,
-  onList,
-  onChoose,
-  canCompare,
-}: {
-  proposal?: MarketplaceProposal;
-  screen: Screen;
-  onNavigate: (view: Screen) => void;
-  onList: () => void;
-  onChoose: () => void;
-  canCompare: boolean;
-}) {
-  const active = activeJourneyStep(proposal, screen);
-  const activeStepObj = journeySteps.find((s) => s.id === active) || journeySteps[0];
-
-  return (
-    <nav
-      aria-label="Fluxo da proposta"
-      className="mb-6 w-full max-w-full overflow-hidden rounded-2xl border border-slate-800 bg-[#0B132B] p-4 text-white shadow-md sm:p-5"
-    >
-      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-blue-400">
-              Jornada da proposta
-            </h2>
-          </div>
-          <p className="text-xs font-medium text-slate-300 mt-0.5">
-            Página {active} de 10 — {activeStepObj.label} (visão geral)
-          </p>
-        </div>
-        <span className="hidden shrink-0 rounded-full bg-blue-500/20 border border-blue-400/30 px-3 py-1 text-[11px] font-bold text-blue-300 sm:inline-flex">
-          10 Passos do Projeto
-        </span>
-      </div>
-
-      <div className="w-full max-w-full overflow-x-auto pb-1 pt-0.5 scrollbar-none">
-        <ol className="flex items-center gap-2 min-w-max">
-          {journeySteps.map((step) => {
-            const isActive = step.id === active;
-            const isDone = step.id < active;
-            const canOpen =
-              Boolean(proposal) &&
-              step.id !== 1 &&
-              (step.id !== 8 || canDecide(proposal!)) &&
-              (step.id !== 4 || canCompare);
-
-            const badgeClass = isActive
-              ? 'bg-blue-600 text-white font-extrabold shadow-sm ring-2 ring-blue-400/40'
-              : isDone
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                : 'bg-slate-800/80 text-slate-400 border border-slate-700/60';
-
-            return (
-              <li key={step.id} className="flex items-center gap-2">
-                {step.id > 1 && <span className="text-slate-600 text-xs">›</span>}
-                <button
-                  type="button"
-                  disabled={!canOpen && step.id !== 1 && !isActive}
-                  onClick={() => {
-                    if (step.id === 1) onList();
-                    else if (step.id === 8) onChoose();
-                    else if (step.view) onNavigate(step.view);
-                  }}
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
-                    isActive
-                      ? 'bg-slate-800 text-white'
-                      : canOpen || step.id === 1
-                        ? 'text-slate-300 hover:text-white hover:bg-slate-800/50'
-                        : 'text-slate-500 cursor-not-allowed opacity-60'
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'flex h-5 w-5 items-center justify-center rounded-full text-[10px]',
-                      badgeClass
-                    )}
-                  >
-                    {step.id}
-                  </span>
-                  <span>{step.label}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      </div>
-    </nav>
-  );
 }
 
 function CompanyAvatar({ proposal }: { proposal: MarketplaceProposal }) {
@@ -358,7 +256,9 @@ export function MarketplaceProposalsWorkspace() {
   function openProposal(proposal: MarketplaceProposal) {
     updateProposal(proposal);
     const targetScreen =
-      proposal.status === 'accepted' || isProposalCompleted(proposal)
+      isProjectComplete(proposal.project)
+        ? 'completed'
+        : proposal.status === 'accepted'
         ? 'project'
         : 'summary';
     navigate(proposal.id, targetScreen);
@@ -531,9 +431,9 @@ export function MarketplaceProposalsWorkspace() {
         </Button>
       </header>
 
-      {/* Rail da jornada no mobile ou em tela de detalhe */}
-      {showingDetail && screen !== 'project' && screen !== 'conversation' && screen !== 'choose' && (
-        <ProposalJourneyRail
+      {/* Modern Stepper Header em telas de detalhes */}
+      {showingDetail && (
+        <ModernProposalStepper
           proposal={selected}
           screen={screen}
           canCompare={compareIds.length >= 2}
@@ -549,7 +449,24 @@ export function MarketplaceProposalsWorkspace() {
       )}
 
       {/* Visor de detalhes quando uma proposta específica estiver aberta */}
-      {screen === 'project' && selected ? (
+      {screen === 'completed' && selected ? (
+        <ProposalCompleted
+          key={selected.id}
+          proposal={selected}
+          onViewProposal={() => navigate(selected.id, 'summary')}
+          onList={() => navigate(null)}
+          onReview={() => navigate(selected.id, 'review')}
+          onConversation={() => navigate(selected.id, 'conversation')}
+        />
+      ) : screen === 'review' && selected ? (
+        <ProposalReview
+          key={selected.id}
+          proposal={selected}
+          onBack={() => navigate(selected.id, 'completed')}
+          onViewProposal={() => navigate(selected.id, 'summary')}
+          onConversation={() => navigate(selected.id, 'conversation')}
+        />
+      ) : screen === 'project' && selected ? (
         <ProposalProject
           key={selected.id}
           proposal={selected}
@@ -993,9 +910,13 @@ export function MarketplaceProposalsWorkspace() {
           {filteredProposals.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
               <FileText className="mx-auto h-12 w-12 text-slate-300" />
-              <h3 className="mt-3 text-base font-bold text-slate-900">Nenhuma proposta encontrada</h3>
+              <h3 className="mt-3 text-base font-bold text-slate-900">
+                {proposals.length === 0 ? 'Suas propostas ficam aqui' : 'Nenhuma proposta encontrada'}
+              </h3>
               <p className="mt-1 text-xs sm:text-sm text-slate-500">
-                Tente ajustar os filtros ou a busca para encontrar o que procura.
+                {proposals.length === 0
+                  ? 'Assim que você solicitar um orçamento, as propostas recebidas aparecerão nesta página.'
+                  : 'Tente ajustar os filtros ou a busca para encontrar o que procura.'}
               </p>
             </div>
           ) : viewLayout === 'table' ? (
