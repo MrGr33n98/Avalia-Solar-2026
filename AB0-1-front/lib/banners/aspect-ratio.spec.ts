@@ -72,6 +72,14 @@ describe('resolveBannerAspectRatio', () => {
     expect(spec?.ambientBackground).toBe(true);
   });
 
+  it('retorna a especificação de exibição canônica para compare_page_sidebar (hidden lg:block)', () => {
+    const spec = getPlacementDisplaySpec('compare_page_sidebar');
+    expect(spec).toBeDefined();
+    expect(spec?.aspectRatioClass).toBe('hidden lg:block lg:aspect-[1/2]');
+    expect(spec?.desktopAspectRatio).toBe('1/2');
+    expect(spec?.desktopMaxHeight).toBe(600);
+  });
+
   it('usa placement solicitado quando sourcePosition não informa default', () => {
     expect(
       resolveBannerAspectRatio({

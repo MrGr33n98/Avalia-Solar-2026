@@ -67,6 +67,7 @@ AB0-1-front/public/**/*.zip
 !AB0-1-front/__tests__/components/sales/SalesAnalyticsReport.test.tsx
 !AB0-1-front/components/sales/leads/create/CreateLeadModal.board-refresh.test.tsx
 !AB0-1-front/__tests__/navigation/MobileBottomNav.test.tsx
+!AB0-1-front/__tests__/components/RecommendedCompanies.test.tsx
 
 # Ignorar documentações de desenvolvimento
 docs/

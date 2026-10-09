@@ -14,11 +14,13 @@ import {
 } from '@/components/ui/sheet';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { COMPARISON_LIMITS } from '@/lib/comparison/config';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
 
 interface RecommendedCompaniesProps {
   companies: CompareCompany[];
   selectedCompanies: CompareCompany[];
+  maxComparison?: number;
   loading: boolean;
   error: boolean;
   onRetry: () => void;
@@ -29,6 +31,7 @@ interface RecommendedCompaniesProps {
 export default function RecommendedCompanies({
   companies,
   selectedCompanies,
+  maxComparison,
   loading,
   error,
   onRetry,
@@ -37,7 +40,13 @@ export default function RecommendedCompanies({
 }: RecommendedCompaniesProps) {
   const [replacement, setReplacement] = useState<CompareCompany | null>(null);
   const isMobile = useIsMobile(768);
-  const isFull = selectedCompanies.length >= 3;
+  const effectiveMax =
+    typeof maxComparison === 'number'
+      ? maxComparison
+      : isMobile
+        ? COMPARISON_LIMITS.mobile
+        : COMPARISON_LIMITS.desktop;
+  const isFull = selectedCompanies.length >= effectiveMax;
 
   const chooseReplacement = (selectedId: number) => {
     if (!replacement) return;

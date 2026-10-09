@@ -68,6 +68,14 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     ambientBackground: true,
     ignoreCreativeDimensions: true,
   },
+  compare_page_sidebar: {
+    aspectRatioClass: 'hidden lg:block lg:aspect-[1/2]',
+    defaultAspectRatio: '1/2',
+    desktopAspectRatio: '1/2',
+    desktopMaxHeight: 600,
+    fit: 'contain',
+    ambientBackground: true,
+  },
 };
 
 export function getPlacementDisplaySpec(position?: string): PlacementDisplaySpec | undefined {

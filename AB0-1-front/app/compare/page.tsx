@@ -335,7 +335,7 @@ function ComparePageContent() {
             )}
 
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-              <div className="min-w-0 space-y-4 lg:order-1">
+              <div className="min-w-0 space-y-4 order-2 lg:order-1">
                 {companies.length > 0 ? (
                   <section aria-labelledby="side-by-side-title">
                     <div className="mb-3 flex items-end justify-between gap-3">
@@ -360,33 +360,42 @@ function ComparePageContent() {
               </div>
 
               <aside
-                className="order-first space-y-4 lg:order-2"
+                className="contents lg:block lg:space-y-4 lg:order-2"
                 aria-label="Descoberta de empresas"
               >
-                <CompanySearchPanel
-                  query={query}
-                  onQueryChange={setQuery}
-                  results={searchResults}
-                  selectedCompanies={companies}
-                  maxComparison={maxComparison}
-                  isSearching={searchQuery.isFetching}
-                  searchError={searchQuery.isError}
-                  canAddMore={canAddMore}
-                  onAdd={handleAdd}
-                  onRemove={removeFromComparison}
-                  onClear={clearComparison}
-                />
-                <RecommendedCompanies
-                  companies={recommendations}
-                  selectedCompanies={companies}
-                  loading={candidatesQuery.isLoading}
-                  error={candidatesQuery.isError}
-                  onRetry={() => void candidatesQuery.refetch()}
-                  onAdd={handleAdd}
-                  onReplace={handleReplace}
-                />
-                <BannerSlot placement="compare_page_sidebar" limit={3} />
-                <VerificationTip />
+                <div className="order-1 lg:order-none">
+                  <CompanySearchPanel
+                    query={query}
+                    onQueryChange={setQuery}
+                    results={searchResults}
+                    selectedCompanies={companies}
+                    maxComparison={maxComparison}
+                    isSearching={searchQuery.isFetching}
+                    searchError={searchQuery.isError}
+                    canAddMore={canAddMore}
+                    onAdd={handleAdd}
+                    onRemove={removeFromComparison}
+                    onClear={clearComparison}
+                  />
+                </div>
+                <div className="order-3 lg:order-none">
+                  <RecommendedCompanies
+                    companies={recommendations}
+                    selectedCompanies={companies}
+                    maxComparison={maxComparison}
+                    loading={candidatesQuery.isLoading}
+                    error={candidatesQuery.isError}
+                    onRetry={() => void candidatesQuery.refetch()}
+                    onAdd={handleAdd}
+                    onReplace={handleReplace}
+                  />
+                </div>
+                <div className="hidden lg:block">
+                  <BannerSlot placement="compare_page_sidebar" limit={3} />
+                </div>
+                <div className="order-4 lg:order-none">
+                  <VerificationTip />
+                </div>
               </aside>
             </div>
 
