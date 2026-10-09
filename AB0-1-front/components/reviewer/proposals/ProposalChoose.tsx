@@ -78,15 +78,14 @@ export function ProposalChoose({
       'power_kwp',
       'installed_power',
       'potencia',
-    ]) || '8,25 kWp';
+    ]);
   const selectedGen =
-    getProposalRawTerm(selectedProposal, ['monthly_generation', 'generation_kwh', 'geracao']) ||
-    '960 kWh/mês';
+    getProposalRawTerm(selectedProposal, ['monthly_generation', 'generation_kwh', 'geracao']);
   const selectedPrice = getProposalDisplayPrice(selectedProposal);
   const selectedDeadline =
-    getProposalRawTerm(selectedProposal, ['installation_deadline', 'prazo']) || '30 dias';
+    getProposalRawTerm(selectedProposal, ['installation_deadline', 'prazo']);
   const selectedSavings =
-    getProposalRawTerm(selectedProposal, ['monthly_savings', 'economia']) || 'R$ 950/mês';
+    getProposalRawTerm(selectedProposal, ['monthly_savings', 'economia']);
 
   return (
     <div className="space-y-6">
@@ -185,17 +184,16 @@ export function ProposalChoose({
                   'power_kwp',
                   'installed_power',
                   'potencia',
-                ]) || '8,25 kWp';
+                ]);
               const gen =
-                getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'geracao']) ||
-                '960 kWh/mês';
+                getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'geracao']);
               const price = getProposalDisplayPrice(proposal);
               const deadline =
-                getProposalRawTerm(proposal, ['installation_deadline', 'prazo']) || '30 dias';
+                getProposalRawTerm(proposal, ['installation_deadline', 'prazo']);
               const savings =
-                getProposalRawTerm(proposal, ['monthly_savings', 'economia']) || 'R$ 950/mês';
+                getProposalRawTerm(proposal, ['monthly_savings', 'economia']);
               const warranty =
-                getProposalRawTerm(proposal, ['warranty', 'garantia_paineis']) || '12 anos';
+                getProposalRawTerm(proposal, ['warranty', 'garantia_paineis']);
 
               // Badges temáticos conforme mockup da imagem 3
               const isBest = idx === 0;

@@ -211,12 +211,9 @@ export function ProposalSummary({
   const displayPrice = getProposalDisplayPrice(proposal);
   const isCompleted = proposal.status === 'accepted' || isProposalCompleted(proposal);
 
-  const mockDocuments = [
-    { name: `Proposta_Comercial_${proposal.company.name.replace(/\s+/g, '_')}.pdf`, size: '1,4 MB', type: 'pdf' },
-    { name: 'Projeto_Tecnico.pdf', size: '2,1 MB', type: 'pdf' },
-    { name: 'Memoria_de_Calculo.pdf', size: '1,8 MB', type: 'pdf' },
-    { name: 'Condicoes_Garantia.pdf', size: '0,9 MB', type: 'pdf' },
-  ];
+  const proposalDocuments = (proposal.version?.terms || [])
+    .filter((t) => t.value && t.value.toLowerCase().includes('.pdf'))
+    .map((t) => ({ name: t.label, size: 'PDF' }));
 
   if (!proposal.version) {
     return (
@@ -802,28 +799,32 @@ export function ProposalSummary({
                 <h4 className="text-base font-extrabold text-foreground border-b border-border/60 pb-3">
                   Documentos da proposta
                 </h4>
-                <ul className="space-y-2.5 text-xs">
-                  {mockDocuments.map((doc) => (
-                    <li
-                      key={doc.name}
-                      className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-muted/20 p-3 hover:bg-muted/40 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold text-[10px]">
-                          PDF
+                {proposalDocuments.length ? (
+                  <ul className="space-y-2.5 text-xs">
+                    {proposalDocuments.map((doc) => (
+                      <li
+                        key={doc.name}
+                        className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-muted/20 p-3 hover:bg-muted/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold text-[10px]">
+                            PDF
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-bold text-foreground text-xs">{doc.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{doc.size}</p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="truncate font-bold text-foreground text-xs">{doc.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{doc.size}</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg">
-                        <Download className="h-4 w-4" />
-                        <span className="sr-only">Baixar {doc.name}</span>
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg">
+                          <Download className="h-4 w-4" />
+                          <span className="sr-only">Baixar {doc.name}</span>
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="py-2 text-xs text-muted-foreground">Nenhum documento anexado a esta proposta.</p>
+                )}
               </div>
             </div>
           </div>
@@ -1046,28 +1047,32 @@ export function ProposalSummary({
         <TabsContent value="documents" className="mt-6 space-y-4 focus-visible:outline-none">
           <div className="rounded-2xl border border-border bg-card p-6 space-y-4 shadow-2xs">
             <h3 className="text-lg font-extrabold text-foreground">Arquivos da proposta</h3>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              {mockDocuments.map((doc) => (
-                <li
-                  key={doc.name}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/20 p-3.5 hover:bg-muted/40 transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold text-[11px]">
-                      PDF
+            {proposalDocuments.length ? (
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {proposalDocuments.map((doc) => (
+                  <li
+                    key={doc.name}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/20 p-3.5 hover:bg-muted/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold text-[11px]">
+                        PDF
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-bold text-foreground text-xs">{doc.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{doc.size}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-bold text-foreground text-xs">{doc.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{doc.size}</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-bold shrink-0 rounded-xl">
-                    <Download className="h-3.5 w-3.5" />
-                    <span>Baixar</span>
-                  </Button>
-                </li>
-              ))}
-            </ul>
+                    <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-bold shrink-0 rounded-xl">
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Baixar</span>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="py-4 text-xs text-muted-foreground">Nenhum arquivo anexado a esta proposta até o momento.</p>
+            )}
           </div>
         </TabsContent>
 

@@ -61,96 +61,109 @@ export function ProposalProject({
 }: ProposalProjectProps) {
   const [activeActionModal, setActiveActionModal] = useState<string | null>(null);
 
-  // Dados reais da proposta com fallbacks técnicos precisos
+  // Dados reais da proposta extraídos via helpers da API
   const power =
-    getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'potencia', 'installed_power']) ||
-    '8,25 kWp';
+    getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'potencia', 'installed_power']);
   const generation =
-    getProposalRawTerm(proposal, ['monthly_generation', 'geracao', 'generation_kwh']) ||
-    '960 kWh/mês';
+    getProposalRawTerm(proposal, ['monthly_generation', 'geracao', 'generation_kwh']);
   const deadline =
-    getProposalRawTerm(proposal, ['installation_deadline', 'prazo', 'installation_time']) ||
-    '30 dias';
+    getProposalRawTerm(proposal, ['installation_deadline', 'prazo', 'installation_time']);
   const savings =
-    getProposalRawTerm(proposal, ['monthly_savings', 'economia', 'estimated_savings']) ||
-    'R$ 950/mês';
+    getProposalRawTerm(proposal, ['monthly_savings', 'economia', 'estimated_savings']);
   const price = getProposalDisplayPrice(proposal);
-  const location = getProposalLocation(proposal) || 'São João da Boa Vista, SP';
-  const reference = proposal.reference || 'AS-2026-001';
-  const confirmedDate = proposal.created_at ? formatDate(proposal.created_at) : '06/10/2026';
+  const location = getProposalLocation(proposal);
+  const reference = proposal.reference;
+  const confirmedDate = proposal.created_at ? formatDate(proposal.created_at) : '';
 
-  const companyPhone = (proposal.company as { phone?: string | null }).phone || '(19) 99876-5432';
+  const companyPhone = (proposal.company as { phone?: string | null }).phone || '';
 
-  // 7 Fases do Stepper Superior
+  // 7 Fases do Stepper Superior dinâmico
   const stepperPhases = [
     { id: 1, label: 'Proposta', status: 'Concluída', completed: true },
     { id: 2, label: 'Negociação', status: 'Concluída', completed: true },
     { id: 3, label: 'Contrato', status: 'Concluída', completed: true },
-    { id: 4, label: 'Projeto', status: 'Em andamento', current: true },
+    { id: 4, label: 'Projeto', status: proposal.status === 'accepted' ? 'Em andamento' : 'Pendente', current: proposal.status === 'accepted' },
     { id: 5, label: 'Instalação', status: 'Pendente', pending: true },
     { id: 6, label: 'Homologação', status: 'Pendente', pending: true },
     { id: 7, label: 'Concluído', status: 'Pendente', pending: true },
   ];
 
-  // Etapas do Projeto (Card Esquerda)
-  const projectSteps = [
-    {
-      id: 1,
-      title: 'Assinatura da proposta',
-      desc: 'Você confirmou interesse na proposta.',
-      date: '06/10/2026',
-      status: 'completed',
-    },
-    {
-      id: 2,
-      title: 'Contrato e pagamento inicial',
-      desc: 'Contrato enviado e pagamento confirmado.',
-      date: '07/10/2026',
-      status: 'completed',
-    },
-    {
-      id: 3,
-      title: 'Elaboração do projeto técnico',
-      badge: 'Em andamento',
-      desc: 'A empresa está desenvolvendo o projeto e definindo os equipamentos.',
-      status: 'in_progress',
-    },
-    {
-      id: 4,
-      title: 'Visita técnica',
-      badge: 'Pendente',
-      desc: 'Será agendada uma visita técnica para validação no local.',
-      status: 'pending',
-    },
-    {
-      id: 5,
-      title: 'Instalação',
-      badge: 'Pendente',
-      desc: 'Equipe realizará a instalação dos equipamentos.',
-      status: 'pending',
-    },
-    {
-      id: 6,
-      title: 'Homologação',
-      badge: 'Pendente',
-      desc: 'Conexão e liberação junto à concessionária.',
-      status: 'pending',
-    },
-    {
-      id: 7,
-      title: 'Projeto concluído',
-      badge: 'Pendente',
-      desc: 'Seu sistema estará gerando energia.',
-      status: 'pending',
-    },
-  ];
+  interface ProjectStepItem {
+    id: number;
+    title: string;
+    desc: string;
+    date?: string;
+    status: string;
+    badge?: string;
+  }
 
-  // Próximas ações (Card Meio)
+  // Etapas do Projeto derivadas do objeto real da API
+  const projectSteps: ProjectStepItem[] = proposal.project?.milestones?.length
+    ? proposal.project.milestones.map((m, idx) => ({
+        id: idx + 1,
+        title: m.title,
+        desc: m.notes || '',
+        date: m.completed_at ? formatDate(m.completed_at) : m.scheduled_at ? formatDate(m.scheduled_at) : '',
+        status: m.status,
+      }))
+    : [
+        {
+          id: 1,
+          title: 'Assinatura da proposta',
+          desc: 'Interesse confirmado pelo comprador.',
+          date: confirmedDate,
+          status: 'completed',
+        },
+        {
+          id: 2,
+          title: 'Contrato e pagamento inicial',
+          desc: 'Processo de contratação iniciado.',
+          date: confirmedDate,
+          status: 'completed',
+        },
+        {
+          id: 3,
+          title: 'Elaboração do projeto técnico',
+          badge: 'Em andamento',
+          desc: 'A empresa está desenvolvendo o projeto técnico e definindo os equipamentos.',
+          status: 'in_progress',
+        },
+        {
+          id: 4,
+          title: 'Visita técnica',
+          badge: 'Pendente',
+          desc: 'Visita no local para validação técnica da estrutura.',
+          status: 'pending',
+        },
+        {
+          id: 5,
+          title: 'Instalação',
+          badge: 'Pendente',
+          desc: 'Execução da instalação dos painéis e inversor.',
+          status: 'pending',
+        },
+        {
+          id: 6,
+          title: 'Homologação',
+          badge: 'Pendente',
+          desc: 'Conexão do sistema com a concessionária de energia.',
+          status: 'pending',
+        },
+        {
+          id: 7,
+          title: 'Projeto concluído',
+          badge: 'Pendente',
+          desc: 'Sistema em operação e gerando energia.',
+          status: 'pending',
+        },
+      ];
+
+  // Próximas ações dinâmicas
   const nextActions = [
     {
       id: 'technical_review',
       title: 'Revisão do projeto técnico',
-      estimate: 'Previsão: hoje',
+      estimate: 'Previsão: em análise',
       estimateTone: 'text-emerald-600',
       desc: 'A empresa irá compartilhar o projeto técnico para sua aprovação.',
       icon: FileText,
@@ -159,75 +172,49 @@ export function ProposalProject({
     {
       id: 'technical_visit',
       title: 'Agendar visita técnica',
-      estimate: 'Previsão: 10/10/2026',
+      estimate: 'Aguardando agendamento',
       estimateTone: 'text-slate-500',
-      desc: 'Aguarde o contato da empresa para definir a data.',
+      desc: 'Entre em contato ou aguarde a empresa definir a data.',
       icon: Calendar,
       onClick: onMeeting || onConversation || onViewProposal,
     },
     {
       id: 'equipment_confirm',
       title: 'Confirmação dos equipamentos',
-      estimate: 'Previsão: 10/10/2026',
+      estimate: 'Em andamento',
       estimateTone: 'text-slate-500',
-      desc: 'Valide os modelos e quantidades.',
+      desc: 'Validação dos modelos e quantidades de equipamentos.',
       icon: Settings,
       onClick: onViewProposal,
     },
     {
       id: 'install_start',
       title: 'Início da instalação',
-      estimate: 'Previsão: 15/10/2026',
+      estimate: 'Pendente',
       estimateTone: 'text-slate-500',
-      desc: 'Equipe técnica realizará a instalação.',
+      desc: 'Execução da instalação técnica.',
       icon: Wrench,
       onClick: onViewProposal,
     },
   ];
 
-  // Mensagens e Atualizações Recentes
-  const recentUpdates = [
-    {
-      id: 1,
-      sender: proposal.company.name,
-      time: 'Hoje às 10:24',
-      message: 'Estamos finalizando o projeto técnico e enviaremos ainda hoje para sua aprovação!',
-      isCompany: true,
-    },
-    {
-      id: 2,
-      sender: 'Você',
-      time: 'Ontem às 16:42',
-      message: 'Perfeito! Fico no aguardo.',
-      isCompany: false,
-    },
-    {
-      id: 3,
-      sender: proposal.company.name,
-      time: '07/10/2026 às 11:03',
-      message: 'Contrato assinado e pagamento confirmado. Iniciando o projeto técnico.',
-      isCompany: true,
-    },
-  ];
+  // Mensagens e Atualizações Recentes reais dos agendamentos / versão
+  const recentUpdates = (proposal.meetings || []).map((meeting, i) => ({
+    id: meeting.id || i,
+    sender: proposal.company.name,
+    time: meeting.scheduled_at ? formatDate(meeting.scheduled_at) : formatDate(meeting.created_at),
+    message: meeting.notes || `Reunião (${meeting.meeting_type}) agendada.`,
+    isCompany: true,
+  }));
 
-  // Documentos do Projeto
-  const projectDocs = [
-    {
-      name: 'Contrato assinado.pdf',
-      size: '1,4 MB',
-      type: 'red',
-    },
-    {
-      name: 'Projeto técnico.pdf',
-      size: '2,1 MB',
+  // Documentos do Projeto derivados dos termos da versão publicada
+  const projectDocs = (proposal.version?.terms || [])
+    .filter((t) => t.value && t.value.toLowerCase().includes('.pdf'))
+    .map((t) => ({
+      name: t.label,
+      size: 'Documento PDF',
       type: 'blue',
-    },
-    {
-      name: 'ART – Responsabilidade Técnica.pdf',
-      size: '480 KB',
-      type: 'red',
-    },
-  ];
+    }));
 
   return (
     <div className="mx-auto w-full max-w-[1280px] space-y-6 pb-16 text-slate-900 font-sans">

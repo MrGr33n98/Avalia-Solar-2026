@@ -55,22 +55,18 @@ export function ProposalCompleted({
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '12m'>('7d');
 
   const power =
-    getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'potencia', 'installed_power']) ||
-    '8,25 kWp';
+    getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'potencia', 'installed_power']);
   const generation =
-    getProposalRawTerm(proposal, ['monthly_generation', 'geracao', 'generation_kwh']) ||
-    '960 kWh/mês';
+    getProposalRawTerm(proposal, ['monthly_generation', 'geracao', 'generation_kwh']);
   const deadline =
-    getProposalRawTerm(proposal, ['installation_deadline', 'prazo', 'installation_time']) ||
-    '30 dias';
+    getProposalRawTerm(proposal, ['installation_deadline', 'prazo', 'installation_time']);
   const savings =
-    getProposalRawTerm(proposal, ['monthly_savings', 'economia', 'estimated_savings']) ||
-    'R$ 950/mês';
+    getProposalRawTerm(proposal, ['monthly_savings', 'economia', 'estimated_savings']);
   const price = getProposalDisplayPrice(proposal);
-  const location = getProposalLocation(proposal) || 'São João da Boa Vista, SP';
-  const reference = proposal.reference || 'AS-2026-001';
+  const location = getProposalLocation(proposal);
+  const reference = proposal.reference;
 
-  // 7 Fases todas concluídas conforme Imagem 4
+  // 7 Fases todas concluídas
   const stepperPhases = [
     { id: 1, label: 'Proposta', status: 'Concluída', completed: true },
     { id: 2, label: 'Negociação', status: 'Concluída', completed: true },
@@ -91,17 +87,11 @@ export function ProposalCompleted({
     { day: '20/11', value: 52 },
   ];
 
-  const samplePhotos = [
-    '/painel-solar-avalia-solar.webp',
-    '/inversor-solar-avalia-solar.webp',
-    '/estrutura-solar-avalia-solar.webp',
-  ];
+  const samplePhotos: string[] = (proposal.project as { photos?: string[] })?.photos || [];
 
-  const finalDocs = [
-    { name: 'Termo de conclusão.pdf', size: '1,2 MB' },
-    { name: 'Laudo de homologação.pdf', size: '980 KB' },
-    { name: 'Garantia dos equipamentos.pdf', size: '1,8 MB' },
-  ];
+  const finalDocs = (proposal.version?.terms || [])
+    .filter((t) => t.value && t.value.toLowerCase().includes('.pdf'))
+    .map((t) => ({ name: t.label, size: 'PDF' }));
 
   return (
     <div className="mx-auto w-full max-w-[1280px] space-y-6 pb-16 text-slate-900 font-sans">
@@ -499,33 +489,37 @@ export function ProposalCompleted({
               <h3 className="text-sm font-extrabold text-slate-950">Documentos finais</h3>
             </div>
 
-            <div className="space-y-2">
-              {finalDocs.map((doc, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-7 w-7 rounded-lg bg-red-500 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
-                      PDF
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-slate-900 block truncate">
-                        {doc.name}
-                      </span>
-                      <span className="text-[10px] text-slate-400 block">{doc.size}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
-                    title="Baixar documento"
+            {finalDocs.length ? (
+              <div className="space-y-2">
+                {finalDocs.map((doc, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors"
                   >
-                    <Download className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="h-7 w-7 rounded-lg bg-red-500 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
+                        PDF
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-slate-900 block truncate">
+                          {doc.name}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">{doc.size}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
+                      title="Baixar documento"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-2 text-xs text-slate-500">Nenhum documento final anexado.</p>
+            )}
           </section>
 
           {/* Card 3: Precisa de algo? */}
