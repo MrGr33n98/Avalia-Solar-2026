@@ -555,6 +555,8 @@ export function MarketplaceProposalsWorkspace() {
           proposal={selected}
           onViewProposal={() => navigate(selected.id, 'summary')}
           onList={() => navigate(null)}
+          onConversation={() => navigate(selected.id, 'conversation')}
+          onMeeting={() => navigate(selected.id, 'meeting')}
         />
       ) : screen === 'conversation' && selected ? (
         <ProposalConversation

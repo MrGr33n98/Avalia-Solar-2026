@@ -299,14 +299,14 @@ export function ProposalSummary({
             </Button>
           )}
 
-          {isCompleted && (
+          {onProject && (
             <Button
               size="sm"
               onClick={onProject}
-              className="gap-1.5 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 px-4 shadow-2xs"
+              className="gap-1.5 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 px-4 shadow-2xs"
             >
               <ShieldCheck className="h-4 w-4" />
-              <span>Ver projeto / Instalação</span>
+              <span>Acompanhamento do projeto</span>
             </Button>
           )}
 
@@ -1162,10 +1162,10 @@ export function ProposalSummary({
         </div>
       )}
 
-      {isCompleted && (
-        <Button size="lg" onClick={onProject} className="w-full gap-2 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 shadow-xs text-white">
+      {onProject && (
+        <Button size="lg" onClick={onProject} className="w-full gap-2 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 shadow-xs text-white">
           <ShieldCheck className="h-5 w-5" />
-          <span>Acompanhar projeto / Ver instalação</span>
+          <span>Acompanhamento do projeto</span>
         </Button>
       )}
     </div>
