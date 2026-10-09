@@ -173,6 +173,11 @@ export function MarketplaceProposalsWorkspace() {
   const proposals = apiProposals;
 
   const selected = proposals.find((proposal) => proposal.id === selectedId);
+  const selectedRef = useRef<MarketplaceProposal | undefined>(selected);
+
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
   const showingDetail = Boolean(selectedId) || screen === 'compare' || screen === 'choose';
   const comparisonIds = (params.get('compare') || '')
     .split(',')
@@ -219,11 +224,15 @@ export function MarketplaceProposalsWorkspace() {
             ? (await marketplaceProposalsApi.view(selectedId)).proposal
             : response.proposal;
         if (current) updateProposal(proposal);
-      } catch {
-        // Se falhar a chamada individual no mock, usa a proposta selecionada local
-        if (current && !selected) {
+      } catch (err: unknown) {
+        if (current) {
+          const msg = err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string'
+            ? (err as any).message
+            : '';
           setDetailError(
-            'Não foi possível abrir esta proposta. Ela pode não estar mais disponível.'
+            msg.includes('404')
+              ? 'Proposta não encontrada. Ela pode ter sido removida ou não está disponível.'
+              : 'Não foi possível carregar os detalhes desta proposta. Verifique sua conexão ou tente novamente.'
           );
         }
       } finally {
@@ -233,7 +242,7 @@ export function MarketplaceProposalsWorkspace() {
     return () => {
       current = false;
     };
-  }, [selectedId, detailAttempt, updateProposal, selected]);
+  }, [selectedId, detailAttempt, updateProposal]);
 
   useEffect(() => {
     if (showingDetail) detailHeading.current?.focus({ preventScroll: true });
@@ -255,10 +264,9 @@ export function MarketplaceProposalsWorkspace() {
 
   function openProposal(proposal: MarketplaceProposal) {
     updateProposal(proposal);
-    const targetScreen =
-      isProjectComplete(proposal.project)
-        ? 'completed'
-        : proposal.status === 'accepted'
+    const targetScreen = isProjectComplete(proposal.project)
+      ? 'completed'
+      : proposal.status === 'accepted'
         ? 'project'
         : 'summary';
     navigate(proposal.id, targetScreen);
@@ -661,7 +669,14 @@ export function MarketplaceProposalsWorkspace() {
               )}
             </>
           ) : (
-            <p className="mt-4 text-sm text-slate-500">Proposta não encontrada.</p>
+            <div role="alert" className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center space-y-4">
+              <p className="text-sm text-slate-700 font-medium">
+                A proposta #{selectedId} não foi encontrada ou você não tem acesso a ela.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => navigate(null)} className="rounded-xl font-bold text-slate-800">
+                Voltar para minhas propostas
+              </Button>
+            </div>
           )}
         </section>
       ) : (

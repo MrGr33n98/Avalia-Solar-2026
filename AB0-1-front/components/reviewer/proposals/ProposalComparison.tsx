@@ -93,48 +93,74 @@ export function ProposalComparison({
     };
   }, [idKey, attempt]);
 
-  // Cálculos comparativos destacados conforme Imagem 2
+  // Destaques calculados somente quando existem valores comparáveis na API.
   const highlights = useMemo(() => {
     if (!proposals.length) return null;
 
-    // Menor valor
-    let lowestPriceProposal = proposals[0];
+    let lowestPriceProposal: MarketplaceProposal | null = null;
     let lowestPrice = Infinity;
-
-    // Maior geração
-    let highestGenProposal = proposals[0];
-    let highestGen = 0;
-
-    // Menor prazo
-    let fastestProposal = proposals[0];
+    let highestGenProposal: MarketplaceProposal | null = null;
+    let highestGen = -Infinity;
+    let highestSavingsProposal: MarketplaceProposal | null = null;
+    let highestSavings = -Infinity;
+    let lowestPaybackProposal: MarketplaceProposal | null = null;
+    let lowestPayback = Infinity;
+    let fastestProposal: MarketplaceProposal | null = null;
     let fastestDays = Infinity;
 
-    proposals.forEach((p) => {
-      const pVal = p.version?.total_cents ?? p.total_cents ?? Infinity;
-      if (pVal < lowestPrice) {
-        lowestPrice = pVal;
-        lowestPriceProposal = p;
+    const parseTermNumber = (value: string | null) => {
+      if (!value) return null;
+      const normalized = value.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '');
+      const number = Number.parseFloat(normalized);
+      return Number.isFinite(number) ? number : null;
+    };
+
+    proposals.forEach((proposal) => {
+      const price = proposal.version?.total_cents ?? proposal.total_cents;
+      if (typeof price === 'number' && price > 0 && price < lowestPrice) {
+        lowestPrice = price;
+        lowestPriceProposal = proposal;
       }
 
-      const genRaw = getProposalRawTerm(p, ['monthly_generation', 'geracao']) || '';
-      const genNum = parseInt(genRaw.replace(/\D/g, ''), 10) || 0;
-      if (genNum > highestGen) {
-        highestGen = genNum;
-        highestGenProposal = p;
+      const generation = parseTermNumber(
+        getProposalRawTerm(proposal, ['monthly_generation', 'geracao'])
+      );
+      if (generation !== null && generation > highestGen) {
+        highestGen = generation;
+        highestGenProposal = proposal;
       }
 
-      const deadlineRaw = getProposalRawTerm(p, ['installation_deadline', 'prazo']) || '';
-      const daysNum = parseInt(deadlineRaw.replace(/\D/g, ''), 10) || 30;
-      if (daysNum < fastestDays) {
-        fastestDays = daysNum;
-        fastestProposal = p;
+      const savings = parseTermNumber(
+        getProposalRawTerm(proposal, ['monthly_savings', 'economia', 'estimated_savings'])
+      );
+      if (savings !== null && savings > highestSavings) {
+        highestSavings = savings;
+        highestSavingsProposal = proposal;
+      }
+
+      const payback = parseTermNumber(
+        getProposalRawTerm(proposal, ['payback', 'payback_years'])
+      );
+      if (payback !== null && payback < lowestPayback) {
+        lowestPayback = payback;
+        lowestPaybackProposal = proposal;
+      }
+
+      const days = parseTermNumber(
+        getProposalRawTerm(proposal, ['installation_deadline', 'prazo'])
+      );
+      if (days !== null && days < fastestDays) {
+        fastestDays = days;
+        fastestProposal = proposal;
       }
     });
 
     return {
-      lowestPriceProposal,
-      highestGenProposal,
-      fastestProposal,
+      lowestPriceProposal: lowestPriceProposal as MarketplaceProposal | null,
+      highestGenProposal: highestGenProposal as MarketplaceProposal | null,
+      highestSavingsProposal: highestSavingsProposal as MarketplaceProposal | null,
+      lowestPaybackProposal: lowestPaybackProposal as MarketplaceProposal | null,
+      fastestProposal: fastestProposal as MarketplaceProposal | null,
     };
   }, [proposals]);
 
@@ -273,7 +299,7 @@ export function ProposalComparison({
         <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
           {proposals.map((proposal, idx) => {
             const isSelected = proposal.id === selectedProposalId;
-            const isRecommended = idx === 0;
+            const projectProfile = proposal.request?.project_profile?.trim();
 
             const power =
               getProposalRawTerm(proposal, [
@@ -281,28 +307,28 @@ export function ProposalComparison({
                 'power_kwp',
                 'installed_power',
                 'potencia',
-              ]) || '8,25 kWp';
+              ]) || 'Não informado';
             const gen =
               getProposalRawTerm(proposal, [
                 'monthly_generation',
                 'generation_kwh',
                 'geracao',
-              ]) || '960 kWh/mês';
+              ]) || 'Não informado';
             const price = getProposalDisplayPrice(proposal);
             const savings =
-              getProposalRawTerm(proposal, ['monthly_savings', 'economia']) || 'R$ 950/mês';
+              getProposalRawTerm(proposal, ['monthly_savings', 'economia']) || 'Não informado';
             const payback =
-              getProposalRawTerm(proposal, ['payback', 'payback_years']) || '4,2 anos';
+              getProposalRawTerm(proposal, ['payback', 'payback_years']) || 'Não informado';
             const deadline =
-              getProposalRawTerm(proposal, ['installation_deadline', 'prazo']) || '30 dias';
+              getProposalRawTerm(proposal, ['installation_deadline', 'prazo']) || 'Não informado';
             const panelWarranty =
-              getProposalRawTerm(proposal, ['panel_warranty', 'garantia_paineis']) || '12 anos';
+              getProposalRawTerm(proposal, ['panel_warranty', 'garantia_paineis']) || 'Não informado';
             const inverterWarranty =
-              getProposalRawTerm(proposal, ['inverter_warranty', 'garantia_inversor']) || '10 anos';
+              getProposalRawTerm(proposal, ['inverter_warranty', 'garantia_inversor']) || 'Não informado';
             const monitoring =
-              getProposalRawTerm(proposal, ['monitoring', 'monitoramento']) || 'Wi-Fi';
+              getProposalRawTerm(proposal, ['monitoring', 'monitoramento']) || 'Não informado';
             const structure =
-              getProposalRawTerm(proposal, ['structure_type', 'estrutura']) || 'Telhado metálico';
+              getProposalRawTerm(proposal, ['structure_type', 'estrutura']) || 'Não informado';
 
             return (
               <div
@@ -315,16 +341,6 @@ export function ProposalComparison({
                     : 'border-slate-200/90 hover:border-slate-300 shadow-2xs'
                 )}
               >
-                {/* Badge Recomendado no Card 1 */}
-                {isRecommended && (
-                  <div className="mb-2">
-                    <span className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-2xs">
-                      <span>👑</span>
-                      <span>Recomendado</span>
-                    </span>
-                  </div>
-                )}
-
                 {/* Header do Card com Radio, Logo, Nome, Local e Nota */}
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
@@ -361,27 +377,29 @@ export function ProposalComparison({
                     <span className="text-[11px] text-slate-400 font-normal">(32 avaliações)</span>
                   </div>
 
-                  {/* Foto em miniatura */}
-                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
-                    <img
-                      src="/energia-solar-avalia-solar.webp"
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
+                  {/* Imagem enviada pela empresa, sem fallback visual inventado */}
+                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+                    {proposal.company.banner_url ? (
+                      <img
+                        src={proposal.company.banner_url}
+                        alt={`Imagem da proposta de ${proposal.company.name}`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center px-4 text-center text-[11px] font-semibold text-slate-400">
+                        Imagem do projeto não informada
+                      </div>
+                    )}
                   </div>
 
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1">
-                    <span className="rounded bg-blue-50 text-blue-700 px-1.5 py-0.5 text-[9px] font-semibold">
-                      On-grid
-                    </span>
-                    <span className="rounded bg-slate-100 text-slate-600 px-1.5 py-0.5 text-[9px] font-medium">
-                      Residencial
-                    </span>
-                    <span className="rounded bg-slate-100 text-slate-600 px-1.5 py-0.5 text-[9px] font-medium">
-                      Alta eficiência
-                    </span>
-                  </div>
+                  {/* Tags provenientes da solicitação */}
+                  {projectProfile && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700">
+                        {projectProfile}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Tabela de Atributos Verticais */}
                   <div className="divide-y divide-slate-100 border-t border-slate-100 pt-1 text-[11px]">
@@ -512,10 +530,12 @@ export function ProposalComparison({
                 </span>
                 <div className="text-right">
                   <span className="text-[10px] text-emerald-700 block">
-                    {highlights?.lowestPriceProposal.company.name}
+                    {highlights?.lowestPriceProposal ? highlights.lowestPriceProposal.company.name : 'Não informado'}
                   </span>
                   <span className="font-extrabold text-emerald-700">
-                    {getProposalDisplayPrice(highlights?.lowestPriceProposal!).formatted}
+                    {highlights?.lowestPriceProposal
+                      ? getProposalDisplayPrice(highlights.lowestPriceProposal).formatted
+                      : 'Não informado'}
                   </span>
                 </div>
               </div>
@@ -528,13 +548,15 @@ export function ProposalComparison({
                 </span>
                 <div className="text-right">
                   <span className="text-[10px] text-slate-500 block">
-                    {highlights?.highestGenProposal.company.name}
+                    {highlights?.highestGenProposal ? highlights.highestGenProposal.company.name : 'Não informado'}
                   </span>
                   <span className="font-bold text-slate-900">
-                    {getProposalRawTerm(highlights?.highestGenProposal!, [
-                      'monthly_generation',
-                      'geracao',
-                    ]) || '960 kWh/mês'}
+                    {highlights?.highestGenProposal
+                      ? getProposalRawTerm(highlights.highestGenProposal, [
+                          'monthly_generation',
+                          'geracao',
+                        ]) || 'Não informado'
+                      : 'Não informado'}
                   </span>
                 </div>
               </div>
@@ -547,11 +569,16 @@ export function ProposalComparison({
                 </span>
                 <div className="text-right">
                   <span className="text-[10px] text-slate-500 block">
-                    {proposals[0]?.company.name}
+                    {highlights?.highestSavingsProposal ? highlights.highestSavingsProposal.company.name : 'Não informado'}
                   </span>
                   <span className="font-bold text-emerald-600">
-                    {getProposalRawTerm(proposals[0], ['monthly_savings', 'economia']) ||
-                      'R$ 950/mês'}
+                    {highlights?.highestSavingsProposal
+                      ? getProposalRawTerm(highlights.highestSavingsProposal, [
+                          'monthly_savings',
+                          'economia',
+                          'estimated_savings',
+                        ]) || 'Não informado'
+                      : 'Não informado'}
                   </span>
                 </div>
               </div>
@@ -564,10 +591,15 @@ export function ProposalComparison({
                 </span>
                 <div className="text-right">
                   <span className="text-[10px] text-slate-500 block">
-                    {proposals[0]?.company.name}
+                    {highlights?.lowestPaybackProposal ? highlights.lowestPaybackProposal.company.name : 'Não informado'}
                   </span>
                   <span className="font-bold text-slate-900">
-                    {getProposalRawTerm(proposals[0], ['payback']) || '4,2 anos'}
+                    {highlights?.lowestPaybackProposal
+                      ? getProposalRawTerm(highlights.lowestPaybackProposal, [
+                          'payback',
+                          'payback_years',
+                        ]) || 'Não informado'
+                      : 'Não informado'}
                   </span>
                 </div>
               </div>
@@ -580,13 +612,15 @@ export function ProposalComparison({
                 </span>
                 <div className="text-right">
                   <span className="text-[10px] text-slate-500 block">
-                    {highlights?.fastestProposal.company.name}
+                    {highlights?.fastestProposal ? highlights.fastestProposal.company.name : 'Não informado'}
                   </span>
                   <span className="font-bold text-slate-900">
-                    {getProposalRawTerm(highlights?.fastestProposal!, [
-                      'installation_deadline',
-                      'prazo',
-                    ]) || '20 dias'}
+                    {highlights?.fastestProposal
+                      ? getProposalRawTerm(highlights.fastestProposal, [
+                          'installation_deadline',
+                          'prazo',
+                        ]) || 'Não informado'
+                      : 'Não informado'}
                   </span>
                 </div>
               </div>

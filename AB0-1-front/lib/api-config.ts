@@ -52,7 +52,7 @@ export const getApiRuntimeConfig = (): ApiRuntimeConfig => {
   // or proxy failures on the same-origin.
   const rawBase = isServer 
     ? (internalBase || serverProxyBase || (publicBase.startsWith('http') ? publicBase : defaultServerProxy)) 
-    : (browserBase || publicBase);
+    : (browserBase || '/api/v1');
   const origin = normalizeOrigin(rawBase);
 
   return {

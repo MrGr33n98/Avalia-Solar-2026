@@ -197,13 +197,7 @@ export function ProposalSummary({
   const [activeImgIndex, setActiveImgIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
 
-  // Default images gallery
-  const galleryImages = [
-    (proposal.company as { banner_url?: string | null }).banner_url || '/energia-solar-avalia-solar.webp',
-    '/painel-solar-avalia-solar.webp',
-    '/inversor-solar-avalia-solar.webp',
-    '/estrutura-solar-avalia-solar.webp',
-  ];
+  const galleryImages = proposal.company.banner_url ? [proposal.company.banner_url] : [];
 
   const powerVal = getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']);
   const genVal = getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'estimated_generation', 'geracao']);
@@ -461,63 +455,28 @@ export function ProposalSummary({
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left Column (2 cols): Hero Image, Metrics, Equipments, Guarantees */}
             <div className="space-y-6 lg:col-span-2">
-              {/* Hero Image & Carousel Thumbnail Selector (Item 5 & 6 in Image 3) */}
+              {/* Imagem real da empresa, quando disponível no payload */}
               <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-5">
-                <div className="space-y-3">
-                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-2xs">
-                    <img
-                      src={galleryImages[activeImgIndex]}
-                      alt="Imagem do sistema solar"
-                      className="h-full w-full object-cover transition-all duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end justify-between gap-2 text-white">
-                      <div>
-                        <h3 className="text-2xl font-extrabold drop-shadow-md tracking-tight">
-                          {proposal.version?.title || 'Sistema Residencial 8,25 kWp'}
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-200 font-medium">
-                          {proposal.request?.project_profile || 'Residencial'} • On-grid
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Thumbnails Carousel row with prev/next controls */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setActiveImgIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1))}
-                      aria-label="Imagem anterior"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-
-                    <div className="flex flex-1 items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-                      {galleryImages.map((img, idx) => (
-                        <button
-                          type="button"
-                          key={idx}
-                          onClick={() => setActiveImgIndex(idx)}
-                          className={cn(
-                            'relative aspect-[16/9] h-14 overflow-hidden rounded-xl border-2 transition-all shrink-0',
-                            activeImgIndex === idx ? 'border-primary ring-2 ring-primary/20 shadow-xs' : 'border-transparent opacity-70 hover:opacity-100'
-                          )}
-                        >
-                          <img src={img} alt="" className="h-full w-full object-cover" />
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveImgIndex((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0))}
-                      aria-label="Próxima imagem"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-2xs">
+                  <img
+                    src={galleryImages[0] || '/painel-solar-avalia-solar.webp'}
+                    alt={`Imagem da proposta de ${proposal.company.name}`}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <h3 className="text-xl font-extrabold tracking-tight drop-shadow-md">
+                      {proposal.version?.title || 'Proposta comercial'}
+                    </h3>
+                    {proposal.request?.project_profile && (
+                      <p className="mt-1 text-xs font-medium text-slate-200">
+                        {proposal.request.project_profile}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -568,25 +527,19 @@ export function ProposalSummary({
 
                   {/* Summary Description Paragraph */}
                   <p className="text-xs leading-relaxed text-muted-foreground bg-muted/30 p-3.5 rounded-xl border border-border/50">
-                    {proposal.version?.summary || 'Projeto de energia solar com equipamentos homologados, instalação técnica e acompanhamento.'}
+                    {proposal.version?.summary || 'Resumo ainda não informado pela empresa.'}
                   </p>
 
                   {/* Tags Chips Row */}
                   <div className="flex flex-wrap gap-2 pt-1">
-                    <span className="rounded-full bg-primary/10 text-primary border border-primary/20 px-3 py-1 text-xs font-semibold">
-                      On-grid
-                    </span>
                     <span className="rounded-full bg-muted/80 text-muted-foreground border border-border/60 px-3 py-1 text-xs font-medium">
-                      {proposal.request?.project_profile || 'Residencial'}
+                      {proposal.request?.project_profile || 'Perfil não informado'}
                     </span>
                     {getProposalLocation(proposal) && (
                       <span className="rounded-full bg-muted/80 text-muted-foreground border border-border/60 px-3 py-1 text-xs font-medium">
                         {getProposalLocation(proposal)}
                       </span>
                     )}
-                    <span className="rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 px-3 py-1 text-xs font-semibold">
-                      Economia estimada de até 95%
-                    </span>
                   </div>
                 </div>
               </div>
@@ -658,7 +611,7 @@ export function ProposalSummary({
                     <div>
                       <p className="font-bold text-foreground">Garantia dos equipamentos</p>
                       <p className="text-muted-foreground text-[11px] mt-0.5">
-                        {getProposalRawTerm(proposal, ['equipment_warranty', 'garantia_equipamentos', 'garantia']) || 'Conforme especificação do fabricante'}
+                        {getProposalRawTerm(proposal, ['equipment_warranty', 'garantia_equipamentos', 'garantia']) || 'Não informado'}
                       </p>
                     </div>
                   </div>
@@ -668,7 +621,7 @@ export function ProposalSummary({
                     <div>
                       <p className="font-bold text-foreground">Garantia de instalação</p>
                       <p className="text-muted-foreground text-[11px] mt-0.5">
-                        {getProposalRawTerm(proposal, ['service_warranty', 'installation_warranty', 'garantia_instalacao']) || 'Garantia de mão de obra homologada'}
+                        {getProposalRawTerm(proposal, ['service_warranty', 'installation_warranty', 'garantia_instalacao']) || 'Não informado'}
                       </p>
                     </div>
                   </div>
@@ -678,7 +631,7 @@ export function ProposalSummary({
                     <div>
                       <p className="font-bold text-foreground">Prazo de instalação</p>
                       <p className="text-muted-foreground text-[11px] mt-0.5">
-                        {deadlineVal || 'Prazo acordado na formalização'}
+                        {deadlineVal || 'Não informado'}
                       </p>
                     </div>
                   </div>
@@ -865,14 +818,14 @@ export function ProposalSummary({
                 <Layers className="mx-auto h-4 w-4 text-emerald-500" />
                 <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Área Estimada</span>
                 <span className="text-sm font-extrabold text-foreground">
-                  {getProposalRawTerm(proposal, ['required_area', 'area_m2', 'area_util']) || 'Aprox. 42 m²'}
+                  {getProposalRawTerm(proposal, ['required_area', 'area_m2', 'area_util']) || 'Não informado'}
                 </span>
               </div>
               <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center">
                 <Cpu className="mx-auto h-4 w-4 text-violet-500" />
                 <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Padrão da Rede</span>
                 <span className="text-sm font-extrabold text-foreground">
-                  {getProposalRawTerm(proposal, ['grid_voltage', 'padrao_entrada', 'tensao']) || '220V Bifásico'}
+                  {getProposalRawTerm(proposal, ['grid_voltage', 'padrao_entrada', 'tensao']) || 'Não informado'}
                 </span>
               </div>
             </div>
@@ -910,13 +863,13 @@ export function ProposalSummary({
                   <div className="rounded-lg bg-muted/30 p-2.5">
                     <span className="block text-[10px] font-semibold">Orientação Preferencial</span>
                     <span className="font-bold text-foreground text-xs">
-                      {getProposalRawTerm(proposal, ['azimuth', 'azimute', 'orientacao']) || 'Norte Geográfico (0°)'}
+                      {getProposalRawTerm(proposal, ['azimuth', 'azimute', 'orientacao']) || 'Não informado'}
                     </span>
                   </div>
                   <div className="rounded-lg bg-muted/30 p-2.5">
                     <span className="block text-[10px] font-semibold">Inclinação Recomendada</span>
                     <span className="font-bold text-foreground text-xs">
-                      {getProposalRawTerm(proposal, ['tilt_angle', 'inclinacao', 'angulo']) || '15° a 22°'}
+                      {getProposalRawTerm(proposal, ['tilt_angle', 'inclinacao', 'angulo']) || 'Não informado'}
                     </span>
                   </div>
                 </li>
@@ -946,17 +899,17 @@ export function ProposalSummary({
                     ))
                 ) : (
                   <li className="rounded-xl border border-border/60 bg-muted/20 p-3 text-muted-foreground">
-                    Inversor String on-grid com rastreadores duplos MPPT e monitoramento Wi-Fi integrado.
+                    Dados do inversor ainda não informados pela empresa.
                   </li>
                 )}
                 <li className="grid grid-cols-2 gap-2 text-muted-foreground pt-1">
                   <div className="rounded-lg bg-muted/30 p-2.5">
                     <span className="block text-[10px] font-semibold">Eficiência Nominal</span>
-                    <span className="font-bold text-foreground text-xs">&gt; 97,8% CEC/EU</span>
+                    <span className="font-bold text-foreground text-xs">Não informado</span>
                   </div>
                   <div className="rounded-lg bg-muted/30 p-2.5">
                     <span className="block text-[10px] font-semibold">Comunicação</span>
-                    <span className="font-bold text-foreground text-xs">Wi-Fi 2.4GHz / App Mobile</span>
+                    <span className="font-bold text-foreground text-xs">Não informado</span>
                   </div>
                 </li>
               </ul>
@@ -972,16 +925,16 @@ export function ProposalSummary({
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                   <dt className="text-muted-foreground font-medium">Tipo de cobertura</dt>
                   <dd className="mt-1 font-bold text-foreground">
-                    {getProposalRawTerm(proposal, ['roof_type', 'tipo_telhado', 'tipo_estrutura']) || 'Telhado cerâmico colonial com ganchos em inox'}
+                    {getProposalRawTerm(proposal, ['roof_type', 'tipo_telhado', 'tipo_estrutura']) || 'Não informado'}
                   </dd>
                 </div>
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                   <dt className="text-muted-foreground font-medium">Material da fixação</dt>
-                  <dd className="mt-1 font-bold text-foreground">Perfis de alumínio anodizado 6063-T6 com presilhas em aço inoxidável 304</dd>
+                  <dd className="mt-1 font-bold text-foreground">Não informado</dd>
                 </div>
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                   <dt className="text-muted-foreground font-medium">Carga de vento projetada</dt>
-                  <dd className="mt-1 font-bold text-foreground">Suporta até 120 km/h (em conformidade com NBR 6123)</dd>
+                  <dd className="mt-1 font-bold text-foreground">Não informado</dd>
                 </div>
               </dl>
             </div>
@@ -996,19 +949,19 @@ export function ProposalSummary({
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                   <dt className="text-muted-foreground font-medium">Proteções elétricas (String Box)</dt>
                   <dd className="mt-1 font-bold text-foreground">
-                    Dispositivo Protetor de Surtos (DPS) Classe II CA e CC + Chaves seccionadoras
+                    Não informado
                   </dd>
                 </div>
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                   <dt className="text-muted-foreground font-medium">Homologação na Distribuidora</dt>
                   <dd className="mt-1 font-bold text-foreground">
-                    Protocolo de acesso e vistoria técnica inclusos no escopo do contrato
+                    Não informado
                   </dd>
                 </div>
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                   <dt className="text-muted-foreground font-medium">Responsável Técnico</dt>
                   <dd className="mt-1 font-bold text-foreground">
-                    {getProposalRawTerm(proposal, ['art_cft', 'responsavel_tecnico']) || 'Emissão de ART (CREA) ou TRT (CFT) por engenheiro habilitado'}
+                    {getProposalRawTerm(proposal, ['art_cft', 'responsavel_tecnico']) || 'Não informado'}
                   </dd>
                 </div>
               </dl>
