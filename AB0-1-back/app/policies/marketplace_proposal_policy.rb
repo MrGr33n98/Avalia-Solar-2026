@@ -16,15 +16,15 @@ class MarketplaceProposalPolicy < ApplicationPolicy
   end
 
   def send?
-    company_member?
+    proposal_manager?
   end
 
   def new_version?
-    company_member?
+    proposal_manager?
   end
 
   def withdraw?
-    company_member?
+    proposal_manager?
   end
 
   private
@@ -38,5 +38,12 @@ class MarketplaceProposalPolicy < ApplicationPolicy
 
   def company_member?
     admin? || (user.respond_to?(:company_user?) && user.company_user? && user.active_membership_for?(record.company_id))
+  end
+
+  def proposal_manager?
+    return true if admin?
+    return false unless company_member?
+
+    CompanyMember.active.where(company_id: record.company_id, user_id: user.id, role: %i[owner manager]).exists?
   end
 end

@@ -31,7 +31,7 @@ import {
   Zap,
   BarChart2,
 } from 'lucide-react';
-import type { MarketplaceProposal } from '@/lib/api';
+import { marketplaceProposalsApi, type MarketplaceProposal } from '@/lib/api';
 import {
   formatDate,
   formatMoney,
@@ -62,14 +62,27 @@ export function ProposalProject({
   const [activeActionModal, setActiveActionModal] = useState<string | null>(null);
 
   // Dados reais da proposta extraídos via helpers da API
-  const power =
-    getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'potencia', 'installed_power']);
-  const generation =
-    getProposalRawTerm(proposal, ['monthly_generation', 'geracao', 'generation_kwh']);
-  const deadline =
-    getProposalRawTerm(proposal, ['installation_deadline', 'prazo', 'installation_time']);
-  const savings =
-    getProposalRawTerm(proposal, ['monthly_savings', 'economia', 'estimated_savings']);
+  const power = getProposalRawTerm(proposal, [
+    'system_power',
+    'power_kwp',
+    'potencia',
+    'installed_power',
+  ]);
+  const generation = getProposalRawTerm(proposal, [
+    'monthly_generation',
+    'geracao',
+    'generation_kwh',
+  ]);
+  const deadline = getProposalRawTerm(proposal, [
+    'installation_deadline',
+    'prazo',
+    'installation_time',
+  ]);
+  const savings = getProposalRawTerm(proposal, [
+    'monthly_savings',
+    'economia',
+    'estimated_savings',
+  ]);
   const price = getProposalDisplayPrice(proposal);
   const location = getProposalLocation(proposal);
   const reference = proposal.reference;
@@ -82,7 +95,12 @@ export function ProposalProject({
     { id: 1, label: 'Proposta', status: 'Concluída', completed: true },
     { id: 2, label: 'Negociação', status: 'Concluída', completed: true },
     { id: 3, label: 'Contrato', status: 'Concluída', completed: true },
-    { id: 4, label: 'Projeto', status: proposal.status === 'accepted' ? 'Em andamento' : 'Pendente', current: proposal.status === 'accepted' },
+    {
+      id: 4,
+      label: 'Projeto',
+      status: proposal.status === 'accepted' ? 'Em andamento' : 'Pendente',
+      current: proposal.status === 'accepted',
+    },
     { id: 5, label: 'Instalação', status: 'Pendente', pending: true },
     { id: 6, label: 'Homologação', status: 'Pendente', pending: true },
     { id: 7, label: 'Concluído', status: 'Pendente', pending: true },
@@ -97,23 +115,25 @@ export function ProposalProject({
     badge?: string;
   }
 
-  const projectSteps: ProjectStepItem[] = (proposal.project?.milestones || []).map((milestone, idx) => ({
-    id: idx + 1,
-    title: milestone.title,
-    desc: milestone.notes || '',
-    date: milestone.completed_at
-      ? formatDate(milestone.completed_at)
-      : milestone.scheduled_at
-        ? formatDate(milestone.scheduled_at)
-        : undefined,
-    status: milestone.status,
-    badge:
-      milestone.status === 'in_progress'
-        ? 'Em andamento'
-        : milestone.status === 'pending'
-          ? 'Pendente'
+  const projectSteps: ProjectStepItem[] = (proposal.project?.milestones || []).map(
+    (milestone, idx) => ({
+      id: idx + 1,
+      title: milestone.title,
+      desc: milestone.notes || '',
+      date: milestone.completed_at
+        ? formatDate(milestone.completed_at)
+        : milestone.scheduled_at
+          ? formatDate(milestone.scheduled_at)
           : undefined,
-  }));
+      status: milestone.status,
+      badge:
+        milestone.status === 'in_progress'
+          ? 'Em andamento'
+          : milestone.status === 'pending'
+            ? 'Pendente'
+            : undefined,
+    })
+  );
 
   const nextActions = (proposal.project?.milestones || [])
     .filter((milestone) => !['completed', 'done'].includes(milestone.status))
@@ -142,13 +162,16 @@ export function ProposalProject({
   }));
 
   // Documentos do Projeto derivados dos termos da versão publicada
-  const projectDocs = (proposal.version?.terms || [])
-    .filter((t) => t.value && t.value.toLowerCase().includes('.pdf'))
-    .map((t) => ({
-      name: t.label,
-      size: 'Documento PDF',
-      type: 'blue',
-    }));
+  const projectDocs = (proposal.version?.documents || []).map((document) => ({
+    name: document.filename,
+    size: 'Documento PDF',
+    type: 'blue',
+    href: marketplaceProposalsApi.documentDownloadUrl(
+      proposal.id,
+      proposal.version!.id,
+      document.id
+    ),
+  }));
 
   return (
     <div className="mx-auto w-full max-w-[1280px] space-y-6 pb-16 text-slate-900 font-sans">
@@ -212,7 +235,9 @@ export function ProposalProject({
             </div>
             <div className="min-w-0">
               <p className="text-sm font-extrabold text-slate-950">Proposta #{reference}</p>
-              <p className="text-xs text-slate-600 font-medium">{proposal.version?.title || 'Título não informado'}</p>
+              <p className="text-xs text-slate-600 font-medium">
+                {proposal.version?.title || 'Título não informado'}
+              </p>
               <p className="text-[11px] text-slate-400">Confirmada em {confirmedDate}</p>
             </div>
           </div>
@@ -306,56 +331,60 @@ export function ProposalProject({
 
               {/* Lista Vertical de Etapas */}
               <div className="space-y-4 text-xs">
-                {projectSteps.length ? projectSteps.map((step) => (
-                  <div key={step.id} className="flex items-start gap-3 relative">
-                    {/* Marcador Numérico ou Check */}
-                    <div className="shrink-0 mt-0.5">
-                      {step.status === 'completed' ? (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white shadow-2xs">
-                          <Check className="h-3.5 w-3.5 stroke-[3]" />
-                        </div>
-                      ) : step.status === 'in_progress' ? (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white font-extrabold text-xs shadow-2xs ring-4 ring-blue-50">
-                          {step.id}
-                        </div>
-                      ) : (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-400 font-bold text-xs">
-                          {step.id}
-                        </div>
-                      )}
-                    </div>
+                {projectSteps.length ? (
+                  projectSteps.map((step) => (
+                    <div key={step.id} className="flex items-start gap-3 relative">
+                      {/* Marcador Numérico ou Check */}
+                      <div className="shrink-0 mt-0.5">
+                        {step.status === 'completed' ? (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white shadow-2xs">
+                            <Check className="h-3.5 w-3.5 stroke-[3]" />
+                          </div>
+                        ) : step.status === 'in_progress' ? (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white font-extrabold text-xs shadow-2xs ring-4 ring-blue-50">
+                            {step.id}
+                          </div>
+                        ) : (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-400 font-bold text-xs">
+                            {step.id}
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Conteúdo da Etapa */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 flex-wrap">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-extrabold text-slate-900 leading-tight">
-                            {step.title}
-                          </h4>
-                          {step.badge && (
-                            <span
-                              className={cn(
-                                'rounded-full px-2 py-0.5 text-[10px] font-bold',
-                                step.status === 'in_progress' &&
-                                  'bg-blue-50 text-blue-600 border border-blue-200/60',
-                                step.status === 'pending' &&
-                                  'bg-slate-100 text-slate-500 border border-slate-200/60'
-                              )}
-                            >
-                              {step.badge}
+                      {/* Conteúdo da Etapa */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-extrabold text-slate-900 leading-tight">
+                              {step.title}
+                            </h4>
+                            {step.badge && (
+                              <span
+                                className={cn(
+                                  'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                                  step.status === 'in_progress' &&
+                                    'bg-blue-50 text-blue-600 border border-blue-200/60',
+                                  step.status === 'pending' &&
+                                    'bg-slate-100 text-slate-500 border border-slate-200/60'
+                                )}
+                              >
+                                {step.badge}
+                              </span>
+                            )}
+                          </div>
+                          {step.date && (
+                            <span className="text-[11px] font-medium text-slate-400 shrink-0">
+                              {step.date}
                             </span>
                           )}
                         </div>
-                        {step.date && (
-                          <span className="text-[11px] font-medium text-slate-400 shrink-0">
-                            {step.date}
-                          </span>
-                        )}
+                        <p className="mt-1 text-slate-500 leading-relaxed text-[11px]">
+                          {step.desc}
+                        </p>
                       </div>
-                      <p className="mt-1 text-slate-500 leading-relaxed text-[11px]">{step.desc}</p>
                     </div>
-                  </div>
-                )) : (
+                  ))
+                ) : (
                   <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-xs leading-relaxed text-slate-500">
                     A empresa ainda não publicou as etapas deste projeto.
                   </p>
@@ -385,35 +414,39 @@ export function ProposalProject({
 
                 {/* Lista de ações derivadas dos milestones publicados */}
                 <div className="mt-3.5 space-y-2.5">
-                  {nextActions.length ? nextActions.map((action) => {
-                    const ActionIcon = action.icon;
-                    return (
-                      <button
-                        key={action.id}
-                        type="button"
-                        onClick={action.onClick}
-                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-left hover:border-blue-200 hover:bg-blue-50/30 transition-all cursor-pointer group"
-                      >
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                            <ActionIcon className="h-4 w-4" />
+                  {nextActions.length ? (
+                    nextActions.map((action) => {
+                      const ActionIcon = action.icon;
+                      return (
+                        <button
+                          key={action.id}
+                          type="button"
+                          onClick={action.onClick}
+                          className="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-left hover:border-blue-200 hover:bg-blue-50/30 transition-all cursor-pointer group"
+                        >
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                              <ActionIcon className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="font-extrabold text-xs text-slate-900 group-hover:text-blue-700 transition-colors">
+                                {action.title}
+                              </h4>
+                              <p
+                                className={cn('text-[11px] font-bold mt-0.5', action.estimateTone)}
+                              >
+                                {action.estimate}
+                              </p>
+                              <p className="text-[11px] text-slate-500 mt-0.5 leading-snug line-clamp-1">
+                                {action.desc}
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <h4 className="font-extrabold text-xs text-slate-900 group-hover:text-blue-700 transition-colors">
-                              {action.title}
-                            </h4>
-                            <p className={cn('text-[11px] font-bold mt-0.5', action.estimateTone)}>
-                              {action.estimate}
-                            </p>
-                            <p className="text-[11px] text-slate-500 mt-0.5 leading-snug line-clamp-1">
-                              {action.desc}
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0" />
-                      </button>
-                    );
-                  }) : (
+                          <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </button>
+                      );
+                    })
+                  ) : (
                     <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-xs leading-relaxed text-slate-500">
                       Nenhuma próxima ação foi publicada para este projeto.
                     </p>
@@ -514,7 +547,9 @@ export function ProposalProject({
             ) : (
               <div className="flex aspect-[16/9] w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center">
                 <FileText className="h-7 w-7 text-slate-400" />
-                <span className="mt-2 text-xs font-semibold text-slate-500">Imagem não informada</span>
+                <span className="mt-2 text-xs font-semibold text-slate-500">
+                  Imagem não informada
+                </span>
               </div>
             )}
 
@@ -550,7 +585,9 @@ export function ProposalProject({
                   <BarChart2 className="h-4 w-4 text-blue-600" />
                   <span>Geração estimada</span>
                 </span>
-                <span className="font-extrabold text-slate-950">{generation || 'Não informado'}</span>
+                <span className="font-extrabold text-slate-950">
+                  {generation || 'Não informado'}
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -568,7 +605,9 @@ export function ProposalProject({
                   <Leaf className="h-4 w-4 text-emerald-600" />
                   <span>Economia estimada</span>
                 </span>
-                <span className="font-extrabold text-emerald-600 tabular-nums">{savings || 'Não informado'}</span>
+                <span className="font-extrabold text-emerald-600 tabular-nums">
+                  {savings || 'Não informado'}
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -622,12 +661,15 @@ export function ProposalProject({
                     </div>
                   </div>
                   <Button
+                    asChild
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 shrink-0 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50"
                     title={`Baixar ${doc.name}`}
                   >
-                    <Download className="h-4 w-4" />
+                    <a href={doc.href}>
+                      <Download className="h-4 w-4" />
+                    </a>
                   </Button>
                 </div>
               ))}

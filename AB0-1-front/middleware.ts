@@ -117,7 +117,13 @@ export async function middleware(request: NextRequest) {
   const isServerActionRequest = request.headers.has('next-action');
 
   // Define protected routes
-  const protectedPaths = ['/dashboard', '/profile', '/company-dashboard', '/review-dashboard', '/creator-studio'];
+  const protectedPaths = [
+    '/dashboard',
+    '/profile',
+    '/company-dashboard',
+    '/review-dashboard',
+    '/creator-studio',
+  ];
 
   // Check if the current path is protected
   const isProtectedRoute = protectedPaths.some((path) =>
@@ -192,6 +198,18 @@ export async function middleware(request: NextRequest) {
   const surface = resolveSurfaceFromHost(host);
   const search = request.nextUrl.search;
 
+  // Links legados devem abrir o mesmo workspace da navegação empresarial.
+  if (
+    surface !== 'crm' &&
+    pathname === '/dashboard' &&
+    request.nextUrl.searchParams.get('tab') === 'proposals'
+  ) {
+    const target = request.nextUrl.clone();
+    target.pathname = '/dashboard/proposals';
+    target.searchParams.delete('tab');
+    return applyNoStoreHeaders(NextResponse.redirect(target, 307));
+  }
+
   // CANONICAL SURFACE HOST FIREWALL (308 Permanent Redirects for misrouted paths)
   if (surface === 'public' && process.env.NODE_ENV === 'production') {
     // 1a. Sales CRM paths on www -> redirect to crm.avaliasolar.com.br
@@ -233,7 +251,9 @@ export async function middleware(request: NextRequest) {
     }
     if (pathname === '/dashboard/companies' || pathname === '/dashboard/clients') {
       return maybeAttachHomeHeroExperimentCookie(
-        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/accounts', request.url)))
+        applyNoStoreHeaders(
+          NextResponse.redirect(new URL('/dashboard/sales/accounts', request.url))
+        )
       );
     }
     if (pathname === '/dashboard/reports') {
@@ -248,7 +268,9 @@ export async function middleware(request: NextRequest) {
     }
     if (pathname === '/dashboard/proposals') {
       return maybeAttachHomeHeroExperimentCookie(
-        applyNoStoreHeaders(NextResponse.redirect(new URL('/dashboard/sales/pipeline', request.url)))
+        applyNoStoreHeaders(
+          NextResponse.redirect(new URL('/dashboard/sales/pipeline', request.url))
+        )
       );
     }
     if (pathname === '/today' || pathname === '/dashboard/today') {

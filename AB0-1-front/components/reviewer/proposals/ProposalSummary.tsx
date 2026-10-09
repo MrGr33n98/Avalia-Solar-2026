@@ -34,7 +34,11 @@ import {
   Layers,
   Cpu,
 } from 'lucide-react';
-import type { MarketplaceProposal, MarketplaceProposalVersion } from '@/lib/api';
+import {
+  marketplaceProposalsApi,
+  type MarketplaceProposal,
+  type MarketplaceProposalVersion,
+} from '@/lib/api';
 import {
   canDecide,
   formatDate,
@@ -96,7 +100,9 @@ export function VersionContent({ version }: { version: MarketplaceProposalVersio
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs">
-        <h3 className="text-base font-bold text-foreground">{version.title || 'Proposta Técnica e Comercial'}</h3>
+        <h3 className="text-base font-bold text-foreground">
+          {version.title || 'Proposta Técnica e Comercial'}
+        </h3>
         <p className="mt-2.5 whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
           {version.summary || 'Resumo executivo ainda não informado pela empresa.'}
         </p>
@@ -139,14 +145,18 @@ export function VersionContent({ version }: { version: MarketplaceProposalVersio
                   </span>
                 </div>
                 <p className="mt-1 text-muted-foreground">
-                  <span className="font-medium text-foreground">{item.quantity} {item.unit}</span>
+                  <span className="font-medium text-foreground">
+                    {item.quantity} {item.unit}
+                  </span>
                   {item.description ? ` · ${item.description}` : ''}
                 </p>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="py-3 text-xs text-muted-foreground">Equipamentos ainda não detalhados individualmente.</p>
+          <p className="py-3 text-xs text-muted-foreground">
+            Equipamentos ainda não detalhados individualmente.
+          </p>
         )}
       </div>
 
@@ -199,15 +209,36 @@ export function ProposalSummary({
 
   const galleryImages = proposal.company.banner_url ? [proposal.company.banner_url] : [];
 
-  const powerVal = getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']);
-  const genVal = getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'estimated_generation', 'geracao']);
-  const deadlineVal = getProposalRawTerm(proposal, ['installation_deadline', 'installation_time', 'prazo']);
+  const powerVal = getProposalRawTerm(proposal, [
+    'system_power',
+    'power_kwp',
+    'installed_power',
+    'potencia',
+  ]);
+  const genVal = getProposalRawTerm(proposal, [
+    'monthly_generation',
+    'generation_kwh',
+    'estimated_generation',
+    'geracao',
+  ]);
+  const deadlineVal = getProposalRawTerm(proposal, [
+    'installation_deadline',
+    'installation_time',
+    'prazo',
+  ]);
   const displayPrice = getProposalDisplayPrice(proposal);
   const isCompleted = proposal.status === 'accepted' || isProposalCompleted(proposal);
 
-  const proposalDocuments = (proposal.version?.terms || [])
-    .filter((t) => t.value && t.value.toLowerCase().includes('.pdf'))
-    .map((t) => ({ name: t.label, size: 'PDF' }));
+  const proposalDocuments = (proposal.version?.documents || []).map((document) => ({
+    ...document,
+    name: document.filename,
+    size: `${(document.byte_size / 1024 / 1024).toFixed(1)} MB`,
+    href: marketplaceProposalsApi.documentDownloadUrl(
+      proposal.id,
+      proposal.version!.id,
+      document.id
+    ),
+  }));
 
   if (!proposal.version) {
     return (
@@ -217,22 +248,17 @@ export function ProposalSummary({
           <h3 className="mt-3 text-lg font-bold text-foreground">Proposta em preparação</h3>
           <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted-foreground">
             A empresa recebeu sua solicitação e está preparando os detalhes técnicos e comerciais.
-            Você verá o valor, os equipamentos e as condições aqui assim que a proposta for publicada.
+            Você verá o valor, os equipamentos e as condições aqui assim que a proposta for
+            publicada.
           </p>
         </div>
         {onConversation ? (
-          <Button
-            onClick={onConversation}
-            className="w-full gap-2 font-bold shadow-xs rounded-xl"
-          >
+          <Button onClick={onConversation} className="w-full gap-2 font-bold shadow-xs rounded-xl">
             <MessageCircle className="h-4 w-4" />
             <span>Conversar com a empresa</span>
           </Button>
         ) : (
-          <Button
-            asChild
-            className="w-full gap-2 font-bold shadow-xs rounded-xl"
-          >
+          <Button asChild className="w-full gap-2 font-bold shadow-xs rounded-xl">
             <Link href={proposalChatUrl(proposal)}>
               <MessageCircle className="h-4 w-4" />
               <span>Conversar com a empresa</span>
@@ -424,28 +450,52 @@ export function ProposalSummary({
       {/* Main Detail Navigation Tabs (8 tabs matching Imagens 3, 4 e 5) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="flex h-12 w-full overflow-x-auto rounded-xl border border-border/80 bg-card p-1 shadow-2xs scrollbar-none justify-start sm:justify-between">
-          <TabsTrigger value="summary" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
+          <TabsTrigger
+            value="summary"
+            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+          >
             Visão geral
           </TabsTrigger>
-          <TabsTrigger value="technical" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
+          <TabsTrigger
+            value="technical"
+            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+          >
             Projeto técnico
           </TabsTrigger>
-          <TabsTrigger value="equipments" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
+          <TabsTrigger
+            value="equipments"
+            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+          >
             Equipamentos
           </TabsTrigger>
-          <TabsTrigger value="financial" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
+          <TabsTrigger
+            value="financial"
+            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+          >
             Financeiro
           </TabsTrigger>
-          <TabsTrigger value="documents" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
+          <TabsTrigger
+            value="documents"
+            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+          >
             Documentos
           </TabsTrigger>
-          <TabsTrigger value="terms" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
+          <TabsTrigger
+            value="terms"
+            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+          >
             Condições
           </TabsTrigger>
-          <TabsTrigger value="company" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
+          <TabsTrigger
+            value="company"
+            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+          >
             Empresa
           </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
+          <TabsTrigger
+            value="history"
+            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+          >
             Histórico
           </TabsTrigger>
         </TabsList>
@@ -547,7 +597,9 @@ export function ProposalSummary({
               {/* Equipamentos Principais Block */}
               <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                  <h4 className="text-base font-extrabold text-foreground">Equipamentos principais</h4>
+                  <h4 className="text-base font-extrabold text-foreground">
+                    Equipamentos principais
+                  </h4>
                   <button
                     type="button"
                     onClick={() => setActiveTab('equipments')}
@@ -562,15 +614,32 @@ export function ProposalSummary({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {proposal.version.items.slice(0, 3).map((item, idx) => {
                       const IconComp = idx === 0 ? Zap : idx === 1 ? Sparkles : Wrench;
-                      const iconColor = idx === 0 ? 'text-primary bg-primary/10' : idx === 1 ? 'text-blue-500 bg-blue-500/10' : 'text-amber-500 bg-amber-500/10';
+                      const iconColor =
+                        idx === 0
+                          ? 'text-primary bg-primary/10'
+                          : idx === 1
+                            ? 'text-blue-500 bg-blue-500/10'
+                            : 'text-amber-500 bg-amber-500/10';
                       return (
-                        <div key={item.id || idx} className="rounded-xl border border-border/60 bg-muted/20 p-3.5 space-y-2 hover:border-primary/40 transition-colors">
-                          <div className={cn('h-10 w-10 rounded-lg flex items-center justify-center', iconColor)}>
+                        <div
+                          key={item.id || idx}
+                          className="rounded-xl border border-border/60 bg-muted/20 p-3.5 space-y-2 hover:border-primary/40 transition-colors"
+                        >
+                          <div
+                            className={cn(
+                              'h-10 w-10 rounded-lg flex items-center justify-center',
+                              iconColor
+                            )}
+                          >
                             <IconComp className="h-5 w-5" />
                           </div>
                           <div>
-                            <p className="font-bold text-xs text-foreground truncate">{item.name}</p>
-                            <p className="text-[11px] text-muted-foreground mt-0.5 capitalize">{item.kind || 'Componente'}</p>
+                            <p className="font-bold text-xs text-foreground truncate">
+                              {item.name}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 capitalize">
+                              {item.kind || 'Componente'}
+                            </p>
                             <span className="mt-2 inline-block rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground">
                               {item.quantity} {item.unit || 'un'}
                             </span>
@@ -611,7 +680,11 @@ export function ProposalSummary({
                     <div>
                       <p className="font-bold text-foreground">Garantia dos equipamentos</p>
                       <p className="text-muted-foreground text-[11px] mt-0.5">
-                        {getProposalRawTerm(proposal, ['equipment_warranty', 'garantia_equipamentos', 'garantia']) || 'Não informado'}
+                        {getProposalRawTerm(proposal, [
+                          'equipment_warranty',
+                          'garantia_equipamentos',
+                          'garantia',
+                        ]) || 'Não informado'}
                       </p>
                     </div>
                   </div>
@@ -621,7 +694,11 @@ export function ProposalSummary({
                     <div>
                       <p className="font-bold text-foreground">Garantia de instalação</p>
                       <p className="text-muted-foreground text-[11px] mt-0.5">
-                        {getProposalRawTerm(proposal, ['service_warranty', 'installation_warranty', 'garantia_instalacao']) || 'Não informado'}
+                        {getProposalRawTerm(proposal, [
+                          'service_warranty',
+                          'installation_warranty',
+                          'garantia_instalacao',
+                        ]) || 'Não informado'}
                       </p>
                     </div>
                   </div>
@@ -654,7 +731,9 @@ export function ProposalSummary({
                     <Wrench className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                     <div>
                       <p className="font-bold text-foreground">Suporte técnico</p>
-                      <p className="text-muted-foreground text-[11px] mt-0.5">Incluso por 1 ano sem custo adicional</p>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">
+                        Incluso por 1 ano sem custo adicional
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -711,7 +790,9 @@ export function ProposalSummary({
                     </div>
                     <div>
                       <p className="font-bold text-foreground">Proposta recebida</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">06 de out. de 2026 às 10:24</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        06 de out. de 2026 às 10:24
+                      </p>
                     </div>
                   </li>
 
@@ -721,7 +802,9 @@ export function ProposalSummary({
                     </div>
                     <div>
                       <p className="font-bold text-blue-600 dark:text-blue-400">Em análise</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">Aguardando sua avaliação</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Aguardando sua avaliação
+                      </p>
                     </div>
                   </li>
 
@@ -731,7 +814,9 @@ export function ProposalSummary({
                     </div>
                     <div>
                       <p className="font-semibold text-muted-foreground">Negociação</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">Aguardando atualização</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Aguardando atualização
+                      </p>
                     </div>
                   </li>
 
@@ -768,15 +853,24 @@ export function ProposalSummary({
                             <p className="text-[10px] text-muted-foreground">{doc.size}</p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg">
-                          <Download className="h-4 w-4" />
-                          <span className="sr-only">Baixar {doc.name}</span>
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"
+                        >
+                          <a href={doc.href}>
+                            <Download className="h-4 w-4" />
+                            <span className="sr-only">Baixar {doc.name}</span>
+                          </a>
                         </Button>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="py-2 text-xs text-muted-foreground">Nenhum documento anexado a esta proposta.</p>
+                  <p className="py-2 text-xs text-muted-foreground">
+                    Nenhum documento anexado a esta proposta.
+                  </p>
                 )}
               </div>
             </div>
@@ -806,26 +900,40 @@ export function ProposalSummary({
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 pt-1">
               <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center">
                 <Zap className="mx-auto h-4 w-4 text-amber-500" />
-                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Potência de Pico</span>
-                <span className="text-sm font-extrabold text-foreground">{powerVal || 'A definir'}</span>
+                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">
+                  Potência de Pico
+                </span>
+                <span className="text-sm font-extrabold text-foreground">
+                  {powerVal || 'A definir'}
+                </span>
               </div>
               <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center">
                 <Sun className="mx-auto h-4 w-4 text-blue-500" />
-                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Geração Média</span>
-                <span className="text-sm font-extrabold text-foreground">{genVal || 'A calcular'}</span>
+                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">
+                  Geração Média
+                </span>
+                <span className="text-sm font-extrabold text-foreground">
+                  {genVal || 'A calcular'}
+                </span>
               </div>
               <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center">
                 <Layers className="mx-auto h-4 w-4 text-emerald-500" />
-                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Área Estimada</span>
+                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">
+                  Área Estimada
+                </span>
                 <span className="text-sm font-extrabold text-foreground">
-                  {getProposalRawTerm(proposal, ['required_area', 'area_m2', 'area_util']) || 'Não informado'}
+                  {getProposalRawTerm(proposal, ['required_area', 'area_m2', 'area_util']) ||
+                    'Não informado'}
                 </span>
               </div>
               <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center">
                 <Cpu className="mx-auto h-4 w-4 text-violet-500" />
-                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Padrão da Rede</span>
+                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">
+                  Padrão da Rede
+                </span>
                 <span className="text-sm font-extrabold text-foreground">
-                  {getProposalRawTerm(proposal, ['grid_voltage', 'padrao_entrada', 'tensao']) || 'Não informado'}
+                  {getProposalRawTerm(proposal, ['grid_voltage', 'padrao_entrada', 'tensao']) ||
+                    'Não informado'}
                 </span>
               </div>
             </div>
@@ -840,14 +948,23 @@ export function ProposalSummary({
                 <span>Arranjo Fotovoltaico (Módulos)</span>
               </h4>
               <ul className="space-y-3 text-xs">
-                {proposal.version?.items.filter(i => /módulo|modulo|painel|placa/i.test(i.name || '') || i.kind === 'module').length ? (
+                {proposal.version?.items.filter(
+                  (i) => /módulo|modulo|painel|placa/i.test(i.name || '') || i.kind === 'module'
+                ).length ? (
                   proposal.version.items
-                    .filter(i => /módulo|modulo|painel|placa/i.test(i.name || '') || i.kind === 'module')
+                    .filter(
+                      (i) => /módulo|modulo|painel|placa/i.test(i.name || '') || i.kind === 'module'
+                    )
                     .map((item) => (
-                      <li key={item.id} className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-1">
+                      <li
+                        key={item.id}
+                        className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-1"
+                      >
                         <div className="flex justify-between font-bold text-foreground">
                           <span>{item.name}</span>
-                          <span className="text-primary font-bold">{item.quantity} {item.unit || 'un'}</span>
+                          <span className="text-primary font-bold">
+                            {item.quantity} {item.unit || 'un'}
+                          </span>
                         </div>
                         {item.description && (
                           <p className="text-[11px] text-muted-foreground">{item.description}</p>
@@ -856,20 +973,23 @@ export function ProposalSummary({
                     ))
                 ) : (
                   <li className="rounded-xl border border-border/60 bg-muted/20 p-3 text-muted-foreground">
-                    Módulos fotovoltaicos monocristalinos de alta eficiência (Half-Cell / N-Type Tier-1).
+                    Módulos fotovoltaicos monocristalinos de alta eficiência (Half-Cell / N-Type
+                    Tier-1).
                   </li>
                 )}
                 <li className="grid grid-cols-2 gap-2 text-muted-foreground pt-1">
                   <div className="rounded-lg bg-muted/30 p-2.5">
                     <span className="block text-[10px] font-semibold">Orientação Preferencial</span>
                     <span className="font-bold text-foreground text-xs">
-                      {getProposalRawTerm(proposal, ['azimuth', 'azimute', 'orientacao']) || 'Não informado'}
+                      {getProposalRawTerm(proposal, ['azimuth', 'azimute', 'orientacao']) ||
+                        'Não informado'}
                     </span>
                   </div>
                   <div className="rounded-lg bg-muted/30 p-2.5">
                     <span className="block text-[10px] font-semibold">Inclinação Recomendada</span>
                     <span className="font-bold text-foreground text-xs">
-                      {getProposalRawTerm(proposal, ['tilt_angle', 'inclinacao', 'angulo']) || 'Não informado'}
+                      {getProposalRawTerm(proposal, ['tilt_angle', 'inclinacao', 'angulo']) ||
+                        'Não informado'}
                     </span>
                   </div>
                 </li>
@@ -883,14 +1003,23 @@ export function ProposalSummary({
                 <span>Inversor e Topologia Elétrica</span>
               </h4>
               <ul className="space-y-3 text-xs">
-                {proposal.version?.items.filter(i => /inversor|microinversor/i.test(i.name || '') || i.kind === 'inverter').length ? (
+                {proposal.version?.items.filter(
+                  (i) => /inversor|microinversor/i.test(i.name || '') || i.kind === 'inverter'
+                ).length ? (
                   proposal.version.items
-                    .filter(i => /inversor|microinversor/i.test(i.name || '') || i.kind === 'inverter')
+                    .filter(
+                      (i) => /inversor|microinversor/i.test(i.name || '') || i.kind === 'inverter'
+                    )
                     .map((item) => (
-                      <li key={item.id} className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-1">
+                      <li
+                        key={item.id}
+                        className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-1"
+                      >
                         <div className="flex justify-between font-bold text-foreground">
                           <span>{item.name}</span>
-                          <span className="text-primary font-bold">{item.quantity} {item.unit || 'un'}</span>
+                          <span className="text-primary font-bold">
+                            {item.quantity} {item.unit || 'un'}
+                          </span>
                         </div>
                         {item.description && (
                           <p className="text-[11px] text-muted-foreground">{item.description}</p>
@@ -925,7 +1054,11 @@ export function ProposalSummary({
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                   <dt className="text-muted-foreground font-medium">Tipo de cobertura</dt>
                   <dd className="mt-1 font-bold text-foreground">
-                    {getProposalRawTerm(proposal, ['roof_type', 'tipo_telhado', 'tipo_estrutura']) || 'Não informado'}
+                    {getProposalRawTerm(proposal, [
+                      'roof_type',
+                      'tipo_telhado',
+                      'tipo_estrutura',
+                    ]) || 'Não informado'}
                   </dd>
                 </div>
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
@@ -947,21 +1080,22 @@ export function ProposalSummary({
               </h4>
               <dl className="space-y-2.5 text-xs">
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
-                  <dt className="text-muted-foreground font-medium">Proteções elétricas (String Box)</dt>
-                  <dd className="mt-1 font-bold text-foreground">
-                    Não informado
-                  </dd>
+                  <dt className="text-muted-foreground font-medium">
+                    Proteções elétricas (String Box)
+                  </dt>
+                  <dd className="mt-1 font-bold text-foreground">Não informado</dd>
                 </div>
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
-                  <dt className="text-muted-foreground font-medium">Homologação na Distribuidora</dt>
-                  <dd className="mt-1 font-bold text-foreground">
-                    Não informado
-                  </dd>
+                  <dt className="text-muted-foreground font-medium">
+                    Homologação na Distribuidora
+                  </dt>
+                  <dd className="mt-1 font-bold text-foreground">Não informado</dd>
                 </div>
                 <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
                   <dt className="text-muted-foreground font-medium">Responsável Técnico</dt>
                   <dd className="mt-1 font-bold text-foreground">
-                    {getProposalRawTerm(proposal, ['art_cft', 'responsavel_tecnico']) || 'Não informado'}
+                    {getProposalRawTerm(proposal, ['art_cft', 'responsavel_tecnico']) ||
+                      'Não informado'}
                   </dd>
                 </div>
               </dl>
@@ -974,22 +1108,31 @@ export function ProposalSummary({
           {proposal.version ? (
             <VersionContent version={proposal.version} />
           ) : (
-            <p className="text-xs text-muted-foreground">A empresa está preparando o detalhamento técnico.</p>
+            <p className="text-xs text-muted-foreground">
+              A empresa está preparando o detalhamento técnico.
+            </p>
           )}
         </TabsContent>
 
         {/* Tab 3: Financeiro */}
         <TabsContent value="financial" className="mt-6 space-y-4 focus-visible:outline-none">
           <div className="rounded-2xl border border-border bg-card p-6 space-y-4 shadow-2xs">
-            <h3 className="text-lg font-extrabold text-foreground">Condições comerciais e financeiras</h3>
+            <h3 className="text-lg font-extrabold text-foreground">
+              Condições comerciais e financeiras
+            </h3>
             <p className="text-3xl font-extrabold tabular-nums text-primary">
               {displayPrice.formatted}
             </p>
             <dl className="space-y-3 text-xs border-t border-border/60 pt-4">
               {technicalFields.slice(3).map((field) => (
-                <div key={field.label} className="rounded-xl border border-border/60 bg-muted/20 p-3.5">
+                <div
+                  key={field.label}
+                  className="rounded-xl border border-border/60 bg-muted/20 p-3.5"
+                >
                   <dt className="font-bold text-muted-foreground">{field.label}</dt>
-                  <dd className="mt-1 font-bold text-foreground">{termValue(proposal, field.keys)}</dd>
+                  <dd className="mt-1 font-bold text-foreground">
+                    {termValue(proposal, field.keys)}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -1016,15 +1159,24 @@ export function ProposalSummary({
                         <p className="text-[11px] text-muted-foreground">{doc.size}</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-bold shrink-0 rounded-xl">
-                      <Download className="h-3.5 w-3.5" />
-                      <span>Baixar</span>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 text-xs font-bold shrink-0 rounded-xl"
+                    >
+                      <a href={doc.href}>
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Baixar</span>
+                      </a>
                     </Button>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="py-4 text-xs text-muted-foreground">Nenhum arquivo anexado a esta proposta até o momento.</p>
+              <p className="py-4 text-xs text-muted-foreground">
+                Nenhum arquivo anexado a esta proposta até o momento.
+              </p>
             )}
           </div>
         </TabsContent>
@@ -1035,9 +1187,14 @@ export function ProposalSummary({
             <h3 className="text-lg font-extrabold text-foreground">Condições gerais do projeto</h3>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               {technicalFields.map((field) => (
-                <div key={field.label} className="rounded-xl border border-border/60 bg-muted/20 p-3.5">
+                <div
+                  key={field.label}
+                  className="rounded-xl border border-border/60 bg-muted/20 p-3.5"
+                >
                   <dt className="font-bold text-muted-foreground">{field.label}</dt>
-                  <dd className="mt-1 font-bold text-foreground">{termValue(proposal, field.keys)}</dd>
+                  <dd className="mt-1 font-bold text-foreground">
+                    {termValue(proposal, field.keys)}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -1051,7 +1208,9 @@ export function ProposalSummary({
               <CompanyMark proposal={proposal} />
               <div>
                 <h3 className="text-lg font-extrabold text-foreground">{proposal.company.name}</h3>
-                <p className="text-xs font-medium text-muted-foreground">{getProposalLocation(proposal)}</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {getProposalLocation(proposal)}
+                </p>
               </div>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1066,11 +1225,18 @@ export function ProposalSummary({
         {/* Tab 7: Histórico */}
         <TabsContent value="history" className="mt-6 space-y-4 focus-visible:outline-none">
           <div className="rounded-2xl border border-border bg-card p-6 space-y-4 shadow-2xs">
-            <h3 className="text-lg font-extrabold text-foreground">Histórico de edições e revisões</h3>
+            <h3 className="text-lg font-extrabold text-foreground">
+              Histórico de edições e revisões
+            </h3>
             <p className="text-xs text-muted-foreground">
               Consulte todas as alterações publicadas para esta proposta.
             </p>
-            <Button variant="outline" size="sm" onClick={onNegotiate} className="font-bold text-xs rounded-xl">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onNegotiate}
+              className="font-bold text-xs rounded-xl"
+            >
               Abrir histórico de versões
             </Button>
           </div>
@@ -1089,11 +1255,7 @@ export function ProposalSummary({
             <span>Conversar com a empresa</span>
           </Button>
         ) : (
-          <Button
-            asChild
-            size="lg"
-            className="gap-2 rounded-xl font-bold shadow-xs"
-          >
+          <Button asChild size="lg" className="gap-2 rounded-xl font-bold shadow-xs">
             <Link href={proposalChatUrl(proposal)}>
               <MessageCircle className="h-4 w-4" />
               <span>Conversar com a empresa</span>
@@ -1101,7 +1263,12 @@ export function ProposalSummary({
           </Button>
         )}
         {(canDecide(proposal) || proposal.status === 'accepted') && (
-          <Button variant="outline" size="lg" onClick={onMeeting} className="gap-2 rounded-xl font-bold border-border bg-card">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={onMeeting}
+            className="gap-2 rounded-xl font-bold border-border bg-card"
+          >
             <CalendarClock className="h-4 w-4 text-primary" />
             <span>Agendar reunião</span>
           </Button>
@@ -1110,10 +1277,19 @@ export function ProposalSummary({
 
       {canDecide(proposal) && (
         <div className="grid gap-3 sm:grid-cols-2">
-          <Button variant="outline" size="lg" onClick={onNegotiate} className="rounded-xl font-bold border-border bg-card">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={onNegotiate}
+            className="rounded-xl font-bold border-border bg-card"
+          >
             Solicitar ajustes
           </Button>
-          <Button size="lg" onClick={onChoose} className="gap-2 rounded-xl font-bold bg-primary hover:bg-primary/90 shadow-xs">
+          <Button
+            size="lg"
+            onClick={onChoose}
+            className="gap-2 rounded-xl font-bold bg-primary hover:bg-primary/90 shadow-xs"
+          >
             <Check className="h-4 w-4" />
             <span>Escolher esta proposta</span>
           </Button>
@@ -1121,7 +1297,11 @@ export function ProposalSummary({
       )}
 
       {onProject && (
-        <Button size="lg" onClick={onProject} className="w-full gap-2 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 shadow-xs text-white">
+        <Button
+          size="lg"
+          onClick={onProject}
+          className="w-full gap-2 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 shadow-xs text-white"
+        >
           <ShieldCheck className="h-5 w-5" />
           <span>Acompanhamento do projeto</span>
         </Button>
@@ -1129,4 +1309,3 @@ export function ProposalSummary({
     </div>
   );
 }
-

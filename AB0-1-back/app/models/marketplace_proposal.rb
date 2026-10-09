@@ -31,12 +31,12 @@ class MarketplaceProposal < ApplicationRecord
   end
 
   def publish!
-    raise ArgumentError, 'Somente rascunhos podem ser publicados' unless status == 'draft'
+    with_lock do
+      raise ArgumentError, 'Somente rascunhos podem ser publicados' unless status == 'draft'
 
-    version = current_version || versions.order(number: :desc).first
-    raise ActiveRecord::RecordInvalid, self unless version
+      version = current_version || versions.order(number: :desc).first
+      raise ActiveRecord::RecordInvalid, self unless version
 
-    transaction do
       version.publish!
       update!(status: 'sent', published_at: Time.current, total_cents: version.total_cents,
               current_version_number: version.number)

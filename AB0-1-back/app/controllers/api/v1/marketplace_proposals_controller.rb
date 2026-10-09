@@ -3,9 +3,10 @@
 module Api
   module V1
     class MarketplaceProposalsController < BaseController
+      include MarketplaceDocumentDownload
       before_action :authenticate_api_user
-      before_action :set_proposal, only: %i[show view accept decline request_change meetings create_meeting]
-      before_action :ensure_buyer_access!, only: %i[show view accept decline request_change meetings create_meeting]
+      before_action :set_proposal, only: %i[show view accept decline request_change meetings create_meeting download_document]
+      before_action :ensure_buyer_access!, only: %i[show view accept decline request_change meetings create_meeting download_document]
 
       def index
         proposals = with_details(visible_buyer_scope.order(created_at: :desc))
@@ -189,6 +190,7 @@ module Api
           currency: version.currency,
           valid_until: version.valid_until,
           published_at: version.published_at,
+          documents: Marketplace::ProposalDocumentService.metadata(version),
           items: version.items.sort_by { |item| [item.position, item.id] }.map do |item|
             item.as_json(only: %i[id kind name description quantity unit unit_price_cents total_cents position])
           end,

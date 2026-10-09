@@ -26,6 +26,18 @@ RSpec.describe 'Marketplace proposals API', type: :request do
     { 'Authorization' => "Bearer #{token}", 'Content-Type' => 'application/json' }
   end
 
+  def auth_headers_for(user)
+    headers_for(user).except('Content-Type')
+  end
+
+  def pdf_upload
+    file = Tempfile.new(['proposta', '.pdf'])
+    file.binmode
+    file.write("%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n%%EOF\n")
+    file.rewind
+    Rack::Test::UploadedFile.new(file.path, 'application/pdf', true)
+  end
+
   def add_published_version(proposal, name: 'Sistema fotovoltaico', total_cents: 26_900_00)
     version = proposal.versions.create!(
       number: 1,
@@ -289,6 +301,78 @@ RSpec.describe 'Marketplace proposals API', type: :request do
           headers: headers_for(company_user)
 
       expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'anexa, publica e entrega um PDF privado somente ao comprador autorizado' do
+      lead.update!(email: buyer.email, name: buyer.name)
+      proposal = Marketplace::ProposalBootstrapService.new(distribution: distribution).call
+
+      patch "/api/v1/company_dashboard/proposals/#{proposal.id}",
+            params: { company_id: company.id, proposal: {
+              title: 'Proposta documental', valid_until: 30.days.from_now.to_date, total_cents: 25_750_00
+            } }.to_json,
+            headers: headers_for(company_user)
+      expect(response).to have_http_status(:ok)
+
+      upload = pdf_upload
+      post "/api/v1/company_dashboard/proposals/#{proposal.id}/versions/#{proposal.current_version.id}/documents",
+           params: { company_id: company.id, file: upload }, headers: auth_headers_for(company_user)
+
+      expect(response).to have_http_status(:created)
+      document_id = JSON.parse(response.body).dig('proposal', 'version', 'documents', 0, 'id')
+      expect(document_id).to be_present
+
+      post "/api/v1/company_dashboard/proposals/#{proposal.id}/send",
+           params: { company_id: company.id }.to_json, headers: headers_for(company_user)
+      expect(response).to have_http_status(:ok)
+
+      get "/api/v1/proposals/#{proposal.id}/versions/#{proposal.current_version.id}/documents/#{document_id}/download",
+          headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq('application/pdf')
+      expect(response.headers['Cache-Control']).to include('private', 'no-store')
+
+      intruder = create(:user, role: 'review', company: nil, status: :active, confirmed_at: Time.current)
+      get "/api/v1/proposals/#{proposal.id}/versions/#{proposal.current_version.id}/documents/#{document_id}/download",
+          headers: headers_for(intruder)
+      expect(response).to have_http_status(:forbidden)
+    ensure
+      upload&.tempfile&.close
+    end
+
+    it 'rejeita conteúdo disfarçado e impede remoção após publicação' do
+      proposal = Marketplace::ProposalBootstrapService.new(distribution: distribution).call
+      fake = Tempfile.new(['proposta', '.pdf'])
+      fake.write('arquivo executável disfarçado')
+      fake.rewind
+      fake_upload = Rack::Test::UploadedFile.new(fake.path, 'application/pdf', true)
+
+      post "/api/v1/company_dashboard/proposals/#{proposal.id}/versions/#{proposal.current_version.id}/documents",
+           params: { company_id: company.id, file: fake_upload }, headers: auth_headers_for(company_user)
+      expect(response).to have_http_status(:unprocessable_entity)
+
+      upload = pdf_upload
+      post "/api/v1/company_dashboard/proposals/#{proposal.id}/versions/#{proposal.current_version.id}/documents",
+           params: { company_id: company.id, file: upload }, headers: auth_headers_for(company_user)
+      document_id = JSON.parse(response.body).dig('proposal', 'version', 'documents', 0, 'id')
+
+      patch "/api/v1/company_dashboard/proposals/#{proposal.id}",
+            params: { company_id: company.id, proposal: {
+              title: 'Proposta documental', valid_until: 30.days.from_now.to_date, total_cents: 25_750_00
+            } }.to_json,
+            headers: headers_for(company_user)
+      post "/api/v1/company_dashboard/proposals/#{proposal.id}/send",
+           params: { company_id: company.id }.to_json, headers: headers_for(company_user)
+
+      delete "/api/v1/company_dashboard/proposals/#{proposal.id}/versions/#{proposal.current_version.id}/documents/#{document_id}",
+             params: { company_id: company.id }.to_json, headers: headers_for(company_user)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(proposal.current_version.reload.documents.attachments.find_by(id: document_id)).to be_present
+    ensure
+      fake&.close!
+      upload&.tempfile&.close
     end
   end
 end

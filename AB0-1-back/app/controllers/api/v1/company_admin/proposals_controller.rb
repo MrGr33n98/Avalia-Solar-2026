@@ -4,16 +4,17 @@ module Api
   module V1
     module CompanyAdmin
       class ProposalsController < BaseController # rubocop:disable Metrics/ClassLength
+        include MarketplaceDocumentDownload
         before_action :authenticate_api_user
         before_action :authenticate_company_user_or_admin!
         before_action :set_company
         before_action :authorize_dashboard_access!
         before_action :set_proposal,
                       only: %i[show update send_proposal new_version withdraw meetings update_meeting project
-                               update_project update_milestone]
+                               update_project update_milestone upload_document remove_document download_document]
         before_action :ensure_company_access!,
                       only: %i[show update send_proposal new_version withdraw meetings update_meeting project
-                               update_project update_milestone]
+                               update_project update_milestone upload_document remove_document download_document]
 
         def index
           authorize @company, :view_leads?
@@ -40,7 +41,31 @@ module Api
         end
 
         def show
+          authorize @proposal, :show?
           render json: { proposal: serialize(@proposal) }
+        end
+
+        def upload_document
+          authorize @proposal, :update?
+          version = @proposal.versions.find(params[:version_id])
+          Marketplace::ProposalDocumentService.new(proposal: @proposal, version: version, actor: current_user)
+                                              .upload(params[:file])
+          render json: { proposal: serialize(@proposal.reload) }, status: :created
+        rescue Marketplace::ProposalDocumentService::InvalidDocument => e
+          render json: { error: e.message }, status: :unprocessable_entity
+        rescue Marketplace::ProposalDocumentService::ScannerUnavailable => e
+          render json: { error: e.message }, status: :service_unavailable
+        end
+
+        def remove_document
+          authorize @proposal, :update?
+          version = @proposal.versions.find(params[:version_id])
+          document = version.documents.attachments.find(params[:document_id])
+          Marketplace::ProposalDocumentService.new(proposal: @proposal, version: version, actor: current_user)
+                                              .remove(document)
+          render json: { proposal: serialize(@proposal.reload) }
+        rescue Marketplace::ProposalDocumentService::InvalidDocument => e
+          render json: { error: e.message }, status: :unprocessable_entity
         end
 
         def create
@@ -75,15 +100,17 @@ module Api
                           status: :unprocessable_entity
           end
 
-          version = @proposal.current_version || @proposal.versions.create!(number: 1,
-                                                                            title: 'Proposta para seu projeto')
           payload = proposal_params
           @proposal.with_lock do
-            version.update!(payload.slice(:title, :summary, :valid_until))
+            raise ArgumentError, 'A proposta publicada deve receber uma nova versão' unless @proposal.status == 'draft'
+            version = @proposal.current_version || @proposal.versions.create!(number: 1, title: 'Proposta para seu projeto')
+            version.update!(payload.slice(:title, :summary, :valid_until, :total_cents))
             replace_items(version, payload[:items]) if payload.key?(:items)
             replace_terms(version, payload[:terms]) if payload.key?(:terms)
           end
           render json: { proposal: serialize(@proposal.reload) }
+        rescue ArgumentError => e
+          render json: { error: e.message }, status: :unprocessable_entity
         rescue ActiveRecord::RecordInvalid => e
           render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
         end
@@ -92,18 +119,24 @@ module Api
           authorize @proposal, :send?
           @proposal.publish!
           render json: { proposal: serialize(@proposal.reload) }
+        rescue ArgumentError => e
+          render json: { error: e.message }, status: :unprocessable_entity
         rescue ActiveRecord::RecordInvalid => e
           render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
         end
 
         def new_version
           authorize @proposal, :new_version?
-          return render_closed_proposal if proposal_closed?
+          @proposal.with_lock do
+            return render_closed_proposal if proposal_closed?
+            return render json: { proposal: serialize(@proposal) } if @proposal.status == 'draft'
 
-          current = @proposal.current_version
-          version = create_next_version(current)
-          copy_version_content(current, version)
-          @proposal.update!(status: 'draft', current_version_number: version.number)
+            current = @proposal.current_version
+            version = create_next_version(current)
+            copy_version_content(current, version)
+            @proposal.update!(status: 'draft', current_version_number: version.number)
+            @proposal.record_event('proposal.version_created', actor: current_user, metadata: { version_id: version.id })
+          end
           render json: { proposal: serialize(@proposal.reload) }, status: :created
         end
 
@@ -184,11 +217,13 @@ module Api
             number: @proposal.versions.maximum(:number).to_i + 1,
             title: current&.title || 'Nova versão da proposta',
             summary: current&.summary,
+            total_cents: current&.total_cents || 0,
             valid_until: current&.valid_until
           )
         end
 
         def copy_version_content(current, version)
+          version.documents.attach(current.documents.blobs) if current&.documents&.attached?
           current&.items&.find_each do |item|
             version.items.create!(item.attributes.slice('kind', 'name', 'description', 'quantity', 'unit',
                                                         'unit_price_cents', 'position'))
@@ -268,7 +303,7 @@ module Api
 
         def proposal_params
           params.require(:proposal).permit(
-            :title, :summary, :valid_until,
+            :title, :summary, :valid_until, :total_cents,
             items: %i[kind name description quantity unit unit_price_cents position],
             terms: %i[key label value position]
           )
@@ -299,6 +334,8 @@ module Api
             expires_at: proposal.expires_at,
             published_at: proposal.published_at,
             created_at: proposal.created_at,
+            updated_at: proposal.updated_at,
+            events: proposal.events.order(:occurred_at, :id).map { |event| event.as_json(only: %i[id event_type occurred_at metadata]) },
             lead_distribution_id: proposal.lead_distribution_id,
             company: { id: proposal.company_id, name: proposal.company.name },
             lead: proposal.lead.as_json(only: %i[id name email phone product_vertical project_profile city state
@@ -364,6 +401,8 @@ module Api
             total_cents: version.total_cents,
             currency: version.currency,
             valid_until: version.valid_until,
+            published_at: version.published_at,
+            documents: Marketplace::ProposalDocumentService.metadata(version),
             items: version.items.order(:position, :id).map do |item|
               item.as_json(only: %i[id kind name description quantity unit unit_price_cents total_cents position])
             end,

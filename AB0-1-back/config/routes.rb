@@ -504,6 +504,9 @@ Rails.application.routes.draw do
             post :send, action: :send_proposal
             post :new_version
             post :withdraw
+            post 'versions/:version_id/documents', action: :upload_document
+            delete 'versions/:version_id/documents/:document_id', action: :remove_document
+            get 'versions/:version_id/documents/:document_id/download', action: :download_document
             get :meetings
             patch 'meetings/:meeting_id', action: :update_meeting
             get :project
@@ -729,6 +732,7 @@ Rails.application.routes.draw do
           post :accept
           post :decline
           post :request_change
+          get 'versions/:version_id/documents/:document_id/download', action: :download_document
           get :meetings
           post :meetings, action: :create_meeting
         end

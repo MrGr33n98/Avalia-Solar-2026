@@ -21,7 +21,7 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react';
-import type { MarketplaceProposal } from '@/lib/api';
+import { marketplaceProposalsApi, type MarketplaceProposal } from '@/lib/api';
 import {
   formatDate,
   getProposalDisplayPrice,
@@ -48,14 +48,27 @@ export function ProposalCompleted({
   onReview,
   onConversation,
 }: ProposalCompletedProps) {
-  const power =
-    getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'potencia', 'installed_power']);
-  const generation =
-    getProposalRawTerm(proposal, ['monthly_generation', 'geracao', 'generation_kwh']);
-  const deadline =
-    getProposalRawTerm(proposal, ['installation_deadline', 'prazo', 'installation_time']);
-  const savings =
-    getProposalRawTerm(proposal, ['monthly_savings', 'economia', 'estimated_savings']);
+  const power = getProposalRawTerm(proposal, [
+    'system_power',
+    'power_kwp',
+    'potencia',
+    'installed_power',
+  ]);
+  const generation = getProposalRawTerm(proposal, [
+    'monthly_generation',
+    'geracao',
+    'generation_kwh',
+  ]);
+  const deadline = getProposalRawTerm(proposal, [
+    'installation_deadline',
+    'prazo',
+    'installation_time',
+  ]);
+  const savings = getProposalRawTerm(proposal, [
+    'monthly_savings',
+    'economia',
+    'estimated_savings',
+  ]);
   const price = getProposalDisplayPrice(proposal);
   const location = getProposalLocation(proposal);
   const reference = proposal.reference;
@@ -76,9 +89,16 @@ export function ProposalCompleted({
 
   const samplePhotos: string[] = (proposal.project as { photos?: string[] })?.photos || [];
 
-  const finalDocs = (proposal.version?.terms || [])
-    .filter((t) => t.value && t.value.toLowerCase().includes('.pdf'))
-    .map((t) => ({ name: t.label, size: 'PDF' }));
+  const finalDocs = (proposal.version?.documents || []).map((document) => ({
+    ...document,
+    name: document.filename,
+    size: `${(document.byte_size / 1024 / 1024).toFixed(1)} MB`,
+    href: marketplaceProposalsApi.documentDownloadUrl(
+      proposal.id,
+      proposal.version!.id,
+      document.id
+    ),
+  }));
 
   return (
     <div className="mx-auto w-full max-w-[1280px] space-y-6 pb-16 text-slate-900 font-sans">
@@ -140,7 +160,9 @@ export function ProposalCompleted({
             </div>
             <div className="min-w-0">
               <p className="text-sm font-extrabold text-slate-950">Proposta #{reference}</p>
-              <p className="text-xs text-slate-600 font-medium">{proposal.version?.title || 'Título não informado'}</p>
+              <p className="text-xs text-slate-600 font-medium">
+                {proposal.version?.title || 'Título não informado'}
+              </p>
               <p className="text-[11px] text-slate-400">Concluída em {formatDate(completedAt)}</p>
             </div>
           </div>
@@ -256,7 +278,9 @@ export function ProposalCompleted({
                 <span className="block text-lg font-extrabold text-slate-950 pt-1">
                   {power || 'Não informado'}
                 </span>
-                <span className="block text-[11px] text-slate-500 font-medium">Potência do sistema</span>
+                <span className="block text-[11px] text-slate-500 font-medium">
+                  Potência do sistema
+                </span>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-1">
@@ -264,7 +288,9 @@ export function ProposalCompleted({
                 <span className="block text-lg font-extrabold text-slate-950 pt-1">
                   {generation || 'Não informado'}
                 </span>
-                <span className="block text-[11px] text-slate-500 font-medium">Geração estimada</span>
+                <span className="block text-[11px] text-slate-500 font-medium">
+                  Geração estimada
+                </span>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-1">
@@ -272,7 +298,9 @@ export function ProposalCompleted({
                 <span className="block text-lg font-extrabold text-emerald-600 pt-1">
                   {savings || 'Não informado'}
                 </span>
-                <span className="block text-[11px] text-slate-500 font-medium">Economia estimada</span>
+                <span className="block text-[11px] text-slate-500 font-medium">
+                  Economia estimada
+                </span>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-1">
@@ -301,7 +329,10 @@ export function ProposalCompleted({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {projectPhotos.length ? (
                 projectPhotos.map((src) => (
-                  <div key={src} className="relative h-28 overflow-hidden rounded-xl border border-slate-200">
+                  <div
+                    key={src}
+                    className="relative h-28 overflow-hidden rounded-xl border border-slate-200"
+                  >
                     <img src={src} alt="Foto do projeto" className="h-full w-full object-cover" />
                   </div>
                 ))
@@ -439,13 +470,13 @@ export function ProposalCompleted({
                         <span className="text-[10px] text-slate-400 block">{doc.size}</span>
                       </div>
                     </div>
-                    <button
-                      type="button"
+                    <a
+                      href={doc.href}
                       className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
                       title="Baixar documento"
                     >
                       <Download className="h-4 w-4" />
-                    </button>
+                    </a>
                   </div>
                 ))}
               </div>

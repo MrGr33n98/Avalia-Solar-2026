@@ -3511,6 +3511,14 @@ export type MarketplaceProposalTerm = {
   position: number;
 };
 
+export type MarketplaceProposalDocument = {
+  id: number;
+  filename: string;
+  byte_size: number;
+  content_type: string;
+  created_at: string;
+};
+
 export type MarketplaceProposalVersion = {
   id: number;
   number: number;
@@ -3523,6 +3531,7 @@ export type MarketplaceProposalVersion = {
   published_at?: string | null;
   items: MarketplaceProposalItem[];
   terms: MarketplaceProposalTerm[];
+  documents?: MarketplaceProposalDocument[];
 };
 
 export type MarketplaceProposalMilestone = {
@@ -3570,6 +3579,13 @@ export type MarketplaceProposal = {
   expires_at?: string | null;
   published_at?: string | null;
   created_at: string;
+  updated_at?: string;
+  events?: Array<{
+    id: number;
+    event_type: string;
+    occurred_at: string;
+    metadata?: Record<string, unknown>;
+  }>;
   company: {
     id: number;
     name: string;
@@ -3654,6 +3670,13 @@ export const marketplaceProposalsApi = {
       '/proposals/' + id + '/meetings',
       { method: 'POST', body: payload }
     ),
+  documentDownloadUrl: (
+    id: number | string,
+    versionId: number | string,
+    documentId: number | string,
+    preview = false
+  ) =>
+    `/api/v1/proposals/${id}/versions/${versionId}/documents/${documentId}/download${preview ? '?preview=1' : ''}`,
 };
 
 export const companyMarketplaceProposalsApi = {
@@ -3672,34 +3695,75 @@ export const companyMarketplaceProposalsApi = {
     }>('/company_dashboard/lead_distributions', {
       params: companyId ? { company_id: companyId } : undefined,
     }),
-  create: (leadDistributionId: number | string) =>
+  create: (leadDistributionId: number | string, companyId?: number | string) =>
     fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals', {
       method: 'POST',
-      body: { lead_distribution_id: leadDistributionId },
+      body: { lead_distribution_id: leadDistributionId, company_id: companyId },
     }),
   update: (
     id: number | string,
     proposal: Omit<Partial<MarketplaceProposalVersion>, 'items' | 'terms'> & {
       items?: Array<Partial<MarketplaceProposalItem>>;
       terms?: Array<Partial<MarketplaceProposalTerm>>;
-    }
+    },
+    companyId?: number | string
   ) =>
     fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id, {
       method: 'PATCH',
-      body: { proposal },
+      body: { proposal, company_id: companyId },
     }),
-  send: (id: number | string) =>
+  send: (id: number | string, companyId?: number | string) =>
     fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/send', {
       method: 'POST',
+      body: { company_id: companyId },
     }),
-  newVersion: (id: number | string) =>
+  newVersion: (id: number | string, companyId?: number | string) =>
     fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/new_version', {
       method: 'POST',
+      body: { company_id: companyId },
     }),
-  withdraw: (id: number | string) =>
+  withdraw: (id: number | string, companyId?: number | string) =>
     fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id + '/withdraw', {
       method: 'POST',
+      body: { company_id: companyId },
     }),
+  uploadDocument: (
+    id: number | string,
+    versionId: number | string,
+    file: File,
+    companyId?: number | string
+  ) => {
+    const body = new FormData();
+    body.append('file', file);
+    if (companyId) body.append('company_id', String(companyId));
+    return fetchApi<MarketplaceProposalResponse>(
+      `/company_dashboard/proposals/${id}/versions/${versionId}/documents`,
+      { method: 'POST', body }
+    );
+  },
+  removeDocument: (
+    id: number | string,
+    versionId: number | string,
+    documentId: number | string,
+    companyId?: number | string
+  ) =>
+    fetchApi<MarketplaceProposalResponse>(
+      `/company_dashboard/proposals/${id}/versions/${versionId}/documents/${documentId}`,
+      { method: 'DELETE', body: { company_id: companyId } }
+    ),
+  documentDownloadUrl: (
+    id: number | string,
+    versionId: number | string,
+    documentId: number | string,
+    companyId?: number | string,
+    preview = false
+  ) => {
+    const query = new URLSearchParams();
+    if (companyId) query.set('company_id', String(companyId));
+    if (preview) query.set('preview', '1');
+    const suffix = query.size ? `?${query.toString()}` : '';
+    return `/api/v1/company_dashboard/proposals/${id}/versions/${versionId}/documents/${documentId}/download${suffix}`;
+  },
   meetings: (id: number | string) =>
     fetchApi<{ meetings: NonNullable<MarketplaceProposal['meetings']> }>(
       '/company_dashboard/proposals/' + id + '/meetings'
