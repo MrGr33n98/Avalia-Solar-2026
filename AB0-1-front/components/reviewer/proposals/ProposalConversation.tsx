@@ -73,51 +73,23 @@ export function ProposalConversation({
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [inputMessage, setInputMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [activeTopic, setActiveTopic] = useState<'proposal' | 'technical' | 'payment' | 'visit'>('proposal');
 
-  const power =
-    getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']) ||
-    '8,25 kWp';
-  const generation =
-    getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'geracao']) ||
-    '960 kWh/mês';
-  const price = getProposalDisplayPrice(proposal);
-  const deadline =
-    getProposalRawTerm(proposal, ['installation_deadline', 'prazo', 'installation_time']) ||
-    '30 dias';
-
-  // Mensagens do chat (iniciadas com o histórico contextual da proposta conforme Imagem 1)
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'c1',
-      sender: 'company',
-      text: 'Olá! Obrigado pelo seu interesse!\nSegue em anexo a proposta comercial com todos os detalhes técnicos, equipamentos e condições de pagamento.',
-      time: '10:24',
-      attachment: {
-        name: `Proposta_Comercial_${proposal.company.name.replace(/\s+/g, '_')}.pdf`,
-        size: '1,4 MB',
-      },
-    },
-    {
-      id: 'c2',
-      sender: 'company',
-      text: 'Também incluímos a memória de cálculo e as condições de garantia.',
-      time: '10:24',
-    },
-    {
-      id: 'u1',
-      sender: 'user',
-      text: 'Ótimo! Poderiam confirmar se essa solução inclui os inversores e painéis conforme especificado? E qual o prazo estimado para instalação?',
-      time: '10:26',
-      read: true,
-    },
-    {
-      id: 'c3',
-      sender: 'company',
-      text: `Sim! Essa proposta inclui todos os equipamentos homologados conforme especificado. O prazo de instalação estimado é de ${deadline} após a formalização. Qualquer outra dúvida, estamos à disposição!`,
-      time: '10:27',
-    },
+  const power = getProposalRawTerm(proposal, [
+    'system_power',
+    'power_kwp',
+    'installed_power',
+    'potencia',
   ]);
+  const generation = getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'geracao']);
+  const price = getProposalDisplayPrice(proposal);
+  const deadline = getProposalRawTerm(proposal, [
+    'installation_deadline',
+    'prazo',
+    'installation_time',
+  ]);
+
+  // O histórico começa vazio e é preenchido exclusivamente pela conversa persistida.
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -146,7 +118,7 @@ export function ProposalConversation({
         setMessages(mapped);
       })
       .catch(() => {
-        // Fallback gracioso mantendo histórico contextualizado
+        // A tela permanece utilizável mesmo quando a conversa ainda não foi criada.
       });
 
     return () => {
@@ -191,14 +163,14 @@ export function ProposalConversation({
     'Quais as condições de financiamento?',
   ];
 
-  const sharedFiles = [
-    {
-      name: `Proposta_Comercial_${proposal.company.name.replace(/\s+/g, '_')}.pdf`,
-      size: '1,4 MB',
-    },
-    { name: 'Projeto_Tecnico.pdf', size: '2,1 MB' },
-    { name: 'Memoria_de_Calculo.pdf', size: '1,8 MB' },
-  ];
+  const sharedFiles = Array.from(
+    new Map(
+      messages
+        .filter((message) => message.attachment)
+        .map((message) => [message.attachment!.name, message.attachment!])
+    ).values()
+  );
+
 
   return (
     <div className="space-y-6">
@@ -239,11 +211,15 @@ export function ProposalConversation({
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">{getProposalLocation(proposal)}</p>
-            <div className="flex items-center gap-1 text-xs text-slate-600 font-semibold mt-1">
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              <span>4,8</span>
-              <span className="text-slate-400 font-normal">(32 avaliações)</span>
-            </div>
+            {proposal.company.rating_avg ? (
+              <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-600">
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                <span>{proposal.company.rating_avg.toFixed(1)}</span>
+                {proposal.company.reviews_count ? (
+                  <span className="font-normal text-slate-400">({proposal.company.reviews_count} avaliações)</span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -258,7 +234,7 @@ export function ProposalConversation({
                 Proposta #{proposal.reference}
               </h3>
               <p className="text-xs text-slate-500 truncate mt-0.5">
-                {proposal.version?.title || `Sistema Residencial ${power}`}
+                {proposal.version?.title || 'Título não informado'}
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 Recebida em {formatDate(proposal.published_at || proposal.created_at)}
@@ -289,126 +265,47 @@ export function ProposalConversation({
 
       {/* 3. Área Central: 3 Colunas (Tópicos ~240px | Chat central 1fr | Aside ~320px) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Coluna 1: Lista de Tópicos/Conversas (240px -> 3 cols no grid 12) */}
-        <aside className="lg:col-span-3 rounded-2xl border border-slate-200/90 bg-white p-3 shadow-2xs space-y-3">
-          <h3 className="text-sm font-bold text-slate-900 px-2 pt-1">Conversas</h3>
-
-          <div className="space-y-1.5">
-            {/* Tópico 1: Proposta Ativa */}
-            <button
-              type="button"
-              onClick={() => setActiveTopic('proposal')}
-              className={cn(
-                'w-full text-left p-3 rounded-xl transition-all border',
-                activeTopic === 'proposal'
-                  ? 'border-blue-200 bg-blue-50/70 shadow-2xs'
-                  : 'border-transparent hover:bg-slate-50'
-              )}
-            >
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-bold text-slate-900 truncate flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                  <span>Proposta #{proposal.reference}</span>
-                </span>
-                <span className="text-[10px] text-slate-400 shrink-0">10:24</span>
-              </div>
-              <p className="text-[11px] text-blue-600 truncate mt-1 font-medium">
-                Olá! Obrigado pelo seu interesse!
-              </p>
-            </button>
-
-            {/* Tópico 2: Dúvida técnica */}
-            <button
-              type="button"
-              onClick={() => setActiveTopic('technical')}
-              className={cn(
-                'w-full text-left p-3 rounded-xl transition-all border',
-                activeTopic === 'technical'
-                  ? 'border-blue-200 bg-blue-50/70 shadow-2xs'
-                  : 'border-transparent hover:bg-slate-50'
-              )}
-            >
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-bold text-slate-700 truncate flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span>Dúvida técnica</span>
-                </span>
-                <span className="text-[10px] text-slate-400 shrink-0">Ontem</span>
-              </div>
-              <p className="text-[11px] text-slate-500 truncate mt-1">
-                Vocês trabalham com microinversores?
-              </p>
-            </button>
-
-            {/* Tópico 3: Condições de pagamento */}
-            <button
-              type="button"
-              onClick={() => setActiveTopic('payment')}
-              className={cn(
-                'w-full text-left p-3 rounded-xl transition-all border',
-                activeTopic === 'payment'
-                  ? 'border-blue-200 bg-blue-50/70 shadow-2xs'
-                  : 'border-transparent hover:bg-slate-50'
-              )}
-            >
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-bold text-slate-700 truncate flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span>Condições de pagamento</span>
-                </span>
-                <span className="text-[10px] text-slate-400 shrink-0">03/10</span>
-              </div>
-              <p className="text-[11px] text-slate-500 truncate mt-1">
-                Podemos ajustar para 12x sem juros?
-              </p>
-            </button>
-
-            {/* Tópico 4: Visita técnica */}
-            <button
-              type="button"
-              onClick={() => setActiveTopic('visit')}
-              className={cn(
-                'w-full text-left p-3 rounded-xl transition-all border',
-                activeTopic === 'visit'
-                  ? 'border-blue-200 bg-blue-50/70 shadow-2xs'
-                  : 'border-transparent hover:bg-slate-50'
-              )}
-            >
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-bold text-slate-700 truncate flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span>Visita técnica</span>
-                </span>
-                <span className="text-[10px] text-slate-400 shrink-0">28/09</span>
-              </div>
-              <p className="text-[11px] text-slate-500 truncate mt-1">
-                Quando é possível agendar vistoria?
-              </p>
-            </button>
+        {/* Coluna 1: contexto da conversa */}
+        <aside className="space-y-3 rounded-2xl border border-slate-200/90 bg-white p-3 shadow-2xs lg:col-span-3">
+          <h3 className="px-2 pt-1 text-sm font-bold text-slate-900">Conversa</h3>
+          <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3">
+            <div className="flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+              <span className="truncate text-xs font-bold text-slate-900">Proposta #{proposal.reference}</span>
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+              {messages.length ? `${messages.length} mensagens registradas` : 'Nenhuma mensagem registrada ainda'}
+            </p>
           </div>
-
           <Button
             variant="outline"
             size="sm"
-            className="w-full h-9 rounded-xl border-dashed border-slate-300 text-xs font-semibold text-blue-600 hover:bg-blue-50/60 gap-1.5"
+            className="h-9 w-full gap-1.5 rounded-xl border-dashed border-slate-300 text-xs font-semibold text-blue-600 hover:bg-blue-50/60"
             onClick={() => handleSendMessage('Gostaria de abrir uma nova dúvida sobre o projeto.')}
+            disabled={!conversation}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Nova conversa</span>
+            <span>Nova mensagem</span>
           </Button>
         </aside>
 
         {/* Coluna 2: Chat Central (6 cols no grid 12) */}
         <div className="lg:col-span-5 flex flex-col h-[650px] rounded-2xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden">
-          {/* Header de Data */}
-          <div className="border-b border-slate-100 py-2.5 text-center bg-slate-50/50">
-            <span className="text-[11px] font-semibold text-slate-400">
-              06 de outubro de 2026
-            </span>
+          <div className="border-b border-slate-100 bg-slate-50/50 py-2.5 text-center">
+            <span className="text-[11px] font-semibold text-slate-400">Histórico da conversa</span>
           </div>
 
           {/* Área de Mensagens com scroll */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {!messages.length && (
+              <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+                <MessageCircle className="h-8 w-8 text-slate-300" />
+                <p className="mt-3 text-sm font-semibold text-slate-700">Nenhuma mensagem ainda</p>
+                <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-500">
+                  Envie uma mensagem para iniciar a conversa com a empresa.
+                </p>
+              </div>
+            )}
             {messages.map((m) => {
               const isCompany = m.sender === 'company';
               return (
@@ -556,30 +453,32 @@ export function ProposalConversation({
 
             {/* Foto e Título */}
             <div className="space-y-2">
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
-                <img
-                  src="/energia-solar-avalia-solar.webp"
-                  alt="Sistema instalado"
-                  className="h-full w-full object-cover"
-                />
-              </div>
+              {proposal.company.banner_url ? (
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
+                  <img
+                    src={proposal.company.banner_url}
+                    alt={`Imagem da proposta de ${proposal.company.name}`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="flex aspect-[16/9] w-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500">
+                  Imagem não informada
+                </div>
+              )}
 
               <div>
                 <h4 className="text-sm font-bold text-slate-900">
-                  {proposal.version?.title || `Sistema Residencial ${power}`}
+                  {proposal.version?.title || 'Título não informado'}
                 </h4>
                 <p className="text-xs text-slate-500 mt-0.5">{getProposalLocation(proposal)}</p>
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  <span className="rounded-md bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 text-[10px] font-semibold">
-                    On-grid
-                  </span>
-                  <span className="rounded-md bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-medium">
-                    Residencial
-                  </span>
-                  <span className="rounded-md bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-semibold">
-                    Alta eficiência
-                  </span>
-                </div>
+                {proposal.request?.project_profile && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                      {proposal.request.project_profile}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -590,7 +489,7 @@ export function ProposalConversation({
                   <Zap className="h-3.5 w-3.5 text-blue-600" />
                   <span>Potência do sistema</span>
                 </span>
-                <span className="font-bold text-slate-900">{power}</span>
+                <span className="font-bold text-slate-900">{power || 'Não informado'}</span>
               </div>
 
               <div className="flex items-center justify-between py-2">
@@ -598,7 +497,7 @@ export function ProposalConversation({
                   <Zap className="h-3.5 w-3.5 text-blue-600" />
                   <span>Geração estimada</span>
                 </span>
-                <span className="font-bold text-slate-900">{generation}</span>
+                <span className="font-bold text-slate-900">{generation || 'Não informado'}</span>
               </div>
 
               <div className="flex items-center justify-between py-2">
@@ -606,7 +505,7 @@ export function ProposalConversation({
                   <Calendar className="h-3.5 w-3.5 text-blue-600" />
                   <span>Valor total</span>
                 </span>
-                <span className="font-bold text-slate-900">{price.formatted}</span>
+                <span className="font-bold text-slate-900">{price.isAvailable ? price.formatted : 'Não informado'}</span>
               </div>
 
               <div className="flex items-center justify-between py-2">
@@ -614,7 +513,7 @@ export function ProposalConversation({
                   <Clock className="h-3.5 w-3.5 text-blue-600" />
                   <span>Prazo de instalação</span>
                 </span>
-                <span className="font-bold text-slate-900">{deadline}</span>
+                <span className="font-bold text-slate-900">{deadline || 'Não informado'}</span>
               </div>
             </div>
 
@@ -635,7 +534,7 @@ export function ProposalConversation({
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <FileText className="h-4 w-4" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900">Arquivos compartilhados (3)</h3>
+                <h3 className="text-base font-bold text-slate-900">Arquivos compartilhados ({sharedFiles.length})</h3>
               </div>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400">
                 <Download className="h-4 w-4" />
@@ -643,7 +542,7 @@ export function ProposalConversation({
             </div>
 
             <div className="space-y-2">
-              {sharedFiles.map((f) => (
+              {sharedFiles.length ? sharedFiles.map((f) => (
                 <div
                   key={f.name}
                   className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/60 p-2.5"
@@ -665,7 +564,11 @@ export function ProposalConversation({
                     <Download className="h-4 w-4" />
                   </Button>
                 </div>
-              ))}
+              )) : (
+                <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-3 text-xs text-slate-500">
+                  Nenhum arquivo compartilhado nesta conversa.
+                </p>
+              )}
             </div>
           </div>
 

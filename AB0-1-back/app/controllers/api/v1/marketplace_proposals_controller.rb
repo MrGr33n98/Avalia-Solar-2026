@@ -146,6 +146,7 @@ module Api
           id: proposal.company_id,
           name: proposal.company.name,
           logo_url: proposal.company.try(:logo_url),
+          banner_url: proposal.company.try(:banner_url),
           slug: proposal.company.slug,
           verified: proposal.company.verified?,
           rating_avg: proposal.company.rating_avg,

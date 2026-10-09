@@ -20,6 +20,15 @@ const UPSTREAM_FORWARDED_HEADERS = [
   'x-forwarded-for',
   'x-real-ip',
 ];
+const CONDITIONAL_REQUEST_HEADERS = [
+  'if-match',
+  'if-none-match',
+  'if-modified-since',
+  'if-unmodified-since',
+  'cache-control',
+  'pragma',
+];
+const CACHE_RESPONSE_HEADERS = ['cache-control', 'etag', 'expires', 'last-modified', 'pragma'];
 const RETRYABLE_UPSTREAM_STATUSES = new Set([502, 503, 504]);
 
 type RouteContext = {
@@ -88,6 +97,9 @@ function buildUpstreamHeaders(request: NextRequest, bodyLength?: number) {
   headers.delete('connection');
   headers.delete('content-length');
   UPSTREAM_FORWARDED_HEADERS.forEach((header) => headers.delete(header));
+  // O cliente consome a resposta como JSON. Repassar validators do browser
+  // permite que o upstream responda 304 sem corpo, quebrando o fetch autenticado.
+  CONDITIONAL_REQUEST_HEADERS.forEach((header) => headers.delete(header));
 
   if (typeof bodyLength === 'number' && bodyLength >= 0) {
     headers.set('content-length', bodyLength.toString());
@@ -191,6 +203,8 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
 
       const responseHeaders = new Headers(upstreamResponse.headers);
       HOP_BY_HOP_RESPONSE_HEADERS.forEach((header) => responseHeaders.delete(header));
+      CACHE_RESPONSE_HEADERS.forEach((header) => responseHeaders.delete(header));
+      responseHeaders.set('cache-control', 'no-store, max-age=0');
 
       return new Response(upstreamResponse.body, {
         status: upstreamResponse.status,

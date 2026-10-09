@@ -80,9 +80,15 @@ export function ProposalMeeting({
   const today = new Date();
   const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-  const powerVal = getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']) || '8,25 kWp';
-  const genVal = getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'estimated_generation', 'geracao']) || '960 kWh/mês';
-  const deadlineVal = getProposalRawTerm(proposal, ['installation_deadline', 'installation_time', 'prazo']) || '30 dias';
+  const powerVal =
+    getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']) ||
+    'Não informado';
+  const genVal =
+    getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'estimated_generation', 'geracao']) ||
+    'Não informado';
+  const deadlineVal =
+    getProposalRawTerm(proposal, ['installation_deadline', 'installation_time', 'prazo']) ||
+    'Não informado';
   const displayPrice = getProposalDisplayPrice(proposal);
 
   function toggleObjective(id: string) {

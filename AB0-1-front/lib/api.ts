@@ -1559,9 +1559,13 @@ export const api = {
         const isRetryableStatus =
           typeof status === 'number' &&
           (status === 401 || status === 404 || status === 503 || status === 504);
+        const isNetworkFailure =
+          /Network request failed|NetworkError|Failed to fetch|fetch resource/i.test(
+            normalizedError.message
+          );
         const isRetryable =
           normalizedError.message === 'Request timeout' ||
-          normalizedError.message.includes('Network request failed') ||
+          isNetworkFailure ||
           (isIdempotent && isRetryableStatus);
 
         if (!isRetryable || attempt === maxAttempts - 1) {
@@ -3570,6 +3574,7 @@ export type MarketplaceProposal = {
     id: number;
     name: string;
     logo_url?: string | null;
+    banner_url?: string | null;
     slug?: string | null;
     verified?: boolean;
     rating_avg?: number | null;

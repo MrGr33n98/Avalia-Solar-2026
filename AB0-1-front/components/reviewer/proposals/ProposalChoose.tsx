@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -176,7 +175,7 @@ export function ProposalChoose({
 
           {/* Cards de Proposta com Radio Button */}
           <div className="space-y-4">
-            {proposals.map((proposal, idx) => {
+            {proposals.map((proposal) => {
               const isSelected = proposal.id === selectedId;
               const power =
                 getProposalRawTerm(proposal, [
@@ -195,11 +194,6 @@ export function ProposalChoose({
               const warranty =
                 getProposalRawTerm(proposal, ['warranty', 'garantia_paineis']);
 
-              // Badges temáticos conforme mockup da imagem 3
-              const isBest = idx === 0;
-              const isFastest = idx === 1;
-              const isDurable = idx === 2;
-
               return (
                 <div
                   key={proposal.id}
@@ -211,33 +205,12 @@ export function ProposalChoose({
                       : 'border-slate-200/90 hover:border-slate-300 shadow-2xs'
                   )}
                 >
-                  {/* Badges superiores flutuantes */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
-                      {isBest && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-2xs">
-                          <span>🏆</span>
-                          <span>Mais vantajosa</span>
-                        </span>
-                      )}
-                      {isFastest && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-sky-50 text-sky-700 border border-sky-200 px-2.5 py-0.5 text-[11px] font-bold">
-                          <span>⚡</span>
-                          <span>Instalação mais rápida</span>
-                        </span>
-                      )}
-                      {isDurable && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 text-[11px] font-bold">
-                          <span>🛡</span>
-                          <span>Maior durabilidade</span>
-                        </span>
-                      )}
-                    </div>
-
-                    {isBest && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200">
+                  {/* Estado da seleção, sem classificar a proposta por posição na lista */}
+                  <div className="mb-3 flex min-h-6 items-center justify-end">
+                    {isSelected && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-200">
                         <Check className="h-3 w-3 stroke-[3]" />
-                        <span>Melhor custo-benefício</span>
+                        <span>Selecionada</span>
                       </span>
                     )}
                   </div>
@@ -270,11 +243,17 @@ export function ProposalChoose({
                         <p className="text-xs text-slate-500 mt-0.5">
                           {getProposalLocation(proposal)}
                         </p>
-                        <div className="flex items-center gap-1 text-xs text-slate-600 font-semibold mt-1">
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          <span>4,8</span>
-                          <span className="text-slate-400 font-normal">(32 avaliações)</span>
-                        </div>
+                        {proposal.company.rating_avg != null && (
+                          <div className="flex items-center gap-1 text-xs text-slate-600 font-semibold mt-1">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            <span>{proposal.company.rating_avg.toFixed(1)}</span>
+                            {proposal.company.reviews_count ? (
+                              <span className="text-slate-400 font-normal">
+                                ({proposal.company.reviews_count} avaliações)
+                              </span>
+                            ) : null}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -283,7 +262,7 @@ export function ProposalChoose({
                       <div className="p-2 rounded-xl bg-slate-50/80 border border-slate-100 min-w-[70px]">
                         <Zap className="h-3.5 w-3.5 text-blue-600 mx-auto" />
                         <span className="block text-xs font-bold text-slate-900 mt-0.5">
-                          {power}
+                          {power || 'Não informado'}
                         </span>
                         <span className="block text-[10px] text-slate-400">Potência</span>
                       </div>
@@ -291,7 +270,7 @@ export function ProposalChoose({
                       <div className="p-2 rounded-xl bg-slate-50/80 border border-slate-100 min-w-[70px]">
                         <Sparkles className="h-3.5 w-3.5 text-blue-600 mx-auto" />
                         <span className="block text-xs font-bold text-slate-900 mt-0.5">
-                          {gen}
+                          {gen || 'Não informado'}
                         </span>
                         <span className="block text-[10px] text-slate-400">Geração</span>
                       </div>
@@ -307,7 +286,7 @@ export function ProposalChoose({
                       <div className="p-2 rounded-xl bg-slate-50/80 border border-slate-100 min-w-[70px]">
                         <Clock className="h-3.5 w-3.5 text-blue-600 mx-auto" />
                         <span className="block text-xs font-bold text-slate-900 mt-0.5">
-                          {deadline}
+                          {deadline || 'Não informado'}
                         </span>
                         <span className="block text-[10px] text-slate-400">Prazo</span>
                       </div>
@@ -317,31 +296,36 @@ export function ProposalChoose({
                   {/* Linha Inferior com Foto e Garantias */}
                   <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="relative h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-100">
-                        <img
-                          src="/energia-solar-avalia-solar.webp"
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
+                      <div className="relative h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
+                        {proposal.company.banner_url ? (
+                          <img
+                            src={proposal.company.banner_url}
+                            alt={`Imagem da proposta de ${proposal.company.name}`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center px-2 text-center text-[9px] font-semibold text-slate-400">
+                            Sem imagem
+                          </div>
+                        )}
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                          On-grid
-                        </span>
-                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                          {proposal.request?.project_profile || 'Residencial'}
-                        </span>
-                      </div>
+                      {proposal.request?.project_profile && (
+                        <div className="flex flex-wrap gap-1.5">
+                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                            {proposal.request.project_profile}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-4 text-xs">
                       <div>
                         <span className="text-[10px] text-slate-400 block">Economia estimada</span>
-                        <span className="font-bold text-emerald-600">{savings}</span>
+                        <span className="font-bold text-emerald-600">{savings || 'Não informado'}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block">Garantia painéis</span>
-                        <span className="font-bold text-slate-800">{warranty}</span>
+                        <span className="font-bold text-slate-800">{warranty || 'Não informado'}</span>
                       </div>
                       <button
                         type="button"
@@ -391,39 +375,43 @@ export function ProposalChoose({
                     {selectedProposal.company.name}
                   </h4>
                   <p className="text-xs text-slate-500">{getProposalLocation(selectedProposal)}</p>
-                  <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold mt-0.5">
-                    <Check className="h-3 w-3 stroke-[3]" />
-                    <span>Empresa verificada</span>
-                  </div>
+                  {selectedProposal.company.verified && (
+                    <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold mt-0.5">
+                      <Check className="h-3 w-3 stroke-[3]" />
+                      <span>Empresa verificada</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Foto e Título */}
             <div className="space-y-2">
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
-                <img
-                  src="/energia-solar-avalia-solar.webp"
-                  alt="Sistema instalado"
-                  className="h-full w-full object-cover"
-                />
+              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+                {selectedProposal?.company.banner_url ? (
+                  <img
+                    src={selectedProposal.company.banner_url}
+                    alt={`Imagem da proposta de ${selectedProposal.company.name}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center px-4 text-center text-[11px] font-semibold text-slate-400">
+                    Imagem do projeto não informada
+                  </div>
+                )}
               </div>
 
               <div>
                 <h4 className="text-sm font-bold text-slate-900">
-                  {selectedProposal?.version?.title || `Sistema Residencial ${selectedPower}`}
+                  {selectedProposal?.version?.title || 'Título não informado'}
                 </h4>
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  <span className="rounded-md bg-blue-50 text-blue-700 px-2 py-0.5 text-[10px] font-semibold">
-                    On-grid
-                  </span>
-                  <span className="rounded-md bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-medium">
-                    Residencial
-                  </span>
-                  <span className="rounded-md bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-semibold">
-                    Alta eficiência
-                  </span>
-                </div>
+                {selectedProposal?.request?.project_profile && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                      {selectedProposal.request.project_profile}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -431,12 +419,12 @@ export function ProposalChoose({
             <div className="divide-y divide-slate-100 border-t border-slate-100 pt-2 text-xs">
               <div className="flex items-center justify-between py-2">
                 <span className="text-slate-500 font-medium">Potência do sistema</span>
-                <span className="font-bold text-slate-900">{selectedPower}</span>
+                <span className="font-bold text-slate-900">{selectedPower || 'Não informado'}</span>
               </div>
 
               <div className="flex items-center justify-between py-2">
                 <span className="text-slate-500 font-medium">Geração estimada</span>
-                <span className="font-bold text-slate-900">{selectedGen}</span>
+                <span className="font-bold text-slate-900">{selectedGen || 'Não informado'}</span>
               </div>
 
               <div className="flex items-center justify-between py-2">
@@ -446,12 +434,12 @@ export function ProposalChoose({
 
               <div className="flex items-center justify-between py-2">
                 <span className="text-slate-500 font-medium">Economia estimada</span>
-                <span className="font-bold text-emerald-600">{selectedSavings}</span>
+                <span className="font-bold text-emerald-600">{selectedSavings || 'Não informado'}</span>
               </div>
 
               <div className="flex items-center justify-between py-2">
                 <span className="text-slate-500 font-medium">Prazo de instalação</span>
-                <span className="font-bold text-slate-900">{selectedDeadline}</span>
+                <span className="font-bold text-slate-900">{selectedDeadline || 'Não informado'}</span>
               </div>
             </div>
 

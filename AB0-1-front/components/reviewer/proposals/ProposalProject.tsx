@@ -97,106 +97,40 @@ export function ProposalProject({
     badge?: string;
   }
 
-  // Etapas do Projeto derivadas do objeto real da API
-  const projectSteps: ProjectStepItem[] = proposal.project?.milestones?.length
-    ? proposal.project.milestones.map((m, idx) => ({
-        id: idx + 1,
-        title: m.title,
-        desc: m.notes || '',
-        date: m.completed_at ? formatDate(m.completed_at) : m.scheduled_at ? formatDate(m.scheduled_at) : '',
-        status: m.status,
-      }))
-    : [
-        {
-          id: 1,
-          title: 'Assinatura da proposta',
-          desc: 'Interesse confirmado pelo comprador.',
-          date: confirmedDate,
-          status: 'completed',
-        },
-        {
-          id: 2,
-          title: 'Contrato e pagamento inicial',
-          desc: 'Processo de contratação iniciado.',
-          date: confirmedDate,
-          status: 'completed',
-        },
-        {
-          id: 3,
-          title: 'Elaboração do projeto técnico',
-          badge: 'Em andamento',
-          desc: 'A empresa está desenvolvendo o projeto técnico e definindo os equipamentos.',
-          status: 'in_progress',
-        },
-        {
-          id: 4,
-          title: 'Visita técnica',
-          badge: 'Pendente',
-          desc: 'Visita no local para validação técnica da estrutura.',
-          status: 'pending',
-        },
-        {
-          id: 5,
-          title: 'Instalação',
-          badge: 'Pendente',
-          desc: 'Execução da instalação dos painéis e inversor.',
-          status: 'pending',
-        },
-        {
-          id: 6,
-          title: 'Homologação',
-          badge: 'Pendente',
-          desc: 'Conexão do sistema com a concessionária de energia.',
-          status: 'pending',
-        },
-        {
-          id: 7,
-          title: 'Projeto concluído',
-          badge: 'Pendente',
-          desc: 'Sistema em operação e gerando energia.',
-          status: 'pending',
-        },
-      ];
+  const projectSteps: ProjectStepItem[] = (proposal.project?.milestones || []).map((milestone, idx) => ({
+    id: idx + 1,
+    title: milestone.title,
+    desc: milestone.notes || '',
+    date: milestone.completed_at
+      ? formatDate(milestone.completed_at)
+      : milestone.scheduled_at
+        ? formatDate(milestone.scheduled_at)
+        : undefined,
+    status: milestone.status,
+    badge:
+      milestone.status === 'in_progress'
+        ? 'Em andamento'
+        : milestone.status === 'pending'
+          ? 'Pendente'
+          : undefined,
+  }));
 
-  // Próximas ações dinâmicas
-  const nextActions = [
-    {
-      id: 'technical_review',
-      title: 'Revisão do projeto técnico',
-      estimate: 'Previsão: em análise',
-      estimateTone: 'text-emerald-600',
-      desc: 'A empresa irá compartilhar o projeto técnico para sua aprovação.',
-      icon: FileText,
+  const nextActions = (proposal.project?.milestones || [])
+    .filter((milestone) => !['completed', 'done'].includes(milestone.status))
+    .slice(0, 4)
+    .map((milestone) => ({
+      id: milestone.id,
+      title: milestone.title,
+      estimate: milestone.scheduled_at
+        ? `Previsão: ${formatDate(milestone.scheduled_at)}`
+        : milestone.status === 'in_progress'
+          ? 'Em andamento'
+          : 'Pendente',
+      estimateTone: milestone.status === 'in_progress' ? 'text-blue-600' : 'text-slate-500',
+      desc: milestone.notes || 'Detalhes desta etapa ainda não informados.',
+      icon: milestone.status === 'in_progress' ? Wrench : Calendar,
       onClick: onViewProposal,
-    },
-    {
-      id: 'technical_visit',
-      title: 'Agendar visita técnica',
-      estimate: 'Aguardando agendamento',
-      estimateTone: 'text-slate-500',
-      desc: 'Entre em contato ou aguarde a empresa definir a data.',
-      icon: Calendar,
-      onClick: onMeeting || onConversation || onViewProposal,
-    },
-    {
-      id: 'equipment_confirm',
-      title: 'Confirmação dos equipamentos',
-      estimate: 'Em andamento',
-      estimateTone: 'text-slate-500',
-      desc: 'Validação dos modelos e quantidades de equipamentos.',
-      icon: Settings,
-      onClick: onViewProposal,
-    },
-    {
-      id: 'install_start',
-      title: 'Início da instalação',
-      estimate: 'Pendente',
-      estimateTone: 'text-slate-500',
-      desc: 'Execução da instalação técnica.',
-      icon: Wrench,
-      onClick: onViewProposal,
-    },
-  ];
+    }));
 
   // Mensagens e Atualizações Recentes reais dos agendamentos / versão
   const recentUpdates = (proposal.meetings || []).map((meeting, i) => ({
@@ -278,7 +212,7 @@ export function ProposalProject({
             </div>
             <div className="min-w-0">
               <p className="text-sm font-extrabold text-slate-950">Proposta #{reference}</p>
-              <p className="text-xs text-slate-600 font-medium">Sistema Residencial {power}</p>
+              <p className="text-xs text-slate-600 font-medium">{proposal.version?.title || 'Título não informado'}</p>
               <p className="text-[11px] text-slate-400">Confirmada em {confirmedDate}</p>
             </div>
           </div>
@@ -372,7 +306,7 @@ export function ProposalProject({
 
               {/* Lista Vertical de Etapas */}
               <div className="space-y-4 text-xs">
-                {projectSteps.map((step) => (
+                {projectSteps.length ? projectSteps.map((step) => (
                   <div key={step.id} className="flex items-start gap-3 relative">
                     {/* Marcador Numérico ou Check */}
                     <div className="shrink-0 mt-0.5">
@@ -421,7 +355,11 @@ export function ProposalProject({
                       <p className="mt-1 text-slate-500 leading-relaxed text-[11px]">{step.desc}</p>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-xs leading-relaxed text-slate-500">
+                    A empresa ainda não publicou as etapas deste projeto.
+                  </p>
+                )}
               </div>
             </section>
 
@@ -445,9 +383,9 @@ export function ProposalProject({
                   </Button>
                 </div>
 
-                {/* Lista de Ações Interativas */}
+                {/* Lista de ações derivadas dos milestones publicados */}
                 <div className="mt-3.5 space-y-2.5">
-                  {nextActions.map((action) => {
+                  {nextActions.length ? nextActions.map((action) => {
                     const ActionIcon = action.icon;
                     return (
                       <button
@@ -475,7 +413,11 @@ export function ProposalProject({
                         <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0" />
                       </button>
                     );
-                  })}
+                  }) : (
+                    <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-xs leading-relaxed text-slate-500">
+                      Nenhuma próxima ação foi publicada para este projeto.
+                    </p>
+                  )}
                 </div>
               </div>
             </section>
@@ -560,38 +502,37 @@ export function ProposalProject({
               <h3 className="text-base font-extrabold text-slate-950">Resumo do projeto</h3>
             </div>
 
-            {/* Imagem do Projeto */}
-            <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-slate-100 shadow-2xs bg-slate-100">
-              <img
-                src="/painel-solar-avalia-solar.webp"
-                alt="Sistema Residencial"
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src =
-                    'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=600&auto=format&fit=crop&q=80';
-                }}
-              />
-            </div>
+            {/* Imagem real da empresa, quando disponível */}
+            {proposal.company.banner_url ? (
+              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100 shadow-2xs">
+                <img
+                  src={proposal.company.banner_url}
+                  alt={`Imagem do projeto de ${proposal.company.name}`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex aspect-[16/9] w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center">
+                <FileText className="h-7 w-7 text-slate-400" />
+                <span className="mt-2 text-xs font-semibold text-slate-500">Imagem não informada</span>
+              </div>
+            )}
 
             {/* Título e Localização */}
             <div>
               <h4 className="text-sm font-extrabold text-slate-950 leading-tight">
-                Sistema Residencial {power}
+                Sistema Residencial {power || 'Não informado'}
               </h4>
               <p className="mt-0.5 text-xs text-slate-500 font-medium">{location}</p>
             </div>
 
             {/* Chips / Tags em azul suave */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-100">
-                On-grid
-              </span>
-              <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-100">
-                Residencial
-              </span>
-              <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-100">
-                Alta eficiência
-              </span>
+              {proposal.request?.project_profile && (
+                <span className="rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700">
+                  {proposal.request.project_profile}
+                </span>
+              )}
             </div>
 
             {/* Linhas Chave/Valor */}
@@ -601,7 +542,7 @@ export function ProposalProject({
                   <Zap className="h-4 w-4 text-blue-600" />
                   <span>Potência do sistema</span>
                 </span>
-                <span className="font-extrabold text-slate-950">{power}</span>
+                <span className="font-extrabold text-slate-950">{power || 'Não informado'}</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -609,7 +550,7 @@ export function ProposalProject({
                   <BarChart2 className="h-4 w-4 text-blue-600" />
                   <span>Geração estimada</span>
                 </span>
-                <span className="font-extrabold text-slate-950">{generation}</span>
+                <span className="font-extrabold text-slate-950">{generation || 'Não informado'}</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -627,7 +568,7 @@ export function ProposalProject({
                   <Leaf className="h-4 w-4 text-emerald-600" />
                   <span>Economia estimada</span>
                 </span>
-                <span className="font-extrabold text-emerald-600 tabular-nums">{savings}</span>
+                <span className="font-extrabold text-emerald-600 tabular-nums">{savings || 'Não informado'}</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -635,7 +576,7 @@ export function ProposalProject({
                   <Calendar className="h-4 w-4 text-blue-600" />
                   <span>Prazo de instalação</span>
                 </span>
-                <span className="font-extrabold text-slate-950">{deadline}</span>
+                <span className="font-extrabold text-slate-950">{deadline || 'Não informado'}</span>
               </div>
             </div>
 
@@ -745,16 +686,18 @@ export function ProposalProject({
               </button>
 
               {/* Opção 3: Ligar para a empresa */}
-              <a
-                href={companyPhone ? `tel:${companyPhone.replace(/\D/g, '')}` : '#'}
-                className="w-full py-2.5 flex items-center justify-between hover:text-blue-600 transition-colors group"
-              >
-                <span className="flex items-center gap-2.5">
-                  <Phone className="h-4 w-4 text-blue-600" />
-                  <span>Ligar para a empresa</span>
-                </span>
-                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-              </a>
+              {companyPhone ? (
+                <a
+                  href={`tel:${companyPhone.replace(/\D/g, '')}`}
+                  className="flex w-full items-center justify-between py-2.5 transition-colors group hover:text-blue-600"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Phone className="h-4 w-4 text-blue-600" />
+                    <span>Ligar para a empresa</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+                </a>
+              ) : null}
             </div>
           </div>
         </aside>

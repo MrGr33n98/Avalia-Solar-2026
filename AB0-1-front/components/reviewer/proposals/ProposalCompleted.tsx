@@ -1,20 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowLeft,
   BarChart2,
   Check,
   CheckCircle2,
-  ChevronDown,
   ChevronRight,
   Download,
   ExternalLink,
   FileText,
   HelpCircle,
-  Leaf,
   LifeBuoy,
   MessageCircle,
   MoreHorizontal,
@@ -27,7 +23,7 @@ import {
 } from 'lucide-react';
 import type { MarketplaceProposal } from '@/lib/api';
 import {
-  formatMoney,
+  formatDate,
   getProposalDisplayPrice,
   getProposalLocation,
   getProposalRawTerm,
@@ -52,8 +48,6 @@ export function ProposalCompleted({
   onReview,
   onConversation,
 }: ProposalCompletedProps) {
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '12m'>('7d');
-
   const power =
     getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'potencia', 'installed_power']);
   const generation =
@@ -65,6 +59,9 @@ export function ProposalCompleted({
   const price = getProposalDisplayPrice(proposal);
   const location = getProposalLocation(proposal);
   const reference = proposal.reference;
+  const completedAt = proposal.project?.completed_at || proposal.created_at;
+  const projectProfile = proposal.request?.project_profile?.trim();
+  const projectPhotos = (proposal.project as { photos?: string[] } | null)?.photos || [];
 
   // 7 Fases todas concluídas
   const stepperPhases = [
@@ -74,17 +71,7 @@ export function ProposalCompleted({
     { id: 4, label: 'Projeto', status: 'Concluída', completed: true },
     { id: 5, label: 'Instalação', status: 'Concluída', completed: true },
     { id: 6, label: 'Homologação', status: 'Concluída', completed: true },
-    { id: 7, label: 'Projeto concluído', status: 'Em operação', completed: true, current: true },
-  ];
-
-  const chartData = [
-    { day: '14/11', value: 38 },
-    { day: '15/11', value: 48 },
-    { day: '16/11', value: 45 },
-    { day: '17/11', value: 50 },
-    { day: '18/11', value: 52 },
-    { day: '19/11', value: 49 },
-    { day: '20/11', value: 52 },
+    { id: 7, label: 'Projeto concluído', status: 'Concluído', completed: true, current: true },
   ];
 
   const samplePhotos: string[] = (proposal.project as { photos?: string[] })?.photos || [];
@@ -153,8 +140,8 @@ export function ProposalCompleted({
             </div>
             <div className="min-w-0">
               <p className="text-sm font-extrabold text-slate-950">Proposta #{reference}</p>
-              <p className="text-xs text-slate-600 font-medium">Sistema Residencial {power}</p>
-              <p className="text-[11px] text-slate-400">Concluída em 15/11/2026</p>
+              <p className="text-xs text-slate-600 font-medium">{proposal.version?.title || 'Título não informado'}</p>
+              <p className="text-[11px] text-slate-400">Concluída em {formatDate(completedAt)}</p>
             </div>
           </div>
 
@@ -229,7 +216,7 @@ export function ProposalCompleted({
           <div>
             <h3 className="text-base font-extrabold text-slate-950">Seu projeto está concluído!</h3>
             <p className="text-xs text-slate-600 font-medium mt-0.5">
-              O sistema foi instalado, homologado e já está gerando energia.
+              A empresa marcou este projeto como concluído.
             </p>
           </div>
         </div>
@@ -248,119 +235,59 @@ export function ProposalCompleted({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
         {/* Coluna Esquerda: Desempenho + Fotos + Avaliação */}
         <div className="space-y-6 min-w-0">
-          {/* Widget 1: Desempenho atual do sistema */}
+          {/* Widget 1: Indicadores que vieram na proposta */}
           <section className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs space-y-5">
             <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 flex-wrap">
               <div className="flex items-center gap-2">
                 <BarChart2 className="h-5 w-5 text-blue-600" />
-                <h3 className="text-base font-extrabold text-slate-950">Desempenho atual do sistema</h3>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Online</span>
+                <h3 className="text-base font-extrabold text-slate-950">Indicadores da proposta</h3>
+                <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 border border-slate-200">
+                  Dados publicados
                 </span>
               </div>
               <span className="text-[11px] text-slate-400 font-medium">
-                Última atualização: 20/11/2026 às 14:32
+                Monitoramento em tempo real não disponível
               </span>
             </div>
 
-            {/* 4 Cards de Métricas */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-1">
                 <Zap className="h-4 w-4 text-blue-600" />
-                <span className="block text-lg font-extrabold text-slate-950 pt-1">8,1 kW</span>
-                <span className="block text-[11px] text-slate-500 font-medium">Potência instantânea</span>
+                <span className="block text-lg font-extrabold text-slate-950 pt-1">
+                  {power || 'Não informado'}
+                </span>
+                <span className="block text-[11px] text-slate-500 font-medium">Potência do sistema</span>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-1">
                 <BarChart2 className="h-4 w-4 text-blue-600" />
-                <span className="block text-lg font-extrabold text-slate-950 pt-1">52 kWh</span>
-                <span className="block text-[11px] text-slate-500 font-medium">Geração hoje</span>
+                <span className="block text-lg font-extrabold text-slate-950 pt-1">
+                  {generation || 'Não informado'}
+                </span>
+                <span className="block text-[11px] text-slate-500 font-medium">Geração estimada</span>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-1">
-                <Leaf className="h-4 w-4 text-emerald-600" />
-                <span className="block text-lg font-extrabold text-slate-950 pt-1">1.560 kWh</span>
-                <span className="block text-[11px] text-slate-500 font-medium">Geração no mês</span>
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span className="block text-lg font-extrabold text-emerald-600 pt-1">
+                  {savings || 'Não informado'}
+                </span>
+                <span className="block text-[11px] text-slate-500 font-medium">Economia estimada</span>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-1">
-                <span className="text-emerald-600 font-extrabold text-sm">$</span>
-                <span className="block text-lg font-extrabold text-emerald-600 pt-1">R$ 156,00</span>
-                <span className="block text-[11px] text-slate-500 font-medium">Economia estimada (mês)</span>
+                <FileText className="h-4 w-4 text-blue-600" />
+                <span className="block text-lg font-extrabold text-slate-950 pt-1">
+                  {price.formatted}
+                </span>
+                <span className="block text-[11px] text-slate-500 font-medium">Valor total</span>
               </div>
             </div>
 
-            {/* Gráfico de Barras de Geração */}
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-4 space-y-4">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="relative">
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs"
-                  >
-                    <span>Geração de energia</span>
-                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setTimeRange('7d')}
-                    className={cn(
-                      'px-3 py-1 text-xs font-bold rounded-lg transition-colors',
-                      timeRange === '7d'
-                        ? 'bg-blue-600 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    )}
-                  >
-                    7 dias
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTimeRange('30d')}
-                    className={cn(
-                      'px-3 py-1 text-xs font-bold rounded-lg transition-colors',
-                      timeRange === '30d'
-                        ? 'bg-blue-600 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    )}
-                  >
-                    30 dias
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTimeRange('12m')}
-                    className={cn(
-                      'px-3 py-1 text-xs font-bold rounded-lg transition-colors',
-                      timeRange === '12m'
-                        ? 'bg-blue-600 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    )}
-                  >
-                    12 meses
-                  </button>
-                </div>
-              </div>
-
-              {/* Renderização visual do gráfico de barras */}
-              <div className="pt-6 pb-2 px-2 flex items-end justify-between gap-2 h-44 border-b border-slate-200">
-                {chartData.map((item, i) => (
-                  <div key={i} className="flex flex-col items-center gap-2 flex-1 group">
-                    <span className="text-[10px] font-bold text-slate-400 group-hover:text-blue-600 transition-colors">
-                      {item.value} kWh
-                    </span>
-                    <div className="w-full max-w-[36px] bg-blue-100 rounded-t-md relative h-32 flex items-end overflow-hidden">
-                      <div
-                        className="w-full bg-blue-500 group-hover:bg-blue-600 transition-all rounded-t-md"
-                        style={{ height: `${(item.value / 60) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-medium text-slate-500">{item.day}</span>
-                  </div>
-                ))}
-              </div>
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 p-6 text-center">
+              <p className="text-xs font-semibold text-slate-500">
+                Dados históricos de geração ainda não foram publicados para este projeto.
+              </p>
             </div>
           </section>
 
@@ -372,18 +299,21 @@ export function ProposalCompleted({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {samplePhotos.map((src, i) => (
-                <div
-                  key={i}
-                  className="relative h-28 rounded-xl overflow-hidden border border-slate-200 group"
-                >
-                  <Image src={src} alt="Foto do projeto" fill className="object-cover" />
+              {projectPhotos.length ? (
+                projectPhotos.map((src) => (
+                  <div key={src} className="relative h-28 overflow-hidden rounded-xl border border-slate-200">
+                    <img src={src} alt="Foto do projeto" className="h-full w-full object-cover" />
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 flex h-28 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 text-center text-[11px] font-semibold text-slate-400 sm:col-span-3">
+                  Nenhuma foto publicada pela empresa.
                 </div>
-              ))}
+              )}
 
               <button
                 type="button"
-                className="flex flex-col items-center justify-center h-28 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-blue-50/50 hover:border-blue-300 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                className="flex h-28 flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 text-slate-400 transition-colors hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600"
               >
                 <span className="text-xl font-bold">+</span>
                 <span className="text-[11px] font-bold">Adicionar fotos</span>
@@ -398,13 +328,8 @@ export function ProposalCompleted({
                 <Star className="h-4 w-4 text-blue-600 fill-blue-600" />
                 <h3 className="text-sm font-extrabold text-slate-950">Avalie sua experiência</h3>
               </div>
-              <div className="flex items-center gap-1 text-amber-400 pt-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="h-4 w-4 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-xs text-slate-600 font-medium italic pt-1">
-                &ldquo;Excelente atendimento desde o início. Equipe técnica muito profissional...&rdquo;
+              <p className="text-xs text-slate-600 font-medium pt-1">
+                Sua avaliação ainda não foi publicada.
               </p>
             </div>
 
@@ -426,39 +351,42 @@ export function ProposalCompleted({
               <h3 className="text-sm font-extrabold text-slate-950">Resumo do projeto</h3>
             </div>
 
-            <div className="relative h-32 rounded-xl overflow-hidden border border-slate-100">
-              <Image
-                src="/energia-solar-avalia-solar.webp"
-                alt="Sistema Residencial"
-                fill
-                className="object-cover"
-              />
+            <div className="relative h-32 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+              {proposal.company.banner_url ? (
+                <img
+                  src={proposal.company.banner_url}
+                  alt={`Imagem da proposta de ${proposal.company.name}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center px-4 text-center text-[11px] font-semibold text-slate-400">
+                  Imagem do projeto não informada
+                </div>
+              )}
             </div>
 
             <div>
-              <h4 className="text-sm font-extrabold text-slate-950">Sistema Residencial {power}</h4>
+              <h4 className="text-sm font-extrabold text-slate-950">
+                {proposal.version?.title || 'Título não informado'}
+              </h4>
               <p className="text-xs text-slate-500 font-medium">{location}</p>
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                  On-grid
-                </span>
-                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                  Residencial
-                </span>
-                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                  Alta eficiência
-                </span>
-              </div>
+              {projectProfile && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                    {projectProfile}
+                  </span>
+                </div>
+              )}
             </div>
 
             <dl className="divide-y divide-slate-100 text-xs pt-1">
               <div className="py-2 flex items-center justify-between">
                 <dt className="text-slate-500">Potência do sistema</dt>
-                <dd className="font-extrabold text-slate-900">{power}</dd>
+                <dd className="font-extrabold text-slate-900">{power || 'Não informado'}</dd>
               </div>
               <div className="py-2 flex items-center justify-between">
                 <dt className="text-slate-500">Geração estimada</dt>
-                <dd className="font-extrabold text-slate-900">{generation}</dd>
+                <dd className="font-extrabold text-slate-900">{generation || 'Não informado'}</dd>
               </div>
               <div className="py-2 flex items-center justify-between">
                 <dt className="text-slate-500">Valor total</dt>
@@ -466,11 +394,11 @@ export function ProposalCompleted({
               </div>
               <div className="py-2 flex items-center justify-between">
                 <dt className="text-slate-500">Economia estimada</dt>
-                <dd className="font-extrabold text-emerald-600">{savings}</dd>
+                <dd className="font-extrabold text-emerald-600">{savings || 'Não informado'}</dd>
               </div>
               <div className="py-2 flex items-center justify-between">
                 <dt className="text-slate-500">Prazo de instalação</dt>
-                <dd className="font-extrabold text-slate-900">{deadline}</dd>
+                <dd className="font-extrabold text-slate-900">{deadline || 'Não informado'}</dd>
               </div>
             </dl>
 
