@@ -130,15 +130,19 @@ export function ProposalCompleted({
               </span>
             </div>
             <p className="mt-0.5 text-xs text-slate-500 font-medium">{location}</p>
-            <div className="mt-1 flex items-center gap-1 text-xs text-amber-500">
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              <span className="font-extrabold text-slate-900">
-                {proposal.company.rating_avg ? proposal.company.rating_avg.toFixed(1) : '4,8'}
-              </span>
-              <span className="text-slate-400 font-normal">
-                ({proposal.company.reviews_count || 32} avaliações)
-              </span>
-            </div>
+            {proposal.company.rating_avg ? (
+              <div className="mt-1 flex items-center gap-1 text-xs text-amber-500">
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                <span className="font-extrabold text-slate-900">
+                  {proposal.company.rating_avg.toFixed(1)}
+                </span>
+                {proposal.company.reviews_count ? (
+                  <span className="text-slate-400 font-normal">
+                    ({proposal.company.reviews_count} avaliações)
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 
