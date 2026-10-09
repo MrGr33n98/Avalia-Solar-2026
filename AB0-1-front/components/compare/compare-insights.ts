@@ -30,6 +30,32 @@ export interface RecommendationOptions {
   limit?: number;
 }
 
+export const isFinanceCompany = (
+  company:
+    | CompareCompany
+    | Company
+    | { name: string; categoryNames?: string[]; category_ids?: unknown[]; categoryIds?: unknown[] }
+): boolean => {
+  const name = normalizedText(company.name);
+  if (/\b(banco|financeira|credito|financiamento|bmg|safra|santander|itau|bradesco)\b/.test(name)) {
+    return true;
+  }
+  const categoryNames =
+    'categoryNames' in company && Array.isArray(company.categoryNames)
+      ? company.categoryNames.map(normalizedText)
+      : [];
+  if (categoryNames.some((cat) => /financiamento|banco|credito/.test(cat))) {
+    return true;
+  }
+  const categoryIds =
+    'categoryIds' in company && Array.isArray(company.categoryIds)
+      ? company.categoryIds
+      : 'category_ids' in company && Array.isArray((company as { category_ids?: unknown[] }).category_ids)
+        ? (company as { category_ids?: unknown[] }).category_ids!
+        : [];
+  return categoryIds.includes(5) || categoryIds.includes('5');
+};
+
 export function getRecommendedCompanies({
   selectedCompanies,
   allCompanies,
@@ -45,10 +71,16 @@ export function getRecommendedCompanies({
   const selectedCategoryNames = Array.from(
     new Set(selectedCompanies.flatMap((company) => company.categoryNames.map(normalizedText)))
   );
+  const hasFinanceSelected = selectedCompanies.some(isFinanceCompany);
 
   return allCompanies
     .map(mapCompanyToCompareCompany)
-    .filter((company) => company.id > 0 && !selectedIds.has(company.id))
+    .filter((company) => {
+      if (company.id <= 0 || selectedIds.has(company.id)) return false;
+      // Não recomendar bancos ou financeiras se o usuário está comparando empresas do setor solar
+      if (!hasFinanceSelected && isFinanceCompany(company)) return false;
+      return true;
+    })
     .map((company) => {
       const sameCity = Boolean(contextCity && normalizedText(company.city) === contextCity);
       const sameCategory =
@@ -141,25 +173,66 @@ export function buildCompareSummary(companies: CompareCompany[]): CompareSummary
   ];
 }
 
+export type BestMatchCompany = CompareCompany & {
+  matchFactors?: string[];
+};
+
 export function getBestMatch(
   companies: CompareCompany[],
   city?: string | null
-): CompareCompany | null {
+): BestMatchCompany | null {
   if (companies.length < 2) return null;
   const contextCity = normalizedText(city);
 
-  return [...companies].sort((left, right) => {
-    const score = (company: CompareCompany) => {
-      const responseMinutes = parseResponseTimeMinutes(company);
-      return (
-        company.rating * 10 +
-        (company.verified ? 15 : 0) +
-        Math.min(Math.log10(company.reviewsCount + 1) * 7.5, 15) +
-        (contextCity && normalizedText(company.city) === contextCity ? 10 : 0) +
-        (responseMinutes !== null ? Math.max(0, 10 - responseMinutes / 144) : 0) +
-        (company.coverageCities.length || company.coverageStates.length ? 5 : 0)
-      );
-    };
-    return score(right) - score(left) || right.rating - left.rating;
-  })[0];
+  const scored = companies.map((company) => {
+    const responseMinutes = parseResponseTimeMinutes(company);
+    const coverageCount = company.coverageCities.length || company.coverageStates.length;
+    const factors: string[] = [];
+
+    let score = 0;
+    if (company.rating > 0) {
+      score += company.rating * 10;
+      factors.push('nota');
+    }
+    if (company.verified) {
+      score += 15;
+      factors.push('verificação');
+    }
+    if (company.reviewsCount > 0) {
+      score += Math.min(Math.log10(company.reviewsCount + 1) * 7.5, 15);
+      if (!factors.includes('nota')) factors.push('avaliações');
+    }
+    if (coverageCount > 0) {
+      score += 5;
+      factors.push('cobertura');
+    }
+    if (responseMinutes !== null) {
+      score += Math.max(0, 10 - responseMinutes / 144);
+      factors.push('tempo de resposta');
+    }
+    if (contextCity && normalizedText(company.city) === contextCity) {
+      score += 10;
+    }
+
+    return { company, score, factors };
+  });
+
+  // Se nenhuma empresa tiver dados mínimos mensuráveis (score 0), não inventa melhor match
+  const maxScore = Math.max(...scored.map((s) => s.score));
+  if (maxScore <= 0) return null;
+
+  scored.sort((left, right) => right.score - left.score || right.company.rating - left.company.rating);
+
+  const best = scored[0];
+  const second = scored[1];
+
+  // Se o primeiro e o segundo empatarem em zero ou não houver dados distintivos
+  if (best.score === second?.score && best.factors.length === 0) {
+    return null;
+  }
+
+  return {
+    ...best.company,
+    matchFactors: best.factors,
+  };
 }

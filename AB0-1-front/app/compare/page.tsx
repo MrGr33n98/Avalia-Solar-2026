@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
+  ArrowLeftRight,
   ArrowRight,
   BadgeCheck,
   FileText,
@@ -330,20 +331,17 @@ function ComparePageContent() {
               onClear={clearComparison}
             />
             {companies.length > 0 && <CompareSummary companies={companies} />}
-            {companies.length > 1 && (
-              <BestMatchCard companies={companies} city={contextCity} onQuote={handleQuote} />
-            )}
 
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-              <div className="min-w-0 space-y-4 order-2 lg:order-1">
+              <div className="min-w-0 space-y-4 order-1 lg:order-1">
                 {companies.length > 0 ? (
-                  <section aria-labelledby="side-by-side-title">
-                    <div className="mb-3 flex items-end justify-between gap-3">
+                  <section aria-labelledby="side-by-side-title" className="space-y-4">
+                    <div className="hidden sm:flex items-end justify-between gap-3">
                       <div>
                         <h2 id="side-by-side-title" className="text-lg font-semibold text-slate-950">Comparação lado a lado</h2>
                         <p className="mt-0.5 text-xs text-slate-500">{companies.length} de {maxComparison} empresas selecionadas</p>
                       </div>
-                      <Button size="sm" variant="outline" onClick={handleShare} aria-label="Compartilhar comparação" className="rounded-none">
+                      <Button size="sm" variant="outline" onClick={handleShare} aria-label="Compartilhar comparação" className="rounded-lg">
                         <Share2 className="mr-2 h-4 w-4" aria-hidden="true" /> Compartilhar
                       </Button>
                     </div>
@@ -352,6 +350,9 @@ function ComparePageContent() {
                       onRemove={removeFromComparison}
                       onQuote={handleQuote}
                     />
+                    {companies.length > 1 && (
+                      <BestMatchCard companies={companies} city={contextCity} onQuote={handleQuote} />
+                    )}
                   </section>
                 ) : (
                   <EmptyComparisonState />
@@ -363,7 +364,19 @@ function ComparePageContent() {
                 className="contents lg:block lg:space-y-4 lg:order-2"
                 aria-label="Descoberta de empresas"
               >
-                <div className="order-1 lg:order-none">
+                <div className="order-2 lg:order-none">
+                  <RecommendedCompanies
+                    companies={recommendations}
+                    selectedCompanies={companies}
+                    maxComparison={maxComparison}
+                    loading={candidatesQuery.isLoading}
+                    error={candidatesQuery.isError}
+                    onRetry={() => void candidatesQuery.refetch()}
+                    onAdd={handleAdd}
+                    onReplace={handleReplace}
+                  />
+                </div>
+                <div className="order-3 lg:order-none">
                   <CompanySearchPanel
                     query={query}
                     onQueryChange={setQuery}
@@ -376,18 +389,6 @@ function ComparePageContent() {
                     onAdd={handleAdd}
                     onRemove={removeFromComparison}
                     onClear={clearComparison}
-                  />
-                </div>
-                <div className="order-3 lg:order-none">
-                  <RecommendedCompanies
-                    companies={recommendations}
-                    selectedCompanies={companies}
-                    maxComparison={maxComparison}
-                    loading={candidatesQuery.isLoading}
-                    error={candidatesQuery.isError}
-                    onRetry={() => void candidatesQuery.refetch()}
-                    onAdd={handleAdd}
-                    onReplace={handleReplace}
                   />
                 </div>
                 <div className="hidden lg:block">
@@ -420,27 +421,34 @@ function CompareHero() {
       >
         <nav
           aria-label="Breadcrumb"
-          className="mb-4 flex items-center gap-2 text-[11px] text-slate-500"
+          className="mb-3 flex items-center gap-1.5 text-[11px] text-slate-500"
         >
           <Link href="/" className="hover:text-blue-700">
-            Home
+            Início
           </Link>
           <span aria-hidden="true">›</span>
-          <span>Comparar empresas</span>
+          <span className="text-slate-700">Comparar empresas</span>
         </nav>
         <div className="grid min-h-[96px] items-center gap-4 lg:grid-cols-[1fr_auto] lg:min-h-[108px]">
           <div className="max-w-[620px]">
-            <span className="inline-flex items-center gap-2 rounded-sm border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-700">
-              <AnimatedCompareIcon size={14} intensity="subtle" aria-hidden="true" /> Comparador de empresas
-            </span>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              Compare antes de decidir.
-            </h1>
-            <p className="mt-1.5 max-w-xl text-sm leading-5 text-slate-600">
-              Coloque até três empresas no computador e até duas no celular lado a lado para avaliar reputação, verificação, cobertura e condições comerciais.
-            </p>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-sm border border-blue-100 bg-blue-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-blue-700 sm:px-2.5 sm:py-1 sm:text-[10px]">
+                  <AnimatedCompareIcon size={13} intensity="subtle" aria-hidden="true" /> Comparador
+                </span>
+                <h1 className="mt-1.5 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl lg:text-3xl">
+                  Comparador de empresas
+                </h1>
+                <p className="mt-1 max-w-xl text-xs leading-relaxed text-slate-600 sm:text-sm">
+                  Compare até duas empresas lado a lado no celular para avaliar reputação, verificação, cobertura e condições comerciais.
+                </p>
+              </div>
+              <div className="flex sm:hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm">
+                <ArrowLeftRight className="h-5 w-5" aria-hidden="true" />
+              </div>
+            </div>
           </div>
-          <div className="flex w-full justify-center lg:justify-end">
+          <div className="hidden lg:flex w-full justify-center lg:justify-end">
             <BannerSlot
               placement="compare_hero"
               limit={1}
@@ -518,29 +526,52 @@ function SelectedCompaniesPanel({
   return (
     <section aria-labelledby="selected-companies-title">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 id="selected-companies-title" className="text-base font-semibold text-slate-950">
+        <h2 id="selected-companies-title" className="text-sm sm:text-base font-bold text-slate-950">
           Empresas selecionadas <span className="text-xs font-normal text-slate-500">({companies.length} de {maxComparison})</span>
         </h2>
-        {companies.length > 0 && <Button variant="outline" size="sm" onClick={onClear} className="rounded-none">Limpar comparação</Button>}
+        {companies.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClear}
+            className="rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100"
+          >
+            Limpar comparação
+          </Button>
+        )}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-3">
         {companies.map((company) => (
-          <article key={company.id} className="flex min-h-[84px] items-center gap-3 border border-slate-200 bg-white p-3">
+          <article
+            key={company.id}
+            className="relative flex min-h-[64px] sm:min-h-[72px] items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 sm:p-3 shadow-sm transition-shadow hover:shadow"
+          >
             <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-950">{company.name}</p>
-              <p className="mt-1 truncate text-xs text-slate-500">{[company.city, company.state].filter(Boolean).join(', ') || 'Localização não informada'}</p>
+            <div className="min-w-0 flex-1 pr-6">
+              <p className="truncate text-xs sm:text-sm font-bold text-slate-950">{company.name}</p>
+              <p className="truncate text-[10px] sm:text-xs text-slate-500">
+                {[company.city, company.state].filter(Boolean).join(', ') || 'Local não informado'}
+              </p>
             </div>
-            <button type="button" onClick={() => onRemove(company.id)} aria-label={`Remover ${company.name} da comparação`} className="flex h-8 w-8 items-center justify-center border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600"><X className="h-3.5 w-3.5" /></button>
+            <button
+              type="button"
+              onClick={() => onRemove(company.id)}
+              aria-label={`Remover ${company.name} da comparação`}
+              className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           </article>
         ))}
         {companies.length < maxComparison && (
-          <a href="#company-search-title" className="flex min-h-[84px] items-center justify-center gap-2 border border-dashed border-slate-300 bg-white p-3 text-sm font-medium text-blue-700 hover:border-blue-400 hover:bg-blue-50/40">
+          <a
+            href="#company-search-title"
+            className="flex min-h-[64px] sm:min-h-[72px] items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-white p-2 text-xs sm:text-sm font-medium text-blue-700 hover:border-blue-400 hover:bg-blue-50/40 transition-colors"
+          >
             <Plus className="h-4 w-4" /> Adicionar empresa
           </a>
         )}
       </div>
-      {companies.length > 1 && <div className="mt-2 flex h-9 items-center justify-center border border-slate-200 bg-white text-[11px] text-slate-500">Arraste para alterar a posição de exibição</div>}
     </section>
   );
 }

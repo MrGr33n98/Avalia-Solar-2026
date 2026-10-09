@@ -75,32 +75,40 @@ export default function RecommendedCompanies({
 
   return (
     <section
-      className="rounded-none border border-slate-200 bg-white p-4 shadow-none"
+      className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm"
       aria-labelledby="recommended-companies-title"
     >
-      <h2 id="recommended-companies-title" className="text-base font-black text-slate-950">
-        Empresas recomendadas
-      </h2>
-      <p className="mt-1 text-xs leading-5 text-slate-500">
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="recommended-companies-title" className="text-base font-bold text-slate-950">
+          Empresas recomendadas
+        </h2>
+        <a
+          href="/companies"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800"
+        >
+          Ver mais <span aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
+      <p className="mt-0.5 text-xs text-slate-500">
         Baseadas na sua cidade, categoria e empresas selecionadas.
       </p>
 
-      <div className="mt-4 space-y-3" aria-live="polite">
-        {loading && [1, 2, 3].map((item) => <Skeleton key={item} className="h-36 rounded-lg" />)}
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-1" aria-live="polite">
+        {loading && [1, 2].map((item) => <Skeleton key={item} className="h-28 rounded-xl" />)}
 
         {!loading && error && (
-          <div className="rounded-lg bg-red-50 p-4 text-center">
+          <div className="col-span-full rounded-xl bg-red-50 p-4 text-center">
             <p className="text-sm font-semibold text-red-800">
               Não foi possível carregar recomendações.
             </p>
-            <Button size="sm" variant="outline" className="mt-3" onClick={onRetry}>
+            <Button size="sm" variant="outline" className="mt-3 rounded-lg" onClick={onRetry}>
               <RefreshCw className="mr-2 h-3.5 w-3.5" aria-hidden="true" /> Tentar novamente
             </Button>
           </div>
         )}
 
         {!loading && !error && companies.length === 0 && (
-          <p className="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-500">
+          <p className="col-span-full rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-500">
             Nenhuma recomendação disponível agora.
           </p>
         )}
@@ -108,45 +116,41 @@ export default function RecommendedCompanies({
         {!loading &&
           !error &&
           companies.map((company) => (
-            <article key={company.id} className="rounded-lg border border-slate-200 p-3">
-              <div className="flex gap-3">
-                <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="truncate text-sm font-black text-slate-950">{company.name}</h3>
-                    {(company.sponsored || company.premium) && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[9px] font-bold text-violet-700">
-                        <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />{' '}
-                        {company.sponsored ? 'Patrocinada' : 'Destaque'}
+            <article key={company.id} className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-sm transition-shadow hover:shadow sm:p-3">
+              <div>
+                <div className="flex items-start gap-2">
+                  <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-xs sm:text-sm font-bold text-slate-950">{company.name}</h3>
+                    <p className="mt-0.5 truncate text-[10px] sm:text-xs text-slate-500">
+                      {company.categoryNames[0] || 'Energia Solar'}
+                    </p>
+                    <p className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-500">
+                      <MapPin className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+                      <span className="truncate">
+                        {[company.city, company.state].filter(Boolean).join(', ') || 'Local não informado'}
                       </span>
-                    )}
+                    </p>
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-slate-500">
-                    {company.categoryNames[0] || 'Categoria não informada'}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
-                    <MapPin className="h-3 w-3" aria-hidden="true" />
-                    {[company.city, company.state].filter(Boolean).join(', ') ||
-                      'Local não informado'}
-                  </p>
                 </div>
-              </div>
-              <div className="mt-3 flex items-center gap-2 text-xs">
-                <span className="inline-flex items-center gap-1 font-black text-slate-900">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-                  {company.rating > 0 ? company.rating.toFixed(1) : 'Sem nota'}
-                </span>
-                <span className="text-slate-500">{company.reviewsCount} avaliações</span>
-                {company.verified && (
-                  <span className="ml-auto rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                    Verificada
-                  </span>
-                )}
+                <div className="mt-2 flex items-center gap-1.5 text-[11px]">
+                  {company.rating > 0 ? (
+                    <span className="inline-flex items-center gap-0.5 font-bold text-slate-900">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" aria-hidden="true" />
+                      {company.rating.toFixed(1)}
+                    </span>
+                  ) : null}
+                  {company.verified && (
+                    <span className="rounded-full bg-emerald-50 px-1.5 py-0.2 text-[9px] font-bold text-emerald-700">
+                      Verificada
+                    </span>
+                  )}
+                </div>
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                className="mt-3 w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                className="mt-2.5 w-full rounded-lg text-xs font-semibold border-blue-200 text-blue-700 hover:bg-blue-50"
                 onClick={() => (isFull ? setReplacement(company) : onAdd(company))}
                 aria-label={`${isFull ? 'Substituir por' : 'Adicionar'} ${company.name}`}
               >

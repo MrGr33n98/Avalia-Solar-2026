@@ -63,6 +63,29 @@ describe('compare insights', () => {
     const second = company({ id: 2, rating_avg: 3.5 });
 
     expect(getBestMatch([first])).toBeNull();
-    expect(getBestMatch([first, second])?.id).toBe(1);
+    const match = getBestMatch([first, second]);
+    expect(match?.id).toBe(1);
+    expect(match?.matchFactors).toContain('verificação');
+  });
+
+  it('does not return a best match when all companies have zero comparable data', () => {
+    const empty1 = company({ id: 1, rating_avg: 0, rating_count: 0, verified: false });
+    const empty2 = company({ id: 2, rating_avg: 0, rating_count: 0, verified: false });
+
+    expect(getBestMatch([empty1, empty2])).toBeNull();
+  });
+
+  it('excludes banks/financial institutions from recommendations when solar companies are selected', () => {
+    const solar = company({ id: 1, name: 'Solar Pro', category_ids: [1] });
+    const bank = company({ id: 2, name: 'Banco ABC Brasil', category_ids: [5] });
+    const otherSolar = company({ id: 3, name: 'Growatt Solar', category_ids: [1], rating_avg: 4.9 });
+
+    const recommended = getRecommendedCompanies({
+      selectedCompanies: [solar],
+      allCompanies: [solar, bank, otherSolar],
+    });
+
+    expect(recommended.map((r) => r.id)).toEqual([3]);
+    expect(recommended.some((r) => r.name.includes('Banco'))).toBe(false);
   });
 });

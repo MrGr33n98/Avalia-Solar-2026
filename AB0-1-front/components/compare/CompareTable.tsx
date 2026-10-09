@@ -113,12 +113,29 @@ function DisplayValue({ value, suffix = '' }: { value: Value; suffix?: string })
   }
   if (typeof value === 'boolean') {
     return value ? (
-      <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
-        <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" /> Sim
+      <span className="inline-flex items-center gap-1 font-semibold text-emerald-800">
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 sm:h-4 sm:w-4" aria-hidden="true" /> Sim
       </span>
     ) : (
-      <span className="inline-flex items-center gap-1.5 text-slate-500">
-        <MinusCircle className="h-4 w-4" aria-hidden="true" /> Não
+      <span className="inline-flex items-center gap-1 text-slate-500">
+        <MinusCircle className="h-3.5 w-3.5 shrink-0 text-slate-400 sm:h-4 sm:w-4" aria-hidden="true" /> Não
+      </span>
+    );
+  }
+  const stringValue = String(value);
+  if (/\d+\s*regi/i.test(stringValue)) {
+    return (
+      <span className="font-semibold text-blue-700">
+        {value}
+        {suffix}
+      </span>
+    );
+  }
+  if (suffix === '%' || /%$/.test(stringValue)) {
+    return (
+      <span className="font-bold text-slate-900">
+        {value}
+        {suffix}
       </span>
     );
   }
@@ -137,31 +154,70 @@ interface CompareTableProps {
 }
 
 export default function CompareTable({ companies, onRemove, onQuote }: CompareTableProps) {
+  const isFluid = companies.length <= 2;
+
   return (
     <section aria-label="Tabela de comparação lado a lado">
-      <p className="mb-2 flex items-center justify-end gap-1 text-[11px] font-medium text-blue-700 md:hidden">
-        Arraste para o lado para ver mais empresas <span aria-hidden="true">→</span>
-      </p>
-      <div className="relative min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <div className="w-full touch-auto snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth">
+      {!isFluid && (
+        <p className="mb-2 flex items-center justify-end gap-1 text-[11px] font-medium text-blue-700 md:hidden">
+          Arraste para o lado para ver mais empresas <span aria-hidden="true">→</span>
+        </p>
+      )}
+      <div className="relative min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div
+          className={
+            isFluid
+              ? 'w-full overflow-hidden'
+              : 'w-full touch-auto snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth'
+          }
+        >
           <table
-            className="w-max min-w-full table-fixed border-collapse text-left"
-            style={{ minWidth: `${120 + Math.max(companies.length, 1) * 200}px`, width: '100%' }}
+            className={
+              isFluid
+                ? 'w-full table-fixed border-collapse text-left'
+                : 'w-max min-w-full table-fixed border-collapse text-left'
+            }
+            style={
+              isFluid
+                ? undefined
+                : { minWidth: `${140 + Math.max(companies.length, 1) * 180}px`, width: '100%' }
+            }
           >
             <caption className="sr-only">
               Critérios das empresas selecionadas para comparação
             </caption>
             <colgroup>
-              <col className="w-[120px] md:w-40" />
+              <col
+                className={
+                  isFluid
+                    ? companies.length === 2
+                      ? 'w-[30%] sm:w-[28%] md:w-44'
+                      : 'w-[36%] md:w-44'
+                    : 'w-32 md:w-44'
+                }
+              />
               {companies.map((company) => (
-                <col key={company.id} className="w-[200px] md:w-auto" />
+                <col
+                  key={company.id}
+                  className={
+                    isFluid
+                      ? companies.length === 2
+                        ? 'w-[35%] sm:w-[36%] md:w-auto'
+                        : 'w-[64%] md:w-auto'
+                      : 'w-[180px] md:w-auto'
+                  }
+                />
               ))}
             </colgroup>
             <thead>
               <tr className="border-b border-slate-200 align-top">
                 <th
                   scope="col"
-                  className="sticky left-0 z-30 w-[120px] border-r border-slate-200 bg-slate-50 p-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 md:w-40 md:p-4"
+                  className={`border-r border-slate-200 bg-slate-50 p-2 sm:p-3 md:p-4 text-[10px] sm:text-xs font-bold uppercase tracking-[0.14em] text-slate-500 ${
+                    isFluid
+                      ? 'w-[30%] sm:w-[28%] md:w-44'
+                      : 'sticky left-0 z-30 w-32 md:w-44'
+                  }`}
                 >
                   Critério
                 </th>
@@ -169,49 +225,54 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   <th
                     key={company.id}
                     scope="col"
-                    className="relative min-w-[200px] border-r border-slate-200 p-3 md:p-4"
+                    className={`relative border-r border-slate-200 p-2 sm:p-3 md:p-4 ${
+                      isFluid ? 'min-w-0' : 'min-w-[180px]'
+                    }`}
                   >
-                    <span className="mb-2 inline-flex bg-blue-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-blue-700">
-                      Empresa {index + 1}
-                    </span>
                     <button
                       type="button"
                       onClick={() => onRemove(company.id)}
                       aria-label={`Remover ${company.name} da comparação`}
-                      className="absolute right-2 top-2 rounded-md border border-slate-200 p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                      className="absolute right-1 top-1 sm:right-2 sm:top-2 rounded-md border border-slate-200/80 p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                     >
                       <X className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
-                    <div className="flex items-center gap-2 pr-7 md:gap-3">
-                      <CompanyLogo
-                        logoUrl={company.logoUrl}
-                        name={company.name}
-                        size="sm"
-                        badges={company.badges}
-                      />
-                      <div className="min-w-0">
-                        <Link
-                          href={`/companies/${company.slug || company.id}`}
-                          className="block truncate text-sm font-black text-slate-950 hover:text-blue-700"
-                        >
-                          {company.name}
-                        </Link>
-                        <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-slate-700">
-                          {company.rating > 0 ? company.rating.toFixed(1) : 'Sem nota'}
-                          <Star
-                            className="h-3 w-3 fill-amber-400 text-amber-400"
-                            aria-hidden="true"
-                          />
-                        </span>
-                        <span className="ml-1 text-[10px] font-normal text-slate-500">
-                          ({company.reviewsCount}{' '}
-                          {company.reviewsCount === 1 ? 'avaliação' : 'avaliações'})
-                        </span>
+                    <div className="flex flex-col gap-1.5 pr-4 sm:pr-6">
+                      <div className="flex items-center gap-2">
+                        <CompanyLogo
+                          logoUrl={company.logoUrl}
+                          name={company.name}
+                          size="sm"
+                          badges={company.badges}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <Link
+                            href={`/companies/${company.slug || company.id}`}
+                            className="block truncate text-xs sm:text-sm font-black text-slate-950 hover:text-blue-700"
+                          >
+                            {company.name}
+                          </Link>
+                          <span className="block truncate text-[10px] sm:text-xs text-slate-500">
+                            {[company.city, company.state].filter(Boolean).join(', ') ||
+                              'Local não informado'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
                         {company.verified && (
-                          <span className="ml-2 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
+                          <span className="inline-flex rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
                             Verificada
                           </span>
                         )}
+                        {company.rating > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700">
+                            <Star
+                              className="h-2.5 w-2.5 fill-amber-400 text-amber-400"
+                              aria-hidden="true"
+                            />
+                            {company.rating.toFixed(1)}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   </th>
@@ -219,20 +280,29 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
               </tr>
             </thead>
             {groups.map((group) => (
-              <TableGroup key={group.id} group={group} companies={companies} />
+              <TableGroup
+                key={group.id}
+                group={group}
+                companies={companies}
+                isFluid={isFluid}
+              />
             ))}
             <tbody>
               <tr className="border-t border-slate-200 bg-slate-50/70 align-top">
                 <th
                   scope="row"
-                  className="sticky left-0 z-20 border-r border-slate-200 bg-slate-50 p-3 text-xs font-semibold text-slate-700 md:p-4"
+                  className={`border-r border-slate-200 bg-slate-50 p-2 sm:p-3 text-[11px] sm:text-xs font-semibold text-slate-700 md:p-4 ${
+                    isFluid ? '' : 'sticky left-0 z-20'
+                  }`}
                 >
                   Próximo passo
                 </th>
                 {companies.map((company) => (
                   <td
                     key={company.id}
-                    className="min-w-[200px] border-l border-slate-200 p-3 align-top"
+                    className={`border-l border-slate-200 p-2 sm:p-3 align-top ${
+                      isFluid ? 'min-w-0' : 'min-w-[180px]'
+                    }`}
                   >
                     {/* Botão de orçamento: apenas para empresas em plano pago */}
                     {canUsePaidConversion(company, 'quote') && (
@@ -242,7 +312,9 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                       asChild
                       size="sm"
                       variant="ghost"
-                      className={`mt-1 w-full text-blue-700 ${canUsePaidConversion(company, 'quote') ? '' : 'col-span-2'}`}
+                      className={`mt-1 w-full text-[11px] sm:text-xs text-blue-700 hover:bg-blue-50 ${
+                        canUsePaidConversion(company, 'quote') ? '' : 'col-span-2'
+                      }`}
                     >
                       <Link href={`/companies/${company.slug || company.id}`}>
                         Ver perfil completo
@@ -254,34 +326,44 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
             </tbody>
           </table>
         </div>
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/65 to-transparent md:hidden"
-        />
+        {!isFluid && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/65 to-transparent md:hidden"
+          />
+        )}
       </div>
     </section>
   );
 }
 
-function TableGroup({ group, companies }: { group: Group; companies: CompareCompany[] }) {
+function TableGroup({
+  group,
+  companies,
+  isFluid,
+}: {
+  group: Group;
+  companies: CompareCompany[];
+  isFluid: boolean;
+}) {
   const [isOpen, setIsOpen] = useState(true);
   const contentId = `comparison-group-${group.id}`;
 
   return (
     <>
       <tbody>
-        <tr className="border-y border-slate-200 bg-slate-50">
+        <tr className="border-y border-slate-200 bg-blue-50/60 md:bg-slate-50">
           <th colSpan={companies.length + 1} className="p-0 text-left">
             <button
               type="button"
               aria-expanded={isOpen}
               aria-controls={contentId}
               onClick={() => setIsOpen((current) => !current)}
-              className="flex min-h-11 w-full items-center justify-between gap-3 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 md:px-4"
+              className="flex min-h-8 sm:min-h-10 w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-blue-900 transition-colors hover:bg-blue-100/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 sm:px-4"
             >
               <span>{group.label}</span>
               <ChevronDown
-                className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 aria-hidden="true"
               />
             </button>
@@ -293,14 +375,18 @@ function TableGroup({ group, companies }: { group: Group; companies: CompareComp
           <tr key={criterion.label} className="border-b border-slate-100 last:border-b-0">
             <th
               scope="row"
-              className="sticky left-0 z-20 border-r border-slate-200 bg-slate-50 px-3 py-3 text-xs font-medium text-slate-700 md:px-4 md:py-2.5"
+              className={`border-r border-slate-200 bg-slate-50/80 p-2 text-[11px] sm:text-xs font-medium text-slate-700 sm:px-3 sm:py-2.5 md:px-4 ${
+                isFluid ? 'break-words' : 'sticky left-0 z-20 break-words'
+              }`}
             >
               {criterion.label}
             </th>
             {companies.map((company) => (
               <td
                 key={company.id}
-                className="min-w-[200px] border-r border-slate-100 px-3 py-3 text-left text-xs text-slate-700 md:px-4 md:py-2.5 md:text-center"
+                className={`border-r border-slate-100 p-2 text-left text-[11px] sm:text-xs text-slate-700 break-words sm:px-3 sm:py-2.5 sm:text-center ${
+                  isFluid ? 'min-w-0' : 'min-w-[180px]'
+                }`}
               >
                 <DisplayValue value={criterion.value(company)} suffix={criterion.suffix} />
               </td>
