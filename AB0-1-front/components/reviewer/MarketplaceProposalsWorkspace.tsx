@@ -505,105 +505,64 @@ export function MarketplaceProposalsWorkspace() {
           onViewDetails={(proposal) => navigate(proposal.id, 'summary')}
         />
       ) : showingDetail ? (
-        <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
-          <div className="mb-5 flex items-center justify-between gap-2 border-b border-slate-100 pb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="-ml-2 font-semibold text-slate-600 hover:text-slate-900"
-              onClick={() =>
-                navigate(
-                  screen === 'summary' || screen === 'complete' || screen === 'compare'
-                    ? null
-                    : selectedId
-                )
-              }
-            >
-              <ArrowLeft className="mr-1.5 h-4 w-4" />
-              {screen === 'summary' || screen === 'complete' || screen === 'compare'
-                ? 'Minhas propostas'
-                : 'Voltar'}
-            </Button>
-            {selectedId && (
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={detailLoading}
-                onClick={() => setDetailAttempt((value) => value + 1)}
-                aria-label="Atualizar proposta"
-              >
-                <RefreshCw className={cn('h-4 w-4', detailLoading && 'animate-spin')} />
-              </Button>
-            )}
-          </div>
-
-          <h2
-            ref={detailHeading}
-            tabIndex={-1}
-            className="text-xl font-bold tracking-tight outline-none sm:text-2xl text-slate-900"
-          >
-            {screenTitles[screen]}
-          </h2>
-
+        <div className="min-w-0 space-y-6">
           {screen === 'compare' ? (
-            <div className="mt-5">
-              <ProposalComparison
-                ids={comparisonIds}
-                onOpen={openProposal}
-                onChoose={(proposal) => {
-                  setDecisionError('');
-                  navigate(proposal.id, 'choose');
-                }}
-                onRemoveId={(idToRemove) => {
-                  const newIds = compareIds.filter((id) => id !== idToRemove);
-                  setCompareIds(newIds);
-                  const query = new URLSearchParams(params.toString());
-                  if (newIds.length) {
-                    query.set('compare', newIds.join(','));
-                  } else {
-                    query.delete('compare');
-                    query.delete('view');
-                  }
-                  router.push(pathname + '?' + query.toString(), { scroll: false });
-                }}
-                onClearAll={() => {
-                  setCompareIds([]);
-                  const query = new URLSearchParams(params.toString());
+            <ProposalComparison
+              ids={comparisonIds}
+              onOpen={openProposal}
+              onChoose={(proposal) => {
+                setDecisionError('');
+                navigate(proposal.id, 'choose');
+              }}
+              onRemoveId={(idToRemove) => {
+                const newIds = compareIds.filter((id) => id !== idToRemove);
+                setCompareIds(newIds);
+                const query = new URLSearchParams(params.toString());
+                if (newIds.length) {
+                  query.set('compare', newIds.join(','));
+                } else {
                   query.delete('compare');
                   query.delete('view');
-                  router.push(pathname + '?' + query.toString(), { scroll: false });
-                }}
-                onBack={() => navigate(null)}
-                onConversation={(p) => navigate(p.id, 'conversation')}
-                onMeeting={() => (selectedId ? navigate(selectedId, 'meeting') : undefined)}
-              />
-            </div>
+                }
+                router.push(pathname + '?' + query.toString(), { scroll: false });
+              }}
+              onClearAll={() => {
+                setCompareIds([]);
+                const query = new URLSearchParams(params.toString());
+                query.delete('compare');
+                query.delete('view');
+                router.push(pathname + '?' + query.toString(), { scroll: false });
+              }}
+              onBack={() => navigate(null)}
+              onConversation={(p) => navigate(p.id, 'conversation')}
+              onMeeting={() => (selectedId ? navigate(selectedId, 'meeting') : undefined)}
+            />
           ) : detailLoading ? (
-            <p role="status" className="py-12 text-center text-sm text-slate-500">
-              Carregando os detalhes da proposta…
-            </p>
+            <div
+              role="status"
+              className="rounded-3xl border border-slate-200/80 bg-white p-12 text-center shadow-xs"
+            >
+              <p className="text-sm font-medium text-slate-500">
+                Carregando os detalhes da proposta…
+              </p>
+            </div>
           ) : detailError ? (
-            <div role="alert" className="mt-4 space-y-4 rounded-xl border border-red-200 bg-red-50 p-4">
-              <p className="text-sm text-red-700 font-medium">{detailError}</p>
-              <Button variant="outline" size="sm" onClick={() => setDetailAttempt((value) => value + 1)}>
+            <div
+              role="alert"
+              className="rounded-3xl border border-rose-200 bg-rose-50/70 p-6 text-center space-y-4"
+            >
+              <p className="text-sm font-medium text-rose-700">{detailError}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDetailAttempt((value) => value + 1)}
+                className="rounded-xl font-bold"
+              >
                 Tentar novamente
               </Button>
             </div>
           ) : selected ? (
             <>
-              <div className="my-5 flex flex-wrap items-center gap-3 border-b border-slate-100 pb-5">
-                <CompanyMark proposal={selected} />
-                <div className="min-w-0 flex-1">
-                  <h3 className="break-words font-bold text-slate-900">{selected.company.name}</h3>
-                  <p className="mt-0.5 text-xs text-slate-500 font-mono">
-                    {selected.reference}
-                    {selected.request?.city ? ' · ' + selected.request.city : ''}
-                    {selected.request?.state ? ', ' + selected.request.state : ''}
-                  </p>
-                </div>
-                <StatusBadge proposal={selected} />
-              </div>
-
               {(screen === 'summary' || screen === 'complete') && (
                 <ProposalSummary
                   key={`${selected.id}-${screen}`}
@@ -626,15 +585,17 @@ export function MarketplaceProposalsWorkspace() {
                       updateProposal({
                         ...selected,
                         status:
-                           selected.status === 'accepted' ? 'accepted' : 'meeting_scheduled',
+                          selected.status === 'accepted' ? 'accepted' : 'meeting_scheduled',
                         meetings: [meeting, ...(selected.meetings || [])],
                       })
                     }
                   />
                 ) : (
-                  <p className="text-sm text-slate-500 py-6">
-                    Esta proposta não permite novos agendamentos.
-                  </p>
+                  <div className="rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-xs">
+                    <p className="text-sm font-medium text-slate-500">
+                      Esta proposta não permite novos agendamentos.
+                    </p>
+                  </div>
                 ))}
               {screen === 'negotiation' && (
                 <ProposalNegotiation
@@ -647,38 +608,26 @@ export function MarketplaceProposalsWorkspace() {
                   }}
                 />
               )}
-              {screen === 'summary' && (
-                <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-100 pt-4">
-                  <Button variant="outline" size="sm" onClick={() => navigate(selected.id, 'negotiation')}>
-                    Histórico de versões
-                  </Button>
-                  {canDecide(selected) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => {
-                        setDecisionError('');
-                        setDeclining(true);
-                      }}
-                    >
-                      Recusar proposta
-                    </Button>
-                  )}
-                </div>
-              )}
             </>
           ) : (
-            <div role="alert" className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center space-y-4">
-              <p className="text-sm text-slate-700 font-medium">
+            <div
+              role="alert"
+              className="rounded-3xl border border-slate-200/80 bg-slate-50/60 p-8 text-center space-y-4 shadow-xs"
+            >
+              <p className="text-sm font-medium text-slate-700">
                 A proposta #{selectedId} não foi encontrada ou você não tem acesso a ela.
               </p>
-              <Button variant="outline" size="sm" onClick={() => navigate(null)} className="rounded-xl font-bold text-slate-800">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(null)}
+                className="rounded-xl font-bold text-slate-800"
+              >
                 Voltar para minhas propostas
               </Button>
             </div>
           )}
-        </section>
+        </div>
       ) : (
         /* ── VISUALIZAÇÃO PRINCIPAL DE PROPOSTAS ── */
         <main className="space-y-6">
