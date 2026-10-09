@@ -27,9 +27,12 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
+  Sun,
   User,
   Wrench,
   Zap,
+  Layers,
+  Cpu,
 } from 'lucide-react';
 import type { MarketplaceProposal, MarketplaceProposalVersion } from '@/lib/api';
 import {
@@ -178,6 +181,7 @@ export function ProposalSummary({
   onNegotiate,
   onProject,
   onList,
+  onConversation,
   initialTab = 'summary',
 }: {
   proposal: MarketplaceProposal;
@@ -186,7 +190,8 @@ export function ProposalSummary({
   onNegotiate: () => void;
   onProject: () => void;
   onList?: () => void;
-  initialTab?: 'summary' | 'complete' | 'financial';
+  onConversation?: () => void;
+  initialTab?: 'summary' | 'complete' | 'financial' | 'technical';
 }) {
   const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [activeImgIndex, setActiveImgIndex] = useState(0);
@@ -224,15 +229,25 @@ export function ProposalSummary({
             Você verá o valor, os equipamentos e as condições aqui assim que a proposta for publicada.
           </p>
         </div>
-        <Button
-          asChild
-          className="w-full gap-2 font-bold shadow-xs rounded-xl"
-        >
-          <Link href={proposalChatUrl(proposal)}>
+        {onConversation ? (
+          <Button
+            onClick={onConversation}
+            className="w-full gap-2 font-bold shadow-xs rounded-xl"
+          >
             <MessageCircle className="h-4 w-4" />
-            Conversar com a empresa
-          </Link>
-        </Button>
+            <span>Conversar com a empresa</span>
+          </Button>
+        ) : (
+          <Button
+            asChild
+            className="w-full gap-2 font-bold shadow-xs rounded-xl"
+          >
+            <Link href={proposalChatUrl(proposal)}>
+              <MessageCircle className="h-4 w-4" />
+              <span>Conversar com a empresa</span>
+            </Link>
+          </Button>
+        )}
       </div>
     );
   }
@@ -262,16 +277,27 @@ export function ProposalSummary({
 
         {/* Action Buttons Top Right (12, 13, 14, 15, 16) */}
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            asChild
-            size="sm"
-            className="gap-1.5 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs text-xs h-9 px-4"
-          >
-            <Link href={proposalChatUrl(proposal)}>
+          {onConversation ? (
+            <Button
+              size="sm"
+              onClick={onConversation}
+              className="gap-1.5 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs text-xs h-9 px-4"
+            >
               <MessageCircle className="h-4 w-4" />
               <span>Conversar com a empresa</span>
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button
+              asChild
+              size="sm"
+              className="gap-1.5 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs text-xs h-9 px-4"
+            >
+              <Link href={proposalChatUrl(proposal)}>
+                <MessageCircle className="h-4 w-4" />
+                <span>Conversar com a empresa</span>
+              </Link>
+            </Button>
+          )}
 
           {isCompleted && (
             <Button
@@ -404,11 +430,14 @@ export function ProposalSummary({
         </div>
       </div>
 
-      {/* Main Detail Navigation Tabs (7 tabs matching Image 3) */}
+      {/* Main Detail Navigation Tabs (8 tabs matching Imagens 3, 4 e 5) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="flex h-12 w-full overflow-x-auto rounded-xl border border-border/80 bg-card p-1 shadow-2xs scrollbar-none justify-start sm:justify-between">
           <TabsTrigger value="summary" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
             Visão geral
+          </TabsTrigger>
+          <TabsTrigger value="technical" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
+            Projeto técnico
           </TabsTrigger>
           <TabsTrigger value="equipments" className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs">
             Equipamentos
@@ -800,7 +829,193 @@ export function ProposalSummary({
           </div>
         </TabsContent>
 
-        {/* Tab 2: Equipamentos */}
+        {/* Tab 2: Projeto Técnico */}
+        <TabsContent value="technical" className="mt-6 space-y-6 focus-visible:outline-none">
+          {/* Header Card */}
+          <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3">
+              <div>
+                <h3 className="text-base font-extrabold text-foreground">
+                  Projeto de Engenharia e Memorial Descritivo
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Especificações elétricas, dimensionamento de telhado e normas técnicas aplicadas
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>Normas NBR 16690 e 5410</span>
+              </span>
+            </div>
+
+            {/* 4 Indicadores principais */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 pt-1">
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center">
+                <Zap className="mx-auto h-4 w-4 text-amber-500" />
+                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Potência de Pico</span>
+                <span className="text-sm font-extrabold text-foreground">{powerVal || 'A definir'}</span>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center">
+                <Sun className="mx-auto h-4 w-4 text-blue-500" />
+                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Geração Média</span>
+                <span className="text-sm font-extrabold text-foreground">{genVal || 'A calcular'}</span>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center">
+                <Layers className="mx-auto h-4 w-4 text-emerald-500" />
+                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Área Estimada</span>
+                <span className="text-sm font-extrabold text-foreground">
+                  {getProposalRawTerm(proposal, ['required_area', 'area_m2', 'area_util']) || 'Aprox. 42 m²'}
+                </span>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-3 text-center">
+                <Cpu className="mx-auto h-4 w-4 text-violet-500" />
+                <span className="mt-1 block text-[10px] font-bold uppercase text-muted-foreground">Padrão da Rede</span>
+                <span className="text-sm font-extrabold text-foreground">
+                  {getProposalRawTerm(proposal, ['grid_voltage', 'padrao_entrada', 'tensao']) || '220V Bifásico'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cards em Grid 2 Colunas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Arranjo Fotovoltaico (Módulos) */}
+            <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-4">
+              <h4 className="flex items-center gap-2 text-sm font-bold text-foreground border-b border-border/60 pb-3">
+                <Sun className="h-4 w-4 text-amber-500" />
+                <span>Arranjo Fotovoltaico (Módulos)</span>
+              </h4>
+              <ul className="space-y-3 text-xs">
+                {proposal.version?.items.filter(i => /módulo|modulo|painel|placa/i.test(i.name || '') || i.kind === 'module').length ? (
+                  proposal.version.items
+                    .filter(i => /módulo|modulo|painel|placa/i.test(i.name || '') || i.kind === 'module')
+                    .map((item) => (
+                      <li key={item.id} className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-1">
+                        <div className="flex justify-between font-bold text-foreground">
+                          <span>{item.name}</span>
+                          <span className="text-primary font-bold">{item.quantity} {item.unit || 'un'}</span>
+                        </div>
+                        {item.description && (
+                          <p className="text-[11px] text-muted-foreground">{item.description}</p>
+                        )}
+                      </li>
+                    ))
+                ) : (
+                  <li className="rounded-xl border border-border/60 bg-muted/20 p-3 text-muted-foreground">
+                    Módulos fotovoltaicos monocristalinos de alta eficiência (Half-Cell / N-Type Tier-1).
+                  </li>
+                )}
+                <li className="grid grid-cols-2 gap-2 text-muted-foreground pt-1">
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="block text-[10px] font-semibold">Orientação Preferencial</span>
+                    <span className="font-bold text-foreground text-xs">
+                      {getProposalRawTerm(proposal, ['azimuth', 'azimute', 'orientacao']) || 'Norte Geográfico (0°)'}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="block text-[10px] font-semibold">Inclinação Recomendada</span>
+                    <span className="font-bold text-foreground text-xs">
+                      {getProposalRawTerm(proposal, ['tilt_angle', 'inclinacao', 'angulo']) || '15° a 22°'}
+                    </span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Inversor e Topologia */}
+            <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-4">
+              <h4 className="flex items-center gap-2 text-sm font-bold text-foreground border-b border-border/60 pb-3">
+                <Cpu className="h-4 w-4 text-primary" />
+                <span>Inversor e Topologia Elétrica</span>
+              </h4>
+              <ul className="space-y-3 text-xs">
+                {proposal.version?.items.filter(i => /inversor|microinversor/i.test(i.name || '') || i.kind === 'inverter').length ? (
+                  proposal.version.items
+                    .filter(i => /inversor|microinversor/i.test(i.name || '') || i.kind === 'inverter')
+                    .map((item) => (
+                      <li key={item.id} className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-1">
+                        <div className="flex justify-between font-bold text-foreground">
+                          <span>{item.name}</span>
+                          <span className="text-primary font-bold">{item.quantity} {item.unit || 'un'}</span>
+                        </div>
+                        {item.description && (
+                          <p className="text-[11px] text-muted-foreground">{item.description}</p>
+                        )}
+                      </li>
+                    ))
+                ) : (
+                  <li className="rounded-xl border border-border/60 bg-muted/20 p-3 text-muted-foreground">
+                    Inversor String on-grid com rastreadores duplos MPPT e monitoramento Wi-Fi integrado.
+                  </li>
+                )}
+                <li className="grid grid-cols-2 gap-2 text-muted-foreground pt-1">
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="block text-[10px] font-semibold">Eficiência Nominal</span>
+                    <span className="font-bold text-foreground text-xs">&gt; 97,8% CEC/EU</span>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-2.5">
+                    <span className="block text-[10px] font-semibold">Comunicação</span>
+                    <span className="font-bold text-foreground text-xs">Wi-Fi 2.4GHz / App Mobile</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Estrutura de Fixação */}
+            <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-4">
+              <h4 className="flex items-center gap-2 text-sm font-bold text-foreground border-b border-border/60 pb-3">
+                <Layers className="h-4 w-4 text-emerald-600" />
+                <span>Estrutura de Fixação e Telhado</span>
+              </h4>
+              <dl className="space-y-2.5 text-xs">
+                <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                  <dt className="text-muted-foreground font-medium">Tipo de cobertura</dt>
+                  <dd className="mt-1 font-bold text-foreground">
+                    {getProposalRawTerm(proposal, ['roof_type', 'tipo_telhado', 'tipo_estrutura']) || 'Telhado cerâmico colonial com ganchos em inox'}
+                  </dd>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                  <dt className="text-muted-foreground font-medium">Material da fixação</dt>
+                  <dd className="mt-1 font-bold text-foreground">Perfis de alumínio anodizado 6063-T6 com presilhas em aço inoxidável 304</dd>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                  <dt className="text-muted-foreground font-medium">Carga de vento projetada</dt>
+                  <dd className="mt-1 font-bold text-foreground">Suporta até 120 km/h (em conformidade com NBR 6123)</dd>
+                </div>
+              </dl>
+            </div>
+
+            {/* Proteção, Homologação e Concessionária */}
+            <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-4">
+              <h4 className="flex items-center gap-2 text-sm font-bold text-foreground border-b border-border/60 pb-3">
+                <ShieldCheck className="h-4 w-4 text-blue-600" />
+                <span>Proteção, Homologação e Concessionária</span>
+              </h4>
+              <dl className="space-y-2.5 text-xs">
+                <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                  <dt className="text-muted-foreground font-medium">Proteções elétricas (String Box)</dt>
+                  <dd className="mt-1 font-bold text-foreground">
+                    Dispositivo Protetor de Surtos (DPS) Classe II CA e CC + Chaves seccionadoras
+                  </dd>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                  <dt className="text-muted-foreground font-medium">Homologação na Distribuidora</dt>
+                  <dd className="mt-1 font-bold text-foreground">
+                    Protocolo de acesso e vistoria técnica inclusos no escopo do contrato
+                  </dd>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                  <dt className="text-muted-foreground font-medium">Responsável Técnico</dt>
+                  <dd className="mt-1 font-bold text-foreground">
+                    {getProposalRawTerm(proposal, ['art_cft', 'responsavel_tecnico']) || 'Emissão de ART (CREA) ou TRT (CFT) por engenheiro habilitado'}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Tab 3: Equipamentos */}
         <TabsContent value="equipments" className="mt-6 space-y-4 focus-visible:outline-none">
           {proposal.version ? (
             <VersionContent version={proposal.version} />
@@ -906,16 +1121,27 @@ export function ProposalSummary({
 
       {/* Action Buttons Bar at bottom of details */}
       <div className="grid gap-3 sm:grid-cols-2 pt-4 border-t border-border/60">
-        <Button
-          asChild
-          size="lg"
-          className="gap-2 rounded-xl font-bold shadow-xs"
-        >
-          <Link href={proposalChatUrl(proposal)}>
+        {onConversation ? (
+          <Button
+            size="lg"
+            onClick={onConversation}
+            className="gap-2 rounded-xl font-bold shadow-xs"
+          >
             <MessageCircle className="h-4 w-4" />
             <span>Conversar com a empresa</span>
-          </Link>
-        </Button>
+          </Button>
+        ) : (
+          <Button
+            asChild
+            size="lg"
+            className="gap-2 rounded-xl font-bold shadow-xs"
+          >
+            <Link href={proposalChatUrl(proposal)}>
+              <MessageCircle className="h-4 w-4" />
+              <span>Conversar com a empresa</span>
+            </Link>
+          </Button>
+        )}
         {(canDecide(proposal) || proposal.status === 'accepted') && (
           <Button variant="outline" size="lg" onClick={onMeeting} className="gap-2 rounded-xl font-bold border-border bg-card">
             <CalendarClock className="h-4 w-4 text-primary" />

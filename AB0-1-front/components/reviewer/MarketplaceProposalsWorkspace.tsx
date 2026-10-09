@@ -54,13 +54,32 @@ import { ProposalComparison } from './proposals/ProposalComparison';
 import { ProposalMeeting } from './proposals/ProposalMeeting';
 import { ProposalNegotiation } from './proposals/ProposalNegotiation';
 import { ProposalProject } from './proposals/ProposalProject';
+import { ProposalConversation } from './proposals/ProposalConversation';
+import { ProposalChoose } from './proposals/ProposalChoose';
 
-type Screen = 'summary' | 'complete' | 'meeting' | 'negotiation' | 'project' | 'compare';
+type Screen =
+  | 'summary'
+  | 'complete'
+  | 'meeting'
+  | 'negotiation'
+  | 'project'
+  | 'compare'
+  | 'conversation'
+  | 'choose';
 type Filter = 'all' | 'active' | 'received' | 'completed';
 type SortOption = 'recent' | 'oldest' | 'highest' | 'lowest';
 type ViewLayout = 'cards' | 'table';
 
-const screens: Screen[] = ['summary', 'complete', 'meeting', 'negotiation', 'project', 'compare'];
+const screens: Screen[] = [
+  'summary',
+  'complete',
+  'meeting',
+  'negotiation',
+  'project',
+  'compare',
+  'conversation',
+  'choose',
+];
 const screenTitles: Record<Screen, string> = {
   summary: 'Detalhes da proposta',
   complete: 'Proposta completa',
@@ -68,6 +87,8 @@ const screenTitles: Record<Screen, string> = {
   negotiation: 'Negociação da proposta',
   project: 'Acompanhamento do projeto',
   compare: 'Comparar propostas',
+  conversation: 'Conversa com a empresa',
+  choose: 'Escolher proposta',
 };
 
 const filterTabs: { id: Filter; label: string }[] = [
@@ -82,10 +103,10 @@ const journeySteps = [
   { id: 2, label: 'Detalhes', view: 'summary' as Screen },
   { id: 3, label: 'Proposta completa', view: 'complete' as Screen },
   { id: 4, label: 'Comparar', view: 'compare' as Screen },
-  { id: 5, label: 'Conversa' },
+  { id: 5, label: 'Conversa', view: 'conversation' as Screen },
   { id: 6, label: 'Reunião', view: 'meeting' as Screen },
   { id: 7, label: 'Negociação', view: 'negotiation' as Screen },
-  { id: 8, label: 'Escolher' },
+  { id: 8, label: 'Escolher', view: 'choose' as Screen },
   { id: 9, label: 'Projeto', view: 'project' as Screen },
   { id: 10, label: 'Concluído', view: 'project' as Screen },
 ];
@@ -254,7 +275,7 @@ export function MarketplaceProposalsWorkspace() {
   const proposals = apiProposals;
 
   const selected = proposals.find((proposal) => proposal.id === selectedId);
-  const showingDetail = Boolean(selectedId) || screen === 'compare';
+  const showingDetail = Boolean(selectedId) || screen === 'compare' || screen === 'choose';
   const comparisonIds = (params.get('compare') || '')
     .split(',')
     .map(Number)
@@ -511,7 +532,7 @@ export function MarketplaceProposalsWorkspace() {
       </header>
 
       {/* Rail da jornada no mobile ou em tela de detalhe */}
-      {showingDetail && screen !== 'project' && (
+      {showingDetail && screen !== 'project' && screen !== 'conversation' && screen !== 'choose' && (
         <ProposalJourneyRail
           proposal={selected}
           screen={screen}
@@ -534,6 +555,27 @@ export function MarketplaceProposalsWorkspace() {
           proposal={selected}
           onViewProposal={() => navigate(selected.id, 'summary')}
           onList={() => navigate(null)}
+        />
+      ) : screen === 'conversation' && selected ? (
+        <ProposalConversation
+          key={selected.id}
+          proposal={selected}
+          onBack={() => navigate(selected.id, 'summary')}
+          onViewProposal={() => navigate(selected.id, 'summary')}
+          onMeeting={() => navigate(selected.id, 'meeting')}
+          onNegotiate={() => navigate(selected.id, 'negotiation')}
+        />
+      ) : screen === 'choose' ? (
+        <ProposalChoose
+          proposals={proposals}
+          initialSelectedId={selectedId || undefined}
+          onBack={() => navigate(selectedId, 'summary')}
+          onConfirm={(proposal) => {
+            setDecisionError('');
+            setChoosing(proposal);
+          }}
+          onConversation={(proposal) => navigate(proposal.id, 'conversation')}
+          onViewDetails={(proposal) => navigate(proposal.id, 'summary')}
         />
       ) : showingDetail ? (
         <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-6">
@@ -583,7 +625,7 @@ export function MarketplaceProposalsWorkspace() {
                 onOpen={openProposal}
                 onChoose={(proposal) => {
                   setDecisionError('');
-                  setChoosing(proposal);
+                  navigate(proposal.id, 'choose');
                 }}
                 onRemoveId={(idToRemove) => {
                   const newIds = compareIds.filter((id) => id !== idToRemove);
@@ -597,6 +639,16 @@ export function MarketplaceProposalsWorkspace() {
                   }
                   router.push(pathname + '?' + query.toString(), { scroll: false });
                 }}
+                onClearAll={() => {
+                  setCompareIds([]);
+                  const query = new URLSearchParams(params.toString());
+                  query.delete('compare');
+                  query.delete('view');
+                  router.push(pathname + '?' + query.toString(), { scroll: false });
+                }}
+                onBack={() => navigate(null)}
+                onConversation={(p) => navigate(p.id, 'conversation')}
+                onMeeting={() => (selectedId ? navigate(selectedId, 'meeting') : undefined)}
               />
             </div>
           ) : detailLoading ? (
@@ -631,13 +683,11 @@ export function MarketplaceProposalsWorkspace() {
                   proposal={selected}
                   initialTab={screen === 'complete' ? 'complete' : 'summary'}
                   onMeeting={() => navigate(selected.id, 'meeting')}
-                  onChoose={() => {
-                    setDecisionError('');
-                    setChoosing(selected);
-                  }}
+                  onChoose={() => navigate(selected.id, 'choose')}
                   onNegotiate={() => navigate(selected.id, 'negotiation')}
                   onProject={() => navigate(selected.id, 'project')}
                   onList={() => navigate(null)}
+                  onConversation={() => navigate(selected.id, 'conversation')}
                 />
               )}
               {screen === 'meeting' &&

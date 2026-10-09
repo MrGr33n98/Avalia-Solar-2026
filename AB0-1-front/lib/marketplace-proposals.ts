@@ -65,7 +65,7 @@ export function formatDate(value?: string | null, withTime = false) {
 }
 
 export function proposalChatUrl(proposal: MarketplaceProposal) {
-  return `/chat?company_id=${proposal.company.id}&marketplace_proposal_id=${proposal.id}`;
+  return `/review-dashboard/proposals?proposal=${proposal.id}&view=conversation`;
 }
 
 export const technicalFields = [
