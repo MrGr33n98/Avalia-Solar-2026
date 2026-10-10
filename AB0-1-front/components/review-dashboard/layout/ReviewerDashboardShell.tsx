@@ -16,12 +16,12 @@ export function ReviewerDashboardShell({ children }: { children: React.ReactNode
   const isRootDashboard = pathname === '/review-dashboard';
 
   return (
-    <div className="review-dashboard-enterprise flex min-h-[calc(100dvh-var(--app-navbar-height))] w-full flex-col overflow-x-clip bg-white text-slate-900 dark:bg-[#020617] dark:text-slate-100 lg:flex-row">
+    <div className="review-dashboard-enterprise flex min-h-[calc(100dvh-var(--app-navbar-height))] w-full flex-col overflow-x-clip bg-slate-50 text-slate-900 dark:bg-[#020617] dark:text-slate-100 lg:flex-row">
       {/* Sidebar desktop */}
       <ReviewerSidebar />
 
       {/* Main content wrapper */}
-      <div className="flex-1 min-w-0 w-full flex flex-col overflow-x-clip bg-white dark:bg-[#020617]">
+      <div className="flex-1 min-w-0 w-full flex flex-col overflow-x-clip bg-slate-50 dark:bg-[#020617]">
         {/* Onboarding Bar apenas na raiz do painel */}
         {isRootDashboard && (
           <div className="w-full max-w-[1440px] mx-auto px-4 pt-4 sm:px-5 lg:px-6 xl:px-8">

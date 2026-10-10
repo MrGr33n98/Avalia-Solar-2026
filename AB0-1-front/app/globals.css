@@ -1063,38 +1063,6 @@
 .premium-popup .leaflet-popup-content { margin: 0; width: auto !important; }
 .premium-popup .leaflet-popup-tip { box-shadow: none; }
 
-/* Review dashboard — Swiss / Enterprise visual system */
-.review-dashboard-enterprise :where([class~="rounded-xl"], [class~="rounded-2xl"], [class~="rounded-3xl"], [class~="rounded-[18px]"], [class~="rounded-[20px]"]) {
-  border-radius: 0 !important;
-}
-
-.review-dashboard-enterprise :where(button, a)[class*="bg-emerald-6"],
-.review-dashboard-enterprise :where(button, a)[class*="bg-emerald-7"] {
-  background-color: #2563eb !important;
-  color: #fff !important;
-}
-
-.review-dashboard-enterprise :where(button, a)[class*="bg-emerald-6"]:hover,
-.review-dashboard-enterprise :where(button, a)[class*="bg-emerald-7"]:hover {
-  background-color: #1d4ed8 !important;
-}
-
-.review-dashboard-enterprise :where(input, select, textarea) {
-  border-radius: 0 !important;
-}
-
-.review-dashboard-enterprise :where(button)[class~="rounded-lg"],
-.review-dashboard-enterprise :where(button)[class~="rounded-md"] {
-  border-radius: 0 !important;
-}
-
-.review-dashboard-enterprise :where([class~="font-black"], [class~="font-extrabold"]) {
-  font-weight: 600 !important;
-}
-
-.review-dashboard-enterprise :where([class~="shadow-xl"], [class~="shadow-lg"]) {
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
-}
 
 @media (max-width: 767px) {
   .mobile-comparison-table > div > :first-child {
@@ -1253,16 +1221,12 @@ html, body, #__next, main {
 /* Review Dashboard · Prime SaaS surface system */
 @layer components {
   .review-dashboard-enterprise {
-    --review-surface-border: rgb(226 232 240 / 0.82);
-    --review-surface-shadow: 0 12px 30px -24px rgb(15 23 42 / 0.32);
-  }
-
-  .review-dashboard-enterprise .rounded-xl {
-    border-radius: 0.875rem;
+    --review-surface-border: #e2e8f0;
+    --review-surface-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
   }
 
   .review-dashboard-enterprise .rounded-2xl {
-    border-radius: 1.125rem;
+    border-radius: 16px;
   }
 
   .review-dashboard-enterprise .border-slate-200,
@@ -1287,11 +1251,7 @@ html, body, #__next, main {
 
   @media (max-width: 767px) {
     .review-dashboard-enterprise main {
-      gap: 1rem;
-    }
-
-    .review-dashboard-enterprise .rounded-xl {
-      border-radius: 0.75rem;
+      gap: 0.75rem;
     }
   }
 }

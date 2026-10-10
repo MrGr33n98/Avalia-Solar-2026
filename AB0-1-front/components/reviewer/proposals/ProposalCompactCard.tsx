@@ -4,10 +4,7 @@ import React from 'react';
 import {
   ArrowRight,
   BarChart2,
-  Calendar,
   DollarSign,
-  FileText,
-  Grid,
   Zap,
 } from 'lucide-react';
 import type { MarketplaceProposal } from '@/lib/api';
@@ -17,7 +14,6 @@ import {
   getProposalLocation,
   getProposalRawTerm,
   getProposalSolutionLabel,
-  isProjectComplete,
   isProposalCompleted,
   isProposalReceived,
   proposalStatus,
@@ -139,13 +135,13 @@ export function ProposalCompactCard({
 
   return (
     <article
-      className="flex min-w-0 flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-4 text-left shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs"
+      className="flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 text-left shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs"
       aria-labelledby={`prop-title-${proposal.id}`}
     >
       <div>
         {/* Linha 1: Logotipo (36-40px) + Nome da Empresa + Referência */}
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-white p-1 overflow-hidden shadow-2xs">
+        <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-white p-1 overflow-hidden shadow-2xs">
             <CompactCompanyAvatar proposal={proposal} />
           </div>
 
@@ -166,14 +162,16 @@ export function ProposalCompactCard({
             <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500 font-medium truncate">
               {solutionLabel} • {location}
             </p>
-            <p className="mt-0.5 text-[11px] sm:text-xs text-slate-600 font-normal truncate">
-              {contextText}
-            </p>
+            {isSentOrReady && contextText && (
+              <p className="mt-0.5 text-[11px] sm:text-xs text-slate-600 font-normal truncate">
+                {contextText}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Linha 2: Status Badge + Status Auxiliar */}
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
+        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
           <span
             className={cn(
               'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border',
@@ -191,10 +189,10 @@ export function ProposalCompactCard({
 
         {/* Linha 3: Métricas Técnicas Reais OU Indicador de Espera */}
         {hasMetrics ? (
-          <div className="mt-2.5 grid grid-cols-2 gap-2 rounded-xl bg-slate-50/70 p-2 text-xs">
+          <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl bg-slate-50/80 p-2 text-xs">
             {power && (
               <div className="flex items-center gap-1.5 min-w-0">
-                <Zap className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                <Zap className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                 <span className="truncate text-[11px] text-slate-500">Potência:</span>
                 <span className="font-bold text-slate-800 tabular-nums text-[11px] truncate">
                   {power}
@@ -203,7 +201,7 @@ export function ProposalCompactCard({
             )}
             {generation && (
               <div className="flex items-center gap-1.5 min-w-0">
-                <BarChart2 className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                <BarChart2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                 <span className="truncate text-[11px] text-slate-500">Geração:</span>
                 <span className="font-bold text-slate-800 tabular-nums text-[11px] truncate">
                   {generation}
@@ -212,7 +210,7 @@ export function ProposalCompactCard({
             )}
             {price.isAvailable && (
               <div className="flex items-center gap-1.5 min-w-0 col-span-2">
-                <DollarSign className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                <DollarSign className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                 <span className="truncate text-[11px] text-slate-500">Total:</span>
                 <span className="font-bold text-slate-900 tabular-nums text-[12px] truncate">
                   {price.formatted}
@@ -221,14 +219,14 @@ export function ProposalCompactCard({
             )}
           </div>
         ) : !isSentOrReady ? (
-          <div className="mt-2.5 rounded-xl bg-slate-50/60 px-2.5 py-1.5 text-[11px] text-slate-500">
+          <div className="mt-2 rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] text-slate-500">
             Proposta comercial ainda não publicada.
           </div>
         ) : null}
       </div>
 
       {/* Linha 4: Ações */}
-      <div className="mt-3.5 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+      <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-2.5">
         {/* Botão de Comparação (Apenas se elegível) */}
         {canCompare && onToggleCompare && (
           <Button
@@ -238,7 +236,7 @@ export function ProposalCompactCard({
             onClick={() => onToggleCompare(proposal.id)}
             aria-label={`Comparar proposta de ${proposal.company.name}`}
             className={cn(
-              'h-9 gap-1.5 rounded-xl text-xs font-semibold px-3 transition-colors',
+              'h-8 sm:h-8.5 gap-1.5 rounded-[10px] max-sm:min-h-0 max-sm:min-w-0 text-xs font-semibold px-2.5 sm:px-3 transition-colors',
               isComparing
                 ? 'border-blue-600 bg-blue-50 text-blue-700'
                 : 'border-slate-200 text-blue-600 hover:bg-slate-50'
@@ -262,7 +260,7 @@ export function ProposalCompactCard({
               : `Acompanhar solicitação de ${proposal.company.name}`
           }
           className={cn(
-            'h-9 min-h-[44px] sm:min-h-[36px] gap-1.5 rounded-xl text-xs sm:text-sm font-semibold px-3.5 sm:px-4 shadow-2xs',
+            'h-8 sm:h-8.5 gap-1.5 rounded-[10px] max-sm:min-h-0 max-sm:min-w-0 text-xs font-semibold px-3 sm:px-3.5 shadow-2xs',
             isComplete
               ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
               : 'bg-blue-600 hover:bg-blue-700 text-white'

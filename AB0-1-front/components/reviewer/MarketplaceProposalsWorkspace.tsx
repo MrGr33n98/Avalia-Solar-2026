@@ -647,7 +647,7 @@ export function MarketplaceProposalsWorkspace() {
         </div>
       ) : (
         /* ── VISUALIZAÇÃO PRINCIPAL DE PROPOSTAS ── */
-        <main className="space-y-6">
+        <div className="space-y-3.5 sm:space-y-4">
           {error && (
             <div
               role="alert"
@@ -958,7 +958,7 @@ export function MarketplaceProposalsWorkspace() {
             </div>
           ) : (
             /* Modo Cards Responsivo: 1 col PWA, 2 col tablet/md, até 3 col desktop */
-            <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:gap-3.5 md:grid-cols-2 xl:grid-cols-3 items-start">
               {filteredProposals.map((proposal) => (
                 <ProposalCompactCard
                   key={proposal.id}
@@ -1036,7 +1036,7 @@ export function MarketplaceProposalsWorkspace() {
               </div>
             </div>
           )}
-        </main>
+        </div>
       )}
 
       {/* Drawer de Filtros Mobile */}
