@@ -278,7 +278,7 @@ export function CompanyMarketplaceProposalsWorkspace({
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <ProposalWizardEditor
             proposal={selectedProposal}
-            companyId={effectiveCompanyId!}
+            companyId={Number(effectiveCompanyId)}
             onSaved={(updated) => {
               setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
               setSelectedProposal(updated);

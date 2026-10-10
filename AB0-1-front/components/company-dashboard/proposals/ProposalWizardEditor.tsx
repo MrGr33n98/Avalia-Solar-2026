@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 
 interface ProposalWizardEditorProps {
   proposal: MarketplaceProposal;
-  companyId: number;
+  companyId: number | string;
   onSaved: (proposal: MarketplaceProposal) => void;
   onBack: () => void;
   onPublishedSuccess: (proposal: MarketplaceProposal) => void;
