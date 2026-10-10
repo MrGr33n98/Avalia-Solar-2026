@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { getCompanyProfileTabs } from './companyProfileTabsConfig';
 import { trackCompanyProfileCategoryDropdownOpened, trackCompanyProfileCategorySelected } from '@/lib/analytics/company-category';
 import { CategoryMotionIcon } from '@/components/categories/CategoryMotionIcon';
-import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 interface CompanyProfileTabsProps {
   activeTab: string;
@@ -164,7 +163,6 @@ export default function CompanyProfileTabs({
                         slug={category.seo_url}
                         name={category.name}
                         size={20}
-                        iconUrl={getCategoryIcon(category)}
                         motionMode="interactive"
                         className="h-5 w-5 shrink-0"
                       />
@@ -261,7 +259,6 @@ export default function CompanyProfileTabs({
                                     slug={category.seo_url}
                                     name={category.name}
                                     size={20}
-                                    iconUrl={getCategoryIcon(category)}
                                     motionMode="interactive"
                                     className="h-5 w-5 shrink-0"
                                   />
@@ -282,34 +279,4 @@ export default function CompanyProfileTabs({
       </div>
     </>
   );
-}
-
-const ICON_BASE = '/assets/avalia-solar-icon-pack';
-
-function getCategoryIcon(category: { name: string; seo_url?: string }) {
-  const visualAsset = getCategoryVisualAsset(category.seo_url, category.name);
-  if (visualAsset) return visualAsset;
-
-  const value = `${category.seo_url || ''} ${category.name}`
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-
-  if (value.includes('utility') || value.includes('usina')) return `${ICON_BASE}/utility-scale.svg`;
-  if (value.includes('software') || value.includes('acessor'))
-    return `${ICON_BASE}/software-acessorios.svg`;
-  if (value.includes('carregador') || value.includes('veicular'))
-    return `${ICON_BASE}/carregador-veicular.svg`;
-  if (value.includes('bateria')) return `${ICON_BASE}/baterias.svg`;
-  if (
-    value.includes('armazenamento') &&
-    (value.includes('comercial') || value.includes('industrial'))
-  ) {
-    return `${ICON_BASE}/armazenamento-comercial-industrial.svg`;
-  }
-  if (value.includes('armazenamento')) return `${ICON_BASE}/armazenamento-residencial.svg`;
-  if (value.includes('comercial') || value.includes('industrial')) {
-    return `${ICON_BASE}/solucoes-comerciais-industriais.svg`;
-  }
-  return `${ICON_BASE}/solucoes-residenciais.svg`;
 }

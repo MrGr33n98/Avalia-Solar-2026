@@ -2,7 +2,7 @@ import type { Group } from '@/types/groups';
 import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 
 const NEUTRAL_GROUP_VISUAL =
-  '/icones/avalia_solar_23_icones_3d_perfeitos_512_transparentes/A11_energia_solar.png';
+  '/icones-new/A_energia-solar/principal/a_energia-solar.svg';
 
 /**
  * Resolve o asset visual de um grupo conforme a prioridade:

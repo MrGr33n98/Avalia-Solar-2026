@@ -1,21 +1,25 @@
 import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 import { resolveCategoryVisual } from './category-visual-registry';
 
-describe('resolvedores visuais de categorias', () => {
+describe('resolvedores visuais de categorias (compatibilidade)', () => {
   it.each([
-    ['energia-solar', 'Energia Solar', 'A11_energia_solar.png'],
+    ['energia-solar', 'Energia Solar', 'a_energia-solar.svg'],
     [
       'energia-solar-fotovoltaica',
       'Energia Solar Fotovoltaica',
-      'A11_energia_solar.png',
+      'a_energia-solar.svg',
     ],
-    ['frotas-eletricas-empresas', 'Frotas Elétricas Corporativas', 'B01_frotas_corporativas.png'],
+    [
+      'frotas-eletricas-empresas',
+      'Frotas Elétricas Corporativas',
+      'c01_frotas-eletricas-corporativas.svg',
+    ],
     [
       'frotas-eletricas-logistica',
       'Frotas Elétricas para Logística e Entregas',
-      'B02_frotas_logistica.png',
+      'c02_frotas-eletricas-para-logistica-e-entregas.svg',
     ],
-  ])('resolve %s para o asset oficial', (slug, name, filename) => {
+  ])('resolve %s para o novo asset SVG oficial', (slug, name, filename) => {
     expect(resolveCategoryVisual(slug, name)?.src).toContain(filename);
     expect(getCategoryVisualAsset(slug, name)).toContain(filename);
   });

@@ -251,6 +251,7 @@ export default function LandingCategoryCard({
             src={resolvedImage.src}
             alt=""
             fill
+            unoptimized={resolvedImage.isVisualAsset}
             sizes="
               (max-width: 640px) 100vw,
               (max-width: 1024px) 50vw,

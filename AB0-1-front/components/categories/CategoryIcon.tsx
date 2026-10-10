@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { Grid2X2 } from 'lucide-react';
 
-import { resolveCategoryVisual } from '@/lib/categories/category-visual-registry';
+import { resolveCategoryIcon } from '@/lib/categories/resolve-category-icon';
 import { cn } from '@/lib/utils';
 
 export type CategoryIconSize =
@@ -17,6 +17,8 @@ export interface CategoryIconProps {
   name?: string | null;
   visualKey?: string | null;
   iconUrl?: string | null;
+  parentSlug?: string | null;
+  parentId?: number | string | null;
   size?: CategoryIconSize;
   priority?: boolean;
   className?: string;
@@ -26,15 +28,6 @@ export interface CategoryIconProps {
    *
    * Permite customizar o tamanho visual do asset
    * sem alterar o container do CategoryIcon.
-   *
-   * Exemplo:
-   * imageClassName="!p-0.5"
-   *
-   * Importante:
-   * - não altera o comportamento padrão;
-   * - consumidores existentes continuam usando p-2;
-   * - ideal para componentes que precisam de ícone
-   *   mais presente visualmente.
    */
   imageClassName?: string;
 
@@ -46,6 +39,8 @@ export function CategoryIcon({
   name,
   visualKey,
   iconUrl,
+  parentSlug,
+  parentId,
   size = 'md',
   priority = false,
   className,
@@ -53,25 +48,21 @@ export function CategoryIcon({
   fill = false,
 }: CategoryIconProps) {
   /* ---------------------------------------------------------------------- */
-  /* VISUAL RESOLUTION                                                      */
+  /* VISUAL RESOLUTION (CANONICAL 47 ICONS SINGLE SOURCE OF TRUTH)           */
   /* ---------------------------------------------------------------------- */
 
-  const visual = resolveCategoryVisual(
+  const resolution = resolveCategoryIcon({
     slug,
     name,
     visualKey,
-  );
+    iconUrl,
+    parentSlug,
+    parentId,
+  });
 
-  const src =
-    iconUrl || visual?.src;
-
-  const alt =
-    visual?.alt ||
-    name ||
-    'Categoria';
-
-  const isFill =
-    fill || size === 'fill';
+  const src = resolution.src;
+  const alt = resolution.alt || name || 'Categoria';
+  const isFill = fill || size === 'fill';
 
   /* ---------------------------------------------------------------------- */
   /* DIMENSIONS                                                             */
@@ -81,9 +72,7 @@ export function CategoryIcon({
 
   if (isFill) {
     dim = undefined;
-  } else if (
-    typeof size === 'number'
-  ) {
+  } else if (typeof size === 'number') {
     dim = size;
   } else {
     switch (size) {
@@ -110,7 +99,7 @@ export function CategoryIcon({
   }
 
   /* ---------------------------------------------------------------------- */
-  /* FALLBACK                                                               */
+  /* FALLBACK (se src vier vazio de alguma chamada anômala)                  */
   /* ---------------------------------------------------------------------- */
 
   if (!src) {
@@ -118,10 +107,8 @@ export function CategoryIcon({
       <div
         className={cn(
           'flex shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500',
-          isFill
-            ? 'absolute inset-0 h-full w-full'
-            : '',
-          className,
+          isFill ? 'absolute inset-0 h-full w-full' : '',
+          className
         )}
         style={
           isFill
@@ -131,6 +118,7 @@ export function CategoryIcon({
                 height: dim,
               }
         }
+        aria-hidden="true"
       >
         <Grid2X2
           style={
@@ -140,10 +128,8 @@ export function CategoryIcon({
                   height: '40%',
                 }
               : {
-                  width:
-                    (dim || 48) * 0.5,
-                  height:
-                    (dim || 48) * 0.5,
+                  width: (dim || 48) * 0.5,
+                  height: (dim || 48) * 0.5,
                 }
           }
           aria-hidden="true"
@@ -161,7 +147,7 @@ export function CategoryIcon({
       <div
         className={cn(
           'absolute inset-0 flex h-full w-full items-center justify-center',
-          className,
+          className
         )}
       >
         <Image
@@ -172,17 +158,8 @@ export function CategoryIcon({
           unoptimized
           sizes="(max-width: 640px) 50vw, 180px"
           className={cn(
-            /*
-             * Mantém exatamente o comportamento
-             * histórico como default.
-             */
             'object-contain p-2',
-
-            /*
-             * Consumidores específicos podem
-             * sobrescrever apenas o asset.
-             */
-            imageClassName,
+            imageClassName
           )}
         />
       </div>
@@ -197,7 +174,7 @@ export function CategoryIcon({
     <div
       className={cn(
         'relative flex shrink-0 items-center justify-center',
-        className,
+        className
       )}
       style={{
         width: dim,
@@ -213,7 +190,7 @@ export function CategoryIcon({
         unoptimized
         className={cn(
           'max-h-full max-w-full object-contain',
-          imageClassName,
+          imageClassName
         )}
       />
     </div>

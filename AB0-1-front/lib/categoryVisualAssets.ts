@@ -1,5 +1,13 @@
-import { normalizeCategoryKey } from './categoryIcons';
-import { resolveCategoryVisual } from './categories/category-visual-registry';
+/**
+ * Adaptador de compatibilidade para categoryVisualAssets.ts.
+ *
+ * Delega para o resolver canônico resolveCategoryIcon, garantindo
+ * que todas as chamadas retornem os novos 47 SVGs canônicos em vez
+ * dos assets 3D legados.
+ */
+
+import { CATEGORY_ICON_MANIFEST } from './categories/category-icon-manifest';
+import { resolveCategoryIcon } from './categories/resolve-category-icon';
 
 export type CategoryVisualKey =
   | 'battery_storage'
@@ -26,167 +34,52 @@ export type CategoryVisualKey =
   | 'electric_vehicle'
   | 'electromobility_hub';
 
-const BASE_PATH = '/icones/avalia_solar_23_icones_3d_perfeitos_512_transparentes';
-
-const CATEGORY_VISUAL_ASSETS: Record<CategoryVisualKey, string> = {
-  battery_storage: `${BASE_PATH}/A01_baterias_armazenamento.png`,
-  solar_carport: `${BASE_PATH}/A02_carport_solar.png`,
-  commercial_industrial_solar: `${BASE_PATH}/A03_solar_comercial_industrial.png`,
-  residential_solar: `${BASE_PATH}/A04_solar_residencial.png`,
-  rural_solar: `${BASE_PATH}/A05_solar_rural.png`,
-  solar_financing: `${BASE_PATH}/A06_financiamento.png`,
-  solar_installer: `${BASE_PATH}/A07_instaladores_solar.png`,
-  solar_inverter: `${BASE_PATH}/A08_inversores.png`,
-  monitoring_software: `${BASE_PATH}/A09_monitoramento_om.png`,
-  solar_panel: `${BASE_PATH}/A10_paineis_solares.png`,
-  corporate_fleet: `${BASE_PATH}/B01_frotas_corporativas.png`,
-  logistics_fleet: `${BASE_PATH}/B02_frotas_logistica.png`,
-  urban_mobility: `${BASE_PATH}/B03_mobilidade_urbana.png`,
-  fleet_management: `${BASE_PATH}/B04_gestao_frotas.png`,
-  fleet_charging: `${BASE_PATH}/B05_recarga_frotas.png`,
-  free_energy_market: `${BASE_PATH}/C01_mercado_livre_energia.png`,
-  commercial_ev_charger: `${BASE_PATH}/D01_carregadores_comerciais.png`,
-  home_wallbox: `${BASE_PATH}/D02_wallbox_residencial.png`,
-  public_charging_station: `${BASE_PATH}/D03_estacoes_publicas.png`,
-  ev_installer: `${BASE_PATH}/D04_instaladores_ev.png`,
-  solar_mobility_integration: `${BASE_PATH}/D05_integracao_solar_mobilidade.png`,
-  electric_vehicle: `${BASE_PATH}/D06_veiculos_eletricos.png`,
-  electromobility_hub: `${BASE_PATH}/E01_hubs_eletromobilidade.png`,
+export const CATEGORY_VISUAL_ASSETS: Record<CategoryVisualKey, string> = {
+  battery_storage: CATEGORY_ICON_MANIFEST.A01.src,
+  solar_carport: CATEGORY_ICON_MANIFEST.A02.src,
+  commercial_industrial_solar: CATEGORY_ICON_MANIFEST.A03.src,
+  residential_solar: CATEGORY_ICON_MANIFEST.A04.src,
+  rural_solar: CATEGORY_ICON_MANIFEST.A05.src,
+  solar_financing: CATEGORY_ICON_MANIFEST.A07.src,
+  solar_installer: CATEGORY_ICON_MANIFEST.A08.src,
+  solar_inverter: CATEGORY_ICON_MANIFEST.A09.src,
+  monitoring_software: CATEGORY_ICON_MANIFEST.A10.src,
+  solar_panel: CATEGORY_ICON_MANIFEST.A11.src,
+  corporate_fleet: CATEGORY_ICON_MANIFEST.C01.src,
+  logistics_fleet: CATEGORY_ICON_MANIFEST.C02.src,
+  urban_mobility: CATEGORY_ICON_MANIFEST.C03.src,
+  fleet_management: CATEGORY_ICON_MANIFEST.C04.src,
+  fleet_charging: CATEGORY_ICON_MANIFEST.C05.src,
+  free_energy_market: CATEGORY_ICON_MANIFEST.D01.src,
+  commercial_ev_charger: CATEGORY_ICON_MANIFEST.B01.src,
+  home_wallbox: CATEGORY_ICON_MANIFEST.B02.src,
+  public_charging_station: CATEGORY_ICON_MANIFEST.B03.src,
+  ev_installer: CATEGORY_ICON_MANIFEST.B04.src,
+  solar_mobility_integration: CATEGORY_ICON_MANIFEST.B05.src,
+  electric_vehicle: CATEGORY_ICON_MANIFEST.B06.src,
+  electromobility_hub: CATEGORY_ICON_MANIFEST.E01.src,
 };
 
-const VISUAL_KEY_BY_CATEGORY: Array<[CategoryVisualKey, string[]]> = [
-  [
-    'battery_storage',
-    ['bateria', 'baterias', 'armazenamento-energia', 'baterias-armazenamento', 'battery_storage'],
-  ],
-  [
-    'solar_carport',
-    ['carport', 'carport-solar', 'cobertura solar', 'coberturas solares', 'solar_carport'],
-  ],
-  [
-    'commercial_industrial_solar',
-    ['comercial e industrial', 'comercial industrial', 'industrial', 'commercial_industrial_solar'],
-  ],
-  ['residential_solar', ['residencial', 'condominio', 'casa', 'residential_solar']],
-  [
-    'rural_solar',
-    ['rural', 'agronegocio', 'agronegócio', 'agropecuaria', 'agrícola', 'agricola', 'rural_solar'],
-  ],
-  ['solar_financing', ['financiamento', 'credito solar', 'crédito solar', 'solar_financing']],
-  [
-    'solar_installer',
-    ['instaladores', 'instalador', 'instalacao', 'instalação', 'solar_installer'],
-  ],
-  ['solar_inverter', ['inversor', 'inversores', 'solar_inverter']],
-  ['monitoring_software', ['monitoramento', 'o&m', 'operacao-manutencao', 'monitoring_software']],
-  ['solar_panel', ['painel', 'paineis', 'painéis', 'placas solares', 'fotovolta', 'solar_panel']],
-  [
-    'corporate_fleet',
-    [
-      'frotas corporativas',
-      'frotas-corporativas',
-      'frotas-eletricas-empresas',
-      'frota corporativa',
-    ],
-  ],
-  [
-    'logistics_fleet',
-    ['frotas logistica', 'frotas-logistica', 'frotas-eletricas-logistica', 'frota de logistica'],
-  ],
-  ['urban_mobility', ['mobilidade urbana', 'mobilidade-urbana']],
-  ['fleet_management', ['gestao frotas', 'gestao-frotas', 'gestão de frotas']],
-  ['fleet_charging', ['recarga frotas', 'recarga-frotas', 'recarga de frotas']],
-  [
-    'free_energy_market',
-    ['mercado livre', 'mercado-livre', 'mercado livre de energia', 'free_energy_market'],
-  ],
-  [
-    'commercial_ev_charger',
-    [
-      'carregadores comerciais',
-      'carregadores-comerciais',
-      'recarga comercial',
-      'commercial_ev_charger',
-    ],
-  ],
-  [
-    'home_wallbox',
-    [
-      'wallbox',
-      'carregador residencial',
-      'carregador-residencial',
-      'carregadores residenciais',
-      'home_wallbox',
-    ],
-  ],
-  [
-    'public_charging_station',
-    [
-      'estacoes publicas',
-      'estacoes-publicas',
-      'estações públicas',
-      'eletropostos',
-      'public_charging_station',
-    ],
-  ],
-  [
-    'ev_installer',
-    ['instaladores ev', 'instaladores-ev', 'instaladores de carregadores', 'ev_installer'],
-  ],
-  [
-    'solar_mobility_integration',
-    [
-      'integracao solar',
-      'integracao-solar',
-      'integração solar',
-      'solar + mobilidade',
-      'solar_mobility_integration',
-    ],
-  ],
-  [
-    'electric_vehicle',
-    [
-      'veiculos eletricos',
-      'veiculos-eletricos',
-      'veículos elétricos',
-      'carros eletricos',
-      'electric_vehicle',
-    ],
-  ],
-  [
-    'electromobility_hub',
-    ['hubs', 'hubs-eletromobilidade', 'hub eletromobilidade', 'electromobility_hub'],
-  ],
-];
-
+/**
+ * Obtém o asset visual canônico delegando para o resolvedor unificado.
+ */
 export function getCategoryVisualAsset(
   slug?: string | null,
   name?: string | null,
   visualKey?: string | null
-) {
-  const registryVisual = resolveCategoryVisual(slug, name, visualKey);
-  if (registryVisual) return registryVisual.src;
-
-  if (visualKey && visualKey in CATEGORY_VISUAL_ASSETS) {
-    return CATEGORY_VISUAL_ASSETS[visualKey as CategoryVisualKey];
-  }
-
-  const candidates = [slug, name, visualKey].map(normalizeCategoryKey).filter(Boolean);
-  const exactMatch = VISUAL_KEY_BY_CATEGORY.find(([, terms]) =>
-    terms.some((term) => candidates.includes(normalizeCategoryKey(term)))
-  );
-
-  if (exactMatch) return CATEGORY_VISUAL_ASSETS[exactMatch[0]];
-
-  const searchable = candidates.join(' ');
-  const fuzzyMatches = VISUAL_KEY_BY_CATEGORY.flatMap(([key, terms]) =>
-    terms.map((term) => ({ key, term: normalizeCategoryKey(term) }))
-  ).sort((a, b) => b.term.length - a.term.length);
-  const fuzzyMatch = fuzzyMatches.find(({ term }) => searchable.includes(term));
-
-  return fuzzyMatch ? CATEGORY_VISUAL_ASSETS[fuzzyMatch.key] : null;
+): string | null {
+  if (!slug && !name && !visualKey) return null;
+  const resolution = resolveCategoryIcon({
+    slug,
+    name,
+    visualKey,
+  });
+  return resolution.src;
 }
 
+/**
+ * Mapeia de volta para CategoryVisualKey caso necessário por consumidores legados.
+ */
 export function getCategoryVisualKey(
   slug?: string | null,
   name?: string | null
@@ -199,5 +92,3 @@ export function getCategoryVisualKey(
     ) || null
   );
 }
-
-export { CATEGORY_VISUAL_ASSETS };

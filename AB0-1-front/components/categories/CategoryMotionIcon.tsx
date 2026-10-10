@@ -4,25 +4,14 @@
  * P0 PERF FIX:
  * Mantém as animações via CSS puro.
  *
- * Não introduz Framer Motion neste componente.
+ * Utiliza o novo resolver unificado dos 47 ícones canônicos.
  */
 
-import {
-  resolveCategoryVisual,
-} from '@/lib/categories/category-visual-registry';
+import { resolveCategoryIcon } from '@/lib/categories/resolve-category-icon';
+import { CategoryIcon, CategoryIconProps } from './CategoryIcon';
 
-import {
-  CategoryIcon,
-  CategoryIconProps,
-} from './CategoryIcon';
-
-export interface CategoryMotionIconProps
-  extends CategoryIconProps {
-  motionMode?:
-    | 'none'
-    | 'interactive'
-    | 'entrance'
-    | 'selected';
+export interface CategoryMotionIconProps extends CategoryIconProps {
+  motionMode?: 'none' | 'interactive' | 'entrance' | 'selected';
 }
 
 export function CategoryMotionIcon({
@@ -32,19 +21,18 @@ export function CategoryMotionIcon({
   ...props
 }: CategoryMotionIconProps) {
   /* ---------------------------------------------------------------------- */
-  /* VISUAL PRESET                                                          */
+  /* VISUAL PRESET VIA RESOLVER CANÔNICO                                    */
   /* ---------------------------------------------------------------------- */
 
-  const visual =
-    resolveCategoryVisual(
-      props.slug,
-      props.name,
-      props.visualKey,
-    );
+  const resolution = resolveCategoryIcon({
+    slug: props.slug,
+    name: props.name,
+    visualKey: props.visualKey,
+    iconUrl: props.iconUrl,
+    parentSlug: props.parentSlug,
+    parentId: props.parentId,
+  });
 
-  const preset =
-    visual?.motionPreset ||
-    'neutral';
 
   /* ---------------------------------------------------------------------- */
   /* STATIC MODE                                                            */
@@ -55,9 +43,7 @@ export function CategoryMotionIcon({
       <CategoryIcon
         {...props}
         className={className}
-        imageClassName={
-          imageClassName
-        }
+        imageClassName={imageClassName}
       />
     );
   }
@@ -66,9 +52,7 @@ export function CategoryMotionIcon({
   /* FILL MODE                                                              */
   /* ---------------------------------------------------------------------- */
 
-  const fillsAvailableSpace =
-    props.fill ||
-    props.size === 'fill';
+  const fillsAvailableSpace = props.fill || props.size === 'fill';
 
   /* ---------------------------------------------------------------------- */
   /* CSS MOTION                                                             */
@@ -77,12 +61,9 @@ export function CategoryMotionIcon({
   const motionClass = [
     'relative flex items-center justify-center',
 
-    motionMode ===
-      'entrance' &&
-      'animate-category-icon-entrance',
+    motionMode === 'entrance' && 'animate-category-icon-entrance',
 
-    motionMode ===
-      'interactive' &&
+    motionMode === 'interactive' &&
       [
         'transition-transform',
         'duration-200',
@@ -91,56 +72,20 @@ export function CategoryMotionIcon({
         'active:scale-95',
       ].join(' '),
 
-    motionMode ===
-      'selected' &&
-      'animate-category-icon-selected',
+    motionMode === 'selected' && 'animate-category-icon-selected',
 
-    fillsAvailableSpace &&
-      'h-full w-full',
+    fillsAvailableSpace && 'h-full w-full',
 
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
-  /* ---------------------------------------------------------------------- */
-  /* CHARGING EFFECT                                                        */
-  /* ---------------------------------------------------------------------- */
-
-  const isCharging =
-    preset === 'charging';
-
-  const isInteractive =
-    motionMode ===
-    'interactive';
-
   return (
-    <div className={motionClass}>
-      {isCharging &&
-        isInteractive && (
-          <span
-            className="
-              pointer-events-none
-              absolute
-              inset-[-8px]
-              rounded-full
-              opacity-0
-              transition-opacity
-              duration-300
-              hover:opacity-5
-            "
-            style={{
-              background:
-                'radial-gradient(circle, rgba(37,99,235,0.15) 0%, rgba(255,255,255,0) 70%)',
-            }}
-          />
-        )}
-
+    <div className={motionClass} data-motion-preset={resolution.motionPreset}>
       <CategoryIcon
         {...props}
-        imageClassName={
-          imageClassName
-        }
+        imageClassName={imageClassName}
       />
     </div>
   );

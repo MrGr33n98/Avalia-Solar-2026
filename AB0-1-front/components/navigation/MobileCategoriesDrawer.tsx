@@ -30,7 +30,6 @@ import { Button } from '@/components/ui/button';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { useCategoriesTree, type CategoryTreeNode } from '@/hooks/useCategoriesTree';
 import { normalizeCategoryKey } from '@/lib/categoryIcons';
-import { getCategoryVisualAsset } from '@/lib/categoryVisualAssets';
 import { getFullImageUrl } from '@/utils/image';
 import { CategoryMotionIcon } from '../categories/CategoryMotionIcon';
 import { useAuth } from '@/contexts/AuthContext';
@@ -509,15 +508,14 @@ function MainCategoriesView({
   return (
     <div className="border-t border-slate-200">
       {categories.map((category) => {
-        const iconSrc = getCategoryVisualAsset(category.slug || category.seo_url, category.name);
         const hasChildren = category.children && category.children.length > 0;
 
         const content = (
           <>
             <CategoryIcon
-              iconSrc={iconSrc}
               name={category.name}
               slug={category.slug || category.seo_url}
+              size="md"
             />
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
@@ -598,10 +596,6 @@ function SubcategoryView({
       </Link>
 
       {subcategories.map((subcategory) => {
-        const iconSrc = getCategoryVisualAsset(
-          subcategory.slug || subcategory.seo_url,
-          subcategory.name
-        );
         return (
           <Link
             key={subcategory.id}
@@ -610,9 +604,9 @@ function SubcategoryView({
             className="flex min-h-[56px] items-center gap-3.5 border-b border-slate-100 bg-white px-2.5 transition-colors hover:bg-slate-50"
           >
             <CategoryIcon
-              iconSrc={iconSrc}
               name={subcategory.name}
               slug={subcategory.slug || subcategory.seo_url}
+              parentSlug={category.slug || category.seo_url}
               size="sm"
             />
             <p className="line-clamp-2 min-w-0 flex-1 text-sm font-medium leading-snug text-slate-950">
@@ -636,28 +630,32 @@ function SubcategoryView({
 }
 
 function CategoryIcon({
-  iconSrc,
   name,
   slug,
+  parentSlug,
   size = 'md',
 }: {
-  iconSrc: string | null;
   name: string;
   slug?: string | null;
+  parentSlug?: string | null;
   size?: 'sm' | 'md';
 }) {
-  const dimensions = 'h-8 w-8';
+  const isSmall = size === 'sm';
+  const boxClasses = isSmall
+    ? 'h-7 w-7 rounded-lg border border-slate-200 bg-white p-0.5'
+    : 'h-8 w-8 rounded-lg border border-slate-200 bg-white p-1';
+  const iconPixelSize = isSmall ? 22 : 24;
 
   return (
     <span
-      className={`relative flex ${dimensions} shrink-0 items-center justify-center [&_img]:!h-full [&_img]:!w-full [&_img]:!max-w-none`}
+      className={`relative flex ${boxClasses} shrink-0 items-center justify-center overflow-hidden shadow-sm`}
       aria-hidden="true"
     >
       <CategoryMotionIcon
         slug={slug}
         name={name}
-        iconUrl={iconSrc}
-        size={size === 'sm' ? 26 : 28}
+        parentSlug={parentSlug}
+        size={iconPixelSize}
         motionMode="interactive"
       />
     </span>

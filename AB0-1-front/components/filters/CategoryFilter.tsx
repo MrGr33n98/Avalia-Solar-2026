@@ -65,11 +65,12 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({ selectedIds, onC
                   <div className="flex items-center justify-between py-1">
                     <span className="flex min-w-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                       {rootIconSrc ? (
-                        <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-none border border-slate-200 bg-white">
+                        <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-none border border-slate-200 bg-white" aria-hidden="true">
                           <Image
                             src={rootIconSrc}
-                            alt={`Ícone de ${root.name}`}
+                            alt=""
                             fill
+                            unoptimized
                             sizes="24px"
                             className="object-contain p-0.5"
                           />

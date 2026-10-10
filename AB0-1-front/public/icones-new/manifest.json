@@ -1,0 +1,390 @@
+{
+  "estilo": {
+    "cor": "#000000",
+    "linha_px": "1.8",
+    "viewBox": "0 0 24 24",
+    "png_dimensoes": "256x256",
+    "transparente": true
+  },
+  "categorias_principais": 9,
+  "subcategorias": 38,
+  "total": 47,
+  "icones": [
+    {
+      "id": "A",
+      "categoria": "A_energia-solar",
+      "nome": "Energia Solar",
+      "tipo": "principal",
+      "svg": "A_energia-solar/principal/a_energia-solar.svg",
+      "png": "A_energia-solar/principal/a_energia-solar.png"
+    },
+    {
+      "id": "A01",
+      "categoria": "A_energia-solar",
+      "nome": "Baterias e Armazenamento de Energia",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a01_baterias-e-armazenamento-de-energia.svg",
+      "png": "A_energia-solar/subcategorias/a01_baterias-e-armazenamento-de-energia.png"
+    },
+    {
+      "id": "A02",
+      "categoria": "A_energia-solar",
+      "nome": "Carport Solar / Coberturas Solares",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a02_carport-solar-coberturas-solares.svg",
+      "png": "A_energia-solar/subcategorias/a02_carport-solar-coberturas-solares.png"
+    },
+    {
+      "id": "A03",
+      "categoria": "A_energia-solar",
+      "nome": "Energia Solar Comercial e Industrial",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a03_energia-solar-comercial-e-industrial.svg",
+      "png": "A_energia-solar/subcategorias/a03_energia-solar-comercial-e-industrial.png"
+    },
+    {
+      "id": "A04",
+      "categoria": "A_energia-solar",
+      "nome": "Energia Solar Residencial",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a04_energia-solar-residencial.svg",
+      "png": "A_energia-solar/subcategorias/a04_energia-solar-residencial.png"
+    },
+    {
+      "id": "A05",
+      "categoria": "A_energia-solar",
+      "nome": "Energia Solar Rural / Agronegócio",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a05_energia-solar-rural-agronegocio.svg",
+      "png": "A_energia-solar/subcategorias/a05_energia-solar-rural-agronegocio.png"
+    },
+    {
+      "id": "A06",
+      "categoria": "A_energia-solar",
+      "nome": "Estruturas e Fixação",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a06_estruturas-e-fixacao.svg",
+      "png": "A_energia-solar/subcategorias/a06_estruturas-e-fixacao.png"
+    },
+    {
+      "id": "A07",
+      "categoria": "A_energia-solar",
+      "nome": "Financiamento de Energia Solar",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a07_financiamento-de-energia-solar.svg",
+      "png": "A_energia-solar/subcategorias/a07_financiamento-de-energia-solar.png"
+    },
+    {
+      "id": "A08",
+      "categoria": "A_energia-solar",
+      "nome": "Instaladores de Energia Solar",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a08_instaladores-de-energia-solar.svg",
+      "png": "A_energia-solar/subcategorias/a08_instaladores-de-energia-solar.png"
+    },
+    {
+      "id": "A09",
+      "categoria": "A_energia-solar",
+      "nome": "Inversores",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a09_inversores.svg",
+      "png": "A_energia-solar/subcategorias/a09_inversores.png"
+    },
+    {
+      "id": "A10",
+      "categoria": "A_energia-solar",
+      "nome": "Monitoramento e O&M",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a10_monitoramento-e-o-m.svg",
+      "png": "A_energia-solar/subcategorias/a10_monitoramento-e-o-m.png"
+    },
+    {
+      "id": "A11",
+      "categoria": "A_energia-solar",
+      "nome": "Painéis Solares",
+      "tipo": "subcategoria",
+      "svg": "A_energia-solar/subcategorias/a11_paineis-solares.svg",
+      "png": "A_energia-solar/subcategorias/a11_paineis-solares.png"
+    },
+    {
+      "id": "B",
+      "categoria": "B_mobilidade-eletrica",
+      "nome": "Mobilidade Elétrica",
+      "tipo": "principal",
+      "svg": "B_mobilidade-eletrica/principal/b_mobilidade-eletrica.svg",
+      "png": "B_mobilidade-eletrica/principal/b_mobilidade-eletrica.png"
+    },
+    {
+      "id": "B01",
+      "categoria": "B_mobilidade-eletrica",
+      "nome": "Carregadores Comerciais e Condomínios",
+      "tipo": "subcategoria",
+      "svg": "B_mobilidade-eletrica/subcategorias/b01_carregadores-comerciais-e-condominios.svg",
+      "png": "B_mobilidade-eletrica/subcategorias/b01_carregadores-comerciais-e-condominios.png"
+    },
+    {
+      "id": "B02",
+      "categoria": "B_mobilidade-eletrica",
+      "nome": "Carregadores Residenciais / Wallbox",
+      "tipo": "subcategoria",
+      "svg": "B_mobilidade-eletrica/subcategorias/b02_carregadores-residenciais-wallbox.svg",
+      "png": "B_mobilidade-eletrica/subcategorias/b02_carregadores-residenciais-wallbox.png"
+    },
+    {
+      "id": "B03",
+      "categoria": "B_mobilidade-eletrica",
+      "nome": "Estações Públicas e Postos Rápidos",
+      "tipo": "subcategoria",
+      "svg": "B_mobilidade-eletrica/subcategorias/b03_estacoes-publicas-e-postos-rapidos.svg",
+      "png": "B_mobilidade-eletrica/subcategorias/b03_estacoes-publicas-e-postos-rapidos.png"
+    },
+    {
+      "id": "B04",
+      "categoria": "B_mobilidade-eletrica",
+      "nome": "Instaladores de Carregadores EV",
+      "tipo": "subcategoria",
+      "svg": "B_mobilidade-eletrica/subcategorias/b04_instaladores-de-carregadores-ev.svg",
+      "png": "B_mobilidade-eletrica/subcategorias/b04_instaladores-de-carregadores-ev.png"
+    },
+    {
+      "id": "B05",
+      "categoria": "B_mobilidade-eletrica",
+      "nome": "Integração Solar + Mobilidade Elétrica",
+      "tipo": "subcategoria",
+      "svg": "B_mobilidade-eletrica/subcategorias/b05_integracao-solar-mobilidade-eletrica.svg",
+      "png": "B_mobilidade-eletrica/subcategorias/b05_integracao-solar-mobilidade-eletrica.png"
+    },
+    {
+      "id": "B06",
+      "categoria": "B_mobilidade-eletrica",
+      "nome": "Veículos Elétricos",
+      "tipo": "subcategoria",
+      "svg": "B_mobilidade-eletrica/subcategorias/b06_veiculos-eletricos.svg",
+      "png": "B_mobilidade-eletrica/subcategorias/b06_veiculos-eletricos.png"
+    },
+    {
+      "id": "C",
+      "categoria": "C_frotas-eletricas",
+      "nome": "Frotas Elétricas",
+      "tipo": "principal",
+      "svg": "C_frotas-eletricas/principal/c_frotas-eletricas.svg",
+      "png": "C_frotas-eletricas/principal/c_frotas-eletricas.png"
+    },
+    {
+      "id": "C01",
+      "categoria": "C_frotas-eletricas",
+      "nome": "Frotas Elétricas Corporativas",
+      "tipo": "subcategoria",
+      "svg": "C_frotas-eletricas/subcategorias/c01_frotas-eletricas-corporativas.svg",
+      "png": "C_frotas-eletricas/subcategorias/c01_frotas-eletricas-corporativas.png"
+    },
+    {
+      "id": "C02",
+      "categoria": "C_frotas-eletricas",
+      "nome": "Frotas Elétricas para Logística e Entregas",
+      "tipo": "subcategoria",
+      "svg": "C_frotas-eletricas/subcategorias/c02_frotas-eletricas-para-logistica-e-entregas.svg",
+      "png": "C_frotas-eletricas/subcategorias/c02_frotas-eletricas-para-logistica-e-entregas.png"
+    },
+    {
+      "id": "C03",
+      "categoria": "C_frotas-eletricas",
+      "nome": "Frotas Elétricas para Mobilidade Urbana",
+      "tipo": "subcategoria",
+      "svg": "C_frotas-eletricas/subcategorias/c03_frotas-eletricas-para-mobilidade-urbana.svg",
+      "png": "C_frotas-eletricas/subcategorias/c03_frotas-eletricas-para-mobilidade-urbana.png"
+    },
+    {
+      "id": "C04",
+      "categoria": "C_frotas-eletricas",
+      "nome": "Gestão de Frotas Elétricas",
+      "tipo": "subcategoria",
+      "svg": "C_frotas-eletricas/subcategorias/c04_gestao-de-frotas-eletricas.svg",
+      "png": "C_frotas-eletricas/subcategorias/c04_gestao-de-frotas-eletricas.png"
+    },
+    {
+      "id": "C05",
+      "categoria": "C_frotas-eletricas",
+      "nome": "Infraestrutura de Recarga para Frotas",
+      "tipo": "subcategoria",
+      "svg": "C_frotas-eletricas/subcategorias/c05_infraestrutura-de-recarga-para-frotas.svg",
+      "png": "C_frotas-eletricas/subcategorias/c05_infraestrutura-de-recarga-para-frotas.png"
+    },
+    {
+      "id": "D",
+      "categoria": "D_mercado-livre-de-energia",
+      "nome": "Mercado Livre de Energia",
+      "tipo": "principal",
+      "svg": "D_mercado-livre-de-energia/principal/d_mercado-livre-de-energia.svg",
+      "png": "D_mercado-livre-de-energia/principal/d_mercado-livre-de-energia.png"
+    },
+    {
+      "id": "D01",
+      "categoria": "D_mercado-livre-de-energia",
+      "nome": "Mercado Livre de Energia",
+      "tipo": "subcategoria",
+      "svg": "D_mercado-livre-de-energia/subcategorias/d01_mercado-livre-de-energia.svg",
+      "png": "D_mercado-livre-de-energia/subcategorias/d01_mercado-livre-de-energia.png"
+    },
+    {
+      "id": "E",
+      "categoria": "E_hubs-de-eletromobilidade-e-recarga",
+      "nome": "Hubs de Eletromobilidade e Recarga",
+      "tipo": "principal",
+      "svg": "E_hubs-de-eletromobilidade-e-recarga/principal/e_hubs-de-eletromobilidade-e-recarga.svg",
+      "png": "E_hubs-de-eletromobilidade-e-recarga/principal/e_hubs-de-eletromobilidade-e-recarga.png"
+    },
+    {
+      "id": "E01",
+      "categoria": "E_hubs-de-eletromobilidade-e-recarga",
+      "nome": "Hubs de Eletromobilidade e Recarga",
+      "tipo": "subcategoria",
+      "svg": "E_hubs-de-eletromobilidade-e-recarga/subcategorias/e01_hubs-de-eletromobilidade-e-recarga.svg",
+      "png": "E_hubs-de-eletromobilidade-e-recarga/subcategorias/e01_hubs-de-eletromobilidade-e-recarga.png"
+    },
+    {
+      "id": "F",
+      "categoria": "F_apps-software-e-plataformas",
+      "nome": "Apps, Software e Plataformas",
+      "tipo": "principal",
+      "svg": "F_apps-software-e-plataformas/principal/f_apps-software-e-plataformas.svg",
+      "png": "F_apps-software-e-plataformas/principal/f_apps-software-e-plataformas.png"
+    },
+    {
+      "id": "F01",
+      "categoria": "F_apps-software-e-plataformas",
+      "nome": "Gestão de Recarga VE",
+      "tipo": "subcategoria",
+      "svg": "F_apps-software-e-plataformas/subcategorias/f01_gestao-de-recarga-ve.svg",
+      "png": "F_apps-software-e-plataformas/subcategorias/f01_gestao-de-recarga-ve.png"
+    },
+    {
+      "id": "F02",
+      "categoria": "F_apps-software-e-plataformas",
+      "nome": "Integração Smart Grid",
+      "tipo": "subcategoria",
+      "svg": "F_apps-software-e-plataformas/subcategorias/f02_integracao-smart-grid.svg",
+      "png": "F_apps-software-e-plataformas/subcategorias/f02_integracao-smart-grid.png"
+    },
+    {
+      "id": "F03",
+      "categoria": "F_apps-software-e-plataformas",
+      "nome": "Monitoramento de Energia Solar",
+      "tipo": "subcategoria",
+      "svg": "F_apps-software-e-plataformas/subcategorias/f03_monitoramento-de-energia-solar.svg",
+      "png": "F_apps-software-e-plataformas/subcategorias/f03_monitoramento-de-energia-solar.png"
+    },
+    {
+      "id": "F04",
+      "categoria": "F_apps-software-e-plataformas",
+      "nome": "Simulação e Projeto Solar",
+      "tipo": "subcategoria",
+      "svg": "F_apps-software-e-plataformas/subcategorias/f04_simulacao-e-projeto-solar.svg",
+      "png": "F_apps-software-e-plataformas/subcategorias/f04_simulacao-e-projeto-solar.png"
+    },
+    {
+      "id": "G",
+      "categoria": "G_casa-sustentavel-e-off-grid",
+      "nome": "Casa Sustentável e Off-Grid",
+      "tipo": "principal",
+      "svg": "G_casa-sustentavel-e-off-grid/principal/g_casa-sustentavel-e-off-grid.svg",
+      "png": "G_casa-sustentavel-e-off-grid/principal/g_casa-sustentavel-e-off-grid.png"
+    },
+    {
+      "id": "G01",
+      "categoria": "G_casa-sustentavel-e-off-grid",
+      "nome": "Kits Solares para Autossuficiência",
+      "tipo": "subcategoria",
+      "svg": "G_casa-sustentavel-e-off-grid/subcategorias/g01_kits-solares-para-autossuficiencia.svg",
+      "png": "G_casa-sustentavel-e-off-grid/subcategorias/g01_kits-solares-para-autossuficiencia.png"
+    },
+    {
+      "id": "G02",
+      "categoria": "G_casa-sustentavel-e-off-grid",
+      "nome": "Reuso de Água e Energias Complementares",
+      "tipo": "subcategoria",
+      "svg": "G_casa-sustentavel-e-off-grid/subcategorias/g02_reuso-de-agua-e-energias-complementares.svg",
+      "png": "G_casa-sustentavel-e-off-grid/subcategorias/g02_reuso-de-agua-e-energias-complementares.png"
+    },
+    {
+      "id": "G03",
+      "categoria": "G_casa-sustentavel-e-off-grid",
+      "nome": "Soluções para Áreas Remotas",
+      "tipo": "subcategoria",
+      "svg": "G_casa-sustentavel-e-off-grid/subcategorias/g03_solucoes-para-areas-remotas.svg",
+      "png": "G_casa-sustentavel-e-off-grid/subcategorias/g03_solucoes-para-areas-remotas.png"
+    },
+    {
+      "id": "H",
+      "categoria": "H_mercado-legislacao-e-financas",
+      "nome": "Mercado, Legislação e Finanças",
+      "tipo": "principal",
+      "svg": "H_mercado-legislacao-e-financas/principal/h_mercado-legislacao-e-financas.svg",
+      "png": "H_mercado-legislacao-e-financas/principal/h_mercado-legislacao-e-financas.png"
+    },
+    {
+      "id": "H01",
+      "categoria": "H_mercado-legislacao-e-financas",
+      "nome": "Legislação e Normas Setoriais",
+      "tipo": "subcategoria",
+      "svg": "H_mercado-legislacao-e-financas/subcategorias/h01_legislacao-e-normas-setoriais.svg",
+      "png": "H_mercado-legislacao-e-financas/subcategorias/h01_legislacao-e-normas-setoriais.png"
+    },
+    {
+      "id": "H02",
+      "categoria": "H_mercado-legislacao-e-financas",
+      "nome": "Linhas de Crédito Verde",
+      "tipo": "subcategoria",
+      "svg": "H_mercado-legislacao-e-financas/subcategorias/h02_linhas-de-credito-verde.svg",
+      "png": "H_mercado-legislacao-e-financas/subcategorias/h02_linhas-de-credito-verde.png"
+    },
+    {
+      "id": "H03",
+      "categoria": "H_mercado-legislacao-e-financas",
+      "nome": "Seguradoras para Solar e VE",
+      "tipo": "subcategoria",
+      "svg": "H_mercado-legislacao-e-financas/subcategorias/h03_seguradoras-para-solar-e-ve.svg",
+      "png": "H_mercado-legislacao-e-financas/subcategorias/h03_seguradoras-para-solar-e-ve.png"
+    },
+    {
+      "id": "H04",
+      "categoria": "H_mercado-legislacao-e-financas",
+      "nome": "Tendências de Mercado",
+      "tipo": "subcategoria",
+      "svg": "H_mercado-legislacao-e-financas/subcategorias/h04_tendencias-de-mercado.svg",
+      "png": "H_mercado-legislacao-e-financas/subcategorias/h04_tendencias-de-mercado.png"
+    },
+    {
+      "id": "I",
+      "categoria": "I_sustentabilidade-e-esg",
+      "nome": "Sustentabilidade e ESG",
+      "tipo": "principal",
+      "svg": "I_sustentabilidade-e-esg/principal/i_sustentabilidade-e-esg.svg",
+      "png": "I_sustentabilidade-e-esg/principal/i_sustentabilidade-e-esg.png"
+    },
+    {
+      "id": "I01",
+      "categoria": "I_sustentabilidade-e-esg",
+      "nome": "Carbono Neutro e Compensação",
+      "tipo": "subcategoria",
+      "svg": "I_sustentabilidade-e-esg/subcategorias/i01_carbono-neutro-e-compensacao.svg",
+      "png": "I_sustentabilidade-e-esg/subcategorias/i01_carbono-neutro-e-compensacao.png"
+    },
+    {
+      "id": "I02",
+      "categoria": "I_sustentabilidade-e-esg",
+      "nome": "Políticas Corporativas ESG",
+      "tipo": "subcategoria",
+      "svg": "I_sustentabilidade-e-esg/subcategorias/i02_politicas-corporativas-esg.svg",
+      "png": "I_sustentabilidade-e-esg/subcategorias/i02_politicas-corporativas-esg.png"
+    },
+    {
+      "id": "I03",
+      "categoria": "I_sustentabilidade-e-esg",
+      "nome": "Selos Verdes e Certificações",
+      "tipo": "subcategoria",
+      "svg": "I_sustentabilidade-e-esg/subcategorias/i03_selos-verdes-e-certificacoes.svg",
+      "png": "I_sustentabilidade-e-esg/subcategorias/i03_selos-verdes-e-certificacoes.png"
+    }
+  ]
+}
