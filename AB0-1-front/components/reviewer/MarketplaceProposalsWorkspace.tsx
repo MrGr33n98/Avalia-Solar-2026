@@ -59,9 +59,17 @@ import { ProposalChoose } from './proposals/ProposalChoose';
 import { ProposalCompleted } from './proposals/ProposalCompleted';
 import { ProposalReview } from './proposals/ProposalReview';
 import { ModernProposalStepper, type Screen } from './proposals/ModernProposalStepper';
+import {
+  ProposalStatusSummary,
+  type ProposalFilter,
+} from './proposals/ProposalStatusSummary';
+import { ProposalCompactCard } from './proposals/ProposalCompactCard';
+import {
+  ProposalFiltersSheet,
+  type SortOption,
+} from './proposals/ProposalFiltersSheet';
 
-type Filter = 'all' | 'active' | 'received' | 'completed';
-type SortOption = 'recent' | 'oldest' | 'highest' | 'lowest';
+type Filter = ProposalFilter;
 type ViewLayout = 'cards' | 'table';
 
 const screens: Screen[] = [
@@ -146,8 +154,13 @@ export function MarketplaceProposalsWorkspace() {
   const [apiProposals, setApiProposals] = useState<MarketplaceProposal[]>([]);
   const [compareIds, setCompareIds] = useState<number[]>([]);
   const [filter, setFilter] = useState<Filter>(
-    filterTabs.some((tab) => tab.id === params.get('tab')) ? (params.get('tab') as Filter) : 'all'
+    params.get('tab') === 'awaiting'
+      ? 'awaiting'
+      : filterTabs.some((tab) => tab.id === params.get('tab'))
+      ? (params.get('tab') as Filter)
+      : 'all'
   );
+  const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const [compareNotice, setCompareNotice] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState('all');
@@ -359,6 +372,7 @@ export function MarketplaceProposalsWorkspace() {
         if (filter === 'all') return true;
         if (filter === 'active') return isProposalActive(proposal);
         if (filter === 'received') return isProposalReceived(proposal);
+        if (filter === 'awaiting') return isProposalAwaiting(proposal);
         if (filter === 'completed') return isProposalCompleted(proposal);
         return true;
       })
@@ -399,9 +413,9 @@ export function MarketplaceProposalsWorkspace() {
       <div role="status" className="mx-auto w-full max-w-6xl space-y-4 px-4 py-6 sm:px-6">
         <span className="sr-only">Carregando propostas…</span>
         <div className="h-8 w-64 animate-pulse rounded-lg bg-slate-100" />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-100" />
+            <div key={i} className="h-20 animate-pulse rounded-2xl bg-slate-100" />
           ))}
         </div>
       </div>
@@ -413,16 +427,19 @@ export function MarketplaceProposalsWorkspace() {
       {/* ── HEADER DA PÁGINA ────────────────────────────────────────── */}
       <header
         className={cn(
-          'mb-6 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-5',
+          'mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-3 sm:mb-6 sm:border-slate-200/80 sm:pb-5',
           showingDetail && 'hidden'
         )}
       >
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+          <div className="mb-0.5 text-[11px] sm:text-xs font-semibold text-blue-600">
+            Meu painel / Propostas
+          </div>
+          <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
             Minhas propostas
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
-            Acompanhe solicitações, respostas e próximas etapas em um só lugar.
+          <p className="mt-0.5 text-xs sm:text-sm text-slate-500 font-normal sm:font-medium">
+            Acompanhe as respostas das empresas e escolha com mais segurança.
           </p>
         </div>
 
@@ -432,10 +449,10 @@ export function MarketplaceProposalsWorkspace() {
           onClick={() => void load()}
           disabled={refreshing}
           aria-label="Atualizar propostas"
-          className="shrink-0 gap-2 rounded-xl border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50"
+          className="shrink-0 h-9 gap-1.5 rounded-xl border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50"
         >
           <RefreshCw className={cn('h-3.5 w-3.5 text-slate-500', refreshing && 'animate-spin')} />
-          <span>Atualizar</span>
+          <span className="hidden sm:inline">Atualizar</span>
         </Button>
       </header>
 
@@ -670,207 +687,210 @@ export function MarketplaceProposalsWorkspace() {
             </div>
           )}
 
-          {/* ── 3 CARDS DE KPIS / STATUS (CLICÁVEIS) ───────────────────── */}
-          <section
-            aria-label="Resumo de status"
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-          >
-            {/* Card 1: Ativas */}
-            <button
-              type="button"
-              onClick={() => handleFilterChange('active')}
-              className={cn(
-                'flex items-center gap-4 rounded-2xl border bg-white p-4 text-left transition-all hover:border-slate-300 hover:shadow-xs',
-                filter === 'active'
-                  ? 'border-blue-600 ring-2 ring-blue-500/20 shadow-xs'
-                  : 'border-slate-200/90'
-              )}
-            >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-50">
-                <FileText className="h-6 w-6 text-blue-600 stroke-[1.8]" />
-              </div>
-              <div>
-                <span className="block text-xs font-medium text-slate-500">Ativas</span>
-                <span className="block text-2xl font-bold text-slate-900 mt-0.5">
-                  {stats.active}
-                </span>
-              </div>
-            </button>
+          {/* ── VISÃO GERAL (STATUS RESUMO COM 3 COLUNAS FIXAS NO PWA) ── */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+              <span>Visão geral</span>
+              <span className="text-[11px] text-slate-400 font-normal">Situação atual</span>
+            </div>
+            <ProposalStatusSummary
+              stats={stats}
+              currentFilter={filter}
+              onSelectFilter={handleFilterChange}
+            />
+          </div>
 
-            {/* Card 2: Recebidas */}
-            <button
-              type="button"
-              onClick={() => handleFilterChange('received')}
-              className={cn(
-                'flex items-center gap-4 rounded-2xl border bg-white p-4 text-left transition-all hover:border-slate-300 hover:shadow-xs',
-                filter === 'received'
-                  ? 'border-emerald-600 ring-2 ring-emerald-500/20 shadow-xs'
-                  : 'border-slate-200/90'
-              )}
-            >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50">
-                <MessageSquare className="h-6 w-6 text-emerald-600 stroke-[1.8]" />
-              </div>
-              <div>
-                <span className="block text-xs font-medium text-slate-500">Recebidas</span>
-                <span className="block text-2xl font-bold text-slate-900 mt-0.5">
-                  {stats.received}
-                </span>
-              </div>
-            </button>
-
-            {/* Card 3: Aguardando retorno */}
-            <button
-              type="button"
-              onClick={() => handleFilterChange('active')}
-              className="flex items-center gap-4 rounded-2xl border border-slate-200/90 bg-white p-4 text-left transition-all hover:border-slate-300 hover:shadow-xs"
-            >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-50">
-                <Clock className="h-6 w-6 text-amber-500 stroke-[1.8]" />
-              </div>
-              <div>
-                <span className="block text-xs font-medium text-slate-500">Aguardando retorno</span>
-                <span className="block text-2xl font-bold text-slate-900 mt-0.5">
-                  {stats.pending}
-                </span>
-              </div>
-            </button>
-          </section>
-
-          {/* ── ABAS EM PÍLULA (SEGMENTED CONTROL COM URL SYNC) ────────── */}
-          <div className="flex items-center justify-between sm:justify-start gap-1 p-1 rounded-full border border-slate-200/80 bg-white overflow-x-auto max-w-full">
-            {filterTabs.map((tab) => {
-              const isActive = filter === tab.id;
-              return (
+          {/* ── EMPRESAS E PROPOSTAS ── */}
+          <div className="space-y-3 pt-1 sm:pt-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+              <span>Empresas e propostas</span>
+              {(filter !== 'all' || Boolean(searchQuery.trim()) || regionFilter !== 'all' || companyFilter !== 'all' || sortBy !== 'recent') && (
                 <button
-                  key={tab.id}
                   type="button"
-                  onClick={() => handleFilterChange(tab.id)}
-                  className={cn(
-                    'px-6 sm:px-8 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap',
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  )}
+                  onClick={() => {
+                    setFilter('all');
+                    setSearchQuery('');
+                    setRegionFilter('all');
+                    setCompanyFilter('all');
+                    setSortBy('recent');
+                    const query = new URLSearchParams(params.toString());
+                    query.delete('tab');
+                    const search = query.toString();
+                    router.replace(pathname + (search ? '?' + search : ''), { scroll: false });
+                  }}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                 >
-                  {tab.label}
+                  Limpar filtros
                 </button>
-              );
-            })}
-          </div>
-
-          {/* ── BARRA DE FERRAMENTAS / FILTROS (TOOLBAR) ────────────────── */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            {/* Campo de Busca */}
-            <div className="relative min-w-[280px] flex-1">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar propostas, empresas ou tecnologia..."
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
+              )}
             </div>
 
-            {/* Select Regiões */}
-            <div className="relative">
-              <select
-                value={regionFilter}
-                onChange={(e) => setRegionFilter(e.target.value)}
-                className="h-10 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-500 focus:outline-none cursor-pointer"
-              >
-                <option value="all">Todas as regiões</option>
-                <option value="sp">São Paulo, SP</option>
-                <option value="sc">Santa Catarina, SC</option>
-                <option value="mg">Minas Gerais, MG</option>
-                <option value="rj">Rio de Janeiro, RJ</option>
-                <option value="pr">Paraná, PR</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            {/* Abas em Pílula com rolagem horizontal controlada */}
+            <div className="flex items-center gap-1.5 p-1 rounded-full border border-slate-200/80 bg-white overflow-x-auto max-w-full scrollbar-none">
+              {filterTabs.map((tab) => {
+                const isActive = filter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleFilterChange(tab.id)}
+                    className={cn(
+                      'px-4 sm:px-6 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap',
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Select Empresas */}
-            <div className="relative">
-              <select
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                className="h-10 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-500 focus:outline-none cursor-pointer"
-              >
-                <option value="all">Todas as empresas</option>
-                {companiesList.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            </div>
+            {/* Barra de Ferramentas / Busca */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Campo de Busca (1 linha no mobile com min-w-0 flex-1) */}
+              <div className="relative min-w-0 flex-1">
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar empresa ou proposta..."
+                  className="h-10 sm:h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-8 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Limpar busca"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:text-slate-600 text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
 
-            {/* Botão Filtros */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 gap-1.5 rounded-xl border-slate-200 bg-white text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50"
-              onClick={() => {
-                if (searchQuery || regionFilter !== 'all' || companyFilter !== 'all') {
-                  setSearchQuery('');
-                  setRegionFilter('all');
-                  setCompanyFilter('all');
-                }
-              }}
-            >
-              <SlidersHorizontal className="h-4 w-4 text-slate-500" />
-              <span>Filtros</span>
-            </Button>
-
-            {/* Alternador de visualização (Cards / Lista) */}
-            <div className="flex items-center rounded-xl border border-slate-200 bg-white p-1">
-              <button
+              {/* Botão Filtros no Mobile (Abre Bottom Sheet Drawer) */}
+              <Button
                 type="button"
-                onClick={() => setViewLayout('cards')}
+                variant="outline"
+                size="sm"
+                onClick={() => setFiltersSheetOpen(true)}
+                aria-label="Abrir filtros avançados"
                 className={cn(
-                  'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all',
-                  viewLayout === 'cards'
-                    ? 'bg-blue-600 text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                  'h-10 sm:h-11 w-10 sm:w-11 shrink-0 p-0 rounded-xl border-slate-200 bg-white sm:hidden',
+                  (filter !== 'all' || regionFilter !== 'all' || companyFilter !== 'all' || sortBy !== 'recent') &&
+                    'border-blue-500 bg-blue-50/60 text-blue-600 ring-1 ring-blue-500'
                 )}
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                <span>Cards</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewLayout('table')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all',
-                  viewLayout === 'table'
-                    ? 'bg-blue-600 text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                )}
-              >
-                <Table className="h-3.5 w-3.5" />
-                <span>Lista</span>
-              </button>
+                <SlidersHorizontal className="h-4 w-4 text-slate-600" />
+              </Button>
+
+              {/* Controles no Desktop (Filtros em linha) */}
+              <div className="hidden sm:flex items-center gap-2 shrink-0">
+                {/* Select Regiões */}
+                <div className="relative">
+                  <select
+                    value={regionFilter}
+                    onChange={(e) => setRegionFilter(e.target.value)}
+                    className="h-11 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-500 focus:outline-none cursor-pointer"
+                  >
+                    <option value="all">Todas as regiões</option>
+                    <option value="sp">São Paulo, SP</option>
+                    <option value="sc">Santa Catarina, SC</option>
+                    <option value="mg">Minas Gerais, MG</option>
+                    <option value="rj">Rio de Janeiro, RJ</option>
+                    <option value="pr">Paraná, PR</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                </div>
+
+                {/* Select Empresas */}
+                <div className="relative">
+                  <select
+                    value={companyFilter}
+                    onChange={(e) => setCompanyFilter(e.target.value)}
+                    className="h-11 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-500 focus:outline-none cursor-pointer"
+                  >
+                    <option value="all">Todas as empresas</option>
+                    {companiesList.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                </div>
+
+                {/* Alternador Cards/Lista */}
+                <div className="flex items-center rounded-xl border border-slate-200 bg-white p-1">
+                  <button
+                    type="button"
+                    onClick={() => setViewLayout('cards')}
+                    aria-label="Visualização em cards"
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all',
+                      viewLayout === 'cards'
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    )}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    <span>Cards</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewLayout('table')}
+                    aria-label="Visualização em lista"
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all',
+                      viewLayout === 'table'
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    )}
+                  >
+                    <Table className="h-3.5 w-3.5" />
+                    <span>Lista</span>
+                  </button>
+                </div>
+
+                {/* Dropdown de Ordenação */}
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="h-11 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-500 focus:outline-none cursor-pointer"
+                  >
+                    <option value="recent">Mais recentes</option>
+                    <option value="oldest">Mais antigas</option>
+                    <option value="highest">Maior valor</option>
+                    <option value="lowest">Menor valor</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                </div>
+              </div>
             </div>
 
-            {/* Dropdown de Ordenação */}
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="h-10 appearance-none rounded-xl border border-slate-200 bg-white pl-3.5 pr-8 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:border-blue-500 focus:outline-none cursor-pointer"
-              >
-                <option value="recent">Ordenar: Mais recentes</option>
-                <option value="oldest">Ordenar: Mais antigas</option>
-                <option value="highest">Ordenar: Maior valor</option>
-                <option value="lowest">Ordenar: Menor valor</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            {/* Contador de Solicitações Encontradas */}
+            <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-0.5">
+              <span>
+                {filteredProposals.length}{' '}
+                {filteredProposals.length === 1 ? 'solicitação encontrada' : 'solicitações encontradas'}
+              </span>
+              <span className="text-[11px] text-slate-400">
+                {sortBy === 'recent'
+                  ? 'Mais recentes'
+                  : sortBy === 'oldest'
+                  ? 'Mais antigas'
+                  : sortBy === 'highest'
+                  ? 'Maior valor'
+                  : 'Menor valor'}
+              </span>
             </div>
           </div>
 
-          {/* ── LISTAGEM DE PROPOSTAS EM ROW-CARDS ──────────────────────── */}
+          {/* ── LISTAGEM DE PROPOSTAS ──────────────────────── */}
           {filteredProposals.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
               <FileText className="mx-auto h-12 w-12 text-slate-300" />
@@ -899,6 +919,7 @@ export function MarketplaceProposalsWorkspace() {
                 <tbody className="divide-y divide-slate-100">
                   {filteredProposals.map((proposal) => {
                     const price = getProposalDisplayPrice(proposal);
+                    const solution = getProposalSolutionLabel(proposal) || 'Categoria não informada';
                     return (
                       <tr key={proposal.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="px-5 py-3.5 font-bold text-slate-900">
@@ -910,7 +931,7 @@ export function MarketplaceProposalsWorkspace() {
                           </div>
                         </td>
                         <td className="px-5 py-3.5 text-slate-500">
-                          {proposal.request?.project_profile || 'Residencial'} • {getProposalLocation(proposal)}
+                          {solution} • {getProposalLocation(proposal)}
                         </td>
                         <td className="px-5 py-3.5 font-bold text-slate-900">
                           {price.formatted}
@@ -936,257 +957,18 @@ export function MarketplaceProposalsWorkspace() {
               </table>
             </div>
           ) : (
-            /* Modo Cards Horizontais */
-            <div className="space-y-4">
-              {filteredProposals.map((proposal) => {
-                const isSentOrReady = isProposalReceived(proposal);
-                const isUnderAnalysis = proposal.status === 'draft' || proposal.status === 'under_review';
-                const isPending = isProposalAwaiting(proposal);
-
-                // Dados técnicos reais (sem inventar fallbacks fictícios)
-                const power = getProposalRawTerm(proposal, [
-                  'system_power',
-                  'power_kwp',
-                  'potencia',
-                  'installed_power',
-                ]);
-                const generation = getProposalRawTerm(proposal, [
-                  'monthly_generation',
-                  'geracao',
-                  'generation_kwh',
-                ]);
-                const price = getProposalDisplayPrice(proposal);
-                const deadline = getProposalRawTerm(proposal, [
-                  'installation_deadline',
-                  'prazo',
-                  'installation_time',
-                ]);
-
-                const hasMetrics = isSentOrReady && Boolean(power || generation || price.isAvailable || deadline);
-
-                const isCompleted = isProposalCompleted(proposal) || proposal.status === 'accepted';
-
-                // Configuração de Status e Data
-                let statusBadgeText = 'Aguardando envio';
-                let statusBadgeColor = 'bg-amber-50 text-amber-700 border-amber-200/40';
-                let statusDotColor = 'bg-amber-500';
-                let dateIcon = <Clock className="h-3.5 w-3.5 text-slate-400" />;
-                const updRel = formatRelativeDay(proposal.created_at);
-                let dateText = updRel === 'hoje' ? 'Atualizado hoje' : updRel ? `Atualizado em ${updRel}` : 'Atualizado';
-
-                if (isCompleted) {
-                  statusBadgeText = 'Projeto concluído';
-                  statusBadgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/40';
-                  statusDotColor = 'bg-emerald-500';
-                  dateIcon = <Check className="h-3.5 w-3.5 text-emerald-600" />;
-                  dateText = 'Instalação finalizada';
-                } else if (isSentOrReady) {
-                  statusBadgeText = 'Proposta recebida';
-                  statusBadgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/40';
-                  statusDotColor = 'bg-emerald-500';
-                  dateIcon = <Calendar className="h-3.5 w-3.5 text-slate-400" />;
-                  const pubRel = formatRelativeDay(
-                    proposal.published_at || proposal.version?.published_at || proposal.created_at
-                  );
-                  dateText = pubRel === 'hoje' ? 'Recebida hoje' : pubRel ? `Recebida em ${pubRel}` : 'Recebida';
-                } else if (isUnderAnalysis) {
-                  statusBadgeText = 'Em análise';
-                  statusBadgeColor = 'bg-blue-50 text-blue-700 border-blue-200/40';
-                  statusDotColor = 'bg-blue-500';
-                  dateIcon = <Clock className="h-3.5 w-3.5 text-slate-400" />;
-                  dateText = 'Prazo estimado: até 24h';
-                }
-
-                // Linha descritiva
-                let detailIcon = <FileText className="h-3.5 w-3.5 text-slate-400" />;
-                let detailText = 'Seu pedido está sendo preparado';
-
-                if (isSentOrReady) {
-                  detailIcon = <Grid className="h-3.5 w-3.5 text-blue-600" />;
-                  detailText =
-                    proposal.version?.summary ||
-                    (proposal.version
-                      ? `Versão ${proposal.version.number} disponível`
-                      : 'Proposta disponível para análise');
-                } else if (isUnderAnalysis) {
-                  detailIcon = <FileText className="h-3.5 w-3.5 text-slate-400" />;
-                  detailText = 'Solicitação enviada com sucesso';
-                }
-
-                const isComparing = compareIds.includes(proposal.id);
-                const solutionLabel =
-                  getProposalSolutionLabel(proposal) ||
-                  proposal.request?.project_profile ||
-                  'Sistema solar';
-                const location = getProposalLocation(proposal);
-
-                return (
-                  <article
-                    key={proposal.id}
-                    className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-none transition-all hover:border-slate-300"
-                  >
-                    {/* Linha Superior: Logo + Dados da Empresa à esquerda | Status + Data à direita */}
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                      <div className="flex items-start gap-4 min-w-0">
-                        {/* Logo da Empresa */}
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-slate-100 bg-white p-1.5 overflow-hidden shadow-2xs">
-                          <CompanyAvatar proposal={proposal} />
-                        </div>
-
-                        {/* Textos da Empresa */}
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                              {proposal.company.name}
-                            </h3>
-                            {proposal.reference && (
-                              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-mono font-medium text-slate-600">
-                                #{proposal.reference}
-                              </span>
-                            )}
-                          </div>
-                          <p className="mt-0.5 text-xs text-slate-500 font-medium">
-                            {solutionLabel} • {location}
-                          </p>
-                          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-600 font-medium">
-                            {detailIcon}
-                            <span>{detailText}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Status + Data à direita */}
-                      <div className="flex items-center gap-4 self-start sm:self-auto shrink-0">
-                        <span
-                          className={cn(
-                            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border',
-                            statusBadgeColor
-                          )}
-                        >
-                          <span className={cn('h-1.5 w-1.5 rounded-full', statusDotColor)} />
-                          <span>{statusBadgeText}</span>
-                        </span>
-
-                        <span className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                          {dateIcon}
-                          <span>{dateText}</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Linha Inferior: Métricas Técnicas em Linha + Botões de Ação */}
-                    <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      {/* Métricas Técnicas */}
-                      {hasMetrics ? (
-                        <div className="flex items-center gap-6 sm:gap-8 flex-wrap">
-                          {power && (
-                            <div className="flex items-center gap-1.5">
-                              <Zap className="h-4 w-4 text-blue-600" />
-                              <span className="text-xs text-slate-500 font-medium">Potência</span>
-                              <span className="text-xs sm:text-sm font-bold text-slate-900 ml-1">
-                                {power}
-                              </span>
-                            </div>
-                          )}
-
-                          {generation && (
-                            <div className="flex items-center gap-1.5">
-                              <BarChart2 className="h-4 w-4 text-blue-600" />
-                              <span className="text-xs text-slate-500 font-medium">Geração estimada</span>
-                              <span className="text-xs sm:text-sm font-bold text-slate-900 ml-1">
-                                {generation}
-                              </span>
-                            </div>
-                          )}
-
-                          {price.isAvailable && (
-                            <div className="flex items-center gap-1.5">
-                              <DollarSign className="h-4 w-4 text-blue-600" />
-                              <span className="text-xs text-slate-500 font-medium">Valor total</span>
-                              <span className="text-xs sm:text-sm font-bold text-slate-900 ml-1">
-                                {price.formatted}
-                              </span>
-                            </div>
-                          )}
-
-                          {deadline && (
-                            <div className="flex items-center gap-1.5">
-                              <Calendar className="h-4 w-4 text-blue-600" />
-                              <span className="text-xs text-slate-500 font-medium">Prazo de instalação</span>
-                              <span className="text-xs sm:text-sm font-bold text-slate-900 ml-1">
-                                {deadline}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div />
-                      )}
-
-                      {/* Botões de Ação */}
-                      <div className="flex items-center gap-2.5 self-end md:self-auto shrink-0">
-                        {isCompleted ? (
-                          <Button
-                            aria-label={'Ver projeto de ' + proposal.company.name}
-                            onClick={() => openProposal(proposal)}
-                            className="h-9 gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold px-4 shadow-2xs"
-                          >
-                            <span>Ver projeto</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </Button>
-                        ) : isSentOrReady ? (
-                          <Button
-                            aria-label={'Abrir proposta de ' + proposal.company.name}
-                            onClick={() => openProposal(proposal)}
-                            className="h-9 gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold px-4 shadow-2xs"
-                          >
-                            <span>Ver proposta</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </Button>
-                        ) : isUnderAnalysis ? (
-                          <Button
-                            variant="outline"
-                            aria-label={'Abrir proposta de ' + proposal.company.name}
-                            onClick={() => openProposal(proposal)}
-                            className="h-9 gap-1.5 rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50 text-xs sm:text-sm font-semibold px-4"
-                          >
-                            <span>Acompanhar status</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            aria-label={'Abrir proposta de ' + proposal.company.name}
-                            onClick={() => openProposal(proposal)}
-                            className="h-9 gap-1.5 rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50 text-xs sm:text-sm font-semibold px-4"
-                          >
-                            <span>Ver detalhes</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-
-                        <Button
-                          variant="outline"
-                          aria-label={'Comparar proposta de ' + proposal.company.name}
-                          disabled={!isSentOrReady}
-                          title={!isSentOrReady ? 'Disponível quando a proposta for recebida' : undefined}
-                          onClick={() => toggleCompare(proposal.id)}
-                          className={cn(
-                            'h-9 gap-1.5 rounded-xl text-xs sm:text-sm font-semibold px-3.5 transition-colors',
-                            !isSentOrReady && 'opacity-50 cursor-not-allowed hover:bg-transparent',
-                            isComparing
-                              ? 'border-blue-600 bg-blue-50 text-blue-700'
-                              : 'border-slate-200 text-blue-600 hover:bg-slate-50'
-                          )}
-                        >
-                          <BarChart2 className="h-3.5 w-3.5" />
-                          <span>{isComparing ? 'Selecionada' : 'Comparar'}</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
+            /* Modo Cards Responsivo: 1 col PWA, 2 col tablet/md, até 3 col desktop */
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {filteredProposals.map((proposal) => (
+                <ProposalCompactCard
+                  key={proposal.id}
+                  proposal={proposal}
+                  onOpen={openProposal}
+                  onToggleCompare={toggleCompare}
+                  isComparing={compareIds.includes(proposal.id)}
+                  canCompare={isProposalReceived(proposal)}
+                />
+              ))}
             </div>
           )}
 
@@ -1218,9 +1000,9 @@ export function MarketplaceProposalsWorkspace() {
             </div>
           )}
 
-          {/* Barra flutuante de comparação quando 1 ou mais propostas estiverem selecionadas */}
+          {/* Barra flutuante de comparação posicionada acima do rodapé mobile e respeitando safe-area */}
           {compareIds.length >= 1 && (
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-2xl border border-slate-200 bg-white/95 p-3.5 shadow-2xl backdrop-blur-md flex items-center gap-4">
+            <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 left-1/2 -translate-x-1/2 z-40 lg:z-50 rounded-2xl border border-slate-200 bg-white/95 p-3.5 shadow-2xl backdrop-blur-md flex items-center gap-4 max-w-[95%] sm:max-w-md">
               <div className="min-w-0">
                 <p className="text-xs font-bold text-slate-900">
                   Comparar propostas ({compareIds.length})
@@ -1256,6 +1038,39 @@ export function MarketplaceProposalsWorkspace() {
           )}
         </main>
       )}
+
+      {/* Drawer de Filtros Mobile */}
+      <ProposalFiltersSheet
+        open={filtersSheetOpen}
+        onClose={() => setFiltersSheetOpen(false)}
+        currentFilter={filter}
+        onFilterChange={handleFilterChange}
+        regionFilter={regionFilter}
+        onRegionFilterChange={setRegionFilter}
+        companyFilter={companyFilter}
+        onCompanyFilterChange={setCompanyFilter}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        companiesList={companiesList}
+        onReset={() => {
+          setFilter('all');
+          setSearchQuery('');
+          setRegionFilter('all');
+          setCompanyFilter('all');
+          setSortBy('recent');
+          const query = new URLSearchParams(params.toString());
+          query.delete('tab');
+          const search = query.toString();
+          router.replace(pathname + (search ? '?' + search : ''), { scroll: false });
+        }}
+        hasActiveFilters={
+          filter !== 'all' ||
+          Boolean(searchQuery.trim()) ||
+          regionFilter !== 'all' ||
+          companyFilter !== 'all' ||
+          sortBy !== 'recent'
+        }
+      />
 
       {/* ── MODAL DE CONFIRMAÇÃO DE DECISÃO ─────────────────────────── */}
       <Dialog
