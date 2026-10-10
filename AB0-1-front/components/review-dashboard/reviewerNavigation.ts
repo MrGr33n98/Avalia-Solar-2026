@@ -16,6 +16,7 @@ import {
 export interface ReviewerNavItem {
   id: string;
   label: string;
+  shortLabel?: string;
   href: string;
   icon: LucideIcon;
   matchPath: string | string[];
@@ -29,6 +30,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
   {
     id: 'dashboard',
     label: 'Meu painel',
+    shortLabel: 'Painel',
     href: '/review-dashboard',
     icon: Home,
     matchPath: '/review-dashboard',
@@ -49,6 +51,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
   {
     id: 'reviews',
     label: 'Avaliações',
+    shortLabel: 'Avaliações',
     href: '/review-dashboard/reviews',
     icon: Star,
     matchPath: '/review-dashboard/reviews',
@@ -69,6 +72,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
   {
     id: 'proposals',
     label: 'Minhas propostas',
+    shortLabel: 'Propostas',
     href: '/review-dashboard/proposals',
     icon: FileText,
     matchPath: '/review-dashboard/proposals',
@@ -90,6 +94,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
   {
     id: 'achievements',
     label: 'Conquistas',
+    shortLabel: 'Conquistas',
     href: '/review-dashboard/achievements',
     icon: Trophy,
     matchPath: '/review-dashboard/achievements',
