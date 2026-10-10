@@ -1,22 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
-  Check,
   Clock3,
-  Download,
-  Eye,
   FilePlus2,
-  FileText,
   History,
   Loader2,
   Plus,
   Search,
-  Send,
-  Trash2,
-  Upload,
-  Users,
-  X,
+  SlidersHorizontal,
 } from 'lucide-react';
 import {
   companyMarketplaceProposalsApi,
@@ -25,7 +17,15 @@ import {
 } from '@/lib/api';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { cn } from '@/lib/utils';
-import { technicalFields } from '@/lib/marketplace-proposals';
+import {
+  getStatusInfo,
+  formatBrlCurrency,
+  normalizeVertical,
+} from '@/lib/proposals/domain';
+import { ProposalFiltersDrawer, type FilterState } from './proposals/ProposalFiltersDrawer';
+import { LeadDetailsDrawer } from './proposals/LeadDetailsDrawer';
+import { ProposalWizardEditor } from './proposals/ProposalWizardEditor';
+import { ProposalSuccessScreen } from './proposals/ProposalSuccessScreen';
 
 type Distribution = {
   id: number;
@@ -34,42 +34,54 @@ type Distribution = {
   lead: MarketplaceProposal['lead'];
 };
 
-function money(cents = 0) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
-}
-
-function date(value?: string | null) {
-  if (!value) return '—';
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('pt-BR');
-}
-
 export function CompanyMarketplaceProposalsWorkspace() {
   const { activeCompany, isLoading: companyLoading } = useCompanyContext();
   const [proposals, setProposals] = useState<MarketplaceProposal[]>([]);
   const [distributions, setDistributions] = useState<Distribution[]>([]);
-  const [selected, setSelected] = useState<MarketplaceProposal | null>(null);
+
+  // Selection & Navigation
+  const [selectedProposal, setSelectedProposal] = useState<MarketplaceProposal | null>(null);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [publishedSuccessProposal, setPublishedSuccessProposal] = useState<MarketplaceProposal | null>(null);
+
+  // Drawers
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [leadDetailTarget, setLeadDetailTarget] = useState<{
+    distribution: Distribution | null;
+    proposal: MarketplaceProposal | null;
+  } | null>(null);
+
+  // Loading & Action states
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Filters
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [filters, setFilters] = useState<FilterState>({
+    status: 'all',
+    category: 'all',
+    dateFrom: '',
+    dateTo: '',
+  });
 
   const load = useCallback(async () => {
     if (!activeCompany?.id) return;
     setLoading(true);
     setError(null);
-    setSelected(null);
-    setProposals([]);
-    setDistributions([]);
     try {
       const [proposalResponse, distributionResponse] = await Promise.all([
         companyMarketplaceProposalsApi.list(activeCompany.id),
         companyMarketplaceProposalsApi.distributions(activeCompany.id),
       ]);
-      setProposals(proposalResponse.proposals || []);
+      const fetchedProposals = proposalResponse.proposals || [];
+      setProposals(fetchedProposals);
       setDistributions(distributionResponse.distributions || []);
-      setSelected(proposalResponse.proposals?.[0] || null);
+
+      // Desktop helper: only select if viewport is large, but do NOT force wizard open
+      if (typeof window !== 'undefined' && window.innerWidth >= 1024 && fetchedProposals.length > 0) {
+        setSelectedProposal(fetchedProposals[0]);
+      }
     } catch {
       setError('Não foi possível carregar as propostas da sua empresa.');
     } finally {
@@ -81,8 +93,9 @@ export function CompanyMarketplaceProposalsWorkspace() {
     void load();
   }, [load]);
 
-  const create = async (distributionId: number) => {
-    setBusy('create-' + distributionId);
+  // Create proposal from distribution
+  const handleCreateProposal = async (distributionId: number) => {
+    setBusy(`create-${distributionId}`);
     try {
       const response = await companyMarketplaceProposalsApi.create(
         distributionId,
@@ -92,7 +105,9 @@ export function CompanyMarketplaceProposalsWorkspace() {
         response.proposal,
         ...current.filter((item) => item.id !== response.proposal.id),
       ]);
-      setSelected(response.proposal);
+      setSelectedProposal(response.proposal);
+      setIsWizardOpen(true);
+      setPublishedSuccessProposal(null);
     } catch {
       setError('Não foi possível abrir o editor da proposta.');
     } finally {
@@ -100,753 +115,515 @@ export function CompanyMarketplaceProposalsWorkspace() {
     }
   };
 
+  // Open existing proposal in wizard
+  const handleOpenProposal = (prop: MarketplaceProposal) => {
+    setSelectedProposal(prop);
+    setIsWizardOpen(true);
+    setPublishedSuccessProposal(null);
+  };
+
+  // Close wizard and return to list
+  const handleBackToList = () => {
+    setIsWizardOpen(false);
+    setPublishedSuccessProposal(null);
+    void load();
+  };
+
+  // Unify and filter items
+  const unifiedItems = useMemo(() => {
+    // Map of proposal by lead_distribution_id
+    const proposalByDist = new Map<number, MarketplaceProposal>();
+    proposals.forEach((p) => {
+      if (p.lead_distribution_id) {
+        proposalByDist.set(p.lead_distribution_id, p);
+      }
+    });
+
+    // 1. Items from distributions
+    const itemsFromDist = distributions.map((dist) => {
+      const prop = proposalByDist.get(dist.id) || null;
+      return {
+        key: `dist-${dist.id}`,
+        distribution: dist,
+        proposal: prop,
+        status: prop ? prop.status : dist.status,
+        date: dist.assigned_at || prop?.created_at,
+        lead: prop?.lead || dist.lead,
+        totalCents: prop?.total_cents,
+      };
+    });
+
+    // 2. Extra proposals without matching distribution in current batch
+    const extraProposals = proposals
+      .filter((p) => !p.lead_distribution_id || !distributions.some((d) => d.id === p.lead_distribution_id))
+      .map((prop) => ({
+        key: `prop-${prop.id}`,
+        distribution: null,
+        proposal: prop,
+        status: prop.status,
+        date: prop.created_at,
+        lead: prop.lead,
+        totalCents: prop.total_cents,
+      }));
+
+    const all = [...itemsFromDist, ...extraProposals];
+
+    // Filter by query
+    const normQuery = query.trim().toLowerCase();
+    const queryFiltered = all.filter((item) => {
+      if (!normQuery) return true;
+      const haystack = [
+        item.lead?.name,
+        item.lead?.email,
+        item.lead?.city,
+        item.lead?.state,
+        item.proposal?.reference,
+        item.lead?.product_vertical,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(normQuery);
+    });
+
+    // Filter by status
+    const statusFiltered = queryFiltered.filter((item) => {
+      if (filters.status === 'all') return true;
+      return item.status === filters.status;
+    });
+
+    // Filter by category
+    const categoryFiltered = statusFiltered.filter((item) => {
+      if (filters.category === 'all') return true;
+      const vertical = normalizeVertical(item.lead?.product_vertical);
+      return vertical === filters.category;
+    });
+
+    // Filter by dates
+    const dateFiltered = categoryFiltered.filter((item) => {
+      if (!filters.dateFrom && !filters.dateTo) return true;
+      if (!item.date) return true;
+      const itemTime = new Date(item.date).getTime();
+      if (filters.dateFrom && itemTime < new Date(filters.dateFrom).getTime()) return false;
+      if (filters.dateTo && itemTime > new Date(`${filters.dateTo}T23:59:59`).getTime()) return false;
+      return true;
+    });
+
+    return dateFiltered;
+  }, [proposals, distributions, query, filters]);
+
+  // Tab counts
+  const counts = useMemo(() => {
+    const total = proposals.length;
+    const drafts = proposals.filter((p) => p.status === 'draft').length;
+    const sent = proposals.filter((p) => p.status === 'sent').length;
+    const negotiating = proposals.filter((p) => p.status === 'negotiating').length;
+    const accepted = proposals.filter((p) => p.status === 'accepted').length;
+    return { total, drafts, sent, negotiating, accepted };
+  }, [proposals]);
+
+  const statusTabItems = [
+    { value: 'all', label: 'Todas', count: counts.total },
+    { value: 'draft', label: 'Rascunhos', count: counts.drafts },
+    { value: 'sent', label: 'Enviadas', count: counts.sent },
+    { value: 'negotiating', label: 'Em negociação', count: counts.negotiating },
+    { value: 'accepted', label: 'Aprovadas', count: counts.accepted },
+  ];
+
   if (companyLoading || loading) {
     return (
       <div className="flex min-h-[360px] items-center justify-center">
-        <Loader2 className="h-7 w-7 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
   if (!activeCompany) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm font-semibold text-amber-800">
+      <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-sm font-semibold text-amber-800">
         Selecione uma empresa para gerenciar propostas.
       </div>
     );
   }
 
-  const normalizedQuery = query.trim().toLocaleLowerCase('pt-BR');
-  const filteredProposals = proposals.filter((proposal) => {
-    const matchesStatus = statusFilter === 'all' || proposal.status === statusFilter;
-    const haystack = [
-      proposal.reference,
-      proposal.lead?.name,
-      proposal.lead?.city,
-      proposal.lead?.state,
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLocaleLowerCase('pt-BR');
-    return matchesStatus && (!normalizedQuery || haystack.includes(normalizedQuery));
-  });
-  const statusFilters = [
-    ['all', 'Todas'],
-    ['draft', 'Rascunhos'],
-    ['sent', 'Enviadas'],
-    ['negotiating', 'Em negociação'],
-    ['accepted', 'Aprovadas'],
-  ];
+  // View: Success Screen (Screen 11)
+  if (publishedSuccessProposal) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <ProposalSuccessScreen
+          proposal={publishedSuccessProposal}
+          onViewProposal={() => {
+            setSelectedProposal(publishedSuccessProposal);
+            setPublishedSuccessProposal(null);
+            setIsWizardOpen(true);
+          }}
+          onBackToList={handleBackToList}
+        />
+      </main>
+    );
+  }
 
-  return (
-    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-bold text-blue-700">Portal da empresa</p>
-          <h1 className="mt-1 text-3xl font-black text-slate-950">Propostas para clientes</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">
-            Receba leads distribuídos, monte propostas versionadas e acompanhe cada negociação até o
-            projeto concluído.
-          </p>
+  // View: Focused Wizard on mobile/PWA or when user opens proposal (Screen 4-10)
+  if (isWizardOpen && selectedProposal) {
+    return (
+      <main className="mx-auto max-w-7xl px-0 sm:px-6 py-0 sm:py-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <ProposalWizardEditor
+            proposal={selectedProposal}
+            companyId={activeCompany.id}
+            onSaved={(updated) => {
+              setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
+              setSelectedProposal(updated);
+            }}
+            onBack={handleBackToList}
+            onPublishedSuccess={(pub) => {
+              setPublishedSuccessProposal(pub);
+              setIsWizardOpen(false);
+            }}
+            onOpenLeadDetails={() => {
+              setLeadDetailTarget({
+                distribution:
+                  distributions.find((d) => d.id === selectedProposal.lead_distribution_id) || null,
+                proposal: selectedProposal,
+              });
+            }}
+          />
+
+          {/* Desktop Sidebar: Timeline & History */}
+          <div className="hidden lg:block space-y-6">
+            <ProposalTimeline proposal={selectedProposal} />
+            {selectedProposal.versions && selectedProposal.versions.length > 1 && (
+              <CompanyVersionHistory versions={selectedProposal.versions} />
+            )}
+            <CompanyLifecyclePanel
+              proposal={selectedProposal}
+              onSaved={(updated) => {
+                setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
+                setSelectedProposal(updated);
+              }}
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-2 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800">
-          <Users className="h-4 w-4" /> {distributions.length} leads disponíveis
+
+        {/* Lead Detail Drawer if triggered from wizard */}
+        <LeadDetailsDrawer
+          isOpen={!!leadDetailTarget}
+          onClose={() => setLeadDetailTarget(null)}
+          distribution={leadDetailTarget?.distribution || null}
+          proposal={leadDetailTarget?.proposal || null}
+          onOpenProposal={({ proposal: p, distributionId }) => {
+            if (p) handleOpenProposal(p);
+            else if (distributionId) void handleCreateProposal(distributionId);
+          }}
+        />
+      </main>
+    );
+  }
+
+  // View: Main Proposals List (Screen 1 & desktop master-detail)
+  return (
+    <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+      {/* Screen 1 Header */}
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+            Portal da empresa
+          </span>
+          <h1 className="mt-0.5 text-2xl font-black text-slate-950 sm:text-3xl">
+            Propostas para clientes
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          {distributions.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                const firstAvailableDist = distributions.find(
+                  (d) => !proposals.some((p) => p.lead_distribution_id === d.id)
+                );
+                if (firstAvailableDist) {
+                  void handleCreateProposal(firstAvailableDist.id);
+                } else if (proposals.length > 0) {
+                  handleOpenProposal(proposals[0]);
+                }
+              }}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Nova proposta</span>
+            </button>
+          )}
         </div>
       </header>
 
       {error && (
-        <p
+        <div
           role="alert"
-          className="mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800"
+          className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800"
         >
           {error}
-        </p>
+        </div>
       )}
 
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-        <div className="flex gap-1 overflow-x-auto">
-          {statusFilters.map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setStatusFilter(value)}
-              className={cn(
-                'min-h-10 shrink-0 rounded-xl px-4 text-sm font-bold transition-colors',
-                statusFilter === value
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-50'
-              )}
-            >
-              {label}
-            </button>
-          ))}
+      {/* Screen 1 Tabs with Counts */}
+      <section className="mt-5 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-sm">
+        <div className="flex gap-1 overflow-x-auto no-scrollbar">
+          {statusTabItems.map((tab) => {
+            const isSelected = filters.status === tab.value;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setFilters((prev) => ({ ...prev, status: tab.value }))}
+                className={cn(
+                  'flex min-h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-xs font-bold transition-all',
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-50'
+                )}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={cn(
+                    'rounded-full px-1.5 py-0.5 text-[10px] font-black',
+                    isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                  )}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(300px,0.78fr)_minmax(0,1.5fr)]">
-        <section className="space-y-3">
-          <h2 className="text-sm font-black uppercase tracking-wide text-slate-500">
-            Leads e propostas
-          </h2>
-          <label className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-            <span className="sr-only">Buscar propostas</span>
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar por cliente ou proposta"
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-          {distributions.map((distribution) => {
-            const proposal = proposals.find(
-              (item) => item.lead_distribution_id === distribution.id
-            );
-            return (
-              <article
-                key={distribution.id}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-bold text-slate-950">
-                      {distribution.lead?.name || 'Lead sem nome'}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {distribution.lead?.city || 'Local não informado'} ·{' '}
-                      {distribution.lead?.product_vertical || 'Solução energética'}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
-                    {proposal ? proposal.status : distribution.status}
-                  </span>
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <span className="text-xs text-slate-500">
-                    Recebido em {date(distribution.assigned_at)}
-                  </span>
-                  {proposal ? (
-                    <button
-                      type="button"
-                      onClick={() => setSelected(proposal)}
-                      className="text-sm font-bold text-blue-700"
-                    >
-                      Abrir proposta
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => void create(distribution.id)}
-                      disabled={busy === 'create-' + distribution.id}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white disabled:opacity-60"
-                    >
-                      {busy === 'create-' + distribution.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <FilePlus2 className="h-4 w-4" />
-                      )}{' '}
-                      Criar proposta
-                    </button>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-          {!distributions.length && (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-              Nenhum lead distribuído disponível para resposta.
-            </div>
+      {/* Screen 1 Search bar & Filter Trigger */}
+      <div className="mt-4 flex gap-2">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por cliente, proposta ou local..."
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-xs sm:text-sm font-medium text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsFilterDrawerOpen(true)}
+          aria-label="Abrir filtros avançados"
+          className={cn(
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors',
+            filters.category !== 'all' || filters.dateFrom || filters.dateTo
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
           )}
-          <div className="border-t border-slate-200 pt-4">
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-500">
-              Publicadas
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Main Grid: Mobile single column / Desktop layout */}
+      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(340px,0.85fr)_minmax(0,1.4fr)]">
+        {/* Left Column: Leads & Proposals List */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">
+              Leads e propostas ({unifiedItems.length})
             </h2>
-            <div className="mt-3 space-y-2">
-              {filteredProposals.map((proposal) => (
-                <button
-                  type="button"
-                  key={proposal.id}
-                  onClick={() => setSelected(proposal)}
+          </div>
+
+          <div className="space-y-3">
+            {unifiedItems.map((item) => {
+              const lead = item.lead;
+              const proposal = item.proposal;
+              const dist = item.distribution;
+              const statusInfo = getStatusInfo(item.status);
+              const isSelected = selectedProposal?.id === proposal?.id;
+
+              return (
+                <article
+                  key={item.key}
                   className={cn(
-                    'flex w-full items-center justify-between gap-3 rounded-xl border bg-white p-3 text-left',
-                    selected?.id === proposal.id
+                    'rounded-2xl border bg-white p-4 shadow-sm transition-all hover:shadow-md',
+                    isSelected && typeof window !== 'undefined' && window.innerWidth >= 1024
                       ? 'border-blue-500 ring-2 ring-blue-100'
                       : 'border-slate-200'
                   )}
                 >
-                  <span>
-                    <span className="block text-sm font-bold text-slate-950">
-                      {proposal.lead?.name || proposal.reference}
+                  {/* Top card row */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-sm font-black text-blue-700">
+                        {(lead?.name || 'L')[0]?.toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-slate-950">
+                          {lead?.name || 'Lead sem nome'}
+                        </p>
+                        <p className="truncate text-xs text-slate-500">
+                          {lead?.product_vertical || 'Solução energética'} ·{' '}
+                          {lead?.city ? `${lead.city}, ${lead.state || ''}` : 'Local não informado'}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-bold',
+                        statusInfo.bg,
+                        statusInfo.text,
+                        statusInfo.border
+                      )}
+                    >
+                      {statusInfo.label}
                     </span>
-                    <span className="block text-xs text-slate-500">
-                      {proposal.reference} · {proposal.status}
+                  </div>
+
+                  {/* Metadata & Values row */}
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
+                    <span className="text-slate-400">
+                      {item.date
+                        ? `Recebido em ${new Date(item.date).toLocaleDateString('pt-BR')}`
+                        : '—'}
                     </span>
-                  </span>
-                  <span className="text-sm font-bold text-blue-700">
-                    {money(proposal.total_cents)}
-                  </span>
-                </button>
-              ))}
-            </div>
-            {!filteredProposals.length && (
-              <p className="mt-3 rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                Nenhuma proposta corresponde aos filtros.
-              </p>
+                    <span className="font-black text-blue-700">
+                      {formatBrlCurrency(item.totalCents)}
+                    </span>
+                  </div>
+
+                  {/* CTAs (hit target >= 44px) */}
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLeadDetailTarget({
+                          distribution: dist,
+                          proposal: proposal,
+                        })
+                      }
+                      className="min-h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Ver detalhes
+                    </button>
+
+                    {proposal ? (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenProposal(proposal)}
+                        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                      >
+                        Abrir proposta
+                      </button>
+                    ) : dist ? (
+                      <button
+                        type="button"
+                        onClick={() => void handleCreateProposal(dist.id)}
+                        disabled={busy === `create-${dist.id}`}
+                        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors disabled:opacity-60"
+                      >
+                        {busy === `create-${dist.id}` ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <FilePlus2 className="h-4 w-4" />
+                        )}
+                        Criar proposta
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+
+            {unifiedItems.length === 0 && (
+              <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+                Nenhuma proposta ou lead encontrado para os filtros selecionados.
+              </div>
             )}
           </div>
         </section>
 
-        {selected ? (
-          <div className="space-y-6">
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-              <ProposalEditor
-                key={selected.id + ':' + selected.status + ':' + (selected.version?.number || 0)}
-                proposal={selected}
-                companyId={activeCompany.id}
-                onSaved={(proposal) => {
-                  setProposals((current) =>
-                    current.map((item) => (item.id === proposal.id ? proposal : item))
-                  );
-                  setSelected(proposal);
+        {/* Right Column: Desktop master-detail preview (Hidden on small screens) */}
+        <div className="hidden lg:block space-y-6">
+          {selectedProposal ? (
+            <div className="space-y-6">
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      {selectedProposal.reference}
+                    </span>
+                    <h3 className="text-xl font-black text-slate-950 mt-1">
+                      {selectedProposal.version?.title || 'Proposta comercial'}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Lead: {selectedProposal.lead?.name} · {selectedProposal.lead?.email}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenProposal(selectedProposal)}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700"
+                  >
+                    Abrir no editor
+                  </button>
+                </div>
+              </div>
+
+              <ProposalTimeline proposal={selectedProposal} />
+
+              {selectedProposal.versions && selectedProposal.versions.length > 1 && (
+                <CompanyVersionHistory versions={selectedProposal.versions} />
+              )}
+
+              <CompanyLifecyclePanel
+                proposal={selectedProposal}
+                onSaved={(updated) => {
+                  setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
+                  setSelectedProposal(updated);
                 }}
               />
-              <ProposalTimeline proposal={selected} />
             </div>
-            {selected.versions && selected.versions.length > 1 && (
-              <CompanyVersionHistory versions={selected.versions} />
-            )}
-            <CompanyLifecyclePanel
-              proposal={selected}
-              onSaved={(proposal) => {
-                setProposals((current) =>
-                  current.map((item) => (item.id === proposal.id ? proposal : item))
-                );
-                setSelected(proposal);
-              }}
-            />
-          </div>
-        ) : (
-          <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
-            Selecione um lead para abrir o editor.
-          </div>
-        )}
+          ) : (
+            <div className="flex min-h-[380px] items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-center text-xs text-slate-400">
+              Selecione um lead ou proposta para visualizar detalhes na lateral.
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Screen 2 Drawer: Filtros Avançados */}
+      <ProposalFiltersDrawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        filters={filters}
+        onApply={(newFilters) => setFilters(newFilters)}
+        onReset={() =>
+          setFilters({
+            status: 'all',
+            category: 'all',
+            dateFrom: '',
+            dateTo: '',
+          })
+        }
+      />
+
+      {/* Screen 3 Drawer: Detalhes do Lead */}
+      <LeadDetailsDrawer
+        isOpen={!!leadDetailTarget}
+        onClose={() => setLeadDetailTarget(null)}
+        distribution={leadDetailTarget?.distribution || null}
+        proposal={leadDetailTarget?.proposal || null}
+        onOpenProposal={({ proposal: p, distributionId }) => {
+          if (p) handleOpenProposal(p);
+          else if (distributionId) void handleCreateProposal(distributionId);
+        }}
+      />
     </main>
   );
 }
 
-function ProposalEditor({
-  proposal,
-  companyId,
-  onSaved,
-}: {
-  proposal: MarketplaceProposal;
-  companyId: number;
-  onSaved: (proposal: MarketplaceProposal) => void;
-}) {
-  const version = proposal.version;
-  const [title, setTitle] = useState(version?.title || '');
-  const [summary, setSummary] = useState(version?.summary || '');
-  const [validUntil, setValidUntil] = useState(version?.valid_until?.slice(0, 10) || '');
-  const [terms, setTerms] = useState(version?.terms || []);
-  const [editorError, setEditorError] = useState<string | null>(null);
-  const [itemName, setItemName] = useState('');
-  const [itemPrice, setItemPrice] = useState('');
-  const [items, setItems] = useState<NonNullable<MarketplaceProposalVersion['items']>>(
-    version?.items || []
-  );
-  const [documentTotal, setDocumentTotal] = useState(
-    version?.total_cents ? String(version.total_cents / 100).replace('.', ',') : ''
-  );
-  const [busy, setBusy] = useState<string | null>(null);
-  const editable = proposal.status === 'draft';
-  const canCreateVersion = [
-    'sent',
-    'viewed',
-    'under_review',
-    'negotiating',
-    'meeting_scheduled',
-  ].includes(proposal.status);
-  const canWithdraw = canCreateVersion;
-  const documentTotalCents = Math.round(Number(documentTotal.replace(',', '.')) * 100);
-  const documents = version?.documents || [];
-  const payload = () => ({
-    title,
-    summary,
-    valid_until: validUntil || null,
-    total_cents: Number.isFinite(documentTotalCents) ? documentTotalCents : 0,
-    terms: terms
-      .filter((term) => term.value.trim())
-      .map((term, position) => ({ key: term.key, label: term.label, value: term.value, position })),
-    items: items.map((item, position) => ({
-      name: item.name,
-      description: item.description,
-      quantity: item.quantity,
-      unit: item.unit,
-      unit_price_cents: item.unit_price_cents,
-      kind: item.kind,
-      position,
-    })),
-  });
-
-  const save = async () => {
-    setBusy('save');
-    setEditorError(null);
-    try {
-      const response = await companyMarketplaceProposalsApi.update(
-        proposal.id,
-        payload(),
-        companyId
-      );
-      onSaved(response.proposal);
-    } catch {
-      setEditorError('Não foi possível salvar a proposta. Revise os campos e tente novamente.');
-      setBusy(null);
-      return;
-    }
-    setBusy(null);
-  };
-
-  const send = async () => {
-    setBusy('send');
-    setEditorError(null);
-    try {
-      await companyMarketplaceProposalsApi.update(proposal.id, payload(), companyId);
-      const response = await companyMarketplaceProposalsApi.send(proposal.id, companyId);
-      onSaved(response.proposal);
-    } catch {
-      setEditorError('Não foi possível publicar a proposta. Revise os campos e tente novamente.');
-      setBusy(null);
-      return;
-    }
-    setBusy(null);
-  };
-
-  const addItem = () => {
-    const cents = Math.round(Number(itemPrice.replace(',', '.')) * 100);
-    if (!itemName.trim() || !Number.isFinite(cents) || cents < 0) return;
-    setItems((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        name: itemName.trim(),
-        kind: 'service',
-        description: null,
-        quantity: 1,
-        unit: 'un',
-        unit_price_cents: cents,
-        total_cents: cents,
-        position: current.length,
-      },
-    ]);
-    setItemName('');
-    setItemPrice('');
-  };
-
-  const createVersion = async () => {
-    setBusy('version');
-    try {
-      const response = await companyMarketplaceProposalsApi.newVersion(proposal.id, companyId);
-      onSaved(response.proposal);
-    } catch {
-      setBusy(null);
-      return;
-    }
-    setBusy(null);
-  };
-
-  const withdraw = async () => {
-    setBusy('withdraw');
-    try {
-      const response = await companyMarketplaceProposalsApi.withdraw(proposal.id, companyId);
-      onSaved(response.proposal);
-    } catch {
-      setBusy(null);
-      return;
-    }
-    setBusy(null);
-  };
-
-  const uploadDocument = async (file?: File) => {
-    if (!file || !version) return;
-    setBusy('upload');
-    setEditorError(null);
-    try {
-      const response = await companyMarketplaceProposalsApi.uploadDocument(
-        proposal.id,
-        version.id,
-        file,
-        companyId
-      );
-      onSaved(response.proposal);
-    } catch {
-      setEditorError('Não foi possível anexar o PDF. Use um arquivo válido de até 10 MB.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const removeDocument = async (documentId: number) => {
-    if (!version) return;
-    setBusy('document-' + documentId);
-    setEditorError(null);
-    try {
-      const response = await companyMarketplaceProposalsApi.removeDocument(
-        proposal.id,
-        version.id,
-        documentId,
-        companyId
-      );
-      onSaved(response.proposal);
-    } catch {
-      setEditorError('Não foi possível remover o documento desta versão.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-            {proposal.reference}
-          </p>
-          <h2 className="mt-1 text-2xl font-black text-slate-950">Editar proposta</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Lead: {proposal.lead?.name || 'não informado'} ·{' '}
-            {proposal.lead?.email || 'e-mail não informado'}
-          </p>
-        </div>
-        <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
-          {proposal.status}
-        </span>
-      </div>
-      <div className="mt-6 space-y-4">
-        <label className="block text-sm font-bold text-slate-800">
-          Título
-          <input
-            disabled={!editable}
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            className="mt-1 h-12 w-full rounded-xl border border-slate-200 px-3 font-normal"
-          />
-        </label>
-        <label className="block text-sm font-bold text-slate-800">
-          Resumo
-          <textarea
-            disabled={!editable}
-            value={summary}
-            onChange={(event) => setSummary(event.target.value)}
-            className="mt-1 min-h-28 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal"
-          />
-        </label>
-        <label className="block text-sm font-bold text-slate-800">
-          Válida até
-          <input
-            type="date"
-            disabled={!editable || busy !== null}
-            value={validUntil}
-            onChange={(event) => setValidUntil(event.target.value)}
-            className="mt-1 h-12 w-full rounded-xl border border-slate-200 px-3 font-normal"
-          />
-        </label>
-        <label className="block text-sm font-bold text-slate-800">
-          Valor total da proposta
-          <input
-            disabled={!editable || busy !== null}
-            value={documentTotal}
-            onChange={(event) => setDocumentTotal(event.target.value)}
-            inputMode="decimal"
-            placeholder="Ex.: 25750,00"
-            className="mt-1 h-12 w-full rounded-xl border border-slate-200 px-3 font-normal"
-          />
-          <span className="mt-1 block text-xs font-normal text-slate-500">
-            Obrigatório quando a proposta for enviada somente em PDF.
-          </span>
-        </label>
-        <fieldset disabled={!editable || busy !== null} className="space-y-3">
-          <legend className="mb-3 text-sm font-semibold">
-            Dados técnicos e condições para comparação
-          </legend>
-          <p className="text-xs text-slate-500">
-            Informe valores com as unidades, como kWp, kWh/mês e R$/mês. Os dados serão exibidos ao
-            cliente.
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[...technicalFields, { label: 'Premissas e observações', keys: ['assumptions'] }].map(
-              (field) => (
-                <label key={field.keys[0]} className="text-sm font-medium text-slate-800">
-                  {field.label}
-                  <input
-                    value={terms.find((term) => field.keys.includes(term.key))?.value || ''}
-                    onChange={(event) =>
-                      setTerms((current) => {
-                        const existing = current.find((term) => field.keys.includes(term.key));
-                        return existing
-                          ? current.map((term) =>
-                              term.key === existing.key
-                                ? { ...term, value: event.target.value }
-                                : term
-                            )
-                          : [
-                              ...current,
-                              {
-                                id: Date.now(),
-                                key: field.keys[0],
-                                label: field.label,
-                                value: event.target.value,
-                                position: current.length,
-                              },
-                            ];
-                      })
-                    }
-                    maxLength={1000}
-                    className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 font-normal"
-                  />
-                </label>
-              )
-            )}
-          </div>
-        </fieldset>
-        <section className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-black text-slate-900">Documentos da versão</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                PDF privado, verificado e limitado a 10 MB.
-              </p>
-            </div>
-            {editable && (
-              <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-3 text-sm font-bold text-white">
-                {busy === 'upload' ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                Anexar PDF
-                <input
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  disabled={busy !== null}
-                  onChange={(event) => {
-                    void uploadDocument(event.target.files?.[0]);
-                    event.currentTarget.value = '';
-                  }}
-                  className="sr-only"
-                />
-              </label>
-            )}
-          </div>
-          <div className="mt-3 space-y-2">
-            {documents.map((document) => (
-              <div
-                key={document.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <FileText className="h-5 w-5 shrink-0 text-blue-600" />
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-bold text-slate-900">
-                      {document.filename}
-                    </span>
-                    <span className="block text-xs text-slate-500">
-                      {(document.byte_size / 1024 / 1024).toFixed(1)} MB
-                    </span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <a
-                    href={companyMarketplaceProposalsApi.documentDownloadUrl(
-                      proposal.id,
-                      version!.id,
-                      document.id,
-                      companyId,
-                      true
-                    )}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`Visualizar ${document.filename}`}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 hover:bg-blue-50"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </a>
-                  <a
-                    href={companyMarketplaceProposalsApi.documentDownloadUrl(
-                      proposal.id,
-                      version!.id,
-                      document.id,
-                      companyId
-                    )}
-                    aria-label={`Baixar ${document.filename}`}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-blue-700 hover:bg-blue-50"
-                  >
-                    <Download className="h-4 w-4" />
-                  </a>
-                  {editable && (
-                    <button
-                      type="button"
-                      onClick={() => void removeDocument(document.id)}
-                      disabled={busy !== null}
-                      aria-label={`Remover ${document.filename}`}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg text-rose-700 hover:bg-rose-50 disabled:opacity-50"
-                    >
-                      {busy === 'document-' + document.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-            {!documents.length && (
-              <p className="rounded-xl border border-dashed border-slate-300 p-3 text-sm text-slate-500">
-                Nenhum documento anexado nesta versão.
-              </p>
-            )}
-          </div>
-        </section>
-        {editorError && (
-          <p role="alert" className="text-sm text-rose-700">
-            {editorError}
-          </p>
-        )}
-        <div>
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-slate-900">Itens e condições comerciais</h3>
-            <span className="text-sm font-black text-blue-700">
-              {money(items.reduce((sum, item) => sum + item.total_cents, 0))}
-            </span>
-          </div>
-          <div className="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200">
-            {items.map((item, index) => (
-              <div
-                key={item.id || index}
-                className="flex items-center justify-between gap-3 p-3 text-sm"
-              >
-                <span>
-                  <span className="block font-bold text-slate-900">{item.name}</span>
-                  <span className="text-xs text-slate-500">{money(item.total_cents)}</span>
-                </span>
-                {editable && (
-                  <button
-                    type="button"
-                    aria-label="Remover item"
-                    onClick={() =>
-                      setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))
-                    }
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-            {!items.length && (
-              <p className="p-4 text-sm text-slate-500">
-                Adicione os itens que compõem a proposta.
-              </p>
-            )}
-          </div>
-        </div>
-        {editable && (
-          <div className="grid gap-2 sm:grid-cols-[1fr_160px_auto]">
-            <input
-              value={itemName}
-              onChange={(event) => setItemName(event.target.value)}
-              placeholder="Ex.: Sistema fotovoltaico"
-              className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
-            />
-            <input
-              value={itemPrice}
-              onChange={(event) => setItemPrice(event.target.value)}
-              inputMode="decimal"
-              placeholder="Valor em R$"
-              className="h-11 rounded-xl border border-slate-200 px-3 text-sm"
-            />
-            <button
-              type="button"
-              onClick={addItem}
-              className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-blue-200 bg-blue-50 px-3 text-sm font-bold text-blue-700"
-            >
-              <Plus className="h-4 w-4" /> Adicionar
-            </button>
-          </div>
-        )}
-        {editable && (
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => void save()}
-              disabled={busy !== null}
-              className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-bold text-slate-800"
-            >
-              {busy === 'save' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}{' '}
-              Salvar rascunho
-            </button>
-            <button
-              type="button"
-              onClick={() => void send()}
-              disabled={
-                busy !== null ||
-                (!items.length && !documents.length) ||
-                (documents.length > 0 && !items.length && documentTotalCents <= 0)
-              }
-              className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-black text-white disabled:opacity-50"
-            >
-              {busy === 'send' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}{' '}
-              Publicar proposta
-            </button>
-          </div>
-        )}
-        {canCreateVersion && (
-          <div className="flex flex-wrap gap-3 border-t border-slate-100 pt-4">
-            <button
-              type="button"
-              onClick={() => void createVersion()}
-              disabled={busy !== null}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-bold text-blue-700"
-            >
-              {busy === 'version' ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <History className="h-4 w-4" />
-              )}{' '}
-              Criar nova versão
-            </button>
-            {canWithdraw && (
-              <button
-                type="button"
-                onClick={() => void withdraw()}
-                disabled={busy !== null}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-rose-200 px-4 text-sm font-bold text-rose-700"
-              >
-                {busy === 'withdraw' ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <X className="h-4 w-4" />
-                )}{' '}
-                Retirar proposta
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
+// Support components: ProposalTimeline, CompanyLifecyclePanel, CompanyVersionHistory
 const eventLabels: Record<string, string> = {
   'proposal.created': 'Proposta criada',
   'proposal.sent': 'Proposta publicada',
@@ -867,7 +644,7 @@ function ProposalTimeline({ proposal }: { proposal: MarketplaceProposal }) {
   const events = proposal.events || [];
 
   return (
-    <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-24">
+    <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center gap-2">
         <Clock3 className="h-5 w-5 text-blue-700" />
         <div>
@@ -894,7 +671,7 @@ function ProposalTimeline({ proposal }: { proposal: MarketplaceProposal }) {
         ))}
       </ol>
       {!events.length && (
-        <p className="mt-4 text-sm text-slate-500">Nenhum evento registrado para esta proposta.</p>
+        <p className="mt-4 text-xs text-slate-400">Nenhum evento registrado para esta proposta.</p>
       )}
     </aside>
   );
@@ -954,7 +731,7 @@ function CompanyLifecyclePanel({
       {lifecycleError && (
         <p
           role="alert"
-          className="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800"
+          className="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800"
         >
           {lifecycleError}
         </p>
@@ -964,25 +741,27 @@ function CompanyLifecyclePanel({
           Operação da proposta
         </p>
         <h2 className="mt-1 text-xl font-black text-slate-950">Reuniões e acompanhamento</h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-xs text-slate-500">
           Atualizações feitas aqui aparecem para o cliente no PWA e no webapp.
         </p>
       </div>
 
       {meetings.length > 0 && (
         <div className="mt-5 space-y-3">
-          <h3 className="text-sm font-black text-slate-900">Reuniões solicitadas</h3>
+          <h3 className="text-xs font-bold text-slate-900 uppercase">Reuniões solicitadas</h3>
           {meetings.map((meeting) => (
             <div
               key={meeting.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 p-3"
             >
               <div>
-                <p className="font-bold text-slate-900">
+                <p className="font-bold text-slate-900 text-sm">
                   {meeting.meeting_type === 'video' ? 'Videoconferência' : 'Reunião'}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {meeting.scheduled_at ? date(meeting.scheduled_at) : 'Horário a combinar'}
+                  {meeting.scheduled_at
+                    ? new Date(meeting.scheduled_at).toLocaleDateString('pt-BR')
+                    : 'Horário a combinar'}
                   {meeting.notes ? ' · ' + meeting.notes : ''}
                 </p>
               </div>
@@ -990,7 +769,7 @@ function CompanyLifecyclePanel({
                 value={meeting.status}
                 onChange={(event) => void updateMeeting(meeting.id, event.target.value)}
                 disabled={busy === 'meeting-' + meeting.id}
-                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700"
+                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"
               >
                 <option value="requested">Solicitada</option>
                 <option value="confirmed">Confirmada</option>
@@ -1005,7 +784,7 @@ function CompanyLifecyclePanel({
       {project && (
         <div className="mt-6 border-t border-slate-100 pt-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-sm font-black text-slate-900">Acompanhamento do projeto</h3>
+            <h3 className="text-xs font-bold text-slate-900 uppercase">Acompanhamento do projeto</h3>
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
               {project.status}
             </span>
@@ -1017,14 +796,14 @@ function CompanyLifecyclePanel({
                 className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 p-3"
               >
                 <div>
-                  <p className="font-bold text-slate-900">{milestone.title}</p>
+                  <p className="font-bold text-slate-900 text-sm">{milestone.title}</p>
                   <p className="text-xs text-slate-500">{milestone.notes || 'Sem observações'}</p>
                 </div>
                 <select
                   value={milestone.status}
                   onChange={(event) => void updateMilestone(milestone.id, event.target.value)}
                   disabled={busy === 'milestone-' + milestone.id}
-                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700"
+                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"
                 >
                   <option value="pending">Aguardando</option>
                   <option value="current">Em andamento</option>
@@ -1067,12 +846,14 @@ function CompanyVersionHistory({ versions }: { versions: MarketplaceProposalVers
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <p className="font-bold text-slate-950">{version.title}</p>
-                <span className="font-black text-blue-700">{money(version.total_cents)}</span>
+                <span className="font-black text-blue-700">
+                  {formatBrlCurrency(version.total_cents, false)}
+                </span>
               </div>
               <p className="mt-1 text-xs text-slate-500">
                 {version.status === 'published' ? 'Enviada ao cliente' : 'Rascunho interno'}
               </p>
-              {version.summary && <p className="mt-2 text-sm text-slate-600">{version.summary}</p>}
+              {version.summary && <p className="mt-2 text-xs text-slate-600">{version.summary}</p>}
             </div>
           </li>
         ))}
