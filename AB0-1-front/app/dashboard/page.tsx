@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense, useCallback } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
@@ -9,8 +9,6 @@ import {
   FileText, 
   DollarSign, 
   Loader2,
-  Eye,
-  Star,
   LayoutDashboard
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +17,6 @@ import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 import DashboardLayout from './components/DashboardLayout';
@@ -94,6 +91,13 @@ function DashboardPageContent() {
         setViewMode('redirecting');
         return;
       }
+    }
+
+    // Encaminha links legados da aba de propostas para a rota canônica PWA
+    if (searchParams.get('tab') === 'proposals') {
+      router.replace('/dashboard/proposals');
+      setViewMode('redirecting');
+      return;
     }
 
     // ✅ Identidade multi-contexto: role=review com CompanyMember ativo deve

@@ -108,6 +108,16 @@ const IcpSetupForm = dynamic(() => import('./IcpSetupForm'), {
 const SupportTrainingDashboard = dynamic(() => import('./SupportTrainingDashboard'), {
   loading: () => <DashboardTabSkeleton />,
 });
+const CompanyMarketplaceProposalsWorkspace = dynamic(
+  () =>
+    import(
+      '@/components/company-dashboard/CompanyMarketplaceProposalsWorkspace'
+    ).then((mod) => mod.CompanyMarketplaceProposalsWorkspace),
+  {
+    loading: () => <DashboardTabSkeleton />,
+    ssr: false,
+  }
+);
 
 function DashboardTabSkeleton() {
   return (
@@ -288,6 +298,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       router.push('/dashboard/icp');
       return;
     }
+    if (tab === 'proposals') {
+      router.push('/dashboard/proposals');
+      return;
+    }
 
     setActiveTab(tab);
 
@@ -326,6 +340,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     const tab = searchParams.get('tab');
     if (tab === 'icp-config') {
       router.push('/dashboard/icp');
+      return;
+    }
+    if (tab === 'proposals') {
+      router.push('/dashboard/proposals');
       return;
     }
     if (tab && tab !== activeTab) {
@@ -772,6 +790,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <LeadsOpportunities companyId={companyId} />
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent
+                value="proposals"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="proposals"
+              >
+                <CompanyMarketplaceProposalsWorkspace companyId={companyId} />
               </TabsContent>
 
               <TabsContent value="approvals" className="mt-0 focus-visible:outline-none">

@@ -34,8 +34,15 @@ type Distribution = {
   lead: MarketplaceProposal['lead'];
 };
 
-export function CompanyMarketplaceProposalsWorkspace() {
+interface CompanyMarketplaceProposalsWorkspaceProps {
+  companyId?: string | number;
+}
+
+export function CompanyMarketplaceProposalsWorkspace({
+  companyId: propCompanyId,
+}: CompanyMarketplaceProposalsWorkspaceProps = {}) {
   const { activeCompany, isLoading: companyLoading } = useCompanyContext();
+  const effectiveCompanyId = propCompanyId || activeCompany?.id;
   const [proposals, setProposals] = useState<MarketplaceProposal[]>([]);
   const [distributions, setDistributions] = useState<Distribution[]>([]);
 
@@ -66,13 +73,13 @@ export function CompanyMarketplaceProposalsWorkspace() {
   });
 
   const load = useCallback(async () => {
-    if (!activeCompany?.id) return;
+    if (!effectiveCompanyId) return;
     setLoading(true);
     setError(null);
     try {
       const [proposalResponse, distributionResponse] = await Promise.all([
-        companyMarketplaceProposalsApi.list(activeCompany.id),
-        companyMarketplaceProposalsApi.distributions(activeCompany.id),
+        companyMarketplaceProposalsApi.list(effectiveCompanyId),
+        companyMarketplaceProposalsApi.distributions(effectiveCompanyId),
       ]);
       const fetchedProposals = proposalResponse.proposals || [];
       setProposals(fetchedProposals);
@@ -87,7 +94,7 @@ export function CompanyMarketplaceProposalsWorkspace() {
     } finally {
       setLoading(false);
     }
-  }, [activeCompany?.id]);
+  }, [effectiveCompanyId]);
 
   useEffect(() => {
     void load();
@@ -95,11 +102,12 @@ export function CompanyMarketplaceProposalsWorkspace() {
 
   // Create proposal from distribution
   const handleCreateProposal = async (distributionId: number) => {
+    if (!effectiveCompanyId) return;
     setBusy(`create-${distributionId}`);
     try {
       const response = await companyMarketplaceProposalsApi.create(
         distributionId,
-        activeCompany?.id
+        effectiveCompanyId
       );
       setProposals((current) => [
         response.proposal,
@@ -238,7 +246,7 @@ export function CompanyMarketplaceProposalsWorkspace() {
     );
   }
 
-  if (!activeCompany) {
+  if (!effectiveCompanyId && !companyLoading) {
     return (
       <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-sm font-semibold text-amber-800">
         Selecione uma empresa para gerenciar propostas.
@@ -270,7 +278,7 @@ export function CompanyMarketplaceProposalsWorkspace() {
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <ProposalWizardEditor
             proposal={selectedProposal}
-            companyId={activeCompany.id}
+            companyId={effectiveCompanyId!}
             onSaved={(updated) => {
               setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
               setSelectedProposal(updated);
@@ -508,13 +516,24 @@ export function CompanyMarketplaceProposalsWorkspace() {
                     </button>
 
                     {proposal ? (
-                      <button
-                        type="button"
-                        onClick={() => handleOpenProposal(proposal)}
-                        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
-                      >
-                        Abrir proposta
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {proposal.status !== 'draft' && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenProposal(proposal)}
+                            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-blue-600 bg-white px-3.5 text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors"
+                          >
+                            Criar nova versão
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenProposal(proposal)}
+                          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                        >
+                          Abrir proposta
+                        </button>
+                      </div>
                     ) : dist ? (
                       <button
                         type="button"
@@ -560,13 +579,24 @@ export function CompanyMarketplaceProposalsWorkspace() {
                       Lead: {selectedProposal.lead?.name} · {selectedProposal.lead?.email}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenProposal(selectedProposal)}
-                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700"
-                  >
-                    Abrir no editor
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {selectedProposal.status !== 'draft' && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenProposal(selectedProposal)}
+                        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-blue-600 bg-white px-3.5 text-xs font-bold text-blue-600 hover:bg-blue-50"
+                      >
+                        Criar nova versão
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenProposal(selectedProposal)}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700"
+                    >
+                      Abrir no editor
+                    </button>
+                  </div>
                 </div>
               </div>
 
