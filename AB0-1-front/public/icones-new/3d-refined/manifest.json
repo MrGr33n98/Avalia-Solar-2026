@@ -1,0 +1,671 @@
+{
+  "collection": "Avalia Solar – 24 ícones 3D recriados",
+  "variant": "3d-refined-v1",
+  "total": 24,
+  "description": "Ícones de categorias com versões individuais PNG RGBA e WebP RGBA, todos sem legenda.",
+  "notice": "Assets reamostrados de uma prancha gerada por IA; adequados a tamanhos modestos de UI, não possuem detalhe 1024 px nativo. Cobrem 24 segmentos somente, não substituem os 47 ícones pretos.",
+  "mapping_rules": [
+    "A correspondência deve ser por slug exato normalizado ou chave visual semântica verificada.",
+    "O code antigo A06 refere-se a Financiamento no conjunto 3D, mas A06 no conjunto novo preto pode significar outra categoria; jamais fazer join pelo code entre pacotes.",
+    "Para as categorias não cobertas, usar fallback existente e não inventar novos mapas."
+  ],
+  "icons": [
+    {
+      "code": "A01",
+      "name": "Baterias e Armazenamento de Energia",
+      "slugs": [
+        "baterias-armazenamento-energia",
+        "baterias-e-armazenamento-de-energia",
+        "armazenamento-energia",
+        "battery_storage"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A01_baterias-e-armazenamento-de-energia.png",
+          "bytes": 325731,
+          "sha256": "b005222a3ecadcc93715bbb63b568f131b296478e63a01ba914d990a097fa2f8"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A01_baterias-e-armazenamento-de-energia-512.webp",
+          "bytes": 19762,
+          "sha256": "bba598fd39b72a646e10831a0f92146875e82d9711544a6c8c983ddf17278387"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A01_baterias-e-armazenamento-de-energia-256.webp",
+          "bytes": 8754,
+          "sha256": "14272567a3ecbd55d9860671f611373e7fa6cb8ffe4570a276b83e24248ca832"
+        }
+      }
+    },
+    {
+      "code": "A02",
+      "name": "Carport Solar e Coberturas Solares",
+      "slugs": [
+        "carport-solar-coberturas-solares",
+        "carport-solar-e-coberturas-solares",
+        "carport-solar",
+        "solar_carport"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A02_carport-solar-e-coberturas-solares.png",
+          "bytes": 400050,
+          "sha256": "53cd028f966e3032ef88006564446fb9afd2ead0aa1ead09620caac9b20c9109"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A02_carport-solar-e-coberturas-solares-512.webp",
+          "bytes": 23088,
+          "sha256": "a177065e2700bf3046d8a115382fc5c782c1259c00a14b3d000ca122ef347329"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A02_carport-solar-e-coberturas-solares-256.webp",
+          "bytes": 9696,
+          "sha256": "47ea252a3ae57aa1cc7ef984b6eada2344a755ec6f2a3413fb6d535605e6b60d"
+        }
+      }
+    },
+    {
+      "code": "A03",
+      "name": "Energia Solar Comercial e Industrial",
+      "slugs": [
+        "energia-solar-comercial-industrial",
+        "energia-solar-comercial-e-industrial",
+        "comercial-industrial",
+        "commercial_industrial_solar"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A03_energia-solar-comercial-e-industrial.png",
+          "bytes": 531087,
+          "sha256": "e1d553be78b0ce0b1c44377416efd696a3410dec78521836a0088923f5b5ed53"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A03_energia-solar-comercial-e-industrial-512.webp",
+          "bytes": 28808,
+          "sha256": "78d9f31f27cced0c989588190acd455ee50b25288dc01df3e3e6b540ba904bc6"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A03_energia-solar-comercial-e-industrial-256.webp",
+          "bytes": 12830,
+          "sha256": "b5f26fccbe8aced7a104319edd9a8a41fd5c3b38e0a76e805c97881a1a706e68"
+        }
+      }
+    },
+    {
+      "code": "A04",
+      "name": "Energia Solar Residencial",
+      "slugs": [
+        "energia-solar-residencial",
+        "residential_solar"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A04_energia-solar-residencial.png",
+          "bytes": 445456,
+          "sha256": "8a65751324b9898a57f296fede803fc6cfb8c1608a23800a274503401032cf87"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A04_energia-solar-residencial-512.webp",
+          "bytes": 27886,
+          "sha256": "93490a9e7ce82fbca2b9511022692bf4088eed4b0ebe762f6bfd50540f0fa9c1"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A04_energia-solar-residencial-256.webp",
+          "bytes": 11562,
+          "sha256": "640bc6ea80a6cb195d5a40ed8b70895f7f4c01b93f68340b432138fb0f4de815"
+        }
+      }
+    },
+    {
+      "code": "A05",
+      "name": "Energia Solar Rural e Agronegócio",
+      "slugs": [
+        "energia-solar-rural-agronegocio",
+        "energia-solar-rural-e-agronegocio",
+        "energia-solar-rural",
+        "rural_solar"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A05_energia-solar-rural-e-agronegocio.png",
+          "bytes": 445389,
+          "sha256": "b0eb07a323a41b79b81e9ca5b5c622c402019c607b4fcaa4473a460642ff27ee"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A05_energia-solar-rural-e-agronegocio-512.webp",
+          "bytes": 29266,
+          "sha256": "5b720c5267efa255152e86d963f6bd2dc54ce95a5c0307b6f1c5ef513f5224fd"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A05_energia-solar-rural-e-agronegocio-256.webp",
+          "bytes": 12250,
+          "sha256": "ec5b54c44ed8b906457d8362872e79c475018a872ab7a9e99fc9af2b1956a2d7"
+        }
+      }
+    },
+    {
+      "code": "A06",
+      "name": "Financiamento de Energia Solar",
+      "slugs": [
+        "financiamento-energia-solar",
+        "financiamento-de-energia-solar",
+        "solar_financing"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A06_financiamento-de-energia-solar.png",
+          "bytes": 375109,
+          "sha256": "ae148bb30c24e32eb019ca33600cb545950f992bd25f2051080632f6c876cc93"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A06_financiamento-de-energia-solar-512.webp",
+          "bytes": 23302,
+          "sha256": "89b8161920cae2d942e3082bb1cb84feb706b6005a8d29b7804eec08f79a17aa"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A06_financiamento-de-energia-solar-256.webp",
+          "bytes": 9994,
+          "sha256": "a2aea8597c4c9fbc4eac8e9c937f98773702ce2f9ee491d38efb2e0382293144"
+        }
+      }
+    },
+    {
+      "code": "A07",
+      "name": "Instaladores de Energia Solar",
+      "slugs": [
+        "instaladores-energia-solar",
+        "instaladores-de-energia-solar",
+        "solar_installer"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A07_instaladores-de-energia-solar.png",
+          "bytes": 414430,
+          "sha256": "931c38327f58a02901fca62005b840d7e2eafadc57fc26df6fcad770338aa78f"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A07_instaladores-de-energia-solar-512.webp",
+          "bytes": 26622,
+          "sha256": "46dfe1c9149719d68e461d91ad85c042facd96a03e86da368f801cd39dc3909b"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A07_instaladores-de-energia-solar-256.webp",
+          "bytes": 11546,
+          "sha256": "b20bb7fef7d06b024b8284d3b56b928f8763b27c53dcfef89931293a5cb80a9c"
+        }
+      }
+    },
+    {
+      "code": "A08",
+      "name": "Inversores",
+      "slugs": [
+        "inversores",
+        "inversores-solares",
+        "solar_inverter"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A08_inversores.png",
+          "bytes": 233759,
+          "sha256": "138aceea190de0a76774da40332e8a2ffae91a4ef491b0701c42dd2799751583"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A08_inversores-512.webp",
+          "bytes": 14996,
+          "sha256": "1fabba9f98a9cc91ab60a83d2acf13d747dd4ae55c7a856abea0454407924a2f"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A08_inversores-256.webp",
+          "bytes": 6648,
+          "sha256": "db28397d7a4f32adceabd426bc3fb487bf427dbe8674cc849a43707fe2e00941"
+        }
+      }
+    },
+    {
+      "code": "A09",
+      "name": "Monitoramento e O&M",
+      "slugs": [
+        "monitoramento-om",
+        "monitoramento-o-m",
+        "monitoramento-e-o-e-m",
+        "monitoramento-operacao-manutencao",
+        "monitoring_software"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A09_monitoramento-e-o-e-m.png",
+          "bytes": 335461,
+          "sha256": "6aafd8d7a1e15a4973b7c3f9220ccc904219ddd35946e561fb344cc3a0b78704"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A09_monitoramento-e-o-e-m-512.webp",
+          "bytes": 17728,
+          "sha256": "4a248a47b929d5ea50e299b86d171dbbd09b154c2c643ee1b2d9a2baf1b54eea"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A09_monitoramento-e-o-e-m-256.webp",
+          "bytes": 8108,
+          "sha256": "294514f82f99d15a8e72508cc64357f066372c5dd5effe081f0b0197b143745b"
+        }
+      }
+    },
+    {
+      "code": "A10",
+      "name": "Painéis Solares",
+      "slugs": [
+        "paineis-solares",
+        "painel-solar",
+        "solar_panel"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A10_paineis-solares.png",
+          "bytes": 469260,
+          "sha256": "f03a879207aceab7923e3350bbe2b4c904fafef2e6125fb8a128cb8929cf69c0"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A10_paineis-solares-512.webp",
+          "bytes": 29036,
+          "sha256": "3d2565e261163cfa76e2690e2b48b2d373e607d5d32c229fe205ab9ae13d6840"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A10_paineis-solares-256.webp",
+          "bytes": 12570,
+          "sha256": "ea2fb9177597302498e1878d2ee83316d906c61733e8c6d093d71cb002dfc67c"
+        }
+      }
+    },
+    {
+      "code": "A11",
+      "name": "Energia Solar",
+      "slugs": [
+        "energia-solar",
+        "energia-solar-fotovoltaica"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/A11_energia-solar.png",
+          "bytes": 434392,
+          "sha256": "590fe8c2d02c72f822748984bc0cb42e54e15be032ac4c0357cfbd664037e425"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/A11_energia-solar-512.webp",
+          "bytes": 26904,
+          "sha256": "f3b73b17815f0d2ab9a0d0ee5d22e3925e0345815780127ff097ff6b4a36b367"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/A11_energia-solar-256.webp",
+          "bytes": 11848,
+          "sha256": "a9b128e7bc3d994d228502578e938390d157c1726134a9b49c00390df4254b8a"
+        }
+      }
+    },
+    {
+      "code": "B01",
+      "name": "Frotas Elétricas Corporativas",
+      "slugs": [
+        "frotas-eletricas-corporativas",
+        "frotas-corporativas",
+        "frotas-eletricas-empresas",
+        "fleet_electric"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/B01_frotas-eletricas-corporativas.png",
+          "bytes": 334111,
+          "sha256": "c3eb9af16060c052c5e64f4e0b23b5da833e4bb3bef070752b77ba2ccc57f771"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/B01_frotas-eletricas-corporativas-512.webp",
+          "bytes": 20428,
+          "sha256": "0a78029281301348325e092df413f0eca595f80c53dfec236b6dc1e642368d58"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/B01_frotas-eletricas-corporativas-256.webp",
+          "bytes": 8876,
+          "sha256": "0d95121f50fd154c33f2b18706ce399566bb347eae3eb68a6763e28d3795bb81"
+        }
+      }
+    },
+    {
+      "code": "B02",
+      "name": "Frotas Elétricas para Logística e Entregas",
+      "slugs": [
+        "frotas-eletricas-para-logistica-e-entregas",
+        "frotas-logistica",
+        "frotas-eletricas-logistica"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/B02_frotas-eletricas-para-logistica-e-entregas.png",
+          "bytes": 431093,
+          "sha256": "f4fdbc2f668e939a0f4814d2927b62cd28f5131038a7e6e28f2f8846982b587f"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/B02_frotas-eletricas-para-logistica-e-entregas-512.webp",
+          "bytes": 24268,
+          "sha256": "6609af6634b4b6052b0618806ba1580b19c3a84d7e5faa9af050e908d2868261"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/B02_frotas-eletricas-para-logistica-e-entregas-256.webp",
+          "bytes": 10398,
+          "sha256": "c2a7929646013d652ad9cd7c85a64dcd7701bd5f15a36cb141118e8f93f4c21d"
+        }
+      }
+    },
+    {
+      "code": "B03",
+      "name": "Frotas Elétricas para Mobilidade Urbana",
+      "slugs": [
+        "frotas-eletricas-para-mobilidade-urbana",
+        "mobilidade-urbana"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/B03_frotas-eletricas-para-mobilidade-urbana.png",
+          "bytes": 432694,
+          "sha256": "42243f323341bb4b11ffa328e6868e885486932d0ef26407df70a62c901a464b"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/B03_frotas-eletricas-para-mobilidade-urbana-512.webp",
+          "bytes": 22460,
+          "sha256": "06c5035928f3a3afef940282225ab8ee94e938f4b06def44924bf348ea12ad9c"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/B03_frotas-eletricas-para-mobilidade-urbana-256.webp",
+          "bytes": 9526,
+          "sha256": "72d706c9db3bf8f77e27136abc4b573c36c7e0f05129d13f0328236f46baff3a"
+        }
+      }
+    },
+    {
+      "code": "B04",
+      "name": "Gestão de Frotas Elétricas",
+      "slugs": [
+        "gestao-de-frotas-eletricas",
+        "gestao-frotas",
+        "gestao-de-frotas",
+        "fleet_management"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/B04_gestao-de-frotas-eletricas.png",
+          "bytes": 478025,
+          "sha256": "dd6c44ccc4a7882d1ef9e8ca9084f003d2bc3c9e8e48abb899da7d2d58c7764e"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/B04_gestao-de-frotas-eletricas-512.webp",
+          "bytes": 26302,
+          "sha256": "8ab72cfe3471c143deeb216c8736f85150d10dfded6dfc7319d3813bccb09960"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/B04_gestao-de-frotas-eletricas-256.webp",
+          "bytes": 10900,
+          "sha256": "c6a43f05c8b33f403ccdcc5591a39a19e8fb4ba51764fc562520e44b0632de2a"
+        }
+      }
+    },
+    {
+      "code": "B05",
+      "name": "Infraestrutura de Recarga para Frotas",
+      "slugs": [
+        "infraestrutura-de-recarga-para-frotas",
+        "recarga-frotas",
+        "fleet_charging"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/B05_infraestrutura-de-recarga-para-frotas.png",
+          "bytes": 516095,
+          "sha256": "2636cc12e648b71ac490d160577592316c272db1184e9263505eaefe0fc5083b"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/B05_infraestrutura-de-recarga-para-frotas-512.webp",
+          "bytes": 29358,
+          "sha256": "1b12c79b182a37ee11b380aa6e7167c640e6df3045e63fb1c2762ee6f2feb7ef"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/B05_infraestrutura-de-recarga-para-frotas-256.webp",
+          "bytes": 12504,
+          "sha256": "c248f0253fbd58279d9165e611c7d79a49fd6bd24917529cf1c5e6c93b4301c9"
+        }
+      }
+    },
+    {
+      "code": "C01",
+      "name": "Mercado Livre de Energia",
+      "slugs": [
+        "mercado-livre-de-energia",
+        "mercado-livre",
+        "free_energy_market"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/C01_mercado-livre-de-energia.png",
+          "bytes": 402979,
+          "sha256": "8ea63e17b05cae10b99b7a08d9cfb41eca71cb16b1cfc6d4d6777ae2fdc923f1"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/C01_mercado-livre-de-energia-512.webp",
+          "bytes": 21138,
+          "sha256": "683f8ad96fb19cb301749d33122fa96548c512b69f0b4712f68a821e3fe0847e"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/C01_mercado-livre-de-energia-256.webp",
+          "bytes": 9364,
+          "sha256": "5b552c180246054e7f8261d144fcee07c0951bd4740f49f8d0db882f5eb432f2"
+        }
+      }
+    },
+    {
+      "code": "D01",
+      "name": "Carregadores Comerciais e Condomínios",
+      "slugs": [
+        "carregadores-comerciais-e-condominios",
+        "carregadores-comerciais",
+        "commercial_ev_charger"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/D01_carregadores-comerciais-e-condominios.png",
+          "bytes": 407373,
+          "sha256": "f6895e85936da688c94e200025346b89b78b4d4ea078aa742dc2dc2df5e51598"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/D01_carregadores-comerciais-e-condominios-512.webp",
+          "bytes": 22948,
+          "sha256": "82bae600fdfff5ba462eed125aea0dd047956d825289643ddd24be0cd7800cca"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/D01_carregadores-comerciais-e-condominios-256.webp",
+          "bytes": 10194,
+          "sha256": "c254c6dec34601bae03f2668e5ea1ab13fc77478998f041f4c44f6064b1ecbca"
+        }
+      }
+    },
+    {
+      "code": "D02",
+      "name": "Carregadores Residenciais Wallbox",
+      "slugs": [
+        "carregadores-residenciais-wallbox",
+        "carregadores-residenciais",
+        "wallbox-residencial",
+        "carregador-residencial",
+        "home_wallbox"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/D02_carregadores-residenciais-wallbox.png",
+          "bytes": 352087,
+          "sha256": "9be2f1ddde23e5b21a5386c7586aa5e63ba00e7604f4e06cc79dd3212cf81bb4"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/D02_carregadores-residenciais-wallbox-512.webp",
+          "bytes": 19910,
+          "sha256": "8abd96e45d4a34e1fe50f7a3cb2cc71f702179bcabe08a747d01aa8a3a642fdf"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/D02_carregadores-residenciais-wallbox-256.webp",
+          "bytes": 8276,
+          "sha256": "a36d4730879011bf77413d4a3c85cb6ac969594ebb0899f77e2a42fb6f0e9d97"
+        }
+      }
+    },
+    {
+      "code": "D03",
+      "name": "Estações Públicas e Postos Rápidos",
+      "slugs": [
+        "estacoes-publicas-e-postos-rapidos",
+        "estacoes-publicas",
+        "public_charging_station"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/D03_estacoes-publicas-e-postos-rapidos.png",
+          "bytes": 420761,
+          "sha256": "6014c7ef161aa42e71e258b97fcae809e6e071601459366d4b7cccb9a418be19"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/D03_estacoes-publicas-e-postos-rapidos-512.webp",
+          "bytes": 24466,
+          "sha256": "841cc376d6c4d69a731a2bffe4e51e4603f3620d6cf6610f74330f50a46fe79e"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/D03_estacoes-publicas-e-postos-rapidos-256.webp",
+          "bytes": 10566,
+          "sha256": "051fc35a6a33439adb1db8e8199bd81b45128640d84d61e65b9ae811b150e15f"
+        }
+      }
+    },
+    {
+      "code": "D04",
+      "name": "Instaladores de Carregadores EV",
+      "slugs": [
+        "instaladores-de-carregadores-ev",
+        "instaladores-carregadores",
+        "instaladores-ev",
+        "ev_installer"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/D04_instaladores-de-carregadores-ev.png",
+          "bytes": 451601,
+          "sha256": "2addb36fb3478219128ed2775c0f67e16f25800f9506c7f8c3871a40a353ecff"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/D04_instaladores-de-carregadores-ev-512.webp",
+          "bytes": 24854,
+          "sha256": "5720890bb376446c5f9bceacad8761c3f0cc688ab6042a7fb0dcdb7d268ead22"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/D04_instaladores-de-carregadores-ev-256.webp",
+          "bytes": 10666,
+          "sha256": "526718192159bd7ee760e314d08d7e37ea82d028713cfa8de3ef132d9b946eec"
+        }
+      }
+    },
+    {
+      "code": "D05",
+      "name": "Integração Solar e Mobilidade Elétrica",
+      "slugs": [
+        "integracao-solar-e-mobilidade-eletrica",
+        "integracao-solar-mobilidade",
+        "integracao-solar-ev",
+        "solar_mobility_integration"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/D05_integracao-solar-e-mobilidade-eletrica.png",
+          "bytes": 411984,
+          "sha256": "f533506d6acf9d044ba0360bfa9f4d8cf3d3067d25825a37f8d3c5b892730089"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/D05_integracao-solar-e-mobilidade-eletrica-512.webp",
+          "bytes": 25098,
+          "sha256": "76441a66355fb147f66d21afa9f0b275b34fc0e4c43559ed98485f67327514ad"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/D05_integracao-solar-e-mobilidade-eletrica-256.webp",
+          "bytes": 9808,
+          "sha256": "6da026e6855d4694fcb858daa46b2edceeffb8fa7541bb33857df7b4ea117e49"
+        }
+      }
+    },
+    {
+      "code": "D06",
+      "name": "Veículos Elétricos",
+      "slugs": [
+        "veiculos-eletricos",
+        "carros-eletricos",
+        "electric_vehicle"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/D06_veiculos-eletricos.png",
+          "bytes": 382889,
+          "sha256": "9680248f7093b7004a6eee7281742dbd4f99320f1ad28036a6d6111f0dc8d180"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/D06_veiculos-eletricos-512.webp",
+          "bytes": 23972,
+          "sha256": "9f9239334d74ff88c236868d8b67d220bf224785c9fcd6a9ce0341a5dd8af582"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/D06_veiculos-eletricos-256.webp",
+          "bytes": 9878,
+          "sha256": "d865900982ef7bf489e5074bee1e03cc04d7deb9aaac1243b4b8bbd0d4e720fc"
+        }
+      }
+    },
+    {
+      "code": "E01",
+      "name": "Hubs de Eletromobilidade e Recarga",
+      "slugs": [
+        "hubs-de-eletromobilidade-e-recarga",
+        "hubs-eletromobilidade",
+        "electromobility_hub"
+      ],
+      "legacy_origin": "refeitos de uma prancha ilustrada; nao nativos em 1024 px",
+      "files": {
+        "png_1024": {
+          "src": "/icones-new/3d-refined/E01_hubs-de-eletromobilidade-e-recarga.png",
+          "bytes": 326738,
+          "sha256": "792ac73a8c514274292771f72ab8a4e74ace820e6527f4e50ddbfdbec0b8e456"
+        },
+        "webp_512": {
+          "src": "/icones-new/3d-refined/E01_hubs-de-eletromobilidade-e-recarga-512.webp",
+          "bytes": 21056,
+          "sha256": "8155c367de72cdd599974cec8da2265826326ce44f77ae42201d02df0a7e6cac"
+        },
+        "webp_256": {
+          "src": "/icones-new/3d-refined/E01_hubs-de-eletromobilidade-e-recarga-256.webp",
+          "bytes": 8896,
+          "sha256": "f7877ad6bc707e357637d8953e8b01c9096653a10ce5a9c255226f984fe153b9"
+        }
+      }
+    }
+  ]
+}

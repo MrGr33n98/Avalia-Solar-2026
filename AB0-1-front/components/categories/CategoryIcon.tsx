@@ -32,6 +32,7 @@ export interface CategoryIconProps {
   imageClassName?: string;
 
   fill?: boolean;
+  sizeVariant?: '256' | '512' | '1024';
 }
 
 export function CategoryIcon({
@@ -46,10 +47,14 @@ export function CategoryIcon({
   className,
   imageClassName,
   fill = false,
+  sizeVariant,
 }: CategoryIconProps) {
   /* ---------------------------------------------------------------------- */
-  /* VISUAL RESOLUTION (CANONICAL 47 ICONS SINGLE SOURCE OF TRUTH)           */
+  /* VISUAL RESOLUTION (CANONICAL 3D REFINED & SVG SOURCE OF TRUTH)        */
   /* ---------------------------------------------------------------------- */
+
+  const isSmall = size === 'sm' || (typeof size === 'number' && size <= 64);
+  const resolvedSizeVariant = sizeVariant || (isSmall ? '256' : '512');
 
   const resolution = resolveCategoryIcon({
     slug,
@@ -58,6 +63,7 @@ export function CategoryIcon({
     iconUrl,
     parentSlug,
     parentId,
+    sizeVariant: resolvedSizeVariant,
   });
 
   const src = resolution.src;

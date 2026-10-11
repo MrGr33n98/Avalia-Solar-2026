@@ -17,17 +17,17 @@ jest.mock('next/image', () => ({
 }));
 
 describe('CategoryIcon Component', () => {
-  it('renderiza o novo SVG monocromático para a categoria principal Energia Solar', () => {
+  it('renderiza o ícone 3D novo para a categoria principal Energia Solar (WebP 256 para tamanho <= 64)', () => {
     render(<CategoryIcon slug="energia-solar" name="Energia Solar" size={32} />);
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute(
       'src',
-      '/icones-new/A_energia-solar/principal/a_energia-solar.svg'
+      '/icones-new/3d-refined/A11_energia-solar-256.webp'
     );
     expect(img).toHaveClass('object-contain');
   });
 
-  it('renderiza o SVG correto para a subcategoria Baterias e Armazenamento', () => {
+  it('renderiza o ícone 3D correto para a subcategoria Baterias e Armazenamento (size="sm")', () => {
     render(
       <CategoryIcon
         slug="baterias-e-armazenamento-de-energia"
@@ -38,11 +38,11 @@ describe('CategoryIcon Component', () => {
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute(
       'src',
-      '/icones-new/A_energia-solar/subcategorias/a01_baterias-e-armazenamento-de-energia.svg'
+      '/icones-new/3d-refined/A01_baterias-e-armazenamento-de-energia-256.webp'
     );
   });
 
-  it('prevalece novo SVG mesmo se iconUrl legado for informado para categoria conhecida', () => {
+  it('prevalece novo ícone 3D mesmo se iconUrl legado for informado para categoria conhecida', () => {
     render(
       <CategoryIcon
         slug="energia-solar-residencial"
@@ -53,11 +53,11 @@ describe('CategoryIcon Component', () => {
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute(
       'src',
-      '/icones-new/A_energia-solar/subcategorias/a04_energia-solar-residencial.svg'
+      '/icones-new/3d-refined/A04_energia-solar-residencial-512.webp'
     );
   });
 
-  it('renderiza no modo fill com container ocupando área total', () => {
+  it('renderiza no modo fill com o ativo 3D de 512px e container ocupando área total', () => {
     const { container } = render(
       <div className="relative h-16 w-16">
         <CategoryIcon slug="inversores" name="Inversores" size="fill" />
@@ -68,7 +68,21 @@ describe('CategoryIcon Component', () => {
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute(
       'src',
-      '/icones-new/A_energia-solar/subcategorias/a09_inversores.svg'
+      '/icones-new/3d-refined/A08_inversores-512.webp'
+    );
+  });
+
+  it('renderiza o SVG canônico para categoria fora do pacote 3D (ex: Selos Verdes)', () => {
+    render(
+      <CategoryIcon
+        slug="selos-verdes-e-certificacoes"
+        name="Selos Verdes e Certificações"
+      />
+    );
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute(
+      'src',
+      '/icones-new/I_sustentabilidade-e-esg/subcategorias/i03_selos-verdes-e-certificacoes.svg'
     );
   });
 

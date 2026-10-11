@@ -15,8 +15,13 @@ import {
   LEGACY_CODE_TO_NEW_CODE,
   LEGACY_KEY_TO_NEW_CODE,
 } from './category-icon-manifest';
+import {
+  Category3DSizeVariant,
+  getCategory3DDetails,
+} from './category-3d-assets';
 
 export type CategoryIconSource =
+  | 'catalog-3d'
   | 'catalog-exact'
   | 'catalog-parent-child'
   | 'verified-alias'
@@ -32,6 +37,8 @@ export interface CategoryIconInput {
   parentSlug?: string | null;
   visualKey?: string | null;
   iconUrl?: string | null;
+  sizeVariant?: Category3DSizeVariant;
+  format?: 'auto' | '3d' | 'svg';
 }
 
 export interface CategoryIconResolution {
@@ -229,6 +236,49 @@ export function resolveCategoryIcon(
       (normalizedInput.parentId !== undefined &&
         normalizedInput.parentId !== null)
   );
+
+function getMotionPresetFor3DCode(code?: string): CategoryMotionPreset {
+  if (!code) return 'neutral';
+  const prefix = code.charAt(0).toUpperCase();
+  switch (prefix) {
+    case 'A':
+      return 'solar';
+    case 'B':
+      return 'mobility';
+    case 'C':
+      return 'energyMarket';
+    case 'D':
+      return 'charging';
+    case 'E':
+      return 'hub';
+    default:
+      return 'neutral';
+  }
+}
+
+  // -------------------------------------------------------------------------
+  // PASSO 0: Consulta prioritária aos 24 ícones 3D refinados
+  // Precedência máxima para as 24 categorias mapeadas: new3D ?? iconUrl ?? legacy
+  // -------------------------------------------------------------------------
+  if (normalizedInput.format !== 'svg') {
+    const threeD = getCategory3DDetails({
+      slug: rawSlug,
+      seo_url: normalizedInput.seo_url,
+      name: rawName,
+      visualKey: rawVisualKey,
+      sizeVariant: normalizedInput.sizeVariant,
+    });
+
+    if (threeD) {
+      return {
+        src: threeD.src,
+        source: 'catalog-3d',
+        catalogId: threeD.code,
+        alt: rawName || threeD.name,
+        motionPreset: getMotionPresetFor3DCode(threeD.code),
+      };
+    }
+  }
 
   // -------------------------------------------------------------------------
   // PASSO 1: Desambiguação com contexto de categoria-mãe / subcategoria
