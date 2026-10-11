@@ -54,6 +54,7 @@ AB0-1-front/public/assets/**/*.zip
 
 AB0-1-front/public/**/*.zip
 AB0-1-front/public/3d-icones/
+AB0-1-front/public/3d-refined/
 
 # Ignorar testes e especificações
 **/__tests__/

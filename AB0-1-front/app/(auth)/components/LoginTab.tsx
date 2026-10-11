@@ -132,14 +132,14 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
   };
 
   return (
-    <div className="h-full overflow-y-auto px-5 pb-8 pt-5 custom-scrollbar sm:px-10 md:px-12 md:pt-7">
-      <div className="mx-auto w-full max-w-[430px]">
-        <div className="mb-6">
-          <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-900 border border-indigo-100 mb-2">
+    <div className="w-full overflow-y-auto px-5 py-4 custom-scrollbar sm:px-8 md:px-7 md:py-4">
+      <div className="mx-auto w-full max-w-[360px]">
+        <div className="mb-3">
+          <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-900 border border-indigo-100 mb-1.5">
             {surfaceInfo.displayName}
           </span>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-950">{surfaceInfo.loginTitle}</h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <h2 className="text-xl font-bold tracking-tight text-slate-950">{surfaceInfo.loginTitle}</h2>
+          <p className="mt-0.5 text-xs text-slate-600">
             {surfaceInfo.isCrm
               ? 'Acesso exclusivo à equipe e consultores Avalia Solar.'
               : 'Use seu e-mail ou uma conta social.'}
@@ -147,57 +147,69 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
         </div>
         {!surfaceInfo.isCrm && (
           <>
-            <div className="mb-6 space-y-2.5">
-              <Button variant="outline" className="h-11 w-full justify-center gap-3 rounded-md border-slate-200 font-medium text-slate-950 shadow-none hover:bg-slate-50" onClick={async () => { setError(null); try { await signInWithGoogle(); } catch { setError("Falha ao iniciar login com Google."); } }} type="button">
+            <div className="mb-3">
+              <Button
+                variant="outline"
+                className="h-10 w-full justify-center gap-2.5 rounded-lg border-slate-200 text-xs font-medium text-slate-950 shadow-none hover:bg-slate-50 sm:text-sm"
+                onClick={async () => {
+                  setError(null);
+                  try {
+                    await signInWithGoogle();
+                  } catch {
+                    setError('Falha ao iniciar login com Google.');
+                  }
+                }}
+                type="button"
+              >
                 <span aria-hidden="true" className="text-base font-bold text-blue-600">G</span>
                 Continuar com Google
               </Button>
             </div>
-            <div className="relative mb-6">
+            <div className="relative mb-3">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-slate-200" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-500">ou</span>
+              <div className="relative flex justify-center text-[11px] uppercase">
+                <span className="bg-white px-2 text-slate-400">ou</span>
               </div>
             </div>
           </>
         )}
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-3 py-2.5 px-3 text-xs">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription className="text-xs">{error}</AlertDescription>
           </Alert>
         )}
 
         {needsConfirmation && (
-          <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-900">
+          <Alert className="mb-3 border-amber-200 bg-amber-50 p-3 text-amber-900">
             <AlertCircle className="h-4 w-4 text-amber-700" />
-            <AlertDescription className="flex flex-col gap-3">
+            <AlertDescription className="flex flex-col gap-2 text-xs">
               <span>Confirme seu e-mail para liberar o acesso.</span>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-amber-300 bg-white hover:bg-amber-100 text-amber-900"
+                className="h-9 w-full border-amber-300 bg-white text-xs text-amber-900 hover:bg-amber-100"
                 onClick={handleResendConfirmation}
                 disabled={isResending || !email}
               >
                 {isResending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                     Reenviando...
                   </>
                 ) : (
                   'Reenviar confirmação'
                 )}
               </Button>
-              {resendMessage && <span className="text-sm">{resendMessage}</span>}
+              {resendMessage && <span className="text-xs">{resendMessage}</span>}
             </AlertDescription>
           </Alert>
         )}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs font-medium text-slate-700">Email</Label>
             <Input
               id="email"
               name="email"
@@ -206,15 +218,15 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-11 rounded-md border-slate-200 focus-visible:ring-blue-500/25"
+              className="h-10 rounded-lg border-slate-200 text-sm focus-visible:ring-blue-500/25"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password" className="text-xs font-medium text-slate-700">Senha</Label>
               <Link
                 href="/forgot-password"
-                className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline sm:text-sm"
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
               >
                 Esqueceu sua senha?
               </Link>
@@ -228,12 +240,13 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-11 rounded-md border-slate-200 pr-10 focus-visible:ring-blue-500/25"
+                className="h-10 rounded-lg border-slate-200 pr-10 text-sm focus-visible:ring-blue-500/25"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -241,12 +254,12 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
           </div>
           <Button
             type="submit"
-            className="mt-2 h-11 w-full rounded-md bg-blue-600 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-1 h-10 w-full rounded-lg bg-blue-600 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isLoading}
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Entrando...
               </>
             ) : (
@@ -255,7 +268,7 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
           </Button>
         </form>
         {!surfaceInfo.isCrm && (
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-slate-500">
+          <div className="mt-3.5 flex items-center justify-center gap-1.5 text-xs text-slate-500">
             <span>Não tem uma conta?</span>
             <button
               type="button"

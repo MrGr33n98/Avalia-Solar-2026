@@ -204,8 +204,8 @@ export default function RegisterUserTab() {
   }
 
   return (
-    <div className="h-full overflow-y-auto px-5 pb-8 pt-4 custom-scrollbar sm:px-10 md:px-12">
-      <div className="mx-auto w-full max-w-[430px]">
+    <div className="h-full overflow-y-auto px-5 pb-6 pt-3 custom-scrollbar sm:px-8 md:px-7">
+      <div className="mx-auto w-full max-w-[360px]">
         <div className="mb-6">
           <h2 className="text-2xl font-bold tracking-tight text-slate-950">Criar conta</h2>
           <p className="mt-1 text-sm text-slate-600">
