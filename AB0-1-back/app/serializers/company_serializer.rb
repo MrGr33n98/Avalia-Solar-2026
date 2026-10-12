@@ -41,7 +41,8 @@ class CompanySerializer < ActiveModel::Serializer
              :featured_products,
              :has_paid_plan,
              :feature_access,
-             :actions
+             :actions,
+             :comparison_profile
 
   def commercial_status
     object.commercial_status
@@ -403,6 +404,10 @@ class CompanySerializer < ActiveModel::Serializer
     return {} unless object.respond_to?(:feature_access)
 
     object.feature_access || {}
+  end
+
+  def comparison_profile
+    object.respond_to?(:comparison_profile) ? object.comparison_profile : {}
   end
 
   private

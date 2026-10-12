@@ -53,11 +53,30 @@ const groups: Group[] = [
   },
   {
     id: 'service',
-    label: 'Atendimento',
+    label: 'Atendimento e Orçamento',
     criteria: [
-      { label: 'Responde avaliações', value: (company) => company.respondsToReviews },
+      {
+        label: 'Prazo do orçamento',
+        value: (company) => {
+          const val = company.comparison_profile?.quote_turnaround;
+          if (val === 'within_24h') return 'Até 24h';
+          if (val === 'within_3_days') return 'Até 3 dias';
+          if (val === 'consult') return 'Consultar';
+          return company.responseTimeLabel;
+        },
+      },
+      {
+        label: 'Visita técnica',
+        value: (company) => {
+          const val = company.comparison_profile?.technical_visit;
+          if (val === 'free') return 'Gratuita';
+          if (val === 'paid') return 'Paga';
+          if (val === 'consult') return 'Consultar';
+          if (val === 'not_offered') return 'Não oferece';
+          return null;
+        },
+      },
       { label: 'Tempo médio de resposta', value: (company) => company.responseTimeLabel },
-      { label: 'Orçamento gratuito', value: (company) => company.freeQuoteAvailable },
       { label: 'Atendimento por WhatsApp', value: (company) => company.whatsappAvailable },
     ],
   },
@@ -76,16 +95,52 @@ const groups: Group[] = [
   },
   {
     id: 'commercial',
-    label: 'Comercial',
+    label: 'Comercial e Execução',
     criteria: [
       {
         label: 'Financiamento',
-        value: (company) =>
-          company.financing_enabled === undefined ? null : Boolean(company.financing_enabled),
+        value: (company) => {
+          const val = company.comparison_profile?.financing_availability;
+          if (val === 'available') return 'Disponível';
+          if (val === 'consult') return 'Consultar';
+          if (val === 'not_offered') return 'Não oferece';
+          return company.financing_enabled === undefined ? null : Boolean(company.financing_enabled);
+        },
       },
       {
         label: 'Formas de pagamento',
         value: (company) => company.paymentMethods.join(', ') || null,
+      },
+      {
+        label: 'Instalação no pacote',
+        value: (company) => {
+          const val = company.comparison_profile?.installation_terms;
+          if (val === 'included') return 'Inclusa';
+          if (val === 'separately_contracted') return 'Contratada à parte';
+          if (val === 'not_offered') return 'Não oferece';
+          return null;
+        },
+      },
+      {
+        label: 'Equipe de instalação',
+        value: (company) => {
+          const val = company.comparison_profile?.installation_team;
+          if (val === 'in_house') return 'Própria';
+          if (val === 'outsourced') return 'Terceirizada';
+          if (val === 'mixed') return 'Mista';
+          return null;
+        },
+      },
+      {
+        label: 'Acompanhamento do sistema',
+        value: (company) => {
+          const val = company.comparison_profile?.system_monitoring;
+          if (val === 'app') return 'Pelo aplicativo';
+          if (val === 'web_portal') return 'Portal web';
+          if (val === 'manual') return 'Manual';
+          if (val === 'not_offered') return 'Não oferece';
+          return null;
+        },
       },
       { label: 'Garantia', value: (company) => company.warrantyYears, suffix: ' anos' },
       { label: 'Suporte pós-venda', value: (company) => company.postSalesSupport },

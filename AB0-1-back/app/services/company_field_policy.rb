@@ -10,7 +10,16 @@ class CompanyFieldPolicy
     location: %w[address city state],
     media: %w[logo banner],
     categories: %w[categories],
-    service_area: %w[coverage_states coverage_cities coverage_state_codes coverage_city_names]
+    service_area: %w[coverage_states coverage_cities coverage_state_codes coverage_city_names],
+    commercial_terms: %w[
+      payment_methods financing_options services_offered project_types
+      equipment_brands post_sales_capacity installation_warranty_years
+      engineering_insurance delivered_projects_score response_time_sla
+      quote_turnaround technical_visit financing_availability
+      installation_terms maintenance_availability after_sales_support
+      installation_team system_monitoring warranty_years warranty_confirmed
+      post_sales_support response_sla_minutes whatsapp_enabled
+    ]
   }.freeze
 
   def initialize(company)

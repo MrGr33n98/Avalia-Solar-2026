@@ -1486,4 +1486,67 @@ end
     else 7
     end
   end
+
+  # ============================================================================
+  # Comparador Comercial e Perfil de Comparação (Contrato Unificado de 14 Critérios)
+  # ============================================================================
+  store_accessor :intent_features,
+                 :quote_turnaround,
+                 :technical_visit,
+                 :financing_availability,
+                 :installation_terms,
+                 :maintenance_availability,
+                 :after_sales_support,
+                 :installation_team,
+                 :system_monitoring,
+                 :warranty_confirmed
+
+  def payment_methods=(value)
+    if value.is_a?(Array)
+      super(value.reject(&:blank?).join(', '))
+    else
+      super(value)
+    end
+  end
+
+  def comparison_profile
+    parsed_payments = if payment_methods.is_a?(Array)
+                        payment_methods
+                      elsif payment_methods.present?
+                        payment_methods.to_s.split(',').map(&:strip).reject(&:blank?)
+                      else
+                        []
+                      end
+
+    parsed_services = if services_offered.is_a?(Array)
+                        services_offered
+                      elsif services_offered.present?
+                        services_offered.to_s.split(',').map(&:strip).reject(&:blank?)
+                      else
+                        []
+                      end
+
+    is_confirmed = [true, 'true', 1, '1'].include?(warranty_confirmed)
+    w_years = if is_confirmed
+                warranty_years.presence || installation_warranty_years.presence
+              else
+                warranty_years.presence
+              end
+
+    {
+      quote_turnaround: quote_turnaround.presence,
+      technical_visit: technical_visit.presence,
+      payment_methods: parsed_payments,
+      financing_availability: financing_availability.presence || (respond_to?(:financing_enabled?) && financing_enabled? ? 'available' : nil),
+      installation_terms: installation_terms.presence,
+      maintenance_availability: maintenance_availability.presence,
+      after_sales_support: after_sales_support.presence || (respond_to?(:post_sales_support?) && post_sales_support? ? 'offered' : nil),
+      installation_team: installation_team.presence,
+      system_monitoring: system_monitoring.presence,
+      services_offered: parsed_services,
+      warranty_years: w_years,
+      warranty_confirmed: is_confirmed
+    }
+  end
 end
+

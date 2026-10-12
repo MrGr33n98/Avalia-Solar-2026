@@ -688,6 +688,7 @@ module Api
           coverage_states: company.coverage_state_list,
           coverage_cities: company.coverage_city_list,
           local_solar_path: ::Locations::CoverageNormalizer.local_solar_path(company.state, company.city),
+          comparison_profile: company.respond_to?(:comparison_profile) ? company.comparison_profile : {},
           seo_metadata: {
             json_ld: {
               '@context': 'https://schema.org',

@@ -1916,20 +1916,39 @@ module Api
       end
 
       def company_params
-        params.require(:company).permit(
-          :name, :description, :website, :phone, :phone_alt, :whatsapp,
-          :email_public, :address, :state, :city, :cnpj,
-          :instagram, :facebook, :linkedin, :working_hours,
-          :payment_methods, :certifications, :awards,
-          :founded_year, :employees_count, :latitude, :longitude,
-          :minimum_ticket, :maximum_ticket, :financing_options,
-          :response_time_sla, :languages,
-          :installation_warranty_years, :engineering_insurance, :delivered_projects_score,
-          :seo_title, :seo_description, :meta_description, :seo_keywords,
-          project_types: [], services_offered: [], equipment_brands: [], post_sales_capacity: [],
-          coverage_states: [], coverage_cities: [], coverage_state_codes: [], coverage_city_names: []
-        )
+        company_p = params.require(:company)
+        array_args = {
+          project_types: [],
+          services_offered: [],
+          equipment_brands: [],
+          post_sales_capacity: [],
+          coverage_states: [],
+          coverage_cities: [],
+          coverage_state_codes: [],
+          coverage_city_names: []
+        }
+
+        scalar_args = %i[
+          name description website phone phone_alt whatsapp email_public
+          address state city cnpj instagram facebook linkedin working_hours
+          certifications awards founded_year employees_count latitude longitude
+          minimum_ticket maximum_ticket financing_options financing_availability financing_enabled
+          response_time_sla response_sla_minutes languages
+          installation_warranty_years warranty_years warranty_confirmed
+          engineering_insurance delivered_projects_score delivered_projects_count
+          post_sales_support quote_turnaround technical_visit installation_terms
+          maintenance_availability after_sales_support installation_team system_monitoring
+          whatsapp_enabled cta_whatsapp_enabled cta_whatsapp_template
+          seo_title seo_description meta_description seo_keywords
+        ]
+
+        if company_p[:payment_methods].is_a?(Array)
+          company_p.permit(*scalar_args, array_args.merge(payment_methods: []))
+        else
+          company_p.permit(*scalar_args, :payment_methods, array_args)
+        end
       end
+
 
       def cta_params
         params.permit(

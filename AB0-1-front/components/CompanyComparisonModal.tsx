@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -13,31 +12,18 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import WhatsappButton from '@/components/WhatsappButton';
-import { Star, X, ShieldCheck, Building2, ExternalLink, Plus } from 'lucide-react';
+import { Star, X, Building2, Plus } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
 import { canUsePaidConversion, type FeatureAccessMap } from '@/lib/feature-access';
 import { openLeadModal } from '@/lib/lead-engine';
 import { track } from '@/lib/analytics/lazy';
 import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { cn } from '@/lib/utils';
-import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { getCoverageLabel } from '@/lib/company/coverage-label';
 import { COMPARISON_LIMITS } from '@/lib/comparison/config';
+import type { CompanyComparisonProfile } from '@/lib/api';
 
-const getSpeedBadge = (time?: string) => {
-  if (!time || time === 'Consultar' || time === 'Sob consulta') return null;
-  const lower = time.toLowerCase();
-  if (lower.includes('h')) {
-    const hours = parseInt(lower) || 0;
-    if (hours <= 2) {
-      return { label: 'Rápido', color: 'bg-emerald-50 text-emerald-800 border-emerald-100' };
-    }
-  }
-  return { label: 'Médio', color: 'bg-amber-50 text-amber-800 border-amber-100' };
-};
-
-interface ComparisonCompany {
+export interface ComparisonCompany {
   id: number;
   slug: string;
   name: string;
@@ -71,6 +57,21 @@ interface ComparisonCompany {
   whatsapp?: string | null;
   whatsapp_url?: string | null;
   phone?: string | null;
+  comparison_profile?: CompanyComparisonProfile;
+  quote_turnaround?: string | null;
+  technical_visit?: string | null;
+  financing_availability?: string | null;
+  financing_enabled?: boolean;
+  installation_terms?: string | null;
+  maintenance_availability?: string | null;
+  after_sales_support?: string | null;
+  post_sales_support?: boolean | null;
+  installation_team?: string | null;
+  system_monitoring?: string | null;
+  services_offered?: string[] | string | null;
+  services?: string[];
+  warranty_confirmed?: boolean | null;
+  payment_methods?: string[] | string | null;
 }
 
 interface CompanyComparisonModalProps {
@@ -81,282 +82,391 @@ interface CompanyComparisonModalProps {
   onClearAll: () => void;
 }
 
-interface MobileComparisonContentProps {
-  companies: ComparisonCompany[];
-  highestRatedCompanyId?: number;
-  onRemoveCompany: (id: number) => void;
-  onAddCompany: () => void;
-  onQuote: (companyId: number) => void;
-}
+type BadgeVariant = 'green' | 'orange' | 'blue' | 'red' | 'gray';
 
-function MobileComparisonContent({
-  companies,
-  highestRatedCompanyId,
-  onRemoveCompany,
-  onAddCompany,
-  onQuote,
-}: MobileComparisonContentProps) {
-  const visibleCompanies = companies.slice(0, COMPARISON_LIMITS.mobile);
-  const mobileGridColumns = 'grid-cols-[88px_minmax(0,1fr)_minmax(0,1fr)]';
-
-  const getVerificationText = (company: ComparisonCompany) => {
-    if (company.verified) return 'Verificada';
-    if (company.verification_status === 'pending') return 'Em análise';
-    return 'Não verificada';
+function ComparisonBadge({ text, variant }: { text: string; variant: BadgeVariant }) {
+  const styles: Record<BadgeVariant, string> = {
+    green: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    orange: 'bg-amber-50 text-amber-800 border-amber-100',
+    blue: 'bg-blue-50 text-blue-700 border-blue-100',
+    red: 'bg-rose-50 text-rose-700 border-rose-100',
+    gray: 'bg-slate-100 text-slate-600 border-slate-200',
   };
 
-  const rows = [
-    {
-      label: 'Reputação',
-      detail: 'Avaliação geral',
-      render: (company: ComparisonCompany) => {
-        const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
-        const reviews = Number(
-          company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0
-        );
-        return (
-          <>
-            <span className="text-sm font-extrabold text-slate-950">
-              {rating > 0 ? rating.toFixed(1) : '—'}
-            </span>
-            <span className="text-[11px] text-amber-500" aria-hidden="true">
-              {rating > 0 ? '★★★★★' : ''}
-            </span>
-            <span className="text-[10px] text-slate-500">
-              {reviews > 0 ? `${reviews} avaliação${reviews === 1 ? '' : 'ões'}` : 'Sem avaliações'}
-            </span>
-          </>
-        );
-      },
-    },
-    {
-      label: 'Certificação',
-      detail: 'Status auditado',
-      render: (company: ComparisonCompany) => (
-        <>
-          <span
-            className={cn(
-              'text-xs font-bold',
-              company.verified ? 'text-emerald-700' : 'text-slate-600'
-            )}
-          >
-            {getVerificationText(company)}
-          </span>
-          <span className="text-[10px] text-slate-400">
-            {company.verified ? 'Dados auditados' : 'Documentação em análise'}
-          </span>
-        </>
-      ),
-    },
-    {
-      label: 'SLA',
-      detail: 'Tempo resposta',
-      render: (company: ComparisonCompany) => {
-        const speed = getSpeedBadge(company.response_time_sla);
-        return (
-          <>
-            <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">
-              {company.response_time_sla || 'Sob consulta'}
-            </span>
-            {speed && (
-              <span
-                className={cn(
-                  'w-fit rounded border px-1 py-0.5 text-[10px] font-bold',
-                  speed.color
-                )}
-              >
-                {speed.label}
-              </span>
-            )}
-          </>
-        );
-      },
-    },
-    {
-      label: 'Abrangência',
-      detail: 'Área de atuação',
-      render: (company: ComparisonCompany) => {
-        return (
-          <>
-            <span className="line-clamp-2 break-words text-xs font-bold leading-tight text-slate-950">
-              {[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}
-            </span>
-            <span className="text-[10px] text-slate-400">{getCoverageLabel(company)}</span>
-          </>
-        );
-      },
-    },
-    {
-      label: 'Volume',
-      detail: 'Projetos',
-      render: (company: ComparisonCompany) => {
-        const count = company.delivered_projects_count ?? company.delivered_projects_score ?? 0;
-        return (
-          <span className="text-xs font-bold text-slate-950">
-            {count > 0 ? `+${count} projetos` : 'Consultar'}
-          </span>
-        );
-      },
-    },
-    {
-      label: 'Garantia',
-      detail: 'Pós-instalação',
-      render: (company: ComparisonCompany) => {
-        const years = company.warranty_years ?? company.installation_warranty_years ?? 0;
-        return (
-          <span className="text-xs font-bold text-slate-950">
-            {years > 0 ? `${years} anos` : 'Consultar'}
-          </span>
-        );
-      },
-    },
-  ];
-
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-1 pt-1 md:hidden">
-      {/* Cards de cabeçalho das empresas no PWA */}
-      <div className={cn('mb-1.5 grid min-w-0 gap-1.5', mobileGridColumns)}>
-        <div
-          className="min-w-0 rounded-lg bg-slate-100/80 p-2 flex items-center justify-center"
-          aria-hidden="true"
-        >
-          <span className="text-[10px] font-bold uppercase text-slate-500">Empresas</span>
-        </div>
-        {visibleCompanies.map((company) => {
-          const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
-          const isHighlighted = company.id === highestRatedCompanyId;
-          return (
-            <div
-              key={company.id}
-              className={cn(
-                'relative min-w-0 rounded-lg border bg-white p-2 pr-6 shadow-xs min-h-[64px] flex flex-col justify-between',
-                isHighlighted ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200'
-              )}
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
-                  {logoUrl ? (
-                    <Image
-                      src={logoUrl}
-                      alt=""
-                      fill
-                      sizes="28px"
-                      className="object-contain p-0.5"
-                    />
-                  ) : (
-                    <Building2 className="m-auto h-4 w-4 text-slate-300" />
-                  )}
-                </div>
-                <Link href={`/companies/${company.slug || company.id}`} className="min-w-0 flex-1">
-                  <span className="line-clamp-1 break-normal text-xs font-bold leading-tight text-slate-900">
-                    {company.name}
-                  </span>
-                  <span className="block truncate text-[10px] leading-tight text-slate-400">
-                    {[company.city, company.state].filter(Boolean).join(', ') || 'Localização n/i'}
-                  </span>
-                </Link>
-              </div>
-              <button
-                onClick={() => onRemoveCompany(company.id)}
-                aria-label={`Remover ${company.name} da comparação`}
-                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
-              >
-                <X className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-            </div>
-          );
-        })}
-        {visibleCompanies.length < COMPARISON_LIMITS.mobile && (
-          <button
-            onClick={onAddCompany}
-            className="flex min-h-[64px] min-w-0 flex-col items-center justify-center rounded-lg border-2 border-dashed border-blue-300 bg-blue-50/50 p-2 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100/50"
-          >
-            <Plus className="h-4 w-4 mb-0.5" />
-            Adicionar
-          </button>
-        )}
-      </div>
-
-      {/* Tabela de critérios no PWA */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white shadow-xs">
-        {rows.map((row) => (
-          <div
-            key={row.label}
-            className={cn(
-              'grid min-w-0',
-              mobileGridColumns,
-              'border-b border-slate-100 last:border-b-0'
-            )}
-          >
-            <div className="min-w-0 bg-slate-50/80 px-2 py-2.5">
-              <span className="block break-normal text-[11px] font-bold uppercase leading-tight tracking-wide text-slate-800">
-                {row.label}
-              </span>
-              <span className="block break-normal text-[10px] leading-tight text-slate-400">
-                {row.detail}
-              </span>
-            </div>
-            {visibleCompanies.map((company) => (
-              <div
-                key={`${row.label}-${company.id}`}
-                className={cn(
-                  'flex min-w-0 flex-col items-start justify-center gap-0.5 px-2 py-2.5 break-words whitespace-normal',
-                  company.id === highestRatedCompanyId && 'bg-blue-50/20'
-                )}
-              >
-                {row.render(company)}
-              </div>
-            ))}
-          </div>
-        ))}
-        {/* Linha de Orçamento */}
-        <div className={cn('grid min-w-0', mobileGridColumns, 'bg-slate-50/50')}>
-          <div className="min-w-0 bg-slate-100/60 px-2 py-2.5">
-            <span className="block text-[11px] font-bold uppercase leading-tight tracking-wide text-slate-700">
-              Orçamento
-            </span>
-          </div>
-          {visibleCompanies.map((company) => {
-            const canRequestQuote = canUsePaidConversion(company, 'quote');
-            const showWhatsApp =
-              canUsePaidConversion(company, 'whatsapp') && Boolean(company.cta_whatsapp_enabled);
-            const whatsappHref =
-              company.whatsapp_url || company.whatsapp || company.phone || undefined;
-
-            return (
-              <div
-                key={`mobile-cta-${company.id}`}
-                className={cn(
-                  'min-w-0 px-1.5 py-2 flex items-center justify-center',
-                  company.id === highestRatedCompanyId && 'bg-blue-50/20'
-                )}
-              >
-                {canRequestQuote ? (
-                  showWhatsApp ? (
-                    <WhatsappButton
-                      href={whatsappHref}
-                      companyId={company.id}
-                      label="WhatsApp"
-                      className="h-8 rounded-md px-2 text-xs font-bold leading-tight"
-                    />
-                  ) : (
-                    <QuoteCTA
-                      context="comparison"
-                      shortLabel="Orçamento"
-                      onRequest={() => onQuote(company.id)}
-                    />
-                  )
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    <span
+      className={cn(
+        'inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-[10px] font-semibold leading-tight min-h-[22px] max-w-full text-center',
+        styles[variant]
+      )}
+    >
+      {text}
+    </span>
   );
 }
 
-export default function CompanyComparisonModal({
+interface CriterionConfig {
+  id: string;
+  label: string;
+  render: (company: ComparisonCompany, onQuote: (id: number) => void) => React.ReactNode;
+}
+
+const CRITERIA_ROWS: CriterionConfig[] = [
+  // 1. Avaliações
+  {
+    id: 'ratings',
+    label: 'Avaliações',
+    render: (company) => {
+      const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
+      const reviews = Number(
+        company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0
+      );
+      if (rating <= 0 && reviews <= 0) {
+        return <span className="text-[11px] text-slate-400 font-medium">— Sem avaliações</span>;
+      }
+      return (
+        <div className="flex flex-col items-center justify-center text-center">
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-bold text-slate-900">
+              {rating.toFixed(1).replace('.', ',')}
+            </span>
+            <span className="text-[10px] text-amber-500 tracking-tighter" aria-hidden="true">
+              ★★★★★
+            </span>
+            <span className="text-[10px] text-slate-500 font-medium">({reviews})</span>
+          </div>
+        </div>
+      );
+    },
+  },
+
+  // 2. Verificação
+  {
+    id: 'verification',
+    label: 'Verificação',
+    render: (company) => {
+      if (company.verified) {
+        return <ComparisonBadge text="✓ Verificada" variant="green" />;
+      }
+      if (company.verification_status === 'pending') {
+        return <ComparisonBadge text="Em análise" variant="orange" />;
+      }
+      return <ComparisonBadge text="Não verificada" variant="gray" />;
+    },
+  },
+
+  // 3. Região atendida
+  {
+    id: 'region',
+    label: 'Região atendida',
+    render: (company) => {
+      const cityState = [company.city, company.state].filter(Boolean).join(', ');
+      const coverage = getCoverageLabel(company);
+      if (!cityState && coverage === 'Área de atendimento não informada') {
+        return <span className="text-[11px] text-slate-400 font-medium">Não informado</span>;
+      }
+      return (
+        <div className="flex flex-col items-center justify-center text-center">
+          <span className="text-[11px] font-bold text-slate-900 leading-tight">
+            {cityState || 'Consultar'}
+          </span>
+          {coverage && coverage !== 'Área de atendimento não informada' && (
+            <span className="text-[10px] text-slate-500 leading-tight mt-0.5">{coverage}</span>
+          )}
+        </div>
+      );
+    },
+  },
+
+  // 4. Prazo do orçamento
+  {
+    id: 'quote_turnaround',
+    label: 'Prazo do orçamento',
+    render: (company) => {
+      const val =
+        company.comparison_profile?.quote_turnaround ||
+        company.quote_turnaround ||
+        company.response_time_sla;
+      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
+      const lower = val.toLowerCase();
+      if (lower === 'within_24h' || lower.includes('24h') || lower.includes('24 h')) {
+        return <ComparisonBadge text="Até 24h" variant="green" />;
+      }
+      if (lower === 'within_3_days' || lower.includes('3 dias') || lower.includes('72h')) {
+        return <ComparisonBadge text="Até 3 dias" variant="orange" />;
+      }
+      if (lower === 'consult' || lower.includes('consult')) {
+        return <ComparisonBadge text="Consultar" variant="blue" />;
+      }
+      return <ComparisonBadge text={val} variant="orange" />;
+    },
+  },
+
+  // 5. Visita técnica
+  {
+    id: 'technical_visit',
+    label: 'Visita técnica',
+    render: (company) => {
+      const val = company.comparison_profile?.technical_visit || company.technical_visit;
+      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
+      const lower = val.toLowerCase();
+      if (lower === 'free' || lower.includes('gratuita') || lower.includes('gratis')) {
+        return <ComparisonBadge text="Gratuita" variant="green" />;
+      }
+      if (lower === 'paid' || lower.includes('paga')) {
+        return <ComparisonBadge text="Paga" variant="orange" />;
+      }
+      if (lower === 'consult' || lower.includes('consult')) {
+        return <ComparisonBadge text="Consultar" variant="blue" />;
+      }
+      if (lower === 'not_offered' || lower.includes('não oferece')) {
+        return <ComparisonBadge text="Não oferece" variant="red" />;
+      }
+      return <ComparisonBadge text={val} variant="blue" />;
+    },
+  },
+
+  // 6. Formas de pagamento
+  {
+    id: 'payment_methods',
+    label: 'Formas de pagamento',
+    render: (company) => {
+      const raw = company.comparison_profile?.payment_methods || company.payment_methods;
+      const list = Array.isArray(raw) ? raw : raw ? String(raw).split(',') : [];
+      if (list.length === 0) {
+        return <span className="text-[11px] text-slate-400 font-medium">Não informado</span>;
+      }
+      const labels = list.map((item) => {
+        const k = item.trim().toLowerCase();
+        if (k === 'pix') return 'Pix';
+        if (k === 'credit_card' || k === 'cartao' || k.includes('cart')) return 'cartão';
+        if (k === 'bank_slip' || k === 'boleto') return 'boleto';
+        if (k === 'debit_card' || k === 'debito') return 'débito';
+        return k;
+      });
+      return (
+        <span className="text-[11px] font-medium text-slate-800 text-center leading-snug">
+          {labels.join(', ')}
+        </span>
+      );
+    },
+  },
+
+  // 7. Financiamento
+  {
+    id: 'financing',
+    label: 'Financiamento',
+    render: (company) => {
+      const val =
+        company.comparison_profile?.financing_availability ||
+        company.financing_availability ||
+        (company.financing_enabled ? 'available' : null);
+      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
+      const lower = val.toLowerCase();
+      if (lower === 'available' || lower === 'true' || lower.includes('dispon')) {
+        return <ComparisonBadge text="Disponível" variant="green" />;
+      }
+      if (lower === 'consult' || lower.includes('consult')) {
+        return <ComparisonBadge text="Consultar" variant="blue" />;
+      }
+      if (lower === 'not_offered' || lower === 'false' || lower.includes('não oferece')) {
+        return <ComparisonBadge text="Não oferece" variant="red" />;
+      }
+      return <ComparisonBadge text={val} variant="blue" />;
+    },
+  },
+
+  // 8. Instalação
+  {
+    id: 'installation',
+    label: 'Instalação',
+    render: (company) => {
+      const val = company.comparison_profile?.installation_terms || company.installation_terms;
+      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
+      const lower = val.toLowerCase();
+      if (lower === 'included' || lower.includes('inclusa')) {
+        return <ComparisonBadge text="Inclusa" variant="green" />;
+      }
+      if (lower === 'separately_contracted' || lower.includes('parte')) {
+        return <ComparisonBadge text="Contratada à parte" variant="orange" />;
+      }
+      if (lower === 'not_offered' || lower.includes('não oferece')) {
+        return <ComparisonBadge text="Não oferece" variant="red" />;
+      }
+      return <ComparisonBadge text={val} variant="blue" />;
+    },
+  },
+
+  // 9. Manutenção
+  {
+    id: 'maintenance',
+    label: 'Manutenção',
+    render: (company) => {
+      const val =
+        company.comparison_profile?.maintenance_availability || company.maintenance_availability;
+      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
+      const lower = val.toLowerCase();
+      if (lower === 'offered' || lower.includes('oferece')) {
+        return <ComparisonBadge text="Oferece" variant="green" />;
+      }
+      if (lower === 'consult' || lower.includes('consult')) {
+        return <ComparisonBadge text="Consultar" variant="blue" />;
+      }
+      if (lower === 'not_offered' || lower.includes('não oferece')) {
+        return <ComparisonBadge text="Não oferece" variant="red" />;
+      }
+      return <ComparisonBadge text={val} variant="blue" />;
+    },
+  },
+
+  // 10. Pós-venda
+  {
+    id: 'after_sales',
+    label: 'Pós-venda',
+    render: (company) => {
+      const val =
+        company.comparison_profile?.after_sales_support ||
+        company.after_sales_support ||
+        (company.post_sales_support ? 'offered' : null);
+      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
+      const lower = val.toLowerCase();
+      if (lower === 'offered' || lower.includes('oferece') || lower === 'true') {
+        return <ComparisonBadge text="Oferece suporte" variant="green" />;
+      }
+      if (lower === 'consult' || lower.includes('consult')) {
+        return <ComparisonBadge text="Consultar" variant="blue" />;
+      }
+      if (lower === 'not_offered' || lower.includes('não oferece') || lower === 'false') {
+        return <ComparisonBadge text="Não oferece" variant="red" />;
+      }
+      return <ComparisonBadge text={val} variant="blue" />;
+    },
+  },
+
+  // 11. Equipe de instalação
+  {
+    id: 'installation_team',
+    label: 'Equipe de instalação',
+    render: (company) => {
+      const val = company.comparison_profile?.installation_team || company.installation_team;
+      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
+      const lower = val.toLowerCase();
+      if (lower === 'in_house' || lower.includes('própria') || lower.includes('propria')) {
+        return <ComparisonBadge text="Própria" variant="green" />;
+      }
+      if (lower === 'outsourced' || lower.includes('terceir')) {
+        return <ComparisonBadge text="Terceirizada" variant="orange" />;
+      }
+      if (lower === 'mixed' || lower.includes('mista')) {
+        return <ComparisonBadge text="Mista" variant="blue" />;
+      }
+      if (lower === 'not_applicable') {
+        return <ComparisonBadge text="Não se aplica" variant="gray" />;
+      }
+      return <ComparisonBadge text={val} variant="blue" />;
+    },
+  },
+
+  // 12. Acompanhamento do sistema
+  {
+    id: 'system_monitoring',
+    label: 'Acompanhamento do sistema',
+    render: (company) => {
+      const val = company.comparison_profile?.system_monitoring || company.system_monitoring;
+      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
+      const lower = val.toLowerCase();
+      if (lower === 'app' || lower.includes('aplicativo')) {
+        return <ComparisonBadge text="Pelo aplicativo" variant="green" />;
+      }
+      if (lower === 'web_portal' || lower.includes('portal') || lower.includes('web')) {
+        return <ComparisonBadge text="Portal web" variant="blue" />;
+      }
+      if (lower === 'manual' || lower.includes('manual')) {
+        return <ComparisonBadge text="Manual" variant="orange" />;
+      }
+      if (lower === 'not_offered' || lower.includes('não oferece')) {
+        return <ComparisonBadge text="Não oferece" variant="red" />;
+      }
+      return <ComparisonBadge text={val} variant="blue" />;
+    },
+  },
+
+  // 13. Serviços oferecidos
+  {
+    id: 'services_offered',
+    label: 'Serviços oferecidos',
+    render: (company) => {
+      const raw =
+        company.comparison_profile?.services_offered ||
+        company.services_offered ||
+        company.services;
+      const list = Array.isArray(raw) ? raw : raw ? String(raw).split(',') : [];
+      if (list.length === 0) {
+        return <span className="text-[11px] text-slate-400 font-medium">Não informado</span>;
+      }
+      const labels = list.map((item) => {
+        const k = item.trim().toLowerCase();
+        if (k === 'project' || k === 'projeto') return 'Projeto';
+        if (k === 'installation' || k === 'instalacao') return 'instalação';
+        if (k === 'maintenance' || k === 'manutencao') return 'manutenção';
+        if (k === 'o&m' || k === 'om') return 'O&M';
+        if (k === 'homologation' || k === 'homologacao') return 'homologação';
+        return k;
+      });
+      return (
+        <span className="text-[11px] font-medium text-slate-800 text-center leading-snug">
+          {labels.join(', ')}
+        </span>
+      );
+    },
+  },
+
+  // 14. Garantia
+  {
+    id: 'warranty',
+    label: 'Garantia',
+    render: (company) => {
+      const profile = company.comparison_profile;
+      const confirmed =
+        profile?.warranty_confirmed === true || company.warranty_confirmed === true;
+      const years =
+        profile?.warranty_years ??
+        company.warranty_years ??
+        (confirmed ? company.installation_warranty_years : null);
+      if (!years || years <= 0) {
+        return <span className="text-[11px] text-slate-400 font-medium">Consultar</span>;
+      }
+      return (
+        <span className="text-[11px] font-bold text-slate-900">
+          {years} {years === 1 ? 'ano' : 'anos'}
+        </span>
+      );
+    },
+  },
+
+  // 15. Solicitar orçamento (Linha Final de CTA)
+  {
+    id: 'quote_cta',
+    label: 'Solicitar orçamento',
+    render: (company, onQuote) => {
+      const eligible = canUsePaidConversion(company, 'quote');
+      if (!eligible) {
+        return <span className="text-slate-400 font-bold text-center">—</span>;
+      }
+      return (
+        <Button
+          size="sm"
+          onClick={() => onQuote(company.id)}
+          className="h-8 w-full max-w-[120px] rounded-lg bg-blue-600 px-2 text-[11px] font-bold text-white shadow-xs hover:bg-blue-700"
+        >
+          Solicitar
+        </Button>
+      );
+    },
+  },
+];
+
+export function CompanyComparisonModal({
   isOpen,
   onClose,
   companies,
@@ -364,38 +474,6 @@ export default function CompanyComparisonModal({
   onClearAll,
 }: CompanyComparisonModalProps) {
   const router = useRouter();
-
-  const highestRatedCompanyId = companies.reduce((prev, current) => {
-    const prevRating = Number(prev.average_rating ?? prev.rating_avg ?? 0);
-    const currRating = Number(current.average_rating ?? current.rating_avg ?? 0);
-    return currRating > prevRating ? current : prev;
-  }, companies[0])?.id;
-
-  useEffect(() => {
-    if (isOpen && companies.length > 0) {
-      track('comparison_modal_opened', {
-        companies_count: companies.length,
-        company_ids: companies.map((c) => c.id),
-        company_names: companies.map((c) => c.name),
-      });
-
-      companies.forEach((company) => {
-        sendIntentSignal({
-          company_id: company.id,
-          signal_type:
-            companies.length >= COMPARISON_LIMITS.desktop
-              ? 'comparison_third_added'
-              : 'comparison_view',
-          signal_category: 'research_intent',
-          element_type: 'comparison_modal',
-          metadata: {
-            compared_with_ids: companies.filter((c) => c.id !== company.id).map((c) => c.id),
-            total_compared: companies.length,
-          },
-        });
-      });
-    }
-  }, [isOpen, companies]);
 
   const handleQuoteClick = (companyId: number) => {
     const company = companies.find((item) => item.id === companyId);
@@ -412,29 +490,37 @@ export default function CompanyComparisonModal({
     openLeadModal({ preferredCompanyId: companyId, source: 'comparison-modal', type: 'quick' });
   };
 
-  const desktopVisibleCompanies = companies.slice(0, COMPARISON_LIMITS.desktop);
+  const mobileCompanies = useMemo(
+    () => companies.slice(0, COMPARISON_LIMITS.mobile),
+    [companies]
+  );
+  const desktopCompanies = useMemo(
+    () => companies.slice(0, COMPARISON_LIMITS.desktop),
+    [companies]
+  );
 
   return (
     <Dialog modal={true} open={isOpen} onOpenChange={onClose}>
       <DialogContent
+        hideCloseButton={true}
         overlayClassName="bg-slate-950/40 backdrop-blur-xs"
-        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[90dvh] !w-[calc(100vw-20px)] !max-w-[440px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl transition-all duration-300 md:!max-h-[85vh] md:!w-[calc(100vw-64px)] md:!max-w-[1024px] md:rounded-xl"
+        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[min(90dvh,820px)] !w-[calc(100vw-16px)] !max-w-[440px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-[20px] border border-slate-200/80 bg-white p-0 shadow-2xl transition-all duration-300 md:!max-h-[min(85vh,820px)] md:!w-[calc(100vw-64px)] md:!max-w-[1024px]"
       >
-        {/* Header Modal */}
-        <DialogHeader className="sticky top-0 z-40 space-y-0 border-b border-blue-900/10 bg-gradient-to-r from-blue-900 via-blue-800 to-slate-900 px-3 py-3 md:px-6 md:py-3.5">
+        {/* Cabeçalho do Modal: Azul Royal Degradê */}
+        <DialogHeader className="sticky top-0 z-30 space-y-0 border-b border-blue-900/10 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 px-3.5 py-2.5 text-white">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 text-left">
+            <div className="flex items-center gap-2 text-left min-w-0">
               <span
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white font-bold"
                 aria-hidden="true"
               >
                 ⇄
               </span>
-              <div>
-                <DialogTitle className="text-base font-bold text-white md:text-lg">
+              <div className="min-w-0">
+                <DialogTitle className="text-base font-bold text-white leading-tight">
                   Comparar empresas
                 </DialogTitle>
-                <DialogDescription className="mt-0.5 text-xs text-blue-100">
+                <DialogDescription className="mt-0.5 text-[11px] text-blue-100/90 leading-tight">
                   <span className="md:hidden">
                     {Math.min(companies.length, COMPARISON_LIMITS.mobile)} de{' '}
                     {COMPARISON_LIMITS.mobile} empresas no celular
@@ -447,32 +533,243 @@ export default function CompanyComparisonModal({
               </div>
             </div>
 
-            {/* Ações Desktop do Header */}
-            <div className="hidden items-center gap-2 md:flex">
-              {desktopVisibleCompanies.map((comp) => {
-                const logoUrl = comp.logo_url ? getFullImageUrl(comp.logo_url) : null;
+            {/* Ações no cabeçalho com alvo de toque acessível (min 44px) */}
+            <div className="flex items-center gap-1 shrink-0">
+              {companies.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClearAll}
+                  className="hidden md:inline-flex h-8 rounded-lg bg-white/10 px-2.5 text-xs font-semibold text-blue-100 transition-all hover:bg-red-500/20 hover:text-red-200"
+                >
+                  <X className="mr-1 h-3.5 w-3.5" />
+                  Limpar
+                </Button>
+              )}
+
+              {/* Botão Minimizar (−) */}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Minimizar comparação"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+                title="Minimizar"
+              >
+                <span className="h-7 w-7 rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-base font-bold leading-none">
+                  −
+                </span>
+              </button>
+
+              {/* Botão Fechar (✕) */}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Fechar modal de comparação"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+                title="Fechar"
+              >
+                <span className="h-7 w-7 rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center">
+                  <X className="h-4 w-4" />
+                </span>
+              </button>
+            </div>
+          </div>
+        </DialogHeader>
+
+        {/* ═══════════════════════════════════════════════════════════════════════
+            CORPO DO MODAL — MOBILE (Grid de 3 Colunas: 1 Rótulo + 2 Empresas)
+            ═══════════════════════════════════════════════════════════════════════ */}
+        <div className="block md:hidden min-h-0 overflow-y-auto px-2 py-1.5">
+          {/* Header Fixo das Empresas (Grid 3 colunas) */}
+          <div className="sticky top-0 z-20 bg-white pb-1.5">
+            <div className="grid grid-cols-[minmax(96px,31%)_repeat(2,minmax(0,1fr))] gap-1.5">
+              {/* Coluna 1: Rótulo "Empresas" */}
+              <div className="rounded-lg bg-slate-100/90 p-1.5 flex items-center justify-center min-h-[52px]">
+                <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                  Empresas
+                </span>
+              </div>
+
+              {/* Coluna 2 e 3: Cartões das Empresas */}
+              {[0, 1].map((index) => {
+                const company = mobileCompanies[index];
+                if (!company) {
+                  return (
+                    <button
+                      key={`empty-mobile-slot-${index}`}
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        router.push('/search?tab=companies');
+                      }}
+                      className="rounded-lg border border-dashed border-slate-300 bg-slate-50/70 p-1.5 flex flex-col items-center justify-center gap-1 min-h-[52px] hover:bg-slate-100 transition-colors"
+                      title="Adicionar empresa para comparar"
+                    >
+                      <Plus className="h-4 w-4 text-slate-400" />
+                      <span className="text-[10px] font-semibold text-slate-600 leading-tight">
+                        + Adicionar
+                      </span>
+                    </button>
+                  );
+                }
+
+                const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
                 return (
                   <div
-                    key={comp.id}
-                    className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 py-1 pl-1 pr-2 text-xs font-semibold text-white backdrop-blur-xs"
+                    key={`mobile-comp-header-${company.id}`}
+                    className="relative rounded-lg border border-slate-200 bg-white p-1.5 flex items-center gap-1.5 min-h-[52px] shadow-xs"
                   >
-                    <div className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white">
+                    <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
                       {logoUrl ? (
                         <Image
                           src={logoUrl}
                           alt=""
                           fill
+                          sizes="28px"
                           className="object-contain p-0.5"
-                          sizes="20px"
                         />
                       ) : (
-                        <Building2 className="m-auto h-3 w-3 text-slate-400" />
+                        <Building2 className="m-auto h-4 w-4 text-slate-300" />
                       )}
                     </div>
-                    <span className="max-w-[110px] truncate">{comp.name}</span>
+                    <Link
+                      href={`/companies/${company.slug || company.id}`}
+                      className="min-w-0 flex-1 hover:underline"
+                    >
+                      <span className="block text-[11px] font-bold text-slate-900 truncate leading-tight">
+                        {company.name}
+                      </span>
+                    </Link>
                     <button
-                      onClick={() => onRemoveCompany(comp.id)}
-                      className="ml-0.5 rounded-full p-0.5 text-blue-200 transition-colors hover:bg-white/20 hover:text-white"
+                      type="button"
+                      onClick={() => onRemoveCompany(company.id)}
+                      aria-label={`Remover ${company.name} da comparação`}
+                      className="shrink-0 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      title="Remover"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tabela dos 14 Critérios + Linha Final de CTA */}
+          <div className="divide-y divide-slate-100 rounded-lg border border-slate-200/80 bg-white overflow-hidden shadow-xs">
+            {CRITERIA_ROWS.map((row) => (
+              <div
+                key={`mobile-row-${row.id}`}
+                className={cn(
+                  'grid grid-cols-[minmax(96px,31%)_repeat(2,minmax(0,1fr))] divide-x divide-slate-100 items-stretch',
+                  row.id === 'quote_cta' ? 'bg-slate-50/80' : 'bg-white'
+                )}
+              >
+                {/* Coluna de Rótulo (Texto puro, normal sentence case, sem ícones) */}
+                <div className="p-1.5 bg-slate-50/70 flex items-center justify-start text-[11px] font-semibold text-slate-700 leading-tight">
+                  {row.label}
+                </div>
+
+                {/* Coluna Empresa 1 e Empresa 2 */}
+                {[0, 1].map((index) => {
+                  const company = mobileCompanies[index];
+                  if (!company) {
+                    return (
+                      <div
+                        key={`mobile-empty-cell-${row.id}-${index}`}
+                        className="p-1.5 flex items-center justify-center text-[11px] text-slate-300"
+                      >
+                        —
+                      </div>
+                    );
+                  }
+                  return (
+                    <div
+                      key={`mobile-data-cell-${row.id}-${company.id}`}
+                      className="p-1.5 flex items-center justify-center text-center text-[11px] leading-snug"
+                    >
+                      {row.render(company, handleQuoteClick)}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════════════════
+            CORPO DO MODAL — DESKTOP (Grid de 4 Colunas: 1 Rótulo + 3 Empresas)
+            ═══════════════════════════════════════════════════════════════════════ */}
+        <div className="hidden md:block min-h-0 overflow-y-auto p-4">
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+            {/* Header das Empresas Desktop */}
+            <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-slate-50/80 border-b border-slate-200">
+              <div className="flex items-center p-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Critérios
+                </span>
+              </div>
+              {[0, 1, 2].map((index) => {
+                const company = desktopCompanies[index];
+                if (!company) {
+                  return (
+                    <div
+                      key={`desktop-empty-header-${index}`}
+                      className="p-3 flex items-center justify-center"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          router.push('/search?tab=companies');
+                        }}
+                        className="flex h-9 items-center gap-1.5 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Adicionar empresa
+                      </button>
+                    </div>
+                  );
+                }
+
+                const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
+                return (
+                  <div
+                    key={`desktop-comp-header-${company.id}`}
+                    className="relative p-3 flex items-center justify-between gap-2 bg-white"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-0.5">
+                        {logoUrl ? (
+                          <Image
+                            src={logoUrl}
+                            alt=""
+                            fill
+                            sizes="36px"
+                            className="object-contain"
+                          />
+                        ) : (
+                          <Building2 className="m-auto h-5 w-5 text-slate-300" />
+                        )}
+                      </div>
+                      <Link
+                        href={`/companies/${company.slug || company.id}`}
+                        className="min-w-0 flex-1 hover:underline"
+                      >
+                        <span className="block text-xs font-bold text-slate-900 truncate">
+                          {company.name}
+                        </span>
+                        <span className="block text-[10px] text-slate-500 truncate">
+                          {[company.city, company.state].filter(Boolean).join(', ')}
+                        </span>
+                      </Link>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => onRemoveCompany(company.id)}
+                      aria-label={`Remover ${company.name} da comparação`}
+                      className="shrink-0 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                       title="Remover"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -480,432 +777,57 @@ export default function CompanyComparisonModal({
                   </div>
                 );
               })}
-
-              {companies.length < COMPARISON_LIMITS.desktop && (
-                <button
-                  onClick={() => {
-                    onClose();
-                    router.push('/search?tab=companies');
-                  }}
-                  className="flex h-8 items-center gap-1 rounded-full border border-dashed border-white/40 bg-white/10 px-3 text-xs font-medium text-white transition-all hover:bg-white/20"
-                  title="Adicionar mais empresas"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Adicionar</span>
-                </button>
-              )}
-
-              {companies.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onClearAll}
-                  className="h-8 rounded-lg bg-white/10 px-2.5 text-xs font-semibold text-blue-100 transition-all hover:bg-red-500/20 hover:text-red-200"
-                >
-                  <X className="mr-1 h-3.5 w-3.5" />
-                  Limpar
-                </Button>
-              )}
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                aria-label="Minimizar comparação"
-                className="h-8 w-8 rounded-lg border border-white/20 p-0 text-white hover:bg-white/15"
-                title="Minimizar"
-              >
-                <span aria-hidden="true" className="text-base font-bold leading-none">
-                  −
-                </span>
-              </Button>
             </div>
 
-            {/* Ações Mobile do Header */}
-            <div className="flex items-center gap-1.5 md:hidden">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                aria-label="Minimizar comparação"
-                className="h-8 w-8 rounded-lg border border-white/20 p-0 text-white hover:bg-white/15"
-                title="Minimizar"
-              >
-                <span aria-hidden="true" className="text-base font-bold leading-none">
-                  −
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                aria-label="Fechar modal de comparação"
-                className="h-8 w-8 rounded-lg border border-white/20 p-0 text-white hover:bg-white/15"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </DialogHeader>
-
-        {/* Desktop View: Grid de 3 empresas */}
-        <div className="hidden min-h-0 overflow-y-auto md:block p-6">
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-            <div className="flex w-full flex-col divide-y divide-slate-100">
-              {/* Header Row Desktop */}
-              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-slate-50/80">
-                <div className="flex flex-col justify-end p-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Critérios
-                  </span>
-                </div>
-
-                {desktopVisibleCompanies.map((company) => {
-                  const isHighlighted = company.id === highestRatedCompanyId;
-                  const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
-                  const rating = Number(
-                    company.average_rating ?? company.rating_avg ?? company.rating ?? 0
-                  );
-
-                  return (
-                    <div
-                      key={company.id}
-                      className={cn(
-                        'relative flex flex-col justify-between bg-white p-4',
-                        isHighlighted && 'bg-blue-50/20'
-                      )}
-                    >
-                      {isHighlighted && (
-                        <div className="absolute right-3 top-3 inline-flex items-center rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-xs">
-                          Melhor avaliada
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => onRemoveCompany(company.id)}
-                        aria-label={`Remover ${company.name} da comparação`}
-                        className="absolute left-3 top-3 rounded-full bg-slate-100 p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                        title="Remover"
-                      >
-                        <X className="h-3.5 w-3.5" aria-hidden="true" />
-                      </button>
-
-                      <div className="mt-6 flex items-center gap-3">
-                        <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-1">
-                          {logoUrl ? (
-                            <Image
-                              src={logoUrl}
-                              alt=""
-                              fill
-                              sizes="64px"
-                              className="object-contain p-1"
-                            />
-                          ) : (
-                            <Building2 className="m-auto h-6 w-6 text-slate-300" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <Link
-                            href={`/companies/${company.slug || company.id}`}
-                            className="hover:text-blue-600 block"
-                          >
-                            <h4 className="line-clamp-1 text-sm font-bold text-slate-900">
-                              {company.name}
-                            </h4>
-                          </Link>
-                          <span className="block truncate text-xs text-slate-500">
-                            {[company.city, company.state].filter(Boolean).join(', ') ||
-                              'Localização não informada'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Slots vazios Desktop */}
-                {Array.from({
-                  length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length,
-                }).map((_, i) => (
-                  <div
-                    key={`empty-desk-${i}`}
-                    className="flex flex-col items-center justify-center bg-slate-50/40 p-6 text-center"
-                  >
-                    <span className="text-xs font-semibold text-slate-400">Slot Livre</span>
-                    <button
-                      onClick={() => {
-                        onClose();
-                        router.push('/search?tab=companies');
-                      }}
-                      className="mt-2 flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
-                    >
-                      <Plus className="h-3.5 w-3.5" /> Adicionar empresa
-                    </button>
+            {/* Tabela Desktop: Mesmos 14 Critérios + Linha Final de CTA */}
+            <div className="divide-y divide-slate-100">
+              {CRITERIA_ROWS.map((row) => (
+                <div
+                  key={`desktop-row-${row.id}`}
+                  className={cn(
+                    'grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 items-stretch',
+                    row.id === 'quote_cta' ? 'bg-slate-50/80' : 'bg-white'
+                  )}
+                >
+                  <div className="p-3 bg-slate-50/70 flex items-center text-xs font-semibold text-slate-700">
+                    {row.label}
                   </div>
-                ))}
-              </div>
-
-              {/* Linha 1: Reputação */}
-              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
-                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    Reputação
-                  </span>
-                  <span className="text-xs text-slate-400">Avaliação de clientes</span>
-                </div>
-                {desktopVisibleCompanies.map((company) => {
-                  const rating = Number(
-                    company.average_rating ?? company.rating_avg ?? company.rating ?? 0
-                  );
-                  const reviews = Number(
-                    company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0
-                  );
-                  return (
-                    <div
-                      key={`rep-desk-${company.id}`}
-                      className="p-4 flex flex-col justify-center"
-                    >
-                      {rating > 0 ? (
-                        <>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-base font-extrabold text-slate-950">
-                              {rating.toFixed(1)}
-                            </span>
-                            <div className="flex text-amber-400" aria-hidden="true">
-                              {[1, 2, 3, 4, 5].map((s) => (
-                                <Star
-                                  key={s}
-                                  className={cn(
-                                    'h-3.5 w-3.5',
-                                    s <= Math.round(rating)
-                                      ? 'fill-amber-400 text-amber-400'
-                                      : 'text-slate-200'
-                                  )}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <span className="text-xs text-slate-500 mt-0.5">
-                            {reviews > 0 ? `${reviews} avaliações` : 'Sem avaliações'}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-xs font-medium text-slate-400">Sem avaliações</span>
-                      )}
-                    </div>
-                  );
-                })}
-                {Array.from({
-                  length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length,
-                }).map((_, i) => (
-                  <div key={`empty-rep-${i}`} className="p-4 bg-slate-50/20" />
-                ))}
-              </div>
-
-              {/* Linha 2: Certificações */}
-              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
-                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    Certificação
-                  </span>
-                  <span className="text-xs text-slate-400">Status de auditoria</span>
-                </div>
-                {desktopVisibleCompanies.map((company) => (
-                  <div key={`ver-desk-${company.id}`} className="p-4 flex flex-col justify-center">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={cn(
-                          'text-xs font-bold',
-                          company.verified ? 'text-emerald-700' : 'text-slate-600'
-                        )}
-                      >
-                        {company.verified
-                          ? 'Verificada'
-                          : company.verification_status === 'pending'
-                            ? 'Em análise'
-                            : 'Não verificada'}
-                      </span>
-                      {company.verified && <ShieldCheck className="h-4 w-4 text-emerald-600" />}
-                    </div>
-                    <span className="text-xs text-slate-400 mt-0.5">
-                      {company.verified ? 'Dados auditados' : 'Documentação em análise'}
-                    </span>
-                  </div>
-                ))}
-                {Array.from({
-                  length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length,
-                }).map((_, i) => (
-                  <div key={`empty-ver-${i}`} className="p-4 bg-slate-50/20" />
-                ))}
-              </div>
-
-              {/* Linha 3: SLA */}
-              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
-                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    SLA de Contato
-                  </span>
-                  <span className="text-xs text-slate-400">Tempo de resposta</span>
-                </div>
-                {desktopVisibleCompanies.map((company) => {
-                  const speed = getSpeedBadge(company.response_time_sla);
-                  return (
-                    <div
-                      key={`sla-desk-${company.id}`}
-                      className="p-4 flex flex-col justify-center"
-                    >
-                      <span className="text-xs font-bold text-slate-900">
-                        {company.response_time_sla || 'Sob consulta'}
-                      </span>
-                      {speed && (
-                        <span
-                          className={cn(
-                            'mt-1 w-fit rounded border px-1.5 py-0.5 text-xs font-bold',
-                            speed.color
-                          )}
+                  {[0, 1, 2].map((index) => {
+                    const company = desktopCompanies[index];
+                    if (!company) {
+                      return (
+                        <div
+                          key={`desktop-empty-cell-${row.id}-${index}`}
+                          className="p-3 flex items-center justify-center text-xs text-slate-300"
                         >
-                          {speed.label}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-                {Array.from({
-                  length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length,
-                }).map((_, i) => (
-                  <div key={`empty-sla-${i}`} className="p-4 bg-slate-50/20" />
-                ))}
-              </div>
-
-              {/* Linha 4: Abrangência */}
-              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
-                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    Abrangência
-                  </span>
-                  <span className="text-xs text-slate-400">Região de atendimento</span>
-                </div>
-                {desktopVisibleCompanies.map((company) => (
-                  <div key={`cov-desk-${company.id}`} className="p-4 flex flex-col justify-center">
-                    <span className="text-xs font-bold text-slate-900">
-                      {[company.city, company.state].filter(Boolean).join(', ') || 'Consultar'}
-                    </span>
-                    <span className="text-xs text-slate-400 mt-0.5">
-                      {getCoverageLabel(company)}
-                    </span>
-                  </div>
-                ))}
-                {Array.from({
-                  length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length,
-                }).map((_, i) => (
-                  <div key={`empty-cov-${i}`} className="p-4 bg-slate-50/20" />
-                ))}
-              </div>
-
-              {/* Linha 5: Volume de Projetos */}
-              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
-                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    Volume
-                  </span>
-                  <span className="text-xs text-slate-400">Projetos entregues</span>
-                </div>
-                {desktopVisibleCompanies.map((company) => {
-                  const count =
-                    company.delivered_projects_count ?? company.delivered_projects_score ?? 0;
-                  return (
-                    <div
-                      key={`vol-desk-${company.id}`}
-                      className="p-4 flex flex-col justify-center"
-                    >
-                      <span className="text-xs font-bold text-slate-900">
-                        {count > 0 ? `+${count} projetos` : 'Consultar'}
-                      </span>
-                    </div>
-                  );
-                })}
-                {Array.from({
-                  length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length,
-                }).map((_, i) => (
-                  <div key={`empty-vol-${i}`} className="p-4 bg-slate-50/20" />
-                ))}
-              </div>
-
-              {/* Linha 6: Garantia */}
-              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-white">
-                <div className="p-4 bg-slate-50/50 flex flex-col justify-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    Garantia
-                  </span>
-                  <span className="text-xs text-slate-400">Pós-instalação</span>
-                </div>
-                {desktopVisibleCompanies.map((company) => {
-                  const years = company.warranty_years ?? company.installation_warranty_years ?? 0;
-                  return (
-                    <div
-                      key={`gar-desk-${company.id}`}
-                      className="p-4 flex flex-col justify-center"
-                    >
-                      <span className="text-xs font-bold text-slate-900">
-                        {years > 0 ? `${years} anos` : 'Consultar'}
-                      </span>
-                    </div>
-                  );
-                })}
-                {Array.from({
-                  length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length,
-                }).map((_, i) => (
-                  <div key={`empty-gar-${i}`} className="p-4 bg-slate-50/20" />
-                ))}
-              </div>
-
-              {/* Linha 7: Orçamento CTA */}
-              <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-slate-50/50">
-                <div className="p-4 flex items-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                    Orçamento
-                  </span>
-                </div>
-                {desktopVisibleCompanies.map((company) => (
-                  <div key={`cta-desk-${company.id}`} className="p-4">
-                    {canUsePaidConversion(company, 'quote') ? (
-                      <Button
-                        className="h-10 w-full rounded-lg bg-orange-600 text-xs font-bold text-white hover:bg-orange-700 shadow-xs"
-                        onClick={() => handleQuoteClick(company.id)}
+                          —
+                        </div>
+                      );
+                    }
+                    return (
+                      <div
+                        key={`desktop-data-cell-${row.id}-${company.id}`}
+                        className="p-3 flex items-center justify-center text-center text-xs"
                       >
-                        Solicitar Orçamento
-                      </Button>
-                    ) : null}
-                  </div>
-                ))}
-                {Array.from({
-                  length: COMPARISON_LIMITS.desktop - desktopVisibleCompanies.length,
-                }).map((_, i) => (
-                  <div key={`empty-cta-${i}`} className="p-4 bg-slate-50/20" />
-                ))}
-              </div>
+                        {row.render(company, handleQuoteClick)}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Mobile View */}
-        <MobileComparisonContent
-          companies={companies}
-          highestRatedCompanyId={highestRatedCompanyId}
-          onRemoveCompany={onRemoveCompany}
-          onAddCompany={() => {
-            onClose();
-            router.push('/search?tab=companies');
-          }}
-          onQuote={handleQuoteClick}
-        />
-
-        {/* Footer Mobile */}
-        <div className="sticky bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-slate-200 bg-white px-3 py-2.5 pb-[calc(env(safe-area-inset-bottom)+8px)] md:hidden">
+        {/* ═══════════════════════════════════════════════════════════════════════
+            RODAPÉ DO MODAL (Mobile e Desktop)
+            ═══════════════════════════════════════════════════════════════════════ */}
+        <div className="sticky bottom-0 z-30 bg-white border-t border-slate-100 p-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between gap-2">
           <Button
+            type="button"
             variant="outline"
-            disabled={companies.length >= COMPARISON_LIMITS.mobile}
-            className="h-10 rounded-lg border-slate-300 bg-white px-2 text-xs font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+            disabled={companies.length >= COMPARISON_LIMITS.desktop}
+            className="min-h-[44px] flex-1 rounded-xl border-slate-300 text-xs font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
             onClick={() => {
               onClose();
               router.push('/search?tab=companies');
@@ -913,8 +835,10 @@ export default function CompanyComparisonModal({
           >
             + Adicionar empresa
           </Button>
+
           <Button
-            className="h-10 rounded-lg bg-blue-700 px-2 text-xs font-bold text-white hover:bg-blue-800"
+            type="button"
+            className="min-h-[44px] flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-xs"
             onClick={() => {
               track('comparison_modal_compare_confirm', { companies_count: companies.length });
               onClose();
@@ -928,3 +852,5 @@ export default function CompanyComparisonModal({
     </Dialog>
   );
 }
+
+export default CompanyComparisonModal;

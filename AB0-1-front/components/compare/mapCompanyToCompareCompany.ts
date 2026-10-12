@@ -173,15 +173,22 @@ export function mapCompanyToCompareCompany(
         source.delivered_projects_score
     ),
     warrantyYears: optionalNumber(
-      source.operations?.warranty_years ??
-        source.warranty_years ??
-        source.installation_warranty_years
+      source.comparison_profile?.warranty_years ??
+        (source.comparison_profile?.warranty_confirmed ? source.installation_warranty_years : null) ??
+        source.operations?.warranty_years ??
+        source.warranty_years
     ),
     postSalesSupport:
-      source.post_sales_support === null || source.post_sales_support === undefined
-        ? null
-        : Boolean(source.post_sales_support),
-    paymentMethods: stringList(source.payment_methods),
+      source.comparison_profile?.after_sales_support === 'offered'
+        ? true
+        : source.comparison_profile?.after_sales_support === 'not_offered'
+          ? false
+          : source.post_sales_support === null || source.post_sales_support === undefined
+            ? null
+            : Boolean(source.post_sales_support),
+    paymentMethods: stringList(
+      source.comparison_profile?.payment_methods || source.payment_methods
+    ),
     specialties: {
       residentialSolar: optionalMatch(serviceText, [/solar residencial/, /residencial/]),
       commercialSolar: optionalMatch(serviceText, [/solar comercial/, /comercial/]),

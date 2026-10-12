@@ -38,6 +38,12 @@ type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.
   fallbackTitle?: string | null;
   /** Classes opcionais aplicadas somente ao overlay deste diálogo. */
   overlayClassName?: string;
+  /**
+   * Permite suprimir o botão de fechar nativo (X) quando o diálogo
+   * implementa seus próprios controles customizados no cabeçalho.
+   * Padrão: false (mantém o botão X nativo).
+   */
+  hideCloseButton?: boolean;
 };
 
 const hasDialogTitle = (children: React.ReactNode): boolean => {
@@ -58,7 +64,7 @@ const hasDialogTitle = (children: React.ReactNode): boolean => {
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, fallbackTitle = 'Dialog', overlayClassName, ...props }, ref) => {
+>(({ className, children, fallbackTitle = 'Dialog', overlayClassName, hideCloseButton = false, ...props }, ref) => {
   const shouldRenderFallbackTitle = fallbackTitle && !hasDialogTitle(children);
 
   return (
@@ -76,10 +82,12 @@ const DialogContent = React.forwardRef<
           <DialogPrimitive.Title className="sr-only">{fallbackTitle}</DialogPrimitive.Title>
         )}
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground bg-white/80 backdrop-blur-sm border border-slate-200 p-2 shadow-sm z-10 top-[calc(1rem+var(--sat))] right-[calc(1rem+var(--sar))]">
-          <X className="h-5 w-5" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
+        {!hideCloseButton && (
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground bg-white/80 backdrop-blur-sm border border-slate-200 p-2 shadow-sm z-10 top-[calc(1rem+var(--sat))] right-[calc(1rem+var(--sar))]">
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        )}
       </DialogPrimitive.Content>
     </DialogPortal>
   );

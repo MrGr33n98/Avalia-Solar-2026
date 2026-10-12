@@ -167,12 +167,38 @@ export interface DirectMessage {
   attachment_url?: string | null;
 }
 
+export interface CompanyComparisonProfile {
+  quote_turnaround?: 'within_24h' | 'within_3_days' | 'consult' | string | null;
+  technical_visit?: 'free' | 'paid' | 'consult' | 'not_offered' | string | null;
+  payment_methods?: string[] | string | null;
+  financing_availability?: 'available' | 'consult' | 'not_offered' | string | null;
+  installation_terms?: 'included' | 'separately_contracted' | 'not_offered' | string | null;
+  maintenance_availability?: 'offered' | 'not_offered' | 'consult' | string | null;
+  after_sales_support?: 'offered' | 'consult' | 'not_offered' | string | null;
+  installation_team?: 'in_house' | 'outsourced' | 'mixed' | 'not_applicable' | string | null;
+  system_monitoring?: 'app' | 'web_portal' | 'manual' | 'not_offered' | string | null;
+  services_offered?: string[] | string | null;
+  warranty_years?: number | null;
+  warranty_confirmed?: boolean | null;
+}
+
 export interface Company {
   id: number;
   p2p_chat_enabled?: boolean;
   slug: string;
   name: string;
   city: string;
+  comparison_profile?: CompanyComparisonProfile;
+  quote_turnaround?: string | null;
+  technical_visit?: string | null;
+  financing_availability?: string | null;
+  installation_terms?: string | null;
+  maintenance_availability?: string | null;
+  after_sales_support?: string | null;
+  installation_team?: string | null;
+  system_monitoring?: string | null;
+  warranty_confirmed?: boolean | null;
+
   state: string;
   status: string;
   verified: boolean;

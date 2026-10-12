@@ -110,6 +110,35 @@ interface CompanyData {
   feature_access?: Record<string, FeatureAccessEntry> | null;
   created_at?: string;
   updated_at?: string;
+  quote_turnaround?: string;
+  technical_visit?: string;
+  financing_availability?: string;
+  installation_terms?: string;
+  maintenance_availability?: string;
+  after_sales_support?: string;
+  installation_team?: string;
+  system_monitoring?: string;
+  warranty_confirmed?: boolean;
+  warranty_years?: number;
+  rating_avg?: number;
+  rating_count?: number;
+  reviews_count?: number;
+  has_paid_plan?: boolean;
+  post_sales_support?: boolean;
+  comparison_profile?: {
+    quote_turnaround?: string | null;
+    technical_visit?: string | null;
+    payment_methods?: string[] | string | null;
+    financing_availability?: string | null;
+    installation_terms?: string | null;
+    maintenance_availability?: string | null;
+    after_sales_support?: string | null;
+    installation_team?: string | null;
+    system_monitoring?: string | null;
+    services_offered?: string[] | string | null;
+    warranty_years?: number | null;
+    warranty_confirmed?: boolean | null;
+  };
 }
 
 const NOT_INFORMED = 'Não informado';
@@ -188,17 +217,118 @@ function parseList(value: string) {
     .filter(Boolean);
 }
 
+const QUOTE_TURNAROUND_OPTIONS = [
+  { value: 'within_24h', label: 'Até 24 horas' },
+  { value: 'within_3_days', label: 'Até 3 dias' },
+  { value: 'consult', label: 'Sob consulta / Consultar' },
+];
+
+const TECHNICAL_VISIT_OPTIONS = [
+  { value: 'free', label: 'Gratuita' },
+  { value: 'paid', label: 'Paga' },
+  { value: 'consult', label: 'Consultar' },
+  { value: 'not_offered', label: 'Não oferece' },
+];
+
+const PAYMENT_METHODS_OPTIONS = [
+  { value: 'pix', label: 'Pix' },
+  { value: 'credit_card', label: 'Cartão de crédito' },
+  { value: 'bank_slip', label: 'Boleto bancário' },
+  { value: 'debit_card', label: 'Cartão de débito' },
+];
+
+const FINANCING_OPTIONS = [
+  { value: 'available', label: 'Disponível' },
+  { value: 'consult', label: 'Consultar' },
+  { value: 'not_offered', label: 'Não oferece' },
+];
+
+const INSTALLATION_TERMS_OPTIONS = [
+  { value: 'included', label: 'Inclusa no pacote' },
+  { value: 'separately_contracted', label: 'Contratada à parte' },
+  { value: 'not_offered', label: 'Não oferece' },
+];
+
+const MAINTENANCE_OPTIONS = [
+  { value: 'offered', label: 'Oferece manutenção' },
+  { value: 'consult', label: 'Consultar' },
+  { value: 'not_offered', label: 'Não oferece' },
+];
+
+const INSTALLATION_TEAM_OPTIONS = [
+  { value: 'in_house', label: 'Própria' },
+  { value: 'outsourced', label: 'Terceirizada' },
+  { value: 'mixed', label: 'Mista' },
+  { value: 'not_applicable', label: 'Não se aplica' },
+];
+
+const AFTER_SALES_OPTIONS = [
+  { value: 'offered', label: 'Oferece suporte pós-venda' },
+  { value: 'consult', label: 'Consultar' },
+  { value: 'not_offered', label: 'Não oferece' },
+];
+
+const SYSTEM_MONITORING_OPTIONS = [
+  { value: 'app', label: 'Pelo aplicativo móvel' },
+  { value: 'web_portal', label: 'Portal web' },
+  { value: 'manual', label: 'Manual' },
+  { value: 'not_offered', label: 'Não oferece' },
+];
+
+const COMPARISON_SERVICES_OPTIONS = [
+  { value: 'Projeto', label: 'Projeto de engenharia' },
+  { value: 'Instalação', label: 'Instalação e montagem' },
+  { value: 'Manutenção', label: 'Manutenção (O&M)' },
+  { value: 'Homologação', label: 'Homologação na concessionária' },
+];
+
+function getOptionLabel(options: { value: string; label: string }[], value?: string) {
+  if (!value) return NOT_INFORMED;
+  const match = options.find((o) => o.value === value);
+  return match ? match.label : value;
+}
+
+function countFilledComparisonFields(data?: CompanyData | null) {
+  if (!data) return 0;
+  let count = 0;
+  if (!isBlank(data.quote_turnaround)) count++;
+  if (!isBlank(data.technical_visit)) count++;
+  if (!isBlank(data.payment_methods)) count++;
+  if (!isBlank(data.financing_availability) || !isBlank(data.financing_options)) count++;
+  if (!isBlank(data.installation_terms)) count++;
+  if (!isBlank(data.maintenance_availability)) count++;
+  if (!isBlank(data.installation_team)) count++;
+  if (!isBlank(data.services_offered)) count++;
+  if (!isBlank(data.after_sales_support) || data.post_sales_support !== undefined) count++;
+  if (!isBlank(data.system_monitoring)) count++;
+  if (data.warranty_years && Number(data.warranty_years) > 0) count++;
+  if (data.warranty_confirmed) count++;
+  return count;
+}
+
 function normalizeSeoFields(data: CompanyData | null): CompanyData | null {
   if (!data) return data;
 
   const seoDescription = data.seo_description ?? data.meta_description ?? '';
+  const profile = data.comparison_profile;
 
   return {
     ...data,
     seo_description: seoDescription,
     meta_description: seoDescription,
+    quote_turnaround: data.quote_turnaround ?? profile?.quote_turnaround ?? '',
+    technical_visit: data.technical_visit ?? profile?.technical_visit ?? '',
+    financing_availability: data.financing_availability ?? profile?.financing_availability ?? '',
+    installation_terms: data.installation_terms ?? profile?.installation_terms ?? '',
+    maintenance_availability: data.maintenance_availability ?? profile?.maintenance_availability ?? '',
+    after_sales_support: data.after_sales_support ?? profile?.after_sales_support ?? '',
+    installation_team: data.installation_team ?? profile?.installation_team ?? '',
+    system_monitoring: data.system_monitoring ?? profile?.system_monitoring ?? '',
+    warranty_confirmed: data.warranty_confirmed ?? profile?.warranty_confirmed ?? false,
+    warranty_years: data.warranty_years ?? profile?.warranty_years ?? data.installation_warranty_years,
   };
 }
+
 
 function formatDateTime(value?: string) {
   if (!value) return NOT_INFORMED;
@@ -1132,7 +1262,350 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         )}
       </SectionCard>
 
+      {/* ═══════════════════════════════════════════════════════════════════════
+          COMO SUA EMPRESA APARECE NA COMPARAÇÃO (O QUIZ COMERCIAL)
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <SectionCard
+        title="Como sua empresa aparece na comparação"
+        description={`Preencha as informações que ajudam clientes a escolher sua empresa no Comparador. Campos em branco aparecem como "Não informado". (Progresso: ${countFilledComparisonFields(isEditing ? formData : currentData)}/12 preenchidos)`}
+        icon={Shield}
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleContextEdit}
+            className="w-full rounded-lg text-brand-blue sm:w-auto"
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar critérios
+          </Button>
+        }
+      >
+        {/* Painel Informativo de Autoridade (Status que a empresa não edita diretamente) */}
+        <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50/70 p-4">
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-blue-900">
+            Critérios do Sistema e Autoridade
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
+              <span className="block text-[11px] font-semibold text-slate-500">Avaliações públicas</span>
+              <span className="block text-sm font-bold text-slate-900 mt-0.5">
+                {currentData.rating_avg && Number(currentData.rating_avg) > 0
+                  ? `${Number(currentData.rating_avg).toFixed(1)} ★ (${currentData.rating_count ?? currentData.reviews_count ?? 0})`
+                  : '— Sem avaliações'}
+              </span>
+              <span className="block text-[10px] text-slate-400 mt-0.5">Definido por avaliações de clientes</span>
+            </div>
+
+            <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
+              <span className="block text-[11px] font-semibold text-slate-500">Status de auditoria</span>
+              <span className="block text-sm font-bold text-emerald-700 mt-0.5">
+                {currentData.verified ? '✓ Empresa Verificada' : 'Documentação em análise'}
+              </span>
+              <span className="block text-[10px] text-slate-400 mt-0.5">Definido por validação de CNPJ</span>
+            </div>
+
+            <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
+              <span className="block text-[11px] font-semibold text-slate-500">Botão de Orçamento no Comparador</span>
+              <span className="block text-sm font-bold text-slate-900 mt-0.5">
+                {currentData.has_paid_plan ? 'Habilitado (Plano Ativo)' : 'Requer Plano Pro'}
+              </span>
+              <span className="block text-[10px] text-slate-400 mt-0.5">Definido pelo plano contratado</span>
+            </div>
+          </div>
+        </div>
+
+        {isEditing ? (
+          <div className="space-y-6">
+            {/* GRUPO 1: Orçamento e Condições Financeiras */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+              <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-700">
+                Grupo 1: Orçamento e Condições Financeiras
+              </h4>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="comp-quote-turnaround">Prazo de envio do orçamento</Label>
+                  <select
+                    id="comp-quote-turnaround"
+                    value={formData?.quote_turnaround || ''}
+                    onChange={(e) => handleInputChange('quote_turnaround', e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="">Selecione o prazo...</option>
+                    {QUOTE_TURNAROUND_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="comp-technical-visit">Visita técnica</Label>
+                  <select
+                    id="comp-technical-visit"
+                    value={formData?.technical_visit || ''}
+                    onChange={(e) => handleInputChange('technical_visit', e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="">Selecione o tipo de visita...</option>
+                    {TECHNICAL_VISIT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="comp-financing">Financiamento ao cliente</Label>
+                  <select
+                    id="comp-financing"
+                    value={formData?.financing_availability || ''}
+                    onChange={(e) => handleInputChange('financing_availability', e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="">Selecione a disponibilidade...</option>
+                    {FINANCING_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Formas de pagamento aceitas</Label>
+                  <ChecklistGrid
+                    options={PAYMENT_METHODS_OPTIONS}
+                    values={listFromValue(formData?.payment_methods)}
+                    onToggle={(val) => {
+                      const current = listFromValue(formData?.payment_methods);
+                      const next = current.includes(val)
+                        ? current.filter((item) => item !== val)
+                        : [...current, val];
+                      handleInputChange('payment_methods', next.join(', '));
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* GRUPO 2: Execução e Instalação */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+              <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-700">
+                Grupo 2: Execução e Instalação
+              </h4>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="comp-installation-terms">Instalação no pacote</Label>
+                  <select
+                    id="comp-installation-terms"
+                    value={formData?.installation_terms || ''}
+                    onChange={(e) => handleInputChange('installation_terms', e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="">Selecione...</option>
+                    {INSTALLATION_TERMS_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="comp-maintenance">Manutenção pós-entrega</Label>
+                  <select
+                    id="comp-maintenance"
+                    value={formData?.maintenance_availability || ''}
+                    onChange={(e) => handleInputChange('maintenance_availability', e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="">Selecione...</option>
+                    {MAINTENANCE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="comp-installation-team">Equipe instaladora</Label>
+                  <select
+                    id="comp-installation-team"
+                    value={formData?.installation_team || ''}
+                    onChange={(e) => handleInputChange('installation_team', e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="">Selecione...</option>
+                    {INSTALLATION_TEAM_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Serviços oferecidos no escopo</Label>
+                  <ChecklistGrid
+                    options={COMPARISON_SERVICES_OPTIONS}
+                    values={listFromValue(formData?.services_offered)}
+                    onToggle={(val) => handleListToggle('services_offered', val)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* GRUPO 3: Atendimento, Suporte e Garantia */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+              <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-700">
+                Grupo 3: Atendimento, Suporte e Garantia
+              </h4>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="comp-after-sales">Suporte pós-venda</Label>
+                  <select
+                    id="comp-after-sales"
+                    value={formData?.after_sales_support || ''}
+                    onChange={(e) => handleInputChange('after_sales_support', e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="">Selecione...</option>
+                    {AFTER_SALES_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="comp-monitoring">Acompanhamento do sistema</Label>
+                  <select
+                    id="comp-monitoring"
+                    value={formData?.system_monitoring || ''}
+                    onChange={(e) => handleInputChange('system_monitoring', e.target.value)}
+                    className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="">Selecione...</option>
+                    {SYSTEM_MONITORING_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="comp-warranty-years">Garantia de instalação (anos)</Label>
+                  <Input
+                    id="comp-warranty-years"
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={formData?.warranty_years ?? formData?.installation_warranty_years ?? ''}
+                    onChange={(e) => {
+                      const val = handleNumberValue(e.target.value);
+                      handleInputChange('warranty_years', val);
+                      handleInputChange('installation_warranty_years', val);
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2 flex items-center pt-6">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData?.warranty_confirmed)}
+                      onChange={(e) => handleInputChange('warranty_confirmed', e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-brand-blue focus:ring-brand-blue"
+                    />
+                    <span>Confirmar garantia explicitamente para o Comparador</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <InfoItem
+                label="Prazo de orçamento"
+                value={getOptionLabel(QUOTE_TURNAROUND_OPTIONS, currentData.quote_turnaround)}
+                icon={Clock}
+              />
+              <InfoItem
+                label="Visita técnica"
+                value={getOptionLabel(TECHNICAL_VISIT_OPTIONS, currentData.technical_visit)}
+                icon={Building2}
+              />
+              <InfoItem
+                label="Financiamento"
+                value={getOptionLabel(FINANCING_OPTIONS, currentData.financing_availability)}
+                icon={DollarSign}
+              />
+              <InfoItem
+                label="Instalação no pacote"
+                value={getOptionLabel(INSTALLATION_TERMS_OPTIONS, currentData.installation_terms)}
+                icon={Wrench}
+              />
+              <InfoItem
+                label="Manutenção pós-entrega"
+                value={getOptionLabel(MAINTENANCE_OPTIONS, currentData.maintenance_availability)}
+                icon={Wrench}
+              />
+              <InfoItem
+                label="Equipe instaladora"
+                value={getOptionLabel(INSTALLATION_TEAM_OPTIONS, currentData.installation_team)}
+                icon={Users}
+              />
+              <InfoItem
+                label="Suporte pós-venda"
+                value={getOptionLabel(AFTER_SALES_OPTIONS, currentData.after_sales_support)}
+                icon={Shield}
+              />
+              <InfoItem
+                label="Acompanhamento"
+                value={getOptionLabel(SYSTEM_MONITORING_OPTIONS, currentData.system_monitoring)}
+                icon={Activity}
+              />
+              <InfoItem
+                label="Garantia confirmada"
+                value={
+                  currentData.warranty_confirmed && currentData.warranty_years
+                    ? `${currentData.warranty_years} ano(s) (Confirmada)`
+                    : currentData.warranty_years
+                    ? `${currentData.warranty_years} ano(s) (Pendente confirmação)`
+                    : NOT_INFORMED
+                }
+                icon={Shield}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Formas de pagamento
+                </span>
+                <ListBadges items={listFromValue(currentData.payment_methods)} empty="Não informado" />
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Serviços oferecidos
+                </span>
+                <ListBadges items={listFromValue(currentData.services_offered)} empty="Não informado" />
+              </div>
+            </div>
+          </div>
+        )}
+      </SectionCard>
+
       <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+
         <SectionCard
           title="Capacidade de Atuação"
           description="Segmentos, serviços e escopo comercial."
