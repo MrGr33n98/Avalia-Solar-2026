@@ -28,6 +28,7 @@ import {
   Table,
   Zap,
   AlertCircle,
+  Shield,
 } from 'lucide-react';
 import { marketplaceProposalsApi, type MarketplaceProposal } from '@/lib/api';
 import {
@@ -59,6 +60,17 @@ import { ProposalChoose } from './proposals/ProposalChoose';
 import { ProposalCompleted } from './proposals/ProposalCompleted';
 import { ProposalReview } from './proposals/ProposalReview';
 import { ModernProposalStepper, type Screen } from './proposals/ModernProposalStepper';
+import {
+  JOURNEY_STAGES,
+  type ProposalJourneyStageId,
+  SCREEN_TO_STAGE,
+  getActiveJourneyStage,
+} from './proposals/proposal-journey-config';
+import {
+  classifyProposalError,
+  type ClassifiedProposalError,
+  proposalStateMessages,
+} from './proposals/proposal-state';
 import {
   ProposalStatusSummary,
   type ProposalFilter,
@@ -104,28 +116,8 @@ const filterTabs: { id: Filter; label: string }[] = [
   { id: 'completed', label: 'Concluídas' },
 ];
 
-const journeySteps = [
-  { id: 1, label: 'Minhas propostas' },
-  { id: 2, label: 'Detalhes', view: 'summary' as Screen },
-  { id: 3, label: 'Proposta completa', view: 'complete' as Screen },
-  { id: 4, label: 'Comparar', view: 'compare' as Screen },
-  { id: 5, label: 'Conversa', view: 'conversation' as Screen },
-  { id: 6, label: 'Reunião', view: 'meeting' as Screen },
-  { id: 7, label: 'Negociação', view: 'negotiation' as Screen },
-  { id: 8, label: 'Escolher', view: 'choose' as Screen },
-  { id: 9, label: 'Projeto', view: 'project' as Screen },
-  { id: 10, label: 'Concluído', view: 'project' as Screen },
-];
-
 function activeJourneyStep(proposal: MarketplaceProposal | undefined, screen: Screen) {
-  if (screen === 'compare') return 4;
-  if (!proposal) return 1;
-  if (screen === 'meeting') return 6;
-  if (screen === 'negotiation') return 7;
-  if (isProjectComplete(proposal.project)) return 10;
-  if (screen === 'project' || proposal.status === 'accepted') return 9;
-  if (screen === 'complete') return 3;
-  return 2;
+  return getActiveJourneyStage(proposal, screen);
 }
 
 function CompanyAvatar({ proposal }: { proposal: MarketplaceProposal }) {
@@ -147,7 +139,10 @@ export function MarketplaceProposalsWorkspace() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const selectedId = Number(params.get('proposal')) || null;
+  const rawProposalParam = params.get('proposal');
+  const parsedId = Number(rawProposalParam);
+  const selectedId =
+    rawProposalParam && Number.isSafeInteger(parsedId) && parsedId > 0 ? parsedId : null;
   const requestedScreen = params.get('view') as Screen;
   const screen = screens.includes(requestedScreen) ? requestedScreen : 'summary';
 
@@ -170,7 +165,7 @@ export function MarketplaceProposalsWorkspace() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState('');
+  const [detailErrorState, setDetailErrorState] = useState<ClassifiedProposalError | null>(null);
   const [detailAttempt, setDetailAttempt] = useState(0);
   const [error, setError] = useState('');
   const [choosing, setChoosing] = useState<MarketplaceProposal | null>(null);
@@ -191,7 +186,8 @@ export function MarketplaceProposalsWorkspace() {
   useEffect(() => {
     selectedRef.current = selected;
   }, [selected]);
-  const showingDetail = Boolean(selectedId) || screen === 'compare' || screen === 'choose';
+  const showingDetail =
+    Boolean(selectedId) || Boolean(rawProposalParam) || screen === 'compare' || screen === 'choose';
   const comparisonIds = (params.get('compare') || '')
     .split(',')
     .map(Number)
@@ -225,10 +221,25 @@ export function MarketplaceProposalsWorkspace() {
   }, [load]);
 
   useEffect(() => {
-    if (!selectedId) return;
+    if (rawProposalParam && selectedId === null) {
+      setDetailErrorState({
+        state: 'not_found',
+        status: 404,
+        message: 'Identificador de proposta inválido.',
+        config: proposalStateMessages.not_found,
+        canRetry: false,
+      });
+      return;
+    }
+
+    if (!selectedId) {
+      setDetailErrorState(null);
+      return;
+    }
+
     let current = true;
     setDetailLoading(true);
-    setDetailError('');
+    setDetailErrorState(null);
     (async () => {
       try {
         const response = await marketplaceProposalsApi.get(selectedId);
@@ -236,17 +247,14 @@ export function MarketplaceProposalsWorkspace() {
           response.proposal.status === 'sent'
             ? (await marketplaceProposalsApi.view(selectedId)).proposal
             : response.proposal;
-        if (current) updateProposal(proposal);
+        if (current) {
+          updateProposal(proposal);
+          setDetailErrorState(null);
+        }
       } catch (err: unknown) {
         if (current) {
-          const msg = err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string'
-            ? (err as any).message
-            : '';
-          setDetailError(
-            msg.includes('404')
-              ? 'Proposta não encontrada. Ela pode ter sido removida ou não está disponível.'
-              : 'Não foi possível carregar os detalhes desta proposta. Verifique sua conexão ou tente novamente.'
-          );
+          const classified = classifyProposalError(err);
+          setDetailErrorState(classified);
         }
       } finally {
         if (current) setDetailLoading(false);
@@ -255,7 +263,7 @@ export function MarketplaceProposalsWorkspace() {
     return () => {
       current = false;
     };
-  }, [selectedId, detailAttempt, updateProposal]);
+  }, [selectedId, rawProposalParam, detailAttempt, updateProposal]);
 
   useEffect(() => {
     if (showingDetail) detailHeading.current?.focus({ preventScroll: true });
@@ -423,7 +431,11 @@ export function MarketplaceProposalsWorkspace() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-2 sm:px-4 lg:px-6 pb-12 pt-1 text-slate-900">
+    <section
+      aria-label="Jornada de propostas"
+      data-testid="marketplace-proposals-journey"
+      className="mx-auto w-full max-w-[1240px] px-2 sm:px-4 lg:px-6 pb-12 pt-1 text-slate-900"
+    >
       {/* ── HEADER DA PÁGINA ────────────────────────────────────────── */}
       <header
         className={cn(
@@ -456,8 +468,8 @@ export function MarketplaceProposalsWorkspace() {
         </Button>
       </header>
 
-      {/* Modern Stepper Header em telas de detalhes */}
-      {showingDetail && (
+      {/* Modern Stepper Header em telas de detalhes (somente com proposta autorizada e sem erro) */}
+      {showingDetail && !detailLoading && !detailErrorState && selected && (
         <ModernProposalStepper
           proposal={selected}
           screen={screen}
@@ -563,20 +575,89 @@ export function MarketplaceProposalsWorkspace() {
                 Carregando os detalhes da proposta…
               </p>
             </div>
-          ) : detailError ? (
+          ) : detailErrorState ? (
             <div
               role="alert"
-              className="rounded-3xl border border-rose-200 bg-rose-50/70 p-6 text-center space-y-4"
+              aria-live="polite"
+              className={cn(
+                'rounded-3xl border p-8 text-center space-y-4 max-w-xl mx-auto shadow-xs',
+                detailErrorState.state === 'permission_denied'
+                  ? 'border-amber-200 bg-amber-50/70'
+                  : detailErrorState.state === 'not_found'
+                  ? 'border-slate-200 bg-slate-50/90'
+                  : 'border-rose-200 bg-rose-50/70'
+              )}
             >
-              <p className="text-sm font-medium text-rose-700">{detailError}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDetailAttempt((value) => value + 1)}
-                className="rounded-xl font-bold"
+              <div
+                className={cn(
+                  'mx-auto flex h-12 w-12 items-center justify-center rounded-2xl',
+                  detailErrorState.state === 'permission_denied'
+                    ? 'bg-amber-100 text-amber-700'
+                    : detailErrorState.state === 'not_found'
+                    ? 'bg-slate-200 text-slate-700'
+                    : 'bg-rose-100 text-rose-700'
+                )}
               >
-                Tentar novamente
-              </Button>
+                {detailErrorState.state === 'permission_denied' ? (
+                  <Shield className="h-6 w-6" />
+                ) : (
+                  <AlertCircle className="h-6 w-6" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  {detailErrorState.config.title}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                  {detailErrorState.message || detailErrorState.config.description}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                {detailErrorState.canRetry && (
+                  <Button
+                    size="sm"
+                    onClick={() => setDetailAttempt((v) => v + 1)}
+                    className="rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Tentar novamente
+                  </Button>
+                )}
+                {detailErrorState.state === 'unauthorized' && (
+                  <Button
+                    size="sm"
+                    asChild
+                    className="rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Link
+                      href={`/login?redirect=${encodeURIComponent(
+                        pathname + (params.toString() ? '?' + params.toString() : '')
+                      )}`}
+                    >
+                      Entrar novamente
+                    </Link>
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(null)}
+                  className="rounded-xl font-bold border-slate-300 hover:bg-slate-100"
+                >
+                  Minhas propostas
+                </Button>
+                {detailErrorState.config.secondaryAction?.href && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                    className="rounded-xl font-medium text-slate-600 hover:bg-slate-100"
+                  >
+                    <Link href={detailErrorState.config.secondaryAction.href}>
+                      {detailErrorState.config.secondaryAction.label}
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
           ) : selected ? (
             <>
@@ -1151,6 +1232,6 @@ export function MarketplaceProposalsWorkspace() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </section>
   );
 }

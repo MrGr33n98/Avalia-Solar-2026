@@ -205,7 +205,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         setReviewsLoading(true);
         setReviewsError(null);
         try {
-          if (pathname === '/review-dashboard') {
+          if (pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/proposals')) {
             setReviews([]);
             return;
           }
@@ -242,7 +242,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         setLeadsLoading(true);
         setLeadsError(null);
         try {
-          if (pathname === '/review-dashboard') {
+          if (pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/proposals')) {
             setLeads([]);
             return;
           }

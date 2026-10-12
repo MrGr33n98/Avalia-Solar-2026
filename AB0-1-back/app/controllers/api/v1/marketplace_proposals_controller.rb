@@ -82,7 +82,7 @@ module Api
       def buyer_scope
         return MarketplaceProposal.none unless buyer_identity_valid?
 
-        MarketplaceProposal.joins(:lead).where(
+        MarketplaceProposal.left_outer_joins(:lead).where(
           'marketplace_proposals.buyer_user_id = :id OR LOWER(leads.email) = LOWER(:email)',
           id: current_user.id,
           email: current_user.email.to_s

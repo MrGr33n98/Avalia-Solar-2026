@@ -60,6 +60,7 @@ export function ProposalComparison({
   const [attempt, setAttempt] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedProposalId, setSelectedProposalId] = useState<number | null>(null);
+  const [mobileVisibleIndices, setMobileVisibleIndices] = useState<[number, number]>([0, 1]);
 
   const idKey = ids.join(',');
 
@@ -293,11 +294,57 @@ export function ProposalComparison({
         </div>
       </div>
 
+      {/* Seletor Mobile de Par Comparado (quando 3 propostas selecionadas) */}
+      {proposals.length === 3 && (
+        <div className="md:hidden flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs">
+          <span className="font-semibold text-slate-700 truncate">Comparando lado a lado:</span>
+          <div className="flex gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setMobileVisibleIndices([0, 1])}
+              className={cn(
+                'px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors',
+                mobileVisibleIndices[0] === 0 && mobileVisibleIndices[1] === 1
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+              )}
+            >
+              1 e 2
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileVisibleIndices([0, 2])}
+              className={cn(
+                'px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors',
+                mobileVisibleIndices[0] === 0 && mobileVisibleIndices[1] === 2
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+              )}
+            >
+              1 e 3
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileVisibleIndices([1, 2])}
+              className={cn(
+                'px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors',
+                mobileVisibleIndices[0] === 1 && mobileVisibleIndices[1] === 2
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+              )}
+            >
+              2 e 3
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 3. Grid Principal: Colunas de Propostas (Esq) + Widgets Resumo (Dir) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Coluna Esquerda: Cards de Propostas Lado a Lado (8 cols no grid 12) */}
-        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+        {/* Coluna Esquerda: Cards de Propostas Lado a Lado (2 colunas mobile, 3 colunas desktop) */}
+        <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4 items-stretch">
           {proposals.map((proposal, idx) => {
+            const isHiddenOnMobile = proposals.length === 3 && !mobileVisibleIndices.includes(idx);
             const isSelected = proposal.id === selectedProposalId;
             const projectProfile = proposal.request?.project_profile?.trim();
 
@@ -335,7 +382,8 @@ export function ProposalComparison({
                 key={proposal.id}
                 onClick={() => setSelectedProposalId(proposal.id)}
                 className={cn(
-                  'rounded-2xl border bg-white p-4 flex flex-col justify-between transition-all cursor-pointer relative',
+                  'rounded-2xl border bg-white p-3 sm:p-4 flex flex-col justify-between transition-all cursor-pointer relative min-w-0',
+                  isHiddenOnMobile && 'hidden md:flex',
                   isSelected
                     ? 'border-blue-600 ring-2 ring-blue-500/20 shadow-md'
                     : 'border-slate-200/90 hover:border-slate-300 shadow-2xs'

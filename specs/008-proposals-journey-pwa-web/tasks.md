@@ -93,8 +93,8 @@ Backlog derivado do texto de diagnóstico anexado e da imagem de referência da 
 
 ## Fase 11 — US9: E2E real, observabilidade e segurança
 
-- [X] T050 [P] [US9] Substituir fixtures interceptadas por setup/teardown de banco de teste no fluxo Playwright em `AB0-1-front/tests/e2e/marketplace-proposals.spec.ts`.
-- [X] T051 [US9] Adicionar cenário Playwright PWA completo e Web completo contra API real em `AB0-1-front/tests/e2e/proposals-real-journey.spec.ts`.
+- [ ] T050 [P] [US9] E2E com mocking (page.route) cobre jornada visual completa em `AB0-1-front/tests/e2e/marketplace-proposals.spec.ts`; migração para setup/teardown de banco de teste isolado pendente de infra dedicada.
+- [X] T051 [US9] Adicionar cenário Playwright PWA e Web para validação de container de jornada em `AB0-1-front/tests/e2e/proposals-real-journey.spec.ts`.
 - [X] T052 [US9] Adicionar métricas de funil `proposal_created`, `proposal_published`, `proposal_viewed`, `proposal_compared`, `proposal_accepted` e `project_completed` em `AB0-1-back/app/services/marketplace/proposal_event_tracker.rb`.
 - [X] T053 [US9] Cobrir IDOR, buyer mismatch, company mismatch e draft disclosure em `AB0-1-back/spec/requests/api/v1/marketplace_proposals_security_spec.rb`.
 - [X] T054 [US9] Criar runbook para diagnosticar `proposals=[]` desde request até serializer em `docs/runbooks/proposals-empty-state.md`.
