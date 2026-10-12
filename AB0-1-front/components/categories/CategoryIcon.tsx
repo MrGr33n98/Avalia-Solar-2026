@@ -33,6 +33,7 @@ export interface CategoryIconProps {
 
   fill?: boolean;
   sizeVariant?: '256' | '512' | '1024';
+  format?: 'svg' | 'auto';
 }
 
 export function CategoryIcon({
@@ -48,6 +49,7 @@ export function CategoryIcon({
   imageClassName,
   fill = false,
   sizeVariant,
+  format = 'auto',
 }: CategoryIconProps) {
   /* ---------------------------------------------------------------------- */
   /* VISUAL RESOLUTION (CANONICAL 3D REFINED & SVG SOURCE OF TRUTH)        */
@@ -64,6 +66,7 @@ export function CategoryIcon({
     parentSlug,
     parentId,
     sizeVariant: resolvedSizeVariant,
+    format,
   });
 
   const src = resolution.src;

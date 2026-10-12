@@ -239,6 +239,7 @@ export function resolveCategoryIcon(
 
 function getMotionPresetFor3DCode(code?: string): CategoryMotionPreset {
   if (!code) return 'neutral';
+  if (code === 'F01') return 'charging';
   const prefix = code.charAt(0).toUpperCase();
   switch (prefix) {
     case 'A':
@@ -251,14 +252,21 @@ function getMotionPresetFor3DCode(code?: string): CategoryMotionPreset {
       return 'charging';
     case 'E':
       return 'hub';
+    case 'F':
+    case 'G':
+      return 'solar';
+    case 'H':
+      return 'energyMarket';
+    case 'I':
+      return 'neutral';
     default:
       return 'neutral';
   }
 }
 
   // -------------------------------------------------------------------------
-  // PASSO 0: Consulta prioritária aos 24 ícones 3D refinados
-  // Precedência máxima para as 24 categorias mapeadas: new3D ?? iconUrl ?? legacy
+  // PASSO 0: Consulta prioritária aos 39 ícones 3D refinados
+  // Precedência máxima para as 39 categorias mapeadas: new3D ?? iconUrl ?? legacy
   // -------------------------------------------------------------------------
   if (normalizedInput.format !== 'svg') {
     const threeD = getCategory3DDetails({

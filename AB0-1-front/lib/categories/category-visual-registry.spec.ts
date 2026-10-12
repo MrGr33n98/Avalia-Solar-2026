@@ -22,7 +22,12 @@ describe('resolvedores visuais de categorias (compatibilidade)', () => {
     [
       'selos-verdes-e-certificacoes',
       'Selos Verdes e Certificações',
-      'i03_selos-verdes-e-certificacoes.svg',
+      'I03_selos-verdes-e-certificacoes-512.webp',
+    ],
+    [
+      'mobilidade-eletrica',
+      'Mobilidade Elétrica',
+      'D06_veiculos-eletricos-512.webp',
     ],
   ])('resolve %s para o asset oficial correspondente', (slug, name, filename) => {
     expect(resolveCategoryVisual(slug, name)?.src).toContain(filename);

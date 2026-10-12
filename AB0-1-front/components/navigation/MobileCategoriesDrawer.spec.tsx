@@ -84,7 +84,7 @@ jest.mock('@/hooks/useCategoriesTree', () => ({
 }));
 
 describe('MobileCategoriesDrawer Component', () => {
-  it('renderiza categorias no drawer com os novos ícones 3D (para as 24 mapeadas) e SVG (para as demais)', () => {
+  it('renderiza categorias no drawer com os novos ícones 3D', () => {
     render(<MobileCategoriesDrawer isOpen={true} onClose={jest.fn()} />);
 
     // Clica no botão para abrir a visualização de categorias
@@ -94,13 +94,13 @@ describe('MobileCategoriesDrawer Component', () => {
     const images = screen.getAllByRole('img', { hidden: true });
     const srcs = images.map((img) => img.getAttribute('src'));
 
-    // Energia Solar é uma das 24 categorias 3D (A11) -> carrega WebP 256
+    // Energia Solar é A11 no pacote 3D -> carrega WebP 256
     expect(srcs).toContain(
-      '/icones-new/3d-refined/A11_energia-solar-256.webp'
+      '/3d-refined/A11_energia-solar-256.webp'
     );
-    // Mobilidade Elétrica raiz não está no pacote 3D de 24 -> preserva o SVG canônico
+    // Mobilidade Elétrica raiz agora mapeia para D06 3D -> carrega WebP 256
     expect(srcs).toContain(
-      '/icones-new/B_mobilidade-eletrica/principal/b_mobilidade-eletrica.svg'
+      '/3d-refined/D06_veiculos-eletricos-256.webp'
     );
   });
 
@@ -118,7 +118,7 @@ describe('MobileCategoriesDrawer Component', () => {
 
     // Baterias e Armazenamento de Energia é A01 no pacote 3D -> carrega WebP 256
     expect(srcs).toContain(
-      '/icones-new/3d-refined/A01_baterias-e-armazenamento-de-energia-256.webp'
+      '/3d-refined/A01_baterias-e-armazenamento-de-energia-256.webp'
     );
   });
 });

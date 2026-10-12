@@ -126,15 +126,26 @@ describe('Canonical Category Icon Resolver (47 SVGs)', () => {
     expect(result.source).toBe('catalog-exact');
   });
 
-  // Teste 6.1: Por padrão (auto), as 24 categorias resolvem para o novo ícone 3D e as demais para SVG
-  it('por padrão (modo auto), categorias dos 24 ativos resolvem para 3D e as demais para SVG', () => {
+  // Teste 6.1: Por padrão (auto), categorias resolvem para 3D e preservam SVG em modo svg explícito
+  it('por padrão (modo auto), categorias resolvem para 3D e preservam SVG em modo svg explícito', () => {
     const res3D = resolveCategoryIcon({ slug: 'energia-solar-residencial' });
     expect(res3D.source).toBe('catalog-3d');
-    expect(res3D.src).toBe('/icones-new/3d-refined/A04_energia-solar-residencial-512.webp');
+    expect(res3D.src).toBe('/3d-refined/A04_energia-solar-residencial-512.webp');
 
-    const resSvg = resolveCategoryIcon({ slug: 'selos-verdes-e-certificacoes' });
+    // Selos Verdes agora tem 3D (I03)
+    const resSelos = resolveCategoryIcon({ slug: 'selos-verdes-e-certificacoes' });
+    expect(resSelos.source).toBe('catalog-3d');
+    expect(resSelos.src).toBe('/3d-refined/I03_selos-verdes-e-certificacoes-512.webp');
+
+    // Mobilidade Elétrica (raiz) agora resolve para D06 no modo padrão
+    const resMob3D = resolveCategoryIcon({ slug: 'mobilidade-eletrica' });
+    expect(resMob3D.source).toBe('catalog-3d');
+    expect(resMob3D.src).toBe('/3d-refined/D06_veiculos-eletricos-512.webp');
+
+    // Mobilidade Elétrica com format: 'svg' preserva SVG canônico
+    const resSvg = resolveCategoryIcon({ slug: 'mobilidade-eletrica', format: 'svg' });
     expect(resSvg.source).toBe('catalog-exact');
-    expect(resSvg.src).toBe(CATEGORY_ICON_MANIFEST.I03.src);
+    expect(resSvg.src).toBe(CATEGORY_ICON_MANIFEST.B.src);
   });
 
   // Teste 7: Fallback seguro para categorias desconhecidas

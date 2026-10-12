@@ -1,16 +1,17 @@
 /**
- * Avalia Solar — Catálogo e Resolvedor Canônico de Ícones 3D Refinados (24 Ativos)
+ * Avalia Solar — Catálogo e Resolvedor Canônico de Ícones 3D Refinados (39 Ativos)
  *
- * Mapeamento estrito e determinístico (SEM fuzzy/substring genérico) para as 24 categorias
- * e subcategorias cobertas pelo pacote 3D Refinado em `/icones-new/3d-refined/`.
+ * Mapeamento estrito e determinístico (SEM fuzzy/substring genérico) para as 39 categorias
+ * e subcategorias cobertas pelo pacote 3D Refinado em `/3d-refined/`.
  *
  * Cada ativo possui:
  * - PNG 1024x1024 px com canal alfa (fallback / alta definição)
  * - WebP 512x512 px com canal alfa (padrão para cards, heros e destaques)
  * - WebP 256x256 px com canal alfa (otimizado para menus, drawer, chips e filtros)
  *
- * Para as demais categorias (não cobertas por estes 24 ativos), o sistema preserva
- * deterministicamente o catálogo canônico de SVGs monocromáticos pretos.
+ * Para as 6 categorias-mãe sem render 3D próprio (Mobilidade Elétrica, Frotas Elétricas,
+ * Apps/Software, Casa Sustentável, Mercado/Legislação e Sustentabilidade/ESG), o sistema
+ * preserva deterministicamente o catálogo canônico de SVGs monocromáticos pretos.
  */
 
 export type Category3DCode =
@@ -25,6 +26,7 @@ export type Category3DCode =
   | 'A09'
   | 'A10'
   | 'A11'
+  | 'A12'
   | 'B01'
   | 'B02'
   | 'B03'
@@ -37,90 +39,88 @@ export type Category3DCode =
   | 'D04'
   | 'D05'
   | 'D06'
-  | 'E01';
+  | 'E01'
+  | 'F01'
+  | 'F02'
+  | 'F03'
+  | 'F04'
+  | 'G01'
+  | 'G02'
+  | 'G03'
+  | 'H01'
+  | 'H02'
+  | 'H03'
+  | 'H04'
+  | 'I01'
+  | 'I02'
+  | 'I03';
 
 export type Category3DSizeVariant = '256' | '512' | '1024';
 
-export const CATEGORY_3D_ASSETS_512: Record<Category3DCode, string> = {
-  A01: '/icones-new/3d-refined/A01_baterias-e-armazenamento-de-energia-512.webp',
-  A02: '/icones-new/3d-refined/A02_carport-solar-e-coberturas-solares-512.webp',
-  A03: '/icones-new/3d-refined/A03_energia-solar-comercial-e-industrial-512.webp',
-  A04: '/icones-new/3d-refined/A04_energia-solar-residencial-512.webp',
-  A05: '/icones-new/3d-refined/A05_energia-solar-rural-e-agronegocio-512.webp',
-  A06: '/icones-new/3d-refined/A06_financiamento-de-energia-solar-512.webp',
-  A07: '/icones-new/3d-refined/A07_instaladores-de-energia-solar-512.webp',
-  A08: '/icones-new/3d-refined/A08_inversores-512.webp',
-  A09: '/icones-new/3d-refined/A09_monitoramento-e-o-e-m-512.webp',
-  A10: '/icones-new/3d-refined/A10_paineis-solares-512.webp',
-  A11: '/icones-new/3d-refined/A11_energia-solar-512.webp',
-  B01: '/icones-new/3d-refined/B01_frotas-eletricas-corporativas-512.webp',
-  B02: '/icones-new/3d-refined/B02_frotas-eletricas-para-logistica-e-entregas-512.webp',
-  B03: '/icones-new/3d-refined/B03_frotas-eletricas-para-mobilidade-urbana-512.webp',
-  B04: '/icones-new/3d-refined/B04_gestao-de-frotas-eletricas-512.webp',
-  B05: '/icones-new/3d-refined/B05_infraestrutura-de-recarga-para-frotas-512.webp',
-  C01: '/icones-new/3d-refined/C01_mercado-livre-de-energia-512.webp',
-  D01: '/icones-new/3d-refined/D01_carregadores-comerciais-e-condominios-512.webp',
-  D02: '/icones-new/3d-refined/D02_carregadores-residenciais-wallbox-512.webp',
-  D03: '/icones-new/3d-refined/D03_estacoes-publicas-e-postos-rapidos-512.webp',
-  D04: '/icones-new/3d-refined/D04_instaladores-de-carregadores-ev-512.webp',
-  D05: '/icones-new/3d-refined/D05_integracao-solar-e-mobilidade-eletrica-512.webp',
-  D06: '/icones-new/3d-refined/D06_veiculos-eletricos-512.webp',
-  E01: '/icones-new/3d-refined/E01_hubs-de-eletromobilidade-e-recarga-512.webp',
-} as const;
+export const ASSET_3D_BASE = '/3d-refined';
 
-export const CATEGORY_3D_ASSETS_256: Record<Category3DCode, string> = {
-  A01: '/icones-new/3d-refined/A01_baterias-e-armazenamento-de-energia-256.webp',
-  A02: '/icones-new/3d-refined/A02_carport-solar-e-coberturas-solares-256.webp',
-  A03: '/icones-new/3d-refined/A03_energia-solar-comercial-e-industrial-256.webp',
-  A04: '/icones-new/3d-refined/A04_energia-solar-residencial-256.webp',
-  A05: '/icones-new/3d-refined/A05_energia-solar-rural-e-agronegocio-256.webp',
-  A06: '/icones-new/3d-refined/A06_financiamento-de-energia-solar-256.webp',
-  A07: '/icones-new/3d-refined/A07_instaladores-de-energia-solar-256.webp',
-  A08: '/icones-new/3d-refined/A08_inversores-256.webp',
-  A09: '/icones-new/3d-refined/A09_monitoramento-e-o-e-m-256.webp',
-  A10: '/icones-new/3d-refined/A10_paineis-solares-256.webp',
-  A11: '/icones-new/3d-refined/A11_energia-solar-256.webp',
-  B01: '/icones-new/3d-refined/B01_frotas-eletricas-corporativas-256.webp',
-  B02: '/icones-new/3d-refined/B02_frotas-eletricas-para-logistica-e-entregas-256.webp',
-  B03: '/icones-new/3d-refined/B03_frotas-eletricas-para-mobilidade-urbana-256.webp',
-  B04: '/icones-new/3d-refined/B04_gestao-de-frotas-eletricas-256.webp',
-  B05: '/icones-new/3d-refined/B05_infraestrutura-de-recarga-para-frotas-256.webp',
-  C01: '/icones-new/3d-refined/C01_mercado-livre-de-energia-256.webp',
-  D01: '/icones-new/3d-refined/D01_carregadores-comerciais-e-condominios-256.webp',
-  D02: '/icones-new/3d-refined/D02_carregadores-residenciais-wallbox-256.webp',
-  D03: '/icones-new/3d-refined/D03_estacoes-publicas-e-postos-rapidos-256.webp',
-  D04: '/icones-new/3d-refined/D04_instaladores-de-carregadores-ev-256.webp',
-  D05: '/icones-new/3d-refined/D05_integracao-solar-e-mobilidade-eletrica-256.webp',
-  D06: '/icones-new/3d-refined/D06_veiculos-eletricos-256.webp',
-  E01: '/icones-new/3d-refined/E01_hubs-de-eletromobilidade-e-recarga-256.webp',
-} as const;
+export const CATEGORY_3D_FILE_BASES: Record<Category3DCode, string> = {
+  A01: 'A01_baterias-e-armazenamento-de-energia',
+  A02: 'A02_carport-solar-e-coberturas-solares',
+  A03: 'A03_energia-solar-comercial-e-industrial',
+  A04: 'A04_energia-solar-residencial',
+  A05: 'A05_energia-solar-rural-e-agronegocio',
+  A06: 'A06_financiamento-de-energia-solar',
+  A07: 'A07_instaladores-de-energia-solar',
+  A08: 'A08_inversores',
+  A09: 'A09_monitoramento-e-o-e-m',
+  A10: 'A10_paineis-solares',
+  A11: 'A11_energia-solar',
+  A12: 'A12_estruturas-e-fixacao',
+  B01: 'B01_frotas-eletricas-corporativas',
+  B02: 'B02_frotas-eletricas-para-logistica-e-entregas',
+  B03: 'B03_frotas-eletricas-para-mobilidade-urbana',
+  B04: 'B04_gestao-de-frotas-eletricas',
+  B05: 'B05_infraestrutura-de-recarga-para-frotas',
+  C01: 'C01_mercado-livre-de-energia',
+  D01: 'D01_carregadores-comerciais-e-condominios',
+  D02: 'D02_carregadores-residenciais-wallbox',
+  D03: 'D03_estacoes-publicas-e-postos-rapidos',
+  D04: 'D04_instaladores-de-carregadores-ev',
+  D05: 'D05_integracao-solar-e-mobilidade-eletrica',
+  D06: 'D06_veiculos-eletricos',
+  E01: 'E01_hubs-de-eletromobilidade-e-recarga',
+  F01: 'F01_gestao-de-recarga-ve',
+  F02: 'F02_integracao-smart-grid',
+  F03: 'F03_monitoramento-de-energia-solar',
+  F04: 'F04_simulacao-e-projeto-solar',
+  G01: 'G01_kits-solares-para-autossuficiencia',
+  G02: 'G02_reuso-de-agua-e-energias-complementares',
+  G03: 'G03_solucoes-para-areas-remotas',
+  H01: 'H01_legislacao-e-normas-setoriais',
+  H02: 'H02_linhas-de-credito-verde',
+  H03: 'H03_seguradoras-para-solar-e-ve',
+  H04: 'H04_tendencias-de-mercado',
+  I01: 'I01_carbono-neutro-e-compensacao',
+  I02: 'I02_politicas-corporativas-esg',
+  I03: 'I03_selos-verdes-e-certificacoes',
+};
 
-export const CATEGORY_3D_ASSETS_1024: Record<Category3DCode, string> = {
-  A01: '/icones-new/3d-refined/A01_baterias-e-armazenamento-de-energia.png',
-  A02: '/icones-new/3d-refined/A02_carport-solar-e-coberturas-solares.png',
-  A03: '/icones-new/3d-refined/A03_energia-solar-comercial-e-industrial.png',
-  A04: '/icones-new/3d-refined/A04_energia-solar-residencial.png',
-  A05: '/icones-new/3d-refined/A05_energia-solar-rural-e-agronegocio.png',
-  A06: '/icones-new/3d-refined/A06_financiamento-de-energia-solar.png',
-  A07: '/icones-new/3d-refined/A07_instaladores-de-energia-solar.png',
-  A08: '/icones-new/3d-refined/A08_inversores.png',
-  A09: '/icones-new/3d-refined/A09_monitoramento-e-o-e-m.png',
-  A10: '/icones-new/3d-refined/A10_paineis-solares.png',
-  A11: '/icones-new/3d-refined/A11_energia-solar.png',
-  B01: '/icones-new/3d-refined/B01_frotas-eletricas-corporativas.png',
-  B02: '/icones-new/3d-refined/B02_frotas-eletricas-para-logistica-e-entregas.png',
-  B03: '/icones-new/3d-refined/B03_frotas-eletricas-para-mobilidade-urbana.png',
-  B04: '/icones-new/3d-refined/B04_gestao-de-frotas-eletricas.png',
-  B05: '/icones-new/3d-refined/B05_infraestrutura-de-recarga-para-frotas.png',
-  C01: '/icones-new/3d-refined/C01_mercado-livre-de-energia.png',
-  D01: '/icones-new/3d-refined/D01_carregadores-comerciais-e-condominios.png',
-  D02: '/icones-new/3d-refined/D02_carregadores-residenciais-wallbox.png',
-  D03: '/icones-new/3d-refined/D03_estacoes-publicas-e-postos-rapidos.png',
-  D04: '/icones-new/3d-refined/D04_instaladores-de-carregadores-ev.png',
-  D05: '/icones-new/3d-refined/D05_integracao-solar-e-mobilidade-eletrica.png',
-  D06: '/icones-new/3d-refined/D06_veiculos-eletricos.png',
-  E01: '/icones-new/3d-refined/E01_hubs-de-eletromobilidade-e-recarga.png',
-} as const;
+export const CATEGORY_3D_ASSETS_512: Record<Category3DCode, string> = Object.fromEntries(
+  Object.entries(CATEGORY_3D_FILE_BASES).map(([code, base]) => [
+    code,
+    `${ASSET_3D_BASE}/${base}-512.webp`,
+  ])
+) as Record<Category3DCode, string>;
+
+export const CATEGORY_3D_ASSETS_256: Record<Category3DCode, string> = Object.fromEntries(
+  Object.entries(CATEGORY_3D_FILE_BASES).map(([code, base]) => [
+    code,
+    `${ASSET_3D_BASE}/${base}-256.webp`,
+  ])
+) as Record<Category3DCode, string>;
+
+export const CATEGORY_3D_ASSETS_1024: Record<Category3DCode, string> = Object.fromEntries(
+  Object.entries(CATEGORY_3D_FILE_BASES).map(([code, base]) => [
+    code,
+    `${ASSET_3D_BASE}/${base}.png`,
+  ])
+) as Record<Category3DCode, string>;
 
 export const CATEGORY_3D_NAMES: Record<Category3DCode, string> = {
   A01: 'Baterias e Armazenamento de Energia',
@@ -134,6 +134,7 @@ export const CATEGORY_3D_NAMES: Record<Category3DCode, string> = {
   A09: 'Monitoramento e O&M',
   A10: 'Painéis Solares',
   A11: 'Energia Solar',
+  A12: 'Estruturas e Fixação',
   B01: 'Frotas Elétricas Corporativas',
   B02: 'Frotas Elétricas para Logística e Entregas',
   B03: 'Frotas Elétricas para Mobilidade Urbana',
@@ -147,11 +148,25 @@ export const CATEGORY_3D_NAMES: Record<Category3DCode, string> = {
   D05: 'Integração Solar e Mobilidade Elétrica',
   D06: 'Veículos Elétricos',
   E01: 'Hubs de Eletromobilidade e Recarga',
+  F01: 'Gestão de Recarga VE',
+  F02: 'Integração Smart Grid',
+  F03: 'Monitoramento de Energia Solar',
+  F04: 'Simulação e Projeto Solar',
+  G01: 'Kits Solares para Autossuficiência',
+  G02: 'Reuso de Água e Energias Complementares',
+  G03: 'Soluções para Áreas Remotas',
+  H01: 'Legislação e Normas Setoriais',
+  H02: 'Linhas de Crédito Verde',
+  H03: 'Seguradoras para Solar e VE',
+  H04: 'Tendências de Mercado',
+  I01: 'Carbono Neutro e Compensação',
+  I02: 'Políticas Corporativas ESG',
+  I03: 'Selos Verdes e Certificações',
 };
 
 /**
  * Tabela canônica de correspondência estrita (slugs, nomes e chaves semânticas).
- * Derivada integralmente do manifest.json de referência da biblioteca 3D.
+ * Mapeia deterministicamente para os 39 ativos 3D.
  */
 export const EXPLICIT_CATEGORY_3D_ALIASES: Record<string, Category3DCode> = {
   // A01 — Baterias e Armazenamento de Energia
@@ -228,7 +243,18 @@ export const EXPLICIT_CATEGORY_3D_ALIASES: Record<string, Category3DCode> = {
   'energia-solar': 'A11',
   'energia-solar-fotovoltaica': 'A11',
 
-  // B01 — Frotas Elétricas Corporativas
+  // A12 — Estruturas e Fixação
+  'estruturas-fixacao': 'A12',
+  'estruturas-e-fixacao': 'A12',
+  'estrutura-fixacao': 'A12',
+  'estruturas-de-fixacao': 'A12',
+  'estruturas-de-montagem': 'A12',
+  estruturas: 'A12',
+  solar_structure: 'A12',
+
+  // B01 — Frotas Elétricas Corporativas (e Grupo Frotas Elétricas)
+  'frotas-eletricas': 'B01',
+  'frotas-eletricas-e-pesados': 'B01',
   'frotas-eletricas-corporativas': 'B01',
   'frotas-corporativas': 'B01',
   'frotas-eletricas-empresas': 'B01',
@@ -293,7 +319,9 @@ export const EXPLICIT_CATEGORY_3D_ALIASES: Record<string, Category3DCode> = {
   'integracao-solar-ev': 'D05',
   solar_mobility_integration: 'D05',
 
-  // D06 — Veículos Elétricos
+  // D06 — Veículos Elétricos (e Grupo Mobilidade Elétrica)
+  'mobilidade-eletrica': 'D06',
+  'mobilidade-eletrica-e-veiculos': 'D06',
   'veiculos-eletricos': 'D06',
   'veiculo-eletrico': 'D06',
   'carros-eletricos': 'D06',
@@ -305,6 +333,125 @@ export const EXPLICIT_CATEGORY_3D_ALIASES: Record<string, Category3DCode> = {
   'hubs-eletromobilidade': 'E01',
   'hubs-de-recarga': 'E01',
   electromobility_hub: 'E01',
+
+  // F01 — Gestão de Recarga VE
+  'gestao-recarga-ev': 'F01',
+  'gestao-de-recarga-ve': 'F01',
+  'gestao-recarga-ve': 'F01',
+  'gestao-de-recarga-ev': 'F01',
+  'software-recarga-ve': 'F01',
+  'app-recarga-ve': 'F01',
+
+  // F02 — Integração Smart Grid
+  'smart-grid': 'F02',
+  'integracao-smart-grid': 'F02',
+  'smart-grids': 'F02',
+  'redes-inteligentes': 'F02',
+  'integracao-grid': 'F02',
+
+  // F03 — Monitoramento de Energia Solar (e Grupo Apps, Software e Plataformas)
+  'apps-software-e-plataformas': 'F03',
+  'apps-software-plataformas': 'F03',
+  'software-e-plataformas': 'F03',
+  'monitoramento-apps': 'F03',
+  'monitoramento-de-energia-solar': 'F03',
+  'software-monitoramento-solar': 'F03',
+  'monitoramento-solar-software': 'F03',
+  'app-monitoramento-solar': 'F03',
+  'plataforma-monitoramento-solar': 'F03',
+
+  // F04 — Simulação e Projeto Solar
+  'simulacao-projeto': 'F04',
+  'simulacao-e-projeto-solar': 'F04',
+  'simulacao-projeto-solar': 'F04',
+  'software-projeto-solar': 'F04',
+  'simulacao-solar': 'F04',
+  'projetistas-e-engenharia': 'F04',
+
+  // G01 — Kits Solares para Autossuficiência (e Grupo Casa Sustentável e Off-Grid)
+  'casa-sustentavel-e-off-grid': 'G01',
+  'casa-sustentavel-off-grid': 'G01',
+  'casa-sustentavel': 'G01',
+  'kits-offgrid': 'G01',
+  'kits-solares-para-autossuficiencia': 'G01',
+  'kits-solares': 'G01',
+  'kit-solar': 'G01',
+  'kit-off-grid': 'G01',
+  autossuficiencia: 'G01',
+  'geradores-solares': 'G01',
+
+  // G02 — Reuso de Água e Energias Complementares
+  'reuso-agua': 'G02',
+  'reuso-de-agua-e-energias-complementares': 'G02',
+  'reuso-de-agua': 'G02',
+  'energias-complementares': 'G02',
+  'bombas-solares': 'G02',
+  'aquecimento-solar': 'G02',
+
+  // G03 — Soluções para Áreas Remotas
+  'solucoes-remotas': 'G03',
+  'solucoes-para-areas-remotas': 'G03',
+  'areas-remotas': 'G03',
+  'comunidades-isoladas': 'G03',
+  'eletrificacao-rural': 'G03',
+
+  // H01 — Legislação e Normas Setoriais (e Grupo Mercado, Legislação e Finanças)
+  'mercado-legislacao-e-financas': 'H01',
+  'mercado-legislacao-financas': 'H01',
+  'legislacao-e-financas': 'H01',
+  'legislacao-normas': 'H01',
+  'legislacao-e-normas-setoriais': 'H01',
+  'legislacao-e-normas': 'H01',
+  'normas-setoriais': 'H01',
+  'regulamentacao-solar': 'H01',
+  'consultoria-e-homologacao': 'H01',
+
+  // H02 — Linhas de Crédito Verde
+  'credito-verde': 'H02',
+  'linhas-de-credito-verde': 'H02',
+  'financiamento-verde': 'H02',
+  'financiamento-esg': 'H02',
+  'fundos-climaticos': 'H02',
+
+  // H03 — Seguradoras para Solar e VE
+  seguradoras: 'H03',
+  'seguradoras-para-solar-e-ve': 'H03',
+  'seguros-solar': 'H03',
+  'seguros-para-ve': 'H03',
+  seguros: 'H03',
+  'seguradoras-solar': 'H03',
+
+  // H04 — Tendências de Mercado
+  'tendencias-mercado': 'H04',
+  'tendencias-de-mercado': 'H04',
+  tendencias: 'H04',
+  'analise-de-mercado': 'H04',
+  'estudos-setoriais': 'H04',
+
+  // I01 — Carbono Neutro e Compensação (e Grupo Sustentabilidade e ESG)
+  'sustentabilidade-e-esg': 'I01',
+  'sustentabilidade-esg': 'I01',
+  sustentabilidade: 'I01',
+  'carbono-neutro': 'I01',
+  'carbono-neutro-e-compensacao': 'I01',
+  'compensacao-de-carbono': 'I01',
+  'creditos-de-carbono': 'I01',
+  descarbonizacao: 'I01',
+
+  // I02 — Políticas Corporativas ESG
+  'esg-corporativo': 'I02',
+  'politicas-corporativas-esg': 'I02',
+  'politicas-esg': 'I02',
+  'corporativo-esg': 'I02',
+  'governanca-esg': 'I02',
+  'relatorios-esg': 'I02',
+
+  // I03 — Selos Verdes e Certificações
+  'selos-verdes': 'I03',
+  'selos-verdes-e-certificacoes': 'I03',
+  certificacoes: 'I03',
+  'certificacoes-ambientais': 'I03',
+  'selo-verde': 'I03',
 };
 
 /**
@@ -339,7 +486,7 @@ export interface Category3DResult {
 
 /**
  * Resolve os detalhes de um ícone 3D refinado a partir dos parâmetros da categoria.
- * Retorna null se a categoria não fizer parte do pacote dos 24 ícones.
+ * Retorna null se a categoria não fizer parte do pacote dos 39 ícones.
  */
 export function getCategory3DDetails(
   input?: Category3DInput | string | null

@@ -22,7 +22,7 @@ describe('CategoryIcon Component', () => {
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute(
       'src',
-      '/icones-new/3d-refined/A11_energia-solar-256.webp'
+      '/3d-refined/A11_energia-solar-256.webp'
     );
     expect(img).toHaveClass('object-contain');
   });
@@ -38,7 +38,7 @@ describe('CategoryIcon Component', () => {
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute(
       'src',
-      '/icones-new/3d-refined/A01_baterias-e-armazenamento-de-energia-256.webp'
+      '/3d-refined/A01_baterias-e-armazenamento-de-energia-256.webp'
     );
   });
 
@@ -53,7 +53,7 @@ describe('CategoryIcon Component', () => {
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute(
       'src',
-      '/icones-new/3d-refined/A04_energia-solar-residencial-512.webp'
+      '/3d-refined/A04_energia-solar-residencial-512.webp'
     );
   });
 
@@ -68,11 +68,11 @@ describe('CategoryIcon Component', () => {
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute(
       'src',
-      '/icones-new/3d-refined/A08_inversores-512.webp'
+      '/3d-refined/A08_inversores-512.webp'
     );
   });
 
-  it('renderiza o SVG canônico para categoria fora do pacote 3D (ex: Selos Verdes)', () => {
+  it('renderiza o novo 3D para subcategorias complementares como Selos Verdes (I03)', () => {
     render(
       <CategoryIcon
         slug="selos-verdes-e-certificacoes"
@@ -82,7 +82,36 @@ describe('CategoryIcon Component', () => {
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute(
       'src',
-      '/icones-new/I_sustentabilidade-e-esg/subcategorias/i03_selos-verdes-e-certificacoes.svg'
+      '/3d-refined/I03_selos-verdes-e-certificacoes-512.webp'
+    );
+  });
+
+  it('renderiza o 3D representativo para categoria-mãe (ex: Sustentabilidade e ESG)', () => {
+    render(
+      <CategoryIcon
+        slug="sustentabilidade-e-esg"
+        name="Sustentabilidade e ESG"
+      />
+    );
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute(
+      'src',
+      '/3d-refined/I01_carbono-neutro-e-compensacao-512.webp'
+    );
+  });
+
+  it('renderiza o SVG canônico quando format: "svg" for especificado explicitamente', () => {
+    render(
+      <CategoryIcon
+        slug="sustentabilidade-e-esg"
+        name="Sustentabilidade e ESG"
+        format="svg"
+      />
+    );
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute(
+      'src',
+      '/icones-new/I_sustentabilidade-e-esg/principal/i_sustentabilidade-e-esg.svg'
     );
   });
 
