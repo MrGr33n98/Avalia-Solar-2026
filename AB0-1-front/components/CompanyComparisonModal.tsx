@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Star, X, Building2, Plus } from 'lucide-react';
+import { X, Building2, Plus, FileText } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
 import { canUsePaidConversion, type FeatureAccessMap } from '@/lib/feature-access';
 import { openLeadModal } from '@/lib/lead-engine';
@@ -84,20 +84,29 @@ interface CompanyComparisonModalProps {
 
 type BadgeVariant = 'green' | 'orange' | 'blue' | 'red' | 'gray';
 
-function ComparisonBadge({ text, variant }: { text: string; variant: BadgeVariant }) {
+function ComparisonBadge({
+  text,
+  variant,
+  className,
+}: {
+  text: string;
+  variant: BadgeVariant;
+  className?: string;
+}) {
   const styles: Record<BadgeVariant, string> = {
-    green: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    orange: 'bg-amber-50 text-amber-800 border-amber-100',
-    blue: 'bg-blue-50 text-blue-700 border-blue-100',
-    red: 'bg-rose-50 text-rose-700 border-rose-100',
+    green: 'bg-emerald-50 text-emerald-700 border-emerald-200/90',
+    orange: 'bg-amber-50 text-amber-800 border-amber-200/90',
+    blue: 'bg-sky-50 text-sky-700 border-sky-200/90',
+    red: 'bg-rose-50 text-rose-700 border-rose-200/90',
     gray: 'bg-slate-100 text-slate-600 border-slate-200',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-[10px] font-semibold leading-tight min-h-[22px] max-w-full text-center',
-        styles[variant]
+        'inline-flex items-center justify-center rounded-md border px-1.5 py-0.5 text-[9.5px] font-semibold leading-tight text-center !min-h-[19px] !h-auto !min-w-0 max-w-full',
+        styles[variant],
+        className
       )}
     >
       {text}
@@ -105,10 +114,34 @@ function ComparisonBadge({ text, variant }: { text: string; variant: BadgeVarian
   );
 }
 
+function parseServices(company: ComparisonCompany): string[] {
+  const raw =
+    company.comparison_profile?.services_offered ||
+    company.services_offered ||
+    company.services;
+  const list = Array.isArray(raw) ? raw : raw ? String(raw).split(',') : [];
+  return list
+    .map((item) => {
+      const k = item.trim();
+      const lower = k.toLowerCase();
+      if (lower === 'project' || lower === 'projeto') return 'Projeto';
+      if (lower === 'installation' || lower === 'instalacao' || lower === 'instalação') return 'instalação';
+      if (lower === 'maintenance' || lower === 'manutencao' || lower === 'manutenção') return 'manutenção';
+      if (lower === 'o&m' || lower === 'om') return 'O&M';
+      if (lower === 'homologation' || lower === 'homologacao' || lower === 'homologação') return 'homologação';
+      return k;
+    })
+    .filter(Boolean);
+}
+
 interface CriterionConfig {
   id: string;
   label: string;
-  render: (company: ComparisonCompany, onQuote: (id: number) => void) => React.ReactNode;
+  render: (
+    company: ComparisonCompany,
+    onQuote: (id: number) => void,
+    onOpenServices: (company: ComparisonCompany) => void
+  ) => React.ReactNode;
 }
 
 const CRITERIA_ROWS: CriterionConfig[] = [
@@ -122,19 +155,17 @@ const CRITERIA_ROWS: CriterionConfig[] = [
         company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0
       );
       if (rating <= 0 && reviews <= 0) {
-        return <span className="text-[11px] text-slate-400 font-medium">— Sem avaliações</span>;
+        return <span className="text-[10px] text-slate-400 font-medium">— Sem avaliações</span>;
       }
       return (
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="flex items-center gap-1">
-            <span className="text-xs font-bold text-slate-900">
-              {rating.toFixed(1).replace('.', ',')}
-            </span>
-            <span className="text-[10px] text-amber-500 tracking-tighter" aria-hidden="true">
-              ★★★★★
-            </span>
-            <span className="text-[10px] text-slate-500 font-medium">({reviews})</span>
-          </div>
+        <div className="flex items-center justify-center gap-1 text-center">
+          <span className="text-[10.5px] font-bold text-slate-900 leading-none">
+            {rating.toFixed(1).replace('.', ',')}
+          </span>
+          <span className="text-[9px] text-amber-500 tracking-tighter" aria-hidden="true">
+            ★★★★★
+          </span>
+          <span className="text-[9px] text-slate-500 font-medium">({reviews})</span>
         </div>
       );
     },
@@ -162,16 +193,18 @@ const CRITERIA_ROWS: CriterionConfig[] = [
     render: (company) => {
       const cityState = [company.city, company.state].filter(Boolean).join(', ');
       const coverage = getCoverageLabel(company);
-      if (!cityState && coverage === 'Área de atendimento não informada') {
-        return <span className="text-[11px] text-slate-400 font-medium">Não informado</span>;
+      if (!cityState && (!coverage || coverage === 'Área de atendimento não informada')) {
+        return <span className="text-[10px] text-slate-400 font-medium">Não informado</span>;
       }
       return (
-        <div className="flex flex-col items-center justify-center text-center">
-          <span className="text-[11px] font-bold text-slate-900 leading-tight">
+        <div className="flex flex-col items-center justify-center text-center leading-tight">
+          <span className="text-[10.5px] font-bold text-slate-900 truncate max-w-full">
             {cityState || 'Consultar'}
           </span>
-          {coverage && coverage !== 'Área de atendimento não informada' && (
-            <span className="text-[10px] text-slate-500 leading-tight mt-0.5">{coverage}</span>
+          {coverage && coverage !== 'Área de atendimento não informada' ? (
+            <span className="text-[9px] text-slate-500 mt-0.5 truncate max-w-full">{coverage}</span>
+          ) : (
+            <span className="text-[9px] text-slate-400 mt-0.5">Não informado</span>
           )}
         </div>
       );
@@ -234,7 +267,7 @@ const CRITERIA_ROWS: CriterionConfig[] = [
       const raw = company.comparison_profile?.payment_methods || company.payment_methods;
       const list = Array.isArray(raw) ? raw : raw ? String(raw).split(',') : [];
       if (list.length === 0) {
-        return <span className="text-[11px] text-slate-400 font-medium">Não informado</span>;
+        return <span className="text-[10px] text-slate-400 font-medium">Não informado</span>;
       }
       const labels = list.map((item) => {
         const k = item.trim().toLowerCase();
@@ -245,7 +278,7 @@ const CRITERIA_ROWS: CriterionConfig[] = [
         return k;
       });
       return (
-        <span className="text-[11px] font-medium text-slate-800 text-center leading-snug">
+        <span className="text-[10px] font-medium text-slate-800 text-center leading-tight">
           {labels.join(', ')}
         </span>
       );
@@ -391,32 +424,44 @@ const CRITERIA_ROWS: CriterionConfig[] = [
     },
   },
 
-  // 13. Serviços oferecidos
+  // 13. Serviços oferecidos (RC-03: Preview compacto 1-2 itens + disclosure acessível)
   {
     id: 'services_offered',
     label: 'Serviços oferecidos',
-    render: (company) => {
-      const raw =
-        company.comparison_profile?.services_offered ||
-        company.services_offered ||
-        company.services;
-      const list = Array.isArray(raw) ? raw : raw ? String(raw).split(',') : [];
-      if (list.length === 0) {
-        return <span className="text-[11px] text-slate-400 font-medium">Não informado</span>;
+    render: (company, _onQuote, onOpenServices) => {
+      const labels = parseServices(company);
+      if (labels.length === 0) {
+        return <span className="text-[10px] text-slate-400 font-medium">Não informado</span>;
       }
-      const labels = list.map((item) => {
-        const k = item.trim().toLowerCase();
-        if (k === 'project' || k === 'projeto') return 'Projeto';
-        if (k === 'installation' || k === 'instalacao') return 'instalação';
-        if (k === 'maintenance' || k === 'manutencao') return 'manutenção';
-        if (k === 'o&m' || k === 'om') return 'O&M';
-        if (k === 'homologation' || k === 'homologacao') return 'homologação';
-        return k;
-      });
+      if (labels.length <= 2) {
+        return (
+          <span className="text-[10px] font-medium text-slate-800 text-center leading-tight">
+            {labels.join(', ')}
+          </span>
+        );
+      }
+
+      const preview = labels.slice(0, 2).join(', ');
+      const extraCount = labels.length - 2;
+
       return (
-        <span className="text-[11px] font-medium text-slate-800 text-center leading-snug">
-          {labels.join(', ')}
-        </span>
+        <div className="flex flex-wrap items-center justify-center gap-1 text-center leading-tight">
+          <span className="text-[10px] font-medium text-slate-800 leading-tight">
+            {preview}
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenServices(company);
+            }}
+            aria-label={`Ver todos os ${labels.length} serviços de ${company.name}`}
+            className="inline-flex items-center rounded bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/90 px-1 py-0.5 text-[9px] font-bold leading-none !min-h-0 !min-w-0 transition-colors cursor-pointer"
+            title="Ver todos os serviços"
+          >
+            +{extraCount}
+          </button>
+        </div>
       );
     },
   },
@@ -434,33 +479,38 @@ const CRITERIA_ROWS: CriterionConfig[] = [
         company.warranty_years ??
         (confirmed ? company.installation_warranty_years : null);
       if (!years || years <= 0) {
-        return <span className="text-[11px] text-slate-400 font-medium">Consultar</span>;
+        return <ComparisonBadge text="Consultar" variant="blue" />;
       }
       return (
-        <span className="text-[11px] font-bold text-slate-900">
+        <span className="text-[10.5px] font-bold text-slate-900 leading-tight">
           {years} {years === 1 ? 'ano' : 'anos'}
         </span>
       );
     },
   },
 
-  // 15. Solicitar orçamento (Linha Final de CTA)
+  // 15. Solicitar orçamento (Linha Final de CTA — RC-04 & RC-05)
   {
     id: 'quote_cta',
     label: 'Solicitar orçamento',
     render: (company, onQuote) => {
       const eligible = canUsePaidConversion(company, 'quote');
       if (!eligible) {
-        return <span className="text-slate-400 font-bold text-center">—</span>;
+        return <span className="text-slate-400 font-bold text-center text-sm leading-none">—</span>;
       }
       return (
-        <Button
-          size="sm"
+        <button
+          type="button"
           onClick={() => onQuote(company.id)}
-          className="h-8 w-full max-w-[120px] rounded-lg bg-blue-600 px-2 text-[11px] font-bold text-white shadow-xs hover:bg-blue-700"
+          aria-label={`Solicitar orçamento para ${company.name}`}
+          className="w-full max-w-[124px] rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-xs transition-colors py-1 px-1.5 flex items-center justify-center gap-1 text-[10px] font-bold leading-tight !min-h-[28px] !min-w-0"
         >
-          Solicitar
-        </Button>
+          <FileText className="h-3 w-3 shrink-0" aria-hidden="true" />
+          <span className="flex flex-col items-center justify-center leading-[1.05]">
+            <span>Solicitar</span>
+            <span>orçamento</span>
+          </span>
+        </button>
       );
     },
   },
@@ -474,6 +524,7 @@ export function CompanyComparisonModal({
   onClearAll,
 }: CompanyComparisonModalProps) {
   const router = useRouter();
+  const [servicesModalCompany, setServicesModalCompany] = useState<ComparisonCompany | null>(null);
 
   const handleQuoteClick = (companyId: number) => {
     const company = companies.find((item) => item.id === companyId);
@@ -500,93 +551,101 @@ export function CompanyComparisonModal({
   );
 
   return (
-    <Dialog modal={true} open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        hideCloseButton={true}
-        overlayClassName="bg-slate-950/40 backdrop-blur-xs"
-        className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[min(90dvh,820px)] !w-[calc(100vw-16px)] !max-w-[440px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-[20px] border border-slate-200/80 bg-white p-0 shadow-2xl transition-all duration-300 md:!max-h-[min(85vh,820px)] md:!w-[calc(100vw-64px)] md:!max-w-[1024px]"
-      >
-        {/* Cabeçalho do Modal: Azul Royal Degradê */}
-        <DialogHeader className="sticky top-0 z-30 space-y-0 border-b border-blue-900/10 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 px-3.5 py-2.5 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-left min-w-0">
-              <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white font-bold"
-                aria-hidden="true"
-              >
-                ⇄
-              </span>
-              <div className="min-w-0">
-                <DialogTitle className="text-base font-bold text-white leading-tight">
-                  Comparar empresas
-                </DialogTitle>
-                <DialogDescription className="mt-0.5 text-[11px] text-blue-100/90 leading-tight">
-                  <span className="md:hidden">
-                    {Math.min(companies.length, COMPARISON_LIMITS.mobile)} de{' '}
-                    {COMPARISON_LIMITS.mobile} empresas no celular
+    <>
+      <Dialog modal={true} open={isOpen} onOpenChange={onClose}>
+        <DialogContent
+          hideCloseButton={true}
+          overlayClassName="bg-slate-950/40 backdrop-blur-xs"
+          className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[min(94dvh,820px)] !w-[calc(100vw-12px)] !max-w-[440px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-[18px] border border-slate-200/80 bg-white p-0 shadow-2xl transition-all duration-300 md:!max-h-[min(85vh,820px)] md:!w-[calc(100vw-64px)] md:!max-w-[1024px]"
+        >
+          {/* Cabeçalho do Modal: Azul Royal Degradê */}
+          <DialogHeader className="space-y-0 border-b border-blue-900/10 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 px-3 py-1.5 text-white">
+            {/* Drag handle sutil */}
+            <div className="w-8 h-1 rounded-full bg-white/35 mx-auto mb-1" aria-hidden="true" />
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-left min-w-0">
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white font-bold text-xs"
+                  aria-hidden="true"
+                >
+                  ⇄
+                </span>
+                <div className="min-w-0">
+                  <DialogTitle className="text-[13.5px] font-bold text-white leading-tight">
+                    Comparar empresas
+                  </DialogTitle>
+                  <DialogDescription className="mt-0.5 text-[10px] text-blue-100/90 leading-tight">
+                    <span className="md:hidden">
+                      {Math.min(companies.length, COMPARISON_LIMITS.mobile)} de{' '}
+                      {COMPARISON_LIMITS.mobile} empresas no celular
+                    </span>
+                    <span className="hidden md:inline">
+                      {Math.min(companies.length, COMPARISON_LIMITS.desktop)} de{' '}
+                      {COMPARISON_LIMITS.desktop} empresas selecionadas
+                    </span>
+                  </DialogDescription>
+                </div>
+              </div>
+
+              {/* Ações no cabeçalho com alvos de toque acessíveis de 44px */}
+              <div className="flex items-center gap-0.5 shrink-0">
+                {companies.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={onClearAll}
+                    className="hidden md:inline-flex h-7 rounded-lg bg-white/10 px-2 text-[11px] font-semibold text-blue-100 transition-all hover:bg-red-500/20 hover:text-red-200 items-center"
+                  >
+                    <X className="mr-1 h-3 w-3" />
+                    Limpar
+                  </button>
+                )}
+
+                {/* Botão Minimizar (−) */}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Minimizar comparação"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+                  title="Minimizar"
+                >
+                  <span className="h-6 w-6 rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-sm font-bold leading-none">
+                    −
                   </span>
-                  <span className="hidden md:inline">
-                    {Math.min(companies.length, COMPARISON_LIMITS.desktop)} de{' '}
-                    {COMPARISON_LIMITS.desktop} empresas selecionadas
+                </button>
+
+                {/* Botão Fechar (✕) */}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Fechar modal de comparação"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+                  title="Fechar"
+                >
+                  <span className="h-6 w-6 rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center">
+                    <X className="h-3.5 w-3.5" />
                   </span>
-                </DialogDescription>
+                </button>
               </div>
             </div>
+          </DialogHeader>
 
-            {/* Ações no cabeçalho com alvo de toque acessível (min 44px) */}
-            <div className="flex items-center gap-1 shrink-0">
-              {companies.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onClearAll}
-                  className="hidden md:inline-flex h-8 rounded-lg bg-white/10 px-2.5 text-xs font-semibold text-blue-100 transition-all hover:bg-red-500/20 hover:text-red-200"
-                >
-                  <X className="mr-1 h-3.5 w-3.5" />
-                  Limpar
-                </Button>
-              )}
-
-              {/* Botão Minimizar (−) */}
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Minimizar comparação"
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
-                title="Minimizar"
-              >
-                <span className="h-7 w-7 rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-base font-bold leading-none">
-                  −
-                </span>
-              </button>
-
-              {/* Botão Fechar (✕) */}
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Fechar modal de comparação"
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
-                title="Fechar"
-              >
-                <span className="h-7 w-7 rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center">
-                  <X className="h-4 w-4" />
-                </span>
-              </button>
-            </div>
-          </div>
-        </DialogHeader>
-
-        {/* ═══════════════════════════════════════════════════════════════════════
-            CORPO DO MODAL — MOBILE (Grid de 3 Colunas: 1 Rótulo + 2 Empresas)
-            ═══════════════════════════════════════════════════════════════════════ */}
-        <div className="block md:hidden min-h-0 overflow-y-auto px-2 py-1.5">
-          {/* Header Fixo das Empresas (Grid 3 colunas) */}
-          <div className="sticky top-0 z-20 bg-white pb-1.5">
-            <div className="grid grid-cols-[minmax(96px,31%)_repeat(2,minmax(0,1fr))] gap-1.5">
+          {/* ═══════════════════════════════════════════════════════════════════════
+              CORPO DO MODAL — MOBILE (Grid de 3 Colunas: 1 Rótulo + 2 Empresas)
+              ═══════════════════════════════════════════════════════════════════════ */}
+          <div
+            data-testid="comparison-modal-content"
+            className="block md:hidden min-h-0 overflow-y-auto px-1.5 py-1"
+          >
+            {/* Header Fixo das Empresas (Grid 3 colunas) */}
+            <div className="grid grid-cols-[clamp(88px,29%,104px)_repeat(2,minmax(0,1fr))] gap-1 pb-1">
               {/* Coluna 1: Rótulo "Empresas" */}
-              <div className="rounded-lg bg-slate-100/90 p-1.5 flex items-center justify-center min-h-[52px]">
-                <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+              <div className="rounded-lg bg-slate-100/90 p-1 flex flex-col items-center justify-center min-h-[38px]">
+                <span className="text-[9.5px] font-bold uppercase text-slate-500 tracking-wider leading-none">
                   Empresas
+                </span>
+                <span className="text-[8.5px] text-slate-400 mt-0.5 leading-none">
+                  selecionadas
                 </span>
               </div>
 
@@ -602,11 +661,11 @@ export function CompanyComparisonModal({
                         onClose();
                         router.push('/search?tab=companies');
                       }}
-                      className="rounded-lg border border-dashed border-slate-300 bg-slate-50/70 p-1.5 flex flex-col items-center justify-center gap-1 min-h-[52px] hover:bg-slate-100 transition-colors"
+                      className="rounded-lg border border-dashed border-slate-300 bg-slate-50/70 p-1 flex items-center justify-center gap-1 min-h-[38px] hover:bg-slate-100 transition-colors"
                       title="Adicionar empresa para comparar"
                     >
-                      <Plus className="h-4 w-4 text-slate-400" />
-                      <span className="text-[10px] font-semibold text-slate-600 leading-tight">
+                      <Plus className="h-3 w-3 text-slate-400" />
+                      <span className="text-[9.5px] font-semibold text-slate-600">
                         + Adicionar
                       </span>
                     </button>
@@ -617,188 +676,70 @@ export function CompanyComparisonModal({
                 return (
                   <div
                     key={`mobile-comp-header-${company.id}`}
-                    className="relative rounded-lg border border-slate-200 bg-white p-1.5 flex items-center gap-1.5 min-h-[52px] shadow-xs"
+                    className="relative rounded-lg border border-slate-200 bg-white p-1 flex items-center gap-1 min-h-[38px] shadow-xs overflow-hidden"
                   >
-                    <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
+                    <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded border border-slate-100 bg-white">
                       {logoUrl ? (
                         <Image
                           src={logoUrl}
                           alt=""
                           fill
-                          sizes="28px"
+                          sizes="24px"
                           className="object-contain p-0.5"
                         />
                       ) : (
-                        <Building2 className="m-auto h-4 w-4 text-slate-300" />
+                        <Building2 className="m-auto h-3.5 w-3.5 text-slate-300" />
                       )}
                     </div>
-                    <Link
-                      href={`/companies/${company.slug || company.id}`}
-                      className="min-w-0 flex-1 hover:underline"
-                    >
-                      <span className="block text-[11px] font-bold text-slate-900 truncate leading-tight">
-                        {company.name}
-                      </span>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveCompany(company.id)}
-                      aria-label={`Remover ${company.name} da comparação`}
-                      className="shrink-0 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      title="Remover"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Tabela dos 14 Critérios + Linha Final de CTA */}
-          <div className="divide-y divide-slate-100 rounded-lg border border-slate-200/80 bg-white overflow-hidden shadow-xs">
-            {CRITERIA_ROWS.map((row) => (
-              <div
-                key={`mobile-row-${row.id}`}
-                className={cn(
-                  'grid grid-cols-[minmax(96px,31%)_repeat(2,minmax(0,1fr))] divide-x divide-slate-100 items-stretch',
-                  row.id === 'quote_cta' ? 'bg-slate-50/80' : 'bg-white'
-                )}
-              >
-                {/* Coluna de Rótulo (Texto puro, normal sentence case, sem ícones) */}
-                <div className="p-1.5 bg-slate-50/70 flex items-center justify-start text-[11px] font-semibold text-slate-700 leading-tight">
-                  {row.label}
-                </div>
-
-                {/* Coluna Empresa 1 e Empresa 2 */}
-                {[0, 1].map((index) => {
-                  const company = mobileCompanies[index];
-                  if (!company) {
-                    return (
-                      <div
-                        key={`mobile-empty-cell-${row.id}-${index}`}
-                        className="p-1.5 flex items-center justify-center text-[11px] text-slate-300"
-                      >
-                        —
-                      </div>
-                    );
-                  }
-                  return (
-                    <div
-                      key={`mobile-data-cell-${row.id}-${company.id}`}
-                      className="p-1.5 flex items-center justify-center text-center text-[11px] leading-snug"
-                    >
-                      {row.render(company, handleQuoteClick)}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ═══════════════════════════════════════════════════════════════════════
-            CORPO DO MODAL — DESKTOP (Grid de 4 Colunas: 1 Rótulo + 3 Empresas)
-            ═══════════════════════════════════════════════════════════════════════ */}
-        <div className="hidden md:block min-h-0 overflow-y-auto p-4">
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-            {/* Header das Empresas Desktop */}
-            <div className="grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-slate-50/80 border-b border-slate-200">
-              <div className="flex items-center p-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                  Critérios
-                </span>
-              </div>
-              {[0, 1, 2].map((index) => {
-                const company = desktopCompanies[index];
-                if (!company) {
-                  return (
-                    <div
-                      key={`desktop-empty-header-${index}`}
-                      className="p-3 flex items-center justify-center"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose();
-                          router.push('/search?tab=companies');
-                        }}
-                        className="flex h-9 items-center gap-1.5 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Adicionar empresa
-                      </button>
-                    </div>
-                  );
-                }
-
-                const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
-                return (
-                  <div
-                    key={`desktop-comp-header-${company.id}`}
-                    className="relative p-3 flex items-center justify-between gap-2 bg-white"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-0.5">
-                        {logoUrl ? (
-                          <Image
-                            src={logoUrl}
-                            alt=""
-                            fill
-                            sizes="36px"
-                            className="object-contain"
-                          />
-                        ) : (
-                          <Building2 className="m-auto h-5 w-5 text-slate-300" />
-                        )}
-                      </div>
+                    <div className="min-w-0 flex-1 pr-3">
                       <Link
                         href={`/companies/${company.slug || company.id}`}
-                        className="min-w-0 flex-1 hover:underline"
+                        className="block text-[10.5px] font-bold text-slate-900 leading-[1.15] hover:underline"
+                        title={company.name}
                       >
-                        <span className="block text-xs font-bold text-slate-900 truncate">
-                          {company.name}
-                        </span>
-                        <span className="block text-[10px] text-slate-500 truncate">
-                          {[company.city, company.state].filter(Boolean).join(', ')}
-                        </span>
+                        <span className="line-clamp-2">{company.name}</span>
                       </Link>
+                      <span className="block text-[9px] text-slate-500 leading-none truncate mt-0.5">
+                        📍 {[company.city, company.state].filter(Boolean).join(', ') || 'Localização'}
+                      </span>
                     </div>
-
                     <button
                       type="button"
                       onClick={() => onRemoveCompany(company.id)}
                       aria-label={`Remover ${company.name} da comparação`}
-                      className="shrink-0 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="absolute top-0.5 right-0.5 p-0.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                       title="Remover"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-2.5 w-2.5" />
                     </button>
                   </div>
                 );
               })}
             </div>
 
-            {/* Tabela Desktop: Mesmos 14 Critérios + Linha Final de CTA */}
-            <div className="divide-y divide-slate-100">
+            {/* Tabela dos 14 Critérios + Linha Final de CTA */}
+            <div className="divide-y divide-slate-100 rounded-lg border border-slate-200/80 bg-white overflow-hidden shadow-xs">
               {CRITERIA_ROWS.map((row) => (
                 <div
-                  key={`desktop-row-${row.id}`}
+                  key={`mobile-row-${row.id}`}
                   className={cn(
-                    'grid grid-cols-[160px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 items-stretch',
-                    row.id === 'quote_cta' ? 'bg-slate-50/80' : 'bg-white'
+                    'grid grid-cols-[clamp(88px,29%,104px)_repeat(2,minmax(0,1fr))] divide-x divide-slate-100 items-stretch',
+                    row.id === 'quote_cta' ? 'bg-slate-50/80 min-h-[32px]' : 'bg-white min-h-[24px]'
                   )}
                 >
-                  <div className="p-3 bg-slate-50/70 flex items-center text-xs font-semibold text-slate-700">
+                  {/* Coluna de Rótulo (Texto puro, normal sentence case, sem ícones) */}
+                  <div className="px-1.5 py-0.5 bg-slate-50/70 flex items-center justify-start text-[10px] font-semibold text-slate-700 leading-tight">
                     {row.label}
                   </div>
-                  {[0, 1, 2].map((index) => {
-                    const company = desktopCompanies[index];
+
+                  {/* Colunas Empresa 1 e Empresa 2 */}
+                  {[0, 1].map((index) => {
+                    const company = mobileCompanies[index];
                     if (!company) {
                       return (
                         <div
-                          key={`desktop-empty-cell-${row.id}-${index}`}
-                          className="p-3 flex items-center justify-center text-xs text-slate-300"
+                          key={`mobile-empty-cell-${row.id}-${index}`}
+                          className="px-1.5 py-0.5 flex items-center justify-center text-[10px] text-slate-300"
                         >
                           —
                         </div>
@@ -806,10 +747,10 @@ export function CompanyComparisonModal({
                     }
                     return (
                       <div
-                        key={`desktop-data-cell-${row.id}-${company.id}`}
-                        className="p-3 flex items-center justify-center text-center text-xs"
+                        key={`mobile-data-cell-${row.id}-${company.id}`}
+                        className="px-1 py-0.5 flex items-center justify-center text-center text-[10px] leading-tight overflow-hidden"
                       >
-                        {row.render(company, handleQuoteClick)}
+                        {row.render(company, handleQuoteClick, (c) => setServicesModalCompany(c))}
                       </div>
                     );
                   })}
@@ -817,39 +758,235 @@ export function CompanyComparisonModal({
               ))}
             </div>
           </div>
-        </div>
 
-        {/* ═══════════════════════════════════════════════════════════════════════
-            RODAPÉ DO MODAL (Mobile e Desktop)
-            ═══════════════════════════════════════════════════════════════════════ */}
-        <div className="sticky bottom-0 z-30 bg-white border-t border-slate-100 p-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={companies.length >= COMPARISON_LIMITS.desktop}
-            className="min-h-[44px] flex-1 rounded-xl border-slate-300 text-xs font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
-            onClick={() => {
-              onClose();
-              router.push('/search?tab=companies');
-            }}
-          >
-            + Adicionar empresa
-          </Button>
+          {/* ═══════════════════════════════════════════════════════════════════════
+              CORPO DO MODAL — DESKTOP (Grid de 4 Colunas: 1 Rótulo + 3 Empresas)
+              ═══════════════════════════════════════════════════════════════════════ */}
+          <div className="hidden md:block min-h-0 overflow-y-auto p-2.5">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+              {/* Header das Empresas Desktop */}
+              <div className="grid grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-slate-50/80 border-b border-slate-200">
+                <div className="flex items-center px-3 py-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                    Critérios
+                  </span>
+                </div>
+                {[0, 1, 2].map((index) => {
+                  const company = desktopCompanies[index];
+                  if (!company) {
+                    return (
+                      <div
+                        key={`desktop-empty-header-${index}`}
+                        className="px-2 py-1.5 flex items-center justify-center"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            router.push('/search?tab=companies');
+                          }}
+                          className="flex h-7 items-center gap-1 rounded-lg border border-dashed border-slate-300 bg-white px-2 text-[10.5px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Adicionar empresa
+                        </button>
+                      </div>
+                    );
+                  }
 
-          <Button
-            type="button"
-            className="min-h-[44px] flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-xs"
-            onClick={() => {
-              track('comparison_modal_compare_confirm', { companies_count: companies.length });
-              onClose();
-              router.push('/compare');
-            }}
-          >
-            Ver comparação completa →
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+                  const logoUrl = company.logo_url ? getFullImageUrl(company.logo_url) : null;
+                  return (
+                    <div
+                      key={`desktop-comp-header-${company.id}`}
+                      className="relative px-2.5 py-1.5 flex items-center justify-between gap-2 bg-white"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-0.5">
+                          {logoUrl ? (
+                            <Image
+                              src={logoUrl}
+                              alt=""
+                              fill
+                              sizes="28px"
+                              className="object-contain"
+                            />
+                          ) : (
+                            <Building2 className="m-auto h-4 w-4 text-slate-300" />
+                          )}
+                        </div>
+                        <Link
+                          href={`/companies/${company.slug || company.id}`}
+                          className="min-w-0 flex-1 hover:underline"
+                        >
+                          <span className="block text-[11px] font-bold text-slate-900 truncate leading-tight">
+                            {company.name}
+                          </span>
+                          <span className="block text-[9.5px] text-slate-500 truncate leading-tight">
+                            {[company.city, company.state].filter(Boolean).join(', ')}
+                          </span>
+                        </Link>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => onRemoveCompany(company.id)}
+                        aria-label={`Remover ${company.name} da comparação`}
+                        className="shrink-0 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        title="Remover"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Tabela Desktop: Mesmos 14 Critérios + Linha Final de CTA */}
+              <div className="divide-y divide-slate-100">
+                {CRITERIA_ROWS.map((row) => (
+                  <div
+                    key={`desktop-row-${row.id}`}
+                    className={cn(
+                      'grid grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 items-stretch',
+                      row.id === 'quote_cta' ? 'bg-slate-50/80 min-h-[34px]' : 'bg-white min-h-[25px]'
+                    )}
+                  >
+                    <div className="px-3 py-1 bg-slate-50/70 flex items-center text-[10.5px] font-semibold text-slate-700">
+                      {row.label}
+                    </div>
+                    {[0, 1, 2].map((index) => {
+                      const company = desktopCompanies[index];
+                      if (!company) {
+                        return (
+                          <div
+                            key={`desktop-empty-cell-${row.id}-${index}`}
+                            className="px-2 py-1 flex items-center justify-center text-[10.5px] text-slate-300"
+                          >
+                            —
+                          </div>
+                        );
+                      }
+                      return (
+                        <div
+                          key={`desktop-data-cell-${row.id}-${company.id}`}
+                          className="px-2 py-1 flex items-center justify-center text-center text-[10.5px] leading-tight overflow-hidden"
+                        >
+                          {row.render(company, handleQuoteClick, (c) => setServicesModalCompany(c))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════════
+              RODAPÉ DO MODAL (Mobile e Desktop)
+              ═══════════════════════════════════════════════════════════════════════ */}
+          <div className="bg-white border-t border-slate-100 px-2 py-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between gap-1.5">
+            {/* Botão Adicionar Empresa — Versão Mobile (limite = 2) */}
+            <button
+              type="button"
+              disabled={companies.length >= COMPARISON_LIMITS.mobile}
+              onClick={() => {
+                onClose();
+                router.push('/search?tab=companies');
+              }}
+              className="md:hidden !min-h-[38px] !min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50 disabled:bg-slate-50 disabled:text-slate-400 transition-colors flex items-center justify-center text-center cursor-pointer disabled:cursor-not-allowed"
+            >
+              {companies.length >= COMPARISON_LIMITS.mobile ? (
+                <span className="leading-tight">Limite atingido ({COMPARISON_LIMITS.mobile}/{COMPARISON_LIMITS.mobile})</span>
+              ) : (
+                <span className="leading-tight">+ Adicionar empresa</span>
+              )}
+            </button>
+
+            {/* Botão Adicionar Empresa — Versão Desktop (limite = 3) */}
+            <button
+              type="button"
+              disabled={companies.length >= COMPARISON_LIMITS.desktop}
+              onClick={() => {
+                onClose();
+                router.push('/search?tab=companies');
+              }}
+              className="hidden md:flex !min-h-[38px] !min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50 disabled:bg-slate-50 disabled:text-slate-400 transition-colors items-center justify-center text-center cursor-pointer disabled:cursor-not-allowed"
+            >
+              {companies.length >= COMPARISON_LIMITS.desktop ? (
+                <span className="leading-tight">Limite atingido ({COMPARISON_LIMITS.desktop}/{COMPARISON_LIMITS.desktop})</span>
+              ) : (
+                <span className="leading-tight">+ Adicionar empresa</span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                track('comparison_modal_compare_confirm', { companies_count: companies.length });
+                onClose();
+                router.push('/compare');
+              }}
+              className="!min-h-[38px] !min-w-0 flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-[11px] font-bold text-white shadow-xs px-2 py-1 transition-colors flex items-center justify-center gap-1 text-center cursor-pointer"
+            >
+              <span className="leading-tight">Ver comparação completa</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════════════════════
+              OVERLAY DE DISCLOSURE DE SERVIÇOS (Acesso progressivo sem scroll do modal)
+              ═══════════════════════════════════════════════════════════════════════ */}
+          {servicesModalCompany && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Serviços oferecidos por ${servicesModalCompany.name}`}
+              className="absolute inset-0 z-50 flex flex-col bg-white p-3.5 animate-in fade-in duration-150"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="text-left">
+                  <h3 className="text-[13px] font-bold text-slate-900 leading-tight">
+                    Serviços oferecidos
+                  </h3>
+                  <p className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                    {servicesModalCompany.name} ({parseServices(servicesModalCompany).length} serviços)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setServicesModalCompany(null)}
+                  aria-label="Fechar lista de serviços"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-3 flex-1 overflow-y-auto flex flex-wrap content-start gap-1.5 py-1">
+                {parseServices(servicesModalCompany).map((item, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center rounded-md bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10.5px] font-semibold text-slate-800"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setServicesModalCompany(null)}
+                  className="h-7 px-3.5 rounded-lg bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700 transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

@@ -85,7 +85,7 @@ const companyWithoutPaidPlan: ComparisonCompany = {
   },
 };
 
-describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + CTA', () => {
+describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha Final CTA', () => {
   const defaultProps = {
     isOpen: true,
     onClose: jest.fn(),
@@ -98,25 +98,32 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + CTA',
     jest.clearAllMocks();
   });
 
-  test('renderiza os 14 critérios na ordem exata e a linha final de orçamento', () => {
+  test('renderiza os 14 critérios na ordem exata e a linha final de orçamento (15 linhas totais)', () => {
     render(<CompanyComparisonModal {...defaultProps} />);
 
-    // Verifica todos os 14 rótulos textuais
-    expect(screen.getAllByText('Avaliações').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Verificação').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Região atendida').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Prazo do orçamento').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Visita técnica').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Formas de pagamento').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Financiamento').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Instalação').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Manutenção').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Pós-venda').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Equipe de instalação').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Acompanhamento do sistema').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Serviços oferecidos').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Garantia').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Solicitar orçamento').length).toBeGreaterThan(0);
+    // 14 critérios canônicos + 1 linha CTA
+    const expectedLabels = [
+      'Avaliações',
+      'Verificação',
+      'Região atendida',
+      'Prazo do orçamento',
+      'Visita técnica',
+      'Formas de pagamento',
+      'Financiamento',
+      'Instalação',
+      'Manutenção',
+      'Pós-venda',
+      'Equipe de instalação',
+      'Acompanhamento do sistema',
+      'Serviços oferecidos',
+      'Garantia',
+      'Solicitar orçamento',
+    ];
+
+    expectedLabels.forEach((label) => {
+      const elements = screen.getAllByText(label);
+      expect(elements.length).toBeGreaterThan(0);
+    });
   });
 
   test('renderiza badges com dados mapeados corretamente', () => {
@@ -144,11 +151,13 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + CTA',
     expect(screen.getAllByText('5 anos').length).toBeGreaterThan(0);
   });
 
-  test('exibe botão "Solicitar" apenas para empresa com plano pago e "—" para empresa gratuita', () => {
+  test('exibe botão "Solicitar orçamento" com aria-label apenas para empresa com plano pago e "—" para empresa gratuita', () => {
     render(<CompanyComparisonModal {...defaultProps} />);
 
-    // Botão Solicitar para empresa elegível
-    const quoteButtons = screen.getAllByRole('button', { name: /^solicitar$/i });
+    // Botão "Solicitar orçamento" para empresa elegível (com label explícito e acessível)
+    const quoteButtons = screen.getAllByRole('button', {
+      name: /solicitar orçamento para weg solar/i,
+    });
     expect(quoteButtons.length).toBeGreaterThan(0);
 
     // Clicar no botão chama openLeadModal para a empresa com plano pago
@@ -157,8 +166,70 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + CTA',
       expect.objectContaining({ preferredCompanyId: 101 })
     );
 
-    // Célula vazia / traço para empresa sem plano pago
+    // Célula vazia / traço para empresa sem plano pago (inelegível)
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+  });
+
+  test('gerencia serviços oferecidos de forma progressiva (0, 1, 3 e 12 itens) sem estourar altura e permitindo ver lista completa', () => {
+    const companyWith12Services: ComparisonCompany = {
+      ...companyWithoutPaidPlan,
+      id: 303,
+      name: 'Empresa Multi Serviços',
+      comparison_profile: {
+        ...companyWithoutPaidPlan.comparison_profile,
+        services_offered: [
+          'Projeto',
+          'instalação',
+          'manutenção',
+          'homologação',
+          'limpeza de painéis',
+          'monitoramento remoto',
+          'consultoria energética',
+          'laudo técnico',
+          'subestação',
+          'baterias e armazenamento',
+          'carport solar',
+          'auditoria predial',
+        ],
+      },
+    };
+
+    render(
+      <CompanyComparisonModal
+        {...defaultProps}
+        companies={[companyWithPaidPlan, companyWith12Services]}
+      />
+    );
+
+    // Empresa 1 tem 3 serviços: exibe preview + botão com "+1"
+    const plus1Button = screen.getAllByRole('button', {
+      name: /ver todos os 3 serviços/i,
+    });
+    expect(plus1Button.length).toBeGreaterThan(0);
+    expect(screen.getAllByText('+1').length).toBeGreaterThan(0);
+
+    // Empresa 2 tem 12 serviços: exibe preview + botão com "+10"
+    const plus10Button = screen.getAllByRole('button', {
+      name: /ver todos os 12 serviços/i,
+    });
+    expect(plus10Button.length).toBeGreaterThan(0);
+    expect(screen.getAllByText('+10').length).toBeGreaterThan(0);
+
+    // Clicar no botão de +10 abre o disclosure sheet com todos os 12 serviços
+    fireEvent.click(plus10Button[0]);
+
+    // O cabeçalho do detalhe aparece com o nome da empresa e a contagem
+    expect(screen.getByText('Empresa Multi Serviços (12 serviços)')).toBeInTheDocument();
+
+    // Todos os 12 serviços estão presentes na lista expandida
+    expect(screen.getByText('baterias e armazenamento')).toBeInTheDocument();
+    expect(screen.getByText('carport solar')).toBeInTheDocument();
+    expect(screen.getByText('auditoria predial')).toBeInTheDocument();
+
+    // Fecha o detalhe
+    const closeDetailBtn = screen.getByRole('button', { name: /fechar lista de serviços/i });
+    fireEvent.click(closeDetailBtn);
+    expect(screen.queryByText('Empresa Multi Serviços (12 serviços)')).not.toBeInTheDocument();
   });
 
   test('exibe "Não informado" quando campos não são preenchidos e não inventa dados', () => {
@@ -194,5 +265,40 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + CTA',
 
     fireEvent.click(closeBtn);
     expect(defaultProps.onClose).toHaveBeenCalled();
+  });
+
+  test('permite remover empresa individualmente pelo botão no card', () => {
+    render(<CompanyComparisonModal {...defaultProps} />);
+
+    const removeButtons = screen.getAllByRole('button', {
+      name: /remover weg solar da comparação/i,
+    });
+    expect(removeButtons.length).toBeGreaterThan(0);
+
+    fireEvent.click(removeButtons[0]);
+    expect(defaultProps.onRemoveCompany).toHaveBeenCalledWith(101);
+  });
+
+  test('botão de ver comparação completa navega para /compare', () => {
+    render(<CompanyComparisonModal {...defaultProps} />);
+
+    const comparePageBtn = screen.getByRole('button', {
+      name: /ver comparação completa/i,
+    });
+    expect(comparePageBtn).toBeInTheDocument();
+
+    fireEvent.click(comparePageBtn);
+    expect(mockPush).toHaveBeenCalledWith('/compare');
+  });
+
+  test('footer no mobile com 2 empresas bloqueia adição de terceira e indica limite atingido (2/2)', () => {
+    render(<CompanyComparisonModal {...defaultProps} />);
+
+    // No mobile, quando companies.length == 2, exibe botão desabilitado com "Limite atingido (2/2)"
+    const mobileAddBtn = screen.getByRole('button', {
+      name: /limite atingido \(2\/2\)/i,
+    });
+    expect(mobileAddBtn).toBeInTheDocument();
+    expect(mobileAddBtn).toBeDisabled();
   });
 });
