@@ -7,7 +7,11 @@ module Messaging
         role = conversation.viewer_role_for(viewer)
         unread = conversation.unread_count_for_role(role)
 
-        last_msg = conversation.direct_messages.order(created_at: :desc).first || conversation.direct_messages.last
+        last_msg = if conversation.association(:direct_messages).loaded?
+                     conversation.direct_messages.sort_by { |m| m.created_at || Time.at(0) }.last
+                   else
+                     conversation.direct_messages.order(created_at: :desc).first
+                   end
 
         participant = if role == 'Company'
                         {
@@ -34,8 +38,6 @@ module Messaging
                                created_at: last_msg.created_at.iso8601,
                                read_at: last_msg.read_at&.iso8601
                              }
-                           else
-                             nil
                            end
 
         sla_dto = if conversation.sla_due_at.present?
@@ -43,9 +45,31 @@ module Messaging
                       due_at: conversation.sla_due_at.iso8601,
                       breached: Time.current > conversation.sla_due_at
                     }
-                  else
-                    nil
                   end
+
+        linked_proposals = if conversation.respond_to?(:conversation_proposal_links)
+                             conversation.conversation_proposal_links.includes(:marketplace_proposal).map do |link|
+                               p = link.marketplace_proposal
+                               next unless p
+                               next unless viewer.nil? || MarketplaceProposalPolicy.new(viewer, p).conversation?
+
+                               {
+                                 id: p.id,
+                                 reference: p.reference,
+                                 status: p.status,
+                                 has_published_version: p.current_version.present?
+                               }
+                             end.compact
+                           else
+                             []
+                           end
+
+        capabilities = {
+          can_reply: conversation.status != 'blocked',
+          can_resolve: role == 'Company' && conversation.status != 'resolved',
+          can_block: true,
+          can_attach: true
+        }
 
         InboxItemSerializer.format_dto(
           composite_id: "p2p:#{conversation.id}",
@@ -57,6 +81,10 @@ module Messaging
           unread_count: unread,
           sla: sla_dto,
           lead: nil,
+          marketplace_proposal_id: conversation.marketplace_proposal_id,
+          marketplace_proposal_reference: conversation.marketplace_proposal&.reference,
+          linked_proposals: linked_proposals,
+          capabilities: capabilities,
           updated_at: conversation.last_message_at || conversation.updated_at || conversation.created_at
         )
       end

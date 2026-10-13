@@ -73,6 +73,7 @@ AB0-1-front/public/3d-icones/
 !AB0-1-front/__tests__/components/ProposalCompactCard.test.tsx
 !AB0-1-front/__tests__/components/ProposalStatusSummary.test.tsx
 !AB0-1-front/__tests__/components/ProposalConversationSurface.test.tsx
+!AB0-1-front/__tests__/components/UnifiedInbox.test.tsx
 !AB0-1-front/__tests__/auth/AuthCallback.test.tsx
 
 # Ignorar documentações de desenvolvimento
@@ -83,6 +84,12 @@ docs/security-audit/
 !docs/security-audit/
 !docs/security-audit/*
 docs/*
+!docs/INBOX_ROOT_CAUSE_AND_EVIDENCE.md
+!docs/INBOX_AS_IS_TO_BE_ARCHITECTURE.md
+!docs/INBOX_API_CONTRACTS_AND_PERMISSIONS.md
+!docs/INBOX_PREMIUM_PWA_UI_UX_SPEC.md
+!docs/INBOX_TEST_MATRIX.md
+!docs/INBOX_IMPLEMENTATION_REPORT.md
 !docs/03-campaign/
 !docs/03-campaign/*
 !docs/security-audit/

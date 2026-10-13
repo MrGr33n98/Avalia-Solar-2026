@@ -12,7 +12,7 @@ module Api
         end
 
         def unread_count
-          total = ::Messaging::UnifiedInboxQuery.total_unread_count(user: current_user)
+          total = ::Messaging::UnifiedInboxQuery.total_unread_count(user: current_user, company_id: params[:company_id])
           render json: { unread_count: total }
         end
       end

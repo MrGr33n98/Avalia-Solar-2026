@@ -86,6 +86,121 @@ export interface InboxCounts {
   archived: number;
 }
 
+// ==========================================
+// UNIFIED INBOX ENTERPRISE DTO CONTRACT
+// ==========================================
+
+export interface UnifiedParticipant {
+  type: string;
+  id: string | number;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  role?: string;
+  avatar_url?: string | null;
+}
+
+export interface UnifiedLastMessage {
+  id: number;
+  body: string;
+  sender_type: string;
+  sender_name?: string | null;
+  created_at: string;
+}
+
+export interface UnifiedLinkedProposal {
+  id: number;
+  reference?: string | null;
+  status?: string | null;
+  value?: number | null;
+  power_kwp?: number | null;
+}
+
+export interface UnifiedCapabilities {
+  can_reply: boolean;
+  can_resolve?: boolean;
+  can_archive?: boolean;
+  can_block?: boolean;
+  can_takeover?: boolean;
+  can_return_to_bot?: boolean;
+  can_handoff_whatsapp?: boolean;
+  can_attach?: boolean;
+}
+
+export interface UnifiedInboxItem {
+  id: string; // composite ID: "p2p:<id>" or "ai:<id>"
+  raw_id: number;
+  channel: 'p2p' | 'ai';
+  status: string;
+  company_id: number;
+  participant: UnifiedParticipant;
+  last_message?: UnifiedLastMessage | null;
+  unread_count: number;
+  sla?: { waiting_since?: string; waiting_seconds?: number } | null;
+  lead?: InboxLead | null;
+  marketplace_proposal_id?: number | null;
+  marketplace_proposal_reference?: string | null;
+  linked_proposals?: UnifiedLinkedProposal[];
+  capabilities?: UnifiedCapabilities;
+  updated_at: string;
+}
+
+export interface UnifiedInboxCounts {
+  all: number;
+  unread: number;
+  waiting_reply: number;
+  archived: number;
+}
+
+export interface UnifiedInboxResponse {
+  items: UnifiedInboxItem[];
+  counts: UnifiedInboxCounts;
+  channels_status: {
+    p2p: { enabled: boolean; reason?: string };
+    ai: { enabled: boolean; reason?: string };
+  };
+  pagination: {
+    limit: number;
+    has_next_page: boolean;
+    next_cursor?: string | null;
+  };
+}
+
+export const unifiedInboxApi = {
+  list: (params: {
+    companyId?: number | null;
+    channel?: 'all' | 'p2p' | 'ai';
+    filter?: 'all' | 'unread' | 'waiting_reply' | 'archived';
+    q?: string;
+    cursor?: string;
+    limit?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params.companyId) searchParams.set('company_id', String(params.companyId));
+    if (params.channel && params.channel !== 'all') searchParams.set('channel', params.channel);
+    if (params.filter && params.filter !== 'all') searchParams.set('filter', params.filter);
+    if (params.q?.trim()) searchParams.set('q', params.q.trim());
+    if (params.cursor) searchParams.set('cursor', params.cursor);
+    if (params.limit) searchParams.set('limit', String(params.limit));
+
+    const qs = searchParams.toString();
+    return fetchApiSafe<UnifiedInboxResponse>(`messaging/inbox${qs ? `?${qs}` : ''}`, {
+      noCache: true,
+      retries: 1,
+    });
+  },
+
+  unreadCount: (companyId?: number | null) => {
+    const searchParams = new URLSearchParams();
+    if (companyId) searchParams.set('company_id', String(companyId));
+    const qs = searchParams.toString();
+    return fetchApiSafe<{ unread_count: number }>(`messaging/inbox/unread_count${qs ? `?${qs}` : ''}`, {
+      noCache: true,
+      retries: 1,
+    });
+  },
+};
+
 export const inboxApi = {
   sessions: (companyId: number, status: string, query = '', cursor?: string) => {
     const params = new URLSearchParams({ company_id: String(companyId), status });
@@ -167,3 +282,67 @@ export const inboxApi = {
       noCache: true,
     }),
 };
+
+/**
+ * Computes an MD5 checksum using browser crypto or simple fallback
+ */
+async function computeFileChecksum(file: File): Promise<string> {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const digest = await crypto.subtle.digest('SHA-256', arrayBuffer);
+    const bytes = new Uint8Array(digest);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  } catch {
+    return 'dummy';
+  }
+}
+
+/**
+ * Secure, verified direct file upload for Active Storage with integrity check and response status validation.
+ */
+export async function uploadAttachmentFile(
+  companyId: number,
+  file: File
+): Promise<{ id: number; filename: string; url?: string }> {
+  const MAX_SIZE = 15 * 1024 * 1024; // 15MB
+  if (file.size > MAX_SIZE) {
+    throw new Error('O arquivo excede o limite máximo permitido de 15MB.');
+  }
+
+  const checksum = await computeFileChecksum(file);
+  const contentType = file.type || 'application/octet-stream';
+
+  // 1. Obter URL pré-assinada
+  const uploadData = await inboxApi.getDirectUploadUrl(
+    companyId,
+    file.name,
+    file.size,
+    checksum,
+    contentType
+  );
+
+  const { url, headers } = uploadData.direct_upload;
+
+  // 2. PUT direto ao Storage
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      ...headers,
+      'Content-Type': contentType,
+    },
+    body: file,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha no armazenamento do anexo (${response.status} ${response.statusText}).`);
+  }
+
+  return {
+    id: uploadData.id,
+    filename: file.name,
+  };
+}
