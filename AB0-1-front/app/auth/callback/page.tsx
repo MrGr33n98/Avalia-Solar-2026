@@ -12,12 +12,24 @@ type CallbackStatus = 'loading' | 'success' | 'pending_approval' | 'inactive' | 
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading, refreshAuth, getPostLoginDestination } = useAuth();
+  const { user, refreshAuth, getPostLoginDestination } = useAuth();
 
   const [status, setStatus] = useState<CallbackStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [inactiveReason, setInactiveReason] = useState<string | null>(null);
   const refreshCalled = useRef(false);
+  const redirecting = useRef(false);
+
+  const handleRetry = async () => {
+    setStatus('loading');
+    setErrorMessage(null);
+    setAuthSessionHint();
+    const ok = await refreshAuth({ force: true });
+    if (!ok && !user) {
+      setErrorMessage('Não foi possível carregar sua sessão após o login. Tente novamente.');
+      setStatus('error');
+    }
+  };
 
   // Step 1: parse URL params and kick off auth refresh on success
   useEffect(() => {
@@ -56,8 +68,11 @@ function AuthCallbackContent() {
 
       refreshAuth().then((ok) => {
         if (!ok) {
-          setErrorMessage('Não foi possível carregar sua sessão após o login. Tente novamente.');
-          setStatus('error');
+          // If user was populated concurrently or already present, do not show false error
+          if (!user) {
+            setErrorMessage('Não foi possível carregar sua sessão após o login. Tente novamente.');
+            setStatus('error');
+          }
         }
         // On success: status stays 'loading' while user state propagates,
         // then the next effect will route the user.
@@ -67,16 +82,22 @@ function AuthCallbackContent() {
 
     // No recognized status — redirect to login
     router.replace('/login');
-  }, [searchParams, refreshAuth, router]);
+  }, [searchParams, refreshAuth, router, user]);
 
-  // Step 2: once user is loaded after a successful refresh, route them
+  // Step 2: once user is loaded after a successful refresh or arrived concurrently, route them
   useEffect(() => {
-    if (status !== 'loading' || !refreshCalled.current) return;
-    if (loading) return;
+    if (redirecting.current) return;
     if (!user) return;
 
-    void getPostLoginDestination(user).then((destination) => router.replace(destination));
-  }, [status, loading, user, router, getPostLoginDestination]);
+    const rawStatus = searchParams.get('status');
+    if (rawStatus === 'success' || !rawStatus) {
+      redirecting.current = true;
+      setStatus('loading');
+      void getPostLoginDestination(user).then((destination) => {
+        router.replace(destination);
+      });
+    }
+  }, [user, searchParams, router, getPostLoginDestination]);
 
   // --- Render ---
 
@@ -180,12 +201,21 @@ function AuthCallbackContent() {
         <p className="text-gray-500 text-sm leading-relaxed">
           {errorMessage || 'Ocorreu um erro durante o login. Por favor, tente novamente.'}
         </p>
-        <Link
-          href="/login"
-          className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Tentar novamente
-        </Link>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Tentar novamente
+          </button>
+          <Link
+            href="/login"
+            className="w-full sm:w-auto px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Voltar ao login
+          </Link>
+        </div>
       </div>
     </div>
   );

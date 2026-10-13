@@ -1100,6 +1100,18 @@ export interface ReviewerProfileResponse {
     creator_enabled?: boolean;
     public_slug?: string | null;
     public_profile?: boolean;
+    public_headline?: string;
+    profession?: string;
+    bio?: string;
+    company_name?: string;
+    public_bio?: string;
+    public_banner_url?: string;
+    whatsapp_url?: string;
+    avatar_url?: string;
+    linkedin_url?: string;
+    instagram_url?: string;
+    website_url?: string;
+    [key: string]: any;
   } | null;
   completion?: { percent?: number };
 }
@@ -1272,6 +1284,12 @@ export const clearAuthSessionHint = () => {
 
 export const hasPossibleAuthSession = () => {
   if (typeof window === 'undefined') return true;
+  if (
+    window.location.pathname.startsWith('/auth/callback') &&
+    window.location.search.includes('status=success')
+  ) {
+    return true;
+  }
   return localStorage.getItem(AUTH_HINT_KEY) === '1' || hasAuthCookieHint();
 };
 
@@ -1290,9 +1308,15 @@ const expireAuthSession = () => {
 
   window.dispatchEvent(new CustomEvent('avalia:auth-session-expired'));
   const pathname = window.location.pathname;
-  const isAuthRoute = ['/login', '/register', '/signup'].some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
+  const isAuthRoute = [
+    '/login',
+    '/register',
+    '/signup',
+    '/register-user',
+    '/forgot-password',
+    '/reset-password',
+    '/auth',
+  ].some((path) => pathname === path || pathname.startsWith(`${path}/`));
   if (!isAuthRoute) {
     const returnTo = `${pathname}${window.location.search}`;
     window.location.replace(`/login?return_to=${encodeURIComponent(returnTo)}`);

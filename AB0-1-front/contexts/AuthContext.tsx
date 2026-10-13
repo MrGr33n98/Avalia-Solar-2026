@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/nextjs';
 
 import {
   User,
+  ReviewerProfileResponse,
   authApi,
   clearAuthSessionHint,
   companyAccessApi,
@@ -25,9 +26,13 @@ import { resolveSurfaceFromHost, ProductSurface } from '@/lib/host-context';
 import { clearRealtimeAuthToken, setRealtimeAuthToken } from '@/lib/realtime-auth';
 import { invalidateAnalyticsAvailability } from '@/lib/api-analytics';
 
+export interface CheckAuthOptions {
+  force?: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
-  reviewerProfile: any | null;
+  reviewerProfile: ReviewerProfileResponse['profile'] | null;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -40,18 +45,25 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string, passwordConfirmation?: string) => Promise<void>;
   resendConfirmation: (email: string) => Promise<void>;
-  refreshAuth: () => Promise<boolean>;
+  refreshAuth: (options?: CheckAuthOptions) => Promise<boolean>;
+  checkAuth: (options?: CheckAuthOptions) => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [reviewerProfile, setReviewerProfile] = useState<any | null>(null);
+  const [reviewerProfile, setReviewerProfile] = useState<ReviewerProfileResponse['profile'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isAuthenticated = !!user;
   const authRequestId = useRef(0);
+  const authGenerationRef = useRef(0);
+  const latestCompletedRequestId = useRef(0);
+  const latestAuthenticatedUserRef = useRef<User | null>(null);
+  const inFlightCheckPromiseRef = useRef<Promise<User | null> | null>(null);
+  const inFlightRequestIdRef = useRef<number | null>(null);
+  const currentUserRef = useRef<User | null>(null);
   const stitchedIdentitySignature = useRef<string | null>(null);
 
   const nextAuthRequest = useCallback(() => {
@@ -59,8 +71,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return authRequestId.current;
   }, []);
 
+  const bumpAuthGeneration = useCallback(() => {
+    authGenerationRef.current += 1;
+    inFlightCheckPromiseRef.current = null;
+    inFlightRequestIdRef.current = null;
+    latestAuthenticatedUserRef.current = null;
+    currentUserRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    currentUserRef.current = user;
+    if (user) {
+      latestAuthenticatedUserRef.current = user;
+    }
+  }, [user]);
+
   useEffect(() => {
     const handleSessionExpired = () => {
+      bumpAuthGeneration();
       nextAuthRequest();
       invalidateAnalyticsAvailability();
       clearAuthSessionHint();
@@ -73,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener('avalia:auth-session-expired', handleSessionExpired);
     return () => window.removeEventListener('avalia:auth-session-expired', handleSessionExpired);
-  }, [nextAuthRequest]);
+  }, [nextAuthRequest, bumpAuthGeneration]);
 
   useEffect(() => {
     if (user?.id) {
@@ -145,50 +173,133 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user]);
 
-  const checkAuth = useCallback(async (): Promise<User | null> => {
-    const requestId = nextAuthRequest();
-    setLoading(true);
-    setError(null);
-
-    if (!hasPossibleAuthSession()) {
-      setUser(null);
-      setLoading(false);
-      return null;
-    }
-
-    try {
-      const userData = await authApi.me();
-      if (requestId === authRequestId.current) {
-        setUser(userData || null);
-        if (userData) {
-          setAuthSessionHint();
-        } else {
-          clearAuthSessionHint();
+  const checkAuth = useCallback(
+    async (options?: CheckAuthOptions): Promise<User | null> => {
+      // 1. Single-flight deduplication: return existing promise if check is in-flight and not forced
+      if (!options?.force && inFlightCheckPromiseRef.current) {
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.debug('[Auth] auth_check_deduplicated: reusing in-flight check');
         }
+        return inFlightCheckPromiseRef.current;
       }
-      return requestId === authRequestId.current ? userData || null : null;
-    } catch (authError) {
-      if (requestId === authRequestId.current) {
-        const status = getErrorStatus(authError);
-        const isDefinitiveAuthFailure = status === 401 || status === 403;
 
-        if (isDefinitiveAuthFailure) {
-          invalidateAnalyticsAvailability();
+      const requestId = nextAuthRequest();
+      const generationAtStart = authGenerationRef.current;
+      const startTime = Date.now();
+
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.debug('[Auth] auth_check_started', {
+          requestId,
+          generation: generationAtStart,
+          force: Boolean(options?.force),
+        });
+      }
+
+      setLoading(true);
+      setError(null);
+
+      if (!hasPossibleAuthSession()) {
+        if (generationAtStart === authGenerationRef.current) {
+          latestAuthenticatedUserRef.current = null;
+          currentUserRef.current = null;
           setUser(null);
-          setError(getApiErrorMessage(authError, 'Falha ao validar sessão.'));
-          clearAuthSessionHint();
-          clearRealtimeAuthToken();
-        } else {
-          setError('Não foi possível conectar ao servidor de autenticação. Verifique sua conexão.');
+          setLoading(false);
         }
+        return null;
       }
-      return null;
-    } finally {
-      if (requestId === authRequestId.current) {
-        setLoading(false);
-      }
-    }
-  }, [nextAuthRequest]);
+
+      inFlightRequestIdRef.current = requestId;
+      const checkPromise = (async (): Promise<User | null> => {
+        try {
+          const userData = await authApi.me();
+
+          // Invalidation check (e.g. logout happened while request was in-flight)
+          if (generationAtStart !== authGenerationRef.current) {
+            return null;
+          }
+
+          if (userData) {
+            latestAuthenticatedUserRef.current = userData;
+            currentUserRef.current = userData;
+            latestCompletedRequestId.current = requestId;
+            setUser(userData);
+            setAuthSessionHint();
+            setError(null);
+            return userData;
+          }
+
+          // Request returned unauthenticated / null
+          // Only clear state if this request is at least as new as any completed request
+          // and no newer request has already authenticated a user in this generation
+          if (
+            requestId >= latestCompletedRequestId.current &&
+            (!latestAuthenticatedUserRef.current || requestId >= authRequestId.current)
+          ) {
+            latestAuthenticatedUserRef.current = null;
+            currentUserRef.current = null;
+            latestCompletedRequestId.current = requestId;
+            setUser(null);
+            clearAuthSessionHint();
+          }
+
+          // If another concurrent or newer check already authenticated the user,
+          // return that authenticated user so caller does not receive a false negative!
+          return latestAuthenticatedUserRef.current || null;
+        } catch (authError) {
+          if (generationAtStart !== authGenerationRef.current) {
+            return null;
+          }
+
+          const status = getErrorStatus(authError);
+          const isDefinitiveAuthFailure = status === 401 || status === 403;
+
+          if (isDefinitiveAuthFailure) {
+            if (
+              requestId >= latestCompletedRequestId.current &&
+              (!latestAuthenticatedUserRef.current || requestId >= authRequestId.current)
+            ) {
+              latestAuthenticatedUserRef.current = null;
+              currentUserRef.current = null;
+              latestCompletedRequestId.current = requestId;
+              invalidateAnalyticsAvailability();
+              setUser(null);
+              setError(getApiErrorMessage(authError, 'Falha ao validar sessão.'));
+              clearAuthSessionHint();
+              clearRealtimeAuthToken();
+            }
+          } else {
+            // Transient error (5xx, network, timeout) - keep hints and recoverable state
+            setError('Não foi possível conectar ao servidor de autenticação. Verifique sua conexão.');
+          }
+
+          return latestAuthenticatedUserRef.current || null;
+        } finally {
+          if (generationAtStart === authGenerationRef.current) {
+            if (requestId >= authRequestId.current || !inFlightCheckPromiseRef.current) {
+              setLoading(false);
+            }
+          }
+          if (inFlightRequestIdRef.current === requestId) {
+            inFlightCheckPromiseRef.current = null;
+          }
+          if (process.env.NODE_ENV !== 'production') {
+            // eslint-disable-next-line no-console
+            console.debug('[Auth] auth_check_completed', {
+              requestId,
+              generation: generationAtStart,
+              durationMs: Date.now() - startTime,
+            });
+          }
+        }
+      })();
+
+      inFlightCheckPromiseRef.current = checkPromise;
+      return checkPromise;
+    },
+    [nextAuthRequest]
+  );
 
   useEffect(() => {
     void checkAuth();
@@ -275,17 +386,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      bumpAuthGeneration();
       nextAuthRequest();
       setError(null);
       const response = await authApi.login(email, password);
       setRealtimeAuthToken(response?.token);
-      const nextUser: User | null = response.user || (await checkAuth());
+      const nextUser: User | null = response.user || (await checkAuth({ force: true }));
 
       if (!nextUser) {
         throw new Error('Falha ao obter dados do usuario apos login.');
       }
 
       setUser(nextUser);
+      currentUserRef.current = nextUser;
+      latestAuthenticatedUserRef.current = nextUser;
       setAuthSessionHint();
       track('login_completed', { method: 'email' });
       return nextUser;
@@ -315,6 +429,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    bumpAuthGeneration();
     nextAuthRequest();
     invalidateAuthRefresh();
     invalidateAnalyticsAvailability();
@@ -328,11 +443,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   };
 
-  const refreshAuth = async (): Promise<boolean> => {
-    if (!hasPossibleAuthSession()) return false;
-    const nextUser = await checkAuth();
-    return !!nextUser;
-  };
+  const refreshAuth = useCallback(
+    async (options?: CheckAuthOptions): Promise<boolean> => {
+      if (!hasPossibleAuthSession()) return false;
+      const nextUser = await checkAuth(options);
+      if (nextUser) return true;
+      return !!latestAuthenticatedUserRef.current || !!currentUserRef.current;
+    },
+    [checkAuth]
+  );
 
   return (
     <AuthContext.Provider
@@ -353,6 +472,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           authApi.resetPassword(token, password, passwordConfirmation),
         resendConfirmation: (email: string) => authApi.resendConfirmation(email),
         refreshAuth,
+        checkAuth,
       }}
     >
       {children}
