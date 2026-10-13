@@ -150,4 +150,29 @@ describe('ProposalConversation component', () => {
       expect(screen.queryByText('Tentar novamente')).not.toBeInTheDocument();
     });
   });
+
+  it('executa fallback gracioso para conversa direta se vinculação da proposta retornar 403', async () => {
+    (conversationsApi.create as jest.Mock)
+      .mockRejectedValueOnce(new Error('[403] Proposta inválida para esta conversa'))
+      .mockResolvedValueOnce({ id: 88, company_id: 10 });
+    (conversationsApi.getMessages as jest.Mock).mockResolvedValue([]);
+
+    render(
+      <ProposalConversation
+        proposal={mockProposal}
+        onBack={onBack}
+        onViewProposal={onViewProposal}
+      />
+    );
+
+    await waitFor(() => {
+      expect(conversationsApi.create).toHaveBeenCalledWith(10, 1);
+      expect(conversationsApi.create).toHaveBeenCalledWith(10);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Digite sua mensagem...')).not.toBeDisabled();
+      expect(screen.queryByText(/Proposta inválida para esta conversa/)).not.toBeInTheDocument();
+    });
+  });
 });

@@ -54,7 +54,7 @@ module Api
       end
 
       def create
-        unless current_user.review_user?
+        unless current_user.review_user? || current_user.admin?
           return render json: { error: 'Only buyer users can start direct chats' },
                         status: :forbidden
         end
@@ -167,9 +167,15 @@ module Api
 
         proposal = MarketplaceProposal.find_by(id: params[:marketplace_proposal_id], company_id: company.id)
         return render json: { error: 'Proposta não encontrada' }, status: :not_found unless proposal
-        visible = proposal.status != 'draft' || proposal.versions.exists?(status: 'published')
-        buyer = proposal.buyer_user_id == current_user.id || proposal.lead.email.to_s.casecmp?(current_user.email.to_s)
-        return proposal if visible && buyer
+
+        is_buyer = proposal.buyer_user_id == current_user.id ||
+                   (proposal.lead&.email.present? && proposal.lead.email.to_s.strip.casecmp?(current_user.email.to_s.strip))
+        is_authorized = is_buyer || current_user.admin?
+
+        if is_authorized
+          proposal.update_column(:buyer_user_id, current_user.id) if proposal.buyer_user_id.nil? && current_user.review_user?
+          return proposal
+        end
 
         render json: { error: 'Proposta inválida para esta conversa' }, status: :forbidden
         nil

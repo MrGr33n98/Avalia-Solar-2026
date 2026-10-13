@@ -167,6 +167,68 @@ RSpec.describe 'Marketplace proposals API', type: :request do
       conversation = Conversation.find(JSON.parse(response.body)['id'])
       expect(conversation.marketplace_proposal_id).to eq(proposal.id)
     end
+
+    it 'permite abrir conversa mesmo quando a proposta está em preparação (draft)' do
+      allow_any_instance_of(Company).to receive(:feature_access).and_wrap_original do |method|
+        method.call.merge('p2p_chat' => { 'state' => 'enabled' })
+      end
+
+      draft_distribution = create(:lead_distribution, lead: lead, company: company, status: 'sent')
+      draft_proposal = create(
+        :marketplace_proposal,
+        lead: lead,
+        company: company,
+        lead_distribution: draft_distribution,
+        buyer_user: buyer,
+        status: 'draft'
+      )
+
+      post '/api/v1/conversations',
+           params: { company_id: company.id, marketplace_proposal_id: draft_proposal.id }.to_json,
+           headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      conversation = Conversation.find(JSON.parse(response.body)['id'])
+      expect(conversation.marketplace_proposal_id).to eq(draft_proposal.id)
+    end
+
+    it 'rejeita proposta com 403 se o usuário não for o comprador nem admin' do
+      allow_any_instance_of(Company).to receive(:feature_access).and_wrap_original do |method|
+        method.call.merge('p2p_chat' => { 'state' => 'enabled' })
+      end
+
+      other_buyer = create(:user, role: 'review', company: nil, status: :active, confirmed_at: Time.current)
+
+      post '/api/v1/conversations',
+           params: { company_id: company.id, marketplace_proposal_id: proposal.id }.to_json,
+           headers: headers_for(other_buyer)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(JSON.parse(response.body)['error']).to eq('Proposta inválida para esta conversa')
+    end
+
+    it 'sincroniza buyer_user_id quando a proposta é vinculada pelo email do lead' do
+      allow_any_instance_of(Company).to receive(:feature_access).and_wrap_original do |method|
+        method.call.merge('p2p_chat' => { 'state' => 'enabled' })
+      end
+
+      unlinked_distribution = create(:lead_distribution, lead: lead, company: company, status: 'sent')
+      unlinked_proposal = create(
+        :marketplace_proposal,
+        lead: lead,
+        company: company,
+        lead_distribution: unlinked_distribution,
+        buyer_user: nil,
+        status: 'draft'
+      )
+
+      post '/api/v1/conversations',
+           params: { company_id: company.id, marketplace_proposal_id: unlinked_proposal.id }.to_json,
+           headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      expect(unlinked_proposal.reload.buyer_user_id).to eq(buyer.id)
+    end
   end
 
   describe 'company workspace' do

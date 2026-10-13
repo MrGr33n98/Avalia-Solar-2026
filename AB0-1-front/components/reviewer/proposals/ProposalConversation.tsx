@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   AlertCircle,
@@ -135,43 +135,43 @@ export function ProposalConversation({
     };
   }, []);
 
-  // Carregar ou inicializar conversa real da API caso disponível
-  useEffect(() => {
-    let active = true;
+  // Carregar ou inicializar conversa real da API com resiliência
+  const loadConversation = useCallback(async () => {
     setLoadingConversation(true);
     setLoadError(null);
+    try {
+      let conv: Conversation | null = null;
+      try {
+        conv = await conversationsApi.create(proposal.company.id, proposal.id);
+      } catch (createErr: unknown) {
+        // Fallback gracioso: se vinculação de proposta falhar (ex: 403 por proposta em validação), abre canal direto com empresa
+        console.warn('[ProposalConversation] Tentando fallback para conversa direta com empresa:', createErr);
+        conv = await conversationsApi.create(proposal.company.id);
+      }
 
-    conversationsApi
-      .create(proposal.company.id, proposal.id)
-      .then((conv) => {
-        if (!active || !conv?.id) return;
-        setConversation(conv);
-        return conversationsApi.getMessages(conv.id);
-      })
-      .then((realMessages) => {
-        if (!active) return;
-        if (!realMessages || realMessages.length === 0) {
-          setMessages([]);
-          return;
-        }
+      if (!conv?.id) return;
+      setConversation(conv);
+
+      const realMessages = await conversationsApi.getMessages(conv.id);
+      if (!realMessages || realMessages.length === 0) {
+        setMessages([]);
+      } else {
         setMessages(realMessages.map(mapDirectMessageToChatMessage));
-      })
-      .catch((err: unknown) => {
-        if (!active) return;
-        const msg =
-          err instanceof Error
-            ? err.message
-            : 'Não foi possível carregar a conversa com esta empresa.';
-        setLoadError(msg);
-      })
-      .finally(() => {
-        if (active) setLoadingConversation(false);
-      });
+      }
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível carregar a conversa com esta empresa.';
+      setLoadError(msg);
+    } finally {
+      setLoadingConversation(false);
+    }
+  }, [proposal.company.id, proposal.id]);
 
-    return () => {
-      active = false;
-    };
-  }, [proposal.company.id, proposal.id, deadline]);
+  useEffect(() => {
+    void loadConversation();
+  }, [loadConversation]);
 
   // Subscrição ActionCable em tempo real quando ativado
   useEffect(() => {
@@ -519,24 +519,7 @@ export function ProposalConversation({
               </span>
               <button
                 type="button"
-                onClick={() => {
-                  setLoadError(null);
-                  setLoadingConversation(true);
-                  conversationsApi
-                    .create(proposal.company.id, proposal.id)
-                    .then((conv) => {
-                      if (!conv?.id) return;
-                      setConversation(conv);
-                      return conversationsApi.getMessages(conv.id);
-                    })
-                    .then((realMessages) => {
-                      if (realMessages && realMessages.length > 0) {
-                        setMessages(realMessages.map(mapDirectMessageToChatMessage));
-                      }
-                    })
-                    .catch((err) => setLoadError(err?.message || 'Falha ao conectar.'))
-                    .finally(() => setLoadingConversation(false));
-                }}
+                onClick={() => void loadConversation()}
                 className="rounded-md bg-white border border-amber-300 px-2 py-0.5 text-[11px] font-bold text-amber-900 hover:bg-amber-100"
               >
                 Tentar novamente
