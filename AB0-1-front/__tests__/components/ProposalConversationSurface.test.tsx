@@ -151,11 +151,10 @@ describe('ProposalConversation component', () => {
     });
   });
 
-  it('executa fallback gracioso para conversa direta se vinculação da proposta retornar 403', async () => {
-    (conversationsApi.create as jest.Mock)
-      .mockRejectedValueOnce(new Error('[403] Proposta inválida para esta conversa'))
-      .mockResolvedValueOnce({ id: 88, company_id: 10 });
-    (conversationsApi.getMessages as jest.Mock).mockResolvedValue([]);
+  it('não executa fallback automático após 403 e bloqueia conversa com erro seguro', async () => {
+    (conversationsApi.create as jest.Mock).mockRejectedValueOnce(
+      new Error('[403] Você não tem acesso a esta proposta.')
+    );
 
     render(
       <ProposalConversation
@@ -167,12 +166,41 @@ describe('ProposalConversation component', () => {
 
     await waitFor(() => {
       expect(conversationsApi.create).toHaveBeenCalledWith(10, 1);
-      expect(conversationsApi.create).toHaveBeenCalledWith(10);
+      // Garante que fallback cego para conversa geral SEM proposal_id NÃO é executado
+      expect(conversationsApi.create).not.toHaveBeenCalledWith(10);
     });
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Digite sua mensagem...')).not.toBeDisabled();
-      expect(screen.queryByText(/Proposta inválida para esta conversa/)).not.toBeInTheDocument();
+      expect(screen.getByText(/Você não tem acesso a esta proposta/)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Inicializando canal seguro...')).toBeDisabled();
+    });
+  });
+
+  it('apresenta interface dedicada em preparação para proposta draft sem versão publicada', async () => {
+    (conversationsApi.create as jest.Mock).mockResolvedValue({ id: 55, company_id: 10 });
+    (conversationsApi.getMessages as jest.Mock).mockResolvedValue([]);
+
+    const draftProposal: MarketplaceProposal = {
+      ...mockProposal,
+      status: 'draft',
+      version: undefined,
+    };
+
+    render(
+      <ProposalConversation
+        proposal={draftProposal}
+        onBack={onBack}
+        onViewProposal={onViewProposal}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Sua proposta está em preparação')).toBeInTheDocument();
+      expect(screen.getByText('Resumo da solicitação')).toBeInTheDocument();
+      expect(screen.getByText('Ver detalhes da solicitação')).toBeInTheDocument();
+      // Não exibe blocos técnicos com "Não informado" em draft
+      expect(screen.queryByText('Potência do sistema')).not.toBeInTheDocument();
+      expect(screen.queryByText('Geração estimada')).not.toBeInTheDocument();
     });
   });
 });

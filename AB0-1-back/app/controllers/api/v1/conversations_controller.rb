@@ -60,11 +60,14 @@ module Api
         end
 
         company = ::Company.find_by(id: params[:company_id])
-        return render json: { error: 'Company not found' }, status: :not_found unless company
+        return render_error_response(message: 'Company not found', status: :not_found, code: 'COMPANY_NOT_FOUND') unless company
 
         unless company.p2p_chat_enabled
-          return render json: { error: 'Chat is disabled for this company' },
-                        status: :forbidden
+          return render_error_response(
+            message: 'Chat is disabled for this company',
+            status: :forbidden,
+            code: 'P2P_CHAT_NOT_AVAILABLE'
+          )
         end
 
         enforce_feature_access!(:p2p_chat, company: company)
@@ -74,7 +77,7 @@ module Api
         return if performed?
 
         @conversation = ::Conversation.find_or_initialize_by(user_id: current_user.id, company_id: company.id)
-        @conversation.marketplace_proposal = proposal if proposal
+        @conversation.marketplace_proposal ||= proposal if proposal
 
         if @conversation.new_record?
           @conversation.save!
@@ -166,19 +169,27 @@ module Api
         return unless params[:marketplace_proposal_id].present?
 
         proposal = MarketplaceProposal.find_by(id: params[:marketplace_proposal_id], company_id: company.id)
-        return render json: { error: 'Proposta não encontrada' }, status: :not_found unless proposal
-
-        is_buyer = proposal.buyer_user_id == current_user.id ||
-                   (proposal.lead&.email.present? && proposal.lead.email.to_s.strip.casecmp?(current_user.email.to_s.strip))
-        is_authorized = is_buyer || current_user.admin?
-
-        if is_authorized
-          proposal.update_column(:buyer_user_id, current_user.id) if proposal.buyer_user_id.nil? && current_user.review_user?
-          return proposal
+        unless proposal
+          render_error_response(message: 'Proposta não encontrada', status: :not_found, code: 'PROPOSAL_NOT_FOUND')
+          return
         end
 
-        render json: { error: 'Proposta inválida para esta conversa' }, status: :forbidden
-        nil
+        policy = MarketplaceProposalPolicy.new(current_user, proposal)
+        unless policy.conversation?
+          render_error_response(message: 'Você não tem acesso a esta proposta.', status: :forbidden, code: 'PROPOSAL_ACCESS_DENIED')
+          return
+        end
+
+        if proposal.buyer_user_id.nil? && current_user.review_user? && current_user.confirmed?
+          proposal.with_lock do
+            if proposal.buyer_user_id.nil? && proposal.lead&.email.present? && proposal.lead.email.to_s.strip.casecmp?(current_user.email.to_s.strip)
+              proposal.update!(buyer_user_id: current_user.id)
+              proposal.record_event('buyer.associated', actor: current_user)
+            end
+          end
+        end
+
+        proposal
       end
 
       def company_actor?

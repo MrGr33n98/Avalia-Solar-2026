@@ -204,7 +204,9 @@ RSpec.describe 'Marketplace proposals API', type: :request do
            headers: headers_for(other_buyer)
 
       expect(response).to have_http_status(:forbidden)
-      expect(JSON.parse(response.body)['error']).to eq('Proposta inválida para esta conversa')
+      body = JSON.parse(response.body)
+      expect(body['code']).to eq('PROPOSAL_ACCESS_DENIED')
+      expect(body['message']).to eq('Você não tem acesso a esta proposta.')
     end
 
     it 'sincroniza buyer_user_id quando a proposta é vinculada pelo email do lead' do
@@ -228,6 +230,65 @@ RSpec.describe 'Marketplace proposals API', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(unlinked_proposal.reload.buyer_user_id).to eq(buyer.id)
+    end
+
+    it 'não sobrescreve buyer_user_id existente com novo usuário' do
+      allow_any_instance_of(Company).to receive(:feature_access).and_wrap_original do |method|
+        method.call.merge('p2p_chat' => { 'state' => 'enabled' })
+      end
+
+      original_buyer = create(:user, role: 'review', company: nil, status: :active, confirmed_at: Time.current)
+      assigned_distribution = create(:lead_distribution, lead: lead, company: company, status: 'sent')
+      assigned_proposal = create(
+        :marketplace_proposal,
+        lead: lead,
+        company: company,
+        lead_distribution: assigned_distribution,
+        buyer_user: original_buyer,
+        status: 'draft'
+      )
+
+      other_buyer = create(:user, role: 'review', company: nil, status: :active, confirmed_at: Time.current)
+
+      post '/api/v1/conversations',
+           params: { company_id: company.id, marketplace_proposal_id: assigned_proposal.id }.to_json,
+           headers: headers_for(other_buyer)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(assigned_proposal.reload.buyer_user_id).to eq(original_buyer.id)
+    end
+
+    it 'preserva o marketplace_proposal_id original da conversa quando outra proposta é acessada' do
+      allow_any_instance_of(Company).to receive(:feature_access).and_wrap_original do |method|
+        method.call.merge('p2p_chat' => { 'state' => 'enabled' })
+      end
+
+      # Cria conversa inicial com proposal 1
+      post '/api/v1/conversations',
+           params: { company_id: company.id, marketplace_proposal_id: proposal.id }.to_json,
+           headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      conversation = Conversation.find(JSON.parse(response.body)['id'])
+      expect(conversation.marketplace_proposal_id).to eq(proposal.id)
+
+      # Segunda proposta para o mesmo comprador e empresa
+      second_distribution = create(:lead_distribution, lead: lead, company: company, status: 'sent')
+      second_proposal = create(
+        :marketplace_proposal,
+        lead: lead,
+        company: company,
+        lead_distribution: second_distribution,
+        buyer_user: buyer,
+        status: 'draft'
+      )
+
+      post '/api/v1/conversations',
+           params: { company_id: company.id, marketplace_proposal_id: second_proposal.id }.to_json,
+           headers: headers_for(buyer)
+
+      expect(response).to have_http_status(:ok)
+      expect(conversation.reload.marketplace_proposal_id).to eq(proposal.id)
     end
   end
 

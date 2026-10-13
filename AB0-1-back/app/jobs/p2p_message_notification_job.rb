@@ -31,7 +31,7 @@ class P2pMessageNotificationJob < ApplicationJob
       next if already_notified
 
       destination_url = if recipient.company_user? && recipient.active_membership_for?(conversation.company_id)
-                          "/review-dashboard/messages?conversation_id=#{conversation.id}"
+                          "/dashboard/inbox?conversation_id=#{conversation.id}"
                         else
                           "/chat?conversation_id=#{conversation.id}"
                         end

@@ -128,7 +128,8 @@ module Api
         when /^review_/
           { label: 'Ver avaliação', destination: "/companies/#{n.company&.slug || 'company'}/review/#{n.review_id || n.notifiable_id}" }
         when /^new_message/, /^message_/
-          { label: 'Abrir conversa', destination: "/review-dashboard/messages?conversation_id=#{n.conversation_id || n.notifiable_id}" }
+          dest = current_user&.company_user? ? "/dashboard/inbox?conversation_id=#{n.conversation_id || n.notifiable_id}" : "/chat?conversation_id=#{n.conversation_id || n.notifiable_id}"
+          { label: 'Abrir conversa', destination: dest }
         when /^favorite_company_/
           { label: 'Ver empresa', destination: "/companies/#{n.company&.slug || n.notifiable_id}" }
         when /^security_/

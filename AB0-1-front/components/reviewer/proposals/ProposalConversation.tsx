@@ -38,6 +38,8 @@ import {
   getProposalDisplayPrice,
   getProposalLocation,
   getProposalRawTerm,
+  getProposalSolutionLabel,
+  hasPublishedVersion,
 } from '@/lib/marketplace-proposals';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -140,14 +142,7 @@ export function ProposalConversation({
     setLoadingConversation(true);
     setLoadError(null);
     try {
-      let conv: Conversation | null = null;
-      try {
-        conv = await conversationsApi.create(proposal.company.id, proposal.id);
-      } catch (createErr: unknown) {
-        // Fallback gracioso: se vinculação de proposta falhar (ex: 403 por proposta em validação), abre canal direto com empresa
-        console.warn('[ProposalConversation] Tentando fallback para conversa direta com empresa:', createErr);
-        conv = await conversationsApi.create(proposal.company.id);
-      }
+      const conv = await conversationsApi.create(proposal.company.id, proposal.id);
 
       if (!conv?.id) return;
       setConversation(conv);
@@ -360,11 +355,19 @@ export function ProposalConversation({
     }
   };
 
-  const quickReplies = [
-    'Podemos melhorar o preço?',
-    'Tem desconto à vista?',
-    'Quais as condições de financiamento?',
-  ];
+  const isPublished = hasPublishedVersion(proposal);
+
+  const quickReplies = isPublished
+    ? [
+        'Podemos melhorar o preço?',
+        'Tem desconto à vista?',
+        'Quais as condições de financiamento?',
+      ]
+    : [
+        'Quando a proposta deve ficar pronta?',
+        'Vocês precisam de alguma informação adicional?',
+        'Gostaria de agendar uma visita técnica.',
+      ];
 
   const sharedFiles = Array.from(
     new Map(
@@ -450,10 +453,14 @@ export function ProposalConversation({
                 Proposta #{proposal.reference}
               </h3>
               <p className="text-xs text-slate-500 truncate mt-0.5">
-                {proposal.version?.title || 'Título não informado'}
+                {isPublished
+                  ? (proposal.version?.title || 'Proposta comercial')
+                  : (getProposalSolutionLabel(proposal) || 'Solicitação em preparação')}
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                Recebida em {formatDate(proposal.published_at || proposal.created_at)}
+                {isPublished
+                  ? `Recebida em ${formatDate(proposal.published_at || proposal.created_at)}`
+                  : `Solicitação enviada em ${formatDate(proposal.created_at)}`}
               </p>
             </div>
           </div>
@@ -465,7 +472,7 @@ export function ProposalConversation({
               onClick={onViewProposal}
               className="h-8 rounded-xl border-slate-200 text-xs font-semibold text-blue-600 hover:bg-blue-50"
             >
-              <span>Ver proposta</span>
+              <span>{isPublished ? 'Ver proposta' : 'Ver solicitação'}</span>
               <span className="ml-1">↗</span>
             </Button>
             <Button
@@ -738,91 +745,141 @@ export function ProposalConversation({
 
         {/* Coluna 3: Aside Lateral Direita (320px -> 4 cols no grid 12) */}
         <aside className="lg:col-span-4 space-y-4">
-          {/* Card 1: Resumo da proposta */}
+          {/* Card 1: Resumo da proposta ou solicitação */}
           <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xs space-y-3.5">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                 <FileText className="h-4 w-4" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Resumo da proposta</h3>
+              <h3 className="text-base font-bold text-slate-900">
+                {isPublished ? 'Resumo da proposta' : 'Resumo da solicitação'}
+              </h3>
             </div>
 
-            {/* Foto e Título */}
-            <div className="space-y-2">
-              {proposal.company.banner_url ? (
-                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
-                  <Image
-                    src={proposal.company.banner_url}
-                    alt={`Imagem da proposta de ${proposal.company.name}`}
-                    fill
-                    unoptimized
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="flex aspect-[16/9] w-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500">
-                  Imagem não informada
-                </div>
-              )}
-
-              <div>
-                <h4 className="text-sm font-bold text-slate-900">
-                  {proposal.version?.title || 'Título não informado'}
-                </h4>
-                <p className="text-xs text-slate-500 mt-0.5">{getProposalLocation(proposal)}</p>
-                {proposal.request?.project_profile && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <span className="rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                      {proposal.request.project_profile}
-                    </span>
+            {!isPublished ? (
+              <div className="space-y-3.5">
+                <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                    <Clock className="h-4 w-4 text-blue-600 shrink-0" />
+                    <span>Sua proposta está em preparação</span>
                   </div>
-                )}
-              </div>
-            </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    A empresa recebeu sua solicitação e está elaborando as condições comerciais. Você já pode tirar dúvidas sobre o projeto pelo chat.
+                  </p>
+                </div>
 
-            {/* Linhas de KPIs técnicos */}
-            <div className="divide-y divide-slate-100 border-t border-slate-100 pt-2 text-xs">
-              <div className="flex items-center justify-between py-2">
-                <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5 text-blue-600" />
-                  <span>Potência do sistema</span>
-                </span>
-                <span className="font-bold text-slate-900">{power || 'Não informado'}</span>
-              </div>
+                <div className="divide-y divide-slate-100 border-t border-slate-100 pt-1 text-xs">
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-slate-500 font-medium">Local do projeto</span>
+                    <span className="font-semibold text-slate-900">{getProposalLocation(proposal)}</span>
+                  </div>
 
-              <div className="flex items-center justify-between py-2">
-                <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5 text-blue-600" />
-                  <span>Geração estimada</span>
-                </span>
-                <span className="font-bold text-slate-900">{generation || 'Não informado'}</span>
-              </div>
+                  {proposal.request?.project_profile && (
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-slate-500 font-medium">Tipo de projeto</span>
+                      <span className="font-semibold text-slate-900">
+                        {getProposalSolutionLabel(proposal) || proposal.request.project_profile}
+                      </span>
+                    </div>
+                  )}
 
-              <div className="flex items-center justify-between py-2">
-                <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-blue-600" />
-                  <span>Valor total</span>
-                </span>
-                <span className="font-bold text-slate-900">{price.isAvailable ? price.formatted : 'Não informado'}</span>
-              </div>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-slate-500 font-medium">Solicitação criada</span>
+                    <span className="font-semibold text-slate-900">{formatDate(proposal.created_at)}</span>
+                  </div>
+                </div>
 
-              <div className="flex items-center justify-between py-2">
-                <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-blue-600" />
-                  <span>Prazo de instalação</span>
-                </span>
-                <span className="font-bold text-slate-900">{deadline || 'Não informado'}</span>
+                <Button
+                  variant="outline"
+                  onClick={onViewProposal}
+                  className="w-full text-xs font-semibold text-blue-600 border-blue-200 hover:bg-blue-50 rounded-xl h-9"
+                >
+                  <span>Ver detalhes da solicitação</span>
+                  <span className="ml-1">→</span>
+                </Button>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-3.5">
+                {/* Foto e Título */}
+                <div className="space-y-2">
+                  {proposal.company.banner_url ? (
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
+                      <Image
+                        src={proposal.company.banner_url}
+                        alt={`Imagem da proposta de ${proposal.company.name}`}
+                        fill
+                        unoptimized
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : null}
 
-            <Button
-              variant="outline"
-              onClick={onViewProposal}
-              className="w-full text-xs font-semibold text-blue-600 border-blue-200 hover:bg-blue-50 rounded-xl h-9"
-            >
-              <span>Ver proposta completa</span>
-              <span className="ml-1">→</span>
-            </Button>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">
+                      {proposal.version?.title || 'Proposta comercial'}
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">{getProposalLocation(proposal)}</p>
+                    {proposal.request?.project_profile && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <span className="rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                          {getProposalSolutionLabel(proposal) || proposal.request.project_profile}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Linhas de KPIs técnicos */}
+                <div className="divide-y divide-slate-100 border-t border-slate-100 pt-2 text-xs">
+                  {power && (
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                        <Zap className="h-3.5 w-3.5 text-blue-600" />
+                        <span>Potência do sistema</span>
+                      </span>
+                      <span className="font-bold text-slate-900">{power}</span>
+                    </div>
+                  )}
+
+                  {generation && (
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                        <Zap className="h-3.5 w-3.5 text-blue-600" />
+                        <span>Geração estimada</span>
+                      </span>
+                      <span className="font-bold text-slate-900">{generation}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                      <span>Valor total</span>
+                    </span>
+                    <span className="font-bold text-slate-900">{price.isAvailable ? price.formatted : 'Sob consulta'}</span>
+                  </div>
+
+                  {deadline && (
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-blue-600" />
+                        <span>Prazo de instalação</span>
+                      </span>
+                      <span className="font-bold text-slate-900">{deadline}</span>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={onViewProposal}
+                  className="w-full text-xs font-semibold text-blue-600 border-blue-200 hover:bg-blue-50 rounded-xl h-9"
+                >
+                  <span>Ver proposta completa</span>
+                  <span className="ml-1">→</span>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Card 2: Arquivos compartilhados */}

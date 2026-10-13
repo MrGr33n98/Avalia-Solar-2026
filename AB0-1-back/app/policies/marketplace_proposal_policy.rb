@@ -10,6 +10,7 @@ class MarketplaceProposalPolicy < ApplicationPolicy
   alias decline? index?
   alias request_change? index?
   alias meeting? index?
+  alias conversation? index?
 
   def update?
     company_member?
@@ -33,7 +34,7 @@ class MarketplaceProposalPolicy < ApplicationPolicy
     return false unless user.respond_to?(:active?)
     
     user.active? && user.review_user? && user.confirmed? &&
-      (record.buyer_user_id == user.id || record.lead&.email.to_s.casecmp?(user.email.to_s))
+      (record.buyer_user_id == user.id || (record.lead&.email.present? && record.lead.email.to_s.strip.casecmp?(user.email.to_s.strip)))
   end
 
   def company_member?
