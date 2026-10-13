@@ -80,6 +80,9 @@ import {
   ProposalFiltersSheet,
   type SortOption,
 } from './proposals/ProposalFiltersSheet';
+import { useBuyerProposalsList } from '@/hooks/reviewer/useBuyerProposalsList';
+import { useBuyerProposalDetail } from '@/hooks/reviewer/useBuyerProposalDetail';
+import { useProposalComparison } from '@/hooks/reviewer/useProposalComparison';
 
 type Filter = ProposalFilter;
 type ViewLayout = 'cards' | 'table';
@@ -146,8 +149,35 @@ export function MarketplaceProposalsWorkspace() {
   const requestedScreen = params.get('view') as Screen;
   const screen = screens.includes(requestedScreen) ? requestedScreen : 'summary';
 
-  const [apiProposals, setApiProposals] = useState<MarketplaceProposal[]>([]);
-  const [compareIds, setCompareIds] = useState<number[]>([]);
+  const {
+    proposals,
+    loading,
+    refreshing,
+    error,
+    load,
+    updateProposal,
+  } = useBuyerProposalsList();
+
+  const {
+    detailLoading,
+    detailErrorState,
+    retryDetail,
+  } = useBuyerProposalDetail({
+    selectedId,
+    rawProposalParam,
+    onProposalLoaded: updateProposal,
+  });
+
+  const {
+    compareIds,
+    setCompareIds,
+    compareNotice,
+    setCompareNotice,
+    toggleCompare,
+    removeCompareId,
+    clearCompare,
+  } = useProposalComparison([], proposals);
+
   const [filter, setFilter] = useState<Filter>(
     params.get('tab') === 'awaiting'
       ? 'awaiting'
@@ -156,18 +186,11 @@ export function MarketplaceProposalsWorkspace() {
       : 'all'
   );
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
-  const [compareNotice, setCompareNotice] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState('all');
   const [companyFilter, setCompanyFilter] = useState('all');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('cards');
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailErrorState, setDetailErrorState] = useState<ClassifiedProposalError | null>(null);
-  const [detailAttempt, setDetailAttempt] = useState(0);
-  const [error, setError] = useState('');
   const [choosing, setChoosing] = useState<MarketplaceProposal | null>(null);
   const [declining, setDeclining] = useState(false);
   const [decisionError, setDecisionError] = useState('');
@@ -177,15 +200,13 @@ export function MarketplaceProposalsWorkspace() {
   const submitting = useRef(false);
   const detailHeading = useRef<HTMLHeadingElement>(null);
 
-  // Somente dados reais vindos da API. Nunca usar propostas de demonstração.
-  const proposals = apiProposals;
-
   const selected = proposals.find((proposal) => proposal.id === selectedId);
   const selectedRef = useRef<MarketplaceProposal | undefined>(selected);
 
   useEffect(() => {
     selectedRef.current = selected;
   }, [selected]);
+
   const showingDetail =
     Boolean(selectedId) || Boolean(rawProposalParam) || screen === 'compare' || screen === 'choose';
   const comparisonIds = (params.get('compare') || '')
@@ -193,77 +214,6 @@ export function MarketplaceProposalsWorkspace() {
     .map(Number)
     .filter((id) => Number.isSafeInteger(id) && id > 0)
     .slice(0, 3);
-
-  const updateProposal = useCallback((proposal: MarketplaceProposal) => {
-    setApiProposals((current) =>
-      current.some((item) => item.id === proposal.id)
-        ? current.map((item) => (item.id === proposal.id ? proposal : item))
-        : [...current, proposal]
-    );
-  }, []);
-
-  const load = useCallback(async () => {
-    setRefreshing(true);
-    setError('');
-    try {
-      const response = await marketplaceProposalsApi.list();
-      setApiProposals(response.proposals ?? []);
-    } catch {
-      setError('Não foi possível carregar suas propostas. Tente novamente.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    if (rawProposalParam && selectedId === null) {
-      setDetailErrorState({
-        state: 'not_found',
-        status: 404,
-        message: 'Identificador de proposta inválido.',
-        config: proposalStateMessages.not_found,
-        canRetry: false,
-      });
-      return;
-    }
-
-    if (!selectedId) {
-      setDetailErrorState(null);
-      return;
-    }
-
-    let current = true;
-    setDetailLoading(true);
-    setDetailErrorState(null);
-    (async () => {
-      try {
-        const response = await marketplaceProposalsApi.get(selectedId);
-        const proposal =
-          response.proposal.status === 'sent'
-            ? (await marketplaceProposalsApi.view(selectedId)).proposal
-            : response.proposal;
-        if (current) {
-          updateProposal(proposal);
-          setDetailErrorState(null);
-        }
-      } catch (err: unknown) {
-        if (current) {
-          const classified = classifyProposalError(err);
-          setDetailErrorState(classified);
-        }
-      } finally {
-        if (current) setDetailLoading(false);
-      }
-    })();
-    return () => {
-      current = false;
-    };
-  }, [selectedId, rawProposalParam, detailAttempt, updateProposal]);
 
   useEffect(() => {
     if (showingDetail) detailHeading.current?.focus({ preventScroll: true });
@@ -293,12 +243,6 @@ export function MarketplaceProposalsWorkspace() {
     navigate(proposal.id, targetScreen);
   }
 
-  useEffect(() => {
-    if (!compareNotice) return;
-    const timer = setTimeout(() => setCompareNotice(''), 3500);
-    return () => clearTimeout(timer);
-  }, [compareNotice]);
-
   function handleFilterChange(newFilter: Filter) {
     setFilter(newFilter);
     const query = new URLSearchParams(params.toString());
@@ -309,24 +253,6 @@ export function MarketplaceProposalsWorkspace() {
     }
     const search = query.toString();
     router.replace(pathname + (search ? '?' + search : ''), { scroll: false });
-  }
-
-  function toggleCompare(id: number) {
-    const target = proposals.find((p) => p.id === id);
-    if (!target || !isProposalReceived(target)) {
-      setCompareNotice('Disponível apenas quando a proposta for recebida.');
-      return;
-    }
-    setCompareIds((current) => {
-      if (current.includes(id)) {
-        return current.filter((item) => item !== id);
-      }
-      if (current.length >= 3) {
-        setCompareNotice('Você pode comparar até 3 propostas.');
-        return current;
-      }
-      return [...current, id];
-    });
   }
 
   async function decide(kind: 'accept' | 'decline') {
@@ -616,7 +542,7 @@ export function MarketplaceProposalsWorkspace() {
                 {detailErrorState.canRetry && (
                   <Button
                     size="sm"
-                    onClick={() => setDetailAttempt((v) => v + 1)}
+                    onClick={() => retryDetail()}
                     className="rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Tentar novamente
