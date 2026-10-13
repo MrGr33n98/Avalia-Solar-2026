@@ -112,7 +112,7 @@ export function FloatingConversationList({
             <ChatAvatar
               name={title}
               src={avatarUrl}
-              status="online"
+              status={null}
               size="md"
             />
 

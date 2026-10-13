@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
-export type CommunicationSurface = 'none' | 'mobivolt' | 'p2p' | 'comparison';
+export type CommunicationSurface = 'none' | 'mobivolt' | 'p2p' | 'comparison' | 'embedded_chat';
 let activeSurface: CommunicationSurface = 'none';
 const listeners = new Set<() => void>();
 
@@ -15,4 +15,18 @@ export function useCommunicationSurface(surface: Exclude<CommunicationSurface, '
   const active = useSyncExternalStore(CommunicationSurfaceManager.subscribe, () => CommunicationSurfaceManager.active, () => 'none' as CommunicationSurface);
   useEffect(() => () => CommunicationSurfaceManager.close(surface), [surface]);
   return { activeSurface: active, isActive: active === surface, isBlocked: active !== 'none' && active !== surface };
+}
+
+export function isEmbeddedConversationSurface(
+  pathname: string | null | undefined,
+  searchParams?: { get: (key: string) => string | null } | URLSearchParams | null
+): boolean {
+  if (!pathname) return false;
+  if (pathname === '/chat' || pathname.startsWith('/chat/')) return true;
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/company-dashboard')) return true;
+  if (pathname.startsWith('/review-dashboard/proposals')) {
+    const view = searchParams?.get('view');
+    if (view === 'conversation') return true;
+  }
+  return false;
 }

@@ -100,7 +100,7 @@ export default function GlobalChatWidget() {
     const uniqueList: Conversation[] = [];
 
     conversations.forEach((c) => {
-      const key = isUser ? `company-${c.company_id}` : `user-${c.user_id}-${c.company_id}`;
+      const key = `conv-${c.id}`;
       if (!seenKeys.has(key)) {
         seenKeys.add(key);
         uniqueList.push(c);
@@ -182,8 +182,10 @@ export default function GlobalChatWidget() {
           setError(null);
         }
       })
-      .catch((err: any) => {
-        if (isMounted) setError(err?.message || 'Erro ao carregar conversas');
+      .catch((err: unknown) => {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Erro ao carregar conversas');
+        }
       })
       .finally(() => {
         if (isMounted) setLoadingConversations(false);

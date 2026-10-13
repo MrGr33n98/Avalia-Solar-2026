@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeft, Minus, MoreVertical, X } from 'lucide-react';
+import { ArrowLeft, Minus, X } from 'lucide-react';
 import { ChatAvatar } from './ChatAvatar';
 import { cn } from '@/lib/utils';
 
@@ -57,7 +57,7 @@ export function FloatingChatHeader({
           <ChatAvatar
             name={activeConversation.title}
             src={activeConversation.avatar_url}
-            status="online"
+            status={null}
             size="sm"
           />
 
@@ -65,13 +65,15 @@ export function FloatingChatHeader({
             <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate line-clamp-1">
               {activeConversation.title}
             </span>
-            <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 truncate">
-              {activeConversation.isTyping ? (
-                <span className="animate-pulse font-semibold text-blue-600 dark:text-blue-400">Digitando...</span>
-              ) : (
-                activeConversation.statusText || 'Online'
-              )}
-            </span>
+            {activeConversation.isTyping ? (
+              <span className="text-[11px] font-medium animate-pulse font-semibold text-blue-600 dark:text-blue-400 truncate">
+                Digitando...
+              </span>
+            ) : activeConversation.statusText ? (
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                {activeConversation.statusText}
+              </span>
+            ) : null}
           </div>
         </div>
       ) : (
@@ -80,7 +82,7 @@ export function FloatingChatHeader({
           <ChatAvatar
             name={currentUser?.name || 'Usuário'}
             src={currentUser?.avatar_url}
-            status="online"
+            status={null}
             size="sm"
           />
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 truncate">

@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
+import { isEmbeddedConversationSurface } from '@/lib/communication-surface-manager';
 
 /**
  * Keeps non-essential client features out of the initial route bundle and the
@@ -36,7 +37,7 @@ export default function DeferredClientRuntime() {
   const [hasComparison, setHasComparison] = useState(false);
   const { isAuthenticated } = useAuth();
   const pathname = usePathname();
-  const isDashboard = pathname?.startsWith('/dashboard');
+  const isEmbeddedSurface = isEmbeddedConversationSurface(pathname);
 
   useEffect(() => {
     const readComparison = () => {
@@ -93,7 +94,7 @@ export default function DeferredClientRuntime() {
           {process.env.NEXT_PUBLIC_ENABLE_MOBILE_OFFLINE === 'true' ? (
             <PwaOfflineController />
           ) : null}
-          {isAuthenticated && !isDashboard ? <GlobalChatWidget /> : null}
+          {isAuthenticated && !isEmbeddedSurface ? <GlobalChatWidget /> : null}
         </>
       ) : null}
       {hasComparison ? <ComparisonFloatingBar /> : null}

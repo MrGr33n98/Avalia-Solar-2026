@@ -72,6 +72,7 @@ AB0-1-front/public/3d-icones/
 !AB0-1-front/__tests__/components/MarketplaceProposalsWorkspace.test.tsx
 !AB0-1-front/__tests__/components/ProposalCompactCard.test.tsx
 !AB0-1-front/__tests__/components/ProposalStatusSummary.test.tsx
+!AB0-1-front/__tests__/components/ProposalConversationSurface.test.tsx
 !AB0-1-front/__tests__/auth/AuthCallback.test.tsx
 
 # Ignorar documentações de desenvolvimento
