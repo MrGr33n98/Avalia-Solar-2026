@@ -601,16 +601,39 @@ export default function LiveInbox() {
     const file = event.target.files?.[0];
     if (!file || !companyId || !selectedItem) return;
 
+    const MAX_SIZE = 15 * 1024 * 1024; // 15MB
+    if (file.size > MAX_SIZE) {
+      alert('O arquivo excede o limite máximo permitido de 15MB.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setUploading(true);
     try {
-      const { id: attachmentId, filename } = await uploadAttachmentFile(companyId, file);
-
       if (selectedItem.channel === 'p2p') {
+        // Read file as base64 DataURL for direct, rock-solid P2P ActiveStorage attachment
+        const base64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+          reader.readAsDataURL(file);
+        });
+
         await conversationsApi.sendMessage(
           selectedItem.raw_id,
-          `Arquivo compartilhado: ${filename}`
+          `Segue proposta/anexo: ${file.name}`,
+          {
+            attachments: [
+              {
+                data: base64Data,
+                filename: file.name,
+                content_type: file.type || 'application/pdf',
+              },
+            ],
+          }
         );
       } else {
+        const { id: attachmentId, filename } = await uploadAttachmentFile(companyId, file);
         const clientMsgId =
           globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substring(2)}`;
         await inboxApi.send(
@@ -622,10 +645,13 @@ export default function LiveInbox() {
         );
       }
 
-      void loadThreadMessages();
+      await loadThreadMessages();
     } catch (err: any) {
       console.error('[UnifiedInbox] Falha no upload:', err);
-      alert(err?.message || 'Falha ao enviar arquivo. Verifique o tipo e tamanho (máx 15MB).');
+      const friendlyMsg = err?.message?.includes('500')
+        ? 'Erro ao processar anexo no servidor. Verifique se o arquivo PDF/imagem está legível.'
+        : err?.message || 'Falha ao enviar arquivo. Verifique o tipo e tamanho (máx 15MB).';
+      alert(friendlyMsg);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -715,7 +741,7 @@ export default function LiveInbox() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col md:flex-row antialiased selection:bg-blue-100 selection:text-blue-900">
+    <div className="h-screen h-[100dvh] max-h-screen overflow-hidden bg-[#F8FAFC] text-slate-900 flex flex-col md:flex-row antialiased selection:bg-blue-100 selection:text-blue-900">
       {/* Hidden file input */}
       <input
         type="file"
@@ -739,8 +765,8 @@ export default function LiveInbox() {
         visibleTabIds={visibleTabIds}
       />
 
-      {/* Main Canvas Area */}
-      <div className="flex-1 pl-[var(--enterprise-sidebar-width,64px)] transition-[padding] duration-200 flex flex-col min-h-screen">
+      {/* Main Canvas Area - Pinned to 100% viewport */}
+      <div className="flex-1 pl-[var(--enterprise-sidebar-width,64px)] transition-[padding] duration-200 flex flex-col h-full max-h-screen overflow-hidden">
         {/* Canonical Dashboard Navbar (Maintained as requested) */}
         <DashboardToolbar
           company={activeCompany ? { name: activeCompany.name, plan_tier: activeCompany.plan_tier } : null}
@@ -753,10 +779,10 @@ export default function LiveInbox() {
           themeToggle={<ThemeToggle />}
         />
 
-        {/* Page Title & Subtitle Banner */}
-        <div className="px-4 md:px-6 pt-1 pb-3 flex items-center justify-between gap-4">
+        {/* Page Title & Subtitle Banner - Compact */}
+        <div className="px-4 md:px-6 pt-1 pb-1.5 flex items-center justify-between gap-4 shrink-0">
           <div>
-            <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-tight">
+            <h1 className="text-lg md:text-xl font-black text-slate-900 tracking-tight leading-tight">
               Mensagens
             </h1>
             <p className="text-xs text-slate-500 font-medium">
@@ -769,7 +795,7 @@ export default function LiveInbox() {
             <button
               type="button"
               onClick={toggleSound}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs"
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs"
               title={soundEnabled ? 'Silenciar alertas de som' : 'Ativar alertas de som'}
             >
               {soundEnabled ? <Volume2 className="h-4 w-4 text-blue-600" /> : <VolumeX className="h-4 w-4 text-slate-400" />}
@@ -779,7 +805,7 @@ export default function LiveInbox() {
             <button
               type="button"
               onClick={() => void loadItems(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs"
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs"
               title="Atualizar lista de conversas"
             >
               <RefreshCw className="h-4 w-4" />
@@ -787,10 +813,10 @@ export default function LiveInbox() {
           </div>
         </div>
 
-        {/* Action & Filter Bar (Sub-Header) */}
-        <div className="px-4 md:px-6 pb-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        {/* Action & Filter Bar (Sub-Header) - Compact */}
+        <div className="px-4 md:px-6 pb-2 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 shrink-0">
           {/* Real Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
             {filterTabs.map((tab) => {
               const isActive = filter === tab.value;
               return (
@@ -799,7 +825,7 @@ export default function LiveInbox() {
                   type="button"
                   onClick={() => setFilter(tab.value)}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0',
+                    'flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all shrink-0',
                     isActive
                       ? 'border-2 border-blue-600 bg-blue-50/70 text-blue-600 shadow-2xs'
                       : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
@@ -821,14 +847,14 @@ export default function LiveInbox() {
 
           {/* Search Box & Actions */}
           <div className="flex items-center gap-2">
-            <div className="relative flex-1 lg:w-72">
-              <Search className="h-4 w-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="relative flex-1 lg:w-64">
+              <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar conversas, empresas ou projetos..."
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs transition-all outline-none"
+                className="h-9 w-full rounded-xl border border-slate-200 bg-white pl-8 pr-7 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs transition-all outline-none"
               />
               {query && (
                 <button
@@ -845,7 +871,7 @@ export default function LiveInbox() {
             <button
               type="button"
               onClick={() => setSortOrder((prev) => (prev === 'recent' ? 'unread' : 'recent'))}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs"
               title="Filtros avançados e ordenação"
             >
               <SlidersHorizontal className="h-4 w-4" />
@@ -855,7 +881,7 @@ export default function LiveInbox() {
             <button
               type="button"
               onClick={() => setNewConversationOpen(true)}
-              className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] px-4 text-xs font-bold text-white shadow-sm transition-all shrink-0"
+              className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] px-3.5 text-xs font-bold text-white shadow-sm transition-all shrink-0"
             >
               <Plus className="h-4 w-4" />
               <span>Nova conversa</span>
@@ -864,8 +890,8 @@ export default function LiveInbox() {
         </div>
 
         {/* Master 3-Column Card Container */}
-        <div className="px-4 md:px-6 pb-6 flex-1 flex flex-col">
-          <div className="flex-1 rounded-2xl border border-slate-200/90 bg-white shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_1fr_330px] xl:grid-cols-[340px_1fr_350px] min-h-[640px]">
+        <div className="px-4 md:px-6 pb-2.5 flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 min-h-0 rounded-2xl border border-slate-200/90 bg-white shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-[290px_1fr_305px] xl:grid-cols-[310px_1fr_325px] h-full">
             {/* ========================================================= */}
             {/* COLUMN 1: Conversation List */}
             {/* ========================================================= */}
@@ -1110,7 +1136,7 @@ export default function LiveInbox() {
 
                   {/* Proposal Banner inside thread (if proposal reference exists) */}
                   {selectedItem.marketplace_proposal_reference && (
-                    <div className="border-b border-amber-200 bg-amber-50/90 px-4 py-2 text-xs text-amber-900 flex items-center justify-between shrink-0">
+                    <div className="border-b border-amber-200 bg-amber-50/90 px-4 py-1.5 text-xs text-amber-900 flex items-center justify-between shrink-0">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
                         <span>
@@ -1120,7 +1146,7 @@ export default function LiveInbox() {
                       </div>
                       {selectedItem.marketplace_proposal_id && (
                         <a
-                          href={`/dashboard/propostas?id=${selectedItem.marketplace_proposal_id}`}
+                          href={`/dashboard/proposals?id=${selectedItem.marketplace_proposal_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 font-bold text-amber-800 hover:underline text-[11px]"
@@ -1133,7 +1159,7 @@ export default function LiveInbox() {
                   )}
 
                   {/* Messages Timeline */}
-                  <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-slate-50/20">
+                  <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3 bg-slate-50/20">
                     {loadingMessages ? (
                       <div className="flex flex-col items-center justify-center p-12 text-slate-400">
                         <Loader2 className="h-6 w-6 animate-spin text-blue-600 mb-2" />
@@ -1400,13 +1426,13 @@ export default function LiveInbox() {
             {/* COLUMN 3: Right Contextual Panel */}
             {/* ========================================================= */}
             <aside
-              className="hidden min-h-0 border-l border-slate-200 bg-white lg:flex lg:flex-col overflow-y-auto"
+              className="hidden min-h-0 h-full border-l border-slate-200 bg-white lg:flex lg:flex-col overflow-hidden"
               aria-label="Detalhes da oportunidade"
             >
               {selectedItem ? (
-                <div className="p-5 space-y-5">
-                  {/* Header */}
-                  <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                <>
+                  {/* Pinned Header */}
+                  <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between shrink-0">
                     <h3 className="text-sm font-bold text-slate-900">Detalhes da oportunidade</h3>
                     <button
                       type="button"
@@ -1419,183 +1445,187 @@ export default function LiveInbox() {
 
                   {!detailsCollapsed && (
                     <>
-                      {/* Status */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-slate-600">Status</span>
-                        <span className="rounded-xl bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 shadow-2xs">
-                          {selectedItem.status === 'resolved' ? 'Resolvido' : 'Aguardando proposta'}
-                        </span>
-                      </div>
-
-                      {/* Informações do cliente */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-                            <User className="h-3.5 w-3.5" />
-                          </div>
-                          <h4 className="text-xs font-bold text-slate-900">Informações do cliente</h4>
+                      {/* Scrollable details body */}
+                      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+                        {/* Status */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-slate-600">Status</span>
+                          <span className="rounded-xl bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 shadow-2xs">
+                            {selectedItem.status === 'resolved' ? 'Resolvido' : 'Aguardando proposta'}
+                          </span>
                         </div>
 
-                        <div className="space-y-2 text-xs pl-8">
-                          <div className="flex items-center gap-2.5 text-slate-700 font-semibold">
-                            <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                            <span className="truncate">{selectedItem.participant?.name || 'Cliente'}</span>
-                          </div>
-                          {selectedItem.participant?.email && (
-                            <div className="flex items-center gap-2.5 text-slate-600">
-                              <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                              <span className="truncate">{selectedItem.participant.email}</span>
+                        {/* Informações do cliente */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+                              <User className="h-3.5 w-3.5" />
                             </div>
-                          )}
-                          {(selectedItem.participant?.phone || selectedItem.lead?.phone) && (
-                            <div className="flex items-center gap-2.5 text-slate-600">
-                              <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                              <span>{selectedItem.participant?.phone || selectedItem.lead?.phone}</span>
+                            <h4 className="text-xs font-bold text-slate-900">Informações do cliente</h4>
+                          </div>
+
+                          <div className="space-y-2 text-xs pl-8">
+                            <div className="flex items-center gap-2.5 text-slate-700 font-semibold">
+                              <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate">{selectedItem.participant?.name || 'Cliente'}</span>
                             </div>
-                          )}
-                          <div className="flex items-center gap-2.5 text-slate-600">
-                            <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                            <span className="truncate">
-                              {[selectedItem.lead?.city, selectedItem.lead?.state].filter(Boolean).join(' - ') || 'Brasil'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Projeto / Lead */}
-                      <div className="space-y-3 pt-2 border-t border-slate-100">
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-                            <Building2 className="h-3.5 w-3.5" />
-                          </div>
-                          <h4 className="text-xs font-bold text-slate-900">Projeto</h4>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-y-2.5 text-xs pl-8">
-                          <div>
-                            <span className="text-[10px] text-slate-400 block font-medium">Tipo</span>
-                            <span className="font-semibold text-slate-800">
-                              {selectedItem.lead?.solution_type || selectedItem.lead?.project_type || 'Residencial'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-400 block font-medium">Consumo estimado</span>
-                            <span className="font-semibold text-slate-800">
-                              {selectedItem.lead?.monthly_bill ? `R$ ${Number(selectedItem.lead.monthly_bill).toLocaleString('pt-BR')}` : 'A calcular'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-400 block font-medium">Interesse</span>
-                            <span className="font-semibold text-slate-800">
-                              {selectedItem.marketplace_proposal_reference ? `Proposta #${selectedItem.marketplace_proposal_reference}` : 'Sistema completo'}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-400 block font-medium">Prazo</span>
-                            <span className="font-semibold text-slate-800">
-                              {selectedItem.lead?.temperature === 'hot' ? 'Imediato' : 'Até 3 meses'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Propostas Vinculadas */}
-                      {selectedItem.linked_proposals && selectedItem.linked_proposals.length > 0 && (
-                        <div className="space-y-2 pt-2 border-t border-slate-100">
-                          <span className="text-xs font-bold text-slate-900">Propostas Vinculadas</span>
-                          {selectedItem.linked_proposals.map((prop) => (
-                            <div key={prop.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-1 text-xs">
-                              <div className="flex justify-between font-semibold">
-                                <span>Proposta #{prop.reference || prop.id}</span>
-                                <span className="uppercase text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-bold">
-                                  {prop.status || 'Ativa'}
-                                </span>
+                            {selectedItem.participant?.email && (
+                              <div className="flex items-center gap-2.5 text-slate-600">
+                                <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                <span className="truncate">{selectedItem.participant.email}</span>
                               </div>
-                              {prop.value && (
-                                <p className="text-slate-600">
-                                  Valor: <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prop.value)}</strong>
-                                </p>
-                              )}
-                              <a
-                                href={`/dashboard/propostas?id=${prop.id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 pt-1"
-                              >
-                                <span>Abrir no dashboard</span>
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
+                            )}
+                            {(selectedItem.participant?.phone || selectedItem.lead?.phone) && (
+                              <div className="flex items-center gap-2.5 text-slate-600">
+                                <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                <span>{selectedItem.participant?.phone || selectedItem.lead?.phone}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2.5 text-slate-600">
+                              <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate">
+                                {[selectedItem.lead?.city, selectedItem.lead?.state].filter(Boolean).join(' - ') || 'Brasil'}
+                              </span>
                             </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* AI Session Takeover Controls */}
-                      {selectedItem.channel === 'ai' && (
-                        <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3 space-y-2">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
-                            <Bot className="h-4 w-4 text-blue-700" />
-                            <span>Controle do Assistente IA</span>
-                          </div>
-                          <div className="flex gap-2">
-                            {selectedItem.capabilities?.can_takeover && (
-                              <button
-                                type="button"
-                                onClick={handleTakeover}
-                                className="flex-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition-colors"
-                              >
-                                Assumir
-                              </button>
-                            )}
-                            {selectedItem.capabilities?.can_return_to_bot && (
-                              <button
-                                type="button"
-                                onClick={handleReturnToBot}
-                                className="flex-1 rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-bold text-blue-800 hover:bg-blue-50 transition-colors"
-                              >
-                                Devolver ao Bot
-                              </button>
-                            )}
                           </div>
                         </div>
-                      )}
 
-                      {/* P2P Quick Actions */}
-                      {selectedItem.channel === 'p2p' && (
-                        <div className="pt-2 border-t border-slate-100">
-                          {selectedItem.status === 'resolved' ? (
-                            <button
-                              type="button"
-                              onClick={handleReopenP2P}
-                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                            >
-                              Reabrir conversa
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={handleResolveP2P}
-                              className="w-full rounded-xl bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800 transition-colors flex items-center justify-center gap-1.5"
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              <span>Concluir negociação</span>
-                            </button>
-                          )}
+                        {/* Projeto / Lead */}
+                        <div className="space-y-3 pt-2 border-t border-slate-100">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+                              <Building2 className="h-3.5 w-3.5" />
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-900">Projeto</h4>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-y-2.5 text-xs pl-8">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Tipo</span>
+                              <span className="font-semibold text-slate-800">
+                                {selectedItem.lead?.solution_type || selectedItem.lead?.project_type || 'Residencial'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Consumo estimado</span>
+                              <span className="font-semibold text-slate-800">
+                                {selectedItem.lead?.monthly_bill ? `R$ ${Number(selectedItem.lead.monthly_bill).toLocaleString('pt-BR')}` : 'A calcular'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Interesse</span>
+                              <span className="font-semibold text-slate-800">
+                                {selectedItem.marketplace_proposal_reference ? `Proposta #${selectedItem.marketplace_proposal_reference}` : 'Sistema completo'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium">Prazo</span>
+                              <span className="font-semibold text-slate-800">
+                                {selectedItem.lead?.temperature === 'hot' ? 'Imediato' : 'Até 3 meses'}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      )}
 
-                      {/* Bottom CTA Button */}
-                      <div className="pt-2">
+                        {/* Propostas Vinculadas */}
+                        {selectedItem.linked_proposals && selectedItem.linked_proposals.length > 0 && (
+                          <div className="space-y-2 pt-2 border-t border-slate-100">
+                            <span className="text-xs font-bold text-slate-900">Propostas Vinculadas</span>
+                            {selectedItem.linked_proposals.map((prop) => (
+                              <div key={prop.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-1 text-xs">
+                                <div className="flex justify-between font-semibold">
+                                  <span>Proposta #{prop.reference || prop.id}</span>
+                                  <span className="uppercase text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-bold">
+                                    {prop.status || 'Ativa'}
+                                  </span>
+                                </div>
+                                {prop.value && (
+                                  <p className="text-slate-600">
+                                    Valor: <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prop.value)}</strong>
+                                  </p>
+                                )}
+                                <a
+                                  href={`/dashboard/proposals?id=${prop.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 pt-1"
+                                >
+                                  <span>Abrir no dashboard</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* AI Session Takeover Controls */}
+                        {selectedItem.channel === 'ai' && (
+                          <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3 space-y-2">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                              <Bot className="h-4 w-4 text-blue-700" />
+                              <span>Controle do Assistente IA</span>
+                            </div>
+                            <div className="flex gap-2">
+                              {selectedItem.capabilities?.can_takeover && (
+                                <button
+                                  type="button"
+                                  onClick={handleTakeover}
+                                  className="flex-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition-colors"
+                                >
+                                  Assumir
+                                </button>
+                              )}
+                              {selectedItem.capabilities?.can_return_to_bot && (
+                                <button
+                                  type="button"
+                                  onClick={handleReturnToBot}
+                                  className="flex-1 rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-bold text-blue-800 hover:bg-blue-50 transition-colors"
+                                >
+                                  Devolver ao Bot
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Pinned Bottom Actions */}
+                      <div className="shrink-0 p-3 bg-white border-t border-slate-100 space-y-2">
+                        {/* P2P Quick Actions */}
+                        {selectedItem.channel === 'p2p' && (
+                          <div>
+                            {selectedItem.status === 'resolved' ? (
+                              <button
+                                type="button"
+                                onClick={handleReopenP2P}
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                Reabrir conversa
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={handleResolveP2P}
+                                className="w-full rounded-xl bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800 transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                <span>Concluir negociação</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Bottom CTA Button */}
                         <button
                           type="button"
                           onClick={() => {
                             if (selectedItem?.marketplace_proposal_id) {
-                              window.open(`/dashboard/propostas?id=${selectedItem.marketplace_proposal_id}`, '_blank');
+                              window.open(`/dashboard/proposals?id=${selectedItem.marketplace_proposal_id}`, '_blank');
                             } else {
-                              router.push('/dashboard/propostas');
+                              router.push('/dashboard/proposals');
                             }
                           }}
-                          className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 py-3 text-xs font-bold text-white shadow-sm transition-all"
+                          className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 py-2.5 text-xs font-bold text-white shadow-sm transition-all"
                         >
                           <Plus className="h-4 w-4" />
                           <span>Criar proposta</span>
@@ -1603,7 +1633,7 @@ export default function LiveInbox() {
                       </div>
                     </>
                   )}
-                </div>
+                </>
               ) : (
                 <div className="h-full bg-slate-50/50 p-6 flex flex-col justify-center text-center text-slate-400">
                   <Building2 className="mx-auto mb-3 h-10 w-10 text-slate-300" />
@@ -1731,7 +1761,7 @@ export default function LiveInbox() {
                     type="button"
                     onClick={() => {
                       setBuyerProfileOpen(false);
-                      router.push('/dashboard/propostas');
+                      router.push('/dashboard/proposals');
                     }}
                     className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 text-xs transition-colors"
                   >
@@ -1780,7 +1810,7 @@ export default function LiveInbox() {
                 type="button"
                 onClick={() => {
                   setDetailsOpen(false);
-                  router.push('/dashboard/propostas');
+                  router.push('/dashboard/proposals');
                 }}
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-xs font-bold text-white shadow-sm"
               >

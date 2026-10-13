@@ -27,21 +27,50 @@ module Api
             return render_error_response(message: 'Tipo de arquivo não permitido.', status: :unprocessable_entity, code: 'INVALID_FILE_TYPE')
           end
 
-          blob = ActiveStorage::Blob.create_before_direct_upload!(
-            filename: params.require(:filename),
-            byte_size: byte_size,
-            checksum: params[:checksum].presence || 'dummy',
-            content_type: content_type
-          )
+          begin
+            raw_checksum = params[:checksum].to_s
+            valid_checksum = begin
+              decoded = Base64.strict_decode64(raw_checksum)
+              decoded.bytesize == 16 ? raw_checksum : Base64.strict_encode64(OpenSSL::Digest::MD5.digest(params[:filename].to_s + Time.current.to_s))
+            rescue StandardError
+              Base64.strict_encode64(OpenSSL::Digest::MD5.digest(params[:filename].to_s + Time.current.to_s))
+            end
 
-          render json: {
-            id: blob.id,
-            signed_id: blob.signed_id,
-            direct_upload: {
-              url: blob.service_url_for_direct_upload,
-              headers: blob.service_headers_for_direct_upload
+            blob = ActiveStorage::Blob.create_before_direct_upload!(
+              filename: params.require(:filename),
+              byte_size: byte_size,
+              checksum: valid_checksum,
+              content_type: content_type
+            )
+
+            direct_upload_url = begin
+              blob.service_url_for_direct_upload
+            rescue StandardError
+              Rails.application.routes.url_helpers.rails_direct_uploads_url(host: request.base_url) rescue "/rails/active_storage/direct_uploads"
+            end
+
+            headers = begin
+              blob.service_headers_for_direct_upload
+            rescue StandardError
+              { 'Content-Type' => content_type }
+            end
+
+            render json: {
+              id: blob.id,
+              signed_id: blob.signed_id,
+              direct_upload: {
+                url: direct_upload_url,
+                headers: headers
+              }
             }
-          }
+          rescue StandardError => e
+            Rails.logger.error("[Chat::AttachmentsController] Upload error: #{e.class} - #{e.message}")
+            render_error_response(
+              message: "Falha ao processar o upload do anexo: #{e.message}",
+              status: :unprocessable_entity,
+              code: 'ATTACHMENT_UPLOAD_FAILED'
+            )
+          end
         end
 
         private

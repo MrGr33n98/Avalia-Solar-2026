@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Clock3,
   FilePlus2,
@@ -72,6 +73,9 @@ export function CompanyMarketplaceProposalsWorkspace({
     dateTo: '',
   });
 
+  const searchParams = useSearchParams();
+  const urlProposalId = searchParams?.get('id');
+
   const load = useCallback(async () => {
     if (!effectiveCompanyId) return;
     setLoading(true);
@@ -85,8 +89,17 @@ export function CompanyMarketplaceProposalsWorkspace({
       setProposals(fetchedProposals);
       setDistributions(distributionResponse.distributions || []);
 
-      // Desktop helper: only select if viewport is large, but do NOT force wizard open
-      if (typeof window !== 'undefined' && window.innerWidth >= 1024 && fetchedProposals.length > 0) {
+      // Desktop helper: select proposal requested via URL or first proposal if available
+      if (urlProposalId) {
+        const found = fetchedProposals.find(
+          (p) => String(p.id) === urlProposalId || p.reference === urlProposalId
+        );
+        if (found) {
+          setSelectedProposal(found);
+        } else if (typeof window !== 'undefined' && window.innerWidth >= 1024 && fetchedProposals.length > 0) {
+          setSelectedProposal(fetchedProposals[0]);
+        }
+      } else if (typeof window !== 'undefined' && window.innerWidth >= 1024 && fetchedProposals.length > 0) {
         setSelectedProposal(fetchedProposals[0]);
       }
     } catch {
@@ -94,7 +107,7 @@ export function CompanyMarketplaceProposalsWorkspace({
     } finally {
       setLoading(false);
     }
-  }, [effectiveCompanyId]);
+  }, [effectiveCompanyId, urlProposalId]);
 
   useEffect(() => {
     void load();
