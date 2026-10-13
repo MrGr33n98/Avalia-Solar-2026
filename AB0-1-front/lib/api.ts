@@ -143,6 +143,15 @@ export interface Conversation {
   report_count?: number;
   marketplace_proposal_id?: number | null;
   marketplace_proposal_reference?: string | null;
+  linked_proposals?: ConversationProposalLinkDto[];
+  conversation_scope?: 'buyer_company';
+}
+
+export interface ConversationProposalLinkDto {
+  id: number;
+  reference: string;
+  status: string;
+  has_published_version: boolean;
 }
 
 export interface DirectMessageAttachment {

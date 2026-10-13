@@ -12,6 +12,8 @@ class MarketplaceProposal < ApplicationRecord
   has_many :meetings, class_name: 'MarketplaceProposalMeeting', foreign_key: :proposal_id, dependent: :destroy
   has_one :project, class_name: 'MarketplaceProject', foreign_key: :proposal_id, dependent: :destroy
   has_many :conversations, dependent: :nullify
+  has_many :conversation_proposal_links, dependent: :destroy
+  has_many :linked_conversations, through: :conversation_proposal_links, source: :conversation
 
   validates :reference, presence: true, uniqueness: true
   validates :status, inclusion: { in: STATUSES }

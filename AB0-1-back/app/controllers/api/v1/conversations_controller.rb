@@ -81,14 +81,18 @@ module Api
 
         if @conversation.new_record?
           @conversation.save!
+          @conversation.link_proposal!(proposal, linked_by: current_user) if proposal
           @conversation.create_event!('conversation.started', actor: current_user)
           P2pChat::Broadcaster.conversation_updated(@conversation)
-        elsif @conversation.changed?
-          @conversation.save!
-          P2pChat::Broadcaster.conversation_updated(@conversation)
+        else
+          @conversation.link_proposal!(proposal, linked_by: current_user) if proposal
+          if @conversation.changed?
+            @conversation.save!
+            P2pChat::Broadcaster.conversation_updated(@conversation)
+          end
         end
 
-        render json: conversation_json(@conversation)
+        render json: conversation_json(@conversation.reload)
       end
 
       def read

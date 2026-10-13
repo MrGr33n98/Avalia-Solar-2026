@@ -510,6 +510,35 @@ export function ProposalConversation({
             <Plus className="h-3.5 w-3.5" />
             <span>Nova mensagem</span>
           </Button>
+
+          {conversation?.linked_proposals && conversation.linked_proposals.length > 1 && (
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <h4 className="px-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                Propostas vinculadas ({conversation.linked_proposals.length})
+              </h4>
+              <div className="space-y-1.5">
+                {conversation.linked_proposals.map((lp) => {
+                  const isCurrent = lp.id === proposal.id;
+                  return (
+                    <div
+                      key={lp.id}
+                      className={cn(
+                        'flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition-colors',
+                        isCurrent
+                          ? 'bg-blue-100/70 text-blue-900 font-semibold'
+                          : 'bg-slate-50 text-slate-600'
+                      )}
+                    >
+                      <span className="truncate">#{lp.reference}</span>
+                      <span className="text-[10px] text-slate-400">
+                        {lp.status === 'draft' ? 'Em preparação' : 'Recebida'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* Coluna 2: Chat Central (6 cols no grid 12) */}

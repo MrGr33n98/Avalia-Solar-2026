@@ -5,6 +5,8 @@ class Conversation < ApplicationRecord
   belongs_to :user
   belongs_to :company
   belongs_to :marketplace_proposal, optional: true
+  has_many :conversation_proposal_links, dependent: :destroy
+  has_many :linked_marketplace_proposals, through: :conversation_proposal_links, source: :marketplace_proposal
   has_many :direct_messages, dependent: :destroy
   has_many :conversation_events, dependent: :destroy
   has_many :conversation_reports, dependent: :destroy
@@ -139,6 +141,19 @@ class Conversation < ApplicationRecord
       metadata: metadata || {},
       created_at: Time.current
     )
+  end
+
+  def link_proposal!(proposal, linked_by: nil)
+    return unless proposal
+    return if proposal.company_id != company_id
+
+    transaction do
+      conversation_proposal_links.find_or_create_by!(marketplace_proposal_id: proposal.id) do |link|
+        link.linked_by_user = linked_by
+      end
+      self.marketplace_proposal ||= proposal
+      save! if changed?
+    end
   end
 
   def company_recipient_user_ids

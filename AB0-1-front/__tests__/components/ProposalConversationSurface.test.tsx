@@ -203,4 +203,31 @@ describe('ProposalConversation component', () => {
       expect(screen.queryByText('Geração estimada')).not.toBeInTheDocument();
     });
   });
+
+  it('exibe lista de propostas vinculadas quando a conversa abrange múltiplos contextos', async () => {
+    (conversationsApi.create as jest.Mock).mockResolvedValue({
+      id: 42,
+      company_id: 10,
+      marketplace_proposal_id: 1,
+      linked_proposals: [
+        { id: 1, reference: 'AS-2026-D00000001', status: 'sent', has_published_version: true },
+        { id: 2, reference: 'AS-2026-D00000002', status: 'draft', has_published_version: false },
+      ],
+    });
+    (conversationsApi.getMessages as jest.Mock).mockResolvedValue([]);
+
+    render(
+      <ProposalConversation
+        proposal={mockProposal}
+        onBack={onBack}
+        onViewProposal={onViewProposal}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Propostas vinculadas (2)')).toBeInTheDocument();
+      expect(screen.getByText('#AS-2026-D00000001')).toBeInTheDocument();
+      expect(screen.getByText('#AS-2026-D00000002')).toBeInTheDocument();
+    });
+  });
 });

@@ -14,12 +14,31 @@ module P2pChat
         user_avatar = conversation.user&.avatar_url
         comp_avatar = conversation.company&.logo_url
 
+        linked_proposals = if conversation.respond_to?(:conversation_proposal_links)
+                             conversation.conversation_proposal_links.includes(:marketplace_proposal).map do |link|
+                               p = link.marketplace_proposal
+                               next unless p
+                               next unless viewer.nil? || MarketplaceProposalPolicy.new(viewer, p).conversation?
+
+                               {
+                                 id: p.id,
+                                 reference: p.reference,
+                                 status: p.status,
+                                 has_published_version: p.current_version.present?
+                               }
+                             end.compact
+                           else
+                             []
+                           end
+
         {
           id: conversation.id,
           user_id: conversation.user_id,
           company_id: conversation.company_id,
           marketplace_proposal_id: conversation.marketplace_proposal_id,
           marketplace_proposal_reference: conversation.marketplace_proposal&.reference,
+          linked_proposals: linked_proposals,
+          conversation_scope: 'buyer_company',
           created_at: conversation.created_at,
           updated_at: conversation.updated_at,
           user_name: conversation.user&.name,

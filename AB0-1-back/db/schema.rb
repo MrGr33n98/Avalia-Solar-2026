@@ -1718,6 +1718,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_06_000000) do
     t.index ["event_type"], name: "index_conversation_events_on_event_type"
   end
 
+  create_table "conversation_proposal_links", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.bigint "marketplace_proposal_id", null: false
+    t.bigint "linked_by_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id", "marketplace_proposal_id"], name: "index_conv_prop_links_on_conv_and_prop", unique: true
+    t.index ["linked_by_user_id"], name: "index_conversation_proposal_links_on_linked_by_user_id"
+    t.index ["marketplace_proposal_id"], name: "index_conv_prop_links_on_prop_id"
+  end
+
   create_table "conversation_reports", force: :cascade do |t|
     t.bigint "conversation_id", null: false
     t.bigint "reporter_id", null: false
@@ -5355,6 +5366,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_06_000000) do
   add_foreign_key "content_reports", "users", column: "resolved_by_id"
   add_foreign_key "conversation_events", "conversations"
   add_foreign_key "conversation_events", "users", column: "actor_id"
+  add_foreign_key "conversation_proposal_links", "conversations"
+  add_foreign_key "conversation_proposal_links", "marketplace_proposals"
+  add_foreign_key "conversation_proposal_links", "users", column: "linked_by_user_id"
   add_foreign_key "conversation_reports", "conversations"
   add_foreign_key "conversation_reports", "users", column: "reporter_id"
   add_foreign_key "conversations", "companies"
