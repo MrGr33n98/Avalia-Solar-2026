@@ -243,6 +243,18 @@ Rails.application.routes.draw do
         end
       end
 
+      # G2 Buyer Intent Platform & Signals
+      resources :intent_signals, only: [:create]
+      resources :intent_scores, only: %i[index show] do
+        collection do
+          get :summary
+          get :reporting
+          get :export_csv
+          get :export_detail_csv
+          post :recalculate
+        end
+      end
+
       # Social Core API routes
       get 'feed', to: 'feed#index'
       resources :groups, param: :slug, only: %i[index show create update], controller: 'groups' do

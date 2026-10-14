@@ -113,6 +113,9 @@ const ReviewFormsManagement = dynamic(() => import('./ReviewFormsManagement'), {
 const IcpSetupForm = dynamic(() => import('./IcpSetupForm'), {
   loading: () => <DashboardTabSkeleton />,
 });
+const BuyerIntentWorkspace = dynamic(() => import('./intent/BuyerIntentWorkspace'), {
+  loading: () => <DashboardTabSkeleton />,
+});
 const SupportTrainingDashboard = dynamic(() => import('./SupportTrainingDashboard'), {
   loading: () => <DashboardTabSkeleton />,
 });
@@ -941,8 +944,12 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 <TeamManagementWorkspace />
               </TabsContent>
 
+              <TabsContent value="buyer-intent" className="mt-0 focus-visible:outline-none">
+                <BuyerIntentWorkspace companyId={companyId} />
+              </TabsContent>
+
               <TabsContent value="icp-config" className="mt-0 focus-visible:outline-none">
-                <IcpSetupForm companyId={companyId} />
+                <BuyerIntentWorkspace companyId={companyId} />
               </TabsContent>
             </Tabs>
           </div>

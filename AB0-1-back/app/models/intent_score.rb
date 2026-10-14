@@ -78,6 +78,44 @@ class IntentScore < ApplicationRecord
     end
   end
 
+  # G2 Buying Stage (Awareness, Consideration, Decision)
+  def buying_stage
+    case intent_level
+    when 'immediate', 'declared', 'boiling'
+      'decision'
+    when 'hot', 'warm'
+      'consideration'
+    else
+      'awareness'
+    end
+  end
+
+  # G2 Activity Level (Low, Medium, High)
+  def activity_level
+    if total_score.to_i >= 71 || hot_signals_count.to_i >= 3
+      'high'
+    elsif total_score.to_i >= 31 || total_signals_count.to_i >= 4
+      'medium'
+    else
+      'low'
+    end
+  end
+
+  # G2 Direct Pageviews (profile, pricing, sponsored, docs)
+  def direct_pageviews
+    counts = score_breakdown.is_a?(Hash) ? (score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
+    (counts['profile_view'] || counts['review_read'] || counts['faq_interaction']).to_i +
+      counts['pricing_interaction'].to_i +
+      counts['calculator_usage'].to_i +
+      counts['document_download'].to_i
+  end
+
+  # G2 Competitive Pageviews (compare & alternatives)
+  def competitive_pageviews
+    counts = score_breakdown.is_a?(Hash) ? (score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
+    counts['comparison_view'].to_i + counts['comparison_usage'].to_i
+  end
+
   private
 
   def must_have_lead_or_anonymous_id
