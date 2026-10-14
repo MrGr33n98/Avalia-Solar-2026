@@ -198,6 +198,55 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
 
       expect(screen.queryByRole('button', { name: OFFICIAL_VERIFIED_MESSAGE })).not.toBeInTheDocument();
     });
+
+    it('mantém a última palavra e o selo no mesmo agrupamento inline sem truncar o nome', () => {
+      render(
+        <CompanyIdentityCard
+          company={{
+            ...mockCompanyVerified,
+            name: 'Cooperativa Regional de Energia Solar',
+          }}
+          companyStats={{ rating: '4.9', reviewCount: 85 }}
+          logoUrl="https://example.com/logo.png"
+          logoError={false}
+          setLogoError={jest.fn()}
+        />
+      );
+
+      const heading = screen.getByTestId('company-name');
+      const tail = screen.getByTestId('company-name-tail');
+      const verifiedTrigger = screen.getByRole('button', {
+        name: /Empresa verificada pelo Avalia Solar/i,
+      });
+
+      expect(heading).not.toHaveClass('truncate', 'whitespace-nowrap');
+      expect(heading).toHaveClass('min-w-0', 'max-w-full', 'break-words');
+      expect(tail).toHaveTextContent('Solar');
+      expect(tail).toContainElement(verifiedTrigger);
+      expect(tail).toHaveClass('inline');
+    });
+
+    it('permite quebra interna de palavra excepcionalmente longa sem overflow mascarado', () => {
+      render(
+        <CompanyIdentityCard
+          company={{
+            ...mockCompanyVerified,
+            name: 'Solar SuperintegradoraFotovoltaicaUltrassustentavel',
+          }}
+          companyStats={{ rating: '4.9', reviewCount: 85 }}
+          logoUrl="https://example.com/logo.png"
+          logoError={false}
+          setLogoError={jest.fn()}
+        />
+      );
+
+      const heading = screen.getByTestId('company-name');
+      expect(heading).toHaveClass('break-words');
+      expect(heading).not.toHaveClass('truncate', 'overflow-hidden');
+      expect(screen.getByTestId('company-name-tail')).toHaveTextContent(
+        'SuperintegradoraFotovoltaicaUltrassustentavel'
+      );
+    });
   });
 
   describe('Ações Secundárias — Favoritar e Compartilhar', () => {
@@ -213,10 +262,30 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
       );
 
       const favBtn = screen.getByRole('button', { name: 'Favoritar empresa' });
-      expect(favBtn).toHaveClass('h-9', 'w-9', 'relative');
+      expect(favBtn).toHaveClass(
+        'h-[36px]',
+        'w-[36px]',
+        '!min-h-0',
+        '!min-w-0',
+        'after:-inset-y-1',
+        'after:-left-2',
+        'after:right-0'
+      );
 
       const shareBtn = screen.getByRole('button', { name: 'Compartilhar empresa' });
-      expect(shareBtn).toHaveClass('h-9', 'w-9', 'relative');
+      expect(shareBtn).toHaveClass(
+        'h-[36px]',
+        'w-[36px]',
+        '!min-h-0',
+        '!min-w-0',
+        'after:-inset-y-1',
+        'after:left-0',
+        'after:-right-2'
+      );
+
+      expect(favBtn.parentElement).toHaveClass('gap-[6px]');
+      expect(favBtn).toHaveClass('focus-visible:ring-2');
+      expect(shareBtn).toHaveClass('focus-visible:ring-2');
     });
   });
 

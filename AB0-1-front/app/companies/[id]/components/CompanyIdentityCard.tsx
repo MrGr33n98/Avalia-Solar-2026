@@ -91,6 +91,20 @@ export default function CompanyIdentityCard({
     return company.name ? company.name.charAt(0).toUpperCase() : 'A';
   }, [company.name]);
 
+  const companyNameParts = useMemo(() => {
+    const normalizedName = company.name.trim().replace(/\s+/g, ' ');
+    const lastSpaceIndex = normalizedName.lastIndexOf(' ');
+
+    if (lastSpaceIndex === -1) {
+      return { prefix: '', lastWord: normalizedName };
+    }
+
+    return {
+      prefix: normalizedName.slice(0, lastSpaceIndex),
+      lastWord: normalizedName.slice(lastSpaceIndex + 1),
+    };
+  }, [company.name]);
+
   const isVerified = Boolean(
     company.verified || company.trust?.verification_status === 'verified'
   );
@@ -204,38 +218,50 @@ export default function CompanyIdentityCard({
 
           {/* Header: Nome + Verificado */}
           <div className="min-w-0 flex-1 pt-0.5 sm:pt-1.5">
-            <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
-              <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
-                {company.name}
+            <div className="min-w-0 max-w-full">
+              <h1
+                data-testid="company-name"
+                className="min-w-0 max-w-full break-words text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl"
+              >
+                {companyNameParts.prefix ? `${companyNameParts.prefix} ` : null}
+                <span data-testid="company-name-tail" className="inline">
+                  {companyNameParts.lastWord}
+                  {isVerified ? '\u00a0' : null}
+                  {isVerified && (
+                    <CompanyVerifiedBadge
+                      size="lg"
+                      triggerClassName="relative !min-h-0 !min-w-0 align-baseline after:absolute after:-inset-3 after:content-['']"
+                    />
+                  )}
+                </span>
               </h1>
-              {isVerified && <CompanyVerifiedBadge size="lg" />}
             </div>
           </div>
         </div>
 
         {/* Lado Direito: Botões de Ação Topo Direito (Favoritar e Compartilhar) */}
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 pt-0.5 sm:pt-1.5">
+        <div className="ml-auto flex shrink-0 items-center gap-[6px] pt-0.5 sm:pt-1.5">
           <button
             type="button"
             onClick={handleToggleFavorite}
             aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
             className={cn(
-              'relative flex h-9 w-9 items-center justify-center rounded-xl border transition-colors after:absolute after:-inset-1.5 after:content-[\'\'] sm:h-10 sm:w-10 sm:after:hidden',
+              "relative flex h-[36px] w-[36px] !min-h-0 !min-w-0 touch-manipulation items-center justify-center rounded-xl border transition-colors after:absolute after:-inset-y-1 after:-left-2 after:right-0 after:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2",
               isFav
                 ? 'border-red-200 bg-red-50 text-red-600'
                 : 'border-slate-200/90 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
             )}
           >
-            <Heart className={cn('h-4 w-4', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
+            <Heart className={cn('h-[17px] w-[17px]', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={handleShare}
             disabled={isSharing}
             aria-label="Compartilhar empresa"
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 after:absolute after:-inset-1.5 after:content-[\'\'] sm:h-10 sm:w-10 sm:after:hidden"
+            className="relative flex h-[36px] w-[36px] !min-h-0 !min-w-0 touch-manipulation items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors after:absolute after:-inset-y-1 after:left-0 after:-right-2 after:content-[''] hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50"
           >
-            <Share2 className="h-4 w-4 text-slate-600" aria-hidden="true" />
+            <Share2 className="h-[17px] w-[17px] text-slate-600" aria-hidden="true" />
           </button>
         </div>
       </div>

@@ -15,6 +15,7 @@ export const OFFICIAL_VERIFIED_MESSAGE =
 
 export interface CompanyVerifiedBadgeProps {
   className?: string;
+  triggerClassName?: string;
   size?: 'sm' | 'md' | 'lg';
   tooltipText?: string;
   title?: string;
@@ -61,6 +62,7 @@ export function OfficialVerifiedIcon({ className }: { className?: string }) {
 
 export function CompanyVerifiedBadge({
   className,
+  triggerClassName,
   size = 'md',
   tooltipText = OFFICIAL_VERIFIED_MESSAGE,
   title,
@@ -104,7 +106,10 @@ export function CompanyVerifiedBadge({
             onMouseLeave={() => setOpen(false)}
             aria-label={displayText}
             title={displayText}
-            className="inline-flex items-center justify-center shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full"
+            className={cn(
+              'inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+              triggerClassName
+            )}
           >
             <OfficialVerifiedIcon className={cn(sizeClasses[size], className)} />
           </span>
