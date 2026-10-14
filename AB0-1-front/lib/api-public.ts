@@ -192,7 +192,11 @@ export async function fetchApiPublic<T, TFallback = undefined>(
   const url = buildApiUrl(endpointWithParams);
   const revalidate = options.revalidate ?? DEFAULT_PUBLIC_REVALIDATE_SECONDS;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), getPublicApiTimeoutMs(options.timeoutMs));
+  let isTimedOut = false;
+  const timeout = setTimeout(() => {
+    isTimedOut = true;
+    controller.abort();
+  }, getPublicApiTimeoutMs(options.timeoutMs));
 
   try {
     const response = await fetch(url, {
@@ -220,6 +224,11 @@ export async function fetchApiPublic<T, TFallback = undefined>(
 
     return payload as T;
   } catch (error) {
+    const isAbort =
+      isTimedOut ||
+      controller.signal.aborted ||
+      (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError'));
+
     if (options.fallback !== undefined) {
       if (!options.silent) {
         console.warn(`[Public API] Using fallback for ${url}:`, error);
@@ -230,6 +239,7 @@ export async function fetchApiPublic<T, TFallback = undefined>(
     const apiError = toApiError(error, {
       url,
       method: 'GET',
+      isTimeout: isAbort,
       isNetworkError: error instanceof TypeError,
     });
 
@@ -314,8 +324,9 @@ export const publicCompaniesApi = {
       params,
       revalidate: options?.revalidate ?? 120,
       tags: options?.tags || ['recommendations'],
-      fallback: options?.fallback || { data: [] },
+      fallback: options?.fallback,
       silent: options?.silent,
+      timeoutMs: options?.timeoutMs,
     });
     return (payload as RecommendationResponse) || { data: [] };
   },

@@ -10,8 +10,20 @@ declare global {
   }
 }
 
-const getGaCookieDomain = (): string => {
-  const hostname = window.location.hostname;
+export const getGaCookieDomain = (overrideHostname?: string): string => {
+  if (typeof window === 'undefined' && !overrideHostname) return 'auto';
+  const hostname =
+    overrideHostname || (typeof window !== 'undefined' ? window.location.hostname : '');
+
+  // Localhost e endereços IPv4 não suportam escopo de domínio amplo; devem usar 'none' (host-only)
+  if (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)
+  ) {
+    return 'none';
+  }
+
   const configuredDomain = process.env.NEXT_PUBLIC_GA_COOKIE_DOMAIN?.trim().replace(/^\./, '');
 
   if (
@@ -39,11 +51,14 @@ export function initializeGTag(measurementId: string): void {
     };
   }
 
-  // 🚨 CRITICAL FIX: Configura o GA4 measurement ID explicitamente
-  // Isso garante que o GA4 seja inicializado mesmo sem GTM container
+  // 🚨 CRITICAL FIX: Configura o GA4 measurement ID explicitamente com domínio e flags seguras
+  // Isso garante que o GA4 seja inicializado mesmo sem GTM container e sem rejeição de cookie de domínio
+  const isHttps = window.location.protocol === 'https:';
   window.gtag('config', measurementId, {
     send_page_view: false, // Manual page view tracking
     cookie_domain: getGaCookieDomain(),
+    cookie_flags: isHttps ? 'SameSite=Lax;Secure' : 'SameSite=Lax',
+    cookie_update: true,
     custom_map: {
       custom_parameter_1: 'company_id',
     },

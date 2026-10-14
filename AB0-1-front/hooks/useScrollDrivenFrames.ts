@@ -58,9 +58,9 @@ export interface UseScrollDrivenFramesResult {
 }
 
 const RAF_THRESHOLD = 0.0002;
-const INITIAL_FRAME_WINDOW = 16;
-const BACKGROUND_BATCH_SIZE = 8;
-const BACKGROUND_BATCH_DELAY_MS = 180;
+const INITIAL_FRAME_WINDOW = 8;
+const BACKGROUND_BATCH_SIZE = 6;
+const BACKGROUND_BATCH_DELAY_MS = 240;
 const TARGET_WINDOW_RADIUS = 4;
 
 export function clampProgress(progress: number): number {
@@ -148,7 +148,7 @@ export function useScrollDrivenFrames({
   initialFrameCount = INITIAL_FRAME_WINDOW,
   backgroundBatchSize = BACKGROUND_BATCH_SIZE,
   backgroundBatchDelayMs = BACKGROUND_BATCH_DELAY_MS,
-  backgroundPreloadDelayMs = 0,
+  backgroundPreloadDelayMs = 1200,
   maxBackgroundFrames = totalFrames,
   autoPlay,
 }: UseScrollDrivenFramesOptions): UseScrollDrivenFramesResult {
@@ -399,7 +399,19 @@ export function useScrollDrivenFrames({
         }
       };
 
-      const timeoutId = window.setTimeout(loadNextBatch, backgroundPreloadDelayMs);
+      const startPreload = () => {
+        if (
+          typeof window !== 'undefined' &&
+          'requestIdleCallback' in window &&
+          typeof window.requestIdleCallback === 'function'
+        ) {
+          window.requestIdleCallback(() => loadNextBatch(), { timeout: 2000 });
+        } else {
+          loadNextBatch();
+        }
+      };
+
+      const timeoutId = window.setTimeout(startPreload, backgroundPreloadDelayMs);
       backgroundTimeoutsRef.current.push(timeoutId);
     };
 

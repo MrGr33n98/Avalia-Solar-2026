@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { SURFACE_ORIGINS, buildCanonicalUrl } from '@/lib/routing/surface-origins';
 
 export default function NotificationsRedirectPage() {
   const router = useRouter();
@@ -17,7 +18,13 @@ export default function NotificationsRedirectPage() {
     if (user?.role === 'review') {
       router.replace('/review-dashboard/notifications');
     } else {
-      router.replace('/dashboard/notifications');
+      const isCrossSurface =
+        typeof window !== 'undefined' && window.location.origin !== SURFACE_ORIGINS.company;
+      if (isCrossSurface) {
+        window.location.replace(buildCanonicalUrl('company_app', '/dashboard/notifications'));
+      } else {
+        router.replace('/dashboard/notifications');
+      }
     }
   }, [user, loading, router]);
 

@@ -39,7 +39,7 @@ interface UseBannersQueryOptions {
  * @param options - Opções de filtro e configuração
  * @returns Query result com dados, loading, error
  */
-const BANNER_REQUEST_TIMEOUT_MS = 5000;
+const BANNER_REQUEST_TIMEOUT_MS = 6000;
 const BANNER_STALE_TIME_MS = 60 * 1000;
 const BANNER_GC_TIME_MS = 10 * 60 * 1000;
 
@@ -111,9 +111,15 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
     staleTime: BANNER_STALE_TIME_MS,
     gcTime: BANNER_GC_TIME_MS,
     retry: (failureCount, error: unknown) => {
-      const requestError = error as { status?: number; context?: { status?: number } };
+      const requestError = error as {
+        status?: number;
+        isTimeout?: boolean;
+        context?: { status?: number; isTimeout?: boolean };
+      };
       const status = requestError.status ?? requestError.context?.status;
-      if (status === 429) return false;
+      const isTimeout = Boolean(requestError.isTimeout ?? requestError.context?.isTimeout);
+      // Prática sênior: Não retentar em rate limit (429) ou em timeout (evita amplificação de carga em cascata)
+      if (status === 429 || isTimeout) return false;
       return failureCount < 1;
     },
     refetchOnWindowFocus: false,
