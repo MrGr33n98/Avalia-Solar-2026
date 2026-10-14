@@ -74,6 +74,9 @@ AB0-1-front/public/3d-icones/
 !AB0-1-front/__tests__/navigation/MobileBottomNav.test.tsx
 !AB0-1-front/__tests__/components/RecommendedCompanies.test.tsx
 !AB0-1-front/__tests__/components/QuoteWizardModal.test.tsx
+!AB0-1-front/__tests__/components/EnterpriseSidebar.test.tsx
+!AB0-1-front/__tests__/components/DashboardNavigationFlyout.test.tsx
+!AB0-1-front/__tests__/hooks/useCompanyDashboardData.test.ts
 !AB0-1-front/__tests__/components/MarketplaceProposalsWorkspace.test.tsx
 !AB0-1-front/__tests__/components/ProposalCompactCard.test.tsx
 !AB0-1-front/__tests__/components/ProposalStatusSummary.test.tsx

@@ -398,10 +398,31 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
   if (loading) {
     return (
-      <div className="min-h-dvh flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="h-16 w-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-muted-foreground">Carregando dashboard...</p>
+      <div className="dashboard-theme-shell min-h-dvh overflow-x-clip bg-[hsl(var(--dashboard-surface))] text-[hsl(var(--dashboard-ink))]">
+        <aside className="fixed inset-y-0 left-0 z-40 hidden border-r border-white/10 bg-[hsl(var(--dashboard-rail))] md:block w-[112px] dashboard:w-[240px] p-3 space-y-4 animate-pulse">
+          <div className="h-9 w-32 bg-white/10 rounded-md" />
+          <div className="space-y-2 pt-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-11 bg-white/5 rounded-xl" />
+            ))}
+          </div>
+        </aside>
+        <div className="flex min-h-dvh flex-col pl-0 md:pl-[112px] dashboard:pl-[240px]">
+          <header className="h-16 border-b border-slate-200/60 bg-white/80 dark:bg-slate-900/80 px-6 flex items-center justify-between">
+            <div className="h-6 w-48 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+            <div className="h-8 w-24 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+          </header>
+          <main className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-28 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 animate-pulse space-y-3">
+                  <div className="h-4 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="h-8 w-16 bg-slate-200 dark:bg-slate-800 rounded" />
+                </div>
+              ))}
+            </div>
+            <div className="h-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 animate-pulse" />
+          </main>
         </div>
       </div>
     );

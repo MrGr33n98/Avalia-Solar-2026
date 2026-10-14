@@ -18,6 +18,8 @@ import {
   type NavigationItem,
 } from '@/config/navigation';
 
+import { DashboardNavigationFlyout } from './DashboardNavigationFlyout';
+
 interface EnterpriseSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
@@ -52,6 +54,7 @@ function SidebarTree({
   pendingReviewsCount = 0,
   isCollapsed,
   isCompactRail,
+  isDrawer,
   openGroups,
   setOpenGroups,
 }: {
@@ -62,30 +65,45 @@ function SidebarTree({
   pendingReviewsCount?: number;
   isCollapsed: boolean;
   isCompactRail: boolean;
+  isDrawer: boolean;
   openGroups: string[];
   setOpenGroups: React.Dispatch<React.SetStateAction<string[]>>;
 }) {
   const renderedItems = items;
 
   return (
-    <nav className={cn('space-y-2', isCompactRail && 'space-y-1')}>
+    <nav className={cn('space-y-1.5', isCompactRail && !isDrawer && 'space-y-1')}>
       {renderedItems.map((item) => {
         const Icon = item.icon;
+        const hasMultipleChildren = (item.children?.length ?? 0) > 1;
+        const hasSingleChild = item.children?.length === 1;
 
-        if (item.children?.length) {
-          const isGroupActive = item.children.some((child) => child.id === activeTab);
+        // 1. Grupos com múltiplos filhos em Desktop e Tablet: SUBMENU LATERAL (Flyout padrão My.G2)
+        if (hasMultipleChildren && !isDrawer) {
+          return (
+            <DashboardNavigationFlyout
+              key={item.id}
+              item={item}
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+              isCompactRail={isCompactRail}
+              isCollapsed={isCollapsed}
+              pendingReviewsCount={pendingReviewsCount}
+            />
+          );
+        }
+
+        // 2. Grupos com múltiplos filhos no Mobile Drawer (<768px): Accordion por toque
+        if (hasMultipleChildren && isDrawer) {
+          const isGroupActive = item.children?.some((child) => child.id === activeTab);
           const isOpen = openGroups.includes(item.id);
 
           return (
-            <div key={item.id} className="space-y-2">
+            <div key={item.id} className="space-y-1">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => {
-                  if (isCompactRail) {
-                    onTabChange(item.children?.[0]?.id || item.id);
-                    return;
-                  }
                   setOpenGroups((prev) =>
                     prev.includes(item.id)
                       ? prev.filter((id) => id !== item.id)
@@ -93,40 +111,30 @@ function SidebarTree({
                   );
                 }}
                 className={cn(
-                  'w-full rounded-lg border border-transparent text-left transition-colors',
+                  'w-full rounded-xl border border-transparent text-left transition-colors h-11 justify-start px-3',
                   isGroupActive
-                    ? 'border-blue-400/40 bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-200 hover:bg-white/10 hover:text-white',
-                  isCompactRail && !isCollapsed
-                    ? 'h-16 flex-col justify-center gap-1 px-1'
-                    : 'h-11 justify-start px-3',
-                  isCollapsed && 'h-11 justify-center px-0'
+                    ? 'border-blue-400/40 bg-blue-600 text-white shadow-sm font-semibold'
+                    : 'text-slate-200 hover:bg-white/10 hover:text-white'
                 )}
                 title={item.label}
                 aria-label={item.label}
-                aria-current={isGroupActive ? 'true' : undefined}
+                aria-expanded={isOpen}
               >
-                <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
-                <span
-                  className={cn(
-                    'min-w-0 break-words text-center font-medium leading-tight tabular-nums',
-                    isCollapsed ? 'hidden' : isCompactRail ? 'block w-full px-1 text-[10px]' : 'ml-3 flex-1 text-sm text-left'
-                  )}
-                >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="ml-3 flex-1 text-sm text-left font-medium">
                   {item.label}
                 </span>
                 <ChevronDown
                   className={cn(
-                    'h-4 w-4 transition-transform',
-                    (isCollapsed || isCompactRail) && 'hidden',
+                    'h-4 w-4 transition-transform duration-200',
                     isOpen && 'rotate-180'
                   )}
                 />
               </Button>
 
-              {!isCollapsed && isOpen && (
-                <div className={cn("space-y-1 border-white/15", isCompactRail ? "ml-0 pl-0 pt-1 border-l-0" : "ml-4 pl-3 border-l")}>
-                  {item.children.map((child) => {
+              {isOpen && (
+                <div className="ml-4 pl-3 border-l border-white/15 space-y-1 pt-1">
+                  {item.children?.map((child) => {
                     const ChildIcon = child.icon;
                     const isChildActive = child.id === activeTab;
                     const childBadge =
@@ -142,33 +150,24 @@ function SidebarTree({
                         aria-label={child.label}
                         aria-current={isChildActive ? 'page' : undefined}
                         className={cn(
-                          'w-full rounded-lg justify-start text-left transition-all',
+                          'w-full rounded-lg justify-start text-left transition-all h-10 px-3',
                           isChildActive
-                            ? 'bg-primary/5 text-primary border border-primary/10'
-                            : 'text-slate-200 hover:text-white hover:bg-white/10',
-                          isCompactRail ? 'h-14 flex-col justify-center gap-1 px-1' : 'h-10 px-3'
+                            ? 'bg-blue-600 text-white font-medium shadow-xs'
+                            : 'text-slate-200 hover:text-white hover:bg-white/10'
                         )}
                       >
-                        <ChildIcon className={cn("shrink-0", isCompactRail ? "h-5 w-5" : "h-4 w-4")} />
-                        <span
-                          className={cn(
-                            'min-w-0 break-words text-center leading-tight tabular-nums',
-                            isCollapsed ? 'hidden' : isCompactRail ? 'block w-full px-1 text-[10px]' : 'ml-3 flex-1 text-sm text-left'
-                          )}
-                        >
+                        <ChildIcon className="h-4 w-4 shrink-0" />
+                        <span className="ml-3 flex-1 text-sm text-left truncate">
                           {child.label}
                         </span>
                         {childBadge > 0 && (
-                          <Badge className={cn("ml-2 h-5 min-w-5 rounded-full px-1.5 text-[10px]", isCompactRail && "hidden")}>
+                          <Badge className="ml-2 h-5 min-w-5 rounded-full bg-blue-600 px-1.5 text-[10px] text-white">
                             {childBadge}
                           </Badge>
                         )}
                         {hasMessageBadge && (
                           <span
-                            className={cn(
-                              'ml-2 h-2.5 w-2.5 rounded-full bg-[hsl(var(--dashboard-accent))] ring-2 ring-[hsl(var(--dashboard-panel))]',
-                              isCompactRail && 'hidden'
-                            )}
+                            className="ml-2 h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-[hsl(var(--dashboard-rail))]"
                             aria-label="Central de mensagens"
                           />
                         )}
@@ -181,7 +180,9 @@ function SidebarTree({
           );
         }
 
-        const isActive = item.id === activeTab;
+        // 3. Item simples ou grupo com filho único (ex: "Visão Geral" -> "overview")
+        const targetTabId = hasSingleChild && item.children?.[0] ? item.children[0].id : item.id;
+        const isActive = activeTab === targetTabId || activeTab === item.id;
         const badgeCount = item.badge && item.id === 'reviews' ? pendingCount : 0;
 
         return (
@@ -189,26 +190,30 @@ function SidebarTree({
             key={item.id}
             type="button"
             variant="ghost"
-            onClick={() => onTabChange(item.id)}
+            onClick={() => onTabChange(targetTabId)}
             className={cn(
-              'w-full rounded-lg border border-transparent text-left transition-colors',
+              'w-full rounded-xl border border-transparent text-left transition-colors',
               isActive
-                ? 'border-blue-400/40 bg-blue-600 text-white shadow-sm'
+                ? 'border-blue-400/40 bg-blue-600 text-white shadow-sm font-semibold'
                 : 'text-slate-200 hover:bg-white/10 hover:text-white',
-              isCompactRail && !isCollapsed
-                ? 'h-16 flex-col justify-center gap-1 px-1'
-                : 'h-11 justify-start px-3',
+              isCompactRail && !isCollapsed && !isDrawer
+                ? 'h-16 flex-col justify-center gap-1 px-1 py-1.5'
+                : 'h-11 justify-start px-3 py-2',
               isCollapsed && 'h-11 justify-center px-0'
             )}
             title={item.label}
             aria-label={item.label}
             aria-current={isActive ? 'page' : undefined}
           >
-            <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail ? 'h-6 w-6' : 'h-4 w-4')} />
+            <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail && !isDrawer ? 'h-6 w-6' : 'h-4 w-4')} />
             <span
               className={cn(
-                'min-w-0 break-words text-center font-medium leading-tight tabular-nums',
-                isCollapsed ? 'hidden' : isCompactRail ? 'block w-full px-1 text-[10px]' : 'ml-3 flex-1 text-sm text-left'
+                'min-w-0 break-words font-medium leading-tight select-none',
+                isCollapsed
+                  ? 'hidden'
+                  : isCompactRail && !isDrawer
+                  ? 'block w-full px-1 text-center text-[10px] line-clamp-2'
+                  : 'ml-3 flex-1 text-sm text-left truncate'
               )}
             >
               {item.label}
@@ -216,8 +221,8 @@ function SidebarTree({
             {badgeCount > 0 && (
               <Badge
                 className={cn(
-                  'ml-2 h-5 min-w-5 rounded-full px-1.5 text-[10px]',
-                  (isCollapsed || isCompactRail) && 'hidden'
+                  'ml-2 h-5 min-w-5 rounded-full bg-blue-600 px-1.5 text-[10px] text-white',
+                  (isCollapsed || (isCompactRail && !isDrawer)) && 'hidden'
                 )}
               >
                 {badgeCount}
@@ -327,6 +332,7 @@ export default function EnterpriseSidebar({
             pendingReviewsCount={pendingReviewsCount}
             isCollapsed={isSidebarCollapsed}
             isCompactRail={isSidebarCompactRail}
+            isDrawer={isDrawer}
             openGroups={openGroups}
             setOpenGroups={setOpenGroups}
           />
@@ -342,6 +348,7 @@ export default function EnterpriseSidebar({
               pendingReviewsCount={0}
               isCollapsed={isSidebarCollapsed}
               isCompactRail={isSidebarCompactRail}
+              isDrawer={isDrawer}
               openGroups={openGroups}
               setOpenGroups={setOpenGroups}
             />

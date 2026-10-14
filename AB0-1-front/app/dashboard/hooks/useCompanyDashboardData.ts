@@ -73,6 +73,8 @@ export function useCompanyDashboardData(companyId: string) {
   const [featureAccess, setFeatureAccess] = useState<Record<string, FeatureAccessEntry>>({});
   const [featureAccessLoading, setFeatureAccessLoading] = useState(true);
   const [featureAccessError, setFeatureAccessError] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [health, setHealth] = useState<any>(null);
   const [nextBestActions, setNextBestActions] = useState<any[]>([]);
 
@@ -98,6 +100,7 @@ export function useCompanyDashboardData(companyId: string) {
   }, [companyId]);
 
   const fetchDashboardStats = useCallback(async () => {
+    setStatsLoading(true);
     try {
       console.debug('[CompanyDashboardData] Fetching dashboard stats', { companyId });
 
@@ -136,6 +139,8 @@ export function useCompanyDashboardData(companyId: string) {
         endpoint: '/company_dashboard/stats',
         error,
       });
+    } finally {
+      setStatsLoading(false);
     }
   }, [companyId]);
 
@@ -161,6 +166,7 @@ export function useCompanyDashboardData(companyId: string) {
   }, [companyId]);
 
   const fetchNotifications = useCallback(async () => {
+    setNotificationsLoading(true);
     try {
       console.debug('[CompanyDashboardData] Fetching dashboard notifications', { companyId });
 
@@ -185,6 +191,8 @@ export function useCompanyDashboardData(companyId: string) {
         endpoint: '/company_dashboard/notifications',
         error,
       });
+    } finally {
+      setNotificationsLoading(false);
     }
   }, [companyId]);
 
@@ -207,8 +215,21 @@ export function useCompanyDashboardData(companyId: string) {
 
     const loadAll = async () => {
       setLoading(true);
-      await Promise.all([fetchCompanyData(), fetchDashboardStats(), fetchFeatureAccess(), fetchNotifications()]);
+      setStatsLoading(true);
+      setNotificationsLoading(true);
+
+      // 1. Etapa Crítica: Empresa e Acesso a Funcionalidades liberam o shell imediatamente
+      const criticalPromise = Promise.all([fetchCompanyData(), fetchFeatureAccess()]);
+
+      // 2. Etapa Progressiva: Métricas e Notificações rodam independentemente
+      const secondaryPromise = Promise.allSettled([fetchDashboardStats(), fetchNotifications()]);
+
+      // Desbloqueia o shell assim que a etapa crítica terminar
+      await criticalPromise;
       setLoading(false);
+
+      // Aguarda as secundárias sem travar a interface
+      await secondaryPromise;
     };
 
     loadAll();
@@ -226,6 +247,8 @@ export function useCompanyDashboardData(companyId: string) {
 
   return {
     loading,
+    statsLoading,
+    notificationsLoading,
     company,
     companyError,
     stats,
