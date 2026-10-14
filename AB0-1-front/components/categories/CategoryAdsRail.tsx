@@ -23,6 +23,7 @@ export default function CategoryAdsRail({
     position: 'categories_filter_sidebar',
     category_id: categoryId,
     limit: 1,
+    initialData: initialFilterBanners,
   });
 
   // Query 2: Right rail banner (with fallback to sidebar)
@@ -31,6 +32,7 @@ export default function CategoryAdsRail({
     fallbackPositions: ['sidebar'],
     category_id: categoryId,
     limit: 1,
+    initialData: initialRightRailBanners,
   });
 
   // Resolve banners (use query data or fallback to initial data)
@@ -61,7 +63,7 @@ export default function CategoryAdsRail({
   // Development logger
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(
+      console.info(
         '[CategoryAds]\n' +
         `filter_sidebar:\n` +
         `  banner_id: ${filterBanner?.id || 'none'}\n` +

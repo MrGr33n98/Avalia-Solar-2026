@@ -3,14 +3,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  CheckCheck,
-  ExternalLink,
   ArrowRight,
   MoreVertical,
   Eye,
   Archive,
   Bell,
-  Info,
 } from 'lucide-react';
 import { useNotificationStore, Notification } from '@/store/notificationStore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,24 +19,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { SURFACE_ORIGINS, buildCanonicalUrl } from '@/lib/routing/surface-origins';
 
 interface NotificationDropdownProps {
   onClose?: () => void;
-  filterType?: string;
+  _filterType?: string;
 }
 
 export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onClose,
-  filterType,
+  _filterType,
 }) => {
   const router = useRouter();
   const { user } = useAuth();
   const [tab, setTab] = useState<'all' | 'unread'>('all');
   const { notifications, unreadCount, markAsRead, markAllAsRead, archiveNotification, loading } =
     useNotificationStore();
-
-  const targetNotificationsUrl =
-    user?.role === 'review' ? '/review-dashboard/notifications' : '/dashboard/notifications';
 
   const filteredNotifications = notifications
     .filter((n) => {
@@ -83,8 +78,37 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       markAsRead(n.id);
     }
     if (n.destination_url) {
-      router.push(n.destination_url);
       if (onClose) onClose();
+      const isExternal =
+        n.destination_url.startsWith('http://') || n.destination_url.startsWith('https://');
+      const isDashboardRoute =
+        n.destination_url.startsWith('/dashboard') ||
+        n.destination_url.startsWith('/company-dashboard');
+      const isCrossSurface =
+        typeof window !== 'undefined' &&
+        window.location.origin !== SURFACE_ORIGINS.company &&
+        isDashboardRoute;
+
+      if (isExternal) {
+        window.location.assign(n.destination_url);
+      } else if (isCrossSurface) {
+        window.location.assign(buildCanonicalUrl('company_app', n.destination_url));
+      } else {
+        router.push(n.destination_url);
+      }
+    }
+  };
+
+  const handleViewAllNotifications = () => {
+    if (onClose) onClose();
+    if (user?.role === 'review') {
+      router.push('/review-dashboard/notifications');
+      return;
+    }
+    if (typeof window !== 'undefined' && window.location.origin !== SURFACE_ORIGINS.company) {
+      window.location.assign(buildCanonicalUrl('company_app', '/dashboard/notifications'));
+    } else {
+      router.push('/dashboard/notifications');
     }
   };
 
@@ -231,10 +255,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       {/* Footer Link */}
       <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
         <button
-          onClick={() => {
-            router.push(targetNotificationsUrl);
-            if (onClose) onClose();
-          }}
+          onClick={handleViewAllNotifications}
           className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
         >
           Ver todas as notificações

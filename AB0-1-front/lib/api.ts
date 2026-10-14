@@ -1465,11 +1465,12 @@ export const api = {
 
         // Add timeout support using AbortController
         const controller = new AbortController();
+        let isTimedOut = false;
         const timeoutId = setTimeout(() => {
+          isTimedOut = true;
           const errorMessage = `[API] Request timed out after ${timeoutDuration}ms: ${config.method} ${url}`;
           console.warn(errorMessage);
-          const timeoutError = new Error(errorMessage);
-          controller.abort(timeoutError);
+          controller.abort();
         }, timeoutDuration);
 
         try {
@@ -1588,8 +1589,12 @@ export const api = {
         } catch (fetchError: unknown) {
           clearTimeout(timeoutId);
           const isAbortError =
-            (fetchError instanceof Error && fetchError.name === 'AbortError') ||
-            (isRecord(fetchError) && fetchError.name === 'AbortError');
+            isTimedOut ||
+            controller.signal.aborted ||
+            (fetchError instanceof Error &&
+              (fetchError.name === 'AbortError' || fetchError.name === 'TimeoutError')) ||
+            (isRecord(fetchError) &&
+              (fetchError.name === 'AbortError' || fetchError.name === 'TimeoutError'));
           if (isAbortError) {
             throw new ApiError('Request timeout', {
               status: 0,

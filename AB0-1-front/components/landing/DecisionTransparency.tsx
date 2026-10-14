@@ -94,6 +94,10 @@ export default function DecisionTransparency() {
     sizeToCanvas: true,
     frameFit: 'cover',
     preloadReadyThreshold: 0.25,
+    initialFrameCount: 8,
+    backgroundPreloadDelayMs: 1500,
+    backgroundBatchSize: 6,
+    backgroundBatchDelayMs: 250,
     autoPlay: canvasEnabled
       ? {
           enabled: true,
