@@ -3864,3 +3864,65 @@ export const companyMarketplaceProposalsApi = {
       { method: 'PATCH', body: payload }
     ),
 };
+
+export interface CompanyProposalSettingsPayload {
+  company_id?: number | string;
+  selected_model?: string;
+  pdf_colors?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
+  cover_mode?: string;
+  cover_image_url?: string | null;
+  pdf_sections?: Array<{
+    id: string;
+    key: string;
+    label: string;
+    enabled: boolean;
+    content?: string;
+    details?: Record<string, any>;
+  }>;
+  pricing_tiers?: Array<{
+    id: string;
+    status: boolean;
+    costName: string;
+    pricePerKwp: number;
+    fromKwp: number;
+    toKwp: number;
+    calculationType: 'Por kWp' | 'Fixo por projeto' | 'Percentual';
+  }>;
+  payment_conditions?: Array<{
+    id: string;
+    name: string;
+    enabled: boolean;
+    installments?: number;
+    discountPercent?: number;
+    hasInfo?: boolean;
+    infoText?: string;
+  }>;
+  digital_sections?: Array<{
+    id: string;
+    key: string;
+    label: string;
+    enabled: boolean;
+  }>;
+  custom_form_fields?: Array<any>;
+  updated_at?: string;
+}
+
+export const companyProposalSettingsApi = {
+  get: (companyId?: string | number) =>
+    fetchApi<{ proposal_settings: CompanyProposalSettingsPayload }>('/company_dashboard/proposal_settings', {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  update: (settings: Partial<CompanyProposalSettingsPayload>, companyId?: string | number) =>
+    fetchApi<{ proposal_settings: CompanyProposalSettingsPayload; message?: string }>(
+      '/company_dashboard/proposal_settings',
+      {
+        method: 'PATCH',
+        body: { proposal_settings: settings, company_id: companyId },
+      }
+    ),
+};
+

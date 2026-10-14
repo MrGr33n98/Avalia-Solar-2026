@@ -33,7 +33,6 @@ import { ProposalWizardEditor } from './proposals/ProposalWizardEditor';
 import { ProposalSuccessScreen } from './proposals/ProposalSuccessScreen';
 import { ProposalListPane } from './proposals/ProposalListPane';
 import { ProposalDetailsPane } from './proposals/ProposalDetailsPane';
-import { ProposalConversationPane } from './proposals/ProposalConversationPane';
 import { SelectEligibleLeadDialog } from './proposals/SelectEligibleLeadDialog';
 import { ProposalReadonlyPreview } from './proposals/ProposalReadonlyPreview';
 import { ProposalSettingsStudio } from './proposals/ProposalSettingsStudio';
@@ -70,19 +69,24 @@ export function CompanyMarketplaceProposalsWorkspace({
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [publishedSuccessProposal, setPublishedSuccessProposal] = useState<MarketplaceProposal | null>(null);
 
+  const tabParam = searchParams?.get('tab');
+
+  // Workspace Navigation Tab (Minhas propostas | Modelos e configurações)
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'proposals' | 'settings'>(
+    tabParam === 'settings' ? 'settings' : 'proposals'
+  );
+
   // Dialogs & Drawers
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [leadDetailTarget, setLeadDetailTarget] = useState<{
     distribution: Distribution | null;
     proposal: MarketplaceProposal | null;
   } | null>(null);
 
   // Mobile navigation stage (1 view per screen on mobile/PWA)
-  const [mobileView, setMobileView] = useState<'list' | 'details' | 'chat'>('list');
+  const [mobileView, setMobileView] = useState<'list' | 'details'>('list');
 
   // Loading & Action states
   const [loading, setLoading] = useState(true);
@@ -378,25 +382,47 @@ export function CompanyMarketplaceProposalsWorkspace({
     <div className="flex flex-col h-full w-full overflow-hidden">
       {/* Workspace Header Bar */}
       <header className="mb-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-            Portal da empresa
-          </span>
-          <h1 className="mt-0.5 text-xl font-black text-slate-950 sm:text-2xl">
-            Propostas para clientes
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsSettingsModalOpen(true)}
-            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
-          >
-            <Settings className="h-4 w-4 text-slate-500" />
-            <span>Configurações</span>
-          </button>
+        <div className="flex items-center gap-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+              Portal da empresa
+            </span>
+            <h1 className="mt-0.5 text-xl font-black text-slate-950 sm:text-2xl">
+              Propostas para clientes
+            </h1>
+          </div>
 
-          {eligibleDistributionsCount > 0 && (
+          {/* Top-Level Tabs (C.1: Minhas propostas | Modelos e configurações) */}
+          <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => setActiveWorkspaceTab('proposals')}
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-xs font-bold transition-all',
+                activeWorkspaceTab === 'proposals'
+                  ? 'bg-white text-blue-600 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              )}
+            >
+              Minhas propostas
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveWorkspaceTab('settings')}
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-xs font-bold transition-all',
+                activeWorkspaceTab === 'settings'
+                  ? 'bg-white text-blue-600 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              )}
+            >
+              Modelos e configurações
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {activeWorkspaceTab === 'proposals' && eligibleDistributionsCount > 0 && (
             <button
               type="button"
               onClick={() => setIsCreateDialogOpen(true)}
@@ -453,150 +479,109 @@ export function CompanyMarketplaceProposalsWorkspace({
       )}
 
       {/* ============================================================== */}
-      {/* DESKTOP LAYOUT (>= 1024px) - ADAPTATIVO 3 / 2 REGIÕES          */}
+      {/* ABA 1: MODELOS E CONFIGURAÇÕES                                 */}
       {/* ============================================================== */}
-      <div className="hidden lg:flex flex-1 gap-3.5 overflow-hidden min-h-0 w-full">
-        {/* Coluna 1: Lista e Filtros */}
-        <div className="w-[280px] xl:w-[310px] shrink-0 h-full">
-          <ProposalListPane
-            proposals={filteredProposals}
-            selectedProposalId={selectedProposal?.id || null}
-            onSelectProposal={handleSelectProposal}
-            groupedFilter={groupedFilter}
-            onFilterChange={setGroupedFilter}
-            counts={counts}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onOpenCreateDialog={() => setIsCreateDialogOpen(true)}
-            hasEligibleDistributions={eligibleDistributionsCount > 0}
-          />
-        </div>
-
-        {/* Coluna 2: Detalhes da Proposta */}
-        <div className="flex-1 min-w-0 h-full">
-          <ProposalDetailsPane
-            proposal={selectedProposal}
-            companyId={effectiveCompanyId}
-            onOpenEditor={handleOpenEditor}
-            onViewProposalModal={handleViewProposal}
-            onCreateNewVersion={handleCreateNewVersion}
-            onProposalUpdated={(updated) => {
-              setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
-              setSelectedProposal(updated);
-            }}
-            onOpenChatMobile={() => setIsChatDrawerOpen(true)}
-            isCreatingVersion={isCreatingVersion}
-          />
-        </div>
-
-        {/* Coluna 3: Conversa P2P Real (Visível em telas amplas >= 1280px) */}
-        <div className="w-[320px] xl:w-[350px] shrink-0 h-full hidden xl:flex">
-          <ProposalConversationPane
-            proposal={selectedProposal}
-            companyId={effectiveCompanyId}
-            onOpenFullInbox={() => router.push('/dashboard/inbox')}
-          />
-        </div>
-      </div>
-
-      {/* Drawer deslizante de Conversa para telas médias (1024px - 1279px) */}
-      {isChatDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-xs animate-in fade-in lg:block xl:hidden">
-          <div className="w-full max-w-md h-full bg-white shadow-2xl p-4 flex flex-col">
-            <ProposalConversationPane
-              proposal={selectedProposal}
-              companyId={effectiveCompanyId}
-              onCloseMobile={() => setIsChatDrawerOpen(false)}
-              onOpenFullInbox={() => router.push('/dashboard/inbox')}
-              className="h-full border-0 shadow-none"
-            />
-          </div>
+      {activeWorkspaceTab === 'settings' && (
+        <div className="flex-1 min-h-0 w-full overflow-hidden">
+          <ProposalSettingsStudio onClose={() => setActiveWorkspaceTab('proposals')} />
         </div>
       )}
 
       {/* ============================================================== */}
-      {/* MOBILE / PWA PROGRESSIVE LAYOUT (< 1024px)                     */}
+      {/* ABA 2: MINHAS PROPOSTAS (DESKTOP >= 1024px - 2 REGIÕES SEM CHAT) */}
       {/* ============================================================== */}
-      <div className="lg:hidden flex-1 flex flex-col min-h-0 w-full">
-        {/* Barra de Navegação Progressiva */}
-        {mobileView !== 'list' && (
-          <div className="mb-2 flex items-center justify-between border-b border-slate-200/80 bg-white px-3 py-2 rounded-xl shadow-xs shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                if (mobileView === 'chat') setMobileView('details');
-                else setMobileView('list');
-              }}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-blue-600"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>
-                {mobileView === 'chat' ? 'Voltar para proposta' : 'Voltar para lista de propostas'}
-              </span>
-            </button>
+      {activeWorkspaceTab === 'proposals' && (
+        <>
+          <div className="hidden lg:flex flex-1 gap-3.5 overflow-hidden min-h-0 w-full">
+            {/* Coluna 1: Lista e Filtros */}
+            <div className="w-[280px] xl:w-[320px] shrink-0 h-full">
+              <ProposalListPane
+                proposals={filteredProposals}
+                selectedProposalId={selectedProposal?.id || null}
+                onSelectProposal={handleSelectProposal}
+                groupedFilter={groupedFilter}
+                onFilterChange={setGroupedFilter}
+                counts={counts}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onOpenCreateDialog={() => setIsCreateDialogOpen(true)}
+                hasEligibleDistributions={eligibleDistributionsCount > 0}
+              />
+            </div>
 
-            {selectedProposal && mobileView === 'details' && (
-              <button
-                type="button"
-                onClick={() => setMobileView('chat')}
-                className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700"
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>Conversa</span>
-              </button>
+            {/* Coluna 2: Detalhes da Proposta (Ampla, Sem Chat Fixo) */}
+            <div className="flex-1 min-w-0 h-full">
+              <ProposalDetailsPane
+                proposal={selectedProposal}
+                companyId={effectiveCompanyId}
+                onOpenEditor={handleOpenEditor}
+                onViewProposalModal={handleViewProposal}
+                onCreateNewVersion={handleCreateNewVersion}
+                onProposalUpdated={(updated) => {
+                  setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
+                  setSelectedProposal(updated);
+                }}
+                isCreatingVersion={isCreatingVersion}
+              />
+            </div>
+          </div>
+
+          {/* ============================================================== */}
+          {/* MOBILE / PWA PROGRESSIVE LAYOUT (< 1024px)                     */}
+          {/* ============================================================== */}
+          <div className="lg:hidden flex-1 flex flex-col min-h-0 w-full">
+            {/* Barra de Navegação Progressiva */}
+            {mobileView !== 'list' && (
+              <div className="mb-2 flex items-center justify-between border-b border-slate-200/80 bg-white px-3 py-2 rounded-xl shadow-xs shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setMobileView('list')}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-blue-600"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Voltar para lista de propostas</span>
+                </button>
+              </div>
+            )}
+
+            {/* View 1: Lista */}
+            {mobileView === 'list' && (
+              <div className="flex-1 min-h-0">
+                <ProposalListPane
+                  proposals={filteredProposals}
+                  selectedProposalId={selectedProposal?.id || null}
+                  onSelectProposal={handleSelectProposal}
+                  groupedFilter={groupedFilter}
+                  onFilterChange={setGroupedFilter}
+                  counts={counts}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  onOpenCreateDialog={() => setIsCreateDialogOpen(true)}
+                  hasEligibleDistributions={eligibleDistributionsCount > 0}
+                />
+              </div>
+            )}
+
+            {/* View 2: Detalhes da Proposta */}
+            {mobileView === 'details' && selectedProposal && (
+              <div className="flex-1 min-h-0">
+                <ProposalDetailsPane
+                  proposal={selectedProposal}
+                  companyId={effectiveCompanyId}
+                  onOpenEditor={handleOpenEditor}
+                  onViewProposalModal={handleViewProposal}
+                  onCreateNewVersion={handleCreateNewVersion}
+                  onProposalUpdated={(updated) => {
+                    setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
+                    setSelectedProposal(updated);
+                  }}
+                  isCreatingVersion={isCreatingVersion}
+                />
+              </div>
             )}
           </div>
-        )}
-
-        {/* View 1: Lista */}
-        {mobileView === 'list' && (
-          <div className="flex-1 min-h-0">
-            <ProposalListPane
-              proposals={filteredProposals}
-              selectedProposalId={selectedProposal?.id || null}
-              onSelectProposal={handleSelectProposal}
-              groupedFilter={groupedFilter}
-              onFilterChange={setGroupedFilter}
-              counts={counts}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onOpenCreateDialog={() => setIsCreateDialogOpen(true)}
-              hasEligibleDistributions={eligibleDistributionsCount > 0}
-            />
-          </div>
-        )}
-
-        {/* View 2: Detalhes da Proposta */}
-        {mobileView === 'details' && selectedProposal && (
-          <div className="flex-1 min-h-0">
-            <ProposalDetailsPane
-              proposal={selectedProposal}
-              companyId={effectiveCompanyId}
-              onOpenEditor={handleOpenEditor}
-              onViewProposalModal={handleViewProposal}
-              onCreateNewVersion={handleCreateNewVersion}
-              onProposalUpdated={(updated) => {
-                setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
-                setSelectedProposal(updated);
-              }}
-              onOpenChatMobile={() => setMobileView('chat')}
-              isCreatingVersion={isCreatingVersion}
-            />
-          </div>
-        )}
-
-        {/* View 3: Conversa P2P */}
-        {mobileView === 'chat' && (
-          <div className="flex-1 min-h-0">
-            <ProposalConversationPane
-              proposal={selectedProposal}
-              companyId={effectiveCompanyId}
-              onCloseMobile={() => setMobileView('details')}
-              onOpenFullInbox={() => router.push('/dashboard/inbox')}
-            />
-          </div>
-        )}
-      </div>
+        </>
+      )}
 
       {/* Modal de Criação Explícita de Proposta (G-05) */}
       <SelectEligibleLeadDialog
@@ -643,15 +628,6 @@ export function CompanyMarketplaceProposalsWorkspace({
         companyId={effectiveCompanyId}
         onClose={() => setIsPreviewModalOpen(false)}
       />
-
-      {/* Modal de Configurações das Propostas (Padrão 77SOL / Avalia Solar) */}
-      {isSettingsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-7xl h-[92vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col">
-            <ProposalSettingsStudio onClose={() => setIsSettingsModalOpen(false)} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

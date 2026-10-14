@@ -218,6 +218,7 @@ end
   has_one :company_trust_score, foreign_key: :company_id, dependent: :destroy
   has_one :company_icp_profile, dependent: :destroy
   accepts_nested_attributes_for :company_icp_profile, allow_destroy: true
+  has_one :proposal_setting, class_name: 'CompanyProposalSetting', dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
   has_many :company_webhooks, dependent: :destroy
   has_many :chat_sessions, dependent: :nullify
@@ -1547,6 +1548,10 @@ end
       warranty_years: w_years,
       warranty_confirmed: is_confirmed
     }
+  end
+
+  def proposal_setting_or_default
+    proposal_setting || build_proposal_setting(company_id: id)
   end
 end
 

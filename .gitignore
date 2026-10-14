@@ -98,6 +98,8 @@ docs/*
 docs/audits/*
 !docs/audits/company-proposals-enterprise/
 !docs/audits/company-proposals-enterprise/**
+!docs/proposals/
+!docs/proposals/**
 !docs/03-campaign/
 !docs/03-campaign/*
 !docs/security-audit/

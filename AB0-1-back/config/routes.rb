@@ -514,6 +514,7 @@ Rails.application.routes.draw do
             patch 'project/milestones/:milestone_id', action: :update_milestone
           end
         end
+        resource :proposal_settings, controller: 'company_dashboard/proposal_settings', only: %i[show update]
 
         resources :sector_questions, controller: 'company_sector_questions', only: %i[index create update destroy]
 

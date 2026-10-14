@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   Calendar,
@@ -77,6 +78,7 @@ export function ProposalDetailsPane({
   onOpenChatMobile,
   isCreatingVersion,
 }: ProposalDetailsPaneProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ProposalStudioTabId>('resumo');
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [docError, setDocError] = useState<string | null>(null);
@@ -161,8 +163,8 @@ export function ProposalDetailsPane({
       return;
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      setDocError('O arquivo deve ter no máximo 20MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      setDocError('O arquivo deve ter no máximo 10MB.');
       return;
     }
 
@@ -274,15 +276,24 @@ export function ProposalDetailsPane({
 
           {/* Action CTAs */}
           <div className="flex flex-wrap items-center gap-2">
-            {onOpenChatMobile && (
+            {proposal.conversation_id ? (
               <button
                 type="button"
-                onClick={onOpenChatMobile}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 lg:hidden shadow-sm"
+                onClick={() => router.push(`/dashboard/inbox?conversation_id=${proposal.conversation_id}`)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors shadow-sm"
+                title="Abrir conversa com o lead na Central de Mensagens"
               >
                 <MessageSquare className="h-4 w-4 text-blue-600" />
-                <span>Conversa</span>
+                <span>Abrir conversa</span>
               </button>
+            ) : (
+              <div
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-400 cursor-not-allowed select-none"
+                title="Nenhuma conversa vinculada a esta proposta"
+              >
+                <MessageSquare className="h-4 w-4 text-slate-300" />
+                <span>Sem conversa vinculada</span>
+              </div>
             )}
 
             <button
