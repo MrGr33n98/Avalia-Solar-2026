@@ -178,6 +178,32 @@ RSpec.describe 'Leads wizard API', type: :request do
     expect(lead.address_full).to eq('Rua D, 75 - Rio de Janeiro/RJ')
   end
 
+  it 'accepts Condomínio as project profile and persists correctly' do
+    allow(Lead).to receive(:generate_otp_code).and_return('654321')
+
+    post '/api/v1/leads/wizard_create', params: {
+      lead: {
+        product_vertical: 'Energia Solar',
+        project_profile: 'Condomínio',
+        quote_type: 'Energia Solar',
+        system_size_band: 'Ate 15 kWp',
+        decision_timeline: 'Agora',
+        address_full: 'Av. Paulista, 1000 - São Paulo/SP',
+        city: 'São Paulo',
+        state: 'SP',
+        full_name: 'Síndico Responsável',
+        email: 'sindico@condominio.com',
+        phone: '11977776666',
+        consent: true
+      },
+      preferred_company_id: company_a.id
+    }
+
+    expect(response).to have_http_status(:created)
+    lead = Lead.order(:created_at).last
+    expect(lead.project_profile).to eq('Condomínio')
+  end
+
   it 'rejects wizard lead creation when the preferred company does not serve the selected category' do
     post '/api/v1/leads/wizard_create', params: {
       lead: {

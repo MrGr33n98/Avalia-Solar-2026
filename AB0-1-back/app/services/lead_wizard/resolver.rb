@@ -24,6 +24,7 @@ module LeadWizard
           fields: [
             { key: 'project_profile', target: 'lead', type: 'select', label: 'Perfil do Projeto', required: true, options: [
               { label: 'Residencial', value: 'residential' },
+              { label: 'Condomínio', value: 'condominium' },
               { label: 'Comercial', value: 'commercial' },
               { label: 'Industrial', value: 'industrial' },
               { label: 'Rural', value: 'rural' }

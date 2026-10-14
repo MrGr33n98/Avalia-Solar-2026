@@ -25,8 +25,12 @@ module LeadWizard
     }.freeze
     LEGACY_OPTION_VALUES = {
       'project_profile' => {
-        'Residencial' => 'residential', 'Comercial' => 'commercial',
-        'Industrial' => 'industrial', 'Rural' => 'rural'
+        'Residencial' => 'residential', 'residential' => 'residential',
+        'Condomínio' => 'condominium', 'Condominio' => 'condominium',
+        'condominium' => 'condominium', 'condominio' => 'condominium',
+        'Comercial' => 'commercial', 'commercial' => 'commercial',
+        'Industrial' => 'industrial', 'industrial' => 'industrial',
+        'Rural' => 'rural', 'rural' => 'rural'
       },
       'system_size_band' => {
         'Ate 7 kWp' => 'up_to_7_kwp', 'Até 7 kWp' => 'up_to_7_kwp',
@@ -225,9 +229,18 @@ module LeadWizard
       options = Array(field[:options])
       return if options.blank? || value.blank?
 
-      allowed_values = options.map { |option| option[:value].to_s }
+      allowed_values = options.flat_map do |option|
+        if option.is_a?(Hash)
+          [
+            option[:value] || option['value'],
+            option[:label] || option['label']
+          ].compact.map(&:to_s)
+        else
+          [option.to_s]
+        end
+      end
       normalized_value = LEGACY_OPTION_VALUES.fetch(key, {}).fetch(value.to_s, value.to_s)
-      return if allowed_values.include?(normalized_value)
+      return if allowed_values.include?(normalized_value) || allowed_values.include?(value.to_s)
 
       @errors[key] ||= []
       @errors[key] << 'is not a valid option'

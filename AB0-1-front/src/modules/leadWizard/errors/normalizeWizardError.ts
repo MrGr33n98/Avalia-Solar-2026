@@ -12,14 +12,27 @@ export type NormalizedWizardError = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+const FIELD_ERROR_TRANSLATIONS: Record<string, string> = {
+  'is not a valid option': 'não é uma opção válida.',
+  'is required': 'é obrigatório.',
+  'must be a valid email': 'deve ser um e-mail válido.',
+  "can't be blank": 'não pode ficar em branco.',
+  'is invalid': 'é inválido.',
+  'has already been taken': 'já está cadastrado.',
+  'is too short': 'é muito curto.',
+  'is too long': 'é muito longo.',
+};
+
 const fieldMessage = (fields?: Record<string, unknown>) => {
   if (!fields) return undefined;
   const [field, messages] = Object.entries(fields)[0] || [];
   if (!field) return undefined;
   const value = Array.isArray(messages) ? messages[0] : messages;
   if (typeof value !== 'string' || !value.trim()) return undefined;
-  const normalized = value === 'is required' ? 'é obrigatório.' : value;
-  return `${WIZARD_FIELD_LABELS[field] || field}: ${normalized}`;
+  const trimmed = value.trim();
+  const normalized = FIELD_ERROR_TRANSLATIONS[trimmed] || (trimmed === 'is required' ? 'é obrigatório.' : trimmed);
+  const label = WIZARD_FIELD_LABELS[field] || field;
+  return `${label}: ${normalized}`;
 };
 
 export const normalizeWizardError = (
