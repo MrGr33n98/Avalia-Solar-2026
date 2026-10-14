@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import type { Company } from '@/lib/api';
 import { getCoverageLabel } from '@/lib/company/coverage-label';
 
@@ -179,11 +180,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                       />
 
                       {/* Status Badges */}
-                      {company.verified ? (
-                        <span className="hidden items-center gap-0.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-extrabold text-emerald-700 sm:inline-flex">
-                          Verificada
-                        </span>
-                      ) : (
+                      {!company.verified && (
                         <span className="hidden items-center gap-0.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-extrabold text-amber-700 sm:inline-flex">
                           Em análise
                         </span>
@@ -192,7 +189,10 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
 
                     <div className="mt-1 md:mt-2">
                       <Link href={`/companies/${company.slug || company.id}`} className="hover:text-blue-700 block">
-                        <h3 className="line-clamp-3 break-normal text-[7px] font-semibold leading-tight tracking-tight text-slate-900 sm:text-xs md:text-base">{company.name}</h3>
+                        <div className="flex items-center gap-1">
+                          <h3 className="line-clamp-3 break-normal text-[7px] font-semibold leading-tight tracking-tight text-slate-900 sm:text-xs md:text-base">{company.name}</h3>
+                          {company.verified && <CompanyVerifiedBadge size="sm" />}
+                        </div>
                       </Link>
                       <div className="mt-1 flex flex-wrap items-center gap-1 sm:gap-1.5">
                         <div className="hidden text-amber-400 sm:flex">
@@ -243,13 +243,7 @@ export default function HomeComparisonPreview({ companies }: HomeComparisonPrevi
                     <div className="flex h-[64px] flex-col justify-center border-b border-slate-100 p-1.5 md:h-[80px] md:p-5">
                       <div className="flex items-center gap-0.5 text-[9px] font-bold text-slate-900 md:gap-1 md:text-sm">
                         {company.verified ? (
-                          <>
-                            <span className="text-emerald-600">
-                              <span className="md:hidden">OK</span>
-                              <span className="hidden md:inline">Verificada</span>
-                            </span>
-                            <BadgeCheck className="h-3 w-3 text-emerald-600 md:h-4 md:w-4" />
-                          </>
+                          <CompanyVerifiedBadge size="sm" />
                         ) : (
                           <>
                             <span className="text-amber-600">

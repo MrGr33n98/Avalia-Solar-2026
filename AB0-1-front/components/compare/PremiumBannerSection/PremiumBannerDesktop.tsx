@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowRight, Briefcase, Clock, ExternalLink, Shield, Star, X, Zap } from 'lucide-react';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { Company } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { getFullImageUrl } from '@/utils/image';
@@ -162,17 +163,12 @@ export default function PremiumBannerDesktop({
 
       {/* Main Info Section */}
       <div className="relative z-20 min-w-0 flex-1">
-        <div className="mb-2 flex flex-wrap items-center gap-3">
+        <div className="mb-2 flex flex-wrap items-center gap-2.5">
           <h3 className="text-2xl font-black leading-none tracking-tight text-slate-900 transition-colors group-hover:text-blue-600 xl:text-[2rem]">
             {company.name}
           </h3>
 
-          {company.verified && (
-            <div className="flex items-center gap-1.5 rounded-full border border-emerald-100/50 bg-emerald-500/10 backdrop-blur-md px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600 shadow-sm">
-              <Shield className="h-3 w-3 fill-current" />
-              Verificada
-            </div>
-          )}
+          {company.verified && <CompanyVerifiedBadge size="lg" />}
 
           <div className="flex items-center gap-1 rounded-full border border-amber-100/50 bg-amber-500/10 backdrop-blur-md px-3 py-1 text-amber-500">
             <Star className="h-3.5 w-3.5 fill-current" />

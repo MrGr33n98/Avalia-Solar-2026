@@ -3,6 +3,7 @@
 import React from 'react';
 import { ShieldCheck, Star, CheckCircle2, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 
 interface TrustRowProps {
   rating?: number;
@@ -38,10 +39,7 @@ export const TrustRow: React.FC<TrustRowProps> = ({
       )}
 
       {isVerified && (
-        <div className="flex items-center gap-1.5 text-blue-800 font-semibold bg-blue-50 px-2 py-1 rounded-md">
-          <ShieldCheck className="w-4 h-4" />
-          Verificada
-        </div>
+        <CompanyVerifiedBadge />
       )}
 
       {isFeatured && (

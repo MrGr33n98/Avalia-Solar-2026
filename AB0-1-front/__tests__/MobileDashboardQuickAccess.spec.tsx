@@ -33,7 +33,9 @@ describe('MobileDashboardQuickAccess', () => {
     );
     expect(screen.getByTestId('reputation-summary')).toBeInTheDocument();
     expect(screen.getByText('Nota 4,7')).toBeInTheDocument();
-    expect(screen.getByText('Verificada')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Perfil oficial e validado pela plataforma Avalia Solar/i)
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Avaliações: 14' })).not.toHaveAttribute(
       'aria-current'
     );

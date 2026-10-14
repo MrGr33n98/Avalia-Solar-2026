@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -179,12 +180,15 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
                         />
                       </Link>
                       <div className="flex min-w-0 flex-col items-start gap-0.5">
-                        <Link
-                          href={href}
-                          className="font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
-                        >
-                          {comp.name}
-                        </Link>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Link
+                            href={href}
+                            className="font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1"
+                          >
+                            {comp.name}
+                          </Link>
+                          {isVerified && <CompanyVerifiedBadge size="sm" />}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -210,10 +214,7 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
                   {/* Verification Status */}
                   <td className="py-4 px-4">
                     {isVerified ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                        <BadgeCheck className="w-4 h-4 fill-emerald-600 text-white shrink-0" />
-                        Verificada
-                      </span>
+                      <CompanyVerifiedBadge size="sm" />
                     ) : (
                       <span className="text-[11px] font-semibold text-slate-400">Padrão</span>
                     )}
@@ -321,12 +322,15 @@ function RelatedCompanyCard({ company, position }: { company: Company; position:
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <Link
-                href={href}
-                className="block truncate text-sm font-bold tracking-[-0.01em] text-slate-955 hover:text-blue-700"
-              >
-                {company.name}
-              </Link>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Link
+                  href={href}
+                  className="block truncate text-sm font-bold tracking-[-0.01em] text-slate-955 hover:text-blue-700"
+                >
+                  {company.name}
+                </Link>
+                {isVerified && <CompanyVerifiedBadge size="sm" />}
+              </div>
               <span className="shrink-0 text-[10px] font-semibold text-slate-400">#{position}</span>
               <span className="block truncate text-xs text-slate-500">{location}</span>
             </div>
@@ -346,15 +350,6 @@ function RelatedCompanyCard({ company, position }: { company: Company; position:
             ) : (
               <span className="text-xs font-medium text-slate-400">Sem avaliações</span>
             )}
-            <span
-              className={cn(
-                'inline-flex items-center gap-1 font-semibold',
-                isVerified ? 'text-emerald-600' : 'text-slate-500'
-              )}
-            >
-              {isVerified && <BadgeCheck className="h-4 w-4" />}
-              {isVerified ? 'Verificada' : 'Padrão'}
-            </span>
           </div>
         </div>
       </div>

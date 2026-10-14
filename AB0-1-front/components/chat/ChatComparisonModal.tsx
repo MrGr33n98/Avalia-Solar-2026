@@ -1,4 +1,5 @@
 import React from 'react';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 
 export interface ChatComparisonModalProps {
   isOpen: boolean;
@@ -91,8 +92,10 @@ export default function ChatComparisonModal({
               </div>
             ))}
             {renderRow('Avaliações', c => c.rating_count !== undefined && c.rating_count !== null ? `${c.rating_count}` : '-')}
-            {renderRow('Verificada', c => c.verified ? (
-               <svg className="w-3.5 h-3.5 text-emerald-500 mx-auto" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+            {renderRow('Verificação', c => c.verified ? (
+               <div className="flex justify-center">
+                 <CompanyVerifiedBadge size="sm" />
+               </div>
             ) : '-')}
             {renderRow('Financiamento', c => c.has_financing ? (
                <svg className="w-3.5 h-3.5 text-emerald-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>

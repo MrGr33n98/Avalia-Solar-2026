@@ -13,6 +13,7 @@ import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
 
 import CompanyViewCounter from './CompanyViewCounter';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 
 interface CompanyIdentityCardProps {
   company: Company;
@@ -209,9 +210,7 @@ export default function CompanyIdentityCard({
               <h1 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl">
                 {company.name}
               </h1>
-              {isVerified && (
-                <BadgeCheck className="h-4.5 w-4.5 shrink-0 fill-blue-600 text-white sm:h-5 sm:w-5" aria-label="Empresa verificada" />
-              )}
+              {isVerified && <CompanyVerifiedBadge size="lg" />}
             </div>
           </div>
         </div>

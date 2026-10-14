@@ -15,6 +15,7 @@ import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { openLeadModal } from '@/lib/lead-engine';
 import { Button } from '@/components/ui/button';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 
 interface RelatedCompanyCardProps {
   company: Company;
@@ -122,12 +123,7 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
               <h3 className="truncate whitespace-nowrap text-[14px] sm:text-[15px] font-bold text-slate-950">
                 {name}
               </h3>
-              {isVerified && (
-                <BadgeCheck
-                  className="h-[18px] w-[18px] shrink-0 fill-blue-600 text-white"
-                  aria-label="Verificada"
-                />
-              )}
+              {isVerified && <CompanyVerifiedBadge />}
             </div>
             {categoryName && (
               <div className="mt-1">

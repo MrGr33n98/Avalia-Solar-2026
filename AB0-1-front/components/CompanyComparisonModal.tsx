@@ -21,6 +21,7 @@ import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { cn } from '@/lib/utils';
 import { getCoverageLabel } from '@/lib/company/coverage-label';
 import { COMPARISON_LIMITS } from '@/lib/comparison/config';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import type { CompanyComparisonProfile } from '@/lib/api';
 
 export interface ComparisonCompany {
@@ -177,7 +178,11 @@ const CRITERIA_ROWS: CriterionConfig[] = [
     label: 'Verificação',
     render: (company) => {
       if (company.verified) {
-        return <ComparisonBadge text="✓ Verificada" variant="green" />;
+        return (
+          <div className="flex justify-center">
+            <CompanyVerifiedBadge />
+          </div>
+        );
       }
       if (company.verification_status === 'pending') {
         return <ComparisonBadge text="Em análise" variant="orange" />;

@@ -1,4 +1,5 @@
 import { Clock3, Map, ShieldCheck, Star } from 'lucide-react';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { buildCompareSummary } from './compare-insights';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
 
@@ -75,9 +76,9 @@ export default function CompareSummary({ companies }: { companies: CompareCompan
                 </p>
                 <div className="mt-1">
                   {item.key === 'verified' && hasData ? (
-                    <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                      Verificada
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <CompanyVerifiedBadge size="sm" />
+                    </div>
                   ) : (
                     <p className="text-[11px] text-slate-500 sm:text-xs">
                       {hasData ? item.detail : '—'}

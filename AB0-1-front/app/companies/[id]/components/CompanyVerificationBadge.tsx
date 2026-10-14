@@ -1,33 +1,30 @@
-"use client";
+'use client';
 
-import { CheckCircle2 } from "lucide-react";
-import { Company } from "@/lib/api";
-import { isFeatureEnabled } from "@/lib/feature-access";
+import { Company } from '@/lib/api';
+import { isFeatureEnabled } from '@/lib/feature-access';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 
 interface CompanyVerificationBadgeProps {
   company: Company;
+  className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export default function CompanyVerificationBadge({ company }: CompanyVerificationBadgeProps) {
-  const isVerifiedEnabled = isFeatureEnabled(company.feature_access, "verified_product");
+export default function CompanyVerificationBadge({
+  company,
+  className,
+  size = 'md',
+}: CompanyVerificationBadgeProps) {
+  const isVerifiedEnabled = isFeatureEnabled(company?.feature_access, 'verified_product');
   const isVerified = Boolean(
-    company.verified ||
-    company.trust?.verification_status === "verified" ||
+    company?.verified ||
+    company?.trust?.verification_status === 'verified' ||
     isVerifiedEnabled
   );
-  
+
   if (!isVerified) {
     return null;
   }
 
-  return (
-    <span 
-      id="company-verification-badge"
-      title="Empresa Verificada"
-      aria-label="Empresa Verificada"
-      className="inline-flex items-center justify-center rounded-full bg-emerald-50 p-1 text-emerald-600 ring-1 ring-inset ring-emerald-600/20 shadow-xs"
-    >
-      <CheckCircle2 className="h-4 w-4 fill-emerald-100 text-emerald-600" />
-    </span>
-  );
+  return <CompanyVerifiedBadge className={className} size={size} />;
 }

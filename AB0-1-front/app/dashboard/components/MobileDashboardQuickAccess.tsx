@@ -1,6 +1,7 @@
 'use client';
 
 import { Eye, ShieldCheck, Star, TrendingUp, UsersRound } from 'lucide-react';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { cn } from '@/lib/utils';
 
 interface MobileDashboardQuickAccessProps {
@@ -80,12 +81,7 @@ export default function MobileDashboardQuickAccess(props: MobileDashboardQuickAc
             · {values.reviews} avaliações
           </span>
         </div>
-        {company?.verified && (
-          <span className="inline-flex shrink-0 items-center gap-1 text-xs text-[hsl(var(--dashboard-positive))]">
-            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-            Verificada
-          </span>
-        )}
+        {company?.verified && <CompanyVerifiedBadge size="sm" />}
       </div>
       <div className="grid grid-cols-4 gap-1.5">
         {KPI_LIST.map(({ id, label, icon: Icon, tab }) => {

@@ -2,6 +2,7 @@
 
 import { ShieldCheck, Lock, ChevronRight, ChevronLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { CompanyVerifiedBadge } from "@/components/company/CompanyVerifiedBadge";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
 import Link from "next/link";
@@ -88,9 +89,7 @@ export default function RelatedCompaniesCarousel({
               </p>
             </div>
           </div>
-          <span className="rounded-full bg-blue-100/80 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-blue-700 border border-blue-200 shrink-0 self-start sm:self-center">
-            Verificada
-          </span>
+          <CompanyVerifiedBadge />
         </div>
       </Card>
     );

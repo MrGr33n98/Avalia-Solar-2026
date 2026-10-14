@@ -64,7 +64,9 @@ describe('RelatedCompanyCard', () => {
   it('renders company name, verified badge and category', () => {
     render(<RelatedCompanyCard company={mockCompany} />);
     expect(screen.getByRole('heading', { name: 'Empresa Teste' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Verificada')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Perfil oficial e validado pela plataforma Avalia Solar/i)
+    ).toBeInTheDocument();
     expect(screen.getByText('Energia Solar')).toBeInTheDocument();
   });
 

@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import debounce from 'lodash/debounce';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 
 interface CompanyComparisonSectionProps {
@@ -250,8 +251,8 @@ export default function CompanyComparisonSection({
                 companies={displayedCompanies} 
                 value={(c) => (
                   c.verified ? (
-                    <div className="inline-flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-xl text-xs font-black">
-                      <Check className="h-3.5 w-3.5" /> Verificada
+                    <div className="flex justify-center">
+                      <CompanyVerifiedBadge />
                     </div>
                   ) : <span className="text-slate-300 font-medium">—</span>
                 )} 

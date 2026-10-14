@@ -6,6 +6,7 @@ import { CheckCircle2, ChevronDown, MinusCircle, Star, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
 import { canUsePaidConversion } from '@/lib/feature-access';
 
@@ -301,12 +302,15 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                           badges={company.badges}
                         />
                         <div className="min-w-0 flex-1">
-                          <Link
-                            href={`/companies/${company.slug || company.id}`}
-                            className="block truncate text-xs sm:text-sm font-black text-slate-950 hover:text-blue-700"
-                          >
-                            {company.name}
-                          </Link>
+                          <div className="flex items-center gap-1 min-w-0">
+                            <Link
+                              href={`/companies/${company.slug || company.id}`}
+                              className="block truncate text-xs sm:text-sm font-black text-slate-950 hover:text-blue-700"
+                            >
+                              {company.name}
+                            </Link>
+                            {company.verified && <CompanyVerifiedBadge size="sm" />}
+                          </div>
                           <span className="block truncate text-[10px] sm:text-xs text-slate-500">
                             {[company.city, company.state].filter(Boolean).join(', ') ||
                               'Local não informado'}
@@ -314,11 +318,6 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5">
-                        {company.verified && (
-                          <span className="inline-flex rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
-                            Verificada
-                          </span>
-                        )}
                         {company.rating > 0 ? (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700">
                             <Star

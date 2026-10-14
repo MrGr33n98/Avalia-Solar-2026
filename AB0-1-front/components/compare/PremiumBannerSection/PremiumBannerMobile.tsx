@@ -16,6 +16,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Company } from '@/lib/api';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { Button } from '@/components/ui/button';
 import { getFullImageUrl } from '@/utils/image';
 import Link from 'next/link';
@@ -128,9 +129,12 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">
-              <h3 className="line-clamp-2 text-base font-black text-slate-900 tracking-tight leading-tight uppercase">
-                {company.name}
-              </h3>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className="line-clamp-2 text-base font-black text-slate-900 tracking-tight leading-tight uppercase">
+                  {company.name}
+                </h3>
+                {company.verified && <CompanyVerifiedBadge />}
+              </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-1 text-[11px]" role="img">
                   <Star className="h-3 w-3 fill-current text-amber-500" aria-hidden="true" />
@@ -139,12 +143,6 @@ export default function PremiumBannerMobile({ company, onDismiss }: PremiumBanne
                   </span>
                   <span className="text-slate-400 font-bold">({company.rating_count || 0})</span>
                 </div>
-
-                {company.verified && (
-                  <span className="rounded-full border border-emerald-100/50 bg-emerald-500/10 backdrop-blur-md px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.15em] text-emerald-700">
-                    Verificada
-                  </span>
-                )}
               </div>
             </div>
 

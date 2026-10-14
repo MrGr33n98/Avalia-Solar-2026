@@ -354,7 +354,7 @@ function MobileCompanyOverview({ company }: { company: Company }) {
   const stats = [
     {
       icon: ShieldCheck,
-      value: yearsInBusiness ? `+${yearsInBusiness} anos` : 'Verificada',
+      value: yearsInBusiness ? `+${yearsInBusiness} anos` : 'Oficial',
       label: yearsInBusiness ? 'No mercado' : 'Perfil validado',
     },
     {

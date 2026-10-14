@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, MapPin, Clock, ChevronDown, Trophy, Zap, CircleDollarSign, Briefcase } from 'lucide-react';
 import VerificationBadge from '@/components/company/VerificationBadge';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { Company } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
@@ -73,9 +74,12 @@ export default function CompanyComparisonCard({
         />
         
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-black text-slate-900 line-clamp-1 mb-1">
-            {company.name}
-          </h3>
+          <div className="flex items-center gap-1.5 mb-1">
+            <h3 className="text-lg font-black text-slate-900 line-clamp-1">
+              {company.name}
+            </h3>
+            {company.verified && <CompanyVerifiedBadge />}
+          </div>
           <div 
             className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-black w-fit"
             role="img"
@@ -94,11 +98,6 @@ export default function CompanyComparisonCard({
           <span className="font-semibold">{company.city}, {company.state}</span>
         </div>
 
-        {company.verified && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <VerificationBadge verified={company.verified} />
-          </div>
-        )}
 
         {getYearsInMarket() && (
           <div className="flex items-center gap-2 text-sm text-slate-600">

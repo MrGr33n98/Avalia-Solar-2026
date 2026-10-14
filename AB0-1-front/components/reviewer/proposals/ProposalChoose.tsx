@@ -22,6 +22,7 @@ import {
   Zap,
 } from 'lucide-react';
 import type { MarketplaceProposal } from '@/lib/api';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import {
   formatDate,
   formatMoney,
@@ -371,16 +372,13 @@ export function ProposalChoose({
               <div className="flex items-center gap-3">
                 <CompanyMark proposal={selectedProposal} />
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-bold text-slate-900 truncate">
-                    {selectedProposal.company.name}
-                  </h4>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="text-sm font-bold text-slate-900 truncate">
+                      {selectedProposal.company.name}
+                    </h4>
+                    {selectedProposal.company.verified && <CompanyVerifiedBadge size="sm" />}
+                  </div>
                   <p className="text-xs text-slate-500">{getProposalLocation(selectedProposal)}</p>
-                  {selectedProposal.company.verified && (
-                    <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold mt-0.5">
-                      <Check className="h-3 w-3 stroke-[3]" />
-                      <span>Empresa verificada</span>
-                    </div>
-                  )}
                 </div>
               </div>
             )}

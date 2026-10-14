@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { CompanyReviewsSummarySheet } from '@/components/company/CompanyReviewsSummarySheet';
 import { buildCompanyPath } from '@/lib/slug';
 import { openLeadModal } from '@/lib/lead-engine';
@@ -511,12 +512,7 @@ export default function CompanyCard({
                 <h3 className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                   {name}
                 </h3>
-                {isVerified && (
-                  <BadgeCheck
-                    className="h-3.5 w-3.5 fill-blue-600 text-white shrink-0"
-                    aria-label="Empresa verificada"
-                  />
-                )}
+                {isVerified && <CompanyVerifiedBadge size="sm" />}
               </div>
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
                 {data.reputation.rating_count > 0 && data.reputation.rating_avg > 0 ? (
@@ -602,25 +598,7 @@ export default function CompanyCard({
                   >
                     {name}
                   </h3>
-                  {isVerified && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            tabIndex={0}
-                            aria-label="Empresa verificada"
-                            className="inline-flex shrink-0 focus:outline-none"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <BadgeCheck className="h-4 w-4 fill-blue-600 text-white shrink-0" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="text-xs bg-slate-900 text-white border-none">
-                          Empresa verificada pela equipe Avalia Solar
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
+                  {isVerified && <CompanyVerifiedBadge />}
                 </div>
               </div>
 

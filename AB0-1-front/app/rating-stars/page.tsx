@@ -9,6 +9,7 @@ import { RatingStars } from '@/components/RatingStars';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { buildCompanyPath } from '@/lib/slug';
 
 export default function RatingStarsPage() {
@@ -134,11 +135,7 @@ export default function RatingStarsPage() {
                                 <h3 className="text-xl font-bold text-slate-900 group-hover:text-primary transition-colors">
                                   {company.name}
                                 </h3>
-                                {company.verified && (
-                                  <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-none text-[10px]">
-                                    Verificada
-                                  </Badge>
-                                )}
+                                {company.verified && <CompanyVerifiedBadge />}
                               </div>
                               <div className="flex items-center gap-4 text-sm text-slate-500">
                                 <div className="flex items-center gap-1">

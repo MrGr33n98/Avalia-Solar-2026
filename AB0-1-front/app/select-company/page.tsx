@@ -545,11 +545,13 @@ function SelectCompanyContent() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold">{company.company_name}</p>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <p className="truncate text-xs font-bold">{company.company_name}</p>
+                    {company.verified && <VerificationBadge verified={company.verified} size="sm" />}
+                  </div>
                   <p className="text-[10px] text-[#60708f]">
                     {company.city || '-'}, {company.state || '-'}
                   </p>
-                  {company.verified && <VerificationBadge verified={company.verified} className="mt-1" />}
                 </div>
                 <Button
                   size="sm"

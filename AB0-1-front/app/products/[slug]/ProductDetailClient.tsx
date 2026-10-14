@@ -986,13 +986,15 @@ export default function ProductDetailClient({
                 <div className="flex items-start gap-3">
                   <AvatarBadge name={company?.name || product.company?.name} logoUrl={company?.logo_url} />
                   <div className="min-w-0 space-y-2">
-                    <p className="text-[14px] font-medium leading-[1.5] text-[var(--color-text-primary)]">
-                      {company?.name || product.company?.name || 'Fabricante não informado'}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <p className="text-[14px] font-medium leading-[1.5] text-[var(--color-text-primary)]">
+                        {company?.name || product.company?.name || 'Fabricante não informado'}
+                      </p>
                       {company?.verified ? (
-                        <VerificationBadge verified={company.verified} />
+                        <VerificationBadge verified={company.verified} size="sm" />
                       ) : null}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                       {(company?.badges || product.company?.badges)?.map((badge, idx) => (
                         <span
                           key={badge.id || idx}

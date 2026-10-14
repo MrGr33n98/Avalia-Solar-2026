@@ -13,6 +13,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { COMPARISON_LIMITS } from '@/lib/comparison/config';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
@@ -121,7 +122,10 @@ export default function RecommendedCompanies({
                 <div className="flex items-start gap-2">
                   <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-xs sm:text-sm font-bold text-slate-950">{company.name}</h3>
+                    <div className="flex items-center gap-1 min-w-0">
+                      <h3 className="truncate text-xs sm:text-sm font-bold text-slate-950">{company.name}</h3>
+                      {company.verified && <CompanyVerifiedBadge size="sm" />}
+                    </div>
                     <p className="mt-0.5 truncate text-[10px] sm:text-xs text-slate-500">
                       {company.categoryNames[0] || 'Energia Solar'}
                     </p>
@@ -140,11 +144,6 @@ export default function RecommendedCompanies({
                       {company.rating.toFixed(1)}
                     </span>
                   ) : null}
-                  {company.verified && (
-                    <span className="rounded-full bg-emerald-50 px-1.5 py-0.2 text-[9px] font-bold text-emerald-700">
-                      Verificada
-                    </span>
-                  )}
                 </div>
               </div>
               <Button
