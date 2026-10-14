@@ -54,6 +54,7 @@ import {
   serializeProposalStudioToTerms,
 } from '@/lib/proposals/domain';
 import { cn } from '@/lib/utils';
+import { ProposalSettingsStudio } from './ProposalSettingsStudio';
 
 interface ProposalDetailsPaneProps {
   proposal: MarketplaceProposal | null;
@@ -90,6 +91,7 @@ export function ProposalDetailsPane({
   const [isSavingStudio, setIsSavingStudio] = useState(false);
   const [studioSaveSuccess, setStudioSaveSuccess] = useState<string | null>(null);
   const [studioSaveError, setStudioSaveError] = useState<string | null>(null);
+  const [isSettingsStudioOpen, setIsSettingsStudioOpen] = useState(false);
 
   // Add custom field modal/inline state
   const [isAddingField, setIsAddingField] = useState(false);
@@ -785,15 +787,26 @@ export function ProposalDetailsPane({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => handleSaveStudio(studioState, 'Modelo e seções do PDF salvos com sucesso!')}
-                disabled={isSavingStudio}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isSavingStudio ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                <span>Salvar Configurações do PDF</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSettingsStudioOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Definições da Empresa</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSaveStudio(studioState, 'Modelo e seções do PDF salvos com sucesso!')}
+                  disabled={isSavingStudio}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isSavingStudio ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  <span>Salvar Configurações do PDF</span>
+                </button>
+              </div>
             </div>
 
             {/* Modelos Oficiais Avalia Solar (5 opções) */}
@@ -1569,6 +1582,15 @@ export function ProposalDetailsPane({
                 <span>Confirmar e Criar Versão</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Configurações das Propostas (Padrão 77SOL / Avalia Solar) */}
+      {isSettingsStudioOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-7xl h-[92vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <ProposalSettingsStudio onClose={() => setIsSettingsStudioOpen(false)} />
           </div>
         </div>
       )}

@@ -97,10 +97,11 @@ const mockDistribution = {
   lead: mockProposalDraft.lead,
 };
 
+jest.setTimeout(25000);
+
 describe('CompanyMarketplaceProposalsWorkspace', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.setTimeout(25000);
   });
 
   it('renderiza header, tabs com contadores e lista de propostas', async () => {
@@ -238,6 +239,29 @@ describe('CompanyMarketplaceProposalsWorkspace', () => {
       expect(screen.getByRole('button', { name: /Documento PDF/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Proposta Digital/i })).toBeInTheDocument();
     });
-  });
+  }, 15000);
+
+  it('abre o estúdio de configurações ao clicar no botão Configurações do header', async () => {
+    (companyMarketplaceProposalsApi.list as jest.Mock).mockResolvedValueOnce({
+      proposals: [mockProposalDraft],
+    });
+    (companyMarketplaceProposalsApi.distributions as jest.Mock).mockResolvedValueOnce({
+      distributions: [mockDistribution],
+    });
+
+    render(<CompanyMarketplaceProposalsWorkspace />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Configurações/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Configurações/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1, name: 'Configurações' })).toBeInTheDocument();
+      expect(screen.getByText('Definições de propostas')).toBeInTheDocument();
+      expect(screen.getByText('Definir Modelo da Proposta')).toBeInTheDocument();
+    });
+  }, 15000);
 });
 

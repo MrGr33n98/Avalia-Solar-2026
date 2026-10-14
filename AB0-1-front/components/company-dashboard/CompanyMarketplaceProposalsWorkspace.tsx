@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   X,
   MessageSquare,
+  Settings,
 } from 'lucide-react';
 import {
   companyMarketplaceProposalsApi,
@@ -35,6 +36,7 @@ import { ProposalDetailsPane } from './proposals/ProposalDetailsPane';
 import { ProposalConversationPane } from './proposals/ProposalConversationPane';
 import { SelectEligibleLeadDialog } from './proposals/SelectEligibleLeadDialog';
 import { ProposalReadonlyPreview } from './proposals/ProposalReadonlyPreview';
+import { ProposalSettingsStudio } from './proposals/ProposalSettingsStudio';
 
 type Distribution = {
   id: number;
@@ -73,6 +75,7 @@ export function CompanyMarketplaceProposalsWorkspace({
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [leadDetailTarget, setLeadDetailTarget] = useState<{
     distribution: Distribution | null;
     proposal: MarketplaceProposal | null;
@@ -384,6 +387,15 @@ export function CompanyMarketplaceProposalsWorkspace({
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsSettingsModalOpen(true)}
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+          >
+            <Settings className="h-4 w-4 text-slate-500" />
+            <span>Configurações</span>
+          </button>
+
           {eligibleDistributionsCount > 0 && (
             <button
               type="button"
@@ -631,6 +643,15 @@ export function CompanyMarketplaceProposalsWorkspace({
         companyId={effectiveCompanyId}
         onClose={() => setIsPreviewModalOpen(false)}
       />
+
+      {/* Modal de Configurações das Propostas (Padrão 77SOL / Avalia Solar) */}
+      {isSettingsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-7xl h-[92vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <ProposalSettingsStudio onClose={() => setIsSettingsModalOpen(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -157,6 +157,7 @@ docs/adr/*
 !AB0-1-front/__tests__/lib/
 !AB0-1-front/__tests__/lib/footer-visibility.test.ts
 !AB0-1-front/__tests__/components/CompanyLogoBadge.test.tsx
+!AB0-1-front/__tests__/components/ProposalSettingsStudio.test.tsx
 
 # Skills and Agent configurations
 .agents/skills/*
