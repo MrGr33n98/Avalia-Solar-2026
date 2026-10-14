@@ -15,7 +15,13 @@ interface SubscriptionData {
   features: string[];
 }
 
-export default function PlanAndSubscription({ companyId }: { companyId: string }) {
+export default function PlanAndSubscription({
+  companyId,
+  onOpenPlans,
+}: {
+  companyId: string;
+  onOpenPlans?: () => void;
+}) {
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -102,7 +108,7 @@ export default function PlanAndSubscription({ companyId }: { companyId: string }
               </ul>
 
               <div className="pt-4">
-                <Button className="w-full">
+                <Button onClick={onOpenPlans} className="w-full">
                   Fazer Upgrade de Plano
                 </Button>
               </div>

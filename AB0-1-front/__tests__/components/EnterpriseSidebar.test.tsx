@@ -124,4 +124,26 @@ describe('EnterpriseSidebar (Arquitetura Lateral My.G2)', () => {
 
     expect(screen.getByTestId('company-selector-modal')).toBeInTheDocument();
   });
+
+  it('renderiza o widget de upgrade na sidebar e aciona onOpenPlans ao clicar', () => {
+    const handleOpenPlans = jest.fn();
+
+    render(
+      <EnterpriseSidebar
+        activeTab="overview"
+        onTabChange={jest.fn()}
+        isOpen={false}
+        onClose={jest.fn()}
+        onOpenPlans={handleOpenPlans}
+      />
+    );
+
+    const upgradeWidget = screen.getByRole('button', {
+      name: /desbloqueie seu potencial: conhecer planos/i,
+    });
+    expect(upgradeWidget).toBeInTheDocument();
+
+    fireEvent.click(upgradeWidget);
+    expect(handleOpenPlans).toHaveBeenCalledTimes(1);
+  });
 });

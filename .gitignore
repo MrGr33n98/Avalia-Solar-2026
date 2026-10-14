@@ -55,6 +55,7 @@ AB0-1-front/public/assets/**/*.zip
 
 AB0-1-front/public/**/*.zip
 AB0-1-front/public/3d-icones/
+AB0-1-front/public/avalia-solar-upgrade-assets/
 
 # Ignorar testes e especificações
 **/__tests__/
@@ -84,6 +85,8 @@ AB0-1-front/public/3d-icones/
 !AB0-1-front/__tests__/components/ProposalConversationSurface.test.tsx
 !AB0-1-front/__tests__/components/UnifiedInbox.test.tsx
 !AB0-1-front/__tests__/auth/AuthCallback.test.tsx
+!AB0-1-front/__tests__/dashboard/SidebarUpgradeWidget.test.tsx
+!AB0-1-front/__tests__/dashboard/PlansPricingModal.test.tsx
 
 # Ignorar documentações de desenvolvimento
 docs/
@@ -108,6 +111,8 @@ docs/audits/*
 !docs/proposals/**
 !docs/03-campaign/
 !docs/03-campaign/*
+!docs/upgrade/
+!docs/upgrade/*
 !docs/security-audit/
 !docs/security-audit/*
 !docs/observability/

@@ -30,6 +30,8 @@ import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-acces
 import ThemeToggle from './ThemeToggle';
 import ApprovalsPanel from './ApprovalsPanel';
 import FeatureGuard from './FeatureGuard';
+import { PlansPricingModal, type PlanSlug } from './PlansPricingModal';
+import { billingApi } from '@/lib/api/billing';
 
 // Lazy Loaded Feature Components for Performance
 const CompanyInfo = dynamic(() => import('./CompanyInfo'), {
@@ -234,10 +236,77 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const { resolvedTheme } = useTheme();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const themeMode: 'light' | 'dark' = resolvedTheme === 'light' ? 'light' : 'dark';
   const dashboardCompany = company;
   const dashboardPlanId = dashboardCompany?.plan_id;
   const dashboardPlanTier = dashboardCompany?.plan_tier;
+
+  const handleSelectPlan = async (planSlug: PlanSlug) => {
+    if (planSlug === 'free') {
+      toast({
+        title: 'Plano Gratuito',
+        description: 'Sua empresa já está cadastrada no plano básico gratuito.',
+      });
+      return;
+    }
+
+    if (planSlug === 'enterprise') {
+      try {
+        setIsCheckoutLoading(true);
+        const numCompanyId = parseInt(companyId, 10);
+        if (!isNaN(numCompanyId)) {
+          await billingApi
+            .createEnterpriseLead(numCompanyId, 4, {
+              justification: 'Solicitação de proposta via Modal de Upgrade do Dashboard',
+              phone_contact: company?.phone || '',
+            })
+            .catch(() => null);
+        }
+        toast({
+          title: 'Solicitação enviada!',
+          description: 'Nossa equipe comercial entrará em contato para alinhar sua proposta Enterprise.',
+        });
+      } catch (err: any) {
+        toast({
+          title: 'Solicitação registrada',
+          description: 'Entraremos em contato com você em breve.',
+        });
+      } finally {
+        setIsCheckoutLoading(false);
+      }
+      return;
+    }
+
+    try {
+      setIsCheckoutLoading(true);
+      const numCompanyId = parseInt(companyId, 10);
+      const planId = planSlug === 'essential' ? 2 : 3;
+      const sUrl = `${window.location.origin}/dashboard?company_id=${companyId}&checkout=success`;
+      const cUrl = window.location.href;
+      const { checkout_url } = await billingApi.createCheckoutSession(
+        numCompanyId,
+        planId,
+        sUrl,
+        cUrl,
+        'twelve_months'
+      );
+      if (checkout_url) {
+        window.location.href = checkout_url;
+      }
+    } catch (err: any) {
+      console.error('[EnterpriseDashboard] Erro ao iniciar checkout:', err);
+      toast({
+        title: 'Erro ao iniciar contratação',
+        description:
+          err?.message || 'Não foi possível conectar ao checkout no momento. Tente novamente mais tarde.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
 
   const tabAccessEntries = useMemo(
     () =>
@@ -464,6 +533,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         pendingCount={stats?.pendingApprovals || 0}
         pendingReviewsCount={stats?.pendingReviewsCount || 0}
         visibleTabIds={visibleTabIds}
+        onOpenPlans={() => setUpgradeModalOpen(true)}
       />
 
       <div className="flex min-h-dvh flex-col pl-[var(--enterprise-sidebar-width,64px)] transition-[padding] duration-200">
@@ -611,7 +681,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       Ajuste configurações relacionadas ao seu plano e comercialização.
                     </p>
                   </div>
-                  <PlanAndSubscription companyId={companyId} />
+                  <PlanAndSubscription companyId={companyId} onOpenPlans={() => setUpgradeModalOpen(true)} />
                 </div>
               </TabsContent>
 
@@ -874,6 +944,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
           </div>
         </main>
       </div>
+
+      <PlansPricingModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        currentPlanTier={dashboardPlanTier || company?.plan_tier || 'free'}
+        onSelectPlan={handleSelectPlan}
+        isLoadingCheckout={isCheckoutLoading}
+      />
     </div>
   );
 }

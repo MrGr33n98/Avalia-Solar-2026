@@ -19,6 +19,7 @@ import {
 } from '@/config/navigation';
 
 import { DashboardNavigationFlyout } from './DashboardNavigationFlyout';
+import { SidebarUpgradeWidget } from './SidebarUpgradeWidget';
 
 interface EnterpriseSidebarProps {
   activeTab: string;
@@ -28,6 +29,7 @@ interface EnterpriseSidebarProps {
   pendingCount?: number;
   pendingReviewsCount?: number;
   visibleTabIds?: string[];
+  onOpenPlans?: () => void;
 }
 
 const COMPACT_RAIL_BREAKPOINT_PX = 1180;
@@ -243,6 +245,7 @@ export default function EnterpriseSidebar({
   pendingCount = 0,
   pendingReviewsCount = 0,
   visibleTabIds,
+  onOpenPlans,
 }: EnterpriseSidebarProps) {
   const { activeCompany } = useCompanyContext();
   const [companySelectorOpen, setCompanySelectorOpen] = useState(false);
@@ -352,6 +355,15 @@ export default function EnterpriseSidebar({
               openGroups={openGroups}
               setOpenGroups={setOpenGroups}
             />
+          )}
+
+          {(!activeCompany?.plan_tier || activeCompany.plan_tier.toLowerCase() !== 'enterprise') && onOpenPlans && (
+            <div className={cn(isSidebarCompactRail && !isDrawer ? 'py-1 flex justify-center' : 'py-1')}>
+              <SidebarUpgradeWidget
+                onOpenPlans={onOpenPlans}
+                compact={isSidebarCompactRail && !isDrawer}
+              />
+            </div>
           )}
 
           <Button
