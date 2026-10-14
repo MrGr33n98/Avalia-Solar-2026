@@ -34,6 +34,7 @@ import { ProposalListPane } from './proposals/ProposalListPane';
 import { ProposalDetailsPane } from './proposals/ProposalDetailsPane';
 import { ProposalConversationPane } from './proposals/ProposalConversationPane';
 import { SelectEligibleLeadDialog } from './proposals/SelectEligibleLeadDialog';
+import { ProposalReadonlyPreview } from './proposals/ProposalReadonlyPreview';
 
 type Distribution = {
   id: number;
@@ -71,6 +72,7 @@ export function CompanyMarketplaceProposalsWorkspace({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [leadDetailTarget, setLeadDetailTarget] = useState<{
     distribution: Distribution | null;
     proposal: MarketplaceProposal | null;
@@ -281,6 +283,12 @@ export function CompanyMarketplaceProposalsWorkspace({
     }
   };
 
+  // Visualizar proposta (somente leitura / PDF e Digital)
+  const handleViewProposal = (prop: MarketplaceProposal) => {
+    setSelectedProposal(prop);
+    setIsPreviewModalOpen(true);
+  };
+
   // Abrir wizard de edição
   const handleOpenEditor = (prop: MarketplaceProposal) => {
     setSelectedProposal(prop);
@@ -458,7 +466,7 @@ export function CompanyMarketplaceProposalsWorkspace({
             proposal={selectedProposal}
             companyId={effectiveCompanyId}
             onOpenEditor={handleOpenEditor}
-            onViewProposalModal={handleOpenEditor}
+            onViewProposalModal={handleViewProposal}
             onCreateNewVersion={handleCreateNewVersion}
             onProposalUpdated={(updated) => {
               setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
@@ -553,7 +561,7 @@ export function CompanyMarketplaceProposalsWorkspace({
               proposal={selectedProposal}
               companyId={effectiveCompanyId}
               onOpenEditor={handleOpenEditor}
-              onViewProposalModal={handleOpenEditor}
+              onViewProposalModal={handleViewProposal}
               onCreateNewVersion={handleCreateNewVersion}
               onProposalUpdated={(updated) => {
                 setProposals((cur) => cur.map((p) => (p.id === updated.id ? updated : p)));
@@ -614,6 +622,14 @@ export function CompanyMarketplaceProposalsWorkspace({
           if (p) handleOpenEditor(p);
           else if (distributionId) void handleCreateProposal(distributionId);
         }}
+      />
+
+      {/* Modal de Pré-visualização Somente Leitura (PDF / Digital) */}
+      <ProposalReadonlyPreview
+        isOpen={isPreviewModalOpen}
+        proposal={selectedProposal}
+        companyId={effectiveCompanyId}
+        onClose={() => setIsPreviewModalOpen(false)}
       />
     </div>
   );

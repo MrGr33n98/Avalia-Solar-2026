@@ -16,6 +16,7 @@ node_modules/
 *.log
 *.tmp
 *.swp
+scratch/
 
 # Environment
 .env
@@ -138,6 +139,8 @@ docs/adr/*
 !docs/ranking-v2/*
 !docs/architecture/
 !docs/architecture/*
+!docs/proposal-studio/
+!docs/proposal-studio/*
 
 # Testes e previews de e-mail fazem parte da implementação de produção.
 !AB0-1-back/spec/

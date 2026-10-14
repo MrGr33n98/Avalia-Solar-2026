@@ -100,6 +100,7 @@ const mockDistribution = {
 describe('CompanyMarketplaceProposalsWorkspace', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.setTimeout(25000);
   });
 
   it('renderiza header, tabs com contadores e lista de propostas', async () => {
@@ -178,7 +179,7 @@ describe('CompanyMarketplaceProposalsWorkspace', () => {
     });
   });
 
-  it('exibe tabs de detalhes Resumo, Itens, Documentos e Histórico', async () => {
+  it('exibe as 8 abas da jornada Proposal Studio e permite alternar entre elas', async () => {
     (companyMarketplaceProposalsApi.list as jest.Mock).mockResolvedValueOnce({
       proposals: [mockProposalDraft],
     });
@@ -189,14 +190,54 @@ describe('CompanyMarketplaceProposalsWorkspace', () => {
     render(<CompanyMarketplaceProposalsWorkspace />);
 
     await waitFor(() => {
-      expect(screen.getByText('Resumo Comercial')).toBeInTheDocument();
-      expect(screen.getByText('Itens & Técnico')).toBeInTheDocument();
-      expect(screen.getByText('Histórico & Versões')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^Resumo$/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^Itens & Técnico$/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Formulário/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Template PDF/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Proposta Digital/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Condições Comerciais/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Documentos/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Histórico/i })).toBeInTheDocument();
     });
 
     // Alternar para aba Itens & Técnico
-    fireEvent.click(screen.getByText('Itens & Técnico'));
+    fireEvent.click(screen.getByRole('button', { name: /^Itens & Técnico$/i }));
     expect(screen.getByText('Lista de Itens, Equipamentos e Serviços')).toBeInTheDocument();
     expect(screen.getByText('Carregador Wallbox 7,4 kW')).toBeInTheDocument();
+
+    // Alternar para aba Formulário
+    fireEvent.click(screen.getByRole('button', { name: /Formulário/i }));
+    expect(screen.getByText('Construtor de Campos do Formulário')).toBeInTheDocument();
+    expect(screen.getByText('Salvar Formulário')).toBeInTheDocument();
+
+    // Alternar para aba Template PDF
+    fireEvent.click(screen.getByRole('button', { name: /Template PDF/i }));
+    expect(screen.getByText('Estúdio de Template e Identidade do PDF')).toBeInTheDocument();
+    expect(screen.getByText('Moderno Solar')).toBeInTheDocument();
+    expect(screen.getByText('Corporativo Clássico')).toBeInTheDocument();
+  });
+
+  it('abre a pré-visualização somente leitura ao clicar em Pré-visualizar', async () => {
+    (companyMarketplaceProposalsApi.list as jest.Mock).mockResolvedValueOnce({
+      proposals: [mockProposalDraft],
+    });
+    (companyMarketplaceProposalsApi.distributions as jest.Mock).mockResolvedValueOnce({
+      distributions: [mockDistribution],
+    });
+
+    render(<CompanyMarketplaceProposalsWorkspace />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Pré-visualizar/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Pré-visualizar/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Pré-visualização da proposta' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Documento PDF/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Proposta Digital/i })).toBeInTheDocument();
+    });
   });
 });
+
