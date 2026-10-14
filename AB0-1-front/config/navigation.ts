@@ -17,6 +17,7 @@ import {
   Grid2X2,
   Package,
   Settings,
+  Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -267,6 +268,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
     context: ['operational', 'admin'],
     group: 'system',
     children: [
+      {
+        id: 'team-management',
+        label: 'Equipe e Membros',
+        icon: Users,
+        context: ['operational', 'admin'],
+        description: 'Gerenciar membros, papéis corporativos e convites',
+      },
       {
         id: 'product-pricing',
         label: 'Plano e Assinatura',

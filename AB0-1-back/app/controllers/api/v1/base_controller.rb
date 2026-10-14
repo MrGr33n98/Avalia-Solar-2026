@@ -9,6 +9,7 @@ module Api
       include Paginatable
       include Pundit::Authorization
       include JwtAuthenticatable
+      include EffectiveTenancyResolvable
 
       # Skip CSRF for API requests
       skip_before_action :verify_authenticity_token
@@ -27,7 +28,7 @@ module Api
       rescue_from ::Groups::MembershipService::Error, with: :groups_error
 
       def set_effective_company_header
-        company = current_user&.company
+        company = current_effective_company
         response.set_header("X-Effective-Company-Id", company.id.to_s) if company
       end
 

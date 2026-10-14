@@ -50,19 +50,48 @@ module Api
 
         def update
           role = params.require(:role)
-          @member.update!(role: role)
-          render json: serialize_member(@member)
+          if @member.owner? && @member.active? && role != 'owner' && @company.company_members.active.where(role: :owner).where.not(id: @member.id).empty?
+            return render_error_response(
+              message: 'A empresa não pode ficar sem nenhum proprietário (owner) ativo.',
+              status: :unprocessable_entity,
+              code: 'LAST_OWNER_PROTECTION'
+            )
+          end
+
+          if @member.update(role: role)
+            render json: serialize_member(@member)
+          else
+            render_error_response(
+              message: @member.errors.full_messages.to_sentence,
+              status: :unprocessable_entity,
+              code: 'MEMBER_UPDATE_FAILED'
+            )
+          end
         end
 
         def destroy
+          if @member.owner? && @member.active? && @company.company_members.active.where(role: :owner).where.not(id: @member.id).empty?
+            return render_error_response(
+              message: 'A empresa não pode ficar sem nenhum proprietário (owner) ativo.',
+              status: :unprocessable_entity,
+              code: 'LAST_OWNER_PROTECTION'
+            )
+          end
+
           @member.destroy!
           head :no_content
+        rescue ActiveRecord::RecordNotDestroyed => e
+          render_error_response(
+            message: e.record.errors.full_messages.to_sentence,
+            status: :unprocessable_entity,
+            code: 'MEMBER_NOT_DESTROYED'
+          )
         end
 
         private
 
         def set_company
-          @company = current_user.company
+          @company = current_effective_company
           render_error('Company not found', :not_found) unless @company
         end
 
@@ -71,7 +100,7 @@ module Api
         end
 
         def ensure_owner!
-          owner = @company.company_members.find_by(user_id: current_user.id)&.owner?
+          owner = @company.company_members.active.find_by(user_id: current_user.id)&.owner?
           render_error('Forbidden', :forbidden) unless owner
         end
 

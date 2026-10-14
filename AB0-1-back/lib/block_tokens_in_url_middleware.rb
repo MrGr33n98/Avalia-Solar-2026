@@ -23,7 +23,7 @@ class BlockTokensInUrlMiddleware
 
     # Check for sensitive tokens in query string
     SENSITIVE_PARAMS.each do |param|
-      next unless request.params[param].present?
+      next unless request.GET[param].present?
 
       Rails.logger.warn(
         "[Security] Blocked request with #{param} in URL query string | " \

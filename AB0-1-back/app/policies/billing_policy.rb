@@ -1,26 +1,25 @@
 class BillingPolicy < ApplicationPolicy
   def show?
-    admin_or_member?
+    admin? || company_owner?
   end
 
   def checkout?
-    admin_or_member?
+    admin? || company_owner?
   end
 
   def portal?
-    admin_or_member?
+    admin? || company_owner?
   end
 
   def enterprise_lead?
-    admin_or_member?
+    admin? || company_owner?
   end
 
   private
 
   def admin_or_member?
-    can_manage_company_id?(record.id)
+    admin? || company_owner?
   end
-
 
   def company_member_active?
     return false unless user.respond_to?(:company_members)
@@ -33,11 +32,11 @@ class BillingPolicy < ApplicationPolicy
 
   def company_owner?
     company_member_active? &&
-      user.company_members.find_by(company_id: record.id)&.role == 'owner'
+      user.company_members.find_by(company_id: record.id, status: 'active')&.role == 'owner'
   end
 
   def company_editor?
     company_member_active? &&
-      user.company_members.find_by(company_id: record.id)&.role == 'editor'
+      user.company_members.find_by(company_id: record.id, status: 'active')&.role == 'editor'
   end
 end

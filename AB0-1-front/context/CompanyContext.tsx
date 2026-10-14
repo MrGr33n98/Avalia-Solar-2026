@@ -62,11 +62,8 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     setActiveCompanyState(company);
     if (company) {
       localStorage.setItem('active_company', JSON.stringify(company));
-      // Set a cookie for the backend if needed
-      document.cookie = `active_company_id=${company.id}; path=/; max-age=31536000; SameSite=Lax`;
     } else {
       localStorage.removeItem('active_company');
-      document.cookie = `active_company_id=; path=/; max-age=0; SameSite=Lax`;
     }
   };
 
@@ -77,14 +74,14 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     const previous = activeCompany;
     invalidateAnalyticsAvailability(previous?.id);
     invalidateAnalyticsAvailability(company.id);
-    setActiveCompany(company);
     try {
+      // Confirma seleção no backend primeiro (backend assina e define cookie seguro)
       await companyAccessApi.selectActiveCompany(company.id);
+      setActiveCompany(company);
     } catch (error) {
       console.warn('[CompanyContext] Failed to persist active company selection', error);
       invalidateAnalyticsAvailability(company.id);
       invalidateAnalyticsAvailability(previous?.id);
-      setActiveCompany(previous ?? null);
       throw error;
     }
   };
@@ -133,10 +130,10 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     setActiveCompany(savedMatch || companies[0]);
   }, [companies, activeCompany, isLoading]);
 
-  // If the selected company is removed while syncing with backend, make sure the cookie is cleared.
+  // If the selected company is removed while syncing with backend, make sure localStorage is cleared.
   useEffect(() => {
     if (!activeCompany && !isLoading && companies.length === 0) {
-      document.cookie = 'active_company_id=; path=/; max-age=0; SameSite=Lax';
+      localStorage.removeItem('active_company');
     }
   }, [activeCompany, isLoading, companies.length]);
 

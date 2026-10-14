@@ -800,8 +800,16 @@ Rails.application.routes.draw do
             post :invite
           end
         end
+        resources :invitations, only: %i[index create destroy] do
+          member do
+            post :resend
+          end
+        end
         resources :pending_changes, only: %i[index show]
       end
+
+      match 'company_invitations/verify', to: 'company_invitations#verify', via: %i[get post]
+      post 'company_invitations/accept', to: 'company_invitations#accept'
 
       namespace :company_admin do
         get 'content_analytics/overview', to: 'content_analytics#overview'

@@ -23,7 +23,7 @@ RSpec.describe 'Company access authorization', type: :request do
 
   def auth_headers_for(target_user)
     token = JWT.encode(
-      { user_id: target_user.id, exp: 1.hour.from_now.to_i },
+      { user_id: target_user.id, typ: 'access', exp: 1.hour.from_now.to_i },
       Rails.application.secret_key_base,
       'HS256'
     )

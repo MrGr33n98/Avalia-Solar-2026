@@ -65,6 +65,12 @@ const CampaignsMarketing = dynamic(() => import('./CampaignsMarketing'), {
 const CompanySettings = dynamic(() => import('./CompanySettings'), {
   loading: () => <DashboardTabSkeleton />,
 });
+const TeamManagementWorkspace = dynamic(
+  () => import('@/components/dashboard/team/TeamManagementWorkspace'),
+  {
+    loading: () => <DashboardTabSkeleton />,
+  }
+);
 const PlanAndSubscription = dynamic(() => import('./PlanAndSubscription'), {
   loading: () => <DashboardTabSkeleton />,
 });
@@ -935,6 +941,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CompanySettings companyId={companyId} company={company} />
                 </div>
+              </TabsContent>
+
+              <TabsContent
+                value="team-management"
+                className="mt-0 focus-visible:outline-none"
+                data-tour="team-management"
+              >
+                <TeamManagementWorkspace />
               </TabsContent>
 
               <TabsContent value="icp-config" className="mt-0 focus-visible:outline-none">

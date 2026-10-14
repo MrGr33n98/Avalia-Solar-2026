@@ -3117,6 +3117,81 @@ export const companyAccessApi = {
     }),
 };
 
+export interface CompanyMemberItem {
+  id: number;
+  role: 'owner' | 'manager' | 'editor' | 'viewer';
+  created_at: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    status: string;
+  };
+  permissions?: string[];
+}
+
+export interface CompanyInvitationItem {
+  id: number;
+  email: string;
+  role: string;
+  status: 'pending' | 'accepted' | 'expired' | 'revoked';
+  expires_at: string;
+  created_at: string;
+  invited_by: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+export const companyTeamApi = {
+  getMembers: (params?: { page?: number; per_page?: number; role?: string }) =>
+    fetchApi<{
+      items: CompanyMemberItem[];
+      meta: { current_page: number; total_pages: number; total_count: number; per_page: number };
+    }>('/company/members', { params }),
+  updateMemberRole: (id: number, role: string) =>
+    fetchApi<CompanyMemberItem>(`/company/members/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    }),
+  removeMember: (id: number) =>
+    fetchApi<void>(`/company/members/${id}`, {
+      method: 'DELETE',
+    }),
+  getInvitations: () =>
+    fetchApi<{ items: CompanyInvitationItem[] }>('/company/invitations'),
+  sendInvitation: (email: string, role: string) =>
+    fetchApi<CompanyInvitationItem>('/company/invitations', {
+      method: 'POST',
+      body: JSON.stringify({ email, role }),
+    }),
+  resendInvitation: (id: number) =>
+    fetchApi<CompanyInvitationItem>(`/company/invitations/${id}/resend`, {
+      method: 'POST',
+    }),
+  revokeInvitation: (id: number) =>
+    fetchApi<void>(`/company/invitations/${id}`, {
+      method: 'DELETE',
+    }),
+  verifyInvitation: (token: string) =>
+    fetchApi<{ company_id: number; company_name: string; email: string; role: string; expires_at: string }>(
+      '/company_invitations/verify',
+      {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      }
+    ),
+  acceptInvitation: (token: string) =>
+    fetchApi<{ message: string; company_id: number; role: string }>(
+      '/company_invitations/accept',
+      {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      }
+    ),
+};
+
 export const plansApi = {
   getAll: () => fetchApi('/plans'),
   getById: (id: number) => fetchApi(`/plans/${id}`),

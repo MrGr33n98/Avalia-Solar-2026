@@ -1,0 +1,6 @@
+Convite de equipe - Avalia Solar
+
+<%= @invited_by.name.presence || @invited_by.email %> convidou você para colaborar na gestão da empresa <%= @company.name %> com o perfil <%= @invitation.role %>.
+
+Para aceitar o convite, acesse o link abaixo (válido por 7 dias):
+<%= @accept_url %>

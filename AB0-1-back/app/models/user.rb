@@ -169,8 +169,10 @@ class User < ApplicationRecord
   end
 
   def owner_of?(company)
-    (company.respond_to?(:owner_id) && company.owner_id == id) || company.company_members.exists?(user_id: id,
-                                                                                                  role: 'owner')
+    return false if company.blank?
+
+    (company.respond_to?(:owner_id) && company.owner_id == id) ||
+      active_company_members.exists?(company_id: company.id, role: :owner)
   end
 
   # PostHog: unique identifier for this user across analytics events and error reports

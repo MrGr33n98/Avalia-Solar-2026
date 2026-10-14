@@ -10,10 +10,38 @@ class CompanyMember < ApplicationRecord
   validates :status, inclusion: { in: statuses.keys }
   validates :user_id, uniqueness: { scope: :company_id }
 
+  scope :active, -> { where(status: 'active') }
+  scope :owners, -> { active.where(role: :owner) }
+  scope :managers, -> { active.where(role: :manager) }
+  scope :editors, -> { active.where(role: :editor) }
+
+  before_destroy :prevent_last_active_owner_removal
+  validate :prevent_last_active_owner_demotion, on: :update
+
   after_create :track_member_assignment
   after_commit :notify_slack, on: :create
 
   private
+
+  def prevent_last_active_owner_removal
+    return unless owner? && active?
+    return unless company
+
+    if company.company_members.active.where(role: :owner).where.not(id: id).empty?
+      errors.add(:base, 'A empresa não pode ficar sem nenhum proprietário (owner) ativo.')
+      throw(:abort)
+    end
+  end
+
+  def prevent_last_active_owner_demotion
+    return unless role_was == 'owner' && status_was == 'active'
+    return unless (role_changed? && role != 'owner') || (status_changed? && status != 'active')
+    return unless company
+
+    if company.company_members.active.where(role: :owner).where.not(id: id).empty?
+      errors.add(:base, 'A empresa não pode ficar sem nenhum proprietário (owner) ativo.')
+    end
+  end
 
   def track_member_assignment
     Analytics::TrackEventService.call(

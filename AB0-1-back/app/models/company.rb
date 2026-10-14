@@ -212,6 +212,7 @@ end
   belongs_to :plan, optional: true
   has_many :users, dependent: :nullify
   has_many :company_members, dependent: :destroy
+  has_many :company_invitations, dependent: :destroy
   accepts_nested_attributes_for :company_members, allow_destroy: true
   has_many :company_badges, dependent: :destroy
   has_many :badges, through: :company_badges
