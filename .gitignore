@@ -64,6 +64,9 @@ AB0-1-front/public/3d-icones/
 # Testes de filtros da listagem de categorias
 !AB0-1-front/components/categories/CategoryFiltersPanel.test.tsx
 !AB0-1-front/components/categories/DecisionChips.test.tsx
+!AB0-1-front/__tests__/components/SelectEligibleLeadDialog.test.tsx
+!AB0-1-front/__tests__/components/ProposalConversationPane.test.tsx
+!AB0-1-front/__tests__/components/CompanyMarketplaceProposalsWorkspaceDeepLink.test.tsx
 !AB0-1-front/__tests__/components/sales/OpportunityCard.test.tsx
 !AB0-1-front/__tests__/components/sales/SalesAnalyticsReport.test.tsx
 !AB0-1-front/components/sales/leads/create/CreateLeadModal.board-refresh.test.tsx
@@ -90,6 +93,10 @@ docs/*
 !docs/INBOX_PREMIUM_PWA_UI_UX_SPEC.md
 !docs/INBOX_TEST_MATRIX.md
 !docs/INBOX_IMPLEMENTATION_REPORT.md
+!docs/audits/
+docs/audits/*
+!docs/audits/company-proposals-enterprise/
+!docs/audits/company-proposals-enterprise/**
 !docs/03-campaign/
 !docs/03-campaign/*
 !docs/security-audit/

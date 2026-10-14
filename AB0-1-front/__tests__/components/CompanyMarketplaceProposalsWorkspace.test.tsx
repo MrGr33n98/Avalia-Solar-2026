@@ -1,7 +1,20 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CompanyMarketplaceProposalsWorkspace } from '@/components/company-dashboard/CompanyMarketplaceProposalsWorkspace';
-import { companyMarketplaceProposalsApi, type MarketplaceProposal } from '@/lib/api';
+import {
+  companyMarketplaceProposalsApi,
+  conversationsApi,
+  type MarketplaceProposal,
+} from '@/lib/api';
+
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  usePathname: () => '/dashboard/proposals',
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 jest.mock('@/context/CompanyContext', () => ({
   useCompanyContext: () => ({
@@ -13,6 +26,7 @@ jest.mock('@/context/CompanyContext', () => ({
 jest.mock('@/lib/api', () => ({
   companyMarketplaceProposalsApi: {
     list: jest.fn(),
+    get: jest.fn(),
     distributions: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
@@ -25,6 +39,11 @@ jest.mock('@/lib/api', () => ({
     updateMeeting: jest.fn(),
     updateMilestone: jest.fn(),
   },
+  conversationsApi: {
+    getMessages: jest.fn().mockResolvedValue([]),
+    sendMessage: jest.fn(),
+    markRead: jest.fn().mockResolvedValue({}),
+  },
 }));
 
 const mockProposalDraft: MarketplaceProposal = {
@@ -35,6 +54,7 @@ const mockProposalDraft: MarketplaceProposal = {
   currency: 'BRL',
   created_at: '2026-10-06T12:00:00Z',
   lead_distribution_id: 50,
+  conversation_id: 42,
   company: { id: 101, name: 'Solar Pro' },
   lead: {
     id: 50,
@@ -94,13 +114,13 @@ describe('CompanyMarketplaceProposalsWorkspace', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Propostas para clientes' })).toBeInTheDocument();
-      expect(screen.getByText('Felipe')).toBeInTheDocument();
-      expect(screen.getByText('Rascunho')).toBeInTheDocument();
-      expect(screen.getByText('Abrir proposta')).toBeInTheDocument();
+      expect(screen.getAllByText('Felipe').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Rascunho').length).toBeGreaterThan(0);
+      expect(screen.getByText('Editar rascunho')).toBeInTheDocument();
     });
   });
 
-  it('abre o wizard de 7 etapas ao clicar em Abrir proposta', async () => {
+  it('abre o wizard de 7 etapas ao clicar em Editar rascunho', async () => {
     (companyMarketplaceProposalsApi.list as jest.Mock).mockResolvedValueOnce({
       proposals: [mockProposalDraft],
     });
@@ -111,10 +131,10 @@ describe('CompanyMarketplaceProposalsWorkspace', () => {
     render(<CompanyMarketplaceProposalsWorkspace />);
 
     await waitFor(() => {
-      expect(screen.getByText('Abrir proposta')).toBeInTheDocument();
+      expect(screen.getByText('Editar rascunho')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Abrir proposta'));
+    fireEvent.click(screen.getByText('Editar rascunho'));
 
     await waitFor(() => {
       expect(screen.getByText('Editar proposta')).toBeInTheDocument();
@@ -136,9 +156,9 @@ describe('CompanyMarketplaceProposalsWorkspace', () => {
     expect(screen.getByText('Dados da proposta')).toBeInTheDocument();
   });
 
-  it('abre e fecha o drawer de filtros avançados', async () => {
+  it('abre o modal de seleção explícita ao clicar em Nova proposta', async () => {
     (companyMarketplaceProposalsApi.list as jest.Mock).mockResolvedValueOnce({
-      proposals: [mockProposalDraft],
+      proposals: [],
     });
     (companyMarketplaceProposalsApi.distributions as jest.Mock).mockResolvedValueOnce({
       distributions: [mockDistribution],
@@ -147,19 +167,18 @@ describe('CompanyMarketplaceProposalsWorkspace', () => {
     render(<CompanyMarketplaceProposalsWorkspace />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Abrir filtros avançados')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Nova proposta/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByLabelText('Abrir filtros avançados'));
-    expect(screen.getByRole('heading', { name: 'Filtros' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Nova proposta/i }));
 
-    fireEvent.click(screen.getByLabelText('Fechar filtros'));
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: 'Filtros' })).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Criar Nova Proposta' })).toBeInTheDocument();
+      expect(screen.getByText('Selecione a oportunidade recebida para a qual deseja elaborar a proposta')).toBeInTheDocument();
     });
   });
 
-  it('abre os detalhes do lead ao clicar em Ver detalhes', async () => {
+  it('exibe tabs de detalhes Resumo, Itens, Documentos e Histórico', async () => {
     (companyMarketplaceProposalsApi.list as jest.Mock).mockResolvedValueOnce({
       proposals: [mockProposalDraft],
     });
@@ -170,15 +189,14 @@ describe('CompanyMarketplaceProposalsWorkspace', () => {
     render(<CompanyMarketplaceProposalsWorkspace />);
 
     await waitFor(() => {
-      expect(screen.getByText('Ver detalhes')).toBeInTheDocument();
+      expect(screen.getByText('Resumo Comercial')).toBeInTheDocument();
+      expect(screen.getByText('Itens & Técnico')).toBeInTheDocument();
+      expect(screen.getByText('Histórico & Versões')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Ver detalhes'));
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Detalhes do lead' })).toBeInTheDocument();
-      expect(screen.getByText('felipe@example.com')).toBeInTheDocument();
-      expect(screen.getByText('(48) 99123-4567')).toBeInTheDocument();
-    });
+    // Alternar para aba Itens & Técnico
+    fireEvent.click(screen.getByText('Itens & Técnico'));
+    expect(screen.getByText('Lista de Itens, Equipamentos e Serviços')).toBeInTheDocument();
+    expect(screen.getByText('Carregador Wallbox 7,4 kW')).toBeInTheDocument();
   });
 });

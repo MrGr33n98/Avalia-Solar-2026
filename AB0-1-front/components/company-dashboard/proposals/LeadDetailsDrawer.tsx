@@ -221,11 +221,32 @@ export function LeadDetailsDrawer({
 
           {activeTab === 'messages' && (
             <div className="flex min-h-[180px] flex-col items-center justify-center text-center p-6 text-slate-500">
-              <MessageSquare className="h-8 w-8 text-slate-300 mb-2" />
-              <p className="text-xs font-medium">Nenhuma mensagem direta aberta para este lead.</p>
-              <p className="text-[11px] text-slate-400 mt-1">
-                As conversas são iniciadas quando a proposta for publicada ou em negociação.
-              </p>
+              <MessageSquare className="h-8 w-8 text-blue-500/60 mb-2" />
+              {proposal?.conversation_id ? (
+                <>
+                  <p className="text-xs font-bold text-slate-800">
+                    Conversa ativa vinculada a esta proposta
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-xs">
+                    As mensagens desta oportunidade estão sincronizadas no painel de conversa do workspace e na Caixa de Entrada.
+                  </p>
+                  <a
+                    href="/dashboard/inbox"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                  >
+                    Abrir na Caixa de Entrada
+                  </a>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs font-medium text-slate-700">
+                    Nenhuma conversa aberta para este lead até o momento
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-xs">
+                    O canal de mensagens diretas é inicializado com segurança quando o comprador interagir com a proposta enviada.
+                  </p>
+                </>
+              )}
             </div>
           )}
 

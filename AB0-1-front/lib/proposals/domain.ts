@@ -294,3 +294,35 @@ export const TECHNICAL_FIELDS_BY_VERTICAL: Record<ProductVertical, TechnicalFiel
     },
   ],
 };
+
+export type ProposalGroupedFilter =
+  | 'all'
+  | 'draft'
+  | 'sent_or_review'
+  | 'negotiating'
+  | 'accepted'
+  | 'closed';
+
+export const PROPOSAL_GROUPED_STATUS_MAP: Record<ProposalGroupedFilter, string[]> = {
+  all: [],
+  draft: ['draft'],
+  sent_or_review: ['sent', 'viewed', 'under_review'],
+  negotiating: ['negotiating', 'meeting_scheduled'],
+  accepted: ['accepted'],
+  closed: ['declined', 'withdrawn', 'expired', 'not_selected', 'closed_after_selection'],
+};
+
+export const PROPOSAL_GROUPED_TABS: Array<{ value: ProposalGroupedFilter; label: string }> = [
+  { value: 'all', label: 'Todas' },
+  { value: 'draft', label: 'Rascunhos' },
+  { value: 'sent_or_review', label: 'Enviadas' },
+  { value: 'negotiating', label: 'Em negociação' },
+  { value: 'accepted', label: 'Aprovadas' },
+  { value: 'closed', label: 'Encerradas' },
+];
+
+export function matchesGroupedFilter(status: string | undefined, filter: ProposalGroupedFilter): boolean {
+  if (filter === 'all' || !status) return true;
+  const targetStatuses = PROPOSAL_GROUPED_STATUS_MAP[filter];
+  return targetStatuses ? targetStatuses.includes(status) : true;
+}

@@ -18,7 +18,7 @@ module Api
 
         def index
           authorize @company, :view_leads?
-          proposals = @company.marketplace_proposals.includes(:lead, :company, :versions).order(created_at: :desc)
+          proposals = @company.marketplace_proposals.includes(:lead, :company, :versions, :linked_conversations, :conversations).order(created_at: :desc)
           render json: { proposals: proposals.map { |proposal| serialize(proposal) } }
         end
 
@@ -235,6 +235,7 @@ module Api
 
         def set_proposal
           @proposal = @company.marketplace_proposals.includes(:lead, :versions, :meetings,
+                                                              :linked_conversations, :conversations,
                                                               project: :milestones).find(params[:id])
         rescue ActiveRecord::RecordNotFound
           render json: { error: 'Proposta não encontrada' }, status: :not_found
@@ -325,6 +326,10 @@ module Api
 
         def serialize(proposal)
           version = proposal.current_version
+          linked_conv = proposal.linked_conversations.first ||
+                        proposal.conversations.first ||
+                        (proposal.buyer_user_id && ::Conversation.find_by(company_id: proposal.company_id, user_id: proposal.buyer_user_id)) ||
+                        (proposal.lead&.user_id && ::Conversation.find_by(company_id: proposal.company_id, user_id: proposal.lead.user_id))
           {
             id: proposal.id,
             reference: proposal.reference,
@@ -337,6 +342,7 @@ module Api
             updated_at: proposal.updated_at,
             events: proposal.events.order(:occurred_at, :id).map { |event| event.as_json(only: %i[id event_type occurred_at metadata]) },
             lead_distribution_id: proposal.lead_distribution_id,
+            conversation_id: linked_conv&.id,
             company: { id: proposal.company_id, name: proposal.company.name },
             lead: proposal.lead.as_json(only: %i[id name email phone product_vertical project_profile city state
                                                  address_full monthly_kwh bill_value]),

@@ -3681,6 +3681,7 @@ export type MarketplaceProposal = {
     bill_value?: number | null;
   };
   lead_distribution_id?: number;
+  conversation_id?: number | null;
   version?: MarketplaceProposalVersion | null;
   versions?: MarketplaceProposalVersion[];
   project?: MarketplaceProposalProject | null;
@@ -3741,6 +3742,10 @@ export const marketplaceProposalsApi = {
 export const companyMarketplaceProposalsApi = {
   list: (companyId?: string | number) =>
     fetchApi<MarketplaceProposalListResponse>('/company_dashboard/proposals', {
+      params: companyId ? { company_id: companyId } : undefined,
+    }),
+  get: (id: number | string, companyId?: string | number) =>
+    fetchApi<MarketplaceProposalResponse>('/company_dashboard/proposals/' + id, {
       params: companyId ? { company_id: companyId } : undefined,
     }),
   distributions: (companyId?: string | number) =>
