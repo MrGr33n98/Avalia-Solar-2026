@@ -66,7 +66,40 @@ describe('CompanyHero — enquadramento do banner', () => {
       .find((image) => image.getAttribute('src') === 'https://example.com/banner.png');
     expect(banner).toBeDefined();
     expect(banner).toHaveClass('object-center');
-    expect(banner).not.toHaveClass('object-cover');
-    expect(banner).toHaveStyle({ objectFit: 'contain' });
+    expect(banner).toHaveClass('object-cover');
+    expect(banner).toHaveStyle({ objectFit: 'cover' });
+  });
+
+  it('renderiza o avatar da empresa padronizado com border-2 border-white e sem padding duplo', () => {
+    render(
+      <CompanyHero
+        company={
+          {
+            id: 1,
+            name: 'Empresa Teste',
+            slug: 'empresa-teste',
+            description: 'Descrição',
+            verified: false,
+            active_admin: true,
+          } as any
+        }
+        companyStats={{ rating: 4.5, reviewCount: 10 }}
+        bannerUrl={null}
+        bannerError={false}
+        setBannerError={jest.fn()}
+        logoUrl="https://example.com/logo.png"
+        logoError={false}
+        setLogoError={jest.fn()}
+        ctaEnabled={false}
+        ctaUrl={null}
+      />
+    );
+
+    const logo = screen.getByAltText('Empresa Teste');
+    const logoContainer = logo.closest('.rounded-\\[14px\\]');
+    expect(logoContainer).toBeInTheDocument();
+    expect(logoContainer).toHaveClass('border-2', 'border-white', 'bg-white', 'shadow-sm', 'overflow-hidden');
+    expect(logoContainer).not.toHaveClass('p-1.5', 'p-0.5');
+    expect(logo).toHaveClass('object-contain', 'p-0');
   });
 });

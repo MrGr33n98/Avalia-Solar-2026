@@ -1,9 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CompanyIdentityCard from '@/app/companies/[id]/components/CompanyIdentityCard';
 import CompanyPremiumHero from '@/app/companies/[id]/components/CompanyPremiumHero';
 import CompanyCTAGroup from '@/app/companies/[id]/components/CompanyCTAGroup';
-import CompanyVerifiedBadge, { OFFICIAL_VERIFIED_MESSAGE } from '@/components/company/CompanyVerifiedBadge';
+import { OFFICIAL_VERIFIED_MESSAGE } from '@/components/company/CompanyVerifiedBadge';
 import type { Company } from '@/lib/api';
 
 jest.mock('@/components/ui/optimized-image', () => ({
@@ -91,8 +91,8 @@ const mockCompanyFreeUnverified: Company = {
 } as unknown as Company;
 
 describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => {
-  describe('CompanyIdentityCard — Logo e Moldura', () => {
-    it('renderiza a logo com dimensão mobile de 62px (faixa 60-64px), moldura única de 2px e objectFit contain', () => {
+  describe('CompanyIdentityCard — Logo e Moldura (Padrão LinkedIn)', () => {
+    it('renderiza a logo com dimensão mobile de 62px, moldura fina de 2px branca, sem padding duplo e com objectFit contain', () => {
       render(
         <CompanyIdentityCard
           company={mockCompanyVerified}
@@ -103,16 +103,49 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
         />
       );
 
-      // Box da logo
-      const logoBox = screen.getByAltText('WEG Solar').closest('.rounded-2xl');
+      // Box da logo padrão LinkedIn
+      const logoBox = screen.getByAltText('WEG Solar').closest('.rounded-\\[14px\\]');
       expect(logoBox).toBeInTheDocument();
-      expect(logoBox).toHaveClass('h-[62px]', 'w-[62px]', 'border-2', 'overflow-hidden');
+      expect(logoBox).toHaveClass(
+        'h-[62px]',
+        'w-[62px]',
+        'border-2',
+        'border-white',
+        'bg-white',
+        'shadow-sm',
+        'overflow-hidden',
+        'rounded-[14px]'
+      );
+      // Garante ausência total de padding duplicado no contêiner
+      expect(logoBox).not.toHaveClass('p-0.5', 'p-1', 'p-1.5', 'p-2');
 
       const logoImg = screen.getByAltText('WEG Solar');
       expect(logoImg).toHaveStyle({ objectFit: 'contain' });
+      expect(logoImg).toHaveClass('object-contain', 'p-0');
+      expect(logoImg).not.toHaveClass('p-0.5', 'p-1');
+
+      const imgContainer = screen.getByTestId('optimized-image-container');
+      expect(imgContainer).toHaveClass('absolute', 'inset-0', 'h-full', 'w-full');
     });
 
-    it('renderiza letra inicial elegante quando não há logo URL', () => {
+    it('preserva integridade de logos horizontais e retangulares com object-contain', () => {
+      render(
+        <CompanyIdentityCard
+          company={{ ...mockCompanyVerified, name: 'Horizontal Brand Solar' }}
+          companyStats={{ rating: '5.0', reviewCount: 12 }}
+          logoUrl="https://example.com/wide-logo-3x1.png"
+          logoError={false}
+          setLogoError={jest.fn()}
+        />
+      );
+
+      const logoImg = screen.getByAltText('Horizontal Brand Solar');
+      expect(logoImg).toBeInTheDocument();
+      expect(logoImg).toHaveStyle({ objectFit: 'contain' });
+      expect(logoImg).toHaveClass('object-contain', 'p-0');
+    });
+
+    it('renderiza letra inicial elegante com raio interno de 12px quando não há logo URL', () => {
       render(
         <CompanyIdentityCard
           company={mockCompanyVerified}
@@ -123,7 +156,9 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
         />
       );
 
-      expect(screen.getByText('W')).toBeInTheDocument();
+      const letterNode = screen.getByText('W');
+      expect(letterNode).toBeInTheDocument();
+      expect(letterNode).toHaveClass('rounded-[12px]');
     });
   });
 

@@ -5,7 +5,7 @@ import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
 import CompanyFreeBannerPlaceholder from './CompanyFreeBannerPlaceholder';
 import { resolveCompanyHeroBannerState } from '@/utils/company-banner';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Share2, ArrowLeft, MapPin, Star, BadgeCheck, Diamond } from 'lucide-react';
+import { MessageCircle, Share2, ArrowLeft, MapPin, Star } from 'lucide-react';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -287,23 +287,21 @@ export default function CompanyHero({
               <div className="flex min-w-0 flex-1 items-start gap-4 sm:items-center sm:gap-5">
                 {/* Logo e selo integrados à mesma moldura */}
                 <div className="relative shrink-0 -translate-y-8 overflow-visible sm:-translate-y-10 lg:-translate-y-12">
-                  <div className="relative h-[88px] w-[88px] rounded-[18px] border border-slate-300 bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.08)] sm:h-[104px] sm:w-[104px] sm:rounded-[20px]">
-                    <div className="relative h-full w-full overflow-hidden rounded-[14px] bg-white sm:rounded-[16px]">
-                      <OptimizedImage
-                        src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
-                        alt={company.name}
-                        fill
-                        priority
-                        imageContext="company-logo"
-                        entityName={company.name}
-                        locationLabel={locationLabel}
-                        objectFit="contain"
-                        className="p-0"
-                        containerClassName="absolute inset-0 h-full w-full"
-                        fallbackSrc="/images/logo-placeholder.svg"
-                        onError={() => setLogoError(true)}
-                      />
-                    </div>
+                  <div className="relative h-[88px] w-[88px] sm:h-[104px] sm:w-[104px] overflow-hidden rounded-[14px] sm:rounded-[16px] border-2 border-white bg-white shadow-sm flex items-center justify-center">
+                    <OptimizedImage
+                      src={!logoUrl || logoError ? '/images/logo-placeholder.svg' : logoUrl}
+                      alt={company.name}
+                      fill
+                      priority
+                      imageContext="company-logo"
+                      entityName={company.name}
+                      locationLabel={locationLabel}
+                      objectFit="contain"
+                      className="object-contain p-0"
+                      containerClassName="absolute inset-0 h-full w-full"
+                      fallbackSrc="/images/logo-placeholder.svg"
+                      onError={() => setLogoError(true)}
+                    />
                   </div>
 
                   {/* Selo preso ao canto superior esquerdo da logo, como na referência. */}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { ReactNode } from 'react';
-import { MapPin, Star, BadgeCheck, Truck, Calendar, Globe, ExternalLink, Heart, Share2 } from 'lucide-react';
+import { MapPin, Star, Truck, Calendar, Globe, ExternalLink, Heart, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Company } from '@/lib/api';
@@ -162,7 +162,7 @@ export default function CompanyIdentityCard({
         <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4 lg:gap-5">
           {/* Box da Logo (Overlapping no Banner) - Moldura única de 2px e 62px mobile */}
           <div className="relative shrink-0 -mt-6 sm:-mt-9 lg:-mt-12 overflow-visible z-30">
-            <div className="relative h-[62px] w-[62px] rounded-2xl border-2 border-white/95 bg-white p-0.5 shadow-md sm:h-[84px] sm:w-[84px] lg:h-[96px] lg:w-[96px] overflow-hidden flex items-center justify-center">
+            <div className="relative h-[62px] w-[62px] sm:h-[84px] sm:w-[84px] lg:h-[96px] lg:w-[96px] overflow-hidden rounded-[14px] border-2 border-white bg-white shadow-sm flex items-center justify-center">
               {hasLogo ? (
                 <OptimizedImage
                   src={logoUrl!}
@@ -173,13 +173,13 @@ export default function CompanyIdentityCard({
                   entityName={company.name}
                   locationLabel={locationLabel}
                   objectFit="contain"
-                  className="object-contain p-0.5"
-                  containerClassName="relative h-full w-full"
+                  className="object-contain p-0"
+                  containerClassName="absolute inset-0 h-full w-full"
                   fallbackSrc="/images/logo-placeholder.svg"
                   onError={() => setLogoError(true)}
                 />
               ) : (
-                <div className="flex h-full w-full select-none items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-black text-white sm:text-2xl">
+                <div className="flex h-full w-full select-none items-center justify-center rounded-[12px] bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-black text-white sm:text-2xl">
                   {initialLetter}
                 </div>
               )}
