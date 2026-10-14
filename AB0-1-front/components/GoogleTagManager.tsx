@@ -33,6 +33,15 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
           'ad_personalization': 'denied'
         });
         gtag('js', new Date());
+        var h = window.location.hostname;
+        var cd = 'none';
+        if (h && h.indexOf('avaliasolar.com.br') !== -1) {
+          cd = 'avaliasolar.com.br';
+        }
+        gtag('set', {
+          cookie_domain: cd,
+          cookie_flags: window.location.protocol === 'https:' ? 'SameSite=Lax;Secure' : 'SameSite=Lax'
+        });
         try {
           var c = JSON.parse(localStorage.getItem('avaliasolar_consent') || 'null');
           if (c) gtag('consent', 'update', {

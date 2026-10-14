@@ -20,6 +20,31 @@ type NavigatorWithConnection = Navigator & {
   connection?: NetworkInformationLike;
 };
 
+export const getPostHogCookieDomain = (overrideHostname?: string): string | undefined => {
+  if (typeof window === 'undefined' && !overrideHostname) return undefined;
+  const hostname =
+    overrideHostname || (typeof window !== 'undefined' ? window.location.hostname : '');
+
+  if (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)
+  ) {
+    return hostname;
+  }
+
+  const configuredDomain = process.env.NEXT_PUBLIC_GA_COOKIE_DOMAIN?.trim().replace(/^\./, '');
+  if (configuredDomain && (hostname === configuredDomain || hostname.endsWith(`.${configuredDomain}`))) {
+    return `.${configuredDomain}`;
+  }
+
+  if (hostname.endsWith('avaliasolar.com.br')) {
+    return '.avaliasolar.com.br';
+  }
+
+  return undefined;
+};
+
 function exposeAnalyticsBridge(posthogInstance: any) {
   window.__analyticsPosthog = {
     alias: (newId) => posthogInstance.alias(newId),
@@ -159,7 +184,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           posthog.init(POSTHOG_KEY, {
             api_host: POSTHOG_HOST,
             // @ts-ignore
-            cookie_domain: window.location.hostname === 'localhost' ? 'localhost' : undefined,
+            cookie_domain: getPostHogCookieDomain(),
 
             person_profiles: 'identified_only',
             capture_pageview: false,

@@ -1,4 +1,5 @@
 import { initializeGTag, getGaCookieDomain } from '@/lib/analytics/gtag';
+import { getPostHogCookieDomain } from '@/components/PostHogProvider';
 import { buildCanonicalUrl, SURFACE_ORIGINS } from '@/lib/routing/surface-origins';
 
 describe('REA Runtime Fixes — Testes de Regressão e Resiliência', () => {
@@ -7,19 +8,26 @@ describe('REA Runtime Fixes — Testes de Regressão e Resiliência', () => {
     window.dataLayer = [];
   });
 
-  describe('EXP-05: GA4 Cookie Domain Resolution & Flags', () => {
-    it('retorna "none" em localhost para evitar rejeição de cookie no browser', () => {
+  describe('EXP-05: GA4 & PostHog Cookie Domain Resolution & Flags', () => {
+    it('retorna "none" em localhost e IP para GA4', () => {
       expect(getGaCookieDomain('localhost')).toBe('none');
       expect(getGaCookieDomain('127.0.0.1')).toBe('none');
-    });
-
-    it('retorna "none" em endereços IP diretos (ex: droplet 64.225.59.107)', () => {
       expect(getGaCookieDomain('64.225.59.107')).toBe('none');
     });
 
-    it('retorna "auto" em subdomínios padrão na ausência de configuração específica', () => {
-      expect(getGaCookieDomain('www.avaliasolar.com.br')).toBe('auto');
-      expect(getGaCookieDomain('app.avaliasolar.com.br')).toBe('auto');
+    it('retorna domínio raiz para GA4 em subdomínios de avaliasolar.com.br', () => {
+      expect(getGaCookieDomain('www.avaliasolar.com.br')).toBe('avaliasolar.com.br');
+      expect(getGaCookieDomain('app.avaliasolar.com.br')).toBe('avaliasolar.com.br');
+      expect(getGaCookieDomain('outro-site.com')).toBe('auto');
+    });
+
+    it('resolve domínio do PostHog sem disparar probes dmn_chk', () => {
+      expect(getPostHogCookieDomain('localhost')).toBe('localhost');
+      expect(getPostHogCookieDomain('127.0.0.1')).toBe('127.0.0.1');
+      expect(getPostHogCookieDomain('64.225.59.107')).toBe('64.225.59.107');
+      expect(getPostHogCookieDomain('www.avaliasolar.com.br')).toBe('.avaliasolar.com.br');
+      expect(getPostHogCookieDomain('app.avaliasolar.com.br')).toBe('.avaliasolar.com.br');
+      expect(getPostHogCookieDomain('desconhecido.com')).toBeUndefined();
     });
 
     it('inicializa o gtag com cookie_domain e flags seguras', () => {

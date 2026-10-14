@@ -33,6 +33,10 @@ export const getGaCookieDomain = (overrideHostname?: string): string => {
     return configuredDomain;
   }
 
+  if (hostname.endsWith('avaliasolar.com.br')) {
+    return 'avaliasolar.com.br';
+  }
+
   return 'auto';
 };
 
