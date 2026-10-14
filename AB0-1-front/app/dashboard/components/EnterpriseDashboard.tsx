@@ -930,17 +930,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 className="mt-0 focus-visible:outline-none"
                 data-tour="settings"
               >
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Configurações
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Ajuste as configurações da sua conta
-                    </p>
-                  </div>
-                  <CompanySettings companyId={companyId} company={company} />
-                </div>
+                <CompanySettings companyId={companyId} company={company} />
               </TabsContent>
 
               <TabsContent
