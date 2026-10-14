@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export const OFFICIAL_VERIFIED_MESSAGE =
-  'Perfil oficial e validado pela plataforma Avalia Solar.';
+  'Empresa verificada pelo Avalia Solar.\n\nAs informações cadastrais passaram pelo nosso processo de verificação.';
 
 export interface CompanyVerifiedBadgeProps {
   className?: string;
@@ -120,7 +120,7 @@ export function CompanyVerifiedBadge({
           }}
           className="z-[9999] max-w-[260px] rounded-xl border border-slate-700/60 bg-[#0f172a] px-3.5 py-2.5 text-center text-xs font-medium leading-relaxed text-slate-100 shadow-2xl animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
         >
-          <p className="select-none leading-snug">{displayText}</p>
+          <p className="select-none leading-snug whitespace-pre-line text-left">{displayText}</p>
           <TooltipPrimitive.Arrow className="fill-[#0f172a]" width={10} height={5} />
         </TooltipContent>
       </Tooltip>

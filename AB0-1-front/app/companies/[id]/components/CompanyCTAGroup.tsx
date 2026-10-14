@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Star, Send, Layers } from 'lucide-react';
 import { toast } from 'sonner';
@@ -61,62 +63,51 @@ export default function CompanyCTAGroup({
   return (
     <div
       id="company-cta-group"
-      className={cn(
-        'grid w-full min-w-0 gap-1 pt-1.5 min-[360px]:gap-1.5 min-[414px]:gap-2 lg:flex lg:w-auto lg:items-center lg:justify-end lg:gap-2.5',
-        canRequestQuote
-          ? 'grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)_minmax(0,1.2fr)]'
-          : 'grid-cols-2'
-      )}
+      className="flex flex-col w-full min-w-0 gap-1.5 lg:flex-row lg:w-auto lg:items-center lg:justify-end lg:gap-2"
     >
-      {/* 1. Solicitar contato (Primário Azul - Proporção 1.3fr) */}
+      {/* 1. Linha 1 (Mobile) / Botão Primário (Desktop): Solicitar orçamento (apenas com entitlement ativo) */}
       {canRequestQuote && (
         <Button
           type="button"
           size="default"
           onClick={handleRequestQuote}
-          className="h-12 min-h-[48px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl bg-blue-600 px-0.5 text-[10px] font-semibold leading-4 text-white shadow-sm transition-colors hover:bg-blue-700 min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[145px]"
+          className="relative h-10 min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-blue-600 px-3 text-xs font-semibold leading-none text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-[0.99] sm:text-sm lg:h-10 lg:w-auto lg:flex-none lg:min-w-[155px]"
         >
-          <Send
-            className="h-[18px] w-[18px] shrink-0 fill-current min-[390px]:h-5 min-[390px]:w-5"
-            aria-hidden="true"
-          />
-          <span className="whitespace-nowrap">Solicitar contato</span>
+          <Send className="h-4 w-4 shrink-0 fill-current" aria-hidden="true" />
+          <span className="truncate">Solicitar orçamento</span>
         </Button>
       )}
 
-      {/* 2. Comparar (Secundário Outline Azul - Proporção 0.9fr) */}
-      <Button
-        type="button"
-        variant="outline"
-        size="default"
-        onClick={handleToggleComparison}
-        className={cn(
-          'h-12 min-h-[48px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl border px-0.5 text-[10px] font-semibold leading-4 transition-colors min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[100px]',
-          isCompared
-            ? 'border-blue-600 bg-blue-50 text-blue-700'
-            : 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
-        )}
-      >
-        <Layers
-          className="h-[18px] w-[18px] shrink-0 text-blue-600 min-[390px]:h-5 min-[390px]:w-5"
-          aria-hidden="true"
-        />
-        <span className="whitespace-nowrap">{isCompared ? 'Comparando' : 'Comparar'}</span>
-      </Button>
+      {/* 2. Linha 2 (Mobile 50/50) / Botões Secundários (Desktop): Comparar + Avaliar empresa */}
+      <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 lg:flex lg:w-auto lg:items-center lg:gap-2">
+        {/* Comparar (Secundário Outline Azul) */}
+        <Button
+          type="button"
+          variant="outline"
+          size="default"
+          onClick={handleToggleComparison}
+          className={cn(
+            'relative h-10 min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1.5 rounded-[10px] border px-2 text-xs font-semibold leading-none transition-colors sm:text-sm lg:h-10 lg:w-auto lg:flex-none lg:min-w-[105px]',
+            isCompared
+              ? 'border-blue-600 bg-blue-50 text-blue-700'
+              : 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
+          )}
+        >
+          <Layers className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+          <span className="truncate">{isCompared ? 'Comparando' : 'Comparar'}</span>
+        </Button>
 
-      {/* 3. Avaliar empresa (Review CTA Warm Light Accent - Proporção 1.2fr) */}
-      <Link
-        href={reviewPath}
-        aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
-        title="Avaliar empresa"
-        className="h-12 min-h-[48px] w-full min-w-0 inline-flex items-center justify-center gap-0.5 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-0.5 text-[10px] font-semibold leading-4 text-slate-900 transition-colors hover:bg-amber-500/[0.12] min-[360px]:gap-1 min-[360px]:px-1 min-[360px]:text-[11px] min-[375px]:px-1.5 sm:px-3 lg:h-10 lg:w-auto lg:flex-none lg:min-w-[130px]"
-      >
-        <Star
-          className="h-[18px] w-[18px] shrink-0 fill-amber-400 text-amber-400 min-[390px]:h-5 min-[390px]:w-5"
-          aria-hidden="true"
-        />
-        <span className="whitespace-nowrap text-slate-900">Avaliar empresa</span>
-      </Link>
+        {/* Avaliar empresa (Review CTA Warm Light Accent) */}
+        <Link
+          href={reviewPath}
+          aria-label={company.name ? `Avaliar empresa: ${company.name}` : 'Avaliar empresa'}
+          title="Avaliar empresa"
+          className="relative h-10 min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-amber-400/80 bg-amber-500/[0.06] px-2 text-xs font-semibold leading-none text-slate-900 transition-colors hover:bg-amber-500/[0.12] sm:text-sm lg:h-10 lg:w-auto lg:flex-none lg:min-w-[130px]"
+        >
+          <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
+          <span className="truncate text-slate-900">Avaliar empresa</span>
+        </Link>
+      </div>
     </div>
   );
 }

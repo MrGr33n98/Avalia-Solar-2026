@@ -39,7 +39,7 @@ const company = {
   },
 } as unknown as Company;
 
-describe('CompanyCTAGroup', () => {
+describe('CompanyCTAGroup — SPEC-UI-027', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useComparison as jest.Mock).mockReturnValue({
@@ -49,49 +49,47 @@ describe('CompanyCTAGroup', () => {
     });
   });
 
-  it('mantém os três CTAs completos e sem truncamento', () => {
+  it('com entitlement ativo: exibe Solicitar orçamento na linha 1 (100%) e Comparar + Avaliar em grid 50/50 na linha 2', () => {
     render(<CompanyCTAGroup company={company} canRequestQuote />);
 
-    expect(screen.getByRole('button', { name: 'Solicitar contato' })).toHaveTextContent(
-      'Solicitar contato'
-    );
-    expect(screen.getByRole('button', { name: 'Comparar' })).toHaveTextContent('Comparar');
-    expect(screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' })).toHaveTextContent(
-      'Avaliar empresa'
-    );
-    expect(screen.getByText('Solicitar contato')).toHaveClass('whitespace-nowrap');
-    expect(screen.getByText('Avaliar empresa')).toHaveClass('whitespace-nowrap');
-    expect(screen.queryByText('Avaliar...')).not.toBeInTheDocument();
+    const quoteBtn = screen.getByRole('button', { name: 'Solicitar orçamento' });
+    expect(quoteBtn).toBeInTheDocument();
+    expect(quoteBtn).toHaveClass('w-full', 'h-10', 'min-h-[44px]');
+
+    const compareBtn = screen.getByRole('button', { name: 'Comparar' });
+    expect(compareBtn).toBeInTheDocument();
+    expect(compareBtn).toHaveClass('w-full', 'h-10', 'min-h-[44px]');
+
+    const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' });
+    expect(reviewLink).toBeInTheDocument();
+    expect(reviewLink).toHaveClass('w-full', 'h-10', 'min-h-[44px]');
+
+    const secondaryGrid = compareBtn.closest('.grid');
+    expect(secondaryGrid).toHaveClass('grid-cols-2', 'gap-1.5', 'w-full');
   });
 
-  it('aplica densidade mobile de 48px e preserva overrides desktop', () => {
-    render(<CompanyCTAGroup company={company} canRequestQuote />);
-
-    const group = document.getElementById('company-cta-group');
-    expect(group).toHaveClass('grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)_minmax(0,1.2fr)]');
-
-    expect(screen.getByRole('button', { name: 'Solicitar contato' })).toHaveClass(
-      'h-12',
-      'min-h-[48px]',
-      'lg:h-10'
-    );
-    expect(screen.getByRole('button', { name: 'Comparar' })).toHaveClass(
-      'h-12',
-      'min-h-[48px]',
-      'lg:h-10'
-    );
-    expect(screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' })).toHaveClass(
-      'h-12',
-      'min-h-[48px]',
-      'lg:h-10'
-    );
-  });
-
-  it('oculta o CTA de contato quando o gate não está habilitado', () => {
+  it('plano Free (sem entitlement): oculta Solicitar orçamento e exibe Comparar + Avaliar sem espaço vazio superior', () => {
     render(<CompanyCTAGroup company={company} canRequestQuote={false} />);
 
-    expect(screen.queryByRole('button', { name: 'Solicitar contato' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Comparar' })).toBeInTheDocument();
-    expect(document.getElementById('company-cta-group')).toHaveClass('grid-cols-2');
+    expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
+
+    const compareBtn = screen.getByRole('button', { name: 'Comparar' });
+    expect(compareBtn).toBeInTheDocument();
+
+    const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' });
+    expect(reviewLink).toBeInTheDocument();
+
+    const secondaryGrid = compareBtn.closest('.grid');
+    expect(secondaryGrid).toHaveClass('grid-cols-2', 'gap-1.5', 'w-full');
+  });
+
+  it('aplica tokens de densidade visual: altura visual 40px (h-10), hit target >=44px e gap de 6px (gap-1.5)', () => {
+    render(<CompanyCTAGroup company={company} canRequestQuote />);
+
+    const quoteBtn = screen.getByRole('button', { name: 'Solicitar orçamento' });
+    expect(quoteBtn).toHaveClass('h-10', 'min-h-[44px]', 'rounded-[10px]');
+
+    const group = document.getElementById('company-cta-group');
+    expect(group).toHaveClass('gap-1.5');
   });
 });

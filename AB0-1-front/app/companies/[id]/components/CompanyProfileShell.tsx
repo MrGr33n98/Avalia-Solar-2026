@@ -94,7 +94,7 @@ export default function CompanyProfileShell({
     <div id="company-profile-shell" data-company-layout="premium-shell" className="min-h-screen bg-[#f7f9fc] text-slate-900 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
       {/* Cabeçalho & Hero Premium */}
       <header className="bg-transparent border-none">
-        <div className="mx-auto w-full max-w-[480px] px-3 pt-2 sm:px-4 sm:pt-4 md:max-w-[1240px] md:px-6">
+        <div className="mx-auto w-full max-w-[480px] px-3.5 min-[412px]:px-4 pt-2 sm:px-4 sm:pt-4 md:max-w-[1240px] md:px-6">
           <AppBreadcrumb items={breadcrumbItems} compact className="mb-3" />
 
           {/* Compound Hero Container estilo WEG */}
@@ -146,7 +146,7 @@ export default function CompanyProfileShell({
       </header>
 
       {/* Grid Principal responsivo de 12 colunas */}
-      <main className="mx-auto w-full max-w-[480px] px-3 py-3 md:max-w-[1240px] md:px-6 md:py-8">
+      <main className="mx-auto w-full max-w-[480px] px-3.5 min-[412px]:px-4 py-3 md:max-w-[1240px] md:px-6 md:py-8">
         <Tabs value={activeTab} className="w-full">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {/* Coluna da Esquerda (8 Colunas) — Aba Ativa */}

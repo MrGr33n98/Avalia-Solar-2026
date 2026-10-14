@@ -77,6 +77,7 @@ AB0-1-front/public/3d-icones/
 !AB0-1-front/__tests__/components/EnterpriseSidebar.test.tsx
 !AB0-1-front/__tests__/components/DashboardNavigationFlyout.test.tsx
 !AB0-1-front/__tests__/hooks/useCompanyDashboardData.test.ts
+!AB0-1-front/__tests__/components/CompanyProfileHeader.spec.tsx
 !AB0-1-front/__tests__/components/MarketplaceProposalsWorkspace.test.tsx
 !AB0-1-front/__tests__/components/ProposalCompactCard.test.tsx
 !AB0-1-front/__tests__/components/ProposalStatusSummary.test.tsx
@@ -102,6 +103,7 @@ docs/*
 docs/audits/*
 !docs/audits/company-proposals-enterprise/
 !docs/audits/company-proposals-enterprise/**
+!docs/audits/SPEC-UI-027_PERFIL_EMPRESAS_RELATORIO.md
 !docs/proposals/
 !docs/proposals/**
 !docs/03-campaign/

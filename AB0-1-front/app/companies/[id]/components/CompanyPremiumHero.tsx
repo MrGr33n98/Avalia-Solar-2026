@@ -29,8 +29,8 @@ export default function CompanyPremiumHero({
       id="company-premium-hero"
       className="relative w-full overflow-hidden bg-slate-900 rounded-2xl md:rounded-3xl"
     >
-      <div className="relative w-full aspect-[3/1] md:aspect-auto md:h-[200px] lg:h-[220px] xl:h-[230px]">
-        {/* Mobile mantém 3:1; desktop limita altura para preservar primeira dobra. */}
+      <div className="relative w-full aspect-[3.4/1] md:aspect-auto md:h-[176px] lg:h-[194px] xl:h-[202px]">
+        {/* Mobile proporção 3.4:1; desktop compacto para preservar primeira dobra sem vazios. */}
         {bannerState.kind === 'free-plan-placeholder' ? (
           <CompanyFreeBannerPlaceholder
             alt="Banner institucional Avalia Solar"
