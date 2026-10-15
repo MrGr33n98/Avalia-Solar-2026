@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_10_14_160000) do
+ActiveRecord::Schema[7.0].define(version: 2026_10_14_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -2938,6 +2938,27 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_14_160000) do
     t.index ["workflow_id"], name: "index_optimization_log_on_workflow_id"
   end
 
+  create_table "outbound_clicks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.uuid "anonymous_session_id"
+    t.string "source_context", limit: 50, default: "profile", null: false
+    t.string "destination_type", limit: 50, default: "website", null: false
+    t.string "target_url", limit: 2048, null: false
+    t.string "click_token_signature", limit: 128, null: false
+    t.string "ip_hash", limit: 64
+    t.string "user_agent_hash", limit: 64
+    t.string "idempotency_key", limit: 128
+    t.datetime "clicked_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["anonymous_session_id"], name: "index_outbound_clicks_on_anonymous_session_id"
+    t.index ["click_token_signature"], name: "index_outbound_clicks_on_click_token_signature"
+    t.index ["clicked_at"], name: "index_outbound_clicks_on_clicked_at"
+    t.index ["company_id", "clicked_at"], name: "index_outbound_clicks_on_company_id_and_clicked_at"
+    t.index ["company_id"], name: "index_outbound_clicks_on_company_id"
+    t.index ["idempotency_key"], name: "index_outbound_clicks_on_idempotency_key", unique: true
+  end
+
   create_table "payment_webhook_events", force: :cascade do |t|
     t.string "provider", null: false
     t.string "provider_event_id", null: false
@@ -5475,6 +5496,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_14_160000) do
   add_foreign_key "milestones", "transactions"
   add_foreign_key "notification_preferences", "users", on_delete: :cascade
   add_foreign_key "notifications", "users"
+  add_foreign_key "outbound_clicks", "companies"
   add_foreign_key "pending_changes", "admin_users", column: "approved_by_id"
   add_foreign_key "pending_changes", "companies"
   add_foreign_key "pending_changes", "users"

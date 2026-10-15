@@ -116,9 +116,9 @@ module Api
 
       def find_target_company(identifier)
         if identifier.to_s =~ /\A\d+\z/
-          Company.find_by(id: identifier)
+          ::Company.find_by(id: identifier)
         else
-          Company.find_by(slug: identifier)
+          ::Company.find_by(slug: identifier)
         end
       end
 

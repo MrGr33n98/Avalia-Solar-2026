@@ -17,9 +17,10 @@ RSpec.describe OutboundClick, type: :model do
   end
 
   describe 'validations' do
+    let!(:company) { create(:company) }
     let(:base_attributes) do
       {
-        company_id: 1,
+        company_id: company.id,
         source_context: 'profile',
         destination_type: 'website',
         target_url: 'https://exemplo-solar.com.br',
