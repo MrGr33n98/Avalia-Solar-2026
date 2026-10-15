@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/lib/api';
 
@@ -60,7 +60,6 @@ interface HomeCategoryRailProps {
 
 export function HomeCategoryRail({ className }: HomeCategoryRailProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   return (
     <nav
@@ -76,7 +75,7 @@ export function HomeCategoryRail({ className }: HomeCategoryRailProps) {
       >
         {PRIMARY_3D_CATEGORIES.map((cat) => {
           const href = `/categories/${cat.slug}`;
-          const isActive = pathname === href || searchParams?.get('category') === cat.slug;
+          const isActive = pathname === href;
 
           return (
             <Link

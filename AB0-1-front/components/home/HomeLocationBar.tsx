@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { MapPin, ChevronDown } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { BRAZIL_STATES_OPTIONS } from '@/lib/company-options';
 import {
   DropdownMenu,
@@ -19,16 +19,20 @@ interface HomeLocationBarProps {
 
 export function HomeLocationBar({ className, defaultState = 'SC' }: HomeLocationBarProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [selectedState, setSelectedState] = React.useState<string>(() => {
+  const [selectedState, setSelectedState] = React.useState<string>(defaultState);
+
+  React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const fromUrl = searchParams.get('state');
-      if (fromUrl) return fromUrl.toUpperCase();
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get('state');
+      if (fromUrl) {
+        setSelectedState(fromUrl.toUpperCase());
+        return;
+      }
       const stored = localStorage.getItem('user_state');
-      if (stored) return stored;
+      if (stored) setSelectedState(stored.toUpperCase());
     }
-    return defaultState;
-  });
+  }, []);
 
   const currentStateObj = React.useMemo(() => {
     return (

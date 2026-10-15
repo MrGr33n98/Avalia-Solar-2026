@@ -170,12 +170,16 @@ export default async function Home() {
 
       {/* 1. Barra de Localização Compacta */}
       <div className="mx-auto max-w-[1320px]">
-        <HomeLocationBar defaultState="SC" />
+        <Suspense fallback={<div className="h-8 animate-pulse bg-slate-50 rounded" />}>
+          <HomeLocationBar defaultState="SC" />
+        </Suspense>
       </div>
 
       {/* 2. Categorias: EXATAMENTE UMA LINHA com ícones 3D */}
       <div className="mx-auto max-w-[1320px]">
-        <HomeCategoryRail />
+        <Suspense fallback={<div className="h-20 animate-pulse bg-slate-50 rounded" />}>
+          <HomeCategoryRail />
+        </Suspense>
       </div>
 
       {/* 3. Hero Banner Compacto com Foto e CTA de Contraste */}
