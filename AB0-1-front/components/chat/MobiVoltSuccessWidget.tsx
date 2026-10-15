@@ -146,11 +146,11 @@ export default function MobiVoltSuccessWidget() {
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
                   <Image
-                    src="/images/mobivolt-ai-avaliasolar.webp"
-                    alt="MobiVolt Success Avatar"
+                    src="/assets/chat-widget-avalia-solar.png"
+                    alt="Avalia Solar Success Avatar"
                     width={40}
                     height={40}
-                    className="h-full w-full object-cover filter saturate-150 hue-rotate-15"
+                    className="h-full w-full object-cover"
                   />
                 </div>
                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-indigo-400 border-2 border-white dark:border-zinc-900 rounded-full animate-ping"></span>
@@ -273,11 +273,11 @@ export default function MobiVoltSuccessWidget() {
                 {msg.role === 'assistant' && (
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-indigo-200 dark:border-zinc-700/80 mt-1 bg-white">
                     <Image
-                      src="/images/mobivolt-ai-avaliasolar.webp"
-                      alt="MobiVolt Success"
+                      src="/assets/chat-widget-avalia-solar.png"
+                      alt="Avalia Solar"
                       width={32}
                       height={32}
-                      className="h-full w-full object-cover filter saturate-150 hue-rotate-15"
+                      className="h-full w-full object-cover"
                     />
                   </div>
                 )}
@@ -328,11 +328,11 @@ export default function MobiVoltSuccessWidget() {
               <div className="flex justify-start items-start space-x-2">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-indigo-200 dark:border-zinc-700/80 mt-1 bg-white">
                   <Image
-                    src="/images/mobivolt-ai-avaliasolar.webp"
-                    alt="MobiVolt Success"
+                    src="/assets/chat-widget-avalia-solar.png"
+                    alt="Avalia Solar"
                     width={32}
                     height={32}
-                    className="h-full w-full object-cover filter saturate-150 hue-rotate-15"
+                    className="h-full w-full object-cover"
                   />
                 </div>
                 <div className="flex items-center space-x-2 bg-white dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700 rounded-2xl rounded-tl-none px-4 py-3 max-w-[80px] shadow-sm">
@@ -450,11 +450,11 @@ export default function MobiVoltSuccessWidget() {
           </span>
 
           <Image
-            src="/images/mobivolt-ai-avaliasolar.webp"
-            alt="MobiVolt Success Avatar"
+            src="/assets/chat-widget-avalia-solar.png"
+            alt="Avalia Solar Success Avatar"
             width={60}
             height={60}
-            className="h-full w-full rounded-full object-cover filter saturate-150 hue-rotate-15"
+            className="h-full w-full rounded-full object-cover"
           />
         </button>
       )}

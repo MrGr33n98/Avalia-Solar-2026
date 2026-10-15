@@ -521,8 +521,8 @@ export default function ChatWidget() {
                 <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/images/mobivolt-ai-avaliasolar.webp"
-                    alt=""
+                    src="/assets/chat-widget-avalia-solar.png"
+                    alt="Avalia Solar"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -620,8 +620,8 @@ export default function ChatWidget() {
                 <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-2 border-2 border-brand-blue/20">
                    {/* eslint-disable-next-line @next/next/no-img-element */}
                    <img
-                    src="/images/mobivolt-ai-avaliasolar.webp"
-                    alt=""
+                    src="/assets/chat-widget-avalia-solar.png"
+                    alt="Avalia Solar"
                     className="w-24 h-24 object-cover rounded-full"
                   />
                 </div>
@@ -714,8 +714,8 @@ export default function ChatWidget() {
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/images/mobivolt-ai-avaliasolar.webp"
-                      alt=""
+                      src="/assets/chat-widget-avalia-solar.png"
+                      alt="Avalia Solar"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -786,8 +786,8 @@ export default function ChatWidget() {
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-amber-200 dark:border-zinc-700/80 mt-1 bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/images/mobivolt-ai-avaliasolar.webp"
-                    alt=""
+                    src="/assets/chat-widget-avalia-solar.png"
+                    alt="Avalia Solar"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -994,10 +994,13 @@ export default function ChatWidget() {
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               {/* Speech bubble avatar icon on the left */}
-              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-[#222D42]">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
+              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-[#222D42] overflow-hidden border border-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/assets/chat-widget-avalia-solar.png"
+                  alt="Avalia Solar"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-bold text-white leading-tight">Olá! Precisa de ajuda?</h3>
@@ -1061,8 +1064,8 @@ export default function ChatWidget() {
           <span className="flex h-11 w-11 overflow-hidden rounded-full bg-white">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/mobivolt-ai-avaliasolar.webp"
-              alt=""
+              src="/assets/chat-widget-avalia-solar.png"
+              alt="Avalia Solar"
               className="h-full w-full rounded-full object-cover"
             />
           </span>
