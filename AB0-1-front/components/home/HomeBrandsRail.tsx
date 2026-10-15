@@ -31,30 +31,28 @@ export function BrandLogoCard({ name, logoUrl, href, className }: BrandLogoCardP
       title={name}
       aria-label={`Ver perfil de ${name}`}
       className={cn(
-        'group relative flex shrink-0 items-center justify-center rounded-[10px] border border-[#E2E8F0] bg-white transition-all',
-        // Desktop: 116px x 52px, padding 10px
-        'w-[104px] h-[48px] p-2 sm:w-[116px] sm:h-[52px] sm:p-2.5',
+        'group relative flex h-[36px] w-[104px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white transition-all',
         'hover:border-blue-500 hover:shadow-xs active:scale-95',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
         className
       )}
     >
       {logoUrl && !imageError ? (
-        <div className="relative flex h-full w-full items-center justify-center">
+        <div className="relative h-full w-full">
           <Image
             src={logoUrl}
             alt={name}
-            width={94}
-            height={30}
-            className="max-h-[26px] max-w-[84px] sm:max-h-[30px] sm:max-w-[94px] w-auto h-auto object-contain transition-transform duration-200 group-hover:scale-105"
+            fill
+            sizes="104px"
+            className="object-contain p-[3px] transition-transform duration-200 group-hover:scale-105"
             onError={() => setImageError(true)}
             loading="lazy"
           />
         </div>
       ) : (
-        <div className="flex h-full w-full items-center justify-center gap-1 px-1">
-          <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="truncate text-[11px] sm:text-xs font-semibold text-slate-700">
+        <div className="flex h-full w-full items-center justify-center gap-1 px-1.5">
+          <Building2 className="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true" />
+          <span className="truncate text-[10px] font-semibold text-slate-700">
             {name}
           </span>
         </div>
@@ -131,9 +129,9 @@ export function HomeBrandsRail({
   if (brandItems.length === 0) return null;
 
   return (
-    <section className={cn('relative px-4 py-3 select-none w-full', className)}>
+    <section className={cn('relative px-4 py-2.5 select-none w-full', className)}>
       {/* Header da seção: Título à esquerda, Ver todas à direita */}
-      <div className="flex items-center justify-between pb-2.5">
+      <div className="flex items-center justify-between pb-2">
         <h2 className="text-sm font-bold text-slate-900">{title}</h2>
         <Link
           href="/companies"
@@ -144,48 +142,51 @@ export function HomeBrandsRail({
         </Link>
       </div>
 
-      {/* Seta de navegação esquerda (Desktop) */}
-      {canScrollLeft && (
-        <button
-          type="button"
-          onClick={() => handleScroll('left')}
-          aria-label="Rolar marcas para a esquerda"
-          className="absolute left-2 top-[60%] z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 p-1 text-slate-700 shadow-md backdrop-blur transition hover:bg-slate-50 hover:text-slate-950 active:scale-95 md:flex"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-      )}
+      {/* Container horizontal com setas perfeitamente centralizadas */}
+      <div className="relative w-full">
+        {/* Seta de navegação esquerda (Desktop) */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => handleScroll('left')}
+            aria-label="Rolar marcas para a esquerda"
+            className="absolute -left-2 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 p-1 text-slate-700 shadow-md backdrop-blur transition hover:bg-slate-50 hover:text-slate-950 active:scale-95 md:flex"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </button>
+        )}
 
-      {/* Container horizontal: 1 única linha, rolagem suave no PWA e Desktop */}
-      <div
-        ref={scrollContainerRef}
-        tabIndex={0}
-        role="region"
-        aria-label="Carrossel de marcas parceiras cadastradas"
-        className="flex w-full flex-nowrap items-center gap-2 sm:gap-2.5 overflow-x-auto pb-1 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {brandItems.map((brand) => (
-          <BrandLogoCard
-            key={brand.id}
-            name={brand.name}
-            logoUrl={brand.logoUrl}
-            href={brand.href}
-          />
-        ))}
+        {/* Trilha de cards: 104px x 36px, padding interno de 3px, logos maximizados */}
+        <div
+          ref={scrollContainerRef}
+          tabIndex={0}
+          role="region"
+          aria-label="Carrossel de marcas parceiras cadastradas"
+          className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {brandItems.map((brand) => (
+            <BrandLogoCard
+              key={brand.id}
+              name={brand.name}
+              logoUrl={brand.logoUrl}
+              href={brand.href}
+            />
+          ))}
+        </div>
+
+        {/* Seta de navegação direita (Desktop) */}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => handleScroll('right')}
+            aria-label="Rolar marcas para a direita"
+            className="absolute -right-2 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 p-1 text-slate-700 shadow-md backdrop-blur transition hover:bg-slate-50 hover:text-slate-950 active:scale-95 md:flex"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
-
-      {/* Seta de navegação direita (Desktop) */}
-      {canScrollRight && (
-        <button
-          type="button"
-          onClick={() => handleScroll('right')}
-          aria-label="Rolar marcas para a direita"
-          className="absolute right-2 top-[60%] z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 p-1 text-slate-700 shadow-md backdrop-blur transition hover:bg-slate-50 hover:text-slate-950 active:scale-95 md:flex"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
     </section>
   );
 }
