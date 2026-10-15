@@ -617,12 +617,12 @@ export default function ChatWidget() {
 
             {messages.length === 0 && !isLoading && hasAcceptedTerms && !showDiscoveryMenu && !activeWizard && (
               <div className="flex flex-col items-center justify-center min-h-full space-y-4 py-8 px-5 text-center animate-in fade-in zoom-in-95 duration-300">
-                <div className="w-16 h-16 bg-brand-blue/10 rounded-full flex items-center justify-center mb-2 border-2 border-brand-blue/20">
+                <div className="w-16 h-16 bg-brand-blue/10 rounded-full overflow-hidden flex items-center justify-center mb-2 border-2 border-brand-blue/20">
                    {/* eslint-disable-next-line @next/next/no-img-element */}
                    <img
                     src="/assets/chat-widget-avalia-solar.png"
                     alt="Avalia Solar"
-                    className="w-24 h-24 object-cover rounded-full"
+                    className="w-full h-full object-cover rounded-full"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1050,7 +1050,7 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="group pointer-events-auto relative flex h-16 w-16 items-center justify-center rounded-full border border-blue-200 bg-white shadow-xl shadow-blue-500/20 ring-4 ring-blue-500/15 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-900 sm:h-16 sm:w-16"
+          className="group pointer-events-auto relative flex h-16 w-16 items-center justify-center rounded-full p-0 shadow-xl shadow-blue-500/25 ring-4 ring-blue-500/20 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:h-16 sm:w-16 bg-[#0048BD]"
           aria-label="Abrir assistente de IA (inteligência artificial)"
           aria-expanded={false}
           aria-haspopup="dialog"
@@ -1061,7 +1061,7 @@ export default function ChatWidget() {
           </span>
 
           {/* Avatar Image as launcher icon */}
-          <span className="flex h-11 w-11 overflow-hidden rounded-full bg-white">
+          <span className="flex h-full w-full overflow-hidden rounded-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/chat-widget-avalia-solar.png"

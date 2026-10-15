@@ -441,21 +441,23 @@ export default function MobiVoltSuccessWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="pointer-events-auto h-[60px] w-[60px] rounded-lg shadow-2xl shadow-indigo-950/20 flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 group relative border-2 border-indigo-500 bg-white overflow-hidden ring-4 ring-indigo-500/10"
+          className="pointer-events-auto relative flex h-[60px] w-[60px] items-center justify-center rounded-full p-0 shadow-2xl shadow-indigo-950/20 transition-all duration-300 transform hover:scale-105 active:scale-95 group bg-[#0048BD] ring-4 ring-indigo-500/20"
           aria-label="Abrir MobiVolt Success"
         >
           {/* Notification Badge */}
-          <span className="absolute -top-0.5 -right-0.5 z-10 rounded-full bg-indigo-600 px-2 py-0.5 text-[9px] font-black text-white border-2 border-white dark:border-zinc-900">
+          <span className="absolute -top-1 -right-1 z-10 rounded-full bg-indigo-600 px-2 py-0.5 text-[9px] font-black text-white border-2 border-white dark:border-zinc-900 shadow-sm">
             SUCCESS
           </span>
 
-          <Image
-            src="/assets/chat-widget-avalia-solar.png"
-            alt="Avalia Solar Success Avatar"
-            width={60}
-            height={60}
-            className="h-full w-full rounded-full object-cover"
-          />
+          <span className="flex h-full w-full overflow-hidden rounded-full">
+            <Image
+              src="/assets/chat-widget-avalia-solar.png"
+              alt="Avalia Solar Success Avatar"
+              width={60}
+              height={60}
+              className="h-full w-full rounded-full object-cover"
+            />
+          </span>
         </button>
       )}
     </div>
