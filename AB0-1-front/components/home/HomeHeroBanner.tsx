@@ -95,7 +95,7 @@ export function HomeHeroBanner({
             <Link href={bannerLink} className="block h-full w-full">
               <Image
                 src={bannerImage}
-                alt={currentBanner.alt_text || bannerTitle}
+                alt={bannerTitle || 'Banner promocional'}
                 fill
                 priority
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"

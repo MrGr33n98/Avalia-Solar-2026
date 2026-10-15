@@ -3,6 +3,7 @@ export interface Banner {
   delivery_id?: string | null;
   title: string;
   description?: string | null;
+  alt_text?: string | null;
   link?: string | null;
   link_url?: string | null;
   image_url?: string | null;
