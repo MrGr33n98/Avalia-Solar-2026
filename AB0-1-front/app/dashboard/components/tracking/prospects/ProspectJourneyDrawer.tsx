@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { X, ExternalLink, ShieldCheck, CheckCircle2, Clock, Globe, ArrowRight } from 'lucide-react';
+import { X, ExternalLink, ShieldCheck, Clock, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
