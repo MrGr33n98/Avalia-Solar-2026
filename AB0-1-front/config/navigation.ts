@@ -72,10 +72,10 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
       },
       {
         id: 'tracking-attribution',
-        label: 'Tracking & Atribuição',
+        label: 'Track Your Prospects',
         icon: Link2,
         context: ['operational'],
-        description: 'Origem, links rastreados e saúde da mensuração',
+        description: 'Atribuição determinística, jornada de compradores e tag parceira',
       },
       {
         id: 'ranking-performance',

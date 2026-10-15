@@ -10,6 +10,7 @@ import {
   HelpCircle,
   ShieldCheck,
   Zap,
+  Link2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -179,6 +180,18 @@ export default function BuyerIntentWorkspace({ companyId }: BuyerIntentWorkspace
           >
             <Download className="h-3.5 w-3.5" />
             Exportar CSV
+          </Button>
+
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs font-semibold"
+          >
+            <a href={`/dashboard?company_id=${companyId}&tab=tracking-attribution`}>
+              <Link2 className="h-3.5 w-3.5 text-blue-600" />
+              Track Your Prospects
+            </a>
           </Button>
         </div>
       </div>

@@ -8,7 +8,7 @@ module Api
       before_action :authenticate_company_user_or_admin!
       before_action :set_company
       before_action :authorize_dashboard_access!
-      before_action :authorize_tracking_workspace_access!, only: %i[analytics_tracking_workspace]
+      before_action :authorize_tracking_workspace_access!, only: %i[analytics_tracking_workspace analytics_prospects analytics_prospects_journey analytics_prospects_export analytics_prospects_settings]
       before_action :enforce_intent_summary_feature_access!, only: %i[intent_summary]
 
       # GET /api/v1/company_dashboard/analytics/overview
@@ -276,6 +276,222 @@ module Api
       rescue StandardError => e
         log_analytics_error('tracking_workspace', e)
         render_tracking_workspace_unavailable(range)
+      end
+
+      # GET /api/v1/company_dashboard/analytics/prospects
+      def analytics_prospects
+        range = analytics_date_range(default_days: 30)
+        return render_invalid_analytics_range unless range
+
+        payload = ::CompanyDashboard::ProspectsWorkspaceService.call(
+          company: @company,
+          from_time: range[:from_day].beginning_of_day,
+          to_time: range[:to_day].end_of_day,
+          params: params,
+          api_root: request.base_url
+        )
+
+        render json: payload, status: :ok
+      rescue StandardError => e
+        log_analytics_error('prospects_workspace', e)
+        render json: { status: 'error', message: 'Erro ao carregar dados de prospecção.' }, status: :internal_server_error
+      end
+
+      # GET /api/v1/company_dashboard/analytics/prospects/journey/:id
+      def analytics_prospects_journey
+        click = ::OutboundClick.find_by(id: params[:id], company_id: @company.id)
+        unless click
+          return render_error_response(message: 'Registro de clique não encontrado para esta empresa.', status: :not_found, code: 'CLICK_NOT_FOUND')
+        end
+
+        session = ::Sales::TrackingSession.find_by(outbound_click_id: click.id, company_id: @company.id)
+        events = session ? session.events.order(:occurred_at) : []
+
+        timeline = []
+        timeline << {
+          step: 'outbound_click',
+          label: 'Clique de saída no Marketplace',
+          occurred_at: click.clicked_at.iso8601,
+          source_context: click.source_context,
+          destination_type: click.destination_type,
+          target_url: click.target_url,
+          evidence_type: 'marketplace_telemetry'
+        }
+
+        if session
+          timeline << {
+            step: 'landing_verified',
+            label: 'Chegada verificada no site parceiro',
+            occurred_at: session.started_at.iso8601,
+            landing_path: session.landing_path,
+            referrer_host: session.referrer_host,
+            consent_state: session.consent_state,
+            traffic_class: session.traffic_class,
+            evidence_type: 'verified_tag_attribution'
+          }
+
+          events.each do |event|
+            timeline << {
+              step: event.event_name,
+              label: event.event_name.humanize,
+              occurred_at: event.occurred_at.iso8601,
+              path: event.path,
+              properties: event.properties,
+              evidence_type: 'observed_partner_event'
+            }
+          end
+        end
+
+        render json: {
+          click_id: click.id,
+          company_id: @company.id,
+          timeline: timeline,
+          summary: {
+            source_context: click.source_context,
+            target_url: click.target_url,
+            total_steps: timeline.length,
+            session_id: session&.session_id,
+            account_name: session&.account&.name || 'Não identificado'
+          }
+        }, status: :ok
+      end
+
+      # GET /api/v1/company_dashboard/analytics/prospects/export
+      def analytics_prospects_export
+        range = analytics_date_range(default_days: 30)
+        return render_invalid_analytics_range unless range
+
+        scope = ::OutboundClick.where(company_id: @company.id, clicked_at: range[:from_day].beginning_of_day..range[:to_day].end_of_day)
+
+        search_term = params[:search].to_s.strip
+        if search_term.present?
+          sanitized = "%#{search_term.downcase}%"
+          scope = scope.where('LOWER(target_url) LIKE ? OR LOWER(source_context) LIKE ?', sanitized, sanitized)
+        end
+
+        evidence_filter = params[:evidence_status].to_s.strip
+        case evidence_filter
+        when 'click_only'
+          scope = scope.where.not(id: ::Sales::TrackingSession.where(company_id: @company.id).select(:outbound_click_id))
+        when 'landing_verified'
+          scope = scope.where(id: ::Sales::TrackingSession.where(company_id: @company.id).select(:outbound_click_id))
+        end
+
+        clicks = scope.order(clicked_at: :desc).limit(10_000)
+        click_ids = clicks.map(&:id)
+        sessions_by_click = ::Sales::TrackingSession.where(company_id: @company.id, outbound_click_id: click_ids)
+                                                    .includes(:account, :events)
+                                                    .index_by(&:outbound_click_id)
+
+        csv_data = CSV.generate(headers: true, col_sep: ',') do |csv|
+          csv << [
+            'ID do Clique',
+            'Data/Hora (ISO8601)',
+            'Origem no Marketplace',
+            'Tipo de Destino',
+            'URL de Destino',
+            'Status de Evidência',
+            'ID da Sessão',
+            'Chegada Verificada em',
+            'Host de Referência',
+            'Duração (s)',
+            'Eventos Observados',
+            'Conta / Empresa',
+            'País'
+          ]
+
+          clicks.each do |click|
+            session = sessions_by_click[click.id]
+            evidence = if !session
+                         'click_only'
+                       elsif session.events.any? { |e| %w[lead_confirmed quote_request_submitted].include?(e.event_name) }
+                         'lead_confirmed'
+                       elsif session.events.any? { |e| e.event_name == 'form_submitted' }
+                         'form_event_observed'
+                       else
+                         'landing_verified'
+                       end
+
+            last_event_time = session&.events&.map(&:occurred_at)&.max || session&.ended_at
+            duration = if session&.started_at && last_event_time && last_event_time > session.started_at
+                         (last_event_time - session.started_at).round
+                       end
+
+            csv << [
+              sanitize_csv_cell(click.id),
+              sanitize_csv_cell(click.clicked_at.iso8601),
+              sanitize_csv_cell(click.source_context),
+              sanitize_csv_cell(click.destination_type),
+              sanitize_csv_cell(click.target_url),
+              sanitize_csv_cell(evidence),
+              sanitize_csv_cell(session&.session_id),
+              sanitize_csv_cell(session&.started_at&.iso8601),
+              sanitize_csv_cell(session&.referrer_host),
+              sanitize_csv_cell(duration),
+              sanitize_csv_cell(session&.events&.length || 0),
+              sanitize_csv_cell(session&.account&.name || 'Não identificado'),
+              sanitize_csv_cell('Brasil')
+            ]
+          end
+        end
+
+        filename = "prospects_#{@company.id}_#{range[:from_day]}_#{range[:to_day]}.csv"
+        send_data csv_data, type: 'text/csv; charset=utf-8', filename: filename
+      end
+
+      # PATCH /api/v1/company_dashboard/analytics/prospects/settings
+      def analytics_prospects_settings
+        site = ::Sales::TrackingSite.find_or_initialize_by(company_id: @company.id)
+        if site.new_record?
+          site.public_key = SecureRandom.urlsafe_base64(32)
+          site.active = true
+          site.allowed_origins = []
+        end
+
+        if params[:active].in?([true, false, 'true', 'false'])
+          site.active = ActiveModel::Type::Boolean.new.cast(params[:active])
+        end
+
+        if params[:allowed_origins].is_a?(Array)
+          origins = params[:allowed_origins].map(&:to_s).map(&:strip).reject(&:blank?)
+          valid_origins = origins.select { |o| o.start_with?('https://') || o.start_with?('http://localhost') }
+          site.allowed_origins = valid_origins.uniq
+        end
+
+        current_settings = site.settings || {}
+        if params[:settings].present?
+          raw_settings = params[:settings].respond_to?(:to_unsafe_h) ? params[:settings].to_unsafe_h : params[:settings]
+          if raw_settings[:ga4] || raw_settings['ga4']
+            ga4 = (raw_settings[:ga4] || raw_settings['ga4'])
+            current_settings['ga4'] = {
+              'measurement_id' => ga4[:measurement_id] || ga4['measurement_id'],
+              'updated_at' => Time.current.iso8601
+            }
+          end
+          if raw_settings.key?(:custom_ids) || raw_settings.key?('custom_ids')
+            c_ids = (raw_settings[:custom_ids] || raw_settings['custom_ids'])
+            current_settings['custom_ids'] = {
+              'enabled' => ActiveModel::Type::Boolean.new.cast(c_ids[:enabled] || c_ids['enabled'])
+            }
+          end
+          site.settings = current_settings
+        end
+
+        if site.save
+          render json: {
+            status: 'success',
+            tag_info: {
+              configured: true,
+              active: site.active,
+              public_key: site.public_key,
+              allowed_origins: site.allowed_origins,
+              snippet_url: "#{request.base_url}/api/v1/public/sales/tracking/#{site.public_key}.js",
+              settings: site.settings
+            }
+          }, status: :ok
+        else
+          render json: { status: 'error', errors: site.errors.full_messages }, status: :unprocessable_entity
+        end
       end
 
       # GET /api/v1/company_dashboard/analytics/reputation
@@ -1753,6 +1969,12 @@ module Api
       end
 
       private
+
+      def sanitize_csv_cell(value)
+        str = value.to_s
+        return str if str.blank?
+        str =~ /\A[=+\-@\t\r]/ ? "'#{str}" : str
+      end
 
       def render_addon_checkout(subscription, status)
         render json: {
