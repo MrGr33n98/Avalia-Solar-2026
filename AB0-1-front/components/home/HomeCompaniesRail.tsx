@@ -96,7 +96,7 @@ export function HomeCompaniesRail({
         tabIndex={0}
         role="region"
         aria-label="Lista de empresas recomendadas"
-        className="flex w-full flex-nowrap items-stretch gap-3.5 overflow-x-auto pb-2 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+        className="flex w-full flex-nowrap items-stretch gap-3.5 overflow-x-auto pb-2 no-scrollbar snap-x snap-mandatory scroll-px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {companies.slice(0, 10).map((company) => {
@@ -121,7 +121,7 @@ export function HomeCompaniesRail({
           return (
             <div
               key={company.id}
-              className="flex w-[210px] sm:w-[230px] shrink-0 flex-col rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden transition-all hover:border-slate-300 hover:shadow-sm"
+              className="flex w-[210px] sm:w-[230px] shrink-0 snap-start flex-col rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden transition-all hover:border-slate-300 hover:shadow-sm"
             >
               {/* Foto da instalação / Logo em contain / Placeholder neutro */}
               <div className="relative h-28 sm:h-32 w-full overflow-hidden bg-slate-50">
@@ -167,19 +167,21 @@ export function HomeCompaniesRail({
 
               {/* Informações da empresa */}
               <div className="flex flex-1 flex-col p-3">
-                {/* Nome da empresa e selo azul verificado com quebra em até 2 linhas */}
-                <div className="flex items-start justify-between gap-1 min-w-0">
+                {/* Nome da empresa e selo azul verificado adjacente sem afastar para a direita */}
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug break-words">
                   <Link
                     href={companyHref}
-                    className="line-clamp-2 min-h-[2.5rem] text-xs sm:text-sm font-bold text-slate-900 hover:text-blue-600 focus-visible:outline-none focus-visible:underline leading-snug"
+                    className="hover:text-blue-600 focus-visible:outline-none focus-visible:underline"
                     title={company.name}
                   >
                     {company.name}
                   </Link>
                   {company.verified && (
-                    <CompanyVerifiedBadge size="sm" className="shrink-0 mt-0.5" />
+                    <span className="inline-flex items-center align-middle ml-1 shrink-0">
+                      <CompanyVerifiedBadge size="sm" />
+                    </span>
                   )}
-                </div>
+                </h3>
 
                 {/* Avaliações reais ou 'Sem avaliações' */}
                 <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-600">

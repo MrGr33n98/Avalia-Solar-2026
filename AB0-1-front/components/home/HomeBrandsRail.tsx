@@ -31,7 +31,7 @@ export function BrandLogoCard({ name, logoUrl, href, className }: BrandLogoCardP
       title={name}
       aria-label={`Ver perfil de ${name}`}
       className={cn(
-        'group relative flex h-[36px] w-[104px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white transition-all',
+        'group relative flex h-[36px] w-[104px] shrink-0 snap-start items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white transition-all',
         'hover:border-blue-500 hover:shadow-xs active:scale-95',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
         className
@@ -76,23 +76,18 @@ export function HomeBrandsRail({
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(false);
 
-  // Extrair empresas cadastradas reais com logo ou perfil
+  // Extrair empresas cadastradas reais que possuam logotipo próprio autêntico (RC-02: NUNCA usar selo de verificação como logotipo)
   const brandItems: BrandCardData[] = React.useMemo(() => {
     if (!companies || companies.length === 0) return [];
 
-    // Priorizar empresas com logo_url preenchido
-    const sorted = [...companies].sort((a, b) => {
-      const aHasLogo = Boolean(a.logo_url || a.verified_badge_image_url);
-      const bHasLogo = Boolean(b.logo_url || b.verified_badge_image_url);
-      if (aHasLogo && !bHasLogo) return -1;
-      if (!aHasLogo && bHasLogo) return 1;
-      return 0;
-    });
+    const withRealLogos = companies.filter(
+      (comp) => Boolean(comp.logo_url && typeof comp.logo_url === 'string' && comp.logo_url.trim().length > 0)
+    );
 
-    return sorted.map((comp) => ({
+    return withRealLogos.map((comp) => ({
       id: comp.id,
       name: comp.name,
-      logoUrl: comp.logo_url || comp.verified_badge_image_url || null,
+      logoUrl: comp.logo_url!,
       href: buildCompanyPath(comp.slug, comp.name, comp.id),
     }));
   }, [companies]);
@@ -156,13 +151,13 @@ export function HomeBrandsRail({
           </button>
         )}
 
-        {/* Trilha de cards: 104px x 36px, padding interno de 3px, logos maximizados */}
+        {/* Trilha de cards: 104px x 36px, snap-x snap-mandatory, logos maximizados */}
         <div
           ref={scrollContainerRef}
           tabIndex={0}
           role="region"
-          aria-label="Carrossel de marcas parceiras cadastradas"
-          className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+          aria-label="Carrossel de marcas em destaque"
+          className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar snap-x snap-mandatory scroll-px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {brandItems.map((brand) => (

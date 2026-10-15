@@ -10,7 +10,6 @@ import {
   ChevronDown,
   LayoutGrid,
   Heart,
-  BadgePercent,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/lib/api';
@@ -241,15 +240,6 @@ export function HomeCategoryRail({ className }: HomeCategoryRailProps) {
         >
           <Heart className="h-4 w-4 text-rose-500 fill-rose-500 transition group-hover:scale-110" />
           <span>Favoritos</span>
-        </Link>
-
-        {/* 3. Botão Simulador / Cupons */}
-        <Link
-          href="/calculadora"
-          className="group flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          <BadgePercent className="h-4 w-4 text-amber-500 transition group-hover:scale-110" />
-          <span>Simulador</span>
         </Link>
 
         {/* Divisor vertical sutil */}
