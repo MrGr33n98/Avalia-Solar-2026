@@ -38,7 +38,7 @@ export default function IntentDashboardPage() {
     <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-8 dark:bg-slate-950">
       <div className="mx-auto max-w-7xl">
         <Suspense fallback={<BuyerIntentSkeleton />}>
-          <BuyerIntentWorkspace companyId={1} />
+          <BuyerIntentWorkspace />
         </Suspense>
       </div>
     </div>

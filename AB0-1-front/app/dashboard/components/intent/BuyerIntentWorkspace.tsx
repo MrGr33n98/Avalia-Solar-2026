@@ -20,18 +20,24 @@ import {
   type BuyerIntentAccount,
   type BuyerIntentReportingData,
   type IcpFilterCriteria,
-  MOCK_REPORTING_DATA,
+  EMPTY_REPORTING_DATA,
 } from '@/lib/api/buyer-intent';
+import { useCompanyContext } from '@/context/CompanyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { IcpFilterPanel } from './IcpFilterPanel';
 import { BuyerIntentReporting } from './BuyerIntentReporting';
 import { BuyerIntentTable } from './BuyerIntentTable';
 import { AccountDetailDrawer } from './AccountDetailDrawer';
 
 interface BuyerIntentWorkspaceProps {
-  companyId: string | number;
+  companyId?: string | number;
 }
 
 export default function BuyerIntentWorkspace({ companyId }: BuyerIntentWorkspaceProps) {
+  const { activeCompany } = useCompanyContext();
+  const { user } = useAuth();
+  const effectiveCompanyId = companyId ?? activeCompany?.id ?? user?.company_id;
+
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,7 +46,7 @@ export default function BuyerIntentWorkspace({ companyId }: BuyerIntentWorkspace
   const [accounts, setAccounts] = useState<BuyerIntentAccount[]>([]);
   const [totalAccounts, setTotalAccounts] = useState<number>(0);
   const [reportingData, setReportingData] =
-    useState<BuyerIntentReportingData>(MOCK_REPORTING_DATA);
+    useState<BuyerIntentReportingData>(EMPTY_REPORTING_DATA);
 
   // Filtros de ICP
   const [filters, setFilters] = useState<IcpFilterCriteria>({
@@ -55,11 +61,20 @@ export default function BuyerIntentWorkspace({ companyId }: BuyerIntentWorkspace
 
   const loadData = useCallback(
     async (appliedFilters: IcpFilterCriteria, isSilent = false) => {
+      if (!effectiveCompanyId) {
+        setAccounts([]);
+        setTotalAccounts(0);
+        setReportingData(EMPTY_REPORTING_DATA);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+
       try {
         if (!isSilent) setLoading(true);
         const [accRes, repRes] = await Promise.all([
-          fetchBuyerIntentAccounts(companyId, appliedFilters),
-          fetchBuyerIntentReporting(companyId),
+          fetchBuyerIntentAccounts(effectiveCompanyId, appliedFilters),
+          fetchBuyerIntentReporting(effectiveCompanyId),
         ]);
 
         setAccounts(accRes.scores);
@@ -77,7 +92,7 @@ export default function BuyerIntentWorkspace({ companyId }: BuyerIntentWorkspace
         setRefreshing(false);
       }
     },
-    [companyId, toast]
+    [effectiveCompanyId, toast]
   );
 
   useEffect(() => {

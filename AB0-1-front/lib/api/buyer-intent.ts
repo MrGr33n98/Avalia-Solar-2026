@@ -320,34 +320,43 @@ export async function fetchBuyerIntentAccounts(
 
     if (res.ok) {
       const data = await res.json();
-      if (data && Array.isArray(data.scores) && data.scores.length > 0) {
+      if (data && Array.isArray(data.scores)) {
         return data;
       }
+    } else {
+      console.warn(`[BuyerIntentApi] Erro HTTP ${res.status} ao consultar intent_scores.`);
     }
   } catch (err) {
-    console.warn('[BuyerIntentApi] Fallback para preview estruturado:', err);
+    console.warn('[BuyerIntentApi] Erro na requisição de intent_scores:', err);
   }
 
-  // Filtragem local no mock para interatividade garantida
-  let filtered = [...MOCK_BUYER_INTENT_ACCOUNTS];
-  if (filters?.buying_stage && filters.buying_stage !== 'all') {
-    filtered = filtered.filter((a) => a.buying_stage === filters.buying_stage);
-  }
-  if (filters?.activity_level && filters.activity_level !== 'all') {
-    filtered = filtered.filter((a) => a.activity_level === filters.activity_level);
-  }
-  if (filters?.search_query) {
-    const q = filters.search_query.toLowerCase();
-    filtered = filtered.filter(
-      (a) =>
-        a.account_name.toLowerCase().includes(q) ||
-        a.location.toLowerCase().includes(q) ||
-        (a.segment && a.segment.toLowerCase().includes(q))
-    );
-  }
-
-  return { total: filtered.length, scores: filtered };
+  return { total: 0, scores: [] };
 }
+
+export const EMPTY_REPORTING_DATA: BuyerIntentReportingData = {
+  total_accounts: 0,
+  buying_stage_distribution: {
+    awareness: 0,
+    consideration: 0,
+    decision: 0,
+  },
+  activity_level_distribution: {
+    low: 0,
+    medium: 0,
+    high: 0,
+  },
+  traffic_ratio: {
+    direct_pageviews: 0,
+    competitive_pageviews: 0,
+    total_intent_signals: 0,
+  },
+  top_signals_summary: [
+    { type: 'profile', label: 'Visualizações de Perfil', count: 0 },
+    { type: 'pricing', label: 'Simulador / Preços', count: 0 },
+    { type: 'compare', label: 'Comparador Solar', count: 0 },
+    { type: 'contact', label: 'Cliques WhatsApp / Fone', count: 0 },
+  ],
+};
 
 export async function fetchBuyerIntentReporting(
   companyId: string | number
@@ -359,15 +368,17 @@ export async function fetchBuyerIntentReporting(
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.total_accounts > 0) {
+      if (data) {
         return {
-          ...MOCK_REPORTING_DATA,
+          ...EMPTY_REPORTING_DATA,
           ...data,
         };
       }
+    } else {
+      console.warn(`[BuyerIntentApi] Erro HTTP ${res.status} ao consultar reporting.`);
     }
   } catch (err) {
-    console.warn('[BuyerIntentApi] Usando reporting base:', err);
+    console.warn('[BuyerIntentApi] Erro na requisição de reporting:', err);
   }
-  return MOCK_REPORTING_DATA;
+  return EMPTY_REPORTING_DATA;
 }
