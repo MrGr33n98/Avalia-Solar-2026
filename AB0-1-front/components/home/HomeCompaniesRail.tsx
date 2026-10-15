@@ -137,14 +137,25 @@ export function HomeCompaniesRail({
                       className="object-cover object-center transition-transform duration-300 hover:scale-105"
                     />
                   ) : hasLogo ? (
-                    <div className="relative h-full w-full bg-slate-50">
+                    <div className="relative h-full w-full overflow-hidden">
+                      {/* Fundo com a cor dominante esticada do logotipo que preenche 100% da área sem margens brancas */}
                       <Image
                         src={logoUrl}
-                        alt={`Logotipo ${company.name}`}
+                        alt=""
                         fill
-                        sizes="(max-width: 640px) 210px, 230px"
-                        className="object-contain p-2"
+                        aria-hidden="true"
+                        className="h-full w-full object-cover object-center blur-xl scale-125 opacity-75"
                       />
+                      {/* Logotipo nítido em contain com padding reduzido para nunca cortar textos nas extremidades */}
+                      <div className="relative h-full w-full flex items-center justify-center p-2">
+                        <Image
+                          src={logoUrl}
+                          alt={`Logotipo ${company.name}`}
+                          fill
+                          sizes="(max-width: 640px) 210px, 230px"
+                          className="h-full w-full object-contain object-center transition-transform duration-300 hover:scale-105"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-slate-100 text-slate-400">
