@@ -246,7 +246,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                 className={
                   isFluid
                     ? companies.length === 2
-                      ? 'w-[27%] sm:w-[28%] md:w-44'
+                      ? 'w-[28%] sm:w-[28%] md:w-44'
                       : 'w-[34%] sm:w-[30%] md:w-44'
                     : 'w-32 md:w-44'
                 }
@@ -257,7 +257,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   className={
                     isFluid
                       ? companies.length === 2
-                        ? 'w-[36.5%] sm:w-[36%] md:w-auto'
+                        ? 'w-[36%] sm:w-[36%] md:w-auto'
                         : 'w-[66%] sm:w-[70%] md:w-auto'
                       : 'w-[180px] md:w-auto'
                   }
@@ -268,9 +268,9 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
               <tr className="border-b border-slate-200 align-top">
                 <th
                   scope="col"
-                  className={`border-r border-slate-200 bg-slate-50/90 p-2 sm:p-2.5 md:p-3.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 ${
+                  className={`border-r border-slate-200 bg-slate-50/90 p-2.5 sm:p-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 align-top ${
                     isFluid
-                      ? 'w-[27%] sm:w-[28%] md:w-44'
+                      ? 'w-[28%] sm:w-[28%] md:w-44'
                       : 'sticky left-0 z-30 w-32 md:w-44'
                   }`}
                 >
@@ -280,23 +280,13 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   <th
                     key={company.id}
                     scope="col"
-                    className={`relative border-r border-slate-200 bg-white p-2 sm:p-2.5 md:p-3.5 align-top ${
+                    className={`border-r border-slate-200 bg-white p-2 sm:p-2.5 md:p-3 align-top ${
                       isFluid ? 'min-w-0' : 'min-w-[180px]'
                     }`}
                   >
-                    {/* Botão X: discreto, área de toque 44px transparente, sem caixa grande */}
-                    <button
-                      type="button"
-                      onClick={() => onRemove(company.id)}
-                      aria-label={`Remover ${company.name} da comparação`}
-                      className="absolute top-0 right-0 sm:top-0.5 sm:right-0.5 z-10 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100/70 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 transition-colors"
-                    >
-                      <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-500" aria-hidden="true" />
-                    </button>
-
-                    {/* Conteúdo do cabeçalho com reserva de espaço à direita para o X */}
-                    <div className="flex flex-col gap-1.5 min-w-0 pr-7 sm:pr-8">
-                      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                    <div className="flex flex-col gap-1.5 min-w-0 w-full">
+                      {/* Linha superior: Logo à esquerda, X à direita */}
+                      <div className="flex items-center justify-between gap-1 w-full">
                         <CompanyLogo
                           logoUrl={company.logoUrl}
                           name={company.name}
@@ -304,27 +294,39 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                           badges={company.badges}
                           className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg shrink-0 object-contain border border-slate-100"
                         />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1 min-w-0">
-                            <Link
-                              href={`/companies/${company.slug || company.id}`}
-                              className="block text-xs sm:text-[13px] font-bold text-slate-900 hover:text-blue-700 leading-snug line-clamp-2 break-words"
-                              title={company.name}
-                            >
-                              {company.name}
-                            </Link>
-                            {company.verified && (
-                              <span className="inline-flex shrink-0">
-                                <CompanyVerifiedBadge size="sm" />
-                              </span>
-                            )}
-                          </div>
-                          <span className="block truncate text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
-                            {[company.city, company.state].filter(Boolean).join(', ') ||
-                              'Local não informado'}
-                          </span>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onRemove(company.id)}
+                          aria-label={`Remover ${company.name} da comparação`}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 transition-colors -mr-1 -mt-1"
+                        >
+                          <X className="h-4 w-4 text-slate-500" aria-hidden="true" />
+                        </button>
                       </div>
+
+                      {/* Nome da empresa: linha dedicada com 100% da largura da coluna */}
+                      <div className="min-w-0 w-full">
+                        <div className="flex items-center gap-1 min-w-0 flex-wrap">
+                          <Link
+                            href={`/companies/${company.slug || company.id}`}
+                            className="text-xs sm:text-[13px] font-bold text-slate-900 hover:text-blue-700 leading-snug break-words"
+                            title={company.name}
+                          >
+                            {company.name}
+                          </Link>
+                          {company.verified && (
+                            <span className="inline-flex shrink-0">
+                              <CompanyVerifiedBadge size="sm" />
+                            </span>
+                          )}
+                        </div>
+                        <span className="block truncate text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
+                          {[company.city, company.state].filter(Boolean).join(', ') ||
+                            'Local não informado'}
+                        </span>
+                      </div>
+
+                      {/* Nota real com estrelas */}
                       {company.rating > 0 && (
                         <div className="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700">
                           <Star

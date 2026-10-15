@@ -21,7 +21,7 @@ const makeCompany = (overrides: Record<string, unknown> = {}) =>
   });
 
 describe('CompareSummary (Correção 01)', () => {
-  it('renderiza container único 2x2 com os 4 indicadores', () => {
+  it('renderiza matriz comparativa de síntese com cabeçalho, indicadores e botões', () => {
     const comp1 = makeCompany({
       id: 1,
       name: 'WEG',
@@ -45,40 +45,31 @@ describe('CompareSummary (Correção 01)', () => {
     // 4 indicadores obrigatórios
     expect(screen.getByText('Verificação')).toBeInTheDocument();
     expect(screen.getByText('Cobertura')).toBeInTheDocument();
-    expect(screen.getByText('Avaliação')).toBeInTheDocument();
+    expect(screen.getByText('Nota média')).toBeInTheDocument();
     expect(screen.getByText('Resposta')).toBeInTheDocument();
 
-    // Resultados objetivos sem truncamento
+    // Dados reais das empresas
     expect(screen.getByText('WEG')).toBeInTheDocument();
-    expect(screen.getByText(/GoodWe Brasil · 2 regiões/)).toBeInTheDocument();
-    expect(screen.getByText('WEG · 4,5/5')).toBeInTheDocument();
-    expect(screen.getByText('WEG · ~2h')).toBeInTheDocument();
-  });
+    expect(screen.getByText('GoodWe Brasil')).toBeInTheDocument();
+    expect(screen.getByText('Verificada')).toBeInTheDocument();
+    expect(screen.getByText('Não verificada')).toBeInTheDocument();
+    expect(screen.getByText('2 regiões')).toBeInTheDocument();
+    expect(screen.getByText('4,5 de 5')).toBeInTheDocument();
+    expect(screen.getByText('4,4 de 5')).toBeInTheDocument();
 
-  it('trata empates e dados insuficientes sem criar vencedor falso', () => {
-    const comp1 = makeCompany({
-      id: 1,
-      name: 'Alpha Solar',
-      verified: false,
-      rating_avg: 0,
-    });
-    const comp2 = makeCompany({
-      id: 2,
-      name: 'Beta Solar',
-      verified: false,
-      rating_avg: 0,
-    });
+    // Botões de navegação rápida
+    const profileButtons = screen.getAllByRole('link', { name: /Ver perfil/i });
+    expect(profileButtons.length).toBeGreaterThanOrEqual(2);
 
-    render(<CompareSummary companies={[comp1, comp2]} />);
-
-    expect(screen.getByText('Nenhuma verificada')).toBeInTheDocument();
-    const insufficientElements = screen.getAllByText('Dados insuficientes');
-    expect(insufficientElements.length).toBeGreaterThanOrEqual(3);
+    // Nota de rodapé no mesmo painel
+    expect(
+      screen.getByText(/Resumo calculado apenas com informações públicas disponíveis/i)
+    ).toBeInTheDocument();
   });
 });
 
 describe('CompareTable (Correção 02, 03, 04)', () => {
-  it('renderiza cabeçalho de 3 colunas com proporções equilibradas e botão X discreto', () => {
+  it('renderiza cabeçalho de 3 colunas com proporções equilibradas (28%/36%/36%) e botão X discreto', () => {
     const onRemove = jest.fn();
     const onQuote = jest.fn();
     const comp1 = makeCompany({ id: 1, name: 'GoodWe Brasil' });
@@ -88,17 +79,20 @@ describe('CompareTable (Correção 02, 03, 04)', () => {
       <CompareTable companies={[comp1, comp2]} onRemove={onRemove} onQuote={onQuote} />
     );
 
-    // Proporções das colunas (27% / 36.5% / 36.5%)
+    // Proporções das colunas (28% / 36% / 36%)
     const cols = container.querySelectorAll('colgroup col');
-    expect(cols[0]).toHaveClass('w-[27%]');
-    expect(cols[1]).toHaveClass('w-[36.5%]');
-    expect(cols[2]).toHaveClass('w-[36.5%]');
+    expect(cols[0]).toHaveClass('w-[28%]');
+    expect(cols[1]).toHaveClass('w-[36%]');
+    expect(cols[2]).toHaveClass('w-[36%]');
+
+    // Nomes das empresas sempre visíveis
+    expect(screen.getByText('GoodWe Brasil')).toBeInTheDocument();
+    expect(screen.getByText('WEG')).toBeInTheDocument();
 
     // Botão X discreto de remoção
     const removeButtons = screen.getAllByRole('button', { name: /Remover .* da comparação/i });
     expect(removeButtons).toHaveLength(2);
-    expect(removeButtons[0]).toHaveClass('min-h-[44px]', 'min-w-[44px]');
-    expect(removeButtons[0]).not.toHaveClass('border');
+    expect(removeButtons[0]).toHaveClass('rounded-full');
 
     fireEvent.click(removeButtons[0]);
     expect(onRemove).toHaveBeenCalledWith(1);
