@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Menu, User as UserIcon, Bell, MessageSquare } from 'lucide-react';
+import { ChevronDown, Menu, User as UserIcon, Bell, MessageSquare, Search } from 'lucide-react';
 
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import LocationSearch from '@/components/LocationSearch';
@@ -47,7 +47,7 @@ export default function Navbar() {
   const [megaMenuMounted, setMegaMenuMounted] = useState(false);
   const [mobileDrawerMounted, setMobileDrawerMounted] = useState(false);
   const megaMenuRef = useRef<HTMLDivElement | null>(null);
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const categoriesMegaMenuId = 'categories-mega-menu';
@@ -262,28 +262,32 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="ml-auto flex min-w-0 items-center justify-end gap-2 dashboard:hidden">
-          {authLoading ? (
-            <div
-              aria-label="Carregando sessão"
-              className="h-[44px] w-[44px] shrink-0 rounded-full bg-slate-100"
-            />
-          ) : isAuthenticated ? (
-            <UserAvatarDropdown compact onCompactClick={openMobileDrawer} />
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={openMobileDrawer}
-              aria-label={isMobileDrawerOpen ? 'Fechar menu principal' : 'Abrir menu principal'}
-              aria-expanded={isMobileDrawerOpen}
-              aria-controls={mobileDrawerMounted ? mobileCategoriesDrawerId : undefined}
-              className="h-[44px] w-[44px] shrink-0 rounded-lg border-brand-border bg-white text-slate-700 shadow-none"
-            >
-              <Menu className="h-5 w-5" aria-hidden="true" />
-            </Button>
-          )}
+        {/* Mobile Search Input Pill (estilo OLX / Marketplace) */}
+        <div className="flex flex-1 min-w-0 items-center px-1.5 sm:px-2 dashboard:hidden">
+          <Link
+            href="/search"
+            aria-label="Buscar empresas, soluções..."
+            className="flex h-9 w-full items-center gap-2 rounded-full border border-slate-200 bg-slate-50/90 px-3 text-xs text-slate-500 shadow-2xs transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
+            <span className="truncate">Buscar empresas, soluções...</span>
+          </Link>
+        </div>
+
+        {/* Mobile Hamburger Menu Button */}
+        <div className="flex shrink-0 items-center dashboard:hidden">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={openMobileDrawer}
+            aria-label={isMobileDrawerOpen ? 'Fechar menu principal' : 'Abrir menu principal'}
+            aria-expanded={isMobileDrawerOpen}
+            aria-controls={mobileDrawerMounted ? mobileCategoriesDrawerId : undefined}
+            className="h-9 w-9 shrink-0 rounded-lg border-slate-200 bg-white text-slate-700 shadow-none hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </Button>
         </div>
       </div>
 

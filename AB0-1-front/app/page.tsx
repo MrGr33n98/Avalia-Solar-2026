@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { Suspense, type ReactNode } from 'react';
 import { ArrowRight, BadgeCheck, Info, ShieldCheck, Sparkles } from 'lucide-react';
 import { unstable_cache } from 'next/cache';
-import { cookies } from 'next/headers';
 
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import FAQSection from '@/components/seo/FAQSection';
@@ -12,23 +11,18 @@ import HomeComparisonPreview from '@/components/home/HomeComparisonPreview';
 import { HomeConversionCTA } from '@/components/home/HomeConversionCTA';
 import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsErrorBoundary';
 import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
-import LandingHero from '@/components/landing/LandingHero';
-import { BannerSlot } from '@/components/banners/BannerSlot';
 import PublicCompanyCard from '@/components/company/PublicCompanyCard';
 import RecommendedCompaniesSection from '@/components/home/RecommendedCompaniesSection';
+import HomeLocationBar from '@/components/home/HomeLocationBar';
+import HomeCategoryRail from '@/components/home/HomeCategoryRail';
+import HomeHeroBanner from '@/components/home/HomeHeroBanner';
+import HomeBrandsRail from '@/components/home/HomeBrandsRail';
+import HomeCompaniesRail from '@/components/home/HomeCompaniesRail';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { publicCompaniesApi } from '@/lib/api-public';
 import type { Category, Company } from '@/lib/api';
 import { getFallbackCategories } from '@/lib/constants/fallback-categories';
-import {
-  HOME_HERO_EXPERIMENT_COOKIE,
-  HOME_HERO_EXPERIMENT_ID,
-  isHomeHeroExperimentEnabled,
-  resolveHomeHeroVariant,
-  type HomeHeroTrustMetrics,
-  type HomeHeroVariant,
-} from '@/lib/experiments/homeHeroExperiment';
 import {
   getCachedActiveCategories,
   getCachedFeaturedCategories,
@@ -148,30 +142,6 @@ async function getCompaniesData(): Promise<{ companies: Company[] }> {
   return { companies: Array.isArray(companies) ? companies : [] };
 }
 
-const getHeroDataCached = unstable_cache(
-  async () => {
-    const [allCategories, totalActiveCompanies, totalVerifiedCompanies] = await Promise.all([
-      getCachedActiveCategories(),
-      publicCompaniesApi.getTotalCount({ status: 'active' }),
-      publicCompaniesApi.getTotalCount({ status: 'active', verified: true }),
-    ]);
-    const trustMetrics: HomeHeroTrustMetrics = {
-      totalActiveCompanies:
-        Number.isFinite(totalActiveCompanies) && (totalActiveCompanies || 0) > 0
-          ? Number(totalActiveCompanies)
-          : null,
-      totalVerifiedCompanies:
-        Number.isFinite(totalVerifiedCompanies) && (totalVerifiedCompanies || 0) > 0
-          ? Number(totalVerifiedCompanies)
-          : null,
-    };
-
-    return { allCategories, trustMetrics };
-  },
-  ['home-hero-data-v3'],
-  { revalidate: 600, tags: ['home-data', 'home-hero'] }
-);
-
 const getHomeDataCached = unstable_cache(
   async () => getHomeData(),
   ['home-categories-section-v2'],
@@ -188,20 +158,6 @@ const getCompaniesDataCached = unstable_cache(
 );
 
 export default async function Home() {
-  const experimentEnabled = isHomeHeroExperimentEnabled();
-  const heroVariantCookieValue = (() => {
-    try {
-      return cookies().get(HOME_HERO_EXPERIMENT_COOKIE)?.value;
-    } catch {
-      return undefined;
-    }
-  })();
-  const heroVariant = resolveHomeHeroVariant({
-    enabled: experimentEnabled,
-    cookieValue: heroVariantCookieValue,
-  });
-
-  const heroDataPromise = getHeroDataCached();
   const categoriesDataPromise = getHomeDataCached();
   const companiesDataPromise = getCompaniesDataCached();
 
@@ -212,15 +168,32 @@ export default async function Home() {
         <HomePageTracking />
       </Suspense>
 
-      <Suspense fallback={<div className="min-h-[620px] animate-pulse bg-slate-100" />}>
-        <LandingHeroWrapper
-          dataPromise={heroDataPromise}
-          variant={heroVariant}
-          experimentEnabled={experimentEnabled}
-        />
-      </Suspense>
+      {/* 1. Barra de Localização Compacta */}
+      <div className="mx-auto max-w-[1320px]">
+        <HomeLocationBar defaultState="SC" />
+      </div>
 
+      {/* 2. Categorias: EXATAMENTE UMA LINHA com ícones 3D */}
+      <div className="mx-auto max-w-[1320px]">
+        <HomeCategoryRail />
+      </div>
 
+      {/* 3. Hero Banner Compacto com Foto e CTA de Contraste */}
+      <div className="mx-auto max-w-[1320px]">
+        <HomeHeroBanner />
+      </div>
+
+      {/* 4. Marcas em Destaque no Catálogo */}
+      <div className="mx-auto max-w-[1320px]">
+        <HomeBrandsRail />
+      </div>
+
+      {/* 5. Empresas em Destaque na Região (Trilha Horizontal de Cards) */}
+      <div className="mx-auto max-w-[1320px]">
+        <Suspense fallback={<div className="h-44 w-full animate-pulse rounded-2xl bg-slate-50 mx-4 my-2" />}>
+          <HomeCompaniesRailWrapper dataPromise={companiesDataPromise} />
+        </Suspense>
+      </div>
 
       <DeferredHomeSections />
 
@@ -307,45 +280,22 @@ export default async function Home() {
   );
 }
 
-async function LandingHeroWrapper({
+async function HomeCompaniesRailWrapper({
   dataPromise,
-  variant,
-  experimentEnabled,
 }: {
-  dataPromise: ReturnType<typeof getHeroDataCached>;
-  variant: HomeHeroVariant;
-  experimentEnabled: boolean;
+  dataPromise: ReturnType<typeof getCompaniesDataCached>;
 }) {
+  let companies: Company[] = [];
   try {
-    const { allCategories, trustMetrics } = await dataPromise;
-    const safeCategories =
-      Array.isArray(allCategories) && allCategories.length > 0
-        ? allCategories
-        : getFallbackCategories(8);
-
-    return (
-      <LandingHero
-        categories={safeCategories}
-        banners={[]}
-        variant={variant}
-        experimentEnabled={experimentEnabled}
-        experimentId={HOME_HERO_EXPERIMENT_ID}
-        trustMetrics={trustMetrics}
-      />
-    );
+    const data = await dataPromise;
+    companies = Array.isArray(data?.companies) ? data.companies : [];
   } catch (error) {
-    console.error('[Home] LandingHeroWrapper fallback triggered:', error);
-    return (
-      <LandingHero
-        categories={getFallbackCategories(8)}
-        banners={[]}
-        variant={variant}
-        experimentEnabled={experimentEnabled}
-        experimentId={HOME_HERO_EXPERIMENT_ID}
-        trustMetrics={{ totalActiveCompanies: null, totalVerifiedCompanies: null }}
-      />
-    );
+    console.error('[Home] HomeCompaniesRailWrapper fallback triggered:', error);
   }
+
+  if (companies.length === 0) return null;
+
+  return <HomeCompaniesRail companies={companies} />;
 }
 
 async function CategoriesSectionWrapper({
