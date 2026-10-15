@@ -1114,13 +1114,13 @@ export default function ChatWidget() {
       {!isOpen && (
         <button
           onClick={handleToggle}
-          className="group pointer-events-auto relative flex h-16 w-16 items-center justify-center rounded-full p-0 shadow-xl shadow-blue-500/25 ring-4 ring-blue-500/20 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:h-16 sm:w-16 bg-[#0048BD]"
+          className="group pointer-events-auto relative flex h-12 w-12 sm:h-13 sm:w-13 items-center justify-center rounded-full p-0 shadow-lg shadow-blue-500/25 ring-2 ring-blue-500/30 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#0048BD]"
           aria-label="Abrir assistente de IA (inteligência artificial)"
           aria-expanded={false}
           aria-haspopup="dialog"
         >
           {/* Notification Pulsing Badge */}
-          <span className="absolute -right-1.5 -top-1.5 z-10 rounded-full border-2 border-white bg-brand-blue px-2 py-0.5 text-[9px] font-black text-white dark:border-zinc-900" aria-hidden="true">
+          <span className="absolute -right-1 -top-1 z-10 rounded-full border-2 border-white bg-blue-600 px-1.5 py-0.2 text-[8px] font-black text-white dark:border-zinc-900" aria-hidden="true">
             IA
           </span>
 

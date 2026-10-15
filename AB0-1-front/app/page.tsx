@@ -21,11 +21,12 @@ import HomeCompaniesRail from '@/components/home/HomeCompaniesRail';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { publicCompaniesApi } from '@/lib/api-public';
-import type { Category, Company } from '@/lib/api';
+import type { Category, Company, Banner } from '@/lib/api';
 import { getFallbackCategories } from '@/lib/constants/fallback-categories';
 import {
   getCachedActiveCategories,
   getCachedFeaturedCategories,
+  getCachedBanners,
 } from '@/lib/server/home-fallback-cache';
 
 const HomePageTracking = dynamic(() => import('@/components/home/HomePageTracking'), {
@@ -157,9 +158,16 @@ const getCompaniesDataCached = unstable_cache(
   { revalidate: 600, tags: ['home-data', 'home-companies'] }
 );
 
+const getHomeBannersCached = unstable_cache(
+  async () => getCachedBanners('home_top'),
+  ['home-hero-banners-top'],
+  { revalidate: 300, tags: ['home-data', 'banners'] }
+);
+
 export default async function Home() {
   const categoriesDataPromise = getHomeDataCached();
   const companiesDataPromise = getCompaniesDataCached();
+  const bannersDataPromise = getHomeBannersCached();
 
   return (
     <main className="flex-grow bg-transparent">
@@ -182,9 +190,11 @@ export default async function Home() {
         </Suspense>
       </div>
 
-      {/* 3. Hero Banner Compacto com Foto e CTA de Contraste */}
+      {/* 3. Hero Banner Compacto com Foto, CTA e Banners do ActiveAdmin */}
       <div className="mx-auto max-w-[1320px]">
-        <HomeHeroBanner />
+        <Suspense fallback={<div className="h-[240px] w-full animate-pulse rounded-2xl bg-slate-50 mx-4 my-2" />}>
+          <HomeHeroBannerWrapper dataPromise={bannersDataPromise} />
+        </Suspense>
       </div>
 
       {/* 4. Marcas em Destaque no Catálogo (Logos reais de empresas parceiras/fabricantes) */}
@@ -284,6 +294,22 @@ export default async function Home() {
       </section>
     </main>
   );
+}
+
+async function HomeHeroBannerWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getHomeBannersCached>;
+}) {
+  let banners: Banner[] = [];
+  try {
+    const data = await dataPromise;
+    banners = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('[Home] HomeHeroBannerWrapper fallback triggered:', error);
+  }
+
+  return <HomeHeroBanner banners={banners} />;
 }
 
 async function HomeBrandsRailWrapper({
