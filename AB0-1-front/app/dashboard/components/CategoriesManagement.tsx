@@ -42,6 +42,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { FeatureAccessEntry } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { buildCompanyPath } from '@/lib/slug';
+import { resolveCategoryIcon } from '@/lib/categories/resolve-category-icon';
 import { getFullImageUrl } from '@/utils/image';
 
 import {
@@ -188,17 +189,6 @@ function groupAccent(group: string) {
   };
 }
 
-function getCategoryImage(
-  category: Category,
-) {
-  return (
-    category.banner_url ||
-    category.icon_url ||
-    category.logo?.url ||
-    null
-  );
-}
-
 function CategoryThumbnail({
   category,
   group,
@@ -206,30 +196,40 @@ function CategoryThumbnail({
   category: Category;
   group: string;
 }) {
-  const imageUrl =
-    getCategoryImage(category);
+  const accent = groupAccent(group);
 
-  const accent =
-    groupAccent(group);
+  const iconRes = resolveCategoryIcon({
+    slug: category.seo_url,
+    seo_url: category.seo_url,
+    name: category.name,
+    iconUrl: category.icon_url,
+    format: 'auto',
+    sizeVariant: '256',
+  });
 
-  const Icon =
+  const imageSrc =
+    iconRes.src.startsWith('/3d-refined') ||
+    iconRes.src.startsWith('/icones-new')
+      ? iconRes.src
+      : getFullImageUrl(iconRes.src);
+
+  const IconFallback =
     group === GROUP_MOBILITY
       ? Zap
       : group === GROUP_SOLAR
         ? Sun
         : Grid2X2;
 
-  if (imageUrl) {
+  if (imageSrc) {
     return (
-      <span className="relative h-[58px] w-[76px] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm">
+      <span className="relative flex h-[54px] w-[54px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 to-slate-100/70 p-1.5 shadow-sm transition-transform duration-200 group-hover:scale-105 sm:h-[58px] sm:w-[58px]">
         <Image
-          src={getFullImageUrl(
-            imageUrl,
-          )}
-          alt=""
-          fill
-          sizes="76px"
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          src={imageSrc}
+          alt={category.name}
+          width={48}
+          height={48}
+          unoptimized
+          className="h-full w-full object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-110"
         />
       </span>
     );
@@ -238,11 +238,11 @@ function CategoryThumbnail({
   return (
     <span
       className={cn(
-        'flex h-[58px] w-[76px] shrink-0 items-center justify-center rounded-xl border shadow-sm',
+        'flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-2xl border shadow-sm sm:h-[58px] sm:w-[58px]',
         accent.iconBg,
       )}
     >
-      <Icon
+      <IconFallback
         className="h-5 w-5"
         aria-hidden="true"
       />
@@ -990,19 +990,27 @@ export default function CategoriesManagement({
                 : categoryLimitBadgeText}
             </Badge>
 
-            <Badge className="h-8 rounded-full border border-amber-100 bg-amber-50 px-3 font-bold text-amber-700 hover:bg-amber-50">
-              <Sun
-                className="mr-2 h-3.5 w-3.5"
-                aria-hidden="true"
+            <Badge className="h-8 rounded-full border border-amber-100 bg-amber-50 pl-2 pr-3 font-bold text-amber-700 hover:bg-amber-50">
+              <Image
+                src="/3d-refined/A11_energia-solar-256.webp"
+                alt=""
+                width={18}
+                height={18}
+                unoptimized
+                className="mr-1.5 h-4 w-4 object-contain"
               />
               {groupedCounts[GROUP_SOLAR] || 0}{' '}
               Energia Solar
             </Badge>
 
-            <Badge className="h-8 rounded-full border border-emerald-100 bg-emerald-50 px-3 font-bold text-emerald-700 hover:bg-emerald-50">
-              <Zap
-                className="mr-2 h-3.5 w-3.5"
-                aria-hidden="true"
+            <Badge className="h-8 rounded-full border border-emerald-100 bg-emerald-50 pl-2 pr-3 font-bold text-emerald-700 hover:bg-emerald-50">
+              <Image
+                src="/3d-refined/D06_veiculos-eletricos-256.webp"
+                alt=""
+                width={18}
+                height={18}
+                unoptimized
+                className="mr-1.5 h-4 w-4 object-contain"
               />
               {groupedCounts[GROUP_MOBILITY] || 0}{' '}
               Mobilidade Elétrica
@@ -1136,6 +1144,13 @@ export default function CategoriesManagement({
                   group,
                 );
 
+              const groupIconSrc =
+                group === GROUP_SOLAR
+                  ? '/3d-refined/A11_energia-solar-256.webp'
+                  : group === GROUP_MOBILITY
+                    ? '/3d-refined/D06_veiculos-eletricos-256.webp'
+                    : null;
+
               const GroupIcon =
                 group ===
                 GROUP_MOBILITY
@@ -1168,11 +1183,22 @@ export default function CategoriesManagement({
                     <span className="flex min-w-0 items-center gap-3">
                       <span
                         className={cn(
-                          'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border',
-                          accent.iconBg,
+                          'relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/80 bg-gradient-to-br from-slate-50 to-slate-100/70 p-1 shadow-sm',
+                          !groupIconSrc && accent.iconBg,
                         )}
                       >
-                        <GroupIcon className="h-4 w-4" />
+                        {groupIconSrc ? (
+                          <Image
+                            src={groupIconSrc}
+                            alt={group}
+                            width={28}
+                            height={28}
+                            unoptimized
+                            className="h-full w-full object-contain drop-shadow-sm"
+                          />
+                        ) : (
+                          <GroupIcon className="h-4 w-4" />
+                        )}
                       </span>
 
                       <span className="min-w-0">
