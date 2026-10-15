@@ -471,6 +471,7 @@ Rails.application.routes.draw do
         get 'analytics/prospects', to: 'company_dashboard#analytics_prospects'
         get 'analytics/prospects/journey/:id', to: 'company_dashboard#analytics_prospects_journey'
         get 'analytics/prospects/export', to: 'company_dashboard#analytics_prospects_export'
+        get 'analytics/prospects/health', to: 'company_dashboard#analytics_prospects_health'
         patch 'analytics/prospects/settings', to: 'company_dashboard#analytics_prospects_settings'
         get 'analytics/reputation', to: 'company_dashboard#analytics_reputation'
         get 'analytics/ranking', to: 'company_dashboard#analytics_ranking'
