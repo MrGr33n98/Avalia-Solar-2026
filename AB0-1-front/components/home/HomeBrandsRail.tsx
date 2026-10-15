@@ -44,7 +44,7 @@ export function BrandLogoCard({ name, logoUrl, href, className }: BrandLogoCardP
             alt={name}
             fill
             sizes="104px"
-            className="object-contain p-[3px] transition-transform duration-200 group-hover:scale-105"
+            className="object-contain p-0.5 transition-transform duration-200 group-hover:scale-105"
             onError={() => setImageError(true)}
             loading="lazy"
           />

@@ -105,8 +105,10 @@ export function HomeCompaniesRail({
           const hasRating = typeof company.average_rating === 'number' && company.average_rating > 0;
           const reviewsCount = company.rating_count || company.reviews_count || 0;
 
-          const hasBanner = Boolean(company.banner_url);
-          const hasLogo = Boolean(company.logo_url);
+          const bannerUrl = typeof company.banner_url === 'string' ? company.banner_url.trim() : '';
+          const logoUrl = typeof company.logo_url === 'string' ? company.logo_url.trim() : '';
+          const hasBanner = Boolean(bannerUrl);
+          const hasLogo = Boolean(logoUrl);
 
           // Tags de especialidade seguras (dados reais de services ou categories)
           const tags: string[] =
@@ -123,28 +125,26 @@ export function HomeCompaniesRail({
               key={company.id}
               className="flex w-[210px] sm:w-[230px] shrink-0 snap-start flex-col rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden transition-all hover:border-slate-300 hover:shadow-sm"
             >
-              {/* Foto da instalação / Logo em contain / Placeholder neutro */}
-              <div className="relative h-28 sm:h-32 w-full overflow-hidden bg-slate-50">
+              {/* Banner empresarial em cover / logo em contain / placeholder neutro */}
+              <div className="relative h-28 w-full overflow-hidden bg-slate-50 sm:h-32">
                 <Link href={companyHref} className="block h-full w-full">
                   {hasBanner ? (
                     <Image
-                      src={company.banner_url!}
-                      alt={company.name}
+                      src={bannerUrl}
+                      alt={`Imagem de capa de ${company.name}`}
                       fill
-                      sizes="240px"
-                      className="object-cover transition-transform duration-300 hover:scale-105"
+                      sizes="(max-width: 640px) 210px, 230px"
+                      className="object-cover object-center transition-transform duration-300 hover:scale-105"
                     />
                   ) : hasLogo ? (
-                    <div className="flex h-full w-full items-center justify-center p-3 bg-slate-50">
-                      <div className="relative h-12 w-28">
-                        <Image
-                          src={company.logo_url!}
-                          alt={company.name}
-                          fill
-                          sizes="140px"
-                          className="object-contain"
-                        />
-                      </div>
+                    <div className="relative h-full w-full bg-slate-50">
+                      <Image
+                        src={logoUrl}
+                        alt={`Logotipo ${company.name}`}
+                        fill
+                        sizes="(max-width: 640px) 210px, 230px"
+                        className="object-contain p-2"
+                      />
                     </div>
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-slate-100 text-slate-400">
