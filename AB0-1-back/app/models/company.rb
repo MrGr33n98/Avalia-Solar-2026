@@ -221,6 +221,8 @@ end
   accepts_nested_attributes_for :company_icp_profile, allow_destroy: true
   has_many :intent_scores, dependent: :destroy
   has_many :buyer_intent_activities, dependent: :destroy
+  has_many :outbound_clicks, dependent: :destroy
+  has_one :sales_tracking_site, class_name: 'Sales::TrackingSite', dependent: :destroy
   has_one :proposal_setting, class_name: 'CompanyProposalSetting', dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
   has_many :company_webhooks, dependent: :destroy
@@ -1555,6 +1557,61 @@ end
 
   def proposal_setting_or_default
     proposal_setting || build_proposal_setting(company_id: id)
+  end
+
+  # ============================================================================
+  # Track Your Prospects — Outbound Destination Security (Anti-Open-Redirect)
+  # ============================================================================
+  def authorized_outbound_origins
+    origins = []
+
+    [website, cta_primary_url, cta_secondary_url].compact.each do |raw_url|
+      uri = URI.parse(raw_url.to_s.strip) rescue nil
+      next unless uri && %w[http https].include?(uri.scheme&.downcase) && uri.host.present?
+
+      port_suffix = (uri.port == uri.default_port ? '' : ":#{uri.port}")
+      origins << "#{uri.scheme.downcase}://#{uri.host.downcase}#{port_suffix}"
+    end
+
+    if sales_tracking_site&.allowed_origins.is_a?(Array)
+      origins.concat(sales_tracking_site.allowed_origins.map(&:to_s).map(&:downcase))
+    end
+
+    origins.uniq
+  end
+
+  def valid_outbound_url?(candidate_url)
+    return false if candidate_url.blank?
+
+    uri = URI.parse(candidate_url.to_s.strip)
+    return false unless uri && %w[http https].include?(uri.scheme&.downcase) && uri.host.present?
+    return false if uri.userinfo.present?
+
+    candidate_origin = "#{uri.scheme.downcase}://#{uri.host.downcase}#{uri.port == uri.default_port ? '' : ":#{uri.port}"}"
+    authorized_outbound_origins.any? { |auth_origin| candidate_origin.casecmp?(auth_origin) }
+  rescue URI::InvalidURIError
+    false
+  end
+
+  def resolve_outbound_destination(destination_type: 'website', custom_url: nil)
+    if custom_url.present?
+      return custom_url.strip if valid_outbound_url?(custom_url)
+
+      return nil
+    end
+
+    target = case destination_type.to_s
+             when 'cta_primary'
+               cta_primary_url.presence || website.presence
+             when 'cta_secondary'
+               cta_secondary_url.presence || website.presence
+             else
+               website.presence || cta_primary_url.presence || cta_secondary_url.presence
+             end
+
+    return nil if target.blank?
+
+    valid_outbound_url?(target) ? target.strip : nil
   end
 end
 

@@ -255,6 +255,11 @@ Rails.application.routes.draw do
         end
       end
 
+      # Track Your Prospects — Outbound Clicks with verifiable attribution
+      scope 'outbound', as: :outbound do
+        get 'redirect', to: 'outbound#redirect_to_target'
+      end
+
       # Social Core API routes
       get 'feed', to: 'feed#index'
       resources :groups, param: :slug, only: %i[index show create update], controller: 'groups' do
