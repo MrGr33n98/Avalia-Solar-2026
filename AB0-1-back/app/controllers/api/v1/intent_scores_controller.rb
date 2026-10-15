@@ -85,6 +85,19 @@ module Api
         direct_views = scores_array.sum(&:direct_pageviews)
         competitive_views = scores_array.sum(&:competitive_pageviews)
 
+        profile_count = scores_array.sum do |s|
+          counts = s.score_breakdown.is_a?(Hash) ? (s.score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
+          counts['profile_view'].to_i + counts['review_read'].to_i + counts['faq_interaction'].to_i
+        end
+
+        pricing_count = scores_array.sum do |s|
+          counts = s.score_breakdown.is_a?(Hash) ? (s.score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
+          counts['pricing_interaction'].to_i + counts['calculator_usage'].to_i
+        end
+
+        compare_count = competitive_views
+        contact_count = scores_array.sum { |s| s.hot_signals_count.to_i }
+
         render json: {
           total_accounts: total_accounts,
           buying_stage_distribution: stage_dist,
@@ -95,10 +108,10 @@ module Api
             total_intent_signals: scores_array.sum(&:total_signals_count)
           },
           top_signals_summary: [
-            { type: 'profile', label: 'Visualizações de Perfil', count: [direct_views * 0.45, 12].max.round },
-            { type: 'pricing', label: 'Simulador / Preços', count: [direct_views * 0.35, 8].max.round },
-            { type: 'compare', label: 'Comparador Solar', count: [competitive_views, 5].max.round },
-            { type: 'contact', label: 'Cliques WhatsApp / Fone', count: scores_array.sum(&:hot_signals_count) }
+            { type: 'profile', label: 'Visualizações de Perfil', count: profile_count },
+            { type: 'pricing', label: 'Simulador / Preços', count: pricing_count },
+            { type: 'compare', label: 'Comparador Solar', count: compare_count },
+            { type: 'contact', label: 'Cliques WhatsApp / Fone', count: contact_count }
           ]
         }
       end
@@ -210,7 +223,7 @@ module Api
       # GET /api/v1/intent_scores/:id
       # Get single score with full details
       def show
-        score = IntentScore.find(params[:id])
+        score = @company.intent_scores.find(params[:id])
 
         render json: score_json(score, detailed: true)
       end
@@ -236,15 +249,28 @@ module Api
       private
 
       def set_company_for_intent_scores
-        company_id = params[:company_id].presence
-        company_id ||= IntentScore.where(id: params[:id]).pick(:company_id) if params[:id].present?
+        if params[:id].present?
+          score = IntentScore.find_by(id: params[:id])
+          unless score
+            render json: { error: 'Score not found' }, status: :not_found
+            return
+          end
 
-        if company_id.blank?
-          render json: { error: 'company_id required' }, status: :bad_request
-          return
+          if params[:company_id].present? && params[:company_id].to_s != score.company_id.to_s
+            render json: { error: 'Acesso negado para este recurso' }, status: :forbidden
+            return
+          end
+
+          @company = score.company
+        else
+          company_id = params[:company_id].presence
+          if company_id.blank?
+            render json: { error: 'company_id required' }, status: :bad_request
+            return
+          end
+
+          @company = ::Company.find(company_id)
         end
-
-        @company = ::Company.find(company_id)
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Company not found' }, status: :not_found
       end
@@ -283,7 +309,7 @@ module Api
           total_score: score.total_score,
           direct_pageviews: score.direct_pageviews,
           competitive_pageviews: score.competitive_pageviews,
-          unique_visitors: [score.unique_sessions_count.to_i, 1].max,
+          unique_visitors: score.unique_sessions_count.to_i,
           intent_level: score.intent_level,
           thermometer: score.thermometer_emoji,
           recommended_action: score.recommended_action,

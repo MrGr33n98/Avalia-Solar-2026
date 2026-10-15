@@ -219,6 +219,8 @@ end
   has_one :company_trust_score, foreign_key: :company_id, dependent: :destroy
   has_one :company_icp_profile, dependent: :destroy
   accepts_nested_attributes_for :company_icp_profile, allow_destroy: true
+  has_many :intent_scores, dependent: :destroy
+  has_many :buyer_intent_activities, dependent: :destroy
   has_one :proposal_setting, class_name: 'CompanyProposalSetting', dependent: :destroy
   has_many :company_access_requests, dependent: :destroy
   has_many :company_webhooks, dependent: :destroy

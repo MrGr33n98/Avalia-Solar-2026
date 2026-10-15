@@ -396,14 +396,6 @@ Rails.application.routes.draw do
       get 'analytics/overview', to: 'analytics#overview'
       get 'analytics/funnel', to: 'analytics#funnel'
 
-      # Intent Scores API
-      resources :intent_scores, only: [:index, :show] do
-        collection do
-          get :summary
-          post :recalculate
-        end
-      end
-      resources :intent_signals, only: [:create]
 
       # Identity Stitching API
       scope 'identity', as: :identity do
