@@ -111,6 +111,9 @@ export interface CompareSummaryItem {
   label: string;
   companyName: string | null;
   detail: string;
+  isTie?: boolean;
+  isBothVerified?: boolean;
+  winnerCompany?: CompareCompany | null;
 }
 
 const bestBy = (
@@ -126,51 +129,174 @@ const bestBy = (
 };
 
 export function buildCompareSummary(companies: CompareCompany[]): CompareSummaryItem[] {
-  const bestRating = bestBy(companies, (company) => (company.rating > 0 ? company.rating : null));
+  // 1. Verificação
+  const verifiedCompanies = companies.filter((c) => c.verified);
+  const isBothVerified =
+    verifiedCompanies.length > 1 && verifiedCompanies.length === companies.length;
+  let verifiedItem: CompareSummaryItem;
+  if (isBothVerified) {
+    verifiedItem = {
+      key: 'verified',
+      label: 'Verificação',
+      companyName: 'Ambas',
+      detail: 'Ambas verificadas',
+      isTie: true,
+      isBothVerified: true,
+      winnerCompany: null,
+    };
+  } else if (verifiedCompanies.length === 1) {
+    const verified = verifiedCompanies[0];
+    verifiedItem = {
+      key: 'verified',
+      label: 'Verificação',
+      companyName: verified.name,
+      detail: `${verified.name} ✓`,
+      isBothVerified: false,
+      winnerCompany: verified,
+    };
+  } else {
+    verifiedItem = {
+      key: 'verified',
+      label: 'Verificação',
+      companyName: null,
+      detail: 'Nenhuma verificada',
+    };
+  }
+
+  // 2. Cobertura
+  const coverageList = companies
+    .map((c) => ({
+      company: c,
+      count: c.coverageCities.length || c.coverageStates.length,
+      isNationwide: c.coverageStates.length >= 26 || /brasil/i.test(c.state || ''),
+    }))
+    .filter((e) => e.count > 0 || e.isNationwide);
+
+  let coverageItem: CompareSummaryItem;
+  if (coverageList.length === 0) {
+    coverageItem = {
+      key: 'coverage',
+      label: 'Cobertura',
+      companyName: null,
+      detail: 'Dados insuficientes',
+    };
+  } else {
+    coverageList.sort((a, b) => {
+      if (a.isNationwide && !b.isNationwide) return -1;
+      if (!a.isNationwide && b.isNationwide) return 1;
+      return b.count - a.count;
+    });
+
+    const first = coverageList[0];
+    const second = coverageList[1];
+    const isTie =
+      coverageList.length > 1 &&
+      ((first.isNationwide && second?.isNationwide) || first.count === second?.count);
+
+    if (isTie) {
+      const regionText = first.isNationwide
+        ? 'Brasil'
+        : `${first.count} ${first.count === 1 ? 'região' : 'regiões'}`;
+      coverageItem = {
+        key: 'coverage',
+        label: 'Cobertura',
+        companyName: 'Empate',
+        detail: `Empate · ${regionText}`,
+        isTie: true,
+      };
+    } else {
+      const regionText = first.isNationwide
+        ? 'Brasil'
+        : `${first.count} ${first.count === 1 ? 'região' : 'regiões'}`;
+      coverageItem = {
+        key: 'coverage',
+        label: 'Cobertura',
+        companyName: first.company.name,
+        detail: `${first.company.name} · ${regionText}`,
+        winnerCompany: first.company,
+      };
+    }
+  }
+
+  // 3. Avaliação
+  const rated = companies
+    .filter((c) => c.rating > 0)
+    .sort((a, b) => b.rating - a.rating);
+
+  let ratingItem: CompareSummaryItem;
+  if (rated.length === 0) {
+    ratingItem = {
+      key: 'rating',
+      label: 'Avaliação',
+      companyName: null,
+      detail: 'Dados insuficientes',
+    };
+  } else if (rated.length > 1 && rated[0].rating === rated[1].rating) {
+    ratingItem = {
+      key: 'rating',
+      label: 'Avaliação',
+      companyName: 'Empate',
+      detail: `Empate · ${rated[0].rating.toFixed(1).replace('.', ',')}/5`,
+      isTie: true,
+    };
+  } else {
+    const winner = rated[0];
+    ratingItem = {
+      key: 'rating',
+      label: 'Avaliação',
+      companyName: winner.name,
+      detail: `${winner.name} · ${winner.rating.toFixed(1).replace('.', ',')}/5`,
+      winnerCompany: winner,
+    };
+  }
+
+  // 4. Resposta
+  const responsive = companies
+    .map((c) => ({ company: c, minutes: parseResponseTimeMinutes(c) }))
+    .filter((e): e is { company: CompareCompany; minutes: number } => e.minutes !== null)
+    .sort((a, b) => a.minutes - b.minutes);
+
+  let responseItem: CompareSummaryItem;
+  if (responsive.length === 0) {
+    responseItem = {
+      key: 'response',
+      label: 'Resposta',
+      companyName: null,
+      detail: 'Dados insuficientes',
+    };
+  } else if (responsive.length > 1 && responsive[0].minutes === responsive[1].minutes) {
+    const label = responsive[0].company.responseTimeLabel || 'Mesmo prazo';
+    responseItem = {
+      key: 'response',
+      label: 'Resposta',
+      companyName: 'Empate',
+      detail: `Empate · ${label}`,
+      isTie: true,
+    };
+  } else {
+    const winner = responsive[0].company;
+    const label = winner.responseTimeLabel || 'Mais rápida';
+    responseItem = {
+      key: 'response',
+      label: 'Resposta',
+      companyName: winner.name,
+      detail: `${winner.name} · ${label}`,
+      winnerCompany: winner,
+    };
+  }
+
+  // 5. Mais avaliações (mantido para compatibilidade)
   const mostReviews = bestBy(companies, (company) =>
     company.reviewsCount > 0 ? company.reviewsCount : null
   );
-  const fastestResponse = bestBy(companies, parseResponseTimeMinutes, 'min');
-  const verified = companies.find((company) => company.verified);
-  const bestCoverage = bestBy(companies, (company) => {
-    const count = company.coverageCities.length || company.coverageStates.length;
-    return count > 0 ? count : null;
-  });
+  const reviewsItem: CompareSummaryItem = {
+    key: 'reviews',
+    label: 'Mais avaliações',
+    companyName: mostReviews?.name || null,
+    detail: mostReviews ? `${mostReviews.reviewsCount} avaliações` : 'Dados insuficientes',
+  };
 
-  return [
-    {
-      key: 'rating',
-      label: 'Melhor nota',
-      companyName: bestRating?.name || null,
-      detail: bestRating ? `${bestRating.rating.toFixed(1)} de 5` : 'Dados insuficientes',
-    },
-    {
-      key: 'reviews',
-      label: 'Mais avaliações',
-      companyName: mostReviews?.name || null,
-      detail: mostReviews ? `${mostReviews.reviewsCount} avaliações` : 'Dados insuficientes',
-    },
-    {
-      key: 'response',
-      label: 'Resposta mais rápida',
-      companyName: fastestResponse?.name || null,
-      detail: fastestResponse?.responseTimeLabel || 'Dados insuficientes',
-    },
-    {
-      key: 'verified',
-      label: 'Empresa verificada',
-      companyName: verified?.name || null,
-      detail: verified ? 'Selo verificado' : 'Dados insuficientes',
-    },
-    {
-      key: 'coverage',
-      label: 'Melhor cobertura',
-      companyName: bestCoverage?.name || null,
-      detail: bestCoverage
-        ? `${bestCoverage.coverageCities.length || bestCoverage.coverageStates.length} regiões informadas`
-        : 'Dados insuficientes',
-    },
-  ];
+  return [verifiedItem, coverageItem, ratingItem, responseItem, reviewsItem];
 }
 
 export type BestMatchCompany = CompareCompany & {

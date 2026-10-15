@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -113,6 +113,7 @@ function CompanyChip({ company, onRemove }: { company: Company; onRemove: (id: n
 
 export default function ComparisonFloatingBar() {
   const router = useRouter();
+  const pathname = usePathname();
   const {
     comparisonList,
     removeFromComparison,
@@ -236,6 +237,10 @@ export default function ComparisonFloatingBar() {
     setIsClosedByUser(false);
     openComparisonDock();
   };
+
+  if (pathname === '/compare') {
+    return null;
+  }
 
   return (
     <>

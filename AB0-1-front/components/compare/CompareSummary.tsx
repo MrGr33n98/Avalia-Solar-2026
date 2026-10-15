@@ -1,96 +1,113 @@
-import { Clock3, Map, ShieldCheck, Star } from 'lucide-react';
+import { Clock3, Info, Map, ShieldCheck, Star } from 'lucide-react';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { buildCompareSummary } from './compare-insights';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
 
-const summaryConfig: Record<
-  string,
-  {
-    icon: typeof ShieldCheck;
-    iconBg: string;
-    iconColor: string;
-    order: number;
-  }
-> = {
-  verified: {
-    icon: ShieldCheck,
-    iconBg: 'bg-blue-50',
-    iconColor: 'text-blue-600',
-    order: 1,
-  },
-  coverage: {
-    icon: Map,
-    iconBg: 'bg-blue-50',
-    iconColor: 'text-blue-600',
-    order: 2,
-  },
-  rating: {
-    icon: Star,
-    iconBg: 'bg-amber-50',
-    iconColor: 'text-amber-500 fill-amber-400',
-    order: 3,
-  },
-  response: {
-    icon: Clock3,
-    iconBg: 'bg-blue-50',
-    iconColor: 'text-blue-600',
-    order: 4,
-  },
-};
-
 export default function CompareSummary({ companies }: { companies: CompareCompany[] }) {
-  const allItems = buildCompareSummary(companies);
-  const items = allItems
-    .filter((item) => item.key in summaryConfig)
-    .sort((a, b) => summaryConfig[a.key].order - summaryConfig[b.key].order);
+  const summaryItems = buildCompareSummary(companies);
+  const verifiedItem = summaryItems.find((item) => item.key === 'verified');
+  const coverageItem = summaryItems.find((item) => item.key === 'coverage');
+  const ratingItem = summaryItems.find((item) => item.key === 'rating');
+  const responseItem = summaryItems.find((item) => item.key === 'response');
 
   return (
-    <section aria-labelledby="compare-summary-title">
-      <h2 id="compare-summary-title" className="mb-2.5 text-base font-bold text-slate-950">
-        Resumo da comparação
-      </h2>
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-        {items.map((item) => {
-          const config = summaryConfig[item.key];
-          const Icon = config.icon;
-          const hasData = Boolean(item.companyName);
+    <section aria-labelledby="compare-summary-title" className="w-full">
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-3 sm:p-3.5 shadow-xs">
+        {/* Header compacto */}
+        <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+          <h2 id="compare-summary-title" className="text-xs sm:text-sm font-bold text-slate-900">
+            Resumo da comparação
+          </h2>
+          <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-slate-400">
+            <Info className="h-3 w-3 text-slate-400" aria-hidden="true" />
+            Dados públicos
+          </span>
+        </div>
 
-          return (
-            <article
-              key={item.key}
-              className="flex flex-col justify-between rounded-xl border border-blue-100/70 bg-white p-2.5 shadow-sm sm:p-3"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${config.iconBg} ${config.iconColor}`}
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </div>
-                <span className="truncate text-[11px] font-semibold text-slate-900 sm:text-xs">
-                  {item.label}
+        {/* Grid 2x2 compacto de síntese */}
+        <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50/40">
+          {/* Célula 1: Verificação */}
+          <div className="flex flex-col justify-center p-2.5 sm:p-3 min-h-[64px] sm:min-h-[72px]">
+            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-500">
+              <ShieldCheck className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
+              Verificação
+            </span>
+            <div className="mt-1 flex items-center gap-1 min-w-0">
+              {verifiedItem?.isBothVerified ? (
+                <span className="text-xs sm:text-[13px] font-bold text-slate-900 inline-flex items-center gap-1 leading-snug">
+                  Ambas <CompanyVerifiedBadge size="sm" />
                 </span>
-              </div>
-              <div className="mt-2 min-w-0">
-                <p className="truncate text-xs font-bold text-slate-950 sm:text-sm">
-                  {item.companyName || 'Dados insuficientes'}
-                </p>
-                <div className="mt-1">
-                  {item.key === 'verified' && hasData ? (
-                    <div className="flex items-center gap-1">
-                      <CompanyVerifiedBadge size="sm" />
-                    </div>
-                  ) : (
-                    <p className="text-[11px] text-slate-500 sm:text-xs">
-                      {hasData ? item.detail : '—'}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </article>
-          );
-        })}
+              ) : verifiedItem?.companyName ? (
+                <span className="text-xs sm:text-[13px] font-bold text-slate-900 inline-flex items-center gap-1 leading-snug break-words">
+                  {verifiedItem.companyName} <CompanyVerifiedBadge size="sm" />
+                </span>
+              ) : (
+                <span className="text-xs sm:text-[13px] font-medium text-slate-400">
+                  Nenhuma verificada
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Célula 2: Cobertura */}
+          <div className="flex flex-col justify-center p-2.5 sm:p-3 min-h-[64px] sm:min-h-[72px] !border-t-0">
+            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-500">
+              <Map className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
+              Cobertura
+            </span>
+            <div className="mt-1 min-w-0">
+              {coverageItem?.companyName ? (
+                <span className="text-xs sm:text-[13px] font-bold text-slate-900 leading-snug break-words">
+                  {coverageItem.detail}
+                </span>
+              ) : (
+                <span className="text-xs sm:text-[13px] font-medium text-slate-400">
+                  Dados insuficientes
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Célula 3: Avaliação */}
+          <div className="flex flex-col justify-center p-2.5 sm:p-3 min-h-[64px] sm:min-h-[72px]">
+            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-500">
+              <Star className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
+              Avaliação
+            </span>
+            <div className="mt-1 min-w-0">
+              {ratingItem?.companyName ? (
+                <span className="text-xs sm:text-[13px] font-bold text-slate-900 leading-snug break-words">
+                  {ratingItem.detail}
+                </span>
+              ) : (
+                <span className="text-xs sm:text-[13px] font-medium text-slate-400">
+                  Dados insuficientes
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Célula 4: Resposta */}
+          <div className="flex flex-col justify-center p-2.5 sm:p-3 min-h-[64px] sm:min-h-[72px]">
+            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-500">
+              <Clock3 className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
+              Resposta
+            </span>
+            <div className="mt-1 min-w-0">
+              {responseItem?.companyName ? (
+                <span className="text-xs sm:text-[13px] font-bold text-slate-900 leading-snug break-words">
+                  {responseItem.detail}
+                </span>
+              ) : (
+                <span className="text-xs sm:text-[13px] font-medium text-slate-400">
+                  Dados insuficientes
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-      <p className="mt-2 px-1 text-[10px] text-slate-400">
+      <p className="mt-1.5 px-1 text-[10px] text-slate-400">
         Resumo calculado apenas com as informações públicas disponíveis para as empresas
         selecionadas.
       </p>
