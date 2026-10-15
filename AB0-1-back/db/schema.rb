@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_10_15_100000) do
+ActiveRecord::Schema[7.0].define(version: 2026_10_15_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -5041,6 +5041,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_15_100000) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "settings", default: {}, null: false
     t.index ["company_id"], name: "index_sales_tracking_sites_on_company_id", unique: true
     t.index ["public_key"], name: "index_sales_tracking_sites_on_public_key", unique: true
   end

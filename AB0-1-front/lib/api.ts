@@ -2133,6 +2133,123 @@ export interface TrackingWorkspaceResponse {
   error?: { code: string; request_id?: string };
 }
 
+// Track Your Prospects Types
+export type ProspectsWorkspaceStatus =
+  | 'ready'
+  | 'empty'
+  | 'configured_no_evidence'
+  | 'active_no_attributed_traffic'
+  | 'tag_not_installed'
+  | 'inactive'
+  | 'unavailable'
+  | 'error';
+
+export interface ProspectRecord {
+  id: string;
+  clicked_at: string;
+  source_context: string;
+  source_label: string;
+  destination_type: string;
+  target_url: string;
+  evidence_status: 'click_only' | 'landing_verified' | 'form_event_observed' | 'lead_confirmed';
+  session_id?: string | null;
+  landing_verified_at?: string | null;
+  referrer_host?: string | null;
+  duration_seconds?: number | null;
+  events_count: number;
+  account_name: string;
+  country: string;
+}
+
+export interface ProspectJourneyStep {
+  step: string;
+  label: string;
+  occurred_at: string;
+  source_context?: string;
+  destination_type?: string;
+  target_url?: string;
+  landing_path?: string;
+  referrer_host?: string;
+  consent_state?: string;
+  traffic_class?: string;
+  path?: string;
+  properties?: Record<string, unknown>;
+  evidence_type: string;
+}
+
+export interface ProspectJourneyResponse {
+  click_id: string;
+  company_id: number;
+  timeline: ProspectJourneyStep[];
+  summary: {
+    source_context: string;
+    target_url: string;
+    total_steps: number;
+    session_id?: string | null;
+    account_name: string;
+  };
+}
+
+export interface ProspectsWorkspaceResponse {
+  status: ProspectsWorkspaceStatus;
+  range: { from: string; to: string };
+  summary: {
+    clicks: number;
+    verified_landings: number;
+    form_submissions: number;
+    confirmed_conversions: number;
+    landing_rate: number | null;
+    conversion_rate: number | null;
+    trends: {
+      clicks_change_pct: number | null;
+      landings_change_pct: number | null;
+      conversions_change_pct: number | null;
+    };
+  };
+  timeseries: Array<{
+    date: string;
+    clicks: number;
+    verified_landings: number;
+    conversions: number;
+  }>;
+  source_breakdown: Array<{
+    source: string;
+    label: string;
+    clicks: number;
+    verified_landings: number;
+    conversions: number;
+    percentage: number;
+  }>;
+  records: ProspectRecord[];
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total_count: number;
+    total_pages: number;
+  };
+  tag_info: {
+    configured: boolean;
+    active?: boolean;
+    public_key?: string;
+    allowed_origins?: string[];
+    snippet_url?: string;
+    last_seen_at?: string | null;
+    status: 'healthy' | 'possibly_inactive' | 'configured_no_evidence' | 'inactive' | 'tag_not_installed';
+    settings?: Record<string, unknown>;
+  };
+  integrations: {
+    ga4: {
+      status: 'connected' | 'not_configured';
+      measurement_id?: string;
+      updated_at?: string;
+    };
+    custom_ids: {
+      allowed_keys: string[];
+      enabled: boolean;
+    };
+  };
+}
+
 // Trust Health Types
 export interface TrustHealth {
   trust_score: number;
@@ -2545,6 +2662,44 @@ export const companyDashboardApi = {
     fetchApi<TrackingWorkspaceResponse>('/company_dashboard/analytics/tracking_workspace', {
       params: { company_id: companyId, ...query },
     }),
+  getProspectsWorkspace: (
+    companyId?: string | number,
+    query: {
+      from?: string;
+      to?: string;
+      preset?: '7d' | '30d' | '90d' | '180d' | '365d';
+      page?: number;
+      per_page?: number;
+      search?: string;
+      evidence_status?: string;
+    } = {}
+  ) =>
+    fetchApi<ProspectsWorkspaceResponse>('/company_dashboard/analytics/prospects', {
+      params: { company_id: companyId, ...query },
+    }),
+  getProspectJourney: (companyId: string | number, clickId: string) =>
+    fetchApi<ProspectJourneyResponse>(`/company_dashboard/analytics/prospects/journey/${clickId}`, {
+      params: { company_id: companyId },
+    }),
+  updateProspectsSettings: (
+    companyId: string | number,
+    payload: {
+      allowed_origins?: string[];
+      active?: boolean;
+      settings?: {
+        ga4?: { measurement_id?: string };
+        custom_ids?: { enabled?: boolean };
+      };
+    }
+  ) =>
+    fetchApi<{ status: string; tag_info: ProspectsWorkspaceResponse['tag_info'] }>(
+      '/company_dashboard/analytics/prospects/settings',
+      {
+        method: 'PATCH',
+        params: { company_id: companyId },
+        body: payload,
+      }
+    ),
 
   // Trust & Certification endpoints (TaaS)
   getTrustHealth: (companyId?: string | number) =>
