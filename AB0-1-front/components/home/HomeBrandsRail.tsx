@@ -1,106 +1,191 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Building2 } from 'lucide-react';
+import { buildCompanyPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
+import type { Company } from '@/lib/api';
 
-export interface BrandItem {
-  id: string;
+export interface BrandCardData {
+  id: string | number;
   name: string;
-  slug: string;
-  displayStyle?: {
-    color?: string;
-    fontWeight?: string;
-    letterSpacing?: string;
-  };
+  logoUrl?: string | null;
+  href: string;
 }
 
-export const CATALOG_BRANDS: BrandItem[] = [
-  {
-    id: 'weg',
-    name: 'WEG',
-    slug: 'weg',
-    displayStyle: { color: '#00579E', fontWeight: '900', letterSpacing: '0.05em' },
-  },
-  {
-    id: 'intelbras',
-    name: 'intelbras',
-    slug: 'intelbras',
-    displayStyle: { color: '#00A859', fontWeight: '800', letterSpacing: '-0.02em' },
-  },
-  {
-    id: 'sungrow',
-    name: 'SUNGROW',
-    slug: 'sungrow',
-    displayStyle: { color: '#F37021', fontWeight: '900', letterSpacing: '0.08em' },
-  },
-  {
-    id: 'huawei',
-    name: 'HUAWEI',
-    slug: 'huawei',
-    displayStyle: { color: '#CF0A2C', fontWeight: '800', letterSpacing: '0.04em' },
-  },
-  {
-    id: 'solis',
-    name: 'Solis',
-    slug: 'solis',
-    displayStyle: { color: '#0066B3', fontWeight: '800' },
-  },
-  {
-    id: 'growatt',
-    name: 'Growatt',
-    slug: 'growatt',
-    displayStyle: { color: '#55A51C', fontWeight: '800' },
-  },
-];
+interface BrandLogoCardProps {
+  name: string;
+  logoUrl?: string | null;
+  href: string;
+  className?: string;
+}
+
+export function BrandLogoCard({ name, logoUrl, href, className }: BrandLogoCardProps) {
+  const [imageError, setImageError] = React.useState(false);
+
+  return (
+    <Link
+      href={href}
+      title={name}
+      aria-label={`Ver perfil de ${name}`}
+      className={cn(
+        'group relative flex shrink-0 items-center justify-center rounded-[10px] border border-[#E2E8F0] bg-white transition-all',
+        // Desktop: 116px x 52px, padding 10px
+        'w-[104px] h-[48px] p-2 sm:w-[116px] sm:h-[52px] sm:p-2.5',
+        'hover:border-blue-500 hover:shadow-xs active:scale-95',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
+        className
+      )}
+    >
+      {logoUrl && !imageError ? (
+        <div className="relative flex h-full w-full items-center justify-center">
+          <Image
+            src={logoUrl}
+            alt={name}
+            width={94}
+            height={30}
+            className="max-h-[26px] max-w-[84px] sm:max-h-[30px] sm:max-w-[94px] w-auto h-auto object-contain transition-transform duration-200 group-hover:scale-105"
+            onError={() => setImageError(true)}
+            loading="lazy"
+          />
+        </div>
+      ) : (
+        <div className="flex h-full w-full items-center justify-center gap-1 px-1">
+          <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+          <span className="truncate text-[11px] sm:text-xs font-semibold text-slate-700">
+            {name}
+          </span>
+        </div>
+      )}
+    </Link>
+  );
+}
 
 interface HomeBrandsRailProps {
+  companies?: Company[];
   className?: string;
   title?: string;
 }
 
 export function HomeBrandsRail({
+  companies = [],
   className,
   title = 'Marcas em destaque',
 }: HomeBrandsRailProps) {
-  if (!CATALOG_BRANDS || CATALOG_BRANDS.length === 0) return null;
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
+  const [canScrollRight, setCanScrollRight] = React.useState(false);
+
+  // Extrair empresas cadastradas reais com logo ou perfil
+  const brandItems: BrandCardData[] = React.useMemo(() => {
+    if (!companies || companies.length === 0) return [];
+
+    // Priorizar empresas com logo_url preenchido
+    const sorted = [...companies].sort((a, b) => {
+      const aHasLogo = Boolean(a.logo_url || a.verified_badge_image_url);
+      const bHasLogo = Boolean(b.logo_url || b.verified_badge_image_url);
+      if (aHasLogo && !bHasLogo) return -1;
+      if (!aHasLogo && bHasLogo) return 1;
+      return 0;
+    });
+
+    return sorted.map((comp) => ({
+      id: comp.id,
+      name: comp.name,
+      logoUrl: comp.logo_url || comp.verified_badge_image_url || null,
+      href: buildCompanyPath(comp.slug, comp.name, comp.id),
+    }));
+  }, [companies]);
+
+  const checkScroll = React.useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 6);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 6);
+  }, []);
+
+  React.useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    checkScroll();
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll, { passive: true });
+
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [checkScroll, brandItems]);
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const offset = direction === 'left' ? -260 : 260;
+    el.scrollBy({ left: offset, behavior: 'smooth' });
+  };
+
+  if (brandItems.length === 0) return null;
 
   return (
-    <section className={cn('px-4 py-3 select-none w-full', className)}>
-      <div className="flex items-center justify-between pb-2">
+    <section className={cn('relative px-4 py-3 select-none w-full', className)}>
+      {/* Header da seção: Título à esquerda, Ver todas à direita */}
+      <div className="flex items-center justify-between pb-2.5">
         <h2 className="text-sm font-bold text-slate-900">{title}</h2>
         <Link
           href="/companies"
-          className="inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-700"
+          className="inline-flex items-center gap-0.5 text-xs font-semibold text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:underline"
         >
           <span>Ver todas</span>
           <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Link>
       </div>
 
+      {/* Seta de navegação esquerda (Desktop) */}
+      {canScrollLeft && (
+        <button
+          type="button"
+          onClick={() => handleScroll('left')}
+          aria-label="Rolar marcas para a esquerda"
+          className="absolute left-2 top-[60%] z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 p-1 text-slate-700 shadow-md backdrop-blur transition hover:bg-slate-50 hover:text-slate-950 active:scale-95 md:flex"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      )}
+
+      {/* Container horizontal: 1 única linha, rolagem suave no PWA e Desktop */}
       <div
+        ref={scrollContainerRef}
         tabIndex={0}
         role="region"
-        aria-label="Lista de marcas parceiras"
-        className="flex w-full flex-nowrap items-center gap-2.5 overflow-x-auto pb-1 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+        aria-label="Carrossel de marcas parceiras cadastradas"
+        className="flex w-full flex-nowrap items-center gap-2 sm:gap-2.5 overflow-x-auto pb-1 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {CATALOG_BRANDS.map((brand) => (
-          <Link
+        {brandItems.map((brand) => (
+          <BrandLogoCard
             key={brand.id}
-            href={`/companies?q=${encodeURIComponent(brand.name)}`}
-            className="flex h-11 shrink-0 items-center justify-center rounded-xl border border-slate-200/90 bg-white px-4 py-2 shadow-xs transition-all hover:border-slate-300 hover:shadow active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          >
-            <span
-              className="text-xs font-extrabold select-none uppercase tracking-wide"
-              style={brand.displayStyle}
-            >
-              {brand.name}
-            </span>
-          </Link>
+            name={brand.name}
+            logoUrl={brand.logoUrl}
+            href={brand.href}
+          />
         ))}
       </div>
+
+      {/* Seta de navegação direita (Desktop) */}
+      {canScrollRight && (
+        <button
+          type="button"
+          onClick={() => handleScroll('right')}
+          aria-label="Rolar marcas para a direita"
+          className="absolute right-2 top-[60%] z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 p-1 text-slate-700 shadow-md backdrop-blur transition hover:bg-slate-50 hover:text-slate-950 active:scale-95 md:flex"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
     </section>
   );
 }

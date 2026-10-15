@@ -187,9 +187,11 @@ export default async function Home() {
         <HomeHeroBanner />
       </div>
 
-      {/* 4. Marcas em Destaque no Catálogo */}
+      {/* 4. Marcas em Destaque no Catálogo (Logos reais de empresas parceiras/fabricantes) */}
       <div className="mx-auto max-w-[1320px]">
-        <HomeBrandsRail />
+        <Suspense fallback={<div className="h-16 w-full animate-pulse rounded-xl bg-slate-50 mx-4 my-2" />}>
+          <HomeBrandsRailWrapper dataPromise={companiesDataPromise} />
+        </Suspense>
       </div>
 
       {/* 5. Empresas em Destaque na Região (Trilha Horizontal de Cards) */}
@@ -282,6 +284,24 @@ export default async function Home() {
       </section>
     </main>
   );
+}
+
+async function HomeBrandsRailWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getCompaniesDataCached>;
+}) {
+  let companies: Company[] = [];
+  try {
+    const data = await dataPromise;
+    companies = Array.isArray(data?.companies) ? data.companies : [];
+  } catch (error) {
+    console.error('[Home] HomeBrandsRailWrapper fallback triggered:', error);
+  }
+
+  if (companies.length === 0) return null;
+
+  return <HomeBrandsRail companies={companies} />;
 }
 
 async function HomeCompaniesRailWrapper({
