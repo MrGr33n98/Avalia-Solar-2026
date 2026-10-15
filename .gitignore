@@ -113,6 +113,8 @@ docs/audits/*
 !docs/03-campaign/*
 !docs/upgrade/
 !docs/upgrade/*
+!docs/tracking/
+!docs/tracking/**
 !docs/security-audit/
 !docs/security-audit/*
 !docs/observability/

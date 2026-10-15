@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'digest'
+
 module Api
   module V1
     module Public
@@ -7,7 +9,8 @@ module Api
         class TrackingController < Api::V1::Sales::BaseController
           MAX_PAYLOAD_BYTES = 16.kilobytes
           ALLOWED_EVENTS = %w[
-            page_view company_view cta_click quote_request_started quote_request_submitted form_started form_submitted
+            page_view company_view cta_click quote_request_started quote_request_submitted
+            form_started form_submitted lead_confirmed consent_granted consent_revoked
           ].freeze
 
           skip_before_action :authenticate_api_user
@@ -29,10 +32,24 @@ module Api
           def create_session
             return oversized_payload if oversized_request?
 
+            raw_consent = params.dig(:session, :consent_state).to_s.strip.downcase
+            consent_state = %w[granted denied].include?(raw_consent) ? raw_consent : 'unknown'
+
+            as_click_id = params.dig(:session, :as_click_id).presence || params[:as_click_id].presence
+            outbound_click = nil
+            click_hash = nil
+
+            if as_click_id.present? && consent_state != 'denied'
+              outbound_click, click_hash = resolve_verified_outbound_click(as_click_id)
+            end
+
             session = ::Sales::TrackingSession.create!(
               company: @site.company,
               session_id: SecureRandom.uuid,
               anonymous_id: SecureRandom.uuid,
+              outbound_click: outbound_click,
+              consent_state: consent_state,
+              as_click_id_hash: click_hash,
               utm_source: safe_utm(:utm_source),
               utm_medium: safe_utm(:utm_medium),
               utm_campaign: safe_utm(:utm_campaign),
@@ -41,7 +58,13 @@ module Api
               traffic_class: traffic_class,
               started_at: Time.current
             )
-            render json: { session_id: session.session_id, anonymous_id: session.anonymous_id }, status: :created
+
+            render json: {
+              session_id: session.session_id,
+              anonymous_id: session.anonymous_id,
+              attributed: session.attributed?,
+              consent_state: session.consent_state
+            }, status: :created
           end
 
           def create_event
@@ -52,6 +75,17 @@ module Api
 
             session = ::Sales::TrackingSession.where(company_id: @site.company_id)
                                               .find_by!(session_id: attributes[:session_id])
+
+            if session.consent_denied? && attributes[:event_name] != 'consent_granted'
+              return render json: { accepted: false, reason: 'consent_denied' }, status: :ok
+            end
+
+            if attributes[:event_name] == 'consent_revoked'
+              session.update!(consent_state: 'denied')
+            elsif attributes[:event_name] == 'consent_granted'
+              session.update!(consent_state: 'granted')
+            end
+
             _, created = persist_event(session, attributes)
             render json: { accepted: true, duplicate: !created }, status: created ? :accepted : :ok
           rescue ActiveRecord::RecordNotUnique
@@ -161,6 +195,43 @@ module Api
               internal_hosts.include?(host) || host.end_with?('.avaliasolar.com.br')
             end
             internal ? 'internal' : 'commercial'
+          end
+
+          def resolve_verified_outbound_click(token)
+            return [nil, nil] if token.blank? || token.to_s.bytesize > 1024
+
+            payload = OutboundTokenService.decode(token)
+            unless payload
+              Rails.logger.warn("[TrackingController] Token as_click_id inválido ou adulterado para site=#{@site.public_key}")
+              return [nil, nil]
+            end
+
+            token_company_id = payload[:cid].to_i
+            if token_company_id != @site.company_id.to_i
+              Rails.logger.warn(
+                "[TrackingController] Bloqueio cross-tenant: token.cid=#{token_company_id} != site.company_id=#{@site.company_id}"
+              )
+              return [nil, nil]
+            end
+
+            click_id = payload[:clk].to_s
+            click = ::OutboundClick.find_by(id: click_id, company_id: @site.company_id)
+            unless click
+              Rails.logger.warn("[TrackingController] OutboundClick id=#{click_id} não encontrado para company_id=#{@site.company_id}")
+              return [nil, nil]
+            end
+
+            _encoded_payload, signature = token.to_s.split('.')
+            unless ActiveSupport::SecurityUtils.secure_compare(click.click_token_signature.to_s, signature.to_s)
+              Rails.logger.warn("[TrackingController] Assinatura do token não confere com OutboundClick id=#{click_id}")
+              return [nil, nil]
+            end
+
+            click_hash = Digest::SHA256.hexdigest(token.to_s)[0..63]
+            [click, click_hash]
+          rescue StandardError => e
+            Rails.logger.error("[TrackingController] Erro ao resolver outbound click: #{e.message}")
+            [nil, nil]
           end
 
           def oversized_payload

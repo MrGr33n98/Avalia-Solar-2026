@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_10_14_180000) do
+ActiveRecord::Schema[7.0].define(version: 2026_10_15_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -5022,10 +5022,15 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_14_180000) do
     t.string "referrer_host"
     t.string "landing_path"
     t.string "traffic_class", default: "commercial", null: false
+    t.uuid "outbound_click_id"
+    t.string "consent_state", limit: 20, default: "unknown", null: false
+    t.string "as_click_id_hash", limit: 64
     t.index ["account_id"], name: "index_sales_tracking_sessions_on_account_id"
     t.index ["company_id", "started_at"], name: "index_sales_tracking_sessions_on_company_and_started"
     t.index ["company_id"], name: "index_sales_tracking_sessions_on_company_id"
+    t.index ["consent_state"], name: "index_sales_tracking_sessions_on_consent_state"
     t.index ["contact_id"], name: "index_sales_tracking_sessions_on_contact_id"
+    t.index ["outbound_click_id"], name: "index_sales_tracking_sessions_on_outbound_click_id"
     t.index ["session_id"], name: "index_sales_tracking_sessions_on_session_id", unique: true
   end
 
@@ -5629,6 +5634,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_14_180000) do
   add_foreign_key "sales_tasks", "users", column: "owner_id"
   add_foreign_key "sales_tracking_events", "companies"
   add_foreign_key "sales_tracking_sessions", "companies"
+  add_foreign_key "sales_tracking_sessions", "outbound_clicks", on_delete: :nullify
   add_foreign_key "sales_tracking_sites", "companies"
   add_foreign_key "sales_user_roles", "sales_roles", column: "role_id"
   add_foreign_key "sales_webhook_deliveries", "sales_webhook_endpoints", column: "endpoint_id"
