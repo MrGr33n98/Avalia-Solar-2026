@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics/lazy';
-import { getFloatingWidgetZIndex, getFloatingWidgetSizeClasses, WIDGET_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
+import { getFloatingWidgetZIndex, WIDGET_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
 
 interface MobiVoltInviteBubbleProps {
   onActionSelect: (action: InviteAction) => void;
@@ -18,15 +19,46 @@ export interface InviteAction {
   kind: InviteActionKind;
   message?: string;
   vertical?: 'solar' | 'electric_mobility';
+  icon3d?: string;
 }
 
 const DEFAULT_ACTIONS: InviteAction[] = [
-  { label: '☀️ Energia Solar', kind: 'qualification', vertical: 'solar' },
-  { label: '🔌 Mobilidade Elétrica', kind: 'qualification', vertical: 'electric_mobility' },
-  { label: '⭐ Ver avaliações', kind: 'message', message: 'Quero ver avaliações de empresas bem avaliadas.' },
-  { label: '📊 Comparar empresas', kind: 'message', message: 'Quero comparar empresas para escolher com mais segurança.' },
-  { label: '💰 Pedir orçamento', kind: 'qualification', vertical: 'solar' },
-  { label: '✍️ Explicar o que preciso', kind: 'message', message: 'Quero explicar brevemente o que preciso.' }
+  {
+    label: 'Energia Solar',
+    kind: 'qualification',
+    vertical: 'solar',
+    icon3d: '/3d-refined/A10_paineis-solares-256.webp'
+  },
+  {
+    label: 'Mobilidade Elétrica',
+    kind: 'qualification',
+    vertical: 'electric_mobility',
+    icon3d: '/3d-refined/D06_veiculos-eletricos-256.webp'
+  },
+  {
+    label: 'Ver avaliações',
+    kind: 'message',
+    message: 'Quero ver avaliações de empresas bem avaliadas.',
+    icon3d: '/3d-refined/I03_selos-verdes-e-certificacoes-256.webp'
+  },
+  {
+    label: 'Comparar empresas',
+    kind: 'message',
+    message: 'Quero comparar empresas para escolher com mais segurança.',
+    icon3d: '/3d-refined/H04_tendencias-de-mercado-256.webp'
+  },
+  {
+    label: 'Pedir orçamento',
+    kind: 'qualification',
+    vertical: 'solar',
+    icon3d: '/3d-refined/A06_financiamento-de-energia-solar-256.webp'
+  },
+  {
+    label: 'Explicar o que preciso',
+    kind: 'message',
+    message: 'Quero explicar brevemente o que preciso.',
+    icon3d: '/3d-refined/F04_simulacao-e-projeto-solar-256.webp'
+  }
 ];
 
 const INVITE_DELAY_MS = 3000;
@@ -128,10 +160,12 @@ export default function MobiVoltInviteBubble({
         {/* Header com avatar e mensagem */}
         <div className="p-4 space-y-3">
           <div className="flex items-start space-x-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-brand-blue/20 bg-white">
-              <img
+            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-brand-blue/20 bg-brand-blue">
+              <Image
                 src="/assets/chat-widget-avalia-solar.png"
                 alt="Avalia Solar"
+                width={40}
+                height={40}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -151,7 +185,7 @@ export default function MobiVoltInviteBubble({
               <button
                 key={action.label}
                 onClick={() => handleActionClick(action)}
-                className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 group ${
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl border transition-all duration-200 group flex items-center justify-between ${
                   highlighted && index < 2
                     ? 'border-brand-blue bg-brand-blue/5 dark:bg-brand-blue/10 hover:bg-brand-blue/10 dark:hover:bg-brand-blue/15 animate-pulse'
                     : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-750 hover:border-brand-blue/50'
@@ -160,9 +194,22 @@ export default function MobiVoltInviteBubble({
                   animationDelay: highlighted && index < 2 ? `${index * 150}ms` : '0ms'
                 }}
               >
-                <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-                  {action.label}
-                </span>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {action.icon3d && (
+                    <div className="w-6 h-6 flex-shrink-0 flex items-center justify-center">
+                      <Image
+                        src={action.icon3d}
+                        alt=""
+                        width={24}
+                        height={24}
+                        className="w-full h-full object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-200"
+                      />
+                    </div>
+                  )}
+                  <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 truncate">
+                    {action.label}
+                  </span>
+                </div>
               </button>
             ))}
           </div>

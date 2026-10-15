@@ -22,6 +22,7 @@ import MobiVoltDiscoveryMenu, { DiscoveryAction } from './MobiVoltDiscoveryMenu'
 import MobiVoltSolarWizard from './MobiVoltSolarWizard';
 import MobiVoltEvWizard from './MobiVoltEvWizard';
 import MobiVoltReengagementPrompt from './MobiVoltReengagementPrompt';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { CommunicationSurfaceManager, useCommunicationSurface } from '@/lib/communication-surface-manager';
 import { WIDGET_POSITION_CLASSES } from '@/lib/floating-widgets-positioning';
@@ -31,6 +32,7 @@ type ChatInviteAction = {
   kind: 'message' | 'qualification';
   message?: string;
   vertical?: ChatLeadVertical;
+  icon3d?: string;
 };
 
 const CHAT_INVITE_DISMISSED_KEY = 'mobivolt_chat_invite_dismissed';
@@ -478,27 +480,60 @@ export default function ChatWidget() {
     {
       label: 'Ver avaliações',
       kind: 'message',
-      message: 'Quero ver avaliações de empresas bem avaliadas.'
+      message: 'Quero ver avaliações de empresas bem avaliadas.',
+      icon3d: '/3d-refined/I03_selos-verdes-e-certificacoes-256.webp'
     },
     {
       label: 'Comparar empresas',
       kind: 'message',
-      message: 'Quero comparar empresas para escolher com mais segurança.'
+      message: 'Quero comparar empresas para escolher com mais segurança.',
+      icon3d: '/3d-refined/H04_tendencias-de-mercado-256.webp'
     },
     {
       label: 'Pedir orçamento',
       kind: 'qualification',
-      vertical: 'solar'
+      vertical: 'solar',
+      icon3d: '/3d-refined/A06_financiamento-de-energia-solar-256.webp'
     }
   ];
 
   const discoveryActions: ChatInviteAction[] = [
-    { label: '☀️ Energia Solar', kind: 'qualification', vertical: 'solar' },
-    { label: '🔌 Mobilidade Elétrica', kind: 'qualification', vertical: 'electric_mobility' },
-    { label: '⭐ Ver avaliações', kind: 'message', message: 'Quero ver avaliações de empresas bem avaliadas.' },
-    { label: '📊 Comparar empresas', kind: 'message', message: 'Quero comparar empresas para escolher com mais segurança.' },
-    { label: '💰 Quero orçamento', kind: 'qualification', vertical: 'solar' },
-    { label: '✍️ Explicar o que preciso', kind: 'message', message: 'Quero explicar brevemente o que preciso.' }
+    {
+      label: 'Energia Solar',
+      kind: 'qualification',
+      vertical: 'solar',
+      icon3d: '/3d-refined/A10_paineis-solares-256.webp'
+    },
+    {
+      label: 'Mobilidade Elétrica',
+      kind: 'qualification',
+      vertical: 'electric_mobility',
+      icon3d: '/3d-refined/D06_veiculos-eletricos-256.webp'
+    },
+    {
+      label: 'Ver avaliações',
+      kind: 'message',
+      message: 'Quero ver avaliações de empresas bem avaliadas.',
+      icon3d: '/3d-refined/I03_selos-verdes-e-certificacoes-256.webp'
+    },
+    {
+      label: 'Comparar empresas',
+      kind: 'message',
+      message: 'Quero comparar empresas para escolher com mais segurança.',
+      icon3d: '/3d-refined/H04_tendencias-de-mercado-256.webp'
+    },
+    {
+      label: 'Quero orçamento',
+      kind: 'qualification',
+      vertical: 'solar',
+      icon3d: '/3d-refined/A06_financiamento-de-energia-solar-256.webp'
+    },
+    {
+      label: 'Explicar o que preciso',
+      kind: 'message',
+      message: 'Quero explicar brevemente o que preciso.',
+      icon3d: '/3d-refined/F04_simulacao-e-projeto-solar-256.webp'
+    }
   ];
 
   return (
@@ -639,10 +674,25 @@ export default function ChatWidget() {
                       type="button"
                       key={action.label}
                       onClick={() => executeInviteAction(action)}
-                      className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-2.5 md:py-3.5 px-3 md:px-4 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group text-left"
+                      className="w-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 text-zinc-800 dark:text-zinc-100 font-bold py-2.5 md:py-3 px-3 md:px-3.5 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-between group text-left"
                     >
-                      <span className="block text-xs md:text-sm">{action.label}</span>
-                      <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {action.icon3d && (
+                          <div className="w-7 h-7 md:w-8 md:h-8 flex-shrink-0 flex items-center justify-center">
+                            <Image
+                              src={action.icon3d}
+                              alt=""
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-contain drop-shadow-sm transition-transform group-hover:scale-110 duration-200"
+                            />
+                          </div>
+                        )}
+                        <span className="block text-xs md:text-sm font-semibold truncate leading-tight">
+                          {action.label}
+                        </span>
+                      </div>
+                      <svg className="w-4 h-4 text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
@@ -1027,14 +1077,28 @@ export default function ChatWidget() {
                 className="w-full flex items-center justify-between rounded-xl border border-[#64748B] bg-[#222D42] p-3.5 text-left transition-all duration-200 hover:bg-[#2d3c56] hover:border-[#3B82F6] hover:shadow-lg hover:shadow-blue-500/5 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#172033]"
               >
                 <div className="flex items-center gap-3">
-                  {action.label === 'Ver avaliações' && (
-                    <Star className="w-5 h-5 text-[#3B82F6] fill-[#3B82F6]" />
-                  )}
-                  {action.label === 'Comparar empresas' && (
-                    <Search className="w-5 h-5 text-[#3B82F6]" />
-                  )}
-                  {action.label === 'Pedir orçamento' && (
-                    <FileText className="w-5 h-5 text-[#3B82F6]" />
+                  {action.icon3d ? (
+                    <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
+                      <Image
+                        src={action.icon3d}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      {action.label === 'Ver avaliações' && (
+                        <Star className="w-5 h-5 text-[#3B82F6] fill-[#3B82F6]" />
+                      )}
+                      {action.label === 'Comparar empresas' && (
+                        <Search className="w-5 h-5 text-[#3B82F6]" />
+                      )}
+                      {action.label === 'Pedir orçamento' && (
+                        <FileText className="w-5 h-5 text-[#3B82F6]" />
+                      )}
+                    </>
                   )}
                   <span className="text-sm font-semibold text-white">
                     {action.label}

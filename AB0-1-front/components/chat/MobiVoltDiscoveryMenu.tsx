@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import Image from 'next/image';
 import { track } from '@/lib/analytics/lazy';
 
 export type DiscoveryActionKind = 'solar' | 'ev' | 'reviews' | 'compare' | 'quote' | 'explain' | 'human';
@@ -10,6 +11,7 @@ export interface DiscoveryAction {
   label: string;
   kind: DiscoveryActionKind;
   icon: string;
+  icon3d?: string;
   description?: string;
   vertical?: 'solar' | 'electric_mobility';
 }
@@ -20,6 +22,7 @@ const DISCOVERY_ACTIONS: DiscoveryAction[] = [
     label: 'Energia Solar',
     kind: 'solar',
     icon: '☀️',
+    icon3d: '/3d-refined/A10_paineis-solares-256.webp',
     description: 'Instalação, financiamento e projetos solares',
     vertical: 'solar'
   },
@@ -28,6 +31,7 @@ const DISCOVERY_ACTIONS: DiscoveryAction[] = [
     label: 'Mobilidade Elétrica',
     kind: 'ev',
     icon: '🔌',
+    icon3d: '/3d-refined/D06_veiculos-eletricos-256.webp',
     description: 'Carregadores, wallbox e infraestrutura EV',
     vertical: 'electric_mobility'
   },
@@ -36,6 +40,7 @@ const DISCOVERY_ACTIONS: DiscoveryAction[] = [
     label: 'Ver avaliações',
     kind: 'reviews',
     icon: '⭐',
+    icon3d: '/3d-refined/I03_selos-verdes-e-certificacoes-256.webp',
     description: 'Empresas bem avaliadas perto de você'
   },
   {
@@ -43,6 +48,7 @@ const DISCOVERY_ACTIONS: DiscoveryAction[] = [
     label: 'Comparar empresas',
     kind: 'compare',
     icon: '📊',
+    icon3d: '/3d-refined/H04_tendencias-de-mercado-256.webp',
     description: 'Compare notas, reviews e serviços'
   },
   {
@@ -50,6 +56,7 @@ const DISCOVERY_ACTIONS: DiscoveryAction[] = [
     label: 'Pedir orçamento',
     kind: 'quote',
     icon: '💰',
+    icon3d: '/3d-refined/A06_financiamento-de-energia-solar-256.webp',
     description: 'Receba orçamentos personalizados'
   },
   {
@@ -57,6 +64,7 @@ const DISCOVERY_ACTIONS: DiscoveryAction[] = [
     label: 'Explicar necessidade',
     kind: 'explain',
     icon: '✍️',
+    icon3d: '/3d-refined/F04_simulacao-e-projeto-solar-256.webp',
     description: 'Descreva o que você precisa'
   },
   {
@@ -64,6 +72,7 @@ const DISCOVERY_ACTIONS: DiscoveryAction[] = [
     label: 'Falar com humano',
     kind: 'human',
     icon: '👤',
+    icon3d: '/3d-refined/A07_instaladores-de-energia-solar-256.webp',
     description: 'Atendimento personalizado'
   }
 ];
@@ -112,7 +121,19 @@ export default function MobiVoltDiscoveryMenu({
             className="group flex flex-col items-start p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-750 hover:border-brand-blue/50 transition-all duration-200 hover:scale-[1.02] active:scale-95 text-left"
           >
             <div className="flex items-start space-x-3 w-full">
-              <span className="text-2xl flex-shrink-0">{action.icon}</span>
+              {action.icon3d ? (
+                <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center">
+                  <Image
+                    src={action.icon3d}
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="w-full h-full object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-200"
+                  />
+                </div>
+              ) : (
+                <span className="text-2xl flex-shrink-0">{action.icon}</span>
+              )}
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-sm text-zinc-800 dark:text-zinc-100 group-hover:text-brand-blue transition-colors">
                   {action.label}
