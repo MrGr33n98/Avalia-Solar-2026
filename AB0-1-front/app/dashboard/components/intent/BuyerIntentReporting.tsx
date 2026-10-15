@@ -192,7 +192,7 @@ export function BuyerIntentReporting({ data, onSelectStage }: BuyerIntentReporti
             <div className="flex items-center gap-2">
               <GitCompare className="h-4 w-4 text-indigo-500" />
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Concorrentes mais comparados com você (G2 Benchmark)
+                Empresas comparadas com você no Comparador Solar
               </h3>
             </div>
             <span className="text-xs text-slate-500">Últimos 30 dias</span>

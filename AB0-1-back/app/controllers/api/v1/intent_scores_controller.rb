@@ -117,7 +117,8 @@ module Api
       end
 
       # GET /api/v1/intent_scores/export_csv
-      # Export G2 Summary CSV
+      # GET /api/v1/intent_scores/export_csv
+      # Export Summary CSV
       def export_csv
         require 'csv'
         company_id = params[:company_id]
@@ -154,11 +155,11 @@ module Api
           end
         end
 
-        send_data csv_data, filename: "g2-buyer-intent-summary-#{company_id}-#{Date.current}.csv", type: 'text/csv'
+        send_data csv_data, filename: "avalia-solar-intencao-compra-summary-#{company_id}-#{Date.current}.csv", type: 'text/csv'
       end
 
       # GET /api/v1/intent_scores/export_detail_csv
-      # Export G2 Signal Detail CSV
+      # Export Signal Detail CSV
       def export_detail_csv
         require 'csv'
         company_id = params[:company_id]
@@ -191,7 +192,7 @@ module Api
           end
         end
 
-        send_data csv_data, filename: "g2-buyer-intent-detail-#{company_id}-#{Date.current}.csv", type: 'text/csv'
+        send_data csv_data, filename: "avalia-solar-intencao-compra-detail-#{company_id}-#{Date.current}.csv", type: 'text/csv'
       end
 
       # GET /api/v1/intent_scores/summary

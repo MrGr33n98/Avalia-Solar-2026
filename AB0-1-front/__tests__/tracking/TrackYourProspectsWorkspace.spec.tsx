@@ -7,6 +7,12 @@ jest.mock('@tanstack/react-query', () => ({
   useQuery: jest.fn(),
 }));
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: jest.fn(), push: jest.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/dashboard',
+}));
+
 const mockProspectsData = {
   status: 'ready' as const,
   range: { from: '2026-09-15', to: '2026-10-15' },

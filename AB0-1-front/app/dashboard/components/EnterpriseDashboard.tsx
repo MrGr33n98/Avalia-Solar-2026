@@ -110,9 +110,7 @@ const WebhooksManagement = dynamic(() => import('./WebhooksManagement'), {
 const ReviewFormsManagement = dynamic(() => import('./ReviewFormsManagement'), {
   loading: () => <DashboardTabSkeleton />,
 });
-const IcpSetupForm = dynamic(() => import('./IcpSetupForm'), {
-  loading: () => <DashboardTabSkeleton />,
-});
+
 const BuyerIntentWorkspace = dynamic(() => import('./intent/BuyerIntentWorkspace'), {
   loading: () => <DashboardTabSkeleton />,
 });
@@ -277,7 +275,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
           title: 'Solicitação enviada!',
           description: 'Nossa equipe comercial entrará em contato para alinhar sua proposta Enterprise.',
         });
-      } catch (err: any) {
+      } catch {
         toast({
           title: 'Solicitação registrada',
           description: 'Entraremos em contato com você em breve.',
@@ -304,12 +302,15 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       if (checkout_url) {
         window.location.href = checkout_url;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[EnterpriseDashboard] Erro ao iniciar checkout:', err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível conectar ao checkout no momento. Tente novamente mais tarde.';
       toast({
         title: 'Erro ao iniciar contratação',
-        description:
-          err?.message || 'Não foi possível conectar ao checkout no momento. Tente novamente mais tarde.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -422,6 +423,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     }
     if (tab === 'proposals') {
       router.push('/dashboard/proposals');
+      return;
+    }
+    if (tab === 'prospects' || tab === 'track-your-prospects') {
+      setActiveTab('tracking-attribution');
+      return;
+    }
+    if (tab === 'buyer_intent') {
+      setActiveTab('buyer-intent');
       return;
     }
     if (tab && tab !== activeTab) {
@@ -945,11 +954,19 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="buyer-intent" className="mt-0 focus-visible:outline-none">
-                <BuyerIntentWorkspace companyId={companyId} />
+                <BuyerIntentWorkspace companyId={companyId} company={company} />
               </TabsContent>
 
               <TabsContent value="icp-config" className="mt-0 focus-visible:outline-none">
-                <BuyerIntentWorkspace companyId={companyId} />
+                <BuyerIntentWorkspace companyId={companyId} company={company} />
+              </TabsContent>
+
+              <TabsContent value="prospects" className="mt-0 focus-visible:outline-none">
+                <TrackingAttributionWorkspace companyId={companyId} company={company} />
+              </TabsContent>
+
+              <TabsContent value="track-your-prospects" className="mt-0 focus-visible:outline-none">
+                <TrackingAttributionWorkspace companyId={companyId} company={company} />
               </TabsContent>
             </Tabs>
           </div>

@@ -84,7 +84,7 @@ export function AccountDetailDrawer({
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
                 <Sparkles className="h-4 w-4" />
-                Ação Recomendada (G2 Playbook):
+                Ação Recomendada:
               </span>
               <Badge className="bg-amber-500 text-white font-bold">
                 SLA: {account.sla_window}

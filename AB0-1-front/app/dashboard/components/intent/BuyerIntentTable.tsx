@@ -149,7 +149,7 @@ export function BuyerIntentTable({
             />
           </div>
 
-          {/* Botões de Exportação G2 */}
+          {/* Botões de Exportação */}
           <Button
             variant="outline"
             size="sm"

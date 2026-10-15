@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   RefreshCw,
   ShieldCheck,
@@ -46,8 +47,46 @@ const tabs: Array<{ id: WorkspaceTab; label: string; icon: React.ElementType }> 
   { id: 'utm_builder', label: 'Links UTM', icon: Link2 },
 ];
 
+const sectionAliasMap: Record<string, WorkspaceTab> = {
+  overview: 'overview',
+  journey: 'journey',
+  visitors: 'visitors',
+  accounts: 'visitors',
+  setup: 'installation',
+  install: 'installation',
+  installation: 'installation',
+  tag: 'installation',
+  integrations: 'integrations',
+  settings: 'settings',
+  utm_builder: 'utm_builder',
+  utm: 'utm_builder',
+};
+
 export default function TrackingAttributionWorkspace({ companyId, company }: Props) {
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('overview');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const rawSection = searchParams?.get('section') || searchParams?.get('track_tab');
+  const resolvedInitialTab =
+    rawSection && sectionAliasMap[rawSection] ? sectionAliasMap[rawSection] : 'overview';
+
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(resolvedInitialTab);
+
+  useEffect(() => {
+    if (rawSection && sectionAliasMap[rawSection] && sectionAliasMap[rawSection] !== activeTab) {
+      setActiveTab(sectionAliasMap[rawSection]);
+    }
+  }, [rawSection, activeTab]);
+
+  const handleTabChange = (tabId: WorkspaceTab) => {
+    setActiveTab(tabId);
+    if (searchParams && pathname) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('section', tabId);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  };
   const [preset, setPreset] = useState<'7d' | '30d' | '90d' | '180d' | '365d'>('30d');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -173,7 +212,7 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
                 type="button"
                 role="tab"
                 aria-selected={isCurrent}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                   isCurrent
                     ? 'border-blue-600 text-blue-600 font-semibold'

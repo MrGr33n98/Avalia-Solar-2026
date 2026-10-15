@@ -3,8 +3,9 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const metadata = {
-  title: 'Buyer Intent Platform (G2 Standard) | Avalia Solar',
-  description: 'Monitore sinais de intenção de compra, contas em pesquisa e ICP matching em tempo real.',
+  title: 'Intenção de Compra | Avalia Solar',
+  description:
+    'Monitore sinais de intenção de compra, contas em pesquisa e interesse no marketplace em tempo real.',
 };
 
 const BuyerIntentWorkspace = dynamic(

@@ -71,10 +71,17 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         description: 'Métricas e estatísticas',
       },
       {
+        id: 'buyer-intent',
+        label: 'Intenção de Compra',
+        icon: Database,
+        context: ['operational', 'quick_access'],
+        description: 'Sinais de interesse no marketplace: visitas, comparações e orçamentos',
+      },
+      {
         id: 'tracking-attribution',
         label: 'Track Your Prospects',
         icon: Link2,
-        context: ['operational'],
+        context: ['operational', 'quick_access'],
         description: 'Atribuição determinística, jornada de compradores e tag parceira',
       },
       {
@@ -160,13 +167,6 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         icon: FileText,
         context: ['operational', 'admin'],
         description: 'Personalizar formulário de orçamento',
-      },
-      {
-        id: 'buyer-intent',
-        label: 'Buyer Intent (G2)',
-        icon: Database,
-        context: ['operational', 'quick_access'],
-        description: 'Sinais de intenção de compra, contas em pesquisa e ICP matching',
       },
     ],
   },

@@ -161,7 +161,7 @@ export function IcpFilterPanel({
           </div>
         </div>
 
-        {/* 2. Buying Stage (G2) */}
+        {/* 2. Estágio de Compra */}
         <div className="space-y-1.5">
           <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
             <Layers className="h-3.5 w-3.5 text-blue-500" />
@@ -189,7 +189,7 @@ export function IcpFilterPanel({
           </div>
         </div>
 
-        {/* 3. Activity Level (G2) */}
+        {/* 3. Nível de Atividade */}
         <div className="space-y-1.5">
           <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
             <Activity className="h-3.5 w-3.5 text-emerald-500" />
