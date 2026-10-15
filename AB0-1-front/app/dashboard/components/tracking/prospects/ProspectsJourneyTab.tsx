@@ -1,9 +1,9 @@
 'use client';
 
-import { ShieldCheck, ArrowRight, ExternalLink, Clock, Globe, FileText, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Clock, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { ProspectsWorkspaceResponse, ProspectRecord } from '@/lib/api';
+import type { ProspectsWorkspaceResponse } from '@/lib/api';
 
 interface Props {
   data: ProspectsWorkspaceResponse;

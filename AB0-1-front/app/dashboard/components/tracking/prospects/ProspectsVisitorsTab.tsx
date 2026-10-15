@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, ShieldAlert, Building2, Globe, Eye, Lock } from 'lucide-react';
+import { Building2, Eye, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { ProspectsWorkspaceResponse } from '@/lib/api';

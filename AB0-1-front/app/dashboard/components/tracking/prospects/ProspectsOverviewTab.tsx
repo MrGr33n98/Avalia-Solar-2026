@@ -11,11 +11,8 @@ import {
   ArrowDownRight,
   Eye,
   ShieldCheck,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
-  BarChart3,
-  Filter,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

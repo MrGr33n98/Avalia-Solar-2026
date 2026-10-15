@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart3, Key, Check, ShieldCheck, AlertCircle, Save } from 'lucide-react';
+import { BarChart3, Key, Check, AlertCircle, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';

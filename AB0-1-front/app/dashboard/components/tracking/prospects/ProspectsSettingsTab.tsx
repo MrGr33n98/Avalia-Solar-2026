@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Power, Shield, Database, Lock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Power, Shield, Database, Lock, CheckCircle2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { companyDashboardApi, type ProspectsWorkspaceResponse } from '@/lib/api';
 
