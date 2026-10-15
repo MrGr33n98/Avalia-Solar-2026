@@ -8,7 +8,7 @@ module Api
       before_action :authenticate_company_user_or_admin!
       before_action :set_company
       before_action :authorize_dashboard_access!
-      before_action :authorize_tracking_workspace_access!, only: %i[analytics_tracking_workspace analytics_prospects analytics_prospects_journey analytics_prospects_export analytics_prospects_settings]
+      before_action :authorize_tracking_workspace_access!, only: %i[analytics_tracking_workspace analytics_prospects analytics_prospects_journey analytics_prospects_export analytics_prospects_health analytics_prospects_settings]
       before_action :enforce_intent_summary_feature_access!, only: %i[intent_summary]
 
       # GET /api/v1/company_dashboard/analytics/overview
@@ -361,82 +361,21 @@ module Api
         range = analytics_date_range(default_days: 30)
         return render_invalid_analytics_range unless range
 
-        scope = ::OutboundClick.where(company_id: @company.id, clicked_at: range[:from_day].beginning_of_day..range[:to_day].end_of_day)
-
-        search_term = params[:search].to_s.strip
-        if search_term.present?
-          sanitized = "%#{search_term.downcase}%"
-          scope = scope.where('LOWER(target_url) LIKE ? OR LOWER(source_context) LIKE ?', sanitized, sanitized)
-        end
-
-        evidence_filter = params[:evidence_status].to_s.strip
-        case evidence_filter
-        when 'click_only'
-          scope = scope.where.not(id: ::Sales::TrackingSession.where(company_id: @company.id).select(:outbound_click_id))
-        when 'landing_verified'
-          scope = scope.where(id: ::Sales::TrackingSession.where(company_id: @company.id).select(:outbound_click_id))
-        end
-
-        clicks = scope.order(clicked_at: :desc).limit(10_000)
-        click_ids = clicks.map(&:id)
-        sessions_by_click = ::Sales::TrackingSession.where(company_id: @company.id, outbound_click_id: click_ids)
-                                                    .includes(:account, :events)
-                                                    .index_by(&:outbound_click_id)
-
-        csv_data = CSV.generate(headers: true, col_sep: ',') do |csv|
-          csv << [
-            'ID do Clique',
-            'Data/Hora (ISO8601)',
-            'Origem no Marketplace',
-            'Tipo de Destino',
-            'URL de Destino',
-            'Status de Evidência',
-            'ID da Sessão',
-            'Chegada Verificada em',
-            'Host de Referência',
-            'Duração (s)',
-            'Eventos Observados',
-            'Conta / Empresa',
-            'País'
-          ]
-
-          clicks.each do |click|
-            session = sessions_by_click[click.id]
-            evidence = if !session
-                         'click_only'
-                       elsif session.events.any? { |e| %w[lead_confirmed quote_request_submitted].include?(e.event_name) }
-                         'lead_confirmed'
-                       elsif session.events.any? { |e| e.event_name == 'form_submitted' }
-                         'form_event_observed'
-                       else
-                         'landing_verified'
-                       end
-
-            last_event_time = session&.events&.map(&:occurred_at)&.max || session&.ended_at
-            duration = if session&.started_at && last_event_time && last_event_time > session.started_at
-                         (last_event_time - session.started_at).round
-                       end
-
-            csv << [
-              sanitize_csv_cell(click.id),
-              sanitize_csv_cell(click.clicked_at.iso8601),
-              sanitize_csv_cell(click.source_context),
-              sanitize_csv_cell(click.destination_type),
-              sanitize_csv_cell(click.target_url),
-              sanitize_csv_cell(evidence),
-              sanitize_csv_cell(session&.session_id),
-              sanitize_csv_cell(session&.started_at&.iso8601),
-              sanitize_csv_cell(session&.referrer_host),
-              sanitize_csv_cell(duration),
-              sanitize_csv_cell(session&.events&.length || 0),
-              sanitize_csv_cell(session&.account&.name || 'Não identificado'),
-              sanitize_csv_cell('Brasil')
-            ]
-          end
-        end
+        csv_data = ::CompanyDashboard::ProspectsExportService.call(
+          company: @company,
+          from_time: range[:from_day].beginning_of_day,
+          to_time: range[:to_day].end_of_day,
+          params: params
+        )
 
         filename = "prospects_#{@company.id}_#{range[:from_day]}_#{range[:to_day]}.csv"
         send_data csv_data, type: 'text/csv; charset=utf-8', filename: filename
+      end
+
+      # GET /api/v1/company_dashboard/analytics/prospects/health
+      def analytics_prospects_health
+        payload = ::CompanyDashboard::TagHealthMonitorService.call(company: @company)
+        render json: payload, status: :ok
       end
 
       # PATCH /api/v1/company_dashboard/analytics/prospects/settings

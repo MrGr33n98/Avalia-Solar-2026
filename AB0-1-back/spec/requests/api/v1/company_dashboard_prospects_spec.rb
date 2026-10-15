@@ -190,4 +190,33 @@ RSpec.describe 'Company Dashboard Prospects API', type: :request do
       expect(site.allowed_origins).to eq(['https://meusite.com.br'])
     end
   end
+
+  describe 'GET /api/v1/company_dashboard/analytics/prospects/health' do
+    it 'retorna diagnóstico de saúde da tag e validação de origens HTTPS' do
+      Sales::TrackingSite.create!(
+        company: company,
+        active: true,
+        allowed_origins: ['https://empresa.com.br'],
+        settings: { ga4: { measurement_id: 'G-HEALTH123' } }
+      )
+
+      get '/api/v1/company_dashboard/analytics/prospects/health', params: { company_id: company.id }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['configured']).to be(true)
+      expect(payload['active']).to be(true)
+      expect(payload['status']).to eq('configured_no_evidence')
+      expect(payload['validated_https_origins']).to be(true)
+      expect(payload['settings']['ga4']['measurement_id']).to eq('G-HEALTH123')
+    end
+
+    it 'retorna 403 se o usuário não tiver permissão para visualizar o dashboard da empresa' do
+      allow_any_instance_of(CompanyPolicy).to receive(:view_dashboard?).and_return(false)
+
+      get '/api/v1/company_dashboard/analytics/prospects/health', params: { company_id: company.id }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
 end
