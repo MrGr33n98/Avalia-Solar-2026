@@ -1,337 +1,186 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+import { CategoryIcon } from '@/components/categories/CategoryIcon';
 import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  LayoutGrid,
-  Heart,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+  CATEGORY_ICON_MANIFEST,
+  type CategoryIconDefinition,
+} from '@/lib/categories/category-icon-manifest';
 import type { Category } from '@/lib/api';
-
-export interface CategoryRailItem {
-  id: string | number;
-  label: string;
-  slug: string;
-  icon3d: string;
-}
-
-export const ALL_3D_CATEGORIES: CategoryRailItem[] = [
-  {
-    id: 'residencial',
-    label: 'Residencial',
-    slug: 'energia-solar-residencial',
-    icon3d: '/3d-refined/A04_energia-solar-residencial-256.webp',
-  },
-  {
-    id: 'comercial',
-    label: 'Comercial',
-    slug: 'energia-solar-comercial-e-industrial',
-    icon3d: '/3d-refined/A03_energia-solar-comercial-e-industrial-256.webp',
-  },
-  {
-    id: 'rural',
-    label: 'Rural & Agro',
-    slug: 'energia-solar-rural-e-agronegocio',
-    icon3d: '/3d-refined/A05_energia-solar-rural-e-agronegocio-256.webp',
-  },
-  {
-    id: 'inversores',
-    label: 'Inversores',
-    slug: 'inversores',
-    icon3d: '/3d-refined/A08_inversores-256.webp',
-  },
-  {
-    id: 'paineis',
-    label: 'Painéis Solares',
-    slug: 'paineis-solares',
-    icon3d: '/3d-refined/A10_paineis-solares-256.webp',
-  },
-  {
-    id: 'baterias',
-    label: 'Baterias',
-    slug: 'baterias-e-armazenamento-de-energia',
-    icon3d: '/3d-refined/A01_baterias-e-armazenamento-de-energia-256.webp',
-  },
-  {
-    id: 'carregadores',
-    label: 'Carregadores VE',
-    slug: 'carregadores-residenciais-wallbox',
-    icon3d: '/3d-refined/D02_carregadores-residenciais-wallbox-256.webp',
-  },
-  {
-    id: 'carport',
-    label: 'Carport Solar',
-    slug: 'carport-solar-e-coberturas-solares',
-    icon3d: '/3d-refined/A02_carport-solar-e-coberturas-solares-256.webp',
-  },
-  {
-    id: 'instaladores',
-    label: 'Instaladores',
-    slug: 'instaladores-de-energia-solar',
-    icon3d: '/3d-refined/A07_instaladores-de-energia-solar-256.webp',
-  },
-  {
-    id: 'financiamento',
-    label: 'Financiamento',
-    slug: 'financiamento-de-energia-solar',
-    icon3d: '/3d-refined/A06_financiamento-de-energia-solar-256.webp',
-  },
-  {
-    id: 'mercado-livre',
-    label: 'Mercado Livre',
-    slug: 'mercado-livre-de-energia',
-    icon3d: '/3d-refined/C01_mercado-livre-de-energia-256.webp',
-  },
-  {
-    id: 'kits-offgrid',
-    label: 'Kits Off-Grid',
-    slug: 'kits-solares-para-autossuficiencia',
-    icon3d: '/3d-refined/G01_kits-solares-para-autossuficiencia-256.webp',
-  },
-  {
-    id: 'veiculos-eletricos',
-    label: 'Veículos Elétricos',
-    slug: 'veiculos-eletricos',
-    icon3d: '/3d-refined/D06_veiculos-eletricos-256.webp',
-  },
-  {
-    id: 'frotas',
-    label: 'Frotas Elétricas',
-    slug: 'frotas-eletricas-corporativas',
-    icon3d: '/3d-refined/B01_frotas-eletricas-corporativas-256.webp',
-  },
-  {
-    id: 'estruturas',
-    label: 'Estruturas',
-    slug: 'estruturas-e-fixacao',
-    icon3d: '/3d-refined/A12_estruturas-e-fixacao-256.webp',
-  },
-  {
-    id: 'monitoramento',
-    label: 'Monitoramento',
-    slug: 'monitoramento-e-o-e-m',
-    icon3d: '/3d-refined/A09_monitoramento-e-o-e-m-256.webp',
-  },
-  {
-    id: 'credito-verde',
-    label: 'Crédito Verde',
-    slug: 'linhas-de-credito-verde',
-    icon3d: '/3d-refined/H02_linhas-de-credito-verde-256.webp',
-  },
-  {
-    id: 'seguros',
-    label: 'Seguros',
-    slug: 'seguradoras-para-solar-e-ve',
-    icon3d: '/3d-refined/H03_seguradoras-para-solar-e-ve-256.webp',
-  },
-  {
-    id: 'smart-grid',
-    label: 'Smart Grid',
-    slug: 'integracao-smart-grid',
-    icon3d: '/3d-refined/F02_integracao-smart-grid-256.webp',
-  },
-  {
-    id: 'projetos',
-    label: 'Projetos',
-    slug: 'simulacao-e-projeto-solar',
-    icon3d: '/3d-refined/F04_simulacao-e-projeto-solar-256.webp',
-  },
-];
-
-// Compatibilidade retroativa
-export const PRIMARY_3D_CATEGORIES = ALL_3D_CATEGORIES;
+import { cn } from '@/lib/utils';
 
 interface HomeCategoryRailProps {
   categories?: Category[];
   className?: string;
 }
 
-export function HomeCategoryRail({ className }: HomeCategoryRailProps) {
-  const pathname = usePathname();
+interface HomeCategoryItem {
+  id: string | number;
+  name: string;
+  slug: string;
+  iconUrl?: string | null;
+  visualKey?: string | null;
+}
+
+const PRIMARY_CATEGORIES = Object.values(CATEGORY_ICON_MANIFEST).filter(
+  (item): item is CategoryIconDefinition => item.type === 'principal'
+);
+
+function normalize(value?: string | null) {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-');
+}
+
+function buildCategoryItems(categories: Category[]): HomeCategoryItem[] {
+  return PRIMARY_CATEGORIES.map((definition) => {
+    const match = categories.find((category) => {
+      if (category.parent_id != null) return false;
+      const categorySlug = normalize(category.slug || category.seo_url || category.name);
+      return (
+        categorySlug === normalize(definition.canonicalSlug) ||
+        categorySlug === normalize(definition.name) ||
+        definition.aliases.some((alias) => categorySlug === normalize(alias))
+      );
+    });
+
+    return {
+      id: match?.id ?? definition.id,
+      name: match?.name || definition.name,
+      slug: match?.slug || match?.seo_url || definition.canonicalSlug,
+      iconUrl: match?.icon_url || definition.src,
+      visualKey: match?.visual_key,
+    };
+  });
+}
+
+export function HomeCategoryRail({ categories = [], className }: HomeCategoryRailProps) {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(false);
+  const items = React.useMemo(() => buildCategoryItems(categories), [categories]);
 
   const checkScroll = React.useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 8);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 8);
+    const element = scrollContainerRef.current;
+    if (!element) return;
+    setCanScrollLeft(element.scrollLeft > 8);
+    setCanScrollRight(element.scrollLeft + element.clientWidth < element.scrollWidth - 8);
   }, []);
 
   React.useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-
+    const element = scrollContainerRef.current;
+    if (!element) return;
     checkScroll();
-    el.addEventListener('scroll', checkScroll, { passive: true });
+    element.addEventListener('scroll', checkScroll, { passive: true });
     window.addEventListener('resize', checkScroll, { passive: true });
-
     return () => {
-      el.removeEventListener('scroll', checkScroll);
+      element.removeEventListener('scroll', checkScroll);
       window.removeEventListener('resize', checkScroll);
     };
   }, [checkScroll]);
 
-  const handleScroll = (direction: 'left' | 'right') => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const scrollAmount = direction === 'left' ? -320 : 320;
-    el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  const scroll = (direction: 'left' | 'right') => {
+    scrollContainerRef.current?.scrollBy({
+      left: direction === 'left' ? -360 : 360,
+      behavior: 'smooth',
+    });
   };
 
-  const isTudoActive = pathname === '/' || pathname === '/companies';
-
   return (
-    <nav
-      aria-label="Barra de navegação de categorias"
-      className={cn('relative w-full border-b border-slate-200/80 bg-white py-1', className)}
+    <section
+      className={cn('relative w-full px-4 py-4', className)}
+      aria-labelledby="home-categories-title"
     >
-      {/* Botão Seta Esquerda (Desktop) */}
-      {canScrollLeft && (
-        <button
-          type="button"
-          onClick={() => handleScroll('left')}
-          aria-label="Ver categorias anteriores"
-          className="absolute left-1 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 p-1.5 text-slate-700 shadow-md backdrop-blur transition hover:bg-slate-50 hover:text-slate-950 active:scale-95 md:flex"
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <h2
+          id="home-categories-title"
+          className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl"
         >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-      )}
-
-      {/* Fade esquerdo quando há scroll */}
-      {canScrollLeft && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 hidden w-10 bg-gradient-to-r from-white via-white/80 to-transparent md:block"
-        />
-      )}
-
-      {/* Container horizontal com scroll */}
-      <div
-        ref={scrollContainerRef}
-        tabIndex={0}
-        role="region"
-        aria-label="Todas as categorias em uma linha"
-        className="flex w-full flex-nowrap items-center gap-1.5 overflow-x-auto px-4 py-1 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {/* 1. Botão Categorias ∨ (abre catálogo completo) */}
+          Categorias em destaque
+        </h2>
         <Link
           href="/categories"
-          className="group flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
-          <LayoutGrid className="h-4 w-4 text-purple-600 transition group-hover:scale-110" />
-          <span>Categorias</span>
-          <ChevronDown className="h-3.5 w-3.5 text-slate-500 transition group-hover:translate-y-0.5" />
+          Ver todas
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Link>
-
-        {/* 2. Botão Favoritos (coração) */}
-        <Link
-          href="/review-dashboard/favorites"
-          className="group flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          <Heart className="h-4 w-4 text-rose-500 fill-rose-500 transition group-hover:scale-110" />
-          <span>Favoritos</span>
-        </Link>
-
-        {/* Divisor vertical sutil */}
-        <div className="h-5 w-[1px] shrink-0 bg-slate-200 mx-1" aria-hidden="true" />
-
-        {/* 4. Item 'Tudo' (ativo por padrão na Home com linha indicadora inferior) */}
-        <Link
-          href="/companies"
-          className={cn(
-            'group relative flex shrink-0 items-center gap-2 px-3 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-            isTudoActive
-              ? 'font-bold text-slate-950'
-              : 'font-medium text-slate-700 hover:text-slate-950'
-          )}
-        >
-          <div className="relative h-6 w-6 shrink-0">
-            <Image
-              src="/3d-refined/A11_energia-solar-256.webp"
-              alt="Tudo"
-              width={28}
-              height={28}
-              className="h-6 w-6 object-contain transition group-hover:scale-110"
-              priority
-            />
-          </div>
-          <span>Tudo</span>
-          {isTudoActive && (
-            <span
-              className="absolute -bottom-[5px] left-2 right-2 h-[2.5px] rounded-full bg-slate-950"
-              aria-hidden="true"
-            />
-          )}
-        </Link>
-
-        {/* 5. Todas as categorias com ícone 3D e rótulo na mesma linha */}
-        {ALL_3D_CATEGORIES.map((cat) => {
-          const href = `/categories/${cat.slug}`;
-          const isActive = pathname === href;
-
-          return (
-            <Link
-              key={cat.id}
-              href={href}
-              className={cn(
-                'group relative flex shrink-0 items-center gap-2 px-3 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-                isActive
-                  ? 'font-bold text-slate-950'
-                  : 'font-medium text-slate-700 hover:text-slate-950'
-              )}
-            >
-              <div className="relative h-6 w-6 shrink-0">
-                <Image
-                  src={cat.icon3d}
-                  alt={cat.label}
-                  width={28}
-                  height={28}
-                  className="h-6 w-6 object-contain transition group-hover:scale-110"
-                  loading="lazy"
-                />
-              </div>
-              <span className="whitespace-nowrap">{cat.label}</span>
-              {isActive && (
-                <span
-                  className="absolute -bottom-[5px] left-2 right-2 h-[2.5px] rounded-full bg-slate-950"
-                  aria-hidden="true"
-                />
-              )}
-            </Link>
-          );
-        })}
       </div>
 
-      {/* Fade direito quando há mais conteúdo */}
-      {canScrollRight && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 hidden w-10 bg-gradient-to-l from-white via-white/80 to-transparent md:block"
-        />
-      )}
+      <div className="relative">
+        {canScrollLeft ? (
+          <button
+            type="button"
+            onClick={() => scroll('left')}
+            aria-label="Ver categorias anteriores"
+            className="absolute -left-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md hover:bg-slate-50 md:flex"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        ) : null}
 
-      {/* Botão Seta Direita (Desktop) */}
-      {canScrollRight && (
-        <button
-          type="button"
-          onClick={() => handleScroll('right')}
-          aria-label="Ver mais categorias"
-          className="absolute right-1 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white/95 p-1.5 text-slate-700 shadow-md backdrop-blur transition hover:bg-slate-50 hover:text-slate-950 active:scale-95 md:flex"
+        <div
+          ref={scrollContainerRef}
+          role="region"
+          aria-label="Categorias principais"
+          tabIndex={0}
+          className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
-    </nav>
+          {items.map((category, index) => (
+            <Link
+              key={category.id}
+              href={`/categories/${category.slug}`}
+              className="group flex min-h-[132px] w-[112px] shrink-0 snap-start flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-3 text-center shadow-xs transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              <CategoryIcon
+                slug={category.slug}
+                name={category.name}
+                visualKey={category.visualKey}
+                iconUrl={category.iconUrl}
+                size={64}
+                priority={index < 4}
+                className="mb-2 rounded-xl bg-slate-50 p-2 transition group-hover:bg-blue-50"
+              />
+              <span className="line-clamp-2 text-xs font-semibold leading-tight text-slate-800">
+                {category.name}
+              </span>
+            </Link>
+          ))}
+        </div>
+
+        {canScrollRight ? (
+          <button
+            type="button"
+            onClick={() => scroll('right')}
+            aria-label="Ver mais categorias"
+            className="absolute -right-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md hover:bg-slate-50 md:flex"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-2.5 flex items-center justify-center gap-1.5" aria-hidden="true">
+        <span
+          className={cn(
+            'h-1.5 rounded-full transition-all',
+            canScrollLeft ? 'w-1.5 bg-slate-300' : 'w-6 bg-blue-600'
+          )}
+        />
+        <span
+          className={cn(
+            'h-1.5 rounded-full transition-all',
+            canScrollLeft ? 'w-6 bg-blue-600' : 'w-1.5 bg-slate-300'
+          )}
+        />
+      </div>
+    </section>
   );
 }
 

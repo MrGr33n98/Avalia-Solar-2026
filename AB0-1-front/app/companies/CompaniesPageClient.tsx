@@ -103,6 +103,12 @@ export function CompaniesContent({
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const { comparisonList, toggleComparison, canAddMore, isInComparison } = useComparison();
 
+  useEffect(() => {
+    if (searchParams.get('filters') === 'open') {
+      setIsFiltersOpen(true);
+    }
+  }, [searchParams]);
+
   const handleToggleVerified = () => {
     const updated = { ...filters, verified: !filters.verified, page: 1 };
     router.replace(buildTargetUrl(updated), { scroll: false });

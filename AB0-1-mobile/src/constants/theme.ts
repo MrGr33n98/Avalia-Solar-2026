@@ -22,6 +22,8 @@ export const Colors = {
     success: '#16A34A',
     danger: '#DC2626',
     surfaceSubtle: '#F1F5F9',
+    onTint: '#FFFFFF',
+    overlay: 'rgba(15, 23, 42, 0.45)',
   },
   dark: {
     text: '#F8FAFC',
@@ -37,6 +39,8 @@ export const Colors = {
     success: '#22C55E',
     danger: '#EF4444',
     surfaceSubtle: '#1E293B',
+    onTint: '#FFFFFF',
+    overlay: 'rgba(2, 6, 23, 0.72)',
   },
 } as const;
 

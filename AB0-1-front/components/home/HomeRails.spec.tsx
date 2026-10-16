@@ -31,6 +31,15 @@ jest.mock('@/components/favorites/FavoriteButton', () => ({
   FavoriteButton: () => <button type="button" aria-label="Favoritar empresa" />,
 }));
 
+jest.mock('@/components/ComparisonToggleButton', () => ({
+  __esModule: true,
+  default: ({ company }: { company: Company }) => (
+    <button type="button" aria-label={`Comparar ${company.name}`}>
+      Comparar
+    </button>
+  ),
+}));
+
 jest.mock('@/lib/slug', () => ({
   buildCompanyPath: (_slug: string, _name: string, id: number) => `/companies/${id}`,
 }));
@@ -56,17 +65,17 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
 }
 
 describe('rails de identidade visual da home', () => {
-  it('renderiza logos no rail compacto de marcas em full bleed com object-cover', () => {
+  it('renderiza logos de marcas sem recorte', () => {
     render(<BrandLogoCard name="Sungrow" logoUrl="/sungrow.png" href="/companies/sungrow" />);
 
     const logo = screen.getByAltText('Sungrow');
 
-    expect(logo).toHaveClass('object-cover', 'object-center');
-    expect(logo).not.toHaveClass('object-contain');
-    expect(logo).toHaveAttribute('sizes', '104px');
+    expect(logo).toHaveClass('object-contain', 'object-center');
+    expect(logo).not.toHaveClass('object-cover');
+    expect(logo).toHaveAttribute('sizes', '128px');
   });
 
-  it('usa toda a área do card para logo em full bleed e mantém banner como capa', () => {
+  it('preserva o logo e disponibiliza favorito e comparação no card', () => {
     render(
       <HomeCompaniesRail
         companies={[
@@ -82,13 +91,20 @@ describe('rails de identidade visual da home', () => {
     );
 
     const logo = screen.getByAltText('Logotipo Sungrow Brasil');
-    const banner = screen.getByAltText('Imagem de capa de Growatt Brasil');
+    expect(logo).toHaveClass('object-contain');
+    expect(logo).toHaveAttribute('sizes', '96px');
+    expect(screen.getAllByRole('button', { name: 'Favoritar empresa' })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Comparar Sungrow Brasil' })).toBeInTheDocument();
+  });
 
-    expect(logo).toHaveClass('object-cover', 'object-center');
-    expect(logo).not.toHaveClass('object-contain');
-    expect(logo).toHaveAttribute('sizes', '(max-width: 640px) 196px, 208px');
-    expect(logo.parentElement).toHaveClass('relative', 'h-full', 'w-full', 'overflow-hidden');
-    expect(banner).toHaveClass('object-cover', 'object-center');
-    expect(banner).toHaveAttribute('sizes', '(max-width: 640px) 196px, 208px');
+  it('limita a vitrine a seis empresas', () => {
+    const companies = Array.from({ length: 7 }, (_, index) =>
+      makeCompany({ id: index + 1, name: `Empresa ${index + 1}` })
+    );
+
+    render(<HomeCompaniesRail companies={companies} />);
+
+    expect(screen.getAllByRole('article')).toHaveLength(6);
+    expect(screen.queryByText('Empresa 7')).not.toBeInTheDocument();
   });
 });

@@ -16,6 +16,7 @@ import RecommendedCompaniesSection from '@/components/home/RecommendedCompaniesS
 import HomeLocationBar from '@/components/home/HomeLocationBar';
 import HomeCategoryRail from '@/components/home/HomeCategoryRail';
 import HomeHeroBanner from '@/components/home/HomeHeroBanner';
+import HomeSolutionsRail from '@/components/home/HomeSolutionsRail';
 import HomeBrandsRail from '@/components/home/HomeBrandsRail';
 import HomeCompaniesRail from '@/components/home/HomeCompaniesRail';
 import { Button } from '@/components/ui/button';
@@ -189,10 +190,10 @@ export default async function Home() {
         </Suspense>
       </div>
 
-      {/* 2. Categorias: EXATAMENTE UMA LINHA com ícones 3D */}
+      {/* 2. Categorias principais da taxonomia oficial */}
       <div className="mx-auto max-w-[1320px]">
-        <Suspense fallback={<div className="h-20 animate-pulse bg-slate-50 rounded" />}>
-          <HomeCategoryRail />
+        <Suspense fallback={<div className="h-44 animate-pulse rounded bg-slate-50" />}>
+          <HomeCategoryRailWrapper dataPromise={categoriesDataPromise} />
         </Suspense>
       </div>
 
@@ -203,14 +204,19 @@ export default async function Home() {
         </Suspense>
       </div>
 
-      {/* 4. Marcas em Destaque no Catálogo (Logos reais de empresas parceiras/fabricantes) */}
+      {/* 4. Tipos de solução: categorias filhas oficiais, sem ofertas inventadas */}
+      <div className="mx-auto max-w-[1320px]">
+        <HomeSolutionsRail />
+      </div>
+
+      {/* 5. Marcas em Destaque no Catálogo (Logos reais de empresas cadastradas) */}
       <div className="mx-auto max-w-[1320px]">
         <Suspense fallback={<div className="h-16 w-full animate-pulse rounded-xl bg-slate-50 mx-4 my-2" />}>
           <HomeBrandsRailWrapper dataPromise={companiesDataPromise} />
         </Suspense>
       </div>
 
-      {/* 5. Empresas em Destaque na Região (Trilha Horizontal de Cards) */}
+      {/* 6. Seis empresas em destaque com favorito e comparação */}
       <div className="mx-auto max-w-[1320px]">
         <Suspense fallback={<div className="h-44 w-full animate-pulse rounded-2xl bg-slate-50 mx-4 my-2" />}>
           <HomeCompaniesRailWrapper dataPromise={companiesDataPromise} />
@@ -316,6 +322,22 @@ async function HomeHeroBannerWrapper({
   }
 
   return <HomeHeroBanner banners={banners} />;
+}
+
+async function HomeCategoryRailWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getHomeDataCached>;
+}) {
+  let categories: Category[] = [];
+  try {
+    const data = await dataPromise;
+    categories = Array.isArray(data?.featuredCategories) ? data.featuredCategories : [];
+  } catch (error) {
+    console.error('[Home] HomeCategoryRailWrapper fallback triggered:', error);
+  }
+
+  return <HomeCategoryRail categories={categories} />;
 }
 
 async function HomeBrandsRailWrapper({

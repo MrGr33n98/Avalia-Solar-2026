@@ -31,7 +31,7 @@ export function BrandLogoCard({ name, logoUrl, href, className }: BrandLogoCardP
       title={name}
       aria-label={`Ver perfil de ${name}`}
       className={cn(
-        'group relative flex h-[36px] w-[104px] shrink-0 snap-start items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white transition-all',
+        'group relative flex h-16 w-32 shrink-0 snap-start items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white transition-all',
         'hover:border-blue-500 hover:shadow-xs active:scale-95',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
         className
@@ -43,8 +43,8 @@ export function BrandLogoCard({ name, logoUrl, href, className }: BrandLogoCardP
             src={logoUrl}
             alt={name}
             fill
-            sizes="104px"
-            className="h-full w-full object-cover object-center transition-transform duration-200 group-hover:scale-105"
+            sizes="128px"
+            className="h-full w-full object-contain object-center p-2 transition-transform duration-200 group-hover:scale-105"
             onError={() => setImageError(true)}
             loading="lazy"
           />
@@ -124,13 +124,13 @@ export function HomeBrandsRail({
   if (brandItems.length === 0) return null;
 
   return (
-    <section className={cn('relative px-4 py-2.5 select-none w-full', className)}>
+    <section className={cn('relative w-full select-none px-4 py-4', className)}>
       {/* Header da seção: Título à esquerda, Ver todas à direita */}
-      <div className="flex items-center justify-between pb-2">
-        <h2 className="text-sm font-bold text-slate-900">{title}</h2>
+      <div className="flex items-center justify-between pb-3">
+        <h2 className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl">{title}</h2>
         <Link
           href="/companies"
-          className="inline-flex items-center gap-0.5 text-xs font-semibold text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:underline"
+          className="inline-flex min-h-11 items-center gap-0.5 rounded-lg px-2 text-sm font-semibold text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           <span>Ver todas</span>
           <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
