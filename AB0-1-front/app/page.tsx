@@ -159,9 +159,15 @@ const getCompaniesDataCached = unstable_cache(
 );
 
 const getHomeBannersCached = unstable_cache(
-  async () => getCachedBanners('home_top'),
-  ['home-hero-banners-top'],
-  { revalidate: 300, tags: ['home-data', 'banners'] }
+  async () => {
+    const heroBanners = await getCachedBanners('home_hero');
+    if (Array.isArray(heroBanners) && heroBanners.length > 0) {
+      return heroBanners;
+    }
+    return getCachedBanners('home_top');
+  },
+  ['home-hero-banners-v3'],
+  { revalidate: 60, tags: ['home-data', 'banners', 'home-hero'] }
 );
 
 export default async function Home() {

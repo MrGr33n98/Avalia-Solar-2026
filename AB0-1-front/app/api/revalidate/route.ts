@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null) as { paths?: unknown; tags?: unknown } | null;
   const payload = body ?? {};
-  const paths = Array.isArray(payload.paths) ? payload.paths.filter((path): path is string => typeof path === 'string' && /^\/companies\//.test(path)) : [];
-  const tags = Array.isArray(payload.tags) ? payload.tags.filter((tag): tag is string => typeof tag === 'string' && /^company(?:-|$)/.test(tag)) : [];
+  const paths = Array.isArray(payload.paths) ? payload.paths.filter((path): path is string => typeof path === 'string' && (/^\/companies\//.test(path) || path === '/')) : [];
+  const tags = Array.isArray(payload.tags) ? payload.tags.filter((tag): tag is string => typeof tag === 'string' && /^(?:company|home|banner)(?:-|$)/.test(tag)) : [];
 
   if (paths.length === 0 && tags.length === 0) {
     return NextResponse.json({ error: 'No valid invalidation target' }, { status: 422 });

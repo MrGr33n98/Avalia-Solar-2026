@@ -39,22 +39,22 @@
 
 ## PR 3 — Frontend Hero Responsivo (P0)
 
-- [ ] **T018:** Adaptar `HomeHeroBanner.tsx` para consumir dados do contrato `home_hero`, respeitando alturas CSS fixas de 210/240/280 px.
-- [ ] **T019:** Implementar elemento `<picture>` com `<source media="(max-width: 639px)" ...>` para art direction entre desktop e smartphone.
-- [ ] **T020:** Renderizar o botão CTA em elemento `<a>` acessível e independente, com hover/focus tokens e target >= 44 px.
-- [ ] **T021:** Suportar modos `photo_with_html` e `image_only` (suprimindo sobreposição duplicada em artes prontas).
-- [ ] **T022:** Remover fallbacks artificiais com IDs 9991–9993; adotar exatamente 1 slide institucional como fallback seguro.
-- [ ] **T023:** Testes de renderização com Jest e React Testing Library para acessibilidade, teclado e ausência de overflow.
+- [x] **T018:** Adaptar `HomeHeroBanner.tsx` para consumir dados do contrato `home_hero`, respeitando alturas CSS fixas de 210/240/280 px.
+- [x] **T019:** Implementar elemento `<picture>` com `<source media="(max-width: 639px)" ...>` para art direction entre desktop e smartphone.
+- [x] **T020:** Renderizar o botão CTA em elemento `<a>` acessível e independente, com hover/focus tokens e target >= 44 px.
+- [x] **T021:** Suportar modos `photo_with_html` e `image_only` (suprimindo sobreposição duplicada em artes prontas).
+- [x] **T022:** Remover fallbacks artificiais com IDs 9991–9993; adotar exatamente 1 slide institucional como fallback seguro.
+- [x] **T023:** Testes de renderização com Jest e React Testing Library para acessibilidade, teclado e ausência de overflow.
 
 ---
 
 ## PR 4 — Qualidade de Mídia e Invalidação de Cache (P0)
 
-- [ ] **T024:** Ajustar variantes do Rails para `home_hero` com `resize_to_limit: [1920, 600]`, eliminando o teto de 160px que causava blur.
-- [ ] **T025:** Configurar tamanhos (`sizes`) adequados no Next.js para priorizar LCP no primeiro slide e carregar os demais de forma lazy.
-- [ ] **T026:** Integrar webhook seguro de invalidação seletiva via `revalidateTag('home-hero')` no callback `after_save` do banner.
-- [ ] **T027:** Testar tempo real de atualização entre salvar no ActiveAdmin e visualizar na home pública (< 60s).
-- [ ] **T028:** Testes de performance Core Web Vitals no laboratório (LCP e CLS).
+- [x] **T024:** Ajustar variantes do Rails para `home_hero` com `resize_to_limit: [1920, 600]`, eliminando o teto de 160px que causava blur.
+- [x] **T025:** Configurar tamanhos (`sizes`) adequados no Next.js para priorizar LCP no primeiro slide e carregar os demais de forma lazy.
+- [x] **T026:** Integrar webhook seguro de invalidação seletiva via `revalidateTag('home-hero')` no callback `after_save` do banner.
+- [x] **T027:** Testar tempo real de atualização entre salvar no ActiveAdmin e visualizar na home pública (< 60s).
+- [x] **T028:** Testes de performance Core Web Vitals no laboratório (LCP e CLS).
 
 ---
 

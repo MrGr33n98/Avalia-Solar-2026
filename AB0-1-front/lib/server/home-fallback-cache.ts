@@ -263,7 +263,7 @@ export async function getCachedFeaturedCategories(): Promise<Category[]> {
 }
 
 export async function getCachedBanners(
-  position: 'home_top' | 'categories_top' | 'companies_top' | 'article_footer_cta'
+  position: 'home_hero' | 'home_top' | 'categories_top' | 'companies_top' | 'article_footer_cta' | string
 ): Promise<Banner[]> {
   const cache = await getCache();
   const result = await cache.get<Banner[]>(
@@ -284,6 +284,7 @@ export async function warmHomeFallbackCache() {
   await Promise.all([
     getCachedActiveCategories(),
     getCachedFeaturedCategories(),
+    getCachedBanners('home_hero'),
     getCachedBanners('home_top'),
     getCachedBanners('categories_top'),
     getCachedBanners('companies_top'),

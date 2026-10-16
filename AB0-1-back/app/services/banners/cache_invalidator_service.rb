@@ -32,6 +32,9 @@ module Banners
         cities = Array(banner.target_cities)
         cities.each { |c| increment_version("city:#{c.to_s.downcase}") }
       end
+
+      # Notifica o frontend Next.js caso seja um banner da Home
+      revalidate_frontend_hero if %w[home_hero home_top].include?(banner.position.to_s)
     end
 
     def self.current_versions(params)
@@ -59,6 +62,29 @@ module Banners
     def self.fetch_version(key)
       cache_key = "banners_cache_version:#{key}"
       Rails.cache.read(cache_key, raw: true).to_i
+    end
+
+    def self.revalidate_frontend_hero
+      return unless ENV['NEXT_REVALIDATE_URL'].present? && ENV['NEXT_REVALIDATE_SECRET'].present?
+
+      Thread.new do
+        endpoint = ENV.fetch('NEXT_REVALIDATE_URL')
+        secret = ENV.fetch('NEXT_REVALIDATE_SECRET')
+        uri = URI.parse(endpoint)
+        req = Net::HTTP::Post.new(uri)
+        req['Content-Type'] = 'application/json'
+        req['Authorization'] = "Bearer #{secret}"
+        req.body = {
+          paths: ['/'],
+          tags: ['home-hero', 'banners', 'home-data']
+        }.to_json
+
+        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https', read_timeout: 3, open_timeout: 3) do |http|
+          http.request(req)
+        end
+      rescue StandardError => e
+        Rails.logger.warn("[Banners::CacheInvalidatorService] Revalidation error: #{e.message}")
+      end
     end
   end
 end
