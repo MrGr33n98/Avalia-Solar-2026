@@ -28,6 +28,88 @@ function publicRating(company: Company): { score: number; count: number } | null
   return null;
 }
 
+export function splitNameHeadTail(name: string): { head: string; tail: string } {
+  const trimmed = name.trim();
+  const lastSpaceIndex = trimmed.lastIndexOf(' ');
+
+  if (lastSpaceIndex === -1) {
+    if (trimmed.length <= 8) {
+      return { head: '', tail: trimmed };
+    }
+    const splitPoint = trimmed.length - 8;
+    return {
+      head: trimmed.slice(0, splitPoint),
+      tail: trimmed.slice(splitPoint),
+    };
+  }
+
+  const prefix = trimmed.slice(0, lastSpaceIndex + 1);
+  const lastWord = trimmed.slice(lastSpaceIndex + 1);
+
+  if (lastWord.length <= 8) {
+    return { head: prefix, tail: lastWord };
+  }
+
+  const splitPoint = lastWord.length - 8;
+  return {
+    head: prefix + lastWord.slice(0, splitPoint),
+    tail: lastWord.slice(splitPoint),
+  };
+}
+
+export function CompanyNameWithBadge({
+  company,
+  href,
+}: {
+  company: Company;
+  href: string;
+}) {
+  if (!company.verified) {
+    return (
+      <h3 className="min-w-0 text-[12px] font-bold leading-4 text-slate-950 sm:text-sm">
+        <Link
+          href={href}
+          title={company.name}
+          className="break-words hover:text-blue-600 focus-visible:underline focus-visible:outline-none"
+        >
+          {company.name}
+        </Link>
+      </h3>
+    );
+  }
+
+  const { head, tail } = splitNameHeadTail(company.name);
+
+  return (
+    <div className="relative min-w-0 text-[12px] font-bold leading-4 text-slate-950 sm:text-sm">
+      <Link
+        href={href}
+        title={company.name}
+        aria-label={`Ver perfil de ${company.name}`}
+        className="absolute inset-0 z-10 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      />
+
+      <h3 className="pointer-events-none min-w-0 [overflow-wrap:anywhere]">
+        <span className="transition-colors group-hover:text-blue-600">
+          {head}
+          <span
+            data-testid="company-name-tail"
+            className="inline-flex items-center whitespace-nowrap gap-[3px]"
+          >
+            <span>{tail}</span>
+            <span
+              data-testid="verified-badge-anchor"
+              className="pointer-events-auto relative z-20 inline-flex items-center shrink-0"
+            >
+              <CompanyVerifiedBadge size="sm" className="!h-4 !w-4" />
+            </span>
+          </span>
+        </span>
+      </h3>
+    </div>
+  );
+}
+
 export function HomeCompaniesRail({
   companies,
   title,
@@ -65,7 +147,11 @@ export function HomeCompaniesRail({
         </Link>
       </div>
 
-      <div className="grid min-w-0 grid-cols-[repeat(2,minmax(0,1fr))] auto-rows-fr gap-2.5 sm:gap-3 lg:grid-cols-3">
+      {/*
+        Auto-rows-fr removido para dimensionamento natural por conteúdo.
+        2 colunas a partir de 320px no mobile e 3 colunas em lg.
+      */}
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-2.5 min-[320px]:grid-cols-[repeat(2,minmax(0,1fr))] sm:gap-3 lg:grid-cols-3">
         {visibleCompanies.map((company) => {
           const companyHref = buildCompanyPath(company.slug, company.name, company.id);
           const logoUrl =
@@ -76,12 +162,12 @@ export function HomeCompaniesRail({
             <article
               key={company.id}
               className={cn(
-                'relative flex min-h-[172px] min-w-0 flex-col rounded-xl border',
-                'border-slate-200 bg-white p-2.5 shadow-xs',
-                'transition-colors hover:border-slate-300 sm:p-3'
+                'relative flex min-h-[160px] min-w-0 flex-col rounded-xl border',
+                'border-slate-200 bg-white p-2.5 shadow-xs transition-colors',
+                'hover:border-slate-300 sm:p-3'
               )}
             >
-              {/* Linha superior: logotipo e botão de favoritos */}
+              {/* Linha 1: logo (alvo 44x44) e botão de favoritos (alvo 44x44) */}
               <div className="flex min-w-0 items-start justify-between gap-1">
                 <Link
                   href={companyHref}
@@ -97,7 +183,7 @@ export function HomeCompaniesRail({
                       className="object-contain p-1"
                     />
                   ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-0.5 bg-slate-50 text-slate-500">
+                    <div className="flex h-full w-full items-center justify-center bg-slate-50">
                       <Building2 className="h-5 w-5 text-slate-400" aria-label="Logotipo não informado" />
                     </div>
                   )}
@@ -111,28 +197,15 @@ export function HomeCompaniesRail({
                 />
               </div>
 
-              {/* Linha da identidade: Nome em linha própria + selo verificado com shrink-0 */}
-              <div className="mt-2 flex min-w-0 items-start gap-1">
-                <h3 className="min-w-0 flex-1 break-words text-[12px] font-bold leading-4 text-slate-950 sm:text-sm">
-                  <Link
-                    href={companyHref}
-                    title={company.name}
-                    className="hover:text-blue-600 focus-visible:underline"
-                  >
-                    {company.name}
-                  </Link>
-                </h3>
-                {company.verified === true && (
-                  <span className="inline-flex shrink-0 pt-0.5">
-                    <CompanyVerifiedBadge size="sm" className="!h-4 !w-4" />
-                  </span>
-                )}
+              {/* Linha 2: selo ancorado no último trecho do nome, sem posição absoluta */}
+              <div className="mt-2 min-w-0">
+                <CompanyNameWithBadge company={company} href={companyHref} />
               </div>
 
-              {/* Avaliação real, sem fallback artificial 5.0 */}
-              <div className="mt-1 flex min-w-0 items-center gap-1 text-[11px] leading-4">
+              {/* Linha 3: dados confirmados, sem 5.0 forçado */}
+              <div className="mt-1 min-w-0 text-[11px] leading-4 text-slate-500">
                 {rating ? (
-                  <>
+                  <div className="flex items-center gap-1">
                     <Star
                       className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400"
                       aria-hidden="true"
@@ -140,26 +213,20 @@ export function HomeCompaniesRail({
                     <span className="font-bold tabular-nums text-slate-900">
                       {rating.score.toFixed(1)}
                     </span>
-                    <span className="min-w-0 text-slate-500">({rating.count})</span>
-                  </>
+                    <span>({rating.count})</span>
+                  </div>
                 ) : (
-                  <span className="text-slate-500">Sem avaliações</span>
+                  <span>Sem avaliações</span>
                 )}
               </div>
 
-              {/* Linha exclusiva para botão Comparar com 100% da largura */}
-              <div className="mt-auto min-w-0 pt-2">
+              {/* Linha 4: h-12 de toque (48px) e 34px visuais com home-compact */}
+              <div className="mt-auto min-w-0 pt-1.5">
                 <ComparisonToggleButton
                   company={company}
-                  variant="default"
-                  compactLabel
+                  variant="home-compact"
                   animated={false}
                   size="sm"
-                  className={cn(
-                    '!h-10 !w-full !min-w-0 !px-2 !text-[11px]',
-                    'rounded-lg border-slate-200 font-semibold',
-                    'hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-600'
-                  )}
                 />
               </div>
             </article>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Plus, Crown } from 'lucide-react';
+import { Check, Plus, Crown, ArrowLeftRight, Loader2 } from 'lucide-react';
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { Company } from '@/lib/api';
 import { useComparison } from '@/hooks/useComparison';
@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 
 interface ComparisonToggleButtonProps {
   company: Company;
-  variant?: 'default' | 'minimal' | 'card' | 'floating';
+  variant?: 'default' | 'minimal' | 'card' | 'floating' | 'home-compact';
   size?: 'sm' | 'default' | 'lg';
   className?: string;
   showPosition?: boolean;
@@ -106,6 +106,12 @@ export default function ComparisonToggleButton({
 
   // Variant configurations
   const variants = {
+    'home-compact': {
+      button: cn(
+        'w-full !h-12 !min-h-[48px] !p-0 !bg-transparent hover:!bg-transparent !border-0 !shadow-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none'
+      ),
+      icon: 'h-4 w-4',
+    },
     default: {
       button: cn(
         'relative overflow-hidden transition-all duration-300',
@@ -162,6 +168,30 @@ export default function ComparisonToggleButton({
   const currentVariant = variants[variant];
 
   const renderButtonContent = () => {
+    if (variant === 'home-compact') {
+      return (
+        <span
+          className={cn(
+            'inline-flex h-[34px] w-full items-center justify-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors duration-150',
+            isSelected
+              ? 'border-blue-600 bg-blue-50/80 text-blue-700'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-600'
+          )}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-500" />
+          ) : isSelected ? (
+            <Check className="h-4 w-4 shrink-0 text-blue-600" />
+          ) : (
+            <ArrowLeftRight className="h-4 w-4 shrink-0 text-slate-700" />
+          )}
+          <span className="truncate">
+            {isSelected ? 'Selecionada' : 'Comparar'}
+          </span>
+        </span>
+      );
+    }
+
     const iconClass = currentVariant.icon;
 
     if (variant === 'minimal' || variant === 'floating') {
