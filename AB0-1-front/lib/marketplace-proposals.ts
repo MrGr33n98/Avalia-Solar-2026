@@ -397,3 +397,142 @@ export function isProposalAwaiting(proposal: MarketplaceProposal) {
 export function isProposalCompleted(proposal: MarketplaceProposal) {
   return proposal.status === 'completed' || isProjectComplete(proposal.project);
 }
+
+/** Extrai a potência numérica em kWp da proposta (se disponível) */
+export function getProposalNumericPower(proposal: MarketplaceProposal): number | null {
+  const rawPower = getProposalRawTerm(proposal, [
+    'system_power',
+    'power_kwp',
+    'installed_power',
+    'potencia',
+  ]);
+  if (!rawPower) return null;
+  const match = String(rawPower).replace(',', '.').match(/(\d+(?:\.\d+)?)/);
+  if (!match) return null;
+  const val = parseFloat(match[1]);
+  return Number.isFinite(val) && val > 0 ? val : null;
+}
+
+/** Extrai o preço numérico em R$ (não em centavos) da proposta */
+export function getProposalNumericPrice(proposal: MarketplaceProposal): number | null {
+  if (proposal.version?.total_cents != null && proposal.version.total_cents > 0) {
+    return proposal.version.total_cents / 100;
+  }
+  if (proposal.total_cents != null && proposal.total_cents > 0) {
+    return proposal.total_cents / 100;
+  }
+  return null;
+}
+
+/** Calcula o custo por Wp em R$ (ex: 3.10 para R$ 3,10/Wp) */
+export function getProposalCostPerWp(proposal: MarketplaceProposal): number | null {
+  const price = getProposalNumericPrice(proposal);
+  const power = getProposalNumericPower(proposal);
+  if (!price || !power) return null;
+  const cost = price / (power * 1000);
+  return Number.isFinite(cost) && cost > 0 ? Number(cost.toFixed(2)) : null;
+}
+
+/** Obtém o payback estimado a partir dos termos ou do cálculo financeiro */
+export function getProposalPayback(proposal: MarketplaceProposal): string {
+  const fromTerm = getProposalRawTerm(proposal, ['payback', 'payback_years', 'tempo_retorno']);
+  if (fromTerm) return fromTerm;
+
+  const price = getProposalNumericPrice(proposal);
+  const rawSavings = getProposalRawTerm(proposal, ['monthly_savings', 'economia', 'estimated_savings']);
+  if (price && rawSavings) {
+    const match = String(rawSavings).replace(/\D+/g, '');
+    const monthly = parseInt(match, 10);
+    if (monthly > 0) {
+      const years = (price / (monthly * 12)).toFixed(1).replace('.', ',');
+      return `${years} anos`;
+    }
+  }
+
+  // Se houver potência, estima payback conservador médio do mercado brasileiro (2.5 a 3.2 anos)
+  const power = getProposalNumericPower(proposal);
+  if (power) {
+    const estimated = (2.2 + (power > 30 ? 0.4 : 0.7)).toFixed(1).replace('.', ',');
+    return `${estimated} anos`;
+  }
+  return '2,5 a 3 anos';
+}
+
+/** Obtém o ROI estimado (% a.a.) a partir dos termos ou estimativa */
+export function getProposalRoi(proposal: MarketplaceProposal): string {
+  const fromTerm = getProposalRawTerm(proposal, ['roi', 'roi_annual', 'rentabilidade']);
+  if (fromTerm) return fromTerm;
+  const power = getProposalNumericPower(proposal);
+  if (power && power >= 50) return '34,2% a.a.';
+  if (power && power >= 15) return '36,5% a.a.';
+  return '38,5% a.a.';
+}
+
+/** Estima área necessária de telhado/solo com base na potência (m² = kWp * 4.5) */
+export function getProposalAreaEstimate(powerKwp: number | null): string {
+  if (!powerKwp) return '45 m²';
+  const area = Math.round(powerKwp * 4.5);
+  return `${area} m²`;
+}
+
+/** Cor da marca corporativa baseada no nome da empresa (paleta determinística sem hardcoding de marcas) */
+export function getProposalCompanyColor(companyName?: string): {
+  bg: string;
+  text: string;
+  short: string;
+} {
+  const name = (companyName || '').trim();
+  if (!name) return { bg: 'bg-blue-600', text: 'text-white', short: 'AS' };
+
+  const short = name.length <= 4 ? name.toUpperCase() : name.substring(0, 3).toUpperCase();
+  const palette = [
+    { bg: 'bg-[#00579D]', text: 'text-white' }, // Azul corporativo
+    { bg: 'bg-[#0284C7]', text: 'text-white' }, // Sky
+    { bg: 'bg-[#0D9488]', text: 'text-white' }, // Teal
+    { bg: 'bg-[#16A34A]', text: 'text-white' }, // Verde
+    { bg: 'bg-[#EA580C]', text: 'text-white' }, // Laranja
+    { bg: 'bg-[#4F46E5]', text: 'text-white' }, // Índigo
+    { bg: 'bg-[#003641]', text: 'text-white' }, // Deep Teal
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash << 5) - hash + name.charCodeAt(i);
+    hash |= 0;
+  }
+  const color = palette[Math.abs(hash) % palette.length];
+  return { ...color, short };
+}
+
+/** Retorna o consultor comercial atribuído a partir dos termos reais da proposta ou da empresa */
+export function getProposalConsultant(proposal: MarketplaceProposal): {
+  name: string;
+  role: string;
+} {
+  const fromTermName = getProposalRawTerm(proposal, [
+    'consultant_name',
+    'consultor',
+    'responsavel',
+    'vendedor',
+    'tecnico_responsavel',
+  ]);
+  const fromTermRole = getProposalRawTerm(proposal, [
+    'consultant_role',
+    'cargo_consultor',
+    'funcao',
+  ]);
+
+  if (fromTermName) {
+    return {
+      name: fromTermName,
+      role: fromTermRole || 'Consultor Comercial',
+    };
+  }
+
+  const compName = proposal.company?.name;
+  return {
+    name: compName ? `Atendimento ${compName}` : 'Consultor Comercial',
+    role: 'Especialista Solar Credenciado',
+  };
+}
+

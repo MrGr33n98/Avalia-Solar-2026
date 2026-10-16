@@ -190,10 +190,13 @@ export function ProposalCompactCard({
         <div className="mt-4 pt-3 border-t border-slate-100">
           <div className="flex items-baseline justify-between gap-2 flex-wrap">
             <div>
-              <p className="text-2xl sm:text-[26px] font-black text-slate-900 tracking-tight tabular-nums">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 block">
+                Valor total
+              </span>
+              <p className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight tabular-nums leading-tight">
                 {price.formatted}
               </p>
-              <p className="mt-0.5 text-xs font-semibold text-slate-500">
+              <p className="mt-0.5 text-xs font-semibold text-slate-500 truncate">
                 {formattedPower ? `${formattedPower} • ` : ''}
                 {solutionLabel}
               </p>
@@ -201,71 +204,72 @@ export function ProposalCompactCard({
 
             {/* Checkbox / Botão Comparar */}
             {canCompare && onToggleCompare && (
-              <button
-                type="button"
-                onClick={() => onToggleCompare(proposal.id)}
-                aria-label={`Comparar proposta de ${proposal.company.name}`}
+              <label
                 className={cn(
-                  'flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold border transition-all',
+                  'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border cursor-pointer select-none text-xs font-medium transition',
                   isComparing
-                    ? 'border-blue-600 bg-blue-50 text-blue-700'
-                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    ? 'border-blue-600 bg-blue-50/80 text-blue-700 ring-1 ring-blue-500/20'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                 )}
               >
-                <div
-                  className={cn(
-                    'flex h-3.5 w-3.5 items-center justify-center rounded border transition-colors',
-                    isComparing
-                      ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-slate-300 bg-white'
-                  )}
-                >
-                  {isComparing && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                </div>
+                <input
+                  type="checkbox"
+                  checked={isComparing}
+                  onChange={() => onToggleCompare(proposal.id)}
+                  aria-label={`Comparar proposta de ${proposal.company.name}`}
+                  className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-0"
+                />
                 <span>Comparar</span>
-              </button>
+              </label>
             )}
           </div>
         </div>
 
-        {/* ── GRID DE 4 MICRO-ESPECIFICAÇÕES TÉCNICAS ── */}
-        {isSentOrReady && metrics.length > 0 ? (
-          <div className="mt-3.5 grid grid-cols-2 gap-2 rounded-xl bg-slate-50/90 p-2.5 text-xs border border-slate-100/80">
-            {metrics.map((metric) => {
-              const Icon =
-                metric.key === 'power'
-                  ? Zap
-                  : metric.key === 'generation'
-                  ? BarChart2
-                  : metric.key === 'warranty'
-                  ? ShieldCheck
-                  : Clock;
+        {/* ── GRID TÉCNICO DE 3 COLUNAS LADO A LADO (Zero quebra) ── */}
+        {isSentOrReady && (
+          <div className="mt-3.5 bg-slate-50/90 border border-slate-200/70 rounded-xl p-2.5 grid grid-cols-3 divide-x divide-slate-200/70">
+            <div className="px-1.5 first:pl-0.5">
+              <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                <Zap className="w-3 h-3 text-slate-400 shrink-0" />
+                <span className="truncate">Potência</span>
+              </div>
+              <p className="text-xs font-bold text-slate-900 mt-0.5 truncate">
+                {formattedPower || 'A definir'}
+              </p>
+            </div>
 
-              return (
-                <div key={metric.key} className="flex flex-col min-w-0 p-1">
-                  <div className="flex items-center gap-1.5 text-slate-400">
-                    <Icon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="text-[11px] font-medium text-slate-500 truncate">
-                      {metric.label}
-                    </span>
-                  </div>
-                  <span className="mt-0.5 font-bold text-slate-800 text-xs truncate tabular-nums">
-                    {metric.value}
-                  </span>
-                </div>
-              );
-            })}
+            <div className="px-2">
+              <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                <ShieldCheck className="w-3 h-3 text-slate-400 shrink-0" />
+                <span className="truncate">Garantia</span>
+              </div>
+              <p className="text-xs font-bold text-slate-900 mt-0.5 truncate">
+                {formatWarrantyTerm(getProposalRawTerm(proposal, ['warranty', 'garantia'])) || '2 anos'}
+              </p>
+            </div>
+
+            <div className="px-2">
+              <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                <span className="truncate">Prazo</span>
+              </div>
+              <p className="text-xs font-bold text-slate-900 mt-0.5 truncate">
+                {formatDeadlineTerm(getProposalRawTerm(proposal, ['installation_deadline', 'installation_time', 'prazo'])) || '15 a 45 dias'}
+              </p>
+            </div>
           </div>
-        ) : !isSentOrReady ? (
+        )}
+
+        {!isSentOrReady && (
           <div className="mt-3.5 rounded-xl bg-slate-50 p-2.5 text-xs text-slate-500 border border-slate-100">
             Aguardando resposta da empresa
           </div>
-        ) : null}
+        )}
       </div>
 
-      {/* ── BASE: 3 BOTÕES DE AÇÃO (Ver proposta / Conversar / Escolher empresa) ── */}
+      {/* ── BASE: 2 BOTÕES DE ALTA ERGONOMIA (Ver proposta / Escolher empresa) ── */}
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-        {/* 1. Ver proposta (abre detalhes da proposta ou PDF) */}
+        {/* 1. Ver proposta (secundário, à esquerda) */}
         <Button
           type="button"
           variant="outline"
@@ -278,15 +282,15 @@ export function ProposalCompactCard({
               ? `Ver proposta de ${proposal.company.name}`
               : `Acompanhar solicitação de ${proposal.company.name}`
           }
-          className="flex-1 h-9 rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 px-2.5 gap-1.5"
+          className="flex-1 h-9 rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 px-2.5 gap-1.5 shadow-2xs"
         >
-          <FileText className="h-3.5 w-3.5 text-slate-500" />
+          <FileText className="h-3.5 w-3.5 text-slate-500 shrink-0" />
           <span className="truncate">
             {isComplete || isAccepted ? 'Ver projeto' : isSentOrReady ? 'Ver proposta (PDF)' : 'Acompanhar'}
           </span>
         </Button>
 
-        {/* 2. Conversar (chat direto com instalador - visível se handler fornecido) */}
+        {/* 2. Conversar (se handler fornecido opcional) */}
         {onConversation && (
           <Button
             type="button"
@@ -294,14 +298,15 @@ export function ProposalCompactCard({
             size="sm"
             onClick={() => onConversation(proposal)}
             aria-label={`Conversar com ${proposal.company.name}`}
-            className="h-9 px-2 rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 gap-1"
+            className="h-9 px-2.5 rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 gap-1 shrink-0"
+            title="Chat com a empresa"
           >
-            <MessageCircle className="h-3.5 w-3.5 text-slate-500" />
-            <span className="sr-only sm:not-sr-only sm:inline truncate">Chat</span>
+            <MessageCircle className="h-3.5 w-3.5 text-blue-600" />
+            <span className="hidden sm:inline">Chat</span>
           </Button>
         )}
 
-        {/* 3. Escolher empresa (botão primário amarelo/destaque com flex-[1.35]) */}
+        {/* 3. Escolher empresa (CTA primário amarelo #F5B800 à direita) */}
         {isComplete ? (
           <Button
             type="button"
@@ -331,7 +336,7 @@ export function ProposalCompactCard({
               else onOpen(proposal);
             }}
             aria-label={`Escolher ${proposal.company.name}`}
-            className="flex-[1.35] h-9 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold px-2.5 shadow-xs transition-colors"
+            className="flex-[1.35] h-9 rounded-xl bg-[#F5B800] hover:bg-[#E5AC00] text-slate-950 text-xs font-extrabold px-3 shadow-2xs transition active:scale-[0.99]"
           >
             <span className="truncate">Escolher empresa</span>
           </Button>

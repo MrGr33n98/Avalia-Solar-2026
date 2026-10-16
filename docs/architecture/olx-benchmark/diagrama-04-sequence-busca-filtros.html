@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrama 04 — Diagrama de Sequência da Busca e dos Filtros Facetados</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      width: 100%;
+      max-width: 1080px;
+      margin-bottom: 24px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #2563EB;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.02em;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 4px;
+    }
+    .diagram-container {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 1080px;
+      width: 100%;
+      overflow-x: auto;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #F1F5F9;
+      font-size: 12px;
+      color: #475569;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="tag">Engenharia Reversa Observacional • Diagrama de Sequência</span>
+    <h1>Sequência da Busca, Filtros Facetados e RSC Streaming</h1>
+    <p class="subtitle">Comportamento de Rede e DOM Observado: Da Interação com o Drawer até a Injeção de Chunks RSC</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg width="1020" height="740" viewBox="0 0 1020 740" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#2563EB"/>
+        </marker>
+        <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#10B981"/>
+        </marker>
+        <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#F59E0B"/>
+        </marker>
+        <marker id="arrow-return" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748B"/>
+        </marker>
+      </defs>
+
+      <!-- PARTICIPANTES (CABEÇALHOS) -->
+      <!-- P1: Usuário -->
+      <g transform="translate(40, 20)">
+        <rect x="0" y="0" width="150" height="44" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="75" y="26" font-size="12" font-weight="700" fill="#0F172A" text-anchor="middle">Usuário (PWA/Web)</text>
+        <line x1="75" y1="44" x2="75" y2="670" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="4 4"/>
+      </g>
+
+      <!-- P2: Client Shell -->
+      <g transform="translate(240, 20)">
+        <rect x="0" y="0" width="160" height="44" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="80" y="26" font-size="12" font-weight="700" fill="#2563EB" text-anchor="middle">Next.js Client Shell</text>
+        <line x1="80" y1="44" x2="80" y2="670" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="4 4"/>
+      </g>
+
+      <!-- P3: Bottom Sheet Drawer -->
+      <g transform="translate(450, 20)">
+        <rect x="0" y="0" width="160" height="44" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="80" y="26" font-size="12" font-weight="700" fill="#B45309" text-anchor="middle">Drawer de Filtros (70dvh)</text>
+        <line x1="80" y1="44" x2="80" y2="670" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="4 4"/>
+      </g>
+
+      <!-- P4: Next.js Server & RSC -->
+      <g transform="translate(660, 20)">
+        <rect x="0" y="0" width="160" height="44" rx="6" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
+        <text x="80" y="26" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">Next.js RSC Streamer</text>
+        <line x1="80" y1="44" x2="80" y2="670" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="4 4"/>
+      </g>
+
+      <!-- P5: Elasticsearch Backend -->
+      <g transform="translate(860, 20)">
+        <rect x="0" y="0" width="140" height="44" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="70" y="26" font-size="12" font-weight="700" fill="#0F172A" text-anchor="middle">Search Engine</text>
+        <line x1="70" y1="44" x2="70" y2="670" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="4 4"/>
+      </g>
+
+      <!-- PASSO 1: Foco na busca -->
+      <g transform="translate(0, 80)">
+        <line x1="115" y1="15" x2="310" y2="15" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="212" y="10" font-size="10" font-weight="600" fill="#2563EB" text-anchor="middle">1. Digita termo "solar" (Autocomplete)</text>
+      </g>
+
+      <!-- PASSO 2: Debounce de Sugestões -->
+      <g transform="translate(0, 120)">
+        <rect x="300" y="5" width="20" height="30" rx="3" fill="#BFDBFE"/>
+        <line x1="320" y1="15" x2="420" y2="15" stroke="#64748B" stroke-width="1"/>
+        <line x1="420" y1="15" x2="420" y2="30" stroke="#64748B" stroke-width="1"/>
+        <line x1="420" y1="30" x2="325" y2="30" stroke="#64748B" stroke-width="1" marker-end="url(#arrow-return)"/>
+        <text x="430" y="24" font-size="9" fill="#64748B">Debounce 300ms (Sugestões em memória)</text>
+      </g>
+
+      <!-- PASSO 3: Abre Bottom Sheet de Filtros -->
+      <g transform="translate(0, 175)">
+        <line x1="115" y1="15" x2="520" y2="15" stroke="#F59E0B" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+        <text x="317" y="10" font-size="10" font-weight="700" fill="#B45309" text-anchor="middle">2. Toque no botão "Filtros" (Mobile)</text>
+        
+        <rect x="520" y="22" width="20" height="90" rx="3" fill="#FEF3C7"/>
+        <text x="550" y="42" font-size="10" font-weight="700" fill="#92400E">DRAFT STATE ATIVADO</text>
+        <text x="550" y="56" font-size="9" fill="#78350F">• Usuário seleciona DDD 41 (Curitiba)</text>
+        <text x="550" y="70" font-size="9" fill="#78350F">• Ajusta faixa de preço (ps=10000, pe=40000)</text>
+        <text x="550" y="84" font-size="9" fill="#78350F">• Nenhuma chamada de rede gerada</text>
+      </g>
+
+      <!-- PASSO 4: Clica em Aplicar -->
+      <g transform="translate(0, 290)">
+        <line x1="115" y1="15" x2="520" y2="15" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+        <text x="317" y="10" font-size="10" font-weight="800" fill="#047857" text-anchor="middle">3. Clica em "Aplicar Filtros" (Confirmação Transacional)</text>
+      </g>
+
+      <!-- PASSO 5: Drawer fecha e Client atualiza URL -->
+      <g transform="translate(0, 335)">
+        <line x1="520" y1="15" x2="330" y2="15" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrow-return)"/>
+        <text x="425" y="10" font-size="10" font-weight="600" fill="#475569" text-anchor="middle">onApply(draft) → Fecha drawer</text>
+
+        <rect x="300" y="25" width="20" height="30" rx="3" fill="#BFDBFE"/>
+        <text x="330" y="44" font-size="9" font-weight="600" fill="#1D4ED8">history.pushState(?cg=1001&amp;re=41&amp;ps=10000)</text>
+      </g>
+
+      <!-- PASSO 6: Request RSC Streaming -->
+      <g transform="translate(0, 400)">
+        <line x1="320" y1="15" x2="730" y2="15" stroke="#2563EB" stroke-width="2" marker-end="url(#arrow)"/>
+        <text x="525" y="10" font-size="10" font-weight="700" fill="#2563EB" text-anchor="middle">4. GET /pr/regiao-de-curitiba?cg=1001 (Header RSC: 1)</text>
+      </g>
+
+      <!-- PASSO 7: Server consulta Elasticsearch -->
+      <g transform="translate(0, 445)">
+        <line x1="740" y1="15" x2="920" y2="15" stroke="#0F172A" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="830" y="10" font-size="10" font-weight="600" fill="#0F172A" text-anchor="middle">Query facetada</text>
+
+        <line x1="920" y1="40" x2="745" y2="40" stroke="#64748B" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrow-return)"/>
+        <text x="830" y="35" font-size="10" fill="#64748B" text-anchor="middle">JSON resultados + facetas</text>
+      </g>
+
+      <!-- PASSO 8: RSC Chunk Streaming de Volta -->
+      <g transform="translate(0, 520)">
+        <line x1="730" y1="15" x2="330" y2="15" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+        <text x="530" y="10" font-size="10" font-weight="800" fill="#047857" text-anchor="middle">5. Stream RSC Chunks (self.__next_f.push)</text>
+        <text x="530" y="26" font-size="9" fill="#065F46" text-anchor="middle">Renderiza AdCards na tela antes do fim da transmissão</text>
+      </g>
+
+      <!-- PASSO 9: DOM Update & Hydration Seletiva -->
+      <g transform="translate(0, 575)">
+        <line x1="310" y1="15" x2="125" y2="15" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="217" y="10" font-size="10" font-weight="700" fill="#2563EB" text-anchor="middle">6. Hydration Seletiva &amp; Exibição</text>
+      </g>
+
+      <!-- CAIXA DE SÍNTESE ARQUITETURAL -->
+      <g transform="translate(40, 640)">
+        <rect x="0" y="0" width="940" height="50" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="20" font-size="11" font-weight="700" fill="#0F172A">DIAGNÓSTICO AVALIA SOLAR:</text>
+        <text x="16" y="36" font-size="11" fill="#475569">O Avalia Solar disparava re-renders a cada clique individual de filtro. O padrão OLX comprovou que isolar o rascunho no drawer poupa 100% de queries espúrias.</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="header">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background: #2563EB;"></div><span>Requisição de Dados / Fluxo Principal</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #10B981;"></div><span>Confirmação Transacional &amp; Streaming RSC</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #F59E0B;"></div><span>Estado Local de Rascunho (Draft)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #64748B;"></div><span>Retorno de Mensagem / Resposta</span></div>
+    </div>
+  </div>
+</body>
+</html>

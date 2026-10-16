@@ -20,7 +20,7 @@ import {
   Upload,
   Wrench,
 } from 'lucide-react';
-import type { MarketplaceProposal } from '@/lib/api';
+import { reviewsApi, type MarketplaceProposal } from '@/lib/api';
 import {
   formatDate,
   formatMoney,
@@ -59,6 +59,7 @@ export function ProposalReview({
   const [isPublic, setIsPublic] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const power = getProposalRawTerm(proposal, [
     'system_power',
@@ -102,11 +103,34 @@ export function ProposalReview({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    // Simulação graciosa ou envio real
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setSubmitting(false);
-    setSubmitted(true);
-    if (onSubmitted) onSubmitted();
+    setSubmitError(null);
+    try {
+      await reviewsApi.create({
+        company_id: proposal.company.id,
+        rating: overallRating,
+        comment: comment.trim(),
+        content_metadata: {
+          equipment_rating: equipmentRating,
+          deadline_rating: deadlineRating,
+          communication_rating: communicationRating,
+          installation_rating: installationRating,
+          post_sale_rating: postSaleRating,
+          cost_benefit_rating: costBenefitRating,
+          proposal_id: proposal.id,
+          project_id: proposal.project?.id,
+          proposal_code: proposal.code,
+        },
+      });
+      setSubmitted(true);
+      if (onSubmitted) onSubmitted();
+    } catch (err: unknown) {
+      console.error('[ProposalReview] Falha ao enviar avaliação:', err);
+      setSubmitError(
+        err instanceof Error ? err.message : 'Não foi possível registrar a avaliação. Tente novamente.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function StarPicker({
@@ -404,6 +428,12 @@ export function ProposalReview({
                 />
               </button>
             </div>
+
+            {submitError && (
+              <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                {submitError}
+              </div>
+            )}
 
             {/* CTA de Envio */}
             <div className="pt-2">

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrama 05 — Swimlane da Jornada do Comprador</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      width: 100%;
+      max-width: 1080px;
+      margin-bottom: 24px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #2563EB;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.02em;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 4px;
+    }
+    .diagram-container {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 1080px;
+      width: 100%;
+      overflow-x: auto;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #F1F5F9;
+      font-size: 12px;
+      color: #475569;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="tag">Engenharia Reversa Observacional • Swimlane Diagram</span>
+    <h1>Swimlane da Jornada do Comprador (Modelo OLX Adaptado)</h1>
+    <p class="subtitle">Fluxo Ponta a Ponta: Descoberta, Solicitação RFP, Comparação Transacional e Decisão</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg width="1020" height="660" viewBox="0 0 1020 660" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#2563EB"/>
+        </marker>
+        <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#10B981"/>
+        </marker>
+        <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#F59E0B"/>
+        </marker>
+      </defs>
+
+      <!-- SWIMLANE BACKGROUND & BORDERS -->
+      <!-- Raia 1: Comprador -->
+      <rect x="40" y="40" width="940" height="110" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+      <rect x="40" y="40" width="160" height="110" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+      <text x="120" y="85" font-size="12" font-weight="800" fill="#1D4ED8" text-anchor="middle">COMPRADOR</text>
+      <text x="120" y="102" font-size="10" fill="#2563EB" text-anchor="middle">(PWA / Mobile Web)</text>
+
+      <!-- Raia 2: Next.js Frontend -->
+      <rect x="40" y="150" width="940" height="110" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+      <rect x="40" y="150" width="160" height="110" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1"/>
+      <text x="120" y="195" font-size="12" font-weight="800" fill="#0F172A" text-anchor="middle">FRONTEND NEXT.JS</text>
+      <text x="120" y="212" font-size="10" fill="#64748B" text-anchor="middle">(App Router / Workspace)</text>
+
+      <!-- Raia 3: Rails API / Backend -->
+      <rect x="40" y="260" width="940" height="110" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+      <rect x="40" y="260" width="160" height="110" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1"/>
+      <text x="120" y="305" font-size="12" font-weight="800" fill="#0F172A" text-anchor="middle">BACKEND RAILS</text>
+      <text x="120" y="322" font-size="10" fill="#64748B" text-anchor="middle">(REST API v1 / PostgreSQL)</text>
+
+      <!-- Raia 4: Instalador / Empresa -->
+      <rect x="40" y="370" width="940" height="110" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+      <rect x="40" y="370" width="160" height="110" fill="#FFFBEB" stroke="#FDE68A" stroke-width="1"/>
+      <text x="120" y="415" font-size="12" font-weight="800" fill="#B45309" text-anchor="middle">INSTALADOR</text>
+      <text x="120" y="432" font-size="10" fill="#92400E" text-anchor="middle">(Empresa Credenciada)</text>
+
+      <!-- COLUNAS TEMPORAIS (FASES) -->
+      <line x1="360" y1="20" x2="360" y2="480" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="2 2"/>
+      <line x1="560" y1="20" x2="560" y2="480" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="2 2"/>
+      <line x1="760" y1="20" x2="760" y2="480" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="2 2"/>
+
+      <text x="280" y="32" font-size="10" font-weight="700" fill="#64748B" text-anchor="middle">1. DESCOBERTA</text>
+      <text x="460" y="32" font-size="10" font-weight="700" fill="#64748B" text-anchor="middle">2. SOLICITAÇÃO (RFP)</text>
+      <text x="660" y="32" font-size="10" font-weight="700" fill="#64748B" text-anchor="middle">3. PROPOSTAS &amp; CHAT</text>
+      <text x="860" y="32" font-size="10" font-weight="700" fill="#64748B" text-anchor="middle">4. COMPARAÇÃO &amp; DECISÃO</text>
+
+      <!-- CARDS DO FLUXO (ATIVIDADES) -->
+      <!-- 1.1 Comprador busca instalador -->
+      <g transform="translate(220, 60)">
+        <rect x="0" y="0" width="120" height="65" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1"/>
+        <text x="10" y="22" font-size="10" font-weight="700" fill="#1D4ED8">Navega na Home</text>
+        <text x="10" y="38" font-size="9" fill="#0F172A">• Busca por cidade</text>
+        <text x="10" y="52" font-size="9" fill="#0F172A">• Filtra empresas</text>
+      </g>
+
+      <path d="M 340 92 L 390 92" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 2.1 Comprador envia solicitação -->
+      <g transform="translate(390, 60)">
+        <rect x="0" y="0" width="130" height="65" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1"/>
+        <text x="10" y="22" font-size="10" font-weight="700" fill="#1D4ED8">Cria Projeto (RFP)</text>
+        <text x="10" y="38" font-size="9" fill="#0F172A">• 8,5 kWp Residencial</text>
+        <text x="10" y="52" font-size="9" fill="#0F172A">• Florianópolis, SC</text>
+      </g>
+
+      <path d="M 455 125 L 455 285" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 2.2 Rails cria Lead / Solicitação -->
+      <g transform="translate(400, 285)">
+        <rect x="0" y="0" width="120" height="60" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="10" y="22" font-size="10" font-weight="700" fill="#0F172A">POST /leads</text>
+        <text x="10" y="38" font-size="9" fill="#64748B">Gera Lead #42</text>
+        <text x="10" y="50" font-size="9" fill="#64748B">Distribui p/ empresas</text>
+      </g>
+
+      <path d="M 460 345 L 460 395" stroke="#F59E0B" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+
+      <!-- 3.1 Empresas preparam proposta -->
+      <g transform="translate(410, 395)">
+        <rect x="0" y="0" width="130" height="60" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="10" y="20" font-size="10" font-weight="700" fill="#B45309">Recebe Oportunidade</text>
+        <text x="10" y="36" font-size="9" fill="#78350F">Elabora Sistema 8.5kWp</text>
+        <text x="10" y="50" font-size="9" fill="#78350F">Publica Proposta + Termos</text>
+      </g>
+
+      <path d="M 540 425 L 610 335" stroke="#F59E0B" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+
+      <!-- 3.2 Rails grava versão de proposta -->
+      <g transform="translate(590, 285)">
+        <rect x="0" y="0" width="130" height="60" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="10" y="20" font-size="10" font-weight="700" fill="#0F172A">MarketplaceProposal</text>
+        <text x="10" y="36" font-size="9" fill="#64748B">status: 'sent'</text>
+        <text x="10" y="50" font-size="9" fill="#64748B">version: published</text>
+      </g>
+
+      <path d="M 655 285 L 655 235" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 3.3 Next.js atualiza workspace -->
+      <g transform="translate(600, 175)">
+        <rect x="0" y="0" width="130" height="60" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="10" y="20" font-size="10" font-weight="800" fill="#2563EB">Workspace do Comprador</text>
+        <text x="10" y="36" font-size="9" fill="#1D4ED8">Stepper: Etapa 2 ativa</text>
+        <text x="10" y="50" font-size="9" fill="#1D4ED8">Banner: "3 propostas"</text>
+      </g>
+
+      <path d="M 665 175 L 665 125" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 4.1 Comprador compara e conversa -->
+      <g transform="translate(600, 65)">
+        <rect x="0" y="0" width="130" height="60" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="10" y="20" font-size="10" font-weight="700" fill="#0F172A">Avalia Propostas</text>
+        <text x="10" y="36" font-size="9" fill="#0F172A">• Chat com instalador</text>
+        <text x="10" y="50" font-size="9" fill="#0F172A">• Download PDF</text>
+      </g>
+
+      <path d="M 730 95 L 800 95" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+      <!-- 4.2 Decisão Final & Projeto -->
+      <g transform="translate(800, 60)">
+        <rect x="0" y="0" width="160" height="70" rx="6" fill="#ECFDF5" stroke="#10B981" stroke-width="2"/>
+        <text x="10" y="22" font-size="11" font-weight="800" fill="#065F46">ESCOLHER EMPRESA</text>
+        <text x="10" y="40" font-size="9" fill="#047857">• Confirmação transacional</text>
+        <text x="10" y="54" font-size="9" fill="#047857">• Stepper avança p/ Projeto</text>
+      </g>
+
+      <path d="M 880 130 L 880 285" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+      <!-- 4.3 Rails aceita proposta e inicia projeto -->
+      <g transform="translate(810, 285)">
+        <rect x="0" y="0" width="140" height="60" rx="6" fill="#FFFFFF" stroke="#10B981" stroke-width="1.5"/>
+        <text x="10" y="20" font-size="10" font-weight="700" fill="#065F46">POST /proposals/accept</text>
+        <text x="10" y="36" font-size="9" fill="#64748B">status: 'accepted'</text>
+        <text x="10" y="50" font-size="9" fill="#64748B">Inicia milestones</text>
+      </g>
+
+      <!-- RODAPÉ DE REGRAS DE NEGÓCIO -->
+      <g transform="translate(40, 500)">
+        <rect x="0" y="0" width="940" height="135" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="20" y="26" font-size="11" font-weight="800" fill="#0F172A">PRINCÍPIOS ARQUITETURAIS OBSERVADOS &amp; APLICADOS NO AVALIA SOLAR 2026:</text>
+        <text x="20" y="50" font-size="11" fill="#475569"><tspan font-weight="700" fill="#2563EB">1. Bloqueio Inter-RFP:</tspan> Não permitir comparação de propostas de projetos distintos (lead_id mismatch retorna 422 Unprocessable Entity).</text>
+        <text x="20" y="74" font-size="11" fill="#475569"><tspan font-weight="700" fill="#2563EB">2. Modelo Mental Centrado no Projeto:</tspan> O comprador vê o título do seu projeto e o stepper de 5 etapas, agrupando as empresas concorrentes.</text>
+        <text x="20" y="98" font-size="11" fill="#475569"><tspan font-weight="700" fill="#2563EB">3. Canal de Conversa Contínuo:</tspan> O chat é acionado diretamente do card de proposta, eliminando atrito de autenticação.</text>
+        <text x="20" y="120" font-size="11" fill="#475569"><tspan font-weight="700" fill="#2563EB">4. Rating e Dados Reais:</tspan> Repúdio a notas ou quantidades fictícias; exibição exclusiva de ratings auditáveis da empresa.</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="header">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background: #2563EB;"></div><span>Ações do Comprador / Next.js (Azul)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #10B981;"></div><span>Fechamento / Confirmação (Verde)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #F59E0B;"></div><span>Interação da Empresa Instaladora (Amarelo)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #0F172A;"></div><span>Processamento de Backend</span></div>
+    </div>
+  </div>
+</body>
+</html>

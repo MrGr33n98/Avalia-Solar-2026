@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrama 07 — Diagrama de Causa-Raiz (Ishikawa / Fishbone)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      width: 100%;
+      max-width: 1080px;
+      margin-bottom: 24px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #2563EB;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.02em;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 4px;
+    }
+    .diagram-container {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 1080px;
+      width: 100%;
+      overflow-x: auto;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #F1F5F9;
+      font-size: 12px;
+      color: #475569;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="tag">Engenharia Reversa Observacional • Diagrama de Ishikawa</span>
+    <h1>Diagrama de Causa-Raiz (Fishbone / Ishikawa)</h1>
+    <p class="subtitle">Desconstrução das Causas-Raiz: Deformações no Hero, Filtros Instáveis, Mocks e Modelo Mental</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg width="1020" height="660" viewBox="0 0 1020 660" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-main" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#0F172A"/>
+        </marker>
+        <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#2563EB"/>
+        </marker>
+        <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#F59E0B"/>
+        </marker>
+      </defs>
+
+      <!-- ESPINHA CENTRAL (COLUNA VERTEBRAL DO ISHIKAWA) -->
+      <line x1="60" y1="330" x2="810" y2="330" stroke="#0F172A" stroke-width="4" marker-end="url(#arrow-main)"/>
+
+      <!-- CABEÇA DO PEIXE (O PROBLEMA CENTRAL CONSTATADO) -->
+      <g transform="translate(820, 260)">
+        <polygon points="0,70 160,0 160,140" fill="#FEF2F2" stroke="#EF4444" stroke-width="2"/>
+        <text x="50" y="62" font-size="11" font-weight="800" fill="#991B1B">RUPTURA DE</text>
+        <text x="50" y="78" font-size="11" font-weight="800" fill="#991B1B">PADRÃO VISUAL &amp;</text>
+        <text x="50" y="94" font-size="11" font-weight="800" fill="#991B1B">EXPERIÊNCIA UX</text>
+      </g>
+
+      <!-- ESPINHAS SUPERIORES (3 CATEGORIAS) -->
+
+      <!-- 1. CSS & STYLING GLOBAL (Superior Esquerda) -->
+      <g transform="translate(60, 40)">
+        <line x1="160" y1="0" x2="260" y2="290" stroke="#2563EB" stroke-width="2"/>
+        
+        <rect x="30" y="0" width="200" height="32" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="40" y="20" font-size="11" font-weight="800" fill="#1D4ED8">1. CSS GLOBAL MOBILE</text>
+
+        <!-- Sub-causas -->
+        <rect x="0" y="60" width="180" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="10" y="76" font-size="9" font-weight="700" fill="#0F172A">button { min-h: 48px; }</text>
+        <text x="10" y="90" font-size="8" fill="#64748B">Regra mobile forçava 48x48px</text>
+        <line x1="180" y1="80" x2="190" y2="85" stroke="#2563EB" stroke-width="1"/>
+
+        <rect x="40" y="125" width="180" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="50" y="141" font-size="9" font-weight="700" fill="#0F172A">Dots deformados em círculos</text>
+        <text x="50" y="155" font-size="8" fill="#64748B">Sem separar touch de visual</text>
+        <line x1="220" y1="145" x2="215" y2="155" stroke="#2563EB" stroke-width="1"/>
+      </g>
+
+      <!-- 2. ASSETS & ENQUADRAMENTO (Superior Central) -->
+      <g transform="translate(320, 40)">
+        <line x1="160" y1="0" x2="260" y2="290" stroke="#2563EB" stroke-width="2"/>
+
+        <rect x="40" y="0" width="200" height="32" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="50" y="20" font-size="11" font-weight="800" fill="#1D4ED8">2. TRATAMENTO DE ASSETS</text>
+
+        <!-- Sub-causas -->
+        <rect x="0" y="60" width="190" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="10" y="76" font-size="9" font-weight="700" fill="#0F172A">Margens brancas intrínsecas</text>
+        <text x="10" y="90" font-size="8" fill="#64748B">Logos sem normalização de padding</text>
+        <line x1="190" y1="80" x2="190" y2="85" stroke="#2563EB" stroke-width="1"/>
+
+        <rect x="40" y="125" width="190" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="50" y="141" font-size="9" font-weight="700" fill="#0F172A">Duplicação com blur-md</text>
+        <text x="50" y="155" font-size="8" fill="#64748B">Tentativa falha de preenchimento</text>
+        <line x1="230" y1="145" x2="215" y2="155" stroke="#2563EB" stroke-width="1"/>
+      </g>
+
+      <!-- 3. MODELO MENTAL DA JORNADA (Superior Direita) -->
+      <g transform="translate(580, 40)">
+        <line x1="160" y1="0" x2="260" y2="290" stroke="#2563EB" stroke-width="2"/>
+
+        <rect x="30" y="0" width="210" height="32" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="40" y="20" font-size="11" font-weight="800" fill="#1D4ED8">3. MODELO MENTAL DA RFP</text>
+
+        <!-- Sub-causas -->
+        <rect x="0" y="60" width="190" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="10" y="76" font-size="9" font-weight="700" fill="#0F172A">Lista plana de propostas</text>
+        <text x="10" y="90" font-size="8" fill="#64748B">Sem agrupar em torno do projeto</text>
+        <line x1="190" y1="80" x2="190" y2="85" stroke="#2563EB" stroke-width="1"/>
+
+        <rect x="40" y="125" width="190" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="50" y="141" font-size="9" font-weight="700" fill="#0F172A">Contador inconsistente</text>
+        <text x="50" y="155" font-size="8" fill="#64748B">Chamava propostas de 'solicitações'</text>
+        <line x1="230" y1="145" x2="215" y2="155" stroke="#2563EB" stroke-width="1"/>
+      </g>
+
+      <!-- ESPINHAS INFERIORES (3 CATEGORIAS) -->
+
+      <!-- 4. GESTÃO DE ESTADO & DRAWER (Inferior Esquerda) -->
+      <g transform="translate(60, 370)">
+        <line x1="160" y1="240" x2="260" y2="0" stroke="#F59E0B" stroke-width="2"/>
+
+        <rect x="30" y="210" width="200" height="32" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="40" y="230" font-size="11" font-weight="800" fill="#B45309">4. ESTADO DE FILTROS</text>
+
+        <!-- Sub-causas -->
+        <rect x="0" y="130" width="190" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="10" y="146" font-size="9" font-weight="700" fill="#0F172A">Mutação em tempo real</text>
+        <text x="10" y="160" font-size="8" fill="#64748B">Sem isolar rascunho de filtros</text>
+        <line x1="190" y1="150" x2="215" y2="135" stroke="#F59E0B" stroke-width="1"/>
+
+        <rect x="40" y="60" width="180" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="50" y="76" font-size="9" font-weight="700" fill="#0F172A">Ausência de safe-area</text>
+        <text x="50" y="90" font-size="8" fill="#64748B">Drawer invadia barras do sistema</text>
+        <line x1="220" y1="80" x2="235" y2="70" stroke="#F59E0B" stroke-width="1"/>
+      </g>
+
+      <!-- 5. INTEGRIDADE DE DADOS & APIS (Inferior Central) -->
+      <g transform="translate(320, 370)">
+        <line x1="160" y1="240" x2="260" y2="0" stroke="#F59E0B" stroke-width="2"/>
+
+        <rect x="30" y="210" width="210" height="32" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="40" y="230" font-size="11" font-weight="800" fill="#B45309">5. VALIDAÇÃO DE DADOS</text>
+
+        <!-- Sub-causas -->
+        <rect x="0" y="130" width="190" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="10" y="146" font-size="9" font-weight="700" fill="#0F172A">Comparação inter-RFP</text>
+        <text x="10" y="160" font-size="8" fill="#64748B">Sem validação no backend (422)</text>
+        <line x1="190" y1="150" x2="215" y2="135" stroke="#F59E0B" stroke-width="1"/>
+
+        <rect x="40" y="60" width="190" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="50" y="76" font-size="9" font-weight="700" fill="#0F172A">Dados mockados de reviews</text>
+        <text x="50" y="90" font-size="8" fill="#64748B">Hardcode de "4,8 (32 avaliações)"</text>
+        <line x1="230" y1="80" x2="235" y2="70" stroke="#F59E0B" stroke-width="1"/>
+      </g>
+
+      <!-- 6. HIERARQUIA VISUAL DO CARD (Inferior Direita) -->
+      <g transform="translate(580, 370)">
+        <line x1="160" y1="240" x2="260" y2="0" stroke="#F59E0B" stroke-width="2"/>
+
+        <rect x="30" y="210" width="210" height="32" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="40" y="230" font-size="11" font-weight="800" fill="#B45309">6. ESPECIFICAÇÃO DO CARD</text>
+
+        <!-- Sub-causas -->
+        <rect x="0" y="130" width="190" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="10" y="146" font-size="9" font-weight="700" fill="#0F172A">Cards sem destaque de preço</text>
+        <text x="10" y="160" font-size="8" fill="#64748B">Tipografia fraca e sem contraste</text>
+        <line x1="190" y1="150" x2="215" y2="135" stroke="#F59E0B" stroke-width="1"/>
+
+        <rect x="40" y="60" width="190" height="42" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="50" y="76" font-size="9" font-weight="700" fill="#0F172A">Ausência de CTAs de ação</text>
+        <text x="50" y="90" font-size="8" fill="#64748B">Faltava botão 'Conversar' e 'Escolher'</text>
+        <line x1="230" y1="80" x2="235" y2="70" stroke="#F59E0B" stroke-width="1"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="header">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background: #2563EB;"></div><span>Causas de Interface e Apresentação (Azul)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #F59E0B;"></div><span>Causas de Estado, Dados e Backend (Amarelo)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #FEF2F2; border: 1px solid #EF4444;"></div><span>Efeito Crítico Central (Vermelho)</span></div>
+    </div>
+  </div>
+</body>
+</html>

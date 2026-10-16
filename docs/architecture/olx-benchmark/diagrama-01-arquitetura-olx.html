@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrama 01 — Arquitetura Observável do Frontend da OLX</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      width: 100%;
+      max-width: 1080px;
+      margin-bottom: 24px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #2563EB;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.02em;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 4px;
+    }
+    .diagram-container {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 1080px;
+      width: 100%;
+      overflow-x: auto;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #F1F5F9;
+      font-size: 12px;
+      color: #475569;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="tag">Engenharia Reversa Observacional • REA MCP</span>
+    <h1>Arquitetura Observável do Frontend da OLX Brasil</h1>
+    <p class="subtitle">Micro-Frontends Multi-Zone em Next.js (Turbopack + RSC Streaming), Camada Edge e Barramento de Serviços</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg width="1020" height="620" viewBox="0 0 1020 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background Grid Subtilation -->
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#F1F5F9" stroke-width="1"/>
+        </pattern>
+        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#2563EB"/>
+        </marker>
+        <marker id="arrow-neutral" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748B"/>
+        </marker>
+        <marker id="arrow-accent" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#F59E0B"/>
+        </marker>
+      </defs>
+
+      <rect width="1020" height="620" fill="url(#grid)" />
+
+      <!-- CAMADA 1: CLIENTES & PWA -->
+      <g transform="translate(40, 30)">
+        <rect x="0" y="0" width="940" height="76" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#64748B" letter-spacing="0.05em">CAMADA CLIENTES [FATO OBSERVADO]</text>
+        
+        <!-- Web Desktop -->
+        <rect x="16" y="32" width="210" height="34" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="32" y="53" font-size="12" font-weight="600" fill="#0F172A">Web Desktop (Next.js Hydration)</text>
+        
+        <!-- PWA Mobile -->
+        <rect x="242" y="32" width="220" height="34" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="258" y="53" font-size="12" font-weight="700" fill="#2563EB">PWA Mobile (Viewport 320–480px)</text>
+        
+        <!-- Native Deep Links -->
+        <rect x="478" y="32" width="230" height="34" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1"/>
+        <text x="494" y="53" font-size="12" font-weight="600" fill="#B45309">olxapp:// (Deep Link + keep_location)</text>
+        
+        <!-- Telemetria RUM -->
+        <rect x="724" y="32" width="200" height="34" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="740" y="53" font-size="12" font-weight="600" fill="#0F172A">Datadog RUM v5 + ThreatMetrix</text>
+      </g>
+
+      <!-- CONECTOR CLIENTE -> EDGE -->
+      <line x1="510" y1="106" x2="510" y2="136" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- CAMADA 2: EDGE ROUTING & REVERSING PROXY -->
+      <g transform="translate(40, 136)">
+        <rect x="0" y="0" width="940" height="74" rx="8" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#94A3B8" letter-spacing="0.05em">EDGE / CDN & INGRESS ROUTING [FATO OBSERVADO]</text>
+        
+        <rect x="16" y="30" width="290" height="34" rx="6" fill="#1E293B" stroke="#334155" stroke-width="1"/>
+        <text x="30" y="52" font-size="12" font-weight="600" fill="#F8FAFC">Cloudflare WAF + Bot Detection</text>
+
+        <rect x="322" y="30" width="296" height="34" rx="6" fill="#1E293B" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="336" y="52" font-size="12" font-weight="700" fill="#60A5FA">Subdomínios UF (sp., rj., sc.olx.com.br)</text>
+
+        <rect x="634" y="30" width="290" height="34" rx="6" fill="#1E293B" stroke="#334155" stroke-width="1"/>
+        <text x="648" y="52" font-size="12" font-weight="600" fill="#F8FAFC">Canonical Mesoregion (/sao-paulo-e-regiao)</text>
+      </g>
+
+      <!-- CONECTORES EDGE -> MICRO-FRONTENDS -->
+      <line x1="140" y1="210" x2="140" y2="246" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="325" y1="210" x2="325" y2="246" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="510" y1="210" x2="510" y2="246" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="695" y1="210" x2="695" y2="246" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="880" y1="210" x2="880" y2="246" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- CAMADA 3: MICRO-FRONTENDS MULTI-ZONE (NEXT.JS) -->
+      <g transform="translate(40, 246)">
+        <rect x="0" y="0" width="940" height="150" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#64748B" letter-spacing="0.05em">MICRO-FRONTENDS NEXT.JS APP ROUTER + RSC STREAMING [FATO OBSERVADO]</text>
+
+        <!-- Zone 1: Home Zone -->
+        <rect x="16" y="34" width="168" height="102" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="26" y="54" font-size="12" font-weight="700" fill="#0F172A">home-ssr-static</text>
+        <text x="26" y="70" font-size="10" fill="#64748B">Rota: /</text>
+        <text x="26" y="86" font-size="10" fill="#0F172A">• Hero Banner + Dots</text>
+        <text x="26" y="100" font-size="10" fill="#0F172A">• Categorias horizontais</text>
+        <text x="26" y="114" font-size="10" fill="#0F172A">• Carrossel de marcas</text>
+
+        <!-- Zone 2: Listing Zone (Destaque) -->
+        <rect x="200" y="34" width="168" height="102" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+        <text x="210" y="54" font-size="12" font-weight="800" fill="#2563EB">listing-next</text>
+        <text x="210" y="70" font-size="10" fill="#1D4ED8">Rota: /estado/categoria</text>
+        <text x="210" y="86" font-size="10" fill="#0F172A">• Busca facetada (cg, q)</text>
+        <text x="210" y="100" font-size="10" fill="#0F172A">• Drawer filtros (70dvh)</text>
+        <text x="210" y="114" font-size="10" fill="#0F172A">• AdCards em grid/lista</text>
+
+        <!-- Zone 3: Item Zone -->
+        <rect x="384" y="34" width="168" height="102" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="394" y="54" font-size="12" font-weight="700" fill="#0F172A">vi-next</text>
+        <text x="394" y="70" font-size="10" fill="#64748B">Rota: /vi/:id</text>
+        <text x="394" y="86" font-size="10" fill="#0F172A">• Galeria de fotos WebP</text>
+        <text x="394" y="100" font-size="10" fill="#0F172A">• OLX Pay / Entrega</text>
+        <text x="394" y="114" font-size="10" fill="#0F172A">• CTA "Chat" direto</text>
+
+        <!-- Zone 4: Chat Zone -->
+        <rect x="568" y="34" width="168" height="102" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="578" y="54" font-size="12" font-weight="800" fill="#B45309">chat.olx.com.br</text>
+        <text x="578" y="70" font-size="10" fill="#92400E">Serviço Dedicado</text>
+        <text x="578" y="86" font-size="10" fill="#0F172A">• WebSocket handshake</text>
+        <text x="578" y="100" font-size="10" fill="#0F172A">• Moderação de texto</text>
+        <text x="578" y="114" font-size="10" fill="#0F172A">• Alertas anti-fraude</text>
+
+        <!-- Zone 5: Auth & Insertion -->
+        <rect x="752" y="34" width="172" height="102" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="762" y="54" font-size="12" font-weight="700" fill="#0F172A">accounts / desapega</text>
+        <text x="762" y="70" font-size="10" fill="#64748B">Access-Host v2.8.0</text>
+        <text x="762" y="86" font-size="10" fill="#0F172A">• Google One-Tap / CPF</text>
+        <text x="762" y="100" font-size="10" fill="#0F172A">• Upload de mídia</text>
+        <text x="762" y="114" font-size="10" fill="#0F172A">• Gateway de publicação</text>
+      </g>
+
+      <!-- CONECTORES MICRO-FRONTENDS -> BACKEND / SERVIÇOS -->
+      <line x1="284" y1="396" x2="284" y2="430" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="652" y1="396" x2="652" y2="430" stroke="#F59E0B" stroke-width="1.5" marker-end="url(#arrow-accent)"/>
+      <line x1="838" y1="396" x2="838" y2="430" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrow-neutral)"/>
+
+      <!-- CAMADA 4: SERVIÇOS DE DADOS, BUSCA & GEOLOCALIZAÇÃO -->
+      <g transform="translate(40, 430)">
+        <rect x="0" y="0" width="940" height="96" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#64748B" letter-spacing="0.05em">SERVIÇOS DE BACKEND & PLATAFORMA [EVIDÊNCIAS DE BUNDLE / DOM]</text>
+
+        <!-- Search Microfrontend Service -->
+        <rect x="16" y="32" width="280" height="50" rx="6" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="28" y="52" font-size="12" font-weight="700" fill="#2563EB">search-microfrontends.olx.com.br</text>
+        <text x="28" y="68" font-size="10" fill="#64748B">Elasticsearch / Queries facetadas (cg, re, loc, ps, pe)</text>
+
+        <!-- Geo & DDD Resolution -->
+        <rect x="312" y="32" width="200" height="50" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="324" y="52" font-size="12" font-weight="700" fill="#0F172A">Geo Service (UF / DDD / CEP)</text>
+        <text x="324" y="68" font-size="10" fill="#64748B">Cookies: olx_location, ddd, state</text>
+
+        <!-- Chat WSS & Gateway -->
+        <rect x="528" y="32" width="230" height="50" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="540" y="52" font-size="12" font-weight="700" fill="#B45309">Chat Gateway (WebSocket)</text>
+        <text x="540" y="68" font-size="10" fill="#64748B">Push, presença, recibos entregue/lido</text>
+
+        <!-- Catalog & Transacional -->
+        <rect x="774" y="32" width="150" height="50" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="786" y="52" font-size="12" font-weight="700" fill="#0F172A">OLX Pay / Entrega</text>
+        <text x="786" y="68" font-size="10" fill="#64748B">Cálculo de frete e parcelas</text>
+      </g>
+
+      <!-- ADAPTAÇÃO PARA O AVALIA SOLAR (RODAPÉ INFORMATIVO) -->
+      <g transform="translate(40, 542)">
+        <rect x="0" y="0" width="940" height="48" rx="6" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+        <circle cx="24" cy="24" r="10" fill="#2563EB"/>
+        <text x="20" y="28" font-size="12" font-weight="800" fill="#FFFFFF">i</text>
+        <text x="44" y="22" font-size="11" font-weight="700" fill="#1D4ED8">APLICAÇÃO NO AVALIA SOLAR 2026:</text>
+        <text x="44" y="38" font-size="11" fill="#1E40AF">Substituir a listagem monolítica por páginas facetadas por Estado/Mesorregião e integrar o Chat do instalador diretamente à RFP do comprador.</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="header">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background: #2563EB;"></div><span>Componente Central / Destaque (Azul Oficial)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #F59E0B;"></div><span>Canal Transacional / Chat (Amarelo Solar)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #0F172A;"></div><span>Infraestrutura Edge / Gateway (Preto/Slate)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #FFFFFF; border: 1px solid #CBD5E1;"></div><span>Módulo Auxiliar / Suporte</span></div>
+    </div>
+  </div>
+</body>
+</html>

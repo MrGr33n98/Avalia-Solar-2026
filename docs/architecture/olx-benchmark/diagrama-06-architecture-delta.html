@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrama 06 — Architecture Delta: Avalia Solar Atual vs Proposto</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      width: 100%;
+      max-width: 1080px;
+      margin-bottom: 24px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #2563EB;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.02em;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 4px;
+    }
+    .diagram-container {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 1080px;
+      width: 100%;
+      overflow-x: auto;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #F1F5F9;
+      font-size: 12px;
+      color: #475569;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="tag">Engenharia Reversa Observacional • Architecture Delta</span>
+    <h1>Architecture Delta: Avalia Solar Atual vs Proposto</h1>
+    <p class="subtitle">Matriz de Transformação: Correções de Causa-Raiz, UX Mobile e Integridade de Dados</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg width="1020" height="720" viewBox="0 0 1020 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#10B981"/>
+        </marker>
+      </defs>
+
+      <!-- CABEÇALHOS DAS DUAS COLUNAS -->
+      <!-- Coluna Esquerda: Estado Anterior (Problemas/GAPs) -->
+      <g transform="translate(40, 20)">
+        <rect x="0" y="0" width="450" height="44" rx="6" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text x="20" y="27" font-size="12" font-weight="800" fill="#991B1B">ESTADO ANTERIOR (GAPs &amp; CONFLITOS)</text>
+      </g>
+
+      <!-- Coluna Direita: Estado Proposto & Implantado -->
+      <g transform="translate(530, 20)">
+        <rect x="0" y="0" width="450" height="44" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+        <text x="20" y="27" font-size="12" font-weight="800" fill="#1D4ED8">ESTADO NOVO (SWISS/OLX BENCHMARK)</text>
+      </g>
+
+      <!-- 1. MODELO MENTAL DA JORNADA -->
+      <g transform="translate(40, 80)">
+        <!-- Anterior -->
+        <rect x="0" y="0" width="450" height="88" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#EF4444">1. MODELO MENTAL DA JORNADA</text>
+        <text x="16" y="42" font-size="11" fill="#475569">• Lista plana de propostas sem contexto de projeto.</text>
+        <text x="16" y="58" font-size="11" fill="#475569">• Contava empresas como "solicitações encontradas".</text>
+        <text x="16" y="74" font-size="11" fill="#475569">• Sem stepper visual do andamento da RFP do comprador.</text>
+
+        <!-- Seta -->
+        <path d="M 460 44 L 520 44" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+        <!-- Novo -->
+        <g transform="translate(490, 0)">
+          <rect x="0" y="0" width="450" height="88" rx="8" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5"/>
+          <text x="16" y="22" font-size="11" font-weight="800" fill="#166534">1. CENTRADO NO PROJETO (RFP)</text>
+          <text x="16" y="42" font-size="11" fill="#15803D">• Agrupador canônico por lead_id (groupProposalsByProject).</text>
+          <text x="16" y="58" font-size="11" fill="#15803D">• Stepper horizontal com 5 etapas da jornada ativo.</text>
+          <text x="16" y="74" font-size="11" fill="#15803D">• Modal com especificações da RFP (kWh, fatura, cidade).</text>
+        </g>
+      </g>
+
+      <!-- 2. REPUTAÇÃO E RATINGS -->
+      <g transform="translate(40, 185)">
+        <!-- Anterior -->
+        <rect x="0" y="0" width="450" height="88" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#EF4444">2. INTEGRIDADE DE REPUTAÇÃO</text>
+        <text x="16" y="42" font-size="11" fill="#475569">• Notas mockadas hardcoded: "★ 4,8 (32 avaliações)".</text>
+        <text x="16" y="58" font-size="11" fill="#475569">• Violação das diretrizes de auditoria do Avalia Solar.</text>
+        <text x="16" y="74" font-size="11" fill="#475569">• Risco severo de litígio e perda de credibilidade.</text>
+
+        <!-- Seta -->
+        <path d="M 460 44 L 520 44" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+        <!-- Novo -->
+        <g transform="translate(490, 0)">
+          <rect x="0" y="0" width="450" height="88" rx="8" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5"/>
+          <text x="16" y="22" font-size="11" font-weight="800" fill="#166534">2. RATINGS 100% AUDITÁVEIS</text>
+          <text x="16" y="42" font-size="11" fill="#15803D">• Exibição vinculada a company.rating_avg real do BD.</text>
+          <text x="16" y="58" font-size="11" fill="#15803D">• Contagem de reviews baseada em dados verificados.</text>
+          <text x="16" y="74" font-size="11" fill="#15803D">• Fallback honesto para "Sem avaliações" quando ausente.</text>
+        </g>
+      </g>
+
+      <!-- 3. COMPARAÇÃO INTER-RFP -->
+      <g transform="translate(40, 290)">
+        <!-- Anterior -->
+        <rect x="0" y="0" width="450" height="88" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#EF4444">3. COMPARADOR DE PROPOSTAS</text>
+        <text x="16" y="42" font-size="11" fill="#475569">• Permitia comparar propostas de leads/projetos distintos.</text>
+        <text x="16" y="58" font-size="11" fill="#475569">• Misturava telhados, tensões e faturas incompatíveis.</text>
+        <text x="16" y="74" font-size="11" fill="#475569">• Vulnerabilidade funcional e dados incoerentes.</text>
+
+        <!-- Seta -->
+        <path d="M 460 44 L 520 44" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+        <!-- Novo -->
+        <g transform="translate(490, 0)">
+          <rect x="0" y="0" width="450" height="88" rx="8" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5"/>
+          <text x="16" y="22" font-size="11" font-weight="800" fill="#166534">3. BLOQUEIO INTER-RFP (BACK &amp; FRONT)</text>
+          <text x="16" y="42" font-size="11" fill="#15803D">• Rails API rejeita com 422 se lead_id.uniq.size &gt; 1.</text>
+          <text x="16" y="58" font-size="11" fill="#15803D">• Hook useProposalComparison impede seleção cruzada.</text>
+          <text x="16" y="74" font-size="11" fill="#15803D">• Comparação restrita estritamente a propostas da mesma RFP.</text>
+        </g>
+      </g>
+
+      <!-- 4. BOTTOM SHEET & FILTROS -->
+      <g transform="translate(40, 395)">
+        <!-- Anterior -->
+        <rect x="0" y="0" width="450" height="88" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#EF4444">4. FILTROS &amp; ESTABILIDADE DE ESTADO</text>
+        <text x="16" y="42" font-size="11" fill="#475569">• Cada clique no drawer disparava mutação imediata.</text>
+        <text x="16" y="58" font-size="11" fill="#475569">• Clicar fora ou fechar não cancelava o estado.</text>
+        <text x="16" y="74" font-size="11" fill="#475569">• Altura de 85vh sem safe-area causava overflow mobile.</text>
+
+        <!-- Seta -->
+        <path d="M 460 44 L 520 44" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+        <!-- Novo -->
+        <g transform="translate(490, 0)">
+          <rect x="0" y="0" width="450" height="88" rx="8" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5"/>
+          <text x="16" y="22" font-size="11" font-weight="800" fill="#166534">4. DRAFT STATE &amp; TRANSAÇÃO SEGURA</text>
+          <text x="16" y="42" font-size="11" fill="#15803D">• Estado local draft isolado; só aplica no botão "Aplicar".</text>
+          <text x="16" y="58" font-size="11" fill="#15803D">• Fechar no 'X' ou backdrop descarta sem afetar a busca.</text>
+          <text x="16" y="74" font-size="11" fill="#15803D">• Altura compacta (70dvh) com padding safe-area no rodapé.</text>
+        </g>
+      </g>
+
+      <!-- 5. CARD DE PROPOSTA & CTAS -->
+      <g transform="translate(40, 500)">
+        <!-- Anterior -->
+        <rect x="0" y="0" width="450" height="88" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#EF4444">5. HIERARQUIA DO CARD DE PROPOSTA</text>
+        <text x="16" y="42" font-size="11" fill="#475569">• Apenas 2 métricas em lista com visual genérico.</text>
+        <text x="16" y="58" font-size="11" fill="#475569">• Sem canal direto de conversa visível no card.</text>
+        <text x="16" y="74" font-size="11" fill="#475569">• Preço sem destaque principal de leitura.</text>
+
+        <!-- Seta -->
+        <path d="M 460 44 L 520 44" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+        <!-- Novo -->
+        <g transform="translate(490, 0)">
+          <rect x="0" y="0" width="450" height="88" rx="8" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5"/>
+          <text x="16" y="22" font-size="11" font-weight="800" fill="#166534">5. PROPOSALCOMPACTCARD PREMIUM</text>
+          <text x="16" y="42" font-size="11" fill="#15803D">• Preço em destaque em 26px font-black + subtítulo de kWp.</text>
+          <text x="16" y="58" font-size="11" fill="#15803D">• Grid de 4 micro-especificações técnicas formatadas.</text>
+          <text x="16" y="74" font-size="11" fill="#15803D">• 3 CTAs na base: Ver proposta (PDF), Conversar e Escolher.</text>
+        </g>
+      </g>
+
+      <!-- 6. CSS MOBILE & DOTS DO BANNER -->
+      <g transform="translate(40, 605)">
+        <!-- Anterior -->
+        <rect x="0" y="0" width="450" height="88" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#EF4444">6. CSS GLOBAL MOBILE VS COMPONENTES</text>
+        <text x="16" y="42" font-size="11" fill="#475569">• button { min-height: 48px; min-width: 48px; } no globals.css.</text>
+        <text x="16" y="58" font-size="11" fill="#475569">• Deformava os indicadores do Hero Banner em círculos de 48px.</text>
+        <text x="16" y="74" font-size="11" fill="#475569">• Quebrava botões compactos max-sm em tabelas e cards.</text>
+
+        <!-- Seta -->
+        <path d="M 460 44 L 520 44" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+        <!-- Novo -->
+        <g transform="translate(490, 0)">
+          <rect x="0" y="0" width="450" height="88" rx="8" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5"/>
+          <text x="16" y="22" font-size="11" font-weight="800" fill="#166534">6. SEPARAÇÃO TOUCH-TARGET VS VISUAL</text>
+          <text x="16" y="42" font-size="11" fill="#15803D">• Área de clique invisível de 48x48px (acessibilidade W3C).</text>
+          <text x="16" y="58" font-size="11" fill="#15803D">• Barra visual de 34x4px perfeitamente renderizada.</text>
+          <text x="16" y="74" font-size="11" fill="#15803D">• Resolução definitiva sem quebrar o reset global.</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="header">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background: #FEF2F2; border: 1px solid #FCA5A5;"></div><span>Estado Anterior / GAPs Identificados</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #F0FDF4; border: 1px solid #86EFAC;"></div><span>Estado Novo / Implementação Validada</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #10B981;"></div><span>Transição e Correção Arquitetural</span></div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avalia Solar — Central de Benchmark Visual & Diagramas Editoriais OLX</title>
+  <style>
+    :root {
+      --as-blue: #2563EB;
+      --as-blue-dark: #1D4ED8;
+      --as-blue-light: #EFF6FF;
+      --as-amber: #F59E0B;
+      --as-amber-light: #FEF3C7;
+      --slate-900: #0F172A;
+      --slate-800: #1E293B;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748B;
+      --slate-200: #E2E8F0;
+      --slate-100: #F1F5F9;
+      --slate-50: #F8FAFC;
+      --white: #FFFFFF;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--slate-50);
+      color: var(--slate-900);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Topbar */
+    header.topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--slate-200);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--as-blue);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-weight: 800;
+      font-size: 16px;
+      border: 2px solid var(--as-amber);
+    }
+    .brand-text h1 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--slate-900);
+      letter-spacing: -0.02em;
+    }
+    .brand-text p {
+      font-size: 12px;
+      color: var(--slate-500);
+    }
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid;
+    }
+    .badge-blue {
+      background: var(--as-blue-light);
+      color: var(--as-blue);
+      border-color: #BFDBFE;
+    }
+    .badge-amber {
+      background: var(--as-amber-light);
+      color: #B45309;
+      border-color: #FDE68A;
+    }
+
+    /* Layout */
+    .app-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 69px);
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      width: 340px;
+      background: var(--white);
+      border-right: 1px solid var(--slate-200);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--slate-500);
+      padding: 20px 20px 8px;
+    }
+    .nav-list {
+      list-style: none;
+      padding: 0 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease-in-out;
+    }
+    .nav-item:hover {
+      background: var(--slate-100);
+      border-color: var(--slate-200);
+    }
+    .nav-item.active {
+      background: var(--as-blue-light);
+      border-color: #93C5FD;
+    }
+    .nav-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+    .nav-item-num {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--slate-500);
+    }
+    .nav-item.active .nav-item-num {
+      color: var(--as-blue);
+    }
+    .nav-item-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+    .nav-item.active .nav-item-title {
+      color: var(--as-blue-dark);
+    }
+    .nav-item-desc {
+      font-size: 11px;
+      color: var(--slate-500);
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+
+    /* Main Viewer Area */
+    main.viewer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--slate-50);
+      overflow: hidden;
+    }
+    .viewer-toolbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--slate-200);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .viewer-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .viewer-title h2 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--slate-900);
+    }
+    .viewer-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1px solid var(--slate-200);
+      background: var(--white);
+      color: var(--slate-700);
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      background: var(--slate-100);
+      color: var(--slate-900);
+    }
+    .btn-primary {
+      background: var(--as-blue);
+      color: var(--white);
+      border-color: var(--as-blue-dark);
+    }
+    .btn-primary:hover {
+      background: var(--as-blue-dark);
+      color: var(--white);
+    }
+    .iframe-container {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: var(--slate-50);
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    @media (max-width: 900px) {
+      .app-container { flex-direction: column; height: auto; }
+      aside.sidebar { width: 100%; height: 260px; border-right: none; border-bottom: 1px solid var(--slate-200); }
+      main.viewer { height: 75vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">AS</div>
+      <div class="brand-text">
+        <h1>Avalia Solar 2026 — Central de Benchmark OLX Brasil</h1>
+        <p>Engenharia Reversa Observacional & Diagramas Editoriais em HTML + SVG</p>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      <span class="badge badge-blue">Diagram Design Standard</span>
+      <span class="badge badge-amber">Modo: Read-Only</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section-title">Diagramas Arquiteturais (7 Itens)</div>
+      <ul class="nav-list">
+        
+        <li class="nav-item active" onclick="loadDiagram('diagrama-01-arquitetura-olx.html', this, 'Diagrama 01 — Arquitetura de Micro-Frontends da OLX')">
+          <div class="nav-item-header">
+            <span class="nav-item-num">Diagrama 01</span>
+            <span class="badge badge-blue" style="font-size: 9px; padding: 2px 6px;">Micro-Frontends</span>
+          </div>
+          <span class="nav-item-title">Arquitetura Observável OLX</span>
+          <p class="nav-item-desc">Multi-Zone Next.js, Edge WAF, Home/Listing/Item/Chat e Barramentos de Telemetria.</p>
+        </li>
+
+        <li class="nav-item" onclick="loadDiagram('diagrama-02-navegacao-mobile.html', this, 'Diagrama 02 — Fluxograma da Navegação Mobile & PWA')">
+          <div class="nav-item-header">
+            <span class="nav-item-num">Diagrama 02</span>
+            <span class="badge badge-amber" style="font-size: 9px; padding: 2px 6px;">Mobile / PWA</span>
+          </div>
+          <span class="nav-item-title">Fluxograma de Navegação Mobile</span>
+          <p class="nav-item-desc">Home, Categories Rail, Search Auto, Bottom Sheet 70dvh, AdCard e Deep Links.</p>
+        </li>
+
+        <li class="nav-item" onclick="loadDiagram('diagrama-03-state-machine-componentes.html', this, 'Diagrama 03 — State Machines dos Componentes Interativos')">
+          <div class="nav-item-header">
+            <span class="nav-item-num">Diagrama 03</span>
+            <span class="badge badge-blue" style="font-size: 9px; padding: 2px 6px;">State Machines</span>
+          </div>
+          <span class="nav-item-title">State Machine de Componentes</span>
+          <p class="nav-item-desc">Autocomplete com debounce, Swipe do Carrossel, Draft State de Filtros e Favoritos.</p>
+        </li>
+
+        <li class="nav-item" onclick="loadDiagram('diagrama-04-sequence-busca-filtros.html', this, 'Diagrama 04 — Diagrama de Sequência: Busca & Filtros')">
+          <div class="nav-item-header">
+            <span class="nav-item-num">Diagrama 04</span>
+            <span class="badge badge-blue" style="font-size: 9px; padding: 2px 6px;">Sequência</span>
+          </div>
+          <span class="nav-item-title">Sequence: Busca & Filtros</span>
+          <p class="nav-item-desc">Jornada de interação, Draft local, PushState URL sem reload e Streaming RSC.</p>
+        </li>
+
+        <li class="nav-item" onclick="loadDiagram('diagrama-05-swimlane-jornada-comprador.html', this, 'Diagrama 05 — Swimlane da Jornada Transacional do Comprador')">
+          <div class="nav-item-header">
+            <span class="nav-item-num">Diagrama 05</span>
+            <span class="badge badge-amber" style="font-size: 9px; padding: 2px 6px;">Transacional</span>
+          </div>
+          <span class="nav-item-title">Swimlane Jornada do Comprador</span>
+          <p class="nav-item-desc">Fluxo ponta a ponta: Descoberta, Comparação, Chat Seguro e RFP/Proposta.</p>
+        </li>
+
+        <li class="nav-item" onclick="loadDiagram('diagrama-06-architecture-delta.html', this, 'Diagrama 06 — Architecture Delta: Avalia Solar Atual vs Benchmark')">
+          <div class="nav-item-header">
+            <span class="nav-item-num">Diagrama 06</span>
+            <span class="badge badge-blue" style="font-size: 9px; padding: 2px 6px;">Delta</span>
+          </div>
+          <span class="nav-item-title">Architecture Delta: Atual vs Proposto</span>
+          <p class="nav-item-desc">Matriz comparativa de 6 pilares: Header, Categorias, Banner, Carrossel, Card e Filtros.</p>
+        </li>
+
+        <li class="nav-item" onclick="loadDiagram('diagrama-07-fishbone-causas-raiz.html', this, 'Diagrama 07 — Diagrama de Ishikawa (Fishbone) de Causas-Raiz')">
+          <div class="nav-item-header">
+            <span class="nav-item-num">Diagrama 07</span>
+            <span class="badge badge-amber" style="font-size: 9px; padding: 2px 6px;">Causas-Raiz</span>
+          </div>
+          <span class="nav-item-title">Ishikawa (Fishbone) Causas-Raiz</span>
+          <p class="nav-item-desc">Dissecação analítica das 6 causas-raiz visuais e de interação identificadas.</p>
+        </li>
+
+      </ul>
+
+      <div class="sidebar-section-title">Documentação Técnica</div>
+      <div style="padding: 0 16px 20px;">
+        <a href="RELATORIO_ESTRATEGICO_BENCHMARK_OLX.md" target="_blank" class="btn" style="width: 100%; justify-content: center;">
+          📄 Abrir Relatório Estratégico (MD)
+        </a>
+      </div>
+    </aside>
+
+    <!-- Viewer -->
+    <main class="viewer">
+      <div class="viewer-toolbar">
+        <div class="viewer-title">
+          <span class="badge badge-blue" id="activeBadge">SVG Puro</span>
+          <h2 id="currentTitle">Diagrama 01 — Arquitetura de Micro-Frontends da OLX</h2>
+        </div>
+        <div class="viewer-actions">
+          <a id="openTabBtn" href="diagrama-01-arquitetura-olx.html" target="_blank" class="btn">
+            ↗ Abrir em Nova Aba
+          </a>
+          <button class="btn btn-primary" onclick="reloadCurrent()">
+            ↻ Recarregar
+          </button>
+        </div>
+      </div>
+      <div class="iframe-container">
+        <iframe id="diagramFrame" src="diagrama-01-arquitetura-olx.html"></iframe>
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    function loadDiagram(filename, el, title) {
+      document.getElementById('diagramFrame').src = filename;
+      document.getElementById('currentTitle').textContent = title;
+      document.getElementById('openTabBtn').href = filename;
+      
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+
+    function reloadCurrent() {
+      const frame = document.getElementById('diagramFrame');
+      frame.src = frame.src;
+    }
+  </script>
+
+</body>
+</html>

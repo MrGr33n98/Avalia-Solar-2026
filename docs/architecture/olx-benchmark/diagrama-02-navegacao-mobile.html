@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrama 02 — Fluxograma da Navegação Mobile (PWA / Mobile Web)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      width: 100%;
+      max-width: 1080px;
+      margin-bottom: 24px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #2563EB;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.02em;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 4px;
+    }
+    .diagram-container {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 1080px;
+      width: 100%;
+      overflow-x: auto;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #F1F5F9;
+      font-size: 12px;
+      color: #475569;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="tag">Engenharia Reversa Observacional • Mobile UX</span>
+    <h1>Fluxograma da Navegação Mobile & PWA</h1>
+    <p class="subtitle">Mapeamento da Jornada do Usuário Mobile: Da Descoberta na Home até a Interação e Deep Linking</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg width="1020" height="680" viewBox="0 0 1020 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#2563EB"/>
+        </marker>
+        <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#F59E0B"/>
+        </marker>
+        <marker id="arrow-neutral" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748B"/>
+        </marker>
+      </defs>
+
+      <!-- 1. PONTO DE ENTRADA (HOME MOBILE) -->
+      <g transform="translate(60, 40)">
+        <rect x="0" y="0" width="220" height="90" rx="8" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+        <text x="16" y="24" font-size="11" font-weight="800" fill="#2563EB">HOME MOBILE / PWA</text>
+        <text x="16" y="42" font-size="12" font-weight="700" fill="#0F172A">Landing Page (olx.com.br)</text>
+        <text x="16" y="60" font-size="10" fill="#64748B">• Header: Busca Pill + DDD</text>
+        <text x="16" y="74" font-size="10" fill="#64748B">• Categorias 1 Linha (Scroll X)</text>
+      </g>
+
+      <!-- CONEXÕES DA HOME -->
+      <path d="M 280 85 L 360 85" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <path d="M 170 130 L 170 200" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrow-neutral)"/>
+
+      <!-- 2. INTERAÇÕES DE HOME -->
+      <g transform="translate(60, 200)">
+        <rect x="0" y="0" width="220" height="96" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="700" fill="#64748B">COMPONENTES DA HOME</text>
+        <text x="16" y="42" font-size="11" font-weight="600" fill="#0F172A">• Hero Banner (Touch Swipe)</text>
+        <text x="16" y="58" font-size="10" fill="#64748B">  Indicador 34x4px (Área 48px)</text>
+        <text x="16" y="74" font-size="11" font-weight="600" fill="#0F172A">• Carrossel de Marcas</text>
+        <text x="16" y="88" font-size="10" fill="#64748B">  Cards 36px alt / Logo contain</text>
+      </g>
+
+      <!-- 3. FLUXO DE BUSCA & LISTAGEM -->
+      <g transform="translate(360, 40)">
+        <rect x="0" y="0" width="280" height="130" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+        <text x="16" y="24" font-size="11" font-weight="800" fill="#0F172A">LISTAGEM FACETADA (listing-next)</text>
+        <text x="16" y="44" font-size="11" font-weight="600" fill="#2563EB">Rota: /estado/regiao?cg=X&amp;q=Y</text>
+        <text x="16" y="64" font-size="10" fill="#0F172A">• Barra de busca persistente</text>
+        <text x="16" y="78" font-size="10" fill="#0F172A">• Chips de ordenação rápida (Relevância, Preço)</text>
+        <text x="16" y="92" font-size="10" fill="#0F172A">• Botão "Filtros" com badge de contagem</text>
+        <text x="16" y="106" font-size="10" fill="#0F172A">• Grid 1 col (320-480px) ou 2 cols (600px+)</text>
+      </g>
+
+      <!-- CONEXÃO LISTAGEM -> DRAWER DE FILTROS -->
+      <path d="M 500 170 L 500 230" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 4. BOTTOM SHEET DE FILTROS (MOBILE DRAWER) -->
+      <g transform="translate(360, 230)">
+        <rect x="0" y="0" width="280" height="140" rx="8" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+        <text x="16" y="24" font-size="11" font-weight="800" fill="#2563EB">DRAWER DE FILTROS (70dvh)</text>
+        <text x="16" y="42" font-size="11" font-weight="700" fill="#0F172A">Transação de Rascunho Isolado</text>
+        <text x="16" y="62" font-size="10" fill="#0F172A">• Seleção de Estado / Região DDD</text>
+        <text x="16" y="76" font-size="10" fill="#0F172A">• Faixa de preço (ps, pe) e categorias (cg)</text>
+        <text x="16" y="90" font-size="10" fill="#0F172A">• Safe-area bottom inset padding</text>
+        <rect x="16" y="102" width="116" height="24" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="24" y="118" font-size="10" font-weight="600" fill="#64748B">X (Descarta)</text>
+        <rect x="144" y="102" width="120" height="24" rx="4" fill="#2563EB"/>
+        <text x="156" y="118" font-size="10" font-weight="700" fill="#FFFFFF">Aplicar (Salva)</text>
+      </g>
+
+      <!-- CONEXÃO LISTAGEM -> AD CARD -->
+      <path d="M 640 105 L 720 105" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- 5. CARD DE ANÚNCIO / EMPRESA (AdCard) -->
+      <g transform="translate(720, 40)">
+        <rect x="0" y="0" width="240" height="150" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="16" y="24" font-size="11" font-weight="800" fill="#0F172A">CARD DE ANÚNCIO (AdCard)</text>
+        <text x="16" y="44" font-size="10" fill="#0F172A">• Imagem com Aspect Ratio 4:3</text>
+        <text x="16" y="58" font-size="10" fill="#0F172A">• Botão Favoritar (SVG Heart Toggle)</text>
+        <text x="16" y="72" font-size="10" fill="#0F172A">• Preço em H3 (20px bold) em destaque</text>
+        <text x="16" y="86" font-size="10" fill="#0F172A">• Badges: "Verificado", "Garantia"</text>
+        <text x="16" y="100" font-size="10" fill="#0F172A">• Município, Bairro e Horário</text>
+        <rect x="16" y="112" width="208" height="26" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="24" y="129" font-size="10" font-weight="600" fill="#2563EB">Ação: Toque abre Página do Anúncio</text>
+      </g>
+
+      <!-- CONEXÃO AD CARD -> CONVERSÃO / CHAT -->
+      <path d="M 840 190 L 840 250" stroke="#F59E0B" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+
+      <!-- 6. CANAL DE CONVERSÃO & CHAT (chat.olx.com.br) -->
+      <g transform="translate(720, 250)">
+        <rect x="0" y="0" width="240" height="120" rx="8" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2"/>
+        <text x="16" y="24" font-size="11" font-weight="800" fill="#B45309">CHAT &amp; NEGOCIAÇÃO</text>
+        <text x="16" y="44" font-size="10" fill="#0F172A">• Autenticação transparente (One-Tap)</text>
+        <text x="16" y="58" font-size="10" fill="#0F172A">• Thread instantânea com anunciante</text>
+        <text x="16" y="72" font-size="10" fill="#0F172A">• Notificações Push &amp; WebSockets</text>
+        <text x="16" y="86" font-size="10" fill="#0F172A">• Moderação de telefone/links sensíveis</text>
+      </g>
+
+      <!-- CONEXÃO CHAT -> DEEP LINK NATIVO -->
+      <path d="M 840 370 L 840 440" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrow-neutral)"/>
+
+      <!-- 7. DEEP LINK NATIVO (olxapp://) -->
+      <g transform="translate(720, 440)">
+        <rect x="0" y="0" width="240" height="100" rx="8" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
+        <text x="16" y="24" font-size="11" font-weight="800" fill="#F8FAFC">APP NATIVO (Deep Link)</text>
+        <text x="16" y="44" font-size="10" fill="#94A3B8">• olxapp://favorite-page</text>
+        <text x="16" y="58" font-size="10" fill="#94A3B8">• olxapp://list?cg=X&amp;keep_location=true</text>
+        <text x="16" y="74" font-size="10" fill="#60A5FA">• Preserva geolocalização do browser</text>
+      </g>
+
+      <!-- BARRA FIXA DE NAVEGAÇÃO MOBILE (BOTTOM NAV) -->
+      <g transform="translate(60, 440)">
+        <rect x="0" y="0" width="580" height="100" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="800" fill="#0F172A">BOTTOM NAVIGATION BAR (Fixa no PWA / Viewport &lt; 600px)</text>
+        <g transform="translate(16, 36)">
+          <rect x="0" y="0" width="100" height="50" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1"/>
+          <text x="36" y="28" font-size="11" font-weight="700" fill="#2563EB">Início</text>
+          
+          <rect x="110" y="0" width="100" height="50" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+          <text x="146" y="28" font-size="11" font-weight="600" fill="#64748B">Chat</text>
+
+          <rect x="220" y="0" width="110" height="50" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.5"/>
+          <text x="248" y="28" font-size="11" font-weight="700" fill="#B45309">+ Anunciar</text>
+
+          <rect x="340" y="0" width="100" height="50" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+          <text x="366" y="28" font-size="11" font-weight="600" fill="#64748B">Favoritos</text>
+
+          <rect x="450" y="0" width="94" height="50" rx="6" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+          <text x="480" y="28" font-size="11" font-weight="600" fill="#64748B">Conta</text>
+        </g>
+      </g>
+
+      <!-- ADAPTAÇÃO PARA O AVALIA SOLAR (RODAPÉ INFORMATIVO) -->
+      <g transform="translate(60, 570)">
+        <rect x="0" y="0" width="900" height="70" rx="6" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1"/>
+        <text x="16" y="24" font-size="11" font-weight="700" fill="#1D4ED8">DIRETRIZES DE IMPLEMENTAÇÃO NO AVALIA SOLAR 2026:</text>
+        <text x="16" y="42" font-size="11" fill="#1E40AF">1. Bottom Sheet de filtros transacional (salvar apenas no botão 'Aplicar') para evitar queries instáveis no Next.js.</text>
+        <text x="16" y="58" font-size="11" fill="#1E40AF">2. Manter bottom navigation no PWA respeitando --safe-area-inset-bottom para não colidir com o botão de sistema do iOS/Android.</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="header">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background: #2563EB;"></div><span>Fluxo Principal de Navegação (Azul)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #F59E0B;"></div><span>Canal de Conversão e Chat (Amarelo)</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #0F172A;"></div><span>Deep Linking Nativo</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #F8FAFC; border: 1px solid #CBD5E1;"></div><span>Interface de Apoio</span></div>
+    </div>
+  </div>
+</body>
+</html>

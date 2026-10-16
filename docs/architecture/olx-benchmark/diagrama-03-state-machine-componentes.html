@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagrama 03 — Máquinas de Estado dos Componentes Interativos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      width: 100%;
+      max-width: 1080px;
+      margin-bottom: 24px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #2563EB;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.02em;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #64748B;
+      margin-top: 4px;
+    }
+    .diagram-container {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 1080px;
+      width: 100%;
+      overflow-x: auto;
+    }
+    svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #F1F5F9;
+      font-size: 12px;
+      color: #475569;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="tag">Engenharia Reversa Observacional • Máquinas de Estado</span>
+    <h1>State Machines dos Componentes Interativos Chave</h1>
+    <p class="subtitle">Comportamento Verificado: Autocomplete, Carrossel com Touch Swipe, Bottom Sheet Transacional e Favoritos</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg width="1020" height="700" viewBox="0 0 1020 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#2563EB"/>
+        </marker>
+        <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#10B981"/>
+        </marker>
+        <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#F59E0B"/>
+        </marker>
+        <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#EF4444"/>
+        </marker>
+      </defs>
+
+      <!-- 1. MÁQUINA DE ESTADO: HERO BANNER (SLIDER & TOUCH) -->
+      <g transform="translate(40, 30)">
+        <rect x="0" y="0" width="940" height="135" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="800" fill="#2563EB">1. HERO BANNER CAROUSEL (TOUCH SWIPE &amp; PAGINAÇÃO) [FATO OBSERVADO]</text>
+
+        <!-- Estado A: Autoplay -->
+        <rect x="20" y="38" width="160" height="54" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="32" y="58" font-size="11" font-weight="700" fill="#0F172A">AUTOPLAY ACTIVE</text>
+        <text x="32" y="74" font-size="10" fill="#64748B">Timer a cada 5000ms</text>
+
+        <path d="M 180 65 L 250 65" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="190" y="58" font-size="9" fill="#2563EB">onTouchStart</text>
+
+        <!-- Estado B: Paused / Dragging -->
+        <rect x="250" y="38" width="180" height="54" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="262" y="58" font-size="11" font-weight="700" fill="#2563EB">TOUCH DRAGGING</text>
+        <text x="262" y="74" font-size="10" fill="#64748B">translateX = deltaX</text>
+
+        <path d="M 430 65 L 500 65" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="440" y="58" font-size="9" fill="#2563EB">onTouchEnd</text>
+
+        <!-- Estado C: Snapping -->
+        <rect x="500" y="38" width="180" height="54" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="512" y="58" font-size="11" font-weight="700" fill="#0F172A">SNAP ANIMATION</text>
+        <text x="512" y="74" font-size="10" fill="#64748B">transition: transform 300ms</text>
+
+        <path d="M 680 65 L 750 65" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <text x="690" y="58" font-size="9" fill="#10B981">Atualiza Slide</text>
+
+        <!-- Estado D: Indicador Atualizado -->
+        <rect x="750" y="38" width="170" height="54" rx="6" fill="#ECFDF5" stroke="#10B981" stroke-width="1.5"/>
+        <text x="762" y="58" font-size="11" font-weight="700" fill="#065F46">DOTS ATUALIZADOS</text>
+        <text x="762" y="74" font-size="10" fill="#047857">Barra ativa: 34x4px</text>
+
+        <!-- Nota do conflito resolvido -->
+        <text x="20" y="118" font-size="10" fill="#B45309" font-weight="600">
+          * Causa-Raiz OLX: Botão de toque invisível de 48x48px separado do desenho da barra de 34x4px para não ser deformado pelo CSS global mobile.
+        </text>
+      </g>
+
+      <!-- 2. MÁQUINA DE ESTADO: BOTTOM SHEET DE FILTROS -->
+      <g transform="translate(40, 195)">
+        <rect x="0" y="0" width="940" height="150" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="800" fill="#2563EB">2. BOTTOM SHEET DE FILTROS (TRANSAÇÃO ISOLADA DE RASCUNHO) [FATO OBSERVADO]</text>
+
+        <!-- Estado Closed -->
+        <rect x="20" y="44" width="160" height="60" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="32" y="66" font-size="11" font-weight="700" fill="#0F172A">DRAWER CLOSED</text>
+        <text x="32" y="82" font-size="10" fill="#64748B">URL Sync com filtros ativos</text>
+
+        <path d="M 180 74 L 260 74" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="190" y="67" font-size="9" fill="#2563EB">Abrir Filtros</text>
+
+        <!-- Estado Draft Active -->
+        <rect x="260" y="44" width="230" height="60" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+        <text x="272" y="66" font-size="11" font-weight="800" fill="#2563EB">DRAFT STATE (ISOLADO)</text>
+        <text x="272" y="82" font-size="10" fill="#1D4ED8">draftFilters em memória interna</text>
+        <text x="272" y="94" font-size="9" fill="#64748B">Nenhuma query enviada ao backend</text>
+
+        <!-- Ramo A: Aplicar -->
+        <path d="M 490 60 L 580 45" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <text x="500" y="45" font-size="9" font-weight="700" fill="#10B981">"Aplicar" (Confirm)</text>
+
+        <rect x="580" y="30" width="200" height="40" rx="6" fill="#ECFDF5" stroke="#10B981" stroke-width="1.5"/>
+        <text x="592" y="48" font-size="10" font-weight="700" fill="#065F46">COMMIT TO URL &amp; FETCH</text>
+        <text x="592" y="62" font-size="9" fill="#047857">onApply(drafts) → atualiza busca</text>
+
+        <!-- Ramo B: Cancelar -->
+        <path d="M 490 85 L 580 100" stroke="#EF4444" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+        <text x="500" y="105" font-size="9" font-weight="700" fill="#EF4444">"X" / Backdrop / ESC</text>
+
+        <rect x="580" y="84" width="200" height="40" rx="6" fill="#FEF2F2" stroke="#EF4444" stroke-width="1"/>
+        <text x="592" y="102" font-size="10" font-weight="700" fill="#991B1B">DISCARD DRAFT</text>
+        <text x="592" y="116" font-size="9" fill="#B91C1C">draftFilters descartados sem efeito</text>
+
+        <!-- Retorno ao fechado -->
+        <path d="M 780 50 L 850 50 L 850 74 L 880 74" stroke="#64748B" stroke-width="1"/>
+        <path d="M 780 104 L 850 104 L 850 74 L 880 74" stroke="#64748B" stroke-width="1" marker-end="url(#arrow)"/>
+        <rect x="880" y="54" width="50" height="40" rx="4" fill="#F1F5F9" stroke="#CBD5E1"/>
+        <text x="888" y="78" font-size="9" font-weight="700" fill="#64748B">FECHA</text>
+      </g>
+
+      <!-- 3. MÁQUINA DE ESTADO: AUTOCOMPLETE DA BUSCA -->
+      <g transform="translate(40, 375)">
+        <rect x="0" y="0" width="940" height="135" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="800" fill="#2563EB">3. CAMPO DE BUSCA &amp; AUTOCOMPLETE (#search-autocomplete-2-input) [FATO OBSERVADO]</text>
+
+        <!-- Idle -->
+        <rect x="20" y="40" width="170" height="52" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="32" y="60" font-size="11" font-weight="700" fill="#0F172A">IDLE / BLURRED</text>
+        <text x="32" y="76" font-size="10" fill="#64748B">Placeholder rotativo dinâmico</text>
+
+        <path d="M 190 66 L 260 66" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="200" y="58" font-size="9" fill="#2563EB">onFocus</text>
+
+        <!-- Focused -->
+        <rect x="260" y="40" width="180" height="52" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="272" y="60" font-size="11" font-weight="700" fill="#2563EB">FOCUSED / OVERLAY</text>
+        <text x="272" y="76" font-size="10" fill="#64748B">Histórico + Buscas Recentes</text>
+
+        <path d="M 440 66 L 510 66" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="450" y="58" font-size="9" fill="#2563EB">onChange</text>
+
+        <!-- Debouncing & Suggestions -->
+        <rect x="510" y="40" width="200" height="52" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="522" y="60" font-size="11" font-weight="700" fill="#0F172A">DEBOUNCE (300ms)</text>
+        <text x="522" y="76" font-size="10" fill="#64748B">Sugestões de termos + categoria</text>
+
+        <path d="M 710 66 L 780 66" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <text x="720" y="58" font-size="9" fill="#10B981">onEnter / Click</text>
+
+        <!-- Submitted -->
+        <rect x="780" y="40" width="140" height="52" rx="6" fill="#ECFDF5" stroke="#10B981" stroke-width="1.5"/>
+        <text x="792" y="60" font-size="11" font-weight="700" fill="#065F46">SUBMITTED</text>
+        <text x="792" y="76" font-size="10" fill="#047857">pushState(?q=termo)</text>
+      </g>
+
+      <!-- 4. MÁQUINA DE ESTADO: FAVORITAR CARD -->
+      <g transform="translate(40, 540)">
+        <rect x="0" y="0" width="940" height="135" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+        <text x="16" y="22" font-size="11" font-weight="800" fill="#2563EB">4. CARD AD FAVORITES TOGGLE (OTIMISTA + DEEP LINK) [FATO OBSERVADO]</text>
+
+        <!-- Não Favoritado -->
+        <rect x="20" y="40" width="180" height="52" rx="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+        <text x="32" y="60" font-size="11" font-weight="700" fill="#0F172A">UNFAVORITED</text>
+        <text x="32" y="76" font-size="10" fill="#64748B">Coração SVG Outline cinza</text>
+
+        <path d="M 200 66 L 270 66" stroke="#F59E0B" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+        <text x="210" y="58" font-size="9" fill="#B45309">Click</text>
+
+        <!-- Optimistic Toggle -->
+        <rect x="270" y="40" width="220" height="52" rx="6" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="282" y="60" font-size="11" font-weight="700" fill="#B45309">OPTIMISTIC ACTIVE</text>
+        <text x="282" y="76" font-size="10" fill="#64748B">Coração preenchido + scale(1.15)</text>
+
+        <path d="M 490 66 L 560 66" stroke="#2563EB" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="500" y="58" font-size="9" fill="#2563EB">Async API</text>
+
+        <!-- Success -->
+        <rect x="560" y="40" width="180" height="52" rx="6" fill="#ECFDF5" stroke="#10B981" stroke-width="1.5"/>
+        <text x="572" y="60" font-size="11" font-weight="700" fill="#065F46">SYNCED (200 OK)</text>
+        <text x="572" y="76" font-size="10" fill="#047857">Armazenado na conta / local</text>
+
+        <path d="M 740 66 L 800 66" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- Deep link -->
+        <rect x="800" y="40" width="124" height="52" rx="6" fill="#0F172A"/>
+        <text x="812" y="60" font-size="10" font-weight="700" fill="#FFFFFF">NATIVE SYNC</text>
+        <text x="812" y="76" font-size="9" fill="#94A3B8">olxapp://fav</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="header">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background: #2563EB;"></div><span>Estado Ativo / Transição Principal</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #10B981;"></div><span>Sucesso / Confirmação Transacional</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #F59E0B;"></div><span>Ação Otimista / Interativa</span></div>
+      <div class="legend-item"><div class="legend-box" style="background: #EF4444;"></div><span>Descarte / Cancelamento</span></div>
+    </div>
+  </div>
+</body>
+</html>

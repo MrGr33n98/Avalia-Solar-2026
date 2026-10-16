@@ -29,6 +29,7 @@ import {
   Zap,
   AlertCircle,
   Shield,
+  Plus,
 } from 'lucide-react';
 import { marketplaceProposalsApi, type MarketplaceProposal } from '@/lib/api';
 import {
@@ -79,10 +80,8 @@ import {
   type ProposalFilter,
 } from './proposals/ProposalStatusSummary';
 import { ProposalCompactCard } from './proposals/ProposalCompactCard';
-import {
-  ProposalFiltersSheet,
-  type SortOption,
-} from './proposals/ProposalFiltersSheet';
+import { ProposalFiltersSheet, type SortOption } from './proposals/ProposalFiltersSheet';
+import { ProposalRequestModal } from './proposals/ProposalRequestModal';
 import { useBuyerProposalsList } from '@/hooks/reviewer/useBuyerProposalsList';
 import { useBuyerProposalDetail } from '@/hooks/reviewer/useBuyerProposalDetail';
 import { useProposalComparison } from '@/hooks/reviewer/useProposalComparison';
@@ -201,6 +200,10 @@ export function MarketplaceProposalsWorkspace() {
   const [infoDismissed, setInfoDismissed] = useState(false);
   const [projectDetailsOpen, setProjectDetailsOpen] = useState(false);
   const [projectsModalOpen, setProjectsModalOpen] = useState(false);
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [requestSupplier, setRequestSupplier] = useState<string>('Empresas parceiras');
+  const [requestCompanyId, setRequestCompanyId] = useState<number | undefined>(undefined);
+  const [requestDefaultPower, setRequestDefaultPower] = useState<string>('8,5');
 
   const rawProjectParam = params.get('project');
   const projectGroups = useMemo(() => groupProposalsByProject(proposals), [proposals]);
@@ -230,6 +233,19 @@ export function MarketplaceProposalsWorkspace() {
   useEffect(() => {
     if (showingDetail) detailHeading.current?.focus({ preventScroll: true });
   }, [selectedId, screen, showingDetail, detailLoading]);
+
+  const handleOpenRequestModal = (supplierName?: string, companyId?: number, power?: string) => {
+    setRequestSupplier(supplierName || 'Empresas parceiras');
+    setRequestCompanyId(companyId);
+    if (power) {
+      const match = power.match(/(\d+(?:[.,]\d+)?)/);
+      if (match) setRequestDefaultPower(match[1].replace('.', ','));
+    } else if (activeProject?.powerEstimate) {
+      const match = activeProject.powerEstimate.match(/(\d+(?:[.,]\d+)?)/);
+      if (match) setRequestDefaultPower(match[1].replace('.', ','));
+    }
+    setRequestModalOpen(true);
+  };
 
   function navigate(id: number | null, view: Screen = 'summary') {
     const query = new URLSearchParams(params.toString());
@@ -746,6 +762,15 @@ export function MarketplaceProposalsWorkspace() {
                     <Info className="h-3.5 w-3.5 mr-1 text-slate-400" />
                     <span>Ver detalhes</span>
                   </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleOpenRequestModal()}
+                    className="rounded-xl bg-[#F5B800] hover:bg-[#E5AC00] text-slate-950 font-bold text-xs h-9 px-3 gap-1.5 shadow-2xs transition active:scale-[0.99]"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Solicitar proposta</span>
+                  </Button>
                 </div>
               </div>
 
@@ -1081,6 +1106,18 @@ export function MarketplaceProposalsWorkspace() {
                   ? 'Assim que você solicitar um orçamento, as propostas recebidas aparecerão nesta página.'
                   : 'Tente ajustar os filtros ou a busca para encontrar o que procura.'}
               </p>
+              {proposals.length === 0 && (
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    type="button"
+                    onClick={() => handleOpenRequestModal()}
+                    className="rounded-xl bg-[#F5B800] hover:bg-[#E5AC00] text-slate-950 font-bold text-xs h-9 px-4 gap-1.5 shadow-2xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Solicitar primeira proposta</span>
+                  </Button>
+                </div>
+              )}
             </div>
           ) : viewLayout === 'table' ? (
             /* Modo Tabela */
@@ -1146,6 +1183,13 @@ export function MarketplaceProposalsWorkspace() {
                   onToggleCompare={toggleCompare}
                   isComparing={compareIds.includes(proposal.id)}
                   canCompare={isProposalReceived(proposal)}
+                  onConversation={(p) => navigate(p.id, 'conversation')}
+                  onChoose={(p) => {
+                    if (canDecide(p)) {
+                      setDecisionError('');
+                      setChoosing(p);
+                    }
+                  }}
                 />
               ))}
             </div>
@@ -1451,6 +1495,47 @@ export function MarketplaceProposalsWorkspace() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Solicitação de Proposta (Telas 4 e 5 da Referência) */}
+      <ProposalRequestModal
+        isOpen={requestModalOpen}
+        onClose={() => setRequestModalOpen(false)}
+        targetSupplier={requestSupplier}
+        targetCompanyId={requestCompanyId}
+        defaultPower={requestDefaultPower}
+        onSubmitted={async () => {
+          await load();
+        }}
+        onSuccessNavigateChat={(supplierName) => {
+          setRequestModalOpen(false);
+          const found = proposals.find(
+            (p) => p.company.name.toLowerCase() === supplierName.toLowerCase()
+          );
+          if (found) {
+            navigate(found.id, 'conversation');
+          } else if (proposals[0]) {
+            navigate(proposals[0].id, 'conversation');
+          }
+        }}
+        onSuccessNavigateCompare={() => {
+          setRequestModalOpen(false);
+          if (compareIds.length >= 2) {
+            navigate(null, 'compare');
+          } else if (proposals.length >= 2) {
+            const topIds = proposals.slice(0, 3).map((p) => p.id);
+            setCompareIds(topIds);
+            const query = new URLSearchParams(params.toString());
+            query.delete('proposal');
+            query.set('view', 'compare');
+            query.set('compare', topIds.join(','));
+            router.push(pathname + '?' + query.toString(), { scroll: false });
+          }
+        }}
+        onSuccessNavigateHub={() => {
+          setRequestModalOpen(false);
+          navigate(null);
+        }}
+      />
     </section>
   );
 }
