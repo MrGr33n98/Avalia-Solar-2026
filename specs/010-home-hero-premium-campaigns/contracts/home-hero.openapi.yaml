@@ -1,0 +1,196 @@
+openapi: 3.0.3
+info:
+  title: Avalia Solar Home Hero API
+  version: 0.1.0
+  description: >
+    Contrato da API de Banners da Homepage para o slot home_hero.
+    Preserva compatibilidade com GET /api/v1/banners?position=home_top.
+
+paths:
+  /api/v1/banners:
+    get:
+      summary: Listar banners elegíveis para exibição
+      parameters:
+        - name: position
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [home_hero, home_top, categories_top, companies_top]
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: city
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de banners ativos, aprovados e elegíveis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HeroBanner'
+        '503':
+          description: Serviço de entrega indisponível
+
+  /api/v1/banner_events:
+    post:
+      summary: Ingestão de telemetria de visualização e clique
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [banner_event]
+              properties:
+                banner_event:
+                  type: object
+                  required: [banner_id, event_type]
+                  properties:
+                    banner_id:
+                      type: integer
+                    event_type:
+                      type: string
+                      enum: [impression, view, click]
+                    delivery_id:
+                      type: string
+                    impression_instance_id:
+                      type: string
+                    click_instance_id:
+                      type: string
+      responses:
+        '201':
+          description: Evento registrado com sucesso
+
+components:
+  schemas:
+    HeroBanner:
+      type: object
+      required: [id, position, title, active]
+      properties:
+        id:
+          type: integer
+        position:
+          type: string
+          enum: [home_hero, home_top]
+        title:
+          type: string
+          description: Título interno de identificação
+        headline:
+          type: string
+          maxLength: 110
+          nullable: true
+          description: Título público visível na UI
+        subtitle:
+          type: string
+          maxLength: 180
+          nullable: true
+          description: Subtítulo de apoio
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Imagem principal (desktop)
+        image_mobile_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Imagem vertical otimizada para mobile
+        alt_text:
+          type: string
+          nullable: true
+        cta_enabled:
+          type: boolean
+          default: true
+        cta_label:
+          type: string
+          maxLength: 36
+          nullable: true
+        cta_href:
+          type: string
+          nullable: true
+        cta_variant:
+          type: string
+          enum: [solar_yellow, primary_blue, outline, custom]
+          default: solar_yellow
+        hero_background_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+        hero_text_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+        cta_background_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+        cta_text_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+        theme:
+          type: string
+          enum: [dark, light]
+          default: dark
+        overlay_variant:
+          type: string
+          enum: [none, left_soft, left_strong]
+          default: left_soft
+        creative_mode:
+          type: string
+          enum: [photo_with_html, image_only]
+          default: photo_with_html
+        object_position_desktop_x:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+        object_position_desktop_y:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+        object_position_mobile_x:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+        object_position_mobile_y:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+        whole_banner_clickable:
+          type: boolean
+          default: false
+        sponsored:
+          type: boolean
+          default: false
+        delivery_id:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        start_date:
+          type: string
+          format: date-time
+          nullable: true
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+        link:
+          type: string
+          nullable: true
+        width:
+          type: integer
+          nullable: true
+        height:
+          type: integer
+          nullable: true
