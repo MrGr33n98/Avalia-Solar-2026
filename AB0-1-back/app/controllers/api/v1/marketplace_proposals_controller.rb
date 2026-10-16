@@ -25,6 +25,10 @@ module Api
         end
 
         proposals = with_details(visible_buyer_scope.where(id: ids))
+        if proposals.map(&:lead_id).uniq.size > 1
+          return render json: { error: 'Só é possível comparar propostas da mesma solicitação' }, status: :unprocessable_entity
+        end
+
         render json: { proposals: proposals.map { |proposal| serialize(proposal, detailed: true) } }
       end
 

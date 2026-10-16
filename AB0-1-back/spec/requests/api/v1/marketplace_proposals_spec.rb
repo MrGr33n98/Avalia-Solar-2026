@@ -122,6 +122,14 @@ RSpec.describe 'Marketplace proposals API', type: :request do
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)['proposals'].map { |item| item['id'] }).to include(proposal.id)
 
+      other_lead = create(:lead, user: buyer, email: buyer.email)
+      proposal_other_lead = add_published_version(
+        create(:marketplace_proposal, lead: other_lead, company: other_company, buyer_user: buyer, status: 'sent')
+      )
+      get '/api/v1/proposals/compare', params: { ids: "#{proposal.id},#{proposal_other_lead.id}" }, headers: headers_for(buyer)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(JSON.parse(response.body)['error']).to eq('Só é possível comparar propostas da mesma solicitação')
+
       post "/api/v1/proposals/#{proposal.id}/meetings",
            params: { meeting_type: 'video', scheduled_at: 2.days.from_now.iso8601,
                      notes: 'Revisar equipamentos' }.to_json,
