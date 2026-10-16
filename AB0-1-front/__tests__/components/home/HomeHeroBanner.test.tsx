@@ -126,4 +126,51 @@ describe('HomeHeroBanner', () => {
 
     expect(screen.getByText('Patrocinado')).toBeInTheDocument();
   });
+
+  it('renders whole banner clickable overlay when whole_banner_clickable is true', () => {
+    const banners: Banner[] = [
+      {
+        id: 105,
+        title: 'Banner Totalmente Clicavel',
+        headline: 'Clique em Qualquer Lugar',
+        image_url: 'https://images.example.com/hero.webp',
+        whole_banner_clickable: true,
+        cta_href: '/destaque',
+        active: true,
+        position: 'home_hero',
+      },
+    ];
+
+    render(<HomeHeroBanner banners={banners} />);
+
+    const fullOverlayLink = screen.getByLabelText('Clique em Qualquer Lugar');
+    expect(fullOverlayLink).toBeInTheDocument();
+    expect(fullOverlayLink).toHaveAttribute('href', expect.stringContaining('/api/v1/banner_clicks/105'));
+  });
+
+  it('handles prefers-reduced-motion without errors and attaches listeners', () => {
+    const addEventListenerMock = jest.fn();
+    window.matchMedia = jest.fn().mockImplementation((query) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: addEventListenerMock,
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
+
+    render(
+      <HomeHeroBanner
+        banners={[
+          { id: 106, title: 'Slide 1', image_url: 'https://images.example.com/1.webp', active: true, position: 'home_hero' },
+          { id: 107, title: 'Slide 2', image_url: 'https://images.example.com/2.webp', active: true, position: 'home_hero' },
+        ]}
+      />
+    );
+
+    expect(window.matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)');
+    expect(addEventListenerMock).toHaveBeenCalled();
+  });
 });

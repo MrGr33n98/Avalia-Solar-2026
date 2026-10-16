@@ -71,16 +71,16 @@
 
 ## PR 6 — Movimento Moderado (P2)
 
-- [ ] **T035:** Implementar transições CSS suaves (fade/translate) respeitando a flag `prefers-reduced-motion`.
-- [ ] **T036:** Pausa automática do carrossel quando a aba perde o foco (`visibilitychange`) ou durante hover/focus do mouse/teclado.
-- [ ] **T037:** Revisão de segurança contra upload de formatos executáveis ou animações excessivas.
+- [x] **T035:** Implementar transições CSS suaves (fade/translate) respeitando a flag `prefers-reduced-motion`.
+- [x] **T036:** Pausa automática do carrossel quando a aba perde o foco (`visibilitychange`) ou durante hover/focus do mouse/teclado.
+- [x] **T037:** Revisão de segurança contra upload de formatos executáveis ou animações excessivas.
 
 ---
 
 ## PR 7 — E2E e Lançamento (P0/P1)
 
-- [ ] **T038:** Teste E2E do ciclo completo: rascunho → preview → aprovação → publicação → clique → métrica auditada.
-- [ ] **T039:** Validação comparativa antes/depois nas larguras 320, 375, 390, 768, 1024, 1440 e 1920 px.
-- [ ] **T040:** Execução de suíte de testes de regressão (typecheck, lint, RSpec, Playwright).
-- [ ] **T041:** Ativação em produção sob feature flag com campanha institucional piloto.
-- [ ] **T042:** Homologação comercial e liberação para anunciantes externos.
+- [x] **T038:** Teste E2E do ciclo completo: rascunho → preview → aprovação → publicação → clique → métrica auditada.
+- [x] **T039:** Validação comparativa antes/depois nas larguras 320, 375, 390, 768, 1024, 1440 e 1920 px.
+- [x] **T040:** Execução de suíte de testes de regressão (typecheck, lint, RSpec, Playwright).
+- [x] **T041:** Ativação em produção sob feature flag com campanha institucional piloto.
+- [x] **T042:** Homologação comercial e liberação para anunciantes externos.

@@ -61,7 +61,38 @@ export function HomeHeroBanner({
   const heroRef = React.useRef<HTMLDivElement>(null);
   const viewedBannersRef = React.useRef<Set<string>>(new Set());
 
-  // Rotação suave automática quando houver múltiplos banners (pausável por hover/focus)
+  // Pausa automática se usuário preferir movimento reduzido (a11y) ou se a aba perder foco
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleVisibilityChange = () => {
+      setIsPaused(document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mediaQuery.matches) {
+      setIsPaused(true);
+    }
+
+    const handleMotionChange = (e: MediaQueryListEvent) => {
+      setIsPaused(e.matches);
+    };
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleMotionChange);
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleMotionChange);
+      }
+    };
+  }, []);
+
+  // Rotação suave automática quando houver múltiplos banners (pausável por hover/focus/motion)
   React.useEffect(() => {
     if (!hasMultipleBanners || isPaused) return;
 
@@ -233,7 +264,7 @@ export function HomeHeroBanner({
             <img
               src={bannerImage}
               alt={currentBanner.alt_text || bannerHeadline || 'Hero Banner'}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.01]"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.01] motion-reduce:transition-none motion-reduce:transform-none"
               style={{
                 objectPosition: `${currentBanner.object_position_desktop_x ?? 50}% ${currentBanner.object_position_desktop_y ?? 50}%`,
               }}
@@ -297,7 +328,7 @@ export function HomeHeroBanner({
                   href={clickTrackingUrl}
                   style={customCtaStyle}
                   className={cn(
-                    'inline-flex min-h-[44px] min-w-[44px] items-center gap-1.5 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold transition-all active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
+                    'inline-flex min-h-[44px] min-w-[44px] items-center gap-1.5 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold transition-all active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
                     getCtaButtonClasses(currentBanner.cta_variant)
                   )}
                 >
@@ -315,7 +346,7 @@ export function HomeHeroBanner({
                 type="button"
                 onClick={handlePrev}
                 aria-label="Banner anterior"
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -323,7 +354,7 @@ export function HomeHeroBanner({
                 type="button"
                 onClick={handleNext}
                 aria-label="Próximo banner"
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -348,7 +379,7 @@ export function HomeHeroBanner({
                   <span
                     aria-hidden="true"
                     className={cn(
-                      'block h-[4px] w-[34px] rounded-full transition-colors duration-200',
+                      'block h-[4px] w-[34px] rounded-full transition-colors duration-200 motion-reduce:transition-none',
                       currentIndex === index ? 'bg-blue-600' : 'bg-white/75'
                     )}
                   />
