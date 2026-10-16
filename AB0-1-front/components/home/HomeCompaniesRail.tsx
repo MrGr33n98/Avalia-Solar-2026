@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Building2, ChevronRight } from 'lucide-react';
+import { Building2, ChevronRight, Star } from 'lucide-react';
 
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
@@ -61,13 +61,19 @@ export function HomeCompaniesRail({
           const companyHref = buildCompanyPath(company.slug, company.name, company.id);
           const logoUrl =
             typeof company.logo_url === 'string' ? company.logo_url.trim() : '';
+          const rating = Number(company.average_rating || company.rating_avg || 5);
+          const reviewsCount = Number(company.rating_count ?? company.reviews_count ?? 0);
+          const location =
+            company.city && company.state
+              ? `${company.city}, ${company.state}`
+              : company.state || company.city || '';
 
           return (
             <article
               key={company.id}
               className="relative flex min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-2.5 shadow-xs transition hover:border-slate-300 hover:shadow-md sm:p-3"
             >
-              <div className="flex min-w-0 items-start gap-2 sm:gap-3">
+              <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
                 <Link
                   href={companyHref}
                   aria-label={`Ver perfil de ${company.name}`}
@@ -91,29 +97,53 @@ export function HomeCompaniesRail({
 
                 <div className="min-w-0 flex-1 pt-0.5">
                   <div className="flex items-start justify-between gap-1">
-                    <h3 className="min-w-0 flex-1 truncate text-xs font-bold leading-tight text-slate-950 sm:text-sm">
-                      <Link
-                        href={companyHref}
-                        className="truncate hover:text-blue-600 focus-visible:outline-none focus-visible:underline"
-                        title={company.name}
-                      >
-                        {company.name}
-                      </Link>
-                    </h3>
+                    <div className="min-w-0 flex-1 flex items-center gap-1">
+                      <h3 className="min-w-0 truncate text-xs font-bold leading-tight text-slate-950 sm:text-sm">
+                        <Link
+                          href={companyHref}
+                          className="truncate hover:text-blue-600 focus-visible:outline-none focus-visible:underline"
+                          title={company.name}
+                        >
+                          {company.name}
+                        </Link>
+                      </h3>
+                      {company.verified && (
+                        <span className="shrink-0 inline-flex items-center">
+                          <CompanyVerifiedBadge size="sm" />
+                        </span>
+                      )}
+                    </div>
                     <FavoriteButton
                       favoritableType="Company"
                       favoritableId={company.id}
                       source="home_rail"
-                      className="h-7 w-7 shrink-0 rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-600 sm:h-8 sm:w-8"
+                      className="h-6 w-6 shrink-0 rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-600 sm:h-7 sm:w-7"
                     />
                   </div>
 
-                  <div className="mt-2">
+                  <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-600">
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" aria-hidden="true" />
+                    <span className="font-bold text-slate-900">{rating.toFixed(1)}</span>
+                    <span className="text-slate-400">
+                      ({reviewsCount > 0 ? reviewsCount : 'Novo'})
+                    </span>
+                    {location && (
+                      <>
+                        <span className="text-slate-300">·</span>
+                        <span className="truncate text-slate-400 font-medium" title={location}>
+                          {company.state || location}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between">
                     <ComparisonToggleButton
                       company={company}
-                      variant="card"
+                      variant="default"
                       compactLabel
-                      className="h-8 w-full text-xs font-medium"
+                      size="sm"
+                      className="h-6.5 px-2.5 text-[11px] rounded-lg border-slate-200 font-medium text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50"
                     />
                   </div>
                 </div>

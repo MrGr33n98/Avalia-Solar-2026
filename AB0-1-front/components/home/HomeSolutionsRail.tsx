@@ -74,9 +74,9 @@ export function HomeSolutionsRail({ className }: HomeSolutionsRailProps) {
             type="button"
             onClick={() => scroll('left')}
             aria-label="Ver soluções anteriores"
-            className="absolute -left-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md hover:bg-slate-50 md:flex"
+            className="absolute -left-2 top-1/2 z-20 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md hover:bg-slate-50 md:flex lg:hidden"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
         ) : null}
 
@@ -85,23 +85,24 @@ export function HomeSolutionsRail({ className }: HomeSolutionsRailProps) {
           role="region"
           aria-label="Tipos de solução"
           tabIndex={0}
-          className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 no-scrollbar lg:grid lg:grid-cols-8 lg:gap-2.5 lg:overflow-visible focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {SOLUTIONS.map((solution) => (
             <Link
               key={solution.id}
               href={`/categories/${solution.canonicalSlug}`}
-              className="group flex min-h-[122px] w-[108px] shrink-0 snap-start flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-3 text-center shadow-xs transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="group flex h-[96px] w-[94px] shrink-0 snap-start flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-center shadow-2xs transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 lg:h-[102px] lg:w-full"
             >
-              <CategoryIcon
-                slug={solution.canonicalSlug}
-                name={solution.name}
-                iconUrl={solution.src}
-                size={58}
-                className="mb-2 rounded-xl bg-slate-50 p-2 transition group-hover:bg-blue-50"
-              />
-              <span className="line-clamp-2 text-xs font-semibold leading-tight text-slate-800">
+              <div className="mb-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 transition group-hover:bg-blue-50/60 sm:h-11 sm:w-11">
+                <CategoryIcon
+                  slug={solution.canonicalSlug}
+                  name={solution.name}
+                  iconUrl={solution.src}
+                  size={42}
+                />
+              </div>
+              <span className="line-clamp-2 text-[11px] font-semibold leading-tight text-slate-800 transition group-hover:text-blue-600 sm:text-xs">
                 {solution.name}
               </span>
             </Link>
@@ -113,14 +114,14 @@ export function HomeSolutionsRail({ className }: HomeSolutionsRailProps) {
             type="button"
             onClick={() => scroll('right')}
             aria-label="Ver mais soluções"
-            className="absolute -right-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md hover:bg-slate-50 md:flex"
+            className="absolute -right-2 top-1/2 z-20 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md hover:bg-slate-50 md:flex lg:hidden"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         ) : null}
       </div>
 
-      <div className="mt-2.5 flex items-center justify-center gap-1.5" aria-hidden="true">
+      <div className="mt-2.5 flex items-center justify-center gap-1.5 lg:hidden" aria-hidden="true">
         <span
           className={cn(
             'h-1.5 rounded-full transition-all',
