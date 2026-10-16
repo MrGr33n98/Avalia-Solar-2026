@@ -40,7 +40,7 @@ C:\Users\Bobi\AppData\Roaming\Claude\claude_desktop_config_backup_20260312_03305
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-figma"],
       "env": {
-        "FIGMA_PERSONAL_ACCESS_TOKEN": "figd_K-PymVAEGP1iJScJ2zr9Fxp6rwXqq7Drv_Bn0y4A"
+        "FIGMA_PERSONAL_ACCESS_TOKEN": "figd_SEU_TOKEN_AQUI"
       }
     }
   }
@@ -176,7 +176,7 @@ Get-Content "$env:APPDATA\Claude\logs\mcp*.log" -Tail 50
 
 **Solução 2: Testar comando manualmente**
 ```powershell
-$env:FIGMA_PERSONAL_ACCESS_TOKEN="figd_K-PymVAEGP1iJScJ2zr9Fxp6rwXqq7Drv_Bn0y4A"
+$env:FIGMA_PERSONAL_ACCESS_TOKEN="figd_SEU_TOKEN_AQUI"
 npx -y @modelcontextprotocol/server-figma
 ```
 
@@ -311,7 +311,7 @@ Copy-Item "C:\Users\Bobi\AppData\Roaming\Claude\claude_desktop_config_backup_*.j
 
 ### Testar Token Manualmente:
 ```powershell
-$token = "figd_K-PymVAEGP1iJScJ2zr9Fxp6rwXqq7Drv_Bn0y4A"
+$token = "figd_SEU_TOKEN_AQUI"
 $headers = @{ "X-Figma-Token" = $token }
 Invoke-RestMethod -Uri "https://api.figma.com/v1/me" -Headers $headers
 ```
@@ -332,7 +332,7 @@ Seu Figma MCP está configurado e pronto para acelerar seu workflow de design!
 ---
 
 **Configuração realizada em:** 2026-03-12 03:30:54 UTC  
-**Token Figma:** figd_K-Pym... (oculto por segurança)  
+**Token Figma:** figd_... (oculto por segurança)  
 **Status:** ✅ Ativo e Pronto
 
 ---
