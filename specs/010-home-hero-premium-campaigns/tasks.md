@@ -60,12 +60,12 @@
 
 ## PR 5 — Telemetria e Publicidade Premium (P1)
 
-- [ ] **T029:** Integrar viewability do hero ao `BannerContainer` com `IntersectionObserver` (50% de visibilidade por 1s).
-- [ ] **T030:** Integrar clique do botão CTA à rota `/api/v1/banner_clicks/:id` com preservação de UTMs e `delivery_id`.
-- [ ] **T031:** Exibir selo de "Patrocinado / Publicidade" exclusivamente quando `sponsored: true`.
-- [ ] **T032:** Implementar controle de elegibilidade de contrato comercial via `apply_contract_eligibility`.
-- [ ] **T033:** Relatório consolidado no ActiveAdmin de visualizações e cliques reais deduplicados por campanha.
-- [ ] **T034:** Testes de requisição simulando cliques concorrentes e prevenção de contagem duplicada.
+- [x] **T029:** Integrar viewability do hero ao `BannerContainer` com `IntersectionObserver` (50% de visibilidade por 1s).
+- [x] **T030:** Integrar clique do botão CTA à rota `/api/v1/banner_clicks/:id` com preservação de UTMs e `delivery_id`.
+- [x] **T031:** Exibir selo de "Patrocinado / Publicidade" exclusivamente quando `sponsored: true`.
+- [x] **T032:** Implementar controle de elegibilidade de contrato comercial via `apply_contract_eligibility`.
+- [x] **T033:** Relatório consolidado no ActiveAdmin de visualizações e cliques reais deduplicados por campanha.
+- [x] **T034:** Testes de requisição simulando cliques concorrentes e prevenção de contagem duplicada.
 
 ---
 
