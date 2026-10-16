@@ -15,6 +15,7 @@ class Banner < ApplicationRecord
 
   has_many :banner_addon_subscriptions, dependent: :destroy
   has_many :active_banner_addon_subscriptions, -> { active }, class_name: 'BannerAddonSubscription'
+  has_many :banner_audit_logs, as: :auditable, dependent: :destroy
 
   MODERATION_STATUSES = %w[draft submitted approved rejected].freeze
   ALLOWED_POSITIONS = BannerPlacements::Catalog.keys.freeze

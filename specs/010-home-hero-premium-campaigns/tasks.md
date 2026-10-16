@@ -29,11 +29,11 @@
 
 ## PR 2 — ActiveAdmin Criativo e Prévia (P0)
 
-- [ ] **T013:** Segmentar formulário do ActiveAdmin em abas: Identificação, Conteúdo & CTA, Aparência & Cores, Mídia Responsiva, Segmentação e Prévia.
-- [ ] **T014:** Adicionar inputs com labels claros: `Título Interno (não exibido)`, `Título Principal (Headline)`, `Subtítulo`, `Texto do Botão`, `Link do Botão` e seletores de tema/overlay.
-- [ ] **T015:** Editor avançado de cores HEX (`#RRGGBB`) com verificação visual de contraste e upload separado para `image` (desktop) e `image_mobile`.
-- [ ] **T016:** Implementar prévia em iframe isolado para simulação nas larguras 390px, 768px e 1440px sem contabilizar métricas de visualização.
-- [ ] **T017:** Integrar auditoria chamando `BannerAuditLog.create!` ao criar ou atualizar banners pelo ActiveAdmin.
+- [x] **T013:** Segmentar formulário do ActiveAdmin em abas: Identificação, Conteúdo & CTA, Aparência & Cores, Mídia Responsiva, Segmentação e Prévia.
+- [x] **T014:** Adicionar inputs com labels claros: `Título Interno (não exibido)`, `Título Principal (Headline)`, `Subtítulo`, `Texto do Botão`, `Link do Botão` e seletores de tema/overlay.
+- [x] **T015:** Editor avançado de cores HEX (`#RRGGBB`) com verificação visual de contraste e upload separado para `image` (desktop) e `image_mobile`.
+- [x] **T016:** Implementar prévia em iframe isolado para simulação nas larguras 390px, 768px e 1440px sem contabilizar métricas de visualização.
+- [x] **T017:** Integrar auditoria chamando `BannerAuditLog.create!` ao criar ou atualizar banners pelo ActiveAdmin.
 
 ---
 
