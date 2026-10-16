@@ -38,18 +38,16 @@ export function BrandLogoCard({ name, logoUrl, href, className }: BrandLogoCardP
       )}
     >
       {logoUrl && !imageError ? (
-        <div className="relative flex h-full w-full items-center justify-center p-[2px]">
-          <div className="relative h-[30px] w-[98px]">
-            <Image
-              src={logoUrl}
-              alt={name}
-              fill
-              sizes="98px"
-              className="object-contain object-center transition-transform duration-200 group-hover:scale-105"
-              onError={() => setImageError(true)}
-              loading="lazy"
-            />
-          </div>
+        <div className="relative h-full w-full overflow-hidden bg-white">
+          <Image
+            src={logoUrl}
+            alt={name}
+            fill
+            sizes="104px"
+            className="h-full w-full object-cover object-center transition-transform duration-200 group-hover:scale-105"
+            onError={() => setImageError(true)}
+            loading="lazy"
+          />
         </div>
       ) : (
         <div className="flex h-full w-full items-center justify-center gap-1 px-1.5">

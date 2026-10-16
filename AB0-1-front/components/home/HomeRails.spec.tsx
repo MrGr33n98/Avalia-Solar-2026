@@ -56,17 +56,17 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
 }
 
 describe('rails de identidade visual da home', () => {
-  it('maximiza logos no rail compacto de marcas sem trocar o object-contain', () => {
+  it('renderiza logos no rail compacto de marcas em full bleed com object-cover', () => {
     render(<BrandLogoCard name="Sungrow" logoUrl="/sungrow.png" href="/companies/sungrow" />);
 
     const logo = screen.getByAltText('Sungrow');
 
-    expect(logo).toHaveClass('object-contain', 'p-0.5');
-    expect(logo).not.toHaveClass('p-[3px]');
+    expect(logo).toHaveClass('object-cover', 'object-center');
+    expect(logo).not.toHaveClass('object-contain');
     expect(logo).toHaveAttribute('sizes', '104px');
   });
 
-  it('usa toda a área do card para logo e mantém banner como capa', () => {
+  it('usa toda a área do card para logo em full bleed e mantém banner como capa', () => {
     render(
       <HomeCompaniesRail
         companies={[
@@ -84,10 +84,11 @@ describe('rails de identidade visual da home', () => {
     const logo = screen.getByAltText('Logotipo Sungrow Brasil');
     const banner = screen.getByAltText('Imagem de capa de Growatt Brasil');
 
-    expect(logo).toHaveClass('object-contain', 'p-2');
-    expect(logo).toHaveAttribute('sizes', '(max-width: 640px) 210px, 230px');
-    expect(logo.parentElement).toHaveClass('relative', 'h-full', 'w-full');
+    expect(logo).toHaveClass('object-cover', 'object-center');
+    expect(logo).not.toHaveClass('object-contain');
+    expect(logo).toHaveAttribute('sizes', '(max-width: 640px) 196px, 208px');
+    expect(logo.parentElement).toHaveClass('relative', 'h-full', 'w-full', 'overflow-hidden');
     expect(banner).toHaveClass('object-cover', 'object-center');
-    expect(banner).toHaveAttribute('sizes', '(max-width: 640px) 210px, 230px');
+    expect(banner).toHaveAttribute('sizes', '(max-width: 640px) 196px, 208px');
   });
 });

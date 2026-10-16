@@ -137,13 +137,13 @@ export function HomeCompaniesRail({
                       className="h-full w-full object-cover object-center transition-transform duration-300 hover:scale-105"
                     />
                   ) : hasLogo ? (
-                    <div className="relative flex h-full w-full items-center justify-center bg-white p-2">
+                    <div className="relative h-full w-full overflow-hidden bg-white">
                       <Image
                         src={logoUrl}
                         alt={`Logotipo ${company.name}`}
                         fill
                         sizes="(max-width: 640px) 196px, 208px"
-                        className="object-contain object-center transition-transform duration-300 hover:scale-105"
+                        className="h-full w-full object-cover object-center transition-transform duration-300 hover:scale-105"
                       />
                     </div>
                   ) : (
