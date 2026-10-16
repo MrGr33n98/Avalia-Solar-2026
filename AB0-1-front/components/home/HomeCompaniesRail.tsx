@@ -96,7 +96,7 @@ export function HomeCompaniesRail({
         tabIndex={0}
         role="region"
         aria-label="Lista de empresas recomendadas"
-        className="flex w-full flex-nowrap items-stretch gap-3.5 overflow-x-auto pb-2 no-scrollbar snap-x snap-mandatory scroll-px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+        className="flex w-full flex-nowrap items-stretch gap-2.5 overflow-x-auto pb-2 no-scrollbar snap-x snap-mandatory scroll-px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {companies.slice(0, 10).map((company) => {
@@ -123,63 +123,52 @@ export function HomeCompaniesRail({
           return (
             <div
               key={company.id}
-              className="flex w-[210px] sm:w-[230px] shrink-0 snap-start flex-col rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden transition-all hover:border-slate-300 hover:shadow-sm"
+              className="flex w-[196px] sm:w-[208px] shrink-0 snap-start flex-col rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden transition-all hover:border-slate-300 hover:shadow-sm"
             >
-              {/* Banner empresarial em cover / logo em contain / placeholder neutro */}
-              <div className="relative h-28 w-full overflow-hidden bg-slate-50 sm:h-32">
+              {/* Área de mídia compacta (84-88px, ~30% mais baixa que os 112-128px anteriores) */}
+              <div className="relative h-[84px] sm:h-[88px] w-full overflow-hidden bg-slate-50/80">
                 <Link href={companyHref} className="block h-full w-full">
                   {hasBanner ? (
                     <Image
                       src={bannerUrl}
                       alt={`Imagem de capa de ${company.name}`}
                       fill
-                      sizes="(max-width: 640px) 210px, 230px"
-                      className="object-cover object-center transition-transform duration-300 hover:scale-105"
+                      sizes="(max-width: 640px) 196px, 208px"
+                      className="h-full w-full object-cover object-center transition-transform duration-300 hover:scale-105"
                     />
                   ) : hasLogo ? (
-                    <div className="relative h-full w-full overflow-hidden">
-                      {/* Fundo com a cor dominante esticada do logotipo que preenche 100% da área sem margens brancas */}
+                    <div className="relative flex h-full w-full items-center justify-center bg-white p-2">
                       <Image
                         src={logoUrl}
-                        alt=""
+                        alt={`Logotipo ${company.name}`}
                         fill
-                        aria-hidden="true"
-                        className="h-full w-full object-cover object-center blur-xl scale-125 opacity-75"
+                        sizes="(max-width: 640px) 196px, 208px"
+                        className="object-contain object-center transition-transform duration-300 hover:scale-105"
                       />
-                      {/* Logotipo nítido em contain com padding reduzido para nunca cortar textos nas extremidades */}
-                      <div className="relative h-full w-full flex items-center justify-center p-2">
-                        <Image
-                          src={logoUrl}
-                          alt={`Logotipo ${company.name}`}
-                          fill
-                          sizes="(max-width: 640px) 210px, 230px"
-                          className="h-full w-full object-contain object-center transition-transform duration-300 hover:scale-105"
-                        />
-                      </div>
                     </div>
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-slate-100 text-slate-400">
-                      <Building2 className="h-8 w-8 text-slate-300" aria-hidden="true" />
+                      <Building2 className="h-6 w-6 text-slate-300" aria-hidden="true" />
                       <span className="text-[10px] font-medium text-slate-500">Avalia Solar</span>
                     </div>
                   )}
                 </Link>
 
                 {/* Botão de favoritar autenticado no canto superior direito */}
-                <div className="absolute right-2 top-2 z-10">
+                <div className="absolute right-1.5 top-1.5 z-10">
                   <FavoriteButton
                     favoritableType="Company"
                     favoritableId={company.id}
                     source="home_rail"
-                    className="h-8 w-8 rounded-full bg-white/90 shadow-sm backdrop-blur-xs hover:bg-white text-slate-600 hover:text-red-500"
+                    className="h-7 w-7 rounded-full bg-white/90 shadow-xs backdrop-blur-xs hover:bg-white text-slate-600 hover:text-red-500"
                   />
                 </div>
               </div>
 
-              {/* Informações da empresa */}
-              <div className="flex flex-1 flex-col p-3">
+              {/* Informações da empresa - padding reduzido para 10px (p-2.5) */}
+              <div className="flex flex-1 flex-col p-2.5">
                 {/* Nome da empresa e selo azul verificado adjacente sem afastar para a direita */}
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug break-words">
+                <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 leading-snug break-words">
                   <Link
                     href={companyHref}
                     className="hover:text-blue-600 focus-visible:outline-none focus-visible:underline"
@@ -219,7 +208,7 @@ export function HomeCompaniesRail({
 
                 {/* Chips de tags reais se existirem */}
                 {tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
+                  <div className="mt-1.5 flex flex-wrap gap-1">
                     {tags.map((tag) => (
                       <span
                         key={tag}
@@ -231,10 +220,10 @@ export function HomeCompaniesRail({
                   </div>
                 )}
 
-                <div className="mt-auto pt-2.5">
+                <div className="mt-auto pt-2">
                   <Link
                     href={companyHref}
-                    className="block w-full text-center rounded-xl bg-slate-50 py-1.5 text-xs font-semibold text-blue-600 border border-slate-200/80 transition-colors hover:bg-blue-50 hover:border-blue-200"
+                    className="flex h-[30px] w-full items-center justify-center rounded-lg bg-slate-50 py-1 text-xs font-semibold text-blue-600 border border-slate-200/80 transition-colors hover:bg-blue-50 hover:border-blue-200"
                   >
                     Ver perfil
                   </Link>

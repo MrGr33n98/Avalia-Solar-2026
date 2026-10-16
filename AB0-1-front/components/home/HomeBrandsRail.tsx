@@ -38,23 +38,14 @@ export function BrandLogoCard({ name, logoUrl, href, className }: BrandLogoCardP
       )}
     >
       {logoUrl && !imageError ? (
-        <div className="relative h-full w-full overflow-hidden">
-          {/* Fundo com a cor dominante esticada do logotipo que preenche 100% da área sem margens brancas */}
-          <Image
-            src={logoUrl}
-            alt=""
-            fill
-            aria-hidden="true"
-            className="h-full w-full object-cover object-center blur-md scale-125 opacity-75"
-          />
-          {/* Logotipo nítido em contain com padding reduzido para nunca cortar textos nas extremidades */}
-          <div className="relative h-full w-full flex items-center justify-center p-0.5">
+        <div className="relative flex h-full w-full items-center justify-center p-[2px]">
+          <div className="relative h-[30px] w-[98px]">
             <Image
               src={logoUrl}
               alt={name}
               fill
-              sizes="104px"
-              className="h-full w-full object-contain object-center transition-transform duration-200 group-hover:scale-105"
+              sizes="98px"
+              className="object-contain object-center transition-transform duration-200 group-hover:scale-105"
               onError={() => setImageError(true)}
               loading="lazy"
             />
