@@ -194,25 +194,29 @@ export function HomeHeroBanner({
             </>
           )}
 
-          {/* Barras de navegação segmentadas (estilo OLX / Story bars) */}
+          {/* Barras de navegação segmentadas (estilo OLX) com touch target acessível de 48px */}
           {hasMultipleBanners && (
             <div
               aria-label="Navegação dos banners"
-              className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 z-20 px-2.5 py-1 rounded-full bg-black/25 backdrop-blur-xs"
+              className="absolute bottom-0 left-1/2 z-20 flex -translate-x-1/2 items-center gap-0 bg-transparent md:bottom-3 md:gap-2 md:rounded-full md:bg-black/25 md:px-2.5 md:py-1 md:backdrop-blur-xs"
             >
-              {activeBanners.map((b, idx) => (
+              {activeBanners.map((banner, index) => (
                 <button
-                  key={b.id || idx}
+                  key={banner.id ?? index}
                   type="button"
-                  onClick={() => setCurrentIndex(idx)}
-                  aria-label={`Ir para banner ${idx + 1}`}
-                  className={cn(
-                    'h-1.5 rounded-full transition-all duration-300',
-                    currentIndex === idx
-                      ? 'w-8 sm:w-12 bg-[#7C3AED] shadow-sm'
-                      : 'w-8 sm:w-12 bg-white/60 hover:bg-white/90'
-                  )}
-                />
+                  onClick={() => setCurrentIndex(index)}
+                  aria-label={`Ir para banner ${index + 1}`}
+                  aria-pressed={currentIndex === index}
+                  className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center bg-transparent p-0 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-blue-600"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'block h-[4px] w-[34px] rounded-full transition-colors duration-200',
+                      currentIndex === index ? 'bg-blue-600' : 'bg-white/75'
+                    )}
+                  />
+                </button>
               ))}
             </div>
           )}
