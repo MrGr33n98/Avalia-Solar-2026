@@ -19,6 +19,15 @@ interface HomeCompaniesRailProps {
   viewAllHref?: string;
 }
 
+function publicRating(company: Company): { score: number; count: number } | null {
+  const count = Number(company.rating_count ?? company.reviews_count ?? 0);
+  const score = Number(company.average_rating ?? company.rating_avg ?? 0);
+  if (count > 0 && score > 0) {
+    return { score, count };
+  }
+  return null;
+}
+
 export function HomeCompaniesRail({
   companies,
   title,
@@ -56,97 +65,102 @@ export function HomeCompaniesRail({
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-[repeat(2,minmax(0,1fr))] auto-rows-fr gap-2.5 sm:gap-3 lg:grid-cols-3">
         {visibleCompanies.map((company) => {
           const companyHref = buildCompanyPath(company.slug, company.name, company.id);
           const logoUrl =
             typeof company.logo_url === 'string' ? company.logo_url.trim() : '';
-          const rating = Number(company.average_rating || company.rating_avg || 5);
-          const reviewsCount = Number(company.rating_count ?? company.reviews_count ?? 0);
-          const location =
-            company.city && company.state
-              ? `${company.city}, ${company.state}`
-              : company.state || company.city || '';
+          const rating = publicRating(company);
 
           return (
             <article
               key={company.id}
-              className="relative flex min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-2.5 shadow-xs transition hover:border-slate-300 hover:shadow-md sm:p-3"
+              className={cn(
+                'relative flex min-h-[172px] min-w-0 flex-col rounded-xl border',
+                'border-slate-200 bg-white p-2.5 shadow-xs',
+                'transition-colors hover:border-slate-300 sm:p-3'
+              )}
             >
-              <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
+              {/* Linha superior: logotipo e botão de favoritos */}
+              <div className="flex min-w-0 items-start justify-between gap-1">
                 <Link
                   href={companyHref}
                   aria-label={`Ver perfil de ${company.name}`}
-                  className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-white sm:h-16 sm:w-16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   {logoUrl ? (
                     <Image
                       src={logoUrl}
                       alt={`Logotipo ${company.name}`}
                       fill
-                      sizes="96px"
-                      className="object-contain p-1.5"
+                      sizes="44px"
+                      className="object-contain p-1"
                     />
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-0.5 bg-slate-50 text-slate-500">
-                      <Building2 className="h-5 w-5 text-slate-400" aria-hidden="true" />
-                      <span className="text-[9px] font-semibold">Avalia</span>
+                      <Building2 className="h-5 w-5 text-slate-400" aria-label="Logotipo não informado" />
                     </div>
                   )}
                 </Link>
 
-                <div className="min-w-0 flex-1 pt-0.5">
-                  <div className="flex items-start justify-between gap-1">
-                    <div className="min-w-0 flex-1 flex items-center gap-1">
-                      <h3 className="min-w-0 truncate text-xs font-bold leading-tight text-slate-950 sm:text-sm">
-                        <Link
-                          href={companyHref}
-                          className="truncate hover:text-blue-600 focus-visible:outline-none focus-visible:underline"
-                          title={company.name}
-                        >
-                          {company.name}
-                        </Link>
-                      </h3>
-                      {company.verified && (
-                        <span className="shrink-0 inline-flex items-center">
-                          <CompanyVerifiedBadge size="sm" />
-                        </span>
-                      )}
-                    </div>
-                    <FavoriteButton
-                      favoritableType="Company"
-                      favoritableId={company.id}
-                      source="home_rail"
-                      className="h-6 w-6 shrink-0 rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-600 sm:h-7 sm:w-7"
-                    />
-                  </div>
+                <FavoriteButton
+                  favoritableType="Company"
+                  favoritableId={company.id}
+                  source="home_rail"
+                  className="h-11 w-11 shrink-0 text-slate-500"
+                />
+              </div>
 
-                  <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-600">
-                    <Star className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0" aria-hidden="true" />
-                    <span className="font-bold text-slate-900">{rating.toFixed(1)}</span>
-                    <span className="text-slate-400">
-                      ({reviewsCount > 0 ? reviewsCount : 'Novo'})
+              {/* Linha da identidade: Nome em linha própria + selo verificado com shrink-0 */}
+              <div className="mt-2 flex min-w-0 items-start gap-1">
+                <h3 className="min-w-0 flex-1 break-words text-[12px] font-bold leading-4 text-slate-950 sm:text-sm">
+                  <Link
+                    href={companyHref}
+                    title={company.name}
+                    className="hover:text-blue-600 focus-visible:underline"
+                  >
+                    {company.name}
+                  </Link>
+                </h3>
+                {company.verified === true && (
+                  <span className="inline-flex shrink-0 pt-0.5">
+                    <CompanyVerifiedBadge size="sm" className="!h-4 !w-4" />
+                  </span>
+                )}
+              </div>
+
+              {/* Avaliação real, sem fallback artificial 5.0 */}
+              <div className="mt-1 flex min-w-0 items-center gap-1 text-[11px] leading-4">
+                {rating ? (
+                  <>
+                    <Star
+                      className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400"
+                      aria-hidden="true"
+                    />
+                    <span className="font-bold tabular-nums text-slate-900">
+                      {rating.score.toFixed(1)}
                     </span>
-                    {location && (
-                      <>
-                        <span className="text-slate-300">·</span>
-                        <span className="truncate text-slate-400 font-medium" title={location}>
-                          {company.state || location}
-                        </span>
-                      </>
-                    )}
-                  </div>
+                    <span className="min-w-0 text-slate-500">({rating.count})</span>
+                  </>
+                ) : (
+                  <span className="text-slate-500">Sem avaliações</span>
+                )}
+              </div>
 
-                  <div className="mt-2 flex items-center justify-between">
-                    <ComparisonToggleButton
-                      company={company}
-                      variant="default"
-                      compactLabel
-                      size="sm"
-                      className="h-6.5 px-2.5 text-[11px] rounded-lg border-slate-200 font-medium text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50"
-                    />
-                  </div>
-                </div>
+              {/* Linha exclusiva para botão Comparar com 100% da largura */}
+              <div className="mt-auto min-w-0 pt-2">
+                <ComparisonToggleButton
+                  company={company}
+                  variant="default"
+                  compactLabel
+                  animated={false}
+                  size="sm"
+                  className={cn(
+                    '!h-10 !w-full !min-w-0 !px-2 !text-[11px]',
+                    'rounded-lg border-slate-200 font-semibold',
+                    'hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-600'
+                  )}
+                />
               </div>
             </article>
           );

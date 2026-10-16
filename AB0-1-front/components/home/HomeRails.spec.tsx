@@ -100,7 +100,7 @@ describe('rails de identidade visual da home', () => {
 
     const logo = screen.getByAltText('Logotipo Sungrow Brasil');
     expect(logo).toHaveClass('object-contain');
-    expect(logo).toHaveAttribute('sizes', '96px');
+    expect(logo).toHaveAttribute('sizes', '44px');
     expect(screen.getAllByRole('button', { name: 'Favoritar empresa' })).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Comparar Sungrow Brasil' })).toBeInTheDocument();
   });
