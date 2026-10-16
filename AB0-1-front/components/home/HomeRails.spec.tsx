@@ -2,15 +2,23 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import type { Company } from '@/lib/api';
 import { BrandLogoCard } from './HomeBrandsRail';
+import { HomeCategoryRail } from './HomeCategoryRail';
 import { HomeCompaniesRail } from './HomeCompaniesRail';
+import { HomeSolutionsRail } from './HomeSolutionsRail';
 
 jest.mock('next/image', () => ({
   __esModule: true,
   default: ({
     fill: _fill,
+    priority: _priority,
+    unoptimized: _unoptimized,
     alt = '',
     ...props
-  }: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean }) => (
+  }: React.ImgHTMLAttributes<HTMLImageElement> & {
+    fill?: boolean;
+    priority?: boolean;
+    unoptimized?: boolean;
+  }) => (
     // eslint-disable-next-line @next/next/no-img-element
     <img alt={alt} {...props} />
   ),
@@ -106,5 +114,21 @@ describe('rails de identidade visual da home', () => {
 
     expect(screen.getAllByRole('article')).toHaveLength(6);
     expect(screen.queryByText('Empresa 7')).not.toBeInTheDocument();
+  });
+
+  it('renderiza categorias em destaque como chips horizontais compactos', () => {
+    render(<HomeCategoryRail categories={[]} />);
+
+    expect(screen.getByText('Categorias em destaque')).toBeInTheDocument();
+    expect(screen.getByText('Energia Solar Residencial')).toBeInTheDocument();
+    expect(screen.getByText('Energia Solar Comercial')).toBeInTheDocument();
+  });
+
+  it('renderiza produtos em destaque como chips horizontais compactos', () => {
+    render(<HomeSolutionsRail />);
+
+    expect(screen.getByText('Produtos em destaque')).toBeInTheDocument();
+    expect(screen.getByText('Energia Solar Residencial')).toBeInTheDocument();
+    expect(screen.getByText('Energia Solar Comercial')).toBeInTheDocument();
   });
 });
