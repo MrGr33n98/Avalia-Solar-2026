@@ -270,14 +270,14 @@ export function ProposalSummary({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 sm:pb-0">
       {/* Back button & Action Toolbar (Item 1 & 12-16 in Image 3) */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         {onList ? (
           <button
             type="button"
             onClick={onList}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline group cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline group cursor-pointer w-fit"
           >
             <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
             <span>Voltar para minhas propostas</span>
@@ -285,47 +285,76 @@ export function ProposalSummary({
         ) : (
           <Link
             href="/review-dashboard/proposals"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline group"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline group w-fit"
           >
             <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
             <span>Voltar para minhas propostas</span>
           </Link>
         )}
 
-        {/* Action Buttons Top Right (12, 13, 14, 15, 16) */}
-        <div className="flex flex-wrap items-center gap-2">
-          {onConversation ? (
+        {/* Mobile Quick Actions Row (Fiel à referência: Sem botão gigante de Chat no topo ocupando a tela) */}
+        <div className="flex sm:hidden items-center gap-1.5 w-full">
+          <Button
+            size="sm"
+            onClick={onProject}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition active:scale-[0.99] h-9"
+          >
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">Acompanhamento do projeto</span>
+          </Button>
+
+          {(canDecide(proposal) || proposal.status === 'accepted') && (
             <Button
+              variant="outline"
               size="sm"
-              onClick={onConversation}
-              className="gap-1.5 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs text-xs h-9 px-4"
+              onClick={onMeeting}
+              className="inline-flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl border-border bg-card text-foreground text-xs font-semibold hover:bg-muted/40 shadow-2xs shrink-0 h-9"
             >
-              <MessageCircle className="h-4 w-4" />
-              <span>Conversar com a empresa</span>
-            </Button>
-          ) : (
-            <Button
-              asChild
-              size="sm"
-              className="gap-1.5 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs text-xs h-9 px-4"
-            >
-              <Link href={proposalChatUrl(proposal)}>
-                <MessageCircle className="h-4 w-4" />
-                <span>Conversar com a empresa</span>
-              </Link>
+              <CalendarClock className="h-3.5 w-3.5 text-primary" />
+              <span>Agendar</span>
             </Button>
           )}
 
-          {onProject && (
-            <Button
-              size="sm"
-              onClick={onProject}
-              className="gap-1.5 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 px-4 shadow-2xs"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              <span>Acompanhamento do projeto</span>
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (navigator.clipboard) {
+                void navigator.clipboard.writeText(window.location.href);
+              }
+            }}
+            className="p-2 rounded-xl border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted/40 shadow-2xs shrink-0 h-9 w-9 flex items-center justify-center"
+            title="Compartilhar proposta"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            <span className="sr-only">Compartilhar</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsFavorited(!isFavorited)}
+            className={cn(
+              'p-2 rounded-xl border-border bg-card shadow-2xs shrink-0 h-9 w-9 flex items-center justify-center transition-colors',
+              isFavorited ? 'text-rose-600 border-rose-200 bg-rose-50' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+            )}
+            title="Favoritar"
+          >
+            <Heart className={cn('h-3.5 w-3.5', isFavorited && 'fill-rose-600')} />
+            <span className="sr-only">{isFavorited ? 'Favoritada' : 'Favoritar'}</span>
+          </Button>
+        </div>
+
+        {/* Desktop Action Buttons Top Right */}
+        <div className="hidden sm:flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={onProject}
+            className="gap-1.5 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 px-4 shadow-2xs"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            <span>Acompanhamento do projeto</span>
+          </Button>
 
           {(canDecide(proposal) || proposal.status === 'accepted') && (
             <Button
@@ -447,54 +476,54 @@ export function ProposalSummary({
         </div>
       </div>
 
-      {/* Main Detail Navigation Tabs (8 tabs matching Imagens 3, 4 e 5) */}
+      {/* Main Detail Navigation Tabs (8 tabs matching Imagens 3, 4 e 5 - Sem colisão de texto) */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="flex h-12 w-full overflow-x-auto rounded-xl border border-border/80 bg-card p-1 shadow-2xs scrollbar-none justify-start sm:justify-between">
+        <TabsList className="flex h-11 w-full items-center gap-1 overflow-x-auto no-scrollbar scrollbar-none rounded-xl border border-border/80 bg-card p-1 shadow-2xs justify-start">
           <TabsTrigger
             value="summary"
-            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+            className="shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             Visão geral
           </TabsTrigger>
           <TabsTrigger
             value="technical"
-            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+            className="shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             Projeto técnico
           </TabsTrigger>
           <TabsTrigger
             value="equipments"
-            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+            className="shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             Equipamentos
           </TabsTrigger>
           <TabsTrigger
             value="financial"
-            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+            className="shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             Financeiro
           </TabsTrigger>
           <TabsTrigger
             value="documents"
-            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+            className="shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             Documentos
           </TabsTrigger>
           <TabsTrigger
             value="terms"
-            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+            className="shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             Condições
           </TabsTrigger>
           <TabsTrigger
             value="company"
-            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+            className="shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             Empresa
           </TabsTrigger>
           <TabsTrigger
             value="history"
-            className="rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs"
+            className="shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             Histórico
           </TabsTrigger>
@@ -738,6 +767,28 @@ export function ProposalSummary({
                   </div>
                 </div>
               </div>
+
+              {/* CTA Fechamento e Decisão da Proposta (Fiel à referência móvel) */}
+              {canDecide(proposal) && (
+                <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-extrabold text-foreground">Decisão da proposta</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Garantia de {getProposalRawTerm(proposal, ['equipment_warranty', 'garantia']) || '2 a 5 anos'} • Prazo: {deadlineVal || '15 a 45 dias'}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="lg"
+                    onClick={onChoose}
+                    className="w-full gap-2 rounded-xl font-extrabold bg-[#F5B800] hover:bg-[#E5AC00] text-slate-950 text-xs sm:text-sm h-11 shadow-xs transition active:scale-[0.99]"
+                  >
+                    <Check className="h-4 w-4 stroke-[2.5]" />
+                    <span>Aceitar e escolher {proposal.company.name}</span>
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Right Column (1 col): Financial Summary, Status Timeline, Documents (Items 7, 8, 11 in Image 3) */}
@@ -1243,21 +1294,22 @@ export function ProposalSummary({
         </TabsContent>
       </Tabs>
 
-      {/* Action Buttons Bar at bottom of details */}
-      <div className="grid gap-3 sm:grid-cols-2 pt-4 border-t border-border/60">
+      {/* Desktop Action Buttons Bar at bottom of details */}
+      <div className="hidden sm:grid sm:grid-cols-2 gap-3 pt-4 border-t border-border/60">
         {onConversation ? (
           <Button
             size="lg"
+            variant="outline"
             onClick={onConversation}
-            className="gap-2 rounded-xl font-bold shadow-xs"
+            className="gap-2 rounded-xl font-bold border-border bg-card shadow-xs"
           >
-            <MessageCircle className="h-4 w-4" />
+            <MessageCircle className="h-4 w-4 text-blue-600" />
             <span>Conversar com a empresa</span>
           </Button>
         ) : (
-          <Button asChild size="lg" className="gap-2 rounded-xl font-bold shadow-xs">
+          <Button asChild size="lg" variant="outline" className="gap-2 rounded-xl font-bold border-border bg-card shadow-xs">
             <Link href={proposalChatUrl(proposal)}>
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-4 w-4 text-blue-600" />
               <span>Conversar com a empresa</span>
             </Link>
           </Button>
@@ -1276,7 +1328,7 @@ export function ProposalSummary({
       </div>
 
       {canDecide(proposal) && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="hidden sm:grid sm:grid-cols-2 gap-3">
           <Button
             variant="outline"
             size="lg"
@@ -1288,15 +1340,15 @@ export function ProposalSummary({
           <Button
             size="lg"
             onClick={onChoose}
-            className="gap-2 rounded-xl font-bold bg-primary hover:bg-primary/90 shadow-xs"
+            className="gap-2 rounded-xl font-bold bg-[#F5B800] hover:bg-[#E5AC00] text-slate-950 shadow-xs"
           >
-            <Check className="h-4 w-4" />
+            <Check className="h-4 w-4 stroke-[2.5]" />
             <span>Escolher esta proposta</span>
           </Button>
         </div>
       )}
 
-      {onProject && (
+      <div className="hidden sm:block">
         <Button
           size="lg"
           onClick={onProject}
@@ -1305,7 +1357,57 @@ export function ProposalSummary({
           <ShieldCheck className="h-5 w-5" />
           <span>Acompanhamento do projeto</span>
         </Button>
-      )}
+      </div>
+
+      {/* Mobile Sticky Bottom Action Bar (Chat integrado no rodapé + Escolher Empresa) */}
+      <div className="fixed bottom-14 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-2.5 sm:hidden shadow-lg">
+        <div className="flex items-center gap-2 max-w-md mx-auto">
+          {onConversation ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onConversation}
+              className="flex-1 gap-1.5 rounded-xl font-bold border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs h-10 shadow-2xs hover:bg-slate-50"
+            >
+              <MessageCircle className="h-4 w-4 text-blue-600" />
+              <span>Conversar</span>
+            </Button>
+          ) : (
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="flex-1 gap-1.5 rounded-xl font-bold border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs h-10 shadow-2xs hover:bg-slate-50"
+            >
+              <Link href={proposalChatUrl(proposal)}>
+                <MessageCircle className="h-4 w-4 text-blue-600" />
+                <span>Conversar</span>
+              </Link>
+            </Button>
+          )}
+
+          {canDecide(proposal) ? (
+            <Button
+              size="sm"
+              onClick={onChoose}
+              className="flex-1 gap-1.5 rounded-xl font-extrabold bg-[#F5B800] hover:bg-[#E5AC00] text-slate-950 text-xs h-10 shadow-xs active:scale-[0.99] transition"
+            >
+              <Check className="h-4 w-4 stroke-[2.5]" />
+              <span>Escolher empresa</span>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onMeeting}
+              className="flex-1 gap-1.5 rounded-xl font-bold border-slate-200 text-xs h-10"
+            >
+              <CalendarClock className="h-4 w-4 text-blue-600" />
+              <span>Agendar</span>
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

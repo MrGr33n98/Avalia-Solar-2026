@@ -10,6 +10,7 @@ import {
   Trophy,
   Zap,
   FileText,
+  MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -66,7 +67,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     icon: Heart,
     matchPath: '/review-dashboard/favorites',
     section: 'main',
-    mobilePriority: 5,
+    mobilePriority: 6,
     analyticsKey: 'reviewer_nav_favorites',
   },
   {
@@ -80,6 +81,17 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     mobilePriority: 3,
     analyticsKey: 'reviewer_nav_proposals',
   },
+  {
+    id: 'chat',
+    label: 'Chat',
+    shortLabel: 'Chat',
+    href: '/chat',
+    icon: MessageSquare,
+    matchPath: ['/chat', '/review-dashboard/proposals?view=conversation'],
+    section: 'main',
+    mobilePriority: 4,
+    analyticsKey: 'reviewer_nav_chat',
+  },
 
   {
     id: 'solutions',
@@ -88,7 +100,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     icon: Zap,
     matchPath: '/review-dashboard/solutions',
     section: 'main',
-    mobilePriority: 5,
+    mobilePriority: 7,
     analyticsKey: 'reviewer_nav_solutions',
   },
   {
@@ -99,7 +111,7 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     icon: Trophy,
     matchPath: '/review-dashboard/achievements',
     section: 'main',
-    mobilePriority: 4,
+    mobilePriority: 5,
     analyticsKey: 'reviewer_nav_achievements',
   },
   {
@@ -145,11 +157,11 @@ export const reviewerNavItems: ReviewerNavItem[] = [
   },
 ];
 
-/** Items para o bottom nav mobile (mobilePriority 1-4 + "Mais") */
-export const mobileBottomNavItems = reviewerNavItems.filter((item) => item.mobilePriority <= 4);
+/** Items para o bottom nav mobile (mobilePriority 1-5 + "Mais") */
+export const mobileBottomNavItems = reviewerNavItems.filter((item) => item.mobilePriority <= 5);
 
 /** Items para o drawer "Mais" no mobile */
-export const mobileDrawerItems = reviewerNavItems.filter((item) => item.mobilePriority > 4);
+export const mobileDrawerItems = reviewerNavItems.filter((item) => item.mobilePriority > 5);
 
 /** Verifica se um pathname está ativo para um item de navegação */
 export function isNavItemActive(pathname: string, item: ReviewerNavItem): boolean {

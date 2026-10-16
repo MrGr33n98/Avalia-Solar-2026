@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,16 @@ import { mobileBottomNavItems, mobileDrawerItems, isNavItemActive } from '../rev
 export function ReviewerMobileNav() {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [proposalParam, setProposalParam] = useState<string | null>(null);
+  const [isConvView, setIsConvView] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const search = new URLSearchParams(window.location.search);
+      setProposalParam(search.get('proposal'));
+      setIsConvView(search.get('view') === 'conversation');
+    }
+  }, [pathname]);
 
   return (
     <>
@@ -24,15 +34,26 @@ export function ReviewerMobileNav() {
         <div className="flex h-14 items-center justify-around px-1">
           {mobileBottomNavItems.map((item) => {
             const Icon = item.icon;
-            const active = isNavItemActive(pathname, item);
+            let targetHref = item.href;
+            if (item.id === 'chat' && proposalParam) {
+              targetHref = `/review-dashboard/proposals?proposal=${proposalParam}&view=conversation`;
+            }
+
+            const active =
+              item.id === 'chat'
+                ? pathname === '/chat' || (pathname.startsWith('/review-dashboard/proposals') && isConvView)
+                : item.id === 'proposals'
+                ? pathname.startsWith('/review-dashboard/proposals') && !isConvView
+                : isNavItemActive(pathname, item);
+
             const labelText = item.shortLabel || item.label;
 
             return (
               <Link
                 key={item.id}
-                href={item.href}
+                href={targetHref}
                 className={cn(
-                  'relative flex flex-col items-center justify-center flex-1 py-1 min-w-[48px] min-h-[44px] transition-colors group',
+                  'relative flex flex-col items-center justify-center flex-1 py-1 min-w-[44px] min-h-[44px] transition-colors group',
                   active
                     ? 'text-blue-600 dark:text-blue-400 font-semibold'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium'
@@ -47,7 +68,7 @@ export function ReviewerMobileNav() {
                 )}
 
                 {/* Caixa dimensional rígida para os ícones ficarem no mesmo centro vertical */}
-                <div className="flex h-6 w-6 items-center justify-center">
+                <div className="relative flex h-6 w-6 items-center justify-center">
                   <Icon
                     className={cn(
                       'h-5 w-5 transition-transform duration-150',
@@ -56,9 +77,15 @@ export function ReviewerMobileNav() {
                         : 'stroke-[1.6] group-hover:scale-105'
                     )}
                   />
+                  {item.id === 'chat' && (
+                    <span
+                      className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"
+                      aria-hidden="true"
+                    />
+                  )}
                 </div>
 
-                <span className="text-[10px] leading-tight tracking-tight whitespace-nowrap truncate max-w-[68px]">
+                <span className="text-[10px] leading-tight tracking-tight whitespace-nowrap truncate max-w-[60px]">
                   {labelText}
                 </span>
               </Link>
