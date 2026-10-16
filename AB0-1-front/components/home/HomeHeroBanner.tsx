@@ -1,11 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Banner } from '@/lib/api';
+import { analyticsApi } from '@/lib/api-analytics';
+import { track } from '@/lib/analytics/lazy';
+import { getBannerAudienceKey } from '@/lib/banner-audience';
 
 interface HomeHeroBannerProps {
   banners?: Banner[];
@@ -26,57 +28,137 @@ export function HomeHeroBanner({
   ctaHref = '/companies',
   imageSrc = '/images/herro-banner-avalia-solar.webp',
 }: HomeHeroBannerProps) {
-  // Fallback institucional com 3 slides quando nenhum banner estiver cadastrado no ActiveAdmin
-  const institutionalFallbackBanners: Banner[] = React.useMemo(
-    () => [
-      {
-        id: 9991,
-        title: headline,
-        link: ctaHref,
-        image_url: imageSrc,
-        active: true,
-        position: 'home_top',
-      },
-      {
-        id: 9992,
-        title: 'Calcule a economia solar para sua casa ou empresa',
-        link: '/calculadora',
-        image_url: imageSrc,
-        active: true,
-        position: 'home_top',
-      },
-      {
-        id: 9993,
-        title: 'Compare instaladores solares com selo de verificação',
-        link: '/companies',
-        image_url: imageSrc,
-        active: true,
-        position: 'home_top',
-      },
-    ],
-    [headline, ctaHref, imageSrc]
+  // Exatamente 1 slide institucional limpo como fallback seguro
+  const institutionalFallback: Banner = React.useMemo(
+    () => ({
+      id: 0,
+      title: headline,
+      headline,
+      subtitle: subheadline,
+      cta_label: ctaText,
+      cta_href: ctaHref,
+      cta_enabled: true,
+      image_url: imageSrc,
+      creative_mode: 'photo_with_html',
+      theme: 'dark',
+      overlay_variant: 'left_soft',
+      cta_variant: 'solar_yellow',
+      active: true,
+      position: 'home_hero',
+    }),
+    [headline, subheadline, ctaText, ctaHref, imageSrc]
   );
 
-  // Filtrar apenas banners válidos com imagem; usar fallback institucional se vazio
   const activeBanners = React.useMemo(() => {
     const valid = (banners || []).filter((b) => Boolean(b.image_url));
-    return valid.length > 0 ? valid : institutionalFallbackBanners;
-  }, [banners, institutionalFallbackBanners]);
+    return valid.length > 0 ? valid : [institutionalFallback];
+  }, [banners, institutionalFallback]);
 
   const hasMultipleBanners = activeBanners.length > 1;
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [isPaused, setIsPaused] = React.useState(false);
   const touchStartXRef = React.useRef<number | null>(null);
+  const heroRef = React.useRef<HTMLDivElement>(null);
+  const viewedBannersRef = React.useRef<Set<string>>(new Set());
 
-  // Troca automática suave apenas quando houver mais de 1 banner
+  // Pausa automática se usuário preferir movimento reduzido (a11y) ou se a aba perder foco
   React.useEffect(() => {
-    if (!hasMultipleBanners) return;
+    if (typeof window === 'undefined') return;
+
+    const handleVisibilityChange = () => {
+      setIsPaused(document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mediaQuery.matches) {
+      setIsPaused(true);
+    }
+
+    const handleMotionChange = (e: MediaQueryListEvent) => {
+      setIsPaused(e.matches);
+    };
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleMotionChange);
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleMotionChange);
+      }
+    };
+  }, []);
+
+  // Rotação suave automática quando houver múltiplos banners (pausável por hover/focus/motion)
+  React.useEffect(() => {
+    if (!hasMultipleBanners || isPaused) return;
 
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
-    }, 6000);
+    }, 7000);
 
     return () => clearInterval(timer);
-  }, [hasMultipleBanners, activeBanners.length]);
+  }, [hasMultipleBanners, isPaused, activeBanners.length]);
+
+  const currentBanner = activeBanners[currentIndex] || activeBanners[0];
+
+  // Telemetria de Viewability (50% de visibilidade por 1s via IntersectionObserver)
+  React.useEffect(() => {
+    const el = heroRef.current;
+    if (!el || !currentBanner || !currentBanner.id || currentBanner.id <= 0) return;
+
+    const bannerId = currentBanner.id;
+    const viewKey = `${bannerId}:view:home_hero`;
+    if (viewedBannersRef.current.has(viewKey)) return;
+
+    let timer: NodeJS.Timeout | null = null;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting) {
+          timer = setTimeout(() => {
+            if (viewedBannersRef.current.has(viewKey)) return;
+            viewedBannersRef.current.add(viewKey);
+
+            analyticsApi.trackBannerEvent({
+              banner_id: Number(bannerId),
+              event_type: 'impression',
+              delivery_id: currentBanner.delivery_id || undefined,
+              metadata: {
+                title: currentBanner.title,
+                position: currentBanner.position || 'home_hero',
+                link: currentBanner.cta_href || currentBanner.link_url || currentBanner.link || null,
+                page: '/',
+                sponsored: Boolean(currentBanner.sponsored),
+                audience_key: getBannerAudienceKey(),
+              },
+              tracked_at: new Date().toISOString(),
+            });
+
+            track('banner_view', {
+              banner_id: bannerId,
+              banner_title: currentBanner.title,
+              banner_position: currentBanner.position || 'home_hero',
+              sponsored: Boolean(currentBanner.sponsored),
+            });
+          }, 1000);
+        } else if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (timer) clearTimeout(timer);
+    };
+  }, [currentBanner]);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -99,81 +181,172 @@ export function HomeHeroBanner({
     const diff = e.changedTouches[0].clientX - touchStartXRef.current;
     if (Math.abs(diff) > 40) {
       if (diff > 0) {
-        // Swipe para a direita -> anterior
         setCurrentIndex((prev) => (prev - 1 + activeBanners.length) % activeBanners.length);
       } else {
-        // Swipe para a esquerda -> próximo
         setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
       }
     }
     touchStartXRef.current = null;
   };
 
-  const currentBanner = activeBanners[currentIndex] || activeBanners[0];
-  const bannerLink = currentBanner.link || ctaHref;
+  // Resolução de Conteúdo
   const bannerTitle = currentBanner.title || headline;
+  const bannerHeadline = currentBanner.headline || (bannerTitle !== '.' ? bannerTitle : headline);
+  const bannerSubtitle = currentBanner.subtitle ?? (currentBanner.id === 0 ? subheadline : null);
   const bannerImage = currentBanner.image_url || imageSrc;
+  const isImageOnly = currentBanner.creative_mode === 'image_only';
+  const ctaEnabled = currentBanner.cta_enabled !== false;
+  const ctaLabel = currentBanner.cta_label || (currentBanner.id === 0 ? ctaText : null);
 
-  // Subtítulo e texto do botão customizados para os slides institucionais padrão
-  const currentSubtitle =
-    currentBanner.id === 9992
-      ? 'Calcule a potência ideal e receba estimativas reais para o seu imóvel.'
-      : currentBanner.id === 9993
-      ? 'Consulte selos de verificação e notas de clientes reais antes de contratar.'
-      : subheadline;
+  // Link de Destino do CTA e Click Redirect
+  const baseDestination = currentBanner.cta_href || currentBanner.link_url || currentBanner.link || ctaHref;
+  const clickTrackingUrl =
+    currentBanner.id && currentBanner.id > 0
+      ? `/api/v1/banner_clicks/${currentBanner.id}${currentBanner.delivery_id ? `?delivery_id=${currentBanner.delivery_id}` : ''}`
+      : baseDestination;
 
-  const currentCtaText =
-    currentBanner.id === 9992
-      ? 'Simular economia'
-      : currentBanner.id === 9993
-      ? 'Ver catálogo'
-      : ctaText;
+  // Estilos de Variantes do CTA
+  const getCtaButtonClasses = (variant?: string) => {
+    switch (variant) {
+      case 'primary_blue':
+        return 'bg-blue-600 text-white hover:bg-blue-500 shadow-md';
+      case 'outline':
+        return 'bg-transparent text-white border-2 border-white/80 hover:bg-white/15 backdrop-blur-xs';
+      case 'custom':
+        return 'shadow-md';
+      case 'solar_yellow':
+      default:
+        return 'bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-md';
+    }
+  };
+
+  const customCtaStyle: React.CSSProperties =
+    currentBanner.cta_variant === 'custom'
+      ? {
+          backgroundColor: currentBanner.cta_background_color || undefined,
+          color: currentBanner.cta_text_color || undefined,
+        }
+      : {};
+
+  // Overlay de Proteção de Contraste
+  const renderOverlay = () => {
+    if (isImageOnly) return null;
+
+    switch (currentBanner.overlay_variant) {
+      case 'none':
+        return null;
+      case 'left_strong':
+        return <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent pointer-events-none" />;
+      case 'left_soft':
+      default:
+        return <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent pointer-events-none" />;
+    }
+  };
 
   return (
     <div className={cn('px-4 py-2 w-full select-none', className)}>
       <div
+        ref={heroRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        onFocus={() => setIsPaused(true)}
+        onBlur={() => setIsPaused(false)}
         className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-slate-800/10 shadow-md group"
       >
         <div className="relative h-[210px] sm:h-[240px] md:h-[280px] w-full">
-          <Link href={bannerLink} className="block h-full w-full">
-            <Image
+          {/* Mídia Art-Directed com <picture> responsivo nativo */}
+          <picture className="absolute inset-0 block h-full w-full pointer-events-none">
+            {currentBanner.image_mobile_url ? (
+              <source media="(max-width: 639px)" srcSet={currentBanner.image_mobile_url} />
+            ) : null}
+            <img
               src={bannerImage}
-              alt={bannerTitle || 'Banner promocional'}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
-              className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.01]"
+              alt={currentBanner.alt_text || bannerHeadline || 'Hero Banner'}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.01] motion-reduce:transition-none motion-reduce:transform-none"
+              style={{
+                objectPosition: `${currentBanner.object_position_desktop_x ?? 50}% ${currentBanner.object_position_desktop_y ?? 50}%`,
+              }}
+              loading={currentIndex === 0 ? 'eager' : 'lazy'}
             />
+          </picture>
 
-            <div className="absolute inset-0 flex flex-col justify-center px-5 sm:px-8 md:px-10 max-w-lg z-10">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
-                {bannerTitle}
-              </h1>
-              {currentSubtitle && (
-                <p className="mt-2 text-xs sm:text-sm text-white line-clamp-2 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">
-                  {currentSubtitle}
-                </p>
-              )}
-
-              <div className="mt-4 flex items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-950 shadow-md transition-all hover:bg-amber-300 active:scale-95">
-                  <span>{currentCtaText}</span>
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </span>
-              </div>
+          {/* Selo Patrocinado quando aplicável */}
+          {currentBanner.sponsored && (
+            <div className="absolute top-3 right-3 z-20 pointer-events-none">
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-950/70 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-white/95 border border-white/10 shadow-xs">
+                Patrocinado
+              </span>
             </div>
-          </Link>
+          )}
 
-          {/* Setas de navegação quando houver múltiplos banners */}
+          {/* Overlay de contraste para legibilidade */}
+          {renderOverlay()}
+
+          {/* Link para toda a área caso configurado como clicável por inteiro */}
+          {currentBanner.whole_banner_clickable && (
+            <Link
+              href={clickTrackingUrl}
+              className="absolute inset-0 z-10 block"
+              aria-label={bannerHeadline || 'Ver campanha'}
+            />
+          )}
+
+          {/* Conteúdo Tipográfico e Ação */}
+          <div className="absolute inset-0 flex flex-col justify-center px-5 sm:px-8 md:px-10 max-w-xl z-15 pointer-events-none">
+            {isImageOnly ? (
+              <span className="sr-only">{bannerHeadline}</span>
+            ) : (
+              <>
+                <h1
+                  className={cn(
+                    'text-xl sm:text-2xl md:text-3xl font-extrabold leading-tight tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]',
+                    currentBanner.theme === 'light' ? 'text-slate-950' : 'text-white'
+                  )}
+                  style={{ color: currentBanner.hero_text_color || undefined }}
+                >
+                  {bannerHeadline}
+                </h1>
+                {bannerSubtitle && (
+                  <p
+                    className={cn(
+                      'mt-2 text-xs sm:text-sm line-clamp-2 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]',
+                      currentBanner.theme === 'light' ? 'text-slate-800' : 'text-white/90'
+                    )}
+                  >
+                    {bannerSubtitle}
+                  </p>
+                )}
+              </>
+            )}
+
+            {/* Botão de Ação (CTA) Acessível */}
+            {ctaEnabled && ctaLabel && (
+              <div className="mt-4 flex items-center gap-3 pointer-events-auto">
+                <Link
+                  href={clickTrackingUrl}
+                  style={customCtaStyle}
+                  className={cn(
+                    'inline-flex min-h-[44px] min-w-[44px] items-center gap-1.5 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold transition-all active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
+                    getCtaButtonClasses(currentBanner.cta_variant)
+                  )}
+                >
+                  <span>{ctaLabel}</span>
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Setas de navegação desktop */}
           {hasMultipleBanners && (
             <>
               <button
                 type="button"
                 onClick={handlePrev}
                 aria-label="Banner anterior"
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -181,14 +354,14 @@ export function HomeHeroBanner({
                 type="button"
                 onClick={handleNext}
                 aria-label="Próximo banner"
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
             </>
           )}
 
-          {/* Barras de navegação segmentadas (estilo OLX) com touch target acessível de 48px */}
+          {/* Barras de navegação segmentadas com touch target de 48px */}
           {hasMultipleBanners && (
             <div
               aria-label="Navegação dos banners"
@@ -206,7 +379,7 @@ export function HomeHeroBanner({
                   <span
                     aria-hidden="true"
                     className={cn(
-                      'block h-[4px] w-[34px] rounded-full transition-colors duration-200',
+                      'block h-[4px] w-[34px] rounded-full transition-colors duration-200 motion-reduce:transition-none',
                       currentIndex === index ? 'bg-blue-600' : 'bg-white/75'
                     )}
                   />

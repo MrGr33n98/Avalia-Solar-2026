@@ -11,19 +11,43 @@ class Banner < ApplicationRecord
   belongs_to :financing_option, optional: true
   belongs_to :approved_by_admin_user, class_name: 'AdminUser', optional: true
   has_one_attached :image
+  has_one_attached :image_mobile
 
   has_many :banner_addon_subscriptions, dependent: :destroy
   has_many :active_banner_addon_subscriptions, -> { active }, class_name: 'BannerAddonSubscription'
+  has_many :banner_audit_logs, as: :auditable, dependent: :destroy
 
   MODERATION_STATUSES = %w[draft submitted approved rejected].freeze
   ALLOWED_POSITIONS = BannerPlacements::Catalog.keys.freeze
   ALLOWED_BANNER_TYPES = %w[rectangular_large rectangular_small].freeze
+  ALLOWED_THEMES = %w[dark light].freeze
+  ALLOWED_CTA_VARIANTS = %w[solar_yellow primary_blue outline custom].freeze
+  ALLOWED_OVERLAY_VARIANTS = %w[none left_soft left_strong].freeze
+  ALLOWED_CREATIVE_MODES = %w[photo_with_html image_only].freeze
+  HEX_COLOR_REGEX = /\A#[0-9A-Fa-f]{6}\z/
 
   # === Validações Básicas ===
   validates :title, :banner_type, :position, presence: true
   validates :banner_type, inclusion: { in: ALLOWED_BANNER_TYPES }
   validates :position, inclusion: { in: ALLOWED_POSITIONS }
   validates :image, presence: true, unless: -> { image.attached? }
+
+  # === Validações Hero / Campanhas (Fase 1) ===
+  validates :headline, length: { maximum: 110 }, allow_blank: true
+  validates :subtitle, length: { maximum: 180 }, allow_blank: true
+  validates :cta_label, length: { maximum: 36 }, allow_blank: true
+  validates :theme, inclusion: { in: ALLOWED_THEMES }, allow_blank: true
+  validates :cta_variant, inclusion: { in: ALLOWED_CTA_VARIANTS }, allow_blank: true
+  validates :overlay_variant, inclusion: { in: ALLOWED_OVERLAY_VARIANTS }, allow_blank: true
+  validates :creative_mode, inclusion: { in: ALLOWED_CREATIVE_MODES }, allow_blank: true
+  validates :hero_background_color, format: { with: HEX_COLOR_REGEX, message: 'deve ser um código hexadecimal válido (#RRGGBB)' }, allow_blank: true
+  validates :hero_text_color, format: { with: HEX_COLOR_REGEX, message: 'deve ser um código hexadecimal válido (#RRGGBB)' }, allow_blank: true
+  validates :cta_background_color, format: { with: HEX_COLOR_REGEX, message: 'deve ser um código hexadecimal válido (#RRGGBB)' }, allow_blank: true
+  validates :cta_text_color, format: { with: HEX_COLOR_REGEX, message: 'deve ser um código hexadecimal válido (#RRGGBB)' }, allow_blank: true
+  validates :object_position_desktop_x, :object_position_desktop_y,
+            :object_position_mobile_x, :object_position_mobile_y,
+            numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 100 },
+            allow_nil: true
 
   def category_ids=(val)
     clean_ids = Array(val).flatten.compact.map(&:to_s).reject(&:blank?).map(&:to_i).uniq
@@ -54,6 +78,8 @@ class Banner < ApplicationRecord
 
   # === Validação de URL de Destino (Fase 4) ===
   validate :validate_link_url, if: -> { link.present? }
+  validate :validate_cta_href, if: -> { cta_href.present? }
+  validate :validate_image_attachments
 
   # === Validação de Limite por Empresa (Fase 1) ===
   # Garante que empresa respeita limite de banners ativos conforme sua assinatura
@@ -103,11 +129,13 @@ class Banner < ApplicationRecord
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[alt_text category_id company_id financial_institution_id financing_option_id created_at id image_url title updated_at link active sponsored width height
-       banner_type position start_date end_date moderation_status priority slot_key approved_by_admin_user_id approved_at target_states target_cities]
+       banner_type position start_date end_date moderation_status priority slot_key approved_by_admin_user_id approved_at target_states target_cities
+       headline subtitle cta_label cta_href cta_enabled theme cta_variant hero_background_color hero_text_color cta_background_color cta_text_color
+       overlay_variant creative_mode whole_banner_clickable creative_version]
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[category categories company approved_by_admin_user image_attachment image_blob]
+    %w[category categories company approved_by_admin_user image_attachment image_blob image_mobile_attachment image_mobile_blob]
   end
 
   scope :approved, -> { where(moderation_status: 'approved') }
@@ -160,8 +188,13 @@ class Banner < ApplicationRecord
     return nil unless image.attached?
 
     source = image
-    if self.class.banner_variants_enabled? && width.present? && height.present?
-      source = image.variant(resize_to_limit: [width, height])
+    if self.class.banner_variants_enabled?
+      variant_limit = if position == 'home_hero'
+                        [1920, 600]
+                      elsif width.present? && height.present?
+                        [width, height]
+                      end
+      source = image.variant(resize_to_limit: variant_limit) if variant_limit
     end
 
     Rails.application.routes.url_helpers.rails_storage_proxy_url(source, safe_url_options)
@@ -174,8 +207,29 @@ class Banner < ApplicationRecord
     end
   end
 
+  def image_mobile_url
+    return nil unless image_mobile.attached?
+
+    source = image_mobile
+    if self.class.banner_variants_enabled?
+      source = image_mobile.variant(resize_to_limit: [780, 460])
+    end
+
+    Rails.application.routes.url_helpers.rails_storage_proxy_url(source, safe_url_options)
+  rescue StandardError => e
+    Rails.logger.error("Error generating banner mobile image URL: #{e.message}")
+    begin
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(image_mobile, safe_url_options)
+    rescue StandardError
+      nil
+    end
+  end
+
   def as_json(options = {})
-    super.merge(image_url: image_url)
+    super.merge(
+      image_url: image_url,
+      image_mobile_url: image_mobile_url
+    )
   end
 
   def target_states=(val)
@@ -267,6 +321,52 @@ class Banner < ApplicationRecord
     end
   rescue URI::InvalidURIError
     errors.add(:link, 'não é uma URL válida')
+  end
+
+  def validate_cta_href
+    return if cta_href.blank?
+
+    if cta_href.start_with?('/')
+      if cta_href.match?(%r{\A//[^/]}) || cta_href.downcase.include?('javascript:') || cta_href.downcase.include?('data:')
+        errors.add(:cta_href, 'formato de link relativo inválido')
+      end
+      return
+    end
+
+    uri = URI.parse(cta_href)
+    unless uri.scheme.in?(%w[http https])
+      errors.add(:cta_href, 'deve ser um link HTTP ou HTTPS válido ou um caminho relativo (/...)')
+      return
+    end
+
+    if uri.host.blank? || uri.host.include?('localhost') || uri.host.match?(/\A(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/)
+      errors.add(:cta_href, 'não pode apontar para endereços locais ou privados')
+      return
+    end
+
+    if cta_href.downcase.include?('javascript:') || cta_href.downcase.include?('data:')
+      errors.add(:cta_href, 'formato de link inválido')
+    end
+  rescue URI::InvalidURIError
+    errors.add(:cta_href, 'não é uma URL válida')
+  end
+
+  ALLOWED_IMAGE_TYPES = %w[image/png image/jpeg image/jpg image/webp].freeze
+  MAX_IMAGE_SIZE = 10.megabytes
+
+  def validate_image_attachments
+    [image, image_mobile].each do |attachment|
+      next unless attachment.attached?
+
+      blob = attachment.blob
+      next unless blob
+
+      errors.add(:base, 'A imagem deve ter no máximo 10 MB') if blob.byte_size.to_i > MAX_IMAGE_SIZE
+
+      unless ALLOWED_IMAGE_TYPES.include?(blob.content_type.to_s)
+        errors.add(:base, 'A imagem deve estar no formato PNG, JPEG ou WebP')
+      end
+    end
   end
 
   def respect_company_active_banners_limit

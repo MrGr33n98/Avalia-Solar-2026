@@ -6,7 +6,8 @@ module Api
 
       def show
         banner = Banner.currently_active.find(params[:id])
-        destination = safe_destination(banner.link_url)
+        target_raw = banner.respond_to?(:cta_href) && banner.cta_href.present? ? banner.cta_href : banner.link_url
+        destination = safe_destination(target_raw)
         destination = append_attribution_params(destination, banner)
         return redirect_to root_fallback, status: :found, allow_other_host: true unless destination
 
@@ -17,6 +18,7 @@ module Api
           event.event_type = 'click'
           event.tracked_at = Time.current
           event.click_instance_id = click_instance_id if event.respond_to?(:click_instance_id=)
+          event.delivery_id = params[:delivery_id].to_s.presence if event.respond_to?(:delivery_id=) && params[:delivery_id].present?
           event.ip_hash = Digest::SHA256.hexdigest(request.remote_ip.to_s) if request.remote_ip.present?
           event.user_agent_hash = Digest::SHA256.hexdigest(request.user_agent.to_s) if request.user_agent.present?
           event.referrer = safe_referrer
@@ -45,6 +47,10 @@ module Api
       def safe_destination(value)
         return if value.blank?
 
+        if value.start_with?('/')
+          return value unless value.start_with?('//')
+        end
+
         uri = URI.parse(value)
         return unless %w[http https].include?(uri.scheme&.downcase)
         return if uri.host.blank?
@@ -54,6 +60,9 @@ module Api
 
       def append_attribution_params(destination, banner)
         return destination if destination.blank?
+
+        # Não anexa UTMs automaticamente em caminhos relativos internos se já não tiver query
+        return destination if destination.start_with?('/')
 
         uri = URI.parse(destination)
         params = URI.decode_www_form(uri.query.to_s)

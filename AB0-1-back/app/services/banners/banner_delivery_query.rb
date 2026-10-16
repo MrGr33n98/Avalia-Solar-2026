@@ -40,7 +40,7 @@ module Banners
       scope = apply_frequency_cap(scope)
       scope = apply_fair_rotation(scope)
       scope = scope.limit(@params[:limit].to_i) if @params[:limit].to_i.positive?
-      scope.includes(:categories, :company, image_attachment: :blob).to_a
+      scope.includes(:categories, :company, image_attachment: :blob, image_mobile_attachment: :blob).to_a
     end
 
     private
