@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fluxo de Propostas — Avalia Solar 2026 (10 Telas)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F5F8FD;
+      --surface: #FFFFFF;
+      --brand: #2563EB;
+      --brand-50: #EFF6FF;
+      --brand-100: #DBEAFE;
+      --brand-200: #BFDBFE;
+      --brand-700: #1D4ED8;
+      --cta: #FBBF24;
+      --cta-hover: #F59E0B;
+      --ink: #0F172A;
+      --muted: #64748B;
+      --line: #E2E8F0;
+      --ok-bg: #ECFDF5;
+      --ok-fg: #047857;
+      --ok-line: #A7F3D0;
+      --danger: #EF4444;
+      --star: #F59E0B;
+      --card-radius: 16px;
+      --btn-radius: 12px;
+      --shadow-soft: 0 2px 8px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+      --shadow-float: 0 8px 24px -4px rgba(15, 23, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0B1120;
+      color: var(--ink);
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    /* Topbar de controle do protótipo */
+    .proto-bar {
+      max-width: 1320px;
+      margin: 0 auto 24px auto;
+      background: #1E293B;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      color: #F8FAFC;
+    }
+
+    .proto-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .proto-badge {
+      background: var(--brand);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    .proto-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .proto-btn {
+      background: #334155;
+      color: #F8FAFC;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .proto-btn:hover {
+      background: #475569;
+    }
+
+    .proto-btn.active {
+      background: var(--brand);
+      border-color: var(--brand-700);
+      color: #FFFFFF;
+    }
+
+    /* Container de visualização */
+    .proto-stage {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 24px;
+      overflow-x: auto;
+      padding-bottom: 40px;
+    }
+
+    .proto-stage.grid-mode {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 390px));
+      justify-content: center;
+      gap: 32px;
+    }
+
+    /* Moldura Mobile (390px exato) */
+    .mobile-frame {
+      width: 390px;
+      height: 844px;
+      background: var(--bg);
+      border-radius: 40px;
+      box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.5), 0 0 0 8px #1E293B;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .screen-header-label {
+      position: absolute;
+      top: -28px;
+      left: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #94A3B8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* iOS Status Bar */
+    .ios-status-bar {
+      height: 44px;
+      padding: 12px 24px 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      z-index: 40;
+      background: transparent;
+      shrink: 0;
+    }
+
+    .ios-status-bar.dark-text {
+      color: var(--ink);
+    }
+
+    .ios-notch {
+      width: 120px;
+      height: 24px;
+      background: #000;
+      border-radius: 0 0 16px 16px;
+      position: absolute;
+      top: 0;
+      left: calc(50% - 60px);
+    }
+
+    /* AppHeader 52px */
+    .app-header {
+      height: 52px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 30;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .brand-logo svg {
+      color: #EAB308;
+    }
+
+    .search-pill {
+      flex: 1;
+      height: 36px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    /* Área de Conteúdo que Rola */
+    .screen-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .screen-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* StickyActionBar */
+    .sticky-action-bar {
+      height: 60px;
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 20;
+      flex-shrink: 0;
+      box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    /* BottomNav 56px */
+    .bottom-nav {
+      height: 56px;
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      align-items: center;
+      z-index: 20;
+      flex-shrink: 0;
+      padding-bottom: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .nav-item.active {
+      color: var(--brand);
+      font-weight: 700;
+    }
+
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 1.75;
+    }
+
+    .nav-badge {
+      position: absolute;
+      top: 2px;
+      right: 14px;
+      min-width: 16px;
+      height: 16px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+
+    /* Botões Padrão */
+    .btn {
+      height: 42px;
+      border-radius: var(--btn-radius);
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-secondary {
+      background: #FFFFFF;
+      border: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg);
+    }
+
+    .btn-cta {
+      background: var(--cta);
+      color: var(--ink);
+      box-shadow: 0 2px 6px rgba(251, 191, 36, 0.3);
+    }
+
+    .btn-cta:hover {
+      background: var(--cta-hover);
+    }
+
+    .btn-brand {
+      background: var(--brand);
+      color: #FFFFFF;
+    }
+
+    .btn-brand:hover {
+      background: var(--brand-700);
+    }
+
+    /* Cards e Containers */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--card-radius);
+      padding: 12px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    /* Stepper 5 etapas horizontal */
+    .stepper-horizontal {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      padding: 8px 4px;
+    }
+
+    .stepper-line {
+      position: absolute;
+      top: 19px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: var(--line);
+      z-index: 1;
+    }
+
+    .stepper-line-progress {
+      position: absolute;
+      top: 19px;
+      left: 20px;
+      height: 2px;
+      background: var(--brand);
+      z-index: 2;
+    }
+
+    .step-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      position: relative;
+      z-index: 3;
+      text-align: center;
+    }
+
+    .step-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 2px solid var(--line);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-node.completed .step-circle {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #FFFFFF;
+    }
+
+    .step-node.active .step-circle {
+      background: #FFFFFF;
+      border-color: var(--brand);
+      color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .step-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      max-width: 60px;
+      line-height: 1.15;
+    }
+
+    .step-node.active .step-label {
+      color: var(--brand);
+      font-weight: 700;
+    }
+
+    .step-date {
+      font-size: 8px;
+      color: var(--muted);
+    }
+
+    /* Tabs Horizontais */
+    .tabs-row {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+      gap: 16px;
+    }
+
+    .tab-item {
+      padding: 8px 2px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .tab-item.active {
+      color: var(--brand);
+    }
+
+    .tab-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--brand);
+      border-radius: 2px;
+    }
+
+    /* Chips e Badges */
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .status-chip.received {
+      background: var(--ok-bg);
+      color: var(--ok-fg);
+      border: 1px solid var(--ok-line);
+    }
+
+    .verified-badge {
+      width: 16px;
+      height: 16px;
+      background: var(--brand);
+      color: #fff;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      flex-shrink: 0;
+    }
+
+    .rating-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .rating-val {
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* SpecRow 3 colunas */
+    .spec-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: #F8FAFC;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px 4px;
+      text-align: center;
+      margin: 8px 0;
+    }
+
+    .spec-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 0 4px;
+    }
+
+    .spec-col:not(:last-child) {
+      border-right: 1px solid var(--line);
+    }
+
+    .spec-col-label {
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .spec-col-val {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* Chat bubble */
+    .chat-bubble {
+      max-width: 82%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.35;
+      margin-bottom: 8px;
+    }
+
+    .chat-bubble.them {
+      background: #FFFFFF;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+    }
+
+    .chat-bubble.me {
+      background: var(--brand);
+      color: #FFFFFF;
+      border-bottom-right-radius: 4px;
+      align-self: flex-end;
+    }
+
+    .chat-time {
+      font-size: 10px;
+      opacity: 0.7;
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    /* Banner informativo */
+    .info-banner {
+      background: var(--brand-50);
+      border: 1px solid var(--brand-200);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 12px;
+      color: #1E3A8A;
+      line-height: 1.35;
+    }
+
+    /* Ocultar / Mostrar telas no modo interativo */
+    .screen-instance {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+    }
+
+    .screen-instance.active-screen {
+      display: flex;
+    }
+
+    /* Em modo grid todas as telas aparecem com frame individual */
+    .proto-stage.grid-mode .screen-instance {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE CONTROLE DO PROTÓTIPO -->
+  <header class="proto-bar">
+    <div class="proto-title">
+      <span class="proto-badge">Avalia Solar 2026</span>
+      <h1 style="font-size: 16px; font-weight: 800;">Fluxo de Propostas — Visual Spec (10 Telas)</h1>
+    </div>
+
+    <div class="proto-controls">
+      <button class="proto-btn active" id="btn-single-mode" onclick="setMode('single')">📱 Navegação Interativa</button>
+      <button class="proto-btn" id="btn-grid-mode" onclick="setMode('grid')">▦ Ver 10 Telas Lado a Lado</button>
+      <select id="screen-selector" class="proto-btn" onchange="switchScreen(Number(this.value))">
+        <option value="1">1. Lista de propostas recebidas</option>
+        <option value="2">2. Detalhes da proposta</option>
+        <option value="3">3. Proposta completa (PDF)</option>
+        <option value="4">4. Comparar propostas</option>
+        <option value="5">5. Personalizar solicitação</option>
+        <option value="6">6. Conversa com a empresa (Chat)</option>
+        <option value="7">7. Escolher empresa (Sucesso)</option>
+        <option value="8">8. Acompanhamento de obra</option>
+        <option value="9">9. Perfil da empresa</option>
+        <option value="10">10. Conclusão de projeto</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- CONTAINER DO PROTÓTIPO -->
+  <main class="proto-stage" id="proto-stage">
+
+    <!-- MOLDURA DO SMARTPHONE 390PX -->
+    <div class="mobile-frame" id="main-phone-frame">
+
+      <!-- ========================================== -->
+      <!-- TELA 1: LISTA DE PROPOSTAS RECEBIDAS -->
+      <!-- ========================================== -->
+      <section class="screen-instance active-screen" id="screen-1">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <a href="#" class="brand-logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+            <span>Avalia Solar</span>
+          </a>
+          <div class="search-pill">
+            <span>🔍 Buscar empresas...</span>
+          </div>
+          <div style="width: 28px; height: 28px; border-radius: 50%; background: #E2E8F0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">JD</div>
+        </div>
+
+        <div class="screen-scroll">
+          <div style="font-size: 11px; font-weight: 600; color: var(--brand); cursor: pointer;">← Meus projetos</div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="font-size: 18px; font-weight: 800; color: var(--ink);">Projeto Residencial</h2>
+            <span style="font-size: 14px; cursor: pointer;">✏️</span>
+          </div>
+
+          <p style="font-size: 12px; color: var(--muted); font-weight: 500;">
+            📍 Residencial • Florianópolis, SC • 8,5 kWp
+          </p>
+
+          <!-- Stepper 5 etapas horizontal -->
+          <div class="stepper-horizontal">
+            <div class="stepper-line"></div>
+            <div class="stepper-line-progress" style="width: 25%;"></div>
+
+            <div class="step-node completed">
+              <div class="step-circle">✓</div>
+              <span class="step-label">Solicitação</span>
+              <span class="step-date">05/10</span>
+            </div>
+            <div class="step-node active">
+              <div class="step-circle">2</div>
+              <span class="step-label">Propostas</span>
+              <span class="step-date">06/10</span>
+            </div>
+            <div class="step-node">
+              <div class="step-circle">3</div>
+              <span class="step-label">Em análise</span>
+            </div>
+            <div class="step-node">
+              <div class="step-circle">4</div>
+              <span class="step-label">Decisão</span>
+            </div>
+            <div class="step-node">
+              <div class="step-circle">5</div>
+              <span class="step-label">Projeto</span>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="tabs-row">
+            <div class="tab-item active">Propostas recebidas (3)</div>
+            <div class="tab-item">Em análise (0)</div>
+            <div class="tab-item">Escolhidas (0)</div>
+          </div>
+
+          <!-- Banner Informativo -->
+          <div class="info-banner">
+            <span style="font-size: 16px;">👥</span>
+            <div>
+              <p style="font-weight: 700; margin-bottom: 2px;">3 empresas enviaram propostas para o seu projeto.</p>
+              <p style="opacity: 0.9;">Compare os valores, equipamentos e condições para tomar a melhor decisão.</p>
+            </div>
+          </div>
+
+          <!-- Botão Comparar Propostas -->
+          <button class="btn btn-secondary" style="width: 100%; border-color: var(--brand-200); color: var(--brand);" onclick="switchScreen(4)">
+            ⚖️ Comparar propostas
+          </button>
+
+          <!-- Toolbar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted);">
+            <span style="font-weight: 600;">Mais relevantes ▾</span>
+            <span style="font-weight: 600; cursor: pointer;">⚡ Filtrar</span>
+          </div>
+
+          <!-- CARD 1: SUNGROW -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: #FF5500; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px;">
+                  SUNGROW
+                </div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 14px; font-weight: 800; color: var(--ink);">Sungrow Brasil</span>
+                    <span class="verified-badge">✓</span>
+                  </div>
+                  <div class="rating-pill">
+                    <span style="color: var(--star)">★</span>
+                    <span class="rating-val">4,8</span>
+                    <span>(126 avaliações)</span>
+                  </div>
+                  <div style="font-size: 11px; color: var(--muted);">Florianópolis, SC</div>
+                </div>
+              </div>
+
+              <div style="text-align: right;">
+                <span class="status-chip received">✓ Proposta recebida</span>
+                <p style="font-size: 10px; color: var(--muted); margin-top: 2px;">em 06/10/2026</p>
+              </div>
+            </div>
+
+            <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: baseline;">
+              <div>
+                <p style="font-size: 22px; font-weight: 900; color: var(--ink); letter-spacing: -0.02em;">R$ 48.500,00</p>
+                <p style="font-size: 11px; font-weight: 600; color: var(--muted);">8,5 kWp • Residencial</p>
+              </div>
+            </div>
+
+            <!-- SpecRow 3 colunas -->
+            <div class="spec-row">
+              <div class="spec-col">
+                <span class="spec-col-label">⏱️ Prazo</span>
+                <span class="spec-col-val">45 dias</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-col-label">🛡️ Garantia</span>
+                <span class="spec-col-val">10 anos</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-col-label">🔧 Escopo</span>
+                <span class="spec-col-val">Instalação</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <button class="btn btn-secondary" style="flex: 1;" onclick="switchScreen(2)">
+                📄 Ver proposta (PDF)
+              </button>
+              <button class="btn btn-cta" style="flex: 1.35;" onclick="switchScreen(7)">
+                Escolher empresa
+              </button>
+            </div>
+          </div>
+
+          <!-- CARD 2: GROWATT -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: #FFFFFF; border: 1px solid var(--line); color: #16A34A; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 10px;">
+                  GROWATT
+                </div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 14px; font-weight: 800; color: var(--ink);">Growatt Brasil</span>
+                    <span class="verified-badge">✓</span>
+                  </div>
+                  <div class="rating-pill">
+                    <span style="color: var(--star)">★</span>
+                    <span class="rating-val">4,6</span>
+                    <span>(89 avaliações)</span>
+                  </div>
+                  <div style="font-size: 11px; color: var(--muted);">São José, SC</div>
+                </div>
+              </div>
+              <span class="status-chip received">✓ Proposta recebida</span>
+            </div>
+
+            <div style="margin-top: 10px;">
+              <p style="font-size: 22px; font-weight: 900; color: var(--ink);">R$ 46.900,00</p>
+              <p style="font-size: 11px; font-weight: 600; color: var(--muted);">8,5 kWp • Residencial</p>
+            </div>
+
+            <div class="spec-row">
+              <div class="spec-col">
+                <span class="spec-col-label">⏱️ Prazo</span>
+                <span class="spec-col-val">30 dias</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-col-label">🛡️ Garantia</span>
+                <span class="spec-col-val">10 anos</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-col-label">🔧 Escopo</span>
+                <span class="spec-col-val">Instalação</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <button class="btn btn-secondary" style="flex: 1;" onclick="switchScreen(2)">Ver proposta</button>
+              <button class="btn btn-cta" style="flex: 1.35;" onclick="switchScreen(7)">Escolher empresa</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BottomNav -->
+        <nav class="bottom-nav">
+          <div class="nav-item">
+            <span>🏠</span>
+            <span>Início</span>
+          </div>
+          <div class="nav-item">
+            <span>🏢</span>
+            <span>Empresas</span>
+          </div>
+          <div class="nav-item">
+            <span>🔍</span>
+            <span>Buscar</span>
+          </div>
+          <div class="nav-item active">
+            <span>📋</span>
+            <span>Propostas</span>
+          </div>
+          <div class="nav-item" onclick="switchScreen(6)">
+            <span class="nav-badge">1</span>
+            <span>💬</span>
+            <span>Chat</span>
+          </div>
+          <div class="nav-item">
+            <span>👤</span>
+            <span>Perfil</span>
+          </div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TELA 2: DETALHES DA PROPOSTA -->
+      <!-- ========================================== -->
+      <section class="screen-instance" id="screen-2">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <div style="cursor: pointer; font-size: 16px;" onclick="switchScreen(1)">←</div>
+          <a href="#" class="brand-logo">Avalia Solar</a>
+          <div style="display: flex; gap: 12px; font-size: 16px;">
+            <span>🤍</span>
+            <span>↗️</span>
+          </div>
+        </div>
+
+        <div class="screen-scroll" style="padding-top: 0;">
+          <!-- Hero Image -->
+          <div style="margin: -12px -16px 12px -16px; height: 180px; background: linear-gradient(180deg, #1E293B, #0F172A); position: relative; display: flex; align-items: center; justify-content: center; color: #fff;">
+            <div style="text-align: center;">
+              <div style="font-size: 32px;">🏡☀️</div>
+              <p style="font-size: 12px; font-weight: 600; opacity: 0.9;">Casa com Painéis Fotovoltaicos</p>
+            </div>
+            <!-- Overlay C2 -->
+            <div style="position: absolute; bottom: 10px; right: 12px; background: rgba(255,255,255,0.95); padding: 4px 10px; border-radius: 8px; text-align: right; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+              <p style="font-size: 10px; font-weight: 700; color: var(--ink);">Proposta recebida</p>
+              <p style="font-size: 9px; color: var(--muted);">em 06/10/2026</p>
+            </div>
+            <!-- Contador C4 -->
+            <div style="position: absolute; bottom: 10px; left: 12px; background: rgba(15,23,42,0.6); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600;">
+              📷 1/12
+            </div>
+          </div>
+
+          <!-- Header Empresa -->
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #FF5500; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px;">
+              SUNGROW
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <h3 style="font-size: 15px; font-weight: 800;">Sungrow Brasil</h3>
+                <span class="verified-badge">✓</span>
+              </div>
+              <div class="rating-pill">
+                <span style="color: var(--star)">★</span>
+                <span class="rating-val">4,8</span>
+                <span>(126 avaliações) • Florianópolis, SC</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="tabs-row">
+            <div class="tab-item active">Resumo</div>
+            <div class="tab-item">Equipamentos</div>
+            <div class="tab-item">Condições</div>
+            <div class="tab-item" onclick="switchScreen(9)">Empresa</div>
+          </div>
+
+          <!-- ValueCard -->
+          <div class="card" style="background: #F8FAFC;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 12px; color: var(--muted); font-weight: 600;">Valor total da proposta</span>
+              <span class="status-chip received" style="font-size: 10px;">✓ Dentro da média da região</span>
+            </div>
+            <p style="font-size: 26px; font-weight: 900; color: var(--ink); margin-top: 4px;">R$ 48.500,00</p>
+
+            <div class="spec-row" style="background: #FFFFFF; margin-top: 12px;">
+              <div class="spec-col">
+                <span class="spec-col-label">⚡ Potência</span>
+                <span class="spec-col-val">8,5 kWp</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-col-label">⏱️ Prazo instalação</span>
+                <span class="spec-col-val">45 dias</span>
+              </div>
+              <div class="spec-col">
+                <span class="spec-col-label">🛡️ Garantia</span>
+                <span class="spec-col-val">10 anos</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Equipamentos principais -->
+          <div class="card">
+            <h4 style="font-size: 13px; font-weight: 800; margin-bottom: 8px;">Equipamentos principais</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">☀️</span>
+                <div>
+                  <p style="font-weight: 700;">Painéis solares Sungrow 550W</p>
+                  <p style="color: var(--muted); font-size: 11px;">16 unidades • Silício Monocristalino</p>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">⚡</span>
+                <div>
+                  <p style="font-weight: 700;">Inversor Sungrow 8kW</p>
+                  <p style="color: var(--muted); font-size: 11px;">1 unidade • Wi-Fi integrado</p>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">🔩</span>
+                <div>
+                  <p style="font-weight: 700;">Estrutura de fixação</p>
+                  <p style="color: var(--muted); font-size: 11px;">Alumínio anodizado antiferrugem</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- StickyActionBar (Sem BottomNav conforme spec D13!) -->
+        <div class="sticky-action-bar">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="switchScreen(6)">
+            💬 Conversar
+          </button>
+          <button class="btn btn-cta" style="flex: 1.35;" onclick="switchScreen(7)">
+            Escolher empresa
+          </button>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TELA 3: PROPOSTA COMPLETA (PDF) -->
+      <!-- ========================================== -->
+      <section class="screen-instance" id="screen-3">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <div style="cursor: pointer; font-size: 16px;" onclick="switchScreen(1)">←</div>
+          <span style="font-size: 14px; font-weight: 800;">Proposta Comercial</span>
+          <div style="width: 24px;"></div>
+        </div>
+
+        <div class="screen-scroll" style="align-items: center; justify-content: center; background: #CBD5E1;">
+          <!-- Folha A4 PDF -->
+          <div style="width: 100%; max-width: 330px; height: 460px; background: #fff; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); padding: 20px; position: relative; display: flex; flex-direction: column; justify-content: space-between;">
+            <!-- Contador C5 -->
+            <div style="position: absolute; top: 12px; right: 12px; background: rgba(15,23,42,0.75); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 12px;">
+              1 / 12
+            </div>
+
+            <div>
+              <div style="font-size: 18px; font-weight: 900; color: #FF5500;">SUNGROW</div>
+              <h3 style="font-size: 16px; font-weight: 800; color: var(--ink); margin-top: 4px;">Proposta Comercial</h3>
+              <p style="font-size: 11px; color: var(--muted);">Sistema Fotovoltaico Residencial</p>
+
+              <div style="margin-top: 24px; height: 140px; background: #F1F5F9; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 32px;">
+                🏡☀️
+              </div>
+
+              <div style="margin-top: 16px; font-size: 11px; line-height: 1.5; color: var(--ink);">
+                <p><strong>Cliente:</strong> João da Silva</p>
+                <p><strong>Projeto:</strong> Residencial 8,5 kWp</p>
+                <p><strong>Cidade:</strong> Florianópolis, SC</p>
+              </div>
+            </div>
+
+            <!-- Toolbar inferior de PDF -->
+            <div style="background: rgba(15,23,42,0.85); color: #fff; border-radius: 20px; padding: 6px 16px; display: flex; justify-content: space-around; font-size: 13px; align-items: center;">
+              <span>🔍</span>
+              <span>➕</span>
+              <span>➖</span>
+              <span>⬇️</span>
+              <span>⛶</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky-action-bar">
+          <button class="btn btn-secondary" style="flex: 1;">📥 Baixar PDF</button>
+          <button class="btn btn-cta" style="flex: 1.35;" onclick="switchScreen(7)">Escolher empresa</button>
+        </div>
+
+        <nav class="bottom-nav">
+          <div class="nav-item"><span>🏠</span><span>Início</span></div>
+          <div class="nav-item"><span>🏢</span><span>Empresas</span></div>
+          <div class="nav-item"><span>🔍</span><span>Buscar</span></div>
+          <div class="nav-item active"><span>📋</span><span>Propostas</span></div>
+          <div class="nav-item"><span>💬</span><span>Chat</span></div>
+          <div class="nav-item"><span>👤</span><span>Perfil</span></div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TELA 4: COMPARAR PROPOSTAS -->
+      <!-- ========================================== -->
+      <section class="screen-instance" id="screen-4">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <div style="cursor: pointer; font-size: 16px;" onclick="switchScreen(1)">←</div>
+          <div style="text-align: center;">
+            <p style="font-size: 14px; font-weight: 800;">Comparar propostas</p>
+            <p style="font-size: 10px; color: var(--muted);">Selecione até 3 propostas</p>
+          </div>
+          <div style="width: 24px;"></div>
+        </div>
+
+        <div class="screen-scroll">
+          <!-- 3 ComparisonTiles C16 -->
+          <div style="display: flex; gap: 8px; justify-content: center;">
+            <div style="flex: 1; height: 56px; border: 1px solid var(--brand); background: #EFF6FF; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+              <span style="font-size: 10px; font-weight: 800; color: #FF5500;">SUNGROW</span>
+              <span style="font-size: 9px; font-weight: 700;">R$ 48.500</span>
+              <span style="position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; background: #0F172A; color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center;">✕</span>
+            </div>
+            <div style="flex: 1; height: 56px; border: 1px solid var(--line); background: #FFFFFF; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+              <span style="font-size: 10px; font-weight: 800; color: #16A34A;">GROWATT</span>
+              <span style="font-size: 9px; font-weight: 700;">R$ 46.900</span>
+              <span style="position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; background: #0F172A; color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center;">✕</span>
+            </div>
+            <div style="flex: 1; height: 56px; border: 1px solid var(--line); background: #FFFFFF; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+              <span style="font-size: 10px; font-weight: 800; color: #047857;">SICOOB</span>
+              <span style="font-size: 9px; font-weight: 700;">R$ 52.300</span>
+              <span style="position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; background: #0F172A; color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center;">✕</span>
+            </div>
+          </div>
+
+          <!-- Tabela Comparativa Compacta -->
+          <div class="card" style="padding: 4px; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--line); background: #F8FAFC;">
+                  <th style="padding: 8px 4px; text-align: left; font-weight: 700; color: var(--muted); width: 28%;">Item</th>
+                  <th style="padding: 8px 4px; font-weight: 800; color: var(--brand);">Sungrow</th>
+                  <th style="padding: 8px 4px; font-weight: 700;">Growatt</th>
+                  <th style="padding: 8px 4px; font-weight: 700;">Sicoob</th>
+                </tr>
+              </thead>
+              <tbody style="line-height: 1.8;">
+                <tr style="border-bottom: 1px solid var(--line);">
+                  <td style="text-align: left; font-weight: 600; color: var(--muted); padding: 4px;">Valor total</td>
+                  <td style="font-weight: 900; color: var(--brand);">R$ 48.500</td>
+                  <td style="font-weight: 700;">R$ 46.900</td>
+                  <td style="font-weight: 700;">R$ 52.300</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--line);">
+                  <td style="text-align: left; font-weight: 600; color: var(--muted); padding: 4px;">Potência</td>
+                  <td>8,5 kWp</td>
+                  <td>8,5 kWp</td>
+                  <td>8,5 kWp</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--line);">
+                  <td style="text-align: left; font-weight: 600; color: var(--muted); padding: 4px;">Painéis</td>
+                  <td>Sungrow 575W</td>
+                  <td>Growatt 550W</td>
+                  <td>Trina 550W</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--line);">
+                  <td style="text-align: left; font-weight: 600; color: var(--muted); padding: 4px;">Inversor</td>
+                  <td>Sungrow 8k</td>
+                  <td>Growatt 8k</td>
+                  <td>Sungrow 8k</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--line);">
+                  <td style="text-align: left; font-weight: 600; color: var(--muted); padding: 4px;">Garantia equip.</td>
+                  <td>10 anos</td>
+                  <td>10 anos</td>
+                  <td>10 anos</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--line);">
+                  <td style="text-align: left; font-weight: 600; color: var(--muted); padding: 4px;">Prazo instal.</td>
+                  <td>45 dias</td>
+                  <td>30 dias</td>
+                  <td>60 dias</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--line);">
+                  <td style="text-align: left; font-weight: 600; color: var(--muted); padding: 4px;">Financiamento</td>
+                  <td>Não</td>
+                  <td>Sim</td>
+                  <td>Sim</td>
+                </tr>
+                <tr>
+                  <td style="text-align: left; font-weight: 600; color: var(--muted); padding: 4px;">Visita técnica</td>
+                  <td>Gratuita</td>
+                  <td>Gratuita</td>
+                  <td>Gratuita</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="sticky-action-bar">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="switchScreen(5)">Solicitar ajuste</button>
+          <button class="btn btn-cta" style="flex: 1.35;" onclick="switchScreen(7)">Escolher empresa</button>
+        </div>
+
+        <nav class="bottom-nav">
+          <div class="nav-item"><span>🏠</span><span>Início</span></div>
+          <div class="nav-item"><span>🏢</span><span>Empresas</span></div>
+          <div class="nav-item"><span>🔍</span><span>Buscar</span></div>
+          <div class="nav-item active"><span>📋</span><span>Propostas</span></div>
+          <div class="nav-item"><span>💬</span><span>Chat</span></div>
+          <div class="nav-item"><span>👤</span><span>Perfil</span></div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TELA 5: PERSONALIZAR SOLICITAÇÃO -->
+      <!-- ========================================== -->
+      <section class="screen-instance" id="screen-5">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <div style="cursor: pointer; font-size: 16px;" onclick="switchScreen(1)">←</div>
+          <span style="font-size: 14px; font-weight: 800;">Solicitar proposta</span>
+          <div style="width: 24px;"></div>
+        </div>
+
+        <div class="screen-scroll">
+          <!-- Stepper 1-2-3 -->
+          <div style="display: flex; justify-content: center; gap: 20px; align-items: center; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--brand); font-weight: 700;">
+              <span style="width: 18px; height: 18px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px;">✓</span>
+              <span>Projeto</span>
+            </div>
+            <span style="color: var(--line);">—</span>
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--brand); font-weight: 800;">
+              <span style="width: 18px; height: 18px; border-radius: 50%; background: #EFF6FF; border: 2px solid var(--brand); color: var(--brand); display: flex; align-items: center; justify-content: center; font-size: 10px;">2</span>
+              <span>Detalhes</span>
+            </div>
+            <span style="color: var(--line);">—</span>
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted);">
+              <span style="width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line); color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 10px;">3</span>
+              <span>Revisar</span>
+            </div>
+          </div>
+
+          <h3 style="font-size: 16px; font-weight: 800;">Personalize sua solicitação</h3>
+          <p style="font-size: 11px; color: var(--muted);">Ajuste as informações do seu projeto para enviar ao fornecedor.</p>
+
+          <!-- Chips segmentados kWp C6 -->
+          <div style="margin-top: 8px;">
+            <label style="font-size: 12px; font-weight: 700; color: var(--ink); display: block; margin-bottom: 6px;">Potência desejada (kWp)</label>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;">
+              <button class="btn btn-secondary" style="height: 36px; padding: 0;">5</button>
+              <button class="btn btn-secondary" style="height: 36px; padding: 0; background: #EFF6FF; border-color: var(--brand); color: var(--brand);">8,5</button>
+              <button class="btn btn-secondary" style="height: 36px; padding: 0;">10</button>
+              <button class="btn btn-secondary" style="height: 36px; padding: 0;">15</button>
+              <button class="btn btn-secondary" style="height: 36px; padding: 0;">Outro</button>
+            </div>
+          </div>
+
+          <!-- Tipo de instalação (3 cards) -->
+          <div style="margin-top: 8px;">
+            <label style="font-size: 12px; font-weight: 700; color: var(--ink); display: block; margin-bottom: 6px;">Tipo de instalação</label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+              <div class="card" style="text-align: center; border-color: var(--brand); background: #EFF6FF; padding: 10px 4px;">
+                <span style="font-size: 20px;">🏠</span>
+                <p style="font-size: 11px; font-weight: 700; color: var(--brand); margin-top: 4px;">Telhado</p>
+              </div>
+              <div class="card" style="text-align: center; padding: 10px 4px;">
+                <span style="font-size: 20px;">🌾</span>
+                <p style="font-size: 11px; font-weight: 600; color: var(--ink); margin-top: 4px;">Solo</p>
+              </div>
+              <div class="card" style="text-align: center; padding: 10px 4px;">
+                <span style="font-size: 20px;">🚗</span>
+                <p style="font-size: 11px; font-weight: 600; color: var(--ink); margin-top: 4px;">Carport</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Necessita Financiamento Toggle C7 -->
+          <div style="margin-top: 8px;">
+            <label style="font-size: 12px; font-weight: 700; color: var(--ink); display: block; margin-bottom: 6px;">Necessita financiamento?</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <button class="btn btn-secondary" style="background: #EFF6FF; border-color: var(--brand); color: var(--brand);">Sim</button>
+              <button class="btn btn-secondary">Não</button>
+            </div>
+          </div>
+
+          <!-- Observações Textarea -->
+          <div style="margin-top: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 4px;">
+              <span>Observações (opcional)</span>
+              <span style="font-size: 10px; color: var(--muted); font-weight: normal;">0/500</span>
+            </div>
+            <textarea placeholder="Gostaria de incluir monitoramento por aplicativo e visita técnica gratuita." style="width: 100%; height: 64px; border: 1px solid var(--line); border-radius: 10px; padding: 8px; font-size: 12px; font-family: inherit; resize: none;"></textarea>
+          </div>
+
+          <button class="btn btn-cta" style="width: 100%; margin-top: 8px;" onclick="switchScreen(1)">
+            Enviar solicitação
+          </button>
+        </div>
+
+        <nav class="bottom-nav">
+          <div class="nav-item"><span>🏠</span><span>Início</span></div>
+          <div class="nav-item"><span>🏢</span><span>Empresas</span></div>
+          <div class="nav-item"><span>🔍</span><span>Buscar</span></div>
+          <div class="nav-item active"><span>📋</span><span>Propostas</span></div>
+          <div class="nav-item"><span>💬</span><span>Chat</span></div>
+          <div class="nav-item"><span>👤</span><span>Perfil</span></div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TELA 6: CONVERSA COM A EMPRESA (CHAT) -->
+      <!-- ========================================== -->
+      <section class="screen-instance" id="screen-6">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="cursor: pointer; font-size: 16px;" onclick="switchScreen(1)">←</div>
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #FF5500; color: #fff; font-size: 8px; font-weight: 900; display: flex; align-items: center; justify-content: center;">SG</div>
+            <div>
+              <p style="font-size: 13px; font-weight: 800; line-height: 1.1;">Sungrow Brasil</p>
+              <p style="font-size: 10px; color: #16A34A; font-weight: 600;">● Online agora</p>
+            </div>
+          </div>
+          <span style="font-size: 16px; color: var(--muted); cursor: pointer;">⋮</span>
+        </div>
+
+        <!-- Thread de Chat -->
+        <div class="screen-scroll" style="background: #F8FAFC;">
+          <!-- System message C18 -->
+          <div style="align-self: center; background: #E2E8F0; padding: 4px 12px; border-radius: 12px; font-size: 10px; color: var(--muted); font-weight: 600; margin: 8px 0;">
+            Conversa iniciada • 06/10 10:15
+          </div>
+
+          <!-- Mensagem da empresa -->
+          <div class="chat-bubble them">
+            <p>Olá, João! Recebemos sua solicitação de proposta para 8,5 kWp. Posso te ajudar com alguma informação?</p>
+            <div class="chat-time">10:24</div>
+          </div>
+
+          <!-- Mensagem do comprador -->
+          <div class="chat-bubble me">
+            <p>Olá! Gostaria de saber se a visita técnica é gratuita e qual o prazo de instalação.</p>
+            <div class="chat-time">10:26</div>
+          </div>
+
+          <!-- Mensagem da empresa com anexo -->
+          <div class="chat-bubble them">
+            <p>Sim, a visita técnica é gratuita. O prazo médio de instalação para projetos residenciais é de 30 a 45 dias, dependendo da sua localidade.</p>
+            <!-- Card de anexo PDF -->
+            <div style="margin-top: 8px; padding: 8px; background: #F1F5F9; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer;" onclick="switchScreen(3)">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 18px;">📄</span>
+                <div>
+                  <p style="font-size: 11px; font-weight: 700; color: var(--ink);">Proposta_Sungrow.pdf</p>
+                  <p style="font-size: 9px; color: var(--muted);">2,4 MB</p>
+                </div>
+              </div>
+              <span style="font-size: 14px;">⬇️</span>
+            </div>
+            <div class="chat-time">10:28</div>
+          </div>
+        </div>
+
+        <!-- Chips de atalho C8/C9 acima do composer -->
+        <div style="background: var(--surface); border-top: 1px solid var(--line); padding: 6px 12px; display: flex; gap: 6px; overflow-x: auto;">
+          <span style="background: #EFF6FF; border: 1px solid var(--brand-200); color: var(--brand); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; cursor: pointer;">Agendar visita</span>
+          <span style="background: #EFF6FF; border: 1px solid var(--brand-200); color: var(--brand); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; cursor: pointer;">Tirar dúvida</span>
+          <span style="background: #EFF6FF; border: 1px solid var(--brand-200); color: var(--brand); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; cursor: pointer;">Solicitar ajuste</span>
+        </div>
+
+        <!-- Composer Fixo (SEM BottomNav conforme D13!) -->
+        <div style="height: 56px; background: var(--surface); border-top: 1px solid var(--line); padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+          <input type="text" placeholder="Digite sua mensagem..." style="flex: 1; height: 38px; border: 1px solid var(--line); border-radius: 20px; padding: 0 14px; font-size: 12px; font-family: inherit;">
+          <button style="width: 36px; height: 36px; border-radius: 50%; border: none; background: #F1F5F9; color: var(--muted); font-size: 14px; cursor: pointer;">📎</button>
+          <button style="width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--brand); color: #fff; font-size: 14px; cursor: pointer;">➤</button>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TELA 7: ESCOLHER EMPRESA (SUCESSO) -->
+      <!-- ========================================== -->
+      <section class="screen-instance" id="screen-7">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <a href="#" class="brand-logo">Avalia Solar</a>
+          <span style="font-size: 13px; font-weight: 800;">Escolher empresa</span>
+          <div style="font-size: 16px;">⋮</div>
+        </div>
+
+        <div class="screen-scroll" style="text-align: center; padding-top: 24px;">
+          <!-- Ícone de Sucesso -->
+          <div style="width: 64px; height: 64px; border-radius: 50%; background: #ECFDF5; border: 3px solid #10B981; color: #10B981; font-size: 32px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; box-shadow: 0 8px 16px rgba(16,185,129,0.2);">
+            ✓
+          </div>
+
+          <h2 style="font-size: 18px; font-weight: 900; color: var(--ink);">Empresa escolhida!</h2>
+          <p style="font-size: 14px; font-weight: 700; color: var(--brand);">Sungrow Brasil</p>
+
+          <p style="font-size: 12px; color: var(--muted); margin: 8px 16px 20px 16px; line-height: 1.4;">
+            A empresa foi notificada e entrará em contato para os próximos passos da vistoria e contratação.
+          </p>
+
+          <!-- Timeline Vertical -->
+          <div class="card" style="text-align: left; padding: 16px;">
+            <h4 style="font-size: 12px; font-weight: 800; color: var(--ink); margin-bottom: 12px;">Próximos passos do seu projeto</h4>
+
+            <div style="display: flex; flex-direction: column; gap: 16px; position: relative;">
+              <div style="position: absolute; left: 11px; top: 12px; bottom: 12px; width: 2px; background: var(--line);"></div>
+
+              <div style="display: flex; gap: 12px; align-items: flex-start; position: relative; z-index: 2;">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;">✓</div>
+                <div>
+                  <p style="font-size: 12px; font-weight: 700;">Proposta selecionada</p>
+                  <p style="font-size: 10px; color: var(--muted);">Hoje, 06/10/2026</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; align-items: flex-start; position: relative; z-index: 2;">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: #EFF6FF; border: 2px solid var(--brand); color: var(--brand); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;">2</div>
+                <div>
+                  <p style="font-size: 12px; font-weight: 700; color: var(--brand);">Aguardando contato da empresa</p>
+                  <p style="font-size: 10px; color: var(--muted);">Em até 24 horas úteis</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; align-items: flex-start; position: relative; z-index: 2;">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: #F1F5F9; color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;">3</div>
+                <div>
+                  <p style="font-size: 12px; font-weight: 600; color: var(--muted);">Ajustes e visita técnica</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; align-items: flex-start; position: relative; z-index: 2;">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: #F1F5F9; color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;">4</div>
+                <div>
+                  <p style="font-size: 12px; font-weight: 600; color: var(--muted);">Assinatura do contrato</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; align-items: flex-start; position: relative; z-index: 2;">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: #F1F5F9; color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;">5</div>
+                <div>
+                  <p style="font-size: 12px; font-weight: 600; color: var(--muted);">Instalação e homologação</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky-action-bar">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="switchScreen(2)">Ver proposta</button>
+          <button class="btn btn-cta" style="flex: 1.35;" onclick="switchScreen(8)">Ir para acompanhamento</button>
+        </div>
+
+        <nav class="bottom-nav">
+          <div class="nav-item"><span>🏠</span><span>Início</span></div>
+          <div class="nav-item"><span>🏢</span><span>Empresas</span></div>
+          <div class="nav-item"><span>🔍</span><span>Buscar</span></div>
+          <div class="nav-item active"><span>📋</span><span>Propostas</span></div>
+          <div class="nav-item"><span>💬</span><span>Chat</span></div>
+          <div class="nav-item"><span>👤</span><span>Perfil</span></div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TELA 8: ACOMPANHAMENTO -->
+      <!-- ========================================== -->
+      <section class="screen-instance" id="screen-8">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <div style="cursor: pointer; font-size: 16px;" onclick="switchScreen(1)">←</div>
+          <a href="#" class="brand-logo">Avalia Solar</a>
+          <div style="font-size: 16px;">⋮</div>
+        </div>
+
+        <div class="screen-scroll">
+          <h3 style="font-size: 16px; font-weight: 800;">Projeto Residencial</h3>
+          <p style="font-size: 11px; color: var(--muted);">Florianópolis, SC • 8,5 kWp</p>
+
+          <!-- Stepper 5 etapas de obra -->
+          <div class="stepper-horizontal">
+            <div class="stepper-line"></div>
+            <div class="stepper-line-progress" style="width: 25%;"></div>
+
+            <div class="step-node completed">
+              <div class="step-circle">✓</div>
+              <span class="step-label">Escolhida</span>
+            </div>
+            <div class="step-node active">
+              <div class="step-circle">2</div>
+              <span class="step-label">Visita</span>
+            </div>
+            <div class="step-node">
+              <div class="step-circle">3</div>
+              <span class="step-label">Contrato</span>
+            </div>
+            <div class="step-node">
+              <div class="step-circle">4</div>
+              <span class="step-label">Instalação</span>
+            </div>
+            <div class="step-node">
+              <div class="step-circle">5</div>
+              <span class="step-label">Concluído</span>
+            </div>
+          </div>
+
+          <!-- Card de Visita Agendada -->
+          <div class="card" style="border-left: 4px solid var(--brand); cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <span style="font-size: 24px;">📅</span>
+                <div>
+                  <p style="font-size: 13px; font-weight: 800; color: var(--ink);">Visita técnica agendada</p>
+                  <p style="font-size: 11px; color: var(--brand); font-weight: 700;">Quinta-feira, 09/10/2026 às 10h</p>
+                  <p style="font-size: 10px; color: var(--muted);">Técnico: Carlos Oliveira</p>
+                </div>
+              </div>
+              <span>›</span>
+            </div>
+          </div>
+
+          <!-- Seção Documentos -->
+          <div>
+            <h4 style="font-size: 13px; font-weight: 800; margin-bottom: 8px;">Documentos</h4>
+            <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="font-size: 20px; color: #EF4444;">📕</span>
+                <div>
+                  <p style="font-size: 12px; font-weight: 700;">Proposta comercial</p>
+                  <p style="font-size: 10px; color: var(--muted);">Sungrow Brasil • Recebido em 06/10/2026</p>
+                </div>
+              </div>
+              <span style="cursor: pointer; font-size: 14px;">⬇️</span>
+            </div>
+          </div>
+
+          <!-- Seção Histórico -->
+          <div>
+            <h4 style="font-size: 13px; font-weight: 800; margin-bottom: 8px;">Histórico</h4>
+            <div class="card" style="display: flex; flex-direction: column; gap: 10px; font-size: 11px;">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="color: #10B981; font-weight: 900;">✓</span>
+                <div>
+                  <p style="font-weight: 700;">Empresa escolhida</p>
+                  <p style="color: var(--muted); font-size: 10px;">06/10/2026 às 14:32</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="color: var(--brand); font-weight: 900;">✓</span>
+                <div>
+                  <p style="font-weight: 700;">Proposta recebida</p>
+                  <p style="color: var(--muted); font-size: 10px;">06/10/2026 às 10:15</p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="color: var(--brand); font-weight: 900;">✓</span>
+                <div>
+                  <p style="font-weight: 700;">Conversa iniciada</p>
+                  <p style="color: var(--muted); font-size: 10px;">05/10/2026 às 14:35</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-brand" style="width: 100%; margin-top: 8px;" onclick="switchScreen(10)">
+            Simular Conclusão de Projeto
+          </button>
+        </div>
+
+        <nav class="bottom-nav">
+          <div class="nav-item"><span>🏠</span><span>Início</span></div>
+          <div class="nav-item"><span>🏢</span><span>Empresas</span></div>
+          <div class="nav-item"><span>🔍</span><span>Buscar</span></div>
+          <div class="nav-item active"><span>📋</span><span>Propostas</span></div>
+          <div class="nav-item"><span>💬</span><span>Chat</span></div>
+          <div class="nav-item"><span>👤</span><span>Perfil</span></div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TELA 9: PERFIL DA EMPRESA -->
+      <!-- ========================================== -->
+      <section class="screen-instance" id="screen-9">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <div style="cursor: pointer; font-size: 16px;" onclick="switchScreen(2)">←</div>
+          <span style="font-size: 14px; font-weight: 800;">Perfil da empresa</span>
+          <div style="display: flex; gap: 10px; font-size: 16px;">
+            <span>🤍</span>
+            <span>↗️</span>
+          </div>
+        </div>
+
+        <div class="screen-scroll" style="padding-top: 0;">
+          <!-- Hero da Empresa -->
+          <div style="margin: -12px -16px 12px -16px; height: 140px; background: #334155; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 36px;">
+            🏢🏭
+          </div>
+
+          <!-- Header da Empresa -->
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #FF5500; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px;">
+              SUNGROW
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <h3 style="font-size: 16px; font-weight: 800;">Sungrow Brasil</h3>
+                <span class="verified-badge">✓</span>
+              </div>
+              <div class="rating-pill">
+                <span style="color: var(--star)">★</span>
+                <span class="rating-val">4,8</span>
+                <span>(126 avaliações) • Florianópolis, SC</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Stats Grid -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; margin-top: 8px;">
+            <div class="card" style="padding: 8px 2px;">
+              <p style="font-size: 14px; font-weight: 900; color: var(--ink);">4,8</p>
+              <p style="font-size: 9px; color: var(--muted);">Avaliação</p>
+            </div>
+            <div class="card" style="padding: 8px 2px;">
+              <p style="font-size: 14px; font-weight: 900; color: var(--ink);">126</p>
+              <p style="font-size: 9px; color: var(--muted);">Avaliações</p>
+            </div>
+            <div class="card" style="padding: 8px 2px;">
+              <p style="font-size: 14px; font-weight: 900; color: var(--ink);">1.200+</p>
+              <p style="font-size: 9px; color: var(--muted);">Projetos</p>
+            </div>
+            <div class="card" style="padding: 8px 2px;">
+              <p style="font-size: 14px; font-weight: 900; color: var(--ink);">8</p>
+              <p style="font-size: 9px; color: var(--muted);">Anos</p>
+            </div>
+          </div>
+
+          <!-- Sobre a Empresa -->
+          <div class="card">
+            <h4 style="font-size: 12px; font-weight: 800; margin-bottom: 4px;">Sobre a empresa</h4>
+            <p style="font-size: 11px; color: var(--muted); line-height: 1.4;">
+              A Sungrow é líder global em inversores solares, presente no Brasil com soluções completas para projetos residenciais, comerciais e de grande porte.
+              <span style="color: var(--brand); font-weight: 600; cursor: pointer;">Ver mais</span>
+            </p>
+          </div>
+
+          <!-- 3 Selos de Confiança C15 -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+            <div class="card" style="text-align: center; padding: 8px 4px;">
+              <span style="font-size: 18px;">👷</span>
+              <p style="font-size: 10px; font-weight: 700; color: var(--ink); margin-top: 2px;">Equipe própria</p>
+              <p style="font-size: 9px; color: var(--muted);">Instalação</p>
+            </div>
+            <div class="card" style="text-align: center; padding: 8px 4px;">
+              <span style="font-size: 18px;">🇧🇷</span>
+              <p style="font-size: 10px; font-weight: 700; color: var(--ink); margin-top: 2px;">Suporte Brasil</p>
+              <p style="font-size: 9px; color: var(--muted);">Pós-venda</p>
+            </div>
+            <div class="card" style="text-align: center; padding: 8px 4px;">
+              <span style="font-size: 18px;">🛠️</span>
+              <p style="font-size: 10px; font-weight: 700; color: var(--ink); margin-top: 2px;">Assistência</p>
+              <p style="font-size: 9px; color: var(--muted);">Autorizada</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky-action-bar">
+          <button class="btn btn-secondary" style="flex: 1;" onclick="switchScreen(6)">Conversar</button>
+          <button class="btn btn-cta" style="flex: 1.35;" onclick="switchScreen(5)">Solicitar proposta</button>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TELA 10: CONCLUSÃO DE PROJETO -->
+      <!-- ========================================== -->
+      <section class="screen-instance" id="screen-10">
+        <div class="ios-status-bar">
+          <span>9:41</span>
+          <div class="ios-notch"></div>
+          <span>􀋒 􀙇 􀛨</span>
+        </div>
+
+        <div class="app-header">
+          <a href="#" class="brand-logo">Avalia Solar</a>
+          <span style="font-size: 13px; font-weight: 800;">Conclusão</span>
+          <div style="font-size: 16px;">⋮</div>
+        </div>
+
+        <div class="screen-scroll" style="text-align: center; padding-top: 16px;">
+          <!-- Ilustração Casa com Painéis e Check Verde -->
+          <div style="font-size: 54px; margin-bottom: 4px;">
+            🏡☀️
+          </div>
+          <div style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: #10B981; color: #fff; font-size: 18px; font-weight: 900; margin-bottom: 8px;">
+            ✓
+          </div>
+
+          <h2 style="font-size: 20px; font-weight: 900; color: var(--ink);">Projeto concluído!</h2>
+          <p style="font-size: 12px; color: var(--muted); margin-top: 2px;">Seu sistema solar está gerando energia limpa.</p>
+
+          <!-- 4 Métricas de Conclusão -->
+          <div class="card" style="text-align: left; margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px; color: var(--brand);">⚡</span>
+                <span style="font-size: 12px; font-weight: 600; color: var(--muted);">Potência instalada</span>
+              </div>
+              <span style="font-size: 13px; font-weight: 800; color: var(--ink);">8,5 kWp</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px; color: #F59E0B;">☀️</span>
+                <span style="font-size: 12px; font-weight: 600; color: var(--muted);">Geração estimada</span>
+              </div>
+              <span style="font-size: 13px; font-weight: 800; color: var(--ink);">1.050 kWh/mês</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px; color: #10B981;">💰</span>
+                <span style="font-size: 12px; font-weight: 600; color: var(--muted);">Economia estimada</span>
+              </div>
+              <span style="font-size: 13px; font-weight: 800; color: #10B981;">R$ 650/mês</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px; color: #047857;">🌱</span>
+                <span style="font-size: 12px; font-weight: 600; color: var(--muted);">CO₂ evitado</span>
+              </div>
+              <span style="font-size: 13px; font-weight: 800; color: var(--ink);">1,2 ton/ano</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+            <button class="btn btn-brand" style="width: 100%;">+ Avaliar empresa</button>
+            <button class="btn btn-secondary" style="width: 100%;" onclick="switchScreen(1)">Ver meus projetos</button>
+          </div>
+        </div>
+
+        <nav class="bottom-nav">
+          <div class="nav-item"><span>🏠</span><span>Início</span></div>
+          <div class="nav-item"><span>🏢</span><span>Empresas</span></div>
+          <div class="nav-item"><span>🔍</span><span>Buscar</span></div>
+          <div class="nav-item active"><span>📋</span><span>Propostas</span></div>
+          <div class="nav-item"><span>💬</span><span>Chat</span></div>
+          <div class="nav-item"><span>👤</span><span>Perfil</span></div>
+        </nav>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    let currentScreen = 1;
+    let isGrid = false;
+
+    function switchScreen(screenNum) {
+      currentScreen = screenNum;
+      document.getElementById('screen-selector').value = screenNum;
+
+      if (!isGrid) {
+        document.querySelectorAll('.screen-instance').forEach(el => {
+          el.classList.remove('active-screen');
+        });
+        const target = document.getElementById('screen-' + screenNum);
+        if (target) {
+          target.classList.add('active-screen');
+          target.querySelector('.screen-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+    }
+
+    function setMode(mode) {
+      const stage = document.getElementById('proto-stage');
+      const btnSingle = document.getElementById('btn-single-mode');
+      const btnGrid = document.getElementById('btn-grid-mode');
+      const mainPhone = document.getElementById('main-phone-frame');
+
+      if (mode === 'grid') {
+        isGrid = true;
+        btnSingle.classList.remove('active');
+        btnGrid.classList.add('active');
+        stage.classList.add('grid-mode');
+
+        // Cria 10 clones dos frames se ainda não criou
+        if (!stage.dataset.gridReady) {
+          stage.innerHTML = '';
+          for (let i = 1; i <= 10; i++) {
+            const frame = document.createElement('div');
+            frame.className = 'mobile-frame';
+            frame.style.height = '844px';
+            frame.style.marginBottom = '20px';
+
+            const originalScreen = document.getElementById('screen-' + i) || mainPhone.querySelector('#screen-' + i);
+            if (originalScreen) {
+              const clone = originalScreen.cloneNode(true);
+              clone.classList.add('active-screen');
+              frame.appendChild(clone);
+            }
+            stage.appendChild(frame);
+          }
+          stage.dataset.gridReady = 'true';
+        }
+      } else {
+        isGrid = false;
+        btnGrid.classList.remove('active');
+        btnSingle.classList.add('active');
+        stage.classList.remove('grid-mode');
+        window.location.reload();
+      }
+    }
+  </script>
+</body>
+</html>

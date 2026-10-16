@@ -282,47 +282,32 @@ export function ProposalCompactCard({
         >
           <FileText className="h-3.5 w-3.5 text-slate-500" />
           <span className="truncate">
-            {isComplete || isAccepted ? 'Ver projeto' : isSentOrReady ? 'Ver proposta' : 'Acompanhar'}
+            {isComplete || isAccepted ? 'Ver projeto' : isSentOrReady ? 'Ver proposta (PDF)' : 'Acompanhar'}
           </span>
         </Button>
 
-        {/* 2. Conversar (chat direto com instalador) */}
-        {onConversation ? (
+        {/* 2. Conversar (chat direto com instalador - visível se handler fornecido) */}
+        {onConversation && (
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => onConversation(proposal)}
             aria-label={`Conversar com ${proposal.company.name}`}
-            className="flex-1 h-9 rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 px-2.5 gap-1.5"
+            className="h-9 px-2 rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 gap-1"
           >
             <MessageCircle className="h-3.5 w-3.5 text-slate-500" />
-            <span className="truncate">Conversar</span>
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            asChild
-            className="flex-1 h-9 rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 px-2.5 gap-1.5"
-          >
-            <Link
-              href={proposalChatUrl(proposal)}
-              aria-label={`Conversar com ${proposal.company.name}`}
-            >
-              <MessageCircle className="h-3.5 w-3.5 text-slate-500" />
-              <span className="truncate">Conversar</span>
-            </Link>
+            <span className="sr-only sm:not-sr-only sm:inline truncate">Chat</span>
           </Button>
         )}
 
-        {/* 3. Escolher empresa (botão primário amarelo/destaque) */}
+        {/* 3. Escolher empresa (botão primário amarelo/destaque com flex-[1.35]) */}
         {isComplete ? (
           <Button
             type="button"
             size="sm"
             onClick={() => onOpen(proposal)}
-            className="flex-1 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-2.5 gap-1 shadow-xs"
+            className="flex-[1.35] h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-2.5 gap-1 shadow-xs"
           >
             <Check className="h-3.5 w-3.5" />
             <span className="truncate">Concluído</span>
@@ -332,7 +317,7 @@ export function ProposalCompactCard({
             type="button"
             size="sm"
             onClick={() => onOpen(proposal)}
-            className="flex-1 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-2.5 gap-1 shadow-xs"
+            className="flex-[1.35] h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-2.5 gap-1 shadow-xs"
           >
             <Check className="h-3.5 w-3.5" />
             <span className="truncate">Escolhida</span>
@@ -346,9 +331,9 @@ export function ProposalCompactCard({
               else onOpen(proposal);
             }}
             aria-label={`Escolher ${proposal.company.name}`}
-            className="flex-1 h-9 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold px-2.5 shadow-xs transition-colors"
+            className="flex-[1.35] h-9 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-bold px-2.5 shadow-xs transition-colors"
           >
-            <span className="truncate">Escolher</span>
+            <span className="truncate">Escolher empresa</span>
           </Button>
         ) : (
           <Button

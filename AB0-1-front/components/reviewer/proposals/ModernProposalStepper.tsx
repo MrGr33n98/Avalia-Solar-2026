@@ -100,12 +100,57 @@ export function ModernProposalStepper({
           </button>
         </div>
 
-        {/* Barra fina de progresso no mobile com 5 etapas */}
-        <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+        {/* ── Stepper 5 círculos horizontais no mobile (fiel às telas 1 e 8) ── */}
+        <div className="mt-3 flex items-center justify-between relative px-1 py-1">
+          <div className="absolute left-4 right-4 top-3 h-0.5 bg-slate-200 -z-0" aria-hidden="true" />
           <div
-            className="h-full bg-blue-600 transition-all duration-300 rounded-full"
-            style={{ width: `${Math.min(100, Math.max(20, (activeStageId / totalStages) * 100))}%` }}
+            className="absolute left-4 top-3 h-0.5 bg-blue-600 transition-all duration-300 -z-0"
+            style={{
+              width: `${Math.min(
+                100,
+                Math.max(0, ((Math.min(activeStageId, totalStages) - 1) / (totalStages - 1)) * 100)
+              )}%`,
+            }}
+            aria-hidden="true"
           />
+
+          {JOURNEY_STAGES.map((stage) => {
+            const isActive = stage.id === activeStageId;
+            const isDone = stage.id < processStageId;
+            const canOpen = isStageAccessible(stage.id, proposal, canCompare);
+
+            return (
+              <button
+                key={stage.id}
+                type="button"
+                disabled={!canOpen && !isActive}
+                onClick={() => handleStageClick(stage.id)}
+                className="flex flex-col items-center gap-1 z-10 focus:outline-none"
+                aria-label={`Etapa ${stage.id}: ${stage.label}`}
+              >
+                <span
+                  className={cn(
+                    'flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all shadow-2xs',
+                    isActive
+                      ? 'border-2 border-blue-600 bg-white text-blue-600 ring-2 ring-blue-600/20'
+                      : isDone
+                      ? 'bg-blue-600 text-white'
+                      : 'border-2 border-slate-200 bg-white text-slate-400'
+                  )}
+                >
+                  {isDone ? <Check className="h-3 w-3 stroke-[3]" /> : stage.id}
+                </span>
+                <span
+                  className={cn(
+                    'text-[9px] font-semibold leading-tight max-w-[56px] truncate text-center',
+                    isActive ? 'text-blue-600 font-bold' : isDone ? 'text-slate-700' : 'text-slate-400'
+                  )}
+                >
+                  {stage.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Menu expansível de etapas no mobile */}
