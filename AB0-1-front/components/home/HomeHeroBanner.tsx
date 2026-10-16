@@ -147,24 +147,18 @@ export function HomeHeroBanner({
               className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.01]"
             />
 
-            {/* Gradiente escuro para contraste e legibilidade de leitura */}
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/65 to-transparent"
-            />
-
             <div className="absolute inset-0 flex flex-col justify-center px-5 sm:px-8 md:px-10 max-w-lg z-10">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight tracking-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
                 {bannerTitle}
               </h1>
               {currentSubtitle && (
-                <p className="mt-2 text-xs sm:text-sm text-slate-200 line-clamp-2 leading-relaxed">
+                <p className="mt-2 text-xs sm:text-sm text-white line-clamp-2 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">
                   {currentSubtitle}
                 </p>
               )}
 
               <div className="mt-4 flex items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-950 shadow-sm transition-all hover:bg-amber-300 active:scale-95">
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-950 shadow-md transition-all hover:bg-amber-300 active:scale-95">
                   <span>{currentCtaText}</span>
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </span>
