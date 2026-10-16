@@ -19,11 +19,11 @@
 
 ## PR 1 — Contrato e Banco Aditivo (P0)
 
-- [ ] **T008:** Adicionar placement `home_hero` em `BannerPlacements::Catalog` com dimensões `[1920, 420]` sem alterar `home_top`.
-- [ ] **T009:** Migration aditiva no Rails para os campos `headline`, `subtitle`, `cta_label`, `cta_href`, `cta_enabled`, `theme`, `cta_variant`, `hero_background_color`, `hero_text_color`, `cta_background_color`, `cta_text_color`, `overlay_variant`, `creative_mode`, `object_position_*`, `whole_banner_clickable`, `creative_version` e anexo `image_mobile`.
-- [ ] **T010:** Validações de modelo para segurança de URLs (apenas HTTPS absoluto ou caminhos internos `/...`), tamanho máximo de texto, MIME types e peso de imagem.
-- [ ] **T011:** Atualizar serializer público em `Api::V1::BannersController` para incluir os novos atributos mantendo compatibilidade com clientes legados.
-- [ ] **T012:** Testes RSpec para `Banner`, `BannerPlacements::Catalog` e `BannersController` cobrindo o novo placement e validações.
+- [x] **T008:** Adicionar placement `home_hero` em `BannerPlacements::Catalog` com dimensões `[1920, 420]` sem alterar `home_top`.
+- [x] **T009:** Migration aditiva no Rails para os campos `headline`, `subtitle`, `cta_label`, `cta_href`, `cta_enabled`, `theme`, `cta_variant`, `hero_background_color`, `hero_text_color`, `cta_background_color`, `cta_text_color`, `overlay_variant`, `creative_mode`, `object_position_*`, `whole_banner_clickable`, `creative_version` e anexo `image_mobile`.
+- [x] **T010:** Validações de modelo para segurança de URLs (apenas HTTPS absoluto ou caminhos internos `/...`), tamanho máximo de texto, MIME types e peso de imagem.
+- [x] **T011:** Atualizar serializer público em `Api::V1::BannersController` para incluir os novos atributos mantendo compatibilidade com clientes legados.
+- [x] **T012:** Testes RSpec para `Banner`, `BannerPlacements::Catalog` e `BannersController` cobrindo o novo placement e validações.
 
 ---
 

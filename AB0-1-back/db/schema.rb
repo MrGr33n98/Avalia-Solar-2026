@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_10_15_110000) do
+ActiveRecord::Schema[7.0].define(version: 2026_10_16_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -444,6 +444,25 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_15_110000) do
     t.string "alt_text"
     t.bigint "financial_institution_id"
     t.bigint "financing_option_id"
+    t.string "headline", limit: 110
+    t.text "subtitle"
+    t.string "cta_label", limit: 36
+    t.string "cta_href", limit: 2048
+    t.boolean "cta_enabled", default: true, null: false
+    t.string "theme", default: "dark", null: false
+    t.string "cta_variant", default: "solar_yellow", null: false
+    t.string "hero_background_color", limit: 7
+    t.string "hero_text_color", limit: 7
+    t.string "cta_background_color", limit: 7
+    t.string "cta_text_color", limit: 7
+    t.string "overlay_variant", default: "left_soft", null: false
+    t.string "creative_mode", default: "photo_with_html", null: false
+    t.integer "object_position_desktop_x", default: 50, null: false
+    t.integer "object_position_desktop_y", default: 50, null: false
+    t.integer "object_position_mobile_x", default: 50, null: false
+    t.integer "object_position_mobile_y", default: 50, null: false
+    t.boolean "whole_banner_clickable", default: false, null: false
+    t.integer "creative_version", default: 1, null: false
     t.index ["active", "moderation_status", "position"], name: "idx_banners_active_approved", where: "((active = true) AND ((moderation_status)::text = 'approved'::text))"
     t.index ["approved_by_admin_user_id"], name: "index_banners_on_approved_by_admin_user_id"
     t.index ["category_id"], name: "index_banners_on_category_id"
@@ -2749,7 +2768,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_15_110000) do
     t.index ["agent_identity_id", "status"], name: "index_mcp_agent_credentials_on_agent_identity_id_and_status"
     t.index ["agent_identity_id"], name: "index_mcp_agent_credentials_on_agent_identity_id"
     t.index ["key_id"], name: "index_mcp_agent_credentials_on_key_id", unique: true
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'revoked'::character varying, 'expired'::character varying]::text[])", name: "chk_mcp_agent_credentials_status"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'revoked'::character varying::text, 'expired'::character varying::text])", name: "chk_mcp_agent_credentials_status"
   end
 
   create_table "mcp_approval_requests", force: :cascade do |t|
@@ -2784,8 +2803,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_15_110000) do
     t.index ["status", "expires_at"], name: "index_mcp_approval_requests_on_status_and_expires_at"
     t.index ["status"], name: "index_mcp_approval_requests_on_status"
     t.index ["tenant_id"], name: "index_mcp_approval_requests_on_tenant_id"
-    t.check_constraint "risk_tier::text = ANY (ARRAY['r0'::character varying, 'r1'::character varying, 'r2'::character varying, 'r3'::character varying, 'r4'::character varying]::text[])", name: "chk_mcp_approval_requests_risk_tier"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'executed'::character varying, 'expired'::character varying]::text[])", name: "chk_mcp_approval_requests_status"
+    t.check_constraint "risk_tier::text = ANY (ARRAY['r0'::character varying::text, 'r1'::character varying::text, 'r2'::character varying::text, 'r3'::character varying::text, 'r4'::character varying::text])", name: "chk_mcp_approval_requests_risk_tier"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text, 'executed'::character varying::text, 'expired'::character varying::text])", name: "chk_mcp_approval_requests_status"
   end
 
   create_table "milestones", force: :cascade do |t|
@@ -4316,7 +4335,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_15_110000) do
     t.index ["owner_id"], name: "idx_sales_seq_enroll_owner"
     t.index ["sales_account_id"], name: "idx_sales_seq_enroll_account"
     t.index ["sales_contact_id"], name: "idx_sales_seq_enroll_contact"
-    t.index ["sales_email_sequence_id", "sales_contact_id"], name: "idx_sales_sequence_enrollments_active_contact", unique: true, where: "((status)::text = ANY ((ARRAY['active'::character varying, 'paused'::character varying])::text[]))"
+    t.index ["sales_email_sequence_id", "sales_contact_id"], name: "idx_sales_sequence_enrollments_active_contact", unique: true, where: "((status)::text = ANY (ARRAY[('active'::character varying)::text, ('paused'::character varying)::text]))"
     t.index ["sales_email_sequence_id"], name: "idx_sales_seq_enroll_sequence"
     t.index ["sales_opportunity_id"], name: "idx_sales_seq_enroll_opportunity"
   end

@@ -65,8 +65,12 @@ class Api::V1::BannersController < Api::V1::BaseController
   def serialize_banners(banners)
     serialized = banners.as_json(
       only: %i[id title alt_text link active position sponsored banner_type category_id company_id start_date end_date
-               created_at width height],
-      methods: %i[image_url link_url category_ids]
+               created_at width height
+               headline subtitle cta_label cta_href cta_enabled theme cta_variant
+               hero_background_color hero_text_color cta_background_color cta_text_color
+               overlay_variant creative_mode object_position_desktop_x object_position_desktop_y
+               object_position_mobile_x object_position_mobile_y whole_banner_clickable creative_version],
+      methods: %i[image_url image_mobile_url link_url category_ids]
     )
 
     serialized.each do |b|
