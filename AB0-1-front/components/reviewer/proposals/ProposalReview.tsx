@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowLeft,
   Award,
@@ -14,7 +14,6 @@ import {
   LifeBuoy,
   MessageCircle,
   MoreHorizontal,
-  Phone,
   ShieldCheck,
   Star,
   Upload,
@@ -23,11 +22,9 @@ import {
 import { reviewsApi, type MarketplaceProposal } from '@/lib/api';
 import {
   formatDate,
-  formatMoney,
   getProposalDisplayPrice,
   getProposalLocation,
   getProposalRawTerm,
-  proposalChatUrl,
 } from '@/lib/marketplace-proposals';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -118,7 +115,7 @@ export function ProposalReview({
           cost_benefit_rating: costBenefitRating,
           proposal_id: proposal.id,
           project_id: proposal.project?.id,
-          proposal_code: proposal.code,
+          proposal_code: proposal.reference,
         },
       });
       setSubmitted(true);
@@ -460,10 +457,12 @@ export function ProposalReview({
 
             <div className="relative h-32 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
               {proposal.company.banner_url ? (
-                <img
+                <Image
                   src={proposal.company.banner_url}
                   alt={`Imagem da proposta de ${proposal.company.name}`}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 320px"
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center px-4 text-center text-[11px] font-semibold text-slate-400">

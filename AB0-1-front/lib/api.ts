@@ -783,16 +783,28 @@ export interface Review {
   category_name?: string;
   editorial_complete?: boolean;
   content_metadata?: {
-    pros: string[];
-    cons: string[];
+    pros?: string[];
+    cons?: string[];
     buyer_tip?: string;
     trust_badge_state?: string;
+    equipment_rating?: number;
+    deadline_rating?: number;
+    communication_rating?: number;
+    installation_rating?: number;
+    post_sale_rating?: number;
+    cost_benefit_rating?: number;
+    proposal_id?: number;
+    project_id?: number;
+    proposal_code?: string;
+    [key: string]: unknown;
   };
   metadata?: {
     cta_clicks?: number;
     read_count?: number;
     last_aggregated_at?: string;
     reviewer_email?: string;
+    would_recommend?: boolean;
+    [key: string]: unknown;
   };
   granular_scores?:
     | Array<{
@@ -3866,6 +3878,7 @@ export type MarketplaceProposalStatus =
 export type MarketplaceProposal = {
   id: number;
   reference: string;
+  code?: string;
   status: MarketplaceProposalStatus | string;
   canonical_status?: MarketplaceProposalStatus;
   total_cents: number;
