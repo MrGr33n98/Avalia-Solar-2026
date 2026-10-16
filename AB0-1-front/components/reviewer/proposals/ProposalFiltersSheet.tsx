@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, SlidersHorizontal, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -61,7 +61,23 @@ export function ProposalFiltersSheet({
   onReset,
   hasActiveFilters,
 }: ProposalFiltersSheetProps) {
-  // Lock body scroll when drawer is open
+  // Rascunho de filtros isolado: só aplica na confirmação explícita
+  const [draftFilter, setDraftFilter] = useState<ProposalFilter>(currentFilter);
+  const [draftRegion, setDraftRegion] = useState<string>(regionFilter);
+  const [draftCompany, setDraftCompany] = useState<string>(companyFilter);
+  const [draftSortBy, setDraftSortBy] = useState<SortOption>(sortBy);
+
+  // Sincroniza rascunho toda vez que a gaveta abre
+  useEffect(() => {
+    if (open) {
+      setDraftFilter(currentFilter);
+      setDraftRegion(regionFilter);
+      setDraftCompany(companyFilter);
+      setDraftSortBy(sortBy);
+    }
+  }, [open, currentFilter, regionFilter, companyFilter, sortBy]);
+
+  // Lock body scroll e tecla ESC
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -78,6 +94,35 @@ export function ProposalFiltersSheet({
 
   if (!open) return null;
 
+  const handleApply = () => {
+    onFilterChange(draftFilter);
+    onRegionFilterChange(draftRegion);
+    onCompanyFilterChange(draftCompany);
+    onSortByChange(draftSortBy);
+    onClose();
+  };
+
+  const handleClearDraft = () => {
+    setDraftFilter('all');
+    setDraftRegion('all');
+    setDraftCompany('all');
+    setDraftSortBy('recent');
+    onReset();
+    onClose();
+  };
+
+  const draftHasChanges =
+    draftFilter !== currentFilter ||
+    draftRegion !== regionFilter ||
+    draftCompany !== companyFilter ||
+    draftSortBy !== sortBy;
+
+  const isDraftFiltered =
+    draftFilter !== 'all' ||
+    draftRegion !== 'all' ||
+    draftCompany !== 'all' ||
+    draftSortBy !== 'recent';
+
   return (
     <div
       role="dialog"
@@ -85,17 +130,17 @@ export function ProposalFiltersSheet({
       aria-labelledby="filters-sheet-title"
       className="fixed inset-0 z-[70] flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-4"
     >
-      {/* Backdrop */}
+      {/* Backdrop com descarte seguro ao clicar fora */}
       <div
         className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Sheet Content Container */}
-      <div className="relative z-10 w-full max-w-lg rounded-t-3xl sm:rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      {/* Sheet Content Container: 70dvh máx no mobile, cabeçalho e rodapé fixos */}
+      <div className="relative z-10 flex flex-col w-full max-w-lg rounded-t-3xl sm:rounded-2xl border border-slate-200 bg-white shadow-2xl max-h-[72dvh] sm:max-h-[85vh] overflow-hidden">
+        {/* Cabeçalho Fixo */}
+        <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="h-5 w-5 text-blue-600" />
             <h2 id="filters-sheet-title" className="text-base sm:text-lg font-bold text-slate-900">
@@ -105,15 +150,15 @@ export function ProposalFiltersSheet({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fechar filtros"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            aria-label="Fechar filtros sem salvar"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <div className="space-y-4 py-4">
+        {/* Corpo com rolagem interna */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {/* Status Segmented Selection */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-2">
@@ -121,16 +166,16 @@ export function ProposalFiltersSheet({
             </label>
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
               {statusOptions.map((st) => {
-                const isSelected = currentFilter === st.id;
+                const isSelected = draftFilter === st.id;
                 return (
                   <button
                     key={st.id}
                     type="button"
-                    onClick={() => onFilterChange(st.id)}
+                    onClick={() => setDraftFilter(st.id)}
                     className={cn(
                       'flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all border text-left',
                       isSelected
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-700'
+                        ? 'border-blue-600 bg-blue-50/70 text-blue-700 font-bold ring-1 ring-blue-500/20'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                     )}
                   >
@@ -149,8 +194,8 @@ export function ProposalFiltersSheet({
             </label>
             <select
               id="filter-region-select"
-              value={regionFilter}
-              onChange={(e) => onRegionFilterChange(e.target.value)}
+              value={draftRegion}
+              onChange={(e) => setDraftRegion(e.target.value)}
               className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs sm:text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer"
             >
               {regionsList.map((r) => (
@@ -168,8 +213,8 @@ export function ProposalFiltersSheet({
             </label>
             <select
               id="filter-company-select"
-              value={companyFilter}
-              onChange={(e) => onCompanyFilterChange(e.target.value)}
+              value={draftCompany}
+              onChange={(e) => setDraftCompany(e.target.value)}
               className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs sm:text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer"
             >
               <option value="all">Todas as empresas</option>
@@ -188,8 +233,8 @@ export function ProposalFiltersSheet({
             </label>
             <select
               id="filter-sort-select"
-              value={sortBy}
-              onChange={(e) => onSortByChange(e.target.value as SortOption)}
+              value={draftSortBy}
+              onChange={(e) => setDraftSortBy(e.target.value as SortOption)}
               className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs sm:text-sm font-medium text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer"
             >
               <option value="recent">Mais recentes</option>
@@ -200,14 +245,14 @@ export function ProposalFiltersSheet({
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
-          {hasActiveFilters ? (
+        {/* Rodapé Fixo com Safe-Area */}
+        <div className="shrink-0 flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-100 bg-slate-50/50 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          {isDraftFiltered || hasActiveFilters ? (
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              onClick={onReset}
+              onClick={handleClearDraft}
               className="text-xs font-semibold text-slate-600 hover:text-slate-900"
             >
               Limpar filtros
@@ -216,14 +261,26 @@ export function ProposalFiltersSheet({
             <div />
           )}
 
-          <Button
-            type="button"
-            size="sm"
-            onClick={onClose}
-            className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold px-5"
-          >
-            Aplicar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="rounded-xl border-slate-200 text-xs font-semibold px-4 text-slate-600 hover:bg-slate-100"
+            >
+              Cancelar
+            </Button>
+
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleApply}
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold px-5 shadow-xs"
+            >
+              Aplicar filtros
+            </Button>
+          </div>
         </div>
       </div>
     </div>

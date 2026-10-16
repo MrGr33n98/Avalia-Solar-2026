@@ -47,6 +47,15 @@ export function useProposalComparison(
           setCompareNotice('Você pode comparar até 3 propostas.');
           return current;
         }
+        if (current.length > 0) {
+          const first = proposals.find((p) => p.id === current[0]);
+          const firstReqId = first?.request?.id ?? first?.lead?.id ?? first?.lead_distribution_id;
+          const targetReqId = target.request?.id ?? target.lead?.id ?? target.lead_distribution_id;
+          if (firstReqId && targetReqId && firstReqId !== targetReqId) {
+            setCompareNotice('Só é possível comparar propostas do mesmo projeto.');
+            return current;
+          }
+        }
         return [...current, id];
       });
     },

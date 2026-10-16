@@ -419,11 +419,21 @@ export function ProposalComparison({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 text-xs text-slate-700 font-bold">
-                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                    <span>4,8</span>
-                    <span className="text-[11px] text-slate-400 font-normal">(32 avaliações)</span>
-                  </div>
+                  {typeof proposal.company.rating_avg === 'number' && proposal.company.rating_avg > 0 ? (
+                    <div className="flex items-center gap-1 text-xs text-slate-700 font-bold">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      <span>{proposal.company.rating_avg.toFixed(1)}</span>
+                      {Boolean(proposal.company.reviews_count) && (
+                        <span className="text-[11px] text-slate-400 font-normal">
+                          ({proposal.company.reviews_count} avaliações)
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-slate-400 font-normal">
+                      Sem avaliações registradas
+                    </div>
+                  )}
 
                   {/* Imagem enviada pela empresa, sem fallback visual inventado */}
                   <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-50">

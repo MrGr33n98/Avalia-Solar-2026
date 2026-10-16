@@ -46,6 +46,9 @@ import {
   isProposalAwaiting,
   isProposalCompleted,
   isProposalReceived,
+  groupProposalsByProject,
+  type BuyerProjectGroup,
+  projectProfileLabels,
 } from '@/lib/marketplace-proposals';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -196,6 +199,15 @@ export function MarketplaceProposalsWorkspace() {
   const [decisionError, setDecisionError] = useState('');
   const [busy, setBusy] = useState(false);
   const [infoDismissed, setInfoDismissed] = useState(false);
+  const [projectDetailsOpen, setProjectDetailsOpen] = useState(false);
+  const [projectsModalOpen, setProjectsModalOpen] = useState(false);
+
+  const rawProjectParam = params.get('project');
+  const projectGroups = useMemo(() => groupProposalsByProject(proposals), [proposals]);
+  const activeProjectId = rawProjectParam ? Number(rawProjectParam) : projectGroups[0]?.id;
+  const activeProject = useMemo(() => {
+    return projectGroups.find((g) => g.id === activeProjectId) || projectGroups[0] || null;
+  }, [projectGroups, activeProjectId]);
 
   const submitting = useRef(false);
   const detailHeading = useRef<HTMLHeadingElement>(null);
@@ -694,6 +706,166 @@ export function MarketplaceProposalsWorkspace() {
             </div>
           )}
 
+          {/* ── CABEÇALHO DO PROJETO / RFP DO COMPRADOR ── */}
+          {activeProject && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {projectGroups.length > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => setProjectsModalOpen(true)}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5" />
+                        <span>Meus projetos ({projectGroups.length})</span>
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                        Projeto Ativo
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-tight truncate">
+                    {activeProject.title}
+                  </h2>
+                  <p className="mt-0.5 text-xs sm:text-sm text-slate-500 font-medium truncate">
+                    {projectProfileLabels[activeProject.profile || 'residential'] || 'Residencial'} • {activeProject.location}
+                    {activeProject.powerEstimate ? ` • ${activeProject.powerEstimate}` : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setProjectDetailsOpen(true)}
+                    className="rounded-xl border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 h-9"
+                  >
+                    <Info className="h-3.5 w-3.5 mr-1 text-slate-400" />
+                    <span>Ver detalhes</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Stepper de 5 Etapas do Projeto */}
+              <div className="mt-4 pt-3.5 border-t border-slate-100">
+                <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+                  {[
+                    { id: 1, label: 'Solicitação enviada', done: true, active: false },
+                    {
+                      id: 2,
+                      label: `Propostas recebidas (${activeProject.receivedCount})`,
+                      done: activeProject.acceptedCount > 0,
+                      active: activeProject.acceptedCount === 0 && activeProject.receivedCount > 0,
+                    },
+                    {
+                      id: 3,
+                      label: `Em análise (${activeProject.underReviewCount})`,
+                      done: activeProject.acceptedCount > 0,
+                      active:
+                        activeProject.acceptedCount === 0 &&
+                        activeProject.underReviewCount > 0 &&
+                        activeProject.receivedCount === 0,
+                    },
+                    {
+                      id: 4,
+                      label: 'Decisão',
+                      done: activeProject.acceptedCount > 0,
+                      active: false,
+                    },
+                    {
+                      id: 5,
+                      label: 'Projeto',
+                      done: activeProject.proposals.some((p) => isProjectComplete(p.project)),
+                      active:
+                        activeProject.acceptedCount > 0 &&
+                        !activeProject.proposals.some((p) => isProjectComplete(p.project)),
+                    },
+                  ].map((st) => (
+                    <div
+                      key={st.id}
+                      className={cn(
+                        'flex flex-col items-center text-center p-1.5 rounded-xl border transition-all',
+                        st.active
+                          ? 'border-blue-500 bg-blue-50/70 shadow-2xs'
+                          : st.done
+                          ? 'border-emerald-200 bg-emerald-50/50'
+                          : 'border-slate-100 bg-slate-50/50'
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-[10px] sm:text-xs font-bold mb-1',
+                          st.active
+                            ? 'bg-blue-600 text-white'
+                            : st.done
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-200 text-slate-500'
+                        )}
+                      >
+                        {st.done ? <Check className="h-3 w-3 stroke-[3]" /> : st.id}
+                      </div>
+                      <span
+                        className={cn(
+                          'text-[10px] sm:text-xs leading-tight line-clamp-2',
+                          st.active
+                            ? 'font-bold text-blue-700'
+                            : st.done
+                            ? 'font-semibold text-emerald-800'
+                            : 'font-medium text-slate-500'
+                        )}
+                      >
+                        {st.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Banner de Comparação Direta do Projeto */}
+          {activeProject && activeProject.receivedCount >= 1 && (
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                  <GitCompareArrows className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                    {activeProject.receivedCount === 1
+                      ? '1 empresa enviou proposta para o seu projeto'
+                      : `${activeProject.receivedCount} empresas enviaram propostas para o seu projeto`}
+                  </h4>
+                  <p className="mt-0.5 text-xs sm:text-sm text-slate-600">
+                    Compare os valores, garantias e potência antes de tomar uma decisão.
+                  </p>
+                </div>
+              </div>
+              {activeProject.receivedCount >= 2 && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    const receivedProposals = activeProject.proposals.filter(isProposalReceived);
+                    const topIds = receivedProposals.slice(0, 3).map((p) => p.id);
+                    const query = new URLSearchParams(params.toString());
+                    query.delete('proposal');
+                    query.set('view', 'compare');
+                    query.set('compare', topIds.join(','));
+                    router.push(pathname + '?' + query.toString(), { scroll: false });
+                  }}
+                  className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm px-4 h-9 shadow-xs shrink-0"
+                >
+                  <GitCompareArrows className="h-4 w-4 mr-1.5" />
+                  <span>Comparar propostas</span>
+                </Button>
+              )}
+            </div>
+          )}
+
           {/* ── VISÃO GERAL (STATUS RESUMO COM 3 COLUNAS FIXAS NO PWA) ── */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
@@ -883,7 +1055,7 @@ export function MarketplaceProposalsWorkspace() {
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-0.5">
               <span>
                 {filteredProposals.length}{' '}
-                {filteredProposals.length === 1 ? 'solicitação encontrada' : 'solicitações encontradas'}
+                {filteredProposals.length === 1 ? 'proposta encontrada' : 'propostas encontradas'}
               </span>
               <span className="text-[11px] text-slate-400">
                 {sortBy === 'recent'
@@ -1044,6 +1216,127 @@ export function MarketplaceProposalsWorkspace() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Modal Detalhes do Projeto / RFP */}
+      <Dialog open={projectDetailsOpen} onOpenChange={setProjectDetailsOpen}>
+        <DialogContent className="max-w-md rounded-2xl p-5 sm:p-6 bg-white">
+          <DialogTitle className="text-lg font-bold text-slate-900">
+            {activeProject ? activeProject.title : 'Detalhes do projeto'}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            Informações da sua solicitação enviada aos instaladores credenciados.
+          </DialogDescription>
+
+          {activeProject && (
+            <div className="mt-4 space-y-3 text-xs sm:text-sm">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Perfil do projeto</span>
+                <span className="font-bold text-slate-900">
+                  {projectProfileLabels[activeProject.profile || 'residential'] || 'Residencial'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Localização</span>
+                <span className="font-bold text-slate-900">{activeProject.location}</span>
+              </div>
+              {activeProject.proposals[0]?.lead?.address_full && (
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500 font-medium">Endereço</span>
+                  <span className="font-bold text-slate-900 truncate max-w-[200px]">
+                    {activeProject.proposals[0].lead.address_full}
+                  </span>
+                </div>
+              )}
+              {activeProject.proposals[0]?.lead?.monthly_kwh != null && (
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500 font-medium">Consumo médio</span>
+                  <span className="font-bold text-slate-900">
+                    {new Intl.NumberFormat('pt-BR').format(activeProject.proposals[0].lead.monthly_kwh)} kWh/mês
+                  </span>
+                </div>
+              )}
+              {activeProject.proposals[0]?.lead?.bill_value != null && (
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500 font-medium">Valor médio da conta</span>
+                  <span className="font-bold text-slate-900">
+                    {formatMoney(activeProject.proposals[0].lead.bill_value * 100)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Propostas recebidas</span>
+                <span className="font-bold text-slate-900">
+                  {activeProject.receivedCount} de {activeProject.totalProposals} empresas
+                </span>
+              </div>
+              {activeProject.createdAt && (
+                <div className="flex justify-between py-1.5">
+                  <span className="text-slate-500 font-medium">Data do pedido</span>
+                  <span className="font-bold text-slate-900">{formatDate(activeProject.createdAt)}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setProjectDetailsOpen(false)}
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4"
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Alternar Projetos */}
+      {projectGroups.length > 1 && (
+        <Dialog open={projectsModalOpen} onOpenChange={setProjectsModalOpen}>
+          <DialogContent className="max-w-md rounded-2xl p-5 sm:p-6 bg-white">
+            <DialogTitle className="text-lg font-bold text-slate-900">
+              Meus projetos ({projectGroups.length})
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Selecione qual projeto você deseja acompanhar agora.
+            </DialogDescription>
+
+            <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
+              {projectGroups.map((pGroup) => {
+                const isCurrent = pGroup.id === activeProject?.id;
+                return (
+                  <button
+                    key={pGroup.id}
+                    type="button"
+                    onClick={() => {
+                      const query = new URLSearchParams(params.toString());
+                      query.set('project', String(pGroup.id));
+                      query.delete('proposal');
+                      router.push(pathname + '?' + query.toString(), { scroll: false });
+                      setProjectsModalOpen(false);
+                    }}
+                    className={cn(
+                      'w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all',
+                      isCurrent
+                        ? 'border-blue-600 bg-blue-50/70 font-bold text-blue-900'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-800'
+                    )}
+                  >
+                    <div>
+                      <p className="text-sm font-bold">{pGroup.title}</p>
+                      <p className="text-xs text-slate-500">
+                        {pGroup.location} • {pGroup.receivedCount} propostas recebidas
+                      </p>
+                    </div>
+                    {isCurrent && <Check className="h-4 w-4 text-blue-600 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Drawer de Filtros Mobile */}

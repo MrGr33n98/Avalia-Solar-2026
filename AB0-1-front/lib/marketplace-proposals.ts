@@ -148,6 +148,53 @@ export function getProposalStatusTone(proposal: MarketplaceProposal): {
   return { badgeTone: 'bg-slate-100 text-slate-700 border-slate-200', dotTone: 'bg-slate-400' };
 }
 
+export function formatPowerTerm(raw?: string | number | null): string | null {
+  if (raw == null) return null;
+  const str = String(raw).trim();
+  if (!str) return null;
+  if (/kwp|kw/i.test(str)) return str;
+  const numeric = str.replace(',', '.');
+  if (!Number.isNaN(Number(numeric))) {
+    return `${str.replace('.', ',')} kWp`;
+  }
+  return str;
+}
+
+export function formatGenerationTerm(raw?: string | number | null): string | null {
+  if (raw == null) return null;
+  const str = String(raw).trim();
+  if (!str) return null;
+  if (/kwh/i.test(str)) return str;
+  const numeric = str.replace(',', '.');
+  if (!Number.isNaN(Number(numeric))) {
+    const num = Number(numeric);
+    return `${new Intl.NumberFormat('pt-BR').format(num)} kWh/mês`;
+  }
+  return str;
+}
+
+export function formatDeadlineTerm(raw?: string | number | null): string | null {
+  if (raw == null) return null;
+  const str = String(raw).trim();
+  if (!str) return null;
+  if (/dia|mês|mes|semana/i.test(str)) return str;
+  if (!Number.isNaN(Number(str))) {
+    return `${str} dias`;
+  }
+  return str;
+}
+
+export function formatWarrantyTerm(raw?: string | number | null): string | null {
+  if (raw == null) return null;
+  const str = String(raw).trim();
+  if (!str) return null;
+  if (/ano|mês|mes/i.test(str)) return str;
+  if (!Number.isNaN(Number(str))) {
+    return `${str} anos`;
+  }
+  return str;
+}
+
 export interface ProposalCardMetric {
   key: string;
   label: string;
@@ -157,19 +204,142 @@ export interface ProposalCardMetric {
 export function getProposalCardMetrics(proposal: MarketplaceProposal): ProposalCardMetric[] {
   const metrics: ProposalCardMetric[] = [];
 
-  const power = getProposalRawTerm(proposal, ['system_power', 'power_kwp', 'installed_power', 'potencia']);
+  const rawPower = getProposalRawTerm(proposal, [
+    'system_power',
+    'power_kwp',
+    'installed_power',
+    'potencia',
+  ]);
+  const power = formatPowerTerm(rawPower);
   if (power) metrics.push({ key: 'power', label: 'Potência', value: power });
 
-  const gen = getProposalRawTerm(proposal, ['monthly_generation', 'generation_kwh', 'estimated_generation', 'geracao']);
+  const rawGen = getProposalRawTerm(proposal, [
+    'monthly_generation',
+    'generation_kwh',
+    'estimated_generation',
+    'geracao',
+  ]);
+  const gen = formatGenerationTerm(rawGen);
   if (gen) metrics.push({ key: 'generation', label: 'Geração estimada', value: gen });
 
-  const deadline = getProposalRawTerm(proposal, ['installation_deadline', 'installation_time', 'prazo']);
-  if (deadline) metrics.push({ key: 'deadline', label: 'Prazo', value: deadline });
+  const rawWarranty = getProposalRawTerm(proposal, ['warranty', 'garantia']);
+  const warranty = formatWarrantyTerm(rawWarranty);
+  if (warranty) metrics.push({ key: 'warranty', label: 'Garantia', value: warranty });
 
-  const warranty = getProposalRawTerm(proposal, ['warranty', 'garantia']);
-  if (warranty && metrics.length < 3) metrics.push({ key: 'warranty', label: 'Garantia', value: warranty });
+  const rawDeadline = getProposalRawTerm(proposal, [
+    'installation_deadline',
+    'installation_time',
+    'prazo',
+  ]);
+  const deadline = formatDeadlineTerm(rawDeadline);
+  if (deadline) {
+    metrics.push({ key: 'deadline', label: 'Prazo', value: deadline });
+  } else {
+    const payment = getProposalRawTerm(proposal, ['payment', 'payment_terms', 'pagamento', 'financiamento']);
+    if (payment) metrics.push({ key: 'payment', label: 'Pagamento', value: payment });
+  }
 
-  return metrics.slice(0, 3);
+  return metrics.slice(0, 4);
+}
+
+export interface BuyerProjectGroup {
+  id: number;
+  title: string;
+  vertical?: string | null;
+  profile?: string | null;
+  city?: string | null;
+  state?: string | null;
+  location: string;
+  powerEstimate?: string | null;
+  proposals: MarketplaceProposal[];
+  receivedCount: number;
+  underReviewCount: number;
+  acceptedCount: number;
+  declinedCount: number;
+  totalProposals: number;
+  createdAt?: string | null;
+}
+
+export function groupProposalsByProject(proposals: MarketplaceProposal[]): BuyerProjectGroup[] {
+  const map = new Map<number, MarketplaceProposal[]>();
+
+  for (const proposal of proposals) {
+    const projectId = proposal.request?.id || proposal.lead?.id || proposal.id;
+    if (!map.has(projectId)) {
+      map.set(projectId, []);
+    }
+    map.get(projectId)!.push(proposal);
+  }
+
+  const groups: BuyerProjectGroup[] = [];
+
+  for (const [id, projectProposals] of map.entries()) {
+    const first = projectProposals[0];
+    const profile = first.request?.project_profile || first.lead?.project_profile || 'residential';
+    const projectTitles: Record<string, string> = {
+      residential: 'Projeto Residencial',
+      commercial: 'Projeto Comercial',
+      industrial: 'Projeto Industrial',
+      rural: 'Projeto Rural',
+    };
+    const title =
+      projectTitles[profile] ||
+      `Projeto ${profile.charAt(0).toUpperCase() + profile.slice(1)}`;
+    const city = first.request?.city || first.lead?.city || first.company.city;
+    const state = first.request?.state || first.lead?.state || first.company.state;
+    const location = [city, state].filter(Boolean).join(', ') || 'Local não informado';
+
+    let powerEstimate: string | null = null;
+    for (const p of projectProposals) {
+      const pwr = getProposalRawTerm(p, ['system_power', 'power_kwp', 'installed_power', 'potencia']);
+      if (pwr) {
+        powerEstimate = formatPowerTerm(pwr);
+        break;
+      }
+    }
+    if (!powerEstimate && first.lead?.monthly_kwh) {
+      powerEstimate = `${new Intl.NumberFormat('pt-BR').format(first.lead.monthly_kwh)} kWh/mês`;
+    }
+
+    const receivedCount = projectProposals.filter(isProposalReceived).length;
+    const underReviewCount = projectProposals.filter(
+      (p) =>
+        p.status === 'draft' ||
+        p.status === 'under_review' ||
+        p.status === 'negotiating' ||
+        p.status === 'meeting_scheduled'
+    ).length;
+    const acceptedCount = projectProposals.filter(
+      (p) => p.status === 'accepted' || isProjectComplete(p.project)
+    ).length;
+    const declinedCount = projectProposals.filter(
+      (p) =>
+        p.status === 'declined' ||
+        p.status === 'not_selected' ||
+        p.status === 'withdrawn' ||
+        p.status === 'expired'
+    ).length;
+
+    groups.push({
+      id,
+      title,
+      vertical: first.request?.vertical || first.lead?.product_vertical,
+      profile,
+      city,
+      state,
+      location,
+      powerEstimate,
+      proposals: projectProposals,
+      receivedCount,
+      underReviewCount,
+      acceptedCount,
+      declinedCount,
+      totalProposals: projectProposals.length,
+      createdAt: first.request?.created_at || first.created_at,
+    });
+  }
+
+  return groups;
 }
 
 
