@@ -130,6 +130,14 @@ export default function ComparisonFloatingBar() {
   const [isForcedOpen, setIsForcedOpen] = useState(false);
   const [isMobileExperience, setIsMobileExperience] = useState(true);
 
+  // Pré-carrega o chunk do CompanyComparisonModal em background assim que houver empresas selecionadas
+  // Isso elimina o atraso de rede (1-3s) quando o usuário clica no botão "Comparar"
+  useEffect(() => {
+    if (count > 0) {
+      void import('./CompanyComparisonModal');
+    }
+  }, [count]);
+
   useEffect(() => {
     const media = window.matchMedia('(max-width: 767px)');
     const standalone = window.matchMedia('(display-mode: standalone)');

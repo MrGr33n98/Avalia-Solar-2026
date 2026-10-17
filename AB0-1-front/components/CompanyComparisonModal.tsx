@@ -561,7 +561,7 @@ export function CompanyComparisonModal({
         <DialogContent
           hideCloseButton={true}
           overlayClassName="bg-slate-950/40 backdrop-blur-xs"
-          className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[min(94dvh,820px)] !w-[calc(100vw-12px)] !max-w-[440px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-[18px] border border-slate-200/80 bg-white p-0 shadow-2xl transition-all duration-300 md:!max-h-[min(85vh,820px)] md:!w-[calc(100vw-64px)] md:!max-w-[1024px]"
+          className="!bottom-auto !left-1/2 !top-1/2 grid !max-h-[min(94dvh,820px)] !w-[calc(100vw-12px)] !max-w-[440px] !-translate-x-1/2 !-translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-[18px] border border-slate-200/80 bg-white p-0 shadow-2xl md:!max-h-[min(85vh,820px)] md:!w-[calc(100vw-64px)] md:!max-w-[1024px]"
         >
           {/* Cabeçalho do Modal: Azul Royal Degradê */}
           <DialogHeader className="space-y-0 border-b border-blue-900/10 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 px-3 py-1.5 text-white">

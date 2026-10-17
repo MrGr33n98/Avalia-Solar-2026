@@ -22,6 +22,13 @@ export default function MobileBottomNav() {
   const { isKeyboardOpen } = useVirtualKeyboard();
   const { unreadMessagesCount, toggleChat } = useMobileNavNotifications();
 
+  // Pré-carrega o chunk do modal de comparação no mobile para abertura instantânea
+  React.useEffect(() => {
+    if (count > 0) {
+      void import('@/components/CompanyComparisonModal');
+    }
+  }, [count]);
+
   // Estados ativos
   const isHomeActive = pathname === '/';
   const isCompaniesActive =
