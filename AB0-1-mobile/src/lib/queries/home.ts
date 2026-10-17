@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 export const COMPANY_FRAGMENT = gql`
   fragment CompanyFields on Company {
@@ -22,7 +22,14 @@ export const CATEGORY_FRAGMENT = gql`
     name
     slug
     iconUrl
-    visualKey
+    parentId
+    children {
+      id
+      name
+      slug
+      iconUrl
+      parentId
+    }
   }
 `;
 
@@ -53,7 +60,7 @@ export const GET_HOME_DATA = gql`
     banners(position: "home_top", city: $city, state: $state, audienceKey: $audienceKey, limit: 5) {
       ...BannerFields
     }
-    categories(featured: true, limit: 10) {
+    categories(featured: true, limit: 20) {
       ...CategoryFields
     }
     companies(featured: true, city: $city, state: $state, limit: 10) {

@@ -1,521 +1,635 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  StyleSheet,
-  ScrollView,
-  View,
-  TextInput,
-  TouchableOpacity,
-  useColorScheme,
-  RefreshControl,
-  Modal,
-  Switch,
   ActivityIndicator,
-  Image,
-  Dimensions,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  TextInput,
+  View,
+  useColorScheme,
 } from 'react-native';
-import * as Location from 'expo-location';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery } from '@apollo/client/react';
-import { useRouter } from 'expo-router';
-import { getBannerAudienceKey } from '@/lib/banner-audience';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery } from '@apollo/client/react';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  Search,
-  MapPin,
-  ChevronDown,
-  ChevronRight,
-  Sun,
-  Camera,
   Bell,
+  ChevronRight,
+  Grid2X2,
+  Heart,
+  MapPin,
   MessageSquare,
+  Search,
   SlidersHorizontal,
+  X,
 } from 'lucide-react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, Spacing } from '@/constants/theme';
-import { GET_HOME_DATA } from '@/lib/queries/home';
-import { useTracking } from '@/hooks/useTracking';
-import { HomeSkeleton } from '@/features/home/components/HomeSkeleton';
+import {
+  type DiscoveryCategory,
+  OFFICIAL_MAIN_CATEGORIES,
+  OFFICIAL_SOLUTION_TYPES,
+} from '@/constants/category-visual-assets';
+import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { BannerCarousel } from '@/features/home/components/BannerCarousel';
+import { BrandScroll, type BrandCompany } from '@/features/home/components/BrandScroll';
 import { CategoryScroll } from '@/features/home/components/CategoryScroll';
-import { FeaturedCompanies } from '@/features/home/components/FeaturedCompanies';
+import {
+  FeaturedCompanies,
+  type FeaturedCompany,
+} from '@/features/home/components/FeaturedCompanies';
+import { HomeSkeleton } from '@/features/home/components/HomeSkeleton';
 import { LatestArticles } from '@/features/home/components/LatestArticles';
+import { useTracking } from '@/hooks/useTracking';
+import { getBannerAudienceKey } from '@/lib/banner-audience';
+import { GET_HOME_DATA } from '@/lib/queries/home';
 import { useAuthStore } from '@/store/auth';
-import { getCategoryVisualAssetUri } from '@/constants/category-visual-assets';
 
-const { width } = Dimensions.get('window');
+interface HomeCategory extends DiscoveryCategory {
+  children?: HomeCategory[];
+}
 
-// Assets dos Ícones de Referência Copiados
-const IconeCategorias = require('../../assets/icones/icone_categorias_avalia_solar.png');
-const IconeDestaques = require('../../assets/icones/icone_destaques_avalia_solar.png');
-const IconeInstalar = require('../../assets/icones/icone_instalar_avalia_solar_40x40.png');
-const IconeProdutos = require('../../assets/icones/icone_produtos_avalia_solar_40x40.png');
-const IconeAvaliacoes = require('../../assets/icones/icone_avaliacoes_avalia_solar.png');
+interface HomeBanner {
+  id: string;
+  imageUrl: string;
+  linkUrl?: string;
+  deliveryId?: string | null;
+  sponsored?: boolean;
+}
 
-const IconeResidencial = { uri: getCategoryVisualAssetUri('residencial', 'Residencial') };
-const IconeComercial = { uri: getCategoryVisualAssetUri('comercial-industrial', 'Comercial e Industrial') };
-const IconeRural = { uri: getCategoryVisualAssetUri('rural', 'Rural') };
+interface HomeArticle {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  coverUrl?: string;
+}
 
-// Assets das Imagens de Produtos para o Grid OLX Style
-const ImgInversor = require('../../assets/images/icon-inversor-avalia-solar.jpeg');
-const ImgCarregador = require('../../assets/images/icon-carregador-avalia-solar.jpeg');
-const ImgSuportes = require('../../assets/images/solo.png');
-const ImgBaterias = require('../../assets/images/sistema-off-grid.png');
-const ImgPaineis = require('../../assets/images/compare-solar-v1.png');
-const ImgKits = require('../../assets/images/late.png');
+interface HomeData {
+  categories?: HomeCategory[];
+  companies?: { nodes?: FeaturedCompany[] };
+  banners?: HomeBanner[];
+  articles?: { nodes?: HomeArticle[] };
+}
+
+function uniqueCategories(categories: HomeCategory[]) {
+  return Array.from(new Map(categories.map((category) => [category.id, category])).values());
+}
+
+function normalizeCategoryKey(value?: string | null) {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-');
+}
+
+function enrichOfficialCategories(
+  officialCategories: DiscoveryCategory[],
+  apiCategories: HomeCategory[]
+) {
+  return officialCategories.map((official) => {
+    const match = apiCategories.find((category) => {
+      const categorySlug = normalizeCategoryKey(category.slug || category.name);
+      return (
+        categorySlug === normalizeCategoryKey(official.slug) ||
+        categorySlug === normalizeCategoryKey(official.name)
+      );
+    });
+
+    return match ? { ...official, ...match } : official;
+  });
+}
 
 export default function HomeScreen() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+  const categoriesOffset = useRef(0);
+  const companiesOffset = useRef(0);
   const user = useAuthStore((state) => state.user);
   const canUseP2PChat = user?.role === 'review';
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedState, setSelectedState] = useState('MT'); 
-  const [selectedCity, setSelectedCity] = useState('Cuiabá');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [isLocationLoading, setIsLocationLoading] = useState(true);
   const [favorites, setFavorites] = useState<string[]>([]);
-  
-  // State da Aba Ativa do Topo (Tudo, Residencial, Comercial, Rural)
-  const [activeTab, setActiveTab] = useState('tudo');
-
-  // States para o Modal de Filtros
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [filterVerifiedOnly, setFilterVerifiedOnly] = useState(false);
-  const [filterMinRating, setFilterMinRating] = useState<number>(0);
-  
+  const [filterMinRating, setFilterMinRating] = useState(0);
+  const [audienceKey, setAudienceKey] = useState<string | null | undefined>(undefined);
   const { trackCompanyClick } = useTracking();
 
-  // Buscar localização do usuário ao abrir
-  React.useEffect(() => {
-    (async () => {
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadLocation = async () => {
       try {
-        // Verificar Onboarding primeiro
         const seenOnboarding = await AsyncStorage.getItem('@avalia_solar:seen_onboarding');
         if (!seenOnboarding) {
           router.replace('/onboarding');
           return;
         }
 
-        // Verificar se já existe localização salva manualmente no AsyncStorage
         const savedCity = await AsyncStorage.getItem('@avalia_solar:selected_city');
         const savedState = await AsyncStorage.getItem('@avalia_solar:selected_state');
         if (savedCity && savedState) {
-          setSelectedCity(savedCity);
-          setSelectedState(savedState);
-          setIsLocationLoading(false);
+          if (isMounted) {
+            setSelectedCity(savedCity);
+            setSelectedState(savedState);
+          }
           return;
         }
 
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setIsLocationLoading(false);
-          return;
-        }
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (permission.status !== 'granted') return;
 
-        let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        let reverseGeocode = await Location.reverseGeocodeAsync({
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        const addresses = await Location.reverseGeocodeAsync({
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         });
+        const address = addresses[0];
+        const city = address?.subregion || address?.city || '';
+        const state = address?.region || '';
 
-        if (reverseGeocode && reverseGeocode.length > 0) {
-          const address = reverseGeocode[0];
-          const state = address.region || 'MT';
-          const city = address.subregion || address.city || 'Cuiabá';
-          setSelectedState(state);
-          setSelectedCity(city);
-          await AsyncStorage.setItem('@avalia_solar:selected_state', state);
-          await AsyncStorage.setItem('@avalia_solar:selected_city', city);
+        if (city && state) {
+          if (isMounted) {
+            setSelectedCity(city);
+            setSelectedState(state);
+          }
+          await AsyncStorage.multiSet([
+            ['@avalia_solar:selected_city', city],
+            ['@avalia_solar:selected_state', state],
+          ]);
         }
-      } catch (error) {
-        console.log('[GPS Error]', error);
+      } catch (locationError) {
+        console.warn('[Home] Não foi possível obter a localização:', locationError);
       } finally {
-        setIsLocationLoading(false);
+        if (isMounted) setIsLocationLoading(false);
       }
-    })();
-  }, []);
+    };
 
-  const [audienceKey, setAudienceKey] = useState<string | null>(null);
+    void loadLocation();
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   useEffect(() => {
-    getBannerAudienceKey().then(setAudienceKey).catch(() => setAudienceKey(null));
+    getBannerAudienceKey()
+      .then(setAudienceKey)
+      .catch(() => setAudienceKey(null));
   }, []);
 
-  // Buscar dados da Home via Apollo
   const { data, loading, error, refetch } = useQuery(GET_HOME_DATA, {
-    variables: { city: selectedCity, state: selectedState, audienceKey },
+    variables: {
+      city: selectedCity || undefined,
+      state: selectedState || undefined,
+      audienceKey,
+    },
     fetchPolicy: 'cache-and-network',
-    skip: !audienceKey,
+    skip: audienceKey === undefined,
   });
 
-  const handleSearch = () => {
-    if (searchQuery.trim() || filterVerifiedOnly || filterMinRating > 0) {
-      setIsFilterModalVisible(false);
-      router.push({
-        pathname: '/explore',
-        params: { 
-          q: searchQuery, 
-          verified: filterVerifiedOnly ? 'true' : undefined,
-          min_rating: filterMinRating > 0 ? filterMinRating.toString() : undefined
-        },
-      });
-    }
-  };
+  const homeData = data as HomeData | undefined;
+  const apiCategories = useMemo(() => homeData?.categories || [], [homeData?.categories]);
+  const companies = useMemo(() => homeData?.companies?.nodes || [], [homeData?.companies?.nodes]);
+  const banners = homeData?.banners || [];
+  const articles = homeData?.articles?.nodes || [];
+
+  const mainCategories = useMemo<DiscoveryCategory[]>(() => {
+    const roots = apiCategories.filter((category) => !category.parentId);
+    return enrichOfficialCategories(OFFICIAL_MAIN_CATEGORIES, roots);
+  }, [apiCategories]);
+
+  const solutionTypes = useMemo<DiscoveryCategory[]>(() => {
+    const children = apiCategories.flatMap((category) => category.children || []);
+    const directChildren = apiCategories.filter((category) => Boolean(category.parentId));
+    const solutions = uniqueCategories([...children, ...directChildren]);
+    return enrichOfficialCategories(OFFICIAL_SOLUTION_TYPES, solutions);
+  }, [apiCategories]);
+
+  const displayedCompanies = useMemo(
+    () =>
+      showFavoritesOnly ? companies.filter((company) => favorites.includes(company.id)) : companies,
+    [companies, favorites, showFavoritesOnly]
+  );
+
+  const displayLocation =
+    selectedCity && selectedState ? `${selectedCity} - ${selectedState}` : 'Escolher localização';
+  const isInitialLoading = audienceKey === undefined || (loading && !homeData);
 
   const toggleFavorite = (id: string) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((favId) => favId !== id) : [...prev, id]
+    setFavorites((current) =>
+      current.includes(id) ? current.filter((favoriteId) => favoriteId !== id) : [...current, id]
     );
   };
 
-  const categories = data?.categories || [];
-  const companies = data?.companies?.nodes || [];
-  const banners = data?.banners || [];
-  const articles = data?.articles?.nodes || [];
+  const navigateToCategory = (category: DiscoveryCategory) => {
+    const isApiId = /^\d+$/.test(category.id);
+    router.push({
+      pathname: '/explore',
+      params: isApiId ? { category_id: category.id } : { q: category.name },
+    });
+  };
 
-  // Filtragem local dinâmica das empresas baseada na aba ativa do topo
-  const filteredCompanies = React.useMemo(() => {
-    if (activeTab === 'tudo') return companies;
-    if (activeTab === 'residencial') {
-      return companies.filter((c: any, idx: number) => 
-        c.name.toLowerCase().includes('residencial') || c.name.toLowerCase().includes('solar') || idx % 2 === 0
-      );
-    }
-    if (activeTab === 'comercial') {
-      return companies.filter((c: any, idx: number) => 
-        c.name.toLowerCase().includes('comercial') || c.name.toLowerCase().includes('empresa') || idx % 2 !== 0
-      );
-    }
-    if (activeTab === 'rural') {
-      return companies.filter((c: any, idx: number) => 
-        c.name.toLowerCase().includes('rural') || c.name.toLowerCase().includes('agro') || idx % 3 === 0
-      );
-    }
-    return companies;
-  }, [companies, activeTab]);
+  const handleSearch = () => {
+    const params: Record<string, string> = {};
+    if (searchQuery.trim()) params.q = searchQuery.trim();
+    if (filterVerifiedOnly) params.verified = 'true';
+    if (filterMinRating > 0) params.min_rating = String(filterMinRating);
+    setIsFilterModalVisible(false);
+    router.push({ pathname: '/explore', params });
+  };
 
-  if (loading && !data) {
-    return (
-      <ThemedView style={styles.container}>
-        <ActivityIndicator size="large" style={{ marginTop: 50 }} color={colors.tint} />
-      </ThemedView>
-    );
-  }
+  const scrollTo = (offset: React.MutableRefObject<number>) => {
+    scrollRef.current?.scrollTo({ y: Math.max(offset.current - Spacing.two, 0), animated: true });
+  };
 
-  // Definição das abas principais inspiradas na referência
-  const HEADER_TABS = [
-    { id: 'tudo', label: 'Tudo', icon: IconeCategorias },
-    { id: 'residencial', label: 'Residencial', icon: IconeResidencial },
-    { id: 'comercial', label: 'Comercial', icon: IconeComercial },
-    { id: 'rural', label: 'Rural', icon: IconeRural }
-  ];
-
-  // Grid de atalhos de ações rápidas
-  const QUICK_ACTIONS = [
-    { 
-      id: 'favoritos', 
-      label: 'Favoritos', 
-      icon: IconeDestaques, 
-      action: () => router.push({ pathname: '/explore', params: { verified: 'true' }}) 
-    },
-    { 
-      id: 'simulador', 
-      label: 'Simulador', 
-      icon: IconeAvaliacoes, 
-      action: () => router.push('/calculadora') 
-    },
-    { 
-      id: 'servicos', 
-      label: 'Orçamentos', 
-      icon: IconeInstalar, 
-      action: () => router.push('/request-quote') 
-    },
-    { 
-      id: 'produtos', 
-      label: 'Produtos', 
-      icon: IconeProdutos, 
-      action: () => router.push('/products') 
-    }
-  ];
-
-  // Grid de 6 cards de Equipamentos Solares (OLX Style)
-  const EQUIPMENTS_GRID = [
-    { 
-      id: 'inversores', 
-      label: 'Inversores no precinho', 
-      image: ImgInversor, 
-      isPNG: false,
-      action: () => router.push({ pathname: '/explore', params: { q: 'inversor' }}) 
-    },
-    { 
-      id: 'paineis', 
-      label: 'Painéis a partir de R$ 300', 
-      image: ImgPaineis, 
-      isPNG: true,
-      action: () => router.push('/compare') 
-    },
-    { 
-      id: 'wallbox', 
-      label: 'Wallbox em até 10x', 
-      image: ImgCarregador, 
-      isPNG: false,
-      action: () => router.push({ pathname: '/explore', params: { category_id: '31' }}) 
-    },
-    { 
-      id: 'baterias', 
-      label: 'Baterias e Off-Grid', 
-      image: ImgBaterias, 
-      isPNG: true,
-      action: () => router.push({ pathname: '/explore', params: { q: 'bateria' }}) 
-    },
-    { 
-      id: 'suportes', 
-      label: 'Estruturas com 40% OFF', 
-      image: ImgSuportes, 
-      isPNG: true,
-      action: () => router.push({ pathname: '/explore', params: { q: 'estrutura' }}) 
-    },
-    { 
-      id: 'kits', 
-      label: 'Kits solares completos', 
-      image: ImgKits, 
-      isPNG: true,
-      action: () => router.push('/request-quote') 
-    }
-  ];
+  const toggleFavoritesView = () => {
+    setShowFavoritesOnly((current) => !current);
+    scrollTo(companiesOffset);
+  };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
-      
-      {/* 1. Header Fundo Branco Premium com Geolocalização e Sino com Badge */}
-      <SafeAreaView edges={['top']} style={[styles.premiumHeader, { backgroundColor: colors.background }]}>
-        <View style={styles.headerTopRow}>
-          <TouchableOpacity 
-            style={styles.premiumLocation} 
+      <SafeAreaView
+        edges={['top']}
+        style={[
+          styles.header,
+          { backgroundColor: colors.backgroundElement, borderBottomColor: colors.border },
+        ]}
+      >
+        <View style={styles.headerRow}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.locationButton,
+              { backgroundColor: colors.surfaceSubtle, opacity: pressed ? 0.7 : 1 },
+            ]}
             onPress={() => router.push('/select-location')}
-            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Localização: ${displayLocation}`}
           >
-            <MapPin size={18} color={colors.tint} style={{ marginRight: 6 }} />
+            <MapPin size={19} color={colors.tint} accessibilityElementsHidden />
             {isLocationLoading ? (
-              <ActivityIndicator size="small" color={colors.tint} style={{ marginRight: 6 }} />
+              <ActivityIndicator size="small" color={colors.tint} />
             ) : (
-              <ThemedText style={styles.premiumLocationText}>{selectedCity} - {selectedState}</ThemedText>
+              <ThemedText style={[styles.locationText, { color: colors.text }]} numberOfLines={1}>
+                {displayLocation}
+              </ThemedText>
             )}
-            <ChevronRight size={14} color={colors.textSecondary} style={{ marginLeft: 4 }} />
-          </TouchableOpacity>
+            <ChevronRight size={16} color={colors.textSecondary} accessibilityElementsHidden />
+          </Pressable>
 
-          <View style={styles.premiumHeaderIcons}>
-            <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.notificationBtn}>
-              <Bell color={colors.text} size={22} />
-              {/* Badge vermelho flutuante estilo Shopee */}
-              <View style={styles.notificationBadge}>
-                <ThemedText style={styles.notificationBadgeText}>4</ThemedText>
-              </View>
-            </TouchableOpacity>
-            {canUseP2PChat && (
-              <TouchableOpacity onPress={() => router.push('/p2p_chat')} style={{ marginLeft: 16 }}>
-                <MessageSquare color={colors.text} size={22} />
-              </TouchableOpacity>
-            )}
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => router.push('/notifications')}
+              style={styles.iconButton}
+              accessibilityRole="button"
+              accessibilityLabel="Notificações"
+            >
+              <Bell color={colors.text} size={23} />
+            </Pressable>
+            {canUseP2PChat ? (
+              <Pressable
+                onPress={() => router.push('/p2p_chat')}
+                style={styles.iconButton}
+                accessibilityRole="button"
+                accessibilityLabel="Mensagens"
+              >
+                <MessageSquare color={colors.text} size={23} />
+              </Pressable>
+            ) : null}
           </View>
         </View>
       </SafeAreaView>
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={colors.tint} />
+          <RefreshControl
+            refreshing={loading && Boolean(homeData)}
+            onRefresh={refetch}
+            tintColor={colors.tint}
+          />
         }
       >
-        
-        {/* 2. Abas do Topo (Tudo, Residencial, Comercial, Rural) */}
-        <View style={styles.tabsContainer}>
-          {HEADER_TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                style={styles.tabItem}
-                onPress={() => setActiveTab(tab.id)}
-                activeOpacity={0.8}
-              >
-                <Image source={tab.icon} style={styles.tabIcon} resizeMode="contain" />
-                <ThemedText style={[styles.tabLabel, isActive && styles.activeTabLabel]}>
-                  {tab.label}
-                </ThemedText>
-                {isActive && <View style={styles.activeIndicator} />}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* 3. Barra de Pesquisa Cinza Claro Arredondada */}
-        <View style={styles.premiumSearchWrapper}>
-          <TouchableOpacity 
-            style={styles.premiumSearchBox}
-            onPress={() => router.push('/search')}
-            activeOpacity={0.9}
+        <View style={styles.searchWrapper}>
+          <View
+            style={[
+              styles.searchBox,
+              { backgroundColor: colors.backgroundElement, borderColor: colors.border },
+            ]}
           >
-            <Search size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
-            <ThemedText style={styles.premiumSearchPlaceholder}>
-              Buscar no Avalia Solar...
-            </ThemedText>
-            <TouchableOpacity style={styles.premiumFilterButton} onPress={() => setIsFilterModalVisible(true)}>
-              <SlidersHorizontal size={18} color={colors.tint} />
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </View>
-
-        {/* 4. Grid de 4 Ações Rápidas Quadradas */}
-        <View style={styles.quickActionsGrid}>
-          {QUICK_ACTIONS.map((action) => (
-            <TouchableOpacity
-              key={action.id}
-              style={styles.quickActionCard}
-              onPress={action.action}
-              activeOpacity={0.8}
-            >
-              <View style={styles.quickActionIconWrapper}>
-                <Image source={action.icon} style={styles.quickActionIcon} resizeMode="contain" />
-              </View>
-              <ThemedText style={styles.quickActionLabel}>{action.label}</ThemedText>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* 5. Carrossel de Banners patrocinados */}
-        {banners.length > 0 && (
-          <BannerCarousel banners={banners} audienceKey={audienceKey} />
-        )}
-
-        {/* 6. Grid de Equipamentos Solares (OLX Style) */}
-        <View style={styles.equipmentSection}>
-          <ThemedText style={styles.equipmentSectionTitle}>Na Avalia Solar, você encontra os melhores preços</ThemedText>
-          <View style={styles.equipmentGrid}>
-            {EQUIPMENTS_GRID.map((prod) => (
-              <TouchableOpacity
-                key={prod.id}
-                style={styles.equipmentCard}
-                onPress={prod.action}
-                activeOpacity={0.85}
-              >
-                <View style={styles.equipmentImageWrapper}>
-                  <Image 
-                    source={prod.image} 
-                    style={prod.isPNG ? styles.equipmentImagePng : styles.equipmentImage} 
-                    resizeMode="contain" 
-                  />
-                </View>
-                <View style={styles.equipmentCardFooter}>
-                  <ThemedText style={styles.equipmentCardLabel} numberOfLines={1}>{prod.label}</ThemedText>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* 7. Integradores Recomendados Dinâmicos baseados na Aba Selecionada */}
-        <View style={styles.premiumSectionHeader}>
-          <View>
-            <ThemedText style={styles.premiumSectionTitle}>
-              {activeTab === 'tudo' ? 'Integradores Recomendados' : `Instaladores ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
-            </ThemedText>
-            <ThemedText style={styles.premiumSectionSubtitle}>
-              Recomendações em {selectedCity} - {selectedState}
-            </ThemedText>
-          </View>
-        </View>
-        
-        <FeaturedCompanies 
-          companies={filteredCompanies}
-          favorites={favorites}
-          onToggleFavorite={toggleFavorite}
-          onPress={(company) => {
-            trackCompanyClick(company.id, company.name, 'home_recommendations');
-            router.push(`/company/${company.slug}`);
-          }}
-        />
-
-        {/* Blog Feed */}
-        {articles.length > 0 && (
-          <>
-            <View style={styles.premiumSectionHeader}>
-              <ThemedText style={styles.premiumSectionTitle}>Blog e Dicas Úteis</ThemedText>
-            </View>
-            <LatestArticles 
-              articles={articles}
-              onPress={(article) => router.push(`/blog/${article.slug}`)}
+            <Search size={20} color={colors.textSecondary} accessibilityElementsHidden />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearch}
+              placeholder="Buscar empresas e soluções"
+              placeholderTextColor={colors.textSecondary}
+              returnKeyType="search"
+              style={[styles.searchInput, { color: colors.text }]}
+              accessibilityLabel="Buscar empresas e soluções"
             />
+            <Pressable
+              style={styles.searchFilterButton}
+              onPress={() => setIsFilterModalVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir filtros"
+              hitSlop={4}
+            >
+              <SlidersHorizontal size={21} color={colors.tint} />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={[styles.discoveryActions, { borderColor: colors.border }]}>
+          <Pressable
+            onPress={() => scrollTo(categoriesOffset)}
+            style={({ pressed }) => [styles.discoveryAction, { opacity: pressed ? 0.65 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Ir para categorias"
+          >
+            <Grid2X2 size={21} color={colors.tint} />
+            <ThemedText style={[styles.discoveryActionLabel, { color: colors.text }]}>
+              Categorias
+            </ThemedText>
+          </Pressable>
+          <View style={[styles.actionDivider, { backgroundColor: colors.border }]} />
+          <Pressable
+            onPress={toggleFavoritesView}
+            style={({ pressed }) => [styles.discoveryAction, { opacity: pressed ? 0.65 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Mostrar empresas favoritas"
+            accessibilityState={{ selected: showFavoritesOnly }}
+          >
+            <Heart
+              size={21}
+              color={showFavoritesOnly ? colors.danger : colors.textSecondary}
+              fill={showFavoritesOnly ? colors.danger : colors.backgroundElement}
+            />
+            <ThemedText style={[styles.discoveryActionLabel, { color: colors.text }]}>
+              Favoritos{favorites.length ? ` (${favorites.length})` : ''}
+            </ThemedText>
+          </Pressable>
+          <View style={[styles.actionDivider, { backgroundColor: colors.border }]} />
+          <Pressable
+            onPress={() => setIsFilterModalVisible(true)}
+            style={({ pressed }) => [styles.discoveryAction, { opacity: pressed ? 0.65 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir filtros"
+          >
+            <SlidersHorizontal size={21} color={colors.textSecondary} />
+            <ThemedText style={[styles.discoveryActionLabel, { color: colors.text }]}>
+              Filtros
+            </ThemedText>
+          </Pressable>
+        </View>
+
+        {isInitialLoading ? (
+          <HomeSkeleton />
+        ) : error && !homeData ? (
+          <View style={styles.feedbackContainer}>
+            <ThemedText style={[styles.feedbackTitle, { color: colors.text }]}>
+              Não foi possível carregar a vitrine.
+            </ThemedText>
+            <Pressable
+              onPress={() => void refetch()}
+              style={[styles.retryButton, { backgroundColor: colors.tint }]}
+              accessibilityRole="button"
+              accessibilityLabel="Tentar carregar novamente"
+            >
+              <ThemedText style={[styles.retryLabel, { color: colors.onTint }]}>
+                Tentar novamente
+              </ThemedText>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            <View
+              onLayout={(event) => {
+                categoriesOffset.current = event.nativeEvent.layout.y;
+              }}
+              style={styles.section}
+            >
+              <View style={styles.sectionHeader}>
+                <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+                  Categorias em destaque
+                </ThemedText>
+              </View>
+              <CategoryScroll
+                categories={mainCategories}
+                onSelect={navigateToCategory}
+                accessibilityLabel="Categorias principais"
+              />
+            </View>
+
+            {banners.length ? <BannerCarousel banners={banners} audienceKey={audienceKey} /> : null}
+
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+                  Tipos de solução
+                </ThemedText>
+                <ThemedText style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                  Tecnologias e serviços do catálogo, não ofertas comerciais.
+                </ThemedText>
+              </View>
+              <CategoryScroll
+                categories={solutionTypes}
+                onSelect={navigateToCategory}
+                accessibilityLabel="Tipos de solução"
+              />
+            </View>
+
+            {companies.some((company) => Boolean(company.logoUrl?.trim())) ? (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+                    Marcas em destaque
+                  </ThemedText>
+                </View>
+                <BrandScroll
+                  companies={companies as BrandCompany[]}
+                  onSelect={(company) => router.push(`/company/${company.slug}`)}
+                />
+              </View>
+            ) : null}
+
+            <View
+              onLayout={(event) => {
+                companiesOffset.current = event.nativeEvent.layout.y;
+              }}
+              style={styles.section}
+            >
+              <View style={styles.sectionHeader}>
+                <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+                  {showFavoritesOnly ? 'Empresas favoritas' : 'Empresas em destaque'}
+                </ThemedText>
+                {selectedCity && selectedState ? (
+                  <ThemedText style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                    Em {selectedCity} - {selectedState}
+                  </ThemedText>
+                ) : null}
+              </View>
+
+              {showFavoritesOnly && !displayedCompanies.length ? (
+                <View
+                  style={[
+                    styles.emptyState,
+                    { backgroundColor: colors.backgroundElement, borderColor: colors.border },
+                  ]}
+                >
+                  <Heart size={28} color={colors.textSecondary} />
+                  <ThemedText style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+                    Você ainda não marcou nenhuma empresa como favorita.
+                  </ThemedText>
+                  <Pressable
+                    onPress={() => setShowFavoritesOnly(false)}
+                    style={[styles.showAllButton, { borderColor: colors.border }]}
+                    accessibilityRole="button"
+                  >
+                    <ThemedText style={[styles.showAllLabel, { color: colors.tint }]}>
+                      Ver empresas em destaque
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              ) : (
+                <FeaturedCompanies
+                  companies={displayedCompanies}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  onPress={(company) => {
+                    trackCompanyClick(company.id, company.name, 'home_featured');
+                    router.push(`/company/${company.slug}`);
+                  }}
+                />
+              )}
+            </View>
+
+            {articles.length ? (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+                    Guias e novidades
+                  </ThemedText>
+                </View>
+                <LatestArticles
+                  articles={articles}
+                  onPress={(article) => router.push(`/blog/${article.slug}`)}
+                />
+              </View>
+            ) : null}
           </>
         )}
-
       </ScrollView>
 
-      {/* MODAL DE FILTROS AVANÇADOS */}
       <Modal
         animationType="slide"
-        transparent={true}
+        transparent
+        statusBarTranslucent
         visible={isFilterModalVisible}
         onRequestClose={() => setIsFilterModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+          <View
+            style={[styles.modalContent, Shadows.lg, { backgroundColor: colors.backgroundElement }]}
+          >
             <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>Filtros de Busca</ThemedText>
-              <TouchableOpacity onPress={() => setIsFilterModalVisible(false)}>
-                <ThemedText style={{ color: colors.textSecondary, fontSize: 24 }}>×</ThemedText>
-              </TouchableOpacity>
+              <ThemedText style={[styles.modalTitle, { color: colors.text }]}>
+                Filtros de busca
+              </ThemedText>
+              <Pressable
+                onPress={() => setIsFilterModalVisible(false)}
+                style={styles.iconButton}
+                accessibilityRole="button"
+                accessibilityLabel="Fechar filtros"
+              >
+                <X size={24} color={colors.textSecondary} />
+              </Pressable>
             </View>
 
-            <View style={styles.filterRow}>
-              <View>
-                <ThemedText style={styles.filterLabel}>Apenas Empresas Verificadas</ThemedText>
-                <ThemedText style={styles.filterHint}>Maior segurança e confiabilidade</ThemedText>
+            <View style={[styles.filterRow, { borderBottomColor: colors.border }]}>
+              <View style={styles.filterCopy}>
+                <ThemedText style={[styles.filterLabel, { color: colors.text }]}>
+                  Apenas empresas verificadas
+                </ThemedText>
+                <ThemedText style={[styles.filterHint, { color: colors.textSecondary }]}>
+                  Exibe somente perfis com verificação.
+                </ThemedText>
               </View>
-              <Switch 
+              <Switch
                 value={filterVerifiedOnly}
                 onValueChange={setFilterVerifiedOnly}
                 trackColor={{ false: colors.border, true: colors.tint }}
-                thumbColor={colors.backgroundElement}
+                thumbColor={colors.onTint}
+                accessibilityLabel="Apenas empresas verificadas"
               />
             </View>
 
             <View style={styles.filterSection}>
-              <ThemedText style={styles.filterLabel}>Avaliação Mínima</ThemedText>
+              <ThemedText style={[styles.filterLabel, { color: colors.text }]}>
+                Avaliação mínima
+              </ThemedText>
               <View style={styles.ratingChips}>
-                {[0, 3, 4, 4.5].map((rating) => (
-                  <TouchableOpacity 
-                    key={rating}
-                    style={[
-                      styles.ratingChip, 
-                      filterMinRating === rating && { backgroundColor: colors.tint, borderColor: colors.tint }
-                    ]}
-                    onPress={() => setFilterMinRating(rating)}
-                  >
-                    <ThemedText style={[
-                      styles.ratingChipText,
-                      filterMinRating === rating && { color: colors.backgroundElement }
-                    ]}>
-                      {rating === 0 ? 'Qualquer' : `${rating}+ Estrelas`}
-                    </ThemedText>
-                  </TouchableOpacity>
-                ))}
+                {[0, 3, 4, 4.5].map((rating) => {
+                  const isSelected = filterMinRating === rating;
+                  return (
+                    <Pressable
+                      key={rating}
+                      style={[
+                        styles.ratingChip,
+                        {
+                          backgroundColor: isSelected ? colors.tint : colors.backgroundElement,
+                          borderColor: isSelected ? colors.tint : colors.border,
+                        },
+                      ]}
+                      onPress={() => setFilterMinRating(rating)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isSelected }}
+                    >
+                      <ThemedText
+                        style={[
+                          styles.ratingChipText,
+                          { color: isSelected ? colors.onTint : colors.textSecondary },
+                        ]}
+                      >
+                        {rating === 0 ? 'Qualquer' : `${rating}+ estrelas`}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
 
-            <TouchableOpacity 
-              style={[styles.applyButton, { backgroundColor: colors.tint }]}
+            <Pressable
+              style={({ pressed }) => [
+                styles.applyButton,
+                { backgroundColor: colors.tint, opacity: pressed ? 0.75 : 1 },
+              ]}
               onPress={handleSearch}
+              accessibilityRole="button"
             >
-              <ThemedText style={styles.applyButtonText}>Aplicar Filtros</ThemedText>
-            </TouchableOpacity>
+              <ThemedText style={[styles.applyButtonText, { color: colors.onTint }]}>
+                Aplicar filtros
+              </ThemedText>
+            </Pressable>
           </View>
         </View>
       </Modal>
-
     </ThemedView>
   );
 }
@@ -524,269 +638,207 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    borderBottomWidth: 1,
+    paddingBottom: Spacing.two,
+  },
+  headerRow: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.two,
+  },
+  locationButton: {
+    minWidth: 0,
+    minHeight: 44,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.three,
+  },
+  locationText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   scrollContent: {
     paddingBottom: Spacing.six,
   },
-  premiumHeader: {
-    paddingTop: 10,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  searchWrapper: {
     paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
   },
-  premiumLocation: {
+  searchBox: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: colors.surfaceSubtle,
-    borderRadius: 20,
+    gap: Spacing.two,
+    borderWidth: 1,
+    borderRadius: Radius.full,
+    paddingLeft: Spacing.three,
+    paddingRight: Spacing.one,
   },
-  premiumLocationText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  premiumHeaderIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  notificationBtn: {
-    position: 'relative',
-    padding: 2,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -6,
-    backgroundColor: colors.danger,
-    borderRadius: 9,
-    width: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notificationBadgeText: {
-    color: colors.backgroundElement,
-    fontSize: 9,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
-    backgroundColor: colors.backgroundElement,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  tabItem: {
-    alignItems: 'center',
+  searchInput: {
+    minHeight: 46,
     flex: 1,
-    position: 'relative',
-    paddingBottom: 4,
+    fontSize: 14,
   },
-  tabIcon: {
+  searchFilterButton: {
     width: 44,
     height: 44,
-    marginBottom: 6,
-  },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  activeTabLabel: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: -4,
-    width: 28,
-    height: 2.5,
-    borderRadius: 1.5,
-    backgroundColor: colors.text,
-  },
-  premiumSearchWrapper: {
-    paddingHorizontal: Spacing.four,
-    marginVertical: 16,
-  },
-  premiumSearchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceSubtle,
-    height: 46,
-    borderRadius: 23,
-    paddingHorizontal: 16,
-  },
-  premiumSearchPlaceholder: {
-    flex: 1,
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  premiumFilterButton: {
-    padding: 6,
-    backgroundColor: colors.backgroundElement,
-    borderRadius: 14,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
-    gap: 10,
-    marginBottom: 16,
-  },
-  quickActionCard: {
-    flex: 1,
-    backgroundColor: colors.backgroundElement,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  quickActionIconWrapper: {
-    width: 40,
-    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
   },
-  quickActionIcon: {
-    width: 36,
-    height: 36,
+  discoveryActions: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.three,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    paddingHorizontal: Spacing.two,
   },
-  quickActionLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colors.textSecondary,
+  discoveryAction: {
+    minHeight: 48,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.one,
   },
-  equipmentSection: {
+  discoveryActionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  actionDivider: {
+    width: 1,
+    height: 28,
+  },
+  section: {
+    marginTop: Spacing.four,
+  },
+  sectionHeader: {
     paddingHorizontal: Spacing.four,
-    marginVertical: 18,
+    marginBottom: Spacing.two,
   },
-  equipmentSectionTitle: {
+  sectionTitle: {
+    fontSize: 20,
+    lineHeight: 25,
+    fontWeight: '800',
+  },
+  sectionSubtitle: {
+    marginTop: Spacing.one,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  feedbackContainer: {
+    minHeight: 280,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.four,
+  },
+  feedbackTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.text,
-    marginBottom: 14,
-  },
-  equipmentGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  equipmentCard: {
-    width: (width - Spacing.four * 2 - 10) / 2,
-    backgroundColor: colors.surfaceSubtle,
-    borderRadius: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  equipmentImageWrapper: {
-    height: 110,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-  },
-  equipmentImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  equipmentImagePng: {
-    width: 70,
-    height: 70,
-  },
-  equipmentCardFooter: {
-    backgroundColor: colors.backgroundElement,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    alignItems: 'center',
-  },
-  equipmentCardLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.text,
     textAlign: 'center',
   },
-  premiumSectionHeader: {
+  retryButton: {
+    minHeight: 44,
+    marginTop: Spacing.three,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: Spacing.four,
-    marginTop: 18,
-    marginBottom: 12,
   },
-  premiumSectionTitle: {
-    fontSize: 16,
+  retryLabel: {
+    fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
   },
-  premiumSectionSubtitle: {
+  emptyState: {
+    minHeight: 180,
+    marginHorizontal: Spacing.four,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.four,
+  },
+  emptyStateText: {
+    marginTop: Spacing.two,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  showAllButton: {
+    minHeight: 44,
+    marginTop: Spacing.three,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.three,
+  },
+  showAllLabel: {
     fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: Spacing.five,
-    minHeight: 300,
-    elevation: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    minHeight: 330,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    padding: Spacing.four,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.five,
+    marginBottom: Spacing.four,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 19,
+    fontWeight: '800',
   },
   filterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.five,
+    gap: Spacing.three,
+    marginBottom: Spacing.four,
     borderBottomWidth: 1,
-    borderBottomColor: colors.surfaceSubtle,
     paddingBottom: Spacing.four,
+  },
+  filterCopy: {
+    flex: 1,
   },
   filterLabel: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   filterHint: {
+    marginTop: Spacing.one,
     fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
   },
   filterSection: {
-    marginBottom: Spacing.six,
+    marginBottom: Spacing.five,
   },
   ratingChips: {
     flexDirection: 'row',
@@ -795,27 +847,26 @@ const styles = StyleSheet.create({
     marginTop: Spacing.three,
   },
   ratingChip: {
+    minHeight: 44,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: colors.backgroundElement,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.three,
   },
   ratingChipText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
   },
   applyButton: {
-    borderRadius: 12,
-    paddingVertical: 14,
+    minHeight: 48,
+    borderRadius: Radius.md,
     alignItems: 'center',
-    marginTop: 'auto',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.four,
   },
   applyButtonText: {
-    color: colors.backgroundElement,
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '800',
   },
 });

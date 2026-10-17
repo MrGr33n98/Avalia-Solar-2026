@@ -42,11 +42,7 @@ jest.mock('@/components/favorites/FavoriteButton', () => ({
 jest.mock('@/components/ComparisonToggleButton', () => ({
   __esModule: true,
   default: ({ company, variant }: { company: Company; variant?: string }) => (
-    <button
-      type="button"
-      aria-label={`Comparar ${company.name}`}
-      data-variant={variant}
-    >
+    <button type="button" aria-label={`Comparar ${company.name}`} data-variant={variant}>
       Comparar
     </button>
   ),
@@ -124,16 +120,16 @@ describe('rails de identidade visual da home', () => {
     render(<HomeCategoryRail categories={[]} />);
 
     expect(screen.getByText('Categorias em destaque')).toBeInTheDocument();
-    expect(screen.getByText('Energia Solar Residencial')).toBeInTheDocument();
-    expect(screen.getByText('Energia Solar Comercial')).toBeInTheDocument();
+    expect(screen.getByText('Energia Solar')).toBeInTheDocument();
+    expect(screen.getByText('Mobilidade Elétrica')).toBeInTheDocument();
   });
 
-  it('renderiza produtos em destaque como chips horizontais compactos', () => {
+  it('renderiza tipos de solução oficiais como chips horizontais compactos', () => {
     render(<HomeSolutionsRail />);
 
-    expect(screen.getByText('Produtos em destaque')).toBeInTheDocument();
-    expect(screen.getByText('Energia Solar Residencial')).toBeInTheDocument();
-    expect(screen.getByText('Energia Solar Comercial')).toBeInTheDocument();
+    expect(screen.getByText('Tipos de solução')).toBeInTheDocument();
+    expect(screen.getByText('Painéis Solares')).toBeInTheDocument();
+    expect(screen.getByText('Inversores')).toBeInTheDocument();
   });
 
   it('ancora selo verificado dentro do tail para empresa verificada', () => {
@@ -179,9 +175,7 @@ describe('rails de identidade visual da home', () => {
   it('passa variante home-compact para o botão de comparação', () => {
     render(
       <HomeCompaniesRail
-        companies={[
-          makeCompany({ id: 1, name: 'Cymaz Solar', verified: true }),
-        ]}
+        companies={[makeCompany({ id: 1, name: 'Cymaz Solar', verified: true })]}
       />
     );
 

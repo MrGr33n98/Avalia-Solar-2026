@@ -17,6 +17,7 @@ import HomeLocationBar from '@/components/home/HomeLocationBar';
 import HomeCategoryRail from '@/components/home/HomeCategoryRail';
 import HomeHeroBanner from '@/components/home/HomeHeroBanner';
 import HomeSolutionsRail from '@/components/home/HomeSolutionsRail';
+import HomeBrandsRail from '@/components/home/HomeBrandsRail';
 import HomeCompaniesRail from '@/components/home/HomeCompaniesRail';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -198,7 +199,11 @@ export default async function Home() {
 
       {/* 3. Hero Banner Compacto com Foto, CTA e Banners do ActiveAdmin */}
       <div className="mx-auto max-w-[1330px]">
-        <Suspense fallback={<div className="aspect-[39/23] md:aspect-[133/23] w-full max-w-[1330px] animate-pulse rounded-xl bg-slate-100 mx-auto my-2" />}>
+        <Suspense
+          fallback={
+            <div className="aspect-[39/23] md:aspect-[133/23] w-full max-w-[1330px] animate-pulse rounded-xl bg-slate-100 mx-auto my-2" />
+          }
+        >
           <HomeHeroBannerWrapper dataPromise={bannersDataPromise} />
         </Suspense>
       </div>
@@ -208,9 +213,20 @@ export default async function Home() {
         <HomeSolutionsRail />
       </div>
 
-      {/* 5. Seis empresas em destaque com favorito e comparação */}
+      {/* 5. Marcas reais derivadas das empresas com logotipo cadastrado */}
       <div className="mx-auto max-w-[1320px]">
-        <Suspense fallback={<div className="h-44 w-full animate-pulse rounded-2xl bg-slate-50 mx-4 my-2" />}>
+        <Suspense
+          fallback={<div className="mx-4 my-2 h-24 animate-pulse rounded-xl bg-slate-50" />}
+        >
+          <HomeBrandsRailWrapper dataPromise={companiesDataPromise} />
+        </Suspense>
+      </div>
+
+      {/* 6. Seis empresas em destaque com favorito e comparação */}
+      <div className="mx-auto max-w-[1320px]">
+        <Suspense
+          fallback={<div className="h-44 w-full animate-pulse rounded-2xl bg-slate-50 mx-4 my-2" />}
+        >
           <HomeCompaniesRailWrapper dataPromise={companiesDataPromise} />
         </Suspense>
       </div>
@@ -332,6 +348,21 @@ async function HomeCategoryRailWrapper({
   return <HomeCategoryRail categories={categories} />;
 }
 
+async function HomeBrandsRailWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getCompaniesDataCached>;
+}) {
+  let companies: Company[] = [];
+  try {
+    const data = await dataPromise;
+    companies = Array.isArray(data?.companies) ? data.companies : [];
+  } catch (error) {
+    console.error('[Home] HomeBrandsRailWrapper fallback triggered:', error);
+  }
+
+  return companies.length > 0 ? <HomeBrandsRail companies={companies} /> : null;
+}
 
 async function HomeCompaniesRailWrapper({
   dataPromise,

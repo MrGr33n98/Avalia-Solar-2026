@@ -1,95 +1,212 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, useColorScheme, Dimensions } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, View, useColorScheme } from 'react-native';
 import { Image } from 'expo-image';
-import { Star, ShieldCheck, Heart, Sun } from 'lucide-react-native';
+import { ArrowLeftRight, Building2, Heart, ShieldCheck, Star } from 'lucide-react-native';
+
 import { ThemedText } from '@/components/themed-text';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { useCompareStore } from '@/store/compare';
 
 const { width } = Dimensions.get('window');
 
-interface Company {
+export interface FeaturedCompany {
   id: string;
   name: string;
   slug: string;
-  logoUrl?: string;
-  ratingAvg?: number;
-  reviewsCount?: number;
+  logoUrl?: string | null;
+  ratingAvg?: number | null;
+  reviewsCount?: number | null;
   isVerified?: boolean;
-  city?: string;
-  state?: string;
+  city?: string | null;
+  state?: string | null;
 }
 
 interface FeaturedCompaniesProps {
-  companies: Company[];
+  companies: FeaturedCompany[];
   favorites: string[];
   onToggleFavorite: (id: string) => void;
-  onPress: (company: Company) => void;
+  onPress: (company: FeaturedCompany) => void;
 }
 
-export const FeaturedCompanies = ({ companies, favorites, onToggleFavorite, onPress }: FeaturedCompaniesProps) => {
+export const FeaturedCompanies = ({
+  companies,
+  favorites,
+  onToggleFavorite,
+  onPress,
+}: FeaturedCompaniesProps) => {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
+  const selectedCompanies = useCompareStore((state) => state.selectedCompanies);
+  const addCompany = useCompareStore((state) => state.addCompany);
+  const removeCompany = useCompareStore((state) => state.removeCompany);
+  const visibleCompanies = companies.slice(0, 6);
 
-  if (!companies || companies.length === 0) return null;
+  if (!visibleCompanies.length) return null;
 
   return (
     <View style={styles.gridContainer}>
-      {companies.map((company) => {
-        const isFav = favorites.includes(company.id);
+      {visibleCompanies.map((company) => {
+        const isFavorite = favorites.includes(company.id);
+        const isComparing = selectedCompanies.some((item) => item.id === company.id);
+        const compareLimitReached = !isComparing && selectedCompanies.length >= 3;
+        const location = [company.city, company.state].filter(Boolean).join(' - ');
+        const hasRating =
+          typeof company.ratingAvg === 'number' &&
+          company.ratingAvg > 0 &&
+          typeof company.reviewsCount === 'number' &&
+          company.reviewsCount > 0;
+
+        const toggleComparison = () => {
+          if (isComparing) {
+            removeCompany(company.id);
+            return;
+          }
+          if (compareLimitReached) return;
+          addCompany({
+            id: company.id,
+            name: company.name,
+            logoUrl: company.logoUrl || undefined,
+            ratingAvg: company.ratingAvg || undefined,
+            reviewsCount: company.reviewsCount || undefined,
+            isVerified: company.isVerified,
+          });
+        };
+
         return (
-          <TouchableOpacity
+          <View
             key={company.id}
-            style={[styles.gridCard, { backgroundColor: colors.background, borderColor: colors.border }]}
-            onPress={() => onPress(company)}
+            style={[
+              styles.gridCard,
+              Shadows.sm,
+              { backgroundColor: colors.backgroundElement, borderColor: colors.border },
+            ]}
           >
             <View style={styles.cardTopRow}>
-              {company.logoUrl ? (
-                <Image
-                  source={{ uri: company.logoUrl }}
-                  style={styles.companyLogo}
-                  contentFit="cover"
-                  transition={200}
-                />
-              ) : (
-                <View style={[styles.companyLogoPlaceholder, { backgroundColor: colors.backgroundSelected }]}>
-                  <Sun color={colors.brandDarkBlue} size={20} />
-                </View>
-              )}
-              
-              <TouchableOpacity onPress={() => onToggleFavorite(company.id)} style={styles.favoriteButton}>
+              <Pressable
+                onPress={() => onPress(company)}
+                accessibilityRole="button"
+                accessibilityLabel={`Ver perfil de ${company.name}`}
+                style={({ pressed }) => [
+                  styles.companyLogoButton,
+                  { borderColor: colors.border, opacity: pressed ? 0.72 : 1 },
+                ]}
+              >
+                {company.logoUrl ? (
+                  <Image
+                    source={{ uri: company.logoUrl }}
+                    style={styles.companyLogo}
+                    contentFit="contain"
+                    transition={150}
+                    accessibilityLabel={`Logotipo ${company.name}`}
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.companyLogoPlaceholder,
+                      { backgroundColor: colors.surfaceSubtle },
+                    ]}
+                  >
+                    <Building2 color={colors.textSecondary} size={22} accessibilityElementsHidden />
+                  </View>
+                )}
+              </Pressable>
+
+              <Pressable
+                onPress={() => onToggleFavorite(company.id)}
+                style={({ pressed }) => [styles.favoriteButton, { opacity: pressed ? 0.65 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isFavorite
+                    ? `Remover ${company.name} dos favoritos`
+                    : `Adicionar ${company.name} aos favoritos`
+                }
+                accessibilityState={{ selected: isFavorite }}
+                hitSlop={4}
+              >
                 <Heart
-                  size={18}
-                  color={isFav ? colors.danger : colors.textSecondary}
-                  fill={isFav ? colors.danger : 'transparent'}
+                  size={22}
+                  color={isFavorite ? colors.danger : colors.textSecondary}
+                  fill={isFavorite ? colors.danger : colors.backgroundElement}
                 />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
-            <View style={styles.cardInfoContainer}>
+            <Pressable
+              onPress={() => onPress(company)}
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir ${company.name}`}
+              style={styles.cardInfoContainer}
+            >
               <View style={styles.companyNameRow}>
-                <ThemedText style={styles.companyName} numberOfLines={1}>
+                <ThemedText style={[styles.companyName, { color: colors.text }]} numberOfLines={2}>
                   {company.name}
                 </ThemedText>
-                {company.isVerified && (
-                  <ShieldCheck size={14} color={colors.success} style={{ marginLeft: 2 }} />
-                )}
+                {company.isVerified ? (
+                  <ShieldCheck size={15} color={colors.success} accessibilityLabel="Verificada" />
+                ) : null}
               </View>
-              
-              <ThemedText style={[styles.companySubname, { color: colors.textSecondary }]} numberOfLines={1}>
-                {company.city} - {company.state}
-              </ThemedText>
+
+              {location ? (
+                <ThemedText
+                  style={[styles.companySubname, { color: colors.textSecondary }]}
+                  numberOfLines={1}
+                >
+                  {location}
+                </ThemedText>
+              ) : null}
 
               <View style={styles.ratingRow}>
-                <Star size={12} color={colors.starYellow} fill={colors.starYellow} style={{ marginRight: 2 }} />
-                <ThemedText style={styles.ratingText}>
-                  {company.ratingAvg ? company.ratingAvg.toFixed(1) : '0.0'}
-                </ThemedText>
-                <ThemedText style={[styles.reviewCountText, { color: colors.textSecondary }]}>
-                  ({company.reviewsCount || 0})
-                </ThemedText>
+                {hasRating ? (
+                  <>
+                    <Star size={13} color={colors.starYellow} fill={colors.starYellow} />
+                    <ThemedText style={[styles.ratingText, { color: colors.text }]}>
+                      {company.ratingAvg?.toFixed(1)}
+                    </ThemedText>
+                    <ThemedText style={[styles.reviewCountText, { color: colors.textSecondary }]}>
+                      ({company.reviewsCount})
+                    </ThemedText>
+                  </>
+                ) : (
+                  <ThemedText style={[styles.reviewCountText, { color: colors.textSecondary }]}>
+                    Sem avaliações
+                  </ThemedText>
+                )}
               </View>
-            </View>
-          </TouchableOpacity>
+            </Pressable>
+
+            <Pressable
+              onPress={toggleComparison}
+              disabled={compareLimitReached}
+              accessibilityRole="button"
+              accessibilityLabel={
+                compareLimitReached
+                  ? 'Limite de três empresas para comparação atingido'
+                  : isComparing
+                    ? `Remover ${company.name} da comparação`
+                    : `Comparar ${company.name}`
+              }
+              accessibilityState={{ selected: isComparing, disabled: compareLimitReached }}
+              style={({ pressed }) => [
+                styles.compareButton,
+                {
+                  backgroundColor: isComparing ? colors.tint : colors.surfaceSubtle,
+                  borderColor: isComparing ? colors.tint : colors.border,
+                  opacity: compareLimitReached ? 0.45 : pressed ? 0.72 : 1,
+                },
+              ]}
+            >
+              <ArrowLeftRight
+                size={16}
+                color={isComparing ? colors.onTint : colors.textSecondary}
+                accessibilityElementsHidden
+              />
+              <ThemedText
+                style={[styles.compareLabel, { color: isComparing ? colors.onTint : colors.text }]}
+              >
+                {isComparing ? 'Selecionada' : 'Comparar'}
+              </ThemedText>
+            </Pressable>
+          </View>
         );
       })}
     </View>
@@ -106,14 +223,10 @@ const styles = StyleSheet.create({
   },
   gridCard: {
     width: (width - Spacing.four * 2 - Spacing.three) / 2,
-    borderRadius: 16,
-    borderWidth: 0,
+    minHeight: 210,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
     padding: Spacing.three,
-    elevation: 4,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -121,46 +234,74 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: Spacing.two,
   },
+  companyLogoButton: {
+    width: 52,
+    height: 52,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
   companyLogo: {
-    width: 36,
-    height: 36,
-    borderRadius: 6,
+    width: '100%',
+    height: '100%',
   },
   companyLogoPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 6,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   favoriteButton: {
-    padding: 2,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardInfoContainer: {
-    gap: 2,
+    flex: 1,
+    gap: Spacing.one,
   },
   companyNameRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: Spacing.one,
   },
   companyName: {
+    minHeight: 34,
     fontSize: 13,
-    fontWeight: 'bold',
+    lineHeight: 17,
+    fontWeight: '700',
     flex: 1,
   },
   companySubname: {
     fontSize: 10,
   },
   ratingRow: {
+    minHeight: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    gap: Spacing.one,
   },
   ratingText: {
-    fontSize: 10,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '700',
   },
   reviewCountText: {
     fontSize: 10,
+  },
+  compareButton: {
+    minHeight: 44,
+    marginTop: Spacing.two,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.two,
+  },
+  compareLabel: {
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

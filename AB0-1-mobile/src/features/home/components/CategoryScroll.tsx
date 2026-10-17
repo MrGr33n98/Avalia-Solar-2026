@@ -1,56 +1,77 @@
 import React from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, useColorScheme } from 'react-native';
 import { Image } from 'expo-image';
-import { ThemedText } from '@/components/themed-text';
-import { Colors, Spacing } from '@/constants/theme';
-import { getCategoryVisualAssetUri } from '@/constants/category-visual-assets';
+import { Shapes } from 'lucide-react-native';
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  iconUrl?: string;
-}
+import { ThemedText } from '@/components/themed-text';
+import {
+  type DiscoveryCategory,
+  getCategoryVisualAssetUri,
+} from '@/constants/category-visual-assets';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 
 interface CategoryScrollProps {
-  categories: Category[];
-  onSelect: (id: string) => void;
+  categories: DiscoveryCategory[];
+  onSelect: (category: DiscoveryCategory) => void;
+  accessibilityLabel?: string;
 }
 
-export const CategoryScroll = ({ categories, onSelect }: CategoryScrollProps) => {
+export const CategoryScroll = ({
+  categories,
+  onSelect,
+  accessibilityLabel = 'Categorias',
+}: CategoryScrollProps) => {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || !scheme ? 'light' : scheme];
 
-  if (!categories || categories.length === 0) return null;
+  if (!categories?.length) return null;
 
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
+      accessibilityRole="list"
+      accessibilityLabel={accessibilityLabel}
     >
-      {categories.map((cat) => (
-        <TouchableOpacity
-          key={cat.id}
-          style={styles.categoryItem}
-          onPress={() => onSelect(cat.id)}
-        >
-          <View style={[styles.categoryCircle, { backgroundColor: colors.surfaceSubtle }]}>
-            {getCategoryVisualAssetUri(cat.slug, cat.name) ? (
-              <Image
-                source={getCategoryVisualAssetUri(cat.slug, cat.name) as string}
-                contentFit="contain"
-                transition={150}
-                style={styles.categoryImage}
-                accessibilityLabel={`Imagem de ${cat.name}`}
-              />
-            ) : null}
-          </View>
-          <ThemedText style={styles.categoryName} numberOfLines={1}>
-            {cat.name}
-          </ThemedText>
-        </TouchableOpacity>
-      ))}
+      {categories.map((category) => {
+        const imageUri =
+          category.iconUrl || getCategoryVisualAssetUri(category.slug, category.name);
+
+        return (
+          <Pressable
+            key={category.id}
+            style={({ pressed }) => [
+              styles.categoryItem,
+              {
+                backgroundColor: colors.backgroundElement,
+                borderColor: colors.border,
+                opacity: pressed ? 0.72 : 1,
+              },
+            ]}
+            onPress={() => onSelect(category)}
+            accessibilityRole="button"
+            accessibilityLabel={`Explorar ${category.name}`}
+          >
+            <View style={[styles.visual, { backgroundColor: colors.surfaceSubtle }]}>
+              {imageUri ? (
+                <Image
+                  source={{ uri: imageUri }}
+                  contentFit="contain"
+                  transition={150}
+                  style={styles.categoryImage}
+                  accessibilityLabel={`Ilustração de ${category.name}`}
+                />
+              ) : (
+                <Shapes size={30} color={colors.tint} accessibilityElementsHidden />
+              )}
+            </View>
+            <ThemedText style={[styles.categoryName, { color: colors.text }]} numberOfLines={2}>
+              {category.name}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
     </ScrollView>
   );
 };
@@ -58,30 +79,37 @@ export const CategoryScroll = ({ categories, onSelect }: CategoryScrollProps) =>
 const styles = StyleSheet.create({
   container: {
     paddingLeft: Spacing.four,
-    paddingRight: Spacing.two,
-    gap: Spacing.three,
-    paddingVertical: Spacing.one,
+    paddingRight: Spacing.four,
+    gap: Spacing.two,
+    paddingBottom: Spacing.two,
   },
   categoryItem: {
-    alignItems: 'center',
-    width: 68,
-  },
-  categoryCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 24,
-    borderWidth: 0,
+    width: 104,
+    minHeight: 124,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.two,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+  },
+  visual: {
+    width: 64,
+    height: 64,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.two,
   },
   categoryImage: {
-    width: 54,
-    height: 54,
+    width: 58,
+    height: 58,
   },
   categoryName: {
-    fontSize: 10,
-    fontWeight: '600',
+    minHeight: 30,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '700',
     textAlign: 'center',
   },
 });

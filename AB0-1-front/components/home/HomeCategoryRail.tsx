@@ -4,11 +4,26 @@ import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { HomeFeaturedChip } from './HomeFeaturedChip';
 import type { Category } from '@/lib/api';
-import { getFallbackCategories } from '@/lib/constants/fallback-categories';
+import {
+  CATEGORY_ICON_MANIFEST,
+  type CategoryIconDefinition,
+} from '@/lib/categories/category-icon-manifest';
 
 export interface HomeCategoryRailProps {
   categories?: Category[];
   className?: string;
+}
+
+const PRIMARY_CATEGORIES = Object.values(CATEGORY_ICON_MANIFEST).filter(
+  (item): item is CategoryIconDefinition => item.type === 'principal'
+);
+
+function normalize(value?: string | null) {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-');
 }
 
 export function HomeCategoryRail({ categories = [], className }: HomeCategoryRailProps) {
@@ -17,8 +32,25 @@ export function HomeCategoryRail({ categories = [], className }: HomeCategoryRai
   const [canScrollRight, setCanScrollRight] = React.useState(false);
 
   const items = React.useMemo(() => {
-    const list = categories.length > 0 ? categories : getFallbackCategories(9);
-    return list.slice(0, 9);
+    return PRIMARY_CATEGORIES.map((definition) => {
+      const category = categories.find((candidate) => {
+        if (candidate.parent_id != null) return false;
+        const candidateSlug = normalize(candidate.slug || candidate.seo_url || candidate.name);
+        return (
+          candidateSlug === normalize(definition.canonicalSlug) ||
+          candidateSlug === normalize(definition.name) ||
+          definition.aliases.some((alias) => candidateSlug === normalize(alias))
+        );
+      });
+
+      return {
+        id: category?.id ?? definition.id,
+        name: category?.name || definition.name,
+        slug: category?.slug || category?.seo_url || definition.canonicalSlug,
+        visualKey: category?.visual_key,
+        iconUrl: category?.icon_url || definition.src,
+      };
+    });
   }, [categories]);
 
   const checkScroll = React.useCallback(() => {
@@ -82,11 +114,11 @@ export function HomeCategoryRail({ categories = [], className }: HomeCategoryRai
           {items.map((category, index) => (
             <HomeFeaturedChip
               key={category.id}
-              href={`/categories/${category.slug || category.seo_url}`}
+              href={`/categories/${category.slug}`}
               name={category.name}
-              slug={category.slug || category.seo_url}
-              visualKey={category.visual_key}
-              iconUrl={category.icon_url}
+              slug={category.slug}
+              visualKey={category.visualKey}
+              iconUrl={category.iconUrl}
               priority={index < 4}
             />
           ))}

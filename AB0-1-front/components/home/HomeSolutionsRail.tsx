@@ -3,73 +3,11 @@
 import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { HomeFeaturedChip } from './HomeFeaturedChip';
+import { CATEGORY_ICON_MANIFEST } from '@/lib/categories/category-icon-manifest';
 
-export interface SolutionItem {
-  id: string;
-  name: string;
-  canonicalSlug: string;
-  src: string;
-  desc: string;
-}
+const SOLUTION_CODES = ['A11', 'A09', 'B02', 'A06', 'A01', 'A10', 'G01', 'A08'] as const;
 
-export const SOLUTIONS: SolutionItem[] = [
-  {
-    id: 'residencial',
-    name: 'Energia Solar Residencial',
-    canonicalSlug: 'energia-solar-residencial',
-    src: '/3d-refined/energia-solar-residencial.png',
-    desc: 'Casas e condomínios',
-  },
-  {
-    id: 'comercial',
-    name: 'Energia Solar Comercial',
-    canonicalSlug: 'energia-solar-comercial',
-    src: '/3d-refined/energia-solar-comercial.png',
-    desc: 'Empresas e comércios',
-  },
-  {
-    id: 'rural',
-    name: 'Energia Solar Rural',
-    canonicalSlug: 'energia-solar-rural',
-    src: '/3d-refined/energia-solar-rural.png',
-    desc: 'Agronegócio e fazendas',
-  },
-  {
-    id: 'industrial',
-    name: 'Energia Solar Industrial',
-    canonicalSlug: 'energia-solar-industrial',
-    src: '/3d-refined/energia-solar-industrial.png',
-    desc: 'Indústrias e galpões',
-  },
-  {
-    id: 'carregador-veicular',
-    name: 'Carregador Veicular Solar',
-    canonicalSlug: 'carregador-veicular-solar',
-    src: '/3d-refined/carregador-veicular-solar.png',
-    desc: 'Mobilidade elétrica',
-  },
-  {
-    id: 'bombeamento',
-    name: 'Bombeamento Solar',
-    canonicalSlug: 'bombeamento-solar',
-    src: '/3d-refined/bombeamento-solar.png',
-    desc: 'Irrigação e poços artesianos',
-  },
-  {
-    id: 'baterias',
-    name: 'Baterias & Nobreak Solar',
-    canonicalSlug: 'baterias-nobreak-solar',
-    src: '/3d-refined/baterias-nobreak-solar.png',
-    desc: 'Armazenamento off-grid e híbrido',
-  },
-  {
-    id: 'manutencao',
-    name: 'Manutenção & Monitoramento',
-    canonicalSlug: 'manutencao-monitoramento-solar',
-    src: '/3d-refined/manutencao-monitoramento-solar.png',
-    desc: 'O&M e limpeza de painéis',
-  },
-];
+export const SOLUTIONS = SOLUTION_CODES.map((code) => CATEGORY_ICON_MANIFEST[code]).filter(Boolean);
 
 export interface HomeSolutionsRailProps {
   className?: string;
@@ -110,7 +48,7 @@ export function HomeSolutionsRail({ className }: HomeSolutionsRailProps) {
     <section aria-labelledby="home-solutions-title" className={className}>
       <div className="mb-2 flex items-center justify-between">
         <h2 id="home-solutions-title" className="text-base font-bold text-slate-900 sm:text-lg">
-          Produtos em destaque
+          Tipos de solução
         </h2>
       </div>
 
@@ -129,7 +67,7 @@ export function HomeSolutionsRail({ className }: HomeSolutionsRailProps) {
         <div
           ref={scrollContainerRef}
           role="region"
-          aria-label="Produtos em destaque"
+          aria-label="Tipos de solução"
           tabIndex={0}
           className="flex w-full min-w-0 snap-x snap-proximity items-center gap-2 overflow-x-auto pb-1 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}

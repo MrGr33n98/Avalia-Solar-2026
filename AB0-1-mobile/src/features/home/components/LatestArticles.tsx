@@ -1,5 +1,4 @@
 import React from 'react';
-import { Colors } from '@/constants/theme';
 import { StyleSheet, View, TouchableOpacity, useColorScheme, Image } from 'react-native';
 import { BookOpen } from 'lucide-react-native';
 import { ThemedText } from '@/components/themed-text';
@@ -25,7 +24,12 @@ export const LatestArticles = ({ articles, onPress }: LatestArticlesProps) => {
   if (!articles || articles.length === 0) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.backgroundElement, borderColor: colors.border },
+      ]}
+    >
       {articles.map((article, index) => {
         const hasCover = !!article.coverUrl;
         const isLast = index === articles.length - 1;
@@ -60,7 +64,10 @@ export const LatestArticles = ({ articles, onPress }: LatestArticlesProps) => {
                 {article.title}
               </ThemedText>
               {article.excerpt && (
-                <ThemedText style={[styles.articleExcerpt, { color: colors.textSecondary }]} numberOfLines={2}>
+                <ThemedText
+                  style={[styles.articleExcerpt, { color: colors.textSecondary }]}
+                  numberOfLines={2}
+                >
                   {article.excerpt}
                 </ThemedText>
               )}
@@ -75,10 +82,8 @@ export const LatestArticles = ({ articles, onPress }: LatestArticlesProps) => {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.four,
-    backgroundColor: colors.backgroundElement,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
     marginHorizontal: Spacing.four,
     marginBottom: Spacing.four,
   },
@@ -94,7 +99,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 8,
-    backgroundColor: colors.border,
   },
   imagePlaceholder: {
     width: 80,
@@ -112,12 +116,10 @@ const styles = StyleSheet.create({
   articleTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
     lineHeight: 18,
   },
   articleExcerpt: {
     fontSize: 11,
-    color: colors.textSecondary,
     lineHeight: 15,
   },
 });
