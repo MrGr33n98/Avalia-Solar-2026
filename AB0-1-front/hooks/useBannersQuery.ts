@@ -39,7 +39,7 @@ interface UseBannersQueryOptions {
  * @param options - Opções de filtro e configuração
  * @returns Query result com dados, loading, error
  */
-const BANNER_REQUEST_TIMEOUT_MS = 6000;
+const BANNER_REQUEST_TIMEOUT_MS = 8000;
 const BANNER_STALE_TIME_MS = 60 * 1000;
 const BANNER_GC_TIME_MS = 10 * 60 * 1000;
 
@@ -103,6 +103,8 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
         method: 'GET',
         timeout: BANNER_REQUEST_TIMEOUT_MS,
         cacheTtlMs: BANNER_STALE_TIME_MS,
+        retries: 1, // Não retentar no api.request (evita cascata de timeouts de 6-8s)
+        silent: true, // Silenciar erros de rede transitórios de publicidade
       });
       return normalizeBanners(response.data);
     },
@@ -110,18 +112,7 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
     initialData,
     staleTime: BANNER_STALE_TIME_MS,
     gcTime: BANNER_GC_TIME_MS,
-    retry: (failureCount, error: unknown) => {
-      const requestError = error as {
-        status?: number;
-        isTimeout?: boolean;
-        context?: { status?: number; isTimeout?: boolean };
-      };
-      const status = requestError.status ?? requestError.context?.status;
-      const isTimeout = Boolean(requestError.isTimeout ?? requestError.context?.isTimeout);
-      // Prática sênior: Não retentar em rate limit (429) ou em timeout (evita amplificação de carga em cascata)
-      if (status === 429 || isTimeout) return false;
-      return failureCount < 1;
-    },
+    retry: false, // Banners são conteúdo secundário: falha graciosa e sem retries
     refetchOnWindowFocus: false,
   });
 }

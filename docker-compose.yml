@@ -71,8 +71,8 @@ services:
       POSTGRES_HOST: ab0-postgres
       OPENSEARCH_URL: http://ab0-opensearch:9200
       SEARCH_ENABLED: ${SEARCH_ENABLED:-false}
-      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
-      RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-8}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
       # As chaves de SPACES virão do .env via env_file
       # As chaves de SPACES virão do .env via env_file

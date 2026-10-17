@@ -15,14 +15,15 @@ class Api::V1::BannersController < Api::V1::BaseController
     # Gera chave de cache baseada em todos os parâmetros relevantes
     cache_key = generate_cache_key
 
-    # Busca do cache ou executa query
-    @banners = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
-      build_banners_query.to_a
+    # Busca payload pré-serializado do cache Redis ou executa query + serialização
+    serialized_banners = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+      banners = build_banners_query.to_a
+      serialize_banners(banners)
     end
 
-    # Serializa apenas campos necessários para reduzir payload
+    # Registra métricas de entrega
     Banners::Metrics.delivery(status: 'success', position: params[:position].presence || 'all', source: 'cache_or_db')
-    render json: serialize_banners(@banners)
+    render json: serialized_banners
   rescue StandardError => e
     Rails.logger.error("[BannersController#index] Error: #{e.class}: #{e.message}")
     Rails.logger.error(e.backtrace&.join("\n"))
@@ -58,7 +59,7 @@ class Api::V1::BannersController < Api::V1::BaseController
     # Gera hash MD5 dos parâmetros para chave compacta
     params_digest = Digest::MD5.hexdigest(params_hash.to_json)
 
-    "banners/v2/#{params_digest}/#{version_string}"
+    "banners/v3/#{params_digest}/#{version_string}"
   end
 
   # Serializa banners retornando apenas campos necessários e anexa UTMs

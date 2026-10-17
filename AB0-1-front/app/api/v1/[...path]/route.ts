@@ -165,6 +165,9 @@ async function discardResponseBody(response: Response) {
   }
 }
 
+const UPSTREAM_PUBLIC_TIMEOUT_MS = 8000;
+const UPSTREAM_DEFAULT_TIMEOUT_MS = 15000;
+
 async function proxyRequest(request: NextRequest, context: RouteContext): Promise<Response> {
   const pathSegments = context.params.path ?? [];
   const upstreamBases = resolveProxyApiBases();
@@ -174,12 +177,30 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
       ? undefined
       : await request.arrayBuffer();
 
+  const timeoutMs = isPublicGetEndpoint(pathSegments)
+    ? UPSTREAM_PUBLIC_TIMEOUT_MS
+    : UPSTREAM_DEFAULT_TIMEOUT_MS;
+
   let lastError: unknown;
+  let isTimeout = false;
 
   for (let index = 0; index < upstreamBases.length; index += 1) {
     const upstreamBase = upstreamBases[index];
     const upstreamUrl = buildUpstreamUrl(upstreamBase, pathSegments, request.nextUrl.search);
     const hasFallback = index < upstreamBases.length - 1;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      isTimeout = true;
+      controller.abort(new Error(`Upstream timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    const onClientAbort = () => {
+      controller.abort(new Error('Client aborted'));
+    };
+    if (request.signal) {
+      request.signal.addEventListener('abort', onClientAbort, { once: true });
+    }
 
     try {
       const init: RequestInit & { duplex?: 'half' } = {
@@ -187,6 +208,7 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
         headers: buildUpstreamHeaders(request, requestBody?.byteLength),
         cache: 'no-store',
         redirect: 'manual',
+        signal: controller.signal,
       };
 
       if (requestBody) {
@@ -213,15 +235,21 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
       });
     } catch (error) {
       lastError = error;
-      if (hasFallback) {
+      if (hasFallback && !request.signal.aborted) {
         continue;
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      if (request.signal) {
+        request.signal.removeEventListener('abort', onClientAbort);
       }
     }
   }
 
   const message = lastError instanceof Error ? lastError.message : 'Upstream request failed';
+  const status = isTimeout ? 504 : 502;
   return new Response(JSON.stringify({ error: message }), {
-    status: 502,
+    status,
     headers: { 'Content-Type': 'application/json' },
   });
 }

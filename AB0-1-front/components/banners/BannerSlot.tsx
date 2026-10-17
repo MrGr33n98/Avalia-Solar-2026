@@ -13,6 +13,7 @@ interface BannerSlotProps {
   fallback?: React.ReactNode;
   limit?: number;
   priority?: boolean;
+  lazy?: boolean;
   companyId?: number;
   categoryId?: number;
   blockCompetitors?: boolean;
@@ -25,11 +26,42 @@ export function BannerSlot({
   fallback,
   limit = 3,
   priority = false,
+  lazy,
   companyId,
   categoryId,
   blockCompetitors = false,
   showLoadingSkeleton = true,
 }: BannerSlotProps) {
+  const isBelowTheFold = placement.endsWith('_bottom') || placement.includes('footer');
+  const shouldLazyLoad = lazy ?? (!priority && isBelowTheFold);
+
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [inView, setInView] = React.useState(!shouldLazyLoad);
+
+  React.useEffect(() => {
+    if (!shouldLazyLoad || inView) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+
+    const element = containerRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '300px' }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [shouldLazyLoad, inView]);
+
   const {
     data: banners,
     isLoading,
@@ -39,9 +71,27 @@ export function BannerSlot({
     limit,
     category_id: categoryId,
     company_id: companyId,
+    enabled: inView,
   });
 
   const displaySpec = getPlacementDisplaySpec(placement);
+
+  // Se ainda não estiver na viewport, renderiza apenas o placeholder para o observer
+  if (!inView) {
+    return (
+      <div ref={containerRef} className={cn('w-full py-2', className)}>
+        {showLoadingSkeleton && (
+          <div
+            className={cn(
+              'flex w-full items-center justify-center rounded-2xl border border-slate-200/50 bg-slate-100/50',
+              displaySpec?.aspectRatioClass || 'mb-[26px] md:mb-0'
+            )}
+            style={displaySpec?.aspectRatioClass ? undefined : { aspectRatio: resolveBannerAspectRatio({ position: placement }) }}
+          />
+        )}
+      </div>
+    );
+  }
 
   // Renderiza um skeleton suave de carregamento
   if (isLoading) {
@@ -49,7 +99,7 @@ export function BannerSlot({
       return fallback ? <>{fallback}</> : null;
     }
     return (
-      <div className={cn('w-full py-2', className)}>
+      <div ref={containerRef} className={cn('w-full py-2', className)}>
         <div
           className={cn(
             'flex w-full items-center justify-center rounded-2xl border border-slate-200/50 bg-slate-100 animate-pulse',
