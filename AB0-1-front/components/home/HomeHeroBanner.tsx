@@ -26,7 +26,7 @@ export function HomeHeroBanner({
   subheadline = 'Compare empresas, avaliações e solicite propostas para seu projeto.',
   ctaText = 'Ver empresas',
   ctaHref = '/companies',
-  imageSrc = '/images/herro-banner-avalia-solar.webp',
+  imageSrc = '/images/home-hero-avalia-solar-1330x230.webp',
 }: HomeHeroBannerProps) {
   // Exatamente 1 slide institucional limpo como fallback seguro
   const institutionalFallback: Banner = React.useMemo(
@@ -39,6 +39,7 @@ export function HomeHeroBanner({
       cta_href: ctaHref,
       cta_enabled: true,
       image_url: imageSrc,
+      image_mobile_url: '/images/home-hero-avalia-solar-mobile-780x460.webp',
       creative_mode: 'photo_with_html',
       theme: 'dark',
       overlay_variant: 'left_soft',
@@ -244,7 +245,7 @@ export function HomeHeroBanner({
   };
 
   return (
-    <div className={cn('px-4 py-2 w-full select-none', className)}>
+    <div className={cn('px-4 py-2 w-full select-none max-w-[1330px] mx-auto', className)}>
       <div
         ref={heroRef}
         onTouchStart={handleTouchStart}
@@ -253,22 +254,33 @@ export function HomeHeroBanner({
         onMouseLeave={() => setIsPaused(false)}
         onFocus={() => setIsPaused(true)}
         onBlur={() => setIsPaused(false)}
-        className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-slate-800/10 shadow-md group"
+        className="relative overflow-hidden rounded-xl border border-slate-200/60 group w-full bg-[#DBEEFE]"
       >
-        <div className="relative h-[210px] sm:h-[240px] md:h-[280px] w-full">
+        <div className="relative aspect-[39/23] md:aspect-[133/23] w-full">
           {/* Mídia Art-Directed com <picture> responsivo nativo */}
           <picture className="absolute inset-0 block h-full w-full pointer-events-none">
             {currentBanner.image_mobile_url ? (
-              <source media="(max-width: 639px)" srcSet={currentBanner.image_mobile_url} />
+              <source media="(max-width: 767px)" srcSet={currentBanner.image_mobile_url} />
             ) : null}
             <img
               src={bannerImage}
               alt={currentBanner.alt_text || bannerHeadline || 'Hero Banner'}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.01] motion-reduce:transition-none motion-reduce:transform-none"
-              style={{
-                objectPosition: `${currentBanner.object_position_desktop_x ?? 50}% ${currentBanner.object_position_desktop_y ?? 50}%`,
-              }}
+              width={1330}
+              height={230}
+              className={cn(
+                'h-full w-full transition-transform duration-500 group-hover:scale-[1.01] motion-reduce:transition-none motion-reduce:transform-none',
+                isImageOnly ? 'object-contain' : 'object-cover'
+              )}
+              style={
+                isImageOnly
+                  ? undefined
+                  : {
+                      objectPosition: `${currentBanner.object_position_desktop_x ?? 50}% ${currentBanner.object_position_desktop_y ?? 50}%`,
+                    }
+              }
               loading={currentIndex === 0 ? 'eager' : 'lazy'}
+              {...({ fetchpriority: currentIndex === 0 ? 'high' : 'auto' } as React.ImgHTMLAttributes<HTMLImageElement>)}
+              decoding="async"
             />
           </picture>
 
@@ -284,8 +296,8 @@ export function HomeHeroBanner({
           {/* Overlay de contraste para legibilidade */}
           {renderOverlay()}
 
-          {/* Link para toda a área caso configurado como clicável por inteiro */}
-          {currentBanner.whole_banner_clickable && (
+          {/* Link para toda a área caso configurado como clicável por inteiro ou image_only com link */}
+          {(currentBanner.whole_banner_clickable || isImageOnly) && clickTrackingUrl && (
             <Link
               href={clickTrackingUrl}
               className="absolute inset-0 z-10 block"
@@ -296,7 +308,7 @@ export function HomeHeroBanner({
           {/* Conteúdo Tipográfico e Ação */}
           <div className="absolute inset-0 flex flex-col justify-center px-5 sm:px-8 md:px-10 max-w-xl z-15 pointer-events-none">
             {isImageOnly ? (
-              <span className="sr-only">{bannerHeadline}</span>
+              <h1 className="sr-only">{bannerHeadline}</h1>
             ) : (
               <>
                 <h1
@@ -322,7 +334,7 @@ export function HomeHeroBanner({
             )}
 
             {/* Botão de Ação (CTA) Acessível */}
-            {ctaEnabled && ctaLabel && (
+            {!isImageOnly && ctaEnabled && ctaLabel && (
               <div className="mt-4 flex items-center gap-3 pointer-events-auto">
                 <Link
                   href={clickTrackingUrl}

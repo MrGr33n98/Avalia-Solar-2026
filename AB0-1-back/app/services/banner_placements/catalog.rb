@@ -2,7 +2,7 @@ module BannerPlacements
   class Catalog
     Entry = Data.define(:key, :label, :routes, :dimensions, :commercial, :status)
     ENTRIES = {
-      'home_hero' => Entry.new('home_hero', 'Hero Principal da Home', ['/'], [1920, 420], 'premium', 'active'),
+      'home_hero' => Entry.new('home_hero', 'Hero Principal da Home', ['/'], [1330, 230], 'premium', 'active'),
       'home_top' => Entry.new('home_top', 'Topo da página inicial', ['/'], [1200, 160], 'premium', 'active'),
       'categories_top' => Entry.new('categories_top', 'Topo de categorias', ['/categories/*'], [1200, 300], 'premium', 'active'),
       'compare_hero' => Entry.new('compare_hero', 'Destaque no Comparador', ['/compare*'], [1200, 300], 'premium', 'active'),

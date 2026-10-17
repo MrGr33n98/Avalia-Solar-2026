@@ -66,7 +66,7 @@ describe('HomeHeroBanner', () => {
     expect(ctaButton).toHaveAttribute('href', expect.stringContaining('/api/v1/banner_clicks/101'));
   });
 
-  it('renders in image_only mode hiding visual text while maintaining screen reader text and CTA', () => {
+  it('renders in image_only mode with semantic sr-only H1, suppressing visible CTA button while making banner clickable', () => {
     const banners: Banner[] = [
       {
         id: 102,
@@ -82,21 +82,35 @@ describe('HomeHeroBanner', () => {
       },
     ];
 
-    render(<HomeHeroBanner banners={banners} />);
+    const { container } = render(<HomeHeroBanner banners={banners} />);
 
-    // Não deve ter heading visível na tela
-    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
-    // Mas deve conter o texto para leitor de tela (sr-only)
-    expect(screen.getByText('Arte Gráfica Pronta com Oferta')).toHaveClass('sr-only');
-    expect(screen.getByRole('link', { name: /Aproveitar Oferta/i })).toBeInTheDocument();
+    // Deve conter H1 semântico para leitor de tela (sr-only)
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toBeInTheDocument();
+    expect(heading).toHaveClass('sr-only');
+    expect(heading).toHaveTextContent('Arte Gráfica Pronta com Oferta');
+
+    // Não deve sobrepor botão de CTA visível sobre a arte com texto embutido
+    expect(screen.queryByText('Aproveitar Oferta')).not.toBeInTheDocument();
+
+    // Deve tornar o banner inteiro clicável com link acessível
+    const bannerLink = screen.getByLabelText('Arte Gráfica Pronta com Oferta');
+    expect(bannerLink).toBeInTheDocument();
+    expect(bannerLink).toHaveAttribute('href', expect.stringContaining('/api/v1/banner_clicks/102'));
+
+    // Deve usar object-contain para não cortar texto gráfico da imagem
+    const img = container.querySelector('img');
+    expect(img).toHaveClass('object-contain');
+    expect(img).toHaveAttribute('width', '1330');
+    expect(img).toHaveAttribute('height', '230');
   });
 
-  it('renders responsive art direction <source> when image_mobile_url is present', () => {
+  it('renders responsive art direction <source> when image_mobile_url is present with media (max-width: 767px)', () => {
     const banners: Banner[] = [
       {
         id: 103,
         title: 'Campanha Responsiva',
-        image_url: 'https://images.example.com/desktop-1920.webp',
+        image_url: 'https://images.example.com/desktop-1330.webp',
         image_mobile_url: 'https://images.example.com/mobile-780.webp',
         active: true,
         position: 'home_hero',
@@ -105,9 +119,14 @@ describe('HomeHeroBanner', () => {
 
     const { container } = render(<HomeHeroBanner banners={banners} />);
 
-    const sourceTag = container.querySelector('source[media="(max-width: 639px)"]');
+    const sourceTag = container.querySelector('source[media="(max-width: 767px)"]');
     expect(sourceTag).toBeInTheDocument();
     expect(sourceTag).toHaveAttribute('srcset', 'https://images.example.com/mobile-780.webp');
+
+    // Verifica proporção e borda discreta
+    const frame = container.querySelector('.aspect-\\[39\\/23\\]');
+    expect(frame).toBeInTheDocument();
+    expect(frame).toHaveClass('md:aspect-[133/23]');
   });
 
   it('renders sponsored badge when banner is sponsored', () => {

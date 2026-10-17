@@ -12,10 +12,15 @@ export const BANNER_PLACEMENTS = {
   GLOBAL: {
     SIDEBAR: 'sidebar',
   },
+  HOME: {
+    HERO: 'home_hero',
+    TOP: 'home_top',
+  },
 } as const;
 
 /** Proporções padrão usadas somente quando creative não informa dimensões válidas. */
 export const BANNER_PLACEMENT_ASPECT_RATIOS: Record<string, string> = {
+  home_hero: '133/23',
   navbar: '10/1',
   financing_simulator_micro_banner: '3/1',
   sidebar: '6/5',
@@ -56,6 +61,14 @@ export interface PlacementDisplaySpec {
 }
 
 export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec> = {
+  home_hero: {
+    aspectRatioClass: 'aspect-[39/23] md:aspect-[133/23]',
+    defaultAspectRatio: '133/23',
+    mobileAspectRatio: '39/23',
+    desktopAspectRatio: '133/23',
+    fit: 'contain',
+    ambientBackground: false,
+  },
   company_profile_about_inline: {
     aspectRatioClass: 'aspect-[4/1] md:aspect-[5/1] lg:aspect-[6/1]',
     defaultAspectRatio: '4/1',
@@ -91,6 +104,8 @@ export type BannerLocation =
   | typeof BANNER_PLACEMENTS.COMPANIES.FOOTER
   | typeof BANNER_PLACEMENTS.COMPANIES.RIGHT_RAIL
   | typeof BANNER_PLACEMENTS.GLOBAL.SIDEBAR
+  | 'home_hero'
+  | 'home_top'
   | 'navbar'
   | 'article_footer_cta'
   | 'search_top'

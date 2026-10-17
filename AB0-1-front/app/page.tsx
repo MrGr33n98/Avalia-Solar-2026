@@ -197,8 +197,8 @@ export default async function Home() {
       </div>
 
       {/* 3. Hero Banner Compacto com Foto, CTA e Banners do ActiveAdmin */}
-      <div className="mx-auto max-w-[1320px]">
-        <Suspense fallback={<div className="h-[240px] w-full animate-pulse rounded-2xl bg-slate-50 mx-4 my-2" />}>
+      <div className="mx-auto max-w-[1330px]">
+        <Suspense fallback={<div className="aspect-[39/23] md:aspect-[133/23] w-full max-w-[1330px] animate-pulse rounded-xl bg-slate-100 mx-auto my-2" />}>
           <HomeHeroBannerWrapper dataPromise={bannersDataPromise} />
         </Suspense>
       </div>

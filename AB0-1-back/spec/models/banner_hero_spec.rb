@@ -5,7 +5,7 @@ RSpec.describe Banner, type: :model do
     it 'includes home_hero with expected dimensions' do
       expect(BannerPlacements::Catalog.keys).to include('home_hero')
       entry = BannerPlacements::Catalog.fetch('home_hero')
-      expect(entry.dimensions).to eq([1920, 420])
+      expect(entry.dimensions).to eq([1330, 230])
       expect(entry.status).to eq('active')
     end
 
@@ -16,8 +16,8 @@ RSpec.describe Banner, type: :model do
         position: 'home_hero'
       )
       banner.valid?
-      expect(banner.width).to eq(1920)
-      expect(banner.height).to eq(420)
+      expect(banner.width).to eq(1330)
+      expect(banner.height).to eq(230)
     end
   end
 
@@ -27,8 +27,8 @@ RSpec.describe Banner, type: :model do
         title: 'Campanha Solar 2026',
         banner_type: 'rectangular_large',
         position: 'home_hero',
-        width: 1920,
-        height: 420
+        width: 1330,
+        height: 230
       )
     end
 

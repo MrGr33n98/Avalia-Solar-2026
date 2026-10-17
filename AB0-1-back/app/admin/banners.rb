@@ -1,5 +1,5 @@
 banner_position_options = [
-  ['Hero Principal da Home (1920×420 px)', 'home_hero'],
+  ['Hero Principal da Home (1330×230 px)', 'home_hero'],
   ['Topo Home (Legado 1200×160)', 'home_top'],
   ['Navbar (Topo Global)', 'navbar'],
   ['Sidebar legado/global', 'sidebar'],
@@ -124,8 +124,8 @@ ActiveAdmin.register Banner do
                              hint: 'Selecione "Hero Principal da Home" para veiculação no banner topo da home.'
           f.input :slot_key, label: 'Slot Key (Opcional)', hint: 'Chave técnica para injeção específica.'
           f.inputs 'Dimensões (px)' do
-            f.input :width, input_html: { id: 'banner_width' }, hint: 'Padrão sugerido para home_hero: 1920'
-            f.input :height, input_html: { id: 'banner_height' }, hint: 'Padrão sugerido para home_hero: 420'
+            f.input :width, input_html: { id: 'banner_width' }, hint: 'Padrão sugerido para home_hero: 1330'
+            f.input :height, input_html: { id: 'banner_height' }, hint: 'Padrão sugerido para home_hero: 230'
           end
         end
       end
@@ -178,8 +178,8 @@ ActiveAdmin.register Banner do
 
       tab '4. Mídia Responsiva' do
         f.inputs 'Imagens Art-Directed' do
-          f.input :image, as: :file, label: 'Imagem Principal Desktop (1920×420 px)',
-                          hint: safe_banner_image_tag(f.object, style: 'max-height: 120px; border-radius: 6px;') || 'Recomendado: 1920×420 px (JPG, PNG ou WebP até 10 MB).',
+          f.input :image, as: :file, label: 'Imagem Principal Desktop (1330×230 px)',
+                          hint: safe_banner_image_tag(f.object, style: 'max-height: 120px; border-radius: 6px;') || 'Recomendado: 1330×230 px (JPG, PNG ou WebP até 10 MB).',
                           input_html: { direct_upload: true, accept: 'image/*' }
           f.input :object_position_desktop_x, label: 'Ponto Focal Desktop X (%)', hint: '0 = Esquerda, 50 = Centro, 100 = Direita'
           f.input :object_position_desktop_y, label: 'Ponto Focal Desktop Y (%)', hint: '0 = Topo, 50 = Centro, 100 = Base'
@@ -227,7 +227,7 @@ ActiveAdmin.register Banner do
       raw <<~JS
         (function() {
           function setDefaultsForPosition(position) {
-            if (position === 'home_hero') return { w: 1920, h: 420 };
+            if (position === 'home_hero') return { w: 1330, h: 230 };
             if (position === 'home_top') return { w: 1200, h: 160 };
             if (position === 'navbar') return { w: 960, h: 100 };
             if (position === 'sidebar') return { w: 150, h: 125 };
@@ -287,7 +287,7 @@ ActiveAdmin.register Banner do
           status_tag 'Ativo Agora', class: 'ok'
         end
       end
-      row 'Imagem Desktop (1920×420)' do |banner|
+      row 'Imagem Desktop (1330×230)' do |banner|
         safe_banner_image_tag(banner, style: 'max-width: 100%; height: auto; border: 1px solid #eee; border-radius: 8px;')
       end
       row 'Imagem Mobile (780×460)' do |banner|

@@ -190,7 +190,7 @@ class Banner < ApplicationRecord
     source = image
     if self.class.banner_variants_enabled?
       variant_limit = if position == 'home_hero'
-                        [1920, 600]
+                        [2660, 460]
                       elsif width.present? && height.present?
                         [width, height]
                       end
