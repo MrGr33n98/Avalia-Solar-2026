@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="900" viewBox="0 0 1920 900" role="img"><defs>
+ <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#F8FCFF"/><stop offset=".55" stop-color="#E6F3FF"/><stop offset="1" stop-color="#CDE6FF"/></linearGradient>
+ <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0D60F2"/><stop offset="1" stop-color="#05368D"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#FFE695"/><stop offset=".48" stop-color="#FFCE47"/><stop offset="1" stop-color="#FFAB0C"/></linearGradient>
+ <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F3F6FA"/><stop offset=".5" stop-color="#B7C0CD"/><stop offset="1" stop-color="#7E8999"/></linearGradient>
+ <linearGradient id="panel" x1="0" x2=".9" y1=".1" y2="1"><stop stop-color="#285DAC"/><stop offset=".5" stop-color="#0D326F"/><stop offset="1" stop-color="#071C45"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#FFE58E" stop-opacity=".88"/><stop offset="1" stop-color="#FFE58E" stop-opacity="0"/></radialGradient>
+ <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#07163C" flood-opacity=".17"/></filter>
+ <filter id="smallShadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0A2F66" flood-opacity=".13"/></filter>
+ <pattern id="dots" patternUnits="userSpaceOnUse" width="24" height="24"><circle cx="2" cy="2" r="2" fill="#3073E9" opacity=".15"/></pattern>
+ </defs><rect width="1920" height="900" fill="url(#sky)"/>
+<path d="M0 0 H1920 V300 Q1500 215 1210 390 T440 325 T0 360 Z" fill="#FFF" opacity=".57"/>
+<path d="M0 650 C340 480 645 900 1080 640 S1580 410 1920 615 V900 H0Z" fill="#D2E9FF" opacity=".6"/>
+<circle cx="1460" cy="115" r="250" fill="url(#gold)" opacity=".95"/>
+<circle cx="1470" cy="124" r="330" fill="url(#glow)" opacity=".65"/>
+<rect x="1260" y="110" width="530" height="470" fill="url(#dots)" opacity=".82"/></svg>

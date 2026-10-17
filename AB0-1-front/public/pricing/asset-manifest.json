@@ -1,0 +1,630 @@
+{
+  "name": "Avalia Solar Pricing Media Kit",
+  "version": "1.0",
+  "assets": [
+    {
+      "file": "/pricing/backgrounds/cta-deep-blue.png",
+      "format": "png",
+      "bytes": 65661,
+      "width": 1920,
+      "height": 420,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/cta-deep-blue.svg",
+      "format": "svg",
+      "bytes": 2016,
+      "width": 1920,
+      "height": 420,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/cta-deep-blue.webp",
+      "format": "webp",
+      "bytes": 9384,
+      "width": 1920,
+      "height": 420,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/hero-desktop.png",
+      "format": "png",
+      "bytes": 168247,
+      "width": 1920,
+      "height": 900,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/hero-desktop.svg",
+      "format": "svg",
+      "bytes": 2075,
+      "width": 1920,
+      "height": 900,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/hero-desktop.webp",
+      "format": "webp",
+      "bytes": 14414,
+      "width": 1920,
+      "height": 900,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/hero-mobile.png",
+      "format": "png",
+      "bytes": 40135,
+      "width": 750,
+      "height": 1100,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/hero-mobile.svg",
+      "format": "svg",
+      "bytes": 1963,
+      "width": 750,
+      "height": 1100,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/hero-mobile.webp",
+      "format": "webp",
+      "bytes": 7036,
+      "width": 750,
+      "height": 1100,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/pricing-soft.png",
+      "format": "png",
+      "bytes": 14110,
+      "width": 1920,
+      "height": 720,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/pricing-soft.svg",
+      "format": "svg",
+      "bytes": 1866,
+      "width": 1920,
+      "height": 720,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/pricing-soft.webp",
+      "format": "webp",
+      "bytes": 3918,
+      "width": 1920,
+      "height": 720,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/section-cream.png",
+      "format": "png",
+      "bytes": 18663,
+      "width": 1920,
+      "height": 720,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/section-cream.svg",
+      "format": "svg",
+      "bytes": 1869,
+      "width": 1920,
+      "height": 720,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/backgrounds/section-cream.webp",
+      "format": "webp",
+      "bytes": 4940,
+      "width": 1920,
+      "height": 720,
+      "category": "backgrounds"
+    },
+    {
+      "file": "/pricing/decor/brand-swoosh.png",
+      "format": "png",
+      "bytes": 13155,
+      "width": 1000,
+      "height": 400,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/brand-swoosh.svg",
+      "format": "svg",
+      "bytes": 1777,
+      "width": 1000,
+      "height": 400,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/brand-swoosh.webp",
+      "format": "webp",
+      "bytes": 6318,
+      "width": 1000,
+      "height": 400,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/dots.png",
+      "format": "png",
+      "bytes": 1990,
+      "width": 480,
+      "height": 400,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/dots.svg",
+      "format": "svg",
+      "bytes": 1661,
+      "width": 480,
+      "height": 400,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/dots.webp",
+      "format": "webp",
+      "bytes": 5834,
+      "width": 480,
+      "height": 400,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/sun-halo.png",
+      "format": "png",
+      "bytes": 144201,
+      "width": 760,
+      "height": 760,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/sun-halo.svg",
+      "format": "svg",
+      "bytes": 1731,
+      "width": 760,
+      "height": 760,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/sun-halo.webp",
+      "format": "webp",
+      "bytes": 46828,
+      "width": 760,
+      "height": 760,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/sun-rays.png",
+      "format": "png",
+      "bytes": 33079,
+      "width": 680,
+      "height": 680,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/sun-rays.svg",
+      "format": "svg",
+      "bytes": 3015,
+      "width": 680,
+      "height": 680,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/decor/sun-rays.webp",
+      "format": "webp",
+      "bytes": 13110,
+      "width": 680,
+      "height": 680,
+      "category": "decor"
+    },
+    {
+      "file": "/pricing/devices/hero-devices-composed.png",
+      "format": "png",
+      "bytes": 429049,
+      "width": 2400,
+      "height": 1500,
+      "category": "devices"
+    },
+    {
+      "file": "/pricing/devices/hero-devices-composed.webp",
+      "format": "webp",
+      "bytes": 88914,
+      "width": 2400,
+      "height": 1500,
+      "category": "devices"
+    },
+    {
+      "file": "/pricing/devices/hero-laptop.png",
+      "format": "png",
+      "bytes": 120993,
+      "width": 1600,
+      "height": 1000,
+      "category": "devices"
+    },
+    {
+      "file": "/pricing/devices/hero-laptop.svg",
+      "format": "svg",
+      "bytes": 12487,
+      "width": 1600,
+      "height": 1000,
+      "category": "devices"
+    },
+    {
+      "file": "/pricing/devices/hero-laptop.webp",
+      "format": "webp",
+      "bytes": 39968,
+      "width": 1600,
+      "height": 1000,
+      "category": "devices"
+    },
+    {
+      "file": "/pricing/devices/hero-phone.png",
+      "format": "png",
+      "bytes": 80163,
+      "width": 600,
+      "height": 1120,
+      "category": "devices"
+    },
+    {
+      "file": "/pricing/devices/hero-phone.svg",
+      "format": "svg",
+      "bytes": 10011,
+      "width": 600,
+      "height": 1120,
+      "category": "devices"
+    },
+    {
+      "file": "/pricing/devices/hero-phone.webp",
+      "format": "webp",
+      "bytes": 30142,
+      "width": 600,
+      "height": 1120,
+      "category": "devices"
+    },
+    {
+      "file": "/pricing/icons/analytics.png",
+      "format": "png",
+      "bytes": 616,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/analytics.svg",
+      "format": "svg",
+      "bytes": 1795,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/check.png",
+      "format": "png",
+      "bytes": 826,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/check.svg",
+      "format": "svg",
+      "bytes": 1772,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/compare.png",
+      "format": "png",
+      "bytes": 1014,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/compare.svg",
+      "format": "svg",
+      "bytes": 1800,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/growth.png",
+      "format": "png",
+      "bytes": 1439,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/growth.svg",
+      "format": "svg",
+      "bytes": 1783,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/products.png",
+      "format": "png",
+      "bytes": 1893,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/products.svg",
+      "format": "svg",
+      "bytes": 1806,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/shield.png",
+      "format": "png",
+      "bytes": 3047,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/shield.svg",
+      "format": "svg",
+      "bytes": 1823,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/solar.png",
+      "format": "png",
+      "bytes": 2683,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/solar.svg",
+      "format": "svg",
+      "bytes": 1872,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/star.png",
+      "format": "png",
+      "bytes": 3684,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/star.svg",
+      "format": "svg",
+      "bytes": 1825,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/store.png",
+      "format": "png",
+      "bytes": 1649,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/store.svg",
+      "format": "svg",
+      "bytes": 1864,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/support.png",
+      "format": "png",
+      "bytes": 2429,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/support.svg",
+      "format": "svg",
+      "bytes": 1869,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/visibility.png",
+      "format": "png",
+      "bytes": 2939,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/visibility.svg",
+      "format": "svg",
+      "bytes": 1836,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/whatsapp.png",
+      "format": "png",
+      "bytes": 3440,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/icons/whatsapp.svg",
+      "format": "svg",
+      "bytes": 1879,
+      "width": 96,
+      "height": 96,
+      "category": "icons"
+    },
+    {
+      "file": "/pricing/illustrations/analytics-ui.png",
+      "format": "png",
+      "bytes": 23708,
+      "width": 1000,
+      "height": 790,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/analytics-ui.svg",
+      "format": "svg",
+      "bytes": 2819,
+      "width": 1000,
+      "height": 790,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/analytics-ui.webp",
+      "format": "webp",
+      "bytes": 10660,
+      "width": 1000,
+      "height": 790,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/ev-charger.png",
+      "format": "png",
+      "bytes": 38555,
+      "width": 1000,
+      "height": 850,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/ev-charger.svg",
+      "format": "svg",
+      "bytes": 2723,
+      "width": 1000,
+      "height": 850,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/ev-charger.webp",
+      "format": "webp",
+      "bytes": 18036,
+      "width": 1000,
+      "height": 850,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-commercial.png",
+      "format": "png",
+      "bytes": 103552,
+      "width": 1200,
+      "height": 850,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-commercial.svg",
+      "format": "svg",
+      "bytes": 5283,
+      "width": 1200,
+      "height": 850,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-commercial.webp",
+      "format": "webp",
+      "bytes": 39038,
+      "width": 1200,
+      "height": 850,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-home.png",
+      "format": "png",
+      "bytes": 156143,
+      "width": 1200,
+      "height": 850,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-home.svg",
+      "format": "svg",
+      "bytes": 6035,
+      "width": 1200,
+      "height": 850,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-home.webp",
+      "format": "webp",
+      "bytes": 39962,
+      "width": 1200,
+      "height": 850,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-kit.png",
+      "format": "png",
+      "bytes": 83970,
+      "width": 1000,
+      "height": 860,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-kit.svg",
+      "format": "svg",
+      "bytes": 5371,
+      "width": 1000,
+      "height": 860,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-kit.webp",
+      "format": "webp",
+      "bytes": 23138,
+      "width": 1000,
+      "height": 860,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-project.png",
+      "format": "png",
+      "bytes": 30872,
+      "width": 1000,
+      "height": 790,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-project.svg",
+      "format": "svg",
+      "bytes": 3100,
+      "width": 1000,
+      "height": 790,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/illustrations/solar-project.webp",
+      "format": "webp",
+      "bytes": 20290,
+      "width": 1000,
+      "height": 790,
+      "category": "illustrations"
+    },
+    {
+      "file": "/pricing/previews/contact-sheet.jpg",
+      "format": "jpg",
+      "bytes": 274124,
+      "width": 1950,
+      "height": 1820,
+      "category": "previews"
+    }
+  ]
+}

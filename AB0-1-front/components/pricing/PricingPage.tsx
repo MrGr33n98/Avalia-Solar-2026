@@ -39,6 +39,7 @@ import { PricingHowItWorks } from './PricingHowItWorks';
 import { PricingTrustStrip } from './PricingTrustStrip';
 import { PricingAdsSection } from './PricingAdsSection';
 import { PricingFinalCTA } from './PricingFinalCTA';
+import AvaliaSolarPricingFiberyAdapted from './AvaliaSolarPricingFiberyAdapted';
 
 const modalVariant: Variants = {
   hidden: { opacity: 0, scale: 0.96, y: 16 },
@@ -103,9 +104,24 @@ interface CombinedPlan extends BillingPlan {
   billingNote?: string;
 }
 
-export default function PricingPage() {
+interface PricingPageProps {
+  variant?: 'fibery' | 'classic';
+}
+
+export default function PricingPage({ variant = 'fibery' }: PricingPageProps = {}) {
   const router = useRouter();
   const { user, isAuthenticated, refreshAuth } = useAuth();
+
+  const [activeVariant, setActiveVariant] = useState<'fibery' | 'classic'>(variant);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlVariant = new URLSearchParams(window.location.search).get('variant');
+      if (urlVariant === 'classic' || urlVariant === 'fibery') {
+        setActiveVariant(urlVariant);
+      }
+    }
+  }, []);
 
   // Estados locais
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('twelve_months');
@@ -232,9 +248,12 @@ export default function PricingPage() {
     track('pricing_billing_period_changed', { billing_period: period });
   };
 
-  const handlePlanCta = async (plan: BillingPlan) => {
+  const handlePlanCta = async (
+    plan: BillingPlan,
+    period: BillingPeriod = billingPeriod
+  ) => {
     if (!isAuthenticated) {
-      router.push(`/register?plan=${plan.slug}`);
+      router.push(`/register?plan=${plan.slug}&billing_period=${period}`);
       return;
     }
 
@@ -272,14 +291,14 @@ export default function PricingPage() {
             plan.id,
             successUrl,
             cancelUrl,
-            billingPeriod
+            period
           );
 
           trackCheckoutStarted(plan.id, undefined, user.company_id);
           window.location.href = checkout_url;
         } else {
           // Se for nulo/sandbox, desvia de forma totalmente segura para o painel com aviso
-          console.info(
+          console.warn(
             '[PricingPage] Checkout do plano Essencial encaminhado para o dashboard local.'
           );
           router.push('/dashboard?reason=essential_plan_activated_locally');
@@ -307,7 +326,7 @@ export default function PricingPage() {
             plan.id,
             successUrl,
             cancelUrl,
-            billingPeriod
+            period
           );
 
           trackCheckoutStarted(plan.id, undefined, user.company_id);
@@ -392,6 +411,185 @@ export default function PricingPage() {
       ['active', 'trialing', 'past_due', 'enterprise_lead'].includes(subscription.status)
     );
   };
+
+  const renderEnterpriseModal = () => (
+    <AnimatePresence>
+      {isEnterpriseModalOpen && enterprisePlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !modalSubmitting && setIsEnterpriseModalOpen(false)}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+          />
+
+          <motion.div
+            variants={modalVariant}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/90 p-8 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl clay-convex"
+          >
+            <button
+              onClick={() => setIsEnterpriseModalOpen(false)}
+              disabled={modalSubmitting}
+              className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-all hover:bg-slate-200 hover:text-slate-800 disabled:opacity-50"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="mb-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg mb-4">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <h3 className="text-2xl font-black tracking-tight text-slate-950">
+                Solicitar plano Enterprise
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                Nos diga um pouco sobre sua operação e necessidades para que possamos formatar a
+                proposta ideal para sua empresa.
+              </p>
+            </div>
+
+            {modalSuccessMessage ? (
+              <div className="space-y-6 py-4 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
+                  <Check className="h-8 w-8" />
+                </div>
+                <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                  {modalSuccessMessage}
+                </p>
+                <Button
+                  onClick={() => setIsEnterpriseModalOpen(false)}
+                  className="w-full h-11 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold"
+                >
+                  Fechar janela
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleEnterpriseLeadSubmit} className="space-y-5">
+                <ErrorBanner error={modalError} onDismiss={() => setModalError(null)} />
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Telefone de Contato *
+                  </label>
+                  <Input
+                    type="text"
+                    required
+                    disabled={modalSubmitting}
+                    placeholder="(11) 99999-9999"
+                    value={phoneContact}
+                    onChange={(e) => setPhoneContact(e.target.value)}
+                    className="rounded-xl h-11 border-slate-200 bg-white/60 focus-visible:ring-brand-blue"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    MRR Estimado (Opcional)
+                  </label>
+                  <Input
+                    type="number"
+                    disabled={modalSubmitting}
+                    placeholder="Faturamento mensal em solar"
+                    value={estimatedMrr}
+                    onChange={(e) => setEstimatedMrr(e.target.value)}
+                    className="rounded-xl h-11 border-slate-200 bg-white/60 focus-visible:ring-brand-blue"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Justificativa / Necessidades *
+                  </label>
+                  <textarea
+                    required
+                    disabled={modalSubmitting}
+                    rows={4}
+                    placeholder="Ex: Integração via webhook com nosso CRM interno, sinais de intenção para equipe de outbound e relatórios personalizados."
+                    value={justification}
+                    onChange={(e) => setJustification(e.target.value)}
+                    className="flex w-full rounded-xl border border-slate-200 bg-white/60 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-blue disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={modalSubmitting}
+                    onClick={() => setIsEnterpriseModalOpen(false)}
+                    className="w-full h-11 rounded-full border-slate-200 hover:bg-slate-50 font-bold"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={modalSubmitting}
+                    className="w-full h-11 rounded-full bg-slate-900 hover:bg-brand-blue-dark text-white border-0 shadow-lg shadow-slate-900/20 font-bold"
+                  >
+                    {modalSubmitting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Enviando...
+                      </span>
+                    ) : (
+                      'Solicitar Proposta'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+
+  if (activeVariant === 'fibery') {
+    return (
+      <main className="relative min-h-screen overflow-hidden bg-[#F7F9FE] font-sans antialiased text-slate-800">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-4">
+          {error && (
+            <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-center text-sm font-semibold shadow-sm mb-4">
+              {error}
+            </div>
+          )}
+          <ErrorBanner
+            error={checkoutError}
+            title="Não foi possível iniciar o pagamento."
+            onRetry={() => lastFailedPlan && handlePlanCta(lastFailedPlan, billingPeriod)}
+            onDismiss={() => setCheckoutError(null)}
+          />
+        </div>
+
+        <AvaliaSolarPricingFiberyAdapted
+          showHeader={false}
+          showFooter={false}
+          initialBillingPeriod={billingPeriod}
+          onBillingPeriodChange={handleBillingPeriodChange}
+          loadingPlanSlug={
+            actionLoadingPlanId
+              ? (plans.find((p) => p.id === actionLoadingPlanId)?.slug as PlanSlug) ?? null
+              : null
+          }
+          onPlanSelect={async (slug, period) => {
+            const apiPlan = plans.find((p) => p.slug === slug);
+            if (!apiPlan) {
+              setCheckoutError('Plano selecionado não encontrado. Tente novamente mais tarde.');
+              return;
+            }
+            await handlePlanCta(apiPlan, period);
+          }}
+          currentPlan={(subscription?.plan?.slug as PlanSlug) ?? null}
+        />
+
+        {renderEnterpriseModal()}
+      </main>
+    );
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#F5F8FC] pb-12 font-sans antialiased text-slate-800">
@@ -1189,140 +1387,8 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ── ENTERPRISE LEAD MODAL (Premium Glassmorphic) ───────────────────── */}
-      <AnimatePresence>
-        {isEnterpriseModalOpen && enterprisePlan && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => !modalSubmitting && setIsEnterpriseModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
-            />
-
-            <motion.div
-              variants={modalVariant}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/90 p-8 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.18)] backdrop-blur-xl clay-convex"
-            >
-              <button
-                onClick={() => setIsEnterpriseModalOpen(false)}
-                disabled={modalSubmitting}
-                className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-all hover:bg-slate-200 hover:text-slate-800 disabled:opacity-50"
-              >
-                <X className="h-4 w-4" />
-              </button>
-
-              <div className="mb-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg mb-4">
-                  <ShieldCheck className="h-6 w-6" />
-                </div>
-                <h3 className="text-2xl font-black tracking-tight text-slate-950">
-                  Solicitar plano Enterprise
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                  Nos diga um pouco sobre sua operação e necessidades para que possamos formatar a
-                  proposta ideal para sua empresa.
-                </p>
-              </div>
-
-              {modalSuccessMessage ? (
-                <div className="space-y-6 py-4 text-center">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
-                    <Check className="h-8 w-8" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                    {modalSuccessMessage}
-                  </p>
-                  <Button
-                    onClick={() => setIsEnterpriseModalOpen(false)}
-                    className="w-full h-11 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold"
-                  >
-                    Fechar janela
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleEnterpriseLeadSubmit} className="space-y-5">
-                  <ErrorBanner error={modalError} onDismiss={() => setModalError(null)} />
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Telefone de Contato *
-                    </label>
-                    <Input
-                      type="text"
-                      required
-                      disabled={modalSubmitting}
-                      placeholder="(11) 99999-9999"
-                      value={phoneContact}
-                      onChange={(e) => setPhoneContact(e.target.value)}
-                      className="rounded-xl h-11 border-slate-200 bg-white/60 focus-visible:ring-brand-blue"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                      MRR Estimado (Opcional)
-                    </label>
-                    <Input
-                      type="number"
-                      disabled={modalSubmitting}
-                      placeholder="Faturamento mensal em solar"
-                      value={estimatedMrr}
-                      onChange={(e) => setEstimatedMrr(e.target.value)}
-                      className="rounded-xl h-11 border-slate-200 bg-white/60 focus-visible:ring-brand-blue"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Justificativa / Necessidades *
-                    </label>
-                    <textarea
-                      required
-                      disabled={modalSubmitting}
-                      rows={4}
-                      placeholder="Ex: Integração via webhook com nosso CRM interno, sinais de intenção para equipe de outbound e relatórios personalizados."
-                      value={justification}
-                      onChange={(e) => setJustification(e.target.value)}
-                      className="flex w-full rounded-xl border border-slate-200 bg-white/60 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-blue disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={modalSubmitting}
-                      onClick={() => setIsEnterpriseModalOpen(false)}
-                      className="w-full h-11 rounded-full border-slate-200 hover:bg-slate-50 font-bold"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={modalSubmitting}
-                      className="w-full h-11 rounded-full bg-slate-900 hover:bg-brand-blue-dark text-white border-0 shadow-lg shadow-slate-900/20 font-bold"
-                    >
-                      {modalSubmitting ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                          Enviando...
-                        </span>
-                      ) : (
-                        'Solicitar Proposta'
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* ── ENTERPRISE LEAD MODAL ── */}
+      {renderEnterpriseModal()}
     </main>
   );
 }

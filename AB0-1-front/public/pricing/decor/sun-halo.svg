@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="760" viewBox="0 0 760 760" role="img"><defs>
+ <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#F8FCFF"/><stop offset=".55" stop-color="#E6F3FF"/><stop offset="1" stop-color="#CDE6FF"/></linearGradient>
+ <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0D60F2"/><stop offset="1" stop-color="#05368D"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#FFE695"/><stop offset=".48" stop-color="#FFCE47"/><stop offset="1" stop-color="#FFAB0C"/></linearGradient>
+ <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F3F6FA"/><stop offset=".5" stop-color="#B7C0CD"/><stop offset="1" stop-color="#7E8999"/></linearGradient>
+ <linearGradient id="panel" x1="0" x2=".9" y1=".1" y2="1"><stop stop-color="#285DAC"/><stop offset=".5" stop-color="#0D326F"/><stop offset="1" stop-color="#071C45"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#FFE58E" stop-opacity=".88"/><stop offset="1" stop-color="#FFE58E" stop-opacity="0"/></radialGradient>
+ <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#07163C" flood-opacity=".17"/></filter>
+ <filter id="smallShadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0A2F66" flood-opacity=".13"/></filter>
+ <pattern id="dots" patternUnits="userSpaceOnUse" width="24" height="24"><circle cx="2" cy="2" r="2" fill="#3073E9" opacity=".15"/></pattern>
+ </defs><circle cx="380" cy="380" r="360" fill="url(#glow)"/><circle cx="380" cy="380" r="244" fill="url(#gold)" opacity=".92"/></svg>
