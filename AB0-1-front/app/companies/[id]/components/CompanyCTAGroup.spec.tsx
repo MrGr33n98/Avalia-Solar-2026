@@ -49,23 +49,20 @@ describe('CompanyCTAGroup — SPEC-UI-027', () => {
     });
   });
 
-  it('com entitlement ativo: exibe Solicitar orçamento na linha 1 (100%) e Comparar + Avaliar em grid 50/50 na linha 2', () => {
+  it('com entitlement ativo: exibe Checkbox e Solicitar orçamento na linha 1 e Avaliar empresa na linha 2', () => {
     render(<CompanyCTAGroup company={company} canRequestQuote />);
-
-    const quoteBtn = screen.getByRole('button', { name: 'Solicitar orçamento' });
-    expect(quoteBtn).toBeInTheDocument();
-    expect(quoteBtn).toHaveClass('w-full', 'h-10', 'min-h-[44px]');
 
     const compareControl = screen.getByRole('checkbox', { name: /Empresa Teste/i });
     expect(compareControl).toBeInTheDocument();
     expect(screen.getByText('Comparar')).toBeInTheDocument();
 
+    const quoteBtn = screen.getByRole('button', { name: 'Solicitar orçamento' });
+    expect(quoteBtn).toBeInTheDocument();
+    expect(quoteBtn).toHaveClass('flex-1', 'h-10', 'min-h-[44px]');
+
     const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' });
     expect(reviewLink).toBeInTheDocument();
     expect(reviewLink).toHaveClass('w-full', 'h-10', 'min-h-[44px]');
-
-    const secondaryGrid = compareControl.closest('.grid');
-    expect(secondaryGrid).toHaveClass('grid-cols-2', 'gap-1.5', 'w-full');
   });
 
   it('plano Free (sem entitlement): oculta Solicitar orçamento e exibe Comparar + Avaliar sem espaço vazio superior', () => {

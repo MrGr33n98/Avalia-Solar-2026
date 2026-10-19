@@ -312,21 +312,19 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
   });
 
   describe('Matriz de Entitlements — CompanyCTAGroup', () => {
-    it('com entitlement ativo: Solicitar orçamento ocupa 100% da primeira linha, Comparar e Avaliar dividem 50/50 a segunda linha', () => {
+    it('com entitlement ativo: exibe Checkbox e Solicitar orçamento na linha 1 e Avaliar empresa na linha 2', () => {
       render(<CompanyCTAGroup company={mockCompanyVerified} canRequestQuote={true} />);
+
+      const compareControl = screen.getByRole('checkbox', { name: /WEG Solar/i });
+      expect(compareControl).toBeInTheDocument();
+      expect(screen.getByText('Comparar')).toBeInTheDocument();
 
       const quoteBtn = screen.getByRole('button', { name: 'Solicitar orçamento' });
       expect(quoteBtn).toBeInTheDocument();
-      expect(quoteBtn).toHaveClass('w-full');
+      expect(quoteBtn).toHaveClass('flex-1');
 
-      const compareBtn = screen.getByRole('button', { name: 'Comparar' });
       const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: WEG Solar' });
-
-      expect(compareBtn).toBeInTheDocument();
       expect(reviewLink).toBeInTheDocument();
-
-      const secondaryContainer = compareBtn.closest('.grid');
-      expect(secondaryContainer).toHaveClass('grid-cols-2', 'gap-1.5');
     });
 
     it('empresa Free: Solicitar orçamento NÃO é renderizado e Comparar + Avaliar ficam no topo sem espaço vazio', () => {
@@ -334,15 +332,15 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
 
       expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
 
-      const compareBtn = screen.getByRole('button', { name: 'Comparar' });
-      const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: Instaladora Local' });
+      const compareControl = screen.getByRole('checkbox', { name: /Instaladora Local/i });
+      expect(compareControl).toBeInTheDocument();
+      expect(screen.getByText('Comparar')).toBeInTheDocument();
 
-      expect(compareBtn).toBeInTheDocument();
+      const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: Instaladora Local' });
       expect(reviewLink).toBeInTheDocument();
 
       const group = document.getElementById('company-cta-group');
-      // No free, não há primeiro filho de orçamento
-      expect(group?.firstElementChild).toBe(compareBtn.closest('.grid'));
+      expect(group?.firstElementChild).toBe(compareControl.closest('.grid'));
     });
   });
 });
