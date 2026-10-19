@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Building2, ChevronRight, Star } from 'lucide-react';
@@ -110,6 +111,88 @@ export function CompanyNameWithBadge({
   );
 }
 
+export function HomeCompanyCard({ company }: { company: Company }) {
+  const [logoError, setLogoError] = React.useState(false);
+  const companyHref = buildCompanyPath(company.slug, company.name, company.id);
+  const logoUrl =
+    typeof company.logo_url === 'string' ? company.logo_url.trim() : '';
+  const rating = publicRating(company);
+
+  return (
+    <article
+      className={cn(
+        'relative flex min-h-[160px] min-w-0 flex-col rounded-xl border',
+        'border-slate-200 bg-white p-2.5 shadow-xs transition-colors',
+        'hover:border-slate-300 sm:p-3'
+      )}
+    >
+      {/* Linha 1: logo (48x48 no mobile / 56x56 em sm+) e botão de favoritos (alvo 44x44) */}
+      <div className="flex min-w-0 items-start justify-between gap-1">
+        <Link
+          href={companyHref}
+          aria-label={`Ver perfil de ${company.name}`}
+          className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:h-14 sm:w-14"
+        >
+          {logoUrl && !logoError ? (
+            <Image
+              src={logoUrl}
+              alt={`Logotipo ${company.name}`}
+              fill
+              sizes="(max-width: 639px) 48px, 56px"
+              className="object-contain object-center"
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-slate-50">
+              <Building2 className="h-5 w-5 text-slate-400" aria-label="Logotipo não informado" />
+            </div>
+          )}
+        </Link>
+
+        <FavoriteButton
+          favoritableType="Company"
+          favoritableId={company.id}
+          source="home_rail"
+          className="h-11 w-11 shrink-0 text-slate-500"
+        />
+      </div>
+
+      {/* Linha 2: selo ancorado no último trecho do nome, sem posição absoluta */}
+      <div className="mt-2 min-w-0">
+        <CompanyNameWithBadge company={company} href={companyHref} />
+      </div>
+
+      {/* Linha 3: dados confirmados, sem 5.0 forçado */}
+      <div className="mt-1 min-w-0 text-[11px] leading-4 text-slate-500">
+        {rating ? (
+          <div className="flex items-center gap-1">
+            <Star
+              className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400"
+              aria-hidden="true"
+            />
+            <span className="font-bold tabular-nums text-slate-900">
+              {rating.score.toFixed(1)}
+            </span>
+            <span>({rating.count})</span>
+          </div>
+        ) : (
+          <span>Sem avaliações</span>
+        )}
+      </div>
+
+      {/* Linha 4: h-12 de toque (48px) e 34px visuais com home-compact */}
+      <div className="mt-auto min-w-0 pt-1.5">
+        <ComparisonToggleButton
+          company={company}
+          variant="home-compact"
+          animated={false}
+          size="sm"
+        />
+      </div>
+    </article>
+  );
+}
+
 export function HomeCompaniesRail({
   companies,
   title,
@@ -152,86 +235,9 @@ export function HomeCompaniesRail({
         2 colunas a partir de 320px no mobile e 3 colunas em lg.
       */}
       <div className="grid min-w-0 grid-cols-1 items-stretch gap-2.5 min-[320px]:grid-cols-[repeat(2,minmax(0,1fr))] sm:gap-3 lg:grid-cols-3">
-        {visibleCompanies.map((company) => {
-          const companyHref = buildCompanyPath(company.slug, company.name, company.id);
-          const logoUrl =
-            typeof company.logo_url === 'string' ? company.logo_url.trim() : '';
-          const rating = publicRating(company);
-
-          return (
-            <article
-              key={company.id}
-              className={cn(
-                'relative flex min-h-[160px] min-w-0 flex-col rounded-xl border',
-                'border-slate-200 bg-white p-2.5 shadow-xs transition-colors',
-                'hover:border-slate-300 sm:p-3'
-              )}
-            >
-              {/* Linha 1: logo (alvo 44x44) e botão de favoritos (alvo 44x44) */}
-              <div className="flex min-w-0 items-start justify-between gap-1">
-                <Link
-                  href={companyHref}
-                  aria-label={`Ver perfil de ${company.name}`}
-                  className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                >
-                  {logoUrl ? (
-                    <Image
-                      src={logoUrl}
-                      alt={`Logotipo ${company.name}`}
-                      fill
-                      sizes="44px"
-                      className="object-contain p-1"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-slate-50">
-                      <Building2 className="h-5 w-5 text-slate-400" aria-label="Logotipo não informado" />
-                    </div>
-                  )}
-                </Link>
-
-                <FavoriteButton
-                  favoritableType="Company"
-                  favoritableId={company.id}
-                  source="home_rail"
-                  className="h-11 w-11 shrink-0 text-slate-500"
-                />
-              </div>
-
-              {/* Linha 2: selo ancorado no último trecho do nome, sem posição absoluta */}
-              <div className="mt-2 min-w-0">
-                <CompanyNameWithBadge company={company} href={companyHref} />
-              </div>
-
-              {/* Linha 3: dados confirmados, sem 5.0 forçado */}
-              <div className="mt-1 min-w-0 text-[11px] leading-4 text-slate-500">
-                {rating ? (
-                  <div className="flex items-center gap-1">
-                    <Star
-                      className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400"
-                      aria-hidden="true"
-                    />
-                    <span className="font-bold tabular-nums text-slate-900">
-                      {rating.score.toFixed(1)}
-                    </span>
-                    <span>({rating.count})</span>
-                  </div>
-                ) : (
-                  <span>Sem avaliações</span>
-                )}
-              </div>
-
-              {/* Linha 4: h-12 de toque (48px) e 34px visuais com home-compact */}
-              <div className="mt-auto min-w-0 pt-1.5">
-                <ComparisonToggleButton
-                  company={company}
-                  variant="home-compact"
-                  animated={false}
-                  size="sm"
-                />
-              </div>
-            </article>
-          );
-        })}
+        {visibleCompanies.map((company) => (
+          <HomeCompanyCard key={company.id} company={company} />
+        ))}
       </div>
     </section>
   );

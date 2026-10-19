@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import type { Company } from '@/lib/api';
-import { BrandLogoCard } from './HomeBrandsRail';
 import { HomeCategoryRail } from './HomeCategoryRail';
-import { HomeCompaniesRail } from './HomeCompaniesRail';
+import { HomeCompaniesRail, HomeCompanyCard } from './HomeCompaniesRail';
 import { HomeSolutionsRail } from './HomeSolutionsRail';
+import { fireEvent } from '@testing-library/react';
 
 jest.mock('next/image', () => ({
   __esModule: true,
@@ -73,17 +73,7 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
 }
 
 describe('rails de identidade visual da home', () => {
-  it('renderiza logos de marcas sem recorte', () => {
-    render(<BrandLogoCard name="Sungrow" logoUrl="/sungrow.png" href="/companies/sungrow" />);
-
-    const logo = screen.getByAltText('Sungrow');
-
-    expect(logo).toHaveClass('object-contain', 'object-center');
-    expect(logo).not.toHaveClass('object-cover');
-    expect(logo).toHaveAttribute('sizes', '128px');
-  });
-
-  it('preserva o logo e disponibiliza favorito e comparação no card', () => {
+  it('preserva o logo com sizes responsivo, sem padding forçado e disponibiliza favorito e comparação', () => {
     render(
       <HomeCompaniesRail
         companies={[
@@ -99,10 +89,55 @@ describe('rails de identidade visual da home', () => {
     );
 
     const logo = screen.getByAltText('Logotipo Sungrow Brasil');
-    expect(logo).toHaveClass('object-contain');
-    expect(logo).toHaveAttribute('sizes', '44px');
+    expect(logo).toHaveClass('object-contain', 'object-center');
+    expect(logo).not.toHaveClass('p-1');
+    expect(logo).toHaveAttribute('sizes', '(max-width: 639px) 48px, 56px');
+    expect(logo.getAttribute('src')).toBe('/sungrow.png');
+
+    const logoLink = logo.closest('a');
+    expect(logoLink).not.toBeNull();
+    expect(logoLink).toHaveClass('h-12', 'w-12', 'sm:h-14', 'sm:w-14');
+
     expect(screen.getAllByRole('button', { name: 'Favoritar empresa' })).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Comparar Sungrow Brasil' })).toBeInTheDocument();
+  });
+
+  it('exibe fallback Building2 quando a empresa não possui logo', () => {
+    render(
+      <HomeCompaniesRail
+        companies={[makeCompany({ id: 1, name: 'Empresa Sem Logo', logo_url: '' })]}
+      />
+    );
+
+    expect(screen.queryByAltText('Logotipo Empresa Sem Logo')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Logotipo não informado')).toBeInTheDocument();
+  });
+
+  it('exibe fallback Building2 quando ocorre erro no carregamento da imagem', () => {
+    render(
+      <HomeCompanyCard
+        company={makeCompany({ id: 1, name: 'Empresa Imagem Quebrada', logo_url: '/broken.png' })}
+      />
+    );
+
+    const logo = screen.getByAltText('Logotipo Empresa Imagem Quebrada');
+    expect(logo).toBeInTheDocument();
+
+    fireEvent.error(logo);
+
+    expect(screen.queryByAltText('Logotipo Empresa Imagem Quebrada')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Logotipo não informado')).toBeInTheDocument();
+  });
+
+  it('não renderiza seção Marcas em destaque e preserva Empresas em destaque', () => {
+    render(
+      <HomeCompaniesRail
+        companies={[makeCompany({ id: 1, name: 'Empresa Solar' })]}
+      />
+    );
+
+    expect(screen.getByText('Empresas em destaque')).toBeInTheDocument();
+    expect(screen.queryByText('Marcas em destaque')).not.toBeInTheDocument();
   });
 
   it('limita a vitrine a seis empresas', () => {
