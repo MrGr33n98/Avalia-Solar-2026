@@ -91,12 +91,12 @@ describe('rails de identidade visual da home', () => {
     const logo = screen.getByAltText('Logotipo Sungrow Brasil');
     expect(logo).toHaveClass('object-contain', 'object-center');
     expect(logo).not.toHaveClass('p-1');
-    expect(logo).toHaveAttribute('sizes', '(max-width: 639px) 48px, 56px');
+    expect(logo).toHaveAttribute('sizes', '(min-width: 1024px) 44px, (min-width: 640px) 56px, 48px');
     expect(logo.getAttribute('src')).toBe('/sungrow.png');
 
     const logoLink = logo.closest('a');
     expect(logoLink).not.toBeNull();
-    expect(logoLink).toHaveClass('h-12', 'w-12', 'sm:h-14', 'sm:w-14');
+    expect(logoLink).toHaveClass('h-12', 'w-12', 'sm:h-14', 'sm:w-14', 'lg:h-11', 'lg:w-11');
 
     expect(screen.getAllByRole('button', { name: 'Favoritar empresa' })).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Comparar Sungrow Brasil' })).toBeInTheDocument();
@@ -140,15 +140,46 @@ describe('rails de identidade visual da home', () => {
     expect(screen.queryByText('Marcas em destaque')).not.toBeInTheDocument();
   });
 
-  it('limita a vitrine a seis empresas', () => {
-    const companies = Array.from({ length: 7 }, (_, index) =>
+  it('com até 12 empresas, limita o rail a exatamente nove cards (IDs 1..9), com cards 7..9 marcados com hidden para mobile', () => {
+    const companies = Array.from({ length: 12 }, (_, index) =>
       makeCompany({ id: index + 1, name: `Empresa ${index + 1}` })
     );
 
     render(<HomeCompaniesRail companies={companies} />);
 
-    expect(screen.getAllByRole('article')).toHaveLength(6);
-    expect(screen.queryByText('Empresa 7')).not.toBeInTheDocument();
+    const articles = screen.getAllByRole('article');
+    expect(articles).toHaveLength(9);
+    expect(screen.queryByText('Empresa 10')).not.toBeInTheDocument();
+
+    // Cards 1..6 são visíveis tanto no mobile quanto no desktop
+    for (let i = 0; i < 6; i++) {
+      expect(articles[i]).toHaveClass('flex', 'flex-col', 'lg:grid');
+      expect(articles[i]).not.toHaveClass('hidden');
+    }
+
+    // Cards 7..9 são ocultos no mobile (hidden) e visíveis no desktop (lg:grid)
+    for (let i = 6; i < 9; i++) {
+      expect(articles[i]).toHaveClass('hidden', 'lg:grid');
+    }
+  });
+
+  it('exibe exatamente a quantidade recebida quando menor que nove e não renderiza nada se vazio', () => {
+    const { rerender } = render(
+      <HomeCompaniesRail
+        companies={Array.from({ length: 5 }, (_, i) => makeCompany({ id: i + 1, name: `E5 ${i + 1}` }))}
+      />
+    );
+    expect(screen.getAllByRole('article')).toHaveLength(5);
+
+    rerender(
+      <HomeCompaniesRail
+        companies={Array.from({ length: 8 }, (_, i) => makeCompany({ id: i + 1, name: `E8 ${i + 1}` }))}
+      />
+    );
+    expect(screen.getAllByRole('article')).toHaveLength(8);
+
+    const { container } = render(<HomeCompaniesRail companies={[]} />);
+    expect(container.firstChild).toBeNull();
   });
 
   it('renderiza categorias em destaque como chips horizontais compactos', () => {

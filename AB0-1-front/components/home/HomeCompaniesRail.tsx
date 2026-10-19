@@ -67,7 +67,7 @@ export function CompanyNameWithBadge({
 }) {
   if (!company.verified) {
     return (
-      <h3 className="min-w-0 text-[12px] font-bold leading-4 text-slate-950 sm:text-sm">
+      <h3 className="min-w-0 text-[12px] font-bold leading-4 text-slate-950 sm:text-sm lg:text-[13px] lg:leading-tight">
         <Link
           href={href}
           title={company.name}
@@ -82,7 +82,7 @@ export function CompanyNameWithBadge({
   const { head, tail } = splitNameHeadTail(company.name);
 
   return (
-    <div className="relative min-w-0 text-[12px] font-bold leading-4 text-slate-950 sm:text-sm">
+    <div className="relative min-w-0 text-[12px] font-bold leading-4 text-slate-950 sm:text-sm lg:text-[13px] lg:leading-tight">
       <Link
         href={href}
         title={company.name}
@@ -111,34 +111,46 @@ export function CompanyNameWithBadge({
   );
 }
 
-export function HomeCompanyCard({ company }: { company: Company }) {
+export function HomeCompanyCard({
+  company,
+  desktopOnly = false,
+}: {
+  company: Company;
+  desktopOnly?: boolean;
+}) {
   const [logoError, setLogoError] = React.useState(false);
   const companyHref = buildCompanyPath(company.slug, company.name, company.id);
   const logoUrl =
     typeof company.logo_url === 'string' ? company.logo_url.trim() : '';
   const rating = publicRating(company);
+  const hasValidLogo = Boolean(logoUrl) && !logoError;
 
   return (
     <article
       className={cn(
-        'relative flex min-h-[160px] min-w-0 flex-col rounded-xl border',
-        'border-slate-200 bg-white p-2.5 shadow-xs transition-colors',
-        'hover:border-slate-300 sm:p-3'
+        'relative min-w-0 rounded-xl border border-slate-200 bg-white shadow-xs transition-colors hover:border-slate-300',
+        desktopOnly ? 'hidden lg:grid' : 'flex flex-col lg:grid',
+        'min-h-[160px] p-2.5 sm:p-3',
+        'lg:min-h-[84px] lg:grid-cols-[44px_minmax(0,1fr)_auto_44px] lg:items-center lg:gap-x-2.5 lg:px-2.5 lg:py-2'
       )}
     >
-      {/* Linha 1: logo (48x48 no mobile / 56x56 em sm+) e botão de favoritos (alvo 44x44) */}
-      <div className="flex min-w-0 items-start justify-between gap-1">
+      {/*
+        Zona 1 (logo) e Zona 4 (favorito).
+        No mobile: flex items-start justify-between gap-1 (logo à esquerda, favorito à direita).
+        No desktop: lg:contents desmonta o wrapper e projeta os filhos nas colunas 1 e 4 do grid.
+      */}
+      <div className="flex min-w-0 items-start justify-between gap-1 lg:contents">
         <Link
           href={companyHref}
           aria-label={`Ver perfil de ${company.name}`}
-          className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:h-14 sm:w-14"
+          className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:h-14 sm:w-14 lg:col-start-1 lg:row-start-1 lg:h-11 lg:w-11"
         >
-          {logoUrl && !logoError ? (
+          {hasValidLogo ? (
             <Image
               src={logoUrl}
               alt={`Logotipo ${company.name}`}
               fill
-              sizes="(max-width: 639px) 48px, 56px"
+              sizes="(min-width: 1024px) 44px, (min-width: 640px) 56px, 48px"
               className="object-contain object-center"
               onError={() => setLogoError(true)}
             />
@@ -153,40 +165,48 @@ export function HomeCompanyCard({ company }: { company: Company }) {
           favoritableType="Company"
           favoritableId={company.id}
           source="home_rail"
-          className="h-11 w-11 shrink-0 text-slate-500"
+          className="h-11 w-11 shrink-0 text-slate-500 lg:col-start-4 lg:row-start-1"
         />
       </div>
 
-      {/* Linha 2: selo ancorado no último trecho do nome, sem posição absoluta */}
-      <div className="mt-2 min-w-0">
+      {/*
+        Zona 2: Nome + Avaliação.
+        No mobile: mt-2 min-w-0 abaixo da linha do logo.
+        No desktop: lg:col-start-2 lg:row-start-1 lg:mt-0 centralizado verticalmente.
+      */}
+      <div className="mt-2 min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:flex lg:flex-col lg:justify-center">
         <CompanyNameWithBadge company={company} href={companyHref} />
+
+        <div className="mt-1 min-w-0 text-[11px] leading-4 text-slate-500 lg:mt-0.5">
+          {rating ? (
+            <div className="flex items-center gap-1">
+              <Star
+                className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400"
+                aria-hidden="true"
+              />
+              <span className="font-bold tabular-nums text-slate-900">
+                {rating.score.toFixed(1)}
+              </span>
+              <span>({rating.count})</span>
+            </div>
+          ) : (
+            <span>Sem avaliações</span>
+          )}
+        </div>
       </div>
 
-      {/* Linha 3: dados confirmados, sem 5.0 forçado */}
-      <div className="mt-1 min-w-0 text-[11px] leading-4 text-slate-500">
-        {rating ? (
-          <div className="flex items-center gap-1">
-            <Star
-              className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400"
-              aria-hidden="true"
-            />
-            <span className="font-bold tabular-nums text-slate-900">
-              {rating.score.toFixed(1)}
-            </span>
-            <span>({rating.count})</span>
-          </div>
-        ) : (
-          <span>Sem avaliações</span>
-        )}
-      </div>
-
-      {/* Linha 4: h-12 de toque (48px) e 34px visuais com home-compact */}
-      <div className="mt-auto min-w-0 pt-1.5">
+      {/*
+        Zona 3: Botão de Comparação.
+        No mobile: mt-auto pt-1.5, largura total.
+        No desktop: lg:col-start-3 lg:row-start-1 lg:mt-0 lg:pt-0 lg:w-auto lg:shrink-0.
+      */}
+      <div className="mt-auto min-w-0 pt-1.5 lg:col-start-3 lg:row-start-1 lg:mt-0 lg:pt-0 lg:w-auto lg:shrink-0">
         <ComparisonToggleButton
           company={company}
           variant="home-compact"
           animated={false}
           size="sm"
+          className="lg:!h-10 lg:!min-h-[40px] lg:w-auto"
         />
       </div>
     </article>
@@ -205,7 +225,7 @@ export function HomeCompaniesRail({
     (stateCode
       ? `Empresas em destaque em ${stateCode.toUpperCase()}`
       : 'Empresas em destaque');
-  const visibleCompanies = companies?.slice(0, 6) || [];
+  const visibleCompanies = companies?.slice(0, 9) || [];
 
   if (visibleCompanies.length === 0) return null;
 
@@ -231,12 +251,18 @@ export function HomeCompaniesRail({
       </div>
 
       {/*
-        Auto-rows-fr removido para dimensionamento natural por conteúdo.
-        2 colunas a partir de 320px no mobile e 3 colunas em lg.
+        Grid responsivo:
+        - Mobile (<320px): 1 coluna
+        - Mobile (>=320px): 2 colunas
+        - Desktop (>=1024px / lg): 3 colunas (3x3 com até 9 empresas)
       */}
       <div className="grid min-w-0 grid-cols-1 items-stretch gap-2.5 min-[320px]:grid-cols-[repeat(2,minmax(0,1fr))] sm:gap-3 lg:grid-cols-3">
-        {visibleCompanies.map((company) => (
-          <HomeCompanyCard key={company.id} company={company} />
+        {visibleCompanies.map((company, index) => (
+          <HomeCompanyCard
+            key={company.id}
+            company={company}
+            desktopOnly={index >= 6}
+          />
         ))}
       </div>
     </section>

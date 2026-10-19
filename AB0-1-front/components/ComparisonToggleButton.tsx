@@ -172,7 +172,7 @@ export default function ComparisonToggleButton({
       return (
         <span
           className={cn(
-            'inline-flex h-[34px] w-full items-center justify-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors duration-150',
+            'inline-flex h-[34px] w-full items-center justify-center gap-1 rounded-lg border px-2 text-xs font-semibold transition-colors duration-150',
             isSelected
               ? 'border-blue-600 bg-blue-50/80 text-blue-700'
               : 'border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-600'
