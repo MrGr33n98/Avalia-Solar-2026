@@ -12,11 +12,9 @@ import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Star, 
-  Check, 
   X, 
   Search, 
   ArrowRight,
-  Zap,
   Plus
 } from 'lucide-react';
 import Link from 'next/link';
@@ -25,6 +23,7 @@ import debounce from 'lodash/debounce';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
+import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 
 interface CompanyComparisonSectionProps {
   currentCompany: Company;
@@ -194,25 +193,33 @@ export default function CompanyComparisonSection({
                             </div>
                           ) : searchResults.length > 0 ? (
                             searchResults.map(result => (
-                              <button 
+                              <div 
                                 key={result.id} 
-                                onClick={() => handleAdd(result)} 
-                                className="w-full p-4 text-left hover:bg-blue-50 flex items-center gap-4 transition-all border-b border-slate-50 last:border-0 group"
+                                className="w-full p-3.5 text-left hover:bg-blue-50/50 flex items-center justify-between gap-3 transition-all border-b border-slate-50 last:border-0 group"
                               >
-                                <div className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all">
-                                  <Image 
-                                    src={getFullImageUrl(result.logo_url || undefined) || '/images/logo-placeholder.svg'} 
-                                    alt={result.name} 
-                                    width={32}
-                                    height={32}
-                                    className="max-h-full max-w-full object-contain" 
+                                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                                  <div className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all">
+                                    <Image 
+                                      src={getFullImageUrl(result.logo_url || undefined) || '/images/logo-placeholder.svg'} 
+                                      alt={result.name} 
+                                      width={32}
+                                      height={32}
+                                      className="max-h-full max-w-full object-contain" 
+                                    />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-black text-slate-900 truncate">{result.name}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{result.city}, {result.state}</p>
+                                  </div>
+                                </div>
+                                <div className="shrink-0">
+                                  <CompareCheckboxControl
+                                    companyName={result.name}
+                                    checked={false}
+                                    onCheckedChange={() => handleAdd(result)}
                                   />
                                 </div>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-black text-slate-900 truncate">{result.name}</p>
-                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{result.city}, {result.state}</p>
-                                </div>
-                              </button>
+                              </div>
                             ))
                           ) : searchTerm.length >= 2 ? (
                             <div className="p-6 text-center text-sm text-slate-400">Nenhuma empresa encontrada</div>

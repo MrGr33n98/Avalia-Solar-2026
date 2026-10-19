@@ -141,26 +141,24 @@ export default function PublicCompanyCard({ company, rank }: PublicCompanyCardPr
         </div>
       </div>
 
-      {/* Bottom Actions: 2 Buttons (Comparar e Chat/Perfil) */}
-      <div className="mt-auto pt-5 grid grid-cols-2 gap-2.5">
+      {/* Bottom Actions: Checkbox Comparar e Chat/Perfil */}
+      <div className="mt-auto pt-5 flex items-center justify-between gap-2">
         <ComparisonToggleButton
           company={comparisonCompany}
           variant="card"
           size="sm"
-          className="h-10 w-full rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700 shadow-none hover:bg-slate-50"
-          animated={false}
         />
         {p2pChatEnabled ? (
           <CompanyChatButton
             companyId={company.id}
             companyName={company.name}
             variant="button"
-            className="h-10 w-full rounded-xl text-xs"
+            className="h-10 px-4 rounded-xl text-xs flex-1 max-w-[140px]"
           />
         ) : (
           <Link
             href={href}
-            className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
+            className="inline-flex h-10 px-4 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-xs font-bold text-blue-700 transition hover:bg-blue-100 flex-1 max-w-[140px]"
           >
             Ver perfil
           </Link>

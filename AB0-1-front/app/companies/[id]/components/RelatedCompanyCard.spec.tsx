@@ -65,7 +65,7 @@ describe('RelatedCompanyCard', () => {
     render(<RelatedCompanyCard company={mockCompany} />);
     expect(screen.getByRole('heading', { name: 'Empresa Teste' })).toBeInTheDocument();
     expect(
-      screen.getByLabelText(/Perfil oficial e validado pela plataforma Avalia Solar/i)
+      screen.getByLabelText(/Empresa verificada pelo Avalia Solar|Perfil oficial e validado/i)
     ).toBeInTheDocument();
     expect(screen.getByText('Energia Solar')).toBeInTheDocument();
   });

@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { getInitials } from '@/lib/text-utils';
 import type { ChatCompanyReferenceCardProps } from './ChatCompanyReferenceCard.types';
+import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 
 const cx = (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(' ');
 
@@ -20,12 +21,6 @@ const StarIcon = ({ className }: { className?: string }) => (
 const VerifiedIcon = ({ className }: { className?: string }) => (
   <svg className={cx('h-[18px] w-[18px] shrink-0 fill-emerald-500', className)} viewBox="0 0 20 20" aria-hidden="true">
     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-  </svg>
-);
-
-const CheckIcon = ({ className }: { className?: string }) => (
-  <svg className={cx('h-3.5 w-3.5 shrink-0', className)} viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
   </svg>
 );
 
@@ -55,8 +50,8 @@ const SpinnerIcon = ({ className }: { className?: string }) => (
 const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
   company,
   isSelectedForComparison = false,
-  selectedPosition = null,
-  maxComparison = 4,
+  selectedPosition: _selectedPosition = null,
+  maxComparison: _maxComparison = 4,
   onCompare,
   onReviews,
   onBudget,
@@ -196,41 +191,14 @@ const ChatCompanyReferenceCard: React.FC<ChatCompanyReferenceCardProps> = ({
       <div className="mt-2 grid w-full grid-cols-[1fr_1fr_1.1fr] gap-1 max-[360px]:grid-cols-[0.9fr_0.9fr_1fr] max-[360px]:gap-0.5">
         {/* Comparar */}
         {compareEnabled && (
-          <button
-            type="button"
-            onClick={onCompare}
-            aria-pressed={isSelectedForComparison}
-            aria-label={
-              isSelectedForComparison
-                ? `Remover ${company.name} da comparação`
-                : `Adicionar ${company.name} à comparação`
-            }
-            className={cx(
-              'inline-flex h-8 min-w-0 shrink-0 items-center justify-center gap-1 overflow-hidden rounded-lg border px-1.5 text-[11px] font-semibold leading-none transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-1',
-              isSelectedForComparison
-                ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                : 'border-zinc-200 bg-white text-zinc-700 hover:border-blue-300 hover:bg-blue-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-blue-700 dark:hover:bg-blue-950',
-            )}
-          >
-            {isSelectedForComparison ? (
-              <>
-                <CheckIcon className="text-blue-600 dark:text-blue-400" />
-                <span className="whitespace-nowrap">
-                  {selectedPosition
-                    ? `${selectedPosition}/${maxComparison}`
-                    : 'Selecionada'}
-                </span>
-              </>
-            ) : (
-              <>
-                <span aria-hidden="true" className="text-zinc-400">
-                  □
-                </span>
-                <span className="whitespace-nowrap">Comparar</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center justify-center">
+            <CompareCheckboxControl
+              companyName={company.name}
+              checked={isSelectedForComparison}
+              onCheckedChange={() => onCompare?.()}
+              density="compact"
+            />
+          </div>
         )}
 
         {/* Reviews */}

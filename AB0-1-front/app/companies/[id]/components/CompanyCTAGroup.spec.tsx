@@ -56,15 +56,15 @@ describe('CompanyCTAGroup — SPEC-UI-027', () => {
     expect(quoteBtn).toBeInTheDocument();
     expect(quoteBtn).toHaveClass('w-full', 'h-10', 'min-h-[44px]');
 
-    const compareBtn = screen.getByRole('button', { name: 'Comparar' });
-    expect(compareBtn).toBeInTheDocument();
-    expect(compareBtn).toHaveClass('w-full', 'h-10', 'min-h-[44px]');
+    const compareControl = screen.getByRole('checkbox', { name: /Empresa Teste/i });
+    expect(compareControl).toBeInTheDocument();
+    expect(screen.getByText('Comparar')).toBeInTheDocument();
 
     const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' });
     expect(reviewLink).toBeInTheDocument();
     expect(reviewLink).toHaveClass('w-full', 'h-10', 'min-h-[44px]');
 
-    const secondaryGrid = compareBtn.closest('.grid');
+    const secondaryGrid = compareControl.closest('.grid');
     expect(secondaryGrid).toHaveClass('grid-cols-2', 'gap-1.5', 'w-full');
   });
 
@@ -73,13 +73,14 @@ describe('CompanyCTAGroup — SPEC-UI-027', () => {
 
     expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
 
-    const compareBtn = screen.getByRole('button', { name: 'Comparar' });
-    expect(compareBtn).toBeInTheDocument();
+    const compareControl = screen.getByRole('checkbox', { name: /Empresa Teste/i });
+    expect(compareControl).toBeInTheDocument();
+    expect(screen.getByText('Comparar')).toBeInTheDocument();
 
     const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' });
     expect(reviewLink).toBeInTheDocument();
 
-    const secondaryGrid = compareBtn.closest('.grid');
+    const secondaryGrid = compareControl.closest('.grid');
     expect(secondaryGrid).toHaveClass('grid-cols-2', 'gap-1.5', 'w-full');
   });
 

@@ -42,9 +42,13 @@ jest.mock('@/components/favorites/FavoriteButton', () => ({
 jest.mock('@/components/ComparisonToggleButton', () => ({
   __esModule: true,
   default: ({ company, variant }: { company: Company; variant?: string }) => (
-    <button type="button" aria-label={`Comparar ${company.name}`} data-variant={variant}>
-      Comparar
-    </button>
+    <label data-variant={variant}>
+      <input
+        type="checkbox"
+        aria-label={`Adicionar ${company.name} à comparação`}
+      />
+      <span>Comparar</span>
+    </label>
   ),
 }));
 
@@ -99,7 +103,7 @@ describe('rails de identidade visual da home', () => {
     expect(logoLink).toHaveClass('h-12', 'w-12', 'sm:h-14', 'sm:w-14', 'lg:h-11', 'lg:w-11');
 
     expect(screen.getAllByRole('button', { name: 'Favoritar empresa' })).toHaveLength(2);
-    expect(screen.getByRole('button', { name: 'Comparar Sungrow Brasil' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Adicionar Sungrow Brasil à comparação' })).toBeInTheDocument();
   });
 
   it('exibe fallback Building2 quando a empresa não possui logo', () => {
@@ -245,8 +249,8 @@ describe('rails de identidade visual da home', () => {
       />
     );
 
-    const compareBtn = screen.getByRole('button', { name: 'Comparar Cymaz Solar' });
-    expect(compareBtn).toHaveAttribute('data-variant', 'home-compact');
+    const compareControl = screen.getByRole('checkbox', { name: 'Adicionar Cymaz Solar à comparação' });
+    expect(compareControl.closest('label')).toHaveAttribute('data-variant', 'home-compact');
   });
 
   it('exibe Sem avaliações quando não há reviews confirmados', () => {

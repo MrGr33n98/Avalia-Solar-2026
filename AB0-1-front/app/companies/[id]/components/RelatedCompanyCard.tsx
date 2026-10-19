@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Star, Clock3, LayoutGrid, Check, BadgeCheck } from 'lucide-react';
+import { Star, Clock3, LayoutGrid } from 'lucide-react';
 import { Company } from '@/lib/api';
 import { canUsePaidConversion } from '@/lib/feature-access';
 import { buildCompanyPath } from '@/lib/slug';
@@ -10,11 +10,10 @@ import { track } from '@/lib/analytics/lazy';
 import { useComparison } from '@/hooks/useComparison';
 import { cn } from '@/lib/utils';
 import { CompanyLogo } from '@/components/CompanyLogo';
-import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
+import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { openLeadModal } from '@/lib/lead-engine';
-import { Button } from '@/components/ui/button';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 
 interface RelatedCompanyCardProps {
@@ -78,11 +77,11 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
     router.push(companyPath);
   };
 
-  const handleCompareClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!selectedInComparison && !canAddMore) return;
+  const handleCompareChange = (next: boolean) => {
+    if (next === selectedInComparison) return;
+    if (next && !canAddMore) return;
     toggleComparison(company);
-    track(selectedInComparison ? 'comparison_remove' : 'comparison_add', {
+    track(next ? 'comparison_add' : 'comparison_remove', {
       company_id: id,
       company_name: name,
       source: 'related_companies_carousel',
@@ -180,39 +179,14 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
       <div className="flex flex-col gap-2 p-4 pt-3">
         <div className="flex gap-2">
           {/* Comparar */}
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleCompareClick}
-            disabled={!selectedInComparison && !canAddMore}
-            aria-pressed={selectedInComparison}
-            className={cn(
-              'flex-1 min-h-[38px] sm:min-h-[40px] h-[44px] sm:h-[40px] px-2 rounded-xl text-[13px] font-bold transition-all',
-              'hover:bg-transparent active:scale-[0.98]',
-              selectedInComparison ? 'text-blue-700' : 'text-slate-600 hover:text-slate-900'
-            )}
-          >
-            <div
-              className={cn(
-                'flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full mr-2',
-                selectedInComparison ? 'bg-blue-50 text-blue-600' : 'bg-transparent text-slate-500'
-              )}
-            >
-              {selectedInComparison ? (
-                <Check className="h-3.5 w-3.5" />
-              ) : (
-                <AnimatedCompareIcon
-                  size={16}
-                  active={false}
-                  selected={false}
-                  disabled={!canAddMore}
-                  className="text-slate-500"
-                  aria-hidden="true"
-                />
-              )}
-            </div>
-            {selectedInComparison ? 'Selecionada' : 'Comparar'}
-          </Button>
+          <div className="flex-1 flex items-center justify-center min-h-[38px] sm:min-h-[40px] h-[44px] sm:h-[40px]">
+            <CompareCheckboxControl
+              companyName={name}
+              checked={selectedInComparison}
+              disabled={!selectedInComparison && !canAddMore}
+              onCheckedChange={handleCompareChange}
+            />
+          </div>
 
           {/* Avaliar */}
           <ReviewCompanyButton

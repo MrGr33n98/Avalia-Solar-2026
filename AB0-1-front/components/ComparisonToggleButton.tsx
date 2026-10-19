@@ -1,27 +1,22 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Check, Plus, Crown, ArrowLeftRight, Loader2 } from 'lucide-react';
-import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
+import * as React from 'react';
 import { Company } from '@/lib/api';
 import { useComparison } from '@/hooks/useComparison';
 import { track } from '@/lib/analytics/lazy';
 import { useComparisonIntent } from '@/lib/analytics/hooks/useIntentTracking';
 import { openComparisonDock } from '@/lib/floating-widget-events';
-import { cn } from '@/lib/utils';
+import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 
-interface ComparisonToggleButtonProps {
+export interface ComparisonToggleButtonProps {
   company: Company;
   variant?: 'default' | 'minimal' | 'card' | 'floating' | 'home-compact';
   size?: 'sm' | 'default' | 'lg';
   className?: string;
   showPosition?: boolean;
   animated?: boolean;
-  /** Mantém o rótulo curto em cards estreitos e omite adornos premium. */
   compactLabel?: boolean;
+  disabled?: boolean;
 }
 
 export default function ComparisonToggleButton({
@@ -29,9 +24,7 @@ export default function ComparisonToggleButton({
   variant = 'default',
   size = 'default',
   className,
-  showPosition = false,
-  animated = true,
-  compactLabel = false,
+  disabled = false,
 }: ComparisonToggleButtonProps) {
   const {
     isInComparison,
@@ -41,15 +34,15 @@ export default function ComparisonToggleButton({
     canAddMore,
     count,
     maxComparison,
+    isLoading: comparisonLoading,
   } = useComparison();
-
-  const [isLoading, setIsLoading] = useState(false);
 
   const isSelected = isInComparison(company.id);
   const position = getCompanyPosition(company.id);
   const isPremium = Boolean(
     company.featured || company.plan_status === 'active' || company.has_paid_plan
   );
+
   const { trackComparisonUsage } = useComparisonIntent(String(company.id), {
     elementSelector: `comparison-toggle-${variant}`,
     metadata: {
@@ -57,284 +50,58 @@ export default function ComparisonToggleButton({
     },
   });
 
-  const handleToggle = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleCheckedChange = (nextChecked: boolean) => {
+    if (nextChecked === isSelected) return;
 
-    setIsLoading(true);
-
-    try {
-      if (isSelected) {
-        removeFromComparison(company.id);
-        track('comparison_remove', {
-          company_id: company.id,
-          company_name: company.name,
-          position: position,
-          source: 'list',
-        });
-        trackComparisonUsage('remove', {
-          company_name: company.name,
-          comparison_count: Math.max(count - 1, 0),
-          position: position || null,
-        });
-      } else {
-        if (!canAddMore) {
-          setIsLoading(false);
-          return;
-        }
-        addToComparison(company);
-        openComparisonDock();
-        track('comparison_add', {
-          company_id: company.id,
-          company_name: company.name,
-          total_companies: count + 1,
-          is_premium: isPremium,
-          source: 'list',
-        });
-        trackComparisonUsage('add', {
-          company_name: company.name,
-          comparison_count: count + 1,
-          is_premium: isPremium,
-        });
-      }
-    } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 300); // Small delay for better UX
+    if (isSelected) {
+      removeFromComparison(company.id);
+      track('comparison_remove', {
+        company_id: company.id,
+        company_name: company.name,
+        position: position,
+        source: 'list',
+      });
+      trackComparisonUsage('remove', {
+        company_name: company.name,
+        comparison_count: Math.max(count - 1, 0),
+        position: position || null,
+      });
+    } else {
+      if (!canAddMore) return;
+      addToComparison(company);
+      openComparisonDock();
+      track('comparison_add', {
+        company_id: company.id,
+        company_name: company.name,
+        total_companies: count + 1,
+        is_premium: isPremium,
+        source: 'list',
+      });
+      trackComparisonUsage('add', {
+        company_name: company.name,
+        comparison_count: count + 1,
+        is_premium: isPremium,
+      });
     }
   };
 
-  // Variant configurations
-  const variants = {
-    'home-compact': {
-      button: cn(
-        'w-full !h-12 !min-h-[48px] !p-0 !bg-transparent hover:!bg-transparent !border-0 !shadow-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none'
-      ),
-      icon: 'h-4 w-4',
-    },
-    default: {
-      button: cn(
-        'relative overflow-hidden transition-all duration-300',
-        isSelected
-          ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200'
-          : 'bg-white hover:bg-blue-50 text-slate-700 border border-slate-200 hover:border-blue-300',
-        size === 'sm' && 'h-8 px-3 text-xs',
-        size === 'default' && 'h-10 px-4 text-sm',
-        size === 'lg' && 'h-12 px-6 text-base font-bold'
-      ),
-      icon: size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-5 w-5' : 'h-4 w-4',
-    },
-    minimal: {
-      button: cn(
-        // Hit-area pura: sem border, sem bg — o AnimatedCompareIcon é o único visual
-        'rounded-full aspect-square shrink-0 transition-all duration-300 hover:scale-110',
-        isSelected
-          ? 'text-white'
-          : 'text-slate-600',
-        size === 'sm' && 'h-8 w-8 min-h-8 min-w-8 p-0',
-        size === 'default' && 'h-9 w-9 min-h-9 min-w-9 p-0',
-        size === 'lg' && 'h-11 w-11 min-h-11 min-w-11 p-0'
-      ),
-      icon: size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-6 w-6' : 'h-4 w-4',
-    },
-    card: {
-      button: cn(
-        'w-full rounded-xl font-bold transition-all duration-300 relative overflow-hidden',
-        isSelected
-          ? isPremium
-            ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-200'
-            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200'
-          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200',
-        size === 'sm' && 'h-8 text-xs',
-        size === 'default' && 'h-10 text-sm',
-        size === 'lg' && 'h-12 text-base'
-      ),
-      icon: size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-5 w-5' : 'h-4 w-4',
-    },
-    floating: {
-      button: cn(
-        'rounded-full shadow-lg backdrop-blur-sm border transition-all duration-300',
-        isSelected
-          ? 'bg-blue-600/90 border-blue-500 text-white shadow-blue-200'
-          : 'bg-white/90 border-slate-200 text-slate-700 hover:bg-blue-50/90',
-        size === 'sm' && 'h-8 w-8',
-        size === 'default' && 'h-10 w-10',
-        size === 'lg' && 'h-12 w-12'
-      ),
-      icon: size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-5 w-5' : 'h-4 w-4',
-    },
-  };
+  const isDisabled = disabled || comparisonLoading || (!isSelected && !canAddMore);
 
-  const currentVariant = variants[variant];
-
-  const renderButtonContent = () => {
-    if (variant === 'home-compact') {
-      return (
-        <span
-          className={cn(
-            'inline-flex h-[34px] w-full items-center justify-center gap-1 rounded-lg border px-2 text-xs font-semibold transition-colors duration-150',
-            isSelected
-              ? 'border-blue-600 bg-blue-50/80 text-blue-700'
-              : 'border-slate-200 bg-white text-slate-700 hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-600'
-          )}
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-500" />
-          ) : isSelected ? (
-            <Check className="h-4 w-4 shrink-0 text-blue-600" />
-          ) : (
-            <ArrowLeftRight className="h-4 w-4 shrink-0 text-slate-700" />
-          )}
-          <span className="truncate">
-            {isSelected ? 'Selecionada' : 'Comparar'}
-          </span>
-        </span>
-      );
-    }
-
-    const iconClass = currentVariant.icon;
-
-    if (variant === 'minimal' || variant === 'floating') {
-      return (
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-              className={cn(
-                iconClass,
-                'animate-spin border-2 border-current border-t-transparent rounded-full'
-              )}
-            />
-          ) : isSelected ? (
-            <motion.div
-              key="selected"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-              className="relative flex items-center justify-center"
-            >
-              {/* Círculo+check via AnimatedCompareIcon: zero camadas extras */}
-              <AnimatedCompareIcon selected size="sm" />
-              {showPosition && position && (
-                <Badge
-                  variant="secondary"
-                  className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs bg-blue-600 text-white"
-                >
-                  {position}
-                </Badge>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="unselected"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-            >
-              <AnimatedCompareIcon size="sm" intensity="strong" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      );
-    }
-
-    // For default and card variants
-    return (
-      <div className="flex items-center justify-center gap-2">
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0, rotate: -180 }}
-              animate={{ opacity: 1, rotate: 0 }}
-              exit={{ opacity: 0, rotate: 180 }}
-              className={cn(
-                iconClass,
-                'animate-spin border-2 border-current border-t-transparent rounded-full'
-              )}
-            />
-          ) : isSelected ? (
-            <motion.div
-              key="selected"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-            >
-              <Check className={iconClass} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="unselected"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0 }}
-            >
-              {compactLabel ? (
-                <AnimatedCompareIcon className={iconClass} size="sm" />
-              ) : isPremium ? (
-                <Crown className={iconClass} />
-              ) : (
-                <Plus className={iconClass} />
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <span className="font-bold">
-          {isSelected
-            ? showPosition && position
-              ? `Posição ${position}`
-              : 'Selecionada'
-            : 'Comparar'}
-        </span>
-      </div>
-    );
-  };
+  const tooltipTitle = isSelected
+    ? `Remover ${company.name} da comparação`
+    : !canAddMore
+      ? `Limite máximo de empresas atingido (${count}/${maxComparison})`
+      : `Adicionar ${company.name} à comparação`;
 
   return (
-    <Button
-      onClick={handleToggle}
-      disabled={isLoading || (!isSelected && !canAddMore)}
-      className={cn(currentVariant.button, className)}
-      variant="ghost"
-      size={variant === 'minimal' || variant === 'floating' ? 'icon' : size}
-      aria-label={
-        isSelected
-          ? `Remover ${company.name} da comparação`
-          : `Adicionar ${company.name} à comparação`
-      }
-      title={
-        isSelected
-          ? `Remover ${company.name} da comparação`
-          : !canAddMore
-            ? `Limite máximo de empresas atingido (${count}/${maxComparison})`
-            : `Adicionar ${company.name} à comparação`
-      }
-    >
-      {renderButtonContent()}
-
-      {/* Loading overlay */}
-      {animated && isLoading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-inherit"
-        />
-      )}
-
-      {/* Success animation */}
-      {animated && isSelected && (
-        <motion.div
-          initial={{ scale: 0, opacity: 1 }}
-          animate={{ scale: [0, 1.2, 0], opacity: [1, 0.8, 0] }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="absolute inset-0 border-2 border-current rounded-inherit"
-        />
-      )}
-    </Button>
+    <CompareCheckboxControl
+      companyName={company.name}
+      checked={isSelected}
+      disabled={isDisabled}
+      onCheckedChange={handleCheckedChange}
+      className={className}
+      density={size === 'sm' || variant === 'home-compact' ? 'compact' : 'compact'}
+      title={tooltipTitle}
+    />
   );
 }

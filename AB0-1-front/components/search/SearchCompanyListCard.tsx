@@ -294,11 +294,11 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
       </div>
 
       {/* Middle Column 3: Secondary Actions */}
-      <div className="hidden lg:flex flex-col justify-center gap-2 p-4 border-r border-slate-100 w-[140px]">
+      <div className="hidden lg:flex flex-col justify-center items-start gap-2 p-4 border-r border-slate-100 w-[140px]">
         <ComparisonToggleButton
           company={company as any}
           variant="default"
-          className="w-full h-8 text-[11px] rounded-lg"
+          size="sm"
         />
         <Button
           asChild
@@ -352,12 +352,14 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
         {canRequestQuote ? (
           // Com orçamento: [Comparar] [Avaliar] | [Solicitar orçamento (destaque)]
           <>
-            <div className="flex flex-1 divide-x divide-slate-100">
-              <ComparisonToggleButton
-                company={company as any}
-                variant="default"
-                className="flex-1 h-11 text-xs rounded-none border-0 shadow-none"
-              />
+            <div className="flex flex-1 items-center justify-around divide-x divide-slate-100">
+              <div className="flex-1 flex items-center justify-center py-1">
+                <ComparisonToggleButton
+                  company={company as any}
+                  variant="default"
+                  size="sm"
+                />
+              </div>
               <Button
                 asChild
                 variant="ghost"
@@ -384,12 +386,14 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
           </>
         ) : (
           // Sem orçamento: [Comparar] [Avaliar] [Ver avaliações]
-          <div className="flex w-full divide-x divide-slate-100">
-            <ComparisonToggleButton
-              company={company as any}
-              variant="default"
-              className="flex-1 h-11 text-xs rounded-none border-0 shadow-none"
-            />
+          <div className="flex w-full items-center justify-around divide-x divide-slate-100">
+            <div className="flex-1 flex items-center justify-center py-1">
+              <ComparisonToggleButton
+                company={company as any}
+                variant="default"
+                size="sm"
+              />
+            </div>
             <Button
               asChild
               variant="ghost"

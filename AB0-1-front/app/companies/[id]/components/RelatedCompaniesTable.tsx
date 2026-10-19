@@ -4,17 +4,10 @@ import { useState } from 'react';
 import { Company } from '@/lib/api';
 import Link from 'next/link';
 import {
-  BadgeCheck,
   Star,
   ChevronLeft,
   ChevronRight,
-  Info,
-  MapPin,
-  Globe,
-  Clock,
-  Building2,
 } from 'lucide-react';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
@@ -338,7 +331,7 @@ function RelatedCompanyCard({ company, position }: { company: Company; position:
               company={company as any}
               variant="minimal"
               size="sm"
-              className="h-8 w-8 min-h-8 min-w-8 shrink-0 p-0"
+              className="shrink-0"
             />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
@@ -379,7 +372,7 @@ function RelatedCompanyActions({
           company={company as any}
           variant="minimal"
           size="sm"
-          className="h-10 w-10 min-h-10 min-w-10 shrink-0 p-0"
+          className="shrink-0"
         />
       )}
       {canRequestQuote && (

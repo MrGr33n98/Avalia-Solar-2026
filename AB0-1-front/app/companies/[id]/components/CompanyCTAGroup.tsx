@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Star, Send, Layers } from 'lucide-react';
+import { Star, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
@@ -10,7 +10,7 @@ import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { track } from '@/lib/analytics/lazy';
 import { buildCompanySubPath } from '@/lib/slug';
 import { useComparison } from '@/hooks/useComparison';
-import { cn } from '@/lib/utils';
+import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 
 interface CompanyCTAGroupProps {
   company: Company;
@@ -24,7 +24,7 @@ export default function CompanyCTAGroup({
   const wizardCategoryId = resolveWizardCategoryId(company);
   const companyIdNum = Number(company.id);
 
-  const { isInComparison, addToComparison, removeFromComparison } = useComparison();
+  const { isInComparison, addToComparison, removeFromComparison, canAddMore } = useComparison();
   const isCompared = isInComparison(companyIdNum);
 
   const handleRequestQuote = async () => {
@@ -42,19 +42,26 @@ export default function CompanyCTAGroup({
     });
   };
 
-  const handleToggleComparison = () => {
-    track('company_compare_click', {
-      company_id: company.id,
-      company_name: company.name,
-      action: isCompared ? 'remove' : 'add',
-    });
+  const handleCompareChange = (next: boolean) => {
+    if (next === isCompared) return;
 
-    if (isCompared) {
-      removeFromComparison(companyIdNum);
-      toast.info(`${company.name} removida da comparação.`);
-    } else {
+    if (next) {
+      if (!canAddMore) return;
+      track('company_compare_click', {
+        company_id: company.id,
+        company_name: company.name,
+        action: 'add',
+      });
       addToComparison(company);
       toast.success(`${company.name} adicionada para comparação!`);
+    } else {
+      track('company_compare_click', {
+        company_id: company.id,
+        company_name: company.name,
+        action: 'remove',
+      });
+      removeFromComparison(companyIdNum);
+      toast.info(`${company.name} removida da comparação.`);
     }
   };
 
@@ -80,22 +87,15 @@ export default function CompanyCTAGroup({
 
       {/* 2. Linha 2 (Mobile 50/50) / Botões Secundários (Desktop): Comparar + Avaliar empresa */}
       <div className="grid w-full min-w-0 grid-cols-2 gap-1.5 lg:flex lg:w-auto lg:items-center lg:gap-2">
-        {/* Comparar (Secundário Outline Azul) */}
-        <Button
-          type="button"
-          variant="outline"
-          size="default"
-          onClick={handleToggleComparison}
-          className={cn(
-            'relative h-10 min-h-[44px] w-full min-w-0 inline-flex items-center justify-center gap-1.5 rounded-[10px] border px-2 text-xs font-semibold leading-none transition-colors sm:text-sm lg:h-10 lg:w-auto lg:flex-none lg:min-w-[105px]',
-            isCompared
-              ? 'border-blue-600 bg-blue-50 text-blue-700'
-              : 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
-          )}
-        >
-          <Layers className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
-          <span className="truncate">{isCompared ? 'Comparando' : 'Comparar'}</span>
-        </Button>
+        {/* Comparar */}
+        <div className="flex items-center justify-center h-10 min-h-[44px] w-full lg:w-auto">
+          <CompareCheckboxControl
+            companyName={company.name}
+            checked={isCompared}
+            disabled={!isCompared && !canAddMore}
+            onCheckedChange={handleCompareChange}
+          />
+        </div>
 
         {/* Avaliar empresa (Review CTA Warm Light Accent) */}
         <Link

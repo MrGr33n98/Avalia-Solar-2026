@@ -137,19 +137,17 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
         </div>
       </div>
 
-      {/* Bottom Actions: 2 Buttons (Comparar e CTA Dinâmico) */}
-      <div className="mt-auto pt-5 grid grid-cols-2 gap-2.5">
+      {/* Bottom Actions: Checkbox Comparar e CTA Dinâmico */}
+      <div className="mt-auto pt-5 flex items-center justify-between gap-2">
         <ComparisonToggleButton
           company={comparisonCompany}
           variant="card"
           size="sm"
-          className="h-11 w-full min-h-[44px] rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700 shadow-none hover:bg-slate-50"
-          animated={false}
         />
         <Link
           href={primaryCtaUrl}
           onClick={() => trackRecommendedPrimaryCtaClicked(company, meta)}
-          className="inline-flex h-11 min-h-[44px] w-full items-center justify-center rounded-xl border border-blue-600 bg-blue-600 px-3 text-xs font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="inline-flex h-10 min-h-[40px] px-3 items-center justify-center rounded-xl border border-blue-600 bg-blue-600 text-xs font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex-1 max-w-[140px]"
         >
           {primaryCtaText}
         </Link>

@@ -71,7 +71,7 @@ describe('CompanyCard V2 — Swiss Enterprise Discovery Card', () => {
 
     expect(screen.getByText('WEG Solar')).toBeInTheDocument();
     expect(screen.queryByText('PRO')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Empresa verificada')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Empresa verificada/i)).toBeInTheDocument();
     expect(screen.getByText('4.5')).toBeInTheDocument();
     expect(screen.getByText('(18)')).toBeInTheDocument();
     expect(screen.getByText('Florianópolis, SC')).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe('CompanyCard V2 — Swiss Enterprise Discovery Card', () => {
     expect(quoteBtn).toBeInTheDocument();
 
     // Ações secundárias: Comparar, Ver perfil, Mais ações
-    expect(screen.getByRole('button', { name: /Comparar/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Adicionar WEG Solar à comparação/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Ver perfil/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Mais ações para WEG Solar/i })).toBeInTheDocument();
 
@@ -137,13 +137,13 @@ describe('CompanyCard V2 — Swiss Enterprise Discovery Card', () => {
     expect(screen.queryByText('24h')).not.toBeInTheDocument();
   });
 
-  it('alterna o estado de comparação ao clicar no botão Comparar (US-006)', () => {
+  it('alterna o estado de comparação ao clicar no seletor Comparar (US-006)', () => {
     render(<CompanyCard company={baseCompany} />);
 
-    const compareBtn = screen.getByRole('button', { name: /Comparar/i });
-    expect(compareBtn).toHaveAttribute('aria-pressed', 'false');
+    const compareCheckbox = screen.getByRole('checkbox', { name: /Adicionar WEG Solar à comparação/i });
+    expect(compareCheckbox).not.toBeChecked();
 
-    fireEvent.click(compareBtn);
+    fireEvent.click(compareCheckbox);
     expect(mockAddToComparison).toHaveBeenCalled();
   });
 

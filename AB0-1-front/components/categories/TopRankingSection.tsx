@@ -192,8 +192,7 @@ function RankingCompanyCard({
         <ComparisonToggleButton
           company={company}
           size="sm"
-          compactLabel
-          className="h-8 min-w-0 rounded-[6px] px-1.5 text-[10px] font-bold shadow-none [&>div]:gap-1 sm:h-9 sm:text-xs"
+          className="justify-center"
         />
       </div>
     </article>

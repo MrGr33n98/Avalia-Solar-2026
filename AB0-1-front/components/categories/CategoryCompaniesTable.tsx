@@ -7,7 +7,6 @@ import { Company } from '@/lib/api';
 import Link from 'next/link';
 
 import {
-  BadgeCheck,
   Star,
   ChevronLeft,
   ChevronRight,
@@ -842,7 +841,7 @@ function CategoryCompanyCard({ company, position }: { company: Company; position
               company={company as any}
               variant="minimal"
               size="sm"
-              className="h-8 w-8 min-h-8 min-w-8 shrink-0 p-0"
+              className="shrink-0"
             />
           </div>
 
@@ -894,7 +893,7 @@ function CategoryCompanyActions({
           company={company as any}
           variant="minimal"
           size="sm"
-          className="h-10 w-10 min-h-10 min-w-10 shrink-0 p-0"
+          className="shrink-0"
         />
       )}
 

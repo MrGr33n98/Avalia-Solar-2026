@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star, CheckCircle, MapPin, TrendingUp, MessageSquare } from 'lucide-react';
+import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 
 export interface CompanyCardProps {
   id: number;
@@ -19,6 +20,7 @@ export interface CompanyCardProps {
   whatsapp_url: string | null;
   quote_enabled: boolean;
   comparison_enabled: boolean;
+  isCompared?: boolean;
   short_reason: string;
   rank_position?: number;
   onCompare?: (companyId: number) => void;
@@ -47,6 +49,7 @@ const MobiVoltCompanyCard: React.FC<CompanyCardProps> = ({
   onQuote,
   quote_enabled,
   comparison_enabled,
+  isCompared = false,
   whatsapp_url,
 }) => {
   const handleCompare = () => {
@@ -200,17 +203,17 @@ const MobiVoltCompanyCard: React.FC<CompanyCardProps> = ({
           Pedir orçamento
         </button>
 
-        <button
-          onClick={handleCompare}
-          disabled={!comparison_enabled}
-          className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-            comparison_enabled
-              ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          Comparar
-        </button>
+        {onCompare && (
+          <div className="flex items-center">
+            <CompareCheckboxControl
+              companyName={name}
+              checked={Boolean(isCompared)}
+              disabled={!comparison_enabled}
+              onCheckedChange={handleCompare}
+              density="compact"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

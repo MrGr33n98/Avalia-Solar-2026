@@ -38,6 +38,7 @@ import CompareSummary from '@/components/compare/CompareSummary';
 import CompareTable from '@/components/compare/CompareTable';
 import ComparisonTableSkeleton from '@/components/compare/ComparisonTableSkeleton';
 import RecommendedCompanies from '@/components/compare/RecommendedCompanies';
+import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 import { getRecommendedCompanies } from '@/components/compare/compare-insights';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import {
@@ -665,23 +666,30 @@ function CompanySearchPanel({
             </p>
           )}
           {results.map((company) => (
-            <button
+            <div
               key={company.id}
-              type="button"
-              disabled={!canAddMore}
-              onClick={() => onAdd(company)}
-              className="flex w-full items-center gap-2 rounded-none border border-slate-200 p-2 text-left enabled:hover:border-blue-300 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label={`Adicionar ${company.name} à comparação`}
+              className="flex w-full items-center justify-between gap-2 rounded-none border border-slate-200 p-2"
             >
-              <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
-              <span className="min-w-0 flex-1">
-                <strong className="block truncate text-xs text-slate-900">{company.name}</strong>
-                <span className="block truncate text-[10px] text-slate-500">
-                  {[company.city, company.state].filter(Boolean).join(', ')}
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
+                <span className="min-w-0 flex-1">
+                  <strong className="block truncate text-xs text-slate-900">{company.name}</strong>
+                  <span className="block truncate text-[10px] text-slate-500">
+                    {[company.city, company.state].filter(Boolean).join(', ')}
+                  </span>
                 </span>
-              </span>
-              <Plus className="h-4 w-4 text-blue-700" aria-hidden="true" />
-            </button>
+              </div>
+              <CompareCheckboxControl
+                companyName={company.name}
+                checked={selectedCompanies.some((c) => c.id === company.id)}
+                disabled={!selectedCompanies.some((c) => c.id === company.id) && !canAddMore}
+                onCheckedChange={(next) => {
+                  if (next) onAdd(company);
+                  else onRemove(company.id);
+                }}
+                density="compact"
+              />
+            </div>
           ))}
         </div>
       )}

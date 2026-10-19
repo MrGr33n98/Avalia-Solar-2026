@@ -60,9 +60,9 @@ describe('FeaturedCompanyCard', () => {
   it('renderiza selo de verificacao e botao de comparacao simultaneamente em regioes proprias', () => {
     render(<FeaturedCompanyCard company={buildCompany(true)} category="solar" isFirst />);
 
-    expect(screen.getByLabelText('Perfil Verificado')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Perfil Verificado|Empresa verificada/i)).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Adicionar Empresa Teste à comparação' })
+      screen.getByRole('checkbox', { name: 'Adicionar Empresa Teste à comparação' })
     ).toBeInTheDocument();
   });
 });

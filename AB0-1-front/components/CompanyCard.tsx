@@ -5,22 +5,19 @@ import { useRouter } from 'next/navigation';
 import {
   Star,
   MapPin,
-  BadgeCheck,
   MessageCircle,
   BookOpen,
   ArrowRight,
-  ArrowLeftRight,
   Building2,
   MoreHorizontal,
   MessageSquare,
   PhoneCall,
   PenSquare,
-  Check,
   FileText,
 } from 'lucide-react';
+import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
   DropdownMenu,
@@ -28,7 +25,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { CompanyReviewsSummarySheet } from '@/components/company/CompanyReviewsSummarySheet';
 import { buildCompanyPath } from '@/lib/slug';
@@ -440,15 +436,15 @@ export default function CompanyCard({
     router.push(companyPath);
   };
 
-  const handleCompareToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isInComparison(id)) {
-      removeFromComparison(id);
-      track('comparison_remove', { company_id: id, company_name: name, source: 'company_card' });
-    } else {
+  const handleCompareChange = (next: boolean) => {
+    if (next === isInComparison(id)) return;
+    if (next) {
       if (!canAddMore) return;
       addToComparison(data as unknown as Parameters<typeof addToComparison>[0]);
       track('comparison_add', { company_id: id, company_name: name, source: 'company_card' });
+    } else {
+      removeFromComparison(id);
+      track('comparison_remove', { company_id: id, company_name: name, source: 'company_card' });
     }
   };
 
@@ -703,25 +699,14 @@ export default function CompanyCard({
           {/* AÇÕES SECUNDÁRIAS (GRADE DE 3 COLUNAS) */}
           <div data-testid="company-card-secondary-row" className="grid min-w-0 grid-cols-3 gap-2">
             {/* 1. COMPARAR */}
-            <Button
-              variant="outline"
-              aria-label={`Comparar ${name}`}
-              aria-pressed={isInComparison(id)}
-              className={cn(
-                'w-full min-h-12 h-auto py-2 rounded-lg text-xs font-medium inline-flex items-center justify-center gap-1 transition-colors px-1',
-                isInComparison(id)
-                  ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-300'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
-              )}
-              onClick={handleCompareToggle}
-            >
-              {isInComparison(id) ? (
-                <Check className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-              ) : (
-                <ArrowLeftRight className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-              )}
-              <span className="truncate">Comparar</span>
-            </Button>
+            <div className="flex items-center justify-center min-h-12 py-1">
+              <CompareCheckboxControl
+                companyName={name}
+                checked={isInComparison(id)}
+                disabled={!isInComparison(id) && !canAddMore}
+                onCheckedChange={handleCompareChange}
+              />
+            </div>
 
             {/* 2. VER PERFIL (SE PRO COM QUOTE) OU AVALIAR (SE FREE) */}
             {canRequestQuote ? (

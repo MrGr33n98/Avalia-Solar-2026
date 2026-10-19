@@ -6,6 +6,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, Circle, useMap } 
 import type { LatLngBounds } from 'leaflet';
 import { useTheme } from 'next-themes';
 import { getFullImageUrl } from '@/utils/image';
+import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 
 // IMPORTAÇÃO CRÍTICA: Sem isso, o Leaflet renderiza de forma totalmente quebrada e os blocos de mapa ficam desalinhados.
 import 'leaflet/dist/leaflet.css';
@@ -324,18 +325,12 @@ export default function MapProvider({
                     Ver empresa
                   </a>
                   {onCompare && (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onCompare(company);
-                      }}
-                      className="inline-flex items-center justify-center rounded-full border border-blue-200 px-2.5 py-1.5 text-[10px] font-bold text-blue-700 hover:bg-blue-50"
-                      aria-pressed={compareIds.includes(company.id)}
-                    >
-                      {compareIds.includes(company.id) ? 'Selecionada' : 'Comparar'}
-                    </button>
+                    <CompareCheckboxControl
+                      companyName={company.name}
+                      checked={compareIds.includes(company.id)}
+                      onCheckedChange={() => onCompare(company)}
+                      density="compact"
+                    />
                   )}
                 </div>
               </div>

@@ -200,13 +200,11 @@ export function HomeCompanyCard({
         No mobile: mt-auto pt-1.5, largura total.
         No desktop: lg:col-start-3 lg:row-start-1 lg:mt-0 lg:pt-0 lg:w-auto lg:shrink-0.
       */}
-      <div className="mt-auto min-w-0 pt-1.5 lg:col-start-3 lg:row-start-1 lg:mt-0 lg:pt-0 lg:w-auto lg:shrink-0">
+      <div className="mt-auto min-w-0 pt-1.5 flex items-center justify-start lg:col-start-3 lg:row-start-1 lg:mt-0 lg:pt-0 lg:w-auto lg:shrink-0 lg:self-center">
         <ComparisonToggleButton
           company={company}
           variant="home-compact"
-          animated={false}
           size="sm"
-          className="lg:!h-10 lg:!min-h-[40px] lg:w-auto"
         />
       </div>
     </article>
