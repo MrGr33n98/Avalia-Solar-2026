@@ -89,12 +89,12 @@ const StyleAnalysis = dynamic(() => import('./StyleAnalysis'), {
 const SectorQuestionsManager = dynamic(() => import('./SectorQuestionsManager'), {
   loading: () => <DashboardTabSkeleton />,
 });
-const TrustWidgetDashboard = dynamic(() => import('./TrustWidgetDashboard'), {
-  loading: () => <DashboardTabSkeleton />,
-});
-const BadgesManagement = dynamic(() => import('./BadgesManagement'), {
-  loading: () => <DashboardTabSkeleton />,
-});
+const ContentStudioWorkspace = dynamic(
+  () => import('./content-studio/ContentStudioWorkspace'),
+  {
+    loading: () => <DashboardTabSkeleton />,
+  }
+);
 const RankingPerformanceTab = dynamic(() => import('./RankingPerformanceTab'), {
   loading: () => <DashboardTabSkeleton />,
 });
@@ -656,21 +656,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="trust-widget" className="mt-0 focus-visible:outline-none">
-                <TrustWidgetDashboard company={company} />
+                <ContentStudioWorkspace company={company} companyId={companyId} />
               </TabsContent>
 
               <TabsContent value="avalia-badges" className="mt-0 focus-visible:outline-none">
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                      Selos Avalia Solar
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Gerencie e compartilhe seus selos oficiais de distinção.
-                    </p>
-                  </div>
-                  <BadgesManagement companyId={companyId} />
-                </div>
+                <ContentStudioWorkspace company={company} companyId={companyId} />
               </TabsContent>
 
               <TabsContent
