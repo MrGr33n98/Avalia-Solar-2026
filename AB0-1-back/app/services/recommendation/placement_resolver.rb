@@ -20,6 +20,13 @@ module Recommendation
         active_placements = active_placements.where('state_code IS NULL OR state_code = ?', context.state)
       end
 
+      if context.category_slug.present?
+        category = Category.find_by(slug: context.category_slug)
+        if category
+          active_placements = active_placements.where('category_id IS NULL OR category_id = ?', category.id)
+        end
+      end
+
       # Filter out expired or max_impressions reached placements
       placements = active_placements.select { |p| p.active_for? }
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CompanyProvider } from '@/context/CompanyContext';
+import { LocationProvider } from '@/contexts/LocationContext';
 import { QueryProvider } from '@/lib/QueryProvider';
 // P1 PERF FIX: ApolloProvider e Context7Provider removidos do global provider.
 // Apollo só é necessário em /dashboard, /compare, /review-dashboard.
@@ -202,19 +203,21 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <QueryProvider>
         <AuthProvider>
           <CompanyProvider>
-            {children}
-            {showDeferredModals && (
-              <>
-                <QuoteWizardModal />
-                <SignupGateModalHost />
-              </>
-            )}
-            <Toaster />
-            {!isAppSurface && <CookieConsent />}
-            {isFeatureFlagEnabled('CHAT') &&
-              !isAppSurface &&
-              hasCookieDecision &&
-              (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
+            <LocationProvider>
+              {children}
+              {showDeferredModals && (
+                <>
+                  <QuoteWizardModal />
+                  <SignupGateModalHost />
+                </>
+              )}
+              <Toaster />
+              {!isAppSurface && <CookieConsent />}
+              {isFeatureFlagEnabled('CHAT') &&
+                !isAppSurface &&
+                hasCookieDecision &&
+                (pathname?.startsWith('/dashboard') ? <MobiVoltSuccessWidget /> : <ChatWidget />)}
+            </LocationProvider>
           </CompanyProvider>
         </AuthProvider>
       </QueryProvider>

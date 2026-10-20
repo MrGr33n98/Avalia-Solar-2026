@@ -7,6 +7,7 @@ import RecommendedCompanyCard from '@/components/company/RecommendedCompanyCard'
 import PublicCompanyCard, { type PublicCompanyCardData } from '@/components/company/PublicCompanyCard';
 import { publicCompaniesApi } from '@/lib/api-public';
 import type { RecommendationItem, RecommendationMeta } from '@/lib/api-public';
+import { useLocation } from '@/contexts/LocationContext';
 import {
   trackRecommendedSectionViewed,
   trackRecommendedFilterChanged,
@@ -31,18 +32,21 @@ type RecommendedCompaniesSectionProps = {
 };
 
 export default function RecommendedCompaniesSection({ initialCompanies }: RecommendedCompaniesSectionProps) {
+  const { selectedState, selectedCity, stateLabel } = useLocation();
   const [activeTab, setActiveTab] = useState<string>('all');
   const [items, setItems] = useState<RecommendationItem[]>([]);
   const [meta, setMeta] = useState<RecommendationMeta | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
 
-  const fetchRecommendations = useCallback(async (tabSegment?: string) => {
+  const fetchRecommendations = useCallback(async (tabSegment?: string, state?: string, city?: string | null) => {
     setLoading(true);
     setError(false);
     try {
       const response = await publicCompaniesApi.getRecommendations({
         segment: tabSegment,
+        state: state || undefined,
+        city: city || undefined,
         limit: 8,
       });
 
@@ -69,14 +73,14 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
 
   useEffect(() => {
     const currentTab = TABS.find((t) => t.id === activeTab);
-    fetchRecommendations(currentTab?.segment);
-  }, [activeTab, fetchRecommendations]);
+    fetchRecommendations(currentTab?.segment, selectedState, selectedCity);
+  }, [activeTab, selectedState, selectedCity, fetchRecommendations]);
 
   const resolvedLocation = meta?.location?.city && meta?.location?.state
     ? `${meta.location.city}, ${meta.location.state}`
     : meta?.location?.state
     ? meta.location.state
-    : 'sua região';
+    : stateLabel || 'sua região';
 
   return (
     <section className="py-12 bg-slate-50/50 border-y border-slate-100" aria-labelledby="recommended-companies-heading">
@@ -101,7 +105,7 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
           </div>
 
           <Link
-            href="/empresas"
+            href={`/companies?state=${encodeURIComponent(selectedState)}`}
             className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-800 transition group self-start md:self-auto"
           >
             <span>Ver todas as empresas</span>

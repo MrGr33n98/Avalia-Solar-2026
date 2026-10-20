@@ -211,6 +211,8 @@ export function HomeCompanyCard({
   );
 }
 
+import { useLocation } from '@/contexts/LocationContext';
+
 export function HomeCompaniesRail({
   companies,
   title,
@@ -218,12 +220,36 @@ export function HomeCompaniesRail({
   className,
   viewAllHref = '/companies',
 }: HomeCompaniesRailProps) {
+  const { selectedState, stateLabel } = useLocation();
+  const effectiveState = stateCode || selectedState;
+
+  const visibleCompanies = React.useMemo(() => {
+    if (!companies || companies.length === 0) return [];
+    if (!effectiveState) return companies.slice(0, 9);
+
+    const normState = effectiveState.toUpperCase();
+    const localMatches = companies.filter((c) => {
+      if (c.state?.toUpperCase() === normState) return true;
+      if (c.coverage_states && Array.isArray(c.coverage_states)) {
+        return c.coverage_states.some((s) => s.toUpperCase() === normState);
+      }
+      return false;
+    });
+
+    const others = companies.filter((c) => !localMatches.some((m) => m.id === c.id));
+    return [...localMatches, ...others].slice(0, 9);
+  }, [companies, effectiveState]);
+
   const displayTitle =
     title ||
-    (stateCode
-      ? `Empresas em destaque em ${stateCode.toUpperCase()}`
+    (effectiveState
+      ? `Empresas em destaque em ${stateLabel || effectiveState.toUpperCase()}`
       : 'Empresas em destaque');
-  const visibleCompanies = companies?.slice(0, 9) || [];
+
+  const effectiveViewAll =
+    viewAllHref === '/companies'
+      ? `/companies?state=${encodeURIComponent(effectiveState)}`
+      : viewAllHref;
 
   if (visibleCompanies.length === 0) return null;
 
@@ -240,7 +266,7 @@ export function HomeCompaniesRail({
           {displayTitle}
         </h2>
         <Link
-          href={viewAllHref}
+          href={effectiveViewAll}
           className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           Ver todas

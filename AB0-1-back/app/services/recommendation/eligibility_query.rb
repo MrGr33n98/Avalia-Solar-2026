@@ -44,7 +44,7 @@ module Recommendation
       city_downcase = city.to_s.strip.downcase
 
       # 1. Sede location match
-      sede_ids = Company.where(state: state_upcase, city: city).pluck(:id)
+      sede_ids = Company.where(state: state_upcase).where('LOWER(city) = ?', city_downcase).pluck(:id)
 
       # 2. Service area match
       service_area_ids = CompanyServiceArea.active
@@ -61,7 +61,9 @@ module Recommendation
       state_upcase = state.to_s.strip.upcase
 
       sede_ids = Company.where(state: state_upcase).pluck(:id)
-      service_area_ids = CompanyServiceArea.active.where(state_code: state_upcase).pluck(:company_id)
+      service_area_ids = CompanyServiceArea.active
+                                            .where(state_code: state_upcase, coverage_type: 'state')
+                                            .pluck(:company_id)
       national_ids = CompanyServiceArea.active.where(coverage_type: 'national').pluck(:company_id)
 
       (sede_ids + service_area_ids + national_ids).uniq

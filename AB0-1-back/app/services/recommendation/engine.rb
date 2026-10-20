@@ -37,6 +37,8 @@ module Recommendation
 
       # Insert sponsored placements into top slots (up to MAX_SPONSORED_SLOTS)
       sponsored_placements.take(MAX_SPONSORED_SLOTS).each do |placement|
+        break if final_results.size >= limit
+
         company = placement.company
         next if used_company_ids.include?(company.id)
 

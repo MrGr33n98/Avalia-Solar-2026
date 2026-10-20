@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import RecommendedCompaniesSection from '@/components/home/RecommendedCompaniesSection';
+import { LocationProvider } from '@/contexts/LocationContext';
 import { publicCompaniesApi } from '@/lib/api-public';
 
 // Mock next/navigation
@@ -107,7 +108,11 @@ describe('RecommendedCompaniesSection', () => {
   });
 
   it('renders section title and tab filters', async () => {
-    render(<RecommendedCompaniesSection />);
+    render(
+      <LocationProvider defaultState="SC">
+        <RecommendedCompaniesSection />
+      </LocationProvider>
+    );
 
     expect(
       screen.getByRole('heading', { name: /Empresas recomendadas para você/i })
@@ -122,7 +127,11 @@ describe('RecommendedCompaniesSection', () => {
   });
 
   it('fetches new segment recommendations when clicking tabs', async () => {
-    render(<RecommendedCompaniesSection />);
+    render(
+      <LocationProvider defaultState="SC">
+        <RecommendedCompaniesSection />
+      </LocationProvider>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Empresa Teste Recomendada')).toBeInTheDocument();
@@ -134,6 +143,7 @@ describe('RecommendedCompaniesSection', () => {
     await waitFor(() => {
       expect(publicCompaniesApi.getRecommendations).toHaveBeenCalledWith({
         segment: 'installer',
+        state: 'SC',
         limit: 8,
       });
     });

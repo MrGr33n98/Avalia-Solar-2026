@@ -23,7 +23,7 @@ module Recommendation
       if context.local?
         if company.state == context.state && company.city.to_s.strip.downcase == context.city.to_s.strip.downcase
           return {
-            code: 'LOCAL_COVERAGE',
+            code: 'LOCAL_SEDE',
             label: "Sede em #{company.city}, #{company.state}"
           }
         elsif company.company_service_areas.any? { |sa| sa.covers?(city: context.city, state: context.state) }
@@ -34,11 +34,19 @@ module Recommendation
         end
       end
 
-      if context.state.present? && company.state == context.state
-        return {
-          code: 'STATE_COVERAGE',
-          label: "Atende #{context.state}"
-        }
+      if context.state.present?
+        has_state_area = company.company_service_areas.any? { |sa| sa.is_active? && sa.state_coverage? && sa.state_code == context.state }
+        if has_state_area
+          return {
+            code: 'STATE_COVERAGE',
+            label: "Atendimento em #{context.state} declarado"
+          }
+        elsif company.state == context.state
+          return {
+            code: 'STATE_SEDE',
+            label: "Sede em #{company.state}"
+          }
+        end
       end
 
       if company.company_service_areas.any?(&:national_coverage?)

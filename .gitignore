@@ -68,6 +68,8 @@ AB0-1-front/public/avalia-solar-upgrade-assets/
 !AB0-1-front/components/categories/DecisionChips.test.tsx
 !AB0-1-front/__tests__/components/SelectEligibleLeadDialog.test.tsx
 !AB0-1-front/__tests__/components/ProposalConversationPane.test.tsx
+!AB0-1-front/__tests__/components/RecommendedCompaniesSection.test.tsx
+!AB0-1-front/__tests__/contexts/LocationContext.test.tsx
 !AB0-1-front/__tests__/components/CompanyMarketplaceProposalsWorkspaceDeepLink.test.tsx
 !AB0-1-front/__tests__/components/sales/OpportunityCard.test.tsx
 !AB0-1-front/__tests__/components/sales/SalesAnalyticsReport.test.tsx
@@ -122,6 +124,8 @@ docs/audits/*
 !docs/security-audit/
 !docs/security-audit/*
 !docs/observability/
+!docs/recommendations/
+!docs/recommendations/**
 docs/observability/*
 !docs/observability/new-relic-setup.md
 !docs/prd/

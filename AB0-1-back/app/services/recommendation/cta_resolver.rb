@@ -4,34 +4,34 @@ module Recommendation
   class CtaResolver
     CTA_MAPPING = {
       'installer' => {
-        type: 'rate_company',
-        label: 'Avaliar essa empresa',
-        action: 'open_review_form'
+        type: 'request_quote',
+        label: 'Solicitar orçamento',
+        action: 'open_lead_modal'
       },
       'integrator' => {
-        type: 'rate_company',
-        label: 'Avaliar essa empresa',
-        action: 'open_review_form'
+        type: 'request_quote',
+        label: 'Solicitar orçamento',
+        action: 'open_lead_modal'
       },
       'mobility' => {
-        type: 'rate_company',
-        label: 'Avaliar essa empresa',
-        action: 'open_review_form'
+        type: 'request_quote',
+        label: 'Solicitar orçamento',
+        action: 'open_lead_modal'
       },
       'supplier' => {
-        type: 'rate_company',
-        label: 'Avaliar essa empresa',
-        action: 'open_review_form'
+        type: 'find_installers',
+        label: 'Encontrar integradores',
+        action: 'open_lead_modal'
       },
       'distributor' => {
-        type: 'rate_company',
-        label: 'Avaliar essa empresa',
-        action: 'open_review_form'
+        type: 'find_installers',
+        label: 'Encontrar integradores',
+        action: 'open_lead_modal'
       },
       'finance' => {
-        type: 'rate_company',
-        label: 'Avaliar essa empresa',
-        action: 'open_review_form'
+        type: 'simulate_financing',
+        label: 'Simular financiamento',
+        action: 'open_lead_modal'
       }
     }.freeze
 
@@ -57,9 +57,9 @@ module Recommendation
       primary[:url] = profile_url
 
       secondary = {
-        type: 'view_profile',
-        label: 'Ver perfil',
-        action: 'navigate_profile',
+        type: 'rate_company',
+        label: 'Avaliar essa empresa',
+        action: 'open_review_form',
         url: profile_url
       }
 
@@ -74,11 +74,8 @@ module Recommendation
     attr_reader :company
 
     def build_profile_url(company)
-      if company.slug.present?
-        "/empresas/#{company.slug}"
-      else
-        "/empresas/#{company.id}"
-      end
+      identifier = company.slug.presence || company.id
+      "/companies/#{identifier}"
     end
   end
 end
