@@ -129,6 +129,33 @@ describe('DashboardNavigationFlyout (Padrão My.G2)', () => {
     expect(handleTabChange).toHaveBeenCalledWith('product-catalog');
   });
 
+  it('exibe cadeado e usa o callback de bloqueio sem navegar', async () => {
+    const handleTabChange = jest.fn();
+    const handleLockedTabClick = jest.fn();
+
+    render(
+      <DashboardNavigationFlyout
+        item={mockItem}
+        activeTab="overview"
+        onTabChange={handleTabChange}
+        isCompactRail={false}
+        lockedTabIds={new Set(['product-categories'])}
+        onLockedTabClick={handleLockedTabClick}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Perfil da Empresa/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-lock-product-categories')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Categorias'));
+
+    expect(handleLockedTabClick).toHaveBeenCalledWith('product-categories');
+    expect(handleTabChange).not.toHaveBeenCalled();
+  });
+
   it('permite fechar com a tecla Escape', async () => {
     render(
       <DashboardNavigationFlyout

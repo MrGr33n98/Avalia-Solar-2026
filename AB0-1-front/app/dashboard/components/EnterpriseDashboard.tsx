@@ -24,7 +24,11 @@ import {
 } from '@/lib/analytics/consolidated';
 import { useToast } from '@/hooks/use-toast';
 import { getFlatNavigationByContext } from '@/config/navigation';
-import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
+import {
+  getFeatureAccessEntry,
+  isFeatureHiddenEntry,
+  isFeatureLockedEntry,
+} from '@/lib/feature-access';
 
 // Components
 import ThemeToggle from './ThemeToggle';
@@ -372,6 +376,16 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     [tabAccessEntries]
   );
 
+  const lockedTabIds = useMemo(
+    () =>
+      new Set(
+        Object.entries(tabAccessEntries)
+          .filter(([, entry]) => isFeatureLockedEntry(entry))
+          .map(([tabId]) => tabId)
+      ),
+    [tabAccessEntries]
+  );
+
   const renderGuardedTab = useCallback(
     (tabId: string, children: ReactNode) => {
       const entry = tabAccessEntries[tabId];
@@ -597,6 +611,8 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         pendingReviewsCount={stats?.pendingReviewsCount || 0}
         visibleTabIds={visibleTabIds}
         onOpenPlans={() => setUpgradeModalOpen(true)}
+        lockedTabIds={lockedTabIds}
+        onLockedTabClick={() => setUpgradeModalOpen(true)}
       />
 
       <div className="flex min-h-dvh flex-col pl-[var(--enterprise-sidebar-width,64px)] transition-[padding] duration-200">

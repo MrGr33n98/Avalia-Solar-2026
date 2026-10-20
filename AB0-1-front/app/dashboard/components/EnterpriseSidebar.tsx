@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LockKeyhole, LogOut } from 'lucide-react';
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,8 @@ interface EnterpriseSidebarProps {
   pendingReviewsCount?: number;
   visibleTabIds?: string[];
   onOpenPlans?: () => void;
+  lockedTabIds?: ReadonlySet<string>;
+  onLockedTabClick?: (tabId: string) => void;
 }
 
 const COMPACT_RAIL_BREAKPOINT_PX = 1180;
@@ -59,6 +61,8 @@ function SidebarTree({
   isDrawer,
   openGroups,
   setOpenGroups,
+  lockedTabIds,
+  onLockedTabClick,
 }: {
   items: NavigationItem[];
   activeTab: string;
@@ -70,6 +74,8 @@ function SidebarTree({
   isDrawer: boolean;
   openGroups: string[];
   setOpenGroups: React.Dispatch<React.SetStateAction<string[]>>;
+  lockedTabIds?: ReadonlySet<string>;
+  onLockedTabClick?: (tabId: string) => void;
 }) {
   const renderedItems = items;
 
@@ -91,6 +97,8 @@ function SidebarTree({
               isCompactRail={isCompactRail}
               isCollapsed={isCollapsed}
               pendingReviewsCount={pendingReviewsCount}
+              lockedTabIds={lockedTabIds}
+              onLockedTabClick={onLockedTabClick}
             />
           );
         }
@@ -142,15 +150,23 @@ function SidebarTree({
                     const childBadge =
                       child.badge && child.id === 'reviews' ? pendingReviewsCount : 0;
                     const hasMessageBadge = child.badge && child.id === 'live-inbox';
+                    const isLocked = lockedTabIds?.has(child.id) ?? false;
 
                     return (
                       <Button
                         key={child.id}
                         type="button"
                         variant="ghost"
-                        onClick={() => onTabChange(child.id)}
+                        onClick={() => {
+                          if (isLocked) {
+                            onLockedTabClick?.(child.id);
+                            return;
+                          }
+                          onTabChange(child.id);
+                        }}
                         aria-label={child.label}
                         aria-current={isChildActive ? 'page' : undefined}
+                        aria-disabled={isLocked ? true : undefined}
                         className={cn(
                           'w-full rounded-lg justify-start text-left transition-all h-10 px-3',
                           isChildActive
@@ -162,7 +178,14 @@ function SidebarTree({
                         <span className="ml-3 flex-1 text-sm text-left truncate">
                           {child.label}
                         </span>
-                        {childBadge > 0 && (
+                        {isLocked && (
+                          <LockKeyhole
+                            className="ml-2 h-3.5 w-3.5 shrink-0 text-slate-400"
+                            aria-label="Recurso bloqueado"
+                            data-testid={`navigation-lock-${child.id}`}
+                          />
+                        )}
+                        {childBadge > 0 && !isLocked && (
                           <Badge className="ml-2 h-5 min-w-5 rounded-full bg-blue-600 px-1.5 text-[10px] text-white">
                             {childBadge}
                           </Badge>
@@ -186,13 +209,20 @@ function SidebarTree({
         const targetTabId = hasSingleChild && item.children?.[0] ? item.children[0].id : item.id;
         const isActive = activeTab === targetTabId || activeTab === item.id;
         const badgeCount = item.badge && item.id === 'reviews' ? pendingCount : 0;
+        const isLocked = lockedTabIds?.has(targetTabId) ?? false;
 
         return (
           <Button
             key={item.id}
             type="button"
             variant="ghost"
-            onClick={() => onTabChange(targetTabId)}
+            onClick={() => {
+              if (isLocked) {
+                onLockedTabClick?.(targetTabId);
+                return;
+              }
+              onTabChange(targetTabId);
+            }}
             className={cn(
               'w-full rounded-xl border border-transparent text-left transition-colors',
               isActive
@@ -206,6 +236,7 @@ function SidebarTree({
             title={item.label}
             aria-label={item.label}
             aria-current={isActive ? 'page' : undefined}
+            aria-disabled={isLocked ? true : undefined}
           >
             <Icon className={cn('shrink-0', isCollapsed ? 'h-5 w-5' : isCompactRail && !isDrawer ? 'h-6 w-6' : 'h-4 w-4')} />
             <span
@@ -220,7 +251,17 @@ function SidebarTree({
             >
               {item.label}
             </span>
-            {badgeCount > 0 && (
+            {isLocked && (
+              <LockKeyhole
+                className={cn(
+                  'ml-2 h-3.5 w-3.5 shrink-0 text-slate-400',
+                  (isCollapsed || (isCompactRail && !isDrawer)) && 'hidden'
+                )}
+                aria-label="Recurso bloqueado"
+                data-testid={`navigation-lock-${targetTabId}`}
+              />
+            )}
+            {badgeCount > 0 && !isLocked && (
               <Badge
                 className={cn(
                   'ml-2 h-5 min-w-5 rounded-full bg-blue-600 px-1.5 text-[10px] text-white',
@@ -246,6 +287,8 @@ export default function EnterpriseSidebar({
   pendingReviewsCount = 0,
   visibleTabIds,
   onOpenPlans,
+  lockedTabIds,
+  onLockedTabClick,
 }: EnterpriseSidebarProps) {
   const { activeCompany } = useCompanyContext();
   const [companySelectorOpen, setCompanySelectorOpen] = useState(false);
@@ -303,6 +346,15 @@ export default function EnterpriseSidebar({
   const sidebarContent = (isDrawer = false) => {
     const isSidebarCollapsed = false;
     const isSidebarCompactRail = isDrawer ? false : isCompactViewport;
+    const handleLockedTabClick = (tabId: string) => {
+      if (onLockedTabClick) {
+        onLockedTabClick(tabId);
+      } else {
+        onOpenPlans?.();
+      }
+
+      if (isDrawer) onClose();
+    };
     
     const mainNavItems = navItems.filter((item) => item.id !== 'settings-group');
     const settingsItem = navItems.find((item) => item.id === 'settings-group');
@@ -338,6 +390,8 @@ export default function EnterpriseSidebar({
             isDrawer={isDrawer}
             openGroups={openGroups}
             setOpenGroups={setOpenGroups}
+            lockedTabIds={lockedTabIds}
+            onLockedTabClick={lockedTabIds ? handleLockedTabClick : undefined}
           />
         </div>
 
@@ -354,6 +408,8 @@ export default function EnterpriseSidebar({
               isDrawer={isDrawer}
               openGroups={openGroups}
               setOpenGroups={setOpenGroups}
+              lockedTabIds={lockedTabIds}
+              onLockedTabClick={lockedTabIds ? handleLockedTabClick : undefined}
             />
           )}
 

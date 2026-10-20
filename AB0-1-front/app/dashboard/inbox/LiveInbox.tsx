@@ -64,7 +64,11 @@ import DashboardToolbar from '../components/DashboardToolbar';
 import ThemeToggle from '../components/ThemeToggle';
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import { getFlatNavigationByContext } from '@/config/navigation';
-import { getFeatureAccessEntry, isFeatureHiddenEntry } from '@/lib/feature-access';
+import {
+  getFeatureAccessEntry,
+  isFeatureHiddenEntry,
+  isFeatureLockedEntry,
+} from '@/lib/feature-access';
 import { SavedRepliesModal } from '@/app/chat/components/SavedRepliesModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -265,6 +269,16 @@ export default function LiveInbox() {
         .filter(
           (tabId) => ALWAYS_VISIBLE_TABS.has(tabId) || !isFeatureHiddenEntry(tabAccessEntries[tabId])
         ),
+    [tabAccessEntries]
+  );
+
+  const lockedTabIds = useMemo(
+    () =>
+      new Set(
+        Object.entries(tabAccessEntries)
+          .filter(([, entry]) => isFeatureLockedEntry(entry))
+          .map(([tabId]) => tabId)
+      ),
     [tabAccessEntries]
   );
 
@@ -763,6 +777,8 @@ export default function LiveInbox() {
         pendingCount={dashboardStats?.pendingApprovals || 0}
         pendingReviewsCount={dashboardStats?.pendingReviewsCount || 0}
         visibleTabIds={visibleTabIds}
+        lockedTabIds={lockedTabIds}
+        onLockedTabClick={() => router.push('/dashboard?tab=product-pricing')}
       />
 
       {/* Main Canvas Area - Pinned to 100% viewport */}

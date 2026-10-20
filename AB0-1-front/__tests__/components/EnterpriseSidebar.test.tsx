@@ -109,6 +109,33 @@ describe('EnterpriseSidebar (Arquitetura Lateral My.G2)', () => {
     expect(handleTabChange).toHaveBeenCalledWith('product-categories');
   });
 
+  it('exibe cadeado e abre o upgrade ao selecionar um recurso bloqueado', async () => {
+    const handleTabChange = jest.fn();
+    const handleLockedTabClick = jest.fn();
+
+    render(
+      <EnterpriseSidebar
+        activeTab="overview"
+        onTabChange={handleTabChange}
+        isOpen={false}
+        onClose={jest.fn()}
+        lockedTabIds={new Set(['product-categories'])}
+        onLockedTabClick={handleLockedTabClick}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Perfil da Empresa \(submenu\)/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('navigation-lock-product-categories')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Categorias'));
+
+    expect(handleLockedTabClick).toHaveBeenCalledWith('product-categories');
+    expect(handleTabChange).not.toHaveBeenCalled();
+  });
+
   it('permite abrir o modal de alternar empresa', () => {
     render(
       <EnterpriseSidebar

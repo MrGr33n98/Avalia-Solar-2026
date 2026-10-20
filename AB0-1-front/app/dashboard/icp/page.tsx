@@ -17,6 +17,7 @@ import { getFlatNavigationByContext } from '@/config/navigation';
 import {
   getFeatureAccessEntry,
   isFeatureHiddenEntry,
+  isFeatureLockedEntry,
 } from '@/lib/feature-access';
 
 // Swiss Style Components
@@ -143,6 +144,16 @@ export default function IcpPage() {
     [tabAccessEntries]
   );
 
+  const lockedTabIds = useMemo(
+    () =>
+      new Set(
+        Object.entries(tabAccessEntries)
+          .filter(([, entry]) => isFeatureLockedEntry(entry))
+          .map(([tabId]) => tabId)
+      ),
+    [tabAccessEntries]
+  );
+
   // Handle unsaved changes block
   useUnsavedChanges(isDirty);
 
@@ -227,6 +238,8 @@ export default function IcpPage() {
         pendingCount={stats?.pendingApprovals || 0}
         pendingReviewsCount={stats?.pendingReviewsCount || 0}
         visibleTabIds={visibleTabIds}
+        lockedTabIds={lockedTabIds}
+        onLockedTabClick={() => router.push('/dashboard?tab=product-pricing')}
       />
 
       <div className="flex-1 pl-[var(--enterprise-sidebar-width,64px)] transition-[padding] duration-200 flex flex-col min-h-screen">

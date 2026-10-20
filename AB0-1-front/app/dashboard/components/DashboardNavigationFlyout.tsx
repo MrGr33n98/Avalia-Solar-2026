@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, LockKeyhole } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { type NavigationItem } from '@/config/navigation';
@@ -14,6 +14,8 @@ interface DashboardNavigationFlyoutProps {
   isCompactRail: boolean;
   isCollapsed?: boolean;
   pendingReviewsCount?: number;
+  lockedTabIds?: ReadonlySet<string>;
+  onLockedTabClick?: (tabId: string) => void;
 }
 
 export function DashboardNavigationFlyout({
@@ -23,6 +25,8 @@ export function DashboardNavigationFlyout({
   isCompactRail,
   isCollapsed = false,
   pendingReviewsCount = 0,
+  lockedTabIds,
+  onLockedTabClick,
 }: DashboardNavigationFlyoutProps) {
   const [open, setOpen] = useState(false);
   const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -61,6 +65,12 @@ export function DashboardNavigationFlyout({
   const handleChildSelect = (childId: string) => {
     clearCloseTimer();
     setOpen(false);
+
+    if (lockedTabIds?.has(childId)) {
+      onLockedTabClick?.(childId);
+      return;
+    }
+
     onTabChange(childId);
   };
 
@@ -207,6 +217,7 @@ export function DashboardNavigationFlyout({
                 const childBadge =
                   child.badge && child.id === 'reviews' ? pendingReviewsCount : 0;
                 const hasMessageBadge = child.badge && child.id === 'live-inbox';
+                const isLocked = lockedTabIds?.has(child.id) ?? false;
 
                 return (
                   <button
@@ -215,6 +226,7 @@ export function DashboardNavigationFlyout({
                     data-flyout-item="true"
                     onClick={() => handleChildSelect(child.id)}
                     aria-current={isChildActive ? 'page' : undefined}
+                    aria-disabled={isLocked ? true : undefined}
                     className={cn(
                       'group/item flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs transition-colors outline-none',
                       isChildActive
@@ -233,7 +245,15 @@ export function DashboardNavigationFlyout({
 
                     <span className="flex-1 truncate">{child.label}</span>
 
-                    {childBadge > 0 && (
+                    {isLocked && (
+                      <LockKeyhole
+                        className="ml-auto h-3.5 w-3.5 shrink-0 text-slate-400"
+                        aria-label="Recurso bloqueado"
+                        data-testid={`navigation-lock-${child.id}`}
+                      />
+                    )}
+
+                    {childBadge > 0 && !isLocked && (
                       <Badge className="ml-auto h-5 min-w-5 rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
                         {childBadge}
                       </Badge>

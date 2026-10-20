@@ -7,7 +7,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompanyContext } from "@/context/CompanyContext";
 import { useCompanyDashboardData } from "../hooks/useCompanyDashboardData";
 import { getFlatNavigationByContext } from "@/config/navigation";
-import { getFeatureAccessEntry, isFeatureHiddenEntry } from "@/lib/feature-access";
+import {
+  getFeatureAccessEntry,
+  isFeatureHiddenEntry,
+  isFeatureLockedEntry,
+} from "@/lib/feature-access";
 
 // System Admin Layout Components
 import DashboardSidebar from "./DashboardSidebar";
@@ -79,6 +83,16 @@ export default function RoleBasedDashboardLayout({
     [tabAccessEntries]
   );
 
+  const lockedTabIds = useMemo(
+    () =>
+      new Set(
+        Object.entries(tabAccessEntries)
+          .filter(([, entry]) => isFeatureLockedEntry(entry))
+          .map(([tabId]) => tabId)
+      ),
+    [tabAccessEntries]
+  );
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -120,6 +134,8 @@ export default function RoleBasedDashboardLayout({
           pendingCount={stats?.pendingApprovals || 0}
           pendingReviewsCount={stats?.pendingReviewsCount || 0}
           visibleTabIds={visibleTabIds}
+          lockedTabIds={lockedTabIds}
+          onLockedTabClick={() => router.push('/dashboard?tab=product-pricing')}
         />
       )}
       
