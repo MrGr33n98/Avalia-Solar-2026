@@ -1484,8 +1484,37 @@ ActiveAdmin.register Company do
     invalid = 0
     errors = []
 
-    CSV.foreach(file.path, headers: true).with_index(2) do |row, line_number|
-      raw_name = row['name'] || row['nome']
+    # Detectar delimitador (, ou ;) e lidar com BOM UTF-8
+    first_line = begin
+      File.open(file.path, 'r:bom|utf-8', &:readline)
+    rescue StandardError
+      ''
+    end
+    col_sep = first_line.count(';') > first_line.count(',') ? ';' : ','
+
+    # Normalizador de cabeçalho: minúsculas, sem acentos, espaços viram underline
+    header_converter = lambda do |header|
+      ActiveSupport::Inflector.transliterate(header.to_s.strip.downcase).gsub(/[\s\-]+/, '_')
+    end
+
+    # Helper de parsing para arrays (JSON ou lista separada por vírgula)
+    parse_list = lambda do |raw|
+      next [] if raw.blank?
+
+      str = raw.to_s.strip
+      if str.start_with?('[') && str.end_with?(']')
+        begin
+          Array(JSON.parse(str)).map(&:to_s).map(&:strip).reject(&:blank?)
+        rescue JSON::ParserError
+          str[1..-2].split(',').map { |s| s.gsub(/["']/, '').strip }.reject(&:blank?)
+        end
+      else
+        str.split(',').map { |s| s.gsub(/["']/, '').strip }.reject(&:blank?)
+      end
+    end
+
+    CSV.foreach(file.path, headers: true, col_sep: col_sep, header_converters: header_converter, encoding: 'bom|utf-8').with_index(2) do |row, line_number|
+      raw_name = row['name'] || row['nome'] || row['company_name'] || row['razao_social'] || row['nome_fantasia']
       name = raw_name.to_s.strip
       if name.blank?
         errors << "linha #{line_number}: nome ausente"
@@ -1493,32 +1522,57 @@ ActiveAdmin.register Company do
         next
       end
 
-      raw_state = row['state'] || row['uf'] || row['sigla_uf']
+      raw_state = row['state'] || row['uf'] || row['sigla_uf'] || row['estado']
       raw_city = row['city'] || row['cidade'] || row['municipio']
       state = raw_state.to_s.strip.upcase
       city = raw_city.to_s.strip.gsub(/\s+/, ' ')
 
       if state.present? && !Locations::BrLocations.valid_state?(state)
-        errors << "linha #{line_number}: estado inválido"
+        errors << "linha #{line_number}: estado inválido (#{state})"
         invalid += 1
         next
       end
 
       if city.present? && !Locations::BrLocations.valid_city?(state, city)
-        errors << "linha #{line_number}: cidade inválida para o estado #{state}"
+        errors << "linha #{line_number}: cidade inválida para o estado #{state} (#{city})"
         invalid += 1
         next
       end
 
-      cnpj_raw = row['cnpj'].to_s.strip
+      cnpj_raw = (row['cnpj'] || row['documento']).to_s.strip
       cnpj_digits = cnpj_raw.gsub(/\D/, '')
-      email_raw = row['email'].to_s.strip
-      email = email_raw.downcase
+      email_raw = (row['email'] || row['e_mail']).to_s.strip
+      email = email_raw.downcase.presence
+      email_public = (row['email_public'] || row['email_publico'] || row['public_email']).to_s.strip.downcase.presence
+
+      phone_raw = (row['phone'] || row['telefone']).to_s.strip
+      phone_digits = phone_raw.gsub(/\D/, '')
+      # Sanitização de DDI + DDD nacional se tiver mais de 11 dígitos começando com 55
+      phone_digits = phone_digits.sub(/\A55/, '') if phone_digits.length > 11 && phone_digits.start_with?('55')
+      phone = phone_digits.presence
+
+      phone_alt_raw = (row['phone_alt'] || row['telefone_alt'] || row['telefone_secundario']).to_s.strip
+      phone_alt_digits = phone_alt_raw.gsub(/\D/, '')
+      phone_alt_digits = phone_alt_digits.sub(/\A55/, '') if phone_alt_digits.length > 11 && phone_alt_digits.start_with?('55')
+      phone_alt = phone_alt_digits.presence
+
+      whatsapp_raw = (row['whatsapp'] || row['whatsapp_number']).to_s.strip
+      whatsapp_digits = whatsapp_raw.gsub(/\D/, '')
+      whatsapp_digits = whatsapp_digits.sub(/\A55/, '') if whatsapp_digits.length > 11 && whatsapp_digits.start_with?('55')
+      whatsapp = whatsapp_digits.presence
+
+      whatsapp_enabled = %w[true 1 yes sim].include?((row['whatsapp_enabled'] || '').to_s.downcase) || whatsapp.present?
+      whatsapp_url = (row['whatsapp_url'] || row['url_whatsapp']).to_s.strip.presence
+      if whatsapp_enabled && whatsapp_url.blank? && (whatsapp.present? || whatsapp_raw.present?)
+        num = whatsapp_raw.gsub(/\D/, '')
+        whatsapp_url = "https://wa.me/#{num}" if num.present?
+      end
+
       force_pending = cnpj_digits.blank? && email.blank? && !(name.present? && state.present? && city.present?)
 
       company =
         if cnpj_digits.present?
-          Company.find_by(cnpj: cnpj_digits) || Company.find_by(cnpj: cnpj_raw) || Company.new(cnpj: cnpj_raw.presence || cnpj_digits)
+          Company.find_by(cnpj: cnpj_digits) || Company.find_by(cnpj: cnpj_raw) || Company.new(cnpj: cnpj_digits)
         elsif email.present?
           Company.find_by(email: email) || Company.new(email: email)
         elsif name.present? && state.present? && city.present?
@@ -1536,35 +1590,105 @@ ActiveAdmin.register Company do
       end
       status = 'pending' if force_pending
 
+      # Parsing de segmento seguro
+      segment_raw = (row['segment'] || row['segmento']).to_s.strip.downcase
+      segment = Company::SEGMENTS.find { |s| segment_raw.include?(s) } || 'supplier'
+
+      # Parsing de tags e arrays seguros contra constantes do modelo
+      project_types = parse_list.call(row['project_types'] || row['tipos_projeto']) & Company::PROJECT_TYPES
+      services_offered = parse_list.call(row['services_offered'] || row['servicos_oferecidos']) & Company::SERVICES_OFFERED
+      niche_tags = parse_list.call(row['niche_tags'] || row['tags_nicho']) & Company::NICHE_TAGS
+      equipment_brands = parse_list.call(row['equipment_brands'] || row['marcas_equipamentos'])
+
+      founded_year_num = (row['founded_year'] || row['ano_fundacao']).to_s.gsub(/\D/, '').to_i
+      founded_year = founded_year_num.positive? ? founded_year_num : nil
+
+      slug = (row['slug'] || row['slug_url']).to_s.strip.presence || name.parameterize
+
+      plan_raw = (row['plan'] || row['plano'] || row['plan_name'] || row['nome_plano'] || row['plan_tier'] || row['intent_tier']).to_s.strip.downcase
+      target_plan = nil
+      intent_tier = 'free'
+
+      if plan_raw.present? && !plan_raw.include?('free') && !plan_raw.include?('gratuit')
+        target_plan = Plan.find_by('LOWER(name) = :p OR LOWER(tier) = :p', p: plan_raw)
+        intent_tier = target_plan&.tier || 'free'
+      else
+        target_plan = Plan.find_by('LOWER(name) IN (?) OR LOWER(tier) = ?', ['plano gratuito', 'gratuito', 'free', 'planfree'], 'free')
+        intent_tier = 'free'
+      end
+
+      plan_id = target_plan&.id
+      plan_status = target_plan ? 'active' : 'inactive'
+
       attrs = {
         name: name,
-        description: row['description'] || 'Empresa importada',
-        website: row['website'],
-        phone: row['phone'],
-        address: row['address'],
+        slug: slug,
+        description: row['description'] || row['descricao'] || 'Empresa importada',
+        website: (row['website'] || row['site']).to_s.strip.presence,
+        phone: phone,
+        phone_alt: phone_alt,
+        address: (row['address'] || row['endereco']).to_s.strip.presence,
         state: state.presence,
         city: city.presence,
-        cnpj: cnpj_raw.presence || cnpj_digits.presence,
-        email: email.presence,
-        whatsapp: row['whatsapp'],
+        cnpj: cnpj_digits.presence,
+        email: email,
+        email_public: email_public,
+        whatsapp: whatsapp,
+        whatsapp_enabled: whatsapp_enabled,
+        whatsapp_url: whatsapp_url,
+        instagram: row['instagram'].to_s.strip.presence,
+        facebook: row['facebook'].to_s.strip.presence,
+        linkedin: row['linkedin'].to_s.strip.presence,
+        working_hours: (row['working_hours'] || row['horario_funcionamento']).to_s.strip.presence,
+        founded_year: founded_year,
+        coverage_states: (row['coverage_states'] || row['estados_atuacao']).to_s.strip.presence,
+        latitude: (row['latitude'] || row['lat']).to_s.strip.presence,
+        longitude: (row['longitude'] || row['lng'] || row['long']).to_s.strip.presence,
+        languages: (row['languages'] || row['idiomas']).to_s.strip.presence,
+        segment: segment,
+        project_types: project_types,
+        services_offered: services_offered,
+        equipment_brands: equipment_brands,
+        niche_tags: niche_tags,
+        seo_title: (row['seo_title'] || row['titulo_seo']).to_s.strip.presence,
+        meta_description: (row['meta_description'] || row['descricao_meta']).to_s.strip.presence,
+        seo_description: (row['seo_description'] || row['descricao_seo']).to_s.strip.presence,
+        seo_keywords: (row['seo_keywords'] || row['palavras_chave_seo']).to_s.strip.presence,
+        cta_primary_label: row['cta_primary_label'].to_s.strip.presence,
+        cta_primary_type: row['cta_primary_type'].to_s.strip.presence,
+        cta_primary_url: row['cta_primary_url'].to_s.strip.presence,
+        moderation_status: (row['moderation_status'] || 'approved').to_s.strip.downcase.presence,
+        business_verification_status: (row['business_verification_status'] || 'verified').to_s.strip.downcase.presence,
         status: status,
+        plan_id: plan_id,
+        plan_status: plan_status,
+        intent_tier: intent_tier,
         featured: %w[true 1 yes sim].include?((row['featured'] || '').to_s.downcase),
-        verified: %w[true 1 yes sim].include?((row['verified'] || '').to_s.downcase),
-        whatsapp_enabled: %w[true 1 yes sim].include?((row['whatsapp_enabled'] || '').to_s.downcase),
-        whatsapp_url: row['whatsapp_url']
+        verified: %w[true 1 yes sim].include?((row['verified'] || '').to_s.downcase)
       }
 
-      cats = (row['categories'] || '').to_s.split(',').map(&:strip).reject(&:blank?)
-      existing_categories = cats.any? ? Category.where(name: cats) : Category.none
-      missing_categories = cats - existing_categories.pluck(:name)
+      cats = parse_list.call(row['categories'] || row['categorias'] || row['categoria'])
+      existing_categories = if cats.any?
+        Category.where('LOWER(name) IN (:names) OR LOWER(seo_url) IN (:names)', names: cats.map(&:downcase))
+      else
+        Category.none
+      end
+
+      missing_categories = cats.map(&:downcase) - existing_categories.map { |c| c.name.downcase } - existing_categories.map { |c| c.seo_url.downcase }
       errors << "linha #{line_number}: categorias ausentes: #{missing_categories.join(', ')}" if missing_categories.any?
 
+      # Fallback: se nenhuma categoria válida foi identificada, vincula a categoria padrão de energia solar
+      if existing_categories.empty?
+        default_cat = Category.find_by(seo_url: 'energia-solar') || Category.find_by(name: 'Energia Solar') || Category.first
+        existing_categories = Category.where(id: default_cat.id) if default_cat
+      end
+
       company.assign_attributes(attrs)
-      company.categories = existing_categories if cats.any?
+      company.categories = existing_categories if existing_categories.any?
 
       if attrs[:status] == 'active' && !company.ready_for_activation?
         company.status = 'pending'
-        errors << "linha #{line_number}: status active inválido, definido como pending"
+        errors << "linha #{line_number}: status active inválido (#{company.errors.full_messages.join(', ')}), definido como pending"
       end
 
       if company.save

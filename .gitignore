@@ -164,6 +164,8 @@ docs/adr/*
 !docs/architecture/*
 !docs/proposal-studio/
 !docs/proposal-studio/*
+!docs/templates/
+!docs/templates/*
 
 # Testes e previews de e-mail fazem parte da implementação de produção.
 !AB0-1-back/spec/

@@ -62,4 +62,31 @@ RSpec.describe 'Admin Companies CSV import', type: :request do
     expect(company_by_email.reload.name).to eq('Empresa Email Atualizada')
     expect(company_by_email.reload.status).to eq('pending')
   end
+
+  it 'importa com cabeçalhos capitalizados, delimitador vírgula e atributos ricos' do
+    csv = <<~CSV
+      Name,Description,Website,Phone,Cnpj,Email,State,City,Segment,Project types,Services offered,Status
+      Solplanet Teste,Fabricante de inversores,https://solplanet.net,(11) 3141-3669,50.982.813/0001-00,teste@solplanet.net,SC,São José,supplier,"[""Residenciais"", ""Comerciais""]","[""Projeto"", ""Instalação""]",active
+    CSV
+
+    file = Tempfile.new(['companies_rich', '.csv'])
+    file.write(csv)
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, 'text/csv')
+    post '/admin/companies/import_csv', params: { csv_file: upload }
+
+    file.close
+    file.unlink
+
+    expect(response).to have_http_status(:found)
+    imported = Company.find_by(cnpj: '50982813000100')
+    expect(imported).to be_present
+    expect(imported.name).to eq('Solplanet Teste')
+    expect(imported.phone).to eq('1131413669')
+    expect(imported.segment).to eq('supplier')
+    expect(imported.project_types).to include('Residenciais', 'Comerciais')
+    expect(imported.services_offered).to include('Projeto', 'Instalação')
+    expect(imported.intent_tier).to eq('free')
+  end
 end
