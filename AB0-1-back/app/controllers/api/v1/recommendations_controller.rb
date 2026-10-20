@@ -17,13 +17,15 @@ module Api
           current_user: current_user_or_nil
         )
 
-        results = Recommendation::Engine.call(context: context, limit: limit)
-
-        payload = RecommendationSerializer.render(
-          results: results,
-          context: context,
-          request_id: request_id
-        )
+        cache_key = "recommendations:v1:#{Digest::MD5.hexdigest(permitted_params.to_h.sort.to_json)}"
+        payload = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+          results = Recommendation::Engine.call(context: context, limit: limit)
+          RecommendationSerializer.render(
+            results: results,
+            context: context,
+            request_id: request_id
+          )
+        end
 
         expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
         render json: payload

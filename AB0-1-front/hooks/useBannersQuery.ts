@@ -41,7 +41,7 @@ interface UseBannersQueryOptions {
  * @param options - Opções de filtro e configuração
  * @returns Query result com dados, loading, error
  */
-const BANNER_REQUEST_TIMEOUT_MS = 8000;
+const BANNER_REQUEST_TIMEOUT_MS = 12000;
 const BANNER_STALE_TIME_MS = 60 * 1000;
 const BANNER_GC_TIME_MS = 10 * 60 * 1000;
 

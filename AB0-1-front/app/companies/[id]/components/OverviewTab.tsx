@@ -76,19 +76,28 @@ export default function OverviewTab({
       // Prioridade de localização geográfica:
       // 1. Contexto do comprador selecionado no LocationContext (selectedState / selectedCity)
       // 2. Local da empresa visitada como fallback territorial de comparação
-      const targetState = userLocation.selectedState || company.state || undefined;
-      const targetCity = userLocation.selectedCity || company.city || undefined;
+      const buyerState = userLocation.selectedState;
+      const buyerCity = userLocation.selectedCity;
+      const targetState = buyerState || company.state || undefined;
+      const targetCity = buyerState ? (buyerCity || undefined) : (buyerCity || company.city || undefined);
       const categoryId = company.category_info?.id || company.category_id || undefined;
 
       // 1ª Tentativa: Engine de Recomendação com contexto geográfico da região
-      let response = await publicCompaniesApi.getRecommendations({
-        context_company_id: company.id,
-        exclude_company_id: company.id,
-        category_id: categoryId ? Number(categoryId) : undefined,
-        state: targetState,
-        city: targetCity,
-        limit: 6,
-      });
+      let response = await publicCompaniesApi.getRecommendations(
+        {
+          context_company_id: company.id,
+          exclude_company_id: company.id,
+          category_id: categoryId ? Number(categoryId) : undefined,
+          state: targetState,
+          city: targetCity,
+          limit: 6,
+        },
+        {
+          signal: controller.signal,
+          timeoutMs: 12000,
+          silent: true,
+        }
+      );
 
       if (currentRequestId !== requestIdRef.current || controller.signal.aborted) {
         return;
@@ -100,12 +109,19 @@ export default function OverviewTab({
       // busca recomendações na mesma categoria a nível nacional
       if (items.length === 0 && (targetState || targetCity)) {
         try {
-          const fallbackResponse = await publicCompaniesApi.getRecommendations({
-            context_company_id: company.id,
-            exclude_company_id: company.id,
-            category_id: categoryId ? Number(categoryId) : undefined,
-            limit: 6,
-          });
+          const fallbackResponse = await publicCompaniesApi.getRecommendations(
+            {
+              context_company_id: company.id,
+              exclude_company_id: company.id,
+              category_id: categoryId ? Number(categoryId) : undefined,
+              limit: 6,
+            },
+            {
+              signal: controller.signal,
+              timeoutMs: 12000,
+              silent: true,
+            }
+          );
           if (fallbackResponse.data && fallbackResponse.data.length > 0) {
             items = fallbackResponse.data.filter((item) => item.id !== company.id);
           }
@@ -123,7 +139,16 @@ export default function OverviewTab({
             per_page: 12,
             status: 'active',
           });
-          const catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
+          let catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
+          if (catalogItems.length === 0) {
+            // Se ainda não encontrou outras empresas na mesma categoria, busca alternativas no catálogo ativo geral
+            const broadResponse = await companiesApiSafe.getAllPaginated({
+              per_page: 12,
+              status: 'active',
+            });
+            catalogItems = (broadResponse.data || []).filter((c) => c.id !== company.id);
+          }
+
           if (catalogItems.length > 0) {
             setRelatedCompanies(catalogItems);
             setDisplayMode('results');
@@ -174,17 +199,36 @@ export default function OverviewTab({
       if (controller.signal.aborted || currentRequestId !== requestIdRef.current) {
         return;
       }
+
+      const isAbort =
+        Boolean(controller.signal?.aborted) ||
+        (err instanceof Error &&
+          (err.name === 'AbortError' ||
+            err.message.toLowerCase().includes('aborted') ||
+            err.message.toLowerCase().includes('canceled')));
+
+      if (isAbort) {
+        return;
+      }
+
       console.error('Erro ao buscar empresas relacionadas:', err);
 
       // Tentativa de emergência via catálogo em caso de erro na Engine
       try {
         const categoryId = company.category_info?.id || company.category_id || undefined;
-        const catalogResponse = await companiesApiSafe.getAllPaginated({
+        let catalogResponse = await companiesApiSafe.getAllPaginated({
           category_id: categoryId,
           per_page: 12,
           status: 'active',
         });
-        const catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
+        let catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
+        if (catalogItems.length === 0) {
+          const generalResponse = await companiesApiSafe.getAllPaginated({
+            per_page: 12,
+            status: 'active',
+          });
+          catalogItems = (generalResponse.data || []).filter((c) => c.id !== company.id);
+        }
         if (catalogItems.length > 0) {
           setRelatedCompanies(catalogItems);
           setDisplayMode('results');

@@ -102,7 +102,7 @@ module Banners
       # Se for informado perfil de empresa, checar se tem direito contratado a proteção
       is_protected = block_requested
       if target_company_id.present?
-        target_company = Company.find_by(id: target_company_id)
+        target_company = (@target_company ||= Company.find_by(id: target_company_id))
         if target_company
           has_paid = target_company.respond_to?(:has_paid_plan?) && target_company.has_paid_plan?
           feature_blocked = target_company.respond_to?(:feature_access) &&

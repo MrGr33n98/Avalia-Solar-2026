@@ -19,6 +19,7 @@ type PublicFetchOptions<TFallback = undefined> = {
   fallback?: TFallback;
   silent?: boolean;
   timeoutMs?: number;
+  signal?: AbortSignal;
 };
 
 export type RecommendationReason = {
@@ -110,7 +111,7 @@ export type RecommendationResponse = {
 };
 
 const DEFAULT_PUBLIC_REVALIDATE_SECONDS = 600;
-const DEFAULT_PUBLIC_API_TIMEOUT_MS = 8_000;
+const DEFAULT_PUBLIC_API_TIMEOUT_MS = 15_000;
 
 const getPublicApiTimeoutMs = (timeoutMs?: number) => {
   if (Number.isFinite(timeoutMs) && (timeoutMs || 0) > 0) return timeoutMs as number;
@@ -205,6 +206,18 @@ export async function fetchApiPublic<T, TFallback = undefined>(
     controller.abort();
   }, getPublicApiTimeoutMs(options.timeoutMs));
 
+  const onCallerAbort = () => {
+    controller.abort();
+  };
+
+  if (options.signal) {
+    if (options.signal.aborted) {
+      controller.abort();
+    } else {
+      options.signal.addEventListener('abort', onCallerAbort, { once: true });
+    }
+  }
+
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -231,13 +244,15 @@ export async function fetchApiPublic<T, TFallback = undefined>(
 
     return payload as T;
   } catch (error) {
+    const isCallerAbort = Boolean(options.signal?.aborted);
     const isAbort =
       isTimedOut ||
+      isCallerAbort ||
       controller.signal.aborted ||
       (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError'));
 
     if (options.fallback !== undefined) {
-      if (!options.silent) {
+      if (!options.silent && !isCallerAbort) {
         console.warn(`[Public API] Using fallback for ${url}:`, error);
       }
       return options.fallback;
@@ -250,13 +265,16 @@ export async function fetchApiPublic<T, TFallback = undefined>(
       isNetworkError: error instanceof TypeError,
     });
 
-    if (!options.silent) {
+    if (!options.silent && !isCallerAbort) {
       console.error(`[Public API] Failed to fetch ${url}:`, apiError);
     }
 
     throw apiError;
   } finally {
     clearTimeout(timeout);
+    if (options.signal) {
+      options.signal.removeEventListener('abort', onCallerAbort);
+    }
   }
 }
 
@@ -343,6 +361,7 @@ export const publicCompaniesApi = {
       fallback: options?.fallback,
       silent: options?.silent,
       timeoutMs: options?.timeoutMs,
+      signal: options?.signal,
     });
     return (payload as RecommendationResponse) || { data: [] };
   },

@@ -1481,7 +1481,9 @@ export const api = {
         const timeoutId = setTimeout(() => {
           isTimedOut = true;
           const errorMessage = `[API] Request timed out after ${timeoutDuration}ms: ${config.method} ${url}`;
-          console.warn(errorMessage);
+          if (!isRequestSilent) {
+            console.warn(errorMessage);
+          }
           controller.abort();
         }, timeoutDuration);
 
