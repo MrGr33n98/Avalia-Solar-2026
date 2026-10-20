@@ -218,10 +218,21 @@ export function LocationProvider({
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;
 }
 
+const defaultLocationValue: LocationContextValue = {
+  location: { state: null, city: null, source: 'default', status: 'unknown' },
+  selectedState: '',
+  selectedCity: null,
+  stateLabel: '',
+  setState: () => {},
+  setCity: () => {},
+  setLocation: () => {},
+  resetLocation: () => {},
+};
+
 export function useLocation(): LocationContextValue {
   const context = useContext(LocationContext);
   if (!context) {
-    throw new Error('useLocation must be used within a LocationProvider');
+    return defaultLocationValue;
   }
   return context;
 }

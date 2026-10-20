@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useLocationData } from '@/hooks/useLocationData';
+import { useLocation } from '@/contexts/LocationContext';
 import { track } from '@/lib/analytics/lazy';
 
 interface LocationSearchProps {
@@ -23,6 +24,14 @@ interface LocationSearchProps {
 }
 
 export default function LocationSearch({ className, ariaLabelledBy, onLocationSelect }: LocationSearchProps) {
+  const {
+    selectedState: contextState,
+    selectedCity: contextCity,
+    stateLabel: contextStateLabel,
+    setState: setContextState,
+    setCity: setContextCity,
+  } = useLocation();
+
   const [open, setOpen] = React.useState(false);
   const [selectedCity, setSelectedCity] = React.useState('');
   const [searchValue, setSearchValue] = React.useState('');
@@ -37,6 +46,23 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
   }, [fetchStates]);
 
   const [selectedState, setSelectedState] = React.useState<string | null>(null);
+
+  // Sync label and state with global LocationContext
+  React.useEffect(() => {
+    if (contextCity && contextState) {
+      setSelectedLabel(`${contextCity} - ${contextState}`);
+      setSelectedState(contextState);
+      setSelectedCity(contextCity);
+    } else if (contextState) {
+      setSelectedLabel(`Todo ${contextState}`);
+      setSelectedState(contextState);
+      setSelectedCity('');
+    } else {
+      setSelectedLabel('Todo Brasil');
+      setSelectedState(null);
+      setSelectedCity('');
+    }
+  }, [contextState, contextCity]);
 
   const handleStateSelect = (state: string) => {
     setSelectedState(state);
@@ -56,6 +82,11 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
       setSearchValue('');
       setSelectedLabel(`${currentValue} - ${selectedState}`);
       setOpen(false);
+
+      if (selectedState) {
+        setContextState(selectedState);
+        setContextCity(currentValue);
+      }
 
       // Track location selection
       track('location_selected', {
@@ -136,6 +167,8 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
                   onSelect={() => {
                     setSelectedLabel("Todo Brasil");
                     setOpen(false);
+                    setContextState('');
+                    setContextCity(null);
                     if (onLocationSelect) onLocationSelect({ state: '' });
                   }}
                 >
@@ -191,7 +224,11 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
                         setSelectedLabel(`Todo ${selectedState}`);
                         setOpen(false);
                         setSearchValue('');
-                        if (onLocationSelect && selectedState) onLocationSelect({ state: selectedState });
+                        if (selectedState) {
+                          setContextState(selectedState);
+                          setContextCity(null);
+                          if (onLocationSelect) onLocationSelect({ state: selectedState });
+                        }
                       }}
                     >
                       <Check className="mr-2 h-4 w-4 opacity-0" aria-hidden="true" />

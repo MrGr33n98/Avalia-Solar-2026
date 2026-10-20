@@ -212,6 +212,7 @@ export function HomeCompanyCard({
 }
 
 import { useLocation } from '@/contexts/LocationContext';
+import { publicCompaniesApi } from '@/lib/api-public';
 
 export function HomeCompaniesRail({
   companies,
@@ -223,27 +224,104 @@ export function HomeCompaniesRail({
   const { selectedState, stateLabel } = useLocation();
   const effectiveState = stateCode || selectedState;
 
-  const visibleCompanies = React.useMemo(() => {
-    if (!companies || companies.length === 0) return [];
-    if (!effectiveState) return companies.slice(0, 9);
+  const [dynamicCompanies, setDynamicCompanies] = React.useState<Company[] | null>(null);
+  const [isFetching, setIsFetching] = React.useState(false);
 
+  // Check if initial SSR companies already have local matches
+  const localSsrMatches = React.useMemo(() => {
+    if (!companies || companies.length === 0 || !effectiveState) return [];
     const normState = effectiveState.toUpperCase();
-    const localMatches = companies.filter((c) => {
+    return companies.filter((c) => {
       if (c.state?.toUpperCase() === normState) return true;
       if (c.coverage_states && Array.isArray(c.coverage_states)) {
         return c.coverage_states.some((s) => s.toUpperCase() === normState);
       }
       return false;
     });
-
-    const others = companies.filter((c) => !localMatches.some((m) => m.id === c.id));
-    return [...localMatches, ...others].slice(0, 9);
   }, [companies, effectiveState]);
+
+  React.useEffect(() => {
+    if (!companies || companies.length === 0 || !effectiveState) {
+      setDynamicCompanies(null);
+      return;
+    }
+
+    if (localSsrMatches.length >= 6) {
+      setDynamicCompanies(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsFetching(true);
+
+    async function loadCompaniesForState() {
+      try {
+        let list = await publicCompaniesApi.getAll({
+          serves_state: effectiveState,
+          status: 'active',
+          limit: 9,
+          include:
+            'logo_url,banner_url,badges,verified_badge_image_url,verified_badge_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,delivered_projects_score,warranty_years',
+        });
+
+        if (!list || list.length === 0) {
+          list = await publicCompaniesApi.getAll({
+            state: effectiveState,
+            status: 'active',
+            limit: 9,
+            include:
+              'logo_url,banner_url,badges,verified_badge_image_url,verified_badge_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,delivered_projects_score,warranty_years',
+          });
+        }
+
+        if (isMounted) {
+          setDynamicCompanies(list || []);
+        }
+      } catch (err) {
+        console.warn('[HomeCompaniesRail] Erro ao buscar empresas para a UF:', effectiveState, err);
+        if (isMounted) setDynamicCompanies([]);
+      } finally {
+        if (isMounted) setIsFetching(false);
+      }
+    }
+
+    loadCompaniesForState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [effectiveState, localSsrMatches.length]);
+
+  const { visibleCompanies, hasLocalMatches } = React.useMemo(() => {
+    if (dynamicCompanies !== null) {
+      if (dynamicCompanies.length > 0) {
+        return { visibleCompanies: dynamicCompanies.slice(0, 9), hasLocalMatches: true };
+      }
+      return { visibleCompanies: (companies || []).slice(0, 9), hasLocalMatches: false };
+    }
+
+    if (!companies || companies.length === 0) {
+      return { visibleCompanies: [], hasLocalMatches: false };
+    }
+
+    if (!effectiveState) {
+      return { visibleCompanies: companies.slice(0, 9), hasLocalMatches: true };
+    }
+
+    if (localSsrMatches.length > 0) {
+      const others = companies.filter((c) => !localSsrMatches.some((m) => m.id === c.id));
+      return { visibleCompanies: [...localSsrMatches, ...others].slice(0, 9), hasLocalMatches: true };
+    }
+
+    return { visibleCompanies: companies.slice(0, 9), hasLocalMatches: false };
+  }, [companies, effectiveState, dynamicCompanies, localSsrMatches]);
 
   const displayTitle =
     title ||
     (effectiveState
-      ? `Empresas em destaque em ${stateLabel || effectiveState.toUpperCase()}`
+      ? hasLocalMatches
+        ? `Empresas em destaque em ${stateLabel || effectiveState.toUpperCase()}`
+        : `Empresas em destaque (atuação nacional)`
       : 'Empresas em destaque');
 
   const effectiveViewAll =
@@ -251,27 +329,34 @@ export function HomeCompaniesRail({
       ? `/companies?state=${encodeURIComponent(effectiveState)}`
       : viewAllHref;
 
-  if (visibleCompanies.length === 0) return null;
+  if (!companies || companies.length === 0 || visibleCompanies.length === 0) return null;
 
   return (
     <section
       className={cn('relative w-full px-4 py-4', className)}
       aria-labelledby="home-companies-title"
     >
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <h2
-          id="home-companies-title"
-          className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl"
-        >
-          {displayTitle}
-        </h2>
-        <Link
-          href={effectiveViewAll}
-          className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          Ver todas
-          <ChevronRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
+      <div className="mb-3 flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-4">
+          <h2
+            id="home-companies-title"
+            className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl"
+          >
+            {displayTitle}
+          </h2>
+          <Link
+            href={effectiveViewAll}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            Ver todas
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
+        {!hasLocalMatches && effectiveState && dynamicCompanies !== null && (
+          <p className="text-xs text-slate-500">
+            Ainda não há empresas com sede cadastrada em {stateLabel || effectiveState}. Exibindo empresas em destaque com atuação nacional.
+          </p>
+        )}
       </div>
 
       {/*
@@ -280,7 +365,12 @@ export function HomeCompaniesRail({
         - Mobile (>=320px): 2 colunas
         - Desktop (>=1024px / lg): 3 colunas (3x3 com até 9 empresas)
       */}
-      <div className="grid min-w-0 grid-cols-1 items-stretch gap-2.5 min-[320px]:grid-cols-[repeat(2,minmax(0,1fr))] sm:gap-3 lg:grid-cols-3">
+      <div
+        className={cn(
+          'grid min-w-0 grid-cols-1 items-stretch gap-2.5 min-[320px]:grid-cols-[repeat(2,minmax(0,1fr))] sm:gap-3 lg:grid-cols-3 transition-opacity duration-200',
+          isFetching && 'opacity-60'
+        )}
+      >
         {visibleCompanies.map((company, index) => (
           <HomeCompanyCard
             key={company.id}

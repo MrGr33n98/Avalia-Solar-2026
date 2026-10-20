@@ -69,10 +69,12 @@ export default function Navbar() {
   }, [isAuthenticated, fetchUnreadCount, fetchUnreadMessagesCount]);
 
   const handleLocationSelect = (location: { state: string; city?: string }) => {
-    const params = new URLSearchParams();
-    if (location.state) params.set('state', location.state);
-    if (location.city) params.set('city', location.city);
-    router.push(`/companies?${params.toString()}`);
+    if (pathname !== '/' && !pathname?.startsWith('/companies')) {
+      const params = new URLSearchParams();
+      if (location.state) params.set('state', location.state);
+      if (location.city) params.set('city', location.city);
+      router.push(`/companies?${params.toString()}`);
+    }
   };
 
   const handleSearch = (query: string) => {
