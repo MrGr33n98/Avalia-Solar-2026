@@ -169,54 +169,86 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
 // fazer fotos e vídeos aparentemente “sumirem” do produto.
 const ALWAYS_VISIBLE_TABS = new Set<string>(['media']);
 
-const DASHBOARD_TAB_GUARD_COPY: Record<string, { title: string; description: string }> = {
+const DASHBOARD_TAB_GUARD_COPY: Record<
+  string,
+  {
+    title: string;
+    description: string;
+    targetPlanName?: string;
+    targetPlanSlug?: 'free' | 'essential' | 'pro' | 'enterprise';
+  }
+> = {
   analytics: {
-    title: 'Analytics avancado bloqueado',
-    description: 'Seu plano atual nao inclui acesso completo a metricas avancadas.',
+    title: 'Analytics avançado bloqueado',
+    description: 'Seu plano atual não inclui acesso completo a métricas e inteligência de visitantes.',
+    targetPlanName: 'Plano Pro',
+    targetPlanSlug: 'pro',
   },
   leads: {
-    title: 'Leads do marketplace indisponiveis',
-    description: 'Essa area depende de um plano com distribuicao de oportunidades.',
+    title: 'Leads do marketplace indisponíveis',
+    description: 'Essa área depende de um plano com distribuição prioritária de oportunidades.',
+    targetPlanName: 'Plano Pro',
+    targetPlanSlug: 'pro',
   },
   integrations: {
-    title: 'Integracoes bloqueadas',
-    description: 'Os recursos de webhook e integracao exigem upgrade de plano.',
+    title: 'Integrações e Webhooks bloqueados',
+    description: 'Os recursos de sincronização com CRM, API e webhooks exigem plano corporativo.',
+    targetPlanName: 'Plano Enterprise',
+    targetPlanSlug: 'enterprise',
   },
   'product-banner': {
     title: 'Campanhas patrocinadas bloqueadas',
-    description: 'Seu plano atual nao libera o gerenciamento de campanhas patrocinadas.',
+    description: 'Seu plano atual não libera o gerenciamento de posições de destaque comercial.',
+    targetPlanName: 'Plano Pro',
+    targetPlanSlug: 'pro',
   },
   'product-sponsored-description': {
-    title: 'Descricao patrocinada bloqueada',
-    description: 'Esse espaco comercial so fica disponivel em planos elegiveis.',
+    title: 'Descrição patrocinada bloqueada',
+    description: 'Esse espaço comercial exclusivo só fica disponível em planos elegíveis.',
+    targetPlanName: 'Plano Pro',
+    targetPlanSlug: 'pro',
   },
   'product-downloads': {
     title: 'Projetos e materiais bloqueados',
-    description: 'Seu plano atual nao permite publicar projetos, mídia e materiais para download.',
+    description: 'Seu plano atual não permite publicar projetos, mídia e materiais para download.',
+    targetPlanName: 'Plano Essencial',
+    targetPlanSlug: 'essential',
   },
   materials: {
     title: 'Materiais para download bloqueados',
-    description: 'Seu plano atual nao permite publicar materiais para download.',
+    description: 'Seu plano atual não permite publicar materiais para download aos visitantes.',
+    targetPlanName: 'Plano Essencial',
+    targetPlanSlug: 'essential',
   },
   'product-videos': {
-    title: 'Galeria de videos bloqueada',
-    description: 'Seu plano atual nao inclui a galeria premium de midia.',
+    title: 'Galeria de vídeos bloqueada',
+    description: 'Seu plano atual não inclui a galeria premium de mídia e demonstrações.',
+    targetPlanName: 'Plano Pro',
+    targetPlanSlug: 'pro',
   },
   'product-images': {
     title: 'Galeria de imagens bloqueada',
-    description: 'Seu plano atual nao inclui a galeria premium de midia.',
+    description: 'Seu plano atual não inclui a galeria premium de fotos de instalações.',
+    targetPlanName: 'Plano Essencial',
+    targetPlanSlug: 'essential',
   },
   media: {
-    title: 'Galeria de midia bloqueada',
-    description: 'Seu plano atual nao inclui upload e gestao completos de midia.',
+    title: 'Galeria de mídia bloqueada',
+    description: 'Seu plano atual não inclui upload e gestão completos de mídia.',
+    targetPlanName: 'Plano Essencial',
+    targetPlanSlug: 'essential',
   },
   'live-inbox': {
-    title: 'Live Inbox de Leads MobiVolt bloqueado',
+    title: 'Live Inbox de Leads bloqueado',
     description: 'Seu plano atual não inclui recebimento e atendimento de oportunidades em tempo real.',
+    targetPlanName: 'Plano Pro',
+    targetPlanSlug: 'pro',
   },
   chat: {
     title: 'Atendimento direto bloqueado',
-    description: 'Seu plano atual nao inclui chat direto com clientes pelo marketplace.',
+    description: 'Seu plano atual não inclui chat direto com clientes pelo marketplace.',
+    targetPlanName: 'Plano Essencial',
+    targetPlanSlug: 'essential',
   },
 };
 
@@ -356,6 +388,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
           title={copy.title}
           description={copy.description}
           featureId={tabId}
+          targetPlanName={copy.targetPlanName}
+          targetPlanSlug={copy.targetPlanSlug}
+          currentPlanTier={dashboardPlanTier || company?.plan_tier || 'free'}
+          onUpgrade={() => setUpgradeModalOpen(true)}
           loading={featureAccessLoading}
           error={featureAccessError}
           onRetry={refreshData}
@@ -364,8 +400,17 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         </FeatureGuard>
       );
     },
-    [tabAccessEntries, featureAccessLoading, featureAccessError, refreshData]
+    [
+      tabAccessEntries,
+      featureAccessLoading,
+      featureAccessError,
+      refreshData,
+      dashboardPlanTier,
+      company?.plan_tier,
+      setUpgradeModalOpen,
+    ]
   );
+
 
   // Sync tab change with URL
   const handleTabChange = (tab: string) => {

@@ -117,4 +117,36 @@ describe('FeatureGuard', () => {
 
     expect(screen.queryByText('conteudo protegido')).not.toBeInTheDocument();
   });
+
+  it('renders educational paywall with target plan and custom benefits', () => {
+    const handleUpgrade = jest.fn();
+    render(
+      <FeatureGuard
+        entry={{ state: 'locked', value: false }}
+        title="Visitantes do Perfil"
+        description="Veja quais empresas visitaram seu perfil"
+        targetPlanName="Plano Pro"
+        currentPlanTier="Gratuito"
+        onUpgrade={handleUpgrade}
+        benefits={[
+          { title: 'Identificação de Empresas', description: 'Nome e localização da empresa visitante', icon: 'target' },
+          { title: 'Alerta em Tempo Real', description: 'Notificação imediata ao receber visita', icon: 'zap' }
+        ]}
+      >
+        <div>conteudo protegido</div>
+      </FeatureGuard>
+    );
+
+    expect(screen.getByText('Visitantes do Perfil')).toBeInTheDocument();
+    expect(screen.getByText('Plano Pro')).toBeInTheDocument();
+    expect(screen.getByText('(Atual: Gratuito)')).toBeInTheDocument();
+    expect(screen.getByText('Identificação de Empresas')).toBeInTheDocument();
+    expect(screen.getByText('Alerta em Tempo Real')).toBeInTheDocument();
+
+    const upgradeBtn = screen.getByText('Desbloquear com Plano Pro');
+    expect(upgradeBtn).toBeInTheDocument();
+    fireEvent.click(upgradeBtn);
+    expect(handleUpgrade).toHaveBeenCalledTimes(1);
+  });
 });
+
