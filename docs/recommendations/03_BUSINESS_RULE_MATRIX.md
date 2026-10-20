@@ -9,12 +9,12 @@
 
 | Cenário de Negócio | Plano | `has_paid_plan?` | `show_alternatives` | Alternativas Orgânicas | Card "Perfil Protegido Exclusivo" | Anúncios de Concorrentes (Banners) | Modo na UI (`displayMode`) |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **1. Free Padrão** | Free | `false` | `true` | Exibe concorrentes da mesma categoria com cobertura regional | **NUNCA** | Permitidos (conforme leilão/campanhas ativas) | `loading` -> `results` |
-| **2. Free sem Alternativas** | Free | `false` | `false` ou ausente | Ocultas (aguarda normalização) | **NUNCA** (Zero Entitlement Leak) | Permitidos no servidor | `hidden` |
+| **1. Free Padrão** | Free | `false` | `true` | Exibe concorrentes recomendados (geo local -> nacional -> catálogo) | **NUNCA** | Permitidos no servidor | `loading` -> `results` |
+| **2. Free sem Configuração** | Free | `false` | `false` / ausente | **DEVEM SEMPRE APARECER** (com fallback nacional/catálogo) | **NUNCA** | Permitidos no servidor | `loading` -> `results` |
 | **3. Pago com Proteção Válida** | Pro / Scale / Enterprise | `true` | Indiferente | Não exibe | **SIM** (direito comprovado e contratado) | **Bloqueados no servidor** (`banners.company_id IS NULL OR banners.company_id = self`) | `protected` |
 | **4. Pago sem Entitlement de Proteção** | Custom Paid Tier | `true` | `true` | Exibe concorrentes | **NUNCA** | Permitidos conforme contrato | `results` |
-| **5. API Indisponível / Timeout** | Free / Qualquer | `false` | `true` | Falha tratada | **NUNCA** | N/A | `error` (com botão de Retry) |
-| **6. Sem Candidatas Elegíveis** | Free | `false` | `true` | Nenhuma (0 resultados) | **NUNCA** | Política própria intacta | `empty` (estado honesto sem empresas fictícias) |
+| **5. API Indisponível / Timeout** | Free / Qualquer | `false` | `true` | Falha tratada com fallback automático para catálogo | **NUNCA** | N/A | `error` (se catálogo também falhar, exibe retry) |
+| **6. Sem Candidatas Elegíveis** | Free | `false` | `true` | Nenhuma (0 resultados após todos os fallbacks) | **NUNCA** | Política própria intacta | `empty` (estado honesto sem empresas fictícias) |
 
 ---
 

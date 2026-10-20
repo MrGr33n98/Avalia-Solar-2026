@@ -56,20 +56,21 @@ describe('RelatedCompaniesCarousel - Anti-Leak & Mode Matrix', () => {
       expect(screen.queryByTestId('company-verified-badge')).not.toBeInTheDocument();
     });
 
-    it('NUNCA exibe "Perfil Protegido Exclusivo" para empresa Free quando showAlternatives é falso (oculta silenciosamente)', () => {
+    it('NUNCA exibe "Perfil Protegido Exclusivo" para empresa Free mesmo se showAlternatives for falso ou indefinido (Free sempre exibe alternativas)', () => {
       // Cenário crítico: Empresa Free sem feature_access ou com show_alternatives=false
-      const { container } = render(
+      render(
         <RelatedCompaniesCarousel
           company={mockFreeCompany}
           showAlternatives={false}
-          relatedCompanies={[]}
+          relatedCompanies={mockCompaniesList}
           loading={false}
         />
       );
 
-      // Deve resolver para 'hidden' e retornar null!
+      // NUNCA deve exibir o card de proteção
       expect(screen.queryByText(/Perfil Protegido Exclusivo/i)).not.toBeInTheDocument();
-      expect(container).toBeEmptyDOMElement();
+      // Deve renderizar os cards de concorrentes para empresas Free
+      expect(screen.getByTestId('related-card-101')).toBeInTheDocument();
     });
 
     it('exibe "Perfil Protegido Exclusivo" para empresa Paga via fallback legado de showAlternatives=false', () => {

@@ -50,11 +50,12 @@ export default function RelatedCompaniesCarousel({
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
-  // Resolução segura do modo de exibição (Zero Brecha Comercial)
+  // Resolução segura do modo de exibição:
+  // - Empresas com plano PAGO comprovado e proteção ativa: exibem 'protected'
+  // - Empresas no plano FREE ou sem configuração: exibem 'results' (ou 'loading' / 'empty')
   const resolvedMode: RelatedCompaniesDisplayMode = mode ?? (() => {
-    if (showAlternatives === false) {
-      // Somente empresas com plano pago comprovado recebem o selo exclusivo
-      return hasPaidPlan(company) ? 'protected' : 'hidden';
+    if (hasPaidPlan(company) && showAlternatives === false) {
+      return 'protected';
     }
     if (loading) return 'loading';
     if (!relatedCompanies || relatedCompanies.length === 0) return 'empty';

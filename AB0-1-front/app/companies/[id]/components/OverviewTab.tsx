@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company, Review } from "@/lib/api";
 import { publicCompaniesApi } from "@/lib/api-public";
+import { companiesApiSafe } from "@/lib/api-client";
 import { useLocation } from "@/contexts/LocationContext";
 
 import ReviewsPreview from "./ReviewsPreview";
@@ -41,16 +42,13 @@ export default function OverviewTab({
   const userLocation = useLocation();
 
   const showSocialProof = isFeatureEnabled(company.feature_access, "social_proof");
-  const showAlternatives = isFeatureEnabled(company.feature_access, "show_alternatives");
   const paidPlan = hasPaidPlan(company);
 
-  // Determinar o modo inicial estritamente:
-  // Se for pago: 'protected' (proteção comercial verificada).
-  // Se for Free com show_alternatives=false: 'hidden' (nunca alegar proteção).
-  // Se for Free com show_alternatives=true: 'loading' (busca alternativas legítimas).
+  // Regra de Negócio:
+  // - Empresas com plano PAGO comprovado: ativam o modo 'protected' (proteção comercial).
+  // - Empresas no plano FREE ou sem configuração: DEVEM SEMPRE EXIBIR empresas similares/relacionadas!
   const [displayMode, setDisplayMode] = useState<RelatedCompaniesDisplayMode>(() => {
     if (paidPlan) return 'protected';
-    if (!showAlternatives) return 'hidden';
     return 'loading';
   });
 
@@ -60,12 +58,6 @@ export default function OverviewTab({
   const fetchRelated = useCallback(async () => {
     if (paidPlan) {
       setDisplayMode('protected');
-      setRelatedCompanies([]);
-      return;
-    }
-
-    if (!showAlternatives) {
-      setDisplayMode('hidden');
       setRelatedCompanies([]);
       return;
     }
@@ -88,7 +80,8 @@ export default function OverviewTab({
       const targetCity = userLocation.selectedCity || company.city || undefined;
       const categoryId = company.category_info?.id || company.category_id || undefined;
 
-      const response = await publicCompaniesApi.getRecommendations({
+      // 1ª Tentativa: Engine de Recomendação com contexto geográfico da região
+      let response = await publicCompaniesApi.getRecommendations({
         context_company_id: company.id,
         exclude_company_id: company.id,
         category_id: categoryId ? Number(categoryId) : undefined,
@@ -97,39 +90,79 @@ export default function OverviewTab({
         limit: 6,
       });
 
-      // Ignorar respostas obsoletas ou requisições canceladas ao trocar de empresa
       if (currentRequestId !== requestIdRef.current || controller.signal.aborted) {
         return;
       }
 
-      const items = response.data || [];
-      const mappedCompanies: Company[] = items
-        .filter((item) => item.id !== company.id)
-        .map((item) => {
-          const ratingValue = item.rating?.average ?? item.rating_avg ?? 0;
-          const reviewsCount = item.rating?.count ?? item.rating_count ?? 0;
-          return {
-            id: item.id,
-            name: item.name,
-            slug: item.slug || '',
-            logo_url: item.logo_url || null,
-            logo: item.logo_url || null,
-            rating: Number(ratingValue),
-            reviews_count: Number(reviewsCount),
-            city: item.city || '',
-            state: item.state || '',
-            verified: Boolean(item.verified),
-            featured: Boolean(item.featured),
+      let items = (response.data || []).filter((item) => item.id !== company.id);
+
+      // 2ª Tentativa (Relaxamento Geográfico): Se não houver concorrentes na UF/Cidade específica,
+      // busca recomendações na mesma categoria a nível nacional
+      if (items.length === 0 && (targetState || targetCity)) {
+        try {
+          const fallbackResponse = await publicCompaniesApi.getRecommendations({
+            context_company_id: company.id,
+            exclude_company_id: company.id,
+            category_id: categoryId ? Number(categoryId) : undefined,
+            limit: 6,
+          });
+          if (fallbackResponse.data && fallbackResponse.data.length > 0) {
+            items = fallbackResponse.data.filter((item) => item.id !== company.id);
+          }
+        } catch {
+          // Continua para o fallback de catálogo
+        }
+      }
+
+      // 3ª Tentativa (Resiliência de Catálogo): Garante que perfis Free sempre encontrem
+      // empresas da mesma categoria ativas no marketplace
+      if (items.length === 0) {
+        try {
+          const catalogResponse = await companiesApiSafe.getAllPaginated({
+            category_id: categoryId,
+            per_page: 12,
             status: 'active',
-            created_at: '',
-            updated_at: '',
-            category: item.segment || '',
-            description: '',
-            website: '',
-            phone: '',
-            address: '',
-          } as unknown as Company;
-        });
+          });
+          const catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
+          if (catalogItems.length > 0) {
+            setRelatedCompanies(catalogItems);
+            setDisplayMode('results');
+            return;
+          }
+        } catch {
+          // Continua para o mapeamento
+        }
+      }
+
+      if (currentRequestId !== requestIdRef.current || controller.signal.aborted) {
+        return;
+      }
+
+      const mappedCompanies: Company[] = items.map((item) => {
+        const ratingValue = item.rating?.average ?? item.rating_avg ?? 0;
+        const reviewsCount = item.rating?.count ?? item.rating_count ?? 0;
+        return {
+          id: item.id,
+          name: item.name,
+          slug: item.slug || '',
+          logo_url: item.logo_url || null,
+          logo: item.logo_url || null,
+          rating: Number(ratingValue),
+          reviews_count: Number(reviewsCount),
+          city: item.city || '',
+          state: item.state || '',
+          verified: Boolean(item.verified),
+          featured: Boolean(item.featured),
+          status: 'active',
+          created_at: '',
+          updated_at: '',
+          category: item.segment || '',
+          description: '',
+          website: '',
+          phone: '',
+          address: '',
+        } as unknown as Company;
+      });
 
       setRelatedCompanies(mappedCompanies);
       if (mappedCompanies.length > 0) {
@@ -142,12 +175,30 @@ export default function OverviewTab({
         return;
       }
       console.error('Erro ao buscar empresas relacionadas:', err);
+
+      // Tentativa de emergência via catálogo em caso de erro na Engine
+      try {
+        const categoryId = company.category_info?.id || company.category_id || undefined;
+        const catalogResponse = await companiesApiSafe.getAllPaginated({
+          category_id: categoryId,
+          per_page: 12,
+          status: 'active',
+        });
+        const catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
+        if (catalogItems.length > 0) {
+          setRelatedCompanies(catalogItems);
+          setDisplayMode('results');
+          return;
+        }
+      } catch {
+        // Falha completa
+      }
+
       setRelatedCompanies([]);
       setDisplayMode('error');
     }
   }, [
     paidPlan,
-    showAlternatives,
     company.id,
     company.state,
     company.city,
@@ -226,7 +277,7 @@ export default function OverviewTab({
           <BannerSlot 
             placement="company_profile_about_inline" 
             companyId={Number(company.id)}
-            blockCompetitors={!showAlternatives || paidPlan}
+            blockCompetitors={paidPlan}
           />
         ) : null}
       </div>
@@ -253,7 +304,7 @@ export default function OverviewTab({
           <BannerSlot 
             placement="company_profile_related_carousel" 
             companyId={Number(company.id)}
-            blockCompetitors={!showAlternatives || paidPlan}
+            blockCompetitors={paidPlan}
           />
         </div>
       )}
