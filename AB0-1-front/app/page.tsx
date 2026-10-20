@@ -200,7 +200,7 @@ export default async function Home() {
       <div className="mx-auto max-w-[1330px]">
         <Suspense
           fallback={
-            <div className="aspect-[39/23] md:aspect-[133/23] w-full max-w-[1330px] animate-pulse rounded-xl bg-slate-100 mx-auto my-2" />
+            <div className="aspect-[39/23] md:aspect-[133/23] w-full max-w-[1330px] animate-pulse rounded-none md:rounded-xl bg-slate-100 mx-auto my-0 md:my-2" />
           }
         >
           <HomeHeroBannerWrapper dataPromise={bannersDataPromise} />

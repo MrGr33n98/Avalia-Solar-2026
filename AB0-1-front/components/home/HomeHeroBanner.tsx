@@ -244,162 +244,185 @@ export function HomeHeroBanner({
     }
   };
 
+  const [failedBannerIds, setFailedBannerIds] = React.useState<Record<string | number, boolean>>({});
+
+  const handleImageError = (id: string | number) => {
+    setFailedBannerIds((prev) => ({ ...prev, [id]: true }));
+  };
+
+  const isCurrentFailed = Boolean(failedBannerIds[currentBanner.id ?? currentIndex]);
+  const currentBannerImage = isCurrentFailed ? imageSrc : bannerImage;
+
   return (
-    <div className={cn('px-4 py-2 w-full select-none max-w-[1330px] mx-auto', className)}>
+    <div className={cn('mx-auto w-full max-w-[1330px] select-none px-0 py-0 md:px-4 md:py-2', className)}>
       <div
         ref={heroRef}
+        data-testid="home-hero-frame"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onFocus={() => setIsPaused(true)}
         onBlur={() => setIsPaused(false)}
-        className="relative overflow-hidden rounded-xl border border-slate-200/60 group w-full bg-[#DBEEFE]"
+        className="group relative w-full overflow-hidden border-0 bg-[#DBEEFE] rounded-none md:rounded-xl md:border md:border-slate-200/60"
       >
-        <div className="relative aspect-[39/23] md:aspect-[133/23] w-full">
-          {/* Mídia Art-Directed com <picture> responsivo nativo */}
-          <picture className="absolute inset-0 block h-full w-full pointer-events-none">
-            {currentBanner.image_mobile_url ? (
-              <source media="(max-width: 767px)" srcSet={currentBanner.image_mobile_url} />
-            ) : null}
-            <img
-              src={bannerImage}
-              alt={currentBanner.alt_text || bannerHeadline || 'Hero Banner'}
-              width={1330}
-              height={230}
-              className={cn(
-                'h-full w-full transition-transform duration-500 group-hover:scale-[1.01] motion-reduce:transition-none motion-reduce:transform-none',
-                isImageOnly ? 'object-contain' : 'object-cover'
-              )}
-              style={
-                isImageOnly
-                  ? undefined
-                  : {
-                      objectPosition: `${currentBanner.object_position_desktop_x ?? 50}% ${currentBanner.object_position_desktop_y ?? 50}%`,
-                    }
-              }
-              loading={currentIndex === 0 ? 'eager' : 'lazy'}
-              {...({ fetchpriority: currentIndex === 0 ? 'high' : 'auto' } as React.ImgHTMLAttributes<HTMLImageElement>)}
-              decoding="async"
-            />
-          </picture>
+        {isImageOnly ? (
+          /* Mídia Art-Directed em fluxo para modo image_only — a imagem determina a altura real da caixa */
+          <>
+            <picture className="block w-full pointer-events-none">
+              {!isCurrentFailed && currentBanner.image_mobile_url ? (
+                <source media="(max-width: 767px)" srcSet={currentBanner.image_mobile_url} />
+              ) : null}
+              <img
+                data-testid="home-hero-image"
+                src={currentBannerImage}
+                alt={currentBanner.alt_text || bannerHeadline || 'Hero Banner'}
+                width={currentBanner.width || 1330}
+                height={currentBanner.height || 230}
+                className="block h-auto w-full object-contain transition-transform duration-500 group-hover:scale-[1.01] motion-reduce:transition-none motion-reduce:transform-none"
+                onError={() => handleImageError(currentBanner.id ?? currentIndex)}
+                loading={currentIndex === 0 ? 'eager' : 'lazy'}
+                {...({ fetchpriority: currentIndex === 0 ? 'high' : 'auto' } as React.ImgHTMLAttributes<HTMLImageElement>)}
+                decoding="async"
+              />
+            </picture>
+            <h1 className="sr-only">{bannerHeadline}</h1>
+          </>
+        ) : (
+          /* Modo photo_with_html com proporção controlada e área para tipografia/CTA */
+          <div className="relative aspect-[39/23] md:aspect-[133/23] w-full">
+            <picture className="absolute inset-0 block h-full w-full pointer-events-none">
+              {!isCurrentFailed && currentBanner.image_mobile_url ? (
+                <source media="(max-width: 767px)" srcSet={currentBanner.image_mobile_url} />
+              ) : null}
+              <img
+                data-testid="home-hero-image"
+                src={currentBannerImage}
+                alt={currentBanner.alt_text || bannerHeadline || 'Hero Banner'}
+                width={1330}
+                height={230}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.01] motion-reduce:transition-none motion-reduce:transform-none"
+                style={{
+                  objectPosition: `${currentBanner.object_position_desktop_x ?? 50}% ${currentBanner.object_position_desktop_y ?? 50}%`,
+                }}
+                onError={() => handleImageError(currentBanner.id ?? currentIndex)}
+                loading={currentIndex === 0 ? 'eager' : 'lazy'}
+                {...({ fetchpriority: currentIndex === 0 ? 'high' : 'auto' } as React.ImgHTMLAttributes<HTMLImageElement>)}
+                decoding="async"
+              />
+            </picture>
 
-          {/* Selo Patrocinado quando aplicável */}
-          {currentBanner.sponsored && (
-            <div className="absolute top-3 right-3 z-20 pointer-events-none">
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-950/70 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-white/95 border border-white/10 shadow-xs">
-                Patrocinado
-              </span>
-            </div>
-          )}
+            {/* Overlay de contraste para legibilidade */}
+            {renderOverlay()}
 
-          {/* Overlay de contraste para legibilidade */}
-          {renderOverlay()}
-
-          {/* Link para toda a área caso configurado como clicável por inteiro ou image_only com link */}
-          {(currentBanner.whole_banner_clickable || isImageOnly) && clickTrackingUrl && (
-            <Link
-              href={clickTrackingUrl}
-              className="absolute inset-0 z-10 block"
-              aria-label={bannerHeadline || 'Ver campanha'}
-            />
-          )}
-
-          {/* Conteúdo Tipográfico e Ação */}
-          <div className="absolute inset-0 flex flex-col justify-center px-5 sm:px-8 md:px-10 max-w-xl z-15 pointer-events-none">
-            {isImageOnly ? (
-              <h1 className="sr-only">{bannerHeadline}</h1>
-            ) : (
-              <>
-                <h1
+            {/* Conteúdo Tipográfico e Ação */}
+            <div className="absolute inset-0 flex flex-col justify-center px-5 sm:px-8 md:px-10 max-w-xl z-15 pointer-events-none">
+              <h1
+                className={cn(
+                  'text-xl sm:text-2xl md:text-3xl font-extrabold leading-tight tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]',
+                  currentBanner.theme === 'light' ? 'text-slate-950' : 'text-white'
+                )}
+                style={{ color: currentBanner.hero_text_color || undefined }}
+              >
+                {bannerHeadline}
+              </h1>
+              {bannerSubtitle && (
+                <p
                   className={cn(
-                    'text-xl sm:text-2xl md:text-3xl font-extrabold leading-tight tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]',
-                    currentBanner.theme === 'light' ? 'text-slate-950' : 'text-white'
+                    'mt-2 text-xs sm:text-sm line-clamp-2 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]',
+                    currentBanner.theme === 'light' ? 'text-slate-800' : 'text-white/90'
                   )}
-                  style={{ color: currentBanner.hero_text_color || undefined }}
                 >
-                  {bannerHeadline}
-                </h1>
-                {bannerSubtitle && (
-                  <p
+                  {bannerSubtitle}
+                </p>
+              )}
+
+              {/* Botão de Ação (CTA) Acessível */}
+              {ctaEnabled && ctaLabel && (
+                <div className="mt-4 flex items-center gap-3 pointer-events-auto">
+                  <Link
+                    href={clickTrackingUrl}
+                    style={customCtaStyle}
                     className={cn(
-                      'mt-2 text-xs sm:text-sm line-clamp-2 leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]',
-                      currentBanner.theme === 'light' ? 'text-slate-800' : 'text-white/90'
+                      'inline-flex min-h-[44px] min-w-[44px] items-center gap-1.5 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold transition-all active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
+                      getCtaButtonClasses(currentBanner.cta_variant)
                     )}
                   >
-                    {bannerSubtitle}
-                  </p>
-                )}
-              </>
-            )}
-
-            {/* Botão de Ação (CTA) Acessível */}
-            {!isImageOnly && ctaEnabled && ctaLabel && (
-              <div className="mt-4 flex items-center gap-3 pointer-events-auto">
-                <Link
-                  href={clickTrackingUrl}
-                  style={customCtaStyle}
-                  className={cn(
-                    'inline-flex min-h-[44px] min-w-[44px] items-center gap-1.5 rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-bold transition-all active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
-                    getCtaButtonClasses(currentBanner.cta_variant)
-                  )}
-                >
-                  <span>{ctaLabel}</span>
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Setas de navegação desktop */}
-          {hasMultipleBanners && (
-            <>
-              <button
-                type="button"
-                onClick={handlePrev}
-                aria-label="Banner anterior"
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                aria-label="Próximo banner"
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </>
-          )}
-
-          {/* Barras de navegação segmentadas com touch target de 48px */}
-          {hasMultipleBanners && (
-            <div
-              aria-label="Navegação dos banners"
-              className="absolute bottom-0 left-1/2 z-20 flex -translate-x-1/2 items-center gap-0 bg-transparent md:bottom-3 md:gap-2 md:rounded-full md:bg-black/25 md:px-2.5 md:py-1 md:backdrop-blur-xs"
-            >
-              {activeBanners.map((banner, index) => (
-                <button
-                  key={banner.id ?? index}
-                  type="button"
-                  onClick={() => setCurrentIndex(index)}
-                  aria-label={`Ir para banner ${index + 1}`}
-                  aria-pressed={currentIndex === index}
-                  className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center bg-transparent p-0 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-blue-600"
-                >
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      'block h-[4px] w-[34px] rounded-full transition-colors duration-200 motion-reduce:transition-none',
-                      currentIndex === index ? 'bg-blue-600' : 'bg-white/75'
-                    )}
-                  />
-                </button>
-              ))}
+                    <span>{ctaLabel}</span>
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Selo Patrocinado quando aplicável */}
+        {currentBanner.sponsored && (
+          <div className="absolute top-3 right-3 z-20 pointer-events-none">
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-950/70 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-white/95 border border-white/10 shadow-xs">
+              Patrocinado
+            </span>
+          </div>
+        )}
+
+        {/* Link para toda a área caso configurado como clicável por inteiro ou image_only com link */}
+        {(currentBanner.whole_banner_clickable || isImageOnly) && clickTrackingUrl && (
+          <Link
+            href={clickTrackingUrl}
+            className="absolute inset-0 z-10 block"
+            aria-label={bannerHeadline || 'Ver campanha'}
+          />
+        )}
+
+        {/* Setas de navegação desktop */}
+        {hasMultipleBanners && (
+          <>
+            <button
+              type="button"
+              onClick={handlePrev}
+              aria-label="Banner anterior"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              aria-label="Próximo banner"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/70 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
+        )}
+
+        {/* Barras de navegação segmentadas com touch target de 48px */}
+        {hasMultipleBanners && (
+          <div
+            aria-label="Navegação dos banners"
+            className="absolute bottom-0 left-1/2 z-20 flex -translate-x-1/2 items-center gap-0 bg-transparent md:bottom-3 md:gap-2 md:rounded-full md:bg-black/25 md:px-2.5 md:py-1 md:backdrop-blur-xs"
+          >
+            {activeBanners.map((banner, index) => (
+              <button
+                key={banner.id ?? index}
+                type="button"
+                onClick={() => setCurrentIndex(index)}
+                aria-label={`Ir para banner ${index + 1}`}
+                aria-pressed={currentIndex === index}
+                className="flex h-12 w-12 min-h-12 min-w-12 items-center justify-center bg-transparent p-0 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-blue-600"
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'block h-[4px] w-[34px] rounded-full transition-colors duration-200 motion-reduce:transition-none',
+                    currentIndex === index ? 'bg-blue-600' : 'bg-white/75'
+                  )}
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
