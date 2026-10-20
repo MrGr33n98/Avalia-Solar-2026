@@ -89,6 +89,7 @@ AB0-1-front/public/avalia-solar-upgrade-assets/
 !AB0-1-front/__tests__/auth/AuthCallback.test.tsx
 !AB0-1-front/__tests__/dashboard/SidebarUpgradeWidget.test.tsx
 !AB0-1-front/__tests__/dashboard/PlansPricingModal.test.tsx
+!AB0-1-front/__tests__/components/ProfileSignalsTab.test.tsx
 
 # Ignorar documentações de desenvolvimento
 docs/

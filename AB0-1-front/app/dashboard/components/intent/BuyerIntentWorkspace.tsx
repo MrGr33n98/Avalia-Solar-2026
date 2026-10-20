@@ -36,6 +36,7 @@ import {
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import TrackingAttributionWorkspace from '../tracking/TrackingAttributionWorkspace';
+import ProfileSignalsTab from './ProfileSignalsTab';
 
 interface BuyerIntentWorkspaceProps {
   companyId?: string | number;
@@ -46,7 +47,14 @@ interface BuyerIntentWorkspaceProps {
   };
 }
 
-type TabType = 'overview' | 'signals' | 'comparisons' | 'segments' | 'alerts' | 'method';
+type TabType =
+  | 'overview'
+  | 'profile_signals'
+  | 'signals'
+  | 'comparisons'
+  | 'segments'
+  | 'alerts'
+  | 'method';
 
 const CATEGORIES = [
   'Solar residencial',
@@ -68,7 +76,18 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
   const subtabParam = searchParams.get('subtab');
   const isProspects = subtabParam === 'prospects';
 
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    if (
+      subtabParam === 'profile_signals' ||
+      subtabParam === 'profile-visitors' ||
+      subtabParam === 'profile'
+    ) {
+      return 'profile_signals';
+    }
+    if (subtabParam === 'signals') return 'signals';
+    if (subtabParam === 'comparisons') return 'comparisons';
+    return 'overview';
+  });
   const [days, setDays] = useState<'7d' | '30d' | '90d'>('30d');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -218,6 +237,14 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
     reportingData.buying_stage_distribution.decision ??
     accounts.filter((a) => a.buying_stage === 'decision').length;
 
+  const profileVisitorCount = useMemo(() => {
+    return accounts.filter(
+      (acc) =>
+        acc.direct_pageviews > 0 ||
+        (acc.pageviews_breakdown && acc.pageviews_breakdown.profile > 0)
+    ).length;
+  }, [accounts]);
+
   // Filtragem de sinais reais
   const filteredAccounts = useMemo(() => {
     return accounts.filter((acc) => {
@@ -344,6 +371,12 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
         >
           {[
             { id: 'overview', label: 'Visão geral', icon: LayoutDashboard },
+            {
+              id: 'profile_signals',
+              label: 'Visitantes do Perfil',
+              icon: Eye,
+              badge: profileVisitorCount > 0 ? String(profileVisitorCount) : undefined,
+            },
             { id: 'signals', label: 'Sinais de interesse', icon: Activity },
             { id: 'comparisons', label: 'Comparações', icon: GitCompare },
             { id: 'segments', label: 'Segmentos', icon: Users },
@@ -366,7 +399,12 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
-                {tab.label}
+                <span>{tab.label}</span>
+                {tab.badge && (
+                  <span className="rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-1.5 py-0.2 text-[10px] font-bold">
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -434,13 +472,21 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
             <div className="space-y-6">
               {/* 4 Cards de Métricas (KPIs Reais) */}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
-                      <Eye className="h-4 w-4" />
+                <div
+                  onClick={() => setActiveTab('profile_signals')}
+                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <Eye className="h-4 w-4" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Visitas ao perfil
+                      </span>
                     </div>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Visitas ao perfil
+                    <span className="text-[10px] font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform flex items-center">
+                      Ver lista &rarr;
                     </span>
                   </div>
                   <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
@@ -502,6 +548,33 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
                   </div>
                 </div>
               </div>
+
+              {/* Banner de Destaque: Visitantes do Perfil (G2 Benchmark) */}
+              {profileVisitorCount > 0 && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border border-blue-100 bg-blue-50/60 dark:border-blue-900/40 dark:bg-blue-950/20 text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-blue-600 text-white shadow-xs">
+                      <Eye className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {profileVisitorCount} {profileVisitorCount === 1 ? 'empresa qualificada visitou' : 'empresas qualificadas visitaram'} o perfil da sua empresa recentemente
+                      </span>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Acesse a lista completa de contas que visualizaram projetos, avaliações e dados de contato.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => setActiveTab('profile_signals')}
+                    className="h-8 gap-1.5 bg-blue-600 text-white font-semibold text-xs shadow-xs hover:bg-blue-700 self-stretch sm:self-auto"
+                  >
+                    <span>Ver Visitantes do Perfil</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
 
               {/* Grid: Gráfico de Evolução e Funil por Etapa */}
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -790,7 +863,29 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
           )}
 
           {/* ========================================================= */}
-          {/* ABA 2: SINAIS DE INTERESSE */}
+          {/* ABA 2: VISITANTES DO PERFIL (PROFILE SIGNALS - MY.G2)    */}
+          {/* ========================================================= */}
+          {activeTab === 'profile_signals' && (
+            <ProfileSignalsTab
+              accounts={accounts}
+              reportingData={reportingData}
+              days={days}
+              companyName={company?.name || activeCompany?.name || 'Sua Empresa'}
+              onSelectAccount={(acc) => {
+                setSelectedAccount(acc);
+                setIsDrawerOpen(true);
+              }}
+              onExportCsv={handleDownloadCsv}
+              onNavigateToTab={(tab) => {
+                const params = new URLSearchParams(searchParams.toString());
+                params.set('tab', tab);
+                router.push(`${pathname}?${params.toString()}`);
+              }}
+            />
+          )}
+
+          {/* ========================================================= */}
+          {/* ABA 3: SINAIS DE INTERESSE */}
           {/* ========================================================= */}
           {activeTab === 'signals' && (
             <div className="space-y-4">
