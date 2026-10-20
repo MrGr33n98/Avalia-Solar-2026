@@ -1605,10 +1605,19 @@ ActiveAdmin.register Company do
           segment_raw = (row['segment'] || row['segmento']).to_s.strip.downcase
           segment = Company::SEGMENTS.find { |s| segment_raw.include?(s) } || 'supplier'
 
-          # Parsing de tags e arrays seguros contra constantes do modelo
-          project_types = parse_list.call(row['project_types'] || row['tipos_projeto']) & Company::PROJECT_TYPES
-          services_offered = parse_list.call(row['services_offered'] || row['servicos_oferecidos']) & Company::SERVICES_OFFERED
-          niche_tags = parse_list.call(row['niche_tags'] || row['tags_nicho']) & Company::NICHE_TAGS
+          # Normalizador flexível de tags contra as constantes válidas do modelo
+          normalize_tag = lambda do |raw_items, valid_constants|
+            raw_items.map do |item|
+              clean_item = ActiveSupport::Inflector.transliterate(item.to_s.strip.downcase).gsub(/[\s\-_]+/, '')
+              valid_constants.find do |valid|
+                ActiveSupport::Inflector.transliterate(valid.to_s.downcase).gsub(/[\s\-_]+/, '') == clean_item
+              end
+            end.compact.uniq
+          end
+
+          project_types = normalize_tag.call(parse_list.call(row['project_types'] || row['tipos_projeto']), Company::PROJECT_TYPES)
+          services_offered = normalize_tag.call(parse_list.call(row['services_offered'] || row['servicos_oferecidos']), Company::SERVICES_OFFERED)
+          niche_tags = normalize_tag.call(parse_list.call(row['niche_tags'] || row['tags_nicho']), Company::NICHE_TAGS)
           equipment_brands = parse_list.call(row['equipment_brands'] || row['marcas_equipamentos'])
 
           founded_year_num = (row['founded_year'] || row['ano_fundacao']).to_s.gsub(/\D/, '').to_i
@@ -1629,9 +1638,6 @@ ActiveAdmin.register Company do
             target_plan = default_free_plan
             intent_tier = 'free'
           end
-
-          plan_id = target_plan&.id
-          plan_status = target_plan ? 'active' : 'inactive'
 
           attrs = {
             name: name,
@@ -1673,12 +1679,13 @@ ActiveAdmin.register Company do
             moderation_status: (row['moderation_status'] || 'approved').to_s.strip.downcase.presence,
             business_verification_status: (row['business_verification_status'] || 'verified').to_s.strip.downcase.presence,
             status: status,
-            plan_id: plan_id,
-            plan_status: plan_status,
-            intent_tier: intent_tier,
             featured: %w[true 1 yes sim].include?((row['featured'] || '').to_s.downcase),
             verified: %w[true 1 yes sim].include?((row['verified'] || '').to_s.downcase)
           }
+
+          attrs[:plan_id] = target_plan.id if target_plan && (Company.column_names.include?('plan_id') || company.respond_to?(:plan_id=))
+          attrs[:plan_status] = 'active' if Company.column_names.include?('plan_status') || company.respond_to?(:plan_status=)
+          attrs[:intent_tier] = intent_tier if Company.column_names.include?('intent_tier') || company.respond_to?(:intent_tier=)
 
           cats = parse_list.call(row['categories'] || row['categorias'] || row['categoria'])
           existing_categories = if cats.any?
@@ -1695,7 +1702,9 @@ ActiveAdmin.register Company do
             existing_categories = [default_cat].compact if default_cat
           end
 
-          company.assign_attributes(attrs)
+          safe_attrs = attrs.select { |k, _v| company.respond_to?("#{k}=") }
+          company.assign_attributes(safe_attrs)
+          company.plan = target_plan if target_plan && company.respond_to?(:plan=)
 
           if attrs[:status] == 'active' && !company.ready_for_activation?
             company.status = 'pending'
