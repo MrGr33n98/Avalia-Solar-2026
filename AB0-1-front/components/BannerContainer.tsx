@@ -10,6 +10,7 @@ import { resolveBannerAspectRatio } from '@/lib/banners/aspect-ratio';
 import { BANNER_PLACEMENT_ASPECT_RATIOS, getPlacementDisplaySpec } from '@/lib/banners/placements';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 import { BannerMedia } from '@/components/banners/BannerMedia';
+import { SponsoredBadge } from '@/components/banners/SponsoredBadge';
 
 interface BannerData {
   id: number | string;
@@ -258,11 +259,7 @@ export function BannerContainer({
           sizes={getSizes(position)}
           ambientBackground={displaySpec?.ambientBackground}
         />
-        {banner.sponsored && (
-          <span className="absolute bottom-2 right-2 z-10 rounded-none bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-            Patrocinado
-          </span>
-        )}
+        {banner.sponsored && <SponsoredBadge />}
       </>
     );
 

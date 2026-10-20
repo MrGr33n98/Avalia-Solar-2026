@@ -9,6 +9,7 @@ import { track } from '@/lib/analytics/lazy';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
+import { SponsoredBadge } from '@/components/banners/SponsoredBadge';
 
 type SponsoredBannerProps = {
   slotKey: string;
@@ -178,11 +179,7 @@ export default function SponsoredBanner({
           }
           className="object-cover object-center"
         />
-        {banner.sponsored !== false && (
-          <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded backdrop-blur-sm">
-            Patrocinado
-          </span>
-        )}
+        {banner.sponsored !== false && <SponsoredBadge />}
       </div>
     );
 

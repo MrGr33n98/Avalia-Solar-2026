@@ -8,6 +8,7 @@ import type { Banner } from '@/lib/api';
 import { analyticsApi } from '@/lib/api-analytics';
 import { track } from '@/lib/analytics/lazy';
 import { getBannerAudienceKey } from '@/lib/banner-audience';
+import { SponsoredBadge } from '@/components/banners/SponsoredBadge';
 
 interface HomeHeroBannerProps {
   banners?: Banner[];
@@ -358,13 +359,7 @@ export function HomeHeroBanner({
         )}
 
         {/* Selo Patrocinado quando aplicável */}
-        {currentBanner.sponsored && (
-          <div className="absolute top-3 right-3 z-20 pointer-events-none">
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-950/70 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-white/95 border border-white/10 shadow-xs">
-              Patrocinado
-            </span>
-          </div>
-        )}
+        {currentBanner.sponsored && <SponsoredBadge />}
 
         {/* Link para toda a área caso configurado como clicável por inteiro ou image_only com link */}
         {(currentBanner.whole_banner_clickable || isImageOnly) && clickTrackingUrl && (

@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAdvertisingStore } from '@/store/useAdvertisingStore';
-import { Sparkles } from 'lucide-react';
+import { SponsoredBadge } from '@/components/banners/SponsoredBadge';
 
 interface CampaignTopBannerProps {
   className?: string;
@@ -36,10 +36,7 @@ export function CampaignTopBanner({ className }: CampaignTopBannerProps) {
             className="object-contain"
             sizes="(max-width: 1240px) 100vw, 1240px"
           />
-          <div className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-slate-950/85 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white backdrop-blur-sm">
-            <Sparkles className="h-3 w-3 text-yellow-400" />
-            <span>Patrocinado</span>
-          </div>
+          <SponsoredBadge />
         </div>
       </Link>
     </div>

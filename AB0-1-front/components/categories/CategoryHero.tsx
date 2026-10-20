@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { ChevronRight } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
 import { CategoryMotionIcon } from './CategoryMotionIcon';
+import { SponsoredBadge } from '@/components/banners/SponsoredBadge';
 
 // LCP OPTIMIZATION P0: PremiumBannerCarousel carregado de forma lazy (dynamic import).
 // O banner hero (LCP candidate) é renderizado diretamente como <Image priority> antes
@@ -76,11 +77,7 @@ export default function CategoryHero({
             decoding="async"
             className="absolute inset-0 h-full w-full object-contain"
           />
-          {b.sponsored !== false && (
-            <span className="absolute bottom-2 right-2 z-10 rounded-none bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-              Patrocinado
-            </span>
-          )}
+          {b.sponsored !== false && <SponsoredBadge />}
         </div>
       );
 
