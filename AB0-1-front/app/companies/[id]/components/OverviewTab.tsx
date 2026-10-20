@@ -82,7 +82,7 @@ export default function OverviewTab({
       const targetCity = buyerState ? (buyerCity || undefined) : (buyerCity || company.city || undefined);
       const categoryId = company.category_info?.id || company.category_id || undefined;
 
-      // 1ª Tentativa: Engine de Recomendação com contexto geográfico da região
+      // UMA ÚNICA chamada à Engine de Recomendação (o backend orquestra contexto geográfico e expansão de categoria)
       let response = await publicCompaniesApi.getRecommendations(
         {
           context_company_id: company.id,
@@ -94,7 +94,7 @@ export default function OverviewTab({
         },
         {
           signal: controller.signal,
-          timeoutMs: 12000,
+          timeoutMs: 6000,
           silent: true,
         }
       );
@@ -105,50 +105,15 @@ export default function OverviewTab({
 
       let items = (response.data || []).filter((item) => item.id !== company.id);
 
-      // 2ª Tentativa (Relaxamento Geográfico): Se não houver concorrentes na UF/Cidade específica,
-      // busca recomendações na mesma categoria a nível nacional
-      if (items.length === 0 && (targetState || targetCity)) {
-        try {
-          const fallbackResponse = await publicCompaniesApi.getRecommendations(
-            {
-              context_company_id: company.id,
-              exclude_company_id: company.id,
-              category_id: categoryId ? Number(categoryId) : undefined,
-              limit: 6,
-            },
-            {
-              signal: controller.signal,
-              timeoutMs: 12000,
-              silent: true,
-            }
-          );
-          if (fallbackResponse.data && fallbackResponse.data.length > 0) {
-            items = fallbackResponse.data.filter((item) => item.id !== company.id);
-          }
-        } catch {
-          // Continua para o fallback de catálogo
-        }
-      }
-
-      // 3ª Tentativa (Resiliência de Catálogo): Garante que perfis Free sempre encontrem
-      // empresas da mesma categoria ativas no marketplace
+      // Resiliência de emergência (apenas se a Engine retornar vazio por inexistência de concorrentes cadastrados)
       if (items.length === 0) {
         try {
           const catalogResponse = await companiesApiSafe.getAllPaginated({
             category_id: categoryId,
-            per_page: 12,
+            per_page: 6,
             status: 'active',
           });
-          let catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
-          if (catalogItems.length === 0) {
-            // Se ainda não encontrou outras empresas na mesma categoria, busca alternativas no catálogo ativo geral
-            const broadResponse = await companiesApiSafe.getAllPaginated({
-              per_page: 12,
-              status: 'active',
-            });
-            catalogItems = (broadResponse.data || []).filter((c) => c.id !== company.id);
-          }
-
+          const catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
           if (catalogItems.length > 0) {
             setRelatedCompanies(catalogItems);
             setDisplayMode('results');
@@ -211,24 +176,15 @@ export default function OverviewTab({
         return;
       }
 
-      console.error('Erro ao buscar empresas relacionadas:', err);
-
-      // Tentativa de emergência via catálogo em caso de erro na Engine
+      // Tentativa rápida de catálogo em caso de falha transitória da Engine
       try {
         const categoryId = company.category_info?.id || company.category_id || undefined;
-        let catalogResponse = await companiesApiSafe.getAllPaginated({
+        const catalogResponse = await companiesApiSafe.getAllPaginated({
           category_id: categoryId,
-          per_page: 12,
+          per_page: 6,
           status: 'active',
         });
-        let catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
-        if (catalogItems.length === 0) {
-          const generalResponse = await companiesApiSafe.getAllPaginated({
-            per_page: 12,
-            status: 'active',
-          });
-          catalogItems = (generalResponse.data || []).filter((c) => c.id !== company.id);
-        }
+        const catalogItems = (catalogResponse.data || []).filter((c) => c.id !== company.id);
         if (catalogItems.length > 0) {
           setRelatedCompanies(catalogItems);
           setDisplayMode('results');

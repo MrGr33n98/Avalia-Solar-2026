@@ -32,8 +32,14 @@ export function BannerSlot({
   blockCompetitors = false,
   showLoadingSkeleton = true,
 }: BannerSlotProps) {
-  const isBelowTheFold = placement.endsWith('_bottom') || placement.includes('footer');
-  const shouldLazyLoad = lazy ?? (!priority && isBelowTheFold);
+  // Banners que estão comprovadamente no topo da tela carregam imediatamente (e.g. hero)
+  const isTopPlacement =
+    priority ||
+    placement.startsWith('hero_') ||
+    placement === 'categories_top' ||
+    placement === 'home_top';
+
+  const shouldLazyLoad = lazy ?? !isTopPlacement;
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [inView, setInView] = React.useState(!shouldLazyLoad);
@@ -55,7 +61,7 @@ export function BannerSlot({
           observer.disconnect();
         }
       },
-      { rootMargin: '300px' }
+      { rootMargin: '250px' }
     );
 
     observer.observe(element);
@@ -78,24 +84,18 @@ export function BannerSlot({
 
   const displaySpec = getPlacementDisplaySpec(placement);
 
-  // Se ainda não estiver na viewport, renderiza apenas o placeholder para o observer
+  // Se ainda não estiver próximo da viewport, reserva apenas o marcador para o observer
   if (!inView) {
     return (
-      <div ref={containerRef} className={cn('w-full py-2', className)}>
-        {showLoadingSkeleton && (
-          <div
-            className={cn(
-              'flex w-full items-center justify-center rounded-2xl border border-slate-200/50 bg-slate-100/50',
-              displaySpec?.aspectRatioClass || 'mb-[26px] md:mb-0'
-            )}
-            style={displaySpec?.aspectRatioClass ? undefined : { aspectRatio: resolveBannerAspectRatio({ position: placement }) }}
-          />
-        )}
-      </div>
+      <div
+        ref={containerRef}
+        className={cn('w-full', className)}
+        style={{ minHeight: '1px' }}
+      />
     );
   }
 
-  // Renderiza um skeleton suave de carregamento
+  // Renderiza um skeleton discreto e translúcido durante o carregamento (sem spinner agressivo)
   if (isLoading) {
     if (!showLoadingSkeleton) {
       return fallback ? <>{fallback}</> : null;
@@ -104,16 +104,11 @@ export function BannerSlot({
       <div ref={containerRef} className={cn('w-full py-2', className)}>
         <div
           className={cn(
-            'flex w-full items-center justify-center rounded-2xl border border-slate-200/50 bg-slate-100 animate-pulse',
+            'w-full rounded-2xl border border-slate-100/60 bg-slate-100/50 animate-pulse',
             displaySpec?.aspectRatioClass || 'mb-[26px] md:mb-0'
           )}
           style={displaySpec?.aspectRatioClass ? undefined : { aspectRatio: resolveBannerAspectRatio({ position: placement }) }}
-        >
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-blue border-t-transparent" />
-            <span className="text-[11px] font-bold text-slate-600">Carregando anúncio...</span>
-          </div>
-        </div>
+        />
       </div>
     );
   }

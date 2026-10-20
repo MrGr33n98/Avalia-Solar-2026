@@ -16,7 +16,17 @@ module Recommendation
 
     def call
       # 1. Fetch eligible population
-      eligible_companies = EligibilityQuery.call(context: context)
+      eligible_companies = EligibilityQuery.call(context: context).to_a
+
+      # Expansão inteligente no backend quando a localização estrita não atingir o limite:
+      # busca concorrentes da mesma categoria/segmento a nível nacional ou estadual
+      if eligible_companies.size < limit && (context.local? || context.state_only?)
+        already_ids = eligible_companies.map(&:id)
+        already_ids << context.exclude_company_id if context.exclude_company_id.present?
+        expanded_companies = fetch_expanded_population(already_ids.compact.uniq)
+        eligible_companies.concat(expanded_companies)
+      end
+
       return [] if eligible_companies.empty?
 
       eligible_ids = eligible_companies.map(&:id)
@@ -93,5 +103,27 @@ module Recommendation
     private
 
     attr_reader :context, :limit
+
+    def fetch_expanded_population(already_included_ids)
+      needed = limit - already_included_ids.size
+      return [] if needed <= 0
+
+      # Busca concorrentes ativos na mesma categoria/segmento, excluindo empresas já mapeadas
+      scope = Company.active
+                     .where(moderation_status: 'approved')
+                     .where.not(id: already_included_ids)
+                     .includes(:categories, :company_service_areas, logo_attachment: :blob)
+
+      scope = scope.where(segment: context.segment) if context.segment.present?
+
+      if context.category_slug.present?
+        scope = scope.joins(:categories).where(categories: { slug: context.category_slug })
+      elsif context.category_id.present?
+        scope = scope.joins(:categories).where(categories: { id: context.category_id })
+      end
+
+      # Prioriza empresas com boa avaliação e volume de depoimentos
+      scope.order(verified: :desc, rating_avg: :desc, rating_count: :desc).limit(needed).to_a
+    end
   end
 end
