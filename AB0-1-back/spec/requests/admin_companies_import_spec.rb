@@ -89,4 +89,44 @@ RSpec.describe 'Admin Companies CSV import', type: :request do
     expect(imported.services_offered).to include('Projeto', 'Instalação')
     expect(imported.intent_tier).to eq('free')
   end
+
+  it 'importa com a coluna Plan definida como planfree e vincula plano gratuito com seguranca' do
+    csv = <<~CSV
+      Name,Description,Website,Phone,Cnpj,Email,State,City,Segment,Plan,Status
+      Solplanet Free,Fabricante de inversores,https://solplanet.net,(11) 3141-3669,50.982.813/0001-00,free@solplanet.net,SC,São José,supplier,planfree,active
+    CSV
+
+    file = Tempfile.new(['companies_free', '.csv'])
+    file.write(csv)
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, 'text/csv')
+    post '/admin/companies/import_csv', params: { csv_file: upload }
+
+    file.close
+    file.unlink
+
+    expect(response).to have_http_status(:found)
+    imported = Company.find_by(cnpj: '50982813000100')
+    expect(imported).to be_present
+    expect(imported.intent_tier).to eq('free')
+  end
+
+  it 'redireciona com alerta e nao estoura erro 500 em caso de CSV com aspas quebradas' do
+    broken_csv = "Name,Description\n\"Solplanet Quebrado,Sem fechar aspas"
+
+    file = Tempfile.new(['companies_broken', '.csv'])
+    file.write(broken_csv)
+    file.rewind
+
+    upload = Rack::Test::UploadedFile.new(file.path, 'text/csv')
+    post '/admin/companies/import_csv', params: { csv_file: upload }
+
+    file.close
+    file.unlink
+
+    expect(response).to have_http_status(:found)
+    follow_redirect!
+    expect(response.body).to include('Arquivo CSV com formatação inválida')
+  end
 end
