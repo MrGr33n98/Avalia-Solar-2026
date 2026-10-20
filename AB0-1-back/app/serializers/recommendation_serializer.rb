@@ -28,7 +28,10 @@ class RecommendationSerializer
         },
         filters: {
           category_slug: @context.category_slug,
-          segment: @context.segment
+          category_id: @context.category_id,
+          segment: @context.segment,
+          exclude_company_id: @context.exclude_company_id,
+          context_company_id: @context.context_company_id
         },
         slots: {
           total: @results.size,
@@ -69,6 +72,12 @@ class RecommendationSerializer
       name: company.name,
       slug: company.slug,
       logo_url: logo_url,
+      city: company.city,
+      state: company.state,
+      rating_avg: rating_avg,
+      rating_count: rating_cnt,
+      response_time_sla: response_sla,
+      delivered_projects_score: projects_cnt,
       segment: company.segment,
       comparable_group: res.comparison_group,
       verified: company.verified?,

@@ -35,6 +35,7 @@ module Banners
       scope = scope.where(position: position) if position.present?
       scope = scope.where(slot_key: @params[:slot_key]) if @params[:slot_key].present? && Banner.column_names.include?('slot_key')
       scope = apply_company(scope)
+      scope = apply_competitor_protection(scope)
       scope = apply_category(scope)
       scope = apply_location(scope)
       scope = apply_frequency_cap(scope)
@@ -82,8 +83,43 @@ module Banners
 
     def apply_company(scope)
       return scope unless @params[:company_id].present? && Banner.column_names.include?('company_id')
+      # Se company_id for o mesmo que profile_company_id e não for para bloquear concorrentes,
+      # não restringe o anunciante aqui para permitir anúncios em perfis Free
+      if @params[:profile_company_id].present? && @params[:company_id].to_s == @params[:profile_company_id].to_s
+        is_blocked = ActiveModel::Type::Boolean.new.cast(@params[:block_competitors])
+        return scope unless is_blocked
+      end
 
       scope.where('banners.company_id = ? OR banners.company_id IS NULL', @params[:company_id])
+    end
+
+    def apply_competitor_protection(scope)
+      return scope unless Banner.column_names.include?('company_id')
+
+      target_company_id = @params[:profile_company_id].presence || @params[:context_company_id].presence
+      block_requested = ActiveModel::Type::Boolean.new.cast(@params[:block_competitors])
+
+      # Se for informado perfil de empresa, checar se tem direito contratado a proteção
+      is_protected = block_requested
+      if target_company_id.present?
+        target_company = Company.find_by(id: target_company_id)
+        if target_company
+          has_paid = target_company.respond_to?(:has_paid_plan?) && target_company.has_paid_plan?
+          feature_blocked = target_company.respond_to?(:feature_access) &&
+                            target_company.feature_access.is_a?(Hash) &&
+                            target_company.feature_access['show_competitor_banners'] == false
+          is_protected ||= (has_paid || feature_blocked)
+        end
+      end
+
+      if is_protected && target_company_id.present?
+        # Proteção comercial estrita no servidor:
+        # Exclui qualquer anúncio de empresa concorrente (banners.company_id IS NOT NULL E diferente da empresa dona do perfil)
+        # Permite banners institucionais do portal (company_id IS NULL) e banners da própria empresa
+        scope.where('banners.company_id IS NULL OR banners.company_id = ?', target_company_id.to_i)
+      else
+        scope
+      end
     end
 
     def apply_category(scope)

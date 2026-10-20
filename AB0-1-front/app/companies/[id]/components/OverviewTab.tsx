@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company, Review } from "@/lib/api";
-import { companiesApiSafe } from "@/lib/api-client";
+import { publicCompaniesApi } from "@/lib/api-public";
+import { useLocation } from "@/contexts/LocationContext";
 
 import ReviewsPreview from "./ReviewsPreview";
 import ProjectsPreview from "./ProjectsPreview";
-import RelatedCompaniesCarousel from "./RelatedCompaniesCarousel";
+import RelatedCompaniesCarousel, { RelatedCompaniesDisplayMode } from "./RelatedCompaniesCarousel";
 import RelatedCompaniesTable from "./RelatedCompaniesTable";
 import SocialProof from "./SocialProof";
 import FeaturedProductsSection from "./FeaturedProductsSection";
@@ -37,39 +38,137 @@ export default function OverviewTab({
 }: OverviewTabProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [relatedCompanies, setRelatedCompanies] = useState<Company[]>([]);
-  const [relatedLoading, setRelatedLoading] = useState(true);
+  const userLocation = useLocation();
 
   const showSocialProof = isFeatureEnabled(company.feature_access, "social_proof");
   const showAlternatives = isFeatureEnabled(company.feature_access, "show_alternatives");
   const paidPlan = hasPaidPlan(company);
-  const shouldShowAlternatives = showAlternatives && !paidPlan;
 
-  useEffect(() => {
-    if (!shouldShowAlternatives) {
-      setRelatedLoading(false);
+  // Determinar o modo inicial estritamente:
+  // Se for pago: 'protected' (proteção comercial verificada).
+  // Se for Free com show_alternatives=false: 'hidden' (nunca alegar proteção).
+  // Se for Free com show_alternatives=true: 'loading' (busca alternativas legítimas).
+  const [displayMode, setDisplayMode] = useState<RelatedCompaniesDisplayMode>(() => {
+    if (paidPlan) return 'protected';
+    if (!showAlternatives) return 'hidden';
+    return 'loading';
+  });
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
+
+  const fetchRelated = useCallback(async () => {
+    if (paidPlan) {
+      setDisplayMode('protected');
+      setRelatedCompanies([]);
       return;
     }
 
-    const fetchRelated = async () => {
-      try {
-        setRelatedLoading(true);
-        const response = await companiesApiSafe.getAllPaginated({
-          category_id: company.category_info?.id || company.category_id,
-          per_page: 21,
-          status: 'active'
+    if (!showAlternatives) {
+      setDisplayMode('hidden');
+      setRelatedCompanies([]);
+      return;
+    }
+
+    // Cancelar requisição em voo se houver
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const currentRequestId = ++requestIdRef.current;
+
+    setDisplayMode('loading');
+
+    try {
+      // Prioridade de localização geográfica:
+      // 1. Contexto do comprador selecionado no LocationContext (selectedState / selectedCity)
+      // 2. Local da empresa visitada como fallback territorial de comparação
+      const targetState = userLocation.selectedState || company.state || undefined;
+      const targetCity = userLocation.selectedCity || company.city || undefined;
+      const categoryId = company.category_info?.id || company.category_id || undefined;
+
+      const response = await publicCompaniesApi.getRecommendations({
+        context_company_id: company.id,
+        exclude_company_id: company.id,
+        category_id: categoryId ? Number(categoryId) : undefined,
+        state: targetState,
+        city: targetCity,
+        limit: 6,
+      });
+
+      // Ignorar respostas obsoletas ou requisições canceladas ao trocar de empresa
+      if (currentRequestId !== requestIdRef.current || controller.signal.aborted) {
+        return;
+      }
+
+      const items = response.data || [];
+      const mappedCompanies: Company[] = items
+        .filter((item) => item.id !== company.id)
+        .map((item) => {
+          const ratingValue = item.rating?.average ?? item.rating_avg ?? 0;
+          const reviewsCount = item.rating?.count ?? item.rating_count ?? 0;
+          return {
+            id: item.id,
+            name: item.name,
+            slug: item.slug || '',
+            logo_url: item.logo_url || null,
+            logo: item.logo_url || null,
+            rating: Number(ratingValue),
+            reviews_count: Number(reviewsCount),
+            city: item.city || '',
+            state: item.state || '',
+            verified: Boolean(item.verified),
+            featured: Boolean(item.featured),
+            status: 'active',
+            created_at: '',
+            updated_at: '',
+            category: item.segment || '',
+            description: '',
+            website: '',
+            phone: '',
+            address: '',
+          } as unknown as Company;
         });
-        
-        const filtered = (response.data || []).filter(c => c.id !== company.id);
-        setRelatedCompanies(filtered);
-      } catch (error) {
-        console.error("Erro ao buscar empresas relacionadas:", error);
-      } finally {
-        setRelatedLoading(false);
+
+      setRelatedCompanies(mappedCompanies);
+      if (mappedCompanies.length > 0) {
+        setDisplayMode('results');
+      } else {
+        setDisplayMode('empty');
+      }
+    } catch (err: unknown) {
+      if (controller.signal.aborted || currentRequestId !== requestIdRef.current) {
+        return;
+      }
+      console.error('Erro ao buscar empresas relacionadas:', err);
+      setRelatedCompanies([]);
+      setDisplayMode('error');
+    }
+  }, [
+    paidPlan,
+    showAlternatives,
+    company.id,
+    company.state,
+    company.city,
+    company.category_info?.id,
+    company.category_id,
+    userLocation.selectedState,
+    userLocation.selectedCity,
+  ]);
+
+  useEffect(() => {
+    fetchRelated();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
+  }, [fetchRelated]);
 
+  const handleRetryRelated = useCallback(() => {
     fetchRelated();
-  }, [company.id, company.category_id, company.category_info?.id, shouldShowAlternatives]);
+  }, [fetchRelated]);
 
   // Lógica para Featured Products e Ads
   const showAds = canShowCompanyProfileAds(company);
@@ -127,7 +226,7 @@ export default function OverviewTab({
           <BannerSlot 
             placement="company_profile_about_inline" 
             companyId={Number(company.id)}
-            blockCompetitors={!showAlternatives}
+            blockCompetitors={!showAlternatives || paidPlan}
           />
         ) : null}
       </div>
@@ -154,7 +253,7 @@ export default function OverviewTab({
           <BannerSlot 
             placement="company_profile_related_carousel" 
             companyId={Number(company.id)}
-            blockCompetitors={!showAlternatives}
+            blockCompetitors={!showAlternatives || paidPlan}
           />
         </div>
       )}
@@ -162,12 +261,12 @@ export default function OverviewTab({
       {/* 6. Empresas Similares / Proteção (Related Companies) */}
       <RelatedCompaniesCarousel
         company={company}
-        showAlternatives={showAlternatives && !paidPlan}
+        mode={displayMode}
         relatedCompanies={relatedCompanies.slice(0, 5)}
-        loading={relatedLoading}
+        onRetry={handleRetryRelated}
       />
 
-      {showAlternatives && !paidPlan && !relatedLoading && relatedCompanies.length > 0 && (
+      {displayMode === 'results' && relatedCompanies.length > 0 && (
         <RelatedCompaniesTable companies={relatedCompanies} />
       )}
 

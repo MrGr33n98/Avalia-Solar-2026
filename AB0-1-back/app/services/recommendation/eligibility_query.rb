@@ -15,12 +15,18 @@ module Recommendation
                      .where(moderation_status: 'approved')
                      .includes(:categories, :company_service_areas, logo_attachment: :blob)
 
+      if context.exclude_company_id.present?
+        scope = scope.where.not(id: context.exclude_company_id)
+      end
+
       if context.segment.present?
         scope = scope.where(segment: context.segment)
       end
 
       if context.category_slug.present?
         scope = scope.joins(:categories).where(categories: { slug: context.category_slug })
+      elsif context.category_id.present?
+        scope = scope.joins(:categories).where(categories: { id: context.category_id })
       end
 
       if context.local?

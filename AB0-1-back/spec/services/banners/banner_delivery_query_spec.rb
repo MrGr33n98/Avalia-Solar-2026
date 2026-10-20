@@ -144,4 +144,56 @@ RSpec.describe Banners::BannerDeliveryQuery do
       }.not_to raise_error
     end
   end
+
+  context 'proteção contra concorrentes (server-side governance)' do
+    let!(:company_profile) { create(:company) }
+    let!(:competitor_company) { create(:company) }
+
+    let!(:institutional_banner) do
+      create(:banner, :approved, active: true, company: nil, sponsored: false)
+    end
+
+    let!(:own_banner) do
+      create(:banner, :approved, active: true, company: company_profile, sponsored: false)
+    end
+
+    let!(:competitor_banner) do
+      create(:banner, :approved, active: true, company: competitor_company, sponsored: false)
+    end
+
+    it 'bloqueia banner de concorrente no servidor quando block_competitors é true' do
+      result = described_class.call(
+        position: institutional_banner.position,
+        profile_company_id: company_profile.id,
+        block_competitors: true
+      ).to_a
+
+      expect(result).to include(institutional_banner)
+      expect(result).to include(own_banner)
+      expect(result).not_to include(competitor_banner)
+    end
+
+    it 'bloqueia banner de concorrente no servidor quando a empresa do perfil possui plano pago' do
+      allow_any_instance_of(Company).to receive(:has_paid_plan?).and_return(true)
+
+      result = described_class.call(
+        position: institutional_banner.position,
+        profile_company_id: company_profile.id
+      ).to_a
+
+      expect(result).not_to include(competitor_banner)
+    end
+
+    it 'permite anúncios de terceiros quando empresa é Free e block_competitors é false' do
+      allow_any_instance_of(Company).to receive(:has_paid_plan?).and_return(false)
+
+      result = described_class.call(
+        position: institutional_banner.position,
+        profile_company_id: company_profile.id,
+        block_competitors: false
+      ).to_a
+
+      expect(result).to include(competitor_banner)
+    end
+  end
 end

@@ -25,13 +25,23 @@ module Api
           request_id: request_id
         )
 
+        expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
         render json: payload
       end
 
       private
 
       def filter_params
-        params.permit(:city, :state, :category_slug, :segment, :limit)
+        params.permit(
+          :city,
+          :state,
+          :category_slug,
+          :category_id,
+          :segment,
+          :limit,
+          :exclude_company_id,
+          :context_company_id
+        )
       end
 
       def parse_limit(val)

@@ -35,6 +35,13 @@ export type RecommendationItem = {
   comparable_group?: string | null;
   verified?: boolean | null;
   sponsored?: boolean | null;
+  featured?: boolean | null;
+  city?: string | null;
+  state?: string | null;
+  rating_avg?: number | null;
+  rating_count?: number | null;
+  response_time_sla?: string | null;
+  delivered_projects_score?: number | null;
   recommendation_reason?: RecommendationReason | null;
   coverage?: {
     type?: string | null;
@@ -317,7 +324,16 @@ export const publicCompaniesApi = {
   },
 
   getRecommendations: async (
-    params?: { city?: string; state?: string; category_slug?: string; segment?: string; limit?: number },
+    params?: {
+      city?: string;
+      state?: string;
+      category_slug?: string;
+      category_id?: number;
+      segment?: string;
+      limit?: number;
+      exclude_company_id?: number;
+      context_company_id?: number;
+    },
     options?: PublicFetchOptions<RecommendationResponse>
   ): Promise<RecommendationResponse> => {
     const payload = await fetchApiPublic<unknown, RecommendationResponse>('recommendations', {

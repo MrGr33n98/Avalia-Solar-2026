@@ -12,6 +12,14 @@ module Recommendation
     end
 
     def call
+      if context.context_company_id.present?
+        context_company = Company.find_by(id: context.context_company_id)
+        if context_company&.has_paid_plan?
+          # Empresas com plano pago ativo são estritamente protegidas contra anúncios patrocinados concorrentes
+          return { sponsored: [], pinned: [] }
+        end
+      end
+
       active_placements = RecommendationPlacement.active_now
                                                    .where(company_id: eligible_company_ids)
                                                    .includes(:company)
@@ -25,6 +33,8 @@ module Recommendation
         if category
           active_placements = active_placements.where('category_id IS NULL OR category_id = ?', category.id)
         end
+      elsif context.category_id.present?
+        active_placements = active_placements.where('category_id IS NULL OR category_id = ?', context.category_id)
       end
 
       # Filter out expired or max_impressions reached placements

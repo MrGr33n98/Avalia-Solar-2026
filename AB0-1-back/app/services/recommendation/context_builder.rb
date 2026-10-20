@@ -9,17 +9,31 @@ module Recommendation
       explicit_city = params[:city].presence
       explicit_state = params[:state].presence
       category_slug = params[:category_slug].presence
+      category_id = params[:category_id].presence
       segment = params[:segment].presence
       visitor_id = params[:visitor_id].presence || request&.cookies&.[]('avalia_visitor_id')
+      exclude_company_id = params[:exclude_company_id].presence
+      context_company_id = params[:context_company_id].presence
+
+      context_company = Company.find_by(id: context_company_id) if context_company_id.present?
+      if context_company.present?
+        exclude_company_id ||= context_company.id
+        segment ||= context_company.segment
+        category_slug ||= context_company.primary_category&.seo_url || context_company.categories.first&.slug
+        category_id ||= context_company.primary_category_id || context_company.categories.first&.id
+      end
 
       if explicit_city.present? || explicit_state.present?
         return Context.new(
           city: explicit_city,
           state: explicit_state,
           category_slug: category_slug,
+          category_id: category_id,
           segment: segment,
           visitor_id: visitor_id,
-          location_source: :explicit_param
+          location_source: :explicit_param,
+          exclude_company_id: exclude_company_id,
+          context_company_id: context_company_id
         )
       end
 
@@ -32,9 +46,12 @@ module Recommendation
             city: user_city,
             state: user_state,
             category_slug: category_slug,
+            category_id: category_id,
             segment: segment,
             visitor_id: visitor_id,
-            location_source: :user_profile
+            location_source: :user_profile,
+            exclude_company_id: exclude_company_id,
+            context_company_id: context_company_id
           )
         end
       end
@@ -48,9 +65,12 @@ module Recommendation
             city: cookie_city,
             state: cookie_state,
             category_slug: category_slug,
+            category_id: category_id,
             segment: segment,
             visitor_id: visitor_id,
-            location_source: :cookie
+            location_source: :cookie,
+            exclude_company_id: exclude_company_id,
+            context_company_id: context_company_id
           )
         end
       end
@@ -64,19 +84,40 @@ module Recommendation
             city: cf_city,
             state: cf_region,
             category_slug: category_slug,
+            category_id: category_id,
             segment: segment,
             visitor_id: visitor_id,
-            location_source: :edge_header
+            location_source: :edge_header,
+            exclude_company_id: exclude_company_id,
+            context_company_id: context_company_id
           )
         end
       end
 
-      # 5. Fallback National
+      # 5. Fallback Company Profile Location (sede da empresa visitada)
+      if context_company.present? && (context_company.city.present? || context_company.state.present?)
+        return Context.new(
+          city: context_company.city,
+          state: context_company.state,
+          category_slug: category_slug,
+          category_id: category_id,
+          segment: segment,
+          visitor_id: visitor_id,
+          location_source: :company_profile_fallback,
+          exclude_company_id: exclude_company_id,
+          context_company_id: context_company_id
+        )
+      end
+
+      # 6. Fallback National
       Context.new(
         category_slug: category_slug,
+        category_id: category_id,
         segment: segment,
         visitor_id: visitor_id,
-        location_source: :fallback_national
+        location_source: :fallback_national,
+        exclude_company_id: exclude_company_id,
+        context_company_id: context_company_id
       )
     end
   end

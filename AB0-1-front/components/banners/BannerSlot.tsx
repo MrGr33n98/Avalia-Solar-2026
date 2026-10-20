@@ -71,6 +71,8 @@ export function BannerSlot({
     limit,
     category_id: categoryId,
     company_id: companyId,
+    profile_company_id: companyId,
+    block_competitors: blockCompetitors,
     enabled: inView,
   });
 

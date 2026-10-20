@@ -25,6 +25,8 @@ interface UseBannersQueryOptions {
   limit?: number;
   category_id?: number | string;
   company_id?: number | string;
+  profile_company_id?: number | string;
+  block_competitors?: boolean;
   slot_key?: string;
   state?: string;
   city?: string;
@@ -61,6 +63,8 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
     limit,
     category_id,
     company_id,
+    profile_company_id,
+    block_competitors,
     slot_key,
     state,
     city,
@@ -80,7 +84,7 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
   return useQuery<Banner[]>({
     queryKey: [
       'banners',
-      { position, fallbackPositions, limit, category_id, company_id, slot_key, state, city, audienceKey, testAdsBypass },
+      { position, fallbackPositions, limit, category_id, company_id, profile_company_id, block_competitors, slot_key, state, city, audienceKey, testAdsBypass },
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -92,6 +96,8 @@ export function useBannersQuery(options: UseBannersQueryOptions = {}) {
       if (limit) params.append('limit', String(limit));
       if (category_id) params.append('category_id', String(category_id));
       if (company_id) params.append('company_id', String(company_id));
+      if (profile_company_id) params.append('profile_company_id', String(profile_company_id));
+      if (block_competitors !== undefined) params.append('block_competitors', String(block_competitors));
       if (slot_key) params.append('slot_key', slot_key);
       if (state) params.append('state', state);
       if (city) params.append('city', city);
