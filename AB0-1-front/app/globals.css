@@ -1136,8 +1136,7 @@ body[data-scroll-locked] {
   button,
   [role="button"],
   a[href].inline-flex,
-  .shadcn-button,
-  .inline-flex.items-center.justify-center {
+  .shadcn-button {
     min-height: 48px;
     min-width: 48px;
   }
