@@ -139,7 +139,7 @@ const normalizeCompanyData = (raw: any): CompanyCardData => {
 
   const rawSentiment = comp?.reputation?.sentiment ?? comp?.sentiment;
   const sentiment =
-    rawSentiment && typeof rawSentiment.positive === 'number'
+    reviewsCount > 0 && rawSentiment && typeof rawSentiment.positive === 'number'
       ? {
           positive: Number(rawSentiment.positive),
           neutral: Number(rawSentiment.neutral || 0),
@@ -150,7 +150,7 @@ const normalizeCompanyData = (raw: any): CompanyCardData => {
   const rawRecommendation =
     comp?.reputation?.recommendation_rate ?? comp?.recommendation_rate;
   const recommendationRate =
-    rawRecommendation != null && !isNaN(Number(rawRecommendation))
+    reviewsCount > 0 && rawRecommendation != null && !isNaN(Number(rawRecommendation))
       ? Number(rawRecommendation)
       : null;
 
@@ -780,6 +780,7 @@ export default function CompanyCard({
         sentiment={data.reputation.sentiment}
         recommendationRate={data.reputation.recommendation_rate}
         reviewsPath={`${companyPath}#reviews`}
+        reviewActionPath={`${companyPath}#review`}
       />
     </>
   );

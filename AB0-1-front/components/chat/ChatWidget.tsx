@@ -538,6 +538,7 @@ export default function ChatWidget() {
 
   return (
     <div
+      data-chat-widget
       className={cn(
         "fixed font-sans flex flex-col items-end pointer-events-none",
         WIDGET_POSITION_CLASSES.mobivolt,

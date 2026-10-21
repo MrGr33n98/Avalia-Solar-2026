@@ -129,6 +129,34 @@ describe('CompanyCard V2 — Swiss Enterprise Discovery Card', () => {
     expect(screen.queryByText('0.0')).not.toBeInTheDocument();
   });
 
+  it('neutraliza indicadores falsamente positivos quando rating_count é 0 (Regressão Growatt)', () => {
+    const zeroReviewsWithFakePayload = {
+      ...baseCompany,
+      rating_avg: 0,
+      rating_count: 0,
+      reputation: {
+        rating_avg: null,
+        rating_count: 0,
+        sentiment: { positive: 100, neutral: 0, negative: 0 },
+        recommendation_rate: 100,
+      },
+    };
+
+    render(<CompanyCard company={zeroReviewsWithFakePayload} />);
+
+    // Deve exibir honestamente que está sem avaliações
+    expect(screen.getAllByText('Sem avaliações').length).toBeGreaterThan(0);
+
+    // Abre o Sheet clicando no chip
+    const reviewChip = screen.getByRole('button', { name: /Sem avaliações/i });
+    fireEvent.click(reviewChip);
+
+    // O Sheet deve exibir o estado vazio e NUNCA 100% positivo ou 100% recomendado
+    expect(screen.getByText('Ainda não há avaliações')).toBeInTheDocument();
+    expect(screen.queryByText(/100% dos clientes recomendam/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Positivo')).not.toBeInTheDocument();
+  });
+
   it('renderiza cobertura real formatada sem dados falsos de Todo o Brasil (US-008)', () => {
     render(<CompanyCard company={baseCompany} />);
 
@@ -153,8 +181,9 @@ describe('CompanyCard V2 — Swiss Enterprise Discovery Card', () => {
     const reviewChip = screen.getByRole('button', { name: /18 avaliações/i });
     fireEvent.click(reviewChip);
 
-    // O Sheet deve abrir exibindo o título
-    expect(screen.getByText('Avaliações da WEG Solar')).toBeInTheDocument();
+    // O Sheet deve abrir exibindo o título e o subtítulo
+    expect(screen.getAllByText('WEG Solar').length).toBeGreaterThan(0);
+    expect(screen.getByText('Avaliações da comunidade')).toBeInTheDocument();
     expect(screen.getByText('Ver todas as avaliações')).toBeInTheDocument();
   });
 

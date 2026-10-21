@@ -25,14 +25,23 @@ module Reviews
           average_rating: 0,
           total_reviews: 0,
           scores_distribution: empty_distribution,
-          criteria_breakdown: {}
+          criteria_breakdown: {},
+          recommendation_rate: nil,
+          nps_score: nil,
+          nps_responses: 0
         )
       else
+        rec_rate = calculate_recommendation_rate(reviews, count)
+        nps_data = calculate_nps(reviews)
+
         aggregate.update!(
           average_rating: @category.present? ? calculate_category_average(reviews) : calculate_global_average,
           total_reviews: count,
           scores_distribution: calculate_distribution(reviews),
-          criteria_breakdown: calculate_criteria_breakdown(reviews)
+          criteria_breakdown: calculate_criteria_breakdown(reviews),
+          recommendation_rate: rec_rate,
+          nps_score: nps_data[:score],
+          nps_responses: nps_data[:responses]
         )
       end
 
@@ -135,6 +144,29 @@ module Reviews
       data = scores.group(:title_snapshot).average(:score)
       data.each { |title, avg| breakdown[title] = avg.to_f.round(2) }
       breakdown
+    end
+
+    def calculate_recommendation_rate(reviews, count)
+      rec_reviews = reviews.where("metadata->>'would_recommend' IS NOT NULL")
+      rec_total = rec_reviews.count
+      if rec_total.positive?
+        positive_recs = rec_reviews.where("metadata->>'would_recommend' IN ('true', 't', '1', 'yes')").count
+        ((positive_recs.to_f / rec_total) * 100).round(2)
+      else
+        pos_stars = reviews.where('rating >= 4').count
+        ((pos_stars.to_f / count) * 100).round(2)
+      end
+    end
+
+    def calculate_nps(reviews)
+      nps_reviews = reviews.where.not(nps_score: nil)
+      nps_count = nps_reviews.count
+      return { score: nil, responses: 0 } if nps_count.zero?
+
+      promoters = nps_reviews.where('nps_score >= 9').count
+      detractors = nps_reviews.where('nps_score <= 6').count
+      score = (((promoters - detractors).to_f / nps_count) * 100).round(2)
+      { score: score, responses: nps_count }
     end
 
     def empty_distribution

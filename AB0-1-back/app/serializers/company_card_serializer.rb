@@ -136,7 +136,7 @@ class CompanyCardSerializer < ActiveModel::Serializer
     neutral_count = dist['3'].to_i
     negative_count = dist['1'].to_i + dist['2'].to_i
 
-    if total.zero? && rating_count > 0
+    if total.zero? && rating_count > 0 && rating_avg.present?
       positive_pct = [[(rating_avg.to_f - 1) / 4.0, 0].max, 1].min
       negative_pct = [1 - positive_pct - 0.08, 0].max
       neutral_pct = [1 - positive_pct - negative_pct, 0].max
@@ -153,21 +153,24 @@ class CompanyCardSerializer < ActiveModel::Serializer
                     negative: ((negative_count.to_f / total) * 100).round
                   }
                 else
-                  { positive: 100, neutral: 0, negative: 0 }
+                  nil
                 end
 
     recommendation_rate = aggregate&.recommendation_rate&.to_f
     if recommendation_rate.nil? && total > 0
       recommendation_rate = ((positive_count.to_f / total) * 100).round
-    elsif recommendation_rate.nil?
-      recommendation_rate = 100
+    elsif total.zero?
+      recommendation_rate = nil
     end
+
+    nps_responses = aggregate&.try(:nps_responses)&.to_i || aggregate&.try(:nps_count)&.to_i || 0
+    nps_score = nps_responses.positive? ? aggregate&.try(:nps_score)&.to_f : nil
 
     {
       rating_avg: rating_avg,
       rating_count: rating_count,
-      nps_score: aggregate&.try(:nps_score)&.to_f,
-      nps_responses: aggregate&.try(:nps_count)&.to_i || 0,
+      nps_score: nps_score,
+      nps_responses: nps_responses,
       recommendation_rate: recommendation_rate,
       sentiment: sentiment,
       recent_reviewer_avatars: []

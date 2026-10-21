@@ -24,4 +24,23 @@ class CompanyCardSerializerTest < ActiveSupport::TestCase
     assert_equal 50, data[:operations][:delivered_projects]
     assert_equal 120, data[:operations][:sla_minutes]
   end
+
+  test "should return nil reputation metrics when company has no reviews" do
+    company = Company.new(
+      name: "Growatt Brasil",
+      slug: "growatt-brasil",
+      rating_avg: nil,
+      rating_count: 0
+    )
+
+    serializer = CompanyCardSerializer.new(company)
+    data = serializer.as_json
+
+    assert_nil data[:reputation][:rating_avg]
+    assert_equal 0, data[:reputation][:rating_count]
+    assert_nil data[:reputation][:sentiment]
+    assert_nil data[:reputation][:recommendation_rate]
+    assert_nil data[:reputation][:nps_score]
+    assert_equal 0, data[:reputation][:nps_responses]
+  end
 end

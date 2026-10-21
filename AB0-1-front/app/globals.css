@@ -1122,6 +1122,15 @@ body[data-scroll-locked] {
   width: 100%;
 }
 
+body.dialog-open [data-chat-widget],
+body.modal-open [data-chat-widget],
+body[data-scroll-locked] [data-chat-widget] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 /* 2. SAFE AREA reforçada para iPhones notch/dynamic island & Android nav bar */
 :root {
   --sat: env(safe-area-inset-top, 0px);

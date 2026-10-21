@@ -112,7 +112,7 @@ class CompanyListSerializer < ActiveModel::Serializer
                 end
 
     nps_avg       = aggregate&.try(:nps_score)&.to_f
-    nps_responses = aggregate&.try(:nps_count)&.to_i || 0
+    nps_responses = aggregate&.try(:nps_responses)&.to_i || aggregate&.try(:nps_count)&.to_i || 0
 
     dist           = aggregate&.scores_distribution || {}
     total          = dist.values.map(&:to_i).sum
@@ -121,7 +121,7 @@ class CompanyListSerializer < ActiveModel::Serializer
     negative_count = dist['1'].to_i + dist['2'].to_i
 
     # Fallback baseado no rating_avg (sem queries extras) quando aggregate não existe
-    if total.zero? && rating_count > 0
+    if total.zero? && rating_count > 0 && rating_avg.present?
       positive_pct   = [[(rating_avg - 1) / 4.0, 0].max, 1].min
       negative_pct   = [1 - positive_pct - 0.08, 0].max
       neutral_pct    = [1 - positive_pct - negative_pct, 0].max
@@ -138,14 +138,14 @@ class CompanyListSerializer < ActiveModel::Serializer
                     negative: ((negative_count.to_f / total) * 100).round
                   }
                 else
-                  { positive: 100, neutral: 0, negative: 0 }
+                  nil
                 end
 
     recommendation_rate = aggregate&.recommendation_rate&.to_f
     if recommendation_rate.nil? && total > 0
       recommendation_rate = ((positive_count.to_f / total) * 100).round
-    elsif recommendation_rate.nil?
-      recommendation_rate = rating_avg.present? && rating_avg >= 3.5 ? 100 : 80
+    elsif total.zero?
+      recommendation_rate = nil
     end
 
     recent_reviewer_avatars = []
@@ -153,7 +153,7 @@ class CompanyListSerializer < ActiveModel::Serializer
     {
       rating_avg:          rating_avg,
       rating_count:        rating_count,
-      nps_score:           nps_avg,
+      nps_score:           nps_responses.positive? ? nps_avg : nil,
       nps_responses:       nps_responses,
       recommendation_rate: recommendation_rate,
       sentiment:           sentiment,
