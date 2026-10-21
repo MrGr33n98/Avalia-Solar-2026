@@ -45,7 +45,7 @@ export default function MobileCompanyFilterBar({
   return (
     <div
       className={cn(
-        'w-full bg-white border-b border-slate-100 flex items-center justify-start gap-2 px-4 py-2 overflow-x-auto select-none no-scrollbar snap-x snap-mandatory',
+        'w-full bg-white border-b border-slate-100 flex items-center justify-start gap-2 px-3 py-1.5 overflow-x-auto select-none no-scrollbar snap-x snap-mandatory',
         className
       )}
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}

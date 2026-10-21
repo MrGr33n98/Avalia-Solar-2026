@@ -49,7 +49,7 @@ export const ActiveFiltersSummary: React.FC<ActiveFiltersSummaryProps> = ({
   if (activeChips.length === 0) return null;
 
   return (
-    <div className="space-y-2 px-4 py-3 md:space-y-3 md:px-5 md:py-4 border-b border-slate-200">
+    <div className="space-y-1.5 px-3 py-2 md:space-y-3 md:px-5 md:py-4 border-b border-slate-200">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
           Filtros ativos ({activeChips.length})

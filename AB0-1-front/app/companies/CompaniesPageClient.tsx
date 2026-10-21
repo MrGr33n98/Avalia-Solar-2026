@@ -703,20 +703,20 @@ export function CompaniesContent({
           </form>
         </div>
 
-        <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1500px] px-3 py-3 sm:px-6 md:py-6 lg:px-8">
           <div className="flex w-full min-w-0 flex-col items-start gap-4 dashboard:gap-4 xl:gap-6 2xl:gap-8 dashboard:flex-row">
             <aside className="hidden dashboard:block dashboard:w-[220px] xl:w-[240px] 2xl:w-[300px] shrink-0">
               <FilterSidebar hideMobileTrigger={true} />
             </aside>
 
-            <div className="w-full min-w-0 flex-1 space-y-6">
-              <div className="w-full min-w-0 max-w-full">
+            <div className="flex w-full min-w-0 flex-1 flex-col gap-3 md:gap-6">
+              <div className="w-full min-w-0 max-w-full empty:hidden">
                 <BannerByLocation location="companies_top" className="max-w-full" />
               </div>
 
               <ActiveFiltersSummary filters={filters} onRemove={removeFilter} />
 
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-4 sm:items-center sm:justify-between">
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                     {pageHeading}
@@ -805,7 +805,7 @@ export function CompaniesContent({
 
               {/* Swiss Style: Contador de resultados */}
               {!loading && viewMode !== 'map' && (
-                <p className="text-xs text-slate-400 font-medium -mt-2">
+                <p className="text-xs text-slate-400 font-medium -mt-1 md:-mt-2">
                   Mostrando {Math.min(companies.length, PAGE_SIZE)} de {totalCount} empresas
                 </p>
               )}
@@ -894,7 +894,7 @@ export function CompaniesContent({
                 {loading ? (
                   <div
                     className={cn(
-                      'grid w-full min-w-0 gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]',
+                      'grid w-full min-w-0 gap-3 sm:gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]',
                       viewMode !== 'grid' && 'grid-cols-1'
                     )}
                     style={
@@ -935,7 +935,7 @@ export function CompaniesContent({
                       <div
                         data-testid="companies-grid"
                         className={cn(
-                          'grid w-full min-w-0 gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]',
+                          'grid w-full min-w-0 gap-3 sm:gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]',
                           viewMode !== 'grid' && 'grid-cols-1'
                         )}
                         style={
