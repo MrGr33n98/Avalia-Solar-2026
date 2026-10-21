@@ -14,7 +14,9 @@ export function FavoriteCompanyCard({
   favorite: Favorite & { item: FavoriteCompany };
   onRemoved?: () => void;
 }) {
-  const item = favorite.item;
+  const item = favorite?.item;
+  if (!item || !item.name) return null;
+
   const href = buildCompanyPath(item.slug, item.name, item.id);
   return (
     <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">

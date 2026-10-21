@@ -22,16 +22,27 @@ export default function FavoritesPage() {
     if (initial === 'companies' || initial === 'products') setFilter(initial);
   }, []);
 
-  useEffect(() => {
-    let active = true;
+  const loadFavorites = () => {
+    setLoading(true);
+    setError(false);
     void favoritesApi.list({ per_page: 100 }).then((response) => {
-      if (!active) return;
-      setFavorites(response.data);
-      track('favorites_page_viewed', { total: response.meta.total });
+      const items = Array.isArray(response?.data)
+        ? response.data.filter(
+            (favorite) =>
+              Boolean(favorite?.item) &&
+              ['Company', 'Product'].includes(favorite.favoritable_type)
+          )
+        : [];
+      setFavorites(items);
+      track('favorites_page_viewed', { total: response?.meta?.total ?? items.length });
     }).catch(() => {
-      if (active) { setError(true); toast.error('Não foi possível carregar favoritos'); }
-    }).finally(() => active && setLoading(false));
-    return () => { active = false; };
+      setError(true);
+      toast.error('Não foi possível carregar favoritos');
+    }).finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadFavorites();
   }, []);
 
   const filteredFavorites = useMemo(() => {

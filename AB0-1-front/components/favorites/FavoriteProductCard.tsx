@@ -13,7 +13,9 @@ export function FavoriteProductCard({
   favorite: Favorite & { item: FavoriteProduct };
   onRemoved?: () => void;
 }) {
-  const item = favorite.item;
+  const item = favorite?.item;
+  if (!item || !item.name) return null;
+
   const href = buildProductPath(item.id, item.name);
   return (
     <article className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
