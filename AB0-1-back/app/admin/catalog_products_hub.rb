@@ -11,7 +11,8 @@ ActiveAdmin.register_page 'Catálogo & Produtos' do
       ['Produtos', admin_products_path],
       ['Categorias', admin_categories_path],
       ['Empresas & Produtos', admin_company_products_path],
-      ['Ofertas', admin_product_offers_path]
+      ['Ofertas', admin_product_offers_path],
+      ['Serviços', admin_company_services_path]
     ]
 
     div class: 'catalog-products-hub-tabs', style: 'display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;' do
@@ -38,6 +39,8 @@ ActiveAdmin.register_page 'Catálogo & Produtos' do
     columns do
       column { metric.call('Vínculos ativos', CompanyProduct.active_status.count, 'Empresa-produto') }
       column { metric.call('Ofertas ativas', ProductOffer.active_status.count, 'Ofertas disponíveis') }
+      column { metric.call('Serviços ativos', CompanyService.active_status.count, 'Serviços publicados') }
+      column { metric.call('Serviços totais', CompanyService.count, 'Cadastrados por empresas') }
     end
 
     columns do

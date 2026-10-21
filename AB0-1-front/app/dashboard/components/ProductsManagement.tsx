@@ -25,7 +25,7 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
-  Tag,
+  Wrench,
   X,
 } from 'lucide-react';
 
@@ -68,6 +68,7 @@ import { fetchApi } from '@/lib/api';
 
 import { cn } from '../utils';
 import type { Product } from '../types';
+import ServicesManagement from './ServicesManagement';
 import {
   type CatalogFilters,
   type ProductInput,
@@ -313,6 +314,9 @@ export default function ProductsManagement({
   const [archivingId, setArchivingId] =
     useState<string | null>(null);
 
+  const [activeCatalogSubTab, setActiveCatalogSubTab] =
+    useState<'products' | 'services'>('products');
+
   /* ------------------------------------------------------------------------ */
   /*                              LOAD CATEGORIES                             */
   /* ------------------------------------------------------------------------ */
@@ -396,7 +400,7 @@ export default function ProductsManagement({
         product.short_description || '',
       price: String(product.price ?? ''),
       price_mode:
-        (product as any).price_mode || 'fixed',
+        product.price_mode || 'fixed',
       stock: String(product.stock ?? 0),
       status:
         (product.status as ProductStatus) || 'draft',
@@ -697,10 +701,57 @@ export default function ProductsManagement({
       </header>
 
       {/* ------------------------------------------------------------------ */}
-      {/* SUMMARY                                                            */}
+      {/* INTERNAL SUB-TABS: PRODUTOS / SERVIÇOS                             */}
       {/* ------------------------------------------------------------------ */}
+      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveCatalogSubTab('products')}
+          className={cn(
+            'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition',
+            activeCatalogSubTab === 'products'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+          )}
+        >
+          <Package className="h-4 w-4" />
+          Produtos
+          <span
+            className={cn(
+              'rounded-full px-2 py-0.5 text-xs font-bold',
+              activeCatalogSubTab === 'products'
+                ? 'bg-slate-800 text-white'
+                : 'bg-slate-100 text-slate-600',
+            )}
+          >
+            {stats.total}
+          </span>
+        </button>
 
-      <div className="rounded-[28px] border border-slate-200/70 bg-slate-50/50 p-3 sm:p-4">
+        <button
+          type="button"
+          onClick={() => setActiveCatalogSubTab('services')}
+          className={cn(
+            'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition',
+            activeCatalogSubTab === 'services'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+          )}
+        >
+          <Wrench className="h-4 w-4" />
+          Serviços
+        </button>
+      </div>
+
+      {activeCatalogSubTab === 'services' ? (
+        <ServicesManagement companyId={companyId} />
+      ) : (
+        <>
+          {/* ------------------------------------------------------------------ */}
+          {/* SUMMARY                                                            */}
+          {/* ------------------------------------------------------------------ */}
+
+          <div className="rounded-[28px] border border-slate-200/70 bg-slate-50/50 p-3 sm:p-4">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
           <MetricCard
             label="Publicados"
@@ -1215,17 +1266,11 @@ export default function ProductsManagement({
                       </TableCell>
 
                       <TableCell className="whitespace-nowrap text-sm font-bold text-slate-900">
-                        {(product as any)
-                          .price_mode ===
-                        'on_request'
+                        {product.price_mode === 'on_request'
                           ? 'Sob consulta'
-                          : (product as any)
-                                .price_mode ===
-                              'hidden'
+                          : product.price_mode === 'hidden'
                             ? '—'
-                            : (product as any)
-                                  .price_mode ===
-                                'starting_at'
+                            : product.price_mode === 'starting_at'
                               ? `A partir de ${formatCurrency(
                                   product.price,
                                 )}`
@@ -1900,6 +1945,8 @@ export default function ProductsManagement({
           </div>
         </DialogContent>
       </Dialog>
+        </>
+      )}
     </section>
   );
 }

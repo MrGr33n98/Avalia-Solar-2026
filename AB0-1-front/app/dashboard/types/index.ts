@@ -96,6 +96,7 @@ export interface Product {
   name: string;
   description: string;
   price: string | number;
+  price_mode?: 'fixed' | 'starting_at' | 'on_request' | 'hidden';
   brand_id?: number | string;
   brand_slug?: string;
   brand?: { id: number | string; name: string; slug: string };
