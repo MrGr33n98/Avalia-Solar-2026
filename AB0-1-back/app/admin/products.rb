@@ -5,7 +5,7 @@ ActiveAdmin.register Product do
   permit_params do
     base = [
       :name, :description, :short_description, :price, :sku, :stock, :status, :featured,
-      :company_id, :seo_title, :seo_description,
+      :company_id, :seo_title, :seo_description, :price_mode, :brand_id,
       { category_ids: [] },
       { images: [] }
     ]
@@ -13,6 +13,21 @@ ActiveAdmin.register Product do
     # Backward-compatible: only permit persisted image_url column if it exists.
     base << :image_url if Product.column_names.include?('image_url')
     base
+  end
+
+  action_item :toggle_featured, only: :show do
+    if resource.featured?
+      link_to 'Remover Destaque (Unfeature)', toggle_featured_admin_product_path(resource), method: :put, class: 'action-item-button'
+    else
+      link_to '⭐ Destacar Produto (Feature)', toggle_featured_admin_product_path(resource), method: :put, class: 'action-item-button'
+    end
+  end
+
+  member_action :toggle_featured, method: :put do
+    new_state = !resource.featured?
+    resource.update!(featured: new_state)
+    redirect_back fallback_location: admin_product_path(resource),
+                  notice: "Produto \"#{resource.name}\" agora está #{new_state ? 'em DESTAQUE (Featured: Sim)' : 'SEM destaque (Featured: Não)'}."
   end
 
   # Explicitly define filters to avoid the error
@@ -82,8 +97,16 @@ ActiveAdmin.register Product do
         span "0/#{product.max_images_allowed}", class: 'aa-image-stack__count is-empty'
       end
     end
-    column :featured do |product|
-      status_tag(product.featured? ? 'Sim' : 'Não', class: "aa-status-pill #{product.featured? ? 'yes' : 'no'}")
+    column 'Destaque (Featured)', :featured, sortable: :featured do |product|
+      div style: 'display: flex; align-items: center; gap: 8px;' do
+        status_tag(product.featured? ? 'Sim' : 'Não', class: "aa-status-pill #{product.featured? ? 'yes' : 'no'}")
+        link_to(
+          product.featured? ? 'Remover' : '⭐ Destacar',
+          toggle_featured_admin_product_path(product),
+          method: :put,
+          class: 'member_link'
+        )
+      end
     end
     actions
   end
@@ -98,7 +121,17 @@ ActiveAdmin.register Product do
       row :price
       row :stock
       row :status
-      row :featured
+      row 'Destaque (Featured)' do |product|
+        div style: 'display: flex; align-items: center; gap: 12px;' do
+          status_tag(product.featured? ? 'Sim (Featured)' : 'Não (Not Featured)', class: product.featured? ? 'yes' : 'no')
+          link_to(
+            product.featured? ? 'Remover Destaque' : '⭐ Destacar Produto Agora',
+            toggle_featured_admin_product_path(product),
+            method: :put,
+            class: 'button'
+          )
+        end
+      end
       row :company
       row 'Plano da Empresa' do |product|
         if product.company&.plan
@@ -165,7 +198,8 @@ ActiveAdmin.register Product do
       f.input :sku, label: 'SKU (Código do Produto)', hint: 'Campo obrigatório - código único do produto'
       f.input :stock, label: 'Estoque'
       f.input :status, as: :select, collection: Product.statuses.keys, include_blank: false
-      f.input :featured, as: :boolean, label: 'Produto em Destaque'
+      f.input :featured, as: :boolean, label: 'Produto em Destaque (Featured)', hint: 'Marque para exibir este produto com destaque prioritário no catálogo da empresa.'
+      f.input :price_mode, as: :select, collection: Product.price_modes.keys, include_blank: false, label: 'Modo de Preço'
       f.input :company, collection: Company.all
 
       # Multiple image upload with plan-based limits
