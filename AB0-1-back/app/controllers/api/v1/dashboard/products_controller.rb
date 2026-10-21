@@ -52,8 +52,12 @@ module Api
                    .distinct
         end
 
+        def editable_products
+          current_company.products
+        end
+
         def set_product
-          @product = accessible_products.find(params[:id])
+          @product = editable_products.find(params[:id])
         end
 
         def filtered_products
@@ -120,6 +124,7 @@ module Api
             description: product.description,
             short_description: product.short_description,
             price: product.price.to_f,
+            price_mode: product.price_mode,
             featured: product.featured,
             status: product.status,
             sku: product.sku,
@@ -140,9 +145,15 @@ module Api
         end
 
         def completeness_for(product)
+          price_valid = if product.price_mode.in?(%w[on_request hidden])
+                          true
+                        else
+                          product.price.present? && product.price.positive?
+                        end
+
           fields = [
             product.name.present?, product.sku.present?, product.description.present?,
-            product.price.present? && product.price.positive?, product.categories.any?,
+            price_valid, product.categories.any?,
             product.image_urls.present?, product.stock.present?
           ]
           ((fields.count(true).to_f / fields.length) * 100).round

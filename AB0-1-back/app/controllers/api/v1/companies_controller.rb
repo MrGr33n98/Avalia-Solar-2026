@@ -6,7 +6,7 @@ module Api
 
       before_action :set_company,
                     only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories catalog
-                             feature_access social_proof views_count track_view]
+                             catalog_showcase service_detail feature_access social_proof views_count track_view]
       before_action :authenticate_api_user,
                     only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
                              analytics_traffic mine]
@@ -148,6 +148,66 @@ module Api
           code: 'CATALOG_UNAVAILABLE',
           request_id: request.request_id
         }, status: :internal_server_error
+      end
+
+      # GET /api/v1/companies/:id/catalog/showcase?tab=all&limit=5
+      def catalog_showcase
+        tab = params[:tab].presence || 'all'
+        limit = params[:limit].present? ? params[:limit].to_i : 5
+
+        result = Catalog::ShowcaseQuery.new(
+          company: @company,
+          tab: tab,
+          limit: limit
+        ).call
+
+        render json: result, status: :ok
+      rescue StandardError => e
+        Rails.logger.error(
+          "[CompaniesController#catalog_showcase] request_id=#{request.request_id} " \
+          "company_id=#{@company&.id} tab=#{params[:tab]} " \
+          "error=#{e.class}: #{e.message}"
+        )
+        render json: {
+          code: 'CATALOG_SHOWCASE_ERROR',
+          message: 'Erro ao carregar vitrine de produtos e serviços',
+          request_id: request.request_id
+        }, status: :internal_server_error
+      end
+
+      # GET /api/v1/companies/:id/services/:slug
+      def service_detail
+        service = @company.company_services.active_status.find_by(slug: params[:slug])
+        return render json: { code: 'NOT_FOUND', message: 'Serviço não encontrado' }, status: :not_found unless service
+
+        image_url = if service.images.attached?
+                      options = Rails.application.routes.default_url_options.dup
+                      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+                      Rails.application.routes.url_helpers.rails_storage_proxy_url(service.images.first, options)
+                    end
+
+        render json: {
+          data: {
+            id: service.id,
+            company_id: @company.id,
+            name: service.name,
+            slug: service.slug,
+            category_id: service.category_id,
+            category: service.category && {
+              id: service.category.id,
+              name: service.category.name,
+              slug: service.category.seo_url
+            },
+            description: service.description,
+            price_from: service.price_from&.to_f,
+            coverage: service.coverage,
+            status: service.status,
+            image_url: image_url
+          }
+        }, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[CompaniesController#service_detail] company_id=#{@company&.id} error=#{e.message}")
+        render json: { code: 'SERVICE_ERROR', message: 'Erro ao carregar detalhes do serviço' }, status: :internal_server_error
       end
 
       # GET /api/v1/companies/:id/feature_access

@@ -128,6 +128,21 @@ RSpec.describe 'Api::V1::Products', type: :request do
         json = JSON.parse(response.body)
         expect(json['data'].map { |product| product['id'] }).to include(linked_product.id)
       end
+
+      it 'excludes canonical products linked via inactive company_product relationships' do
+        inactive_linked_product = create(:product, name: 'Produto Vinculado Inativo', company: other_company)
+        CompanyProduct.create!(
+          company: company,
+          product: inactive_linked_product,
+          relationship_type: 'reseller',
+          status: 'inactive'
+        )
+
+        get '/api/v1/products', params: { company_id: company.id }
+
+        json = JSON.parse(response.body)
+        expect(json['data'].map { |product| product['id'] }).not_to include(inactive_linked_product.id)
+      end
     end
 
     context 'with brand_id filter' do

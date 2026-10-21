@@ -10,7 +10,8 @@ class Api::V1::ProductsController < Api::V1::BaseController
     if params[:company_id].present?
       company_id = params[:company_id].to_i
       scope = scope.left_joins(:company_products)
-                   .where('company_products.company_id = :company_id OR products.company_id = :company_id', company_id: company_id)
+                   .where('(company_products.company_id = :company_id AND company_products.status = :cp_active) OR products.company_id = :company_id',
+                          company_id: company_id, cp_active: 'active')
                    .distinct
     end
     scope = scope.where(brand_id: params[:brand_id]) if params[:brand_id].present?
@@ -275,8 +276,8 @@ class Api::V1::ProductsController < Api::V1::BaseController
     Company
       .joins(:products)
       .merge(active_products)
-      .select('companies.id, companies.name, companies.slug, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count, COUNT(products.id) AS products_count')
-      .group('companies.id, companies.name, companies.slug, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count')
+      .select('companies.id, companies.name, companies.slug, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count, companies.rating_count, COUNT(products.id) AS products_count')
+      .group('companies.id, companies.name, companies.slug, companies.city, companies.state, companies.verified, companies.rating_avg, companies.reviews_count, companies.rating_count')
       .order('companies.name ASC')
       .map do |company|
         {

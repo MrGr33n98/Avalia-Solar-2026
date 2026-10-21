@@ -374,6 +374,8 @@ Rails.application.routes.draw do
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
           get :catalog
+          get 'catalog/showcase', to: 'companies#catalog_showcase'
+          get 'services/:slug', to: 'companies#service_detail'
           get :social_proof
           get  :views_count
           post :track_view

@@ -7,7 +7,7 @@ RSpec.describe 'Dashboard product catalog', type: :request do
   let(:user) { create(:user, company: company, status: :active, approved_by_admin: true, confirmed_at: Time.current) }
   let(:other_company) { create(:company, status: :active) }
   let(:category) { create(:category, name: 'Inversores') }
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) { JWT.encode({ user_id: user.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{token}", 'ACCEPT' => 'application/json' } }
 
   before do
@@ -71,6 +71,26 @@ RSpec.describe 'Dashboard product catalog', type: :request do
 
       expect(response).to have_http_status(:not_found)
       expect(foreign_product.reload.name).not_to eq('Alteração indevida')
+    end
+
+    it 'does not allow mutating a foreign product even when linked via company_product' do
+      foreign_product = create(:product, company: other_company, name: 'Inversor Original')
+      CompanyProduct.create!(company: company, product: foreign_product, relationship_type: 'reseller', status: 'active')
+
+      patch "/api/v1/dashboard/products/#{foreign_product.id}", params: { product: { name: 'Inversor Adulterado' } }, headers: headers
+
+      expect(response).to have_http_status(:not_found)
+      expect(foreign_product.reload.name).to eq('Inversor Original')
+    end
+
+    it 'does not allow archiving a foreign product linked via company_product' do
+      foreign_product = create(:product, company: other_company, status: 'active')
+      CompanyProduct.create!(company: company, product: foreign_product, relationship_type: 'reseller', status: 'active')
+
+      delete "/api/v1/dashboard/products/#{foreign_product.id}", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+      expect(foreign_product.reload.status).to eq('active')
     end
   end
 end

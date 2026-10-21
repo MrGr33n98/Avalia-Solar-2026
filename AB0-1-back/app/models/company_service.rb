@@ -4,6 +4,8 @@ class CompanyService < ApplicationRecord
 
   enum status: { active: 'active', inactive: 'inactive' }, _suffix: true
 
+  has_many_attached :images
+
   validates :name, :slug, presence: true
   validates :slug, uniqueness: { scope: :company_id }
   validates :price_from, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
