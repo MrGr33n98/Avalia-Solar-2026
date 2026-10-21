@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
-export type CommunicationSurface = 'none' | 'mobivolt' | 'p2p' | 'comparison' | 'embedded_chat';
+export type CommunicationSurface = 'none' | 'mobivolt' | 'p2p' | 'comparison' | 'embedded_chat' | 'filters_drawer';
 let activeSurface: CommunicationSurface = 'none';
 const listeners = new Set<() => void>();
 

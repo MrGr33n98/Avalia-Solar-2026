@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import type { CompanyFilters } from '@/components/filters/types';
 import { CompanyCategoryPicker } from './CompanyCategoryPicker';
 import { track } from '@/lib/analytics/consolidated';
+import { CommunicationSurfaceManager } from '@/lib/communication-surface-manager';
 
 interface MobileCompanyFiltersSheetProps {
   open: boolean;
@@ -38,10 +39,39 @@ export default function MobileCompanyFiltersSheet({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
+  const [isRendered, setIsRendered] = useState(open);
+  const [isEntered, setIsEntered] = useState(open);
+
   const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities } =
     useCompanyLocationData();
   const { detectingGps, gpsError, setGpsError, getCoordinates } = useCompanyGeolocation();
   const { categories } = useCategories(true);
+
+  // Transition & Communication Surface locking
+  useEffect(() => {
+    if (open) {
+      setIsRendered(true);
+      CommunicationSurfaceManager.open('filters_drawer');
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const anim = requestAnimationFrame(() => {
+        setIsEntered(true);
+      });
+
+      return () => {
+        cancelAnimationFrame(anim);
+        document.body.style.overflow = prevOverflow;
+        CommunicationSurfaceManager.close('filters_drawer');
+      };
+    } else {
+      setIsEntered(false);
+      const timer = setTimeout(() => {
+        setIsRendered(false);
+      }, 240);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   const handleCancel = () => {
     setDraftFilters(filters);
@@ -49,7 +79,7 @@ export default function MobileCompanyFiltersSheet({
     onClose();
   };
 
-  // Keyboard Escape listener
+  // Keyboard Escape listener & Focus trap
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -76,6 +106,7 @@ export default function MobileCompanyFiltersSheet({
       }
     };
     window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isCategoryPickerOpen, filters]);
 
@@ -154,7 +185,7 @@ export default function MobileCompanyFiltersSheet({
     };
   }, [draftFilters, open]);
 
-  if (!open) return null;
+  if (!isRendered && !open) return null;
 
   const updateDraft = (updater: Partial<CompanyFilters>) => {
     setDraftFilters((prev) => ({ ...prev, ...updater }));
@@ -208,7 +239,10 @@ export default function MobileCompanyFiltersSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+      className={cn(
+        'fixed inset-0 z-[9500] flex justify-end bg-black/40 backdrop-blur-xs transition-opacity duration-[240ms] ease-out',
+        isEntered ? 'opacity-100' : 'opacity-0'
+      )}
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) handleCancel();
@@ -220,11 +254,14 @@ export default function MobileCompanyFiltersSheet({
         aria-modal="true"
         aria-labelledby="mobile-company-filters-title"
         tabIndex={-1}
-        className="relative flex max-h-[85dvh] w-full max-w-lg translate-y-0 transform flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform duration-300"
+        className={cn(
+          'relative flex h-full h-[100dvh] max-h-[100dvh] w-[70vw] max-w-[70vw] flex-col overflow-hidden rounded-l-[20px] bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.15)] transition-transform duration-[240ms] ease-out',
+          isEntered ? 'translate-x-0' : 'translate-x-full'
+        )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
-          <h2 id="mobile-company-filters-title" className="text-base font-bold text-slate-900">
+        <div className="flex items-center justify-between px-3.5 sm:px-4 py-3 border-b border-slate-100 shrink-0 pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <h2 id="mobile-company-filters-title" className="text-sm font-bold text-slate-900 truncate">
             Filtrar empresas
           </h2>
           <button
@@ -232,38 +269,40 @@ export default function MobileCompanyFiltersSheet({
             type="button"
             onClick={handleCancel}
             aria-label="Fechar filtros"
-            className="p-1 rounded-full text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors"
+            className="p-1 rounded-full text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors shrink-0"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3.5 sm:px-4 py-3.5 space-y-3.5 [-webkit-overflow-scrolling:touch]">
           {/* 1. Localização */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="space-y-2.5">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
               Localização
             </h3>
 
             {/* GPS Button */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <button
                 type="button"
                 onClick={handleGPSLocation}
                 className={cn(
-                  'flex items-center justify-center gap-2 h-11 w-full rounded-xl text-xs font-bold transition-all border',
+                  'flex items-center justify-center gap-1.5 h-10 w-full rounded-xl px-2 text-[11px] font-bold transition-all border text-center',
                   isGpsActive
                     ? 'bg-blue-50 border-blue-200 text-blue-700'
                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                 )}
               >
                 {detectingGps ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600 shrink-0" />
                 ) : (
-                  <MapPin className="h-4 w-4 text-blue-600" />
+                  <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                 )}
-                {isGpsActive ? 'Localização GPS Ativa' : 'Usar minha localização atual'}
+                <span className="truncate">
+                  {isGpsActive ? 'Localização GPS Ativa' : 'Usar minha localização atual'}
+                </span>
               </button>
               {gpsError && <p className="text-[10px] text-red-600 font-medium">{gpsError}</p>}
             </div>
@@ -271,17 +310,17 @@ export default function MobileCompanyFiltersSheet({
             {/* Radius Selector if GPS Active */}
             {isGpsActive && (
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500">
+                <label className="text-[11px] font-semibold text-slate-500">
                   Distância (Raio máximo)
                 </label>
-                <div className="grid grid-cols-5 gap-1.5">
+                <div className="grid grid-cols-4 gap-1">
                   {([25, 50, 100, 200] as const).map((r) => (
                     <button
                       key={r}
                       type="button"
                       onClick={() => updateDraft({ radius_km: r })}
                       className={cn(
-                        'h-9 rounded-lg text-xs font-semibold border transition-all',
+                        'h-8 rounded-lg text-[11px] font-semibold border transition-all text-center',
                         draftFilters.radius_km === r
                           ? 'bg-blue-600 border-blue-600 text-white font-bold'
                           : 'bg-white border-slate-200 text-slate-600'
@@ -290,25 +329,25 @@ export default function MobileCompanyFiltersSheet({
                       {r} km
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => updateDraft({ lat: null, lng: null, radius_km: null })}
-                    className={cn(
-                      'h-9 rounded-lg text-xs font-semibold border transition-all col-span-1',
-                      draftFilters.radius_km === null
-                        ? 'bg-blue-600 border-blue-600 text-white font-bold'
-                        : 'bg-white border-slate-200 text-slate-600'
-                    )}
-                  >
-                    Todo Brasil
-                  </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => updateDraft({ lat: null, lng: null, radius_km: null })}
+                  className={cn(
+                    'h-8 w-full rounded-lg text-xs font-semibold border transition-all',
+                    draftFilters.radius_km === null
+                      ? 'bg-blue-600 border-blue-600 text-white font-bold'
+                      : 'bg-white border-slate-200 text-slate-600'
+                  )}
+                >
+                  Todo Brasil
+                </button>
               </div>
             )}
 
             {/* Manual Selection (State & City) */}
             {!isGpsActive && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-2">
                 <div className="space-y-1">
                   <label
                     htmlFor="company-filter-state"
@@ -330,7 +369,7 @@ export default function MobileCompanyFiltersSheet({
                       });
                     }}
                     disabled={loadingStates}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                   >
                     <option value="">Selecione...</option>
                     {activeState && !states.includes(activeState) && (
@@ -367,7 +406,7 @@ export default function MobileCompanyFiltersSheet({
                       });
                     }}
                     disabled={!activeState || loadingCities}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:opacity-50"
+                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:opacity-50"
                   >
                     <option value="">Selecione...</option>
                     {(draftFilters.city[0] || '') &&
@@ -388,16 +427,16 @@ export default function MobileCompanyFiltersSheet({
           </div>
 
           {/* 2. Categoria */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="space-y-1.5">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
               O que você procura?
             </h3>
             <button
               type="button"
               onClick={() => setIsCategoryPickerOpen(true)}
-              className="w-full h-11 px-4 border border-slate-200 rounded-xl bg-white flex items-center justify-between text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all"
+              className="w-full h-10 px-3 border border-slate-200 rounded-xl bg-white flex items-center justify-between text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all text-left"
             >
-              <span className="truncate">
+              <span className="truncate pr-1">
                 {draftFilters.category_ids.length === 0
                   ? 'Todas as categorias'
                   : draftFilters.category_ids.length === 1
@@ -405,30 +444,30 @@ export default function MobileCompanyFiltersSheet({
                       'Categoria selecionada'
                     : `${draftFilters.category_ids.length} categorias selecionadas`}
               </span>
-              <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
             </button>
           </div>
 
           {/* 3. Confiança */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Confiança</h3>
-            <label className="flex items-center gap-3 h-12 w-full bg-slate-50 rounded-xl px-4 cursor-pointer select-none">
+          <div className="space-y-1.5">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Confiança</h3>
+            <label className="flex items-center gap-2.5 min-h-10 w-full bg-slate-50 rounded-xl px-3 py-2 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={draftFilters.verified}
                 onChange={(e) => updateDraft({ verified: e.target.checked })}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
               />
-              <span className="text-xs font-semibold text-slate-700">
+              <span className="text-xs font-semibold text-slate-700 leading-tight">
                 Somente empresas verificadas
               </span>
             </label>
           </div>
 
           {/* 4. Avaliação */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Avaliação</h3>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <div className="space-y-1.5">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Avaliação</h3>
+            <div className="grid grid-cols-2 gap-1.5">
               {(
                 [
                   { label: 'Qualquer', value: null },
@@ -449,7 +488,8 @@ export default function MobileCompanyFiltersSheet({
                     )
                   }
                   className={cn(
-                    'flex flex-col items-center justify-center h-12 rounded-xl border text-[10px] font-bold transition-all px-1.5 text-center',
+                    'flex flex-col items-center justify-center h-10 rounded-xl border text-[10px] font-bold transition-all px-1 text-center',
+                    opt.value === 'has_reviews' && 'col-span-2',
                     opt.value === 'has_reviews'
                       ? draftFilters.has_reviews
                       : draftFilters.min_rating === opt.value
@@ -464,92 +504,85 @@ export default function MobileCompanyFiltersSheet({
           </div>
 
           {/* 5. Atendimento */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="space-y-1.5">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
               Atendimento e Recursos
             </h3>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="flex items-center gap-2.5 h-11 border border-slate-200 rounded-xl px-3.5 cursor-pointer">
+            <div className="flex flex-col gap-1.5">
+              <label className="flex items-center gap-2.5 min-h-10 border border-slate-200 rounded-xl px-3 py-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={draftFilters.whatsapp_enabled}
                   onChange={(e) => updateDraft({ whatsapp_enabled: e.target.checked })}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 shrink-0"
                 />
-                <span className="text-xs font-bold text-slate-600">WhatsApp disponível</span>
+                <span className="text-xs font-bold text-slate-600 leading-tight">WhatsApp disponível</span>
               </label>
 
-              <label className="flex items-center gap-2.5 h-11 border border-slate-200 rounded-xl px-3.5 cursor-pointer">
+              <label className="flex items-center gap-2.5 min-h-10 border border-slate-200 rounded-xl px-3 py-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={draftFilters.financing_enabled}
                   onChange={(e) => updateDraft({ financing_enabled: e.target.checked })}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 shrink-0"
                 />
-                <span className="text-xs font-bold text-slate-600">Financiamento</span>
+                <span className="text-xs font-bold text-slate-600 leading-tight">Financiamento</span>
               </label>
             </div>
           </div>
         </div>
 
+        {/* Subvisão interna de Categorias (restringida aos 70vw) */}
         {isCategoryPickerOpen && (
           <div
-            className="absolute inset-0 z-10 flex items-end bg-black/20"
-            role="presentation"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setIsCategoryPickerOpen(false);
-            }}
+            className="absolute inset-0 z-30 flex flex-col bg-white rounded-l-[20px] overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Selecionar categorias"
           >
-            <div
-              className="w-full max-h-[80dvh]"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Selecionar categorias"
-            >
-              <CompanyCategoryPicker
-                selectedIds={draftCategoryIds}
-                onChange={setDraftCategoryIds}
-                onCancel={() => {
-                  setDraftCategoryIds(draftFilters.category_ids);
-                  setIsCategoryPickerOpen(false);
-                }}
-                onConfirm={() => {
-                  updateDraft({ category_ids: draftCategoryIds });
-                  setIsCategoryPickerOpen(false);
-                }}
-              />
-            </div>
+            <CompanyCategoryPicker
+              selectedIds={draftCategoryIds}
+              onChange={setDraftCategoryIds}
+              embedded={true}
+              onCancel={() => {
+                setDraftCategoryIds(draftFilters.category_ids);
+                setIsCategoryPickerOpen(false);
+              }}
+              onConfirm={() => {
+                updateDraft({ category_ids: draftCategoryIds });
+                setIsCategoryPickerOpen(false);
+              }}
+            />
           </div>
         )}
 
         {/* Footer */}
         <div
-          className="sticky bottom-0 z-20 px-5 pt-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3 shrink-0"
-          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+          className="shrink-0 px-3.5 sm:px-4 py-3 border-t border-slate-100 bg-white flex flex-col gap-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         >
-          <button
-            type="button"
-            onClick={handleClear}
-            className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors h-11 px-4"
-          >
-            Limpar filtros
-          </button>
-
           <button
             type="button"
             onClick={() => {
               onApply({ ...draftFilters, page: 1 });
             }}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl h-11 flex items-center justify-center gap-1.5 transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl h-10 flex items-center justify-center gap-1.5 transition-colors shadow-sm"
           >
-            {loadingCount && <Loader2 className="h-4 w-4 animate-spin" />}
-            <span>
+            {loadingCount && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            <span className="truncate">
               {loadingCount
                 ? 'Contando...'
                 : totalCount !== null
                   ? `Ver ${totalCount} ${totalCount === 1 ? 'empresa' : 'empresas'}`
                   : 'Aplicar filtros'}
             </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleClear}
+            className="w-full text-center text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors h-8"
+          >
+            Limpar filtros
           </button>
         </div>
       </div>

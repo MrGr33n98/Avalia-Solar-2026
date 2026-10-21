@@ -1112,7 +1112,7 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {!isOpen && (
+      {!isOpen && !isBlocked && (
         <button
           onClick={handleToggle}
           className="group pointer-events-auto relative flex h-12 w-12 sm:h-13 sm:w-13 items-center justify-center rounded-full p-0 shadow-lg shadow-blue-500/25 ring-2 ring-blue-500/30 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 bg-[#0048BD]"

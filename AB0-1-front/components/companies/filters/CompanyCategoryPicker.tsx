@@ -88,12 +88,12 @@ export function CompanyCategoryPicker({
   return (
     <div
       className={cn(
-        'flex h-full max-h-[min(80dvh,640px)] flex-col overflow-hidden bg-white',
-        embedded ? 'rounded-xl' : 'rounded-t-2xl'
+        'flex h-full flex-col overflow-hidden bg-white',
+        embedded ? 'h-full max-h-full rounded-l-[20px]' : 'max-h-[min(80dvh,640px)] rounded-t-2xl'
       )}
     >
       {/* Search Header */}
-      <div className="sticky top-0 z-10 shrink-0 border-b border-slate-100 bg-white p-4">
+      <div className="sticky top-0 z-10 shrink-0 border-b border-slate-100 bg-white p-3 sm:p-4">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
           <input
@@ -135,7 +135,7 @@ export function CompanyCategoryPicker({
       </div>
 
       {/* Footer Controls */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-white px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <Button
           variant="ghost"
           size="sm"
