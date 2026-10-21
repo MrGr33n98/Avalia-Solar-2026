@@ -528,9 +528,13 @@ export default function ProductsManagement({
       name: editor.name.trim(),
       sku: editor.sku.trim(),
       description: editor.description.trim(),
-      short_description:
-        editor.short_description.trim(),
-      price: Number(editor.price || 0),
+      short_description: editor.short_description.trim(),
+      price: (() => {
+        if (!editor.price) return 0;
+        const normalized = String(editor.price).replace(/\./g, '').replace(',', '.');
+        const num = parseFloat(normalized);
+        return isNaN(num) ? 0 : num;
+      })(),
       price_mode: editor.price_mode,
       stock: Number(editor.stock || 0),
       status: editor.status,

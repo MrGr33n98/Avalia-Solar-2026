@@ -45,6 +45,23 @@ RSpec.describe 'Dashboard product catalog', type: :request do
       expect(product.categories).to include(category)
       expect(JSON.parse(response.body).dig('product', 'status')).to eq('draft')
     end
+
+    it 'allows admin user to create a product for a company via company_id param' do
+      admin_user = create(:user, company: nil, role: 'admin', status: :active, approved_by_admin: true, confirmed_at: Time.current)
+      admin_token = JWT.encode({ user_id: admin_user.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256')
+      admin_headers = { 'Authorization' => "Bearer #{admin_token}", 'ACCEPT' => 'application/json' }
+
+      post '/api/v1/dashboard/products', params: {
+        company_id: company.id,
+        product: {
+          name: 'Inversor GoodWe 5kW', sku: 'GW5000-MS-220V', description: 'Linha MS 5-10kw',
+          price: 5800, stock: 5, status: 'draft', category_ids: [category.id]
+        }
+      }, headers: admin_headers
+
+      expect(response).to have_http_status(:created)
+      expect(Product.find_by!(sku: 'GW5000-MS-220V').company).to eq(company)
+    end
   end
 
   describe 'PATCH and DELETE /api/v1/dashboard/products/:id' do

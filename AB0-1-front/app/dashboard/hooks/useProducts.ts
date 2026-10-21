@@ -77,7 +77,7 @@ function toFormData(input: ProductInput) {
   return payload;
 }
 
-export function useProducts(_companyId: string) {
+export function useProducts(companyId?: string | number) {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [stats, setStats] = useState<CatalogStats>(EMPTY_STATS);
@@ -88,7 +88,7 @@ export function useProducts(_companyId: string) {
     try {
       setLoading(true);
       const data = await fetchApi<ProductsResponse>('/dashboard/products', {
-        params: { per_page: 100, ...nextFilters },
+        params: { per_page: 100, ...(companyId ? { company_id: companyId } : {}), ...nextFilters },
       });
       setProducts((data?.data || []).map((product) => ({ ...product, id: String(product.id) })));
       setStats(data?.meta?.stats || EMPTY_STATS);
@@ -103,22 +103,28 @@ export function useProducts(_companyId: string) {
     } finally {
       setLoading(false);
     }
-  }, [filters, toast]);
+  }, [filters, companyId, toast]);
 
   useEffect(() => {
     fetchProducts(filters);
   // A atualização deve ocorrer somente quando os filtros aplicados mudarem.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
+  }, [filters, companyId]);
 
   const applyFilters = useCallback((nextFilters: CatalogFilters) => {
     setFilters(nextFilters);
   }, []);
 
   const addProduct = async (input: ProductInput) => {
+    const formData = toFormData(input);
+    if (companyId) {
+      formData.append('company_id', String(companyId));
+      formData.append('product[company_id]', String(companyId));
+    }
     const response = await fetchApi<{ product: Product }>('/dashboard/products', {
       method: 'POST',
-      body: toFormData(input),
+      params: companyId ? { company_id: String(companyId) } : undefined,
+      body: formData,
     });
     track('Product Action', { action: 'create', product_id: response.product.id });
     await fetchProducts(filters);
@@ -126,9 +132,15 @@ export function useProducts(_companyId: string) {
   };
 
   const updateProduct = async (productId: string, input: ProductInput) => {
+    const formData = toFormData(input);
+    if (companyId) {
+      formData.append('company_id', String(companyId));
+      formData.append('product[company_id]', String(companyId));
+    }
     const response = await fetchApi<{ product: Product }>(`/dashboard/products/${productId}`, {
       method: 'PATCH',
-      body: toFormData(input),
+      params: companyId ? { company_id: String(companyId) } : undefined,
+      body: formData,
     });
     track('Product Action', { action: 'update', product_id: productId });
     await fetchProducts(filters);
@@ -136,7 +148,10 @@ export function useProducts(_companyId: string) {
   };
 
   const archiveProduct = async (productId: string) => {
-    await fetchApi(`/dashboard/products/${productId}`, { method: 'DELETE' });
+    await fetchApi(`/dashboard/products/${productId}`, {
+      method: 'DELETE',
+      params: companyId ? { company_id: String(companyId) } : undefined,
+    });
     track('Product Action', { action: 'archive', product_id: productId });
     await fetchProducts(filters);
   };

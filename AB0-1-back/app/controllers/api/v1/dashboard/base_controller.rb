@@ -25,6 +25,7 @@ module Api
         end
 
         def ensure_approved_user
+          return if current_user&.admin?
           return if current_user&.review_user?
           return if current_user&.approved_for_dashboard?
 
@@ -36,7 +37,6 @@ module Api
         end
 
         def ensure_company
-          return if current_user&.review_user?
           return if current_company.present?
 
           render_error_response(
@@ -47,7 +47,26 @@ module Api
         end
 
         def current_company
-          current_user&.company
+          @current_company ||= begin
+            param_company_id = params[:company_id] || params.dig(:product, :company_id) || params.dig(:service, :company_id)
+
+            if current_user&.admin?
+              if param_company_id.present?
+                ::Company.find_by(id: param_company_id)
+              else
+                current_user.company || current_user.active_member_companies.first
+              end
+            elsif param_company_id.present? && current_user&.active_membership_for?(param_company_id)
+              ::Company.find_by(id: param_company_id)
+            else
+              selected_company_id = cookies.signed[:active_company_id] || current_user&.company_id
+              if selected_company_id.present? && current_user&.active_membership_for?(selected_company_id)
+                ::Company.find_by(id: selected_company_id)
+              else
+                current_user&.company || current_user&.active_member_companies&.first
+              end
+            end
+          end
         end
 
         def authorize_feature!(feature_name)
