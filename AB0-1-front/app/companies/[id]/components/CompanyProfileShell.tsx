@@ -2,9 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
-import { MapPin, Phone, Mail, Globe, ExternalLink } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
 import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { Company, Product, Review } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
@@ -17,6 +16,7 @@ import CompanyProfileTabs from './CompanyProfileTabs';
 // Novos componentes da Fase 3
 import OverviewTab from './OverviewTab';
 import SidebarPremium from './SidebarPremium';
+import CompanyContactCard from './CompanyContactCard';
 
 // Importações dos subcomponentes legados de exibição para manter as abas funcionais
 import CompanyProducts from './CompanyProducts';
@@ -192,55 +192,12 @@ export default function CompanyProfileShell({
                 <MaterialsLibrary companyId={company.id} />
               </TabsContent>
 
-              {/* ABA 6: CONTATO (Placeholder com detalhes de e-mail, telefone e FAQs expansíveis) */}
+              {/* ABA 6: CONTATO */}
               <TabsContent value="contact" className="mt-0 space-y-6 focus-visible:outline-none">
-                <Card className="rounded-2xl border-none bg-white p-6 shadow-sm">
-                  <h3 className="text-lg font-black tracking-tight text-slate-950 mb-4">
-                    Informações de Contato
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      {company.phone && (
-                        <div className="flex items-center gap-3">
-                          <Phone className="h-5 w-5 text-slate-400" />
-                          <div>
-                            <p className="text-xs text-slate-400">Telefone Comercial</p>
-                            <p className="text-sm font-semibold text-slate-800">{company.phone}</p>
-                          </div>
-                        </div>
-                      )}
-                      {company.email_public && (
-                        <div className="flex items-center gap-3">
-                          <Mail className="h-5 w-5 text-slate-400" />
-                          <div>
-                            <p className="text-xs text-slate-400">E-mail de Contato</p>
-                            <p className="text-sm font-semibold text-slate-800">
-                              {company.email_public}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      {company.website && (
-                        <div className="flex items-center gap-3">
-                          <Globe className="h-5 w-5 text-slate-400" />
-                          <div>
-                            <p className="text-xs text-slate-400">Website Oficial</p>
-                            <a
-                              href={company.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm font-semibold text-blue-700 hover:underline inline-flex items-center gap-1"
-                            >
-                              Visitar site
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <ContactCoverageMap company={company} />
-                  </div>
-                </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                  <CompanyContactCard company={company} />
+                  <ContactCoverageMap company={company} />
+                </div>
 
                 <FaqSection companyId={Number(company.id)} companyName={company.name} company={company} />
               </TabsContent>
