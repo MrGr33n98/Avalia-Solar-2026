@@ -3,9 +3,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
-import { BarChart3, FileText, FolderKanban, MoreHorizontal, Pencil, Plus, RefreshCw, Send, ShieldCheck, Upload, Users } from 'lucide-react';
+import { BarChart3, Eye, FileText, FolderKanban, MoreHorizontal, Pencil, Plus, RefreshCw, RotateCcw, Send, ShieldCheck, Trash2, Upload, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
@@ -68,7 +74,6 @@ export default function ProjectsMaterialsHub({
   const [assetTarget, setAssetTarget] = useState<{ type: 'project' | 'material'; id: number } | null>(null);
   const [materialFilter, setMaterialFilter] = useState<'all' | 'active' | 'archived'>('active');
   const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
-  const [openMaterialMenu, setOpenMaterialMenu] = useState<number | null>(null);
   const [materialPdf, setMaterialPdf] = useState<File | null>(null);
   const [materialCover, setMaterialCover] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string>('');
@@ -370,7 +375,44 @@ export default function ProjectsMaterialsHub({
                     <Send className="mr-1 h-3 w-3" />Enviar para revisão
                   </Button>
                 )}
-                <div className="relative"><Button size="sm" type="button" variant="outline" aria-label="Ações do material" onClick={() => setOpenMaterialMenu(openMaterialMenu === material.id ? null : material.id)}><MoreHorizontal className="h-4 w-4" /></Button>{openMaterialMenu === material.id && <div className="absolute right-0 z-10 mt-1 w-44 rounded-lg border border-slate-200 bg-white p-1 shadow-xl"><button type="button" className="w-full rounded px-3 py-2 text-left text-sm hover:bg-slate-50" onClick={() => { setSelectedMaterialId(material.id); setOpenMaterialMenu(null); }}>Ver preview</button><button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50" onClick={() => { setOpenMaterialMenu(null); if (material.status === 'archived') { void restore(material.id); } else { void archive('material', material.id); } }}>{material.status === 'archived' ? 'Restaurar' : 'Excluir material'}</button></div>}</div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" type="button" variant="outline" aria-label="Ações do material">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 z-50 bg-white shadow-xl">
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => setSelectedMaterialId(material.id)}
+                    >
+                      <Eye className="mr-2 h-4 w-4 text-slate-500" />
+                      Ver preview
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className={material.status === 'archived' ? 'cursor-pointer text-blue-600 focus:bg-blue-50 focus:text-blue-700' : 'cursor-pointer text-rose-600 focus:bg-rose-50 focus:text-rose-700'}
+                      onClick={() => {
+                        if (material.status === 'archived') {
+                          void restore(material.id);
+                        } else {
+                          void archive('material', material.id);
+                        }
+                      }}
+                    >
+                      {material.status === 'archived' ? (
+                        <>
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Restaurar
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Excluir material
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </>
           )}
@@ -507,7 +549,24 @@ function LeadsPanel({ leads, companyId }: { leads: Leads | null; companyId: stri
 function Field({ label, name, required = false, type = 'text', value, onChange }: { label: string; name: string; required?: boolean; type?: string; value?: string; onChange?: (value: string) => void }) { return <label className="space-y-1 text-sm font-medium"><span>{label}</span><Input name={name} type={type} required={required} {...(onChange ? { value, onChange: (event) => onChange(event.target.value) } : { defaultValue: value })} /></label>; }
 function Actions({ onCancel }: { onCancel: () => void }) { return <div className="flex items-end gap-2"><Button type="submit">Salvar rascunho</Button><Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button></div>; }
 function ModerationNote({ note }: { note?: string | null }) { return note ? <span className="mt-1 block text-xs font-normal text-rose-600">Motivo da moderação: {note}</span> : null; }
-function List<T extends { id: number }>({ loading, empty, rows, children }: { loading: boolean; empty: string; rows: T[]; children: (row: T) => ReactNode }) { if (loading) return <div className="h-32 animate-pulse rounded-xl bg-slate-100" />; if (!rows.length) return <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">{empty}</div>; return <div className="divide-y overflow-hidden rounded-xl border border-slate-200 bg-white">{rows.map(row => <div key={row.id} className="grid items-center gap-3 p-4 text-sm md:grid-cols-4">{children(row)}</div>)}</div>; }
+function List<T extends { id: number }>({ loading, empty, rows, children }: { loading: boolean; empty: string; rows: T[]; children: (row: T) => ReactNode }) {
+  if (loading) return <div className="h-32 animate-pulse rounded-xl bg-slate-100" />;
+  if (!rows.length) return <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">{empty}</div>;
+  return (
+    <div className="divide-y rounded-xl border border-slate-200 bg-white">
+      {rows.map((row, index) => (
+        <div
+          key={row.id}
+          className={`grid items-center gap-3 p-4 text-sm md:grid-cols-4 ${
+            index === 0 ? 'rounded-t-xl' : ''
+          } ${index === rows.length - 1 ? 'rounded-b-xl' : ''}`}
+        >
+          {children(row)}
+        </div>
+      ))}
+    </div>
+  );
+}
 function AssetUpload({ companyId, type, id, accept, kind, onDone }: { companyId: string; type: 'project' | 'material'; id: number; accept: string; kind: 'image' | 'document'; onDone: () => Promise<void> }) { const [sending, setSending] = useState(false); const upload = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; if (kind === "document" && file.type !== "application/pdf") { toast({ title: "PDF inválido", description: "Envie um arquivo PDF.", variant: "destructive" }); event.target.value = ""; return; } if (kind === "document" && file.size > 25 * 1024 * 1024) { toast({ title: "PDF muito grande", description: "O arquivo deve ter no máximo 25 MB.", variant: "destructive" }); event.target.value = ""; return; } if (kind === "image" && !["image/png", "image/jpeg", "image/webp"].includes(file.type)) { toast({ title: "Capa inválida", description: "Use PNG, JPG ou WebP.", variant: "destructive" }); event.target.value = ""; return; } const payload = new FormData(); payload.append('attachable_type', type); payload.append('attachable_id', String(id)); payload.append('kind', kind); payload.append('file', file); setSending(true); try { await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, { method: 'POST', body: payload }); toast({ title: 'Arquivo enviado para moderação' }); await onDone(); } catch (err) { const message = err instanceof Error ? cleanErrorMessage(err.message) : 'Falha no envio do arquivo'; toast({ title: 'Falha no envio do arquivo', description: message, variant: 'destructive' }); } finally { setSending(false); event.target.value = ''; } }; return <label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-input px-2 text-xs font-medium hover:bg-slate-50"><Upload className="mr-1 h-3 w-3" />{sending ? 'Enviando…' : kind === 'document' ? 'Adicionar PDF' : 'Alterar capa'}<input className="sr-only" type="file" accept={accept} disabled={sending} onChange={upload} /></label>; }
 function ExternalVideo({ companyId, projectId, onDone }: { companyId: string; projectId: number; onDone: () => Promise<void> }) { const [open, setOpen] = useState(false); const [url, setUrl] = useState(''); const save = async () => { if (!url) return; try { await fetchApi(`/company_admin/assets?company_id=${encodeURIComponent(companyId)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attachable_type: 'project', attachable_id: projectId, kind: 'video', provider: 'youtube', external_url: url }) }); toast({ title: 'Vídeo enviado para moderação' }); setUrl(''); setOpen(false); await onDone(); } catch { toast({ title: 'Link de vídeo inválido', variant: 'destructive' }); } }; return <>{open ? <span className="flex gap-1"><Input aria-label="URL do vídeo" className="h-8 w-44 text-xs" value={url} onChange={event => setUrl(event.target.value)} placeholder="https://youtube.com/..." /><Button size="sm" type="button" onClick={save}>Salvar</Button></span> : <Button size="sm" type="button" variant="outline" onClick={() => setOpen(true)}>Vídeo</Button>}</>; }
 
