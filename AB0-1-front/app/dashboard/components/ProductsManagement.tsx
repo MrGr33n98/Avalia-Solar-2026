@@ -538,11 +538,14 @@ export default function ProductsManagement({
       price_mode: editor.price_mode,
       stock: Number(editor.stock || 0),
       status: editor.status,
-      category_ids: [editor.category_id],
-      image_url:
-        editor.image_url.trim() ||
-        editor.previewUrls[0] ||
-        '',
+      category_ids: editor.category_id ? [editor.category_id] : [],
+      image_url: (() => {
+        const url = editor.image_url.trim();
+        if (url && (url.startsWith('http://') || url.startsWith('https://')) && !url.startsWith('blob:')) {
+          return url;
+        }
+        return undefined;
+      })(),
       images:
         editor.images.length > 0
           ? editor.images

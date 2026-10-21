@@ -62,6 +62,32 @@ RSpec.describe 'Dashboard product catalog', type: :request do
       expect(response).to have_http_status(:created)
       expect(Product.find_by!(sku: 'GW5000-MS-220V').company).to eq(company)
     end
+
+    it 'creates a product with image_url and safely handles blob URLs without error' do
+      post '/api/v1/dashboard/products', params: {
+        product: {
+          name: 'Inversor GoodWe MS', sku: 'GW5000-MS-URL', description: 'Teste de URL de imagem',
+          price: 5800, stock: 5, status: 'draft', category_ids: [category.id],
+          image_url: 'blob:https://app.avaliasolar.com.br/sample-uuid'
+        }
+      }, headers: headers
+
+      expect(response).to have_http_status(:created)
+      product = Product.find_by!(sku: 'GW5000-MS-URL')
+      expect(product.image_url).to be_nil
+
+      post '/api/v1/dashboard/products', params: {
+        product: {
+          name: 'Inversor GoodWe MS 2', sku: 'GW6000-MS-URL', description: 'Teste de URL externa',
+          price: 6800, stock: 5, status: 'draft', category_ids: [category.id],
+          image_url: 'https://example.com/goodwe-gw6000.jpg'
+        }
+      }, headers: headers
+
+      expect(response).to have_http_status(:created)
+      product2 = Product.find_by!(sku: 'GW6000-MS-URL')
+      expect(product2.image_url).to eq('https://example.com/goodwe-gw6000.jpg')
+    end
   end
 
   describe 'PATCH and DELETE /api/v1/dashboard/products/:id' do

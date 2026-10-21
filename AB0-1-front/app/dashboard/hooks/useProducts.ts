@@ -69,7 +69,7 @@ function toFormData(input: ProductInput) {
   payload.append('product[stock]', String(input.stock ?? 0));
   payload.append('product[featured]', String(Boolean(input.featured)));
   payload.append('product[status]', input.status);
-  if (input.image_url !== undefined) {
+  if (input.image_url && !input.image_url.startsWith('blob:')) {
     payload.append('product[image_url]', input.image_url);
   }
   input.category_ids.forEach((id) => payload.append('product[category_ids][]', id));

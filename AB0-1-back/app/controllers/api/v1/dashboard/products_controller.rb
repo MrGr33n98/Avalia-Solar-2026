@@ -79,7 +79,11 @@ module Api
             scope = scope.joins(:images_attachments).distinct
           when 'without_images'
             scope = scope.left_joins(:images_attachments)
-                         .where('active_storage_attachments.id IS NULL AND (products.image_url IS NULL OR products.image_url = \'\')')
+            scope = if Product.column_names.include?('image_url')
+                      scope.where('active_storage_attachments.id IS NULL AND (products.image_url IS NULL OR products.image_url = \'\')')
+                    else
+                      scope.where('active_storage_attachments.id IS NULL')
+                    end
           end
 
           case params[:stock]
@@ -110,11 +114,13 @@ module Api
         end
 
         def product_params
-          params.require(:product).permit(
+          sanitized = params.require(:product).permit(
             :name, :description, :short_description, :price, :sku, :stock,
             :status, :featured, :seo_title, :seo_description, :brand_id, :image_url, :price_mode,
             category_ids: [], images: []
           )
+          sanitized.delete(:image_url) if sanitized[:image_url].to_s.start_with?('blob:')
+          sanitized
         end
 
         def product_payload(product)

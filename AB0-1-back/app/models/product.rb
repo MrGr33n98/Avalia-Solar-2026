@@ -57,14 +57,32 @@ class Product < ApplicationRecord
   validate :blocked_transition_guard
   validate :validate_image_uploads
 
-  # Method to get primary image URL from Active Storage
+  # Setter for image_url that ignores ephemeral blob: URLs and gracefully writes to DB column or instance variable
+  def image_url=(val)
+    sanitized = val.to_s.strip
+    sanitized = nil if sanitized.blank? || sanitized.start_with?('blob:')
+
+    if has_attribute?(:image_url)
+      write_attribute(:image_url, sanitized)
+    else
+      @image_url_override = sanitized
+    end
+  end
+
+  # Method to get primary image URL from Active Storage or fallback
   def image_url
-    return self[:image_url] unless images.attached?
+    if images.attached?
+      options = Rails.application.routes.default_url_options.dup
+      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
 
-    options = Rails.application.routes.default_url_options.dup
-    options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+      return Rails.application.routes.url_helpers.rails_storage_proxy_url(images.first, options)
+    end
 
-    Rails.application.routes.url_helpers.rails_storage_proxy_url(images.first, options)
+    if has_attribute?(:image_url)
+      self[:image_url]
+    else
+      @image_url_override
+    end
   end
 
   # Returns all attached image URLs
