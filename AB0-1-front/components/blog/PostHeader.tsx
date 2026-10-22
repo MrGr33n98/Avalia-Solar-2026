@@ -83,7 +83,7 @@ export function PostHeader({ article }: PostHeaderProps) {
           </Badge>
         )}
         
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.15] [text-wrap:balance]">
           {article.title}
         </h1>
 

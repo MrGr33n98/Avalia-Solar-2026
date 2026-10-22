@@ -12,6 +12,7 @@ import { BlogSidebar } from '@/components/blog/BlogSidebar';
 import { StickyMobileCTA } from '@/components/blog/StickyMobileCTA';
 import { NewsletterPopup } from '@/components/blog/NewsletterPopup';
 import { BlogIntentTracker } from '@/components/blog/BlogIntentTracker';
+import { GridGuides } from '@/components/blog/GridGuides';
 import { Button } from '@/components/ui/button';
 import { SITE, absoluteUrl } from '@/lib/site';
 
@@ -62,6 +63,15 @@ export default async function BlogIndexPage({
         url: absoluteUrl('/images/avalia-solar-logo-horizontal.svg'),
       },
     },
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: posts.map((post, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        url: absoluteUrl(`/blog/${post.slug || post.id}`),
+        name: post.title,
+      })),
+    },
   };
 
   const breadcrumbJsonLd = {
@@ -90,7 +100,12 @@ export default async function BlogIndexPage({
   const showFeatured = !hasFilters && page === 1;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+    <div className="relative min-h-screen bg-[#F8FAFC] text-slate-900 overflow-x-hidden">
+      {/* =========================================================
+          STRIPE-INSPIRED GRID GUIDES (ANCOREGEM ARQUITETÔNICA)
+      ========================================================== */}
+      <GridGuides />
+
       {/* =========================================================
           SEO / STRUCTURED DATA
       ========================================================== */}
@@ -239,25 +254,12 @@ export default async function BlogIndexPage({
         "
       >
         {/* =======================================================
-            FEATURED POSTS
+            FEATURED POSTS (EDITORIAL SPLIT PADRÃO STRIPE)
         ======================================================== */}
 
         {showFeatured && (
           <section className="mb-9 lg:mb-11">
-            <div
-              className="
-                rounded-[24px]
-                border
-                border-slate-200/80
-                bg-white
-                p-4
-                shadow-[0_12px_36px_rgba(15,23,42,0.035)]
-                sm:p-5
-                lg:p-6
-              "
-            >
-              <FeaturedPostsSection posts={featuredPosts} />
-            </div>
+            <FeaturedPostsSection posts={featuredPosts} />
           </section>
         )}
 
@@ -336,6 +338,7 @@ export default async function BlogIndexPage({
                       text-slate-950
                       sm:text-[32px]
                       lg:text-[34px]
+                      [text-wrap:balance]
                     "
                   >
                     Últimos Artigos
@@ -347,7 +350,8 @@ export default async function BlogIndexPage({
                       max-w-2xl
                       text-sm
                       leading-6
-                      text-slate-500
+                      text-slate-600
+                      [text-wrap:pretty]
                     "
                   >
                     Guias, análises e conteúdos para decisões

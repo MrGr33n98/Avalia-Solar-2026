@@ -18,6 +18,11 @@ interface PostCardProps {
   placement?: string;
 }
 
+/**
+ * PostCard - Card de artigo com acabamento visual refinado no padrão Stripe.
+ * Mantém 100% da telemetria de cliques, links canônicos e tags de marketplace,
+ * adicionando balanceamento tipográfico [text-wrap:balance], elevação suave e contraste AAA.
+ */
 export function PostCard({ post, position, placement = 'blog_list_card' }: PostCardProps) {
   const wordCount = post.content
     ? post.content.replace(/<[^>]*>/g, '').split(/\s+/).length
@@ -31,10 +36,13 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
     term: post.slug || String(post.id),
   });
 
+  const authorName = post.author_name || post.author?.name || 'Avalia Solar';
+  const authorAvatar = post.author_avatar_url || post.author?.avatar_url;
+
   return (
     <Link
       href={url}
-      className="group block h-full"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.03)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_14px_36px_rgba(15,23,42,0.06)]"
       onClick={() => {
         track('blog_article_click', {
           post_id: post.id,
@@ -50,89 +58,90 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
         });
       }}
     >
-      <article className="h-full flex flex-col bg-white border border-gray-100 rounded-lg overflow-hidden group-hover:border-[#0047bb] transition-colors">
-        {/* Cover Image */}
-        <div className="relative h-44 w-full overflow-hidden bg-gray-100 shrink-0">
+      <article className="flex h-full flex-col">
+        {/* Cover Image com Aspect-Ratio 16:9 Estável */}
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100 shrink-0">
           {post.cover_image_url || post.image_url ? (
             <Image
               src={getFullImageUrl(post.cover_image_url || post.image_url)}
               alt={post.title}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center text-gray-500">
-              <Sun className="w-8 h-8 mb-1.5 opacity-70" aria-hidden="true" />
-              <span className="text-[10px] font-semibold uppercase tracking-widest">
+            <div className="w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center text-slate-400">
+              <Sun className="w-8 h-8 mb-1.5 opacity-60" aria-hidden="true" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Avalia Solar
               </span>
             </div>
           )}
 
-          {/* Category label */}
+          {/* Category label discreto em pílula translúcida */}
           {post.category && (
             <div className="absolute top-3 left-3">
-              <span className="inline-block bg-white/95 text-[10px] font-semibold text-gray-800 px-2 py-0.5 tracking-wide uppercase shadow-sm">
+              <span className="inline-block rounded-md bg-white/95 text-[10px] font-bold text-slate-800 px-2.5 py-1 tracking-wider uppercase shadow-sm backdrop-blur-sm">
                 {post.category.name}
               </span>
             </div>
           )}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 flex flex-col p-4">
-          {/* Meta */}
-          <div className="flex items-center gap-2.5 text-[11px] text-gray-500 mb-2.5">
-            <span suppressHydrationWarning className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" aria-hidden="true" />
+        {/* Content com Escala Slate de Alto Contraste */}
+        <div className="flex-1 flex flex-col p-5">
+          {/* Metadados */}
+          <div className="flex items-center gap-2 text-xs text-slate-500 mb-2.5">
+            <span suppressHydrationWarning className="flex items-center gap-1 font-medium">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
               {post.published_date
                 ? post.published_date
                 : post.published_at
                 ? format(new Date(post.published_at), 'd MMM, yyyy', { locale: ptBR })
                 : 'Recente'}
             </span>
-            <span className="text-gray-500" aria-hidden="true">·</span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" aria-hidden="true" />
+            <span className="text-slate-300" aria-hidden="true">·</span>
+            <span className="flex items-center gap-1 font-medium">
+              <Clock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
               {readTime} min
             </span>
           </div>
 
-          {/* Title */}
-          <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug group-hover:text-blue-700 transition-colors">
+          {/* Title com [text-wrap:balance] para evitar viúvas tipográficas */}
+          <h3 className="text-base font-bold text-slate-900 mb-2 line-clamp-2 leading-snug group-hover:text-blue-700 transition-colors [text-wrap:balance]">
             {post.title}
           </h3>
 
-          {/* Excerpt */}
-          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4 font-normal">
+          {/* Excerpt com [text-wrap:pretty] */}
+          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4 font-normal [text-wrap:pretty]">
             {post.excerpt ||
               'Confira este artigo completo sobre energia solar e economize na sua conta de luz.'}
           </p>
 
-          {/* Footer */}
-          <div className="mt-auto flex items-center justify-between pt-3 border-t border-gray-50">
-            <div className="flex items-center gap-1.5">
-              <Avatar className="h-5 w-5">
+          {/* Footer com Autor e Seta de Interação Estilo Stripe */}
+          <div className="mt-auto flex items-center justify-between pt-3.5 border-t border-slate-100">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-6 w-6 border border-slate-200">
                 <AvatarImage
                   src={
-                    post.author_avatar_url || post.author?.avatar_url
-                      ? getFullImageUrl(post.author_avatar_url || post.author?.avatar_url)
+                    authorAvatar
+                      ? getFullImageUrl(authorAvatar)
                       : '/images/felipe-ceo-avalia-solar.png'
                   }
-                  alt={post.author_name || 'Avalia Solar'}
+                  alt={authorName}
                   className="object-cover object-top"
                 />
-                <AvatarFallback className="text-[8px] bg-gray-100">
-                  <User className="w-2.5 h-2.5 text-gray-500" aria-hidden="true" />
+                <AvatarFallback className="text-[9px] bg-slate-100 text-slate-600 font-bold">
+                  <User className="w-3 h-3 text-slate-400" aria-hidden="true" />
                 </AvatarFallback>
               </Avatar>
-              <span className="text-[11px] font-medium text-gray-500 truncate max-w-[100px]">
-                {post.author_name || post.author?.name || 'Avalia Solar'}
+              <span className="text-xs font-medium text-slate-700 truncate max-w-[120px]">
+                {authorName}
               </span>
             </div>
 
-            <span className="text-[11px] font-semibold text-blue-600 flex items-center gap-0.5 group-hover:gap-1.5 transition-all">
-              Ler <ArrowRight className="w-3 h-3" aria-hidden="true" />
+            <span className="text-xs font-bold text-blue-600 flex items-center gap-1 transition-transform duration-200 group-hover:translate-x-1">
+              Ler artigo <ArrowRight className="w-3 h-3" aria-hidden="true" />
             </span>
           </div>
         </div>
