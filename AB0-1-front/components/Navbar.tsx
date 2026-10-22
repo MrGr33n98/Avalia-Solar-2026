@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Menu, User as UserIcon, Bell, MessageSquare, Search } from 'lucide-react';
 
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useNotificationStore } from '@/store/notificationStore';
+import { preloadCategoriesTree } from '@/hooks/useCategoriesTree';
 
 const CompanySwitcher = dynamic(
   () => import('./company/CompanySwitcher').then((mod) => ({ default: mod.CompanySwitcher })),
@@ -25,10 +26,13 @@ const CompanySwitcher = dynamic(
   }
 );
 
-const CategoriesMegaMenu = dynamic(
-  () => import('./categories/CategoriesMegaMenu').then((mod) => mod.CategoriesMegaMenu),
-  { ssr: false, loading: () => null }
-);
+const loadCategoriesMegaMenu = () =>
+  import('./categories/CategoriesMegaMenu').then((mod) => mod.CategoriesMegaMenu);
+
+const CategoriesMegaMenu = dynamic(loadCategoriesMegaMenu, {
+  ssr: false,
+  loading: () => null,
+});
 
 const MobileCategoriesDrawer = dynamic(
   () => import('./navigation/MobileCategoriesDrawer').then((mod) => mod.MobileCategoriesDrawer),
@@ -47,6 +51,7 @@ export default function Navbar() {
   const [megaMenuMounted, setMegaMenuMounted] = useState(false);
   const [mobileDrawerMounted, setMobileDrawerMounted] = useState(false);
   const megaMenuRef = useRef<HTMLDivElement | null>(null);
+  const megaMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -81,13 +86,24 @@ export default function Navbar() {
     router.push(`/search?q=${encodeURIComponent(query)}&sort=rating&page=1`);
   };
 
-  const openMegaMenu = () => {
+  const prewarmMegaMenu = useCallback(() => {
     if (!megaMenuMounted) setMegaMenuMounted(true);
+    void loadCategoriesMegaMenu();
+    void preloadCategoriesTree();
+  }, [megaMenuMounted]);
+
+  const openMegaMenu = () => {
+    prewarmMegaMenu();
     setIsMegaMenuOpen(true);
   };
 
+  const closeMegaMenu = useCallback(() => {
+    setIsMegaMenuOpen(false);
+    megaMenuTriggerRef.current?.focus();
+  }, []);
+
   const toggleMegaMenu = () => {
-    if (!megaMenuMounted) setMegaMenuMounted(true);
+    prewarmMegaMenu();
     setIsMegaMenuOpen((current) => !current);
   };
 
@@ -97,6 +113,8 @@ export default function Navbar() {
   };
 
   useEffect(() => {
+    if (!isMegaMenuOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (megaMenuRef.current && !megaMenuRef.current.contains(event.target as Node)) {
         setIsMegaMenuOpen(false);
@@ -105,7 +123,7 @@ export default function Navbar() {
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isMegaMenuOpen]);
 
   if (pathname?.startsWith('/f/')) return null;
   if (pathname?.startsWith('/dashboard')) return null;
@@ -151,10 +169,12 @@ export default function Navbar() {
             <div
               ref={megaMenuRef}
               className="static"
+              onPointerEnter={prewarmMegaMenu}
               onMouseEnter={openMegaMenu}
               onMouseLeave={() => setIsMegaMenuOpen(false)}
             >
               <Button
+                ref={megaMenuTriggerRef}
                 type="button"
                 variant="ghost"
                 className={cn(
@@ -162,9 +182,10 @@ export default function Navbar() {
                   isMegaMenuOpen && 'bg-slate-50 text-brand-blue'
                 )}
                 onClick={toggleMegaMenu}
+                onFocus={prewarmMegaMenu}
                 aria-expanded={isMegaMenuOpen}
                 aria-controls={megaMenuMounted ? categoriesMegaMenuId : undefined}
-                aria-haspopup="menu"
+                aria-haspopup="dialog"
               >
                 Categorias
                 <ChevronDown
@@ -180,7 +201,7 @@ export default function Navbar() {
                 <CategoriesMegaMenu
                   id={categoriesMegaMenuId}
                   isOpen={isMegaMenuOpen}
-                  onClose={() => setIsMegaMenuOpen(false)}
+                  onClose={closeMegaMenu}
                 />
               ) : null}
             </div>

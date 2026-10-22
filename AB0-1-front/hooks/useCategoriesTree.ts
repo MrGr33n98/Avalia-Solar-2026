@@ -149,6 +149,93 @@ let cachedCategoriesTree: CategoryTreeNode[] | null = null;
 let cachedDataSource: 'tree' | 'cards' | 'static' | 'error' = 'tree';
 let inFlightTreePromise: Promise<{ categories: CategoryTreeNode[]; source: 'tree' | 'cards' | 'static' | 'error' }> | null = null;
 
+export const fetchCategoriesTreeData = async (
+  force = false
+): Promise<{ categories: CategoryTreeNode[]; source: 'tree' | 'cards' | 'static' | 'error' }> => {
+  if (!force && cachedCategoriesTree && cachedCategoriesTree.length > 0) {
+    return { categories: cachedCategoriesTree, source: cachedDataSource };
+  }
+
+  if (inFlightTreePromise) {
+    return inFlightTreePromise;
+  }
+
+  inFlightTreePromise = (async () => {
+    let capturedError: Error | null = null;
+    let resolvedCategories: CategoryTreeNode[] = [];
+    let resolvedSource: 'tree' | 'cards' | 'static' | 'error' = 'error';
+
+    try {
+      resolvedCategories = normalizeTreePayload(await fetchApiSafe<CategoryTreeNode[]>('/categories/tree'));
+      if (resolvedCategories.length > 0) resolvedSource = 'tree';
+    } catch (err) {
+      capturedError = err instanceof Error ? err : new Error('Failed to fetch categories tree');
+      logFetchFailure('Primary tree endpoint failed', err);
+    }
+
+    if (resolvedCategories.length === 0) {
+      try {
+        resolvedCategories = normalizeTreePayload(await fetchDirectJson('/categories/tree'));
+        if (resolvedCategories.length > 0) resolvedSource = 'tree';
+      } catch (err) {
+        if (!capturedError) capturedError = err instanceof Error ? err : new Error('Failed to fetch direct tree');
+        logFetchFailure('Direct tree endpoint failed', err);
+      }
+    }
+
+    if (resolvedCategories.length === 0) {
+      try {
+        resolvedCategories = normalizeCardsPayload(
+          await fetchApiSafe('/categories?view=cards&status=active&sort_by=companies_count_desc&limit=18')
+        );
+        if (resolvedCategories.length > 0) resolvedSource = 'cards';
+      } catch (err) {
+        if (!capturedError) capturedError = err instanceof Error ? err : new Error('Failed to fetch categories cards');
+        logFetchFailure('Cards endpoint fallback failed', err);
+      }
+    }
+
+    if (resolvedCategories.length === 0) {
+      try {
+        resolvedCategories = normalizeCardsPayload(
+          await fetchDirectJson('/categories?view=cards&status=active&sort_by=companies_count_desc&limit=18')
+        );
+        if (resolvedCategories.length > 0) resolvedSource = 'cards';
+      } catch (err) {
+        if (!capturedError) capturedError = err instanceof Error ? err : new Error('Failed to fetch direct category cards');
+        logFetchFailure('Direct cards endpoint fallback failed', err);
+      }
+    }
+
+    if (resolvedCategories.length === 0) {
+      resolvedCategories = getStaticFallbackTree();
+      resolvedSource = 'static';
+    }
+
+    cachedCategoriesTree = resolvedCategories;
+    cachedDataSource = resolvedSource;
+
+    return { categories: resolvedCategories, source: resolvedSource };
+  })();
+
+  try {
+    return await inFlightTreePromise;
+  } catch (err) {
+    console.error('[useCategoriesTree] Critical error in hook logic:', err);
+    const fallback = getStaticFallbackTree();
+    cachedCategoriesTree = fallback;
+    cachedDataSource = 'static';
+    return { categories: fallback, source: 'static' };
+  } finally {
+    inFlightTreePromise = null;
+  }
+};
+
+export const preloadCategoriesTree = async (): Promise<CategoryTreeNode[]> => {
+  const result = await fetchCategoriesTreeData(false);
+  return result.categories;
+};
+
 export function useCategoriesTree() {
   const [categories, setCategories] = useState<CategoryTreeNode[]>(() => cachedCategoriesTree || []);
   const [loading, setLoading] = useState(() => !cachedCategoriesTree);
@@ -156,99 +243,20 @@ export function useCategoriesTree() {
   const [dataSource, setDataSource] = useState<'tree' | 'cards' | 'static' | 'error'>(() => cachedDataSource);
 
   const fetchTree = useCallback(async (force = false) => {
-    if (!force && cachedCategoriesTree && cachedCategoriesTree.length > 0) {
-      setCategories(cachedCategoriesTree);
-      setDataSource(cachedDataSource);
-      setLoading(false);
-      return;
-    }
-
-    if (inFlightTreePromise) {
-      try {
-        const result = await inFlightTreePromise;
-        setCategories(result.categories);
-        setDataSource(result.source);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch categories tree'));
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    inFlightTreePromise = (async () => {
-      let capturedError: Error | null = null;
-      let resolvedCategories: CategoryTreeNode[] = [];
-      let resolvedSource: 'tree' | 'cards' | 'static' | 'error' = 'error';
-
-      try {
-        resolvedCategories = normalizeTreePayload(await fetchApiSafe<CategoryTreeNode[]>('/categories/tree'));
-        if (resolvedCategories.length > 0) resolvedSource = 'tree';
-      } catch (err) {
-        capturedError = err instanceof Error ? err : new Error('Failed to fetch categories tree');
-        logFetchFailure('Primary tree endpoint failed', err);
-      }
-
-      if (resolvedCategories.length === 0) {
-        try {
-          resolvedCategories = normalizeTreePayload(await fetchDirectJson('/categories/tree'));
-          if (resolvedCategories.length > 0) resolvedSource = 'tree';
-        } catch (err) {
-          if (!capturedError) capturedError = err instanceof Error ? err : new Error('Failed to fetch direct tree');
-          logFetchFailure('Direct tree endpoint failed', err);
-        }
-      }
-
-      if (resolvedCategories.length === 0) {
-        try {
-          resolvedCategories = normalizeCardsPayload(
-            await fetchApiSafe('/categories?view=cards&status=active&sort_by=companies_count_desc&limit=18')
-          );
-          if (resolvedCategories.length > 0) resolvedSource = 'cards';
-        } catch (err) {
-          if (!capturedError) capturedError = err instanceof Error ? err : new Error('Failed to fetch categories cards');
-          logFetchFailure('Cards endpoint fallback failed', err);
-        }
-      }
-
-      if (resolvedCategories.length === 0) {
-        try {
-          resolvedCategories = normalizeCardsPayload(
-            await fetchDirectJson('/categories?view=cards&status=active&sort_by=companies_count_desc&limit=18')
-          );
-          if (resolvedCategories.length > 0) resolvedSource = 'cards';
-        } catch (err) {
-          if (!capturedError) capturedError = err instanceof Error ? err : new Error('Failed to fetch direct category cards');
-          logFetchFailure('Direct cards endpoint fallback failed', err);
-        }
-      }
-
-      if (resolvedCategories.length === 0) {
-        resolvedCategories = getStaticFallbackTree();
-        resolvedSource = 'static';
-      }
-
-      cachedCategoriesTree = resolvedCategories;
-      cachedDataSource = resolvedSource;
-
-      return { categories: resolvedCategories, source: resolvedSource };
-    })();
-
     try {
-      setLoading(true);
+      if (!cachedCategoriesTree || force) {
+        setLoading(true);
+      }
       setError(null);
-      const result = await inFlightTreePromise;
+      const result = await fetchCategoriesTreeData(force);
       setCategories(result.categories);
       setDataSource(result.source);
     } catch (err) {
-      console.error('[useCategoriesTree] Critical error in hook logic:', err);
-      setError(err instanceof Error ? err : new Error('Failed to process categories tree'));
-      setDataSource('static');
+      setError(err instanceof Error ? err : new Error('Failed to fetch categories tree'));
       const fallback = getStaticFallbackTree();
-      cachedCategoriesTree = fallback;
       setCategories(fallback);
+      setDataSource('static');
     } finally {
-      inFlightTreePromise = null;
       setLoading(false);
     }
   }, []);

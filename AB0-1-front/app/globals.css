@@ -1262,4 +1262,20 @@ html, body, #__next, main {
       gap: 0.75rem;
     }
   }
+
+  /* Category Mega-Menu High-Performance Containment & GPU Layering */
+  .mega-menu-surface {
+    contain: layout style paint;
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .category-card-contain {
+    contain: layout style;
+    content-visibility: auto;
+    contain-intrinsic-size: 260px 320px;
+  }
 }
+

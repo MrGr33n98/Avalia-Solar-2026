@@ -1,8 +1,7 @@
 'use client';
 
 import React, {
-  useMemo,
-  useState,
+  useEffect,
 } from 'react';
 
 import Link from 'next/link';
@@ -22,6 +21,10 @@ import {
 import {
   useCategoriesTree,
 } from '@/hooks/useCategoriesTree';
+
+import {
+  useCategorySearchTransition,
+} from '@/hooks/useCategorySearchTransition';
 
 import {
   CategorySearch,
@@ -114,26 +117,33 @@ export const CategoriesMegaMenu:
       filterCategories,
     } = useCategoriesTree();
 
-    const [
-      searchQuery,
-      setSearchQuery,
-    ] = useState('');
+    const {
+      searchTerm: searchQuery,
+      isSearching,
+      filteredCategories: filteredTree,
+      handleSearchChange: setSearchQuery,
+      clearSearch,
+    } = useCategorySearchTransition(
+      categories,
+      filterCategories,
+    );
 
     /* ---------------------------------------------------------------------- */
-    /* FILTERING — LOGIC PRESERVED                                            */
+    /* KEYBOARD ACCESSIBILITY (ESC TO CLOSE)                                  */
     /* ---------------------------------------------------------------------- */
 
-    const filteredTree =
-      useMemo(() => {
-        return filterCategories(
-          categories,
-          searchQuery,
-        );
-      }, [
-        categories,
-        searchQuery,
-        filterCategories,
-      ]);
+    useEffect(() => {
+      if (!isOpen) return;
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
 
     /* ---------------------------------------------------------------------- */
     /* CONTENT                                                                */
@@ -350,6 +360,7 @@ export const CategoriesMegaMenu:
                       CATEGORY_VARIANTS
                     }
                     className="
+                      category-card-contain
                       group
                       flex
                       min-w-0
@@ -658,12 +669,13 @@ export const CategoriesMegaMenu:
               onClick={
                 onClose
               }
+              aria-hidden="true"
               className="
                 fixed
                 inset-0
                 z-40
-                bg-slate-950/10
-                backdrop-blur-[2px]
+                bg-slate-950/15
+                will-change-[opacity]
               "
             />
 
@@ -673,6 +685,9 @@ export const CategoriesMegaMenu:
 
             <motion.div
               id={id}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Explorar categorias e nichos de energia solar"
               initial={{
                 opacity: 0,
                 y: 6,
@@ -694,6 +709,7 @@ export const CategoriesMegaMenu:
                 MENU_TRANSITION
               }
               className="
+                mega-menu-surface
                 absolute
                 left-0
                 top-full
@@ -709,6 +725,7 @@ export const CategoriesMegaMenu:
                 className="
                   mx-auto
                   flex
+                  min-h-[380px]
                   max-h-[min(680px,calc(100vh-82px))]
                   max-w-[1320px]
                   flex-col
@@ -788,8 +805,14 @@ export const CategoriesMegaMenu:
                       value={
                         searchQuery
                       }
+                      isSearching={
+                        isSearching
+                      }
                       onChange={
                         setSearchQuery
+                      }
+                      onClear={
+                        clearSearch
                       }
                     />
                   </div>
