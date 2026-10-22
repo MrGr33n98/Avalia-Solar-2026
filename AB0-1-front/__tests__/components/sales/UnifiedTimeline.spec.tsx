@@ -41,4 +41,25 @@ describe('UnifiedTimeline component', () => {
     expect(screen.getByText('Sem sinal de abertura')).toBeInTheDocument();
     expect(screen.queryByText(/Aguardando leitura|Lido/)).not.toBeInTheDocument();
   });
+
+  it('filters events harmonizing both kind and type attributes', () => {
+    const mockEvents: any[] = [
+      {
+        id: 'act:1',
+        type: 'call',
+        title: 'Ligação de Qualificação',
+        occurred_at: '2026-09-25T18:00:00Z',
+      },
+      {
+        id: 'task:1',
+        kind: 'task',
+        title: 'Enviar Contrato Solar',
+        occurred_at: '2026-09-25T17:30:00Z',
+      },
+    ];
+
+    const { rerender } = render(<UnifiedTimeline events={mockEvents} />);
+    expect(screen.getByText('Ligação de Qualificação')).toBeInTheDocument();
+    expect(screen.getByText('Enviar Contrato Solar')).toBeInTheDocument();
+  });
 });

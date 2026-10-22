@@ -13,9 +13,12 @@ module Sales
         end
 
         activities.includes(:actor).order(occurred_at: :desc).each do |act|
+          act_kind = act.activity_type == 'call' ? 'call' : 'activity'
           events << {
             id: "act-#{act.id}",
-            type: act.activity_type == 'call' ? 'call' : 'activity',
+            type: act_kind,
+            kind: act_kind,
+            activity_type: act.activity_type,
             title: act.activity_type == 'call' ? 'Chamada Registrada' : 'Atividade Comercial',
             description: act.description || act.body,
             occurred_at: act.occurred_at || act.created_at,
@@ -27,6 +30,7 @@ module Sales
           events << {
             id: "task-#{t.id}",
             type: 'task',
+            kind: 'task',
             title: "Tarefa: #{t.title}",
             description: "Status: #{t.status || (t.completed_at ? 'Concluída' : 'Pendente')}",
             occurred_at: t.completed_at || t.due_at || t.created_at,
@@ -39,6 +43,7 @@ module Sales
             events << {
               id: "opp-#{oc.id}",
               type: 'stage_changed',
+              kind: 'stage_changed',
               title: "Vínculo a Oportunidade #{oc.opportunity.name}",
               description: "Papel no Comitê: #{oc.role || 'Membro'}",
               occurred_at: oc.created_at
@@ -55,6 +60,7 @@ module Sales
           events << {
             id: "email-#{email.id}",
             type: 'email',
+            kind: 'email',
             title: email.subject.presence || 'E-mail Comercial Enviado',
             subject: email.subject,
             description: email.body_text.presence || "#{email.status} - #{email.to_email}",

@@ -38,6 +38,7 @@ export interface SalesEmailLifecycleEvent {
 export interface SalesTimelineEvent {
   id: string;
   kind: 'activity' | 'call' | 'email' | 'note' | 'task' | 'stage_changed' | 'quote' | 'won' | 'lost' | 'website';
+  type?: string;
   title?: string;
   activity_type?: string;
   preview?: string;

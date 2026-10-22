@@ -25,11 +25,11 @@
 ### Sprint 1 — Segurança, Persistência & Consistência (P0)
 | TASK_ID | GAP_ID | USER_STORY | DEPENDS_ON | FILES | ACTION | ACCEPTANCE CRITERIA | TEST | STATUS |
 |---------|--------|------------|------------|-------|--------|---------------------|------|--------|
-| **T-010** | GAP-01 | US-CRM-021 | T-005 | `components/sales/CallLoggerModal.tsx` | Corrigir falso sucesso, validar `res.ok`, receipt id e exigir `accountId` | Erro HTTP não fecha modal; notas preservadas; bloqueio sem conta | `CallLoggerModal.test.tsx` | **IN_PROGRESS** |
-| **T-011** | GAP-02 | US-CRM-022 | T-002 | `CreateActivityModal.tsx`, `ActivitiesController.rb`, `routes.rb` | Permitir `sales_account_id` e rota direta `/activities` | Salva atividade com 201 Created e invalida cache | Jest test + controller check | **IN_PROGRESS** |
-| **T-012** | GAP-05 | US-CRM-038 | T-005 | `lib/api/sales/client.ts` | Consolidar Map TTL e padronizar SalesApiError | Zero erros silenciosos; códigos unificados | Jest unit test | **IN_PROGRESS** |
-| **T-013** | GAP-05 | US-CRM-038 | T-012 | `lib/api/sales/queries.ts`, `queryKeys.ts` | Padronizar queryKeys e invalidação após mutações | Timeline e Hoje atualizados após ações | TypeScript check | **IN_PROGRESS** |
-| **T-014** | GAP-04 | US-CRM-024 | T-002 | `TimelineQuery.rb`, `TimelineBuilder.rb`, `UnifiedTimeline.tsx` | Harmonizar campos `kind` e `type` nos builders Rails | Eventos filtrados corretamente no frontend | Jest / RTL test | **IN_PROGRESS** |
+| **T-010** | GAP-01 | US-CRM-021 | T-005 | `components/sales/CallLoggerModal.tsx` | Corrigir falso sucesso, validar `res.ok`, receipt id e exigir `accountId` | Erro HTTP não fecha modal; notas preservadas; bloqueio sem conta | `CallLoggerModal.test.tsx` | **PASS** |
+| **T-011** | GAP-02 | US-CRM-022 | T-002 | `CreateActivityModal.tsx`, `ActivitiesController.rb`, `routes.rb` | Permitir `sales_account_id` e rota direta `/activities` | Salva atividade com 201 Created e invalida cache | Jest test + controller check | **PASS** |
+| **T-012** | GAP-05 | US-CRM-038 | T-005 | `lib/api/sales/client.ts` | Consolidar Map TTL e padronizar SalesApiError | Zero erros silenciosos; códigos unificados | Jest unit test | **PASS** |
+| **T-013** | GAP-05 | US-CRM-038 | T-012 | `lib/api/sales/queries.ts`, `queryKeys.ts` | Padronizar queryKeys e invalidação após mutações | Timeline e Hoje atualizados após ações | TypeScript check | **PASS** |
+| **T-014** | GAP-04 | US-CRM-024 | T-002 | `TimelineQuery.rb`, `TimelineBuilder.rb`, `UnifiedTimeline.tsx` | Harmonizar campos `kind` e `type` nos builders Rails | Eventos filtrados corretamente no frontend | Jest / RTL test | **PASS** |
 | **T-015** | GAP-00 | US-CRM-045 | T-002 | `tenant_scope.rb`, `authorization_service.rb` | Auditoria de isolamento multi-tenant | Proibido acesso cruzado entre contas | Rails spec audit | **PASS** |
 | **T-016** | GAP-14 | US-CRM-039 | T-005 | `lib/offline/config.ts`, `mutationQueue.ts` | Avaliação de risco de substituição por conflictKey | Fila offline desativada por padrão no CRM | Análise de segurança | **PASS** |
 | **T-017** | GAP-14 | US-CRM-038 | T-016 | `lib/offline/*`, `AuthContext.tsx` | Garantir isolamento e expiração de dados no logout | Sem vazamento de dados de sessão anterior | Inspeção e testes | **PASS** |

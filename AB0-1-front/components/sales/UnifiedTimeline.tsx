@@ -36,10 +36,11 @@ export default function UnifiedTimeline({ events, loading = false, onRefresh, li
   const activityTypes = Array.from(new Set(events.map((event) => event.activity_type).filter(Boolean))) as string[];
 
   const filteredEvents = events.filter((ev) => {
+    const eventKind = ev.kind || (ev as any).type || '';
     const kindMatches = filter === 'all' ||
-      (filter === 'activity' && ['activity', 'call'].includes(ev.kind)) ||
-      (filter === 'system' && ['stage_changed', 'won', 'lost', 'website'].includes(ev.kind)) ||
-      ev.kind === filter;
+      (filter === 'activity' && ['activity', 'call'].includes(eventKind)) ||
+      (filter === 'system' && ['stage_changed', 'won', 'lost', 'website'].includes(eventKind)) ||
+      eventKind === filter;
     const creatorMatches = creator === 'all' || String(ev.actor?.id) === creator;
     const activityTypeMatches = activityType === 'all' || ev.activity_type === activityType;
     const withinPeriod = period === 'all' || Date.now() - new Date(ev.occurred_at).getTime() <= Number(period) * 86400000;

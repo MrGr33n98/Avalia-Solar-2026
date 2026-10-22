@@ -26,9 +26,12 @@ module Sales
 
       # Activities (Calls, Meetings, Notes, In-person)
       activities.each do |act|
+        act_kind = act.activity_type == 'call' ? 'call' : (act.activity_type || 'activity')
         events << {
           id: "act-#{act.id}",
-          type: act.activity_type == 'call' ? 'call' : (act.activity_type || 'activity'),
+          type: act_kind,
+          kind: act_kind,
+          activity_type: act.activity_type,
           title: act.subject.presence || (act.activity_type == 'call' ? 'Chamada Registrada' : 'Atividade Comercial'),
           description: act.description || act.body,
           occurred_at: act.occurred_at || act.created_at,
@@ -41,6 +44,7 @@ module Sales
         events << {
           id: "task-#{t.id}",
           type: 'task',
+          kind: 'task',
           title: "Tarefa: #{t.title}",
           description: "Status: #{t.status} | Prioridade: #{t.priority}",
           occurred_at: t.completed_at || t.created_at,
@@ -53,6 +57,7 @@ module Sales
         events << {
           id: "opp-#{o.id}",
           type: 'stage_changed',
+          kind: 'stage_changed',
           title: "Oportunidade #{o.name}",
           description: "Estágio: #{o.stage&.name || 'Prospect'} | Valor: R$ #{((o.value_cents || 0) / 100.0).round(2)}",
           occurred_at: o.created_at
@@ -67,6 +72,7 @@ module Sales
         events << {
           id: "email-#{email.id}",
           type: 'email',
+          kind: 'email',
           title: email.subject.presence || 'E-mail Comercial Enviado',
           subject: email.subject,
           description: email.body_text.presence || "#{email.status} - #{email.to_email}",
@@ -91,6 +97,7 @@ module Sales
         events << {
           id: "acc-created-#{@account.id}",
           type: 'website',
+          kind: 'website',
           title: 'Empresa Cadastrada no CRM',
           description: "Empresa #{@account.name} registrada no CRM.",
           occurred_at: @account.created_at
@@ -99,6 +106,7 @@ module Sales
         events << {
           id: "contact-created-#{@contact.id}",
           type: 'contact',
+          kind: 'contact',
           title: 'Contato Cadastrado no CRM',
           description: "Contato #{@contact.first_name} #{@contact.last_name || ''} registrado.",
           occurred_at: @contact.created_at
