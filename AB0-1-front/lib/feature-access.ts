@@ -69,3 +69,24 @@ export function canUsePaidConversion(
   const entry = getFeatureAccessEntry(company.feature_access, featureKey);
   return Boolean(entry && isFeatureEnabledEntry(entry));
 }
+
+/**
+ * Verifica se a empresa tem direito à exibição da galeria de mídia e vitrine de projetos.
+ * O plano Free NÃO tem direito a esse recurso.
+ * Falha fechada (fail closed) para planos free ou sem plano pago confirmado.
+ */
+export function canShowMediaGallery(company: {
+  has_paid_plan?: boolean | null;
+  plan_tier?: string | null;
+  feature_access?: FeatureAccessMap;
+}): boolean {
+  if (company.plan_tier === 'free' || company.has_paid_plan === false) {
+    return false;
+  }
+
+  if (company.feature_access) {
+    return isFeatureEnabled(company.feature_access, 'media_gallery');
+  }
+
+  return hasPaidPlan(company);
+}

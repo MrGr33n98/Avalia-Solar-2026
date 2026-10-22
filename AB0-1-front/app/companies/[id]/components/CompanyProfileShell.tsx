@@ -186,11 +186,13 @@ export default function CompanyProfileShell({
                 </TabsContent>
               )}
 
-              {/* ABA 5: PROJETOS */}
-              <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
-                <ProjectsGallery companyId={company.id} companyName={company.name} />
-                <MaterialsLibrary companyId={company.id} />
-              </TabsContent>
+              {/* ABA 5: PROJETOS (Apenas se a empresa tiver direito à galeria de mídia) */}
+              {showGallery && (
+                <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
+                  <ProjectsGallery companyId={company.id} companyName={company.name} />
+                  <MaterialsLibrary companyId={company.id} />
+                </TabsContent>
+              )}
 
               {/* ABA 6: CONTATO */}
               <TabsContent value="contact" className="mt-0 space-y-6 focus-visible:outline-none">

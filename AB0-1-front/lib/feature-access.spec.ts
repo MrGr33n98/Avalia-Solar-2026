@@ -1,11 +1,13 @@
-import { canUsePaidConversion } from './feature-access';
+import { canUsePaidConversion, canShowMediaGallery } from './feature-access';
 
 const company = (
   hasPaidPlan: boolean,
-  featureAccess?: Record<string, { state: 'enabled' | 'locked' | 'hidden'; value?: boolean }>
+  featureAccess?: Record<string, { state: 'enabled' | 'locked' | 'hidden'; value?: boolean }>,
+  planTier?: string
 ) => ({
   has_paid_plan: hasPaidPlan,
   feature_access: featureAccess,
+  plan_tier: planTier,
 });
 
 describe('canUsePaidConversion', () => {
@@ -43,5 +45,39 @@ describe('canUsePaidConversion', () => {
         'whatsapp'
       )
     ).toBe(true);
+  });
+});
+
+describe('canShowMediaGallery', () => {
+  it('bloqueia empresa gratuita sem plano pago', () => {
+    expect(canShowMediaGallery(company(false))).toBe(false);
+  });
+
+  it('bloqueia empresa com plan_tier explicitamente free', () => {
+    expect(
+      canShowMediaGallery(
+        company(false, { media_gallery: { state: 'enabled', value: true } }, 'free')
+      )
+    ).toBe(false);
+  });
+
+  it('bloqueia empresa com plano pago quando media_gallery está bloqueado (ex: plano essencial)', () => {
+    expect(
+      canShowMediaGallery(
+        company(true, { media_gallery: { state: 'locked', value: false } }, 'essential')
+      )
+    ).toBe(false);
+  });
+
+  it('habilita empresa com plano pago e media_gallery habilitado (ex: plano pro/enterprise)', () => {
+    expect(
+      canShowMediaGallery(
+        company(true, { media_gallery: { state: 'enabled', value: true } }, 'pro')
+      )
+    ).toBe(true);
+  });
+
+  it('habilita empresa com plano pago ativo mesmo na ausência transitória de feature_access', () => {
+    expect(canShowMediaGallery(company(true, undefined, 'pro'))).toBe(true);
   });
 });

@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Company, fetchApi } from "@/lib/api";
+import { canShowMediaGallery } from "@/lib/feature-access";
 
 interface ProjectsPreviewProps {
   company: Company;
@@ -87,14 +88,15 @@ function toVideoEmbedUrl(rawUrl?: string | null): string | null {
 }
 
 export default function ProjectsPreview({ company, onTabChange }: ProjectsPreviewProps) {
+  const hasAccess = canShowMediaGallery(company);
   const [projectAssets, setProjectAssets] = useState<ShowcaseMediaItem[]>([]);
   const [activeVideo, setActiveVideo] = useState<ShowcaseMediaItem | null>(null);
   const [activeImage, setActiveImage] = useState<ShowcaseMediaItem | null>(null);
 
-  // Busca projetos adicionais caso a empresa tenha poucos vídeos e fotos diretos
+  // Busca projetos adicionais apenas se a empresa tiver direito no plano
   useEffect(() => {
     let active = true;
-    if (!company.id) return;
+    if (!hasAccess || !company.id) return;
 
     fetchApi<{ projects: ProjectItem[] }>(`/companies/${company.id}/projects`)
       .then((res) => {
@@ -123,10 +125,11 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
     return () => {
       active = false;
     };
-  }, [company.id, company.name]);
+  }, [hasAccess, company.id, company.name]);
 
   // Monta lista de mídias reais da empresa
   const displayedMedia = useMemo(() => {
+    if (!hasAccess) return [];
     const items: ShowcaseMediaItem[] = [];
 
     // 1. Vídeos oficiais da empresa
@@ -205,6 +208,7 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
     // Retorna EXCLUSIVAMENTE o que a empresa realmente listou (máximo de 4 mídias)
     return items.slice(0, 4);
   }, [
+    hasAccess,
     company.videos,
     company.media_urls,
     company.name,
@@ -219,6 +223,11 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
       setActiveImage(item);
     }
   };
+
+  // Se a empresa for do plano Free (ou sem direito à galeria de mídia), não renderiza o componente
+  if (!hasAccess) {
+    return null;
+  }
 
   return (
     <Card className="rounded-2xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm">

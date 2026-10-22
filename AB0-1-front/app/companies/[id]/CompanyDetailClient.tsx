@@ -95,7 +95,7 @@ import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { trackCompanyProfileViewed, trackDashboardViewed } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
 import { useScrollPause } from '@/lib/analytics/hooks/useIntentTracking';
-import { isFeatureEnabled, canUsePaidConversion } from '@/lib/feature-access';
+import { isFeatureEnabled, canUsePaidConversion, canShowMediaGallery } from '@/lib/feature-access';
 import CompanyProfileShell from './components/CompanyProfileShell';
 import { getCapitalLocalSolarPage } from '@/lib/locations/local-page-slugs';
 
@@ -262,9 +262,7 @@ export default function CompanyDetailClient({
   const canRequestQuote = canUsePaidConversion(currentCompany, 'quote');
   const canUseWhatsApp = canUsePaidConversion(currentCompany, 'whatsapp');
   const showFaq = true;
-  const showGallery = currentCompany.feature_access
-    ? isFeatureEnabled(currentCompany.feature_access, 'media_gallery')
-    : Boolean(currentCompany.media_urls?.length || currentCompany.videos?.length);
+  const showGallery = canShowMediaGallery(currentCompany);
   const showSocialProof = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'social_proof')
     : Boolean(currentCompany.can_use_social_proof ?? currentCompany.social_proof_enabled);

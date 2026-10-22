@@ -15,6 +15,8 @@ const mockCompany: Company = {
   state: 'SC',
   status: 'active',
   verified: true,
+  has_paid_plan: true,
+  plan_tier: 'pro',
   category: 'energia-solar',
   description: 'Fabricante líder em inversores e soluções solares',
   website: 'https://www.weg.net/',
@@ -125,5 +127,19 @@ describe('ProjectsPreview (4-Item Media Showcase)', () => {
 
     // Should open dialog with video title or iframe
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('returns null and does not render when company is on free plan', () => {
+    const freeCompany: Company = {
+      ...mockCompany,
+      has_paid_plan: false,
+      plan_tier: 'free',
+    };
+
+    const { container } = render(
+      <ProjectsPreview company={freeCompany} onTabChange={mockOnTabChange} />
+    );
+
+    expect(container.firstChild).toBeNull();
   });
 });

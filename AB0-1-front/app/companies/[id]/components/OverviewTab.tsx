@@ -15,7 +15,12 @@ import RelatedCompaniesTable from "./RelatedCompaniesTable";
 import SocialProof from "./SocialProof";
 import FeaturedProductsSection from "./FeaturedProductsSection";
 import { BannerSlot } from "@/components/banners/BannerSlot";
-import { hasPaidPlan, isFeatureEnabled, canShowCompanyProfileAds } from "@/lib/feature-access";
+import {
+  hasPaidPlan,
+  isFeatureEnabled,
+  canShowCompanyProfileAds,
+  canShowMediaGallery,
+} from "@/lib/feature-access";
 
 interface OverviewTabProps {
   company: Company;
@@ -43,6 +48,7 @@ export default function OverviewTab({
 
   const showSocialProof = isFeatureEnabled(company.feature_access, "social_proof");
   const paidPlan = hasPaidPlan(company);
+  const showGallery = canShowMediaGallery(company);
 
   // Regra de Negócio:
   // - Empresas com plano PAGO comprovado: ativam o modo 'protected' (proteção comercial).
@@ -83,7 +89,7 @@ export default function OverviewTab({
       const categoryId = company.category_info?.id || company.category_id || undefined;
 
       // UMA ÚNICA chamada à Engine de Recomendação (o backend orquestra contexto geográfico e expansão de categoria)
-      let response = await publicCompaniesApi.getRecommendations(
+      const response = await publicCompaniesApi.getRecommendations(
         {
           context_company_id: company.id,
           exclude_company_id: company.id,
@@ -103,7 +109,7 @@ export default function OverviewTab({
         return;
       }
 
-      let items = (response.data || []).filter((item) => item.id !== company.id);
+      const items = (response.data || []).filter((item) => item.id !== company.id);
 
       // Resiliência de emergência (apenas se a Engine retornar vazio por inexistência de concorrentes cadastrados)
       if (items.length === 0) {
@@ -295,8 +301,10 @@ export default function OverviewTab({
         onTabChange={onTabChange}
       />
 
-      {/* 5. Vitrine de Especialidades (Projects Preview) */}
-      <ProjectsPreview company={company} onTabChange={onTabChange} />
+      {/* 5. Vitrine de Especialidades e Galeria de Mídia (apenas para planos com direito ao recurso) */}
+      {showGallery && (
+        <ProjectsPreview company={company} onTabChange={onTabChange} />
+      )}
 
       {/* Banner de Carrossel antes de Empresas Relacionadas (apenas para empresas sem plano pago) */}
       {showAds && (
