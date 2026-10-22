@@ -14,12 +14,12 @@
 |------|-----------|--------|---------------------|
 | **Gate A** | Baseline READ-ONLY, Inventário de Rotas, UI e 14 Refs Nutshell | **CONCLUÍDO** | Documentação completa em `docs/crm/ux-revamp/` (00 a 15) |
 | **Gate B** | Segurança Funcional P0 (CallLogger, Activities, TenantScope, Timeline) | **CONCLUÍDO** | Falso sucesso eliminado no CallLogger, rota e payload em ActivitiesController, Timeline harmonizada |
-| **Gate C** | Shell Responsivo e PWA Real (BottomNav, Header Compacto, Safe Area) | **CONCLUÍDO** | `CRMMobileBottomNav` criado e integrado a `SalesLayoutWrapper` com safe-area |
+| **Gate C** | Shell Responsivo e PWA Real (BottomNav, Header Compacto, Safe Area, MoreSheet) | **CONCLUÍDO** | `CRMMobileBottomNav` integrado a `SalesLayoutWrapper`, `CRMMobileMoreSheet` para ações móveis, `CRMModal` responsivo |
 | **Gate D** | Jornada Core (Hoje, 360°, Pipeline, Atividades, Persistência) | **CONCLUÍDO** | `PipelineBoard.tsx` com diálogo de transição touch-friendly (substitui DnD em mobile) e scroll snap |
 | **Gate E** | Propostas Comerciais e Documentos (QuoteBuilder, Wizard, Lifecycle) | **CONCLUÍDO** | Normalização de payload em `QuotesController.rb`, preenchimento de oportunidade em `CreateQuoteModal` e `QuoteBuilder` |
 | **Gate F** | Voz / IA com Revisão Humana (Feature Flag) | **BLOQUEADO (Requisito Externo)** | Depende de credenciais e infraestrutura de storage de áudio |
 | **Gate G** | PWA Offline Seguro (Dexie, Invalidação por Tenant) | **BLOQUEADO (Segurança Tenant)** | Mantido em offline-readonly seguro por padrão |
-| **Gate H** | Release & Qualidade (Suites de Teste, TypeScript, Lint) | **CONCLUÍDO** | `tsc --noEmit` PASS (0 erros), 11 testes Jest unitários em 5 suites passando (100%) |
+| **Gate H** | Release & Qualidade (Suites de Teste, TypeScript, Lint) | **CONCLUÍDO** | `tsc --noEmit` PASS (0 erros), 18 testes Jest unitários em 7 suites passando (100%) |
 
 ---
 
@@ -34,13 +34,16 @@
    - Invalidação de cache em `client.ts` para timeline da conta e contato.
 3. **PWA Mobile e Touch Interactivity:**
    - `CRMMobileBottomNav.tsx` criado com safe-area insets e integrado a `SalesLayoutWrapper.tsx`.
+   - `CRMMobileMoreSheet.tsx` criado com grid de criação rápida, busca e atalhos de módulos.
+   - `CRMTopbar.tsx` e `CRMCommandPalette.tsx` com fechamento por toque, dimensões responsivas e resultados de busca ao vivo.
+   - `CRMModal.tsx` adaptado para mobile (padding reduzido, altura flexível `88dvh`, descrição acessível).
    - `PipelineBoard.tsx`: implementado diálogo touch-friendly para mover estágio via menu do card, botões de ação (marcar como ganho/perdido) e snap-x para rolagem fluida em mobile.
 4. **Propostas Comerciais (Quotes):**
    - `QuotesController.rb`: normalização de `opportunity_id`/`sales_opportunity_id` e `total_cents`/`total_price_cents`.
    - `CreateQuoteModal.tsx` & `QuoteBuilder.tsx`: interface pt-BR, preenchimento automático e seleção de oportunidades.
 5. **TypeScript Healthcheck & Testes:**
    - `npm run typecheck` (`tsc --noEmit`): **0 erros**.
-   - Jest: 5 suites, 11 testes unitários passando (100%).
+   - Jest: 7 suites, 18 testes unitários passando (100%).
 
 ---
 
@@ -53,6 +56,6 @@ pwd && git status --short && git branch --show-current && git rev-parse HEAD
 npm run typecheck
 # PASS (tsc --noEmit concluído com sucesso)
 
-npx jest CallLoggerModal CRMMobileBottomNav CreateActivityModal CreateQuoteModal QuoteBuilder
-# PASS (5 test suites, 11 tests passed)
+npx jest CallLoggerModal CRMMobileBottomNav CRMMobileMoreSheet CRMCommandPalette CreateActivityModal CreateQuoteModal QuoteBuilder
+# PASS (7 test suites, 18 tests passed)
 ```

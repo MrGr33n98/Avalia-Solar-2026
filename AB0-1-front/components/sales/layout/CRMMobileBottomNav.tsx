@@ -92,6 +92,7 @@ export default function CRMMobileBottomNav({ onOpenMore }: CRMMobileBottomNavPro
               href={item.href}
               onClick={(e) => {
                 if (item.onClick) {
+                  e.preventDefault();
                   item.onClick();
                 }
               }}

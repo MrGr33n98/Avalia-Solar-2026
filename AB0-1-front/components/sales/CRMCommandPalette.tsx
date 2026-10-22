@@ -218,14 +218,19 @@ export default function CRMCommandPalette({ open: controlledOpen, onOpenChange }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 p-4 pt-20 backdrop-blur-xs animate-in fade-in duration-150">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleSetOpen(false);
+      }}
+      className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 p-3 pt-6 sm:p-4 sm:pt-20 backdrop-blur-xs animate-in fade-in duration-150"
+    >
       <div
         className="w-full max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl transition-all"
         onKeyDown={handleKeyDownInMenu}
       >
         {/* Search Input Bar */}
-        <div className="flex items-center border-b border-slate-100 px-4 py-3">
-          <Search className="mr-3 h-5 w-5 text-blue-900" />
+        <div className="flex items-center border-b border-slate-100 px-3 py-2.5 sm:px-4 sm:py-3">
+          <Search className="mr-2 sm:mr-3 h-4 sm:h-5 w-4 sm:w-5 text-blue-900 shrink-0" />
           <Input
             autoFocus
             value={query}
@@ -233,46 +238,103 @@ export default function CRMCommandPalette({ open: controlledOpen, onOpenChange }
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="Digite um comando, buscar empresa, prospect ou atalho (ex: Pipeline, Reunião, Solar)..."
-            className="border-0 bg-transparent text-base focus-visible:ring-0 focus-visible:ring-offset-0 text-slate-900 placeholder:text-slate-400"
+            placeholder="Digite um comando, empresa, prospect ou atalho..."
+            className="border-0 bg-transparent text-sm sm:text-base focus-visible:ring-0 focus-visible:ring-offset-0 text-slate-900 placeholder:text-slate-400 h-9"
           />
-          <Badge variant="outline" className="border-slate-200 bg-slate-50 font-mono text-[10px] text-slate-500">
-            ESC
-          </Badge>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              aria-label="Fechar busca"
+              onClick={() => handleSetOpen(false)}
+              className="p-1 rounded text-slate-400 hover:text-slate-600 sm:hidden"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <Badge variant="outline" className="hidden sm:inline-flex border-slate-200 bg-slate-50 font-mono text-[10px] text-slate-500">
+              ESC
+            </Badge>
+          </div>
         </div>
 
         {/* Results List */}
-        <div className="max-h-96 overflow-y-auto p-2">
-          {filteredCommands.length === 0 ? (
-            <div className="p-8 text-center text-sm text-slate-500">
-              Nenhum comando ou registro encontrado para &quot;{query}&quot;.
+        <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto p-2">
+          {/* Live Search Results from backend */}
+          {searchResults.length > 0 && (
+            <div className="mb-3 space-y-1 border-b border-slate-100 pb-2">
+              <p className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Registros Encontrados
+              </p>
+              {searchResults.map((res) => (
+                <button
+                  key={`${res.type}-${res.id}`}
+                  onClick={() => {
+                    handleSetOpen(false);
+                    setQuery('');
+                    const path =
+                      res.type === 'account'
+                        ? `/dashboard/sales/accounts`
+                        : res.type === 'opportunity'
+                        ? `/dashboard/sales/leads?view=kanban`
+                        : `/dashboard/sales/contacts`;
+                    if (router) {
+                      router.push(path);
+                    } else if (typeof window !== 'undefined') {
+                      window.location.href = path;
+                    }
+                  }}
+                  className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs text-slate-800 hover:bg-indigo-50/60 transition"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="rounded p-1 bg-indigo-50 text-indigo-700 shrink-0">
+                      {res.type === 'account' ? (
+                        <Building2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <Users className="w-3.5 h-3.5" />
+                      )}
+                    </div>
+                    <div className="truncate min-w-0">
+                      <p className="font-semibold truncate text-slate-900">{res.title}</p>
+                      {res.subtitle && <p className="text-[11px] truncate text-slate-500">{res.subtitle}</p>}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-indigo-100 bg-indigo-50/50 text-[9px] font-mono uppercase text-indigo-700 shrink-0">
+                    {res.type}
+                  </Badge>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {filteredCommands.length === 0 && searchResults.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-500">
+              {isSearching ? 'Buscando registros...' : `Nenhum comando ou registro encontrado para "${query}".`}
             </div>
           ) : (
             <div className="space-y-1">
               {filteredCommands.map((item, index) => {
                 const Icon = item.icon;
-                const isSelected = index === selectedIndex;
+                const isSelected = index === selectedIndex && searchResults.length === 0;
                 return (
                   <button
                     key={item.id}
                     onClick={() => handleSelect(item)}
                     onMouseEnter={() => setSelectedIndex(index)}
-                    className={`flex w-full items-center justify-between rounded-lg px-3.5 py-2.5 text-left text-sm transition ${
+                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs sm:text-sm transition ${
                       isSelected ? 'bg-blue-900 text-white' : 'text-slate-800 hover:bg-slate-100'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                       <div
-                        className={`rounded-md p-1.5 ${
+                        className={`rounded-md p-1.5 shrink-0 ${
                           isSelected ? 'bg-blue-800 text-white' : 'bg-slate-100 text-blue-900'
                         }`}
                       >
                         <Icon className="h-4 w-4" />
                       </div>
-                      <div>
-                        <p className="font-semibold">{item.label}</p>
+                      <div className="truncate min-w-0">
+                        <p className="font-semibold truncate">{item.label}</p>
                         {item.detail && (
-                          <p className={`text-xs ${isSelected ? 'text-blue-200' : 'text-slate-500'}`}>
+                          <p className={`text-[11px] sm:text-xs truncate ${isSelected ? 'text-blue-200' : 'text-slate-500'}`}>
                             {item.detail}
                           </p>
                         )}
@@ -280,7 +342,7 @@ export default function CRMCommandPalette({ open: controlledOpen, onOpenChange }
                     </div>
                     <Badge
                       variant="outline"
-                      className={`border-transparent font-mono text-[10px] ${
+                      className={`hidden sm:inline-flex border-transparent font-mono text-[9px] shrink-0 ${
                         isSelected ? 'bg-blue-800 text-blue-100' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
@@ -294,15 +356,16 @@ export default function CRMCommandPalette({ open: controlledOpen, onOpenChange }
         </div>
 
         {/* Footer info bar */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-4 py-2 text-[11px] text-slate-500">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-slate-700">Avalia Solar Command Palette</span>
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-3 py-2 text-[10px] sm:text-[11px] text-slate-500">
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="font-semibold text-slate-700">Avalia Solar CRM</span>
             <span>·</span>
-            <span>Use ↑ ↓ para navegar, Enter para selecionar</span>
+            <span className="hidden sm:inline">Use ↑ ↓ para navegar, Enter para selecionar</span>
+            <span className="sm:hidden">Toque para selecionar</span>
           </div>
-          <div className="flex items-center gap-1 font-mono text-[10px]">
-            <span className="rounded bg-white px-1.5 py-0.5 border border-slate-200 shadow-2xs">⌘K</span>
-            <span>para alternar</span>
+          <div className="flex items-center gap-1 font-mono text-[9px] sm:text-[10px] shrink-0">
+            <span className="rounded bg-white px-1.5 py-0.5 border border-slate-200 shadow-2xs">ESC</span>
+            <span>para fechar</span>
           </div>
         </div>
       </div>

@@ -37,13 +37,13 @@
 ### Sprint 2 — Shell & PWA Real (P0/P1)
 | TASK_ID | GAP_ID | USER_STORY | DEPENDS_ON | FILES | ACTION | ACCEPTANCE CRITERIA | TEST | STATUS |
 |---------|--------|------------|------------|-------|--------|---------------------|------|--------|
-| **T-020** | GAP-03 | US-CRM-005 | T-003 | `SalesLayoutWrapper.tsx` | Integrar layout responsivo Web x PWA sem quebrar desktop | Desktop preserva sidebar/topbar; PWA tem layout limpo | Responsividade 320/768/1440 | **IN_PROGRESS** |
+| **T-020** | GAP-03 | US-CRM-005 | T-003 | `SalesLayoutWrapper.tsx` | Integrar layout responsivo Web x PWA sem quebrar desktop | Desktop preserva sidebar/topbar; PWA tem layout limpo | Responsividade 320/768/1440 | **PASS** |
 | **T-021** | GAP-03 | US-CRM-005 | T-020 | `CRMSidebar.tsx` | Garantir ocultação em `< 768px` e expansão em `≥ 1024px` | Zero overflow horizontal na página | CSS/Viewport inspection | **PASS** |
-| **T-022** | GAP-03 | US-CRM-006 | T-020 | `CRMTopbar.tsx` | Topbar compacta responsiva com botão de busca e novo | Elementos acessíveis e alinhados | Jest / DOM test | **IN_PROGRESS** |
-| **T-023** | GAP-03 | US-CRM-006 | T-020 | `components/sales/layout/CRMMobileBottomNav.tsx` | Criar barra inferior CRM (Hoje, Pipeline, Empresas, Tarefas, Mais) | Altura 54px + safe-area; indicador ativo | Jest unit test | **IN_PROGRESS** |
-| **T-024** | GAP-03 | US-CRM-008 | T-003 | `CRMGlobalCreateHost.tsx` | Unificar acionador global de criação no mobile | Abre modal com contexto correto | Interação / RTL test | **PLANNED** |
-| **T-025** | GAP-07 | US-CRM-011 | T-002 | `CRMCommandPalette.tsx` | Otimizar busca mobile com foco e dismiss seguro do teclado | Busca rápida sem travar scroll | Interação manual/test | **PLANNED** |
-| **T-026** | GAP-03 | US-CRM-002 | T-003 | `components/sales/ui/CRMModal.tsx` | Adaptar modal para bottom sheet ≤ 70dvh em mobile | Scroll interno e backdrop acessível | Viewport 375x812 | **PLANNED** |
+| **T-022** | GAP-03 | US-CRM-006 | T-020 | `CRMTopbar.tsx` | Topbar compacta responsiva com botão de busca e novo | Elementos acessíveis e alinhados | Jest / DOM test | **PASS** |
+| **T-023** | GAP-03 | US-CRM-006 | T-020 | `components/sales/layout/CRMMobileBottomNav.tsx` | Criar barra inferior CRM (Hoje, Pipeline, Empresas, Tarefas, Mais) | Altura 54px + safe-area; indicador ativo | Jest unit test | **PASS** |
+| **T-024** | GAP-03 | US-CRM-008 | T-003 | `CRMMobileMoreSheet.tsx`, `CRMGlobalCreateHost.tsx` | Unificar acionador global de criação no mobile | Abre modal com contexto correto | Interação / RTL test | **PASS** |
+| **T-025** | GAP-07 | US-CRM-011 | T-002 | `CRMCommandPalette.tsx` | Otimizar busca mobile com foco e dismiss seguro do teclado | Busca rápida sem travar scroll | Interação manual/test | **PASS** |
+| **T-026** | GAP-03 | US-CRM-002 | T-003 | `components/sales/ui/CRMModal.tsx` | Adaptar modal responsivo para mobile com scroll interno | Scroll interno e backdrop acessível | Viewport 375x812 | **PASS** |
 
 ### Sprints 3 a 6 — Jornadas Comerciais, Propostas, IA e Qualidade
 | TASK_ID | GAP_ID | USER_STORY | DEPENDS_ON | FILES | ACTION | STATUS |
