@@ -133,16 +133,16 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-[540px] max-h-[90vh] flex flex-col p-0 bg-white rounded-3xl shadow-2xl overflow-hidden font-sans border-slate-200">
+      <DialogContent className="max-w-[540px] max-h-[90vh] flex flex-col p-0 bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden font-sans border-slate-200">
         {/* FIXED HEADER */}
-        <DialogHeader className="px-7 py-5 border-b border-slate-100 flex flex-row items-center justify-between space-y-0 shrink-0">
+        <DialogHeader className="px-4 sm:px-7 py-4 sm:py-5 border-b border-slate-100 flex flex-row items-center justify-between space-y-0 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-900 border border-indigo-100/80">
-              <Target className="w-5 h-5" />
+            <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-indigo-50 text-indigo-900 border border-indigo-100/80 shrink-0">
+              <Target className="w-4 h-4 sm:w-5 h-5" />
             </div>
-            <div>
-              <DialogTitle className="text-xl font-extrabold text-slate-900 tracking-tight">Adicionar Lead</DialogTitle>
-              <DialogDescription className="text-xs text-slate-500 mt-0.5">Cadastre um novo lead B2B no pipeline comercial.</DialogDescription>
+            <div className="min-w-0">
+              <DialogTitle className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight truncate">Adicionar Lead</DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 mt-0.5 truncate">Cadastre um novo lead B2B no pipeline comercial.</DialogDescription>
             </div>
           </div>
 
@@ -151,15 +151,16 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
             variant="outline"
             size="sm"
             onClick={() => toast.info('Painel de Personalização de Campos ativado')}
-            className="h-8 text-xs font-semibold bg-slate-50 border-slate-200 text-slate-700 rounded-xl"
+            className="h-8 text-xs font-semibold bg-slate-50 border-slate-200 text-slate-700 rounded-xl px-2.5 sm:px-3 shrink-0"
           >
-            <Settings className="w-3.5 h-3.5 mr-1.5 text-slate-500" /> Personalizar campos
+            <Settings className="w-3.5 h-3.5 sm:mr-1.5 text-slate-500" />
+            <span className="hidden sm:inline">Personalizar campos</span>
           </Button>
         </DialogHeader>
 
         {/* SCROLLABLE FORM BODY */}
-        <div className="flex-1 overflow-y-auto p-7 space-y-5">
-          <form id="create-lead-form" onSubmit={handleSubmit} className="space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-7 space-y-4 sm:space-y-5">
+          <form id="create-lead-form" onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             {error && (
               <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-800">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
@@ -343,7 +344,7 @@ export default function CreateLeadModal({ open, onClose, onSuccess }: CreateLead
         </div>
 
         {/* FIXED FOOTER */}
-        <div className="px-7 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/60 shrink-0 font-sans">
+        <div className="px-4 sm:px-7 py-3 sm:py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/60 shrink-0 font-sans">
           <Button
             type="button"
             variant="ghost"

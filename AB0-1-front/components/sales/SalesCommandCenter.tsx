@@ -154,6 +154,9 @@ const DEFAULT_STAGES = [
 export default function SalesCommandCenter({
   pipelineOnly = false,
   hideLayout = false,
+  hideViewSwitcher = false,
+  hideSearch = false,
+  hideNewDealButton = false,
   pipelineId,
   refreshVersion = 0,
   initialView = 'kanban',
@@ -162,6 +165,9 @@ export default function SalesCommandCenter({
 }: {
   pipelineOnly?: boolean;
   hideLayout?: boolean;
+  hideViewSwitcher?: boolean;
+  hideSearch?: boolean;
+  hideNewDealButton?: boolean;
   pipelineId?: number;
   refreshVersion?: number;
   initialView?: 'kanban' | 'table';
@@ -359,15 +365,17 @@ export default function SalesCommandCenter({
         {/* Pipeline Control Toolbar */}
         <section className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-2xs md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative min-w-[260px]">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Buscar por empresa ou projeto..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-9 border-slate-300 pl-9 text-xs"
-              />
-            </div>
+            {!hideSearch && !hideLayout && (
+              <div className="relative w-full sm:w-auto sm:min-w-[200px] md:min-w-[240px]">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Buscar por empresa ou projeto..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-9 border-slate-300 pl-9 text-xs w-full"
+                />
+              </div>
+            )}
             <Button variant="outline" size="sm" onClick={() => setColumnDialogOpen(true)} className="h-9 border-slate-300 text-xs font-semibold">Colunas</Button>
             <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)} className="h-9 border-slate-300 text-xs font-semibold">
               <Filter className="mr-1.5 h-3.5 w-3.5 text-slate-500" /> Filtros Avançados
@@ -386,7 +394,7 @@ export default function SalesCommandCenter({
           <div className="flex flex-wrap items-center justify-end gap-2">
             {selectedIds.length > 0 && <div className="flex items-center gap-1 rounded-md bg-blue-50 p-1 text-xs"><span className="px-2 font-semibold text-blue-900">{selectedIds.length} selecionados</span><Button size="sm" variant="ghost" onClick={() => runBulk('status', 'won')} className="h-7 text-xs">Marcar ganho</Button><select aria-label="Mover Leads selecionados" defaultValue="" onChange={(event) => { if (event.target.value) runBulk('stage', event.target.value); }} className="h-7 rounded border border-blue-200 bg-white px-1 text-xs"><option value="">Mover para...</option>{stages.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}</select><select aria-label="Adicionar tag aos Leads selecionados" defaultValue="" onChange={(event) => { if (event.target.value) runBulk('tag', event.target.value); }} className="h-7 rounded border border-blue-200 bg-white px-1 text-xs"><option value="">Adicionar tag...</option>{tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}</select><select aria-label="Remover tag dos Leads selecionados" defaultValue="" onChange={(event) => { if (event.target.value) runBulk('remove_tag', event.target.value); }} className="h-7 rounded border border-blue-200 bg-white px-1 text-xs"><option value="">Remover tag...</option>{tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}</select><Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="h-7 text-xs">Limpar</Button></div>}
             <SavedViewMenu filters={leadFilters} search={search} viewMode={view} onApply={(savedFilters, savedSearch) => { setLeadFilters(savedFilters as LeadFilters); setSearch(savedSearch); }} />
-            {pipelineOnly && (
+            {pipelineOnly && !hideLayout && !hideNewDealButton && (
               <Button
                 onClick={() => setIsNewDealOpen(true)}
                 size="sm"
@@ -395,24 +403,26 @@ export default function SalesCommandCenter({
                 <Plus className="mr-1.5 h-3.5 w-3.5" /> Nova Oportunidade
               </Button>
             )}
-            <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-0.5">
-              <button
-                onClick={() => setView('kanban')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
-                  view === 'kanban' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" /> Kanban
-              </button>
-              <button
-                onClick={() => setView('table')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
-                  view === 'table' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <ListFilter className="h-3.5 w-3.5" /> Tabela
-              </button>
-            </div>
+            {!hideViewSwitcher && !hideLayout && (
+              <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-0.5">
+                <button
+                  onClick={() => setView('kanban')}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
+                    view === 'kanban' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" /> Kanban
+                </button>
+                <button
+                  onClick={() => setView('table')}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition-all ${
+                    view === 'table' ? 'bg-white text-blue-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <ListFilter className="h-3.5 w-3.5" /> Tabela
+                </button>
+              </div>
+            )}
           </div>
         </section>
 

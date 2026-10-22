@@ -20,7 +20,10 @@ export default function CRMMobileBottomNav({ onOpenMore }: CRMMobileBottomNavPro
 
   const isTodayActive = pathname.startsWith('/dashboard/sales/today');
   const isPipelineActive =
-    pathname === '/dashboard/sales/pipeline' || pathname.startsWith('/dashboard/sales/pipeline/');
+    pathname === '/dashboard/sales/pipeline' ||
+    pathname.startsWith('/dashboard/sales/pipeline/') ||
+    pathname === '/dashboard/sales/leads' ||
+    pathname.startsWith('/dashboard/sales/leads/');
   const isAccountsActive =
     pathname.startsWith('/dashboard/sales/accounts') ||
     pathname.startsWith('/dashboard/sales/companies') ||

@@ -1,11 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import CRMMobileBottomNav from '@/components/sales/layout/CRMMobileBottomNav';
 
+let currentPathname = '/dashboard/sales/pipeline';
+
 jest.mock('next/navigation', () => ({
-  usePathname: () => '/dashboard/sales/pipeline',
+  usePathname: () => currentPathname,
 }));
 
 describe('CRMMobileBottomNav — Navegação Móvel PWA do CRM', () => {
+  beforeEach(() => {
+    currentPathname = '/dashboard/sales/pipeline';
+  });
+
   it('renderiza os 5 destinos obrigatórios do CRM com acessibilidade', () => {
     render(<CRMMobileBottomNav />);
 
@@ -27,5 +33,16 @@ describe('CRMMobileBottomNav — Navegação Móvel PWA do CRM', () => {
     // Como o mock do pathname é /dashboard/sales/pipeline, Pipeline deve ter aria-current="page"
     expect(pipelineLink).toHaveAttribute('aria-current', 'page');
     expect(hojeLink).not.toHaveAttribute('aria-current');
+  });
+
+  it('reconhece a rota /dashboard/sales/leads como destino Pipeline ativo', () => {
+    currentPathname = '/dashboard/sales/leads';
+    render(<CRMMobileBottomNav />);
+
+    const pipelineLink = screen.getByRole('link', { name: /Ir para o Pipeline de Vendas/i });
+    expect(pipelineLink).toHaveAttribute('aria-current', 'page');
+
+    const maisLink = screen.getByRole('link', { name: /Abrir menu de opções e configurações do CRM/i });
+    expect(maisLink).not.toHaveAttribute('aria-current');
   });
 });
