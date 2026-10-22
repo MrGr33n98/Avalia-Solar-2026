@@ -72,35 +72,53 @@ describe('ProjectsPreview (4-Item Media Showcase)', () => {
     ).toBeInTheDocument();
   });
 
-  it('always renders exactly 4 media cards', async () => {
+  it('renders up to 4 real media cards when company provides them', async () => {
     render(<ProjectsPreview company={mockCompany} onTabChange={mockOnTabChange} />);
 
-    // Should have 4 items rendered
     const videoBadges = await screen.findAllByText('Video');
     const imageBadges = await screen.findAllByText('Imagem');
 
     expect(videoBadges.length + imageBadges.length).toBe(4);
   });
 
-  it('renders 4 items even when company has zero media uploaded (curated fallback)', async () => {
+  it('renders only the media listed by the company without fictitious items (e.g. 2 videos for WEG)', async () => {
+    const wegOnlyVideos: Company = {
+      ...mockCompany,
+      videos: mockCompany.videos, // 2 videos
+      media_urls: [],             // 0 photos
+    };
+
+    render(<ProjectsPreview company={wegOnlyVideos} onTabChange={mockOnTabChange} />);
+
+    const videoBadges = await screen.findAllByText('Video');
+    expect(videoBadges).toHaveLength(2);
+    expect(screen.queryByText('Imagem')).not.toBeInTheDocument();
+  });
+
+  it('renders clean empty state without fictitious items when company has zero media listed', async () => {
     const emptyCompany: Company = {
       ...mockCompany,
       videos: [],
       media_urls: [],
+      youtube_url: undefined,
     };
 
     render(<ProjectsPreview company={emptyCompany} onTabChange={mockOnTabChange} />);
 
-    const videoBadges = await screen.findAllByText('Video');
-    const imageBadges = await screen.findAllByText('Imagem');
+    expect(
+      screen.getByText('Galeria sob consulta: esta empresa ainda não publicou mídias públicas.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Solicitar portfólio')).toBeInTheDocument();
 
-    expect(videoBadges.length + imageBadges.length).toBe(4);
+    const requestButton = screen.getByText('Solicitar portfólio');
+    fireEvent.click(requestButton);
+    expect(mockOnTabChange).toHaveBeenCalledWith('contact');
   });
 
   it('opens video modal when a video card is clicked', async () => {
     render(<ProjectsPreview company={mockCompany} onTabChange={mockOnTabChange} />);
 
-    const videoCard = screen.getAllByText('Video')[0].closest('div');
+    const videoCard = (await screen.findAllByText('Video'))[0].closest('div');
     expect(videoCard).toBeInTheDocument();
 
     fireEvent.click(videoCard!);

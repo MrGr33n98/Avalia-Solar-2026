@@ -126,7 +126,7 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
   }, [company.id, company.name]);
 
   // Monta lista de mídias reais da empresa
-  const fourMedia = useMemo(() => {
+  const displayedMedia = useMemo(() => {
     const items: ShowcaseMediaItem[] = [];
 
     // 1. Vídeos oficiais da empresa
@@ -169,10 +169,24 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
       });
     }
 
-    // 2. Fotos da galeria da empresa
+    // 2. Vídeo do canal YouTube da empresa (se for link de vídeo válido e ainda não estiver na lista)
+    if (company.youtube_url) {
+      const ytId = extractYoutubeId(company.youtube_url);
+      if (ytId && !items.some((i) => i.videoUrl && i.videoUrl.includes(ytId))) {
+        items.push({
+          id: "company-youtube-main",
+          type: "video",
+          title: `Vídeo Institucional - ${company.name}`,
+          thumbnail: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`,
+          videoUrl: company.youtube_url,
+        });
+      }
+    }
+
+    // 3. Fotos da galeria da empresa
     if (Array.isArray(company.media_urls)) {
       company.media_urls.forEach((url, idx) => {
-        if (url && typeof url === "string") {
+        if (url && typeof url === "string" && url.trim().length > 0) {
           items.push({
             id: `media-url-${idx}`,
             type: "image",
@@ -183,44 +197,20 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
       });
     }
 
-    // 3. Ativos extraídos de projetos da empresa
+    // 4. Ativos reais extraídos de projetos da empresa
     projectAssets.forEach((asset) => {
       items.push(asset);
     });
 
-    // 4. Fallback Curado de Alta Resolução Solar para garantir SEMPRE 4 ITENS
-    const fallbackItems: ShowcaseMediaItem[] = [
-      {
-        id: "curated-1",
-        type: "video",
-        title: `Apresentação Técnica e Institucional - ${company.name}`,
-        thumbnail: "/images/banner-landing-page-avalia-solar.jpg",
-        videoUrl: company.youtube_url || "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      },
-      {
-        id: "curated-2",
-        type: "image",
-        title: `Instalação Fotovoltaica e Usina Solar - ${company.name}`,
-        thumbnail: "/images/usinas-de-solo-avalia-solar.png",
-      },
-      {
-        id: "curated-3",
-        type: "image",
-        title: `Sistemas de Armazenamento e BESS - ${company.name}`,
-        thumbnail: "/images/sistema-off-grid.png",
-      },
-      {
-        id: "curated-4",
-        type: "video",
-        title: `Mobilidade Elétrica e Carregadores Inteligentes - ${company.name}`,
-        thumbnail: "/images/carregadores-veiculos-eletricos-avalia-solar.png",
-        videoUrl: company.youtube_url || "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      },
-    ];
-
-    // Concatena priorizando mídias reais e pega estritamente os primeiros 4
-    return [...items, ...fallbackItems].slice(0, 4);
-  }, [company.videos, company.media_urls, company.name, company.youtube_url, projectAssets]);
+    // Retorna EXCLUSIVAMENTE o que a empresa realmente listou (máximo de 4 mídias)
+    return items.slice(0, 4);
+  }, [
+    company.videos,
+    company.media_urls,
+    company.name,
+    company.youtube_url,
+    projectAssets,
+  ]);
 
   const handleMediaClick = (item: ShowcaseMediaItem) => {
     if (item.type === "video") {
@@ -256,13 +246,20 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
         </p>
       </div>
 
-      {/* 3. Grid Responsivo de 4 Mídias: 4 colunas em linha única no Desktop / 2x2 no Mobile (PWA) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        {fourMedia.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => handleMediaClick(item)}
-            className="group relative aspect-[16/10] overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer select-none"
+      {/* 3. Grid Responsivo de Mídias Reais: até 4 colunas no Desktop / 2x2 no Mobile (PWA) */}
+      {displayedMedia.length > 0 ? (
+        <div
+          className={`grid gap-3 sm:gap-4 ${
+            displayedMedia.length === 1
+              ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-sm sm:max-w-none"
+              : "grid-cols-2 md:grid-cols-4"
+          }`}
+        >
+          {displayedMedia.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => handleMediaClick(item)}
+              className="group relative aspect-[16/10] overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer select-none"
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
@@ -309,6 +306,24 @@ export default function ProjectsPreview({ company, onTabChange }: ProjectsPrevie
           </div>
         ))}
       </div>
+    ) : (
+      /* Estado quando a empresa não publicou fotos ou vídeos */
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4">
+        <div className="flex items-center gap-2.5">
+          <ImageIcon className="h-4 w-4 text-slate-400 shrink-0" aria-hidden="true" />
+          <span className="text-xs font-medium text-slate-600">
+            Galeria sob consulta: esta empresa ainda não publicou mídias públicas.
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => onTabChange("contact")}
+          className="shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+        >
+          Solicitar portfólio
+        </button>
+      </div>
+    )}
 
       {/* Modal / Dialog de Reprodução de Vídeo */}
       <Dialog open={Boolean(activeVideo)} onOpenChange={(open) => !open && setActiveVideo(null)}>
