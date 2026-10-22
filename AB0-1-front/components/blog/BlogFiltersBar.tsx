@@ -101,8 +101,8 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
     (currentSort && currentSort !== 'latest') ||
     Boolean(currentQ);
   return (
-    <section className="mb-8 sticky top-[80px] z-20">
-      <div className="rounded-none border border-slate-200 bg-white p-4 shadow-none">
+    <section className="mb-6">
+      <div className="rounded-2xl border border-[#E8EAED] bg-white p-3 shadow-[0_2px_12px_rgba(16,17,20,0.02)]">
         {/* grid responsivo: categorias / search / sort */}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-center">
           {/* Categories (col 1..7) */}
@@ -118,7 +118,7 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-none border border-slate-200 bg-white text-slate-500 shadow-none hover:bg-slate-50 hover:text-primary"
+                  className="h-8 w-8 rounded-lg border border-[#E8EAED] bg-white text-slate-500 shadow-none hover:bg-slate-50 hover:text-primary"
                   onClick={() => scroll('left')}
                   aria-label="Rolar categorias para esquerda"
                 >
@@ -129,18 +129,18 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
               <div
                 ref={scrollContainerRef}
                 onScroll={checkScroll}
-                className="min-w-0 w-full overflow-x-auto no-scrollbar scroll-smooth px-2"
+                className="min-w-0 w-full overflow-x-auto no-scrollbar scroll-smooth px-1"
               >
-                <div className="inline-flex h-11 w-max gap-1 rounded-full bg-slate-100/60 p-1" role="group" aria-label="Categorias do blog">
+                <div className="inline-flex h-10 w-max items-center gap-1.5 rounded-xl bg-slate-50/80 p-1 border border-slate-100" role="group" aria-label="Categorias do blog">
                   <button
                     type="button"
                     aria-pressed={currentCategory === 'all'}
                     onClick={() => pushParams({ category: null })}
                     className={cn(
-                      'inline-flex h-9 items-center justify-center whitespace-nowrap rounded-none border border-transparent px-4 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                      'inline-flex h-8 items-center justify-center whitespace-nowrap rounded-lg border px-3 text-xs font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                       currentCategory === 'all'
-                        ? 'border-blue-200 bg-blue-50 text-primary shadow-none'
-                        : 'text-muted-foreground hover:bg-white/70 hover:text-slate-900'
+                        ? 'border-blue-200 bg-blue-50 text-[#155EEF] font-bold shadow-none'
+                        : 'border-transparent text-[#667085] hover:bg-white hover:text-[#101114]'
                     )}
                   >
                     Tudo
@@ -152,14 +152,14 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
                       aria-pressed={currentCategory === String(cat.id)}
                       onClick={() => pushParams({ category: String(cat.id) })}
                       className={cn(
-                        'inline-flex h-9 items-center justify-center whitespace-nowrap rounded-none border border-transparent px-4 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                        'inline-flex h-8 items-center justify-center whitespace-nowrap rounded-lg border px-3 text-xs font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                         currentCategory === String(cat.id)
-                          ? 'border-blue-200 bg-blue-50 text-primary shadow-none'
-                          : 'text-muted-foreground hover:bg-white/70 hover:text-slate-900'
+                          ? 'border-blue-200 bg-blue-50 text-[#155EEF] font-bold shadow-none'
+                          : 'border-transparent text-[#667085] hover:bg-white hover:text-[#101114]'
                       )}
                     >
                       {cat.name}{' '}
-                      <span className="ml-1 text-slate-500">({cat.articles_count ?? cat.count ?? 0})</span>
+                      <span className="ml-1 text-slate-400 font-normal">({cat.articles_count ?? cat.count ?? 0})</span>
                     </button>
                   ))}
                 </div>
@@ -174,7 +174,7 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-none border border-slate-200 bg-white text-slate-500 shadow-none hover:bg-slate-50 hover:text-primary"
+                  className="h-8 w-8 rounded-lg border border-[#E8EAED] bg-white text-slate-500 shadow-none hover:bg-slate-50 hover:text-primary"
                   onClick={() => scroll('right')}
                   aria-label="Rolar categorias para direita"
                 >
@@ -186,14 +186,14 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
           {/* Search (col 8..10) */}
           <div className="lg:col-span-3 min-w-0">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" aria-hidden="true" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" aria-hidden="true" />
               <Input
                 aria-label="Buscar artigos"
                 placeholder="Buscar artigos..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className={cn(
-                  "h-11 rounded-full pl-9 bg-slate-50 border-slate-200 focus-visible:ring-primary",
+                  "h-10 rounded-xl pl-9 bg-slate-50/70 border-[#E8EAED] text-xs text-[#101114] placeholder:text-slate-400 focus-visible:ring-[#155EEF]",
                   search && "pr-10"
                 )}
               />
@@ -201,11 +201,11 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 h-11 w-10 text-slate-500 hover:text-slate-700"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-9 text-slate-400 hover:text-slate-700"
                   onClick={() => setSearch("")}
                   aria-label="Limpar busca"
                 >
-                  <X className="h-4 w-4" aria-hidden="true" />
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
               )}
             </div>
@@ -216,10 +216,10 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
               <Select value={currentSort} onValueChange={(v) => pushParams({ sort: v || null })}>
                 <SelectTrigger
                   aria-label={`Filtrar posts por ordem de ${SORT_LABELS[currentSort] || 'mais recentes'}`}
-                  className="w-full h-11 rounded-full bg-white border-slate-200 hover:bg-slate-50"
+                  className="w-full h-10 rounded-xl bg-white border-[#E8EAED] text-xs text-[#101114] hover:bg-slate-50"
                 >
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <ArrowUpDown className="h-4 w-4 text-primary/70" aria-hidden="true" />
+                  <div className="flex items-center gap-2 text-[#475467]">
+                    <ArrowUpDown className="h-3.5 w-3.5 text-[#155EEF]" aria-hidden="true" />
                     <SelectValue placeholder="Ordenar" />
                   </div>
                 </SelectTrigger>
@@ -234,7 +234,7 @@ export function BlogFiltersBar({ categories }: BlogFiltersBarProps) {
               <Button
                 variant="outline"
                 size="icon"
-                className="h-11 w-11 rounded-full"
+                className="h-10 w-10 rounded-xl border-[#E8EAED] text-[#667085]"
                 onClick={() => router.push(pathname)}
                 aria-label="Limpar filtros"
                 title="Limpar filtros"

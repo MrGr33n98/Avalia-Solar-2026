@@ -38,7 +38,7 @@ export function FeaturedSplitPost({ post }: FeaturedSplitPostProps) {
     Math.ceil(((post.content || '').replace(/<[^>]*>/g, '').split(/\s+/).length || 1000) / 200);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.04)] transition-all duration-300 hover:border-slate-300 hover:shadow-[0_20px_55px_rgba(15,23,42,0.07)]">
+    <div className="relative overflow-hidden rounded-2xl border border-[#E8EAED] bg-white shadow-[0_4px_20px_rgba(16,17,20,0.035)] transition-all duration-300 hover:border-slate-300 hover:shadow-[0_12px_32px_rgba(16,17,20,0.06)]">
       <Link
         href={url}
         className="group grid grid-cols-1 items-stretch lg:grid-cols-12"
@@ -62,24 +62,24 @@ export function FeaturedSplitPost({ post }: FeaturedSplitPostProps) {
           <div>
             {/* Badges de Destaque Editorial e Categoria */}
             <div className="flex flex-wrap items-center gap-2.5 mb-4">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50/90 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#155EEF]">
                 <Sparkles className="h-3 w-3" aria-hidden="true" />
                 Destaque da Semana
               </span>
               {post.category && (
-                <span className="text-[12px] font-semibold tracking-wide text-slate-500 uppercase">
+                <span className="text-[12px] font-semibold tracking-wide text-[#667085] uppercase">
                   {post.category.name}
                 </span>
               )}
             </div>
 
             {/* Título com [text-wrap:balance] para eliminar quebras orfãs */}
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 transition-colors duration-200 group-hover:text-blue-700 sm:text-3xl lg:text-[32px] lg:leading-[1.2] [text-wrap:balance]">
+            <h2 className="text-2xl font-bold tracking-tight text-[#101114] transition-colors duration-200 group-hover:text-[#155EEF] sm:text-3xl lg:text-[32px] lg:leading-[1.2] [text-wrap:balance]">
               {post.title}
             </h2>
 
             {/* Resumo com cor Slate de alto contraste e legibilidade */}
-            <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base line-clamp-3 [text-wrap:pretty]">
+            <p className="mt-4 text-sm leading-relaxed text-[#667085] sm:text-base line-clamp-3 [text-wrap:pretty]">
               {post.excerpt ||
                 'Confira a análise completa de nossos especialistas sobre o mercado de energia solar, payback e avanços tecnológicos.'}
             </p>
@@ -87,7 +87,7 @@ export function FeaturedSplitPost({ post }: FeaturedSplitPostProps) {
 
           {/* Rodapé do Card: Metadados e Seta com Micro-Interação da Stripe */}
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
-            <div className="flex items-center gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-3 text-xs text-[#667085]">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
                 {post.published_at
@@ -101,7 +101,7 @@ export function FeaturedSplitPost({ post }: FeaturedSplitPostProps) {
               </span>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 transition-transform duration-200 group-hover:translate-x-1.5">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#155EEF] transition-transform duration-200 group-hover:translate-x-1.5">
               Ler artigo completo
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </div>

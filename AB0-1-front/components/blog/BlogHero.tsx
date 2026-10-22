@@ -12,46 +12,46 @@ import { openQuoteWizard } from '@/lib/quote-wizard';
  */
 export function BlogHero() {
   return (
-    <div className="bg-white py-8 md:py-12 overflow-hidden">
+    <div className="py-6 md:py-10 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 relative">
 
           {/* Lado esquerdo: título editorial + CTAs de conversão */}
           <div className="max-w-2xl flex-shrink-0 relative z-10">
             <div className="flex items-center gap-2 mb-3.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50/80 px-2.5 py-0.5 text-[11px] font-bold text-blue-700 tracking-wider uppercase">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50/90 px-3 py-1 text-[11px] font-bold text-[#155EEF] tracking-wider uppercase">
                 <Sparkles className="h-3 w-3" aria-hidden="true" />
-                Blog Editorial
+                Blog Avalia Solar
               </span>
               <span className="w-1 h-1 rounded-full bg-slate-300" aria-hidden="true" />
-              <span className="text-[11px] text-slate-500 font-medium">
+              <span className="text-[11px] text-[#667085] font-medium">
                 Energia Solar &amp; Mobilidade Elétrica
               </span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.12] tracking-tight [text-wrap:balance]">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#101114] leading-[1.12] tracking-tight [text-wrap:balance]">
               Tudo sobre{' '}
-              <span className="text-blue-600">energia solar</span>,{' '}
+              <span className="text-[#155EEF]">energia solar</span>,{' '}
               economia e sustentabilidade
             </h1>
 
-            <p className="mt-4 text-sm sm:text-base text-slate-600 max-w-lg leading-relaxed font-normal [text-wrap:pretty]">
+            <p className="mt-4 text-sm sm:text-base text-[#667085] max-w-lg leading-relaxed font-normal [text-wrap:pretty]">
               Guias práticos, análises do setor fotovoltaico e comparativos imparciais para você tomar a decisão mais inteligente em energia limpa.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Button
                 size="sm"
-                className="bg-[#0047bb] hover:bg-[#003b9d] text-white font-bold rounded-xl px-5 h-10 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
+                className="bg-[#FFD21F] hover:bg-[#F5C814] text-[#101114] font-bold rounded-xl px-5 h-11 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 border border-[#F0C51E]"
                 onClick={() => openQuoteWizard({ source: 'blog_hero' })}
               >
                 Simular Economia
-                <ArrowRight className="w-3.5 h-3.5 ml-1.5" aria-hidden="true" />
+                <ArrowRight className="w-4 h-4 ml-1.5 text-[#101114]" aria-hidden="true" />
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-xl border-slate-200 text-slate-700 font-semibold px-5 h-10 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all"
+                className="rounded-xl border-[#E8EAED] bg-white text-[#101114] font-semibold px-5 h-11 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all"
                 asChild
               >
                 <a href="/blog?category=guias">Explorar Guias</a>
@@ -59,9 +59,9 @@ export function BlogHero() {
             </div>
           </div>
 
-          {/* Lado direito: imagem editorial com cantos suaves sem recorte brusco */}
+          {/* Lado direito: imagem editorial com cantos suaves */}
           <div
-            className="hidden md:block relative flex-1 h-[260px] lg:h-[300px] overflow-hidden rounded-2xl border border-slate-200/80 shadow-[0_12px_32px_rgba(15,23,42,0.04)]"
+            className="hidden md:block relative flex-1 h-[260px] lg:h-[300px] overflow-hidden rounded-2xl border border-[#E8EAED] shadow-[0_8px_30px_rgba(16,17,20,0.04)]"
             aria-hidden="true"
           >
             <Image

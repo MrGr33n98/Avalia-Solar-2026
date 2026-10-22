@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
-import { SearchX, Sparkles } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 
 import { blogApi } from '@/lib/api/blog';
 import { BlogHero } from '@/components/blog/BlogHero';
@@ -12,7 +12,6 @@ import { BlogSidebar } from '@/components/blog/BlogSidebar';
 import { StickyMobileCTA } from '@/components/blog/StickyMobileCTA';
 import { NewsletterPopup } from '@/components/blog/NewsletterPopup';
 import { BlogIntentTracker } from '@/components/blog/BlogIntentTracker';
-import { GridGuides } from '@/components/blog/GridGuides';
 import { Button } from '@/components/ui/button';
 import { SITE, absoluteUrl } from '@/lib/site';
 
@@ -100,11 +99,7 @@ export default async function BlogIndexPage({
   const showFeatured = !hasFilters && page === 1;
 
   return (
-    <div className="relative min-h-screen bg-[#F8FAFC] text-slate-900 overflow-x-hidden">
-      {/* =========================================================
-          STRIPE-INSPIRED GRID GUIDES (ANCOREGEM ARQUITETÔNICA)
-      ========================================================== */}
-      <GridGuides />
+    <div className="blog-page relative min-h-screen bg-[#FAFAF8] text-[#101114] overflow-x-hidden">
 
       {/* =========================================================
           SEO / STRUCTURED DATA
@@ -134,67 +129,62 @@ export default async function BlogIndexPage({
           - maior densidade editorial
       ========================================================== */}
 
-      <section className="bg-white">
+      <section className="pt-4 pb-2 sm:pt-6 sm:pb-3">
         <div
           className="
             mx-auto
             max-w-[1400px]
             px-4
-            pb-5
-            pt-5
             sm:px-6
-            sm:pb-6
-            sm:pt-6
             lg:px-8
-            lg:pb-7
-            lg:pt-7
           "
         >
           <div
             className="
+              blog-hero-surface
               relative
               overflow-hidden
               rounded-[26px]
               border
-              border-slate-200/80
-              bg-white
-              shadow-[0_18px_55px_rgba(15,23,42,0.045)]
+              border-[#E8EAED]
+              shadow-[0_8px_30px_rgba(16,17,20,0.035)]
             "
           >
-            {/* Decorative glow */}
-
+            {/* Decorative subtle yellow glow */}
             <div
               aria-hidden="true"
               className="
                 pointer-events-none
                 absolute
-                -right-32
-                -top-32
+                -left-16
+                -top-16
                 h-72
                 w-72
                 rounded-full
-                bg-blue-100/35
+                bg-[#FFD21F]/15
                 blur-3xl
               "
             />
 
+            {/* Decorative subtle dot-matrix pattern */}
             <div
               aria-hidden="true"
               className="
                 pointer-events-none
                 absolute
-                -bottom-40
-                -left-24
-                h-72
-                w-72
-                rounded-full
-                bg-amber-50/70
-                blur-3xl
+                -bottom-4
+                left-6
+                h-32
+                w-44
+                opacity-35
               "
+              style={{
+                backgroundImage: 'radial-gradient(#FFD21F 2px, transparent 2px)',
+                backgroundSize: '12px 12px',
+              }}
             />
 
             {/* Hero content */}
-
             <div
               className="
                 relative
@@ -212,30 +202,14 @@ export default async function BlogIndexPage({
             >
               <BlogHero />
             </div>
+          </div>
 
-            {/* Integrated category navigation */}
-
-            <div
-              className="
-                relative
-                border-t
-                border-slate-200/70
-                bg-slate-50/65
-                px-3
-                py-3
-                sm:px-4
-                lg:px-5
-              "
-            >
-              <CategoryHighlights />
-            </div>
+          {/* Integrated category navigation */}
+          <div className="mt-3 sm:mt-4">
+            <CategoryHighlights />
           </div>
         </div>
       </section>
-
-      {/* Subtle separator */}
-
-      <div className="border-t border-slate-200/60" />
 
       {/* =========================================================
           MAIN
@@ -303,46 +277,21 @@ export default async function BlogIndexPage({
                 "
               >
                 <div>
-                  <div
-                    className="
-                      mb-2
-                      inline-flex
-                      items-center
-                      gap-2
-                      rounded-full
-                      border
-                      border-blue-100
-                      bg-blue-50/80
-                      px-3
-                      py-1
-                      text-[10px]
-                      font-bold
-                      uppercase
-                      tracking-[0.14em]
-                      text-blue-700
-                    "
-                  >
-                    <Sparkles
-                      className="h-3.5 w-3.5"
-                      aria-hidden="true"
-                    />
-
-                    Conteúdo Avalia Solar
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <span className="block w-1 h-5 rounded-full bg-[#FFD21F]" aria-hidden="true" />
+                    <h2
+                      className="
+                        text-[26px]
+                        font-bold
+                        tracking-tight
+                        text-[#101114]
+                        sm:text-[30px]
+                        [text-wrap:balance]
+                      "
+                    >
+                      Últimos Artigos
+                    </h2>
                   </div>
-
-                  <h2
-                    className="
-                      text-[28px]
-                      font-black
-                      tracking-[-0.04em]
-                      text-slate-950
-                      sm:text-[32px]
-                      lg:text-[34px]
-                      [text-wrap:balance]
-                    "
-                  >
-                    Últimos Artigos
-                  </h2>
 
                   <p
                     className="
@@ -350,7 +299,7 @@ export default async function BlogIndexPage({
                       max-w-2xl
                       text-sm
                       leading-6
-                      text-slate-600
+                      text-[#667085]
                       [text-wrap:pretty]
                     "
                   >
@@ -365,34 +314,23 @@ export default async function BlogIndexPage({
                 FILTER TOOLBAR
             ==================================================== */}
 
-            <div
-              className="
-                mb-6
-                rounded-[20px]
-                border
-                border-slate-200/80
-                bg-white
-                p-2.5
-                shadow-[0_8px_28px_rgba(15,23,42,0.03)]
-                sm:p-3
-              "
+            <Suspense
+              fallback={
+                <div
+                  className="
+                    h-14
+                    w-full
+                    animate-pulse
+                    rounded-2xl
+                    border
+                    border-[#E8EAED]
+                    bg-white
+                  "
+                />
+              }
             >
-              <Suspense
-                fallback={
-                  <div
-                    className="
-                      h-14
-                      w-full
-                      animate-pulse
-                      rounded-2xl
-                      bg-slate-100
-                    "
-                  />
-                }
-              >
-                <BlogFiltersBar categories={categories} />
-              </Suspense>
-            </div>
+              <BlogFiltersBar categories={categories} />
+            </Suspense>
 
             {/* ===================================================
                 POSTS
@@ -631,27 +569,14 @@ export default async function BlogIndexPage({
           >
             <div
               className="
-                space-y-5
+                space-y-4
                 lg:sticky
                 lg:top-24
               "
             >
-              <div
-                className="
-                  overflow-hidden
-                  rounded-[24px]
-                  border
-                  border-slate-200/80
-                  bg-white
-                  p-3
-                  shadow-[0_12px_38px_rgba(15,23,42,0.04)]
-                  sm:p-4
-                "
-              >
-                <BlogSidebar
-                  verifiedCompanies={verifiedCompanies}
-                />
-              </div>
+              <BlogSidebar
+                verifiedCompanies={verifiedCompanies}
+              />
             </div>
           </aside>
         </div>

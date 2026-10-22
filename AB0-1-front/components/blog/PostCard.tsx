@@ -42,7 +42,7 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
   return (
     <Link
       href={url}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.03)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_14px_36px_rgba(15,23,42,0.06)]"
+      className="group flex h-full flex-col overflow-hidden rounded-[20px] border border-[#E8EAED] bg-white shadow-[0_4px_20px_rgba(16,17,20,0.035)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_14px_36px_rgba(16,17,20,0.07)]"
       onClick={() => {
         track('blog_article_click', {
           post_id: post.id,
@@ -81,7 +81,7 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
           {/* Category label discreto em pílula translúcida */}
           {post.category && (
             <div className="absolute top-3 left-3">
-              <span className="inline-block rounded-md bg-white/95 text-[10px] font-bold text-slate-800 px-2.5 py-1 tracking-wider uppercase shadow-sm backdrop-blur-sm">
+              <span className="inline-block rounded-lg bg-white/95 text-[10px] font-bold text-[#101114] px-2.5 py-1 tracking-wider uppercase shadow-sm border border-slate-100 backdrop-blur-sm">
                 {post.category.name}
               </span>
             </div>
@@ -91,7 +91,7 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
         {/* Content com Escala Slate de Alto Contraste */}
         <div className="flex-1 flex flex-col p-5">
           {/* Metadados */}
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-2.5">
+          <div className="flex items-center gap-2 text-xs text-[#667085] mb-2.5">
             <span suppressHydrationWarning className="flex items-center gap-1 font-medium">
               <Calendar className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
               {post.published_date
@@ -108,12 +108,12 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
           </div>
 
           {/* Title com [text-wrap:balance] para evitar viúvas tipográficas */}
-          <h3 className="text-base font-bold text-slate-900 mb-2 line-clamp-2 leading-snug group-hover:text-blue-700 transition-colors [text-wrap:balance]">
+          <h3 className="text-base font-bold text-[#101114] mb-2 line-clamp-2 leading-snug group-hover:text-[#155EEF] transition-colors [text-wrap:balance]">
             {post.title}
           </h3>
 
           {/* Excerpt com [text-wrap:pretty] */}
-          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4 font-normal [text-wrap:pretty]">
+          <p className="text-xs text-[#667085] line-clamp-2 leading-relaxed mb-4 font-normal [text-wrap:pretty]">
             {post.excerpt ||
               'Confira este artigo completo sobre energia solar e economize na sua conta de luz.'}
           </p>
@@ -135,12 +135,12 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
                   <User className="w-3 h-3 text-slate-400" aria-hidden="true" />
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs font-medium text-slate-700 truncate max-w-[120px]">
+              <span className="text-xs font-medium text-[#475467] truncate max-w-[120px]">
                 {authorName}
               </span>
             </div>
 
-            <span className="text-xs font-bold text-blue-600 flex items-center gap-1 transition-transform duration-200 group-hover:translate-x-1">
+            <span className="text-xs font-bold text-[#155EEF] flex items-center gap-1 transition-transform duration-200 group-hover:translate-x-1">
               Ler artigo <ArrowRight className="w-3 h-3" aria-hidden="true" />
             </span>
           </div>

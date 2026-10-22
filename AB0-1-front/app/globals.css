@@ -1277,5 +1277,33 @@ html, body, #__next, main {
     content-visibility: auto;
     contain-intrinsic-size: 260px 320px;
   }
+
+  /* Blog Avalia Solar — Background & Surfaces Premium (Swiss Style) */
+  .blog-page {
+    background-color: #fafaf8;
+    color: #101114;
+  }
+
+  .blog-hero-surface {
+    background:
+      radial-gradient(
+        ellipse at 12% 50%,
+        rgba(255, 210, 31, 0.12),
+        transparent 50%
+      ),
+      linear-gradient(
+        135deg,
+        #ffffff 0%,
+        #fffdf7 100%
+      );
+  }
+
+  .blog-card-surface {
+    background-color: #ffffff;
+    border: 1px solid #e8eaed;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(16, 17, 20, 0.035);
+  }
 }
+
 
