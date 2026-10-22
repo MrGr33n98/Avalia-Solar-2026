@@ -17,7 +17,7 @@ import {
 } from './api';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
 import { getAttribution, getCurrentUTMs } from './analytics/utm';
-import { ApiError, toApiError } from './api-error';
+import { ApiError, toApiError, isAbortError } from './api-error';
 import { refreshAuthSession } from './api';
 
 // Re-export types so they can be imported from api-client
@@ -161,12 +161,63 @@ const buildQueryParams = (params: Record<string, any>) => {
   return qs ? `?${qs}` : '';
 };
 
+function attachSignalToPromise<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    const reason =
+      signal.reason || new DOMException('The user aborted a request.', 'AbortError');
+    return Promise.reject(reason);
+  }
+
+  return new Promise<T>((resolve, reject) => {
+    let settled = false;
+
+    const onAbort = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      const reason =
+        signal.reason || new DOMException('The user aborted a request.', 'AbortError');
+      reject(reason);
+    };
+
+    const cleanup = () => {
+      signal.removeEventListener('abort', onAbort);
+    };
+
+    signal.addEventListener('abort', onAbort, { once: true });
+
+    promise.then(
+      (val) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(val);
+      },
+      (err) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(err);
+      }
+    );
+  });
+}
+
 // ------------------
-// FunÃ§Ã£o genÃ©rica com fetch seguro (SSR friendly)
+// Função genérica com fetch seguro (SSR friendly)
 // ------------------
 export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Promise<T> {
   const url = buildApiUrl(endpoint);
   const requestOptions: any = { ...options };
+  const callerSignal: AbortSignal | undefined = requestOptions.signal;
+
+  if (callerSignal?.aborted) {
+    const reason =
+      callerSignal.reason || new DOMException('The user aborted a request.', 'AbortError');
+    return Promise.reject(reason);
+  }
+
   const normalizedEndpoint = endpoint.replace(/^\//, '');
   const method = (requestOptions.method || 'GET').toString().toUpperCase();
   const maxRetries = Number.isFinite(requestOptions.retries)
@@ -225,7 +276,7 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
   if (method === 'GET') {
     const inFlight = SAFE_API_IN_FLIGHT.get(cacheKey);
     if (inFlight) {
-      return inFlight as Promise<T>;
+      return attachSignalToPromise(inFlight as Promise<T>, callerSignal);
     }
   }
 
@@ -268,18 +319,28 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
     requestOptions.body = JSON.stringify(bodyPayload);
   }
 
+  // Para requisições GET compartilhadas no SAFE_API_IN_FLIGHT,
+  // desacoplamos o signal do chamador do transporte nativo.
+  const transportOptions =
+    method === 'GET'
+      ? (() => {
+          const { signal: _callerSignal, ...rest } = requestOptions;
+          return rest;
+        })()
+      : requestOptions;
+
   const executeRequest = async (): Promise<T> => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         console.log('[API] Request ->', method, url);
 
         const response = await fetch(url, {
-          ...requestOptions,
+          ...transportOptions,
           headers: {
             ...defaultHeaders,
-            ...requestOptions.headers,
+            ...transportOptions.headers,
           },
-          credentials: requestOptions.credentials || 'include',
+          credentials: transportOptions.credentials || 'include',
         });
 
         const responseBody = await response.json().catch(() => null);
@@ -362,6 +423,10 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
 
         return responseBody;
       } catch (error) {
+        if (isAbortError(error)) {
+          throw toApiError(error, { url, method });
+        }
+
         const apiError = toApiError(error, {
           url,
           method,
@@ -396,14 +461,17 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
   };
 
   if (method === 'GET') {
-    const promise = executeRequest().finally(() => {
-      SAFE_API_IN_FLIGHT.delete(cacheKey);
-    });
-    SAFE_API_IN_FLIGHT.set(cacheKey, promise as Promise<unknown>);
-    return promise;
+    let promise = SAFE_API_IN_FLIGHT.get(cacheKey) as Promise<T> | undefined;
+    if (!promise) {
+      promise = executeRequest().finally(() => {
+        SAFE_API_IN_FLIGHT.delete(cacheKey);
+      });
+      SAFE_API_IN_FLIGHT.set(cacheKey, promise as Promise<unknown>);
+    }
+    return attachSignalToPromise(promise, callerSignal);
   }
 
-  return executeRequest();
+  return attachSignalToPromise(executeRequest(), callerSignal);
 }
 
 // ------------------
@@ -434,8 +502,9 @@ export const companiesApiSafe = {
     signal?: AbortSignal;
   }): Promise<Company[]> => {
     try {
-      const url = `companies${buildQueryParams(params || {})}`;
-      const response = await fetchApiSafe<any>(url); // Usar 'any' temporariamente para inspecionar a resposta
+      const { signal, ...queryParams } = params || {};
+      const url = `companies${buildQueryParams(queryParams)}`;
+      const response = await fetchApiSafe<any>(url, { signal });
 
       // Verificar se a resposta é um array diretamente ou um objeto com a propriedade 'companies'
       if (Array.isArray(response)) {
@@ -447,9 +516,14 @@ export const companiesApiSafe = {
       }
       return [];
     } catch (error) {
+      if (isAbortError(error) || params?.signal?.aborted) {
+        throw error;
+      }
       console.error('Error fetching companies:', error);
-      // Return empty array on error to prevent breaking the UI during build or runtime
-      return [];
+      if (typeof window === 'undefined') {
+        return [];
+      }
+      throw error;
     }
   },
 
@@ -516,9 +590,14 @@ export const companiesApiSafe = {
       );
       return { data: [] };
     } catch (error) {
+      if (isAbortError(error) || params?.signal?.aborted) {
+        throw error;
+      }
       console.error('[companiesApiSafe.getAllPaginated] Error:', error);
-      // Return empty data on error to prevent breaking the UI during build or runtime
-      return { data: [] };
+      if (typeof window === 'undefined') {
+        return { data: [] };
+      }
+      throw error;
     }
   },
 
@@ -568,6 +647,9 @@ export const companiesApiSafe = {
 
       return null;
     } catch (error) {
+      if (isAbortError(error) || params?.signal?.aborted) {
+        throw error;
+      }
       console.error('[companiesApiSafe.getTotalCount] Error:', error);
       return null;
     }

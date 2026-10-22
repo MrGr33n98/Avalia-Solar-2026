@@ -13,6 +13,7 @@ import {
   ChevronRight,
   MapPin,
   ChevronDown,
+  AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -21,6 +22,7 @@ import CompanyCard from '@/components/CompanyCard';
 import CompaniesLoading from './loading';
 import type { MapCompany } from '@/components/search/MapProvider';
 import { companiesApiSafe } from '@/lib/api-client';
+import { isAbortError } from '@/lib/api-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -198,6 +200,11 @@ export function CompaniesContent({
   }, [categoryNames, categoriesById, filters.category_ids]);
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const debouncedSearchInput = useDebounce(searchInput, 250);
+
+  const stateDep = (filters.state || []).join(',');
+  const cityDep = (filters.city || []).join(',');
+  const categoryIdsDep = (filters.category_ids || []).join(',');
+
   const requestParams = useMemo(
     () => ({
       status: 'active' as const,
@@ -222,9 +229,9 @@ export function CompaniesContent({
     [
       filters.page,
       filters.search,
-      filters.state,
-      filters.city,
-      filters.category_ids,
+      stateDep,
+      cityDep,
+      categoryIdsDep,
       filters.min_rating,
       filters.verified,
       filters.featured,
@@ -244,6 +251,7 @@ export function CompaniesContent({
     isLoading: loading,
     isFetching,
     error: queryError,
+    refetch,
   } = useQuery({
     queryKey: ['companies', requestParams],
     queryFn: async ({ signal }) => {
@@ -262,12 +270,20 @@ export function CompaniesContent({
     placeholderData: keepPreviousData,
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
-    retry: 1,
+    retry: (failureCount, error) => {
+      if (isAbortError(error)) return false;
+      return failureCount < 2;
+    },
   });
 
   const companies = useMemo(() => companiesResponse?.data || [], [companiesResponse?.data]);
   const totalCount = companiesResponse?.meta?.pagination?.total ?? companies.length;
-  const error = queryError instanceof Error ? queryError.message : null;
+  const error =
+    queryError && !isAbortError(queryError)
+      ? queryError instanceof Error
+        ? queryError.message
+        : 'Erro ao carregar empresas'
+      : null;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -650,46 +666,21 @@ export function CompaniesContent({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-destructive mb-3">
-              ❌ Erro ao Carregar Empresas
-            </h2>
-            <p className="text-destructive mb-4">{error}</p>
-
-            <div className="bg-white rounded-lg p-4 mb-4 border border-slate-200">
-              <h3 className="font-medium text-slate-900 mb-2">🔍 Passos para Diagnóstico:</h3>
-              <ol className="list-decimal list-inside space-y-1 text-sm text-slate-700">
-                <li>Verifique se o backend Rails está rodando na porta 3001</li>
-                <li>
-                  Teste a API diretamente:{' '}
-                  <code className="bg-slate-100 px-1 rounded">
-                    curl http://localhost:3001/api/v1/companies
-                  </code>
-                </li>
-                <li>Verifique as variáveis de ambiente no arquivo .env.local</li>
-                <li>Verifique o console do navegador (F12) para erros detalhados</li>
-                <li>
-                  Execute o script de diagnóstico:{' '}
-                  <code className="bg-slate-100 px-1 rounded">
-                    node diagnose-companies-issue.js
-                  </code>
-                </li>
-              </ol>
+      <div className="min-h-screen bg-slate-50 py-12">
+        <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-100 text-amber-600 mb-4">
+              <AlertCircle className="w-6 h-6" />
             </div>
-
-            <div className="flex gap-3">
-              <Button onClick={() => window.location.reload()} variant="outline">
+            <h2 className="text-xl font-bold text-slate-900 mb-2">
+              Não foi possível carregar as empresas no momento
+            </h2>
+            <p className="text-slate-600 mb-6 text-sm max-w-md mx-auto">
+              Tivemos uma instabilidade temporária ao consultar as empresas cadastradas. Por favor, tente novamente.
+            </p>
+            <div className="flex justify-center gap-3">
+              <Button onClick={() => refetch()} className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2">
                 Tentar Novamente
-              </Button>
-              <Button
-                onClick={() => {
-                  window.open('http://localhost:3001/api/v1/companies', '_blank');
-                }}
-                variant="secondary"
-              >
-                Testar API Diretamente
               </Button>
             </div>
           </div>
