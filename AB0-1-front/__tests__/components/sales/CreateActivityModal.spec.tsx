@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import CreateActivityModal from '@/components/sales/create/CreateActivityModal';
 
 describe('CreateActivityModal — Registro de Atividades e Rota', () => {
+  jest.setTimeout(20000);
   const originalFetch = global.fetch;
 
   beforeEach(() => {

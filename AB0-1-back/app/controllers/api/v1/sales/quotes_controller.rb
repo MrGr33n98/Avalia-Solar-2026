@@ -9,7 +9,17 @@ module Api
         end
 
         def create
-          opportunity = current_tenant_scope.opportunities.find(quote_params[:opportunity_id])
+          opp_id = quote_params[:opportunity_id]
+          if opp_id.blank?
+            return render_error_response(message: 'Oportunidade é obrigatória.', status: :unprocessable_entity, code: 'OPPORTUNITY_REQUIRED')
+          end
+
+          opportunity = current_tenant_scope.opportunities.find_by(id: opp_id)
+          unless opportunity
+            log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Opportunity')
+            return render_error_response(message: 'Oportunidade não encontrada.', status: :not_found, code: 'NOT_FOUND')
+          end
+
           if quote_params[:solar_project_id].present?
             project = ::Sales::SolarProject.find_by(id: quote_params[:solar_project_id])
             unless project && current_tenant_scope.accounts.exists?(id: project.account_id)
@@ -33,7 +43,16 @@ module Api
         private
 
         def quote_params
-          params.require(:quote).permit(:opportunity_id, :solar_project_id, :number, :expires_on, :total_cents, :currency)
+          raw = params.require(:quote).permit(
+            :opportunity_id, :sales_opportunity_id, :solar_project_id,
+            :number, :expires_on, :total_cents, :total_price_cents, :currency
+          )
+          opp_id = raw[:opportunity_id].presence || raw[:sales_opportunity_id].presence
+          total = raw[:total_cents].presence || raw[:total_price_cents].presence
+          raw.except(:sales_opportunity_id, :total_price_cents).merge(
+            opportunity_id: opp_id,
+            total_cents: total.to_i
+          ).compact
         end
 
         def serialize(quote)

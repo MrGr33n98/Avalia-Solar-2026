@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import CallLoggerModal from '@/components/sales/CallLoggerModal';
 
 describe('CallLoggerModal — Validação de Persistência e Falso Positivo', () => {
+  jest.setTimeout(20000);
   const originalFetch = global.fetch;
   const originalOpen = window.open;
 

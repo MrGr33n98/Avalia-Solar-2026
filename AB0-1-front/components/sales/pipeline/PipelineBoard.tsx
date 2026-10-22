@@ -1,8 +1,15 @@
 'use client';
 
-import React from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertCircle, ArrowRight, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   PipelineBoardDTO,
   PipelineCardDTO,
@@ -34,6 +41,9 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
   onAction,
   onCreateTask,
 }) => {
+  const [movingCard, setMovingCard] = useState<PipelineCardDTO | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   const handleDropCard = async (card: PipelineCardDTO, targetStageKey: string) => {
     try {
       await salesApi.updateOpportunity(card.id, { stage_key: targetStageKey });
@@ -43,9 +53,52 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
     }
   };
 
+  const handleSelectStage = async (stageKey: string) => {
+    if (!movingCard) return;
+    setIsTransitioning(true);
+    try {
+      await salesApi.updateOpportunityStage(movingCard.id, stageKey);
+      setMovingCard(null);
+      await onRefresh();
+    } catch (err: any) {
+      alert(err?.message || 'Não foi possível mover a oportunidade.');
+    } finally {
+      setIsTransitioning(false);
+    }
+  };
+
   const handleCardAction = async (action: string, card: PipelineCardDTO) => {
     if (onAction) {
       onAction(action, card);
+      return;
+    }
+    if (action === 'move') {
+      setMovingCard(card);
+      return;
+    }
+    if (action === 'won') {
+      if (!window.confirm(`Confirmar que a oportunidade "${card.name}" foi ganha?`)) return;
+      try {
+        await salesApi.markOpportunityWon(card.id);
+        await onRefresh();
+      } catch (err: any) {
+        alert(err?.message || 'Erro ao marcar oportunidade como ganha.');
+      }
+      return;
+    }
+    if (action === 'lost') {
+      const reason = window.prompt(`Motivo da perda para "${card.name}":`, 'Perda comercial / Preço');
+      if (reason === null) return;
+      try {
+        await salesApi.markOpportunityLost(card.id, reason);
+        await onRefresh();
+      } catch (err: any) {
+        alert(err?.message || 'Erro ao marcar oportunidade como perdida.');
+      }
+      return;
+    }
+    if (action === 'task') {
+      onCreateTask?.(card);
       return;
     }
     if (action === 'delete') {
@@ -54,7 +107,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         await salesApi.deleteOpportunity(card.id);
         await onRefresh();
       } catch (err: any) {
-        alert(err.message || 'Erro ao excluir oportunidade.');
+        alert(err?.message || 'Erro ao excluir oportunidade.');
       }
     }
   };
@@ -88,31 +141,75 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
   if (!boardData) return null;
 
   return (
-    <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-color:#94a3b8_transparent] [scrollbar-width:thin]">
-      <section
-        data-testid="sales-pipeline-board"
-        className="flex w-max min-w-full select-none gap-3 pb-1 pt-1 sm:gap-4"
-      >
-        {boardData.stages.map((stage) => {
-          const columnCards = boardData.cards.filter(
-            (card) => (card.stage?.key || 'prospect') === stage.key
-          );
+    <>
+      <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain pb-3 snap-x snap-mandatory [scrollbar-color:#94a3b8_transparent] [scrollbar-width:thin]">
+        <section
+          data-testid="sales-pipeline-board"
+          className="flex w-max min-w-full select-none gap-3 pb-1 pt-1 sm:gap-4"
+        >
+          {boardData.stages.map((stage) => {
+            const columnCards = boardData.cards.filter(
+              (card) => (card.stage?.key || 'prospect') === stage.key
+            );
 
-          return (
-            <PipelineColumn
-              key={stage.key}
-              stage={stage}
-              cards={columnCards}
-              selectedIds={selectedIds}
-              onToggleSelect={onToggleSelect}
-              onOpenDetails={onOpenDetails}
-              onDropCard={handleDropCard}
-              onAction={handleCardAction}
-              onCreateTask={onCreateTask}
-            />
-          );
-        })}
-      </section>
-    </div>
+            return (
+              <PipelineColumn
+                key={stage.key}
+                stage={stage}
+                cards={columnCards}
+                selectedIds={selectedIds}
+                onToggleSelect={onToggleSelect}
+                onOpenDetails={onOpenDetails}
+                onDropCard={handleDropCard}
+                onAction={handleCardAction}
+                onCreateTask={onCreateTask}
+              />
+            );
+          })}
+        </section>
+      </div>
+
+      {/* Touch-Friendly Move Stage Dialog */}
+      <Dialog
+        open={Boolean(movingCard)}
+        onOpenChange={(open) => {
+          if (!open) setMovingCard(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mover Oportunidade</DialogTitle>
+            <DialogDescription>
+              Selecione o estágio de destino para a oportunidade &quot;{movingCard?.name}&quot;:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            {boardData.stages.map((stage) => {
+              const isCurrent = (movingCard?.stage?.key || 'prospect') === stage.key;
+              return (
+                <button
+                  key={stage.key}
+                  type="button"
+                  disabled={isCurrent || isTransitioning}
+                  onClick={() => handleSelectStage(stage.key)}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl border text-left text-xs font-semibold transition-all ${
+                    isCurrent
+                      ? 'bg-slate-100 border-slate-300 text-slate-500 cursor-not-allowed'
+                      : 'bg-white border-slate-200 text-slate-800 hover:border-indigo-600 hover:bg-indigo-50/50 active:scale-[0.99]'
+                  }`}
+                >
+                  <span className="font-bold">{stage.name}</span>
+                  {isCurrent ? (
+                    <span className="text-[10px] text-slate-400 font-normal">Estágio atual</span>
+                  ) : (
+                    <ArrowRight className="h-4 w-4 text-slate-400" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
