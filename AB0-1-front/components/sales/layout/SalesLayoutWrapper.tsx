@@ -7,6 +7,7 @@ import CRMTopbar from '@/components/sales/layout/CRMTopbar';
 import SettingsSubSidebar from '@/components/sales/layout/SettingsSubSidebar';
 import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
 import CRMGlobalCreateHost from '@/components/sales/create/CRMGlobalCreateHost';
+import CRMMobileBottomNav from '@/components/sales/layout/CRMMobileBottomNav';
 
 interface SalesLayoutWrapperProps {
   children: ReactNode;
@@ -36,10 +37,13 @@ export default function SalesLayoutWrapper({ children }: SalesLayoutWrapperProps
           onOpenSearch={() => setSearchOpen(true)}
           onOpenAddModal={(type) => setAddModalType(type)}
         />
-        <main className="flex-1 min-w-0 flex flex-col overflow-y-auto">
+        <main className="flex-1 min-w-0 flex flex-col overflow-y-auto pb-16 md:pb-0">
           <div className="mx-auto w-full max-w-[1600px] min-w-0 p-3 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
+
+      {/* PWA Mobile Bottom Navigation */}
+      <CRMMobileBottomNav />
 
       {/* Global Modals & Palette */}
       <CRMGlobalCreateHost modalType={addModalType} onClose={() => setAddModalType(null)} />

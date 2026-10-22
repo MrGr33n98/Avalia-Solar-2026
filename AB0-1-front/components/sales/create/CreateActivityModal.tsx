@@ -11,6 +11,7 @@ import CRMModal from '@/components/sales/ui/CRMModal';
 interface CreateActivityModalProps {
   open: boolean;
   onClose: () => void;
+  accountId?: number;
   opportunityId?: number;
   contactId?: number;
   onSuccess?: () => void;
@@ -19,6 +20,7 @@ interface CreateActivityModalProps {
 export default function CreateActivityModal({
   open,
   onClose,
+  accountId,
   opportunityId,
   contactId,
   onSuccess,
@@ -33,11 +35,15 @@ export default function CreateActivityModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!subject.trim()) return setError('Subject is required');
+    if (!subject.trim()) return setError('Assunto é obrigatório');
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/v1/sales/activities', {
+      const endpoint = accountId
+        ? `/api/v1/sales/accounts/${accountId}/activities`
+        : '/api/v1/sales/activities';
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -46,14 +52,26 @@ export default function CreateActivityModal({
             activity_type: activityType,
             subject,
             body: description,
+            sales_account_id: accountId,
             sales_opportunity_id: opportunityId,
             sales_contact_id: contactId,
             occurred_at: new Date().toISOString(),
           },
         }),
       });
-      if (!res.ok) throw new Error('Failed to log activity');
-      setSuccessMsg('Activity logged successfully!');
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        const errMsg = errJson?.error?.message || errJson?.error || `Falha ao registrar atividade (${res.status})`;
+        throw new Error(typeof errMsg === 'string' ? errMsg : 'Falha ao registrar atividade');
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!data.activity?.id && !data.id) {
+        throw new Error('Servidor não retornou recibo de persistência da atividade');
+      }
+
+      setSuccessMsg('Atividade registrada com sucesso!');
       setTimeout(() => {
         onClose();
         setSuccessMsg(null);
@@ -62,7 +80,7 @@ export default function CreateActivityModal({
         onSuccess?.();
       }, 800);
     } catch (err: any) {
-      setError(err.message || 'Error logging activity');
+      setError(err.message || 'Erro ao registrar atividade');
     } finally {
       setLoading(false);
     }
@@ -72,7 +90,7 @@ export default function CreateActivityModal({
     <CRMModal
       open={open}
       onClose={onClose}
-      title="Log an activity"
+      title="Registrar Atividade Comercial"
       size="md"
       heroIcon={<PhoneCall className="w-8 h-8 text-indigo-600" />}
       showCustomizeFields={true}
@@ -84,7 +102,7 @@ export default function CreateActivityModal({
             disabled={loading}
             className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
           >
-            Cancel
+            Cancelar
           </button>
           <Button
             type="submit"
@@ -92,7 +110,7 @@ export default function CreateActivityModal({
             disabled={loading}
             className="h-9 px-4 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-md shadow-2xs"
           >
-            {loading ? <RotateCw className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null} Log activity
+            {loading ? <RotateCw className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null} Salvar Atividade
           </Button>
         </>
       }
@@ -102,37 +120,37 @@ export default function CreateActivityModal({
         {successMsg && <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-2.5 rounded-md">{successMsg}</p>}
 
         <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Activity type</Label>
+          <Label className="text-xs font-normal text-slate-600">Tipo de atividade</Label>
           <select
             value={activityType}
             onChange={(e) => setActivityType(e.target.value)}
             className="w-full h-9 text-xs rounded-md border border-slate-200 bg-white px-3 text-slate-700 focus:border-indigo-500"
           >
-            <option value="call">Phone Call</option>
-            <option value="meeting">Meeting</option>
-            <option value="email">Email Sent</option>
-            <option value="whatsapp">WhatsApp Message</option>
-            <option value="note">Note / Observation</option>
+            <option value="call">Ligação Telefônica</option>
+            <option value="meeting">Reunião Comercial</option>
+            <option value="email">E-mail Enviado</option>
+            <option value="whatsapp">Mensagem de WhatsApp</option>
+            <option value="note">Anotação / Nota</option>
           </select>
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Subject</Label>
+          <Label className="text-xs font-normal text-slate-600">Assunto</Label>
           <Input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="Ex: Call to align payback requirements with CTO"
+            placeholder="Ex: Alinhamento de payback e requisitos técnicos com CTO"
             className="h-9 text-xs border-slate-200 focus:border-indigo-500 rounded-md"
             required
           />
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs font-normal text-slate-600">Notes / Details</Label>
+          <Label className="text-xs font-normal text-slate-600">Notas / Detalhes</Label>
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Summarize key decision points, objections, and next steps..."
+            placeholder="Resuma os pontos decisivos, objeções e próximos passos acordados..."
             className="text-xs border-slate-200 focus:border-indigo-500 rounded-md resize-none"
             rows={3}
           />

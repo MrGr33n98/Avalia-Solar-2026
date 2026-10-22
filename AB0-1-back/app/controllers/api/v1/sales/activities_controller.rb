@@ -27,6 +27,9 @@ module Api
           opportunity = current_tenant_scope.opportunities.find_by(id: opp_id) if opp_id.present?
           contact = current_tenant_scope.contacts.find_by(id: cnt_id) if cnt_id.present?
 
+          account ||= opportunity&.account
+          account ||= contact&.account
+
           unless account
             log_sales_denial(reason: 'foreign_key_out_of_scope', resource: 'Account')
             return render_error_response(message: 'Recurso não encontrado.', status: :not_found, code: 'NOT_FOUND')
@@ -51,7 +54,7 @@ module Api
         private
 
         def activity_params
-          params.require(:activity).permit(:sales_opportunity_id, :sales_contact_id, :activity_type, :direction, :subject, :body)
+          params.require(:activity).permit(:sales_account_id, :sales_opportunity_id, :sales_contact_id, :activity_type, :direction, :subject, :body)
         end
       end
     end

@@ -36,48 +36,69 @@ export default function CallLoggerModal({
   const [duration, setDuration] = useState('180');
   const [notes, setNotes] = useState('');
   const [nextActionAt, setNextActionAt] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!accountId) {
+      setError('Contexto de empresa (conta) não encontrado para registrar a ligação.');
+      return;
+    }
     setLoading(true);
+    setError(null);
     try {
-      if (accountId) {
-        await fetch(`/api/v1/sales/accounts/${accountId}/activities`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            activity: {
-              activity_type: 'call',
-              subject: `Ligação Realizada — Outcome: ${outcome.toUpperCase()}`,
-              body: `Duração: ${duration}s. Notas: ${notes}. Próxima ação: ${nextActionAt || 'Nenhum'}`,
-              sales_contact_id: contactId,
-            },
-          }),
-        });
+      const res = await fetch(`/api/v1/sales/accounts/${accountId}/activities`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          activity: {
+            activity_type: 'call',
+            subject: `Ligação Realizada — Outcome: ${outcome.toUpperCase()}`,
+            body: `Duração: ${duration}s. Notas: ${notes}. Próxima ação: ${nextActionAt || 'Nenhum'}`,
+            sales_contact_id: contactId,
+            sales_account_id: accountId,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        const errMsg = errJson?.error?.message || errJson?.error || `Falha ao registrar ligação (${res.status})`;
+        throw new Error(typeof errMsg === 'string' ? errMsg : 'Falha ao registrar ligação');
       }
+
+      const data = await res.json().catch(() => ({}));
+      if (!data.activity?.id && !data.id) {
+        throw new Error('Servidor não retornou confirmação de persistência da atividade.');
+      }
+
       setSaved(true);
       setTimeout(() => {
         setSaved(false);
         setOpen(false);
+        setNotes('');
         onSuccess?.();
-      }, 1200);
-    } catch {
-      // Fallback optimistic UI
-      setSaved(true);
-      setTimeout(() => {
-        setSaved(false);
-        setOpen(false);
       }, 1000);
+    } catch (err: any) {
+      setError(err?.message || 'Erro inesperado ao registrar chamada.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setError(null);
+      setSaved(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
           size="sm"
@@ -113,6 +134,11 @@ export default function CallLoggerModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-3 space-y-4 text-xs">
+            {error && (
+              <p role="alert" className="p-2.5 rounded-md text-xs font-semibold text-red-700 bg-red-50 border border-red-200">
+                {error}
+              </p>
+            )}
             <div>
               <label className="font-bold text-slate-700 block mb-1">Resultado da Ligação (Outcome)</label>
               <div className="grid grid-cols-3 gap-2">

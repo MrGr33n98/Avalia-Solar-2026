@@ -8,9 +8,12 @@ module Sales
       # 1. Activities
       if entity.respond_to?(:activities)
         entity.activities.each do |act|
+          act_kind = act.activity_type == 'call' ? 'call' : (act.activity_type || 'activity')
           events << {
             id: "act-#{act.id}",
-            type: act.activity_type || 'activity',
+            kind: act_kind,
+            type: act_kind,
+            activity_type: act.activity_type,
             title: act.subject || 'Atividade registrada',
             description: act.body || act.notes,
             occurred_at: act.occurred_at || act.created_at,
@@ -26,6 +29,7 @@ module Sales
         entity.tasks.each do |t|
           events << {
             id: "task-#{t.id}",
+            kind: 'task',
             type: 'task',
             title: t.title || 'Tarefa',
             description: t.description,
@@ -42,7 +46,8 @@ module Sales
         entity.stage_histories.includes(:to_stage, :actor).each do |sh|
           events << {
             id: "sh-#{sh.id}",
-            type: 'stage_change',
+            kind: 'stage_changed',
+            type: 'stage_changed',
             title: "Estágio alterado para #{sh.to_stage&.name}",
             description: "Oportunidade movida para o estágio #{sh.to_stage&.name}",
             occurred_at: sh.entered_at || sh.created_at,
@@ -58,6 +63,7 @@ module Sales
         entity.email_messages.each do |em|
           events << {
             id: "email-#{em.id}",
+            kind: 'email',
             type: 'email',
             title: em.subject || 'E-mail enviado',
             description: em.snippet || em.body_text,
@@ -69,8 +75,8 @@ module Sales
         end
       end
 
-      # Filter by type if provided
-      events = events.select { |e| e[:type].to_s == type.to_s } if type.present?
+      # Filter by type or kind if provided
+      events = events.select { |e| e[:type].to_s == type.to_s || e[:kind].to_s == type.to_s } if type.present?
 
       # Sort descending by occurred_at
       events.sort_by! { |e| e[:occurred_at] || Time.at(0) }.reverse!

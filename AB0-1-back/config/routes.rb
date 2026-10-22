@@ -220,6 +220,7 @@ Rails.application.routes.draw do
           resources :activities, only: %i[index create], controller: 'sales/activities'
         end
         resources :tasks, only: %i[index create update], controller: 'sales/tasks'
+        resources :activities, only: %i[index create], controller: 'sales/activities'
         resources :opportunities, only: [] do
           resource :qualification, only: %i[show], controller: 'sales/qualifications'
           put :qualification, to: 'sales/qualifications#upsert'
