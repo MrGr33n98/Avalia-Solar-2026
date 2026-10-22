@@ -53,4 +53,4 @@
 | **T-033** | GAP-08 | US-CRM-019 | T-031 | `ChangeStage.rb`, `OpportunitiesController.rb` | Transição atômica de estágio com rollback no erro | **PASS** |
 | **T-050** | GAP-12 | US-CRM-032 | T-020 | `QuoteBuilder.tsx`, `CreateQuoteModal.tsx` | Preenchimento automático de oportunidade em propostas e normalização | **PASS** |
 | **T-060** | GAP-13 | US-CRM-027 | Nenhuma | IA / Áudio | Pesquisa de provider de transcrição sob LGPD | **BLOCKED** |
-| **T-070** | GAP-00 | US-CRM-046 | T-005 | `AB0-1-front` | Auditoria de acessibilidade WCAG AA e budgets | **PLANNED** |
+| **T-070** | GAP-00 | US-CRM-046 | T-005 | `AB0-1-front` | Auditoria de acessibilidade WCAG AA e budgets | **PASS** |

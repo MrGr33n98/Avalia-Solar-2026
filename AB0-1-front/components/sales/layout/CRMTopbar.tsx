@@ -98,18 +98,27 @@ export default function CRMTopbar({ onOpenSearch, onOpenAddModal }: CRMTopbarPro
           <span className="font-semibold text-slate-300">Avalia Solar CRM</span>
         </span>
 
-        <button className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-md hover:bg-slate-800/60">
+        <button
+          aria-label="Ajuda e suporte do CRM"
+          className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-md hover:bg-slate-800/60"
+        >
           <HelpCircle className="w-4 h-4" />
         </button>
 
-        <button className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-md hover:bg-slate-800/60 relative">
+        <button
+          aria-label="Notificações do sistema"
+          className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-md hover:bg-slate-800/60 relative"
+        >
           <Bell className="w-4 h-4" />
           <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500" />
         </button>
 
         <CRMUserPopover onOpenInbox={() => onOpenAddModal?.('email')} />
 
-        <button className="text-slate-400 hover:text-purple-300 transition-colors p-1.5 rounded-md hover:bg-slate-800/60">
+        <button
+          aria-label="Recursos inteligentes e IA"
+          className="text-slate-400 hover:text-purple-300 transition-colors p-1.5 rounded-md hover:bg-slate-800/60"
+        >
           <Sparkles className="w-4 h-4 text-purple-400" />
         </button>
       </div>
