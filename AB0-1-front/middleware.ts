@@ -72,18 +72,37 @@ function flattenCategoryIndex(categories: CategoryTreeLike[]): Record<number, st
   return index;
 }
 
+let cachedSlugIndex: Record<number, string> | null = null;
+let cachedSlugIndexExpiresAt = 0;
+const SLUG_CACHE_TTL_MS = 1000 * 60 * 15; // 15 minutos em memória no worker
+
 async function resolveCategorySlugIndex(request: NextRequest): Promise<Record<number, string>> {
+  const now = Date.now();
+  if (cachedSlugIndex && now < cachedSlugIndexExpiresAt) {
+    return cachedSlugIndex;
+  }
+
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+
     const response = await fetch(`${request.nextUrl.origin}/api/v1/categories/tree`, {
       method: 'GET',
       headers: { Accept: 'application/json' },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
-    if (!response.ok) return {};
+    if (!response.ok) return cachedSlugIndex || {};
     const payload = await response.json();
-    return flattenCategoryIndex(extractCollection(payload));
+    const index = flattenCategoryIndex(extractCollection(payload));
+    if (Object.keys(index).length > 0) {
+      cachedSlugIndex = index;
+      cachedSlugIndexExpiresAt = now + SLUG_CACHE_TTL_MS;
+    }
+    return index;
   } catch {
-    return {};
+    return cachedSlugIndex || {};
   }
 }
 

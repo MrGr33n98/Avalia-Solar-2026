@@ -55,7 +55,7 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onOpenFilters}
         className={cn(
-          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all border snap-start',
+          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all border snap-start touch-manipulation',
           activeGroupsCount > 0
             ? 'bg-blue-600 border-blue-600 text-white'
             : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
@@ -80,7 +80,7 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onOpenLocation}
         className={cn(
-          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start',
+          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation',
           hasLocationActive
             ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold'
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
@@ -96,7 +96,7 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onOpenCategory}
         className={cn(
-          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start',
+          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation',
           hasCategoryActive
             ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold'
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
@@ -111,7 +111,7 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onToggleVerified}
         className={cn(
-          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start',
+          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation',
           filters.verified
             ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold'
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'

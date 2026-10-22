@@ -54,7 +54,7 @@ export function CompanyCategoryPicker({
         <label
           htmlFor={`picker-cat-${node.id}`}
           className={cn(
-            'flex min-h-12 w-full cursor-pointer select-none items-center gap-3 border-b border-slate-100 pr-4 transition-colors active:bg-slate-100/70 motion-reduce:transition-none',
+            'flex min-h-12 w-full cursor-pointer select-none items-center gap-3 border-b border-slate-100 pr-4 transition-colors active:bg-slate-100/70 motion-reduce:transition-none touch-manipulation',
             'supports-[hover:hover]:hover:bg-slate-50',
             depth === 0 ? 'pl-4' : depth === 1 ? 'pl-7' : 'pl-10',
             isSelected && 'bg-blue-50/30'

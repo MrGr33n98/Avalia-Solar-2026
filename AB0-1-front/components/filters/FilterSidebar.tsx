@@ -14,10 +14,10 @@ import { CompanyFilters, DEFAULT_FILTERS } from './types';
 import { areFiltersEqual, parseQueryParams, stringifyQueryParams, isFilterActive } from './query';
 import {
   buildCompaniesCategoriesPath,
+  buildCategoryDescriptorMap,
   COMPANIES_PATH,
   extractCategoryIdsFromPath,
   extractCategorySlugByIdFromPath,
-  isCompaniesCategoriesPath,
 } from '@/lib/seo/companies-category-url';
 
 // ─── Seção colapsável ────────────────────────────────────────────────────────
@@ -264,6 +264,8 @@ export const FilterSidebar: React.FC<{ hideMobileTrigger?: boolean }> = ({ hideM
   const searchParamsKey = searchParams.toString();
   const pathCategoryIds = useMemo(() => extractCategoryIdsFromPath(pathname), [pathname]);
   const slugByIdFromPath = useMemo(() => extractCategorySlugByIdFromPath(pathname), [pathname]);
+  const { categories } = useCategoriesTree();
+  const categoriesById = useMemo(() => buildCategoryDescriptorMap(categories), [categories]);
 
   const [filters, setFilters] = useState<CompanyFilters>(DEFAULT_FILTERS);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -279,17 +281,16 @@ export const FilterSidebar: React.FC<{ hideMobileTrigger?: boolean }> = ({ hideM
 
   const buildTargetUrl = useCallback(
     (nextFilters: CompanyFilters) => {
-      const hasPathCategories = isCompaniesCategoriesPath(pathname);
       const sortedCategoryIds = [...nextFilters.category_ids].sort((a, b) => a - b);
-      if (sortedCategoryIds.length > 0 && hasPathCategories) {
-        const nextPath = buildCompaniesCategoriesPath(sortedCategoryIds, {}, slugByIdFromPath);
+      if (sortedCategoryIds.length > 0) {
+        const nextPath = buildCompaniesCategoriesPath(sortedCategoryIds, categoriesById, slugByIdFromPath);
         const queryString = stringifyQueryParams(nextFilters, { omitCategoryIds: true });
         return `${nextPath}${queryString ? `?${queryString}` : ''}`;
       }
-      const queryString = stringifyQueryParams(nextFilters);
+      const queryString = stringifyQueryParams(nextFilters, { omitCategoryIds: true });
       return `${COMPANIES_PATH}${queryString ? `?${queryString}` : ''}`;
     },
-    [pathname, slugByIdFromPath]
+    [categoriesById, slugByIdFromPath]
   );
 
   const updateFilters = useCallback(

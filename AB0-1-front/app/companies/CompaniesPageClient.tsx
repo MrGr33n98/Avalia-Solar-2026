@@ -50,12 +50,13 @@ const MobileCompanyFiltersSheet = dynamic(
 );
 import { useCompanyGeolocation } from '@/hooks/useCompanyGeolocation';
 import { CompanyCategoryPicker } from '@/components/companies/filters/CompanyCategoryPicker';
+import { useCategoriesTree } from '@/hooks/useCategoriesTree';
 import {
   buildCompaniesCategoriesPath,
+  buildCategoryDescriptorMap,
   COMPANIES_PATH,
   extractCategoryIdsFromPath,
   extractCategorySlugByIdFromPath,
-  isCompaniesCategoriesPath,
 } from '@/lib/seo/companies-category-url';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePageTracking } from '@/hooks/usePageTracking';
@@ -96,12 +97,72 @@ export function CompaniesContent({
     [activeForcedCategoryIds, pathname]
   );
   const pathSlugById = useMemo(() => extractCategorySlugByIdFromPath(pathname), [pathname]);
+  const { categories: treeCategories } = useCategoriesTree();
+  const categoriesById = useMemo(
+    () => buildCategoryDescriptorMap(treeCategories),
+    [treeCategories]
+  );
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   const [showMobileLocationGate, setShowMobileLocationGate] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const { detectingGps: detectingLocation, gpsError, getCoordinates } = useCompanyGeolocation();
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const { comparisonList, toggleComparison, canAddMore, isInComparison } = useComparison();
+
+  const PAGE_SIZE = 12;
+
+  const filters = useMemo(
+    () => parseQueryParams(new URLSearchParams(searchParamsKey), { pathCategoryIds }),
+    [searchParamsKey, pathCategoryIds]
+  );
+
+  const buildTargetUrl = useCallback(
+    (nextFilters: CompanyFilters): string => {
+      const sortedCategoryIds = [...nextFilters.category_ids].sort((a, b) => a - b);
+
+      if (sortedCategoryIds.length > 0) {
+        const nextPath = buildCompaniesCategoriesPath(sortedCategoryIds, categoriesById, pathSlugById);
+        const queryString = stringifyQueryParams(nextFilters, { omitCategoryIds: true });
+        return `${nextPath}${queryString ? `?${queryString}` : ''}`;
+      }
+
+      const queryString = stringifyQueryParams(nextFilters, { omitCategoryIds: true });
+      return `${COMPANIES_PATH}${queryString ? `?${queryString}` : ''}`;
+    },
+    [categoriesById, pathSlugById]
+  );
+
+  const prefetchCompanies = useCallback(
+    (targetFilters: CompanyFilters) => {
+      const nextParams = {
+        status: 'active' as const,
+        page: targetFilters.page || 1,
+        per_page: viewMode === 'map' ? 100 : PAGE_SIZE,
+        q: targetFilters.search || undefined,
+        state: targetFilters.state.length > 0 ? targetFilters.state : undefined,
+        city: targetFilters.city.length > 0 ? targetFilters.city : undefined,
+        category_ids: targetFilters.category_ids.length > 0 ? targetFilters.category_ids : undefined,
+        min_rating: targetFilters.min_rating || undefined,
+        has_reviews: targetFilters.has_reviews || undefined,
+        verified: targetFilters.verified || undefined,
+        featured: targetFilters.featured || undefined,
+        financing_enabled: targetFilters.financing_enabled || undefined,
+        whatsapp_enabled: targetFilters.whatsapp_enabled || undefined,
+        sort: targetFilters.sort || undefined,
+        latitude: targetFilters.lat || undefined,
+        longitude: targetFilters.lng || undefined,
+        radius_km: targetFilters.radius_km || undefined,
+        fields: viewMode === 'map' ? ('map' as const) : ('card' as const),
+      };
+
+      queryClient.prefetchQuery({
+        queryKey: ['companies', nextParams],
+        queryFn: ({ signal }) => companiesApiSafe.getAllPaginated({ ...nextParams, signal }),
+        staleTime: 60 * 1000,
+      });
+    },
+    [queryClient, viewMode]
+  );
 
   useEffect(() => {
     if (searchParams.get('filters') === 'open') {
@@ -111,6 +172,7 @@ export function CompaniesContent({
 
   const handleToggleVerified = () => {
     const updated = { ...filters, verified: !filters.verified, page: 1 };
+    prefetchCompanies(updated);
     router.replace(buildTargetUrl(updated), { scroll: false });
   };
 
@@ -119,21 +181,21 @@ export function CompaniesContent({
       ...nextFilters,
       page: 1,
     };
+    prefetchCompanies(normalized);
     const targetUrl = buildTargetUrl(normalized);
     router.replace(targetUrl, { scroll: false });
     setIsFiltersOpen(false);
   };
-  const PAGE_SIZE = 12;
 
-  const filters = useMemo(
-    () => parseQueryParams(new URLSearchParams(searchParamsKey), { pathCategoryIds }),
-    [searchParamsKey, pathCategoryIds]
-  );
   const categoryLabel = useMemo(() => {
     if (filters.category_ids.length === 0) return 'Categoria';
     if (categoryNames.length > 0) return categoryNames.slice(0, 2).join(', ');
+    const names = filters.category_ids
+      .map((id) => categoriesById[id]?.name)
+      .filter((name): name is string => Boolean(name));
+    if (names.length > 0) return names.slice(0, 2).join(', ');
     return `${filters.category_ids.length} categorias`;
-  }, [categoryNames, filters.category_ids]);
+  }, [categoryNames, categoriesById, filters.category_ids]);
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const debouncedSearchInput = useDebounce(searchInput, 250);
   const requestParams = useMemo(
@@ -206,23 +268,6 @@ export function CompaniesContent({
   const companies = useMemo(() => companiesResponse?.data || [], [companiesResponse?.data]);
   const totalCount = companiesResponse?.meta?.pagination?.total ?? companies.length;
   const error = queryError instanceof Error ? queryError.message : null;
-
-  const buildTargetUrl = useCallback(
-    (nextFilters: CompanyFilters): string => {
-      const sortedCategoryIds = [...nextFilters.category_ids].sort((a, b) => a - b);
-      const hasPathCategories = isCompaniesCategoriesPath(pathname);
-
-      if (sortedCategoryIds.length > 0 && hasPathCategories) {
-        const nextPath = buildCompaniesCategoriesPath(sortedCategoryIds, {}, pathSlugById);
-        const queryString = stringifyQueryParams(nextFilters, { omitCategoryIds: true });
-        return `${nextPath}${queryString ? `?${queryString}` : ''}`;
-      }
-
-      const queryString = stringifyQueryParams(nextFilters);
-      return `${COMPANIES_PATH}${queryString ? `?${queryString}` : ''}`;
-    },
-    [pathSlugById, pathname]
-  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -333,6 +378,7 @@ export function CompaniesContent({
       updated = { ...filters, [key]: DEFAULT_FILTERS[key], page: 1 };
     }
 
+    prefetchCompanies(updated);
     router.replace(buildTargetUrl(updated), { scroll: false });
   };
 
@@ -890,7 +936,7 @@ export function CompaniesContent({
                 })}
               </section>
 
-              <div className="space-y-4">
+              <div className={cn('space-y-4 transition-opacity duration-200', isFetching && !loading && 'opacity-70')}>
                 {loading ? (
                   <div
                     className={cn(

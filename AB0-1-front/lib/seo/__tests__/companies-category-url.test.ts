@@ -3,6 +3,7 @@ import {
   normalizeCategoryIds,
   parseCategorySegment,
   extractCategoryIdsFromPath,
+  buildCategoryDescriptorMap,
 } from '@/lib/seo/companies-category-url';
 
 describe('companies-category-url helpers', () => {
@@ -48,6 +49,31 @@ describe('companies-category-url helpers', () => {
     const durationMs = performance.now() - start;
 
     expect(durationMs).toBeLessThan(1000);
+  });
+
+  it('builds a descriptor map recursively from nested category tree', () => {
+    const tree = [
+      {
+        id: 1,
+        name: 'Energia Solar',
+        slug: 'energia-solar',
+        children: [
+          { id: 10, name: 'Painéis Fotovoltaicos', seo_url: 'paineis-fotovoltaicos' },
+          { id: 11, name: 'Inversores', slug: 'inversores' },
+        ],
+      },
+      {
+        id: 2,
+        name: 'Mobilidade',
+        seo_url: 'mobilidade',
+      },
+    ];
+
+    const map = buildCategoryDescriptorMap(tree);
+    expect(map[1]).toEqual({ id: 1, name: 'Energia Solar', seo_url: 'energia-solar' });
+    expect(map[10]).toEqual({ id: 10, name: 'Painéis Fotovoltaicos', seo_url: 'paineis-fotovoltaicos' });
+    expect(map[11]).toEqual({ id: 11, name: 'Inversores', seo_url: 'inversores' });
+    expect(map[2]).toEqual({ id: 2, name: 'Mobilidade', seo_url: 'mobilidade' });
   });
 });
 
