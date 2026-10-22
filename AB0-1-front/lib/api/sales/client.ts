@@ -517,8 +517,17 @@ export const salesApi = {
     sales_contact_id?: number;
     sales_opportunity_id?: number;
   }): Promise<void> {
+    clearSalesApiCache('today');
     if (payload.sales_opportunity_id) {
       clearSalesApiCache(`opp_timeline:${payload.sales_opportunity_id}`);
+    }
+    if (payload.sales_account_id) {
+      clearSalesApiCache(`account_timeline:${payload.sales_account_id}`);
+      clearSalesApiCache(`account:${payload.sales_account_id}`);
+    }
+    if (payload.sales_contact_id) {
+      clearSalesApiCache(`contact_timeline:${payload.sales_contact_id}`);
+      clearSalesApiCache(`contact:${payload.sales_contact_id}`);
     }
     await request('/api/v1/sales/activities', {
       method: 'POST',

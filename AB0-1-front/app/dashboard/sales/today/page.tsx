@@ -25,7 +25,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
-import CRMCommandPalette from '@/components/sales/CRMCommandPalette';
 import SalesOutreachTemplates from '@/components/sales/SalesOutreachTemplates';
 import CallLoggerModal from '@/components/sales/CallLoggerModal';
 import Company360View from '@/components/sales/Company360View';
@@ -112,7 +111,6 @@ export default function SalesTodayWorkQueuePage() {
 
   return (
     <SalesLayoutWrapper>
-      <CRMCommandPalette />
       <div className="mx-auto w-full max-w-7xl space-y-6">
         {/* Header */}
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
