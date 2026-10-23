@@ -17,6 +17,9 @@ import {
 import { PipelineColumn } from './PipelineColumn';
 import { OpportunityCardSkeleton } from './OpportunityCard/OpportunityCardSkeleton';
 import { salesApi } from '@/lib/api/sales/client';
+import LostOpportunityDialog, {
+  type LostOpportunityPayload,
+} from '@/components/sales/opportunities/LostOpportunityDialog';
 
 interface PipelineBoardProps {
   boardData?: PipelineBoardDTO | null;
@@ -43,6 +46,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
 }) => {
   const [movingCard, setMovingCard] = useState<PipelineCardDTO | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [losingCard, setLosingCard] = useState<PipelineCardDTO | null>(null);
 
   const handleDropCard = async (card: PipelineCardDTO, targetStageKey: string) => {
     try {
@@ -67,6 +71,13 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
     }
   };
 
+  const handleConfirmLost = async (payload: LostOpportunityPayload) => {
+    if (!losingCard) return;
+    await salesApi.markOpportunityLost(losingCard.id, payload);
+    setLosingCard(null);
+    await onRefresh();
+  };
+
   const handleCardAction = async (action: string, card: PipelineCardDTO) => {
     if (onAction) {
       onAction(action, card);
@@ -87,14 +98,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       return;
     }
     if (action === 'lost') {
-      const reason = window.prompt(`Motivo da perda para "${card.name}":`, 'Perda comercial / Preço');
-      if (reason === null) return;
-      try {
-        await salesApi.markOpportunityLost(card.id, reason);
-        await onRefresh();
-      } catch (err: any) {
-        alert(err?.message || 'Erro ao marcar oportunidade como perdida.');
-      }
+      setLosingCard(card);
       return;
     }
     if (action === 'task') {
@@ -210,6 +214,13 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <LostOpportunityDialog
+        open={Boolean(losingCard)}
+        opportunityName={losingCard?.name}
+        onOpenChange={(nextOpen) => !nextOpen && setLosingCard(null)}
+        onConfirm={handleConfirmLost}
+      />
     </>
   );
 };

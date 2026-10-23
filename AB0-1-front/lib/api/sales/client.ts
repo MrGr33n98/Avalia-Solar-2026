@@ -12,6 +12,7 @@ import {
   ApiTag,
   ApiTask,
   CreateLeadPayload,
+  MarkOpportunityLostPayload,
   PipelineBoardParams,
   SalesLead,
 } from './types';
@@ -450,12 +451,16 @@ export const salesApi = {
     await request(`/api/v1/sales/opportunities/${id}/won`, { method: 'POST' });
   },
 
-  async markOpportunityLost(id: number, reason?: string): Promise<void> {
+  async markOpportunityLost(id: number, payload: MarkOpportunityLostPayload): Promise<void> {
     clearSalesApiCache(`opp:${id}`);
     clearSalesApiCache('opps:');
     await request(`/api/v1/sales/opportunities/${id}/lost`, {
       method: 'POST',
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({
+        lost_reason: payload.lostReason,
+        lost_notes: payload.lostNotes,
+        competitor_id: payload.competitorId,
+      }),
     });
   },
 

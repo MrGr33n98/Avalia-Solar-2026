@@ -5,11 +5,9 @@ import {
   BarChart3,
   CheckCircle2,
   Clock,
-  Eye,
   FileText,
   Inbox,
   Mail,
-  MousePointerClick,
   Plus,
   RefreshCw,
   Search,
@@ -22,21 +20,66 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import EmailComposerModal from './EmailComposerModal';
+import EmailEngagementBadges, {
+  EVENT_LABELS,
+  SIGNAL_CLASS_LABELS,
+  type EmailEngagement,
+} from './EmailEngagementBadges';
 
-type EmailEvent = { event_type?: string; occurred_at?: string; title?: string; at?: string };
+type EmailEvent = {
+  event_type?: string;
+  source?: string;
+  signal_class?: string | null;
+  url?: string | null;
+  occurred_at?: string;
+  title?: string;
+  at?: string;
+};
 type EmailMessage = {
   id: number;
   subject: string;
   from_email: string;
   to_email: string;
   status: string;
+  delivery_status?: string | null;
+  engagement_status?: string | null;
   body_text?: string;
   contact_name?: string;
   account_name?: string;
+  created_at?: string;
   open_count: number;
   click_count: number;
+  engagement?: EmailEngagement;
   events?: EmailEvent[];
 };
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: 'Rascunho',
+  queued: 'Enfileirado',
+  sending: 'Enviando',
+  sent: 'Enviado',
+  delivered: 'Entregue',
+  delayed: 'Entrega atrasada',
+  bounced: 'Rejeitado (bounce)',
+  failed: 'Falhou',
+};
+
+const STATUS_TONES: Record<string, string> = {
+  delivered: 'bg-emerald-100 text-emerald-800',
+  bounced: 'bg-red-100 text-red-800',
+  failed: 'bg-red-100 text-red-800',
+  delayed: 'bg-amber-100 text-amber-800',
+};
+
+const formatDateTime = (value?: string) =>
+  value
+    ? new Date(value).toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '';
 
 export default function EmailCenterPage() {
   const [activeFolder, setActiveFolder] = useState<
@@ -44,6 +87,9 @@ export default function EmailCenterPage() {
   >('inbox');
   const [messages, setMessages] = useState<EmailMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<EmailMessage | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [detail, setDetail] = useState<EmailMessage | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [composerOpen, setComposerOpen] = useState(false);
@@ -68,23 +114,60 @@ export default function EmailCenterPage() {
       const list: EmailMessage[] = data.emails ?? [];
       setMessages(list);
       setTotalPages(data.meta?.total_pages ?? 1);
-      setSelectedMessage(
-        (current: EmailMessage | null) =>
-          list.find((item) => item.id === current?.id) ?? list[0] ?? null
+      setSelectedId((current) =>
+        list.some((item) => item.id === current) ? current : (list[0]?.id ?? null)
       );
     } catch (err) {
       console.error('Erro ao carregar mensagens:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar e-mails.');
       setMessages([]);
-      setSelectedMessage(null);
+      setSelectedId(null);
     }
   }, [page]);
+
+  // A listagem é leve (sem eventos/corpo). O detalhe vem de GET /emails/:id.
+  const fetchDetail = useCallback(async (id: number) => {
+    setDetailLoading(true);
+    try {
+      const response = await fetch(`/api/v1/sales/emails/${id}`, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) throw new Error('Não foi possível carregar o detalhe do e-mail.');
+      const data = await response.json();
+      setDetail(data.email ?? null);
+    } catch (err) {
+      console.error('Erro ao carregar detalhe do e-mail:', err);
+      setDetail(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchMessages();
     const interval = window.setInterval(fetchMessages, 10000);
     return () => window.clearInterval(interval);
   }, [activeFolder, fetchMessages]);
+
+  useEffect(() => {
+    if (selectedId == null) {
+      setDetail(null);
+      return;
+    }
+    fetchDetail(selectedId);
+    const interval = window.setInterval(() => fetchDetail(selectedId), 15000);
+    return () => window.clearInterval(interval);
+  }, [selectedId, fetchDetail]);
+
+  // Detalhe (quando já carregado para o id atual) sobrepõe os dados leves da listagem.
+  useEffect(() => {
+    const base = messages.find((item) => item.id === selectedId) ?? null;
+    setSelectedMessage(
+      base ? { ...base, ...(detail && detail.id === base.id ? detail : {}) } : null
+    );
+  }, [messages, selectedId, detail]);
 
   const filteredMessages = messages.filter((m) => {
     const folderMatches =
@@ -267,9 +350,9 @@ export default function EmailCenterPage() {
               {filteredMessages.map((m) => (
                 <div
                   key={m.id}
-                  onClick={() => setSelectedMessage(m)}
+                  onClick={() => setSelectedId(m.id)}
                   className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
-                    selectedMessage?.id === m.id
+                    selectedId === m.id
                       ? 'border-indigo-600 bg-indigo-50/40 shadow-2xs'
                       : 'border-slate-200/70 bg-white hover:bg-slate-50'
                   }`}
@@ -278,7 +361,7 @@ export default function EmailCenterPage() {
                     <span className="text-xs font-bold text-slate-900 truncate">
                       {m.contact_name || m.to_email}
                     </span>
-                    <span className="text-[10px] text-slate-400">14:30</span>
+                    <span className="text-[10px] text-slate-400">{formatDateTime(m.created_at)}</span>
                   </div>
                   <p className="text-xs font-semibold text-slate-800 truncate mt-1">{m.subject}</p>
                   <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
@@ -288,18 +371,11 @@ export default function EmailCenterPage() {
                     <span className="text-[10px] text-indigo-700 font-medium">
                       {m.account_name}
                     </span>
-                    <div className="flex items-center gap-2">
-                      {m.open_count > 0 && (
-                        <span className="text-[10px] font-bold text-sky-700 flex items-center gap-1">
-                          <Eye className="w-3 h-3" /> {m.open_count}
-                        </span>
-                      )}
-                      {m.click_count > 0 && (
-                        <span className="text-[10px] font-bold text-purple-700 flex items-center gap-1">
-                          <MousePointerClick className="w-3 h-3" /> {m.click_count}
-                        </span>
-                      )}
-                    </div>
+                    <EmailEngagementBadges
+                      engagement={m.engagement}
+                      openCount={m.open_count}
+                      clickCount={m.click_count}
+                    />
                   </div>
                 </div>
               ))}
@@ -345,16 +421,10 @@ export default function EmailCenterPage() {
                       <h2 className="text-base font-bold text-slate-900 leading-snug">
                         {selectedMessage.subject}
                       </h2>
-                      <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">
-                        {(
-                          {
-                            queued: 'Enfileirado',
-                            sending: 'Enviando',
-                            sent: 'Enviado',
-                            delivered: 'Entregue',
-                            failed: 'Falhou',
-                          } as Record<string, string>
-                        )[selectedMessage.status] ||
+                      <Badge
+                        className={`${STATUS_TONES[selectedMessage.status] ?? 'bg-slate-100 text-slate-700'} text-[10px] font-bold shrink-0`}
+                      >
+                        {STATUS_LABELS[selectedMessage.status] ||
                           selectedMessage.status ||
                           'Desconhecido'}
                       </Badge>
@@ -377,23 +447,43 @@ export default function EmailCenterPage() {
                     {selectedMessage.body_text}
                   </div>
 
-                  {/* Delivery & Engagement Events Timeline */}
+                  {/* Engajamento + histórico real de eventos */}
                   <div className="pt-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2.5">
-                      Eventos de Engajamento Real
-                    </h4>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Engajamento e histórico
+                      </h4>
+                      <EmailEngagementBadges
+                        engagement={selectedMessage.engagement}
+                        openCount={selectedMessage.open_count}
+                        clickCount={selectedMessage.click_count}
+                      />
+                    </div>
                     <div className="space-y-2">
+                      {detailLoading && !selectedMessage.events && (
+                        <p className="text-[11px] text-slate-400">Carregando histórico…</p>
+                      )}
+                      {selectedMessage.events?.length === 0 && (
+                        <p className="text-[11px] text-slate-400">Nenhum evento registrado ainda.</p>
+                      )}
                       {selectedMessage.events?.map((evt, idx) => (
                         <div
-                          key={idx}
-                          className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200/60 text-xs"
+                          key={`${evt.event_type}-${evt.occurred_at}-${idx}`}
+                          className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-slate-50 border border-slate-200/60 text-xs"
                         >
-                          <span className="flex items-center gap-2 font-medium text-slate-700">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />{' '}
-                            {evt.event_type || evt.title}
+                          <span className="flex flex-col gap-0.5 font-medium text-slate-700">
+                            <span className="flex items-center gap-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              {EVENT_LABELS[evt.event_type ?? ''] || evt.event_type || evt.title}
+                            </span>
+                            {evt.signal_class && (
+                              <span className="pl-5 text-[10px] font-normal text-slate-500">
+                                Classificação: {SIGNAL_CLASS_LABELS[evt.signal_class] ?? evt.signal_class}
+                              </span>
+                            )}
                           </span>
-                          <span className="text-[11px] text-slate-400">
-                            {evt.occurred_at || evt.at}
+                          <span className="text-[11px] text-slate-400 shrink-0">
+                            {formatDateTime(evt.occurred_at || evt.at)}
                           </span>
                         </div>
                       ))}

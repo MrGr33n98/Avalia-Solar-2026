@@ -182,4 +182,74 @@ RSpec.describe 'Sales API - Emails', type: :request do
       end
     end
   end
+
+  describe 'GET /api/v1/sales/emails/:id' do
+    let(:thread) do
+      Sales::EmailThread.create!(company_id: company.id, subject_normalized: 'detalhe email', first_message_at: Time.current, last_message_at: Time.current)
+    end
+    let(:email) do
+      Sales::EmailMessage.create!(
+        company_id: company.id,
+        sales_email_thread_id: thread.id,
+        sales_account_id: account.id,
+        sales_contact_id: contact.id,
+        sender_user_id: user.id,
+        from_email: user.email,
+        to_email: contact.email,
+        subject: 'Email com eventos',
+        body_text: 'Corpo do email detalhado',
+        body_html: '<p>Corpo do email detalhado</p>',
+        status: 'delivered',
+        delivery_status: 'delivered',
+        engagement_status: 'open_signal'
+      )
+    end
+
+    it 'retorna detalhes completos incluindo eventos reais e contadores de engajamento' do
+      email.events.create!(
+        company_id: company.id,
+        event_type: 'delivered',
+        source: 'aws_ses_sns',
+        occurred_at: 10.minutes.ago
+      )
+      email.events.create!(
+        company_id: company.id,
+        event_type: 'open_signal',
+        source: 'avalia_pixel',
+        signal_class: 'proxy',
+        occurred_at: 5.minutes.ago
+      )
+
+      get "/api/v1/sales/emails/#{email.id}", headers: headers
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      data = json['email']
+      expect(data['id']).to eq(email.id)
+      expect(data['body_text']).to eq('Corpo do email detalhado')
+      expect(data['body_html']).to eq('<p>Corpo do email detalhado</p>')
+      expect(data['delivery_status']).to eq('delivered')
+      expect(data['engagement_status']).to eq('open_signal')
+      expect(data['engagement']).to be_a(Hash)
+      expect(data['events'].length).to eq(2)
+      expect(data['events'].map { |e| e['event_type'] }).to eq(%w[delivered open_signal])
+      expect(data['events'].map { |e| e['signal_class'] }).to eq([nil, 'proxy'])
+    end
+
+    it 'impede acesso a e-mail de outra empresa (tenant isolation)' do
+      other_thread = Sales::EmailThread.create!(company_id: other_company.id, subject_normalized: 'outro', first_message_at: Time.current, last_message_at: Time.current)
+      other_email = Sales::EmailMessage.create!(
+        company_id: other_company.id,
+        sales_email_thread_id: other_thread.id,
+        sender_user_id: user.id,
+        from_email: 'outro@empresa.com',
+        to_email: 'dest@empresa.com',
+        subject: 'Outro',
+        body_text: 'Outro'
+      )
+
+      get "/api/v1/sales/emails/#{other_email.id}", headers: headers
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end

@@ -12,7 +12,7 @@ module T
 
     def open
       email = ::Sales::EmailMessage.find_by(tracking_token: params[:token])
-      if email&.open_tracking_enabled
+      if tracking_allowed?(email, :open)
         user_agent = request.user_agent.to_s
         classification = ::Sales::Messaging::OpenSignalClassifier.call(user_agent)
         email.register_event!(
@@ -58,6 +58,10 @@ module T
         return redirect_to '/', allow_other_host: false
       end
 
+      email = link.email_message
+      # Política de tracking: se o clique foi desativado ou o destinatário está suprimido, apenas redireciona (sem coletar).
+      return redirect_to target_url, allow_other_host: true unless tracking_allowed?(email, :click)
+
       occurred_at = Time.current
       classification = ::Sales::Messaging::OpenSignalClassifier.call(request.user_agent)
       link.with_lock do
@@ -65,7 +69,7 @@ module T
         link.update!(first_clicked_at: occurred_at) if link.first_clicked_at.blank?
         link.update!(last_clicked_at: occurred_at)
       end
-      link.email_message.register_event!(
+      email.register_event!(
         event_type: 'click', source: 'avalia_link', signal_class: classification[:signal_class],
         classification_reasons: classification[:reasons], url: target_url, occurred_at: occurred_at,
         payload: { email_link_id: link.id }
@@ -74,6 +78,15 @@ module T
     end
 
     private
+
+    def tracking_allowed?(email, kind)
+      return false unless email
+      return false if kind == :open && !email.open_tracking_enabled
+      return false if kind == :click && !email.click_tracking_enabled
+      return false if ::Sales::Messaging::SuppressionChecker.blocked?(company_id: email.company_id, email: email.to_email)
+
+      true
+    end
 
     def set_pixel_cache_headers
       response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'

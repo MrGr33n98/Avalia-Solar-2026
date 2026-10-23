@@ -35,6 +35,19 @@ export interface ApiCompetitor {
   website?: string;
 }
 
+export type OpportunityLostReason =
+  | 'lost_to_competitor'
+  | 'price_terms'
+  | 'project_cancelled'
+  | 'no_response'
+  | 'other';
+
+export interface MarkOpportunityLostPayload {
+  lostReason: OpportunityLostReason;
+  lostNotes?: string;
+  competitorId?: number;
+}
+
 export interface ApiAccount {
   id: number;
   name: string;

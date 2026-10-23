@@ -246,6 +246,17 @@ RSpec.describe 'POST /api/v1/sales/ses_webhooks', type: :request do
         expect(JSON.parse(response.body)).to eq({ 'status' => 'success' })
       end
 
+      it 'usa o timestamp específico do evento (delivery) e não o horário original do envio' do
+        message = '{"eventType":"Delivery","mail":{"messageId":"ses-msg-999","timestamp":"2026-09-25T10:00:00Z"},' \
+                  '"delivery":{"timestamp":"2026-09-25T10:00:07Z"}}'
+        payload = build_payload(message: message)
+
+        post '/api/v1/sales/ses_webhooks', params: payload.to_json, headers: { 'CONTENT_TYPE' => 'application/json' }
+
+        expect(response).to have_http_status(:ok)
+        expect(Sales::EmailEvent.last.occurred_at).to eq(Time.iso8601('2026-09-25T10:00:07Z'))
+      end
+
       it 'propaga delivery idempotente para recipient, campanha e timeline' do
         campaign = Sales::Campaign.create!(company_id: company.id, user_id: user.id, name: 'Campanha teste',
                                            campaign_type: 'email_broadcast', status: 'dispatching', total_recipients: 1)

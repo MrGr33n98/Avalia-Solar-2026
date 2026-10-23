@@ -38,4 +38,11 @@ RSpec.describe 'Email pixel tracking', type: :request do
     expect(response).to have_http_status(:ok)
     expect(message.events.where(event_type: 'open_signal')).to be_empty
   end
+
+  it 'responde GIF mas não registra evento quando destinatário está na lista de supressão' do
+    Sales::EmailSuppression.create!(company_id: company.id, email: message.to_email, reason: 'unsubscribe')
+    get "/t/email/open/#{message.tracking_token}.gif"
+    expect(response).to have_http_status(:ok)
+    expect(message.events.where(event_type: 'open_signal')).to be_empty
+  end
 end

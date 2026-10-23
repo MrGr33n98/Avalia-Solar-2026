@@ -108,8 +108,12 @@ module Api
           end
         end
 
+        EVENT_TIMESTAMP_KEYS = %w[delivery bounce complaint deliveryDelay open click reject].freeze
+
         def event_time(payload)
-          Time.iso8601(payload.dig('mail', 'timestamp').to_s)
+          detail_key = EVENT_TIMESTAMP_KEYS.find { |key| payload[key].is_a?(Hash) && payload[key]['timestamp'].present? }
+          raw = detail_key ? payload.dig(detail_key, 'timestamp') : payload.dig('mail', 'timestamp')
+          Time.iso8601(raw.to_s)
         rescue ArgumentError
           Time.current
         end

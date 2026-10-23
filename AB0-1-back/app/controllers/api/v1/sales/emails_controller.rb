@@ -253,6 +253,9 @@ module Api
             delivered_at: e.delivered_at,
             open_count: e.open_count,
             click_count: e.click_count,
+            delivery_status: e.delivery_status,
+            engagement_status: e.engagement_status,
+            engagement: serialize_engagement(e),
             account_id: e.sales_account_id,
             account_name: e.account&.name,
             contact_id: e.sales_contact_id,
@@ -263,10 +266,25 @@ module Api
           if detailed
             data[:body_text] = e.body_text
             data[:body_html] = e.body_html
-            data[:events] = e.events.map { |ev| { event_type: ev.event_type, occurred_at: ev.occurred_at } }
+            data[:events] = e.events.order(:occurred_at, :id).map { |ev| serialize_event(ev) }
           end
 
           data
+        end
+
+        def serialize_engagement(e)
+          {
+            raw_open_signals: e.raw_open_signals, unique_open_signals: e.unique_open_signals,
+            human_likely_open_signals: e.human_likely_open_signals, proxy_open_signals: e.proxy_open_signals,
+            bot_open_signals: e.bot_open_signals, scanner_open_signals: e.scanner_open_signals,
+            raw_clicks: e.raw_clicks, unique_clicks: e.unique_clicks,
+            bot_clicks: e.bot_clicks, scanner_clicks: e.scanner_clicks
+          }
+        end
+
+        def serialize_event(ev)
+          { event_type: ev.event_type, source: ev.source, signal_class: ev.signal_class,
+            url: ev.try(:url), occurred_at: ev.occurred_at }
         end
       end
     end

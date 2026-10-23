@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import { salesImportsApi, SalesImport, SalesImportRow } from '@/lib/api/sales/imports';
+import { isVCardFile, parseVCardText, vCardContactsToCsv } from '@/lib/vcard/vcard-parser';
 
 // Campos CRM disponíveis para mapeamento
 const CRM_FIELDS = [
@@ -82,15 +83,34 @@ export default function SalesImportWizard() {
     setErrorMessage('');
     setLoading(true);
     try {
-      // Ler texto do CSV no cliente para enviar como fallback resiliente
-      const csvText = await file.text().catch(() => '');
-      const res = await salesImportsApi.uploadFile(file, 'lead', csvText || undefined);
+      let fileToUpload = file;
+      let textToSend = await file.text().catch(() => '');
+
+      // Suporte direto a vCard (.vcf / text/vcard)
+      if (isVCardFile(file) || textToSend.includes('BEGIN:VCARD')) {
+        const contacts = parseVCardText(textToSend);
+        if (contacts.length === 0) {
+          setErrorMessage('Nenhum contato válido encontrado no arquivo vCard (.vcf).');
+          setLoading(false);
+          return;
+        }
+        const generatedCsv = vCardContactsToCsv(contacts);
+        textToSend = generatedCsv;
+        const csvBlob = new Blob([generatedCsv], { type: 'text/csv;charset=utf-8;' });
+        fileToUpload = new File(
+          [csvBlob],
+          file.name.replace(/\.(vcf|vcard)$/i, '') + '_vcard.csv',
+          { type: 'text/csv' }
+        );
+      }
+
+      const res = await salesImportsApi.uploadFile(fileToUpload, 'lead', textToSend || undefined);
 
       if (res.import.status === 'failed') {
         const msg =
           res.import.error_summary?.error ||
           res.import.error_summary?.fatal_error ||
-          'Falha ao analisar o arquivo CSV. Verifique se o arquivo possui colunas e cabeçalho válidos.';
+          'Falha ao analisar o arquivo. Verifique se o arquivo possui colunas e dados válidos.';
         setErrorMessage(msg);
         return;
       }
@@ -378,7 +398,7 @@ export default function SalesImportWizard() {
                     value="file"
                     className="text-xs font-semibold data-[state=active]:bg-white data-[state=active]:text-blue-950"
                   >
-                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Arquivo Local (.CSV / .TXT)
+                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Arquivo Local (.CSV / .TXT / .VCF)
                   </TabsTrigger>
                   <TabsTrigger
                     value="manual"
@@ -404,21 +424,21 @@ export default function SalesImportWizard() {
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => e.key === 'Enter' && !loading && fileInputRef.current?.click()}
-                    aria-label="Área de upload de arquivo CSV"
+                    aria-label="Área de upload de arquivo CSV ou vCard"
                   >
                     {loading ? (
                       <>
                         <RefreshCw className="h-10 w-10 animate-spin text-blue-600" />
                         <p className="mt-3 text-sm font-semibold text-slate-700">Processando arquivo...</p>
-                        <p className="mt-1 text-xs text-slate-500">Aguarde enquanto analisamos o CSV.</p>
+                        <p className="mt-1 text-xs text-slate-500">Aguarde enquanto analisamos os dados.</p>
                       </>
                     ) : (
                       <>
                         <Upload className={`h-10 w-10 ${isDragging ? 'text-blue-600' : 'text-blue-700'}`} />
                         <p className="mt-3 text-sm font-semibold text-slate-900">
-                          {isDragging ? 'Solte o arquivo aqui' : 'Arraste seu arquivo .CSV aqui'}
+                          {isDragging ? 'Solte o arquivo aqui' : 'Arraste seu arquivo .CSV ou .VCF aqui'}
                         </p>
-                        <p className="mt-1 text-xs text-slate-500">ou clique para selecionar</p>
+                        <p className="mt-1 text-xs text-slate-500">ou clique para selecionar (CSV, TXT, TSV ou contatos vCard)</p>
                         <span className="mt-5 inline-flex items-center rounded-lg bg-blue-900 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-950">
                           Selecionar Arquivo
                         </span>
@@ -427,7 +447,7 @@ export default function SalesImportWizard() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".csv,.txt,.tsv"
+                      accept=".csv,.txt,.tsv,.vcf,.vcard"
                       onChange={handleFileInputChange}
                       disabled={loading}
                       className="hidden"

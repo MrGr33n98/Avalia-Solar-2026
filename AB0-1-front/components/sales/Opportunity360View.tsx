@@ -229,7 +229,7 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
       if (newStatus === 'won') {
         await salesApi.markOpportunityWon(opp.id);
       } else if (newStatus === 'lost') {
-        await salesApi.markOpportunityLost(opp.id);
+        await salesApi.markOpportunityLost(opp.id, { lostReason: 'other' });
       } else {
         await salesApi.updateOpportunity(opp.id, { status: 'open' });
       }

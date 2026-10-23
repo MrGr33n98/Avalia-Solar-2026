@@ -32,6 +32,7 @@ export default function CallLoggerModal({
   onSuccess?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [isWrapUp, setIsWrapUp] = useState(false);
   const [outcome, setOutcome] = useState<'answered' | 'no_answer' | 'voicemail' | 'interested' | 'not_interested' | 'callback'>('answered');
   const [duration, setDuration] = useState('180');
   const [notes, setNotes] = useState('');
@@ -79,6 +80,7 @@ export default function CallLoggerModal({
       setTimeout(() => {
         setSaved(false);
         setOpen(false);
+        setIsWrapUp(false);
         setNotes('');
         onSuccess?.();
       }, 1000);
@@ -94,6 +96,7 @@ export default function CallLoggerModal({
     if (!newOpen) {
       setError(null);
       setSaved(false);
+      setIsWrapUp(false);
     }
   };
 
@@ -106,6 +109,9 @@ export default function CallLoggerModal({
             if (phone) {
               const cleanPhone = phone.replace(/\D/g, '');
               window.open(`tel:${cleanPhone}`, '_self');
+              // GAP-19: Arm wrap-up prompt immediately so it is ready when returning to app
+              setIsWrapUp(true);
+              setOpen(true);
             }
           }}
           className="h-8 bg-blue-900 font-bold text-white hover:bg-blue-950 text-xs shadow-xs"
@@ -116,14 +122,22 @@ export default function CallLoggerModal({
       <DialogContent className="max-w-md bg-white border-slate-200 p-6">
         <DialogHeader className="border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
-            <Badge className="border-0 bg-blue-900 font-bold text-white">Call Logger</Badge>
+            {isWrapUp ? (
+              <Badge className="border-0 bg-emerald-600 font-bold text-white flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> Pós-Chamada (Wrap-Up)
+              </Badge>
+            ) : (
+              <Badge className="border-0 bg-blue-900 font-bold text-white">Call Logger</Badge>
+            )}
             <span className="text-xs text-slate-500">{contactName}</span>
           </div>
           <DialogTitle className="mt-1 text-lg font-bold text-slate-900">
-            Registrar Chamada Telefônica
+            {isWrapUp ? 'Pós-Chamada: Registrar Desfecho' : 'Registrar Chamada Telefônica'}
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Grave o resultado da ligação em menos de 10 segundos para manter a timeline sincronizada.
+            {isWrapUp
+              ? 'Ligação disparada no discador. Registre o resultado e notas enquanto o contexto está fresco.'
+              : 'Grave o resultado da ligação em menos de 10 segundos para manter a timeline sincronizada.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -181,6 +195,27 @@ export default function CallLoggerModal({
                   className="min-h-9 text-xs"
                   placeholder="Ex: 180"
                 />
+                <div className="flex items-center gap-1 mt-1.5">
+                  {[
+                    { label: '30s', val: '30' },
+                    { label: '1m', val: '60' },
+                    { label: '3m', val: '180' },
+                    { label: '5m', val: '300' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.val}
+                      type="button"
+                      onClick={() => setDuration(preset.val)}
+                      className={`text-[10px] px-2 py-0.5 rounded border transition-colors ${
+                        duration === preset.val
+                          ? 'bg-blue-900 text-white border-blue-900 font-bold'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
