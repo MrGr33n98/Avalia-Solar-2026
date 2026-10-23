@@ -21,6 +21,7 @@ import {
   canShowCompanyProfileAds,
   canShowMediaGallery,
 } from "@/lib/feature-access";
+import FinancingInlineCard from "./FinancingInlineCard";
 
 interface OverviewTabProps {
   company: Company;
@@ -49,6 +50,16 @@ export default function OverviewTab({
   const showSocialProof = isFeatureEnabled(company.feature_access, "social_proof");
   const paidPlan = hasPaidPlan(company);
   const showGallery = canShowMediaGallery(company);
+
+  // Setup de financiamento da instituição / empresa (US-010 / PRD-FIN-001)
+  const hasFinancingSetup = Boolean(
+    company.financing_profile ||
+    company.financing_enabled ||
+    company.financing_tab_visible ||
+    company.segment === 'finance' ||
+    company.category_info?.seo_url?.includes('financ') ||
+    company.categories?.some((c) => c.seo_url?.includes('financ'))
+  );
 
   // Regra de Negócio:
   // - Empresas com plano PAGO comprovado: ativam o modo 'protected' (proteção comercial).
@@ -291,6 +302,13 @@ export default function OverviewTab({
       {/* 3. Provas Sociais Coletivas */}
       {showSocialProof && (
         <SocialProof companyId={Number(company.id)} companyName={company.name} />
+      )}
+
+      {/* Bloco de Financiamento Solar na Visão Geral (US-010, US-011, US-012 / PRD-FIN-001) */}
+      {hasFinancingSetup && (
+        <div className="my-2">
+          <FinancingInlineCard company={company} />
+        </div>
       )}
 
       {/* 4. Mural Compacto de Depoimentos (Reviews Preview) */}
