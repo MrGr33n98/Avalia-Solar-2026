@@ -52,7 +52,7 @@ export default function FinancingSimulationModal({
   const profile = company.financing_profile;
   const [selectedAudience, setSelectedAudience] = useState<'PF' | 'PJ' | 'Rural'>('PF');
 
-  const logoSrc = company.logo_url || company.logo;
+  const logoSrc = company.logo_url || (company as any).logo;
   const logoUrl = logoSrc ? getFullImageUrl(logoSrc) : null;
   const downPaymentAmount = (amount * downPaymentPercent) / 100;
 

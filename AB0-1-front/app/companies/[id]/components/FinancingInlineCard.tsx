@@ -163,7 +163,7 @@ export default function FinancingInlineCard({ company }: FinancingInlineCardProp
   }, [maxTerm]);
 
   // Logo da instituição
-  const logoSrc = company.logo_url || company.logo;
+  const logoSrc = company.logo_url || (company as any).logo;
   const logoUrl = logoSrc ? getFullImageUrl(logoSrc) : null;
   const isBancoDoBrasil = /banco do brasil|bb/i.test(company.name);
 
