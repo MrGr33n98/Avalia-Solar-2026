@@ -16,6 +16,14 @@ module Sales
     has_many :contact_employments, class_name: 'Sales::ContactEmployment', foreign_key: :sales_account_id, dependent: :destroy
     has_many :employed_contacts, through: :contact_employments, source: :contact
 
+    has_many :email_messages, class_name: 'Sales::EmailMessage', foreign_key: :sales_account_id, dependent: :nullify
+    has_many :email_threads, class_name: 'Sales::EmailThread', foreign_key: :sales_account_id, dependent: :nullify
+    has_many :email_sequence_enrollments, class_name: 'Sales::EmailSequenceEnrollment', foreign_key: :sales_account_id, dependent: :destroy
+    has_many :founder_inbox_items, class_name: 'Sales::FounderInboxItem', foreign_key: :sales_account_id, dependent: :nullify
+    has_many :research_records, class_name: 'Sales::ResearchRecord', foreign_key: :sales_account_id, dependent: :nullify
+    has_many :intelligence_signals, class_name: 'Sales::IntelligenceSignal', foreign_key: :sales_account_id, dependent: :destroy
+    has_many :campaign_recipients, class_name: 'Sales::CampaignRecipient', foreign_key: :sales_account_id, dependent: :nullify
+
     validates :name, presence: true
 
     after_commit :invalidate_account_cache

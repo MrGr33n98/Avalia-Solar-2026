@@ -27,6 +27,12 @@ module Sales
     has_many :opportunity_competitors, class_name: 'Sales::OpportunityCompetitor', foreign_key: :sales_opportunity_id, dependent: :destroy
     has_many :competitors, through: :opportunity_competitors, source: :competitor
 
+    has_many :email_messages, class_name: 'Sales::EmailMessage', foreign_key: :sales_opportunity_id, dependent: :nullify
+    has_many :email_sequence_enrollments, class_name: 'Sales::EmailSequenceEnrollment', foreign_key: :sales_opportunity_id, dependent: :nullify
+    has_many :founder_inbox_items, class_name: 'Sales::FounderInboxItem', foreign_key: :sales_opportunity_id, dependent: :nullify
+    has_many :research_records, class_name: 'Sales::ResearchRecord', foreign_key: :sales_opportunity_id, dependent: :nullify
+    has_many :intelligence_signals, class_name: 'Sales::IntelligenceSignal', foreign_key: :sales_opportunity_id, dependent: :nullify
+
     TEMPERATURES = %w[cold warm hot].freeze
 
     validates :name, :status, presence: true

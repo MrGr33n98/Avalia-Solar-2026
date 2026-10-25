@@ -40,4 +40,19 @@ RSpec.describe Sales::Opportunity, type: :model do
       .and change(Sales::Task, :count).by(-1)
       .and change(Sales::Qualification, :count).by(-1)
   end
+
+  it "nullifies email_messages on destroy" do
+    opp = account.opportunities.create!(name: "With Email", pipeline: pipeline, stage: prospect, owner: owner)
+    company = create(:company)
+    msg = Sales::EmailMessage.create!(
+      company: company,
+      opportunity: opp,
+      from_email: "test@example.com",
+      to_email: "lead@example.com",
+      subject: "Hello",
+      status: "sent"
+    )
+
+    expect { opp.destroy }.to change { msg.reload.sales_opportunity_id }.from(opp.id).to(nil)
+  end
 end

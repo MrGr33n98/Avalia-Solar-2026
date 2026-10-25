@@ -32,4 +32,19 @@ RSpec.describe Sales::Account, type: :model do
     expect { account.destroy }.to change(Sales::Contact, :count).by(-1)
       .and change(Sales::Opportunity, :count).by(-1)
   end
+
+  it "nullifies email_messages on destroy" do
+    account = Sales::Account.create!(name: "Acme", owner: owner)
+    company = create(:company)
+    msg = Sales::EmailMessage.create!(
+      company: company,
+      account: account,
+      from_email: "test@example.com",
+      to_email: "lead@example.com",
+      subject: "Hello",
+      status: "sent"
+    )
+
+    expect { account.destroy }.to change { msg.reload.sales_account_id }.from(account.id).to(nil)
+  end
 end
