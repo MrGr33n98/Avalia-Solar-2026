@@ -442,6 +442,7 @@ export interface Company {
   financing_profile?: CompanyFinancingProfile | null;
   financing_partners?: CompanyFinancingPartner[];
   financing_offers?: CompanyFinancingOffer[];
+  segment?: string | null;
   trust_score?: number;
   trust_health?: {
     trust_score: number;

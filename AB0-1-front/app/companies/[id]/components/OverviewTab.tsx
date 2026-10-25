@@ -56,7 +56,7 @@ export default function OverviewTab({
     company.financing_profile ||
     company.financing_enabled ||
     company.financing_tab_visible ||
-    company.segment === 'finance' ||
+    (company as any).segment === 'finance' ||
     company.category_info?.seo_url?.includes('financ') ||
     company.categories?.some((c) => c.seo_url?.includes('financ'))
   );
