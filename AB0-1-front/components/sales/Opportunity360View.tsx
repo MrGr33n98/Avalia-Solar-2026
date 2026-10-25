@@ -13,6 +13,7 @@ import {
   FileText,
   Flame,
   Globe,
+  Eye,
   Mail,
   MessageSquare,
   MoreHorizontal,
@@ -131,6 +132,11 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
         id: event.id,
         title: event.email?.subject || 'Email',
         description: `Para: ${event.email?.to.join(', ') || ''}`,
+        hasOpen: (event.engagement?.unique_open_signals || 0) > 0,
+        openCount: event.engagement?.raw_open_signals || event.engagement?.unique_open_signals || 0,
+        clicks: event.engagement?.unique_clicks || 0,
+        date: event.occurred_at,
+        deliveryStatus: event.email?.delivery_status,
       })));
       setQuotes(formattedEvents.filter((event) => event.kind === 'quote'));
     } catch (err) {
@@ -655,10 +661,27 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
                           Nenhum e-mail enviado.
                         </div>
                       ) : (
-                        emails.map((e) => (
-                          <div key={e.id} className="p-3 bg-white rounded-lg border border-slate-200 flex items-center justify-between">
-                            <span className="font-bold text-slate-800">{e.title}</span>
-                            <span className="text-slate-500 text-[11px]">{e.description}</span>
+                        emails.map((e: any) => (
+                          <div key={e.id} className="p-3.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between gap-3 shadow-2xs">
+                            <div className="space-y-1 min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-800 text-xs truncate">{e.title}</span>
+                                {e.hasOpen ? (
+                                  <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 text-[10px] font-bold flex items-center gap-1">
+                                    <Eye className="w-3 h-3 text-emerald-600" />
+                                    <span>Aberto {e.openCount > 1 ? `(${e.openCount}x)` : ''}</span>
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-slate-50 text-slate-500 border-slate-200 text-[10px]">
+                                    Sem abertura
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-slate-500 text-[11px] truncate">{e.description}</p>
+                            </div>
+                            <time className="text-slate-400 text-[11px] shrink-0 font-medium">
+                              {e.date ? new Date(e.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
+                            </time>
                           </div>
                         ))
                       )}
