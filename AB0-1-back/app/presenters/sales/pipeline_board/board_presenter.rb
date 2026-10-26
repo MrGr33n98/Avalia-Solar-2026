@@ -122,6 +122,8 @@ module Sales
             no_contact: record.primary_contact_id.nil?,
             no_owner: record.owner_id.nil?
           },
+          created_at: record.created_at,
+          expected_close_date: record.expected_close_date,
           tags: record.tags.map { |t| { id: t.id, name: t.name, color: t.color || '#3b82f6' } }
         }
       end

@@ -185,6 +185,8 @@ export interface ApiPipelineBoardCard {
   next_action?: { id: number; type: string; title: string; due_at?: string; overdue: boolean } | null;
   aging: { days_in_stage: number; stage_entered_at: string; stale: boolean };
   flags: { overdue: boolean; due_today: boolean; stale: boolean; hot: boolean; no_contact: boolean; no_owner: boolean };
+  created_at?: string;
+  expected_close_date?: string | null;
   tags: Array<{ id: number; name: string; color?: string }>;
 }
 

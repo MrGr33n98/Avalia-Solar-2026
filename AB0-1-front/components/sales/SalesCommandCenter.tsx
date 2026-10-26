@@ -45,16 +45,25 @@ import {
   PipelineBoardParams,
 } from '@/lib/api/sales/types';
 import { useSalesPipelineBoard, useSalesPipelines } from '@/lib/api/sales/queries';
+import NutshellLeadsTable from '@/components/sales/leads/NutshellLeadsTable';
 
 type Deal = {
   id: number;
   stageKey: string;
+  stageName?: string;
+  stagePosition: number;
   company: string;
   plan: string;
   value: string;
   rawCents: number;
   probability: number;
   contact: string;
+  contactPhone?: string | null;
+  ownerName?: string | null;
+  status: string;
+  source?: string | null;
+  createdAt?: string;
+  expectedCloseDate?: string | null;
   next: string | null;
   score: number | null;
   accountId?: number;
@@ -100,12 +109,20 @@ function mapBoardCardsToDeals(cards: ApiPipelineBoardCard[]): Deal[] {
   return cards.map((card) => ({
     id: card.id,
     stageKey: card.stage?.key || 'prospect',
+    stageName: card.stage?.name || 'Prospect',
+    stagePosition: card.stage?.position ?? 1,
     company: card.account?.name || card.name || 'Empresa',
     plan: card.name || '',
     value: card.value_cents ? `R$ ${(card.value_cents / 100).toLocaleString('pt-BR')}` : 'R$ 0',
     rawCents: card.value_cents || 0,
     probability: card.probability || 0,
     contact: card.primary_contact?.name || '',
+    contactPhone: card.primary_contact?.phone || null,
+    ownerName: card.owner?.name || null,
+    status: card.status || 'open',
+    source: card.source || null,
+    createdAt: card.created_at,
+    expectedCloseDate: card.expected_close_date,
     next: card.next_action?.title || null,
     score: card.qualification?.score || null,
     accountId: card.account?.id,
@@ -476,20 +493,7 @@ export default function SalesCommandCenter({
             onRefresh={refreshBoard}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelected}
-            onOpenDetails={(card) => setSelectedDeal({
-              id: card.id,
-              stageKey: card.stage?.key || 'prospect',
-              company: card.account?.name || card.name,
-              plan: card.name,
-              value: card.value_cents ? `R$ ${(card.value_cents / 100).toLocaleString('pt-BR')}` : 'R$ 0',
-              rawCents: card.value_cents || 0,
-              probability: card.probability,
-              contact: card.primary_contact?.name || '',
-              next: card.next_action?.title || null,
-              score: card.qualification?.score || null,
-              accountId: card.account?.id,
-              contactId: card.primary_contact?.id,
-            })}
+            onOpenDetails={(card) => setSelectedDeal(mapBoardCardsToDeals([card])[0])}
           />
         )}
 
@@ -505,51 +509,16 @@ export default function SalesCommandCenter({
 
         <Dialog open={columnDialogOpen} onOpenChange={setColumnDialogOpen}><DialogContent className="w-[calc(100vw-1.5rem)] max-w-sm"><DialogHeader><DialogTitle>Colunas do Lead</DialogTitle><DialogDescription>Escolha campos visíveis na tabela.</DialogDescription></DialogHeader><div className="grid gap-3 py-3">{Object.entries(columns).map(([key, enabled]) => <label key={key} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={enabled} onChange={() => setColumns((current) => ({ ...current, [key]: !current[key as keyof typeof current] }))} />{key}</label>)}</div></DialogContent></Dialog>
 
-        {/* TABLE VIEW */}
+        {/* TABLE VIEW: PADRÃO CANÔNICO NUTSHELL CRM */}
         {fetchState === 'success' && view === 'table' && (
-          <Card className="border-slate-200 bg-white shadow-xs">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                    <tr>
-                      <th className="p-3">Empresa</th>
-                      <th className="p-3">Oportunidade / Projeto</th>
-                      <th className="p-3">Estágio</th>
-                      <th className="p-3">Valor Estimado</th>
-                      <th className="p-3">Contato Principal</th>
-                      <th className="p-3 text-right">Ação</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {allDeals.filter(visible).map((deal) => (
-                      <tr key={deal.id} className="hover:bg-slate-50 transition">
-                        {columns.company && <td className="p-3 font-bold text-slate-900">{deal.company}</td>}
-                        {columns.opportunity && <td className="p-3 text-slate-700">{deal.plan}</td>}
-                        {columns.stage && <td className="p-3">
-                          <Badge variant="outline" className="font-semibold border-slate-300">
-                            {stages.find((s) => s.key === deal.stageKey)?.label || deal.stageKey}
-                          </Badge>
-                        </td>}
-                        {columns.value && <td className="p-3 font-bold text-blue-900">{deal.value}</td>}
-                        {columns.contact && <td className="p-3 text-slate-600">{deal.contact || '—'}</td>}
-                        <td className="p-3 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedDeal(deal)}
-                            className="h-7 text-xs font-semibold text-blue-900 hover:text-blue-950"
-                          >
-                            Ver Detalhes
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+          <NutshellLeadsTable
+            leads={allDeals.filter(visible)}
+            onSelectLead={(lead) => {
+              const matchingDeal = allDeals.find((d) => d.id === lead.id);
+              if (matchingDeal) setSelectedDeal(matchingDeal);
+            }}
+            totalStagesCount={stages.length}
+          />
         )}
       </div>
 
