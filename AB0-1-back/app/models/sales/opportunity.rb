@@ -32,6 +32,8 @@ module Sales
     has_many :founder_inbox_items, class_name: 'Sales::FounderInboxItem', foreign_key: :sales_opportunity_id, dependent: :nullify
     has_many :research_records, class_name: 'Sales::ResearchRecord', foreign_key: :sales_opportunity_id, dependent: :nullify
     has_many :intelligence_signals, class_name: 'Sales::IntelligenceSignal', foreign_key: :sales_opportunity_id, dependent: :nullify
+    has_many :installments, class_name: 'Sales::OpportunityInstallment', foreign_key: :sales_opportunity_id, dependent: :destroy
+    has_many :line_items, class_name: 'Sales::OpportunityLineItem', foreign_key: :opportunity_id, dependent: :destroy
 
     TEMPERATURES = %w[cold warm hot].freeze
 

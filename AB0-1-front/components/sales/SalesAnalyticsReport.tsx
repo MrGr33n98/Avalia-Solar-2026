@@ -27,6 +27,11 @@ import {
   SalesTeamPerformance,
   EmailPerformance,
   ReportsSkeleton,
+  QuotaAttainmentCard,
+  StageDurationCard,
+  TaskPerformanceCard,
+  TopProductsCard,
+  RevenueInstallmentsCard,
 } from './reports';
 
 export type Kpi = {
@@ -39,6 +44,8 @@ export type Kpi = {
   open_deals: number;
   won_deals: number;
   lost_deals: number;
+  hot_deals?: number;
+  hot_deals_cents?: number;
 };
 
 export type FunnelItem = {
@@ -87,6 +94,12 @@ export type AnalyticsData = {
   loss_reasons?: WinLossItem[];
   team_performance?: TeamPerformanceItem[];
   email_metrics?: EmailMetrics;
+  stage_durations?: any[];
+  task_performance?: any;
+  top_products?: any[];
+  competitor_losses?: any[];
+  quota_attainment?: any;
+  revenue_installments?: any;
 };
 
 const WIN_LOSS_COLORS = ['#10B981', '#EF4444', '#F59E0B', '#6B7280', '#3B82F6', '#8B5CF6'];
@@ -314,9 +327,9 @@ export default function SalesAnalyticsReport() {
               </div>
             )}
 
-            {/* Grid Hierarquizado de KPIs: Linha 2 (3 operacionais) */}
+            {/* Grid Hierarquizado de KPIs: Linha 2 (4 operacionais) */}
             {kpis && (
-              <div className="grid gap-3.5 sm:grid-cols-3">
+              <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
                 <ReportKpiCard
                   label="Ticket Médio"
                   value={fmtBRL(kpis.average_ticket_cents)}
@@ -344,6 +357,14 @@ export default function SalesAnalyticsReport() {
                   iconSrc="/assets/avaliasolar_reports_icon_assets/01_kpi_metricas/perdidos_periodo.png"
                   iconTone="rose"
                   testId="kpi-lost-deals"
+                />
+                <ReportKpiCard
+                  label="Leads Quentes (Hot)"
+                  value={String(kpis.hot_deals ?? 0)}
+                  detail={`${fmtBRL(kpis.hot_deals_cents ?? 0)} em pipeline`}
+                  iconSrc="/assets/avaliasolar_reports_icon_assets/01_kpi_metricas/pipeline_total.png"
+                  iconTone="purple"
+                  testId="kpi-hot-deals"
                 />
               </div>
             )}
@@ -537,6 +558,21 @@ export default function SalesAnalyticsReport() {
                   )}
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Atingimento de Metas (Sales Quota & Pace) */}
+            <QuotaAttainmentCard quota={data.quota_attainment} formatCurrency={fmtBRL} />
+
+            {/* Tempo Médio por Estágio & Produtividade de Tarefas */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <StageDurationCard durations={data.stage_durations} />
+              <TaskPerformanceCard performance={data.task_performance} />
+            </div>
+
+            {/* Produtos Mais Vendidos & Receita Parcelada */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <TopProductsCard products={data.top_products} formatCurrency={fmtBRL} />
+              <RevenueInstallmentsCard installments={data.revenue_installments} formatCurrency={fmtBRL} />
             </div>
 
             {/* Desempenho da Equipe de Vendas (Leaderboard) */}

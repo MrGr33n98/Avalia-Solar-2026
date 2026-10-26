@@ -91,13 +91,21 @@ module Api
               average_sales_cycle_days: avg_cycle_days,
               open_deals: open_opps.count,
               won_deals: won_count,
-              lost_deals: lost_count
+              lost_deals: lost_count,
+              hot_deals: tenant_opps.open.where(temperature: 'hot').count,
+              hot_deals_cents: tenant_opps.open.where(temperature: 'hot').sum(:value_cents) || 0
             },
             funnel: funnel,
             win_loss: win_loss,
             loss_reasons: loss_reasons,
             team_performance: team_performance,
             revenue_by_month: revenue_by_month,
+            stage_durations: ::Sales::Reporting::StageDurationQuery.call(opportunity_scope: scoped_opps),
+            task_performance: ::Sales::Reporting::TaskPerformanceQuery.call(user: current_user, date_range: date_range),
+            top_products: ::Sales::Reporting::TopProductsQuery.call(opportunity_scope: won_opps),
+            competitor_losses: ::Sales::Reporting::CompetitorLossesQuery.call(lost_scope: lost_opps),
+            quota_attainment: ::Sales::Reporting::QuotaAttainmentQuery.call(user: current_user, won_scope: won_opps),
+            revenue_installments: ::Sales::Reporting::RevenueInstallmentsQuery.call(opportunity_scope: scoped_opps),
             email_metrics: ::Sales::Reporting::EmailMetricsQuery.call(user: current_user, date_range: date_range)
           }
         end

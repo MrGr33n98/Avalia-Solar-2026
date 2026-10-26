@@ -241,8 +241,83 @@ export interface ApiAnalytics {
     open_deals: number;
     won_deals: number;
     lost_deals: number;
+    hot_deals?: number;
+    hot_deals_cents?: number;
   };
-  funnel: Array<{ stage: string; count: number; valor: number; value_cents: number }>;
+  funnel: Array<{ stage: string; count: number; valor?: number; value_cents?: number }>;
   win_loss: Array<{ name: string; value: number; color?: string }>;
-  revenue_by_month: Array<{ month: string; realizado: number; previsao: number; won_cents: number; pipeline_cents: number }>;
+  revenue_by_month: Array<{ month: string; realizado?: number; previsao?: number; won_cents?: number; pipeline_cents?: number }>;
+  loss_reasons?: Array<{ name: string; count: number; value: number; color: string }>;
+  team_performance?: Array<{
+    owner_id: number;
+    name: string;
+    email: string;
+    total_deals: number;
+    won_deals: number;
+    lost_deals: number;
+    won_revenue_cents: number;
+    win_rate: number;
+  }>;
+  email_metrics?: Record<'sent' | 'delivered' | 'open' | 'click' | 'replied' | 'bounce' | 'complaint', number>;
+  stage_durations?: Array<{
+    stage_id: number;
+    stage_name: string;
+    count: number;
+    avg_days: number;
+    avg_hours: number;
+  }>;
+  task_performance?: {
+    total: number;
+    completed: number;
+    completed_on_time: number;
+    completed_late: number;
+    completed_without_due_date: number;
+    pending: number;
+    pending_on_time: number;
+    pending_overdue: number;
+    on_time_rate: number;
+  };
+  top_products?: Array<{
+    product_id: number;
+    name: string;
+    category: string;
+    deals_count: number;
+    total_quantity: number;
+    total_revenue_cents: number;
+  }>;
+  competitor_losses?: Array<{
+    competitor_id: number;
+    name: string;
+    count: number;
+    value: number;
+    color: string;
+  }>;
+  quota_attainment?: {
+    has_quota: boolean;
+    target_cents: number;
+    actual_cents: number;
+    target_deals: number;
+    actual_deals: number;
+    attainment_percent: number;
+    ideal_pace_percent: number;
+    pace_status: 'on_track' | 'behind_pace' | 'no_quota';
+    reps: Array<{
+      user_id: number;
+      user_name: string;
+      target_cents: number;
+      actual_cents: number;
+      attainment_percent: number;
+      target_deals: number;
+      actual_deals: number;
+    }>;
+  };
+  revenue_installments?: {
+    has_installments: boolean;
+    total_installments_count: number;
+    collected_cents: number;
+    planned_cents: number;
+    overdue_cents: number;
+    due_next_30d_cents: number;
+    due_next_90d_cents: number;
+  };
 }
