@@ -321,3 +321,41 @@ export interface ApiAnalytics {
     due_next_90d_cents: number;
   };
 }
+
+export type NutshellReportType = 'sales' | 'forecast' | 'new_leads';
+export type NutshellGranularity = 'day' | 'week' | 'month' | 'quarter' | 'year';
+export type NutshellMeasure = 'value' | 'quantity';
+export type NutshellSegmentBy = 'none' | 'confidence' | 'assignee' | 'source';
+
+export interface NutshellDataPoint {
+  date: string;
+  label: string;
+  value: number;
+  count: number;
+  quota: number;
+  target_pace: number;
+}
+
+export interface NutshellSummary {
+  total_value: number;
+  total_count: number;
+  granularity_unit: string;
+  avg_per_period_value: number;
+  avg_per_period_count: number;
+  avg_cycle_days: number;
+  avg_lead_value: number;
+}
+
+export interface NutshellReportResponse {
+  report_type: NutshellReportType;
+  granularity: NutshellGranularity;
+  measure: NutshellMeasure;
+  segment_by: NutshellSegmentBy;
+  date_range: {
+    from: string;
+    to: string;
+  };
+  series: NutshellDataPoint[];
+  summary: NutshellSummary;
+}
+

@@ -15,6 +15,7 @@ import {
   MarkOpportunityLostPayload,
   PipelineBoardParams,
   SalesLead,
+  NutshellReportResponse,
 } from './types';
 import type { SalesTimelineResponse } from './timeline-types';
 
@@ -615,6 +616,31 @@ export const salesApi = {
   async getAnalytics(period = '30d'): Promise<ApiAnalytics> {
     const res = await request<ApiAnalytics>(`/api/v1/sales/analytics?period=${period}`);
     return res;
+  },
+
+  async getNutshellReport(params: {
+    report_type?: string;
+    granularity?: string;
+    measure?: string;
+    from?: string;
+    to?: string;
+    segment_by?: string;
+  } = {}): Promise<NutshellReportResponse> {
+    const query = new URLSearchParams();
+    if (params.report_type) query.set('report_type', params.report_type);
+    if (params.granularity) query.set('granularity', params.granularity);
+    if (params.measure) query.set('measure', params.measure);
+    if (params.from) query.set('from', params.from);
+    if (params.to) query.set('to', params.to);
+    if (params.segment_by) query.set('segment_by', params.segment_by);
+    const qs = query.toString();
+    return await request<NutshellReportResponse>(`/api/v1/sales/reports/nutshell${qs ? `?${qs}` : ''}`);
+  },
+
+  async getForecast(params: Record<string, string> = {}): Promise<any> {
+    const query = new URLSearchParams(params);
+    const qs = query.toString();
+    return await request<any>(`/api/v1/sales/forecast${qs ? `?${qs}` : ''}`);
   },
 
   async getEmailTemplates(): Promise<any[]> {

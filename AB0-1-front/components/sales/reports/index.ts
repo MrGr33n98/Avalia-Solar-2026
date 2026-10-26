@@ -10,3 +10,5 @@ export * from './StageDurationCard';
 export * from './TaskPerformanceCard';
 export * from './TopProductsCard';
 export * from './RevenueInstallmentsCard';
+export * from './nutshell/NutshellReportCanvas';
+
