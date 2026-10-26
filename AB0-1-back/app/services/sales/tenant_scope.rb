@@ -51,7 +51,8 @@ module Sales
       return ::Sales::Opportunity.all if admin?
 
       acc_ids = accounts.select(:id)
-      ::Sales::Opportunity.where(sales_account_id: acc_ids, owner_id: tenant_user_ids)
+      ::Sales::Opportunity.where(sales_account_id: acc_ids)
+                          .where('owner_id IS NULL OR owner_id IN (?)', tenant_user_ids)
     end
 
     def tasks
@@ -105,12 +106,17 @@ module Sales
     def email_messages
       scope = ::Sales::EmailMessage.all
       unless admin?
-        return ::Sales::EmailMessage.none if user_company_id.blank?
+        if user_company_id.present?
+          scope = scope.where(company_id: user_company_id)
+                       .where('sender_user_id IS NULL OR sender_user_id IN (?)', tenant_user_ids)
+                       .where('sales_account_id IS NULL OR sales_account_id IN (?)', accounts.select(:id))
+                       .where('sales_contact_id IS NULL OR sales_contact_id IN (?)', contacts.select(:id))
+                       .where('sales_opportunity_id IS NULL OR sales_opportunity_id IN (?)', opportunities.select(:id))
+        else
+          return ::Sales::EmailMessage.none if user.nil?
 
-        scope = scope.where(company_id: user_company_id, sender_user_id: tenant_user_ids)
-                     .where('sales_account_id IS NULL OR sales_account_id IN (?)', accounts.select(:id))
-                     .where('sales_contact_id IS NULL OR sales_contact_id IN (?)', contacts.select(:id))
-                     .where('sales_opportunity_id IS NULL OR sales_opportunity_id IN (?)', opportunities.select(:id))
+          scope = scope.where(sender_user_id: user.id)
+        end
       end
 
       scope.where(<<~SQL.squish)

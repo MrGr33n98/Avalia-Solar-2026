@@ -78,6 +78,7 @@ export const ReportsHeader: React.FC<ReportsHeaderProps> = ({
               <SelectItem value="this_quarter">Este Trimestre</SelectItem>
               <SelectItem value="last_quarter">Último Trimestre</SelectItem>
               <SelectItem value="ytd">Acumulado do Ano</SelectItem>
+              <SelectItem value="all_time">Todo o Período</SelectItem>
             </SelectContent>
           </Select>
 
