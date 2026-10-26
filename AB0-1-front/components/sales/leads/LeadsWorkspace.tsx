@@ -20,6 +20,7 @@ import Link from 'next/link';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateLeadModal from './create/CreateLeadModal';
 import SalesCommandCenter from '@/components/sales/SalesCommandCenter';
+import NutshellReportCanvas from '@/components/sales/reports/nutshell/NutshellReportCanvas';
 import { SalesLead } from '@/lib/api/sales/types';
 import { salesKeys } from '@/lib/api/sales/queryKeys';
 
@@ -235,10 +236,12 @@ export default function LeadsWorkspace() {
             <p className="text-xs">Mapeamento espacial das usinas e projetos solares dos leads cadastrados.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-slate-500 space-y-2">
-            <BarChart3 className="w-10 h-10 text-indigo-600 mx-auto" />
-            <h3 className="text-base font-bold text-slate-900">Relatório & Funil de Conversão</h3>
-            <p className="text-xs">Análise agregada de taxas de ganho, ciclo médio de vendas e volume por origem.</p>
+          <div className="w-full space-y-6">
+            <NutshellReportCanvas
+              initialReportType="sales"
+              titleOverride="Relatório & Funil de Conversão"
+              subtitleOverride="Análise de vendas, projeções e novos leads no pipeline comercial com dados 100% reais."
+            />
           </div>
         )}
       </div>
