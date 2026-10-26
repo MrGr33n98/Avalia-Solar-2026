@@ -69,6 +69,7 @@ Rails.application.routes.draw do
         get 'attribution', to: 'sales/attribution#index'
         get 'forecast', to: 'sales/forecast#index'
         get 'reports/nutshell', to: 'sales/nutshell_reports#index'
+        get 'filters/options', to: 'sales/filter_options#index'
         post 'companies/:company_id/account', to: 'sales/account_links#create'
         resources :taxonomies, only: %i[index create update destroy], controller: 'sales/taxonomies'
         resources :custom_field_definitions, controller: 'sales/custom_field_definitions'

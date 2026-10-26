@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   BarChart3,
   Download,
+  Filter,
   Kanban,
   LayoutList,
   MapPin,
@@ -21,8 +22,9 @@ import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateLeadModal from './create/CreateLeadModal';
 import SalesCommandCenter from '@/components/sales/SalesCommandCenter';
 import NutshellReportCanvas from '@/components/sales/reports/nutshell/NutshellReportCanvas';
-import { SalesLead } from '@/lib/api/sales/types';
+import { SalesLead, NutshellFilterCriteria } from '@/lib/api/sales/types';
 import { salesKeys } from '@/lib/api/sales/queryKeys';
+import NutshellFilterSidebar from '@/components/sales/filters/NutshellFilterSidebar';
 
 export default function LeadsWorkspace() {
   const router = useRouter();
@@ -40,7 +42,21 @@ export default function LeadsWorkspace() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | undefined>();
   const [boardRefreshVersion, setBoardRefreshVersion] = useState(0);
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
+  const [nutshellFilters, setNutshellFilters] = useState<NutshellFilterCriteria>({});
   const queryClient = useQueryClient();
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    Object.values(nutshellFilters).forEach((val) => {
+      if (!val) return;
+      if ('selectedIds' in val && val.selectedIds.length > 0) count++;
+      else if ('min' in val && (val.min !== undefined || val.max !== undefined)) count++;
+      else if ('from' in val && (val.from || val.to)) count++;
+      else if ('days' in val && val.days) count++;
+    });
+    return count;
+  }, [nutshellFilters]);
 
   const handleViewChange = (nextView: 'list' | 'kanban' | 'map' | 'analytics') => {
     setView(nextView);
@@ -204,6 +220,29 @@ export default function LeadsWorkspace() {
               />
             </div>
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
+              className={`h-8 gap-1.5 text-xs font-semibold shrink-0 transition-colors ${
+                isFilterSidebarOpen || activeFiltersCount > 0
+                  ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-2xs'
+                  : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <Filter
+                className={`w-3.5 h-3.5 ${
+                  isFilterSidebarOpen || activeFiltersCount > 0 ? 'text-sky-600' : 'text-slate-400'
+                }`}
+              />
+              <span>Filtros</span>
+              {activeFiltersCount > 0 && (
+                <span className="rounded-full bg-sky-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </Button>
+
+            <Button
               variant="ghost"
               size="sm"
               onClick={() => {
@@ -220,15 +259,26 @@ export default function LeadsWorkspace() {
 
         {/* Main Leads Workspace View Container */}
         {view === 'kanban' || view === 'list' ? (
-          <SalesCommandCenter
-            hideLayout
-            pipelineOnly
-            pipelineId={selectedPipelineId}
-            refreshVersion={boardRefreshVersion}
-            initialView={view === 'list' ? 'table' : 'kanban'}
-            searchQuery={search}
-            activeQuickFilter={activeFilter}
-          />
+          <div className="relative flex w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
+            <NutshellFilterSidebar
+              isOpen={isFilterSidebarOpen}
+              onClose={() => setIsFilterSidebarOpen(false)}
+              filters={nutshellFilters}
+              onChange={setNutshellFilters}
+            />
+            <div className="flex-1 overflow-x-hidden p-1">
+              <SalesCommandCenter
+                hideLayout
+                pipelineOnly
+                pipelineId={selectedPipelineId}
+                refreshVersion={boardRefreshVersion}
+                initialView={view === 'list' ? 'table' : 'kanban'}
+                searchQuery={search}
+                activeQuickFilter={activeFilter}
+                customFilters={nutshellFilters}
+              />
+            </div>
+          </div>
         ) : view === 'map' ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-slate-500 space-y-2">
             <MapPin className="w-10 h-10 text-indigo-600 mx-auto" />

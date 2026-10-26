@@ -16,6 +16,8 @@ import {
   PipelineBoardParams,
   SalesLead,
   NutshellReportResponse,
+  FilterOptionsResponse,
+  NutshellFilterCriteria,
 } from './types';
 import type { SalesTimelineResponse } from './timeline-types';
 
@@ -172,6 +174,79 @@ export function clearSalesApiCache(pattern?: string) {
   }
   for (const key of apiCache.keys()) {
     if (key.includes(pattern)) apiCache.delete(key);
+  }
+}
+
+export function appendFilterCriteriaParams(query: URLSearchParams, filters?: NutshellFilterCriteria) {
+  if (!filters) return;
+
+  // Assignee
+  if (filters.assignee && filters.assignee.selectedIds.length > 0) {
+    const key = filters.assignee.operator === 'is_not' ? 'owner_ids_not[]' : 'owner_ids[]';
+    filters.assignee.selectedIds.forEach((id) => query.append(key, String(id)));
+  }
+
+  // Sources
+  if (filters.sources && filters.sources.selectedIds.length > 0) {
+    const key = filters.sources.operator === 'is_not' ? 'source_ids_not[]' : 'source_ids[]';
+    filters.sources.selectedIds.forEach((id) => query.append(key, String(id)));
+  }
+
+  // Tags
+  if (filters.tags && filters.tags.selectedIds.length > 0) {
+    const key = filters.tags.operator === 'is_not' ? 'tag_ids_not[]' : 'tag_ids[]';
+    filters.tags.selectedIds.forEach((id) => query.append(key, String(id)));
+  }
+
+  // Competitors
+  if (filters.competitors && filters.competitors.selectedIds.length > 0) {
+    const key = filters.competitors.operator === 'is_not' ? 'competitor_ids_not[]' : 'competitor_ids[]';
+    filters.competitors.selectedIds.forEach((id) => query.append(key, String(id)));
+  }
+
+  // Companies / Accounts
+  if (filters.companies && filters.companies.selectedIds.length > 0) {
+    const key = filters.companies.operator === 'is_not' ? 'account_ids_not[]' : 'account_ids[]';
+    filters.companies.selectedIds.forEach((id) => query.append(key, String(id)));
+  }
+
+  // Outcome / Status
+  if (filters.outcome && filters.outcome.selectedIds.length > 0) {
+    const key = filters.outcome.operator === 'is_not' ? 'status_not[]' : 'status_in[]';
+    filters.outcome.selectedIds.forEach((id) => query.append(key, String(id)));
+  }
+
+  // Pipeline
+  if (filters.pipeline && filters.pipeline.selectedIds.length > 0) {
+    filters.pipeline.selectedIds.forEach((id) => query.append('pipeline_id', String(id)));
+  }
+
+  // Address (States)
+  if (filters.address && filters.address.selectedIds.length > 0) {
+    filters.address.selectedIds.forEach((uf) => query.append('states[]', String(uf)));
+  }
+
+  // Value
+  if (filters.value) {
+    if (filters.value.min !== undefined && filters.value.min !== null) query.set('value_min', String(filters.value.min));
+    if (filters.value.max !== undefined && filters.value.max !== null) query.set('value_max', String(filters.value.max));
+  }
+
+  // Age (dias)
+  if (filters.age) {
+    if (filters.age.min !== undefined && filters.age.min !== null) query.set('age_min_days', String(filters.age.min));
+    if (filters.age.max !== undefined && filters.age.max !== null) query.set('age_max_days', String(filters.age.max));
+  }
+
+  // Last contacted
+  if (filters.lastContacted?.days) {
+    query.set('last_contacted_days', String(filters.lastContacted.days));
+  }
+
+  // Close date
+  if (filters.closeDate) {
+    if (filters.closeDate.from) query.set('close_from', filters.closeDate.from);
+    if (filters.closeDate.to) query.set('close_to', filters.closeDate.to);
   }
 }
 
@@ -340,11 +415,15 @@ export const salesApi = {
     params: PipelineBoardParams = {}
   ): Promise<ApiPipelineBoard> {
     const qs = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
+    const { filters, ...restParams } = params;
+    Object.entries(restParams).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         qs.set(key, Array.isArray(value) ? value.join(',') : String(value));
       }
     });
+    if (filters) {
+      appendFilterCriteriaParams(qs, filters);
+    }
     const suffix = qs.toString();
     return request<ApiPipelineBoard>(
       `/api/v1/sales/pipelines/${pipelineId}/board${suffix ? `?${suffix}` : ''}`
@@ -618,6 +697,14 @@ export const salesApi = {
     return res;
   },
 
+  async getFilterOptions(): Promise<FilterOptionsResponse> {
+    const cached = getCached<FilterOptionsResponse>('sales_filter_options');
+    if (cached) return cached;
+    const res = await request<FilterOptionsResponse>('/api/v1/sales/filters/options');
+    setCache('sales_filter_options', res);
+    return res;
+  },
+
   async getNutshellReport(params: {
     report_type?: string;
     granularity?: string;
@@ -625,6 +712,7 @@ export const salesApi = {
     from?: string;
     to?: string;
     segment_by?: string;
+    filters?: NutshellFilterCriteria;
   } = {}): Promise<NutshellReportResponse> {
     const query = new URLSearchParams();
     if (params.report_type) query.set('report_type', params.report_type);
@@ -633,6 +721,7 @@ export const salesApi = {
     if (params.from) query.set('from', params.from);
     if (params.to) query.set('to', params.to);
     if (params.segment_by) query.set('segment_by', params.segment_by);
+    if (params.filters) appendFilterCriteriaParams(query, params.filters);
     const qs = query.toString();
     return await request<NutshellReportResponse>(`/api/v1/sales/reports/nutshell${qs ? `?${qs}` : ''}`);
   },

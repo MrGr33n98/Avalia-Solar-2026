@@ -92,6 +92,9 @@ module Sales
           scope = scope.joins(:tags).where(sales_tags: { id: tag_ids }).distinct
         end
 
+        # Aplica filtros avançados completos (operadores is e is_not, sources, competitors, states, etc.)
+        scope = ::Sales::OpportunitiesQuery.call(@params, scope)
+
         scope
       end
 

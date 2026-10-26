@@ -36,7 +36,9 @@ import {
   NutshellMeasure,
   NutshellSegmentBy,
   NutshellReportResponse,
+  NutshellFilterCriteria,
 } from '@/lib/api/sales/types';
+import { NutshellFilterSidebar } from '@/components/sales/filters/NutshellFilterSidebar';
 
 interface NutshellReportCanvasProps {
   initialReportType?: NutshellReportType;
@@ -88,6 +90,8 @@ export function NutshellReportCanvas({
   const [showSegmentDropdown, setShowSegmentDropdown] = useState(false);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [saveSuccessNotice, setSaveSuccessNotice] = useState<string | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<NutshellFilterCriteria>({});
 
   // Calcula datas a partir do preset selecionado
   const dateRange = useMemo(() => {
@@ -138,6 +142,7 @@ export function NutshellReportCanvas({
         segment_by: segmentBy,
         from: dateRange.from,
         to: dateRange.to,
+        filters,
       });
       setData(response);
     } catch (err: any) {
@@ -147,7 +152,7 @@ export function NutshellReportCanvas({
     } finally {
       setLoading(false);
     }
-  }, [reportType, granularity, measure, segmentBy, dateRange]);
+  }, [reportType, granularity, measure, segmentBy, dateRange, filters]);
 
   useEffect(() => {
     loadReport();
@@ -241,13 +246,35 @@ export function NutshellReportCanvas({
     }
   };
 
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    Object.values(filters).forEach((val) => {
+      if (!val) return;
+      if ('selectedIds' in val && val.selectedIds.length > 0) count++;
+      else if ('min' in val && (val.min !== undefined || val.max !== undefined)) count++;
+      else if ('from' in val && (val.from || val.to)) count++;
+      else if ('days' in val && val.days) count++;
+    });
+    return count;
+  }, [filters]);
+
   return (
-    <div className="w-full bg-white rounded-xl border border-slate-200 shadow-xs p-6 space-y-6">
-      {/* 1. Header do Relatório Estilo Nutshell */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-        <div>
-          {/* Alternador de tipo de relatório padrão Nutshell */}
-          <div className="flex items-center gap-2 mb-2">
+    <div className="relative flex w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+      {/* Sidebar Retrátil de Filtros Nutshell */}
+      <NutshellFilterSidebar
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        filters={filters}
+        onChange={setFilters}
+      />
+
+      {/* Conteúdo Principal do Canvas */}
+      <div className="flex-1 p-6 space-y-6 overflow-x-hidden">
+        {/* 1. Header do Relatório Estilo Nutshell */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+          <div>
+            {/* Alternador de tipo de relatório padrão Nutshell */}
+            <div className="flex items-center gap-2 mb-2">
             {(['sales', 'forecast', 'new_leads'] as NutshellReportType[]).map((t) => (
               <button
                 key={t}
@@ -322,13 +349,26 @@ export function NutshellReportCanvas({
       {/* 2. Barra de Controles e Filtros */}
       <div className="flex flex-wrap items-center justify-between gap-4 py-1">
         <div className="flex flex-wrap items-center gap-3">
-          {/* Botão de Filtro */}
+          {/* Botão de Filtro Estilo Nutshell */}
           <button
-            onClick={() => {}}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-medium text-xs hover:bg-slate-50 transition-colors"
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+              isFilterOpen || activeFiltersCount > 0
+                ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-xs'
+                : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+            }`}
           >
-            <Filter className="w-3.5 h-3.5 text-slate-500" />
-            <span>Filtros</span>
+            <Filter
+              className={`w-3.5 h-3.5 ${
+                isFilterOpen || activeFiltersCount > 0 ? 'text-sky-600' : 'text-slate-500'
+              }`}
+            />
+            <span>Filter</span>
+            {activeFiltersCount > 0 && (
+              <span className="rounded-full bg-sky-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
+                {activeFiltersCount}
+              </span>
+            )}
           </button>
 
           {/* Segment by Dropdown */}
@@ -660,6 +700,7 @@ export function NutshellReportCanvas({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

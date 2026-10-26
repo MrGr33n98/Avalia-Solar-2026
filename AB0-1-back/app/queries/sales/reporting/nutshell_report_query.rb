@@ -6,7 +6,7 @@ module Sales
       VALID_GRANULARITIES = %w[day week month quarter year].freeze
       VALID_TYPES = %w[sales forecast new_leads].freeze
 
-      def self.call(user:, report_type: 'sales', granularity: 'month', measure: 'value', from: nil, to: nil, segment_by: 'none')
+      def self.call(user:, report_type: 'sales', granularity: 'month', measure: 'value', from: nil, to: nil, segment_by: 'none', filters: {})
         new(
           user: user,
           report_type: report_type,
@@ -14,18 +14,20 @@ module Sales
           measure: measure,
           from: from,
           to: to,
-          segment_by: segment_by
+          segment_by: segment_by,
+          filters: filters
         ).execute
       end
 
-      attr_reader :user, :report_type, :granularity, :measure, :from_date, :to_date, :segment_by
+      attr_reader :user, :report_type, :granularity, :measure, :from_date, :to_date, :segment_by, :filters
 
-      def initialize(user:, report_type: 'sales', granularity: 'month', measure: 'value', from: nil, to: nil, segment_by: 'none')
+      def initialize(user:, report_type: 'sales', granularity: 'month', measure: 'value', from: nil, to: nil, segment_by: 'none', filters: {})
         @user = user
         @report_type = VALID_TYPES.include?(report_type.to_s) ? report_type.to_s : 'sales'
         @granularity = VALID_GRANULARITIES.include?(granularity.to_s) ? granularity.to_s : 'month'
         @measure = measure.to_s == 'quantity' ? 'quantity' : 'value'
         @segment_by = segment_by.to_s
+        @filters = (filters.presence || {}).to_h.symbolize_keys
         parse_dates(from, to)
       end
 
@@ -62,7 +64,7 @@ module Sales
       def base_scope
         opps = tenant_scope.opportunities
 
-        case report_type
+        scoped = case report_type
         when 'sales'
           opps.where(status: 'won')
               .where('COALESCE(sales_opportunities.won_at, sales_opportunities.updated_at) BETWEEN ? AND ?', from_date.beginning_of_day, to_date.end_of_day)
@@ -73,6 +75,15 @@ module Sales
           opps.where('sales_opportunities.created_at BETWEEN ? AND ?', from_date.beginning_of_day, to_date.end_of_day)
         else
           opps.none
+        end
+
+        if filters.present?
+          report_filters = filters.dup
+          report_filters[:all_statuses] = true
+          report_filters.delete(:status) if report_type == 'sales' || report_type == 'forecast'
+          ::Sales::OpportunitiesQuery.call(report_filters, scoped)
+        else
+          scoped
         end
       end
 

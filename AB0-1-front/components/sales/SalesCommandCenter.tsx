@@ -43,6 +43,7 @@ import {
   ApiPipelineBoardCard,
   ApiTag,
   PipelineBoardParams,
+  NutshellFilterCriteria,
 } from '@/lib/api/sales/types';
 import { useSalesPipelineBoard, useSalesPipelines } from '@/lib/api/sales/queries';
 import NutshellLeadsTable from '@/components/sales/leads/NutshellLeadsTable';
@@ -179,6 +180,7 @@ export default function SalesCommandCenter({
   initialView = 'kanban',
   searchQuery = '',
   activeQuickFilter = 'all',
+  customFilters,
 }: {
   pipelineOnly?: boolean;
   hideLayout?: boolean;
@@ -190,6 +192,7 @@ export default function SalesCommandCenter({
   initialView?: 'kanban' | 'table';
   searchQuery?: string;
   activeQuickFilter?: string;
+  customFilters?: NutshellFilterCriteria;
 }) {
   const [view, setView] = useState<'kanban' | 'table'>(initialView);
   const [search, setSearch] = useState(searchQuery);
@@ -239,8 +242,9 @@ export default function SalesCommandCenter({
       value_min: leadFilters.value_min,
       value_max: leadFilters.value_max,
       tag_ids: leadFilters.tag_ids,
+      filters: customFilters,
     }),
-    [leadFilters, search, quickFilterParams]
+    [leadFilters, search, quickFilterParams, customFilters]
   );
   const {
     data: boardData,

@@ -157,6 +157,7 @@ export interface PipelineBoardParams {
   value_max?: number;
   tag_ids?: number[];
   closing_this_week?: boolean | string;
+  filters?: NutshellFilterCriteria;
 }
 
 export interface ApiPipelineBoardCard {
@@ -359,5 +360,64 @@ export interface NutshellReportResponse {
   };
   series: NutshellDataPoint[];
   summary: NutshellSummary;
+}
+
+export interface FilterOptionItem {
+  id: number | string;
+  name: string;
+  color?: string;
+  key?: string;
+  pipeline_id?: number;
+  position?: number;
+}
+
+export interface ApiFilterOptions {
+  assignees: FilterOptionItem[];
+  pipelines: FilterOptionItem[];
+  stages: FilterOptionItem[];
+  sources: FilterOptionItem[];
+  tags: FilterOptionItem[];
+  competitors: FilterOptionItem[];
+  products: FilterOptionItem[];
+  states: FilterOptionItem[];
+  outcomes: FilterOptionItem[];
+  channels: FilterOptionItem[];
+}
+
+export interface FilterOptionsResponse {
+  options: ApiFilterOptions;
+}
+
+export type FilterOperator = 'is' | 'is_not';
+
+export interface CriterionSelection {
+  operator: FilterOperator;
+  selectedIds: (number | string)[];
+}
+
+export interface RangeCriterion {
+  min?: number;
+  max?: number;
+  from?: string;
+  to?: string;
+  days?: number;
+}
+
+export interface NutshellFilterCriteria {
+  assignee?: CriterionSelection;
+  closeDate?: RangeCriterion;
+  lastContacted?: RangeCriterion;
+  outcome?: CriterionSelection;
+  pipeline?: CriterionSelection;
+  products?: CriterionSelection;
+  sources?: CriterionSelection;
+  tags?: CriterionSelection;
+  value?: RangeCriterion;
+  tickets?: RangeCriterion;
+  address?: CriterionSelection;
+  age?: RangeCriterion;
+  channels?: CriterionSelection;
+  companies?: CriterionSelection;
+  competitors?: CriterionSelection;
 }
 
