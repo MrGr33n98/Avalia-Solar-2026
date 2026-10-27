@@ -69,7 +69,7 @@ export default function FunnelReportCanvas() {
         all_statuses: true,
         per_page: 50,
       });
-      setOpportunities(res.opportunities || []);
+      setOpportunities(res || []);
     } catch (err) {
       console.error('[FunnelReport] Erro ao carregar oportunidades:', err);
     } finally {

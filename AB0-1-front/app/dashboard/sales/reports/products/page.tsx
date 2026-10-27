@@ -53,10 +53,10 @@ export default function ProductsReportPage() {
   }, [loadData]);
 
   const topProducts = analytics?.top_products || [];
-  const totalQuantity = topProducts.reduce((acc, p) => acc + (p.quantity || 0), 0);
+  const totalQuantity = topProducts.reduce((acc, p) => acc + (p.total_quantity || 0), 0);
   const uniqueProducts = topProducts.length;
-  const totalValueCents = topProducts.reduce((acc, p) => acc + (p.revenue_cents || 0), 0);
-  const totalDeals = topProducts.reduce((acc, p) => acc + (p.deal_count || 0), 0);
+  const totalValueCents = topProducts.reduce((acc, p) => acc + (p.total_revenue_cents || 0), 0);
+  const totalDeals = topProducts.reduce((acc, p) => acc + (p.deals_count || 0), 0);
 
   return (
     <SalesLayoutWrapper>
@@ -202,7 +202,7 @@ export default function ProductsReportPage() {
                       contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
                     />
                     <Bar
-                      dataKey={measure === 'value' ? 'revenue_cents' : 'quantity'}
+                      dataKey={measure === 'value' ? 'total_revenue_cents' : 'total_quantity'}
                       fill="#10B981"
                       radius={[0, 4, 4, 0]}
                     />
@@ -227,10 +227,10 @@ export default function ProductsReportPage() {
                         <td className="py-2.5 px-3 font-semibold text-slate-900 dark:text-slate-100">
                           {p.name}
                         </td>
-                        <td className="py-2.5 px-3 text-right">{p.quantity}</td>
-                        <td className="py-2.5 px-3 text-right">{p.deal_count}</td>
+                        <td className="py-2.5 px-3 text-right">{p.total_quantity}</td>
+                        <td className="py-2.5 px-3 text-right">{p.deals_count}</td>
                         <td className="py-2.5 px-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                          {fmtBRL(p.revenue_cents)}
+                          {fmtBRL(p.total_revenue_cents)}
                         </td>
                       </tr>
                     ))}

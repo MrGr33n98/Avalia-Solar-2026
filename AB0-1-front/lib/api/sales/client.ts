@@ -405,6 +405,7 @@ export const salesApi = {
   async getOpportunities(params?: {
     q?: string;
     status?: string;
+    all_statuses?: boolean;
     account_id?: number;
     pipeline_id?: number;
     stage_id?: number | number[];
