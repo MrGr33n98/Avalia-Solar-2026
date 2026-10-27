@@ -30,6 +30,7 @@ import {
   User,
   Users,
   Zap,
+  Trash2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -246,6 +247,24 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
     }
   };
 
+  const handleDeleteOpportunity = async () => {
+    if (!opp) return;
+    const valueStr = opp.value_cents
+      ? ` de R$ ${(opp.value_cents / 100).toLocaleString('pt-BR')}`
+      : '';
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir permanentemente a oportunidade "${opp.name}"${valueStr}?\n\nEsta ação apagará todos os dados vinculados a este lead e não pode ser desfeita.`
+    );
+    if (!confirmed) return;
+    try {
+      await salesApi.deleteOpportunity(opp.id);
+      onUpdated?.();
+      onClose();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao excluir oportunidade');
+    }
+  };
+
   const handleSaveTitle = async () => {
     if (!opp || !oppTitle.trim()) return;
     try {
@@ -360,6 +379,17 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
                       }`}
                     >
                       {opp.status === 'won' ? '✓ Ganho' : 'Marcar Ganho'}
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDeleteOpportunity}
+                      className="h-8 px-2.5 text-xs font-semibold rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40 transition-colors"
+                      title="Excluir Oportunidade Permanentemente"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1" />
+                      <span>Excluir</span>
                     </Button>
                   </div>
                 </div>
