@@ -32,6 +32,27 @@ module Sales
       result = result.where(sales_account_id: account_id) if account_id.present?
       result = result.where(decision_role: params[:decision_role]) if params[:decision_role].present?
 
+      # Nutshell Filter Criteria
+      result = result.where.not(email: [nil, '']) if params[:has_email] == 'true'
+      result = result.where("phone IS NOT NULL AND phone != '' OR whatsapp IS NOT NULL AND whatsapp != ''") if params[:has_phone] == 'true'
+      result = result.where.not(linkedin_url: [nil, '']) if params[:has_linkedin] == 'true'
+
+      if params[:job_title].present?
+        if params[:title_exact] == 'true'
+          result = result.where('LOWER(job_title) = ?', params[:job_title].to_s.strip.downcase)
+        else
+          result = result.where('LOWER(job_title) LIKE ?', "%#{params[:job_title].to_s.strip.downcase}%")
+        end
+      end
+
+      if params[:company_name].present? || params[:state].present? || params[:city].present? || params[:segment].present?
+        result = result.joins(:account)
+        result = result.where('LOWER(sales_accounts.name) LIKE ?', "%#{params[:company_name].to_s.strip.downcase}%") if params[:company_name].present?
+        result = result.where('LOWER(sales_accounts.state) = ?', params[:state].to_s.strip.downcase) if params[:state].present?
+        result = result.where('LOWER(sales_accounts.city) LIKE ?', "%#{params[:city].to_s.strip.downcase}%") if params[:city].present?
+        result = result.where('LOWER(sales_accounts.segment) LIKE ?', "%#{params[:segment].to_s.strip.downcase}%") if params[:segment].present?
+      end
+
       if params[:stale] == 'true'
         thirty_days_ago = 30.days.ago
         result = result.left_joins(:activities)

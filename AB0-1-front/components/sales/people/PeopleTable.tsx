@@ -16,9 +16,16 @@ export interface PersonListItem {
   phone?: string | null;
   whatsapp?: string | null;
   job_title?: string | null;
+  linkedin_url?: string | null;
   decision_role?: string | null;
   is_primary?: boolean;
   account_name?: string | null;
+  account_domain?: string | null;
+  account_website?: string | null;
+  account_city?: string | null;
+  account_state?: string | null;
+  account_segment?: string | null;
+  account_company_size?: string | null;
   sales_account_id?: number | null;
   owner_id?: number | null;
   owner_name?: string | null;
