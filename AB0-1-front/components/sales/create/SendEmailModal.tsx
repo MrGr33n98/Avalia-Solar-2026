@@ -10,6 +10,8 @@ import {
   Italic,
   Link as LinkIcon,
   List,
+  Maximize2,
+  Minimize2,
   Minus,
   Paperclip,
   Pencil,
@@ -131,6 +133,7 @@ export default function SendEmailModal({
   const [sendOption, setSendOption] = useState<'now' | 'task' | 'schedule'>('now');
   const [sendMenuOpen, setSendMenuOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [windowState, setWindowState] = useState<'normal' | 'minimized' | 'maximized'>('normal');
 
   const [isEditingTo, setIsEditingTo] = useState<boolean>(
     !contactEmail || contactEmail === 'sem-email@exemplo.com' || !contactEmail.includes('@')
@@ -274,32 +277,78 @@ export default function SendEmailModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-[960px] max-h-[90vh] flex flex-col p-0 bg-white rounded-2xl shadow-2xl overflow-hidden font-sans border-slate-200">
-        {/* MODAL HEADER (Matching Nutshell Benchmark Header) */}
-        <DialogHeader className="px-6 py-3.5 border-b border-slate-200 flex flex-row items-center justify-between space-y-0 bg-white shrink-0">
-          <DialogTitle className="text-base font-bold text-slate-800 tracking-tight">
-            Send email to {recipientName ? `${recipientName} -` : '-'}
-          </DialogTitle>
-          <div className="flex items-center gap-1 text-slate-400">
+      <DialogContent
+        hideCloseButton
+        overlayClassName={windowState === 'minimized' ? 'hidden' : undefined}
+        className={
+          windowState === 'minimized'
+            ? 'fixed !bottom-0 !right-6 !top-auto !left-auto !translate-x-0 !translate-y-0 w-80 max-w-[calc(100vw-2rem)] h-11 p-0 rounded-t-xl rounded-b-none border border-slate-300 shadow-xl bg-white overflow-hidden z-[9999]'
+            : windowState === 'maximized'
+            ? 'fixed inset-4 !left-[50%] !top-[50%] !translate-x-[-50%] !translate-y-[-50%] w-[96vw] max-w-[96vw] h-[94vh] max-h-[94vh] flex flex-col p-0 bg-white rounded-2xl shadow-2xl overflow-hidden font-sans border-slate-200 z-[9999]'
+            : 'max-w-[960px] max-h-[90vh] flex flex-col p-0 bg-white rounded-2xl shadow-2xl overflow-hidden font-sans border-slate-200'
+        }
+      >
+        {/* MODAL HEADER (Matching Gmail & Nutshell Benchmark Header) */}
+        <DialogHeader
+          className={`px-4 py-2.5 border-b border-slate-200 flex flex-row items-center justify-between space-y-0 bg-slate-50/90 shrink-0 cursor-pointer select-none ${
+            windowState === 'minimized' ? 'h-full border-none' : ''
+          }`}
+          onClick={() => {
+            if (windowState === 'minimized') setWindowState('normal');
+          }}
+        >
+          <div className="flex items-center gap-2 truncate">
+            <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />
+            <DialogTitle className="text-xs font-bold text-slate-800 tracking-tight truncate">
+              {subject ? subject : `Nova mensagem para ${recipientName || 'contato'}`}
+            </DialogTitle>
+          </div>
+
+          <div
+            className="flex items-center gap-0.5 text-slate-500 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* MINIMIZE BUTTON (-) */}
             <button
               type="button"
-              onClick={onClose}
-              className="p-1 rounded-md hover:bg-slate-100 hover:text-slate-700 transition-colors"
+              onClick={() => setWindowState(windowState === 'minimized' ? 'normal' : 'minimized')}
+              className="p-1 rounded-md hover:bg-slate-200 hover:text-slate-800 transition-colors"
+              title={windowState === 'minimized' ? 'Restaurar janela' : 'Minimizar (estilo Gmail)'}
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="w-3.5 h-3.5" />
             </button>
+
+            {/* MAXIMIZE / RESTORE BUTTON */}
+            {windowState !== 'minimized' && (
+              <button
+                type="button"
+                onClick={() => setWindowState(windowState === 'maximized' ? 'normal' : 'maximized')}
+                className="p-1 rounded-md hover:bg-slate-200 hover:text-slate-800 transition-colors"
+                title={windowState === 'maximized' ? 'Restaurar tamanho' : 'Maximizar'}
+              >
+                {windowState === 'maximized' ? (
+                  <Minimize2 className="w-3.5 h-3.5" />
+                ) : (
+                  <Maximize2 className="w-3.5 h-3.5" />
+                )}
+              </button>
+            )}
+
+            {/* CLOSE BUTTON (X) */}
             <button
               type="button"
               onClick={onClose}
-              className="p-1 rounded-md hover:bg-slate-100 hover:text-slate-700 transition-colors"
+              className="p-1 rounded-md hover:bg-rose-100 hover:text-rose-700 transition-colors"
+              title="Salvar rascunho e fechar"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </DialogHeader>
 
-        {/* TWO-COLUMN MAIN BODY (32% LEFT SIDEBAR / 68% RIGHT COMPOSER) */}
-        <div className="grid grid-cols-12 flex-1 min-h-[480px] max-h-[75vh] overflow-hidden">
+        {/* TWO-COLUMN MAIN BODY (Ocultado quando minimizado) */}
+        {windowState !== 'minimized' && (
+          <div className="grid grid-cols-12 flex-1 min-h-[480px] max-h-[75vh] overflow-hidden">
           {/* LEFT SIDEBAR (Template selection & search) */}
           <div className="col-span-4 bg-slate-50/80 border-r border-slate-200 p-4 space-y-3 flex flex-col">
             {/* Search Input */}
@@ -672,6 +721,7 @@ export default function SendEmailModal({
             )}
           </div>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );
