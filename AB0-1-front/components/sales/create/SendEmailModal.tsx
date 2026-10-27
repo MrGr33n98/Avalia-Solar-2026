@@ -348,7 +348,8 @@ export default function SendEmailModal({
 
         {/* TWO-COLUMN MAIN BODY (Ocultado quando minimizado) */}
         {windowState !== 'minimized' && (
-          <div className="grid grid-cols-12 flex-1 min-h-[480px] max-h-[75vh] overflow-hidden">
+          <>
+            <div className="grid grid-cols-12 flex-1 min-h-[480px] max-h-[75vh] overflow-hidden">
           {/* LEFT SIDEBAR (Template selection & search) */}
           <div className="col-span-4 bg-slate-50/80 border-r border-slate-200 p-4 space-y-3 flex flex-col">
             {/* Search Input */}
@@ -721,6 +722,7 @@ export default function SendEmailModal({
             )}
           </div>
         </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
