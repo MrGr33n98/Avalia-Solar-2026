@@ -601,6 +601,28 @@ export const salesApi = {
     return res.task;
   },
 
+  async updateContact(
+    id: number,
+    payload: {
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      phone?: string;
+      whatsapp?: string;
+      job_title?: string;
+      decision_role?: string;
+      owner_id?: number | null;
+      tag_names?: string[];
+      metadata?: Record<string, any>;
+    }
+  ): Promise<any> {
+    const res = await request<{ contact: any }>(`/api/v1/sales/contacts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ contact: payload, tag_names: payload.tag_names }),
+    });
+    return res.contact;
+  },
+
   async updateTask(id: number, payload: Partial<ApiTask>): Promise<ApiTask> {
     if (payload.sales_opportunity_id) {
       clearSalesApiCache(`opp_timeline:${payload.sales_opportunity_id}`);

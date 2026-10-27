@@ -49,7 +49,7 @@ module Api
         end
 
         def show
-          contact = scoped_contacts.includes(:account, :user, :contact_employments, :opportunity_contacts, :activities, :tasks).find(params[:id])
+          contact = scoped_contacts.includes(:account, :user, :contact_employments, :opportunity_contacts, :activities, :tasks, :tags, opportunities: :stage).find(params[:id])
           render json: { contact: serialize_detailed(contact) }
         end
 
@@ -126,7 +126,7 @@ module Api
 
         def update
           contact = scoped_contacts.find(params[:id])
-          attrs = contact_params.except(:company_name, :user_id, :owner_id)
+          attrs = contact_params.except(:company_name, :user_id, :owner_id).to_h
           target_account = contact.account
 
           if contact_params[:sales_account_id].present? && contact_params[:sales_account_id].to_i != contact.sales_account_id
@@ -148,8 +148,30 @@ module Api
             attrs[:user_id] = owner_user.id
           end
 
+          if params[:contact] && params[:contact][:metadata].present?
+            current_meta = contact.metadata || {}
+            new_meta = params[:contact][:metadata].is_a?(ActionController::Parameters) ? params[:contact][:metadata].to_unsafe_h : params[:contact][:metadata]
+            attrs[:metadata] = current_meta.deep_merge(new_meta.stringify_keys)
+          end
+
           contact.update!(attrs)
-          render json: { contact: serialize_detailed(contact) }
+
+          if params[:tag_names].is_a?(Array)
+            tag_ids = params[:tag_names].map do |tname|
+              tag = ::Sales::Tag.find_or_create_by!(
+                company_id: current_user.company_id,
+                entity_type: 'Contact',
+                name: tname.to_s.strip
+              ) do |t|
+                t.color = '#4f46e5'
+                t.created_by = current_user
+              end
+              tag.id
+            end
+            contact.tag_ids = tag_ids if contact.respond_to?(:tag_ids=)
+          end
+
+          render json: { contact: serialize_detailed(contact.reload) }
         end
 
         private
@@ -157,7 +179,8 @@ module Api
         def contact_params
           params.require(:contact).permit(
             :first_name, :last_name, :email, :phone, :whatsapp, :job_title, :linkedin_url,
-            :decision_role, :is_primary, :sales_account_id, :user_id, :owner_id, :company_name
+            :decision_role, :is_primary, :sales_account_id, :user_id, :owner_id, :company_name,
+            metadata: {}
           )
         end
 
@@ -194,7 +217,9 @@ module Api
             last_contact_title: last_contact[:last_contact_title],
             next_action_at: next_action[:next_action_at],
             next_action_type: next_action[:next_action_type],
-            next_action_title: next_action[:next_action_title]
+            next_action_title: next_action[:next_action_title],
+            created_at: contact.created_at,
+            metadata: contact.metadata || {}
           }
         end
 
@@ -206,11 +231,21 @@ module Api
             opportunity.present? && scope.opportunities.exists?(id: opportunity.id) &&
               scope.valid_relation?(account: opportunity.account, contact: contact, opportunity: opportunity)
           end
-          safe_activities = scope.activities.where(sales_contact_id: contact.id).order(occurred_at: :desc).limit(10)
-          safe_tasks = scope.tasks.where(sales_contact_id: contact.id)
+          direct_opportunities = contact.opportunities.select { |opp| scope.opportunities.exists?(id: opp.id) }
+          safe_activities = scope.activities.where(sales_contact_id: contact.id).order(occurred_at: :desc).limit(25)
+          safe_tasks = scope.tasks.where(sales_contact_id: contact.id).order(due_at: :asc)
+
+          all_opps = (safe_opportunity_contacts.map(&:opportunity) + direct_opportunities).compact.uniq(&:id)
+          meta = contact.metadata || {}
 
           serialize(contact).merge(
             account: contact.account ? { id: contact.account.id, name: contact.account.name, city: contact.account.city, state: contact.account.state } : nil,
+            bio: meta['bio'] || meta['description'] || '',
+            territory: meta['territory'] || [contact.account&.city, contact.account&.state].compact.join(' - '),
+            created_via: meta['created_via'] || 'Formulário Solar',
+            custom_fields: meta['custom_fields'] || {},
+            attachments: meta['attachments'] || [],
+            tags: contact.tags.map { |t| { id: t.id, name: t.name, color: t.respond_to?(:color) ? t.color : '#4f46e5' } },
             employments: safe_employments.map do |e|
               {
                 id: e.id,
@@ -229,17 +264,48 @@ module Api
                 id: oc.id,
                 opportunity_id: oc.sales_opportunity_id,
                 opportunity_name: oc.opportunity&.name,
+                value_cents: oc.opportunity&.value_cents,
+                stage_name: oc.opportunity&.stage&.name,
+                status: oc.opportunity&.status,
+                probability: oc.opportunity&.probability,
                 role: oc.role,
                 influence: oc.influence,
                 support_level: oc.support_level,
                 is_primary: oc.is_primary
               }
             end,
+            opportunities: all_opps.map do |opp|
+              {
+                id: opp.id,
+                name: opp.name,
+                value_cents: opp.value_cents,
+                currency: opp.currency || 'BRL',
+                stage_name: opp.stage&.name || 'Em Andamento',
+                status: opp.status,
+                probability: opp.probability,
+                expected_close_date: opp.expected_close_date
+              }
+            end,
             activities: safe_activities.map do |a|
-              { id: a.id, activity_type: a.activity_type, subject: a.subject, occurred_at: a.occurred_at }
+              {
+                id: a.id,
+                activity_type: a.activity_type,
+                subject: a.subject,
+                body: a.respond_to?(:body) ? a.body : nil,
+                occurred_at: a.occurred_at
+              }
             end,
             tasks: safe_tasks.map do |t|
-              { id: t.id, title: t.title, due_at: t.due_at, completed_at: t.completed_at }
+              {
+                id: t.id,
+                title: t.title,
+                description: t.description,
+                status: t.status,
+                priority: t.priority,
+                task_type: t.task_type,
+                due_at: t.due_at,
+                completed_at: t.completed_at
+              }
             end
           )
         end
