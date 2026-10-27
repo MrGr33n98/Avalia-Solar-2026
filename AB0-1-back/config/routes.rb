@@ -64,6 +64,7 @@ Rails.application.routes.draw do
         get 'today', to: 'sales/today#index'
         get 'search', to: 'sales/search#index'
         get 'analytics', to: 'sales/analytics#index'
+        get 'analytics/email_engagement', to: 'sales/analytics#email_engagement'
         get 'opportunities', to: 'sales/opportunities#index'
         get 'summary', to: 'sales#summary'
         get 'attribution', to: 'sales/attribution#index'

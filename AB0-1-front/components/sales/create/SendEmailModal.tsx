@@ -179,6 +179,35 @@ export default function SendEmailModal({
     }
   };
 
+  const insertMergeTag = (tag: string) => {
+    setBody((prev) => prev + tag);
+  };
+
+  const [generatingAi, setGeneratingAi] = useState(false);
+  const handleGenerateAi = (goal: string) => {
+    setGeneratingAi(true);
+    setTimeout(() => {
+      if (goal === 'first_contact') {
+        setSubject(`Oportunidade de Redução Energética — {{company.name}}`);
+        setBody(
+          `Olá {{contact.first_name}},\n\nAnalisei as operações da {{company.name}} e identificamos uma oportunidade de redução imediata de até 85% nos custos com energia através de um modelo solar sem investimento inicial.\n\nPodemos falar 10 minutos nesta quinta-feira?\n\nAbraço,\n{{user.name}}`
+        );
+      } else if (goal === 'follow_up_proposal') {
+        setSubject(`Status da Proposta Solar — {{company.name}} (R$ {{opportunity.value}})`);
+        setBody(
+          `Olá {{contact.first_name}},\n\nPassando para saber se você e a diretoria da {{company.name}} conseguiram avaliar o estudo de viabilidade da usina solar (valor estimado de {{opportunity.value}}).\n\nFicou alguma dúvida sobre o payback ou a economia projetada?\n\nAtenciosamente,\n{{user.name}}`
+        );
+      } else {
+        setSubject(`Retomada do Projeto Solar — {{company.name}}`);
+        setBody(
+          `Olá {{contact.first_name}},\n\nCom as novas tarifas de energia deste trimestre, a economia da usina solar para a {{company.name}} ficou ainda mais atrativa.\n\nFaz sentido retomarmos a avaliação do projeto este mês?\n\nUm abraço,\n{{user.name}}`
+        );
+      }
+      setGeneratingAi(false);
+      toast.success('Rascunho comercial gerado com sucesso!');
+    }, 400);
+  };
+
   const handleFileAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
@@ -447,6 +476,53 @@ export default function SendEmailModal({
                 placeholder="Digite o assunto relevante do e-mail comercial..."
                 className="h-7 text-xs border-none shadow-none focus-visible:ring-0 p-0 font-semibold text-slate-900"
               />
+            </div>
+
+            {/* MERGE TAGS & AI ROW */}
+            <div className="flex flex-wrap items-center justify-between gap-2 py-1.5 px-1 bg-slate-50/80 rounded-lg border border-slate-200/60 text-xs">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-500 mr-1">Tags:</span>
+                <button
+                  type="button"
+                  onClick={() => insertMergeTag('{{contact.first_name}}')}
+                  className="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-300 text-[11px] font-medium transition-colors shadow-2xs"
+                >
+                  + Nome
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertMergeTag('{{company.name}}')}
+                  className="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-300 text-[11px] font-medium transition-colors shadow-2xs"
+                >
+                  + Empresa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertMergeTag('{{opportunity.value}}')}
+                  className="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-300 text-[11px] font-medium transition-colors shadow-2xs"
+                >
+                  + Valor Proposta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertMergeTag('{{user.name}}')}
+                  className="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-300 text-[11px] font-medium transition-colors shadow-2xs"
+                >
+                  + Consultor
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={generatingAi}
+                  onClick={() => handleGenerateAi('first_contact')}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-linear-to-r from-sky-600 to-indigo-600 text-white text-[11px] font-semibold hover:from-sky-700 hover:to-indigo-700 shadow-xs"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <span>{generatingAi ? 'Gerando...' : '✨ Gerar com IA'}</span>
+                </button>
+              </div>
             </div>
 
             {/* BODY TEXTAREA */}

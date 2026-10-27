@@ -46,7 +46,7 @@ export default function SalesEngagementReport() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await salesApi.getAnalytics(period);
+      const res = await salesApi.getEmailEngagement(period);
       setData(res);
     } catch {
       setData(null);
@@ -59,21 +59,32 @@ export default function SalesEngagementReport() {
     loadData();
   }, [loadData]);
 
-  const engagementTrend = [
-    { day: 'Seg', emails: 45, calls: 28, whatsapp: 34 },
-    { day: 'Ter', emails: 62, calls: 35, whatsapp: 48 },
-    { day: 'Qua', emails: 78, calls: 42, whatsapp: 56 },
-    { day: 'Qui', emails: 54, calls: 31, whatsapp: 40 },
-    { day: 'Sex', emails: 89, calls: 49, whatsapp: 65 },
-    { day: 'Sáb', emails: 15, calls: 8, whatsapp: 12 },
-    { day: 'Dom', emails: 9, calls: 3, whatsapp: 6 },
+  const metrics = data?.metrics || {
+    sent: 0,
+    delivered: 0,
+    unique_opens: 0,
+    open_rate: 0,
+    unique_clicks: 0,
+    click_rate: 0,
+    replied: 0,
+    bounces: 0,
+    bounce_rate: 0,
+    unsubscribed: 0,
+    unsub_rate: 0,
+  };
+
+  const engagementTrend = data?.trend?.length ? data.trend : [
+    { day: 'Seg', emails: 0, opens: 0, clicks: 0, replies: 0 },
+    { day: 'Ter', emails: 0, opens: 0, clicks: 0, replies: 0 },
+    { day: 'Qua', emails: 0, opens: 0, clicks: 0, replies: 0 },
+    { day: 'Qui', emails: 0, opens: 0, clicks: 0, replies: 0 },
+    { day: 'Sex', emails: 0, opens: 0, clicks: 0, replies: 0 },
+    { day: 'Sáb', emails: 0, opens: 0, clicks: 0, replies: 0 },
+    { day: 'Dom', emails: 0, opens: 0, clicks: 0, replies: 0 },
   ];
 
-  const channelBreakdown = [
-    { name: 'E-mail Comercial', value: 42, color: '#3b82f6' },
-    { name: 'WhatsApp B2B', value: 33, color: '#10b981' },
-    { name: 'Ligações / Call', value: 18, color: '#f59e0b' },
-    { name: 'Reunião Presencial', value: 7, color: '#8b5cf6' },
+  const channelBreakdown = data?.channels?.length ? data.channels : [
+    { name: 'E-mail Comercial', value: 100, color: '#3b82f6' },
   ];
 
   return (
@@ -133,10 +144,10 @@ export default function SalesEngagementReport() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <div className="text-2xl font-black text-slate-900">352</div>
+                  <div className="text-2xl font-black text-slate-900">{metrics.sent}</div>
                   <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-600 font-semibold">
                     <ArrowUpRight className="w-3.5 h-3.5" />
-                    <span>+14.2% este mês</span>
+                    <span>{metrics.delivered} entregues</span>
                   </div>
                 </CardContent>
               </Card>
@@ -149,41 +160,41 @@ export default function SalesEngagementReport() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <div className="text-2xl font-black text-slate-900">48.6%</div>
+                  <div className="text-2xl font-black text-slate-900">{metrics.open_rate}%</div>
                   <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-600 font-semibold">
                     <ArrowUpRight className="w-3.5 h-3.5" />
-                    <span>Benchmark Solar: 32%</span>
+                    <span>{metrics.unique_opens} aberturas únicas</span>
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="border-slate-200 shadow-xs">
                 <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-                  <CardTitle className="text-xs font-medium text-slate-500">Interações WhatsApp</CardTitle>
+                  <CardTitle className="text-xs font-medium text-slate-500">Taxa de Cliques (CTR)</CardTitle>
                   <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+                    <MousePointerClick className="w-4 h-4" />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <div className="text-2xl font-black text-slate-900">{metrics.click_rate}%</div>
+                  <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-500">
+                    <span>{metrics.unique_clicks} cliques em links</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200 shadow-xs">
+                <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
+                  <CardTitle className="text-xs font-medium text-slate-500">Respostas Recebidas</CardTitle>
+                  <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
                     <MessageSquare className="w-4 h-4" />
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <div className="text-2xl font-black text-slate-900">213</div>
-                  <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-500">
-                    <span>94.2% resposta em &lt;2h</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200 shadow-xs">
-                <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-                  <CardTitle className="text-xs font-medium text-slate-500">Ligações Registradas</CardTitle>
-                  <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
-                    <Phone className="w-4 h-4" />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="text-2xl font-black text-slate-900">197</div>
+                  <div className="text-2xl font-black text-slate-900">{metrics.replied}</div>
                   <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-600 font-semibold">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>82% conectadas</span>
+                    <span>Bounce: {metrics.bounce_rate}%</span>
                   </div>
                 </CardContent>
               </Card>
@@ -225,7 +236,7 @@ export default function SalesEngagementReport() {
                   <ResponsiveContainer width="100%" height="180px">
                     <PieChart>
                       <Pie data={channelBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={4} dataKey="value">
-                        {channelBreakdown.map((entry, index) => (
+                        {channelBreakdown.map((entry: { name: string; value: number; color: string }, index: number) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -233,7 +244,7 @@ export default function SalesEngagementReport() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="grid grid-cols-2 gap-2 w-full mt-2 text-[11px]">
-                    {channelBreakdown.map((item) => (
+                    {channelBreakdown.map((item: { name: string; value: number; color: string }) => (
                       <div key={item.name} className="flex items-center gap-1.5 truncate">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                         <span className="text-slate-600 font-medium truncate">{item.name} ({item.value}%)</span>

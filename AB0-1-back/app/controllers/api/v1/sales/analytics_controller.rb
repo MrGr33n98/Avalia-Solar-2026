@@ -110,7 +110,114 @@ module Api
           }
         end
 
+        def email_engagement
+          period = params[:period] || '30d'
+          date_range = parse_engagement_period(period)
+
+          events = ::Sales::TenantScope.for(current_user).email_events
+          scoped_events = date_range ? events.where(occurred_at: date_range) : events
+
+          sent_count = scoped_events.where(event_type: %w[sent provider_accepted queued]).count
+          delivered_count = scoped_events.where(event_type: 'delivered').count
+          unique_opens = scoped_events.where(event_type: %w[open open_signal provider_open_signal]).select(:sales_email_message_id).distinct.count
+          unique_clicks = scoped_events.where(event_type: %w[click provider_click_signal]).select(:sales_email_message_id).distinct.count
+          replied_count = scoped_events.where(event_type: 'replied').count
+          bounce_count = scoped_events.where(event_type: %w[bounce reject failed]).count
+          unsubscribed_count = scoped_events.where(event_type: %w[unsubscribed complaint]).count
+
+          base_delivered = delivered_count.positive? ? delivered_count.to_f : (sent_count.positive? ? sent_count.to_f : 1.0)
+          open_rate = ((unique_opens.to_f / base_delivered) * 100).round(1)
+          click_rate = ((unique_clicks.to_f / base_delivered) * 100).round(1)
+          bounce_rate = sent_count.positive? ? ((bounce_count.to_f / sent_count) * 100).round(1) : 0.0
+          unsub_rate = sent_count.positive? ? ((unsubscribed_count.to_f / sent_count) * 100).round(1) : 0.0
+
+          # Real daily engagement trend (last 7 days or date_range)
+          trend_start = date_range ? date_range.begin : 7.days.ago.beginning_of_day
+          trend_end = date_range ? date_range.end : Time.current.end_of_day
+
+          daily_events = scoped_events.where(occurred_at: trend_start..trend_end)
+                                      .group("DATE_TRUNC('day', occurred_at)")
+                                      .group(:event_type)
+                                      .count
+
+          days_map = {}
+          cur = trend_start.to_date
+          while cur <= trend_end.to_date
+            days_map[cur] = { day: I18n.l(cur, format: '%a'), emails: 0, opens: 0, clicks: 0, replies: 0 }
+            cur += 1.day
+          end
+
+          daily_events.each do |(day_ts, type), count|
+            d = day_ts.to_date
+            next unless days_map[d]
+
+            if %w[sent provider_accepted queued delivered].include?(type)
+              days_map[d][:emails] += count
+            elsif %w[open open_signal provider_open_signal].include?(type)
+              days_map[d][:opens] += count
+            elsif %w[click provider_click_signal].include?(type)
+              days_map[d][:clicks] += count
+            elsif type == 'replied'
+              days_map[d][:replies] += count
+            end
+          end
+
+          # Channel breakdown based on sales activity/events
+          activities = ::Sales::TenantScope.for(current_user).activities
+          scoped_activities = date_range ? activities.where(created_at: date_range) : activities
+          email_act = scoped_activities.where(activity_type: 'email').count + sent_count
+          call_act = scoped_activities.where(activity_type: 'call').count
+          meeting_act = scoped_activities.where(activity_type: 'meeting').count
+          whatsapp_act = scoped_activities.where(activity_type: %w[whatsapp message]).count
+          total_acts = email_act + call_act + meeting_act + whatsapp_act
+
+          channel_breakdown = if total_acts.positive?
+                                [
+                                  { name: 'E-mail Comercial', value: ((email_act.to_f / total_acts) * 100).round, color: '#3b82f6' },
+                                  { name: 'WhatsApp B2B', value: ((whatsapp_act.to_f / total_acts) * 100).round, color: '#10b981' },
+                                  { name: 'Ligações / Call', value: ((call_act.to_f / total_acts) * 100).round, color: '#f59e0b' },
+                                  { name: 'Reunião Presencial', value: ((meeting_act.to_f / total_acts) * 100).round, color: '#8b5cf6' }
+                                ]
+                              else
+                                [
+                                  { name: 'E-mail Comercial', value: 100, color: '#3b82f6' }
+                                ]
+                              end
+
+          render json: {
+            metrics: {
+              sent: sent_count,
+              delivered: delivered_count,
+              unique_opens: unique_opens,
+              open_rate: open_rate,
+              unique_clicks: unique_clicks,
+              click_rate: click_rate,
+              replied: replied_count,
+              bounces: bounce_count,
+              bounce_rate: bounce_rate,
+              unsubscribed: unsubscribed_count,
+              unsub_rate: unsub_rate
+            },
+            trend: days_map.values,
+            channels: channel_breakdown
+          }
+        end
+
         private
+
+        def parse_engagement_period(period)
+          now = Time.current
+          case period
+          when '7d'
+            7.days.ago.beginning_of_day..now.end_of_day
+          when '30d'
+            30.days.ago.beginning_of_day..now.end_of_day
+          when '90d'
+            90.days.ago.beginning_of_day..now.end_of_day
+          else
+            parse_period(period)
+          end
+        end
 
         def parse_period(period)
           now = Time.current

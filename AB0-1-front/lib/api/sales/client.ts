@@ -697,6 +697,27 @@ export const salesApi = {
     return res;
   },
 
+  async getEmailEngagement(period = '30d'): Promise<{
+    metrics: {
+      sent: number;
+      delivered: number;
+      unique_opens: number;
+      open_rate: number;
+      unique_clicks: number;
+      click_rate: number;
+      replied: number;
+      bounces: number;
+      bounce_rate: number;
+      unsubscribed: number;
+      unsub_rate: number;
+    };
+    trend: Array<{ day: string; emails: number; opens: number; clicks: number; replies: number }>;
+    channels: Array<{ name: string; value: number; color: string }>;
+  }> {
+    const res = await request<any>(`/api/v1/sales/analytics/email_engagement?period=${period}`);
+    return res;
+  },
+
   async getFilterOptions(): Promise<FilterOptionsResponse> {
     const cached = getCached<FilterOptionsResponse>('sales_filter_options');
     if (cached) return cached;

@@ -56,7 +56,16 @@ module Outbox
 
     def handle_opportunity_stage_changed
       opp_id = @event.payload['opportunity_id'] || @event.aggregate_id
-      Rails.logger.info("[Outbox::EventRouter] Dispatched sales.opportunity.stage_changed for Opportunity##{opp_id}")
+      new_stage_id = @event.payload['to_stage_id'] || @event.payload['sales_stage_id']
+
+      if opp_id && new_stage_id
+        ::Sales::EmailSequences::StageTriggerJob.perform_later(
+          opportunity_id: opp_id,
+          new_stage_id: new_stage_id
+        )
+      end
+
+      Rails.logger.info("[Outbox::EventRouter] Dispatched sales.opportunity.stage_changed for Opportunity##{opp_id} -> Stage##{new_stage_id}")
     end
 
     def handle_lead_converted
