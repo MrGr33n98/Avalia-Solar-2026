@@ -22,7 +22,7 @@ module Sales
         tenant_scope = ::Sales::TenantScope.for(@current_user).opportunities
         scope = tenant_scope
                   .where(sales_pipeline_id: pipeline.id)
-                  .includes(:account, :stage, :primary_contact, :owner, :source, :qualification, :tags)
+                  .preload(:account, :stage, :primary_contact, :owner, :source, :qualification, :tags)
 
         scope = apply_filters(scope)
 
@@ -87,12 +87,8 @@ module Sales
         if @params[:value_max].present?
           scope = scope.where('sales_opportunities.value_cents <= ?', @params[:value_max].to_i)
         end
-        if @params[:tag_ids].present?
-          tag_ids = Array(@params[:tag_ids]).flat_map { |id| id.to_s.split(',') }
-          scope = scope.joins(:tags).where(sales_tags: { id: tag_ids }).distinct
-        end
 
-        # Aplica filtros avançados completos (operadores is e is_not, sources, competitors, states, etc.)
+        # Aplica filtros avançados completos (operadores is e is_not, tags, sources, competitors, states, etc.)
         scope = ::Sales::OpportunitiesQuery.call(@params, scope)
 
         scope

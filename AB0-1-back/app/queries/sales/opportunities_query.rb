@@ -60,10 +60,19 @@ module Sales
       scope = scope.where.not(source_id: ids(:source_ids_not)) if @params[:source_ids_not].present?
 
       # Tags
-      scope = scope.joins(:tags).where(sales_tags: { id: ids(:tag_ids) }).distinct if @params[:tag_ids].present?
+      if @params[:tag_ids].present?
+        target_tag_ids = ids(:tag_ids)
+        if target_tag_ids.any?
+          tagged_opp_ids = ::Sales::Tagging.where(taggable_type: 'Sales::Opportunity', sales_tag_id: target_tag_ids).select(:taggable_id)
+          scope = scope.where(id: tagged_opp_ids)
+        end
+      end
       if @params[:tag_ids_not].present?
-        excluded_ids = ::Sales::Opportunity.joins(:tags).where(sales_tags: { id: ids(:tag_ids_not) }).select(:id)
-        scope = scope.where.not(id: excluded_ids)
+        excluded_tag_ids = ids(:tag_ids_not)
+        if excluded_tag_ids.any?
+          excluded_opp_ids = ::Sales::Tagging.where(taggable_type: 'Sales::Opportunity', sales_tag_id: excluded_tag_ids).select(:taggable_id)
+          scope = scope.where.not(id: excluded_opp_ids)
+        end
       end
 
       # Competitors

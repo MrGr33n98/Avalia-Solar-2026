@@ -1,7 +1,7 @@
 module Sales
   class Tag < ApplicationRecord
     self.table_name = 'sales_tags'
-    ENTITY_TYPES = %w[Opportunity Account Contact].freeze
+    ENTITY_TYPES = %w[Opportunity Account Contact Lead].freeze
     belongs_to :company, optional: true
     belongs_to :created_by, class_name: 'User', optional: true
     has_many :taggings, class_name: 'Sales::Tagging', foreign_key: :sales_tag_id, dependent: :destroy

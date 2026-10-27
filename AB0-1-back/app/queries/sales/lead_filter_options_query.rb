@@ -50,21 +50,29 @@ module Sales
     end
 
     def pipeline_options(company_id)
-      scope = company_id.present? ? ::Sales::Pipeline.where(company_id: company_id) : ::Sales::Pipeline.all
-      scope = ::Sales::Pipeline.where(active: true) if scope.empty?
+      scope = if company_id.present? && ::Sales::Pipeline.column_names.include?('company_id')
+                ::Sales::Pipeline.where(company_id: company_id, active: true)
+              else
+                ::Sales::Pipeline.where(active: true)
+              end
+      scope = ::Sales::Pipeline.all if scope.empty?
       scope.select(:id, :name, :key).map do |p|
         { id: p.id, name: p.name, key: p.key }
       end.sort_by { |p| p[:name] }
     end
 
-    def stage_options(company_id)
-      ::Sales::Stage.select(:id, :name, :key, :position, :sales_pipeline_id).map do |s|
+    def stage_options(_company_id)
+      ::Sales::Stage.where(active: true).select(:id, :name, :key, :position, :sales_pipeline_id).map do |s|
         { id: s.id, name: s.name, key: s.key, position: s.position, pipeline_id: s.sales_pipeline_id }
       end.sort_by { |s| [s[:pipeline_id].to_i, s[:position].to_i] }
     end
 
     def source_options(company_id)
-      scope = company_id.present? ? ::Sales::Source.where(company_id: company_id) : ::Sales::Source.all
+      scope = if company_id.present? && ::Sales::Source.column_names.include?('company_id')
+                ::Sales::Source.where(company_id: company_id)
+              else
+                ::Sales::Source.where(active: true)
+              end
       scope = ::Sales::Source.all if scope.empty?
       scope.select(:id, :name).map do |s|
         { id: s.id, name: s.name }
@@ -72,15 +80,24 @@ module Sales
     end
 
     def tag_options(company_id)
-      scope = company_id.present? ? ::Sales::Tag.where(company_id: company_id) : ::Sales::Tag.all
+      scope = if company_id.present? && ::Sales::Tag.column_names.include?('company_id')
+                ::Sales::Tag.where(company_id: company_id)
+              else
+                ::Sales::Tag.all
+              end
       scope = ::Sales::Tag.all if scope.empty?
+      scope = scope.active if scope.respond_to?(:active)
       scope.select(:id, :name, :color).map do |t|
         { id: t.id, name: t.name, color: t.color }
       end.sort_by { |t| t[:name] }
     end
 
     def competitor_options(company_id)
-      scope = company_id.present? ? ::Sales::Competitor.where(company_id: company_id) : ::Sales::Competitor.all
+      scope = if company_id.present? && ::Sales::Competitor.column_names.include?('company_id')
+                ::Sales::Competitor.where(company_id: company_id)
+              else
+                ::Sales::Competitor.where(active: true)
+              end
       scope = ::Sales::Competitor.all if scope.empty?
       scope.select(:id, :name).map do |c|
         { id: c.id, name: c.name }
@@ -89,7 +106,11 @@ module Sales
 
     def product_options(company_id)
       if defined?(::Sales::Product)
-        scope = company_id.present? ? ::Sales::Product.where(company_id: company_id) : ::Sales::Product.all
+        scope = if company_id.present? && ::Sales::Product.column_names.include?('company_id')
+                  ::Sales::Product.where(company_id: company_id)
+                else
+                  ::Sales::Product.all
+                end
         scope = ::Sales::Product.all if scope.empty?
         scope.select(:id, :name).map { |p| { id: p.id, name: p.name } }.sort_by { |p| p[:name] }
       else

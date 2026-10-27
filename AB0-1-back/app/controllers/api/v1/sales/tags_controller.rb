@@ -4,7 +4,9 @@ module Api
       class TagsController < BaseController
         before_action :require_tag_scope
         def index
-          render json: { tags: scoped_tags.active.where(entity_type: params[:entity_type].presence || 'Opportunity').includes(:taggings).order(:name).map { |tag| serialize(tag) } }
+          requested_type = params[:entity_type].presence || 'Opportunity'
+          matching_types = requested_type.in?(%w[Lead Opportunity]) ? %w[Lead Opportunity] : [requested_type]
+          render json: { tags: scoped_tags.active.where(entity_type: matching_types).includes(:taggings).order(:name).map { |tag| serialize(tag) } }
         end
         def create
           tag = scoped_tags.create!(tag_params.merge(created_by: current_user, company_id: current_user.company_id))
@@ -52,7 +54,7 @@ module Api
 
         def scoped_taggable(tag)
           case taggable_type
-          when 'Opportunity'
+          when 'Opportunity', 'Lead'
             scope = ::Sales::Opportunity.joins(:account)
             return scope if current_user.admin?
             scope.where(sales_accounts: { company_id: current_user.company_id })

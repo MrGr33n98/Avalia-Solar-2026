@@ -5,9 +5,12 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   BarChart3,
+  Check,
+  ChevronDown,
   Download,
   Filter,
   Kanban,
+  Layers,
   LayoutList,
   MapPin,
   Plus,
@@ -17,13 +20,23 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateLeadModal from './create/CreateLeadModal';
+import CreatePipelineModal from '../pipeline/CreatePipelineModal';
 import SalesCommandCenter from '@/components/sales/SalesCommandCenter';
 import NutshellReportCanvas from '@/components/sales/reports/nutshell/NutshellReportCanvas';
 import { SalesLead, NutshellFilterCriteria } from '@/lib/api/sales/types';
 import { salesKeys } from '@/lib/api/sales/queryKeys';
+import { useSalesPipelines } from '@/lib/api/sales/queries';
 import NutshellFilterSidebar from '@/components/sales/filters/NutshellFilterSidebar';
 
 export default function LeadsWorkspace() {
@@ -40,11 +53,18 @@ export default function LeadsWorkspace() {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createPipelineModalOpen, setCreatePipelineModalOpen] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | undefined>();
   const [boardRefreshVersion, setBoardRefreshVersion] = useState(0);
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
   const [nutshellFilters, setNutshellFilters] = useState<NutshellFilterCriteria>({});
   const queryClient = useQueryClient();
+
+  const { data: pipelines = [] } = useSalesPipelines();
+  const activePipeline = useMemo(() => {
+    if (selectedPipelineId) return pipelines.find((p) => p.id === selectedPipelineId);
+    return pipelines.find((p) => p.active) || pipelines[0];
+  }, [pipelines, selectedPipelineId]);
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -90,16 +110,78 @@ export default function LeadsWorkspace() {
                 <Target className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
-                  Leads
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
+                    Leads
+                  </h1>
+                  {/* Seletor de Pipeline Ativo */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 gap-1.5 rounded-lg border-indigo-200 bg-indigo-50/70 px-2 text-xs font-bold text-indigo-950 hover:bg-indigo-100 transition-colors shadow-2xs"
+                        aria-label="Trocar pipeline"
+                      >
+                        <Layers className="h-3 w-3 text-indigo-700" />
+                        <span className="truncate max-w-[140px] sm:max-w-[200px]">
+                          {activePipeline?.name || 'Vendas B2B'}
+                        </span>
+                        <ChevronDown className="h-3 w-3 text-indigo-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-60 text-xs font-sans">
+                      <DropdownMenuLabel className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                        Funis / Pipelines Ativos
+                      </DropdownMenuLabel>
+                      {pipelines.map((p) => (
+                        <DropdownMenuItem
+                          key={p.id}
+                          onClick={() => {
+                            setSelectedPipelineId(p.id);
+                            void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
+                            setBoardRefreshVersion((v) => v + 1);
+                          }}
+                          className={`flex items-center justify-between cursor-pointer py-2 ${
+                            p.id === activePipeline?.id ? 'bg-indigo-50 text-indigo-900 font-bold' : ''
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <Layers className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                            <span className="truncate">{p.name}</span>
+                          </div>
+                          {p.id === activePipeline?.id && <Check className="h-3.5 w-3.5 text-indigo-600 shrink-0" />}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setCreatePipelineModalOpen(true)}
+                        className="gap-2 text-indigo-700 font-bold cursor-pointer py-2 hover:bg-indigo-50"
+                      >
+                        <Plus className="h-3.5 w-3.5 text-indigo-700" />
+                        <span>Criar Novo Pipeline...</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 <p className="truncate text-xs text-slate-500">
-                  Gestão de oportunidades comerciais
+                  Gestão de oportunidades comerciais e implantação
                 </p>
               </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCreatePipelineModalOpen(true)}
+                className="flex h-9 items-center gap-1.5 rounded-xl border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50"
+                aria-label="Criar novo funil"
+              >
+                <Layers className="h-4 w-4 text-indigo-700" />
+                <span className="hidden sm:inline">Novo Funil</span>
+              </Button>
+
               <Link href="/dashboard/sales/import?entity=leads">
                 <Button
                   variant="outline"
@@ -301,6 +383,18 @@ export default function LeadsWorkspace() {
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onSuccess={handleLeadCreated}
+      />
+
+      {/* Modal de Criação de Pipelines (ex: Onboarding, Vendas) */}
+      <CreatePipelineModal
+        open={createPipelineModalOpen}
+        onClose={() => setCreatePipelineModalOpen(false)}
+        onSuccess={(created) => {
+          setSelectedPipelineId(created.id);
+          void queryClient.invalidateQueries({ queryKey: salesKeys.pipelines() });
+          void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
+          setBoardRefreshVersion((v) => v + 1);
+        }}
       />
     </SalesLayoutWrapper>
   );

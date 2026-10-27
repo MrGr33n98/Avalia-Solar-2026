@@ -263,6 +263,26 @@ export const salesApi = {
     return data;
   },
 
+  async createPipeline(payload: {
+    name: string;
+    key?: string;
+    active?: boolean;
+    stages?: Array<{
+      name: string;
+      key?: string;
+      position?: number;
+      probability?: number;
+      terminal_type?: string | null;
+    }>;
+  }): Promise<ApiPipeline> {
+    clearSalesApiCache('pipelines:');
+    const res = await request<{ pipeline: ApiPipeline }>('/api/v1/sales/pipelines', {
+      method: 'POST',
+      body: JSON.stringify({ pipeline: payload }),
+    });
+    return res.pipeline;
+  },
+
   async getSavedViews(
     resourceType: ApiSavedView['resource_type'] = 'opportunity'
   ): Promise<ApiSavedView[]> {

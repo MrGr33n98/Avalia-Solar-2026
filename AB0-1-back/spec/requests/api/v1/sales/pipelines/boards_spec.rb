@@ -114,5 +114,28 @@ RSpec.describe 'Api::V1::Sales::Pipelines::Boards', type: :request do
       expect(card[:qualification][:spin_completion]).to eq(80)
       expect(card[:qualification][:bant_completion]).to eq(60)
     end
+
+    it 'handles opportunity with tags and filters by tag_ids without error' do
+      tag = Sales::Tag.create!(
+        name: 'Cliente VIP',
+        color: '#10b981',
+        entity_type: 'Opportunity',
+        company_id: company.id
+      )
+      Sales::Tagging.create!(
+        sales_tag: tag,
+        taggable: opportunity,
+        created_by: user
+      )
+
+      get "/api/v1/sales/pipelines/#{pipeline.id}/board?tag_ids=#{tag.id}", headers: headers
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body, symbolize_names: true)
+      card = json[:cards].first
+      expect(card[:tags].size).to eq(1)
+      expect(card[:tags].first[:name]).to eq('Cliente VIP')
+      expect(card[:tags].first[:color]).to eq('#10b981')
+    end
   end
 end

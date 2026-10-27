@@ -177,7 +177,7 @@ Rails.application.routes.draw do
         resources :email_suppressions, only: %i[index create destroy], controller: 'sales/email_suppressions'
         resources :email_signatures, only: %i[index create update destroy], controller: 'sales/email_signatures'
         post 'email_events/provider', to: 'sales/ses_webhooks#create'
-        resources :pipelines, only: %i[index show], controller: 'sales/pipelines' do
+        resources :pipelines, only: %i[index show create update], controller: 'sales/pipelines' do
           get :board, to: 'sales/pipelines/boards#show', on: :member
         end
         get 'pipelines/board', to: 'sales/pipelines/boards#show'
