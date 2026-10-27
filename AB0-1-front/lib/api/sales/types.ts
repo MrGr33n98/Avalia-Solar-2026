@@ -247,7 +247,18 @@ export interface ApiAnalytics {
     hot_deals?: number;
     hot_deals_cents?: number;
   };
-  funnel: Array<{ stage: string; count: number; valor?: number; value_cents?: number }>;
+  funnel: Array<{
+    id?: number;
+    stage: string;
+    position?: number;
+    count: number;
+    valor?: number;
+    value_cents?: number;
+    conversion_rate_from_prev?: number;
+    drop_off_rate?: number;
+  }>;
+  pipeline?: { id: number; name: string; key: string } | null;
+  pipelines?: Array<{ id: number; name: string; key: string }>;
   win_loss: Array<{ name: string; value: number; color?: string }>;
   revenue_by_month: Array<{ month: string; realizado?: number; previsao?: number; won_cents?: number; pipeline_cents?: number }>;
   loss_reasons?: Array<{ name: string; count: number; value: number; color: string }>;

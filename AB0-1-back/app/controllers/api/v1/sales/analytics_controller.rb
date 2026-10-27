@@ -36,15 +36,39 @@ module Api
                              0.0
                            end
 
-          # Funnel breakdown by Stage
-          stages = ::Sales::Stage.order(:position)
+          # Pipeline & Funnel Breakdown by Stage
+          target_pipeline = if params[:pipeline_id].present?
+                              ::Sales::Pipeline.find_by(id: params[:pipeline_id])
+                            end
+          target_pipeline ||= ::Sales::Pipeline.order(:id).first
+
+          stages = target_pipeline ? target_pipeline.stages.order(:position) : ::Sales::Stage.order(:position)
+          pipeline_opps = target_pipeline ? tenant_opps.where(sales_pipeline_id: target_pipeline.id) : tenant_opps
+
+          prev_stage_count = nil
           funnel = stages.map do |stage|
-            stage_opps = tenant_opps.where(sales_stage_id: stage.id)
+            stage_opps = pipeline_opps.where(sales_stage_id: stage.id)
+            cnt = stage_opps.count
+            val_cents = stage_opps.sum(:value_cents) || 0
+
+            pass_rate = if prev_stage_count.nil? || prev_stage_count.zero?
+                          100.0
+                        else
+                          ((cnt.to_f / prev_stage_count) * 100).round(1)
+                        end
+            pass_rate = [pass_rate, 100.0].min
+            drop_rate = (100.0 - pass_rate).round(1)
+            prev_stage_count = cnt if cnt.positive?
+
             {
+              id: stage.id,
               stage: stage.name,
-              count: stage_opps.count,
-              valor: (stage_opps.sum(:value_cents) / 100.0).round,
-              value_cents: stage_opps.sum(:value_cents) || 0
+              position: stage.position,
+              count: cnt,
+              valor: (val_cents / 100.0).round,
+              value_cents: val_cents,
+              conversion_rate_from_prev: pass_rate,
+              drop_off_rate: drop_rate
             }
           end
 
@@ -106,7 +130,9 @@ module Api
             competitor_losses: ::Sales::Reporting::CompetitorLossesQuery.call(lost_scope: lost_opps),
             quota_attainment: ::Sales::Reporting::QuotaAttainmentQuery.call(user: current_user, won_scope: won_opps),
             revenue_installments: ::Sales::Reporting::RevenueInstallmentsQuery.call(opportunity_scope: scoped_opps),
-            email_metrics: ::Sales::Reporting::EmailMetricsQuery.call(user: current_user, date_range: date_range)
+            email_metrics: ::Sales::Reporting::EmailMetricsQuery.call(user: current_user, date_range: date_range),
+            pipeline: target_pipeline ? { id: target_pipeline.id, name: target_pipeline.name, key: target_pipeline.key } : nil,
+            pipelines: ::Sales::Pipeline.where(active: true).order(:id).map { |p| { id: p.id, name: p.name, key: p.key } }
           }
         end
 

@@ -35,6 +35,7 @@ export const ReportsHeader: React.FC<ReportsHeaderProps> = ({
 
   const navItems = [
     { label: 'Visão Geral', href: '/dashboard/sales/reports', icon: BarChart2 },
+    { label: 'Funil (Funnel)', href: '/dashboard/sales/reports/funnel', icon: Layers },
     { label: 'Snapshots', href: '/dashboard/sales/reports/snapshots', icon: Layers },
     { label: 'Previsão (Forecast)', href: '/dashboard/sales/reports/forecast', icon: TrendingUp },
     { label: 'Atribuição', href: '/dashboard/sales/reports/attribution', icon: Compass },

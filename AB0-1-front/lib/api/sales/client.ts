@@ -712,8 +712,10 @@ export const salesApi = {
   },
 
   // Analytics
-  async getAnalytics(period = '30d'): Promise<ApiAnalytics> {
-    const res = await request<ApiAnalytics>(`/api/v1/sales/analytics?period=${period}`);
+  async getAnalytics(period = '30d', pipelineId?: number): Promise<ApiAnalytics> {
+    const qs = new URLSearchParams({ period });
+    if (pipelineId) qs.set('pipeline_id', String(pipelineId));
+    const res = await request<ApiAnalytics>(`/api/v1/sales/analytics?${qs.toString()}`);
     return res;
   },
 
