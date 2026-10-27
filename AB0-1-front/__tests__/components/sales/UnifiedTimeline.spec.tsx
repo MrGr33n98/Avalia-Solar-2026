@@ -62,4 +62,34 @@ describe('UnifiedTimeline component', () => {
     expect(screen.getByText('Ligação de Qualificação')).toBeInTheDocument();
     expect(screen.getByText('Enviar Contrato Solar')).toBeInTheDocument();
   });
+
+  it('renders a Won Lead event in Nutshell visual style with celebration narrative and team avatars', () => {
+    const mockEvents: TimelineEvent[] = [
+      {
+        id: 'won:1',
+        kind: 'won',
+        title: 'UMSI Design Students',
+        occurred_at: '2026-09-21T12:00:00Z',
+        actor: { id: 10, name: 'Nicole Walters' },
+      },
+    ];
+
+    render(<UnifiedTimeline events={mockEvents} />);
+
+    expect(screen.getAllByText('Nicole Walters').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/won the lead/i)).toBeInTheDocument();
+    expect(screen.getByText('UMSI Design Students')).toBeInTheDocument();
+    expect(screen.getByText('NW')).toBeInTheDocument();
+    expect(screen.getByText('AS')).toBeInTheDocument();
+  });
+
+  it('renders Nutshell-style TIMELINE header and 4 filter pills', () => {
+    render(<UnifiedTimeline events={[]} />);
+
+    expect(screen.getByRole('heading', { name: /timeline/i })).toBeInTheDocument();
+    expect(screen.getByDisplayValue('All entries')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('All activity types')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('All users & teams')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('All time')).toBeInTheDocument();
+  });
 });
