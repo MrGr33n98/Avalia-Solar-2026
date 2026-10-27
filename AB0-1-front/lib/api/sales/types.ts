@@ -421,3 +421,73 @@ export interface NutshellFilterCriteria {
   competitors?: CriterionSelection;
 }
 
+// -------------------------------------------------------------
+// Snapshots: Pipeline Size & Win Rate Canonical Types
+// -------------------------------------------------------------
+export interface PipelineSnapshotSummary {
+  avg_open_count: number | null;
+  avg_open_value_cents: number | null;
+  delta_open_count_pct: number | null;
+  delta_open_value_pct: number | null;
+  valid_snapshots_count: number;
+}
+
+export interface PipelineSnapshotPoint {
+  date: string;
+  open_count: number | null;
+  open_value_cents: number | null;
+  has_snapshot: boolean;
+  is_live_estimated?: boolean;
+}
+
+export interface WinRateSnapshotSummary {
+  won_count: number;
+  lost_count: number;
+  closed_count: number;
+  win_rate_pct: number | null;
+  win_rate_delta_pp: number | null;
+}
+
+export interface WinRateSnapshotPoint {
+  date: string;
+  won_count: number;
+  lost_count: number;
+  cancelled_count: number;
+  closed_count: number;
+  win_rate_pct: number | null;
+}
+
+export interface SnapshotsMeta {
+  from: string;
+  to: string;
+  timezone: string;
+  granularity: 'day' | 'week' | 'month';
+  currency: string;
+  historical_coverage_from: string | null;
+  coverage: 'full' | 'partial' | 'none';
+  as_of: string;
+  definition_version: number;
+}
+
+export interface SnapshotsReportResponse {
+  meta: SnapshotsMeta;
+  pipeline: {
+    summary: PipelineSnapshotSummary;
+    series: PipelineSnapshotPoint[];
+  };
+  win_rate: {
+    summary: WinRateSnapshotSummary;
+    series: WinRateSnapshotPoint[];
+  };
+}
+
+export interface SnapshotsReportParams {
+  from?: string;
+  to?: string;
+  granularity?: 'day' | 'week' | 'month';
+  pipeline_id?: number | string;
+  owner_ids?: (number | string)[];
+  format?: 'json' | 'csv';
+}
+
+

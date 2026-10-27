@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Download, RotateCw, BarChart2, TrendingUp, Compass } from 'lucide-react';
+import { Download, RotateCw, BarChart2, TrendingUp, Compass, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -35,6 +35,7 @@ export const ReportsHeader: React.FC<ReportsHeaderProps> = ({
 
   const navItems = [
     { label: 'Visão Geral', href: '/dashboard/sales/reports', icon: BarChart2 },
+    { label: 'Snapshots', href: '/dashboard/sales/reports/snapshots', icon: Layers },
     { label: 'Previsão (Forecast)', href: '/dashboard/sales/reports/forecast', icon: TrendingUp },
     { label: 'Atribuição', href: '/dashboard/sales/reports/attribution', icon: Compass },
   ];
