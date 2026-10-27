@@ -1,8 +1,18 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { ExternalLink, Layers, MapPin, Navigation } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+
+const PersonLeafletMap = dynamic(() => import('./PersonLeafletMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+      <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  ),
+});
 
 interface PersonMapHeroProps {
   name: string;
@@ -49,18 +59,17 @@ export default function PersonMapHero({ name, city, state, companyName: _company
   }, [city, state]);
 
   const locationLabel = [city, state].filter(Boolean).join(', ') || 'São Paulo, SP';
-  const bbox = `${coords.lng - 0.04},${coords.lat - 0.03},${coords.lng + 0.04},${coords.lat + 0.03}`;
-  const osmEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${coords.lat}%2C${coords.lng}`;
   const externalMapUrl = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=14/${coords.lat}/${coords.lng}`;
 
   return (
     <div className="relative w-full h-40 md:h-44 rounded-t-xl overflow-hidden border border-slate-200/90 shadow-xs bg-slate-100">
-      {/* Map iframe embed */}
-      <iframe
-        title={`Mapa de localização de ${name}`}
-        src={osmEmbedUrl}
-        className="w-full h-full border-0 pointer-events-auto filter saturate-90 contrast-95"
-        loading="lazy"
+      {/* Native Leaflet Map avoiding CSP iframe block */}
+      <PersonLeafletMap
+        lat={coords.lat}
+        lng={coords.lng}
+        name={name}
+        locationLabel={locationLabel}
+        mapType={mapType}
       />
 
       {/* Top Left: Nutshell-style Person Badge */}
