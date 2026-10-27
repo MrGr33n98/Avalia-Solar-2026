@@ -15,6 +15,7 @@ import {
   Tag,
   Users,
   Webhook,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -73,6 +74,19 @@ export default function SettingsSubSidebar() {
               <span className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-slate-400" />
                 <span>Email templates</span>
+              </span>
+            </Link>
+            <Link
+              href="/dashboard/sales/campaigns/sequences"
+              className={cn(
+                'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
+                isCurrent('/dashboard/sales/campaigns/sequences') &&
+                  'bg-slate-800 text-white font-medium'
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span>Sequências & Cadências</span>
               </span>
             </Link>
             <Link
