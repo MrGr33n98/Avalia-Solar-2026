@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { salesApi } from '@/lib/api/sales/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SendEmailModalProps {
   open: boolean;
@@ -103,9 +104,15 @@ export default function SendEmailModal({
   companyName = '',
   onSuccess,
 }: SendEmailModalProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const senderName = user?.name || 'Felipe';
+  const senderEmail = user?.email?.includes('@avaliasolar.com.br')
+    ? user.email
+    : 'felipe@avaliasolar.com.br';
 
   // Email Fields
   const [toEmail, setToEmail] = useState(contactEmail || '');
@@ -376,7 +383,7 @@ export default function SendEmailModal({
             <div className="flex items-center text-xs pb-1 border-b border-slate-100">
               <span className="w-20 text-slate-400 font-medium">From</span>
               <div className="flex items-center gap-1 bg-slate-700 text-white px-2.5 py-0.5 rounded-md text-[11px] font-semibold">
-                <span>Felipe &lt;felipehhenriquee@gmail.com&gt;</span>
+                <span>{senderName} &lt;{senderEmail}&gt;</span>
               </div>
             </div>
 
