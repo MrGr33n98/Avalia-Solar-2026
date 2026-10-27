@@ -398,10 +398,10 @@ export default function PeoplePage() {
             open={Boolean(emailModalTarget)}
             onClose={() => setEmailModalTarget(null)}
             contactId={emailModalTarget.id}
-            contactEmail={emailModalTarget.email}
+            contactEmail={emailModalTarget.email || undefined}
             contactName={emailModalTarget.name}
-            companyName={emailModalTarget.account_name}
-            accountId={emailModalTarget.sales_account_id}
+            companyName={emailModalTarget.account_name || undefined}
+            accountId={emailModalTarget.sales_account_id || undefined}
             onSuccess={() => {
               setEmailModalTarget(null);
               fetchContacts();

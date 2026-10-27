@@ -33,12 +33,12 @@ import { useAuth } from '@/contexts/AuthContext';
 interface SendEmailModalProps {
   open: boolean;
   onClose: () => void;
-  opportunityId?: number;
-  contactId?: number;
-  accountId?: number;
-  contactEmail?: string;
-  contactName?: string;
-  companyName?: string;
+  opportunityId?: number | null;
+  contactId?: number | null;
+  accountId?: number | null;
+  contactEmail?: string | null;
+  contactName?: string | null;
+  companyName?: string | null;
   onSuccess?: () => void;
 }
 
@@ -224,7 +224,7 @@ export default function SendEmailModal({
     }
   };
 
-  const handleSendEmail = async (mode: 'now' | 'task' | 'schedule' = 'now') => {
+  const handleSendEmail = async (_mode: 'now' | 'task' | 'schedule' = 'now') => {
     const trimmedTo = toEmail.trim();
     if (!trimmedTo || trimmedTo === 'sem-email@exemplo.com' || !trimmedTo.includes('@')) {
       setIsEditingTo(true);
@@ -247,9 +247,9 @@ export default function SendEmailModal({
         to_email: toEmail,
         subject,
         body_text: body,
-        sales_opportunity_id: opportunityId,
-        sales_contact_id: contactId,
-        sales_account_id: accountId,
+        sales_opportunity_id: opportunityId || undefined,
+        sales_contact_id: contactId || undefined,
+        sales_account_id: accountId || undefined,
         cc: cc ? [cc] : undefined,
         bcc: bcc ? [bcc] : undefined,
         open_tracking_enabled: true,
@@ -269,8 +269,9 @@ export default function SendEmailModal({
         setAttachments([]);
         onSuccess?.();
       }, 600);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao enviar e-mail comercial.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao enviar e-mail comercial.';
+      setError(message);
       setLoading(false);
     }
   };
