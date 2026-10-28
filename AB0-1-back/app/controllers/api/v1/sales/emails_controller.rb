@@ -44,7 +44,11 @@ module Api
             end
           end
 
-          to_email = contact&.email.presence || email_params[:to_email].to_s.strip.downcase
+          to_email = email_params[:to_email].to_s.strip.downcase.presence || contact&.email.presence
+
+          if contact.present? && to_email.present? && contact.email.to_s.strip.downcase != to_email
+            contact = scoped_contacts.find_by('LOWER(email) = ?', to_email)
+          end
 
           if to_email.blank?
             return render json: { error: 'Destinatário é obrigatório', code: 'EMAIL_RECIPIENT_REQUIRED' }, status: :unprocessable_entity

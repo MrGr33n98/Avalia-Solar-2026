@@ -41,9 +41,8 @@ module Sales
       dispatch_source = nil
 
       # A. Se o vendedor possui conta de e-mail conectada (Zoho Mail - Opção A)
-      connected_account = ::Sales::EmailAccount.find_by(
-        user_id: email.sender_user_id,
-        status: 'connected'
+      connected_account = ::Sales::EmailAccount.connected.find_by(
+        user_id: email.sender_user_id
       ) if email.sender_user_id.present?
 
       if connected_account.present? && connected_account.provider_account_id.present?
