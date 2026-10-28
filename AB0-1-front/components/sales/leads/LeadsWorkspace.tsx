@@ -33,7 +33,7 @@ import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 import CreateLeadModal from './create/CreateLeadModal';
 import CreatePipelineModal from '../pipeline/CreatePipelineModal';
 import SalesCommandCenter from '@/components/sales/SalesCommandCenter';
-import NutshellReportCanvas from '@/components/sales/reports/nutshell/NutshellReportCanvas';
+import LeadsAnalyticsView from './views/LeadsAnalyticsView';
 import { SalesLead, NutshellFilterCriteria } from '@/lib/api/sales/types';
 import { salesKeys } from '@/lib/api/sales/queryKeys';
 import { useSalesPipelines } from '@/lib/api/sales/queries';
@@ -368,13 +368,11 @@ export default function LeadsWorkspace() {
             <p className="text-xs">Mapeamento espacial das usinas e projetos solares dos leads cadastrados.</p>
           </div>
         ) : (
-          <div className="w-full space-y-6">
-            <NutshellReportCanvas
-              initialReportType="sales"
-              titleOverride="Relatório & Funil de Conversão"
-              subtitleOverride="Análise de vendas, projeções e novos leads no pipeline comercial com dados 100% reais."
-            />
-          </div>
+          <LeadsAnalyticsView
+            pipelineId={selectedPipelineId}
+            searchQuery={search}
+            filters={nutshellFilters}
+          />
         )}
       </div>
 

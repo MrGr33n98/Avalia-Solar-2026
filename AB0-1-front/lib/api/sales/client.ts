@@ -18,6 +18,7 @@ import {
   NutshellReportResponse,
   FilterOptionsResponse,
   NutshellFilterCriteria,
+  LeadsAnalyticsResponse,
 } from './types';
 import type { SalesTimelineResponse } from './timeline-types';
 
@@ -448,6 +449,25 @@ export const salesApi = {
     const suffix = qs.toString();
     return request<ApiPipelineBoard>(
       `/api/v1/sales/pipelines/${pipelineId}/board${suffix ? `?${suffix}` : ''}`
+    );
+  },
+
+  async getOpportunitiesAnalytics(
+    params: Record<string, unknown> & { filters?: NutshellFilterCriteria } = {}
+  ): Promise<LeadsAnalyticsResponse> {
+    const qs = new URLSearchParams();
+    const { filters, ...restParams } = params;
+    Object.entries(restParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        qs.set(key, Array.isArray(value) ? value.join(',') : String(value));
+      }
+    });
+    if (filters) {
+      appendFilterCriteriaParams(qs, filters);
+    }
+    const suffix = qs.toString();
+    return request<LeadsAnalyticsResponse>(
+      `/api/v1/sales/opportunities/analytics${suffix ? `?${suffix}` : ''}`
     );
   },
 

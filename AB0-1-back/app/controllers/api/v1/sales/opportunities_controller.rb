@@ -25,6 +25,178 @@ module Api
           }
         end
 
+        def analytics
+          query_params = params.to_unsafe_h.symbolize_keys
+          query_params[:all_statuses] = true if query_params[:status].blank? && query_params[:status_in].blank?
+          scope = scoped_opportunities.merge(::Sales::OpportunitiesQuery.call(query_params))
+
+          total_leads = scope.count
+          total_value_cents = scope.sum(:value_cents) || 0
+          avg_value_cents = total_leads.positive? ? (total_value_cents.to_f / total_leads).round : 0
+
+          avg_time_open_sql = Arel.sql('COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(sales_opportunities.won_at, sales_opportunities.lost_at, CURRENT_TIMESTAMP) - sales_opportunities.created_at)) / 86400.0), 0.0)')
+          avg_time_open_days = scope.pick(avg_time_open_sql).to_f.round(1)
+
+          status_counts = scope.group(:status).count
+          won_count = status_counts['won'].to_i
+          lost_count = status_counts['lost'].to_i
+          open_count = status_counts['open'].to_i
+          closed_count = won_count + lost_count
+          win_rate_percentage = closed_count.positive? ? ((won_count.to_f / closed_count) * 100).round(1) : 0.0
+
+          date_col = params[:date_field] == 'close_date' ? 'COALESCE(sales_opportunities.won_at, sales_opportunities.lost_at, sales_opportunities.expected_close_date::timestamp)' : 'sales_opportunities.created_at'
+          group_trunc = params[:group_by] == 'month' ? 'month' : 'week'
+
+          time_series_rows = scope.where("#{date_col} IS NOT NULL")
+                                  .group(Arel.sql("DATE_TRUNC('#{group_trunc}', #{date_col})"))
+                                  .order(Arel.sql("DATE_TRUNC('#{group_trunc}', #{date_col}) ASC"))
+                                  .pluck(
+                                    Arel.sql("DATE_TRUNC('#{group_trunc}', #{date_col})"),
+                                    Arel.sql('COUNT(sales_opportunities.id)'),
+                                    Arel.sql('COALESCE(SUM(sales_opportunities.value_cents), 0)')
+                                  )
+
+          months_pt = %w[jan fev mar abr mai jun jul ago set out nov dez]
+          time_series = time_series_rows.map do |date_val, qty, val_cents|
+            d = date_val.is_a?(Time) || date_val.is_a?(DateTime) ? date_val.to_date : Date.parse(date_val.to_s)
+            label = "#{months_pt[d.month - 1]} #{d.strftime('%y')}"
+            {
+              period_label: label,
+              start_date: d.to_s,
+              quantity: qty.to_i,
+              value_cents: val_cents.to_i
+            }
+          end
+
+          calc_pct = ->(c) { total_leads.positive? ? ((c.to_f / total_leads) * 100).round(1) : 0.0 }
+
+          assignee_data = scope.joins('LEFT JOIN users ON users.id = sales_opportunities.owner_id')
+                               .group('users.id', 'users.first_name', 'users.last_name', 'users.email')
+                               .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                               .pluck('users.id', 'users.first_name', 'users.last_name', 'users.email', Arel.sql('COUNT(sales_opportunities.id)'))
+                               .map do |uid, fn, ln, em, c|
+                                 name = [fn, ln].compact.join(' ').presence || em.presence || 'Sem responsável'
+                                 { id: uid, label: name, count: c.to_i, percentage: calc_pct.call(c) }
+                               end
+
+          stage_data = scope.joins(:stage)
+                            .group('sales_stages.id', 'sales_stages.name', 'sales_stages.position')
+                            .order('sales_stages.position ASC')
+                            .pluck('sales_stages.id', 'sales_stages.name', Arel.sql('COUNT(sales_opportunities.id)'))
+                            .map do |sid, sname, c|
+                              { id: sid, label: sname, count: c.to_i, percentage: calc_pct.call(c) }
+                            end
+
+          product_data = begin
+            scope.joins(:line_items => :product)
+                 .group('sales_products.id', 'sales_products.name')
+                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                 .pluck('sales_products.id', 'sales_products.name', Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map { |pid, pname, c| { id: pid, label: pname, count: c.to_i, percentage: calc_pct.call(c) } }
+          rescue StandardError
+            []
+          end
+
+          outcome_data = [
+            { status: 'won', label: 'Won', count: won_count, percentage: calc_pct.call(won_count), color: '#16A34A' },
+            { status: 'open', label: 'Open', count: open_count, percentage: calc_pct.call(open_count), color: '#334155' },
+            { status: 'lost', label: 'Lost', count: lost_count, percentage: calc_pct.call(lost_count), color: '#DC2626' }
+          ]
+
+          source_data = scope.joins('LEFT JOIN sales_sources ON sales_sources.id = sales_opportunities.source_id')
+                             .group(Arel.sql("COALESCE(sales_sources.name, sales_opportunities.source, 'Não informado')"))
+                             .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                             .pluck(Arel.sql("COALESCE(sales_sources.name, sales_opportunities.source, 'Não informado')"), Arel.sql('COUNT(sales_opportunities.id)'))
+                             .map { |src, c| { label: src, count: c.to_i, percentage: calc_pct.call(c) } }
+
+          competitor_data = begin
+            scope.joins(:competitors)
+                 .group('sales_competitors.id', 'sales_competitors.name')
+                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                 .pluck('sales_competitors.id', 'sales_competitors.name', Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map { |cid, cname, c| { id: cid, label: cname, count: c.to_i, percentage: calc_pct.call(c) } }
+          rescue StandardError
+            []
+          end
+
+          tag_data = begin
+            scope.joins(:tags)
+                 .group('sales_tags.id', 'sales_tags.name')
+                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                 .pluck('sales_tags.id', 'sales_tags.name', Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map { |tid, tname, c| { id: tid, label: tname, count: c.to_i, percentage: calc_pct.call(c) } }
+          rescue StandardError
+            []
+          end
+
+          territory_data = scope.joins(:account)
+                                .where.not('sales_accounts.state' => [nil, ''])
+                                .group('sales_accounts.state')
+                                .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                                .pluck('sales_accounts.state', Arel.sql('COUNT(sales_opportunities.id)'))
+                                .map { |st, c| { label: st.upcase, count: c.to_i, percentage: calc_pct.call(c) } }
+
+          age_sql = <<-SQL.squish
+            CASE
+              WHEN CURRENT_DATE - sales_opportunities.created_at::date <= 30 THEN '< 1 month'
+              WHEN CURRENT_DATE - sales_opportunities.created_at::date <= 60 THEN '1-2 months'
+              WHEN CURRENT_DATE - sales_opportunities.created_at::date <= 90 THEN '2-3 months'
+              ELSE '> 3 months'
+            END
+          SQL
+          age_data = scope.group(Arel.sql(age_sql))
+                          .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                          .pluck(Arel.sql(age_sql), Arel.sql('COUNT(sales_opportunities.id)'))
+                          .map { |bucket, c| { label: bucket, count: c.to_i, percentage: calc_pct.call(c) } }
+
+          val_sql = <<-SQL.squish
+            CASE
+              WHEN sales_opportunities.value_cents <= 1000000 THEN 'R$ 0 - 10k'
+              WHEN sales_opportunities.value_cents <= 2500000 THEN 'R$ 10k - 25k'
+              WHEN sales_opportunities.value_cents <= 5000000 THEN 'R$ 25k - 50k'
+              WHEN sales_opportunities.value_cents <= 7500000 THEN 'R$ 50k - 75k'
+              ELSE 'R$ 75k+'
+            END
+          SQL
+          value_data = scope.group(Arel.sql(val_sql))
+                            .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                            .pluck(Arel.sql(val_sql), Arel.sql('COUNT(sales_opportunities.id)'))
+                            .map { |vbucket, c| { label: vbucket, count: c.to_i, percentage: calc_pct.call(c) } }
+
+          channel_sql = "COALESCE(sales_opportunities.metadata->>'channel', sales_opportunities.metadata->>'utm_medium', sales_opportunities.metadata->>'acquisition_channel', sales_sources.name, sales_opportunities.source, 'Direct')"
+          channel_data = scope.joins('LEFT JOIN sales_sources ON sales_sources.id = sales_opportunities.source_id')
+                              .group(Arel.sql(channel_sql))
+                              .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                              .pluck(Arel.sql(channel_sql), Arel.sql('COUNT(sales_opportunities.id)'))
+                              .map { |ch, c| { label: ch, count: c.to_i, percentage: calc_pct.call(c) } }
+
+          render json: {
+            summary: {
+              total_leads: total_leads,
+              total_value_cents: total_value_cents,
+              total_value_formatted: format_currency_brl(total_value_cents),
+              avg_value_cents: avg_value_cents,
+              avg_value_formatted: format_currency_brl(avg_value_cents),
+              avg_time_open_days: avg_time_open_days,
+              win_rate_percentage: win_rate_percentage
+            },
+            time_series: time_series,
+            breakdowns: {
+              assignee: assignee_data,
+              stage: stage_data,
+              product: product_data,
+              outcome: outcome_data,
+              source: source_data,
+              competitor: competitor_data,
+              tag: tag_data,
+              territory: territory_data,
+              age: age_data,
+              value_bracket: value_data,
+              channel: channel_data
+            }
+          }
+        end
+
         def show
           render json: { opportunity: opportunity_json(@opportunity) }
         end
@@ -261,6 +433,14 @@ module Api
             created_at: opportunity.created_at,
             updated_at: opportunity.updated_at
           }
+        end
+
+        def format_currency_brl(cents)
+          reais = cents.to_f / 100.0
+          formatted = sprintf('%.2f', reais).tr('.', ',')
+          parts = formatted.split(',')
+          parts[0] = parts[0].reverse.gsub(/(\d{3})(?=\d)/, '\\1.').reverse
+          "R$ #{parts.join(',')}"
         end
       end
     end

@@ -502,4 +502,51 @@ export interface SnapshotsReportParams {
   format?: 'json' | 'csv';
 }
 
+export interface LeadsAnalyticsSummary {
+  total_leads: number;
+  total_value_cents: number;
+  total_value_formatted: string;
+  avg_value_cents: number;
+  avg_value_formatted: string;
+  avg_time_open_days: number;
+  win_rate_percentage: number;
+}
+
+export interface LeadsTimeSeriesItem {
+  period_label: string;
+  start_date: string;
+  quantity: number;
+  value_cents: number;
+}
+
+export interface LeadsBreakdownItem {
+  id?: number | null;
+  label: string;
+  count: number;
+  percentage: number;
+  status?: string;
+  color?: string;
+}
+
+export interface LeadsBreakdowns {
+  assignee: LeadsBreakdownItem[];
+  stage: LeadsBreakdownItem[];
+  product: LeadsBreakdownItem[];
+  outcome: LeadsBreakdownItem[];
+  source: LeadsBreakdownItem[];
+  competitor: LeadsBreakdownItem[];
+  tag: LeadsBreakdownItem[];
+  territory: LeadsBreakdownItem[];
+  age: LeadsBreakdownItem[];
+  value_bracket: LeadsBreakdownItem[];
+  channel: LeadsBreakdownItem[];
+}
+
+export interface LeadsAnalyticsResponse {
+  summary: LeadsAnalyticsSummary;
+  time_series: LeadsTimeSeriesItem[];
+  breakdowns: LeadsBreakdowns;
+}
+
+
 
