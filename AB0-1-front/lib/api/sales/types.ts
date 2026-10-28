@@ -560,5 +560,108 @@ export interface LeadsAnalyticsResponse {
   breakdowns: LeadsBreakdowns;
 }
 
+// -------------------------------------------------------------
+// Sales Inbox (Opção A - Proposta Bidirecional)
+// -------------------------------------------------------------
+export interface InboxMailbox {
+  id: number;
+  email: string;
+  provider: 'zoho' | 'ses' | 'google' | 'microsoft' | string;
+  provider_account_id?: string | null;
+  provider_region?: string | null;
+  connection_status: 'pending' | 'healthy' | 'needs_reconnect' | 'paused' | 'disconnected' | string;
+  sync_status: 'idle' | 'syncing' | 'healthy' | 'degraded' | 'error' | string;
+  last_synced_at?: string | null;
+  messages_imported?: number;
+  sync_error?: string | null;
+  token_expired?: boolean;
+  created_at: string;
+}
+
+export interface InboxThreadSummary {
+  id: number;
+  sales_email_account_id?: number | null;
+  subject: string;
+  status: 'open' | 'pending' | 'resolved' | 'archived';
+  first_message_at?: string | null;
+  last_message_at: string;
+  message_count: number;
+  messages_count?: number;
+  unread_count: number;
+  assigned_user?: { id: number; name: string } | null;
+  assigned_user_name?: string | null;
+  contact?: { id: number; name: string; email: string; phone?: string | null } | null;
+  contact_name?: string | null;
+  sales_contact_id?: number | null;
+  account?: { id: number; name: string } | null;
+  company_name?: string | null;
+  sales_account_id?: number | null;
+  opportunity?: { id: number; name: string; stage?: string; value_cents?: number } | null;
+  opportunity_title?: string | null;
+  opportunity_stage?: string | null;
+  sales_opportunity_id?: number | null;
+  snippet?: string | null;
+  latest_message_snippet?: string | null;
+  sender_name?: string | null;
+  sender_email?: string | null;
+  latest_message_from?: string | null;
+  direction?: 'inbound' | 'outbound' | null;
+  latest_message_direction?: 'inbound' | 'outbound' | null;
+}
+
+export interface InboxMessageItem {
+  id: number;
+  from_name?: string;
+  from_email: string;
+  to_email: string;
+  subject: string;
+  direction: 'inbound' | 'outbound';
+  status: string;
+  delivery_status?: string | null;
+  body_text?: string | null;
+  body_html?: string | null;
+  provider_message_id?: string | null;
+  received_at?: string;
+  created_at: string;
+  cc?: string[];
+  bcc?: string[];
+  attachments?: Array<{
+    id: number;
+    file_name?: string;
+    filename?: string;
+    file_size?: number;
+    content_type?: string;
+    download_url?: string;
+  }>;
+}
+
+export interface InboxThreadDetail extends InboxThreadSummary {
+  provider_thread_id?: string | null;
+  messages?: InboxMessageItem[];
+}
+
+export interface InboxCounts {
+  inbox: number;
+  sent: number;
+  drafts?: number;
+  unread?: number;
+  all?: number;
+  open: number;
+  pending: number;
+  resolved: number;
+  archived: number;
+}
+
+export interface InboxThreadsResponse {
+  threads: InboxThreadSummary[];
+  counts: InboxCounts;
+  meta: {
+    page: number;
+    per_page: number;
+    total_records: number;
+    total_pages: number;
+  };
+}
+
 
 

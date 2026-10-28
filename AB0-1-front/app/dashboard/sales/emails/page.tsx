@@ -1,10 +1,10 @@
-import EmailCenterPage from '@/components/sales/email/EmailCenterPage';
+import SalesEmailUnifiedPage from '@/components/sales/email/SalesEmailUnifiedPage';
 
 export const metadata = {
-  title: 'E-mails Comerciais | Avalia Solar CRM',
-  description: 'Plataforma de mensageria unificada comercial com envio real AWS SES e rastreamento de engajamento.',
+  title: 'Sales Inbox & E-mails | Avalia Solar CRM',
+  description: 'Caixa de entrada unificada bidirecional Zoho Mail e plataforma de mensageria comercial com envio real e rastreamento.',
 };
 
 export default function Page() {
-  return <EmailCenterPage />;
+  return <SalesEmailUnifiedPage />;
 }

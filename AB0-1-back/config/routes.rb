@@ -176,6 +176,19 @@ Rails.application.routes.draw do
         end
         resources :email_suppressions, only: %i[index create destroy], controller: 'sales/email_suppressions'
         resources :email_signatures, only: %i[index create update destroy], controller: 'sales/email_signatures'
+        resources :email_connections, only: %i[index show], controller: 'sales/email_connections' do
+          collection do
+            post 'zoho/authorize', to: 'sales/email_connections#zoho_authorize'
+            get 'zoho/callback', to: 'sales/email_connections#zoho_callback'
+          end
+          member do
+            post :disconnect
+            post :sync
+          end
+        end
+        resources :email_threads, only: %i[index show update], controller: 'sales/inbox_threads' do
+          resources :replies, only: %i[create], controller: 'sales/inbox_replies'
+        end
         post 'email_events/provider', to: 'sales/ses_webhooks#create'
         resources :pipelines, only: %i[index show create update], controller: 'sales/pipelines' do
           get :board, to: 'sales/pipelines/boards#show', on: :member

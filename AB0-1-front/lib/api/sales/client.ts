@@ -19,6 +19,10 @@ import {
   FilterOptionsResponse,
   NutshellFilterCriteria,
   LeadsAnalyticsResponse,
+  InboxMailbox,
+  InboxThreadsResponse,
+  InboxThreadDetail,
+  InboxMessageItem,
 } from './types';
 import type { SalesTimelineResponse } from './timeline-types';
 
@@ -899,6 +903,104 @@ export const salesApi = {
       method: 'POST',
       body: attachments?.length ? body : JSON.stringify({ email: fields }),
     });
+    return res;
+  },
+
+  // --- Sales Inbox (Opção A - Zoho Mail & Bidirectional Sync) ---
+  async getEmailConnections(): Promise<InboxMailbox[]> {
+    const res = await request<{ accounts: InboxMailbox[] }>('/api/v1/sales/email_connections');
+    return res.accounts ?? [];
+  },
+
+  async getZohoAuthorizeUrl(region = 'us', includeSend = true): Promise<{ authorization_url: string }> {
+    const res = await request<{ authorization_url: string }>('/api/v1/sales/email_connections/zoho/authorize', {
+      method: 'POST',
+      body: JSON.stringify({ region, include_send: includeSend }),
+    });
+    return res;
+  },
+
+  async disconnectEmailConnection(id: number): Promise<{ message: string; account: InboxMailbox }> {
+    const res = await request<{ message: string; account: InboxMailbox }>(`/api/v1/sales/email_connections/${id}/disconnect`, {
+      method: 'POST',
+    });
+    return res;
+  },
+
+  async syncEmailConnection(id: number, mode: 'incremental' | 'full' = 'incremental'): Promise<{ message: string; status: string }> {
+    const res = await request<{ message: string; status: string }>(`/api/v1/sales/email_connections/${id}/sync`, {
+      method: 'POST',
+      body: JSON.stringify({ mode }),
+    });
+    return res;
+  },
+
+  async getInboxThreads(params: {
+    mailbox_id?: number;
+    folder?: string;
+    status?: string;
+    search?: string;
+    page?: number;
+    per_page?: number;
+  } = {}): Promise<InboxThreadsResponse> {
+    const query = new URLSearchParams();
+    if (params.mailbox_id) query.set('mailbox_id', String(params.mailbox_id));
+    if (params.folder) query.set('folder', params.folder);
+    if (params.status) query.set('status', params.status);
+    if (params.search) query.set('search', params.search);
+    if (params.page) query.set('page', String(params.page));
+    if (params.per_page) query.set('per_page', String(params.per_page));
+
+    const qs = query.toString();
+    const url = `/api/v1/sales/email_threads${qs ? `?${qs}` : ''}`;
+    return request<InboxThreadsResponse>(url);
+  },
+
+  async getInboxThread(id: number): Promise<InboxThreadDetail> {
+    const res = await request<{ thread: InboxThreadDetail }>(`/api/v1/sales/email_threads/${id}`);
+    return res.thread;
+  },
+
+  async updateInboxThread(
+    id: number,
+    patch: {
+      status?: string;
+      assigned_user_id?: number | null;
+      sales_opportunity_id?: number | null;
+    }
+  ): Promise<InboxThreadDetail> {
+    const res = await request<{ thread: InboxThreadDetail }>(`/api/v1/sales/email_threads/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ thread: patch }),
+    });
+    return res.thread;
+  },
+
+  async sendInboxReply(
+    threadId: number,
+    payload: {
+      body_html?: string;
+      body_text?: string;
+      cc?: string[];
+      bcc?: string[];
+      reply_all?: boolean;
+    },
+    idempotencyKey?: string
+  ): Promise<{ message: string; email_message: InboxMessageItem }> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (idempotencyKey) {
+      headers['Idempotency-Key'] = idempotencyKey;
+    }
+    const res = await request<{ message: string; email_message: InboxMessageItem }>(
+      `/api/v1/sales/email_threads/${threadId}/replies`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ reply: payload }),
+      }
+    );
     return res;
   },
 };

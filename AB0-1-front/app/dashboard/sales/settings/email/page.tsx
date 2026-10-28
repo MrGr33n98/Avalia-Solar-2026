@@ -1,7 +1,8 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { Mail, Plus, Trash2, CheckCircle2, Eye, Code, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { Mail, Plus, Trash2, CheckCircle2, Eye, Code, Sparkles, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import OrganizationSettingLayout from '@/components/sales/settings/OrganizationSettingLayout';
@@ -83,12 +84,33 @@ export default function EmailSettingsPage() {
         helpDescription="Assinaturas padronizadas aumentam a taxa de resposta dos leads solares e fortalecem a autoridade da marca Avalia Solar."
         extraHelpCards={[
           {
+            title: 'Caixas Conectadas (Zoho)',
+            content: 'Vincule sua conta Zoho Mail para ter sincronização bidirecional na Caixa de Entrada.',
+          },
+          {
             title: 'Variáveis Dinâmicas',
             content: 'Utilize tags como {{user.name}} ou {{user.phone}} para preenchimento automático dos dados do vendedor.',
           },
         ]}
       >
         <div className="space-y-4 font-sans text-xs">
+          {/* Quick link to Mailbox Accounts */}
+          <div className="bg-sky-50/70 border border-sky-200 rounded-md p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-sky-600 shrink-0" />
+              <div>
+                <p className="font-semibold text-slate-900 text-xs">Caixas de E-mail Conectadas (Zoho Mail)</p>
+                <p className="text-[11px] text-slate-500">Conecte sua conta via OAuth 2.0 para ler e responder mensagens no CRM.</p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/sales/settings/email/accounts"
+              className="text-xs font-semibold text-[#0F62FE] hover:underline flex items-center gap-1 shrink-0"
+            >
+              Gerenciar Contas <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
+
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <span className="font-semibold text-slate-800 text-sm flex items-center gap-1.5">
               <Mail className="w-4 h-4 text-sky-600" />

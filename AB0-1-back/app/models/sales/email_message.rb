@@ -26,7 +26,8 @@ module Sales
     has_many :events, class_name: 'Sales::EmailEvent', foreign_key: :sales_email_message_id, dependent: :destroy
     has_many :links, class_name: 'Sales::EmailLink', foreign_key: :email_message_id, dependent: :destroy
 
-    STATUSES = %w[draft queued sending sent delivered bounced failed].freeze
+    STATUSES = %w[draft queued sending sent delivered bounced failed received].freeze
+    DIRECTIONS = %w[inbound outbound].freeze
 
     validates :status, inclusion: { in: STATUSES }
     validates :from_email, presence: true
