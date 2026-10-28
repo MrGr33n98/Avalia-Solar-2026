@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Mail, 
@@ -16,7 +16,12 @@ import {
   Trash2, 
   Edit3,
   Calendar,
-  Linkedin
+  Linkedin,
+  Upload,
+  Camera,
+  X,
+  Image as ImageIcon,
+  Link2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +60,38 @@ export default function EmailSignaturesPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [signatures, setSignatures] = useState<Signature[]>([]);
   const [signatureName, setSignatureName] = useState('Assinatura Oficial Avalia Solar (Padrão)');
+
+  // Upload Refs e Modos de Input
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarMode, setAvatarMode] = useState<'upload' | 'url'>('upload');
+  const [logoMode, setLogoMode] = useState<'upload' | 'url'>('upload');
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setAvatarUrl(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setLogoUrl(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Gerador dinâmico do HTML de compatibilidade de e-mail (Tabelas e estilos inline)
   const generatedHtml = useMemo(() => {
@@ -339,14 +376,95 @@ export default function EmailSignaturesPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] text-slate-600 font-medium mb-1">Link da Foto / Avatar</label>
-                    <Input
-                      value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
-                      className="h-8 text-xs bg-white font-mono"
-                      placeholder="https://..."
+                  {/* Campo Foto / Avatar do Consultor */}
+                  <div className="space-y-1.5 p-3 bg-slate-50/80 rounded-md border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] text-slate-700 font-semibold flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-sky-600" /> Foto de Perfil / Avatar
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setAvatarMode(avatarMode === 'upload' ? 'url' : 'upload')}
+                        className="text-[10px] text-sky-600 hover:underline flex items-center gap-1 font-medium"
+                      >
+                        {avatarMode === 'upload' ? (
+                          <>
+                            <Link2 className="w-2.5 h-2.5" /> Colar link URL
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-2.5 h-2.5" /> Enviar arquivo
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Input de arquivo invisível */}
+                    <input
+                      type="file"
+                      ref={avatarFileInputRef}
+                      onChange={handleAvatarUpload}
+                      accept="image/*"
+                      className="hidden"
                     />
+
+                    {avatarMode === 'upload' ? (
+                      <div className="flex items-center gap-3 pt-1">
+                        {/* Miniatura do Avatar com borda amarela */}
+                        <div className="relative shrink-0">
+                          {avatarUrl ? (
+                            <div className="relative">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={avatarUrl}
+                                alt="Foto do consultor"
+                                className="w-14 h-14 rounded-full object-cover border-2 border-[#ffcd2d] shadow-xs bg-white"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setAvatarUrl('')}
+                                className="absolute -top-1 -right-1 bg-red-600 text-white p-0.5 rounded-full shadow-xs hover:bg-red-700 transition-colors"
+                                title="Remover foto"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="w-14 h-14 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center bg-white text-slate-400">
+                              <Camera className="w-6 h-6" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Botão de Upload e Orientações */}
+                        <div className="flex-1 space-y-1">
+                          <Button
+                            type="button"
+                            onClick={() => avatarFileInputRef.current?.click()}
+                            size="sm"
+                            className="h-7 text-xs bg-sky-600 hover:bg-sky-700 text-white font-medium flex items-center gap-1.5 shadow-xs"
+                          >
+                            <Upload className="w-3 h-3" />
+                            {avatarUrl ? 'Trocar Foto do Computador' : 'Fazer Upload da Foto'}
+                          </Button>
+                          <p className="text-[10px] text-slate-500">
+                            Formatos suportados: PNG, JPG ou WEBP (recomendado quadrado 1:1, mín. 166x166px).
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1 pt-1">
+                        <Input
+                          value={avatarUrl}
+                          onChange={(e) => setAvatarUrl(e.target.value)}
+                          className="h-8 text-xs bg-white font-mono"
+                          placeholder="https://exemplo.com/sua-foto.png"
+                        />
+                        <p className="text-[10px] text-slate-400">
+                          Cole a URL direta da imagem hospedada.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -406,14 +524,73 @@ export default function EmailSignaturesPage() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] text-slate-500 font-medium mb-1">Logotipo Horizontal</label>
-                    <Input
-                      value={logoUrl}
-                      disabled={!isAdmin}
-                      onChange={(e) => setLogoUrl(e.target.value)}
-                      className="h-8 text-xs bg-white font-mono disabled:bg-slate-50 disabled:text-slate-500"
+                  {/* Campo Logotipo Horizontal da Empresa */}
+                  <div className="space-y-1.5 p-3 bg-slate-50/80 rounded-md border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] text-slate-700 font-semibold flex items-center gap-1.5">
+                        <ImageIcon className="w-3.5 h-3.5 text-slate-600" /> Logotipo Horizontal
+                      </label>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setLogoMode(logoMode === 'upload' ? 'url' : 'upload')}
+                          className="text-[10px] text-sky-600 hover:underline flex items-center gap-1 font-medium"
+                        >
+                          {logoMode === 'upload' ? (
+                            <>
+                              <Link2 className="w-2.5 h-2.5" /> Colar URL
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-2.5 h-2.5" /> Enviar arquivo
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    <input
+                      type="file"
+                      ref={logoFileInputRef}
+                      onChange={handleLogoUpload}
+                      accept="image/*"
+                      className="hidden"
                     />
+
+                    {logoMode === 'upload' ? (
+                      <div className="flex items-center gap-3 pt-1">
+                        <div className="border border-slate-200 bg-white p-1 rounded shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={logoUrl || 'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png'}
+                            alt="Logo preview"
+                            className="h-7 w-auto object-contain"
+                          />
+                        </div>
+
+                        {isAdmin ? (
+                          <Button
+                            type="button"
+                            onClick={() => logoFileInputRef.current?.click()}
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs flex items-center gap-1.5 bg-white hover:bg-slate-50"
+                          >
+                            <Upload className="w-3 h-3 text-slate-600" /> Escolher Logo do Computador
+                          </Button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 italic">Logo institucional travado</span>
+                        )}
+                      </div>
+                    ) : (
+                      <Input
+                        value={logoUrl}
+                        disabled={!isAdmin}
+                        onChange={(e) => setLogoUrl(e.target.value)}
+                        className="h-8 text-xs bg-white font-mono disabled:bg-slate-50 disabled:text-slate-500"
+                        placeholder="https://..."
+                      />
+                    )}
                   </div>
 
                   <div>
