@@ -23,7 +23,11 @@ import {
   InboxThreadsResponse,
   InboxThreadDetail,
   InboxMessageItem,
+  ApiContactMethod,
+  ContactMethodKind,
+  UpsertContactMethodPayload,
 } from './types';
+export type { ApiContactMethod, ContactMethodKind, UpsertContactMethodPayload };
 import type { SalesTimelineResponse } from './timeline-types';
 
 export class SalesApiError extends Error {
@@ -782,6 +786,74 @@ export const salesApi = {
       body: JSON.stringify({ contact: payload }),
     });
     return res.contact;
+  },
+
+  // Contact Methods (Multicanal)
+  async getContactMethods(contactId: number): Promise<ApiContactMethod[]> {
+    const res = await request<{ contact_methods: ApiContactMethod[] }>(
+      `/api/v1/sales/contacts/${contactId}/contact_methods`
+    );
+    return res.contact_methods ?? [];
+  },
+
+  async createContactMethod(
+    contactId: number,
+    payload: UpsertContactMethodPayload
+  ): Promise<ApiContactMethod> {
+    clearSalesApiCache('contacts:');
+    const res = await request<{ contact_method: ApiContactMethod }>(
+      `/api/v1/sales/contacts/${contactId}/contact_methods`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ contact_method: payload }),
+      }
+    );
+    return res.contact_method;
+  },
+
+  async updateContactMethod(
+    contactId: number,
+    methodId: number,
+    payload: Partial<UpsertContactMethodPayload>
+  ): Promise<ApiContactMethod> {
+    clearSalesApiCache('contacts:');
+    const res = await request<{ contact_method: ApiContactMethod }>(
+      `/api/v1/sales/contacts/${contactId}/contact_methods/${methodId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ contact_method: payload }),
+      }
+    );
+    return res.contact_method;
+  },
+
+  async setPrimaryContactMethod(
+    contactId: number,
+    methodId: number
+  ): Promise<ApiContactMethod> {
+    clearSalesApiCache('contacts:');
+    const res = await request<{ contact_method: ApiContactMethod }>(
+      `/api/v1/sales/contacts/${contactId}/contact_methods/${methodId}/primary`,
+      {
+        method: 'PATCH',
+      }
+    );
+    return res.contact_method;
+  },
+
+  async archiveContactMethod(
+    contactId: number,
+    methodId: number,
+    replacementId?: number
+  ): Promise<{ success: boolean; message: string }> {
+    clearSalesApiCache('contacts:');
+    return request<{ success: boolean; message: string }>(
+      `/api/v1/sales/contacts/${contactId}/contact_methods/${methodId}`,
+      {
+        method: 'DELETE',
+        body: replacementId ? JSON.stringify({ replacement_id: replacementId }) : undefined,
+      }
+    );
   },
 
   // Analytics

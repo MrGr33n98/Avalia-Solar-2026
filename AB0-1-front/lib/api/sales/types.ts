@@ -64,6 +64,31 @@ export interface ApiAccount {
   updated_at?: string;
 }
 
+export type ContactMethodKind = 'email' | 'phone' | 'whatsapp' | 'linkedin' | 'instagram' | 'website';
+
+export interface ApiContactMethod {
+  id: number;
+  contact_id?: number;
+  kind: ContactMethodKind;
+  value: string;
+  normalized_value?: string;
+  label: string;
+  is_primary: boolean;
+  position: number;
+  source?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface UpsertContactMethodPayload {
+  kind: ContactMethodKind;
+  value: string;
+  label?: string;
+  is_primary?: boolean;
+  position?: number;
+  source?: string;
+}
+
 export interface ApiContact {
   id: number;
   first_name: string;
@@ -71,9 +96,12 @@ export interface ApiContact {
   name?: string;
   email?: string | null;
   phone?: string | null;
+  whatsapp?: string | null;
+  linkedin_url?: string | null;
   job_title?: string | null;
   sales_account_id?: number | null;
   account_name?: string | null;
+  contact_methods?: ApiContactMethod[];
   created_at?: string;
   updated_at?: string;
 }

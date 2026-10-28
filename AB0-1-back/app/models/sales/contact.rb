@@ -28,11 +28,21 @@ module Sales
     has_many :research_records, class_name: 'Sales::ResearchRecord', foreign_key: :sales_contact_id, dependent: :nullify
     has_many :email_threads, class_name: 'Sales::EmailThread', foreign_key: :sales_contact_id, dependent: :nullify
 
+    has_many :contact_methods, class_name: 'Sales::ContactMethod', foreign_key: :sales_contact_id, dependent: :destroy
+    has_many :active_contact_methods, -> { active }, class_name: 'Sales::ContactMethod', foreign_key: :sales_contact_id
+
     validates :first_name, presence: true
 
     after_create :ensure_initial_employment
+    after_commit :sync_legacy_contact_methods, on: %i[create update]
 
     private
+
+    def sync_legacy_contact_methods
+      return unless saved_change_to_email? || saved_change_to_phone? || saved_change_to_whatsapp? || saved_change_to_linkedin_url?
+
+      ::Sales::ContactMethods::LegacySync.sync_contact(self)
+    end
 
     def ensure_initial_employment
       return if sales_account_id.blank?

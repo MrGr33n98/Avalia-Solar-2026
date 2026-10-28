@@ -246,6 +246,20 @@ module Api
             custom_fields: meta['custom_fields'] || {},
             attachments: meta['attachments'] || [],
             tags: contact.tags.map { |t| { id: t.id, name: t.name, color: t.respond_to?(:color) ? t.color : '#4f46e5' } },
+            contact_methods: (contact.contact_methods.active.ordered rescue []).map do |m|
+              {
+                id: m.id,
+                kind: m.kind,
+                value: m.value,
+                normalized_value: m.normalized_value,
+                label: m.label,
+                is_primary: m.is_primary,
+                position: m.position,
+                source: m.source,
+                created_at: m.created_at,
+                updated_at: m.updated_at
+              }
+            end,
             employments: safe_employments.map do |e|
               {
                 id: e.id,

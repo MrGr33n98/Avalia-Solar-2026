@@ -47,6 +47,12 @@ module Sales
       ::Sales::Contact.where(sales_account_id: acc_ids)
     end
 
+    def contact_methods
+      return ::Sales::ContactMethod.all if admin?
+
+      ::Sales::ContactMethod.where(sales_contact_id: contacts.select(:id))
+    end
+
     def opportunities
       return ::Sales::Opportunity.all if admin?
 

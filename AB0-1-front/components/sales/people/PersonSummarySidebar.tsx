@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Check,
@@ -15,9 +15,13 @@ import {
   Send,
   Tag as TagIcon,
   Zap,
+  Globe,
+  Star,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ContactMethodsModal } from './ContactMethodsModal';
+import { ApiContactMethod } from '@/lib/api/sales/client';
 
 export interface OpportunityItem {
   id: number;
@@ -41,6 +45,10 @@ type CustomFieldValue = string | number | boolean;
 
 interface PersonSummarySidebarProps {
   contactId?: number;
+  contactName?: string;
+  contactMethods?: ApiContactMethod[];
+  onContactMethodsUpdated?: (methods: ApiContactMethod[]) => void;
+  onSendEmailWithAddress?: (email: string) => void;
   email?: string | null;
   phone?: string | null;
   whatsapp?: string | null;
@@ -65,7 +73,11 @@ interface PersonSummarySidebarProps {
 }
 
 export default function PersonSummarySidebar({
-  contactId: _contactId,
+  contactId,
+  contactName,
+  contactMethods = [],
+  onContactMethodsUpdated,
+  onSendEmailWithAddress,
   email,
   phone,
   whatsapp,
@@ -83,6 +95,16 @@ export default function PersonSummarySidebar({
   onUpdateTags,
   onUpdateCustomFields,
 }: PersonSummarySidebarProps) {
+  // Contact Methods modal & state
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [methods, setMethods] = useState<ApiContactMethod[]>(contactMethods);
+
+  useEffect(() => {
+    if (contactMethods) {
+      setMethods(contactMethods);
+    }
+  }, [contactMethods]);
+
   // Tags state
   const [currentTags, setCurrentTags] = useState<TagItem[]>(tags);
   const [isAddingTag, setIsAddingTag] = useState(false);
@@ -212,89 +234,240 @@ export default function PersonSummarySidebar({
         </div>
       </div>
 
-      {/* 2. CONTACT INFO (1-Click Actions) */}
+      {/* 2. CONTACT INFO (1-Click Actions & Multicanal) */}
       <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider text-slate-400">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
             Contact Info
           </h3>
-          <span className="text-[11px] text-indigo-700 font-semibold cursor-pointer hover:underline">
+          <button
+            type="button"
+            onClick={() => setIsContactModalOpen(true)}
+            className="text-[11px] text-indigo-700 hover:text-indigo-900 font-semibold cursor-pointer hover:underline focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 py-0.5 transition"
+            aria-label="Adicionar ou gerenciar canais de contato"
+          >
             + Add info
-          </span>
+          </button>
         </div>
 
         <div className="space-y-2 text-xs">
-          {email ? (
-            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <Mail className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-                <span className="text-slate-800 font-medium truncate">{email}</span>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleCopy(email, 'email')}
-                  className="p-1 text-slate-400 hover:text-slate-600 rounded transition"
-                  title="Copiar e-mail"
+          {methods.length > 0 ? (
+            // RENDERIZAÇÃO MULTICANAL PERSISTIDA
+            <div className="space-y-2">
+              {/* E-mails */}
+              {methods.filter((m) => m.kind === 'email').map((m) => (
+                <div
+                  key={m.id}
+                  className={`p-2 rounded-lg border flex items-center justify-between gap-2 ${
+                    m.is_primary ? 'bg-sky-50/50 border-sky-100' : 'bg-slate-50 border-slate-100'
+                  }`}
                 >
-                  {copyFeedback === 'email' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={onSendEmail}
-                  className="p-1 text-sky-600 hover:text-sky-800 rounded transition"
-                  title="Enviar e-mail"
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Mail className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                    <span className="text-slate-800 font-medium truncate">{m.value}</span>
+                    {m.is_primary && (
+                      <span className="text-[9px] bg-sky-600 text-white font-bold px-1 rounded">
+                        Principal
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-400">({m.label})</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(m.value, `email_${m.id}`)}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded transition"
+                      title="Copiar e-mail"
+                    >
+                      {copyFeedback === `email_${m.id}` ? (
+                        <Check className="w-3 h-3 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => (onSendEmailWithAddress ? onSendEmailWithAddress(m.value) : onSendEmail())}
+                      className="p-1 text-sky-600 hover:text-sky-800 rounded transition"
+                      title="Enviar e-mail para este endereço"
+                    >
+                      <Send className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Telefones */}
+              {methods.filter((m) => m.kind === 'phone').map((m) => (
+                <div
+                  key={m.id}
+                  className={`p-2 rounded-lg border flex items-center justify-between gap-2 ${
+                    m.is_primary ? 'bg-emerald-50/50 border-emerald-100' : 'bg-slate-50 border-slate-100'
+                  }`}
                 >
-                  <Send className="w-3 h-3" />
-                </button>
-              </div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="text-slate-800 font-medium truncate">{m.value}</span>
+                    {m.is_primary && (
+                      <span className="text-[9px] bg-emerald-600 text-white font-bold px-1 rounded">
+                        Principal
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-400">({m.label})</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(m.value, `phone_${m.id}`)}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded transition"
+                      title="Copiar telefone"
+                    >
+                      {copyFeedback === `phone_${m.id}` ? (
+                        <Check className="w-3 h-3 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                    <a
+                      href={`tel:${m.value}`}
+                      className="p-1 text-emerald-600 hover:text-emerald-800 rounded transition"
+                      title="Ligar"
+                    >
+                      <Phone className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+
+              {/* WhatsApps */}
+              {methods.filter((m) => m.kind === 'whatsapp').map((m) => (
+                <div
+                  key={m.id}
+                  className="p-2 rounded-lg bg-emerald-50/50 border border-emerald-100 flex items-center justify-between gap-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span className="text-emerald-900 font-semibold truncate">
+                      WhatsApp: {m.value}
+                    </span>
+                    {m.is_primary && (
+                      <span className="text-[9px] bg-emerald-700 text-white font-bold px-1 rounded">
+                        Principal
+                      </span>
+                    )}
+                  </div>
+                  <a
+                    href={`https://wa.me/${m.normalized_value?.replace(/\D/g, '') || m.value.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 text-emerald-700 hover:text-emerald-900 rounded transition"
+                    title="Abrir WhatsApp"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              ))}
+
+              {/* Redes Sociais & Websites */}
+              {methods.filter((m) => ['linkedin', 'instagram', 'website'].includes(m.kind)).map((m) => (
+                <div
+                  key={m.id}
+                  className="p-2 rounded-lg bg-indigo-50/40 border border-indigo-100 flex items-center justify-between gap-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Globe className="w-3.5 h-3.5 text-indigo-700 shrink-0" />
+                    <span className="text-indigo-950 font-medium truncate capitalize">
+                      {m.kind}: {m.value}
+                    </span>
+                  </div>
+                  <a
+                    href={m.value.startsWith('http') ? m.value : `https://${m.value}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 text-indigo-700 hover:text-indigo-900 rounded transition"
+                    title="Abrir link externo seguro"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              ))}
             </div>
           ) : (
-            <p className="text-[11px] text-slate-400 italic">Nenhum e-mail cadastrado.</p>
-          )}
+            // FALLBACK RETROCOMPATÍVEL LEGADO
+            <>
+              {email ? (
+                <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Mail className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                    <span className="text-slate-800 font-medium truncate">{email}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(email, 'email')}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded transition"
+                      title="Copiar e-mail"
+                    >
+                      {copyFeedback === 'email' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onSendEmail}
+                      className="p-1 text-sky-600 hover:text-sky-800 rounded transition"
+                      title="Enviar e-mail"
+                    >
+                      <Send className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[11px] text-slate-400 italic">Nenhum e-mail cadastrado.</p>
+              )}
 
-          {phone && (
-            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span className="text-slate-800 font-medium truncate">{phone}</span>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleCopy(phone, 'phone')}
-                  className="p-1 text-slate-400 hover:text-slate-600 rounded transition"
-                  title="Copiar telefone"
-                >
-                  {copyFeedback === 'phone' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={onCall}
-                  className="p-1 text-emerald-600 hover:text-emerald-800 rounded transition"
-                  title="Ligar"
-                >
-                  <Phone className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          )}
+              {phone && (
+                <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="text-slate-800 font-medium truncate">{phone}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(phone, 'phone')}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded transition"
+                      title="Copiar telefone"
+                    >
+                      {copyFeedback === 'phone' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onCall}
+                      className="p-1 text-emerald-600 hover:text-emerald-800 rounded transition"
+                      title="Ligar"
+                    >
+                      <Phone className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
 
-          {whatsapp && (
-            <div className="p-2 rounded-lg bg-emerald-50/50 border border-emerald-100 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <MessageSquare className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                <span className="text-emerald-900 font-semibold truncate">WhatsApp: {whatsapp}</span>
-              </div>
-              <button
-                type="button"
-                onClick={onSendWhatsApp}
-                className="p-1 text-emerald-700 hover:text-emerald-900 rounded transition"
-                title="Abrir WhatsApp"
-              >
-                <ExternalLink className="w-3 h-3" />
-              </button>
-            </div>
+              {whatsapp && (
+                <div className="p-2 rounded-lg bg-emerald-50/50 border border-emerald-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span className="text-emerald-900 font-semibold truncate">WhatsApp: {whatsapp}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onSendWhatsApp}
+                    className="p-1 text-emerald-700 hover:text-emerald-900 rounded transition"
+                    title="Abrir WhatsApp"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -500,6 +673,38 @@ export default function PersonSummarySidebar({
           }))}
         </div>
       </div>
+
+      {contactId && (
+        <ContactMethodsModal
+          open={isContactModalOpen}
+          onOpenChange={setIsContactModalOpen}
+          contactId={contactId}
+          contactName={contactName || 'Contato'}
+          initialMethods={methods}
+          onMethodsUpdated={(updated) => {
+            setMethods(updated);
+            onContactMethodsUpdated?.(updated);
+          }}
+          onSendEmail={(targetEmail) => {
+            if (onSendEmailWithAddress) {
+              onSendEmailWithAddress(targetEmail);
+            } else {
+              onSendEmail();
+            }
+          }}
+          onCall={(targetPhone) => {
+            window.location.href = `tel:${targetPhone}`;
+          }}
+          onWhatsApp={(targetWhatsApp) => {
+            const digits = targetWhatsApp.replace(/\D/g, '');
+            window.open(
+              `https://wa.me/${digits.startsWith('55') ? digits : `55${digits}`}`,
+              '_blank',
+              'noopener,noreferrer'
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

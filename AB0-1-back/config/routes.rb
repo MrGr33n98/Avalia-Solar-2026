@@ -217,6 +217,11 @@ Rails.application.routes.draw do
           get :timeline, on: :member
           get :engagement, on: :member
           resources :employments, only: %i[index create update destroy], controller: 'sales/contact_employments'
+          resources :contact_methods, only: %i[index create update destroy], controller: 'sales/contact_methods' do
+            member do
+              patch :primary
+            end
+          end
         end
         post 'opportunities/bulk', to: 'sales/opportunities#bulk'
         get 'opportunities/analytics', to: 'sales/opportunities#analytics'

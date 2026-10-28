@@ -20,7 +20,7 @@ import PersonEmailsSequencesCard from '@/components/sales/people/PersonEmailsSeq
 import PersonTimelineCard, { TimelineEvent } from '@/components/sales/people/PersonTimelineCard';
 import PersonSummarySidebar from '@/components/sales/people/PersonSummarySidebar';
 
-import { salesApi } from '@/lib/api/sales/client';
+import { salesApi, ApiContactMethod } from '@/lib/api/sales/client';
 
 interface ContactDetail {
   id: number;
@@ -103,6 +103,7 @@ interface ContactDetail {
     name: string;
     color?: string;
   }>;
+  contact_methods?: ApiContactMethod[];
   custom_fields?: Record<string, string | number | boolean>;
   attachments?: Array<{ name: string; size: string; date: string; url?: string }>;
   last_contact_at?: string | null;
@@ -122,6 +123,7 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
 
   // Modals state
   const [activeModal, setActiveModal] = useState<'activity' | 'email' | 'task' | 'add_company' | null>(null);
+  const [selectedEmailAddress, setSelectedEmailAddress] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
   const [submittingNote, setSubmittingNote] = useState(false);
 
@@ -361,6 +363,15 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
           <div className="space-y-4 lg:sticky lg:top-14">
             <PersonSummarySidebar
               contactId={contact.id}
+              contactName={contact.name}
+              contactMethods={contact.contact_methods || []}
+              onContactMethodsUpdated={(updated) => {
+                setContact((prev) => (prev ? { ...prev, contact_methods: updated } : null));
+              }}
+              onSendEmailWithAddress={(targetEmail) => {
+                setSelectedEmailAddress(targetEmail);
+                setActiveModal('email');
+              }}
               email={contact.email}
               phone={contact.phone}
               whatsapp={contact.whatsapp}
@@ -392,10 +403,13 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
 
         <SendEmailModal
           open={activeModal === 'email'}
-          onClose={() => setActiveModal(null)}
+          onClose={() => {
+            setActiveModal(null);
+            setSelectedEmailAddress(null);
+          }}
           contactId={contact.id}
           accountId={contact.account?.id}
-          contactEmail={contact.email || ''}
+          contactEmail={selectedEmailAddress || contact.email || ''}
           contactName={contact.name}
           companyName={contact.account?.name}
           onSuccess={fetchPersonData}
