@@ -24,7 +24,7 @@ permissions:
   actions: read
 
 env:
-  RUBY_VERSION: '3.2.2'
+  RUBY_VERSION: '3.2'
   NODE_VERSION: '20.x'
   NEXT_TELEMETRY_DISABLED: 1
 

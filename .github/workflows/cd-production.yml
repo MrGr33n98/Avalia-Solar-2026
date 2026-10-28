@@ -170,7 +170,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2.2'
+          ruby-version: '3.2'
           bundler-cache: true
           working-directory: ./AB0-1-back
 
@@ -220,7 +220,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2.2'
+          ruby-version: '3.2'
           bundler-cache: true
           working-directory: ./AB0-1-back
 
