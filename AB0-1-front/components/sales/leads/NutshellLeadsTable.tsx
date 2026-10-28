@@ -13,6 +13,7 @@ import {
   MessageCircle,
   ExternalLink,
   Check,
+  Tag as TagIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,12 +41,16 @@ export interface NutshellLeadItem {
   expectedCloseDate?: string | null;
   accountId?: number;
   contactId?: number;
+  tags?: Array<{ id: number; name: string; color?: string }>;
 }
 
 interface NutshellLeadsTableProps {
   leads: NutshellLeadItem[];
   onSelectLead: (lead: NutshellLeadItem) => void;
   totalStagesCount?: number;
+  allTags?: Array<{ id: number; name: string; color?: string }>;
+  selectedTagIds?: number[];
+  onTagFilterChange?: (tagId: number) => void;
 }
 
 // Formata tempo relativo em linguagem humana (Age)
@@ -161,6 +166,9 @@ export function NutshellLeadsTable({
   leads,
   onSelectLead,
   totalStagesCount = 5,
+  allTags = [],
+  selectedTagIds = [],
+  onTagFilterChange,
 }: NutshellLeadsTableProps) {
   // Estado de Colunas Visíveis (Change columns)
   const [columns, setColumns] = useState({
@@ -171,6 +179,7 @@ export function NutshellLeadsTable({
     confidence: true,
     closeDate: true,
     sources: true,
+    tags: true,
   });
 
   // Estado de Paginação
@@ -304,6 +313,7 @@ export function NutshellLeadsTable({
                 { id: 'confidence', label: 'Confidence (Probabilidade)' },
                 { id: 'closeDate', label: 'Close date (Fechamento)' },
                 { id: 'sources', label: 'Sources (Origem)' },
+                { id: 'tags', label: 'Tags (Marcadores)' },
               ].map((col) => {
                 const key = col.id as keyof typeof columns;
                 return (
@@ -410,13 +420,89 @@ export function NutshellLeadsTable({
               {columns.sources && (
                 <th className="py-2.5 px-4 font-bold text-slate-900">Sources</th>
               )}
+
+              {/* Tags */}
+              {columns.tags && (
+                <th className="py-2.5 px-3">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                    <span>Tags</span>
+                    {allTags && allTags.length > 0 && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className={`p-1 rounded hover:bg-slate-100 transition-colors flex items-center gap-1 ${
+                              selectedTagIds.length > 0
+                                ? 'text-sky-700 bg-sky-50 font-bold'
+                                : 'text-slate-400 hover:text-slate-700'
+                            }`}
+                            title="Filtrar por tag"
+                            aria-label="Filtrar por tag"
+                          >
+                            <TagIcon className="w-3.5 h-3.5" />
+                            {selectedTagIds.length > 0 && (
+                              <span className="text-[10px] bg-sky-600 text-white rounded-full px-1 leading-tight font-mono">
+                                {selectedTagIds.length}
+                              </span>
+                            )}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-56 p-2 text-xs">
+                          <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-100">
+                            <span className="font-bold text-slate-800">Filtrar por Tag</span>
+                            {selectedTagIds.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  selectedTagIds.forEach((id) => onTagFilterChange?.(id));
+                                }}
+                                className="text-[10px] text-sky-600 hover:underline font-medium"
+                              >
+                                Limpar
+                              </button>
+                            )}
+                          </div>
+                          <div className="max-h-52 overflow-y-auto space-y-1">
+                            {allTags.map((tag) => {
+                              const isSelected = selectedTagIds.includes(tag.id);
+                              return (
+                                <button
+                                  key={tag.id}
+                                  type="button"
+                                  onClick={() => onTagFilterChange?.(tag.id)}
+                                  className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-left transition-colors ${
+                                    isSelected
+                                      ? 'bg-sky-50 text-sky-800 font-semibold'
+                                      : 'hover:bg-slate-50 text-slate-700'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                                      style={{ backgroundColor: tag.color || '#0284c7' }}
+                                    />
+                                    <span className="truncate">{tag.name}</span>
+                                  </div>
+                                  {isSelected && (
+                                    <Check className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
+                </th>
+              )}
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100">
             {currentLeads.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-slate-400 italic">
+                <td colSpan={10} className="py-12 text-center text-slate-400 italic">
                   Nenhum lead encontrado com os filtros selecionados.
                 </td>
               </tr>
@@ -505,6 +591,48 @@ export function NutshellLeadsTable({
                       {deal.source || '—'}
                     </td>
                   )}
+
+                  {/* Tags */}
+                  {columns.tags && (
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-1 flex-wrap max-w-[200px]">
+                        {deal.tags && deal.tags.length > 0 ? (
+                          deal.tags.map((tag) => {
+                            const isSelected = selectedTagIds.includes(tag.id);
+                            return (
+                              <button
+                                key={tag.id}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onTagFilterChange?.(tag.id);
+                                }}
+                                title={`Filtrar por "${tag.name}"`}
+                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium transition-transform hover:scale-105 ${
+                                  isSelected
+                                    ? 'ring-2 ring-sky-500 ring-offset-1 font-bold shadow-2xs'
+                                    : ''
+                                }`}
+                                style={{
+                                  backgroundColor: tag.color ? `${tag.color}20` : '#e0f2fe',
+                                  color: tag.color || '#0369a1',
+                                  border: `1px solid ${tag.color ? `${tag.color}40` : '#bae6fd'}`,
+                                }}
+                              >
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                                  style={{ backgroundColor: tag.color || '#0284c7' }}
+                                />
+                                <span className="truncate max-w-[90px]">{tag.name}</span>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <span className="text-slate-300 text-xs">—</span>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
@@ -536,6 +664,37 @@ export function NutshellLeadsTable({
                     <p className="text-xs text-slate-500 truncate">
                       {deal.contact || 'Sem contato'}
                     </p>
+                    {deal.tags && deal.tags.length > 0 && (
+                      <div className="flex items-center gap-1 flex-wrap pt-1">
+                        {deal.tags.map((tag) => {
+                          const isSelected = selectedTagIds.includes(tag.id);
+                          return (
+                            <button
+                              key={tag.id}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onTagFilterChange?.(tag.id);
+                              }}
+                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-transform active:scale-95 ${
+                                isSelected ? 'ring-1 ring-sky-500 font-bold' : ''
+                              }`}
+                              style={{
+                                backgroundColor: tag.color ? `${tag.color}20` : '#e0f2fe',
+                                color: tag.color || '#0369a1',
+                                border: `1px solid ${tag.color ? `${tag.color}40` : '#bae6fd'}`,
+                              }}
+                            >
+                              <span
+                                className="w-1.5 h-1.5 rounded-full shrink-0"
+                                style={{ backgroundColor: tag.color || '#0284c7' }}
+                              />
+                              <span className="truncate max-w-[80px]">{tag.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 

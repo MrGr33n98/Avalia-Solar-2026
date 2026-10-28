@@ -69,6 +69,7 @@ type Deal = {
   score: number | null;
   accountId?: number;
   contactId?: number;
+  tags?: Array<{ id: number; name: string; color?: string }>;
 };
 
 type FetchState = 'loading' | 'success' | 'unauthorized' | 'forbidden' | 'error';
@@ -128,6 +129,7 @@ function mapBoardCardsToDeals(cards: ApiPipelineBoardCard[]): Deal[] {
     score: card.qualification?.score || null,
     accountId: card.account?.id,
     contactId: card.primary_contact?.id,
+    tags: card.tags || [],
   }));
 }
 
@@ -274,9 +276,17 @@ export default function SalesCommandCenter({
     if (refreshVersion > 0) void refreshBoard();
   }, [refreshVersion, refreshBoard]);
 
-  const visible = (deal: Deal) =>
-    !search || deal.company.toLowerCase().includes(search.toLowerCase()) ||
-    deal.plan.toLowerCase().includes(search.toLowerCase());
+  const visible = (deal: Deal) => {
+    const matchesSearch =
+      !search ||
+      deal.company.toLowerCase().includes(search.toLowerCase()) ||
+      deal.plan.toLowerCase().includes(search.toLowerCase());
+    const matchesTags =
+      !leadFilters.tag_ids ||
+      leadFilters.tag_ids.length === 0 ||
+      (deal.tags && deal.tags.some((t) => leadFilters.tag_ids?.includes(t.id)));
+    return Boolean(matchesSearch && matchesTags);
+  };
 
   const allDeals = useMemo(() => mapBoardCardsToDeals(boardData?.cards ?? []), [boardData]);
   const totalCents = allDeals.reduce((sum, d) => sum + d.rawCents, 0);
@@ -522,6 +532,17 @@ export default function SalesCommandCenter({
               if (matchingDeal) setSelectedDeal(matchingDeal);
             }}
             totalStagesCount={stages.length}
+            allTags={tags}
+            selectedTagIds={leadFilters.tag_ids}
+            onTagFilterChange={(tagId) => {
+              setLeadFilters((prev) => {
+                const current = prev.tag_ids || [];
+                const next = current.includes(tagId)
+                  ? current.filter((id) => id !== tagId)
+                  : [...current, tagId];
+                return { ...prev, tag_ids: next.length > 0 ? next : undefined };
+              });
+            }}
           />
         )}
       </div>
