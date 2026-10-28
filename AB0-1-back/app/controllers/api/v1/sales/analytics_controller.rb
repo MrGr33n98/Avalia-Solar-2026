@@ -183,6 +183,7 @@ module Api
             quota_attainment: ::Sales::Reporting::QuotaAttainmentQuery.call(user: current_user, won_scope: won_opps),
             revenue_installments: ::Sales::Reporting::RevenueInstallmentsQuery.call(opportunity_scope: scoped_opps),
             email_metrics: ::Sales::Reporting::EmailMetricsQuery.call(user: current_user, date_range: date_range),
+            activity_metrics: calculate_activity_metrics(date_range),
             pipeline: target_pipeline ? { id: target_pipeline.id, name: target_pipeline.name, key: target_pipeline.key } : nil,
             pipelines: ::Sales::Pipeline.where(active: true).order(:id).map { |p| { id: p.id, name: p.name, key: p.key } }
           }
@@ -195,17 +196,19 @@ module Api
           events = ::Sales::TenantScope.for(current_user).email_events
           scoped_events = date_range ? events.where(occurred_at: date_range) : events
 
-          sent_count = scoped_events.where(event_type: %w[sent provider_accepted queued]).count
-          delivered_count = scoped_events.where(event_type: 'delivered').count
+          # Deduplicado por sales_email_message_id; queued não é considerado enviado
+          sent_count = scoped_events.where(event_type: %w[sent provider_accepted]).select(:sales_email_message_id).distinct.count
+          delivered_count = scoped_events.where(event_type: 'delivered').select(:sales_email_message_id).distinct.count
           unique_opens = scoped_events.where(event_type: %w[open open_signal provider_open_signal]).select(:sales_email_message_id).distinct.count
           unique_clicks = scoped_events.where(event_type: %w[click provider_click_signal]).select(:sales_email_message_id).distinct.count
-          replied_count = scoped_events.where(event_type: 'replied').count
-          bounce_count = scoped_events.where(event_type: %w[bounce reject failed]).count
-          unsubscribed_count = scoped_events.where(event_type: %w[unsubscribed complaint]).count
+          replied_count = scoped_events.where(event_type: 'replied').select(:sales_email_message_id).distinct.count
+          bounce_count = scoped_events.where(event_type: 'bounce').select(:sales_email_message_id).distinct.count
+          failed_count = scoped_events.where(event_type: %w[reject failed]).select(:sales_email_message_id).distinct.count
+          unsubscribed_count = scoped_events.where(event_type: %w[unsubscribed complaint]).select(:sales_email_message_id).distinct.count
 
           base_delivered = delivered_count.positive? ? delivered_count.to_f : (sent_count.positive? ? sent_count.to_f : 1.0)
-          open_rate = ((unique_opens.to_f / base_delivered) * 100).round(1)
-          click_rate = ((unique_clicks.to_f / base_delivered) * 100).round(1)
+          open_rate = delivered_count.positive? || sent_count.positive? ? ((unique_opens.to_f / base_delivered) * 100).round(1) : 0.0
+          click_rate = delivered_count.positive? || sent_count.positive? ? ((unique_clicks.to_f / base_delivered) * 100).round(1) : 0.0
           bounce_rate = sent_count.positive? ? ((bounce_count.to_f / sent_count) * 100).round(1) : 0.0
           unsub_rate = sent_count.positive? ? ((unsubscribed_count.to_f / sent_count) * 100).round(1) : 0.0
 
@@ -221,7 +224,7 @@ module Api
           days_map = {}
           cur = trend_start.to_date
           while cur <= trend_end.to_date
-            days_map[cur] = { day: I18n.l(cur, format: '%a'), emails: 0, opens: 0, clicks: 0, replies: 0 }
+            days_map[cur] = { day: I18n.l(cur, format: '%a'), emails: 0, opens: 0, clicks: 0, replies: 0, whatsapp: 0, calls: 0 }
             cur += 1.day
           end
 
@@ -229,7 +232,7 @@ module Api
             d = day_ts.to_date
             next unless days_map[d]
 
-            if %w[sent provider_accepted queued delivered].include?(type)
+            if %w[sent provider_accepted].include?(type)
               days_map[d][:emails] += count
             elsif %w[open open_signal provider_open_signal].include?(type)
               days_map[d][:opens] += count
@@ -240,9 +243,25 @@ module Api
             end
           end
 
-          # Channel breakdown based on sales activity/events
+          # Channel activities from real sales activities
           activities = ::Sales::TenantScope.for(current_user).activities
-          scoped_activities = date_range ? activities.where(created_at: date_range) : activities
+          scoped_activities = date_range ? activities.where(occurred_at: date_range) : activities
+
+          daily_acts = scoped_activities.where(occurred_at: trend_start..trend_end)
+                                        .group("DATE_TRUNC('day', occurred_at)")
+                                        .group(:activity_type)
+                                        .count
+          daily_acts.each do |(day_ts, act_type), count|
+            d = day_ts.to_date
+            next unless days_map[d]
+
+            if %w[whatsapp message].include?(act_type)
+              days_map[d][:whatsapp] += count
+            elsif act_type == 'call'
+              days_map[d][:calls] += count
+            end
+          end
+
           email_act = scoped_activities.where(activity_type: 'email').count + sent_count
           call_act = scoped_activities.where(activity_type: 'call').count
           meeting_act = scoped_activities.where(activity_type: 'meeting').count
@@ -257,9 +276,7 @@ module Api
                                   { name: 'Reunião Presencial', value: ((meeting_act.to_f / total_acts) * 100).round, color: '#8b5cf6' }
                                 ]
                               else
-                                [
-                                  { name: 'E-mail Comercial', value: 100, color: '#3b82f6' }
-                                ]
+                                []
                               end
 
           render json: {
@@ -272,6 +289,7 @@ module Api
               click_rate: click_rate,
               replied: replied_count,
               bounces: bounce_count,
+              failed: failed_count,
               bounce_rate: bounce_rate,
               unsubscribed: unsubscribed_count,
               unsub_rate: unsub_rate
@@ -283,18 +301,38 @@ module Api
 
         private
 
+        def calculate_activity_metrics(date_range)
+          activities_scope = ::Sales::TenantScope.for(current_user).activities
+          scoped_activities = date_range ? activities_scope.where(occurred_at: date_range) : activities_scope
+          total_activities = scoped_activities.count
+          with_notes_count = scoped_activities.where.not(body: [nil, '']).count
+          ai_summarized_count = scoped_activities.where("metadata->>'ai_summary' IS NOT NULL").count
+
+          durations = scoped_activities.where.not(metadata: nil).pluck(:metadata).map { |m| m['duration_seconds'].to_i }.select(&:positive?)
+          avg_duration_seconds = durations.any? ? (durations.sum.to_f / durations.size).round : nil
+          total_duration_hours = durations.any? ? (durations.sum / 3600.0).round(1) : nil
+
+          days_in_period = if date_range
+                             [((date_range.end - date_range.begin) / 1.day).round, 1].max
+                           else
+                             30
+                           end
+          weeks_in_period = [days_in_period / 7.0, 1.0].max
+          avg_per_week = total_activities.positive? ? (total_activities / weeks_in_period).round(1) : 0.0
+
+          {
+            total_activities: total_activities,
+            with_notes_count: with_notes_count,
+            ai_summarized_count: ai_summarized_count,
+            avg_duration_seconds: avg_duration_seconds,
+            total_duration_hours: total_duration_hours,
+            avg_per_week: avg_per_week,
+            has_real_duration: durations.any?
+          }
+        end
+
         def parse_engagement_period(period)
-          now = Time.current
-          case period
-          when '7d'
-            7.days.ago.beginning_of_day..now.end_of_day
-          when '30d'
-            30.days.ago.beginning_of_day..now.end_of_day
-          when '90d'
-            90.days.ago.beginning_of_day..now.end_of_day
-          else
-            parse_period(period)
-          end
+          parse_period(period)
         end
 
         def parse_period(period)
@@ -310,8 +348,18 @@ module Api
             now.beginning_of_quarter..now.end_of_quarter
           when 'last_quarter'
             3.months.ago.beginning_of_quarter..3.months.ago.end_of_quarter
-          when 'ytd'
+          when 'ytd', 'this_year'
             now.beginning_of_year..now.end_of_year
+          when 'last_year'
+            1.year.ago.beginning_of_year..1.year.ago.end_of_year
+          when '7d'
+            7.days.ago.beginning_of_day..now.end_of_day
+          when '30d'
+            30.days.ago.beginning_of_day..now.end_of_day
+          when '90d'
+            90.days.ago.beginning_of_day..now.end_of_day
+          when '180d'
+            180.days.ago.beginning_of_day..now.end_of_day
           else
             nil
           end

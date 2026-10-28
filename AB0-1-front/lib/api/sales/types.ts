@@ -316,6 +316,15 @@ export interface ApiAnalytics {
     won_revenue_cents: number;
     win_rate: number;
   }>;
+  activity_metrics?: {
+    total_activities: number;
+    with_notes_count: number;
+    ai_summarized_count: number;
+    avg_duration_seconds: number | null;
+    total_duration_hours: number | null;
+    avg_per_week: number;
+    has_real_duration: boolean;
+  };
   email_metrics?: Record<'sent' | 'delivered' | 'open' | 'click' | 'replied' | 'bounce' | 'complaint', number>;
   stage_durations?: Array<{
     stage_id: number;

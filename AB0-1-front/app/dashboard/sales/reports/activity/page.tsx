@@ -32,11 +32,18 @@ export default function ActivityReportPage() {
   }, [loadData]);
 
   const teamPerf = analytics?.team_performance || [];
+  const actMetrics = analytics?.activity_metrics;
 
-  // Atividades simuladas/calculadas da equipe
-  const totalActivities = teamPerf.reduce((acc, t) => acc + t.total_deals, 0) || 12;
-  const avgDuration = '22m';
-  const activitiesPerWeek = (totalActivities / 4.2).toFixed(1);
+  const totalActivities = actMetrics?.total_activities ?? 0;
+  const aiSummarized = actMetrics?.ai_summarized_count ?? 0;
+  const withNote = actMetrics?.with_notes_count ?? 0;
+  const avgDuration = actMetrics?.has_real_duration && actMetrics?.avg_duration_seconds != null
+    ? `${Math.round(actMetrics.avg_duration_seconds / 60)}m`
+    : 'N/D';
+  const activitiesPerWeek = actMetrics?.avg_per_week != null ? actMetrics.avg_per_week.toFixed(1) : '0.0';
+  const totalDuration = actMetrics?.has_real_duration && actMetrics?.total_duration_hours != null
+    ? `${actMetrics.total_duration_hours}h`
+    : 'N/D';
 
   return (
     <SalesLayoutWrapper>
@@ -81,7 +88,7 @@ export default function ActivityReportPage() {
           </div>
         </div>
 
-        {/* 6 KPI Cards (Padrão exato do print 5 do Nutshell) */}
+        {/* 6 KPI Cards Reais (Padrão exato do print 5 do Nutshell) */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 rounded-xl shadow-xs">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">
@@ -97,7 +104,7 @@ export default function ActivityReportPage() {
               AI-summarized
             </span>
             <p className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
-              {Math.round(totalActivities * 0.4)}
+              {aiSummarized}
             </p>
           </div>
 
@@ -106,7 +113,7 @@ export default function ActivityReportPage() {
               With a note
             </span>
             <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
-              {Math.round(totalActivities * 0.85)}
+              {withNote}
             </p>
           </div>
 
@@ -114,7 +121,7 @@ export default function ActivityReportPage() {
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">
               Avg duration
             </span>
-            <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+            <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1" title={actMetrics?.has_real_duration ? 'Média calculada' : 'Duração não persistida nas atividades atuais'}>
               {avgDuration}
             </p>
           </div>
@@ -132,8 +139,8 @@ export default function ActivityReportPage() {
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">
               Total duration
             </span>
-            <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
-              {Math.round(totalActivities * 0.35)}h
+            <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1" title={actMetrics?.has_real_duration ? 'Total calculado' : 'Duração não persistida nas atividades atuais'}>
+              {totalDuration}
             </p>
           </div>
         </div>

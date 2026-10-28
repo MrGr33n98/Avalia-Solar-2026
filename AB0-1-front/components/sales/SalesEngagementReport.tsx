@@ -83,9 +83,7 @@ export default function SalesEngagementReport() {
     { day: 'Dom', emails: 0, opens: 0, clicks: 0, replies: 0 },
   ];
 
-  const channelBreakdown = data?.channels?.length ? data.channels : [
-    { name: 'E-mail Comercial', value: 100, color: '#3b82f6' },
-  ];
+  const channelBreakdown = data?.channels?.length ? data.channels : [];
 
   return (
     <SalesLayoutWrapper>
@@ -233,24 +231,33 @@ export default function SalesEngagementReport() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-5 pt-4 flex flex-col items-center justify-center h-72">
-                  <ResponsiveContainer width="100%" height="180px">
-                    <PieChart>
-                      <Pie data={channelBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={4} dataKey="value">
-                        {channelBreakdown.map((entry: { name: string; value: number; color: string }, index: number) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                  {channelBreakdown.length > 0 ? (
+                    <>
+                      <ResponsiveContainer width="100%" height="180px">
+                        <PieChart>
+                          <Pie data={channelBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={4} dataKey="value">
+                            {channelBreakdown.map((entry: { name: string; value: number; color: string }, index: number) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '12px' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="grid grid-cols-2 gap-2 w-full mt-2 text-[11px]">
+                        {channelBreakdown.map((item: { name: string; value: number; color: string }) => (
+                          <div key={item.name} className="flex items-center gap-1.5 truncate">
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                            <span className="text-slate-600 font-medium truncate">{item.name} ({item.value}%)</span>
+                          </div>
                         ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '8px', border: 'none', color: '#fff', fontSize: '12px' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="grid grid-cols-2 gap-2 w-full mt-2 text-[11px]">
-                    {channelBreakdown.map((item: { name: string; value: number; color: string }) => (
-                      <div key={item.name} className="flex items-center gap-1.5 truncate">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                        <span className="text-slate-600 font-medium truncate">{item.name} ({item.value}%)</span>
                       </div>
-                    ))}
-                  </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                      <p className="text-xs font-semibold text-slate-700">Sem dados de canais</p>
+                      <p className="text-[11px] text-slate-400 mt-1 max-w-[200px]">Nenhuma atividade ou envio registrado para este período.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

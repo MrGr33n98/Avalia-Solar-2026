@@ -214,16 +214,48 @@ export function NutshellReportCanvas({
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
-      const url = `${window.location.origin}${window.location.pathname}?type=${reportType}&granularity=${granularity}&measure=${measure}`;
+      const params = new URLSearchParams();
+      params.set('type', reportType);
+      params.set('granularity', granularity);
+      params.set('measure', measure);
+      if (segmentBy !== 'none') params.set('segment_by', segmentBy);
+      params.set('preset', datePreset);
+      if (dateRange.from) params.set('from', dateRange.from);
+      if (dateRange.to) params.set('to', dateRange.to);
+      if (activeFiltersCount > 0) {
+        try {
+          params.set('filters', JSON.stringify(filters));
+        } catch {
+          // ignora erro de serialização
+        }
+      }
+      const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
       navigator.clipboard?.writeText(url);
-      setSaveSuccessNotice('Link copiado para a área de transferência!');
-      setTimeout(() => setSaveSuccessNotice(null), 3000);
+      setSaveSuccessNotice('Link completo com filtros e período copiado para a área de transferência!');
+      setTimeout(() => setSaveSuccessNotice(null), 3500);
     }
   };
 
   const handleSave = () => {
-    setSaveSuccessNotice('Visualização de relatório salva com sucesso nos seus favoritos!');
-    setTimeout(() => setSaveSuccessNotice(null), 3000);
+    if (typeof window !== 'undefined') {
+      try {
+        const config = {
+          reportType,
+          granularity,
+          measure,
+          segmentBy,
+          datePreset,
+          dateRange,
+          filters,
+          savedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(`saved_nutshell_report_${reportType}`, JSON.stringify(config));
+        setSaveSuccessNotice('Visualização de relatório salva localmente neste navegador!');
+      } catch {
+        setSaveSuccessNotice('Erro ao salvar visualização local.');
+      }
+      setTimeout(() => setSaveSuccessNotice(null), 3500);
+    }
   };
 
   // Preset labels legíveis
