@@ -5,6 +5,7 @@ import { Mail, Plus, Trash2, CheckCircle2, Eye, Code, Sparkles } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import OrganizationSettingLayout from '@/components/sales/settings/OrganizationSettingLayout';
+import Link from 'next/link';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 
 type Signature = {
@@ -89,6 +90,15 @@ export default function EmailSettingsPage() {
         ]}
       >
         <div className="space-y-4 font-sans text-xs">
+          <div className="flex flex-col gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-sky-950">Contas de e-mail conectadas</p>
+              <p className="mt-0.5 text-xs text-sky-800">Conecte uma caixa Zoho existente com OAuth. Não altera DNS nem o envio AWS SES.</p>
+            </div>
+            <Link href="/dashboard/sales/settings/email/accounts" className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-sky-700 px-3 text-xs font-semibold text-white hover:bg-sky-800">
+              Gerenciar contas
+            </Link>
+          </div>
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <span className="font-semibold text-slate-800 text-sm flex items-center gap-1.5">
               <Mail className="w-4 h-4 text-sky-600" />
