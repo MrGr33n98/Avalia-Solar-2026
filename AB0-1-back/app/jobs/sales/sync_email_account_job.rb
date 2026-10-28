@@ -111,7 +111,7 @@ module Sales
 
         # Match with CRM entities
         target_email = direction == 'inbound' ? from_email : to_email
-        crm_match = EmailSync::CrmMessageMatcher.match(company_id: account.company_id, email_address: target_email)
+        crm_match = EmailSync::CRMMessageMatcher.match(company_id: account.company_id, email_address: target_email)
 
         # Update thread links if not set
         if thread.sales_contact_id.nil? && crm_match[:contact_id]

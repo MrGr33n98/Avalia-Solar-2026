@@ -5,7 +5,7 @@ require 'digest'
 
 module Sales
   module EmailSync
-    class OAuthStateService
+    class OauthStateService
       STATE_TTL = 10.minutes
       PREFIX = 'crm:zoho:oauth:state:'
 
@@ -41,5 +41,7 @@ module Sales
         "#{PREFIX}#{Digest::SHA256.hexdigest(raw_state)}"
       end
     end
+
+    OAuthStateService = OauthStateService
   end
 end

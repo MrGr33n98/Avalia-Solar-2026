@@ -222,5 +222,7 @@ module Sales
         end
       end
     end
+
+    ZohoAPIClient = ZohoApiClient
   end
 end

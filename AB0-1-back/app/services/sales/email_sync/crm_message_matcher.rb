@@ -2,7 +2,7 @@
 
 module Sales
   module EmailSync
-    class CrmMessageMatcher
+    class CRMMessageMatcher
       def self.match(company_id:, email_address:)
         return {} if email_address.blank?
 
@@ -59,5 +59,7 @@ module Sales
         {}
       end
     end
+
+    CrmMessageMatcher = CRMMessageMatcher
   end
 end
