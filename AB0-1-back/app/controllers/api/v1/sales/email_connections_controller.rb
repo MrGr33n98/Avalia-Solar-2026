@@ -10,8 +10,10 @@ module Api
     module Sales
       # Phase 1: connect an existing Zoho Mail account. No email is imported or sent here.
       class EmailConnectionsController < BaseController
-        before_action :authenticate_api_user, except: :zoho_callback
-        before_action :require_internal_sales, except: :zoho_callback
+        # BaseController registers these callbacks; the OAuth redirect has no browser session.
+        # A cryptographically random, expiring state is mandatory for this sole public action.
+        skip_before_action :authenticate_api_user, only: :zoho_callback
+        skip_before_action :require_internal_sales, only: :zoho_callback
 
         AUTH_HOSTS = {
           'us' => ['https://accounts.zoho.com', 'https://mail.zoho.com'],
