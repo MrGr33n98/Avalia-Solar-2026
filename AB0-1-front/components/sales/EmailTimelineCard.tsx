@@ -98,14 +98,28 @@ export default function EmailTimelineCard({ email, engagement, lifecycle }: Emai
             {email.preview}
           </p>
         )}
+        {email.delivery_status === 'failed' && email.error_message && (
+          <div className="mt-2 rounded-md bg-rose-50 border border-rose-200/90 p-2 text-[11px] text-rose-800 flex items-start gap-1.5">
+            <span className="font-bold shrink-0">Motivo da falha:</span>
+            <span className="break-words font-mono text-[10px] leading-relaxed text-rose-900">{email.error_message}</span>
+          </div>
+        )}
       </div>
 
       {/* Nutshell Engagement Metrics Bar: 📎 1   👁️ 9   💬 13 */}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5 text-xs text-slate-600">
         <div className="flex items-center gap-3.5 flex-wrap">
           {/* Status de entrega */}
-          <span className="text-slate-500 font-medium text-[11px]">
-            ✓ {deliveryLabels[email.delivery_status] || email.delivery_status}
+          <span
+            className={`font-semibold text-[11px] ${
+              email.delivery_status === 'failed'
+                ? 'text-rose-600'
+                : email.delivery_status === 'delivered' || email.delivery_status === 'sent'
+                ? 'text-emerald-700'
+                : 'text-slate-500'
+            }`}
+          >
+            {email.delivery_status === 'failed' ? '✕' : '✓'} {deliveryLabels[email.delivery_status] || email.delivery_status}
           </span>
 
           {/* Attachments */}
@@ -164,6 +178,11 @@ export default function EmailTimelineCard({ email, engagement, lifecycle }: Emai
           <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
             Status de Entrega: {deliveryLabels[email.delivery_status] || email.delivery_status}
           </div>
+          {email.error_message && (
+            <div className="mb-2 rounded bg-rose-100/70 p-1.5 font-mono text-[10px] text-rose-900 break-words">
+              <strong>Erro retornado:</strong> {email.error_message}
+            </div>
+          )}
           <ol className="space-y-1.5 border-l border-slate-200 pl-3 text-xs text-slate-600">
             {lifecycle.map((event, index) => (
               <li key={`${event.type}:${event.occurred_at}:${index}`} className="flex items-center gap-1.5 flex-wrap">

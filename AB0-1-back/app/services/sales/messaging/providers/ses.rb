@@ -61,8 +61,9 @@ module Sales
                 return Result.new(success?: false, error_code: 'SES_INVALID_RESPONSE', error_message: 'AWS SES não retornou message_id.')
               end
             rescue StandardError => e
-              Rails.logger.error({ event: 'sales_email_provider_send_failed', error_class: e.class.name }.to_json)
-              return Result.new(success?: false, error_code: 'SES_SEND_ERROR', error_message: e.class.name)
+              detailed_error = "#{e.class.name}: #{e.message}"
+              Rails.logger.error({ event: 'sales_email_provider_send_failed', error_class: e.class.name, message: e.message }.to_json)
+              return Result.new(success?: false, error_code: 'SES_SEND_ERROR', error_message: detailed_error)
             end
           else
             return Result.new(success?: false, error_code: 'SES_NOT_CONFIGURED', error_message: 'Credenciais AWS SES incompletas ou SDK não configurado.')
@@ -73,11 +74,12 @@ module Sales
             provider_message_id: provider_id
           )
         rescue StandardError => e
-          Rails.logger.error({ event: 'sales_email_provider_send_failed', error_class: e.class.name }.to_json)
+          detailed_error = "#{e.class.name}: #{e.message}"
+          Rails.logger.error({ event: 'sales_email_provider_send_failed', error_class: e.class.name, message: e.message }.to_json)
           Result.new(
             success?: false,
             error_code: 'SES_SEND_ERROR',
-            error_message: e.class.name
+            error_message: detailed_error
           )
         end
 

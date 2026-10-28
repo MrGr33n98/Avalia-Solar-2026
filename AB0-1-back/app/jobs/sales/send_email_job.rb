@@ -36,9 +36,77 @@ module Sales
         body_text: rendered[:body_text]
       )
 
-      # 2. Provider Dispatch (Real AWS SES / Provider driver)
-      provider = ::Sales::Messaging::Providers::Ses.new
-      result = provider.send_message(email)
+      # 2. Multi-Provider Dispatch (Zoho connected mailbox -> AWS SES -> Brevo fallback)
+      result = nil
+      dispatch_source = nil
+
+      # A. Se o vendedor possui conta de e-mail conectada (Zoho Mail - Opção A)
+      connected_account = ::Sales::EmailAccount.find_by(
+        user_id: email.sender_user_id,
+        status: 'connected'
+      ) if email.sender_user_id.present?
+
+      if connected_account.present? && connected_account.provider_account_id.present?
+        begin
+          token = ::Sales::EmailSync::TokenRefresher.refresh_if_needed!(connected_account)
+          if token
+            client = ::Sales::EmailSync::ZohoApiClient.new(connected_account.provider_region || 'us')
+            provider_resp = client.send_reply(
+              access_token: token,
+              account_id: connected_account.provider_account_id,
+              message_id: email.in_reply_to.presence || email.message_id,
+              body_text: email.body_text,
+              body_html: email.body_html,
+              subject: email.subject
+            )
+            provider_msg_id = provider_resp.is_a?(Hash) ? (provider_resp.dig('data', 'messageId') || provider_resp['messageId']) : nil
+            result = ::Sales::Messaging::Providers::Base::Result.new(
+              success?: true,
+              provider_message_id: provider_msg_id.presence || "zoho_#{SecureRandom.hex(12)}"
+            )
+            dispatch_source = 'zoho_mail_api'
+          end
+        rescue StandardError => e
+          Rails.logger.warn("[SendEmailJob] Envio via conta Zoho falhou: #{e.message}. Tentando SES/Brevo fallback.")
+        end
+      end
+
+      # B. Provedor Primário: AWS SES (quando não enviado via Zoho)
+      if result.nil? || !result.success?
+        access_key = ENV['AWS_ACCESS_KEY_ID'].to_s
+        spaces_key = ENV['SPACES_ACCESS_KEY_ID'].to_s
+        is_spaces_fallback = access_key.present? && spaces_key.present? && access_key == spaces_key
+
+        # Se as credenciais não forem espelho do Spaces da DigitalOcean
+        unless is_spaces_fallback
+          provider = ::Sales::Messaging::Providers::Ses.new
+          ses_result = provider.send_message(email)
+          if ses_result.success?
+            result = ses_result
+            dispatch_source = 'aws_ses_api'
+          else
+            Rails.logger.warn("[SendEmailJob] Envio SES falhou: #{ses_result.error_message}. Tentando Brevo fallback.")
+          end
+        end
+      end
+
+      # C. Fallback: Brevo API (SMTP) quando SES não configurado ou falhou
+      if (result.nil? || !result.success?) && ENV['BREVO_API_KEY'].present?
+        brevo_provider = ::Sales::Messaging::Providers::Brevo.new
+        brevo_result = brevo_provider.send_message(email)
+        if brevo_result.success?
+          result = brevo_result
+          dispatch_source = 'brevo_api'
+        else
+          result ||= brevo_result
+        end
+      end
+
+      # Se ainda sem resultado (ex: sem Brevo configurado), chama SES padrão para registrar o resultado
+      if result.nil?
+        result = ::Sales::Messaging::Providers::Ses.new.send_message(email)
+        dispatch_source = 'aws_ses_api'
+      end
 
       if result.success?
         now = Time.current
@@ -49,16 +117,18 @@ module Sales
           sent_at: now
         )
 
-        email.register_event!(event_type: 'provider_accepted', source: 'aws_ses_api',
+        email.register_event!(event_type: 'provider_accepted', source: dispatch_source || 'provider_api',
                               dedupe_key: "provider-accepted:#{result.provider_message_id}", occurred_at: now,
-                              payload: { provider_message_id: result.provider_message_id })
+                              payload: { provider_message_id: result.provider_message_id, source: dispatch_source })
 
         safely_advance_sequence(email)
       else
+        error_msg = result.error_message.presence || 'Falha no provedor de envio'
         email.update!(status: 'failed', delivery_status: 'failed',
-                      metadata: (email.metadata || {}).merge('error' => result.error_message))
-        email.register_event!(event_type: 'failed', source: 'aws_ses_api',
-                              dedupe_key: "failed:#{email.id}:#{email.updated_at.to_i}", occurred_at: Time.current)
+                      metadata: (email.metadata || {}).merge('error' => error_msg, 'provider' => dispatch_source))
+        email.register_event!(event_type: 'failed', source: dispatch_source || 'provider_api',
+                              dedupe_key: "failed:#{email.id}:#{email.updated_at.to_i}", occurred_at: Time.current,
+                              payload: { error: error_msg })
         safely_fail_sequence_step(email)
       end
     rescue ::Sales::Messaging::Renderer::EmailRenderError => e

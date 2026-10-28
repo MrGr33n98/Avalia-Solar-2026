@@ -13,6 +13,7 @@ export interface SalesTimelineEmail {
   to: string[];
   delivery_status: string;
   engagement_status: string;
+  error_message?: string | null;
 }
 
 export interface SalesEmailEngagement {

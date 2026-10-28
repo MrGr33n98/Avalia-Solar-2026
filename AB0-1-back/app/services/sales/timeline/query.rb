@@ -123,11 +123,13 @@ module Sales
 
       def email_details(email, direction)
         recipients = email.participants.select { |participant| participant.participant_type == 'to' }.map(&:email)
+        error_msg = email.metadata.is_a?(Hash) ? email.metadata['error'] : nil
         {
           id: email.id, direction: direction, subject: email.subject, preview: safe_preview(email),
           from: email.from_email, to: recipients.presence || [email.to_email],
           delivery_status: email.delivery_status.presence || email.status,
-          engagement_status: email.engagement_status.presence || 'none'
+          engagement_status: email.engagement_status.presence || 'none',
+          error_message: error_msg
         }
       end
 
