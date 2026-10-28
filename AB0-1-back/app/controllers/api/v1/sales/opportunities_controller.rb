@@ -9,7 +9,7 @@ module Api
         before_action :set_opportunity, only: %i[show update destroy timeline]
 
         def index
-          scope = scoped_opportunities.merge(::Sales::OpportunitiesQuery.call(params)).includes(:account, :stage, :primary_contact, :owner)
+          scope = scoped_opportunities.merge(::Sales::OpportunitiesQuery.call(params)).includes(:account, :stage, :primary_contact, :owner, :tags)
           page = [params[:page].to_i, 1].max
           per_page = [[params[:per_page].to_i, 50].max, 100].min
           total = scope.count
@@ -337,7 +337,7 @@ module Api
         end
 
         def set_opportunity
-          @opportunity = scoped_opportunities.includes(:account, :stage, :primary_contact, :pipeline).find(params[:id])
+          @opportunity = scoped_opportunities.includes(:account, :stage, :primary_contact, :pipeline, :tags).find(params[:id])
         end
 
         def resolve_pipeline
@@ -430,6 +430,9 @@ module Api
             next_activity_at: opportunity.next_activity_at,
             expected_close_date: opportunity.expected_close_date,
             priority: opportunity.priority,
+            tags: opportunity.tags.active.map do |t|
+              { id: t.id, name: t.name, slug: t.slug, color: t.color, entity_type: t.entity_type }
+            end,
             created_at: opportunity.created_at,
             updated_at: opportunity.updated_at
           }

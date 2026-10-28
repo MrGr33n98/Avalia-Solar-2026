@@ -360,6 +360,8 @@ export const salesApi = {
       method: 'POST',
       body: JSON.stringify({ taggable_type: taggableType, taggable_id: recordId }),
     });
+    clearSalesApiCache(`opp:${recordId}`);
+    clearSalesApiCache('leads');
   },
 
   async removeTag(
@@ -371,6 +373,8 @@ export const salesApi = {
       method: 'DELETE',
       body: JSON.stringify({ taggable_type: taggableType, taggable_id: recordId }),
     });
+    clearSalesApiCache(`opp:${recordId}`);
+    clearSalesApiCache('leads');
   },
 
   // Leads & Opportunities
@@ -554,10 +558,15 @@ export const salesApi = {
     return res.opportunity;
   },
 
-  async getOpportunity(id: number): Promise<ApiOpportunity> {
+  async getOpportunity(
+    id: number,
+    options: { force?: boolean } = {}
+  ): Promise<ApiOpportunity> {
     const cacheKey = `opp:${id}`;
-    const cached = getCached<ApiOpportunity>(cacheKey);
-    if (cached) return cached;
+    if (!options.force) {
+      const cached = getCached<ApiOpportunity>(cacheKey);
+      if (cached) return cached;
+    }
 
     const res = await request<{ opportunity: ApiOpportunity }>(`/api/v1/sales/opportunities/${id}`);
     if (res.opportunity) setCache(cacheKey, res.opportunity);

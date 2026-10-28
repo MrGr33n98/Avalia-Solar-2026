@@ -43,6 +43,7 @@ import CreateQuoteModal from '@/components/sales/create/CreateQuoteModal';
 import CreateTaskModal from '@/components/sales/create/CreateTaskModal';
 import SendEmailModal from '@/components/sales/create/SendEmailModal';
 import AttachCompanyPersonModal from '@/components/sales/create/AttachCompanyPersonModal';
+import OpportunityTagPicker from '@/components/sales/opportunities/OpportunityTagPicker';
 import { salesApi } from '@/lib/api/sales/client';
 import { subscribeSalesTimeline } from '@/lib/cable';
 
@@ -778,7 +779,14 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
                         </div>
                         <div className="pt-2 border-t border-slate-100">
                           <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Tags</span>
-                          <span className="text-sky-700 font-semibold cursor-pointer hover:underline">+ Add tags...</span>
+                          <OpportunityTagPicker
+                            opportunityId={opp.id}
+                            initialTags={opp.tags || []}
+                            onUpdated={() => {
+                              fetchOpportunityData(opp.id);
+                              onUpdated?.();
+                            }}
+                          />
                         </div>
                       </CardContent>
                     )}

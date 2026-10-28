@@ -29,22 +29,12 @@ export default function TagsPage() {
 
   const load = async () => {
     try {
+      setError(null);
       const data = await salesApi.getTags();
-      if (data.length === 0) {
-        setTags([
-          { id: 1, name: 'Alta Prioridade (Solar C&I)', slug: 'alta-prioridade', color: '#0284c7', entity_type: 'Opportunity', records_count: 14 },
-          { id: 2, name: 'Aguardando Parecer Técnico', slug: 'aguardando-parecer', color: '#d97706', entity_type: 'Opportunity', records_count: 8 },
-          { id: 3, name: 'Financiamento Aprovado', slug: 'financiamento-aprovado', color: '#059669', entity_type: 'Opportunity', records_count: 22 },
-        ]);
-      } else {
-        setTags(data);
-      }
-    } catch {
-      setTags([
-        { id: 1, name: 'Alta Prioridade (Solar C&I)', slug: 'alta-prioridade', color: '#0284c7', entity_type: 'Opportunity', records_count: 14 },
-        { id: 2, name: 'Aguardando Parecer Técnico', slug: 'aguardando-parecer', color: '#d97706', entity_type: 'Opportunity', records_count: 8 },
-        { id: 3, name: 'Financiamento Aprovado', slug: 'financiamento-aprovado', color: '#059669', entity_type: 'Opportunity', records_count: 22 },
-      ]);
+      setTags(data);
+    } catch (err: any) {
+      setError(err?.message || 'Erro ao carregar marcadores do servidor.');
+      setTags([]);
     }
   };
 
@@ -55,33 +45,23 @@ export default function TagsPage() {
   const create = async () => {
     if (!name.trim()) return;
     try {
+      setError(null);
       const tag = await salesApi.createTag({ name: name.trim(), color, entity_type: entityType });
       setTags((current) => [...current, tag].sort((a, b) => a.name.localeCompare(b.name)));
-    } catch {
-      setTags((current) => [
-        ...current,
-        {
-          id: Date.now(),
-          name: name.trim(),
-          slug: name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-          color,
-          entity_type: entityType,
-          records_count: 0,
-        },
-      ]);
-    } finally {
       setName('');
       setAdding(false);
-      setError(null);
+    } catch (err: any) {
+      setError(err?.message || 'Não foi possível salvar o marcador no banco de dados.');
     }
   };
 
   const archive = async (id: number) => {
     try {
+      setError(null);
       await salesApi.archiveTag(id);
       setTags((current) => current.filter((tag) => tag.id !== id));
-    } catch {
-      setTags((current) => current.filter((tag) => tag.id !== id));
+    } catch (err: any) {
+      setError(err?.message || 'Erro ao arquivar marcador.');
     }
   };
 

@@ -121,6 +121,7 @@ export interface ApiOpportunity {
   next_activity_at?: string | null;
   expected_close_date?: string | null;
   priority?: string | null;
+  tags?: ApiTag[];
   created_at?: string;
   updated_at?: string;
 }

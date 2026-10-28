@@ -52,20 +52,15 @@ module Api
           ::Sales::Tag.where(company_id: current_user.company_id)
         end
 
-        def scoped_taggable(tag)
+        def scoped_taggable(_tag)
+          tenant = ::Sales::TenantScope.for(current_user)
           case taggable_type
           when 'Opportunity', 'Lead'
-            scope = ::Sales::Opportunity.joins(:account)
-            return scope if current_user.admin?
-            scope.where(sales_accounts: { company_id: current_user.company_id })
+            tenant.opportunities
           when 'Account'
-            scope = ::Sales::Account.all
-            return scope if current_user.admin?
-            scope.where(company_id: current_user.company_id)
+            tenant.accounts
           when 'Contact'
-            scope = ::Sales::Contact.joins(:account)
-            return scope if current_user.admin?
-            scope.where(sales_accounts: { company_id: current_user.company_id })
+            tenant.contacts
           end
         end
 
