@@ -33,7 +33,7 @@ describe('OpportunityTagPicker component', () => {
   it('renders "+ Add tags..." when no tags are attached', () => {
     render(<OpportunityTagPicker opportunityId={123} initialTags={[]} />);
 
-    expect(screen.getByRole('button', { name: /\+ add tags\.\.\./i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add tags\.\.\./i })).toBeInTheDocument();
   });
 
   it('opens popover, loads tags from API and allows toggling a tag', async () => {
@@ -99,7 +99,7 @@ describe('OpportunityTagPicker component', () => {
     render(<OpportunityTagPicker opportunityId={123} initialTags={[]} onUpdated={onUpdated} />);
 
     // Open popover
-    await userEvent.click(screen.getByRole('button', { name: /\+ add tags\.\.\./i }));
+    await userEvent.click(screen.getByRole('button', { name: /add tags\.\.\./i }));
 
     const searchInput = await screen.findByPlaceholderText(/buscar ou criar marcador\.\.\./i);
     await userEvent.type(searchInput, 'Parecer Pendente');
@@ -125,7 +125,7 @@ describe('OpportunityTagPicker component', () => {
 
     render(<OpportunityTagPicker opportunityId={123} initialTags={[]} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /\+ add tags\.\.\./i }));
+    await userEvent.click(screen.getByRole('button', { name: /add tags\.\.\./i }));
 
     await waitFor(() => {
       expect(screen.getByText('Erro 500 no banco')).toBeInTheDocument();

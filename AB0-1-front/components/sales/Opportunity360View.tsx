@@ -98,7 +98,7 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
     try {
       // Parallel execution of all required APIs to eliminate waterfall latency
       const [data, fetchedPipelines, timelineResponse] = await Promise.all([
-        salesApi.getOpportunity(id),
+        salesApi.getOpportunity(id, { force: true }),
         salesApi.getPipelines(),
         salesApi.getOpportunityTimeline(id, { force: true }),
       ]);
