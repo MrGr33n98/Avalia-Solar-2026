@@ -26,6 +26,8 @@ import {
   ApiContactMethod,
   ContactMethodKind,
   UpsertContactMethodPayload,
+  ApiActivityReportResponse,
+  ActivityFilterCriteria,
 } from './types';
 export type { ApiContactMethod, ContactMethodKind, UpsertContactMethodPayload };
 import type { SalesTimelineResponse } from './timeline-types';
@@ -912,6 +914,27 @@ export const salesApi = {
     if (params.filters) appendFilterCriteriaParams(query, params.filters);
     const qs = query.toString();
     return await request<NutshellReportResponse>(`/api/v1/sales/reports/nutshell${qs ? `?${qs}` : ''}`);
+  },
+
+  async getActivityReport(params: ActivityFilterCriteria = {}): Promise<ApiActivityReportResponse> {
+    const query = new URLSearchParams();
+    if (params.from) query.set('from', params.from);
+    if (params.to) query.set('to', params.to);
+    if (params.granularity) query.set('granularity', params.granularity);
+    if (params.segment_by) query.set('segment_by', params.segment_by);
+    if (params.include_emails) query.set('include_emails', 'true');
+    if (params.include_notes) query.set('include_notes', 'true');
+    if (params.types?.length) {
+      params.types.forEach((t) => query.append('types[]', t));
+    }
+    if (params.actor_ids?.length) {
+      params.actor_ids.forEach((id) => query.append('actor_ids[]', id.toString()));
+    }
+    if (params.log_statuses?.length) {
+      params.log_statuses.forEach((s) => query.append('log_statuses[]', s));
+    }
+    const qs = query.toString();
+    return await request<ApiActivityReportResponse>(`/api/v1/sales/reports/activity${qs ? `?${qs}` : ''}`);
   },
 
   async getForecast(params: Record<string, string> = {}): Promise<any> {

@@ -389,6 +389,82 @@ export interface ApiAnalytics {
   };
 }
 
+export interface ActivityFilterCriteria {
+  from?: string;
+  to?: string;
+  granularity?: 'day' | 'week' | 'month' | 'quarter' | 'year';
+  types?: string[];
+  actor_ids?: number[];
+  log_statuses?: string[];
+  include_emails?: boolean;
+  include_notes?: boolean;
+  segment_by?: 'type' | 'actor' | 'status';
+}
+
+export interface ApiActivityReportResponse {
+  period: {
+    from: string;
+    to: string;
+    granularity: 'day' | 'week' | 'month' | 'quarter' | 'year';
+  };
+  kpis: {
+    total_activities: number;
+    ai_summarized: number;
+    with_notes: number;
+    avg_duration_seconds: number | null;
+    total_duration_hours: number | null;
+    avg_per_week: number;
+    has_real_duration: boolean;
+  };
+  series: Array<{
+    date: string;
+    total: number;
+    [key: string]: string | number;
+  }>;
+  by_actor: Array<{
+    id: number;
+    name: string;
+    email: string;
+    total_activities: number;
+    calls: number;
+    meetings: number;
+    emails: number;
+    notes: number;
+    tasks: number;
+    total_duration_seconds: number;
+  }>;
+  by_type: Array<{
+    type: string;
+    name: string;
+    count: number;
+    percentage: number;
+    color: string;
+  }>;
+  recent_activities: Array<{
+    id: number;
+    activity_type: string;
+    direction?: string;
+    subject: string;
+    occurred_at: string;
+    actor?: { id: number; name: string } | null;
+    account?: { id: number; name: string } | null;
+    contact?: { id: number; name: string } | null;
+    opportunity?: { id: number; name: string } | null;
+    duration_seconds?: number | null;
+    log_status?: string;
+  }>;
+  meta: {
+    filters: {
+      types: string[];
+      actor_ids: number[];
+      log_statuses: string[];
+      include_emails: boolean;
+      include_notes: boolean;
+      segment_by: string;
+    };
+  };
+}
+
 export type NutshellReportType = 'sales' | 'forecast' | 'new_leads';
 export type NutshellGranularity = 'day' | 'week' | 'month' | 'quarter' | 'year';
 export type NutshellMeasure = 'value' | 'quantity';

@@ -70,6 +70,8 @@ Rails.application.routes.draw do
         get 'attribution', to: 'sales/attribution#index'
         get 'forecast', to: 'sales/forecast#index'
         get 'reports/nutshell', to: 'sales/nutshell_reports#index'
+        get 'reports/activity', to: 'sales/activity_reports#index'
+        get 'reports/activity/export', to: 'sales/activity_reports#export'
         get 'reports/snapshots', to: 'sales/snapshots#index'
         get 'filters/options', to: 'sales/filter_options#index'
         post 'companies/:company_id/account', to: 'sales/account_links#create'

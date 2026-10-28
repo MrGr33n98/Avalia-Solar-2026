@@ -257,23 +257,19 @@ export default function ChatWidget() {
   }, [clearSession, setIsOpen]);
 
   const handleToggle = () => {
-    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches) {
-      if (isOpen) {
-        setIsOpen(false);
-        track('ai_chat_closed', { surface: 'mobile' });
-        return;
-      }
-      setShowInviteBubble(false);
-      setShowCompactHelp(false);
-      setIsOpen(true);
-      track('ai_chat_opened', { surface: 'mobile' });
+    const isSmallScreen = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+    const surface = isSmallScreen ? 'mobile' : 'desktop';
+
+    if (isOpen) {
+      setIsOpen(false);
+      track('ai_chat_closed', { surface, widget_id: 'mobivolt' });
       return;
     }
 
-    if (!isOpen) {
-      setShowInviteBubble(false);
-    }
-    setIsOpen(!isOpen);
+    setShowInviteBubble(false);
+    setShowCompactHelp(false);
+    setIsOpen(true);
+    track('ai_chat_opened', { surface, widget_id: 'mobivolt' });
   };
 
   const handleSend = (e: React.FormEvent) => {
