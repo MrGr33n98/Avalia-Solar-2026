@@ -217,6 +217,23 @@ export function appendFilterCriteriaParams(query: URLSearchParams, filters?: Nut
     filters.outcome.selectedIds.forEach((id) => query.append(key, String(id)));
   }
 
+  // Status
+  if (filters.status && filters.status.selectedIds.length > 0) {
+    const key = filters.status.operator === 'is_not' ? 'status_not[]' : 'status_in[]';
+    filters.status.selectedIds.forEach((id) => query.append(key, String(id)));
+  }
+
+  // Stage
+  if (filters.stage && filters.stage.selectedIds.length > 0) {
+    const key = filters.stage.operator === 'is_not' ? 'stage_id_not[]' : 'stage_id[]';
+    filters.stage.selectedIds.forEach((id) => query.append(key, String(id)));
+  }
+
+  // Priority
+  if (filters.priority && filters.priority.selectedIds.length > 0) {
+    filters.priority.selectedIds.forEach((id) => query.append('priority[]', String(id)));
+  }
+
   // Pipeline
   if (filters.pipeline && filters.pipeline.selectedIds.length > 0) {
     filters.pipeline.selectedIds.forEach((id) => query.append('pipeline_id', String(id)));

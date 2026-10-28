@@ -151,6 +151,7 @@ export const NutshellFilterSidebar: React.FC<NutshellFilterSidebarProps> = ({
   const isFilterActive = (key: keyof NutshellFilterCriteria): boolean => {
     const val = filters[key];
     if (!val) return false;
+    if (typeof val === 'string') return val.trim().length > 0;
     if ('selectedIds' in val) return Array.isArray(val.selectedIds) && val.selectedIds.length > 0;
     if ('min' in val || 'max' in val) return val.min !== undefined || val.max !== undefined;
     if ('from' in val || 'to' in val) return Boolean(val.from || val.to);
@@ -161,6 +162,7 @@ export const NutshellFilterSidebar: React.FC<NutshellFilterSidebarProps> = ({
   const getActiveFilterLabelCount = (key: keyof NutshellFilterCriteria): number | null => {
     const val = filters[key];
     if (!val) return null;
+    if (typeof val === 'string') return val.trim().length > 0 ? 1 : null;
     if ('selectedIds' in val && Array.isArray(val.selectedIds) && val.selectedIds.length > 0) {
       return val.selectedIds.length;
     }

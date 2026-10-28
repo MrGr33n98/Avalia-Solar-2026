@@ -4,22 +4,15 @@ import { useState, useTransition, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  BarChart3,
   Check,
   ChevronDown,
   Download,
-  Filter,
-  Kanban,
   Layers,
-  LayoutList,
   MapPin,
   Plus,
-  RefreshCw,
-  Search,
   Target,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +30,7 @@ import LeadsAnalyticsView from './views/LeadsAnalyticsView';
 import { SalesLead, NutshellFilterCriteria } from '@/lib/api/sales/types';
 import { salesKeys } from '@/lib/api/sales/queryKeys';
 import { useSalesPipelines } from '@/lib/api/sales/queries';
-import NutshellFilterSidebar from '@/components/sales/filters/NutshellFilterSidebar';
+import NutshellFilterBar from '@/components/sales/filters/NutshellFilterBar';
 
 export default function LeadsWorkspace() {
   const router = useRouter();
@@ -56,7 +49,6 @@ export default function LeadsWorkspace() {
   const [createPipelineModalOpen, setCreatePipelineModalOpen] = useState(false);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | undefined>();
   const [boardRefreshVersion, setBoardRefreshVersion] = useState(0);
-  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
   const [nutshellFilters, setNutshellFilters] = useState<NutshellFilterCriteria>({});
   const queryClient = useQueryClient();
 
@@ -65,18 +57,6 @@ export default function LeadsWorkspace() {
     if (selectedPipelineId) return pipelines.find((p) => p.id === selectedPipelineId);
     return pipelines.find((p) => p.active) || pipelines[0];
   }, [pipelines, selectedPipelineId]);
-
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    Object.values(nutshellFilters).forEach((val) => {
-      if (!val) return;
-      if ('selectedIds' in val && val.selectedIds.length > 0) count++;
-      else if ('min' in val && (val.min !== undefined || val.max !== undefined)) count++;
-      else if ('from' in val && (val.from || val.to)) count++;
-      else if ('days' in val && val.days) count++;
-    });
-    return count;
-  }, [nutshellFilters]);
 
   const handleViewChange = (nextView: 'list' | 'kanban' | 'map' | 'analytics') => {
     setView(nextView);
@@ -207,159 +187,37 @@ export default function LeadsWorkspace() {
             </div>
           </div>
 
-          {/* Row 2 — View Switcher Controls with internal horizontal scroll on mobile */}
-          <div className="min-w-0 border-t border-slate-100 pt-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-slate-200/60 bg-slate-100 p-1 [scrollbar-width:none]">
-                <button
-                  onClick={() => handleViewChange('kanban')}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                    view === 'kanban'
-                      ? 'bg-white text-indigo-900 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                  aria-pressed={view === 'kanban'}
-                >
-                  <Kanban className="h-3.5 w-3.5" />
-                  <span>Kanban</span>
-                </button>
-                <button
-                  onClick={() => handleViewChange('list')}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                    view === 'list'
-                      ? 'bg-white text-indigo-900 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                  aria-pressed={view === 'list'}
-                >
-                  <LayoutList className="h-3.5 w-3.5" />
-                  <span>Lista</span>
-                </button>
-                <button
-                  onClick={() => handleViewChange('map')}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                    view === 'map'
-                      ? 'bg-white text-indigo-900 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                  aria-pressed={view === 'map'}
-                >
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>Mapa</span>
-                </button>
-                <button
-                  onClick={() => handleViewChange('analytics')}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                    view === 'analytics'
-                      ? 'bg-white text-indigo-900 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                  aria-pressed={view === 'analytics'}
-                >
-                  <BarChart3 className="h-3.5 w-3.5" />
-                  <span>Métricas</span>
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Secondary Saved Views Quick Navigation Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 sm:px-4 sm:py-2.5 rounded-2xl border border-slate-200/80 shadow-2xs min-w-0">
-          <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] py-0.5 text-xs min-w-0">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">
-              Filtros:
-            </span>
-            {[
-              { id: 'all', label: 'Todos os Leads' },
-              { id: 'my_leads', label: 'Meus Leads' },
-              { id: 'hot', label: 'Leads Quentes 🔥' },
-              { id: 'closing_this_week', label: 'Fechando esta Semana' },
-              { id: 'unassigned', label: 'Sem Responsável' },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setActiveFilter(f.id)}
-                className={`shrink-0 px-3 py-1 rounded-xl font-semibold transition-all text-xs ${
-                  activeFilter === f.id
-                    ? 'bg-indigo-900 text-white shadow-2xs font-bold'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/70'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto min-w-0 shrink-0">
-            <div className="relative flex-1 sm:w-64 min-w-0">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-              <Input
-                placeholder="Buscar lead por nome ou empresa..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-8 pl-8 text-xs border-slate-200 rounded-lg w-full bg-slate-50 focus:bg-white"
-              />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
-              className={`h-8 gap-1.5 text-xs font-semibold shrink-0 transition-colors ${
-                isFilterSidebarOpen || activeFiltersCount > 0
-                  ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-2xs'
-                  : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <Filter
-                className={`w-3.5 h-3.5 ${
-                  isFilterSidebarOpen || activeFiltersCount > 0 ? 'text-sky-600' : 'text-slate-400'
-                }`}
-              />
-              <span>Filtros</span>
-              {activeFiltersCount > 0 && (
-                <span className="rounded-full bg-sky-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
-                setBoardRefreshVersion((current) => current + 1);
-              }}
-              className="h-8 w-8 p-0 text-slate-500 shrink-0"
-              aria-label="Atualizar dados"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
+        {/* Barra de Filtros Horizontal + Menu Cascata [+] (IBM Carbon Style) */}
+        <NutshellFilterBar
+          filters={nutshellFilters}
+          onChange={setNutshellFilters}
+          searchQuery={search}
+          onSearchChange={setSearch}
+          view={view}
+          onViewChange={handleViewChange}
+          activePipelineName={activePipeline?.name}
+          onClearAll={() => {
+            setNutshellFilters({});
+            setSearch('');
+            setActiveFilter('all');
+          }}
+        />
 
         {/* Main Leads Workspace View Container */}
         {view === 'kanban' || view === 'list' ? (
-          <div className="relative flex w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
-            <NutshellFilterSidebar
-              isOpen={isFilterSidebarOpen}
-              onClose={() => setIsFilterSidebarOpen(false)}
-              filters={nutshellFilters}
-              onChange={setNutshellFilters}
+          <div className="relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs p-1">
+            <SalesCommandCenter
+              hideLayout
+              pipelineOnly
+              pipelineId={selectedPipelineId}
+              refreshVersion={boardRefreshVersion}
+              initialView={view === 'list' ? 'table' : 'kanban'}
+              searchQuery={search}
+              activeQuickFilter={activeFilter}
+              customFilters={nutshellFilters}
             />
-            <div className="flex-1 overflow-x-hidden p-1">
-              <SalesCommandCenter
-                hideLayout
-                pipelineOnly
-                pipelineId={selectedPipelineId}
-                refreshVersion={boardRefreshVersion}
-                initialView={view === 'list' ? 'table' : 'kanban'}
-                searchQuery={search}
-                activeQuickFilter={activeFilter}
-                customFilters={nutshellFilters}
-              />
-            </div>
           </div>
         ) : view === 'map' ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-slate-500 space-y-2">

@@ -417,12 +417,16 @@ export interface RangeCriterion {
 
 export interface NutshellFilterCriteria {
   assignee?: CriterionSelection;
-  closeDate?: RangeCriterion;
-  lastContacted?: RangeCriterion;
-  outcome?: CriterionSelection;
+  status?: CriterionSelection;
   pipeline?: CriterionSelection;
-  products?: CriterionSelection;
+  priority?: CriterionSelection;
+  closeDate?: RangeCriterion;
+  createdVia?: CriterionSelection;
+  lastContacted?: RangeCriterion;
+  openDate?: RangeCriterion;
+  outcome?: CriterionSelection;
   sources?: CriterionSelection;
+  stage?: CriterionSelection;
   tags?: CriterionSelection;
   value?: RangeCriterion;
   tickets?: RangeCriterion;
@@ -431,6 +435,13 @@ export interface NutshellFilterCriteria {
   channels?: CriterionSelection;
   companies?: CriterionSelection;
   competitors?: CriterionSelection;
+  confidence?: RangeCriterion;
+  createdBy?: CriterionSelection;
+  leadName?: string;
+  market?: CriterionSelection;
+  number?: string;
+  products?: CriterionSelection;
+  watchedBy?: CriterionSelection;
 }
 
 // -------------------------------------------------------------
