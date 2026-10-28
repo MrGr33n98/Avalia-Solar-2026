@@ -8,7 +8,7 @@ module Sales
 
     EVENT_TYPES = %w[queued sent provider_accepted delivered open open_signal provider_open_signal click
                      provider_click_signal replied bounce complaint reject delivery_delay unsubscribed failed].freeze
-    SOURCES = %w[sales_crm aws_ses_sns aws_ses_api avalia_pixel avalia_link inbound_email unsubscribe legacy].freeze
+    SOURCES = %w[sales_crm aws_ses_sns aws_ses_api zoho_mail_api brevo_api provider_api avalia_pixel avalia_link inbound_email unsubscribe legacy].freeze
     SIGNAL_CLASSES = %w[human_likely proxy bot scanner unknown].freeze
 
     validates :event_type, inclusion: { in: EVENT_TYPES }

@@ -50,14 +50,28 @@ module Sales
           token = ::Sales::EmailSync::TokenRefresher.refresh_if_needed!(connected_account)
           if token
             client = ::Sales::EmailSync::ZohoApiClient.new(connected_account.provider_region || 'us')
-            provider_resp = client.send_reply(
-              access_token: token,
-              account_id: connected_account.provider_account_id,
-              message_id: email.in_reply_to.presence || email.message_id,
-              body_text: email.body_text,
-              body_html: email.body_html,
-              subject: email.subject
-            )
+            provider_resp = if email.in_reply_to.present?
+                              client.send_reply(
+                                access_token: token,
+                                account_id: connected_account.provider_account_id,
+                                message_id: email.in_reply_to,
+                                body_text: email.body_text,
+                                body_html: email.body_html,
+                                subject: email.subject
+                              )
+                            else
+                              client.send_mail(
+                                access_token: token,
+                                account_id: connected_account.provider_account_id,
+                                from: connected_account.email,
+                                to: email.to_email,
+                                subject: email.subject,
+                                body_text: email.body_text,
+                                body_html: email.body_html,
+                                cc: email.cc,
+                                bcc: email.bcc
+                              )
+                            end
             provider_msg_id = provider_resp.is_a?(Hash) ? (provider_resp.dig('data', 'messageId') || provider_resp['messageId']) : nil
             result = ::Sales::Messaging::Providers::Base::Result.new(
               success?: true,
@@ -113,21 +127,38 @@ module Sales
           status: 'sent',
           delivery_status: 'sent',
           provider_message_id: result.provider_message_id,
-          sent_at: now
+          sent_at: now,
+          metadata: (email.metadata || {}).except('error').merge('provider' => dispatch_source)
         )
 
-        email.register_event!(event_type: 'provider_accepted', source: dispatch_source || 'provider_api',
-                              dedupe_key: "provider-accepted:#{result.provider_message_id}", occurred_at: now,
-                              payload: { provider_message_id: result.provider_message_id, source: dispatch_source })
+        begin
+          email.register_event!(
+            event_type: 'provider_accepted',
+            source: dispatch_source || 'legacy',
+            dedupe_key: "provider-accepted:#{result.provider_message_id}",
+            occurred_at: now,
+            payload: { provider_message_id: result.provider_message_id, source: dispatch_source }
+          )
+        rescue StandardError => ev_err
+          Rails.logger.warn("[SendEmailJob] Falha ao registrar evento de envio: #{ev_err.message}")
+        end
 
         safely_advance_sequence(email)
       else
         error_msg = result.error_message.presence || 'Falha no provedor de envio'
         email.update!(status: 'failed', delivery_status: 'failed',
                       metadata: (email.metadata || {}).merge('error' => error_msg, 'provider' => dispatch_source))
-        email.register_event!(event_type: 'failed', source: dispatch_source || 'provider_api',
-                              dedupe_key: "failed:#{email.id}:#{email.updated_at.to_i}", occurred_at: Time.current,
-                              payload: { error: error_msg })
+        begin
+          email.register_event!(
+            event_type: 'failed',
+            source: dispatch_source || 'legacy',
+            dedupe_key: "failed:#{email.id}:#{email.updated_at.to_i}",
+            occurred_at: Time.current,
+            payload: { error: error_msg }
+          )
+        rescue StandardError => ev_err
+          Rails.logger.warn("[SendEmailJob] Falha ao registrar evento de falha: #{ev_err.message}")
+        end
         safely_fail_sequence_step(email)
       end
     rescue ::Sales::Messaging::Renderer::EmailRenderError => e
@@ -137,9 +168,11 @@ module Sales
                      metadata: (email.metadata || {}).merge('error' => e.class.name))
       safely_fail_sequence_step(email)
     rescue StandardError => e
-      email&.update!(status: 'failed', delivery_status: 'failed',
-                     metadata: (email.metadata || {}).merge('error' => e.class.name))
-      safely_fail_sequence_step(email)
+      unless result&.success?
+        email&.update!(status: 'failed', delivery_status: 'failed',
+                       metadata: (email.metadata || {}).merge('error' => e.class.name))
+        safely_fail_sequence_step(email)
+      end
       raise e
     end
 

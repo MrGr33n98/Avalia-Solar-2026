@@ -165,6 +165,22 @@ module Sales
         execute_get(uri, access_token)
       end
 
+      # Send new email message
+      def send_mail(access_token:, account_id:, to:, subject:, body_text:, from: nil, body_html: nil, cc: nil, bcc: nil)
+        uri = URI("#{mail_host}/api/accounts/#{account_id}/messages")
+        params = {
+          toAddress: to,
+          subject: subject,
+          content: body_html.presence || body_text,
+          mailFormat: body_html.present? ? 'html' : 'plaintext'
+        }
+        params[:fromAddress] = from if from.present?
+        params[:ccAddress] = cc if cc.present?
+        params[:bccAddress] = bcc if bcc.present?
+
+        execute_post_json(uri, params, access_token)
+      end
+
       # Reply to existing email message
       def send_reply(access_token:, account_id:, message_id:, body_text:, body_html: nil, subject: nil)
         uri = URI("#{mail_host}/api/accounts/#{account_id}/messages/#{message_id}/reply")
@@ -176,6 +192,7 @@ module Sales
 
         execute_post_json(uri, params, access_token)
       end
+
 
       private
 
