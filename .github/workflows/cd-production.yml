@@ -139,7 +139,7 @@ jobs:
 
   zeitwerk-check:
     name: Zeitwerk & Boot Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     services:
       postgres:
@@ -170,7 +170,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: '3.2.2'
           bundler-cache: true
           working-directory: ./AB0-1-back
 
@@ -189,7 +189,7 @@ jobs:
   ranking-gate:
     name: Ranking Performance Gate
     needs: [zeitwerk-check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       postgres:
@@ -220,7 +220,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: '3.2.2'
           bundler-cache: true
           working-directory: ./AB0-1-back
 
