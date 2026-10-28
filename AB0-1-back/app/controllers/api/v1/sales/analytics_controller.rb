@@ -46,19 +46,57 @@ module Api
           pipeline_opps = target_pipeline ? tenant_opps.where(sales_pipeline_id: target_pipeline.id) : tenant_opps
 
           prev_stage_count = nil
-          funnel = stages.map do |stage|
+          stages_arr = stages.to_a
+          funnel = stages_arr.map.with_index do |stage, idx|
             stage_opps = pipeline_opps.where(sales_stage_id: stage.id)
             cnt = stage_opps.count
             val_cents = stage_opps.sum(:value_cents) || 0
 
-            pass_rate = if prev_stage_count.nil? || prev_stage_count.zero?
-                          100.0
-                        else
+            # Already vs Remain vs Added
+            period_start = date_range ? date_range.first : 30.days.ago
+            already_cnt = stage_opps.where('sales_opportunities.created_at < ?', period_start).count
+            remain_cnt = stage_opps.where(status: 'open').count
+            added_cnt = stage_opps.where('sales_opportunities.created_at >= ?', period_start).count
+
+            # Average time in stage
+            avg_days = if cnt.positive?
+                         days_arr = stage_opps.pluck(:created_at, :updated_at).map do |cr, up|
+                           [((up || Time.current) - cr) / 1.day, 0.5].max
+                         end
+                         (days_arr.sum / days_arr.size).round(1)
+                       else
+                         0.0
+                       end
+
+            # Advanced to subsequent stages
+            next_stage = stages_arr[idx + 1]
+            advanced_cnt = if next_stage
+                             hist_cnt = ::Sales::StageHistory.where(
+                               sales_opportunity_id: pipeline_opps.select(:id),
+                               from_stage_id: stage.id,
+                               to_stage_id: next_stage.id
+                             ).count
+                             hist_cnt.positive? ? hist_cnt : [pipeline_opps.where(sales_stage_id: next_stage.id).count, cnt].min
+                           else
+                             0
+                           end
+
+            pass_rate = if cnt.positive? && next_stage
+                          ((advanced_cnt.to_f / cnt) * 100).round(1)
+                        elsif prev_stage_count && prev_stage_count.positive?
                           ((cnt.to_f / prev_stage_count) * 100).round(1)
+                        else
+                          100.0
                         end
             pass_rate = [pass_rate, 100.0].min
             drop_rate = (100.0 - pass_rate).round(1)
             prev_stage_count = cnt if cnt.positive?
+
+            # Stage outcomes
+            won_cnt = stage_opps.where(status: 'won').count
+            lost_cnt = stage_opps.where(status: 'lost').count
+            cancelled_cnt = stage_opps.where(status: 'cancelled').count
+            closed_cnt = won_cnt + lost_cnt + cancelled_cnt
 
             {
               id: stage.id,
@@ -68,7 +106,21 @@ module Api
               valor: (val_cents / 100.0).round,
               value_cents: val_cents,
               conversion_rate_from_prev: pass_rate,
-              drop_off_rate: drop_rate
+              drop_off_rate: drop_rate,
+              already_count: already_cnt,
+              remain_count: remain_cnt,
+              added_count: added_cnt,
+              average_time_days: avg_days,
+              advanced_count: advanced_cnt,
+              conversion_rate: pass_rate,
+              closed_count: closed_cnt,
+              closed_rate: cnt.positive? ? ((closed_cnt.to_f / cnt) * 100).round(1) : 0.0,
+              won_count: won_cnt,
+              won_rate: cnt.positive? ? ((won_cnt.to_f / cnt) * 100).round(1) : 0.0,
+              lost_count: lost_cnt,
+              lost_rate: cnt.positive? ? ((lost_cnt.to_f / cnt) * 100).round(1) : 0.0,
+              cancelled_count: cancelled_cnt,
+              cancelled_rate: cnt.positive? ? ((cancelled_cnt.to_f / cnt) * 100).round(1) : 0.0
             }
           end
 
