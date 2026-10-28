@@ -2,28 +2,14 @@
 
 import { useCallback, useState } from 'react';
 import {
-  Activity,
   AlertCircle,
   Briefcase,
   Building2,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Eye,
-  Globe,
   Linkedin,
   Mail,
-  MapPin,
   MessageSquare,
-  Phone,
-  PhoneCall,
-  Plus,
   RotateCw,
-  ShieldCheck,
-  Sparkles,
   User,
-  UserCheck,
-  Users,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -89,11 +75,13 @@ export default function Contact360View({
   contactName = 'Contato Comercial',
   jobTitle = 'Decisor Comercial',
   accountName = 'Empresa Prospect',
+  trigger,
 }: {
   contactId?: number;
   contactName?: string;
   jobTitle?: string;
   accountName?: string;
+  trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -143,9 +131,11 @@ export default function Contact360View({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-blue-900 hover:bg-blue-50">
-          <User className="mr-1 h-3.5 w-3.5 text-blue-700" /> Perfil 360°
-        </Button>
+        {trigger || (
+          <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-blue-900 hover:bg-blue-50">
+            <User className="mr-1 h-3.5 w-3.5 text-blue-700" /> Perfil 360°
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white border-slate-200 p-6">
         <DialogHeader className="border-b border-slate-100 pb-4">

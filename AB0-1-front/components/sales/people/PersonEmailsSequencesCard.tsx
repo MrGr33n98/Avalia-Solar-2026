@@ -26,24 +26,9 @@ export default function PersonEmailsSequencesCard({
 }: PersonEmailsSequencesCardProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
 
-  // If no sequences are provided, mock a realistic solar cadence or empty state
-  const mockSequences: SequenceItem[] =
-    sequences.length > 0
-      ? sequences
-      : [
-          {
-            id: 'seq-1',
-            name: 'Cadência Solar: Qualificação & Estudo Energético',
-            status: 'active',
-            current_step: 2,
-            total_steps: 4,
-            next_step_at: 'Amanhã às 09:30',
-            enrolled_at: 'Ontem',
-          },
-        ];
-
-  const activeSequences = mockSequences.filter((s) => s.status === 'active' || s.status === 'paused');
-  const completedSequences = mockSequences.filter((s) => s.status === 'completed');
+  // Zero-mock policy: only display real active or completed sequences
+  const activeSequences = sequences.filter((s) => s.status === 'active' || s.status === 'paused');
+  const completedSequences = sequences.filter((s) => s.status === 'completed');
 
   const currentList = activeTab === 'active' ? activeSequences : completedSequences;
 

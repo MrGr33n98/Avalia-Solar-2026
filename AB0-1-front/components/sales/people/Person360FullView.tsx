@@ -39,6 +39,7 @@ interface ContactDetail {
   created_via?: string;
   account_city?: string | null;
   account_state?: string | null;
+  sales_account_id?: number | null;
   account?: {
     id: number;
     name: string;
@@ -403,6 +404,8 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
         <CreateTaskModal
           open={activeModal === 'task'}
           onClose={() => setActiveModal(null)}
+          accountId={contact.account?.id || contact.sales_account_id || contact.employments?.find((e) => e.is_primary)?.sales_account_id || undefined}
+          contactId={contact.id}
           onSuccess={fetchPersonData}
         />
 

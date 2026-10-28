@@ -305,6 +305,16 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/sales/contacts/:id',
+        destination: '/dashboard/sales/people/:id',
+        permanent: false,
+      },
+      {
+        source: '/sales/accounts/:id',
+        destination: '/dashboard/sales/accounts/:id',
+        permanent: false,
+      },
+      {
         source: '/entrar',
         destination: '/login',
         permanent: true,

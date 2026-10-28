@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Building2,
   Check,
+  Eye,
   Globe,
   Linkedin,
   Mail,
@@ -24,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Contact360View from '@/components/sales/Contact360View';
 import { PersonListItem } from '../PeopleTable';
 
 interface PeopleCardViewProps {
@@ -199,7 +201,7 @@ export default function PeopleCardView({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Link
-                      href={`/sales/contacts/${contact.id}`}
+                      href={`/dashboard/sales/people/${contact.id}`}
                       className="font-bold text-slate-900 text-sm hover:text-sky-600 hover:underline truncate"
                     >
                       {contact.name}
@@ -224,7 +226,7 @@ export default function PeopleCardView({
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {contact.sales_account_id ? (
                     <Link
-                      href={`/sales/accounts/${contact.sales_account_id}`}
+                      href={`/dashboard/sales/accounts/${contact.sales_account_id}`}
                       className="font-bold text-slate-800 text-xs hover:text-sky-600 hover:underline flex items-center gap-1 truncate"
                     >
                       <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -334,6 +336,25 @@ export default function PeopleCardView({
                   )}
                 </div>
 
+                {/* Quick Modal Preview Trigger */}
+                <Contact360View
+                  contactId={contact.id}
+                  contactName={contact.name}
+                  jobTitle={contact.job_title || ''}
+                  accountName={contact.account_name || ''}
+                  trigger={
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs font-semibold bg-white text-indigo-700 border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50/60"
+                      title="Abrir preview rápido 360°"
+                    >
+                      <Eye className="w-3 h-3 mr-1 text-indigo-600" />
+                      Preview
+                    </Button>
+                  }
+                />
+
                 {/* Primary Action Button */}
                 <Button
                   size="sm"
@@ -356,13 +377,13 @@ export default function PeopleCardView({
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 text-xs">
+                  <DropdownMenuContent align="end" className="w-52 text-xs">
                     <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link href={`/sales/contacts/${contact.id}`}>Ver Perfil Completo</Link>
+                      <Link href={`/dashboard/sales/people/${contact.id}`}>Ver Perfil Completo</Link>
                     </DropdownMenuItem>
                     {contact.sales_account_id && (
                       <DropdownMenuItem asChild className="cursor-pointer">
-                        <Link href={`/sales/accounts/${contact.sales_account_id}`}>
+                        <Link href={`/dashboard/sales/accounts/${contact.sales_account_id}`}>
                           Ver Empresa ({contact.account_name})
                         </Link>
                       </DropdownMenuItem>

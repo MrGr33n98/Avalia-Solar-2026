@@ -50,15 +50,20 @@ const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
 export default function PersonMapHero({ name, city, state, companyName: _companyName }: PersonMapHeroProps) {
   const [mapType, setMapType] = useState<'streets' | 'satellite'>('streets');
 
+  const hasLocation = Boolean((city && city.trim()) || (state && state.trim()));
+
   const coords = useMemo(() => {
     const rawCity = (city || '').toLowerCase().trim();
     const rawState = (state || '').toLowerCase().trim();
     if (rawCity && CITY_COORDINATES[rawCity]) return CITY_COORDINATES[rawCity];
     if (rawState && CITY_COORDINATES[rawState]) return CITY_COORDINATES[rawState];
-    return CITY_COORDINATES['sao paulo'];
+    // Centro do Brasil quando não especificado
+    return CITY_COORDINATES.df || { lat: -15.7975, lng: -47.8919 };
   }, [city, state]);
 
-  const locationLabel = [city, state].filter(Boolean).join(', ') || 'São Paulo, SP';
+  const locationLabel = hasLocation
+    ? [city, state].filter(Boolean).join(', ')
+    : 'Localização não cadastrada';
   const externalMapUrl = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=14/${coords.lat}/${coords.lng}`;
 
   return (
@@ -75,7 +80,7 @@ export default function PersonMapHero({ name, city, state, companyName: _company
       {/* Top Left: Nutshell-style Person Badge */}
       <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
         <Badge className="bg-white/95 hover:bg-white text-slate-800 border border-slate-200/80 shadow-sm px-2.5 py-1 text-xs font-semibold backdrop-blur-xs flex items-center gap-1.5 transition-all">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className={`w-2 h-2 rounded-full ${hasLocation ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
           <MapPin className="w-3.5 h-3.5 text-indigo-600" />
           <span>Person</span>
         </Badge>

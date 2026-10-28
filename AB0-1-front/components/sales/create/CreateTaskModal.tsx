@@ -12,10 +12,11 @@ interface CreateTaskModalProps {
   onClose: () => void;
   opportunityId?: number;
   accountId?: number;
+  contactId?: number;
   onSuccess?: () => void;
 }
 
-export default function CreateTaskModal({ open, onClose, opportunityId, accountId, onSuccess }: CreateTaskModalProps) {
+export default function CreateTaskModal({ open, onClose, opportunityId, accountId, contactId, onSuccess }: CreateTaskModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -26,7 +27,10 @@ export default function CreateTaskModal({ open, onClose, opportunityId, accountI
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!taskTitle.trim()) return setError('Task title is required');
+    if (!taskTitle.trim()) return setError('O título da tarefa é obrigatório');
+    if (!accountId) {
+      return setError('Uma conta (empresa) vinculada é obrigatória para criar tarefas.');
+    }
     setLoading(true);
     setError(null);
     try {
@@ -37,16 +41,21 @@ export default function CreateTaskModal({ open, onClose, opportunityId, accountI
         body: JSON.stringify({
           task: {
             title: taskTitle,
+            task_type: 'task',
             priority: taskPriority,
             due_at: taskDueAt || undefined,
             status: 'pending',
             sales_opportunity_id: opportunityId,
             sales_account_id: accountId,
+            sales_contact_id: contactId,
           },
         }),
       });
-      if (!res.ok) throw new Error('Failed to add task');
-      setSuccessMsg('Task added successfully!');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error?.message || errData?.message || 'Falha ao criar tarefa.');
+      }
+      setSuccessMsg('Tarefa criada com sucesso!');
       setTimeout(() => {
         onClose();
         setSuccessMsg(null);
@@ -54,8 +63,8 @@ export default function CreateTaskModal({ open, onClose, opportunityId, accountI
         setTaskDueAt('');
         onSuccess?.();
       }, 800);
-    } catch (err: any) {
-      setError(err.message || 'Error creating task');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao criar tarefa.');
     } finally {
       setLoading(false);
     }

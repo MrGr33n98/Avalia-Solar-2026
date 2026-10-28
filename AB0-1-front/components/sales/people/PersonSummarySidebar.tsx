@@ -91,26 +91,12 @@ export default function PersonSummarySidebar({
 
   // Custom Fields tabs & edit
   const [customFieldFilter, setCustomFieldFilter] = useState<'all' | 'filled' | 'empty'>('all');
-  const [fields, setFields] = useState<Record<string, CustomFieldValue>>({
-    'Consumo Médio (kWh/mês)': customFields['Consumo Médio (kWh/mês)'] || '650 kWh',
-    'Concessionária': customFields['Concessionária'] || 'CEMIG',
-    'Tipo de Ligação': customFields['Tipo de Ligação'] || 'Bifásico',
-    'Tipo de Telhado': customFields['Tipo de Telhado'] || 'Cerâmico Colonial',
-    'Potência Estimada (kWp)': customFields['Potência Estimada (kWp)'] || '5.8 kWp',
-    ...customFields,
-  });
+  const [fields, setFields] = useState<Record<string, CustomFieldValue>>(customFields);
   const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
   const [editingFieldValue, setEditingFieldValue] = useState('');
 
-  // Attachments state
-  const [fileList] = useState(
-    attachments.length > 0
-      ? attachments
-      : [
-          { name: 'Fatura_Energia_Outubro_2026.pdf', size: '1.2 MB', date: '24/10/2026' },
-          { name: 'Foto_Padrao_Entrada_Telhado.jpg', size: '3.4 MB', date: '24/10/2026' },
-        ]
-  );
+  // Attachments state (Zero-mock: use real attachments)
+  const [fileList] = useState(attachments);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -340,7 +326,7 @@ export default function PersonSummarySidebar({
               return (
                 <Link
                   key={opp.id}
-                  href={`/dashboard/sales/deals/${opp.id}`}
+                  href={`/dashboard/sales/pipeline`}
                   className="block p-3 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-slate-100/80 transition-colors space-y-1 group"
                 >
                   <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-700 truncate">
@@ -357,7 +343,7 @@ export default function PersonSummarySidebar({
             })
           )}
 
-          <Link href="/dashboard/sales/deals" className="block pt-1">
+          <Link href="/dashboard/sales/pipeline" className="block pt-1">
             <Button variant="outline" size="sm" className="w-full h-7 text-xs border-dashed text-slate-600 font-semibold">
               <Plus className="w-3.5 h-3.5 mr-1" /> Create a lead
             </Button>
@@ -415,23 +401,27 @@ export default function PersonSummarySidebar({
         </div>
 
         <div className="space-y-1.5">
-          {fileList.map((file, i) => (
-            <div
-              key={i}
-              className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100/80 border border-slate-100 flex items-center justify-between gap-2 text-xs transition"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
-                <div className="min-w-0">
-                  <p className="font-semibold text-slate-800 truncate text-[11px]">{file.name}</p>
-                  <p className="text-[10px] text-slate-400">
-                    {file.size} • {file.date}
-                  </p>
+          {fileList.length === 0 ? (
+            <p className="text-xs text-slate-400 italic py-2 text-center">Nenhum arquivo anexado.</p>
+          ) : (
+            fileList.map((file, i) => (
+              <div
+                key={i}
+                className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100/80 border border-slate-100 flex items-center justify-between gap-2 text-xs transition"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-800 truncate text-[11px]">{file.name}</p>
+                    <p className="text-[10px] text-slate-400">
+                      {file.size} • {file.date}
+                    </p>
+                  </div>
                 </div>
+                <ExternalLink className="w-3 h-3 text-slate-400 shrink-0 cursor-pointer hover:text-indigo-600" />
               </div>
-              <ExternalLink className="w-3 h-3 text-slate-400 shrink-0 cursor-pointer hover:text-indigo-600" />
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -459,7 +449,10 @@ export default function PersonSummarySidebar({
         </div>
 
         <div className="space-y-2 text-xs">
-          {Object.entries(fields).map(([key, val]) => {
+          {Object.keys(fields).length === 0 ? (
+            <p className="text-xs text-slate-400 italic py-2 text-center">Nenhum campo personalizado cadastrado.</p>
+          ) : (
+            Object.entries(fields).map(([key, val]) => {
             const isFilled = !!val && String(val).trim().length > 0;
             if (customFieldFilter === 'filled' && !isFilled) return null;
             if (customFieldFilter === 'empty' && isFilled) return null;
@@ -504,7 +497,7 @@ export default function PersonSummarySidebar({
                 )}
               </div>
             );
-          })}
+          }))}
         </div>
       </div>
     </div>
