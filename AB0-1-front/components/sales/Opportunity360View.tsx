@@ -73,6 +73,7 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
   const [tasks, setTasks] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [emails, setEmails] = useState<any[]>([]);
+  const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   
   // Modals & Action box state
   const [activeModal, setActiveModal] = useState<'call' | 'email' | 'task' | 'quote' | 'note' | null>(null);
@@ -130,16 +131,29 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
 
       setTasks(formattedEvents.filter((event) => event.kind === 'task'));
       setActivities(formattedEvents.filter((event) => event.kind === 'call' || event.kind === 'activity'));
-      setEmails(formattedEvents.filter((event) => event.kind === 'email').map((event) => ({
-        id: event.id,
-        title: event.email?.subject || 'Email',
-        description: `Para: ${event.email?.to.join(', ') || ''}`,
-        hasOpen: (event.engagement?.unique_open_signals || 0) > 0,
-        openCount: event.engagement?.raw_open_signals || event.engagement?.unique_open_signals || 0,
-        clicks: event.engagement?.unique_clicks || 0,
-        date: event.occurred_at,
-        deliveryStatus: event.email?.delivery_status,
-      })));
+      setEmails(formattedEvents.filter((event) => event.kind === 'email').map((event: any) => {
+        const rawOpens = Number(event.engagement?.raw_open_signals ?? event.opens_count ?? event.open_count ?? 0);
+        const uniqueOpens = Number(event.engagement?.unique_open_signals ?? (rawOpens > 0 ? 1 : 0));
+        const hasOpen = uniqueOpens > 0 || rawOpens > 0 || Boolean(event.first_opened_at);
+        const toList = Array.isArray(event.email?.to)
+          ? event.email.to
+          : [event.to_email || event.email?.to].filter(Boolean);
+        const subject = event.email?.subject || event.subject || event.title || 'Email';
+
+        return {
+          id: event.id,
+          title: subject,
+          description: `Para: ${toList.length > 0 ? toList.join(', ') : (event.to_email || 'Destinatário')}`,
+          hasOpen,
+          openCount: rawOpens || uniqueOpens,
+          clicks: Number(event.engagement?.unique_clicks ?? event.clicks_count ?? 0),
+          date: event.occurred_at || event.date,
+          firstOpenedAt: event.first_opened_at || event.engagement?.first_opened_at,
+          deliveryStatus: event.email?.delivery_status || event.status,
+          bodyText: event.body_text || event.email?.body_text,
+          bodyHtml: event.body_html || event.email?.body_html,
+        };
+      }));
       setQuotes(formattedEvents.filter((event) => event.kind === 'quote'));
     } catch (err) {
       console.error('Erro ao carregar Oportunidade 360:', err);
@@ -692,29 +706,73 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
                           Nenhum e-mail enviado.
                         </div>
                       ) : (
-                        emails.map((e: any) => (
-                          <div key={e.id} className="p-3.5 bg-white rounded-lg border border-slate-200 flex items-center justify-between gap-3 shadow-2xs">
-                            <div className="space-y-1 min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800 text-xs truncate">{e.title}</span>
-                                {e.hasOpen ? (
-                                  <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 text-[10px] font-bold flex items-center gap-1">
-                                    <Eye className="w-3 h-3 text-emerald-600" />
-                                    <span>Aberto {e.openCount > 1 ? `(${e.openCount}x)` : ''}</span>
-                                  </Badge>
-                                ) : (
-                                  <Badge className="bg-slate-50 text-slate-500 border-slate-200 text-[10px]">
-                                    Sem abertura
-                                  </Badge>
-                                )}
+                        emails.map((e: any) => {
+                          const isExpanded = expandedEmailId === e.id;
+                          return (
+                            <div key={e.id} className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-2xs transition-all">
+                              <div
+                                onClick={() => setExpandedEmailId(isExpanded ? null : e.id)}
+                                className="p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/80 transition-colors"
+                              >
+                                <div className="space-y-1 min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                    <span className="font-bold text-slate-800 text-xs truncate">{e.title}</span>
+                                    {e.hasOpen ? (
+                                      <Badge className="bg-emerald-50 text-emerald-800 border-emerald-300 text-[10px] font-bold flex items-center gap-1">
+                                        <Eye className="w-3 h-3 text-emerald-600" />
+                                        <span>Aberto {e.openCount > 1 ? `(${e.openCount}x)` : ''}</span>
+                                      </Badge>
+                                    ) : (
+                                      <Badge className="bg-slate-50 text-slate-500 border-slate-200 text-[10px]">
+                                        Sem abertura
+                                      </Badge>
+                                    )}
+                                    {e.clicks > 0 && (
+                                      <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] font-bold">
+                                        {e.clicks}x clique{e.clicks > 1 ? 's' : ''}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-slate-500 text-[11px] truncate pl-5.5">{e.description}</p>
+                                </div>
+                                <time className="text-slate-400 text-[11px] shrink-0 font-medium">
+                                  {e.date ? new Date(e.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
+                                </time>
                               </div>
-                              <p className="text-slate-500 text-[11px] truncate">{e.description}</p>
+
+                              {/* Visualização detalhada do corpo ao expandir */}
+                              {isExpanded && (
+                                <div className="p-3.5 bg-slate-50/70 border-t border-slate-100 space-y-2.5">
+                                  {e.firstOpenedAt && (
+                                    <div className="text-[11px] text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded border border-emerald-200 flex items-center gap-1.5">
+                                      <Eye className="w-3.5 h-3.5" />
+                                      <span>Primeira abertura em: {new Date(e.firstOpenedAt).toLocaleString('pt-BR')}</span>
+                                    </div>
+                                  )}
+                                  {e.bodyHtml ? (
+                                    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-2xs">
+                                      <iframe
+                                        title={`Email ${e.title}`}
+                                        srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:12px;color:#1e293b;line-height:1.5;padding:12px;margin:0;}a{color:#2563eb;}table{border-collapse:collapse;}img{max-width:100%;height:auto;}</style></head><body>${e.bodyHtml}</body></html>`}
+                                        className="w-full min-h-[260px] border-0"
+                                        sandbox="allow-same-origin allow-popups"
+                                      />
+                                    </div>
+                                  ) : e.bodyText ? (
+                                    <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs leading-relaxed text-slate-800 whitespace-pre-line font-sans">
+                                      {e.bodyText}
+                                    </div>
+                                  ) : (
+                                    <div className="p-4 text-center text-slate-400 text-xs bg-white rounded-lg border border-slate-200">
+                                      Nenhum conteúdo salvo para esta mensagem.
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                            <time className="text-slate-400 text-[11px] shrink-0 font-medium">
-                              {e.date ? new Date(e.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''}
-                            </time>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   )}

@@ -66,8 +66,29 @@ module Sales
 
       # Emails
       emails.each do |email|
-        opens = email.respond_to?(:open_count) ? email.open_count.to_i : email.events.count { |ev| ev.event_type == 'open' }
-        clicks = email.respond_to?(:click_count) ? email.click_count.to_i : email.events.count { |ev| ev.event_type == 'click' }
+        opens = if email.respond_to?(:open_count) && email.open_count.to_i.positive?
+                  email.open_count.to_i
+                else
+                  email.events.count { |ev| ev.event_type.in?(%w[open open_signal]) }
+                end
+
+        clicks = if email.respond_to?(:click_count) && email.click_count.to_i.positive?
+                   email.click_count.to_i
+                 else
+                   email.events.count { |ev| ev.event_type == 'click' }
+                 end
+
+        unique_opens = if email.respond_to?(:unique_open_signals) && email.unique_open_signals.to_i.positive?
+                         email.unique_open_signals.to_i
+                       else
+                         (opens.positive? || email.first_opened_at.present?) ? 1 : 0
+                       end
+
+        unique_clicks = if email.respond_to?(:unique_clicks) && email.unique_clicks.to_i.positive?
+                          email.unique_clicks.to_i
+                        else
+                          clicks.positive? ? 1 : 0
+                        end
 
         events << {
           id: "email-#{email.id}",
@@ -76,6 +97,7 @@ module Sales
           title: email.subject.presence || 'E-mail Comercial Enviado',
           subject: email.subject,
           description: email.body_text.presence || "#{email.status} - #{email.to_email}",
+          preview: email.body_text&.truncate(220),
           body_snippet: email.body_text&.truncate(220),
           body_text: email.body_text,
           body_html: email.body_html,
@@ -87,6 +109,33 @@ module Sales
           last_opened_at: email.last_opened_at,
           opens_count: opens,
           clicks_count: clicks,
+          email: {
+            id: email.id,
+            subject: email.subject.presence || 'E-mail Comercial Enviado',
+            to: [email.to_email].compact_blank,
+            from: email.from_email,
+            delivery_status: email.delivery_status || email.status,
+            body_text: email.body_text,
+            body_html: email.body_html,
+            direction: (email.respond_to?(:direction) && email.direction.presence) || 'outbound',
+            preview: email.body_text&.truncate(220)
+          },
+          engagement: {
+            unique_open_signals: unique_opens,
+            raw_open_signals: opens,
+            unique_clicks: unique_clicks,
+            raw_clicks: clicks,
+            first_opened_at: email.first_opened_at,
+            last_opened_at: email.last_opened_at
+          },
+          lifecycle: email.events.map do |ev|
+            {
+              event_type: ev.event_type,
+              occurred_at: ev.occurred_at || ev.created_at,
+              signal_class: ev.signal_class,
+              source: ev.source
+            }
+          end,
           occurred_at: email.sent_at || email.created_at,
           actor_name: email.sender_user&.name
         }

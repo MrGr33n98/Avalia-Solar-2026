@@ -23,9 +23,13 @@ module Sales
       end
 
       def self.configured_origin
-        return ENV.fetch('EMAIL_TRACKING_HOST') if Rails.env.production?
+        host = ENV['EMAIL_TRACKING_HOST'].presence || ENV['APP_HOST'].presence
+        if Rails.env.production?
+          host = host.present? ? (host.start_with?('http') ? host : "https://#{host}") : 'https://app.avaliasolar.com.br'
+          return host
+        end
 
-        ENV['EMAIL_TRACKING_HOST'].presence || ENV['APP_HOST'].presence || 'http://localhost:3001'
+        host.presence || 'http://localhost:3001'
       end
       private_class_method :configured_origin
 

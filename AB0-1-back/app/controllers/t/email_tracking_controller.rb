@@ -11,7 +11,8 @@ module T
     skip_forgery_protection only: :unsubscribe
 
     def open
-      email = ::Sales::EmailMessage.find_by(tracking_token: params[:token])
+      clean_token = params[:token].to_s.sub(/\.gif\z/i, '')
+      email = ::Sales::EmailMessage.find_by(tracking_token: clean_token)
       if tracking_allowed?(email, :open)
         user_agent = request.user_agent.to_s
         classification = ::Sales::Messaging::OpenSignalClassifier.call(user_agent)

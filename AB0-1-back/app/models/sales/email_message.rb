@@ -165,6 +165,7 @@ module Sales
       signal_class = event.signal_class
       return true if source == 'aws_ses_sns' && type.in?(%w[delivered delivery_delay bounce complaint reject])
       return true if source == 'avalia_link' && type == 'click' && signal_class.in?(%w[human_likely unknown])
+      return true if source == 'avalia_pixel' && type == 'open_signal' && signal_class.in?(%w[human_likely proxy unknown])
 
       source.in?(%w[inbound_email unsubscribe]) && type.in?(%w[replied unsubscribed])
     end

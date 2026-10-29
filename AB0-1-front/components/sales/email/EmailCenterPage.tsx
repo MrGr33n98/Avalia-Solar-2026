@@ -44,6 +44,7 @@ type EmailMessage = {
   delivery_status?: string | null;
   engagement_status?: string | null;
   body_text?: string;
+  body_html?: string;
   contact_name?: string;
   account_name?: string;
   created_at?: string;
@@ -95,6 +96,7 @@ export default function EmailCenterPage() {
   const [composerOpen, setComposerOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [bodyViewMode, setBodyViewMode] = useState<'html' | 'text'>('html');
 
   const fetchMessages = useCallback(async () => {
     setError(null);
@@ -442,9 +444,54 @@ export default function EmailCenterPage() {
                     </div>
                   </div>
 
-                  {/* Body Content */}
-                  <div className="p-4 bg-slate-50/60 rounded-xl border border-slate-200/60 text-xs leading-relaxed text-slate-800 space-y-3 whitespace-pre-line font-sans">
-                    {selectedMessage.body_text}
+                  {/* Body Content with HTML / Text switcher */}
+                  <div className="space-y-2">
+                    {selectedMessage.body_html && selectedMessage.body_text && (
+                      <div className="flex items-center justify-end gap-1.5 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setBodyViewMode('html')}
+                          className={`px-2 py-0.5 rounded font-medium transition-colors ${
+                            bodyViewMode === 'html'
+                              ? 'bg-indigo-100 text-indigo-800'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          Visualização (HTML)
+                        </button>
+                        <span className="text-slate-300">•</span>
+                        <button
+                          type="button"
+                          onClick={() => setBodyViewMode('text')}
+                          className={`px-2 py-0.5 rounded font-medium transition-colors ${
+                            bodyViewMode === 'text'
+                              ? 'bg-indigo-100 text-indigo-800'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          Texto Puro
+                        </button>
+                      </div>
+                    )}
+
+                    {selectedMessage.body_html && bodyViewMode === 'html' ? (
+                      <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden shadow-2xs">
+                        <iframe
+                          title="Visualização do E-mail"
+                          srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:13px;color:#1e293b;line-height:1.55;padding:16px;margin:0;}a{color:#2563eb;}table{border-collapse:collapse;}img{max-width:100%;height:auto;}</style></head><body>${selectedMessage.body_html}</body></html>`}
+                          className="w-full min-h-[380px] border-0"
+                          sandbox="allow-same-origin allow-popups"
+                        />
+                      </div>
+                    ) : selectedMessage.body_text ? (
+                      <div className="p-4 bg-slate-50/60 rounded-xl border border-slate-200/60 text-xs leading-relaxed text-slate-800 space-y-3 whitespace-pre-line font-sans">
+                        {selectedMessage.body_text}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 text-xs">
+                        Nenhum conteúdo de texto disponível para esta mensagem.
+                      </div>
+                    )}
                   </div>
 
                   {/* Engajamento + histórico real de eventos */}

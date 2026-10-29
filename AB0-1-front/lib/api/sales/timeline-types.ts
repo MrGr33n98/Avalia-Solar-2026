@@ -25,6 +25,8 @@ export interface SalesTimelineEmail {
   error_message?: string | null;
   replies_count?: number;
   replies?: SalesTimelineEmailReply[];
+  body_text?: string;
+  body_html?: string;
 }
 
 export interface SalesEmailEngagement {
@@ -59,6 +61,10 @@ export interface SalesTimelineEvent {
   email?: SalesTimelineEmail;
   engagement?: SalesEmailEngagement;
   lifecycle?: SalesEmailLifecycleEvent[];
+  body_text?: string;
+  body_html?: string;
+  opens_count?: number;
+  clicks_count?: number;
 }
 
 export interface SalesTimelineResponse {

@@ -31,11 +31,15 @@ module Sales
         }
       )
 
+      email.ensure_tracking_token if email.respond_to?(:ensure_tracking_token)
       email.update!(
         subject: rendered[:subject],
         body_html: rendered[:body_html],
         body_text: rendered[:body_text]
       )
+
+      # Aplica tracking pixel e click rewriter no HTML a ser disparado
+      html_to_send = ::Sales::Messaging::TrackingRewriter.apply_tracking(email.body_html, email)
 
       # 2. Multi-Provider Dispatch (Zoho connected mailbox -> AWS SES -> Brevo fallback)
       result = nil
@@ -57,7 +61,7 @@ module Sales
                                 account_id: connected_account.provider_account_id,
                                 message_id: email.in_reply_to,
                                 body_text: email.body_text,
-                                body_html: email.body_html,
+                                body_html: html_to_send,
                                 subject: email.subject
                               )
                             else
@@ -68,7 +72,7 @@ module Sales
                                 to: email.to_email,
                                 subject: email.subject,
                                 body_text: email.body_text,
-                                body_html: email.body_html,
+                                body_html: html_to_send,
                                 cc: email.cc,
                                 bcc: email.bcc
                               )

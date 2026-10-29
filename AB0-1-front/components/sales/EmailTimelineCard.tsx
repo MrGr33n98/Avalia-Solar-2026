@@ -60,10 +60,19 @@ const signalLabels: Record<string, string> = {
 
 export default function EmailTimelineCard({ email, engagement, lifecycle }: EmailTimelineCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const hasOpen = engagement.unique_open_signals > 0 || engagement.raw_open_signals > 0;
-  const openCount = engagement.unique_open_signals || engagement.raw_open_signals || 0;
-  const repliesAndClicks = (engagement.replies || 0) + (engagement.unique_clicks || 0);
-  const hasReply = (engagement.replies || 0) > 0;
+  const [viewTab, setViewTab] = useState<'events' | 'body'>('events');
+
+  const safeEmail = email || ({} as Partial<SalesTimelineEmail>);
+  const safeEngagement = engagement || ({} as Partial<SalesEmailEngagement>);
+  const safeLifecycle = Array.isArray(lifecycle) ? lifecycle : [];
+
+  const rawOpens = safeEngagement.raw_open_signals || (safeEmail as any).opens_count || 0;
+  const uniqueOpens = safeEngagement.unique_open_signals || (rawOpens > 0 ? 1 : 0);
+  const hasOpen = uniqueOpens > 0 || rawOpens > 0 || Boolean((safeEmail as any).first_opened_at);
+  const openCount = safeEngagement.raw_open_signals || safeEngagement.unique_open_signals || (safeEmail as any).opens_count || 0;
+  const repliesAndClicks = (safeEngagement.replies || 0) + (safeEngagement.unique_clicks || (safeEmail as any).clicks_count || 0);
+  const hasReply = (safeEngagement.replies || 0) > 0;
+  const toList = Array.isArray(safeEmail.to) ? safeEmail.to : [safeEmail.to || (safeEmail as any).to_email].filter(Boolean);
 
   return (
     <article className="mt-1.5 overflow-hidden rounded-lg border border-slate-200/90 bg-white p-3.5 shadow-2xs transition-shadow hover:shadow-xs">
@@ -71,29 +80,29 @@ export default function EmailTimelineCard({ email, engagement, lifecycle }: Emai
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="inline-block rounded bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
-            {email.direction === 'inbound' ? 'Inbound email' : 'Outbound email'}
+            {safeEmail.direction === 'inbound' ? 'Inbound email' : 'Outbound email'}
           </span>
           {hasOpen && (
             <span className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 shadow-2xs">
               <Eye className="h-3 w-3 text-emerald-600" />
-              <span>Aberto {engagement.raw_open_signals > 1 ? `(${engagement.raw_open_signals}x)` : ''}</span>
+              <span>Aberto {openCount > 1 ? `(${openCount}x)` : ''}</span>
             </span>
           )}
-          {engagement.unique_clicks > 0 && (
+          {(safeEngagement.unique_clicks || (safeEmail as any).clicks_count || 0) > 0 && (
             <span className="inline-flex items-center gap-1 rounded border border-purple-300 bg-purple-50 px-1.5 py-0.5 text-[10px] font-bold text-purple-800 shadow-2xs">
               <MousePointer2 className="h-3 w-3 text-purple-600" />
-              <span>Clicado ({engagement.unique_clicks}x)</span>
+              <span>Clicado ({safeEngagement.unique_clicks || (safeEmail as any).clicks_count}x)</span>
             </span>
           )}
-          {(hasReply || (email.replies && email.replies.length > 0) || email.engagement_status === 'replied') && (
+          {(hasReply || (safeEmail.replies && safeEmail.replies.length > 0) || safeEmail.engagement_status === 'replied') && (
             <span className="inline-flex items-center gap-1 rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-800 shadow-2xs">
               <Reply className="h-3 w-3 text-blue-600" />
-              <span>Respondido {email.replies && email.replies.length > 1 ? `(${email.replies.length})` : ''}</span>
+              <span>Respondido {safeEmail.replies && safeEmail.replies.length > 1 ? `(${safeEmail.replies.length})` : ''}</span>
             </span>
           )}
         </div>
         <span className="truncate text-[11px] text-slate-400">
-          Para: {email.to.join(', ')}
+          Para: {toList.join(', ')}
         </span>
       </div>
 
@@ -179,31 +188,78 @@ export default function EmailTimelineCard({ email, engagement, lifecycle }: Emai
         </button>
       </div>
 
-      {/* Expanded Lifecycle drawer */}
+      {/* Expanded Lifecycle & Body drawer */}
       {expanded && (
-        <div className="mt-2.5 rounded-md border border-slate-100 bg-slate-50/60 p-2 text-xs">
-          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            Status de Entrega: {deliveryLabels[email.delivery_status] || email.delivery_status}
+        <div className="mt-2.5 rounded-md border border-slate-100 bg-slate-50/60 p-2.5 text-xs space-y-2">
+          {/* Tabs switcher */}
+          <div className="flex items-center justify-between border-b border-slate-200/80 pb-1.5">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setViewTab('events')}
+                className={`text-[11px] font-semibold px-2 py-0.5 rounded transition-colors ${
+                  viewTab === 'events' ? 'bg-sky-100 text-sky-800' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                Eventos ({safeLifecycle.length})
+              </button>
+              {(safeEmail.body_html || safeEmail.body_text || safeEmail.preview) && (
+                <button
+                  type="button"
+                  onClick={() => setViewTab('body')}
+                  className={`text-[11px] font-semibold px-2 py-0.5 rounded transition-colors ${
+                    viewTab === 'body' ? 'bg-sky-100 text-sky-800' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Mensagem Completa
+                </button>
+              )}
+            </div>
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              {deliveryLabels[safeEmail.delivery_status || ''] || safeEmail.delivery_status}
+            </div>
           </div>
-          {email.error_message && (
-            <div className="mb-2 rounded bg-rose-100/70 p-1.5 font-mono text-[10px] text-rose-900 break-words">
-              <strong>Erro retornado:</strong> {email.error_message}
+
+          {viewTab === 'events' ? (
+            <div>
+              {safeEmail.error_message && (
+                <div className="mb-2 rounded bg-rose-100/70 p-1.5 font-mono text-[10px] text-rose-900 break-words">
+                  <strong>Erro retornado:</strong> {safeEmail.error_message}
+                </div>
+              )}
+              <ol className="space-y-1.5 border-l border-slate-200 pl-3 text-xs text-slate-600">
+                {safeLifecycle.map((event, index) => (
+                  <li key={`${event.type}:${event.occurred_at}:${index}`} className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-semibold text-slate-800 inline-flex items-center gap-1">
+                      {event.type === 'open_signal' && <Eye className="h-3.5 w-3.5 text-emerald-600 shrink-0" />}
+                      {event.type === 'click' && <MousePointer2 className="h-3.5 w-3.5 text-purple-600 shrink-0" />}
+                      {lifecycleLabels[event.type] || event.type}
+                    </span>
+                    {event.type === 'open_signal' && event.signal_class && ` · ${signalLabels[event.signal_class] || signalLabels.unknown}`}
+                    <time className="ml-auto text-slate-400 text-[11px]">{new Date(event.occurred_at).toLocaleString('pt-BR')}</time>
+                  </li>
+                ))}
+                {safeLifecycle.length === 0 && <li className="text-slate-400">Nenhum evento registrado.</li>}
+              </ol>
+            </div>
+          ) : (
+            <div className="pt-1">
+              {safeEmail.body_html ? (
+                <div className="rounded border border-slate-200 bg-white overflow-hidden shadow-2xs">
+                  <iframe
+                    title={`Email ${safeEmail.subject}`}
+                    srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:12px;color:#1e293b;line-height:1.5;padding:12px;margin:0;}a{color:#2563eb;}table{border-collapse:collapse;}img{max-width:100%;height:auto;}</style></head><body>${safeEmail.body_html}</body></html>`}
+                    className="w-full min-h-[220px] border-0"
+                    sandbox="allow-same-origin allow-popups"
+                  />
+                </div>
+              ) : (
+                <div className="p-2.5 bg-white rounded border border-slate-200 text-xs leading-relaxed text-slate-800 whitespace-pre-line font-sans">
+                  {safeEmail.body_text || safeEmail.preview || 'Sem conteúdo.'}
+                </div>
+              )}
             </div>
           )}
-          <ol className="space-y-1.5 border-l border-slate-200 pl-3 text-xs text-slate-600">
-            {lifecycle.map((event, index) => (
-              <li key={`${event.type}:${event.occurred_at}:${index}`} className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-semibold text-slate-800 inline-flex items-center gap-1">
-                  {event.type === 'open_signal' && <Eye className="h-3.5 w-3.5 text-emerald-600 shrink-0" />}
-                  {event.type === 'click' && <MousePointer2 className="h-3.5 w-3.5 text-purple-600 shrink-0" />}
-                  {lifecycleLabels[event.type] || event.type}
-                </span>
-                {event.type === 'open_signal' && event.signal_class && ` · ${signalLabels[event.signal_class] || signalLabels.unknown}`}
-                <time className="ml-auto text-slate-400 text-[11px]">{new Date(event.occurred_at).toLocaleString('pt-BR')}</time>
-              </li>
-            ))}
-            {lifecycle.length === 0 && <li className="text-slate-400">Nenhum evento registrado.</li>}
-          </ol>
         </div>
       )}
 

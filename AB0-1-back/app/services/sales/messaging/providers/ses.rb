@@ -20,16 +20,7 @@ module Sales
             return Result.new(success?: false, error_code: 'SES_NOT_CONFIGURED', error_message: 'AWS SES não configurado para teste.')
           end
 
-          tracking_pixel = if email_message.open_tracking_enabled
-                             "<img src=\"#{tracking_url("/t/email/open/#{email_message.tracking_token}")}\" " \
-                               'width="1" height="1" alt="" style="width:1px;height:1px;border:0;opacity:0;" />'
-                           end
-          html_body = "#{email_message.body_html}#{tracking_pixel}"
-          html_with_tracking = if email_message.click_tracking_enabled
-                                 ::Sales::Messaging::TrackingRewriter.rewrite(html_body, email_message)
-                               else
-                                 html_body
-                               end
+          html_with_tracking = ::Sales::Messaging::TrackingRewriter.apply_tracking(email_message.body_html, email_message)
 
           provider_id = nil
 
