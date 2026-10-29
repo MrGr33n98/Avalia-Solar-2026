@@ -192,8 +192,10 @@ module Sales
         end
       end
 
-      ALLOWED_HTML_TAGS = %w[p br strong em u s a ul ol li h1 h2 h3 blockquote hr img].freeze
-      ALLOWED_HTML_ATTRIBUTES = %w[href target rel src alt width height style].freeze
+      ALLOWED_HTML_TAGS = (%w[p br strong b em i u s a ul ol li h1 h2 h3 h4 blockquote hr img] +
+                           %w[div span table thead tbody tfoot tr td th]).freeze
+      ALLOWED_HTML_ATTRIBUTES = (%w[href target rel src alt width height style role] +
+                                 %w[cellspacing cellpadding border bgcolor valign align colspan rowspan]).freeze
       ALLOWED_HTML_PROTOCOLS = %w[http https mailto tel].freeze
 
       def sanitize_html(html)

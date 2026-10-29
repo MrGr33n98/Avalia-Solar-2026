@@ -1,16 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   AlertCircle,
-  Bold,
   Check,
   CheckCircle2,
   ChevronDown,
-  Image as ImageIcon,
-  Italic,
-  Link as LinkIcon,
-  List,
+  Eye,
+  EyeOff,
   Maximize2,
   Minimize2,
   Minus,
@@ -20,16 +17,15 @@ import {
   Search,
   Send,
   Sparkles,
-  Underline,
   X,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { salesApi } from '@/lib/api/sales/client';
 import { useAuth } from '@/contexts/AuthContext';
+import CRMRichTextEditor, { CRMRichTextEditorRef } from './CRMRichTextEditor';
 
 interface SignatureItem {
   id: number;
@@ -130,6 +126,11 @@ export default function SendEmailModal({
   const [relatedLead, setRelatedLead] = useState(companyName || 'Projeto Solar B2B');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [bodyHtml, setBodyHtml] = useState('');
+  const [previewSignatureOpen, setPreviewSignatureOpen] = useState(false);
+  const editorRef = useRef<CRMRichTextEditorRef>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
 
   // Template Search & Selection
@@ -183,6 +184,14 @@ export default function SendEmailModal({
       t.subject.toLowerCase().includes(searchTemplate.toLowerCase())
   );
 
+  const textToHtml = (text: string) => {
+    if (!text) return '';
+    return text
+      .split('\n\n')
+      .map((p) => `<p style="margin: 0 0 12px 0;">${p.replace(/\n/g, '<br/>')}</p>`)
+      .join('');
+  };
+
   const applyTemplate = (tmpl: (typeof DEFAULT_TEMPLATES)[0]) => {
     setSelectedTemplateId(tmpl.id);
     const sub = tmpl.subject
@@ -193,49 +202,44 @@ export default function SendEmailModal({
       .replace(/{{contact_name}}/g, recipientName || 'Cliente');
     setSubject(sub);
     setBody(bdy);
+    setBodyHtml(textToHtml(bdy));
   };
 
   const handleCreateFromScratch = () => {
     setSelectedTemplateId(null);
     setSubject('');
     setBody('');
-  };
-
-  const handleFormatText = (tag: string) => {
-    if (tag === 'bold') setBody((prev) => prev + ' **texto em negrito** ');
-    if (tag === 'italic') setBody((prev) => prev + ' *texto em itálico* ');
-    if (tag === 'underline') setBody((prev) => prev + ' <u>texto sublinhado</u> ');
-    if (tag === 'list') setBody((prev) => prev + '\n- Item 1\n- Item 2\n');
-    if (tag === 'link') {
-      const url = prompt('Digite o link URL:', 'https://');
-      if (url) setBody((prev) => prev + ` [link](${url}) `);
-    }
+    setBodyHtml('');
+    editorRef.current?.clear();
   };
 
   const insertMergeTag = (tag: string) => {
-    setBody((prev) => prev + tag);
+    if (editorRef.current) {
+      editorRef.current.insertText(tag);
+    } else {
+      setBody((prev) => prev + tag);
+    }
   };
 
   const [generatingAi, setGeneratingAi] = useState(false);
   const handleGenerateAi = (goal: string) => {
     setGeneratingAi(true);
     setTimeout(() => {
+      let newSubject = '';
+      let newBody = '';
       if (goal === 'first_contact') {
-        setSubject(`Oportunidade de Redução Energética — {{company.name}}`);
-        setBody(
-          `Olá {{contact.first_name}},\n\nAnalisei as operações da {{company.name}} e identificamos uma oportunidade de redução imediata de até 85% nos custos com energia através de um modelo solar sem investimento inicial.\n\nPodemos falar 10 minutos nesta quinta-feira?\n\nAbraço,\n{{user.name}}`
-        );
+        newSubject = `Oportunidade de Redução Energética — {{company.name}}`;
+        newBody = `Olá {{contact.first_name}},\n\nAnalisei as operações da {{company.name}} e identificamos uma oportunidade de redução imediata de até 85% nos custos com energia através de um modelo solar sem investimento inicial.\n\nPodemos falar 10 minutos nesta quinta-feira?\n\nAbraço,\n{{user.name}}`;
       } else if (goal === 'follow_up_proposal') {
-        setSubject(`Status da Proposta Solar — {{company.name}} (R$ {{opportunity.value}})`);
-        setBody(
-          `Olá {{contact.first_name}},\n\nPassando para saber se você e a diretoria da {{company.name}} conseguiram avaliar o estudo de viabilidade da usina solar (valor estimado de {{opportunity.value}}).\n\nFicou alguma dúvida sobre o payback ou a economia projetada?\n\nAtenciosamente,\n{{user.name}}`
-        );
+        newSubject = `Status da Proposta Solar — {{company.name}} (R$ {{opportunity.value}})`;
+        newBody = `Olá {{contact.first_name}},\n\nPassando para saber se você e a diretoria da {{company.name}} conseguiram avaliar o estudo de viabilidade da usina solar (valor estimado de {{opportunity.value}}).\n\nFicou alguma dúvida sobre o payback ou a economia projetada?\n\nAtenciosamente,\n{{user.name}}`;
       } else {
-        setSubject(`Retomada do Projeto Solar — {{company.name}}`);
-        setBody(
-          `Olá {{contact.first_name}},\n\nCom as novas tarifas de energia deste trimestre, a economia da usina solar para a {{company.name}} ficou ainda mais atrativa.\n\nFaz sentido retomarmos a avaliação do projeto este mês?\n\nUm abraço,\n{{user.name}}`
-        );
+        newSubject = `Retomada do Projeto Solar — {{company.name}}`;
+        newBody = `Olá {{contact.first_name}},\n\nCom as novas tarifas de energia deste trimestre, a economia da usina solar para a {{company.name}} ficou ainda mais atrativa.\n\nFaz sentido retomarmos a avaliação do projeto este mês?\n\nUm abraço,\n{{user.name}}`;
       }
+      setSubject(newSubject);
+      setBody(newBody);
+      setBodyHtml(textToHtml(newBody));
       setGeneratingAi(false);
       toast.success('Rascunho comercial gerado com sucesso!');
     }, 400);
@@ -258,7 +262,10 @@ export default function SendEmailModal({
       return setError('Informe o assunto do e-mail comercial.');
     }
 
-    if (!body.trim()) {
+    const currentText = body || editorRef.current?.getText() || '';
+    const currentHtml = bodyHtml || editorRef.current?.getHtml() || undefined;
+
+    if (!currentText.trim() && (!currentHtml || currentHtml === '<p><br></p>' || currentHtml === '')) {
       return setError('Escreva a mensagem do e-mail.');
     }
 
@@ -269,7 +276,8 @@ export default function SendEmailModal({
       await salesApi.sendEmail({
         to_email: toEmail,
         subject,
-        body_text: body,
+        body_text: currentText,
+        body_html: currentHtml,
         sales_opportunity_id: opportunityId || undefined,
         sales_contact_id: contactId || undefined,
         sales_account_id: accountId || undefined,
@@ -291,6 +299,8 @@ export default function SendEmailModal({
         setSuccessMsg(null);
         setSubject('');
         setBody('');
+        setBodyHtml('');
+        editorRef.current?.clear();
         setAttachments([]);
         onSuccess?.();
       }, 600);
@@ -310,8 +320,8 @@ export default function SendEmailModal({
           windowState === 'minimized'
             ? 'fixed !bottom-0 !right-6 !top-auto !left-auto !translate-x-0 !translate-y-0 w-80 max-w-[calc(100vw-2rem)] h-11 p-0 rounded-t-xl rounded-b-none border border-slate-300 shadow-xl bg-white overflow-hidden z-[9999]'
             : windowState === 'maximized'
-            ? 'fixed inset-4 !left-[50%] !top-[50%] !translate-x-[-50%] !translate-y-[-50%] w-[96vw] max-w-[96vw] h-[94vh] max-h-[94vh] flex flex-col p-0 bg-white rounded-2xl shadow-2xl overflow-hidden font-sans border-slate-200 z-[9999]'
-            : 'max-w-[960px] max-h-[90vh] flex flex-col p-0 bg-white rounded-2xl shadow-2xl overflow-hidden font-sans border-slate-200'
+            ? 'fixed inset-3 !left-[50%] !top-[50%] !translate-x-[-50%] !translate-y-[-50%] w-[98vw] max-w-[98vw] h-[96vh] max-h-[96vh] flex flex-col p-0 bg-white rounded-2xl shadow-2xl overflow-hidden font-sans border-slate-200 z-[9999]'
+            : 'max-w-[1060px] w-[94vw] h-[86vh] max-h-[880px] flex flex-col p-0 bg-white rounded-2xl shadow-2xl overflow-hidden font-sans border-slate-200'
         }
       >
         {/* MODAL HEADER (Matching Gmail & Nutshell Benchmark Header) */}
@@ -608,176 +618,176 @@ export default function SendEmailModal({
               </div>
             </div>
 
-            {/* BODY TEXTAREA */}
-            <div className="flex-1 flex flex-col min-h-[220px]">
-              <Textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
+            {/* RICH TEXT EDITOR (WYSIWYG Nativo com Links em Palavras Selecionadas e Viewport Amplo) */}
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden mt-1">
+              <CRMRichTextEditor
+                ref={editorRef}
+                valueHtml={bodyHtml}
+                onChangeHtml={setBodyHtml}
+                onChangeText={setBody}
                 placeholder="Escreva a mensagem do e-mail..."
-                className="flex-1 text-xs border-slate-200 focus:border-sky-500 rounded-lg p-3 leading-relaxed font-sans resize-none"
-              />
+                minHeight="320px"
+                className="flex-1 min-h-0"
+                onAttachFile={() => fileInputRef.current?.click()}
+                onAttachImage={() => imageInputRef.current?.click()}
+                attachmentsCount={attachments.length}
+                extraToolbarRight={
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setSignatureMenuOpen(!signatureMenuOpen)}
+                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-semibold border transition-all ${
+                        includeSignature
+                          ? 'bg-amber-50/90 border-amber-300 text-amber-900 hover:bg-amber-100 shadow-2xs'
+                          : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-100'
+                      }`}
+                      title="Configurar Assinatura Comercial"
+                    >
+                      <Pencil className={`w-3 h-3 ${includeSignature ? 'text-amber-600' : 'text-slate-400'}`} />
+                      <span className="truncate max-w-[130px]">
+                        {includeSignature
+                          ? (signatures.find((s) => s.id === selectedSignatureId)?.name || 'Assinatura Oficial')
+                          : 'Sem assinatura'}
+                      </span>
+                      <ChevronDown className="w-3 h-3 text-slate-400" />
+                    </button>
 
-              {/* RICH TEXT TOOLBAR (At bottom of text box) */}
-              <div className="flex items-center gap-1 pt-2 text-slate-600">
-                <button
-                  type="button"
-                  onClick={() => handleFormatText('bold')}
-                  className="p-1.5 rounded-md hover:bg-slate-100 text-slate-700 font-bold"
-                  title="Bold (**)"
-                >
-                  <Bold className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleFormatText('italic')}
-                  className="p-1.5 rounded-md hover:bg-slate-100 text-slate-700"
-                  title="Italic (*)"
-                >
-                  <Italic className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleFormatText('underline')}
-                  className="p-1.5 rounded-md hover:bg-slate-100 text-slate-700"
-                  title="Underline (<u>)"
-                >
-                  <Underline className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleFormatText('list')}
-                  className="p-1.5 rounded-md hover:bg-slate-100 text-slate-700"
-                  title="Bullet List"
-                >
-                  <List className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleFormatText('link')}
-                  className="p-1.5 rounded-md hover:bg-slate-100 text-slate-700"
-                  title="Insert Link"
-                >
-                  <LinkIcon className="w-3.5 h-3.5" />
-                </button>
-                <label className="p-1.5 rounded-md hover:bg-slate-100 text-slate-700 cursor-pointer" title="Attach image">
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  <input type="file" accept="image/*" onChange={handleFileAttach} className="hidden" />
-                </label>
-                <label className="p-1.5 rounded-md hover:bg-slate-100 text-slate-700 cursor-pointer" title="Attach file">
-                  <Paperclip className="w-3.5 h-3.5" />
-                  <input type="file" onChange={handleFileAttach} className="hidden" />
-                </label>
-
-                {attachments.length > 0 && (
-                  <span className="text-[11px] font-bold text-sky-700 ml-2">
-                    {attachments.length} anexo(s) adicionado(s)
-                  </span>
-                )}
-
-                {/* SIGNATURE SELECTOR IN TOOLBAR */}
-                <div className="relative ml-auto">
-                  <button
-                    type="button"
-                    onClick={() => setSignatureMenuOpen(!signatureMenuOpen)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
-                      includeSignature
-                        ? 'bg-amber-50/90 border-amber-300 text-amber-900 hover:bg-amber-100 shadow-2xs'
-                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                    }`}
-                    title="Configurar Assinatura Comercial"
-                  >
-                    <Pencil className={`w-3 h-3 ${includeSignature ? 'text-amber-600' : 'text-slate-400'}`} />
-                    <span className="truncate max-w-[140px]">
-                      {includeSignature
-                        ? (signatures.find((s) => s.id === selectedSignatureId)?.name || 'Assinatura Oficial')
-                        : 'Sem assinatura'}
-                    </span>
-                    <ChevronDown className="w-3 h-3 text-slate-400" />
-                  </button>
-
-                  {signatureMenuOpen && (
-                    <div className="absolute right-0 bottom-full mb-1.5 w-64 rounded-lg bg-white border border-slate-200 shadow-lg p-1.5 z-50 text-xs space-y-1">
-                      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                        Assinatura Comercial
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIncludeSignature(true);
-                          setSelectedSignatureId('default');
-                          setSignatureMenuOpen(false);
-                        }}
-                        className={`w-full text-left px-2 py-1.5 rounded flex items-center justify-between text-[11px] hover:bg-slate-50 ${
-                          includeSignature && selectedSignatureId === 'default' ? 'bg-amber-50/70 font-bold text-amber-950' : 'text-slate-700'
-                        }`}
-                      >
-                        <span className="truncate">Assinatura Oficial Avalia Solar</span>
-                        {includeSignature && selectedSignatureId === 'default' && (
-                          <Check className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        )}
-                      </button>
-                      {signatures.map((sig) => (
+                    {signatureMenuOpen && (
+                      <div className="absolute right-0 bottom-full mb-1.5 w-64 rounded-lg bg-white border border-slate-200 shadow-xl p-1.5 z-[100] text-xs space-y-1">
+                        <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                          Assinatura Comercial
+                        </div>
                         <button
-                          key={sig.id}
                           type="button"
                           onClick={() => {
                             setIncludeSignature(true);
-                            setSelectedSignatureId(sig.id);
+                            setSelectedSignatureId('default');
                             setSignatureMenuOpen(false);
                           }}
                           className={`w-full text-left px-2 py-1.5 rounded flex items-center justify-between text-[11px] hover:bg-slate-50 ${
-                            includeSignature && selectedSignatureId === sig.id ? 'bg-amber-50/70 font-bold text-amber-950' : 'text-slate-700'
+                            includeSignature && selectedSignatureId === 'default' ? 'bg-amber-50/70 font-bold text-amber-950' : 'text-slate-700'
                           }`}
                         >
-                          <span className="truncate">{sig.name}</span>
-                          {includeSignature && selectedSignatureId === sig.id && (
+                          <span className="truncate">Assinatura Oficial Avalia Solar</span>
+                          {includeSignature && selectedSignatureId === 'default' && (
                             <Check className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                           )}
                         </button>
-                      ))}
-                      <div className="border-t border-slate-100 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIncludeSignature(false);
-                            setSelectedSignatureId('none');
-                            setSignatureMenuOpen(false);
-                          }}
-                          className={`w-full text-left px-2 py-1.5 rounded flex items-center justify-between text-[11px] hover:bg-slate-50 ${
-                            !includeSignature ? 'font-bold text-slate-900 bg-slate-50' : 'text-slate-500'
-                          }`}
-                        >
-                          <span>Não incluir assinatura</span>
-                          {!includeSignature && <Check className="w-3.5 h-3.5 text-slate-700 shrink-0" />}
-                        </button>
+                        {signatures.map((sig) => (
+                          <button
+                            key={sig.id}
+                            type="button"
+                            onClick={() => {
+                              setIncludeSignature(true);
+                              setSelectedSignatureId(sig.id);
+                              setSignatureMenuOpen(false);
+                            }}
+                            className={`w-full text-left px-2 py-1.5 rounded flex items-center justify-between text-[11px] hover:bg-slate-50 ${
+                              includeSignature && selectedSignatureId === sig.id ? 'bg-amber-50/70 font-bold text-amber-950' : 'text-slate-700'
+                            }`}
+                          >
+                            <span className="truncate">{sig.name}</span>
+                            {includeSignature && selectedSignatureId === sig.id && (
+                              <Check className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            )}
+                          </button>
+                        ))}
+                        <div className="border-t border-slate-100 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIncludeSignature(false);
+                              setSelectedSignatureId('none');
+                              setSignatureMenuOpen(false);
+                            }}
+                            className={`w-full text-left px-2 py-1.5 rounded flex items-center justify-between text-[11px] hover:bg-slate-50 ${
+                              !includeSignature ? 'font-bold text-slate-900 bg-slate-50' : 'text-slate-500'
+                            }`}
+                          >
+                            <span>Não incluir assinatura</span>
+                            {!includeSignature && <Check className="w-3.5 h-3.5 text-slate-700 shrink-0" />}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+                    )}
+                  </div>
+                }
+              />
 
-              {/* VISUAL SIGNATURE PREVIEW (Com foto, cargo, logo e links) */}
-              {includeSignature ? (
-                <div className="mt-3 rounded-lg border border-amber-200/90 bg-amber-50/20 p-2.5 transition-all">
-                  <div className="flex items-center justify-between pb-2 border-b border-amber-200/50 text-[11px]">
-                    <div className="flex items-center gap-1.5 font-bold text-amber-950">
-                      <Pencil className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Assinatura incluída neste envio</span>
-                      <span className="text-[10px] font-normal text-amber-800 bg-amber-100/70 px-1.5 py-0.2 rounded">
-                        {signatures.find((s) => s.id === selectedSignatureId)?.name || 'Oficial Avalia Solar'}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setIncludeSignature(false)}
-                      className="text-[10px] text-slate-500 hover:text-slate-800 hover:underline"
+              {/* Inputs Ocultos para Uploads */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileAttach}
+                className="hidden"
+              />
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileAttach}
+                className="hidden"
+              />
+
+              {/* Chips de Anexos */}
+              {attachments.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                  {attachments.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px]"
                     >
-                      Remover assinatura deste e-mail
-                    </button>
+                      <Paperclip className="w-3 h-3 text-slate-500" />
+                      <span className="truncate max-w-[150px] font-medium">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                        className="hover:text-rose-600 ml-1 p-0.5 rounded"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ASSINATURA COMPACTA NO ESTILO NUTSHELL (Barra de status discreta com drawer retrátil) */}
+              <div className="shrink-0 mt-2 space-y-2">
+                <div className="flex items-center justify-between px-3 py-1.5 bg-amber-50/50 border border-amber-200/60 rounded-lg text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${includeSignature ? 'bg-amber-500' : 'bg-slate-300'}`} />
+                    <span className="text-[11px] font-medium text-slate-600">Assinatura no envio:</span>
+                    <span className="text-[11px] font-bold text-amber-950">
+                      {includeSignature
+                        ? (signatures.find((s) => s.id === selectedSignatureId)?.name || 'Oficial Avalia Solar (Felipe — Fundador)')
+                        : 'Desativada'}
+                    </span>
                   </div>
 
-                  {/* Renderização do preview da assinatura */}
-                  <div className="pt-2 text-xs">
+                  <div className="flex items-center gap-3">
+                    {includeSignature && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewSignatureOpen(!previewSignatureOpen)}
+                        className="text-[11px] font-semibold text-amber-900 hover:text-amber-950 flex items-center gap-1 hover:underline cursor-pointer"
+                      >
+                        {previewSignatureOpen ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        <span>{previewSignatureOpen ? 'Ocultar preview' : 'Ver preview visual'}</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setIncludeSignature(!includeSignature)}
+                      className="text-[11px] text-slate-500 hover:text-slate-800 hover:underline cursor-pointer"
+                    >
+                      {includeSignature ? 'Desativar' : 'Ativar assinatura'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Preview Visual Retrátil da Assinatura */}
+                {includeSignature && previewSignatureOpen && (
+                  <div className="p-3 bg-[#f8fafc] border border-slate-200 rounded-xl animate-in fade-in slide-in-from-top-1 duration-200">
                     {typeof selectedSignatureId === 'number' && signatures.find((s) => s.id === selectedSignatureId)?.body_html ? (
                       <div
                         className="overflow-x-auto max-h-[160px] rounded border border-slate-200/70 bg-white p-2"
@@ -786,7 +796,6 @@ export default function SendEmailModal({
                         }}
                       />
                     ) : (
-                      /* Preview oficial Avalia Solar de alta fidelidade */
                       <div className="rounded border border-slate-200/80 bg-[#f6f9fd] p-3 flex flex-col sm:flex-row items-start gap-3 shadow-2xs">
                         <div className="flex flex-col items-center gap-1.5 shrink-0 border-r border-amber-300 pr-3">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -821,23 +830,8 @@ export default function SendEmailModal({
                       </div>
                     )}
                   </div>
-                </div>
-              ) : (
-                <div className="mt-2.5 rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-2 flex items-center justify-between text-[11px] text-slate-500">
-                  <span>Nenhuma assinatura será anexada a este e-mail.</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIncludeSignature(true);
-                      setSelectedSignatureId(signatures[0]?.id || 'default');
-                    }}
-                    className="font-bold text-sky-600 hover:text-sky-800 hover:underline flex items-center gap-1"
-                  >
-                    <Pencil className="w-3 h-3" />
-                    <span>+ Incluir Assinatura Comercial</span>
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
