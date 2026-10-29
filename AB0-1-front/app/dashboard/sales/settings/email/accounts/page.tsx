@@ -14,7 +14,9 @@ import {
   CheckCircle2,
   ExternalLink,
   Lock,
+  Database,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -69,10 +71,34 @@ export default function EmailAccountsSettingsPage() {
   const handleSync = async (id: number) => {
     setSyncingId(id);
     try {
-      await salesApi.syncEmailConnection(id, 'full');
+      const res = await salesApi.syncEmailConnection(id, 'full');
       await loadAccounts();
-    } catch (err) {
-      console.error('Falha ao sincronizar conta:', err);
+
+      if (res.status === 'error') {
+        toast.error(res.error || res.message || 'Falha ao sincronizar caixa Zoho Mail.');
+        return;
+      }
+
+      const importedNow = typeof res.imported_now === 'number' ? res.imported_now : 0;
+      const totalStored =
+        typeof res.stored_messages === 'number'
+          ? res.stored_messages
+          : res.account?.stored_messages ?? res.account?.messages_imported ?? 0;
+      const totalThreads =
+        typeof res.stored_threads === 'number'
+          ? res.stored_threads
+          : res.account?.stored_threads ?? 0;
+
+      toast.success(
+        importedNow > 0
+          ? `Sincronização concluída: +${importedNow} nova(s) mensagem(ns) (${totalStored} mensagens em ${totalThreads} conversas).`
+          : `Sincronização concluída (${totalStored} mensagens em ${totalThreads} conversas).`
+      );
+    } catch (err: unknown) {
+      await loadAccounts();
+      const message =
+        err instanceof Error ? err.message : 'Falha ao sincronizar conta Zoho Mail.';
+      toast.error(message);
     } finally {
       setSyncingId(null);
     }
@@ -83,8 +109,11 @@ export default function EmailAccountsSettingsPage() {
     try {
       await salesApi.disconnectEmailConnection(id);
       await loadAccounts();
-    } catch (err) {
-      console.error('Falha ao desconectar conta:', err);
+      toast.success('Conta de e-mail desconectada.');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Falha ao desconectar conta.';
+      toast.error(message);
     } finally {
       setDisconnectingId(null);
     }
@@ -179,43 +208,78 @@ export default function EmailAccountsSettingsPage() {
           ) : (
             <div className="space-y-3">
               {accounts.map((acc) => {
-                const isSyncingThis = syncingId === acc.id;
+                const isSyncingThis = syncingId === acc.id || acc.sync_status === 'syncing';
                 const isDisconnectingThis = disconnectingId === acc.id;
-                const isHealthy = acc.connection_status === 'healthy';
+                const isOAuthHealthy = acc.connection_status === 'healthy' && !acc.token_expired;
                 const isNeedsReconnect = acc.connection_status === 'needs_reconnect' || acc.token_expired;
+                const isSyncError = acc.sync_status === 'error';
+                const isSyncDegraded = acc.sync_status === 'degraded';
+                const isSyncHealthy = acc.sync_status === 'healthy';
+                const storedMessages = acc.stored_messages ?? acc.messages_imported ?? 0;
+                const storedThreads = acc.stored_threads ?? 0;
 
                 return (
                   <div
                     key={acc.id}
                     className="p-4 bg-white border border-slate-200 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs hover:border-slate-300 transition-colors"
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold text-slate-900 text-sm">{acc.email}</span>
-                        {isHealthy ? (
+
+                        {/* Status 1: Autenticação OAuth */}
+                        {isOAuthHealthy ? (
                           <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 text-[10px] flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Saudável
+                            <ShieldCheck className="w-3 h-3 text-emerald-600" /> OAuth Conectado
                           </Badge>
                         ) : isNeedsReconnect ? (
                           <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 text-[10px] flex items-center gap-1">
-                            <ShieldAlert className="w-3 h-3 text-amber-600" /> Requer Reconexão
+                            <ShieldAlert className="w-3 h-3 text-amber-600" /> Requer Reconexão OAuth
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700 text-[10px]">
-                            {acc.connection_status}
+                            OAuth: {acc.connection_status}
+                          </Badge>
+                        )}
+
+                        {/* Status 2: Sincronização de Mensagens */}
+                        {isSyncingThis ? (
+                          <Badge variant="outline" className="border-sky-300 bg-sky-50 text-sky-800 text-[10px] flex items-center gap-1">
+                            <RefreshCw className="w-3 h-3 text-sky-600 animate-spin" /> Sincronizando...
+                          </Badge>
+                        ) : isSyncError ? (
+                          <Badge variant="outline" className="border-red-300 bg-red-50 text-red-800 text-[10px] flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 text-red-600" /> Erro na Sincronização
+                          </Badge>
+                        ) : isSyncDegraded ? (
+                          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 text-[10px] flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 text-amber-600" /> Sync Parcial / Rate Limit
+                          </Badge>
+                        ) : isSyncHealthy ? (
+                          <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 text-[10px] flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Sync Saudável
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-600 text-[10px]">
+                            Aguardando 1ª Sync
                           </Badge>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 text-[11px] text-slate-500">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                         <span>Provedor: <strong className="text-slate-700 uppercase">{acc.provider}</strong></span>
                         <span>•</span>
                         <span>Região: <strong className="text-slate-700 uppercase">{acc.provider_region || 'US'}</strong></span>
+                        <span>•</span>
+                        <span className="inline-flex items-center gap-1 text-slate-600">
+                          <Database className="w-3 h-3 text-slate-400" />
+                          <strong>{storedMessages}</strong> mensagens em <strong>{storedThreads}</strong> conversas
+                        </span>
                         {acc.last_synced_at && (
                           <>
                             <span>•</span>
                             <span>
-                              Última sincronização:{' '}
+                              Última sync:{' '}
                               {new Date(acc.last_synced_at).toLocaleString('pt-BR', {
                                 dateStyle: 'short',
                                 timeStyle: 'short',
@@ -226,9 +290,9 @@ export default function EmailAccountsSettingsPage() {
                       </div>
 
                       {acc.sync_error && (
-                        <p className="text-[11px] text-red-600 mt-1 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3 shrink-0" />
-                          <span>Erro recente: {acc.sync_error}</span>
+                        <p className="text-[11px] text-red-600 mt-1 flex items-center gap-1 bg-red-50/80 border border-red-200 px-2 py-1 rounded">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-red-600" />
+                          <span>Falha registrada na última sincronização: {acc.sync_error}</span>
                         </p>
                       )}
                     </div>
@@ -242,7 +306,7 @@ export default function EmailAccountsSettingsPage() {
                         className="h-8 text-xs border-slate-200 text-slate-700 hover:bg-slate-50 gap-1.5"
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${isSyncingThis ? 'animate-spin text-sky-600' : ''}`} />
-                        <span>Sincronizar</span>
+                        <span>{isSyncingThis ? 'Sincronizando...' : 'Sincronizar'}</span>
                       </Button>
 
                       <Button

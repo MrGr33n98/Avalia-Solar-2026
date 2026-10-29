@@ -54,6 +54,66 @@ required_schema = {
     company_id
     sales_campaign_id
     metric_date
+  ],
+  sales_email_accounts: %i[
+    company_id
+    user_id
+    email
+    provider
+    provider_account_id
+    provider_region
+    connection_status
+    sync_status
+    last_synced_at
+    messages_imported
+    messages_failed
+    sync_error
+  ],
+  sales_email_sync_states: %i[
+    company_id
+    sales_email_account_id
+    provider_folder_id
+    cursor
+    high_watermark_at
+    last_started_at
+    last_succeeded_at
+    last_error_code
+    retry_count
+    lease_until
+  ],
+  sales_email_threads: %i[
+    company_id
+    sales_email_account_id
+    assigned_user_id
+    provider_thread_id
+    subject_normalized
+    status
+    first_message_at
+    last_message_at
+    message_count
+  ],
+  sales_email_messages: %i[
+    company_id
+    sales_email_account_id
+    sales_email_thread_id
+    direction
+    provider_message_id
+    provider_folder_id
+    provider_received_at
+    from_email
+    to_email
+    subject
+    status
+    is_read
+    read_at
+  ],
+  sales_email_signatures: %i[
+    company_id
+    user_id
+    name
+    body_html
+    is_default
+    settings
   ]
 }.freeze
 
@@ -79,6 +139,10 @@ required_migrations = %w[
   20260905000002
   20260905000003
   20260905000004
+  20261028010000
+  20261028210000
+  20261029160000
+  20261029163000
 ].freeze
 
 required_foreign_keys = {
@@ -243,6 +307,15 @@ end
 
 required_phase_two_migrations.each do |version|
   errors << "migration não aplicada: #{version}" unless applied_migrations.include?(version)
+end
+
+# Validação de contrato de código do SyncEmailAccountJob contra EmailSyncState (GAP-01 / GAP-08)
+sync_job_path = Rails.root.join('app/jobs/sales/sync_email_account_job.rb')
+if File.exist?(sync_job_path)
+  sync_job_source = File.read(sync_job_path)
+  if sync_job_source.include?('sync_state.imported_count')
+    errors << 'regressão detectada: Sales::SyncEmailAccountJob referencia sync_state.imported_count inexistente'
+  end
 end
 
 if errors.empty?

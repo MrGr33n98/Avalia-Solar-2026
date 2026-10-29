@@ -9,8 +9,9 @@ module Api
 
         # GET /api/v1/sales/email_threads
         def index
-          threads_scope = ::Sales::EmailThread.where(company_id: current_user.company_id)
-          threads_scope = threads_scope.where(sales_email_account_id: @mailbox.id) if @mailbox
+          reconcile_orphan_threads(@mailbox) if @mailbox
+
+          threads_scope = mailbox_threads_scope(@mailbox)
 
           # Folder filter
           folder = params[:folder].presence || 'inbox'
@@ -21,7 +22,7 @@ module Api
             threads_scope = threads_scope.joins(:messages).where(sales_email_messages: { direction: 'outbound' }).distinct
           when 'drafts'
             threads_scope = threads_scope.joins(:messages).where(sales_email_messages: { status: 'draft' }).distinct
-          when 'archived'
+          when 'archived', 'archive'
             threads_scope = threads_scope.where(status: 'archived')
           end
 
@@ -35,27 +36,34 @@ module Api
           if raw_search.present?
             query = "%#{raw_search.to_s.strip.downcase}%"
             threads_scope = threads_scope.joins(:messages)
-                                         .where('LOWER(sales_email_threads.subject_normalized) LIKE ? OR LOWER(sales_email_messages.from_email) LIKE ? OR LOWER(sales_email_messages.to_email) LIKE ?', query, query, query)
+                                         .where(
+                                           'LOWER(COALESCE(sales_email_threads.subject_normalized, \'\')) LIKE ? OR LOWER(COALESCE(sales_email_messages.subject, \'\')) LIKE ? OR LOWER(COALESCE(sales_email_messages.from_email, \'\')) LIKE ? OR LOWER(COALESCE(sales_email_messages.to_email, \'\')) LIKE ?',
+                                           query, query, query, query
+                                         )
                                          .distinct
           end
 
           # Order
-          threads_scope = threads_scope.order(last_message_at: :desc)
+          threads_scope = threads_scope.order(Arel.sql('COALESCE(sales_email_threads.last_message_at, sales_email_threads.updated_at) DESC'))
 
           page = [params[:page].to_i, 1].max
           raw_per_page = params[:per_page].to_i
           per_page = raw_per_page.positive? ? [raw_per_page, 50].min : 25
 
           total_records = threads_scope.count
-          records = threads_scope.offset((page - 1) * per_page).limit(per_page)
+          records = threads_scope.includes(:contact, :account, :opportunity, :assigned_user, :messages)
+                                 .offset((page - 1) * per_page)
+                                 .limit(per_page)
 
-          # Folder counts
-          base_mailbox_threads = @mailbox ? ::Sales::EmailThread.where(company_id: current_user.company_id, sales_email_account_id: @mailbox.id) : ::Sales::EmailThread.where(company_id: current_user.company_id)
+          # Folder counts (column-safe for `is_read` before/after migration)
+          base_mailbox_threads = mailbox_threads_scope(@mailbox)
+          unread_count = compute_unread_threads_count(base_mailbox_threads)
+
           counts = {
             inbox: base_mailbox_threads.joins(:messages).where(sales_email_messages: { direction: 'inbound' }).distinct.count,
             sent: base_mailbox_threads.joins(:messages).where(sales_email_messages: { direction: 'outbound' }).distinct.count,
-            drafts: 0,
-            unread: base_mailbox_threads.joins(:messages).where(sales_email_messages: { is_read: false }).distinct.count,
+            drafts: base_mailbox_threads.joins(:messages).where(sales_email_messages: { status: 'draft' }).distinct.count,
+            unread: unread_count,
             all: base_mailbox_threads.count,
             open: base_mailbox_threads.where(status: 'open').count,
             pending: base_mailbox_threads.where(status: 'pending').count,
@@ -77,6 +85,7 @@ module Api
 
         # GET /api/v1/sales/email_threads/:id
         def show
+          mark_thread_messages_read!(@thread)
           render json: {
             thread: serialize_thread_detail(@thread)
           }
@@ -84,21 +93,22 @@ module Api
 
         # PATCH /api/v1/sales/email_threads/:id
         def update
+          src = params[:thread].is_a?(ActionController::Parameters) || params[:thread].is_a?(Hash) ? params[:thread] : params
           attrs = {}
-          if params[:status].present? && ::Sales::EmailThread::STATUSES.include?(params[:status])
-            attrs[:status] = params[:status]
+          if src[:status].present? && ::Sales::EmailThread::STATUSES.include?(src[:status])
+            attrs[:status] = src[:status]
           end
-          if params.key?(:assigned_user_id)
-            attrs[:assigned_user_id] = params[:assigned_user_id]
+          if src.key?(:assigned_user_id)
+            attrs[:assigned_user_id] = src[:assigned_user_id]
           end
-          if params.key?(:sales_contact_id)
-            attrs[:sales_contact_id] = params[:sales_contact_id]
+          if src.key?(:sales_contact_id)
+            attrs[:sales_contact_id] = src[:sales_contact_id]
           end
-          if params.key?(:sales_account_id)
-            attrs[:sales_account_id] = params[:sales_account_id]
+          if src.key?(:sales_account_id)
+            attrs[:sales_account_id] = src[:sales_account_id]
           end
-          if params.key?(:sales_opportunity_id)
-            attrs[:sales_opportunity_id] = params[:sales_opportunity_id]
+          if src.key?(:sales_opportunity_id)
+            attrs[:sales_opportunity_id] = src[:sales_opportunity_id]
           end
 
           @thread.update!(attrs)
@@ -120,6 +130,57 @@ module Api
           end
         end
 
+        def mailbox_threads_scope(mailbox)
+          base = ::Sales::EmailThread.where(company_id: current_user.company_id)
+          return base unless mailbox
+
+          base.where(sales_email_account_id: mailbox.id)
+        end
+
+        def reconcile_orphan_threads(mailbox)
+          return unless mailbox
+
+          orphan_thread_ids = ::Sales::EmailMessage.where(
+            company_id: current_user.company_id,
+            sales_email_account_id: mailbox.id
+          ).where.not(sales_email_thread_id: nil).distinct.pluck(:sales_email_thread_id)
+
+          return if orphan_thread_ids.empty?
+
+          ::Sales::EmailThread.where(id: orphan_thread_ids, sales_email_account_id: nil)
+                              .update_all(sales_email_account_id: mailbox.id)
+        rescue StandardError => e
+          Rails.logger.warn("[InboxThreadsController] reconcile_orphan_threads warning: #{e.message}")
+        end
+
+        def compute_unread_threads_count(scope)
+          cols = ::Sales::EmailMessage.column_names
+          if cols.include?('is_read')
+            scope.joins(:messages).where(sales_email_messages: { direction: 'inbound', is_read: false }).distinct.count
+          elsif cols.include?('read_at')
+            scope.joins(:messages).where(sales_email_messages: { direction: 'inbound', read_at: nil }).distinct.count
+          else
+            0
+          end
+        rescue StandardError => e
+          Rails.logger.warn("[InboxThreadsController] compute_unread_threads_count fallback: #{e.message}")
+          0
+        end
+
+        def mark_thread_messages_read!(thread)
+          cols = ::Sales::EmailMessage.column_names
+          updates = {}
+          updates[:is_read] = true if cols.include?('is_read')
+          updates[:read_at] = Time.current if cols.include?('read_at')
+          return if updates.empty?
+
+          scope = thread.messages.where(direction: 'inbound')
+          scope = scope.where(is_read: false) if cols.include?('is_read')
+          scope.update_all(updates)
+        rescue StandardError => e
+          Rails.logger.warn("[InboxThreadsController] mark_thread_messages_read! warning: #{e.message}")
+        end
+
         def set_thread
           @thread = ::Sales::EmailThread.where(company_id: current_user.company_id).find(params[:id])
           if @thread.email_account && @thread.email_account.user_id != current_user.id && !current_user.admin?
@@ -132,15 +193,16 @@ module Api
         def serialize_thread_summary(thread)
           latest = thread.latest_message
           contact_full_name = thread.contact ? "#{thread.contact.first_name} #{thread.contact.last_name}".strip : nil
+          msg_count = thread.messages.size
           {
             id: thread.id,
             sales_email_account_id: thread.sales_email_account_id,
-            subject: thread.subject_normalized.presence || latest&.subject || '(Sem assunto)',
+            subject: latest&.subject.presence || thread.subject_normalized.presence || '(Sem assunto)',
             status: thread.status || 'open',
             first_message_at: thread.first_message_at,
             last_message_at: thread.last_message_at || thread.updated_at,
-            message_count: thread.messages.count,
-            messages_count: thread.messages.count,
+            message_count: msg_count,
+            messages_count: msg_count,
             unread_count: thread.unread_messages_count,
             assigned_user: thread.assigned_user ? { id: thread.assigned_user.id, name: thread.assigned_user.name } : nil,
             assigned_user_name: thread.assigned_user&.name,

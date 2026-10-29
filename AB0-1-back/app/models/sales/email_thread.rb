@@ -20,7 +20,15 @@ module Sales
     scope :with_status, ->(status) { where(status: status) if status.present? && STATUSES.include?(status.to_s) }
 
     def unread_messages_count
-      messages.where(direction: 'inbound', read_at: nil).count rescue 0
+      if Sales::EmailMessage.column_names.include?('is_read')
+        messages.where(direction: 'inbound', is_read: false).count
+      elsif Sales::EmailMessage.column_names.include?('read_at')
+        messages.where(direction: 'inbound', read_at: nil).count
+      else
+        0
+      end
+    rescue StandardError
+      0
     end
 
     def latest_message

@@ -184,6 +184,7 @@ jobs:
           bundle exec rails db:create db:schema:load db:migrate
           bundle exec rails zeitwerk:check
           bundle exec rails runner script/schema_contract_check.rb
+          bundle exec rspec spec/jobs/sales/sync_email_account_job_spec.rb
           RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test SECRET_KEY_BASE=ci-only-secret-key-base-not-for-production bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'
 
   ranking-gate:
@@ -743,36 +744,69 @@ jobs:
             sleep 8
             WORKER_CID=$(docker compose ps -q "$WORKER_SERVICE")
             if [ -z "$WORKER_CID" ]; then
-              echo "!! AVISO: container ID do $WORKER_SERVICE nao encontrado"
+              echo "!! ERRO: container ID do $WORKER_SERVICE nao encontrado"
               docker compose ps
               docker compose logs --tail=200 "$WORKER_SERVICE" || true
-            else
-              STABLE=1
-              for i in $(seq 1 15); do
-                WORKER_STATE=$(docker inspect --format='{{.State.Status}}' "$WORKER_CID" 2>/dev/null || echo missing)
-                WORKER_EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' "$WORKER_CID" 2>/dev/null || echo unknown)
-                if [ "$WORKER_STATE" != "running" ]; then
-                  echo "!! AVISO: $WORKER_SERVICE nao ficou em execucao (state=$WORKER_STATE, exit_code=$WORKER_EXIT_CODE)"
-                  docker inspect "$WORKER_CID" --format '{{json .State}}' || true
-                  docker logs --tail=200 "$WORKER_CID" || true
-                  docker compose logs --tail=200 "$WORKER_SERVICE" || true
-                  STABLE=0
-                  break
-                fi
-                sleep 2
-              done
-
-              if [ "$STABLE" -ne 1 ]; then
-                echo "!! AVISO: deploy concluido com backend/frontend saudaveis, mas $WORKER_SERVICE precisa de verificacao"
-              fi
-            fi
-
-            echo "?? Executando smoke funcional do worker de ranking..."
-            if ! (docker compose exec -T "$WORKER_SERVICE" bundle exec rails runner 'Analytics::RankingScoreWorker.new.perform; puts "RANKING_WORKER_SMOKE_OK"' 2>/dev/null || docker compose run --rm --no-deps backend bash -lc 'bundle exec rails runner "Analytics::RankingScoreWorker.new.perform; puts \"RANKING_WORKER_SMOKE_OK\""'); then
-              echo "!! Smoke funcional do worker de ranking falhou"
-              docker compose logs --tail=300 "$WORKER_SERVICE" || true
+              rollback_apps
               exit 1
             fi
+
+            STABLE=1
+            for i in $(seq 1 15); do
+              WORKER_STATE=$(docker inspect --format='{{.State.Status}}' "$WORKER_CID" 2>/dev/null || echo missing)
+              WORKER_EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' "$WORKER_CID" 2>/dev/null || echo unknown)
+              if [ "$WORKER_STATE" != "running" ]; then
+                echo "!! ERRO: $WORKER_SERVICE nao ficou em execucao (state=$WORKER_STATE, exit_code=$WORKER_EXIT_CODE)"
+                docker inspect "$WORKER_CID" --format '{{json .State}}' || true
+                docker logs --tail=200 "$WORKER_CID" || true
+                docker compose logs --tail=200 "$WORKER_SERVICE" || true
+                STABLE=0
+                break
+              fi
+              sleep 2
+            done
+
+            if [ "$STABLE" -ne 1 ]; then
+              echo "!! ERRO CRITICO: $WORKER_SERVICE instavel; executando rollback automatico (GAP-03)"
+              rollback_apps
+              exit 1
+            fi
+
+            echo "?? Certificando imagem e codigo ativo em backend e worker (GAP-01 / GAP-02)..."
+            docker inspect ab0-backend ab0-worker --format '{{.Name}} | {{.Config.Image}} | {{.State.StartedAt}} | {{.State.Status}}' || true
+            if ! docker compose exec -T backend bundle exec rails runner 'path = Sales::SyncEmailAccountJob.instance_method(:sync_folder).source_location.first; legacy = File.read(path).include?("sync_state.imported_count"); puts "BACKEND_SOURCE=#{path} LEGACY_IMPORTED_COUNT=#{legacy}"; abort("LEGACY_IMPORTED_COUNT_IN_BACKEND") if legacy'; then
+              echo "!! ERRO: backend contem codigo legado imported_count"
+              rollback_apps
+              exit 1
+            fi
+            if ! docker compose exec -T "$WORKER_SERVICE" bundle exec rails runner 'path = Sales::SyncEmailAccountJob.instance_method(:sync_folder).source_location.first; legacy = File.read(path).include?("sync_state.imported_count"); puts "WORKER_SOURCE=#{path} LEGACY_IMPORTED_COUNT=#{legacy}"; abort("LEGACY_IMPORTED_COUNT_IN_WORKER") if legacy'; then
+              echo "!! ERRO: worker contem codigo legado imported_count"
+              rollback_apps
+              exit 1
+            fi
+
+            echo "?? Executando smoke funcional obrigatorio no proprio container $WORKER_SERVICE (GAP-03)..."
+            if ! docker compose exec -T "$WORKER_SERVICE" bundle exec rails runner 'Analytics::RankingScoreWorker.new.perform; puts "RANKING_WORKER_SMOKE_OK"'; then
+              echo "!! Smoke funcional do worker de ranking falhou"
+              docker compose logs --tail=300 "$WORKER_SERVICE" || true
+              rollback_apps
+              exit 1
+            fi
+
+            echo "?? Reconciliando contas Zoho Mail conectadas e disparando sincronizacao (Fase 3)..."
+            docker compose exec -T backend bundle exec rails runner '
+              Sales::EmailAccount.where(provider: "zoho").find_each do |a|
+                orphan_ids = Sales::EmailMessage.where(sales_email_account_id: a.id).where.not(sales_email_thread_id: nil).distinct.pluck(:sales_email_thread_id)
+                Sales::EmailThread.where(id: orphan_ids, sales_email_account_id: nil).update_all(sales_email_account_id: a.id) if orphan_ids.any?
+                stored_msgs = Sales::EmailMessage.where(sales_email_account_id: a.id).count
+                stored_threads = Sales::EmailThread.where(sales_email_account_id: a.id).count
+                if a.sync_error.to_s.include?("imported_count")
+                  a.update_columns(sync_status: "idle", sync_error: nil, messages_imported: [a.messages_imported.to_i, stored_msgs].max)
+                end
+                Sales::SyncEmailAccountJob.perform_later(a.id, mode: "full") if a.connection_status == "healthy"
+                puts({ account_id: a.id, email: a.email, connection_status: a.connection_status, sync_status: a.sync_status, last_synced_at: a.last_synced_at, messages_imported: a.messages_imported, stored_messages: stored_msgs, stored_threads: stored_threads }.to_json)
+              end
+            ' || true
 
             mkdir -p .deploy
             printf 'GIT_SHA=%s\nBACKEND_IMAGE=%s\nFRONTEND_IMAGE=%s\n' "$GIT_SHA" "$BACKEND_IMAGE" "$FRONTEND_IMAGE" > .deploy/current.env.tmp

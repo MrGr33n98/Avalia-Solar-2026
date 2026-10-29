@@ -15,6 +15,7 @@ import {
   Mail,
   Check,
   ShieldCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -118,11 +119,13 @@ export default function InboxSidebar({
                   <span
                     className={`w-2 h-2 rounded-full shrink-0 ${
                       activeMailbox
-                        ? activeMailbox.connection_status === 'healthy'
-                          ? 'bg-emerald-500'
-                          : activeMailbox.connection_status === 'syncing'
+                        ? activeMailbox.sync_status === 'error'
+                          ? 'bg-red-500'
+                          : activeMailbox.sync_status === 'syncing' || isSyncing || syncLoading
                             ? 'bg-sky-500 animate-pulse'
-                            : 'bg-amber-500'
+                            : activeMailbox.connection_status === 'healthy' && activeMailbox.sync_status === 'healthy'
+                              ? 'bg-emerald-500'
+                              : 'bg-amber-500'
                         : 'bg-slate-400'
                     }`}
                   />
@@ -156,12 +159,19 @@ export default function InboxSidebar({
                   <div className="flex items-center gap-2 truncate">
                     <span
                       className={`w-2 h-2 rounded-full shrink-0 ${
-                        mb.connection_status === 'healthy' ? 'bg-emerald-500' : 'bg-amber-500'
+                        mb.sync_status === 'error'
+                          ? 'bg-red-500'
+                          : mb.connection_status === 'healthy' && mb.sync_status === 'healthy'
+                            ? 'bg-emerald-500'
+                            : 'bg-amber-500'
                       }`}
                     />
                     <div className="truncate">
                       <p className="font-medium truncate">{mb.email}</p>
-                      <p className="text-[10px] text-slate-400">{mb.provider.toUpperCase()} • {mb.provider_region?.toUpperCase() || 'US'}</p>
+                      <p className="text-[10px] text-slate-400">
+                        {mb.provider.toUpperCase()} • {mb.provider_region?.toUpperCase() || 'US'} •{' '}
+                        {mb.sync_status === 'error' ? 'Erro Sync' : `${mb.stored_messages ?? mb.messages_imported ?? 0} msgs`}
+                      </p>
                     </div>
                   </div>
                   {selectedMailboxId === mb.id && <Check className="w-3.5 h-3.5 text-sky-600 shrink-0" />}
@@ -240,8 +250,17 @@ export default function InboxSidebar({
       <div className="p-3 border-t border-slate-200/80 bg-white/50 space-y-2">
         <div className="flex items-center justify-between text-[11px] text-slate-500 px-1">
           <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="font-medium text-slate-700">Zoho OAuth 2.0</span>
+            {activeMailbox?.sync_status === 'error' ? (
+              <>
+                <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                <span className="font-medium text-red-700">Erro na Sync</span>
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="font-medium text-slate-700">Zoho OAuth 2.0</span>
+              </>
+            )}
           </span>
           <Button
             size="sm"

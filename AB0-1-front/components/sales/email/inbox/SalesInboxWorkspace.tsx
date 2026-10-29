@@ -150,7 +150,7 @@ export default function SalesInboxWorkspace() {
   const handleSync = useCallback(async (id: number, silent = false) => {
     setIsSyncing(true);
     try {
-      const res: any = await salesApi.syncEmailConnection(id, 'incremental');
+      const res = await salesApi.syncEmailConnection(id, silent ? 'incremental' : 'full');
       await loadMailboxes();
       await loadThreads();
       if (selectedThreadId) {
@@ -158,20 +158,31 @@ export default function SalesInboxWorkspace() {
       }
       if (!silent) {
         if (res?.status === 'error') {
-          toast.error(res?.message || 'Erro ao sincronizar caixa Zoho Mail.');
+          toast.error(res?.error || res?.message || 'Erro ao sincronizar caixa Zoho Mail.');
         } else {
-          const imported = typeof res?.imported_now === 'number' ? res.imported_now : null;
+          const imported = typeof res?.imported_now === 'number' ? res.imported_now : 0;
+          const storedMessages =
+            typeof res?.stored_messages === 'number'
+              ? res.stored_messages
+              : res?.account?.stored_messages ?? res?.account?.messages_imported ?? 0;
+          const storedThreads =
+            typeof res?.stored_threads === 'number'
+              ? res.stored_threads
+              : res?.account?.stored_threads ?? 0;
           toast.success(
-            imported && imported > 0
-              ? `Sincronização concluída (${imported} nova(s) mensagem(ns) importada(s)).`
-              : 'Caixa Zoho Mail sincronizada e atualizada!'
+            imported > 0
+              ? `Sincronização concluída: +${imported} nova(s) (${storedMessages} mensagens em ${storedThreads} conversas).`
+              : `Caixa Zoho Mail sincronizada (${storedMessages} mensagens em ${storedThreads} conversas).`
           );
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      await loadMailboxes();
+      await loadThreads();
       console.error('Falha ao acionar sincronização:', err);
       if (!silent) {
-        toast.error('Não foi possível sincronizar a caixa de e-mail agora.');
+        const msg = err instanceof Error ? err.message : 'Não foi possível sincronizar a caixa de e-mail agora.';
+        toast.error(msg);
       }
     } finally {
       setIsSyncing(false);

@@ -107,12 +107,13 @@ module Api
           account.sync_error = nil
           account.save!
 
-          # Executa sincronização inicial imediata + agenda backfill assíncrono
+          # Executa sincronização inicial imediata + agenda backfill assíncrono completo
           begin
             ::Sales::SyncEmailAccountJob.perform_now(account.id, mode: 'incremental')
+            ::Sales::SyncEmailAccountJob.perform_later(account.id, mode: 'full') rescue nil
           rescue StandardError => sync_err
             Rails.logger.warn("[EmailConnectionsController] Initial sync inline failed: #{sync_err.message}")
-            ::Sales::SyncEmailAccountJob.perform_later(account.id, mode: 'incremental') rescue nil
+            ::Sales::SyncEmailAccountJob.perform_later(account.id, mode: 'full') rescue nil
           end
 
           redirect_with_status('connected')
@@ -130,26 +131,44 @@ module Api
         # POST /api/v1/sales/email_connections/:id/sync
         def sync
           mode = params[:mode].presence || 'incremental'
-          before_count = @account.messages_imported.to_i
+          before_stored = ::Sales::EmailMessage.where(sales_email_account_id: @account.id).count
 
           ::Sales::SyncEmailAccountJob.perform_now(@account.id, mode: mode)
           @account.reload
 
-          imported_delta = [@account.messages_imported.to_i - before_count, 0].max
-          render json: {
-            message: @account.sync_status == 'error' ? (@account.sync_error || 'Falha na sincronização.') : 'Sincronização concluída.',
+          after_stored = ::Sales::EmailMessage.where(sales_email_account_id: @account.id).count
+          stored_threads = ::Sales::EmailThread.where(sales_email_account_id: @account.id).count
+          imported_delta = [after_stored - before_stored, 0].max
+
+          payload = {
+            message: @account.sync_status == 'error' ? (@account.sync_error || 'Falha na sincronização.') : "Sincronização concluída (#{imported_delta} nova(s), #{after_stored} total).",
+            error: @account.sync_error,
+            code: @account.sync_status == 'error' ? 'EMAIL_SYNC_FAILED' : nil,
             status: @account.sync_status,
             imported_now: imported_delta,
+            stored_messages: after_stored,
+            stored_threads: stored_threads,
             account: serialize_account(@account)
-          }
+          }.compact
+
+          if @account.sync_status == 'error'
+            render json: payload, status: :unprocessable_entity
+          else
+            render json: payload, status: :ok
+          end
         rescue StandardError => e
-          Rails.logger.warn("[EmailConnectionsController#sync] Inline sync error: #{e.message}. Enqueueing background job.")
-          ::Sales::SyncEmailAccountJob.perform_later(@account.id, mode: mode) rescue nil
+          Rails.logger.error("[EmailConnectionsController#sync] Unexpected sync exception: #{e.class} - #{e.message}")
+          @account.update(sync_status: 'error', sync_error: e.message) if @account&.persisted?
           render json: {
-            message: 'Sincronização em segundo plano iniciada.',
-            status: 'syncing',
-            account: serialize_account(@account.reload)
-          }
+            message: "Falha na sincronização: #{e.message}",
+            error: e.message,
+            code: 'EMAIL_SYNC_EXCEPTION',
+            status: 'error',
+            imported_now: 0,
+            stored_messages: ::Sales::EmailMessage.where(sales_email_account_id: @account&.id).count,
+            stored_threads: ::Sales::EmailThread.where(sales_email_account_id: @account&.id).count,
+            account: @account ? serialize_account(@account.reload) : nil
+          }, status: :unprocessable_entity
         end
 
         private
@@ -192,6 +211,19 @@ module Api
         end
 
         def serialize_account(account)
+          stored_messages = ::Sales::EmailMessage.where(sales_email_account_id: account.id).count rescue account.messages_imported.to_i
+          stored_threads = ::Sales::EmailThread.where(sales_email_account_id: account.id).count rescue 0
+          sync_states = account.sync_states.order(updated_at: :desc).map do |st|
+            {
+              folder_id: st.provider_folder_id,
+              cursor: st.cursor,
+              last_started_at: st.last_started_at,
+              last_succeeded_at: st.last_succeeded_at,
+              last_error_code: st.last_error_code,
+              retry_count: st.retry_count
+            }
+          end rescue []
+
           {
             id: account.id,
             email: account.email,
@@ -201,8 +233,12 @@ module Api
             connection_status: account.connection_status,
             sync_status: account.sync_status,
             last_synced_at: account.last_synced_at,
-            messages_imported: account.messages_imported,
+            messages_imported: [account.messages_imported.to_i, stored_messages].max,
+            messages_failed: account.messages_failed.to_i,
+            stored_messages: stored_messages,
+            stored_threads: stored_threads,
             sync_error: account.sync_error,
+            sync_states: sync_states,
             token_expired: account.token_expired?,
             created_at: account.created_at
           }
