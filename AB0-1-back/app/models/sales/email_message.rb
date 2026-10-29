@@ -18,6 +18,10 @@ module Sales
                                     optional: true
     belongs_to :sequence_enrollment_step, class_name: 'Sales::EmailSequenceEnrollmentStep',
                                           foreign_key: :sales_email_sequence_enrollment_step_id, optional: true
+    belongs_to :parent_email_message, class_name: 'Sales::EmailMessage', foreign_key: :parent_email_message_id, optional: true
+    belongs_to :reply_mailbox, class_name: 'Sales::EmailAccount', foreign_key: :reply_mailbox_id, optional: true
+
+    has_many :replies, class_name: 'Sales::EmailMessage', foreign_key: :parent_email_message_id, dependent: :nullify
 
     has_many :participants, class_name: 'Sales::EmailParticipant', foreign_key: :sales_email_message_id,
                             dependent: :destroy
@@ -38,6 +42,9 @@ module Sales
     scope :queued, -> { where(status: 'queued') }
     scope :sent, -> { where(status: 'sent') }
     scope :delivered, -> { where(status: 'delivered') }
+    scope :inbound, -> { where(direction: 'inbound') }
+    scope :outbound, -> { where(direction: 'outbound') }
+    scope :human_replies, -> { inbound.where(inbound_classification: 'human_reply') }
 
     before_create :ensure_tracking_token
 

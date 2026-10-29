@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import {
   ChevronDown,
+  CornerDownRight,
   Eye,
   MessageSquare,
   MousePointer2,
@@ -82,6 +83,12 @@ export default function EmailTimelineCard({ email, engagement, lifecycle }: Emai
             <span className="inline-flex items-center gap-1 rounded border border-purple-300 bg-purple-50 px-1.5 py-0.5 text-[10px] font-bold text-purple-800 shadow-2xs">
               <MousePointer2 className="h-3 w-3 text-purple-600" />
               <span>Clicado ({engagement.unique_clicks}x)</span>
+            </span>
+          )}
+          {(hasReply || (email.replies && email.replies.length > 0) || email.engagement_status === 'replied') && (
+            <span className="inline-flex items-center gap-1 rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-800 shadow-2xs">
+              <Reply className="h-3 w-3 text-blue-600" />
+              <span>Respondido {email.replies && email.replies.length > 1 ? `(${email.replies.length})` : ''}</span>
             </span>
           )}
         </div>
@@ -197,6 +204,48 @@ export default function EmailTimelineCard({ email, engagement, lifecycle }: Emai
             ))}
             {lifecycle.length === 0 && <li className="text-slate-400">Nenhum evento registrado.</li>}
           </ol>
+        </div>
+      )}
+
+      {/* Respostas encadeadas (Threading / Inbound Replies) */}
+      {email.replies && email.replies.length > 0 && (
+        <div className="mt-3.5 space-y-2 border-t border-slate-100 pt-3">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+            <CornerDownRight className="h-3.5 w-3.5 text-blue-600" />
+            <span>Respostas nesta conversa ({email.replies.length})</span>
+          </div>
+          <div className="space-y-2 pl-3 border-l-2 border-blue-300">
+            {email.replies.map((reply) => (
+              <div
+                key={reply.id}
+                className="rounded-md border border-blue-100/80 bg-blue-50/40 p-2.5 transition-colors hover:bg-blue-50/70"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-xs text-slate-800">
+                      {reply.from}
+                    </span>
+                    <span className="inline-block rounded bg-blue-100 px-1.5 py-0.2 text-[10px] font-medium text-blue-800">
+                      {reply.classification === 'auto_reply' ? 'Resposta Automática' : 'Resposta do Lead'}
+                    </span>
+                  </div>
+                  <time className="text-[10px] text-slate-400">
+                    {new Date(reply.occurred_at).toLocaleString('pt-BR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </time>
+                </div>
+                {reply.preview && (
+                  <p className="mt-1 text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                    {reply.preview}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </article>

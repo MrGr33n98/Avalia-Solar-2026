@@ -4,8 +4,17 @@ export interface SalesTimelineActor {
   avatar_url?: string | null;
 }
 
+export interface SalesTimelineEmailReply {
+  id: number;
+  from: string;
+  preview: string;
+  occurred_at: string;
+  classification?: string;
+}
+
 export interface SalesTimelineEmail {
   id: number;
+  parent_id?: number | null;
   direction: 'inbound' | 'outbound';
   subject: string;
   preview: string;
@@ -14,6 +23,8 @@ export interface SalesTimelineEmail {
   delivery_status: string;
   engagement_status: string;
   error_message?: string | null;
+  replies_count?: number;
+  replies?: SalesTimelineEmailReply[];
 }
 
 export interface SalesEmailEngagement {

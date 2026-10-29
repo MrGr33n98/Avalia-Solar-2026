@@ -72,81 +72,98 @@ module Sales
       )
 
       sync_state.update!(last_started_at: Time.current)
-      messages = client.list_messages(
-        access_token: token,
-        account_id: account_id,
-        folder_id: folder_id,
-        limit: 30,
-        start: 1
-      )
 
       imported = 0
-      messages.each do |msg|
-        next if msg[:message_id].blank?
+      page = 1
+      has_more = true
 
-        # Check existing message
-        existing = Sales::EmailMessage.find_by(
-          sales_email_account_id: account.id,
-          provider_message_id: msg[:message_id]
-        )
-        next if existing
-
-        # Occurred at
-        occurred_at = if msg[:received_time].present?
-                        Time.at(msg[:received_time].to_i / 1000.0) rescue Time.current
-                      else
-                        Time.current
-                      end
-
-        # Resolve or create thread
-        thread = EmailSync::ThreadMatcher.resolve_or_create_thread(
-          email_account: account,
-          provider_thread_id: msg[:thread_id],
-          subject: msg[:subject],
-          occurred_at: occurred_at
+      while has_more && page <= 3
+        start_offset = ((page - 1) * 30) + 1
+        messages = client.list_messages(
+          access_token: token,
+          account_id: account_id,
+          folder_id: folder_id,
+          limit: 30,
+          start: start_offset
         )
 
-        from_email = (msg[:from] || '').downcase.strip
-        to_email = (msg[:to] || '').downcase.strip
+        break if messages.blank?
 
-        # Match with CRM entities
-        target_email = direction == 'inbound' ? from_email : to_email
-        crm_match = EmailSync::CRMMessageMatcher.match(company_id: account.company_id, email_address: target_email)
+        messages.each do |msg|
+          next if msg[:message_id].blank?
 
-        # Update thread links if not set
-        if thread.sales_contact_id.nil? && crm_match[:contact_id]
-          thread.update!(
-            sales_contact_id: crm_match[:contact_id],
-            sales_account_id: crm_match[:account_id],
-            sales_opportunity_id: crm_match[:opportunity_id]
+          existing = Sales::EmailMessage.find_by(
+            sales_email_account_id: account.id,
+            provider_message_id: msg[:message_id]
           )
+          next if existing
+
+          if direction == 'inbound'
+            ingestion = Sales::EmailInbound::IngestionService.new(
+              email_account: account,
+              folder_id: folder_id,
+              msg_data: msg,
+              client: client,
+              access_token: token
+            )
+            created = ingestion.ingest!
+            imported += 1 if created
+          else
+            # Outbound import (Sent folder)
+            occurred_at = if msg[:received_time].present?
+                            Time.at(msg[:received_time].to_i / 1000.0) rescue Time.current
+                          else
+                            Time.current
+                          end
+
+            thread = EmailSync::ThreadMatcher.resolve_or_create_thread(
+              email_account: account,
+              provider_thread_id: msg[:thread_id],
+              subject: msg[:subject],
+              occurred_at: occurred_at
+            )
+
+            from_email = (msg[:from] || '').downcase.strip
+            to_email = (msg[:to] || '').downcase.strip
+
+            crm_match = EmailSync::CRMMessageMatcher.match(company_id: account.company_id, email_address: to_email)
+
+            Sales::EmailMessage.create!(
+              company_id: account.company_id,
+              sales_email_account_id: account.id,
+              sales_email_thread_id: thread.id,
+              sales_account_id: thread.sales_account_id || crm_match[:account_id],
+              sales_contact_id: thread.sales_contact_id || crm_match[:contact_id],
+              sales_opportunity_id: thread.sales_opportunity_id || crm_match[:opportunity_id],
+              sender_user_id: account.user_id,
+              from_email: from_email.presence || account.email,
+              to_email: to_email.presence || 'cliente@destino.com',
+              subject: msg[:subject] || '(Sem assunto)',
+              body_text: msg[:summary] || '',
+              status: 'sent',
+              direction: 'outbound',
+              delivery_status: 'delivered',
+              provider_message_id: msg[:message_id],
+              provider_folder_id: folder_id,
+              provider_received_at: occurred_at,
+              created_at: occurred_at
+            )
+            thread.update!(message_count: thread.messages.count)
+            imported += 1
+          end
         end
 
-        # Ingest message
-        created_msg = Sales::EmailMessage.create!(
-          company_id: account.company_id,
-          sales_email_account_id: account.id,
-          sales_email_thread_id: thread.id,
-          sales_account_id: thread.sales_account_id || crm_match[:account_id],
-          sales_contact_id: thread.sales_contact_id || crm_match[:contact_id],
-          sales_opportunity_id: thread.sales_opportunity_id || crm_match[:opportunity_id],
-          sender_user_id: direction == 'outbound' ? account.user_id : nil,
-          from_email: from_email.presence || account.email,
-          to_email: to_email.presence || 'contato@cliente.com',
-          subject: msg[:subject] || '(Sem assunto)',
-          body_text: msg[:summary] || '',
-          status: direction == 'inbound' ? 'received' : 'sent',
-          direction: direction,
-          delivery_status: 'delivered',
-          provider_message_id: msg[:message_id],
-          provider_folder_id: folder_id,
-          provider_received_at: occurred_at,
-          created_at: occurred_at
-        )
-
-        thread.update!(message_count: thread.messages.count)
-        imported += 1
+        page += 1
+        has_more = messages.size >= 30
       end
+
+      sync_state.update!(
+        last_synced_at: Time.current,
+        cursor: "page_#{page}",
+        imported_count: sync_state.imported_count.to_i + imported
+      )
+
+      imported
 
       sync_state.update!(
         last_succeeded_at: Time.current,

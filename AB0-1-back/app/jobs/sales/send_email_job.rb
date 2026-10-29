@@ -123,10 +123,13 @@ module Sales
 
       if result.success?
         now = Time.current
+        rfc_id = email.rfc_message_id.presence || (result.provider_message_id.present? ? "<#{result.provider_message_id.delete('<>')}>" : nil)
         email.update!(
           status: 'sent',
           delivery_status: 'sent',
           provider_message_id: result.provider_message_id,
+          transport_provider: dispatch_source,
+          rfc_message_id: rfc_id,
           sent_at: now,
           metadata: (email.metadata || {}).except('error').merge('provider' => dispatch_source)
         )

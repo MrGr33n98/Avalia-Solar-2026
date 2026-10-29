@@ -165,6 +165,34 @@ module Sales
         execute_get(uri, access_token)
       end
 
+      # Fetch RFC message headers (In-Reply-To, References, Message-ID)
+      def fetch_message_headers(access_token:, account_id:, folder_id:, message_id:)
+        uri = URI("#{mail_host}/api/accounts/#{account_id}/folders/#{folder_id}/messages/#{message_id}/header")
+        data = execute_get(uri, access_token)
+        headers_data = data['data'] || {}
+
+        raw_headers = {}
+        if headers_data.is_a?(Hash)
+          raw_headers = headers_data
+        elsif headers_data.is_a?(Array)
+          headers_data.each { |h| raw_headers[h['headerName'].to_s.downcase] = h['headerValue'] }
+        end
+
+        in_reply_to = raw_headers['in-reply-to'] || raw_headers['In-Reply-To'] || raw_headers['inReplyTo']
+        references = raw_headers['references'] || raw_headers['References']
+        message_id_header = raw_headers['message-id'] || raw_headers['Message-ID'] || raw_headers['messageId']
+
+        {
+          in_reply_to: in_reply_to.to_s.strip.presence,
+          references: references.to_s.strip.presence,
+          message_id: message_id_header.to_s.strip.presence,
+          raw: raw_headers
+        }
+      rescue StandardError => e
+        Rails.logger.warn("[ZohoApiClient] Failed to fetch headers for message #{message_id}: #{e.message}")
+        {}
+      end
+
       # Send new email message
       def send_mail(access_token:, account_id:, to:, subject:, body_text:, from: nil, body_html: nil, cc: nil, bcc: nil)
         uri = URI("#{mail_host}/api/accounts/#{account_id}/messages")

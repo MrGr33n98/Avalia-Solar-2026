@@ -101,11 +101,20 @@ module Sales
           cc = participants['cc'].to_a.map(&:email)
           unsubscribe_token = ::Sales::Messaging::UnsubscribeToken.generate(email_message)
           unsubscribe_url = tracking_url("/t/email/unsubscribe/#{unsubscribe_token}")
+
+          # Suporte a threading e reply-to determinístico
+          parent = email_message.parent_email_message if email_message.respond_to?(:parent_email_message)
+          parent_rfc = parent&.rfc_message_id.presence || (parent&.provider_message_id.present? ? "<#{parent.provider_message_id}>" : nil)
+          reply_to_address = email_message.reply_to_email.presence || (email_message.respond_to?(:reply_mailbox) ? email_message.reply_mailbox&.email : nil)
+
           headers = [
             "From: #{header_value(email_message.from_email)}",
+            ("Reply-To: #{header_value(reply_to_address)}" if reply_to_address.present?),
             "To: #{to.map { |address| header_value(address) }.join(', ')}",
             ("Cc: #{cc.map { |address| header_value(address) }.join(', ')}" if cc.any?),
             "Subject: #{encoded_header(email_message.subject)}",
+            ("In-Reply-To: #{parent_rfc}" if parent_rfc.present?),
+            ("References: #{parent_rfc}" if parent_rfc.present?),
             "List-Unsubscribe: <#{unsubscribe_url}>",
             'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
             'MIME-Version: 1.0',

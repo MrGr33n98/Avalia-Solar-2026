@@ -88,7 +88,7 @@ module Sales
           direct = direct.or(@scope.email_messages.where(sales_opportunity_id: nil,
                                                          sales_account_id: @opportunity.sales_account_id))
         end
-        direct.includes(:sender_user, :contact, :participants, :events)
+        direct.includes(:sender_user, :contact, :participants, :events, :replies)
               .map { |email| email_item(email) }
       end
 
@@ -106,7 +106,7 @@ module Sales
                          changed_events.none
                        end
         changed_ids = direct.or(account_only).select(:sales_email_message_id)
-        @scope.email_messages.where(id: changed_ids).includes(:sender_user, :contact, :participants, :events)
+        @scope.email_messages.where(id: changed_ids).includes(:sender_user, :contact, :participants, :events, :replies)
               .distinct.map { |email| email_item(email) }
       end
 
@@ -124,12 +124,25 @@ module Sales
       def email_details(email, direction)
         recipients = email.participants.select { |participant| participant.participant_type == 'to' }.map(&:email)
         error_msg = email.metadata.is_a?(Hash) ? email.metadata['error'] : nil
+        replies_list = email.replies.map do |r|
+          {
+            id: r.id,
+            from: r.from_email,
+            preview: safe_preview(r),
+            occurred_at: r.created_at,
+            classification: r.inbound_classification || 'human_reply'
+          }
+        end
+
         {
           id: email.id, direction: direction, subject: email.subject, preview: safe_preview(email),
           from: email.from_email, to: recipients.presence || [email.to_email],
+          parent_id: email.parent_email_message_id,
           delivery_status: email.delivery_status.presence || email.status,
           engagement_status: email.engagement_status.presence || 'none',
-          error_message: error_msg
+          error_message: error_msg,
+          replies_count: replies_list.size,
+          replies: replies_list
         }
       end
 
