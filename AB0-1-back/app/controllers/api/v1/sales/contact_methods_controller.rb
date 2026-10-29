@@ -87,7 +87,7 @@ module Api
             :is_primary,
             :position,
             :source
-          )
+          ).to_h
         end
 
         def serialize(method)

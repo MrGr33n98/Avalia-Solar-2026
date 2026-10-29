@@ -11,7 +11,8 @@ module Sales
 
       def initialize(contact:, attributes:, actor: nil, method_id: nil)
         @contact = contact
-        @attributes = attributes.with_indifferent_access
+        attrs = attributes.respond_to?(:to_unsafe_h) ? attributes.to_unsafe_h : (attributes.respond_to?(:to_h) ? attributes.to_h : attributes)
+        @attributes = attrs.with_indifferent_access
         @actor = actor
         @method_id = method_id
       end
