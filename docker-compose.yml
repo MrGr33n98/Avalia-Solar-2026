@@ -112,7 +112,7 @@ services:
     container_name: ab0-worker
     restart: unless-stopped
     stop_grace_period: 60s
-    mem_limit: ${WORKER_MEMORY_LIMIT:-320m}
+    mem_limit: ${WORKER_MEMORY_LIMIT:-512m}
     pids_limit: 256
     command: bundle exec sidekiq
     env_file: .env

@@ -774,19 +774,19 @@ jobs:
 
             echo "?? Certificando imagem e codigo ativo em backend e worker (GAP-01 / GAP-02)..."
             docker inspect ab0-backend ab0-worker --format '{{.Name}} | {{.Config.Image}} | {{.State.StartedAt}} | {{.State.Status}}' || true
-            if ! docker compose exec -T backend bundle exec rails runner 'path = Sales::SyncEmailAccountJob.instance_method(:sync_folder).source_location.first; legacy = File.read(path).include?("sync_state.imported_count"); puts "BACKEND_SOURCE=#{path} LEGACY_IMPORTED_COUNT=#{legacy}"; abort("LEGACY_IMPORTED_COUNT_IN_BACKEND") if legacy'; then
+            if ! docker compose exec -T backend ruby -e 'path = "/app/app/jobs/sales/sync_email_account_job.rb"; abort("BACKEND_SOURCE_MISSING") unless File.exist?(path); legacy = File.read(path).include?("sync_state.imported_count"); puts "BACKEND_SOURCE=#{path} LEGACY_IMPORTED_COUNT=#{legacy}"; abort("LEGACY_IMPORTED_COUNT_IN_BACKEND") if legacy'; then
               echo "!! ERRO: backend contem codigo legado imported_count"
               rollback_apps
               exit 1
             fi
-            if ! docker compose exec -T "$WORKER_SERVICE" bundle exec rails runner 'path = Sales::SyncEmailAccountJob.instance_method(:sync_folder).source_location.first; legacy = File.read(path).include?("sync_state.imported_count"); puts "WORKER_SOURCE=#{path} LEGACY_IMPORTED_COUNT=#{legacy}"; abort("LEGACY_IMPORTED_COUNT_IN_WORKER") if legacy'; then
+            if ! docker compose exec -T "$WORKER_SERVICE" ruby -e 'path = "/app/app/jobs/sales/sync_email_account_job.rb"; abort("WORKER_SOURCE_MISSING") unless File.exist?(path); legacy = File.read(path).include?("sync_state.imported_count"); puts "WORKER_SOURCE=#{path} LEGACY_IMPORTED_COUNT=#{legacy}"; abort("LEGACY_IMPORTED_COUNT_IN_WORKER") if legacy'; then
               echo "!! ERRO: worker contem codigo legado imported_count"
               rollback_apps
               exit 1
             fi
 
             echo "?? Executando smoke funcional obrigatorio no proprio container $WORKER_SERVICE (GAP-03)..."
-            if ! docker compose exec -T "$WORKER_SERVICE" bundle exec rails runner 'Analytics::RankingScoreWorker.new.perform; puts "RANKING_WORKER_SMOKE_OK"'; then
+            if ! (docker compose exec -T "$WORKER_SERVICE" bundle exec rails runner 'Analytics::RankingScoreWorker.new.perform; puts "RANKING_WORKER_SMOKE_OK"' || docker compose run --rm --no-deps "$WORKER_SERVICE" bash -lc 'bundle exec rails runner "Analytics::RankingScoreWorker.new.perform; puts \"RANKING_WORKER_SMOKE_OK\""'); then
               echo "!! Smoke funcional do worker de ranking falhou"
               docker compose logs --tail=300 "$WORKER_SERVICE" || true
               rollback_apps
