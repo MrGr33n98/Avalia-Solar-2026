@@ -45,7 +45,7 @@ export default function EmailSignaturesPage() {
   const [roleTitle, setRoleTitle] = useState('Fundador do Avalia Solar');
   const [email, setEmail] = useState('felipe@avaliasolar.com.br');
   const [phone, setPhone] = useState('(65) 99346-5055');
-  const [avatarUrl, setAvatarUrl] = useState('https://www.avaliasolar.com.br/images/felipe-assinatura-avatar.png');
+  const [avatarUrl, setAvatarUrl] = useState('https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png');
   const [websiteUrl, setWebsiteUrl] = useState('https://www.avaliasolar.com.br/');
   const [linkedinUrl, setLinkedinUrl] = useState('https://www.linkedin.com/in/felipe-morais-8bb61a7b/');
   const [calendlyUrl, setCalendlyUrl] = useState('https://calendly.com/felipe-avaliasolar/30min');
@@ -99,7 +99,7 @@ export default function EmailSignaturesPage() {
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="550" bgcolor="#f6f9fd" style="width:550px;max-width:100%;border-collapse:separate;border-spacing:0;background-color:#f6f9fd;border:1px solid #dae5ef;font-family:Arial,Helvetica,sans-serif;color:#0b2944;">
   <tr>
     <td bgcolor="#eef4fa" width="120" valign="top" align="center" style="width:120px;background-color:#eef4fa;vertical-align:top;padding:17px 12px 12px 13px;border-right:3px solid #ffcd2d;">
-      <img src="${avatarUrl || 'https://www.avaliasolar.com.br/images/felipe-assinatura-avatar.png'}" width="83" height="83" alt="${fullName}" style="width:83px;height:83px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;">
+      <img src="${avatarUrl || 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png'}" width="83" height="83" alt="${fullName}" style="width:83px;height:83px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;">
       <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:10px;"><tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:5px 7px;border-radius:4px;">
         <a href="${websiteUrl}" target="_blank" style="text-decoration:none;"><img src="${logoUrl}" alt="Avalia Solar" width="92" style="display:block;width:92px;height:auto;border:0;"></a>
       </td></tr></table>

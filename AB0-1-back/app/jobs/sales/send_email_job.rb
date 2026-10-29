@@ -240,14 +240,64 @@ module Sales
       scope.find_by(is_default: true) || scope.where(sales_email_account_id: nil).find_by(is_default: true) || scope.first
     end
 
+    def default_official_signature(email)
+      sender = User.find_by(id: email.sender_user_id) if email.sender_user_id.present?
+      sender_name = sender&.name.presence || 'Felipe Henrique'
+      sender_email = sender&.email.presence || 'felipe@avaliasolar.com.br'
+
+      <<~HTML
+        <!-- Assinatura Oficial Avalia Solar -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="550" bgcolor="#f6f9fd" style="width:550px;max-width:100%;border-collapse:separate;border-spacing:0;background-color:#f6f9fd;border:1px solid #dae5ef;font-family:Arial,Helvetica,sans-serif;color:#0b2944;">
+          <tr>
+            <td bgcolor="#eef4fa" width="120" valign="top" align="center" style="width:120px;background-color:#eef4fa;vertical-align:top;padding:17px 12px 12px 13px;border-right:3px solid #ffcd2d;">
+              <img src="https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png" width="83" height="83" alt="#{sender_name}" style="width:83px;height:83px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:10px;"><tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:5px 7px;border-radius:4px;">
+                <a href="https://www.avaliasolar.com.br/" target="_blank" style="text-decoration:none;"><img src="https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png" alt="Avalia Solar" width="92" style="display:block;width:92px;height:auto;border:0;"></a>
+              </td></tr></table>
+            </td>
+            <td valign="top" style="padding:16px 16px 12px 18px;vertical-align:top;">
+              <p style="margin:0 0 2px;font-size:17px;line-height:1.23;letter-spacing:-0.3px;font-weight:700;color:#0b2944;"><strong>#{sender_name}</strong></p>
+              <p style="margin:0 0 9px;font-size:11px;line-height:1.3;color:#63768a;">Fundador & Equipe Comercial — Avalia Solar</p>
+              <p style="margin:0 0 3px;font-size:11px;line-height:1.4;">
+                <a href="mailto:#{sender_email}" style="color:#0b2944;text-decoration:none;">#{sender_email}</a> <span style="color:#a2b2c2;">&nbsp;·&nbsp;</span>
+                <a href="tel:+5565993465055" style="color:#0b2944;text-decoration:none;">(65) 99346-5055</a>
+              </p>
+              <p style="margin:0 0 12px;font-size:11px;line-height:1.4;">
+                <a href="https://www.avaliasolar.com.br/" target="_blank" style="color:#0e5ac9;text-decoration:none;">Website</a><span style="color:#a2b2c2;">&nbsp;&nbsp;|&nbsp;&nbsp;</span><a href="https://www.linkedin.com/in/felipe-morais-8bb61a7b/" target="_blank" style="color:#0e5ac9;text-decoration:none;">LinkedIn</a>
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
+                <td bgcolor="#0b2944" style="background-color:#0b2944;border-radius:4px;">
+                  <a href="https://calendly.com/felipe-avaliasolar/30min" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:7px 13px;font-size:11px;line-height:1.2;font-weight:bold;text-decoration:none;color:#ffffff;">Agendar 30 min ↗</a>
+                </td>
+                <td width="10" style="width:10px;font-size:1px;line-height:1px;">&nbsp;</td>
+                <td style="font-size:11px;line-height:1.25;"><a href="https://www.avaliasolar.com.br/" target="_blank" style="font-weight:bold;color:#0e5ac9;text-decoration:none;">Conhecer a plataforma</a></td>
+              </tr></table>
+            </td>
+          </tr>
+          <tr><td colspan="2" bgcolor="#e8f0f7" style="background-color:#e8f0f7;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:9px;color:#5d7287;letter-spacing:0.4px;line-height:1.4;">ENERGIA SOLAR ● MOBILIDADE ELÉTRICA ● CONFIANÇA DIGITAL</td></tr>
+        </table>
+      HTML
+    end
+
+    def resolved_signature_html(email)
+      meta = email.metadata.is_a?(Hash) ? email.metadata : {}
+      return nil if meta['include_signature'] == false || meta['include_signature'] == 'false'
+
+      custom_sig = signature_for(email)
+      return custom_sig.body_html if custom_sig&.body_html.present?
+
+      # Fallback para a assinatura oficial padrão quando a inclusão de assinatura estiver ativa
+      default_official_signature(email)
+    end
+
     def body_with_signature(email)
-      signature = signature_for(email)
-      [email.body_html.presence || email.body_text, signature&.body_html].compact_blank.join('<br><br>')
+      sig_html = resolved_signature_html(email)
+      [email.body_html.presence || email.body_text, sig_html].compact_blank.join('<br><br>')
     end
 
     def text_with_signature(email)
-      signature = signature_for(email)
-      signature_text = signature && ActionView::Base.full_sanitizer.sanitize(signature.body_html)
+      sig_html = resolved_signature_html(email)
+      signature_text = sig_html.present? ? ActionView::Base.full_sanitizer.sanitize(sig_html) : nil
       [email.body_text.presence || email.body_html, signature_text].compact_blank.join("\n\n")
     end
   end

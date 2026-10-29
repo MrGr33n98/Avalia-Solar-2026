@@ -791,7 +791,7 @@ export default function SendEmailModal({
                         <div className="flex flex-col items-center gap-1.5 shrink-0 border-r border-amber-300 pr-3">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src="https://www.avaliasolar.com.br/images/felipe-assinatura-avatar.png"
+                            src="https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png"
                             alt={senderName}
                             className="w-14 h-14 rounded-full object-cover border-2 border-[#ffcd2d]"
                           />
