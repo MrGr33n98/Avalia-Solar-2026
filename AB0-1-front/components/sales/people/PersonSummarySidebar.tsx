@@ -16,12 +16,12 @@ import {
   Tag as TagIcon,
   Zap,
   Globe,
-  Star,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ContactMethodsModal } from './ContactMethodsModal';
 import { ApiContactMethod } from '@/lib/api/sales/client';
+import { useVoiceCallOptional } from '@/contexts/VoiceCallContext';
 
 export interface OpportunityItem {
   id: number;
@@ -95,6 +95,8 @@ export default function PersonSummarySidebar({
   onUpdateTags,
   onUpdateCustomFields,
 }: PersonSummarySidebarProps) {
+  const voiceCall = useVoiceCallOptional();
+
   // Contact Methods modal & state
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [methods, setMethods] = useState<ApiContactMethod[]>(contactMethods);
@@ -124,6 +126,18 @@ export default function PersonSummarySidebar({
     navigator.clipboard.writeText(text);
     setCopyFeedback(label);
     setTimeout(() => setCopyFeedback(null), 2000);
+  };
+
+  const triggerVoiceCall = (targetPhone: string) => {
+    if (voiceCall) {
+      void voiceCall.startCall({
+        phoneNumber: targetPhone,
+        contactId,
+        contactName: contactName || undefined,
+      });
+      return;
+    }
+    onCall();
   };
 
   const handleAddTag = async () => {
@@ -328,13 +342,14 @@ export default function PersonSummarySidebar({
                         <Copy className="w-3 h-3" />
                       )}
                     </button>
-                    <a
-                      href={`tel:${m.value}`}
-                      className="p-1 text-emerald-600 hover:text-emerald-800 rounded transition"
-                      title="Ligar"
+                    <button
+                      type="button"
+                      onClick={() => triggerVoiceCall(m.value)}
+                      className="p-1 text-emerald-600 hover:text-emerald-800 rounded transition cursor-pointer"
+                      title="Ligar via CRM VoIP"
                     >
                       <Phone className="w-3 h-3" />
-                    </a>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -441,9 +456,9 @@ export default function PersonSummarySidebar({
                     </button>
                     <button
                       type="button"
-                      onClick={onCall}
-                      className="p-1 text-emerald-600 hover:text-emerald-800 rounded transition"
-                      title="Ligar"
+                      onClick={() => triggerVoiceCall(phone)}
+                      className="p-1 text-emerald-600 hover:text-emerald-800 rounded transition cursor-pointer"
+                      title="Ligar via CRM VoIP"
                     >
                       <Phone className="w-3 h-3" />
                     </button>
@@ -693,7 +708,8 @@ export default function PersonSummarySidebar({
             }
           }}
           onCall={(targetPhone) => {
-            window.location.href = `tel:${targetPhone}`;
+            setIsContactModalOpen(false);
+            triggerVoiceCall(targetPhone);
           }}
           onWhatsApp={(targetWhatsApp) => {
             const digits = targetWhatsApp.replace(/\D/g, '');

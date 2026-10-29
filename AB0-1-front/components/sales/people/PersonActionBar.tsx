@@ -2,6 +2,7 @@
 
 import { Calendar, FileText, Mail, MessageSquare, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useVoiceCallOptional } from '@/contexts/VoiceCallContext';
 
 interface PersonActionBarProps {
   onLogActivity: () => void;
@@ -11,6 +12,9 @@ interface PersonActionBarProps {
   onCallContact: () => void;
   phone?: string | null;
   whatsapp?: string | null;
+  contactId?: number;
+  contactName?: string;
+  accountId?: number;
 }
 
 export default function PersonActionBar({
@@ -19,9 +23,28 @@ export default function PersonActionBar({
   onSendEmail,
   onSendText,
   onCallContact,
-  phone: _phone,
-  whatsapp: _whatsapp,
+  phone,
+  whatsapp,
+  contactId,
+  contactName,
+  accountId,
 }: PersonActionBarProps) {
+  const voiceCall = useVoiceCallOptional();
+
+  const handleCallClick = () => {
+    const targetPhone = phone || whatsapp;
+    if (voiceCall && targetPhone) {
+      void voiceCall.startCall({
+        phoneNumber: targetPhone,
+        contactId,
+        contactName,
+        accountId,
+      });
+      return;
+    }
+    onCallContact();
+  };
+
   return (
     <div className="bg-white rounded-xl border border-slate-200/90 p-2 shadow-xs flex flex-wrap items-center gap-2">
       {/* 1. Log activity */}
@@ -72,7 +95,7 @@ export default function PersonActionBar({
       <Button
         variant="outline"
         size="sm"
-        onClick={onCallContact}
+        onClick={handleCallClick}
         className="h-8 text-xs font-semibold border-slate-200 text-slate-700 hover:text-indigo-900 hover:bg-indigo-50/50 hover:border-indigo-200 transition-colors flex items-center gap-1.5"
       >
         <Phone className="w-3.5 h-3.5 text-emerald-600" />

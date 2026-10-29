@@ -16,6 +16,7 @@ import {
   Tag as TagIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useVoiceCallOptional } from '@/contexts/VoiceCallContext';
 import {
   Popover,
   PopoverContent,
@@ -170,6 +171,7 @@ export function NutshellLeadsTable({
   selectedTagIds = [],
   onTagFilterChange,
 }: NutshellLeadsTableProps) {
+  const voiceCall = useVoiceCallOptional();
   // Estado de Colunas Visíveis (Change columns)
   const [columns, setColumns] = useState({
     age: true,
@@ -757,6 +759,18 @@ export function NutshellLeadsTable({
                   {deal.contactPhone && (
                     <a
                       href={`tel:${deal.contactPhone}`}
+                      onClick={(e) => {
+                        if (voiceCall && deal.contactPhone) {
+                          e.preventDefault();
+                          void voiceCall.startCall({
+                            phoneNumber: deal.contactPhone,
+                            contactName: deal.contact || deal.company,
+                            contactId: deal.contactId,
+                            accountId: deal.accountId,
+                            opportunityId: deal.id,
+                          });
+                        }
+                      }}
                       className="w-7 h-7 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-200"
                       title="Ligar"
                     >

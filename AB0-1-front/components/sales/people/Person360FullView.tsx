@@ -215,21 +215,36 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
     }
   };
 
+  const resolvedPhone =
+    contact?.phone ||
+    contact?.contact_methods?.find((m) => m.kind === 'phone' && m.is_primary)?.value ||
+    contact?.contact_methods?.find((m) => m.kind === 'phone')?.value ||
+    null;
+
+  const resolvedWhatsApp =
+    contact?.whatsapp ||
+    contact?.contact_methods?.find((m) => m.kind === 'whatsapp' && m.is_primary)?.value ||
+    contact?.contact_methods?.find((m) => m.kind === 'whatsapp')?.value ||
+    null;
+
   const handleSendText = () => {
-    if (!contact?.whatsapp && !contact?.phone) {
+    if (!resolvedWhatsApp && !resolvedPhone) {
       alert('Nenhum número de WhatsApp ou telefone cadastrado.');
       return;
     }
-    const cleanNum = (contact.whatsapp || contact.phone || '').replace(/\D/g, '');
-    window.open(`https://wa.me/${cleanNum}?text=Olá%20${encodeURIComponent(contact.first_name)},%20tudo%20bem?`, '_blank');
+    const cleanNum = (resolvedWhatsApp || resolvedPhone || '').replace(/\D/g, '');
+    window.open(
+      `https://wa.me/${cleanNum.startsWith('55') ? cleanNum : `55${cleanNum}`}?text=Olá%20${encodeURIComponent(contact?.first_name || '')},%20tudo%20bem?`,
+      '_blank'
+    );
   };
 
   const handleCall = () => {
-    if (!contact?.phone && !contact?.whatsapp) {
+    if (!resolvedPhone && !resolvedWhatsApp) {
       alert('Nenhum número de telefone cadastrado.');
       return;
     }
-    window.location.href = `tel:${contact.phone || contact.whatsapp}`;
+    window.location.href = `tel:${resolvedPhone || resolvedWhatsApp}`;
   };
 
   if (loading) {
@@ -314,8 +329,11 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
           onSendEmail={() => setActiveModal('email')}
           onSendText={handleSendText}
           onCallContact={handleCall}
-          phone={contact.phone}
-          whatsapp={contact.whatsapp}
+          phone={resolvedPhone}
+          whatsapp={resolvedWhatsApp}
+          contactId={contact.id}
+          contactName={contact.name}
+          accountId={contact.account?.id || contact.sales_account_id || undefined}
         />
 
         {/* 4. CLEAN 2-COLUMN GRID (Principal 68% / Sidebar 32%) */}
@@ -373,8 +391,8 @@ export default function Person360FullView({ contactId }: { contactId: string }) 
                 setActiveModal('email');
               }}
               email={contact.email}
-              phone={contact.phone}
-              whatsapp={contact.whatsapp}
+              phone={resolvedPhone}
+              whatsapp={resolvedWhatsApp}
               territory={contact.territory || [contact.account?.city, contact.account?.state].filter(Boolean).join(' - ')}
               lastContactAt={contact.last_contact_at}
               createdVia={contact.created_via}

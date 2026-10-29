@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertCircle, Building2, ChevronRight, Mail, MessageSquare, PhoneCall, RotateCw, UserCheck, Users } from 'lucide-react';
+import { AlertCircle, Building2, ChevronRight, Mail, MessageSquare, PhoneCall, RotateCw, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Contact360View from '@/components/sales/Contact360View';
 import { PeopleColumnConfig } from './PeopleColumnsDialog';
+import { useVoiceCallOptional } from '@/contexts/VoiceCallContext';
 
 export interface PersonListItem {
   id: number;
@@ -58,6 +59,8 @@ export default function PeopleTable({
   onToggleSelect,
   onRetry,
 }: PeopleTableProps) {
+  const voiceCall = useVoiceCallOptional();
+
   if (loading) {
     return (
       <div className="py-16 text-center space-y-3 bg-white rounded-lg border border-slate-200">
@@ -240,9 +243,25 @@ export default function PeopleTable({
                           </a>
                         )}
                         {person.phone && (
-                          <a href={`tel:${person.phone}`} title="Ligar" className="p-1 text-sky-600 hover:bg-sky-50 rounded">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (voiceCall && person.phone) {
+                                void voiceCall.startCall({
+                                  phoneNumber: person.phone,
+                                  contactId: person.id,
+                                  contactName: person.name,
+                                  accountId: person.sales_account_id || undefined,
+                                });
+                              } else if (person.phone) {
+                                window.location.href = `tel:${person.phone}`;
+                              }
+                            }}
+                            title="Ligar via CRM VoIP"
+                            className="p-1 text-sky-600 hover:bg-sky-50 rounded cursor-pointer"
+                          >
                             <PhoneCall className="w-3.5 h-3.5" />
-                          </a>
+                          </button>
                         )}
                       </div>
                     </td>

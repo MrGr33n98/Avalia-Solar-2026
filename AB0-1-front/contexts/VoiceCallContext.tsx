@@ -37,6 +37,7 @@ export function VoiceCallProvider({ children }: { children: React.ReactNode }) {
 
   const deviceRef = useRef<any>(null);
   const callRef = useRef<any>(null);
+  const callSidRef = useRef<string | null>(null);
   const timerRef = useRef<any>(null);
 
   // Limpa timer ao desmontar
@@ -66,6 +67,8 @@ export function VoiceCallProvider({ children }: { children: React.ReactNode }) {
   const startCall = useCallback(async (info: ActiveCallInfo) => {
     setError(null);
     setActiveCall(info);
+    setIsMuted(false);
+    callSidRef.current = null;
     setStatus('initiating');
 
     try {
@@ -90,11 +93,12 @@ export function VoiceCallProvider({ children }: { children: React.ReactNode }) {
           setStatus('failed');
         });
 
-        await device.register();
         deviceRef.current = device;
+      } else {
+        deviceRef.current.updateToken(tokenRes.token);
       }
 
-      // 3. Efetua a chamada outbound
+      // 3. Efetua a chamada outbound diretamente (sem device.register() obrigatório)
       setStatus('ringing');
       const params = {
         To: info.phoneNumber,
@@ -103,11 +107,28 @@ export function VoiceCallProvider({ children }: { children: React.ReactNode }) {
       const call = await deviceRef.current.connect({ params });
       callRef.current = call;
 
+      if (call?.parameters?.CallSid) {
+        callSidRef.current = call.parameters.CallSid;
+      }
+
       call.on('accept', () => {
+        if (call?.parameters?.CallSid) {
+          callSidRef.current = call.parameters.CallSid;
+        }
         setStatus('connected');
       });
 
       call.on('disconnect', () => {
+        setStatus('completed');
+        callRef.current = null;
+      });
+
+      call.on('cancel', () => {
+        setStatus('completed');
+        callRef.current = null;
+      });
+
+      call.on('reject', () => {
         setStatus('completed');
         callRef.current = null;
       });
@@ -156,10 +177,12 @@ export function VoiceCallProvider({ children }: { children: React.ReactNode }) {
         outcome: data.outcome || (durationSeconds > 0 ? 'completed' : 'no_answer'),
         notes: data.notes,
         subject: data.subject || `Ligação para ${activeCall.contactName || activeCall.phoneNumber}`,
+        call_sid: callSidRef.current || undefined,
       });
       setStatus('idle');
       setActiveCall(null);
       setDurationSeconds(0);
+      callSidRef.current = null;
     } catch (err: any) {
       console.error('[VoiceCall] Falha ao salvar log da chamada:', err);
       throw err;
@@ -170,6 +193,7 @@ export function VoiceCallProvider({ children }: { children: React.ReactNode }) {
     setStatus('idle');
     setActiveCall(null);
     setDurationSeconds(0);
+    callSidRef.current = null;
   }, []);
 
   return (
@@ -198,4 +222,8 @@ export function useVoiceCall() {
     throw new Error('useVoiceCall deve ser usado dentro de um VoiceCallProvider');
   }
   return context;
+}
+
+export function useVoiceCallOptional() {
+  return useContext(VoiceCallContext);
 }

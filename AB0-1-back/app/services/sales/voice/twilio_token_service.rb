@@ -22,11 +22,21 @@ module Sales
         api_key = ENV['TWILIO_API_KEY'].presence
         api_secret = ENV['TWILIO_API_SECRET'].presence
         app_sid = ENV['TWILIO_TWIML_APP_SID'].presence
+        caller_id = ENV['TWILIO_CALLER_ID'].presence || ENV['TWILIO_PHONE_NUMBER'].presence
 
         unless account_sid && api_key && api_secret && app_sid
           return {
             configured: false,
-            error: 'Twilio não configurado. Defina TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET e TWILIO_TWIML_APP_SID no .env'
+            error: 'Twilio não configurado. Defina TWILIO_ACCOUNT_SID, TWILIO_API_KEY, ' \
+                   'TWILIO_API_SECRET e TWILIO_TWIML_APP_SID no .env'
+          }
+        end
+
+        unless caller_id
+          return {
+            configured: false,
+            error: 'Caller ID da Twilio ausente. Defina TWILIO_CALLER_ID ou TWILIO_PHONE_NUMBER ' \
+                   'com um número verificado na conta Twilio.'
           }
         end
 
@@ -44,8 +54,9 @@ module Sales
           jti: "#{api_key}-#{now}",
           iss: api_key,
           sub: account_sid,
-          exp: exp,
+          iat: now,
           nbf: now,
+          exp: exp,
           grants: {
             identity: identity,
             voice: {
@@ -71,7 +82,7 @@ module Sales
           token: token,
           identity: identity,
           expires_at: Time.at(exp).iso8601,
-          caller_id: ENV['TWILIO_CALLER_ID'] || ENV['TWILIO_PHONE_NUMBER']
+          caller_id: caller_id
         }
       end
     end

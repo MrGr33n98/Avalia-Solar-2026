@@ -2,21 +2,17 @@
 
 import { useState } from 'react';
 import {
-  Calendar,
   CheckCircle2,
   Clock,
-  Phone,
   PhoneCall,
   PhoneForwarded,
   PhoneOff,
-  Plus,
-  RotateCw,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useVoiceCallOptional } from '@/contexts/VoiceCallContext';
 
 export default function CallLoggerModal({
   accountId,
@@ -31,6 +27,7 @@ export default function CallLoggerModal({
   phone?: string;
   onSuccess?: () => void;
 }) {
+  const voiceCall = useVoiceCallOptional();
   const [open, setOpen] = useState(false);
   const [isWrapUp, setIsWrapUp] = useState(false);
   const [outcome, setOutcome] = useState<'answered' | 'no_answer' | 'voicemail' | 'interested' | 'not_interested' | 'callback'>('answered');
@@ -108,7 +105,16 @@ export default function CallLoggerModal({
           onClick={() => {
             if (phone) {
               const cleanPhone = phone.replace(/\D/g, '');
-              window.open(`tel:${cleanPhone}`, '_self');
+              if (voiceCall) {
+                void voiceCall.startCall({
+                  phoneNumber: cleanPhone,
+                  contactName,
+                  contactId,
+                  accountId,
+                });
+              } else {
+                window.open(`tel:${cleanPhone}`, '_self');
+              }
               // GAP-19: Arm wrap-up prompt immediately so it is ready when returning to app
               setIsWrapUp(true);
               setOpen(true);
