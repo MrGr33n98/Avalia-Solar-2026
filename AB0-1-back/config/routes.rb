@@ -182,7 +182,11 @@ Rails.application.routes.draw do
           end
         end
         resources :email_suppressions, only: %i[index create destroy], controller: 'sales/email_suppressions'
-        resources :email_signatures, only: %i[index create update destroy], controller: 'sales/email_signatures'
+        resources :email_signatures, only: %i[index create update destroy], controller: 'sales/email_signatures' do
+          collection do
+            post :upload_asset
+          end
+        end
         resources :email_connections, only: %i[index show], controller: 'sales/email_connections' do
           collection do
             post 'zoho/authorize', to: 'sales/email_connections#zoho_authorize'

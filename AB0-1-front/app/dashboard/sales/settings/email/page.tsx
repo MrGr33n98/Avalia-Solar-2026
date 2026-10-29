@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { 
-  Mail, 
-  Sparkles, 
-  Copy, 
-  Check, 
-  ExternalLink, 
-  Eye, 
-  Code2, 
-  ShieldCheck, 
-  Lock, 
-  CheckCircle2, 
-  Trash2, 
+import {
+  Mail,
+  Sparkles,
+  Copy,
+  Check,
+  ExternalLink,
+  Eye,
+  Code2,
+  ShieldCheck,
+  Lock,
+  CheckCircle2,
+  Trash2,
   Edit3,
   Calendar,
   Linkedin,
@@ -21,20 +21,43 @@ import {
   Camera,
   X,
   Image as ImageIcon,
-  Link2
+  Link2,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
 
+type SignatureFields = {
+  full_name?: string;
+  role_title?: string;
+  email?: string;
+  phone?: string;
+  avatar_url?: string;
+  logo_url?: string;
+  website_url?: string;
+  linkedin_url?: string;
+  calendly_url?: string;
+  cta_text?: string;
+  footer_tagline?: string;
+};
+
 type Signature = {
   id: number;
   name: string;
   body_html: string;
   is_default: boolean;
+  avatar_url?: string;
+  logo_url?: string;
+  fields?: SignatureFields;
 };
+
+const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export default function EmailSignaturesPage() {
   // Controle de Permissão (Admin vs. Vendedor/Read-Only)
@@ -45,21 +68,33 @@ export default function EmailSignaturesPage() {
   const [roleTitle, setRoleTitle] = useState('Fundador do Avalia Solar');
   const [email, setEmail] = useState('felipe@avaliasolar.com.br');
   const [phone, setPhone] = useState('(65) 99346-5055');
-  const [avatarUrl, setAvatarUrl] = useState('https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png');
+  const [avatarUrl, setAvatarUrl] = useState(
+    'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png'
+  );
+  const [avatarSignedId, setAvatarSignedId] = useState<string | null>(null);
   const [websiteUrl, setWebsiteUrl] = useState('https://www.avaliasolar.com.br/');
   const [linkedinUrl, setLinkedinUrl] = useState('https://www.linkedin.com/in/felipe-morais-8bb61a7b/');
   const [calendlyUrl, setCalendlyUrl] = useState('https://calendly.com/felipe-avaliasolar/30min');
   const [ctaText, setCtaText] = useState('Agendar 30 min ↗');
-  const [logoUrl, setLogoUrl] = useState('https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png');
-  const [footerTagline, setFooterTagline] = useState('ENERGIA SOLAR ● MOBILIDADE ELÉTRICA ● CONFIANÇA DIGITAL');
+  const [logoUrl, setLogoUrl] = useState(
+    'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png'
+  );
+  const [logoSignedId, setLogoSignedId] = useState<string | null>(null);
+  const [footerTagline, setFooterTagline] = useState(
+    'ENERGIA SOLAR ● MOBILIDADE ELÉTRICA ● CONFIANÇA DIGITAL'
+  );
 
-  // Estados de Interface
+  // Estados de Interface e Persistência
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [signatures, setSignatures] = useState<Signature[]>([]);
   const [signatureName, setSignatureName] = useState('Assinatura Oficial Avalia Solar (Padrão)');
+  const hydratedInitialRef = useRef(false);
 
   // Upload Refs e Modos de Input
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
@@ -67,34 +102,69 @@ export default function EmailSignaturesPage() {
   const [avatarMode, setAvatarMode] = useState<'upload' | 'url'>('upload');
   const [logoMode, setLogoMode] = useState<'upload' | 'url'>('upload');
 
+  const uploadSignatureAsset = async (file: File, kind: 'avatar' | 'logo') => {
+    if (!ALLOWED_MIME_TYPES.includes(file.type.toLowerCase())) {
+      toast.error('Formato inválido. Use PNG, JPG ou WEBP.');
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast.error('A imagem excede o limite máximo de 5 MB.');
+      return;
+    }
+
+    if (kind === 'avatar') setUploadingAvatar(true);
+    else setUploadingLogo(true);
+    setSaveError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('kind', kind);
+
+      const res = await fetch('/api/v1/sales/email_signatures/upload_asset', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || data.message || 'Falha ao enviar imagem para o servidor.');
+      }
+
+      if (kind === 'avatar') {
+        setAvatarUrl(data.url);
+        setAvatarSignedId(data.signed_id || null);
+        toast.success('Foto do avatar enviada e salva com URL pública HTTPS!');
+      } else {
+        setLogoUrl(data.url);
+        setLogoSignedId(data.signed_id || null);
+        toast.success('Logotipo enviado e salvo com URL pública HTTPS!');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar imagem.';
+      setSaveError(msg);
+      toast.error(msg);
+    } finally {
+      if (kind === 'avatar') setUploadingAvatar(false);
+      else setUploadingLogo(false);
+    }
+  };
+
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setAvatarUrl(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+      uploadSignatureAsset(e.target.files[0], 'avatar');
+      e.target.value = '';
     }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setLogoUrl(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+      uploadSignatureAsset(e.target.files[0], 'logo');
+      e.target.value = '';
     }
   };
 
-  // Gerador dinâmico do HTML de compatibilidade de e-mail (Tabelas e estilos inline)
-  // Nota crítica para Gmail/Outlook: imagens em HTML de e-mail NUNCA podem usar data:image/... (bloqueado pelo Gmail e sanitizador).
   const resolvedEmailAvatarUrl = useMemo(() => {
     const fallback = 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png';
     if (!avatarUrl || avatarUrl.startsWith('data:')) return fallback;
@@ -109,6 +179,15 @@ export default function EmailSignaturesPage() {
     return logoUrl;
   }, [logoUrl]);
 
+  const whatsappDigits = useMemo(() => {
+    const digits = phone.replace(/\D/g, '') || '5565993465055';
+    return digits.length <= 11 && !digits.startsWith('55') ? `55${digits}` : digits;
+  }, [phone]);
+
+  const whatsappUrl = `https://wa.me/${whatsappDigits}`;
+  const whatsappIconUrl = 'https://www.avaliasolar.com.br/images/email/whatsapp.png';
+
+  // Gerador dinâmico do HTML de compatibilidade de e-mail (Tabelas, estilos inline e WhatsApp clicável)
   const generatedHtml = useMemo(() => {
     return `<!-- Assinatura Avalia Solar premium: fundo azul-gelo; somente tabelas e CSS inline para compatibilidade com email -->
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="550" bgcolor="#f6f9fd" style="width:550px;max-width:100%;border-collapse:separate;border-spacing:0;background-color:#f6f9fd;border:1px solid #dae5ef;font-family:Arial,Helvetica,sans-serif;color:#0b2944;">
@@ -123,8 +202,8 @@ export default function EmailSignaturesPage() {
       <p style="margin:0 0 2px;font-size:17px;line-height:1.23;letter-spacing:-0.3px;font-weight:700;color:#0b2944;"><strong>${fullName}</strong></p>
       <p style="margin:0 0 9px;font-size:11px;line-height:1.3;color:#63768a;">${roleTitle}</p>
       <p style="margin:0 0 3px;font-size:11px;line-height:1.4;">
-        <a href="mailto:${email}" style="color:#0b2944;text-decoration:none;">${email}</a> <span style="color:#a2b2c2;">&nbsp;·&nbsp;</span>
-        <a href="tel:${phone.replace(/[^0-9+]/g, '')}" style="color:#0b2944;text-decoration:none;">${phone}</a>
+        <a href="mailto:${email}" style="color:#0b2944;text-decoration:none;vertical-align:middle;">${email}</a> <span style="color:#a2b2c2;vertical-align:middle;">&nbsp;·&nbsp;</span>
+        <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" title="Conversar pelo WhatsApp" style="display:inline-block;vertical-align:middle;text-decoration:none;"><img src="${whatsappIconUrl}" width="18" height="18" alt="WhatsApp" style="display:inline-block;vertical-align:middle;width:18px;height:18px;border:0;" /></a>
       </p>
       <p style="margin:0 0 12px;font-size:11px;line-height:1.4;">
         <a href="${websiteUrl}" target="_blank" style="color:#0e5ac9;text-decoration:none;">Website</a><span style="color:#a2b2c2;">&nbsp;&nbsp;|&nbsp;&nbsp;</span><a href="${linkedinUrl}" target="_blank" style="color:#0e5ac9;text-decoration:none;">LinkedIn</a>
@@ -140,24 +219,60 @@ export default function EmailSignaturesPage() {
   </tr>
   <tr><td colspan="2" bgcolor="#e8f0f7" style="background-color:#e8f0f7;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:9px;color:#5d7287;letter-spacing:0.4px;line-height:1.4;">${footerTagline}</td></tr>
 </table>`;
-  }, [fullName, roleTitle, email, phone, resolvedEmailAvatarUrl, websiteUrl, linkedinUrl, calendlyUrl, ctaText, resolvedEmailLogoUrl, footerTagline]);
+  }, [
+    fullName,
+    roleTitle,
+    email,
+    whatsappUrl,
+    whatsappIconUrl,
+    resolvedEmailAvatarUrl,
+    websiteUrl,
+    linkedinUrl,
+    calendlyUrl,
+    ctaText,
+    resolvedEmailLogoUrl,
+    footerTagline,
+  ]);
 
-  // Carregar assinaturas existentes
-  const loadSignatures = async () => {
+  const hydrateFromSignature = useCallback((sig: Signature) => {
+    setSignatureName(sig.name || 'Assinatura Oficial Avalia Solar (Padrão)');
+    const f = sig.fields || {};
+    if (f.full_name) setFullName(f.full_name);
+    if (f.role_title) setRoleTitle(f.role_title);
+    if (f.email) setEmail(f.email);
+    if (f.phone) setPhone(f.phone);
+    if (sig.avatar_url || f.avatar_url) setAvatarUrl(sig.avatar_url || f.avatar_url!);
+    if (sig.logo_url || f.logo_url) setLogoUrl(sig.logo_url || f.logo_url!);
+    if (f.website_url) setWebsiteUrl(f.website_url);
+    if (f.linkedin_url) setLinkedinUrl(f.linkedin_url);
+    if (f.calendly_url) setCalendlyUrl(f.calendly_url);
+    if (f.cta_text) setCtaText(f.cta_text);
+    if (f.footer_tagline) setFooterTagline(f.footer_tagline);
+  }, []);
+
+  // Carregar assinaturas existentes e restaurar campos salvos
+  const loadSignatures = useCallback(async () => {
     try {
       const res = await fetch('/api/v1/sales/email_signatures', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        setSignatures(data.signatures ?? []);
+        const list: Signature[] = data.signatures ?? [];
+        setSignatures(list);
+
+        if (list.length > 0 && !hydratedInitialRef.current) {
+          hydratedInitialRef.current = true;
+          const def = list.find((s) => s.is_default) || list[0];
+          hydrateFromSignature(def);
+        }
       }
     } catch {
-      // Fallback gracioso
+      // Ignora erro inicial de leitura
     }
-  };
+  }, [hydrateFromSignature]);
 
   useEffect(() => {
     loadSignatures();
-  }, []);
+  }, [loadSignatures]);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(generatedHtml);
@@ -170,6 +285,9 @@ export default function EmailSignaturesPage() {
     if (!isAdmin) return;
 
     setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
     try {
       const existingDefault = signatures.find((s) => s.is_default) || signatures[0];
       const endpoint = existingDefault
@@ -183,22 +301,44 @@ export default function EmailSignaturesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           signature: {
-            name: signatureName.trim(),
+            name: signatureName.trim() || 'Assinatura Oficial Avalia Solar (Padrão)',
             body_html: generatedHtml,
             is_default: true,
+            avatar_signed_id: avatarSignedId || undefined,
+            logo_signed_id: logoSignedId || undefined,
+            settings: {
+              full_name: fullName,
+              role_title: roleTitle,
+              email,
+              phone,
+              avatar_url: resolvedEmailAvatarUrl,
+              logo_url: resolvedEmailLogoUrl,
+              website_url: websiteUrl,
+              linkedin_url: linkedinUrl,
+              calendly_url: calendlyUrl,
+              cta_text: ctaText,
+              footer_tagline: footerTagline,
+            },
           },
         }),
       });
 
-      if (response.ok) {
-        await loadSignatures();
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Não foi possível salvar a assinatura no servidor.');
       }
-    } catch {
-      // Feedback local se offline
+
+      if (data.signature) {
+        hydrateFromSignature(data.signature);
+      }
+      await loadSignatures();
       setSaveSuccess(true);
+      toast.success('Assinatura salva com sucesso no servidor!');
       setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Falha de conexão ao salvar assinatura.';
+      setSaveError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -206,10 +346,17 @@ export default function EmailSignaturesPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch(`/api/v1/sales/email_signatures/${id}`, { method: 'DELETE', credentials: 'include' });
+      const res = await fetch(`/api/v1/sales/email_signatures/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        throw new Error('Falha ao excluir assinatura.');
+      }
       setSignatures((prev) => prev.filter((s) => s.id !== id));
-    } catch {
-      setSignatures((prev) => prev.filter((s) => s.id !== id));
+      toast.success('Assinatura removida.');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao remover assinatura.');
     }
   };
 
@@ -217,7 +364,6 @@ export default function EmailSignaturesPage() {
     <SalesLayoutWrapper>
       <TooltipProvider delayDuration={200}>
         <div className="max-w-[1400px] mx-auto py-2 space-y-5 font-sans text-xs">
-          
           {/* Header da Página (Estilo Setup Nutshell + IBM Carbon) */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200/80 pb-3">
             <div>
@@ -234,9 +380,7 @@ export default function EmailSignaturesPage() {
                 type="button"
                 onClick={() => setIsAdmin(true)}
                 className={`text-xs px-2.5 py-0.5 rounded font-medium transition-all ${
-                  isAdmin 
-                    ? 'bg-slate-900 text-white shadow-xs' 
-                    : 'text-slate-600 hover:bg-slate-100'
+                  isAdmin ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <span className="flex items-center gap-1">
@@ -247,9 +391,7 @@ export default function EmailSignaturesPage() {
                 type="button"
                 onClick={() => setIsAdmin(false)}
                 className={`text-xs px-2.5 py-0.5 rounded font-medium transition-all ${
-                  !isAdmin 
-                    ? 'bg-amber-600 text-white shadow-xs' 
-                    : 'text-slate-600 hover:bg-slate-100'
+                  !isAdmin ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <span className="flex items-center gap-1">
@@ -266,7 +408,11 @@ export default function EmailSignaturesPage() {
               <div>
                 <p className="font-semibold text-slate-900 text-xs">Caixas de E-mail Conectadas (Zoho Mail / SES)</p>
                 <p className="text-[11px] text-slate-500">
-                  Esta assinatura é injetada automaticamente em todas as mensagens de campanhas e respostas pela variável <code className="bg-sky-100 text-sky-800 px-1 py-0.5 rounded font-mono text-[10px]">&#123;&#123;user.signature&#125;&#125;</code>.
+                  Esta assinatura é injetada automaticamente em todas as mensagens de campanhas e respostas pela variável{' '}
+                  <code className="bg-sky-100 text-sky-800 px-1 py-0.5 rounded font-mono text-[10px]">
+                    &#123;&#123;user.signature&#125;&#125;
+                  </code>
+                  .
                 </p>
               </div>
             </div>
@@ -278,6 +424,22 @@ export default function EmailSignaturesPage() {
             </Link>
           </div>
 
+          {saveError && (
+            <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>{saveError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSaveError(null)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {/* Banner Informativo de Governança se estiver no modo Vendedor (Read-Only) */}
           {!isAdmin && (
             <div className="bg-amber-50 border border-amber-200/80 text-amber-900 rounded-md p-3 flex items-center justify-between">
@@ -287,7 +449,10 @@ export default function EmailSignaturesPage() {
                   <strong>Governança Ativa:</strong> A identidade visual, logotipo e rodapé institucional são padronizados pela gestão. Você pode personalizar apenas seus dados de contato e link de agendamento.
                 </span>
               </div>
-              <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300 text-[10px] uppercase tracking-wider font-semibold">
+              <Badge
+                variant="outline"
+                className="bg-amber-100 text-amber-800 border-amber-300 text-[10px] uppercase tracking-wider font-semibold"
+              >
                 Modo Vendedor
               </Badge>
             </div>
@@ -299,7 +464,10 @@ export default function EmailSignaturesPage() {
             <div className="bg-[#f5f6f8] px-5 py-3 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-semibold text-slate-800">Assinatura Oficial Avalia Solar</h2>
-                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
+                <Badge
+                  variant="outline"
+                  className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]"
+                >
                   Compatível com Gmail & Outlook
                 </Badge>
                 {saveSuccess && (
@@ -325,10 +493,10 @@ export default function EmailSignaturesPage() {
                   <Button
                     type="button"
                     onClick={() => handleSaveSignature()}
-                    disabled={saving}
+                    disabled={saving || uploadingAvatar || uploadingLogo}
                     className="bg-[#43a047] hover:bg-[#388e3c] text-white font-medium text-xs h-7 px-4 shadow-xs transition-colors"
                   >
-                    {saving ? 'Saving...' : 'Salvar como Padrão'}
+                    {saving ? 'Salvando...' : 'Salvar como Padrão'}
                   </Button>
                 )}
               </div>
@@ -336,7 +504,6 @@ export default function EmailSignaturesPage() {
 
             {/* Grid 2-Colunas: Coluna Esquerda (Formulário) | Coluna Direita (Live Preview) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200">
-              
               {/* Coluna 1: Campos e Customização (45% -> col-span-5) */}
               <div className="lg:col-span-5 p-5 space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
@@ -348,7 +515,9 @@ export default function EmailSignaturesPage() {
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[11px] text-slate-600 font-medium mb-1">Identificador da Assinatura (CRM)</label>
+                    <label className="block text-[11px] text-slate-600 font-medium mb-1">
+                      Identificador da Assinatura (CRM)
+                    </label>
                     <Input
                       value={signatureName}
                       disabled={!isAdmin}
@@ -369,7 +538,9 @@ export default function EmailSignaturesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-slate-600 font-medium mb-1">Cargo / Especialidade</label>
+                    <label className="block text-[11px] text-slate-600 font-medium mb-1">
+                      Cargo / Especialidade
+                    </label>
                     <Input
                       value={roleTitle}
                       onChange={(e) => setRoleTitle(e.target.value)}
@@ -380,7 +551,9 @@ export default function EmailSignaturesPage() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] text-slate-600 font-medium mb-1">E-mail Comercial</label>
+                      <label className="block text-[11px] text-slate-600 font-medium mb-1">
+                        E-mail Comercial
+                      </label>
                       <Input
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -388,11 +561,14 @@ export default function EmailSignaturesPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-slate-600 font-medium mb-1">Telefone / WhatsApp</label>
+                      <label className="block text-[11px] text-slate-600 font-medium mb-1">
+                        WhatsApp (Link do Ícone)
+                      </label>
                       <Input
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         className="h-8 text-xs bg-white"
+                        placeholder="(65) 99346-5055"
                       />
                     </div>
                   </div>
@@ -425,7 +601,7 @@ export default function EmailSignaturesPage() {
                       type="file"
                       ref={avatarFileInputRef}
                       onChange={handleAvatarUpload}
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       className="hidden"
                     />
 
@@ -443,9 +619,13 @@ export default function EmailSignaturesPage() {
                               />
                               <button
                                 type="button"
-                                onClick={() => setAvatarUrl('')}
+                                onClick={() =>
+                                  setAvatarUrl(
+                                    'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png'
+                                  )
+                                }
                                 className="absolute -top-1 -right-1 bg-red-600 text-white p-0.5 rounded-full shadow-xs hover:bg-red-700 transition-colors"
-                                title="Remover foto"
+                                title="Restaurar foto padrão"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -461,15 +641,25 @@ export default function EmailSignaturesPage() {
                         <div className="flex-1 space-y-1">
                           <Button
                             type="button"
+                            disabled={uploadingAvatar}
                             onClick={() => avatarFileInputRef.current?.click()}
                             size="sm"
                             className="h-7 text-xs bg-sky-600 hover:bg-sky-700 text-white font-medium flex items-center gap-1.5 shadow-xs"
                           >
-                            <Upload className="w-3 h-3" />
-                            {avatarUrl ? 'Trocar Foto do Computador' : 'Fazer Upload da Foto'}
+                            {uploadingAvatar ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span>Enviando ao servidor...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-3 h-3" />
+                                <span>{avatarUrl ? 'Trocar Foto do Computador' : 'Fazer Upload da Foto'}</span>
+                              </>
+                            )}
                           </Button>
                           <p className="text-[10px] text-slate-500">
-                            Formatos suportados: PNG, JPG ou WEBP (recomendado quadrado 1:1, mín. 166x166px).
+                            PNG, JPG ou WEBP (máx. 5 MB). Salvo permanentemente no Active Storage com URL HTTPS.
                           </p>
                         </div>
                       </div>
@@ -481,9 +671,7 @@ export default function EmailSignaturesPage() {
                           className="h-8 text-xs bg-white font-mono"
                           placeholder="https://exemplo.com/sua-foto.png"
                         />
-                        <p className="text-[10px] text-slate-400">
-                          Cole a URL direta da imagem hospedada.
-                        </p>
+                        <p className="text-[10px] text-slate-400">Cole a URL HTTPS direta da imagem hospedada.</p>
                       </div>
                     )}
                   </div>
@@ -529,7 +717,10 @@ export default function EmailSignaturesPage() {
                       <ShieldCheck className="w-3.5 h-3.5 text-slate-600" /> Padrões Globais da Empresa
                     </span>
                     {!isAdmin && (
-                      <Badge variant="outline" className="text-[9px] bg-slate-100 text-slate-500 border-slate-200 flex items-center gap-1">
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] bg-slate-100 text-slate-500 border-slate-200 flex items-center gap-1"
+                      >
                         <Lock className="w-2.5 h-2.5" /> Bloqueado
                       </Badge>
                     )}
@@ -574,7 +765,7 @@ export default function EmailSignaturesPage() {
                       type="file"
                       ref={logoFileInputRef}
                       onChange={handleLogoUpload}
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       className="hidden"
                     />
 
@@ -583,7 +774,10 @@ export default function EmailSignaturesPage() {
                         <div className="border border-slate-200 bg-white p-1 rounded shrink-0">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={logoUrl || 'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png'}
+                            src={
+                              logoUrl ||
+                              'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png'
+                            }
                             alt="Logo preview"
                             className="h-7 w-auto object-contain"
                           />
@@ -592,12 +786,22 @@ export default function EmailSignaturesPage() {
                         {isAdmin ? (
                           <Button
                             type="button"
+                            disabled={uploadingLogo}
                             onClick={() => logoFileInputRef.current?.click()}
                             size="sm"
                             variant="outline"
                             className="h-7 text-xs flex items-center gap-1.5 bg-white hover:bg-slate-50"
                           >
-                            <Upload className="w-3 h-3 text-slate-600" /> Escolher Logo do Computador
+                            {uploadingLogo ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span>Enviando...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-3 h-3 text-slate-600" /> Escolher Logo do Computador
+                              </>
+                            )}
                           </Button>
                         ) : (
                           <span className="text-[10px] text-slate-400 italic">Logo institucional travado</span>
@@ -615,7 +819,9 @@ export default function EmailSignaturesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-slate-500 font-medium mb-1">Faixa de Autoridade (Rodapé)</label>
+                    <label className="block text-[11px] text-slate-500 font-medium mb-1">
+                      Faixa de Autoridade (Rodapé)
+                    </label>
                     <Input
                       value={footerTagline}
                       disabled={!isAdmin}
@@ -633,15 +839,15 @@ export default function EmailSignaturesPage() {
                     <span className="text-xs font-semibold text-slate-800">
                       Visualização em Tempo Real (Live Preview)
                     </span>
-                    
+
                     {/* Alternador Código vs Preview */}
                     <div className="flex bg-white rounded border border-slate-200 p-0.5 text-[11px]">
                       <button
                         type="button"
                         onClick={() => setActiveTab('preview')}
                         className={`px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors ${
-                          activeTab === 'preview' 
-                            ? 'bg-sky-100 text-sky-800 font-semibold' 
+                          activeTab === 'preview'
+                            ? 'bg-sky-100 text-sky-800 font-semibold'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
@@ -651,8 +857,8 @@ export default function EmailSignaturesPage() {
                         type="button"
                         onClick={() => setActiveTab('code')}
                         className={`px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors ${
-                          activeTab === 'code' 
-                            ? 'bg-sky-100 text-sky-800 font-semibold' 
+                          activeTab === 'code'
+                            ? 'bg-sky-100 text-sky-800 font-semibold'
                             : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
@@ -666,19 +872,27 @@ export default function EmailSignaturesPage() {
                     <div className="bg-white rounded-md border border-slate-200 shadow-xs overflow-hidden">
                       <div className="bg-slate-100/80 px-4 py-2 border-b border-slate-200 text-[11px] text-slate-500 flex items-center justify-between">
                         <span>Simulação de Leitura (Gmail / Outlook)</span>
-                        <span className="text-[10px] font-mono">550px width</span>
+                        <span className="text-[10px] font-mono">550px width · WhatsApp Link: {whatsappUrl}</span>
                       </div>
                       <div className="p-4 space-y-3">
                         <div className="text-slate-600 text-xs space-y-1.5">
                           <p>Olá, Carlos!</p>
-                          <p>Conforme conversamos, montei o estudo de viabilidade solar para o seu projeto com estimativa de retorno em menos de 3 anos.</p>
+                          <p>
+                            Conforme conversamos, montei o estudo de viabilidade solar para o seu projeto com
+                            estimativa de retorno em menos de 3 anos.
+                          </p>
                           <p>Qualquer dúvida estou à total disposição.</p>
                         </div>
 
                         {/* Renderização da Tabela de Assinatura */}
-                        <div 
+                        <div
                           className="pt-2 overflow-x-auto"
-                          dangerouslySetInnerHTML={{ __html: generatedHtml }}
+                          dangerouslySetInnerHTML={{
+                            __html: generatedHtml.replace(
+                              'https://www.avaliasolar.com.br/images/email/whatsapp.png',
+                              '/images/email/whatsapp.png'
+                            ),
+                          }}
                         />
                       </div>
                     </div>
@@ -696,11 +910,11 @@ export default function EmailSignaturesPage() {
 
                 <div className="bg-white p-3 rounded-md border border-slate-200 text-slate-600 text-[11px] flex items-center justify-between">
                   <span>
-                    💡 <strong>Dica de Outbound:</strong> Ao criar cadências no Hermes Agent, use a tag <code className="bg-slate-100 px-1 py-0.5 rounded text-sky-700">&#123;&#123;user.signature&#125;&#125;</code> para injetar esta assinatura.
+                    💡 <strong>Dica de Outbound:</strong> O ícone do WhatsApp aponta automaticamente para{' '}
+                    <code className="bg-slate-100 px-1 py-0.5 rounded text-emerald-700">{whatsappUrl}</code> sem expor o telefone em texto.
                   </span>
                 </div>
               </div>
-
             </div>
           </div>
 
@@ -719,24 +933,35 @@ export default function EmailSignaturesPage() {
             ) : (
               <div className="divide-y divide-slate-100 border border-slate-200 rounded-md">
                 {signatures.map((s) => (
-                  <div key={s.id} className="p-3.5 hover:bg-slate-50/80 transition-colors flex items-center justify-between">
+                  <div
+                    key={s.id}
+                    onClick={() => hydrateFromSignature(s)}
+                    className="p-3.5 hover:bg-slate-50/80 transition-colors flex items-center justify-between cursor-pointer"
+                  >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-slate-900">{s.name}</span>
                         {s.is_default && (
-                          <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 text-[10px]">
+                          <Badge
+                            variant="outline"
+                            className="bg-sky-50 text-sky-700 border-sky-200 text-[10px]"
+                          >
                             Padrão de Campanhas
                           </Badge>
                         )}
                       </div>
                       <p className="text-[11px] text-slate-500 truncate max-w-xl">
-                        ID #{s.id} · HTML de alta compatibilidade
+                        ID #{s.id} · Clique para carregar no editor · Avatar HTTPS ativo
                       </p>
                     </div>
 
                     {isAdmin && (
                       <button
-                        onClick={() => handleDelete(s.id)}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(s.id);
+                        }}
                         className="text-slate-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors"
                         title="Excluir"
                       >
@@ -748,7 +973,6 @@ export default function EmailSignaturesPage() {
               </div>
             )}
           </div>
-
         </div>
       </TooltipProvider>
     </SalesLayoutWrapper>

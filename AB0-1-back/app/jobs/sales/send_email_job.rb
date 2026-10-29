@@ -259,8 +259,8 @@ module Sales
               <p style="margin:0 0 2px;font-size:17px;line-height:1.23;letter-spacing:-0.3px;font-weight:700;color:#0b2944;"><strong>#{sender_name}</strong></p>
               <p style="margin:0 0 9px;font-size:11px;line-height:1.3;color:#63768a;">Fundador & Equipe Comercial — Avalia Solar</p>
               <p style="margin:0 0 3px;font-size:11px;line-height:1.4;">
-                <a href="mailto:#{sender_email}" style="color:#0b2944;text-decoration:none;">#{sender_email}</a> <span style="color:#a2b2c2;">&nbsp;·&nbsp;</span>
-                <a href="tel:+5565993465055" style="color:#0b2944;text-decoration:none;">(65) 99346-5055</a>
+                <a href="mailto:#{sender_email}" style="color:#0b2944;text-decoration:none;vertical-align:middle;">#{sender_email}</a> <span style="color:#a2b2c2;vertical-align:middle;">&nbsp;·&nbsp;</span>
+                <a href="https://wa.me/5565993465055" target="_blank" rel="noopener noreferrer" title="Conversar pelo WhatsApp" style="display:inline-block;vertical-align:middle;text-decoration:none;"><img src="https://www.avaliasolar.com.br/images/email/whatsapp.png" width="18" height="18" alt="WhatsApp" style="display:inline-block;vertical-align:middle;width:18px;height:18px;border:0;" /></a>
               </p>
               <p style="margin:0 0 12px;font-size:11px;line-height:1.4;">
                 <a href="https://www.avaliasolar.com.br/" target="_blank" style="color:#0e5ac9;text-decoration:none;">Website</a><span style="color:#a2b2c2;">&nbsp;&nbsp;|&nbsp;&nbsp;</span><a href="https://www.linkedin.com/in/felipe-morais-8bb61a7b/" target="_blank" style="color:#0e5ac9;text-decoration:none;">LinkedIn</a>
@@ -286,6 +286,12 @@ module Sales
       custom_sig = signature_for(email)
       if custom_sig&.body_html.present?
         normalized = ::Sales::EmailSignature.normalize_html(custom_sig.body_html)
+        if custom_sig.avatar.attached? && custom_sig.avatar_public_url.present?
+          normalized = normalized.sub(/(<img\b[^>]*src=["'])([^"']+)(["'][^>]*width=["']83["'])/i, "\\1#{custom_sig.avatar_public_url}\\3")
+        end
+        if custom_sig.logo.attached? && custom_sig.logo_public_url.present?
+          normalized = normalized.sub(/(<img\b[^>]*src=["'])([^"']+)(["'][^>]*alt=["']Avalia Solar["'])/i, "\\1#{custom_sig.logo_public_url}\\3")
+        end
         custom_sig.update_column(:body_html, normalized) if normalized != custom_sig.body_html
         return normalized
       end
