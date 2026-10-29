@@ -385,3 +385,4 @@ export default function CRMNotificationsPopover() {
     </DropdownMenu>
   );
 }
+

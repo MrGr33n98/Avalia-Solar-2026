@@ -127,19 +127,15 @@ module Api
           { label: 'Ver resposta', destination: "/companies/#{n.company&.slug || 'company'}/review/#{n.review_id || n.notifiable_id}" }
         when /^review_/
           { label: 'Ver avaliação', destination: "/companies/#{n.company&.slug || 'company'}/review/#{n.review_id || n.notifiable_id}" }
-        when /^new_message/, /^message_/, 'reply_received'
-          if n.notification_type == 'reply_received' || n.title.to_s.include?('e-mail')
-            { label: 'Abrir Sales Inbox', destination: '/dashboard/sales/emails' }
-          else
-            dest = current_user&.company_user? ? "/dashboard/inbox?conversation_id=#{n.conversation_id || n.notifiable_id}" : "/chat?conversation_id=#{n.conversation_id || n.notifiable_id}"
-            { label: 'Abrir conversa', destination: dest }
-          end
+        when /^new_message/, /^message_/
+          dest = current_user&.company_user? ? "/dashboard/inbox?conversation_id=#{n.conversation_id || n.notifiable_id}" : "/chat?conversation_id=#{n.conversation_id || n.notifiable_id}"
+          { label: 'Abrir conversa', destination: dest }
         when /^favorite_company_/
           { label: 'Ver empresa', destination: "/companies/#{n.company&.slug || n.notifiable_id}" }
         when /^security_/
           { label: 'Revisar atividade', destination: '/review-dashboard/settings/security' }
         else
-          { label: 'Ver detalhes', destination: '/dashboard/sales/emails' }
+          { label: 'Ver detalhes', destination: '/review-dashboard' }
         end
       end
 
