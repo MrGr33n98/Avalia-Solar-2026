@@ -28,6 +28,7 @@ import {
   UpsertContactMethodPayload,
   ApiActivityReportResponse,
   ActivityFilterCriteria,
+  ApiWidgetEngagementReportResponse,
 } from './types';
 export type { ApiContactMethod, ContactMethodKind, UpsertContactMethodPayload };
 import type { SalesTimelineResponse } from './timeline-types';
@@ -935,6 +936,43 @@ export const salesApi = {
     }
     const qs = query.toString();
     return await request<ApiActivityReportResponse>(`/api/v1/sales/reports/activity${qs ? `?${qs}` : ''}`);
+  },
+
+  async getWidgetEngagementReport(params: { from?: string; to?: string; granularity?: string } = {}): Promise<ApiWidgetEngagementReportResponse> {
+    const query = new URLSearchParams();
+    if (params.from) query.set('from', params.from);
+    if (params.to) query.set('to', params.to);
+    if (params.granularity) query.set('granularity', params.granularity);
+    const qs = query.toString();
+    return await request<ApiWidgetEngagementReportResponse>(`/api/v1/sales/reports/widget_engagement${qs ? `?${qs}` : ''}`);
+  },
+
+  async getVoiceToken(): Promise<{
+    configured: boolean;
+    token?: string;
+    identity?: string;
+    expires_at?: string;
+    caller_id?: string;
+    error?: string;
+  }> {
+    return await request<any>('/api/v1/sales/voice/token');
+  },
+
+  async logCall(payload: {
+    sales_account_id?: number;
+    sales_contact_id?: number;
+    sales_opportunity_id?: number;
+    phone_number: string;
+    duration_seconds: number;
+    outcome?: string;
+    subject?: string;
+    notes?: string;
+    call_sid?: string;
+  }): Promise<{ activity: any; message: string }> {
+    return await request<any>('/api/v1/sales/voice/log_call', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 
   async getForecast(params: Record<string, string> = {}): Promise<any> {

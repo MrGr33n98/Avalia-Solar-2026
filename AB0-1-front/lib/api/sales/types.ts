@@ -465,6 +465,42 @@ export interface ApiActivityReportResponse {
   };
 }
 
+export interface ApiWidgetEngagementReportResponse {
+  period: {
+    from: string;
+    to: string;
+    granularity: 'day' | 'week' | 'month';
+  };
+  widget_status: 'enabled' | 'disabled';
+  surface: string;
+  kpis: {
+    visitors: number;
+    opens: number;
+    actions: number;
+    contacts: number;
+    sales: number;
+    attributed_value_cents: number;
+  };
+  rates: {
+    open_rate: number;
+    action_rate: number;
+    contact_rate: number;
+    sales_rate: number;
+  };
+  series: Array<{
+    date: string;
+    visitors: number;
+    opens: number;
+    actions: number;
+    contacts: number;
+    sales: number;
+  }>;
+  meta: {
+    attribution_model: string;
+    coverage: string;
+  };
+}
+
 export type NutshellReportType = 'sales' | 'forecast' | 'new_leads';
 export type NutshellGranularity = 'day' | 'week' | 'month' | 'quarter' | 'year';
 export type NutshellMeasure = 'value' | 'quantity';
