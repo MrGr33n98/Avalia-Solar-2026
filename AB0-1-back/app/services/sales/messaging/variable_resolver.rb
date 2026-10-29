@@ -70,12 +70,18 @@ module Sales
           name = get_val(owner, :full_name) || get_val(owner, :name) || get_val(owner, :first_name)
           first_name = get_val(owner, :first_name)
           email = get_val(owner, :email)
+          signature = context[:signature].presence || get_val(owner, :signature)
 
           resolved.gsub!('{{owner.name}}', name.to_s)
           resolved.gsub!('{{owner.first_name}}', first_name.to_s)
           resolved.gsub!('{{owner.email}}', email.to_s)
+          resolved.gsub!('{{owner.signature}}', signature.to_s) if signature.present?
           resolved.gsub!('{{user.name}}', name.to_s)
           resolved.gsub!('{{user.email}}', email.to_s)
+          resolved.gsub!('{{user.signature}}', signature.to_s) if signature.present?
+        elsif context[:signature].present?
+          resolved.gsub!('{{owner.signature}}', context[:signature].to_s)
+          resolved.gsub!('{{user.signature}}', context[:signature].to_s)
         end
 
         # Fallback for remaining unresolved mustache tags

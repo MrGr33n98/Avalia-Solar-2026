@@ -59,6 +59,70 @@ type Signature = {
 const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
+export type ParsedWhatsappPhone = {
+  valid: boolean;
+  digits: string;
+  formatted: string;
+  url: string;
+};
+
+export function escapeHtml(raw: string): string {
+  return String(raw ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export function sanitizeHttpUrl(rawUrl: string, fallback: string): string {
+  const candidate = String(rawUrl ?? '').trim();
+  if (!candidate) return fallback;
+  if (!/^https?:\/\/[^\s"'<>]+$/i.test(candidate)) return fallback;
+  return escapeHtml(candidate);
+}
+
+export function sanitizeEmailAddress(rawEmail: string, fallback = 'felipe@avaliasolar.com.br'): string {
+  const candidate = String(rawEmail ?? '').trim();
+  if (!candidate || /[<>"'\s]/.test(candidate)) return fallback;
+  return escapeHtml(candidate);
+}
+
+export function parseAndFormatWhatsappPhone(rawPhone: string): ParsedWhatsappPhone {
+  const raw = String(rawPhone ?? '').trim();
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length < 8 || digits.length > 15) {
+    return { valid: false, digits: '', formatted: '', url: '' };
+  }
+
+  const hasIntlPrefix = raw.startsWith('+') && !raw.startsWith('+55');
+
+  if (!hasIntlPrefix && (digits.length === 10 || digits.length === 11)) {
+    const waDigits = `55${digits}`;
+    const ddd = digits.slice(0, 2);
+    const local = digits.slice(2);
+    const formatted =
+      local.length === 9
+        ? `(${ddd}) ${local.slice(0, 5)}-${local.slice(5, 9)}`
+        : `(${ddd}) ${local.slice(0, 4)}-${local.slice(4, 8)}`;
+    return { valid: true, digits: waDigits, formatted, url: `https://wa.me/${waDigits}` };
+  }
+
+  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+    const national = digits.slice(2);
+    const ddd = national.slice(0, 2);
+    const local = national.slice(2);
+    const formatted =
+      local.length === 9
+        ? `(${ddd}) ${local.slice(0, 5)}-${local.slice(5, 9)}`
+        : `(${ddd}) ${local.slice(0, 4)}-${local.slice(4, 8)}`;
+    return { valid: true, digits, formatted, url: `https://wa.me/${digits}` };
+  }
+
+  const display = raw.startsWith('+') ? raw.replace(/\s+/g, ' ') : `+${digits}`;
+  return { valid: true, digits, formatted: display, url: `https://wa.me/${digits}` };
+}
+
 export default function EmailSignaturesPage() {
   // Controle de Permissão (Admin vs. Vendedor/Read-Only)
   const [isAdmin, setIsAdmin] = useState(true);
@@ -169,62 +233,94 @@ export default function EmailSignaturesPage() {
     const fallback = 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png';
     if (!avatarUrl || avatarUrl.startsWith('data:')) return fallback;
     if (avatarUrl.startsWith('/')) return `https://www.avaliasolar.com.br${avatarUrl}`;
-    return avatarUrl.replace('felipe-assinatura-avatar.png', 'foto-felipe-assinatura-avalia-solar.png');
+    return sanitizeHttpUrl(
+      avatarUrl.replace('felipe-assinatura-avatar.png', 'foto-felipe-assinatura-avalia-solar.png'),
+      fallback
+    );
   }, [avatarUrl]);
 
   const resolvedEmailLogoUrl = useMemo(() => {
     const fallback = 'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png';
     if (!logoUrl || logoUrl.startsWith('data:')) return fallback;
     if (logoUrl.startsWith('/')) return `https://www.avaliasolar.com.br${logoUrl}`;
-    return logoUrl;
+    return sanitizeHttpUrl(logoUrl, fallback);
   }, [logoUrl]);
 
-  const whatsappDigits = useMemo(() => {
-    const digits = phone.replace(/\D/g, '') || '5565993465055';
-    return digits.length <= 11 && !digits.startsWith('55') ? `55${digits}` : digits;
-  }, [phone]);
-
-  const whatsappUrl = `https://wa.me/${whatsappDigits}`;
+  const phoneInfo = useMemo(() => parseAndFormatWhatsappPhone(phone), [phone]);
+  const whatsappUrl = phoneInfo.valid ? phoneInfo.url : '';
   const whatsappIconUrl = 'https://www.avaliasolar.com.br/images/email/whatsapp.png';
+  const mailIconUrl = 'https://www.avaliasolar.com.br/images/email/mail.png';
+  const globeIconUrl = 'https://www.avaliasolar.com.br/images/email/globe.png';
+  const linkedinIconUrl = 'https://www.avaliasolar.com.br/images/email/linkedin.png';
+  const watermarkIconUrl = 'https://www.avaliasolar.com.br/images/email/avalia-solar-watermark.png';
 
-  // Gerador dinâmico do HTML de compatibilidade de e-mail (Tabelas, estilos inline e WhatsApp clicável)
+  // Gerador dinâmico do HTML V2 de compatibilidade de e-mail (Tabelas, estilos inline, WhatsApp com ícone + número visível e marca d'água)
   const generatedHtml = useMemo(() => {
-    return `<!-- Assinatura Avalia Solar premium: fundo azul-gelo; somente tabelas e CSS inline para compatibilidade com email -->
+    const safeName = escapeHtml(fullName.trim() || 'Felipe Henrique');
+    const safeRole = escapeHtml(roleTitle.trim() || 'Fundador do Avalia Solar');
+    const safeEmail = sanitizeEmailAddress(email);
+    const safeWebsite = sanitizeHttpUrl(websiteUrl, 'https://www.avaliasolar.com.br/');
+    const safeLinkedin = sanitizeHttpUrl(linkedinUrl, 'https://www.linkedin.com/in/felipe-morais-8bb61a7b/');
+    const safeCalendly = sanitizeHttpUrl(calendlyUrl, 'https://calendly.com/felipe-avaliasolar/30min');
+    const safeCta = escapeHtml(ctaText.trim() || 'Agendar 30 min ↗');
+    const safeFooter = escapeHtml(
+      footerTagline.trim() || 'ENERGIA SOLAR ● MOBILIDADE ELÉTRICA ● CONFIANÇA DIGITAL'
+    );
+
+    const whatsappSegment = phoneInfo.valid
+      ? ` <span style="color:#a2b2c2;vertical-align:middle;">&nbsp;·&nbsp;</span> <a href="${phoneInfo.url}" target="_blank" rel="noopener noreferrer" title="Conversar pelo WhatsApp" style="color:#0b2944;text-decoration:none;vertical-align:middle;white-space:nowrap;"><img src="${whatsappIconUrl}" width="14" height="14" alt="WhatsApp" style="display:inline-block;vertical-align:middle;width:14px;height:14px;border:0;margin-right:4px;" /><span style="vertical-align:middle;color:#0b2944;font-weight:600;">${escapeHtml(
+          phoneInfo.formatted
+        )}</span></a>`
+      : '';
+
+    return `<!-- Assinatura Corporativa Avalia Solar V2 -->
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="550" bgcolor="#f6f9fd" style="width:550px;max-width:100%;border-collapse:separate;border-spacing:0;background-color:#f6f9fd;border:1px solid #dae5ef;font-family:Arial,Helvetica,sans-serif;color:#0b2944;">
   <tr>
     <td bgcolor="#eef4fa" width="120" valign="top" align="center" style="width:120px;background-color:#eef4fa;vertical-align:top;padding:17px 12px 12px 13px;border-right:3px solid #ffcd2d;">
-      <img src="${resolvedEmailAvatarUrl}" width="83" height="83" alt="${fullName}" style="width:83px;height:83px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;">
+      <img src="${resolvedEmailAvatarUrl}" width="83" height="83" alt="${safeName}" style="width:83px;height:83px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;" />
       <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:10px;"><tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:5px 7px;border-radius:4px;">
-        <a href="${websiteUrl}" target="_blank" style="text-decoration:none;"><img src="${resolvedEmailLogoUrl}" alt="Avalia Solar" width="92" style="display:block;width:92px;height:auto;border:0;"></a>
+        <a href="${safeWebsite}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><img src="${resolvedEmailLogoUrl}" alt="Avalia Solar" width="92" style="display:block;width:92px;height:auto;border:0;" /></a>
       </td></tr></table>
     </td>
-    <td valign="top" style="padding:16px 16px 12px 18px;vertical-align:top;">
-      <p style="margin:0 0 2px;font-size:17px;line-height:1.23;letter-spacing:-0.3px;font-weight:700;color:#0b2944;"><strong>${fullName}</strong></p>
-      <p style="margin:0 0 9px;font-size:11px;line-height:1.3;color:#63768a;">${roleTitle}</p>
-      <p style="margin:0 0 3px;font-size:11px;line-height:1.4;">
-        <a href="mailto:${email}" style="color:#0b2944;text-decoration:none;vertical-align:middle;">${email}</a> <span style="color:#a2b2c2;vertical-align:middle;">&nbsp;·&nbsp;</span>
-        <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" title="Conversar pelo WhatsApp" style="display:inline-block;vertical-align:middle;text-decoration:none;"><img src="${whatsappIconUrl}" width="18" height="18" alt="WhatsApp" style="display:inline-block;vertical-align:middle;width:18px;height:18px;border:0;" /></a>
-      </p>
-      <p style="margin:0 0 12px;font-size:11px;line-height:1.4;">
-        <a href="${websiteUrl}" target="_blank" style="color:#0e5ac9;text-decoration:none;">Website</a><span style="color:#a2b2c2;">&nbsp;&nbsp;|&nbsp;&nbsp;</span><a href="${linkedinUrl}" target="_blank" style="color:#0e5ac9;text-decoration:none;">LinkedIn</a>
-      </p>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
-        <td bgcolor="#0b2944" style="background-color:#0b2944;border-radius:4px;">
-          <a href="${calendlyUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:7px 13px;font-size:11px;line-height:1.2;font-weight:bold;text-decoration:none;color:#ffffff;">${ctaText}</a>
-        </td>
-        <td width="10" style="width:10px;font-size:1px;line-height:1px;">&nbsp;</td>
-        <td style="font-size:11px;line-height:1.25;"><a href="${websiteUrl}" target="_blank" style="font-weight:bold;color:#0e5ac9;text-decoration:none;">Conhecer a plataforma</a></td>
-      </tr></table>
+    <td valign="top" style="padding:14px 14px 12px 18px;vertical-align:top;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td valign="top" style="vertical-align:top;padding-right:8px;">
+            <p style="margin:0 0 2px;font-size:17px;line-height:1.23;letter-spacing:-0.3px;font-weight:700;color:#0b2944;"><strong>${safeName}</strong></p>
+            <p style="margin:0 0 9px;font-size:11px;line-height:1.3;color:#63768a;">${safeRole}</p>
+            <p style="margin:0 0 4px;font-size:11px;line-height:1.45;color:#0b2944;">
+              <a href="mailto:${safeEmail}" style="color:#0b2944;text-decoration:none;vertical-align:middle;white-space:nowrap;"><img src="${mailIconUrl}" width="13" height="13" alt="" style="display:inline-block;vertical-align:middle;width:13px;height:13px;border:0;margin-right:4px;" /><span style="vertical-align:middle;">${safeEmail}</span></a>${whatsappSegment}
+            </p>
+            <p style="margin:0 0 12px;font-size:11px;line-height:1.45;">
+              <a href="${safeWebsite}" target="_blank" rel="noopener noreferrer" style="color:#0e5ac9;text-decoration:none;vertical-align:middle;white-space:nowrap;"><img src="${globeIconUrl}" width="13" height="13" alt="" style="display:inline-block;vertical-align:middle;width:13px;height:13px;border:0;margin-right:4px;" /><span style="vertical-align:middle;">Website</span></a><span style="color:#a2b2c2;vertical-align:middle;">&nbsp;&nbsp;|&nbsp;&nbsp;</span><a href="${safeLinkedin}" target="_blank" rel="noopener noreferrer" style="color:#0e5ac9;text-decoration:none;vertical-align:middle;white-space:nowrap;"><img src="${linkedinIconUrl}" width="13" height="13" alt="" style="display:inline-block;vertical-align:middle;width:13px;height:13px;border:0;margin-right:4px;" /><span style="vertical-align:middle;">LinkedIn</span></a>
+            </p>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
+              <td bgcolor="#0b2944" style="background-color:#0b2944;border-radius:4px;">
+                <a href="${safeCalendly}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:7px 13px;font-size:11px;line-height:1.2;font-weight:bold;text-decoration:none;color:#ffffff;">${safeCta}</a>
+              </td>
+              <td width="10" style="width:10px;font-size:1px;line-height:1px;">&nbsp;</td>
+              <td style="font-size:11px;line-height:1.25;"><a href="${safeWebsite}" target="_blank" rel="noopener noreferrer" style="font-weight:bold;color:#0e5ac9;text-decoration:none;">Conhecer a plataforma</a></td>
+            </tr></table>
+          </td>
+          <td width="68" valign="middle" align="right" style="width:68px;vertical-align:middle;text-align:right;padding-left:4px;">
+            <img src="${watermarkIconUrl}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border:0;margin-left:auto;" />
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
-  <tr><td colspan="2" bgcolor="#e8f0f7" style="background-color:#e8f0f7;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:9px;color:#5d7287;letter-spacing:0.4px;line-height:1.4;">${footerTagline}</td></tr>
+  <tr><td colspan="2" bgcolor="#e8f0f7" style="background-color:#e8f0f7;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:9px;color:#5d7287;letter-spacing:0.4px;line-height:1.4;">${safeFooter}</td></tr>
 </table>`;
   }, [
     fullName,
     roleTitle,
     email,
-    whatsappUrl,
+    phoneInfo,
     whatsappIconUrl,
+    mailIconUrl,
+    globeIconUrl,
+    linkedinIconUrl,
+    watermarkIconUrl,
     resolvedEmailAvatarUrl,
     websiteUrl,
     linkedinUrl,
@@ -240,7 +336,7 @@ export default function EmailSignaturesPage() {
     if (f.full_name) setFullName(f.full_name);
     if (f.role_title) setRoleTitle(f.role_title);
     if (f.email) setEmail(f.email);
-    if (f.phone) setPhone(f.phone);
+    if (typeof f.phone === 'string') setPhone(f.phone);
     if (sig.avatar_url || f.avatar_url) setAvatarUrl(sig.avatar_url || f.avatar_url!);
     if (sig.logo_url || f.logo_url) setLogoUrl(sig.logo_url || f.logo_url!);
     if (f.website_url) setWebsiteUrl(f.website_url);
@@ -562,7 +658,7 @@ export default function EmailSignaturesPage() {
                     </div>
                     <div>
                       <label className="block text-[11px] text-slate-600 font-medium mb-1">
-                        WhatsApp (Link do Ícone)
+                        WhatsApp (Ícone + Número Clicável)
                       </label>
                       <Input
                         value={phone}
@@ -570,6 +666,11 @@ export default function EmailSignaturesPage() {
                         className="h-8 text-xs bg-white"
                         placeholder="(65) 99346-5055"
                       />
+                      {!phoneInfo.valid && (
+                        <p className="text-[10px] text-amber-600 mt-1">
+                          Informe um telefone válido com DDD para exibir o bloco do WhatsApp na assinatura.
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -872,7 +973,12 @@ export default function EmailSignaturesPage() {
                     <div className="bg-white rounded-md border border-slate-200 shadow-xs overflow-hidden">
                       <div className="bg-slate-100/80 px-4 py-2 border-b border-slate-200 text-[11px] text-slate-500 flex items-center justify-between">
                         <span>Simulação de Leitura (Gmail / Outlook)</span>
-                        <span className="text-[10px] font-mono">550px width · WhatsApp Link: {whatsappUrl}</span>
+                        <span className="text-[10px] font-mono">
+                          550px width ·{' '}
+                          {phoneInfo.valid
+                            ? `WhatsApp: ${phoneInfo.formatted} (${whatsappUrl})`
+                            : 'WhatsApp oculto (telefone não informado)'}
+                        </span>
                       </div>
                       <div className="p-4 space-y-3">
                         <div className="text-slate-600 text-xs space-y-1.5">
@@ -884,13 +990,13 @@ export default function EmailSignaturesPage() {
                           <p>Qualquer dúvida estou à total disposição.</p>
                         </div>
 
-                        {/* Renderização da Tabela de Assinatura */}
+                        {/* Renderização da Tabela de Assinatura V2 */}
                         <div
                           className="pt-2 overflow-x-auto"
                           dangerouslySetInnerHTML={{
                             __html: generatedHtml.replace(
-                              'https://www.avaliasolar.com.br/images/email/whatsapp.png',
-                              '/images/email/whatsapp.png'
+                              /https:\/\/www\.avaliasolar\.com\.br\/images\/email\/([a-z0-9.-]+\.png)/gi,
+                              '/images/email/$1'
                             ),
                           }}
                         />
@@ -909,10 +1015,18 @@ export default function EmailSignaturesPage() {
                 </div>
 
                 <div className="bg-white p-3 rounded-md border border-slate-200 text-slate-600 text-[11px] flex items-center justify-between">
-                  <span>
-                    💡 <strong>Dica de Outbound:</strong> O ícone do WhatsApp aponta automaticamente para{' '}
-                    <code className="bg-slate-100 px-1 py-0.5 rounded text-emerald-700">{whatsappUrl}</code> sem expor o telefone em texto.
-                  </span>
+                  {phoneInfo.valid ? (
+                    <span>
+                      💡 <strong>Dica de Outbound:</strong> O ícone verde e o número{' '}
+                      <strong>{phoneInfo.formatted}</strong> formam um único link clicável apontando para{' '}
+                      <code className="bg-slate-100 px-1 py-0.5 rounded text-emerald-700">{whatsappUrl}</code>.
+                    </span>
+                  ) : (
+                    <span>
+                      ⚠️ <strong>WhatsApp oculto:</strong> Preencha um telefone válido com DDD para exibir o ícone e o
+                      número clicável na assinatura.
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

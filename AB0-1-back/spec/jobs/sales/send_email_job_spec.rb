@@ -48,7 +48,7 @@ RSpec.describe Sales::SendEmailJob, type: :job do
         expect(recipient.error_message).to eq('SUPPRESSED_AT_SEND_TIME')
       end
 
-      it 'calls provider when address is not suppressed' do
+      it 'calls provider when address is not suppressed and injects V2 signature without hardcoded phone for non-default users' do
         provider_double = instance_double(Sales::Messaging::Providers::Ses)
         allow(Sales::Messaging::Providers::Ses).to receive(:new).and_return(provider_double)
         allow(provider_double).to receive(:send_message).and_return(
@@ -56,7 +56,9 @@ RSpec.describe Sales::SendEmailJob, type: :job do
         )
 
         described_class.new.perform(email_message.id)
-        expect(email_message.reload.status).to eq('sent')
+        email_message.reload
+        expect(email_message.status).to eq('sent')
+        expect(email_message.body_html).to include('avalia-solar-watermark.png')
       end
     end
   end

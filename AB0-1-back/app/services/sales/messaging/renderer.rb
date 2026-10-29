@@ -196,7 +196,7 @@ module Sales
 
       ALLOWED_HTML_TAGS = (%w[p br strong b em i u s a ul ol li h1 h2 h3 h4 blockquote hr img] +
                            %w[div span table thead tbody tfoot tr td th]).freeze
-      ALLOWED_HTML_ATTRIBUTES = (%w[href target rel src alt width height style role] +
+      ALLOWED_HTML_ATTRIBUTES = (%w[href target rel src alt title width height style role] +
                                  %w[cellspacing cellpadding border bgcolor valign align colspan rowspan]).freeze
       ALLOWED_HTML_PROTOCOLS = %w[http https mailto tel].freeze
 
