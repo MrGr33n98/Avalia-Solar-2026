@@ -6,11 +6,14 @@
 
 # Queues with priority (higher number = higher priority)
 :queues:
-  - [critical, 100]   # Critical jobs (payments, urgent notifications)
-  - [mailers, 40]     # Email delivery
-  - [default, 20]     # Default queue
-  - [analytics, 15]   # Analytics processing
-  - [low, 5]          # Low priority (cleanup, reports)
+  - [critical, 100]         # Critical jobs (payments, urgent notifications)
+  - [mailers, 40]           # Email delivery
+  - [sales_email_sync, 30]  # Zoho Mail / CRM Inbox bidirectional sync
+  - [default, 20]           # Default queue
+  - [notifications, 18]     # In-app and push notifications
+  - [analytics, 15]         # Analytics processing
+  - [maintenance, 10]       # Maintenance & retention jobs
+  - [low, 5]                # Low priority (cleanup, reports)
 
 # Timeout for jobs (30s for standard, override per job if needed)
 :timeout: 30

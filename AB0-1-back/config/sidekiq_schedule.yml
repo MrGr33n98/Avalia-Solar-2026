@@ -25,6 +25,13 @@ sales_email_sequence_enrollment_scheduler_job:
   description: 'Processa follow-ups vencidos das cadências CRM'
   enabled: true
 
+sales_email_accounts_sync_job:
+  cron: '*/5 * * * *'
+  class: Sales::SyncAllEmailAccountsJob
+  queue: sales_email_sync
+  description: 'Sincroniza caixas Zoho Mail conectadas ao Sales Inbox a cada 5 minutos'
+  enabled: true
+
 # Daily cache cleanup at 3 AM
 cache_cleanup_job:
   cron: '0 3 * * *'  # Every day at 3:00 AM

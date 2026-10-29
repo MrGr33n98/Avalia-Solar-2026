@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, RefreshCw, Unplug, ShieldAlert, ExternalLink } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Unplug, ShieldAlert, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { InboxMailbox } from '@/lib/api/sales/types';
 
@@ -57,12 +57,22 @@ export default function InboxConnectionBanner({
     );
   }
 
-  // Se houver uma conta ativa com estado crítico
   const target = activeMailbox ?? mailboxes[0];
   const isNeedsReconnect = target.connection_status === 'needs_reconnect' || target.token_expired;
-  const isDegraded = target.connection_status === 'degraded';
   const isDisconnected = target.connection_status === 'disconnected';
+  const isSyncError = target.sync_status === 'error';
+  const isDegraded = target.connection_status === 'degraded' || target.sync_status === 'degraded';
   const isCurrentlySyncing = target.sync_status === 'syncing' || isSyncing;
+  const neverSynced = !target.last_synced_at;
+
+  const triggerManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      await onSync(target.id);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   if (isNeedsReconnect || isDisconnected) {
     return (
@@ -72,7 +82,7 @@ export default function InboxConnectionBanner({
           <div>
             <span className="font-semibold">Sessão expirada para {target.email}: </span>
             <span className="text-amber-800 text-[11px]">
-              O token de acesso foi revogado ou expirou. É necessário reconectar para continuar a sincronização.
+              {target.sync_error || 'O token de acesso foi revogado ou expirou. Reconecte a conta para continuar a sincronização.'}
             </span>
           </div>
         </div>
@@ -90,44 +100,60 @@ export default function InboxConnectionBanner({
     );
   }
 
-  if (isDegraded) {
+  if (isSyncError || isDegraded) {
     return (
       <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 flex items-center justify-between gap-2 text-xs text-yellow-950">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-3.5 h-3.5 text-yellow-600 shrink-0" />
           <span className="text-[11px]">
-            Conexão com {target.email} instável: {target.sync_error || 'Algumas pastas podem estar pendentes de sincronização.'}
+            <strong>Sincronização pendente para {target.email}:</strong>{' '}
+            {target.sync_error || 'Algumas pastas podem estar pendentes de sincronização.'}
           </span>
         </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled={isCurrentlySyncing}
-          onClick={async () => {
-            setIsSyncing(true);
-            try {
-              await onSync(target.id);
-            } finally {
-              setIsSyncing(false);
-            }
-          }}
-          className="text-yellow-800 hover:text-yellow-900 h-6 px-2 text-[11px]"
-        >
-          <RefreshCw className={`w-3 h-3 mr-1 ${isCurrentlySyncing ? 'animate-spin' : ''}`} />
-          Tentar Novamente
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isCurrentlySyncing}
+            onClick={triggerManualSync}
+            className="border-yellow-300 bg-white text-yellow-900 hover:bg-yellow-100 h-6 px-2.5 text-[11px]"
+          >
+            <RefreshCw className={`w-3 h-3 mr-1 ${isCurrentlySyncing ? 'animate-spin' : ''}`} />
+            Sincronizar Agora
+          </Button>
+        </div>
       </div>
     );
   }
 
-  // Notificação suave de sincronização em andamento
   if (isCurrentlySyncing) {
     return (
-      <div className="bg-sky-50/60 border-b border-sky-100 px-4 py-1.5 flex items-center justify-between text-[11px] text-sky-800">
+      <div className="bg-sky-50/70 border-b border-sky-100 px-4 py-1.5 flex items-center justify-between text-[11px] text-sky-800">
         <div className="flex items-center gap-2">
           <RefreshCw className="w-3 h-3 text-sky-600 animate-spin shrink-0" />
-          <span>Sincronizando novas mensagens com {target.email}...</span>
+          <span>Importando mensagens da conta {target.email} via Zoho Mail API...</span>
         </div>
+      </div>
+    );
+  }
+
+  if (neverSynced) {
+    return (
+      <div className="bg-sky-50/70 border-b border-sky-200 px-4 py-2 flex items-center justify-between text-xs text-sky-900">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span className="text-[11px]">
+            Conta <strong>{target.email}</strong> autenticada via OAuth 2.0. Clique ao lado para importar suas conversas existentes do Zoho Mail.
+          </span>
+        </div>
+        <Button
+          size="sm"
+          onClick={triggerManualSync}
+          className="bg-[#0F62FE] hover:bg-[#0353E9] text-white h-6 px-2.5 text-[11px]"
+        >
+          <RefreshCw className="w-3 h-3 mr-1" />
+          Sincronizar Caixa
+        </Button>
       </div>
     );
   }

@@ -22,12 +22,14 @@ end
 # Queue priorities (higher number = higher priority)
 # Format: [queue_name, weight]
 SIDEKIQ_QUEUES = [
-  ['critical', 10],    # Admin alerts, system critical jobs
-  ['mailers', 7],      # Email sending
-  ['default', 5],      # Standard jobs
-  ['analytics', 4],    # Event processing and feature computation
-  ['notifications', 3], # Push notifications
-  ['low', 1]           # Cleanup, analytics, non-urgent tasks
+  ['critical', 10],         # Admin alerts, system critical jobs
+  ['mailers', 7],           # Email sending
+  ['sales_email_sync', 6],  # Zoho Mail / CRM Inbox bidirectional sync
+  ['default', 5],           # Standard jobs
+  ['analytics', 4],         # Event processing and feature computation
+  ['notifications', 3],     # Push notifications
+  ['maintenance', 2],       # Retention and maintenance jobs
+  ['low', 1]                # Cleanup, analytics, non-urgent tasks
 ].freeze
 
 begin

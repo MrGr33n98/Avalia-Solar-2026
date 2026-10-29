@@ -30,9 +30,10 @@ module Api
             threads_scope = threads_scope.where(status: params[:status])
           end
 
-          # Search query
-          if params[:q].present?
-            query = "%#{params[:q].to_s.strip.downcase}%"
+          # Search query (supports both `q` and `search`)
+          raw_search = params[:q].presence || params[:search].presence
+          if raw_search.present?
+            query = "%#{raw_search.to_s.strip.downcase}%"
             threads_scope = threads_scope.joins(:messages)
                                          .where('LOWER(sales_email_threads.subject_normalized) LIKE ? OR LOWER(sales_email_messages.from_email) LIKE ? OR LOWER(sales_email_messages.to_email) LIKE ?', query, query, query)
                                          .distinct
@@ -42,8 +43,8 @@ module Api
           threads_scope = threads_scope.order(last_message_at: :desc)
 
           page = [params[:page].to_i, 1].max
-          per_page = [[params[:per_page].to_i, 1].max, 50].min
-          per_page = 25 if per_page <= 0
+          raw_per_page = params[:per_page].to_i
+          per_page = raw_per_page.positive? ? [raw_per_page, 50].min : 25
 
           total_records = threads_scope.count
           records = threads_scope.offset((page - 1) * per_page).limit(per_page)
@@ -121,7 +122,6 @@ module Api
 
         def set_thread
           @thread = ::Sales::EmailThread.where(company_id: current_user.company_id).find(params[:id])
-          # ACL: ensure thread's mailbox belongs to user if mailbox is personal
           if @thread.email_account && @thread.email_account.user_id != current_user.id && !current_user.admin?
             render_error_response(message: 'Sem permissão para acessar esta conversa.', status: :forbidden, code: 'FORBIDDEN')
           end
@@ -183,7 +183,7 @@ module Api
             status: msg.status,
             delivery_status: msg.delivery_status,
             body_text: msg.body_text,
-            body_html: msg.body_json&.dig('html'),
+            body_html: msg.body_html.presence || msg.body_json&.dig('html'),
             provider_message_id: msg.provider_message_id,
             received_at: msg.provider_received_at || msg.created_at,
             created_at: msg.created_at,

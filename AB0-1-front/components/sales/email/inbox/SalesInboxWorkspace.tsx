@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Mail,
   ShieldCheck,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -65,6 +67,7 @@ export default function SalesInboxWorkspace() {
   const [isDetailLoading, setIsDetailLoading] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [isContextOpen, setIsContextOpen] = useState<boolean>(true);
+  const autoSyncedMailboxIds = useRef<Set<number>>(new Set());
 
   // Connect Zoho Modal State
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
@@ -77,12 +80,13 @@ export default function SalesInboxWorkspace() {
     try {
       const list = await salesApi.getEmailConnections();
       setMailboxes(list);
-      // Select first mailbox if none selected and accounts exist
       if (list.length > 0 && selectedMailboxId === null) {
         setSelectedMailboxId(list[0].id);
       }
+      return list;
     } catch (err) {
       console.error('Falha ao carregar conexões de e-mail:', err);
+      return [];
     }
   }, [selectedMailboxId]);
 
@@ -99,12 +103,12 @@ export default function SalesInboxWorkspace() {
         folder: selectedFolder,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         search: searchQuery.trim() || undefined,
+        per_page: 25,
       });
 
       setThreads(res.threads ?? []);
       setCounts(res.counts ?? DEFAULT_COUNTS);
 
-      // Auto-select first thread on desktop if none selected
       if (res.threads && res.threads.length > 0 && !selectedThreadId) {
         setSelectedThreadId(res.threads[0].id);
       }
@@ -142,22 +146,53 @@ export default function SalesInboxWorkspace() {
     }
   }, [selectedThreadId, loadThreadDetail]);
 
-  // 4. Handle Sync
-  const handleSync = async (id: number) => {
+  // 4. Handle Sync (with immediate completion wait & toast)
+  const handleSync = useCallback(async (id: number, silent = false) => {
     setIsSyncing(true);
     try {
-      await salesApi.syncEmailConnection(id, 'incremental');
+      const res: any = await salesApi.syncEmailConnection(id, 'incremental');
       await loadMailboxes();
       await loadThreads();
       if (selectedThreadId) {
         await loadThreadDetail(selectedThreadId);
       }
+      if (!silent) {
+        if (res?.status === 'error') {
+          toast.error(res?.message || 'Erro ao sincronizar caixa Zoho Mail.');
+        } else {
+          const imported = typeof res?.imported_now === 'number' ? res.imported_now : null;
+          toast.success(
+            imported && imported > 0
+              ? `Sincronização concluída (${imported} nova(s) mensagem(ns) importada(s)).`
+              : 'Caixa Zoho Mail sincronizada e atualizada!'
+          );
+        }
+      }
     } catch (err) {
       console.error('Falha ao acionar sincronização:', err);
+      if (!silent) {
+        toast.error('Não foi possível sincronizar a caixa de e-mail agora.');
+      }
     } finally {
       setIsSyncing(false);
     }
-  };
+  }, [loadMailboxes, loadThreads, loadThreadDetail, selectedThreadId]);
+
+  // Auto-sync na abertura quando a caixa conectada nunca sincronizou ou está sem mensagens importadas
+  useEffect(() => {
+    const active = mailboxes.find((m) => m.id === selectedMailboxId) ?? mailboxes[0];
+    if (!active) return;
+    if (autoSyncedMailboxIds.current.has(active.id)) return;
+
+    const shouldAutoSync =
+      active.connection_status === 'healthy' &&
+      (!active.last_synced_at || active.messages_imported === 0 || active.sync_status === 'error');
+
+    if (shouldAutoSync) {
+      autoSyncedMailboxIds.current.add(active.id);
+      handleSync(active.id, true);
+    }
+  }, [mailboxes, selectedMailboxId, handleSync]);
 
   // 5. Connect Zoho Authorization Flow
   const handleStartZohoAuth = async () => {
@@ -196,7 +231,7 @@ export default function SalesInboxWorkspace() {
       <InboxConnectionBanner
         mailboxes={mailboxes}
         activeMailbox={activeMailbox}
-        onSync={handleSync}
+        onSync={(id) => handleSync(id, false)}
         onConnectClick={() => setIsConnectModalOpen(true)}
       />
 
@@ -210,7 +245,7 @@ export default function SalesInboxWorkspace() {
           selectedFolder={selectedFolder}
           onSelectFolder={setSelectedFolder}
           counts={counts}
-          onSync={handleSync}
+          onSync={(id) => handleSync(id, false)}
           onOpenConnectModal={() => setIsConnectModalOpen(true)}
           isSyncing={isSyncing}
         />
@@ -274,6 +309,19 @@ export default function SalesInboxWorkspace() {
               <p className="text-[11px] text-slate-400 mt-1 max-w-xs">
                 Selecione uma mensagem na lista ao lado para ler o histórico completo e responder.
               </p>
+              {activeMailbox && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={isSyncing}
+                  onClick={() => handleSync(activeMailbox.id, false)}
+                  className="mt-4 text-xs h-8 gap-1.5 border-slate-300 text-slate-700 hover:bg-slate-100"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#0F62FE]' : ''}`} />
+                  <span>{isSyncing ? 'Sincronizando com Zoho Mail...' : 'Sincronizar Caixa Agora'}</span>
+                </Button>
+              )}
             </div>
           )}
         </div>

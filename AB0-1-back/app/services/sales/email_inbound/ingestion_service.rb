@@ -106,12 +106,34 @@ module Sales
             end
           end
 
-          thread.update!(message_count: thread.messages.count)
+          thread.update!(last_message_at: [thread.last_message_at, occurred_at].compact.max, message_count: thread.messages.count)
+          emit_inbound_notification(inbound_message, thread, classification[:type])
           inbound_message
         end
       end
 
       private
+
+      def emit_inbound_notification(inbound_message, thread, classification_type)
+        return unless email_account.user_id.present?
+        return if classification_type == 'bounce'
+
+        notif_type = inbound_message.parent_email_message_id.present? ? 'reply_received' : 'new_message'
+        title = inbound_message.parent_email_message_id.present? ? "Resposta recebida de #{inbound_message.from_email}" : "Novo e-mail de #{inbound_message.from_email}"
+
+        ::Notification.create!(
+          user_id: email_account.user_id,
+          company_id: email_account.company_id,
+          notification_type: notif_type,
+          category: 'messages',
+          title: title.truncate(140),
+          body: "#{inbound_message.subject} — #{inbound_message.body_text.to_s.truncate(120)}",
+          delivery_channels: ['in_app'],
+          sent_at: Time.current
+        )
+      rescue StandardError => e
+        Rails.logger.warn("[IngestionService] Falha ao criar notificacao in-app para #{inbound_message.id}: #{e.message}")
+      end
 
       def parse_occurred_at(timestamp)
         return Time.current if timestamp.blank?

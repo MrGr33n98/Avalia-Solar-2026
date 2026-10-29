@@ -82,7 +82,6 @@ module Api
             return redirect_with_status('mailbox_not_found')
           end
 
-          # Select primary or first valid account with verified identity
           selected_account = accounts_list.find { |a| a[:is_primary] } || accounts_list.first
           target_email = selected_account[:email]
           target_account_id = selected_account[:account_id]
@@ -102,14 +101,19 @@ module Api
           account.provider_region = client.region
           account.access_token_encrypted = ::Sales::EmailSync::TokenVault.encrypt(access_token)
           account.refresh_token_encrypted = ::Sales::EmailSync::TokenVault.encrypt(refresh_token)
-          account.access_token_expires_at = Time.current + (expires_in > 0 ? expires_in : 3600).seconds
+          account.access_token_expires_at = Time.current + (expires_in.positive? ? expires_in : 3600).seconds
           account.connection_status = 'healthy'
           account.sync_status = 'idle'
           account.sync_error = nil
           account.save!
 
-          # Trigger initial sync job asynchronously
-          ::Sales::SyncEmailAccountJob.perform_later(account.id, mode: 'incremental') rescue nil
+          # Executa sincronização inicial imediata + agenda backfill assíncrono
+          begin
+            ::Sales::SyncEmailAccountJob.perform_now(account.id, mode: 'incremental')
+          rescue StandardError => sync_err
+            Rails.logger.warn("[EmailConnectionsController] Initial sync inline failed: #{sync_err.message}")
+            ::Sales::SyncEmailAccountJob.perform_later(account.id, mode: 'incremental') rescue nil
+          end
 
           redirect_with_status('connected')
         rescue StandardError => e
@@ -126,8 +130,26 @@ module Api
         # POST /api/v1/sales/email_connections/:id/sync
         def sync
           mode = params[:mode].presence || 'incremental'
-          ::Sales::SyncEmailAccountJob.perform_later(@account.id, mode: mode)
-          render json: { message: 'Sincronização iniciada.', status: 'syncing' }
+          before_count = @account.messages_imported.to_i
+
+          ::Sales::SyncEmailAccountJob.perform_now(@account.id, mode: mode)
+          @account.reload
+
+          imported_delta = [@account.messages_imported.to_i - before_count, 0].max
+          render json: {
+            message: @account.sync_status == 'error' ? (@account.sync_error || 'Falha na sincronização.') : 'Sincronização concluída.',
+            status: @account.sync_status,
+            imported_now: imported_delta,
+            account: serialize_account(@account)
+          }
+        rescue StandardError => e
+          Rails.logger.warn("[EmailConnectionsController#sync] Inline sync error: #{e.message}. Enqueueing background job.")
+          ::Sales::SyncEmailAccountJob.perform_later(@account.id, mode: mode) rescue nil
+          render json: {
+            message: 'Sincronização em segundo plano iniciada.',
+            status: 'syncing',
+            account: serialize_account(@account.reload)
+          }
         end
 
         private
@@ -151,7 +173,6 @@ module Api
         end
 
         def request_base_url
-          # Allow environment-based callback matching
           if request.host.include?('localhost') || request.host.include?('127.0.0.1')
             "#{request.protocol}#{request.host_with_port}"
           else
