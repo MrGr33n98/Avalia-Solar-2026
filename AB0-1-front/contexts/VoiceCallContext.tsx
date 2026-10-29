@@ -76,11 +76,11 @@ export function VoiceCallProvider({ children }: { children: React.ReactNode }) {
       }
 
       // 2. Import dinâmico do SDK da Twilio (somente no browser)
-      const { Device } = await import('@twilio/voice-sdk');
+      const { Device, Call } = await import('@twilio/voice-sdk');
 
       if (!deviceRef.current) {
         const device = new Device(tokenRes.token, {
-          codecPreferences: ['opus', 'pcmu'],
+          codecPreferences: [Call.Codec.Opus, Call.Codec.PCMU],
           logLevel: 1,
         });
 
