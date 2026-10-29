@@ -13,7 +13,7 @@ RSpec.describe 'Api::V1::Sales::EmailSignatures', type: :request do
   end
 
   describe 'POST /api/v1/sales/email_signatures' do
-    it 'persiste settings estruturados e normaliza o HTML V2 com WhatsApp clicável (ícone + número) e marca d\'água' do
+    it 'persiste settings estruturados e normaliza o HTML V3 com WhatsApp responsivo .button2 e largura fluida' do
       raw_html = Sales::EmailSignature.build_v2_html(
         full_name: 'Felipe Henrique',
         role_title: 'Fundador do Avalia Solar',
@@ -23,7 +23,7 @@ RSpec.describe 'Api::V1::Sales::EmailSignatures', type: :request do
 
       post '/api/v1/sales/email_signatures', params: {
         signature: {
-          name: 'Assinatura V2 Oficial',
+          name: 'Assinatura V3 Oficial',
           body_html: raw_html,
           is_default: true,
           settings: {
@@ -39,8 +39,10 @@ RSpec.describe 'Api::V1::Sales::EmailSignatures', type: :request do
       json = JSON.parse(response.body)
       expect(json.dig('signature', 'fields', 'phone')).to eq('(65) 99346-5055')
       expect(json.dig('signature', 'body_html')).to include('https://wa.me/5565993465055')
-      expect(json.dig('signature', 'body_html')).to include('(65) 99346-5055</span></a>')
-      expect(json.dig('signature', 'body_html')).to include('avalia-solar-watermark.png')
+      expect(json.dig('signature', 'body_html')).to include('(65) 99346-5055</span>')
+      expect(json.dig('signature', 'body_html')).to include('max-width:480px')
+      expect(json.dig('signature', 'body_html')).to include('width="76"')
+      expect(json.dig('signature', 'body_html')).to include('WhatsApp</span>')
     end
   end
 end

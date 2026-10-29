@@ -24,6 +24,10 @@ import {
   Link2,
   AlertCircle,
   Loader2,
+  Smartphone,
+  Monitor,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -37,7 +41,10 @@ import {
   sanitizeHttpUrl,
   sanitizeEmailAddress,
   parseAndFormatWhatsappPhone,
+  buildResponsiveSignatureHtml,
+  DEFAULT_SIGNATURE_ASSETS,
 } from './signature-utils';
+import { WhatsAppButton2 } from '@/components/ui/WhatsAppButton2';
 
 type SignatureFields = {
   full_name?: string;
@@ -51,6 +58,7 @@ type SignatureFields = {
   calendly_url?: string;
   cta_text?: string;
   footer_tagline?: string;
+  whatsapp_message?: string;
 };
 
 type Signature = {
@@ -90,9 +98,14 @@ export default function EmailSignaturesPage() {
   const [footerTagline, setFooterTagline] = useState(
     'ENERGIA SOLAR ● MOBILIDADE ELÉTRICA ● CONFIANÇA DIGITAL'
   );
+  const [whatsappMessage, setWhatsappMessage] = useState(
+    'Olá! Gostaria de falar sobre os projetos da Avalia Solar.'
+  );
 
   // Estados de Interface e Persistência
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
+  const [previewViewport, setPreviewViewport] = useState<'desktop' | 'iphone' | 'se' | 'compact'>('desktop');
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light');
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -189,87 +202,40 @@ export default function EmailSignaturesPage() {
     return sanitizeHttpUrl(logoUrl, fallback);
   }, [logoUrl]);
 
-  const phoneInfo = useMemo(() => parseAndFormatWhatsappPhone(phone), [phone]);
+  const phoneInfo = useMemo(
+    () => parseAndFormatWhatsappPhone(phone, whatsappMessage),
+    [phone, whatsappMessage]
+  );
   const whatsappUrl = phoneInfo.valid ? phoneInfo.url : '';
-  const whatsappIconUrl = 'https://www.avaliasolar.com.br/images/email/whatsapp.png';
-  const mailIconUrl = 'https://www.avaliasolar.com.br/images/email/mail.png';
-  const globeIconUrl = 'https://www.avaliasolar.com.br/images/email/globe.png';
-  const linkedinIconUrl = 'https://www.avaliasolar.com.br/images/email/linkedin.png';
-  const watermarkIconUrl = 'https://www.avaliasolar.com.br/images/email/avalia-solar-watermark.png';
 
-  // Gerador dinâmico do HTML V2 de compatibilidade de e-mail (Tabelas, estilos inline, WhatsApp com ícone + número visível e marca d'água)
+  // Gerador dinâmico do HTML V3 Responsivo de compatibilidade de e-mail (Tabelas fluidas, estilos inline, WhatsApp .button2 e Dark Mode)
   const generatedHtml = useMemo(() => {
-    const safeName = escapeHtml(fullName.trim() || 'Felipe Henrique');
-    const safeRole = escapeHtml(roleTitle.trim() || 'Fundador do Avalia Solar');
-    const safeEmail = sanitizeEmailAddress(email);
-    const safeWebsite = sanitizeHttpUrl(websiteUrl, 'https://www.avaliasolar.com.br/');
-    const safeLinkedin = sanitizeHttpUrl(linkedinUrl, 'https://www.linkedin.com/in/felipe-morais-8bb61a7b/');
-    const safeCalendly = sanitizeHttpUrl(calendlyUrl, 'https://calendly.com/felipe-avaliasolar/30min');
-    const safeCta = escapeHtml(ctaText.trim() || 'Agendar 30 min ↗');
-    const safeFooter = escapeHtml(
-      footerTagline.trim() || 'ENERGIA SOLAR ● MOBILIDADE ELÉTRICA ● CONFIANÇA DIGITAL'
-    );
-
-    const whatsappSegment = phoneInfo.valid
-      ? ` <span style="color:#a2b2c2;vertical-align:middle;">&nbsp;·&nbsp;</span> <a href="${phoneInfo.url}" target="_blank" rel="noopener noreferrer" title="Conversar pelo WhatsApp" style="color:#0b2944;text-decoration:none;vertical-align:middle;white-space:nowrap;"><img src="${whatsappIconUrl}" width="14" height="14" alt="WhatsApp" style="display:inline-block;vertical-align:middle;width:14px;height:14px;border:0;margin-right:4px;" /><span style="vertical-align:middle;color:#0b2944;font-weight:600;">${escapeHtml(
-          phoneInfo.formatted
-        )}</span></a>`
-      : '';
-
-    return `<!-- Assinatura Corporativa Avalia Solar V2 -->
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="550" bgcolor="#f6f9fd" style="width:550px;max-width:100%;border-collapse:separate;border-spacing:0;background-color:#f6f9fd;border:1px solid #dae5ef;font-family:Arial,Helvetica,sans-serif;color:#0b2944;">
-  <tr>
-    <td bgcolor="#eef4fa" width="120" valign="top" align="center" style="width:120px;background-color:#eef4fa;vertical-align:top;padding:17px 12px 12px 13px;border-right:3px solid #ffcd2d;">
-      <img src="${resolvedEmailAvatarUrl}" width="83" height="83" alt="${safeName}" style="width:83px;height:83px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;" />
-      <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:10px;"><tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:5px 7px;border-radius:4px;">
-        <a href="${safeWebsite}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><img src="${resolvedEmailLogoUrl}" alt="Avalia Solar" width="92" style="display:block;width:92px;height:auto;border:0;" /></a>
-      </td></tr></table>
-    </td>
-    <td valign="top" style="padding:14px 14px 12px 18px;vertical-align:top;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;">
-        <tr>
-          <td valign="top" style="vertical-align:top;padding-right:8px;">
-            <p style="margin:0 0 2px;font-size:17px;line-height:1.23;letter-spacing:-0.3px;font-weight:700;color:#0b2944;"><strong>${safeName}</strong></p>
-            <p style="margin:0 0 9px;font-size:11px;line-height:1.3;color:#63768a;">${safeRole}</p>
-            <p style="margin:0 0 4px;font-size:11px;line-height:1.45;color:#0b2944;">
-              <a href="mailto:${safeEmail}" style="color:#0b2944;text-decoration:none;vertical-align:middle;white-space:nowrap;"><img src="${mailIconUrl}" width="13" height="13" alt="" style="display:inline-block;vertical-align:middle;width:13px;height:13px;border:0;margin-right:4px;" /><span style="vertical-align:middle;">${safeEmail}</span></a>${whatsappSegment}
-            </p>
-            <p style="margin:0 0 12px;font-size:11px;line-height:1.45;">
-              <a href="${safeWebsite}" target="_blank" rel="noopener noreferrer" style="color:#0e5ac9;text-decoration:none;vertical-align:middle;white-space:nowrap;"><img src="${globeIconUrl}" width="13" height="13" alt="" style="display:inline-block;vertical-align:middle;width:13px;height:13px;border:0;margin-right:4px;" /><span style="vertical-align:middle;">Website</span></a><span style="color:#a2b2c2;vertical-align:middle;">&nbsp;&nbsp;|&nbsp;&nbsp;</span><a href="${safeLinkedin}" target="_blank" rel="noopener noreferrer" style="color:#0e5ac9;text-decoration:none;vertical-align:middle;white-space:nowrap;"><img src="${linkedinIconUrl}" width="13" height="13" alt="" style="display:inline-block;vertical-align:middle;width:13px;height:13px;border:0;margin-right:4px;" /><span style="vertical-align:middle;">LinkedIn</span></a>
-            </p>
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
-              <td bgcolor="#0b2944" style="background-color:#0b2944;border-radius:4px;">
-                <a href="${safeCalendly}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:7px 13px;font-size:11px;line-height:1.2;font-weight:bold;text-decoration:none;color:#ffffff;">${safeCta}</a>
-              </td>
-              <td width="10" style="width:10px;font-size:1px;line-height:1px;">&nbsp;</td>
-              <td style="font-size:11px;line-height:1.25;"><a href="${safeWebsite}" target="_blank" rel="noopener noreferrer" style="font-weight:bold;color:#0e5ac9;text-decoration:none;">Conhecer a plataforma</a></td>
-            </tr></table>
-          </td>
-          <td width="68" valign="middle" align="right" style="width:68px;vertical-align:middle;text-align:right;padding-left:4px;">
-            <img src="${watermarkIconUrl}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border:0;margin-left:auto;" />
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr><td colspan="2" bgcolor="#e8f0f7" style="background-color:#e8f0f7;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:9px;color:#5d7287;letter-spacing:0.4px;line-height:1.4;">${safeFooter}</td></tr>
-</table>`;
+    return buildResponsiveSignatureHtml({
+      fullName,
+      roleTitle,
+      email,
+      phone,
+      whatsappMessage,
+      avatarUrl: resolvedEmailAvatarUrl,
+      logoUrl: resolvedEmailLogoUrl,
+      websiteUrl,
+      linkedinUrl,
+      calendlyUrl,
+      ctaText,
+      footerTagline,
+    });
   }, [
     fullName,
     roleTitle,
     email,
-    phoneInfo,
-    whatsappIconUrl,
-    mailIconUrl,
-    globeIconUrl,
-    linkedinIconUrl,
-    watermarkIconUrl,
+    phone,
+    whatsappMessage,
     resolvedEmailAvatarUrl,
+    resolvedEmailLogoUrl,
     websiteUrl,
     linkedinUrl,
     calendlyUrl,
     ctaText,
-    resolvedEmailLogoUrl,
     footerTagline,
   ]);
 
@@ -287,6 +253,7 @@ export default function EmailSignaturesPage() {
     if (f.calendly_url) setCalendlyUrl(f.calendly_url);
     if (f.cta_text) setCtaText(f.cta_text);
     if (f.footer_tagline) setFooterTagline(f.footer_tagline);
+    if (f.whatsapp_message) setWhatsappMessage(f.whatsapp_message);
   }, []);
 
   // Carregar assinaturas existentes e restaurar campos salvos
@@ -357,6 +324,7 @@ export default function EmailSignaturesPage() {
               calendly_url: calendlyUrl,
               cta_text: ctaText,
               footer_tagline: footerTagline,
+              whatsapp_message: whatsappMessage,
             },
           },
         }),
@@ -615,6 +583,22 @@ export default function EmailSignaturesPage() {
                         </p>
                       )}
                     </div>
+                  </div>
+
+                  {/* Campo Mensagem Inicial do WhatsApp */}
+                  <div className="space-y-1">
+                    <label className="block text-[11px] text-slate-600 font-medium">
+                      Mensagem Inicial do WhatsApp (Opcional)
+                    </label>
+                    <Input
+                      value={whatsappMessage}
+                      onChange={(e) => setWhatsappMessage(e.target.value)}
+                      className="h-8 text-xs bg-white"
+                      placeholder="Olá! Gostaria de falar sobre os projetos da Avalia Solar."
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Texto codificado na URL wa.me pré-carregado no chat do WhatsApp ao clicar no botão.
+                    </p>
                   </div>
 
                   {/* Campo Foto / Avatar do Consultor */}
@@ -884,65 +868,195 @@ export default function EmailSignaturesPage() {
                       Visualização em Tempo Real (Live Preview)
                     </span>
 
-                    {/* Alternador Código vs Preview */}
-                    <div className="flex bg-white rounded border border-slate-200 p-0.5 text-[11px]">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('preview')}
-                        className={`px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors ${
-                          activeTab === 'preview'
-                            ? 'bg-sky-100 text-sky-800 font-semibold'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <Eye className="w-3.5 h-3.5" /> Renderizado
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('code')}
-                        className={`px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors ${
-                          activeTab === 'code'
-                            ? 'bg-sky-100 text-sky-800 font-semibold'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <Code2 className="w-3.5 h-3.5" /> Código HTML
-                      </button>
+                    {/* Controles de Preview e Alternador Código/Renderizado */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {activeTab === 'preview' && (
+                        <>
+                          {/* Seletores de Viewport */}
+                          <div className="flex bg-white rounded border border-slate-200 p-0.5 text-[10px]">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewViewport('desktop')}
+                              className={`px-2 py-0.5 rounded flex items-center gap-1 transition-colors ${
+                                previewViewport === 'desktop'
+                                  ? 'bg-sky-100 text-sky-800 font-bold'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                              title="Desktop (máx. 480px)"
+                            >
+                              <Monitor className="w-3 h-3" /> 480px
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewViewport('iphone')}
+                              className={`px-2 py-0.5 rounded flex items-center gap-1 transition-colors ${
+                                previewViewport === 'iphone'
+                                  ? 'bg-sky-100 text-sky-800 font-bold'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                              title="iPhone 14/15/Pro (390px)"
+                            >
+                              <Smartphone className="w-3 h-3" /> 390px
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewViewport('se')}
+                              className={`px-2 py-0.5 rounded flex items-center gap-1 transition-colors ${
+                                previewViewport === 'se'
+                                  ? 'bg-sky-100 text-sky-800 font-bold'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                              title="iPhone SE (375px)"
+                            >
+                              <Smartphone className="w-3 h-3" /> 375px
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewViewport('compact')}
+                              className={`px-2 py-0.5 rounded flex items-center gap-1 transition-colors ${
+                                previewViewport === 'compact'
+                                  ? 'bg-sky-100 text-sky-800 font-bold'
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                              title="Compacto (320px)"
+                            >
+                              <Smartphone className="w-3 h-3" /> 320px
+                            </button>
+                          </div>
+
+                          {/* Alternador Light / Dark Mode */}
+                          <div className="flex bg-white rounded border border-slate-200 p-0.5 text-[10px]">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewTheme('light')}
+                              className={`p-1 rounded transition-colors ${
+                                previewTheme === 'light'
+                                  ? 'bg-amber-100 text-amber-900 font-bold'
+                                  : 'text-slate-500 hover:text-slate-800'
+                              }`}
+                              title="Tema Claro"
+                            >
+                              <Sun className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewTheme('dark')}
+                              className={`p-1 rounded transition-colors ${
+                                previewTheme === 'dark'
+                                  ? 'bg-indigo-950 text-indigo-200 font-bold'
+                                  : 'text-slate-500 hover:text-slate-800'
+                              }`}
+                              title="Tema Escuro (Dark Mode)"
+                            >
+                              <Moon className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Alternador Código vs Preview */}
+                      <div className="flex bg-white rounded border border-slate-200 p-0.5 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('preview')}
+                          className={`px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors ${
+                            activeTab === 'preview'
+                              ? 'bg-sky-100 text-sky-800 font-semibold'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Renderizado
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('code')}
+                          className={`px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors ${
+                            activeTab === 'code'
+                              ? 'bg-sky-100 text-sky-800 font-semibold'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Code2 className="w-3.5 h-3.5" /> Código HTML
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   {activeTab === 'preview' ? (
-                    /* Mock Visual de E-mail (Gmail / Outlook) */
+                    /* Mock Visual de E-mail (Gmail / Outlook / Apple Mail) */
                     <div className="bg-white rounded-md border border-slate-200 shadow-xs overflow-hidden">
-                      <div className="bg-slate-100/80 px-4 py-2 border-b border-slate-200 text-[11px] text-slate-500 flex items-center justify-between">
-                        <span>Simulação de Leitura (Gmail / Outlook)</span>
-                        <span className="text-[10px] font-mono">
-                          550px width ·{' '}
-                          {phoneInfo.valid
-                            ? `WhatsApp: ${phoneInfo.formatted} (${whatsappUrl})`
-                            : 'WhatsApp oculto (telefone não informado)'}
+                      <div className="bg-slate-100/90 px-4 py-2 border-b border-slate-200 text-[11px] text-slate-600 flex items-center justify-between">
+                        <span className="font-medium flex items-center gap-1.5">
+                          <span>Simulação:</span>
+                          <Badge variant="outline" className="text-[10px] font-mono py-0 h-4 bg-white">
+                            {previewViewport === 'desktop'
+                              ? 'Desktop (480px)'
+                              : previewViewport === 'iphone'
+                              ? 'iPhone 14/15 (390px)'
+                              : previewViewport === 'se'
+                              ? 'iPhone SE (375px)'
+                              : 'Compacto (320px)'}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] py-0 h-4 ${
+                              previewTheme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-700'
+                            }`}
+                          >
+                            {previewTheme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                          </Badge>
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500">
+                          {phoneInfo.valid ? `wa.me/${phoneInfo.digits}` : 'WhatsApp oculto'}
                         </span>
                       </div>
-                      <div className="p-4 space-y-3">
-                        <div className="text-slate-600 text-xs space-y-1.5">
-                          <p>Olá, Carlos!</p>
-                          <p>
-                            Conforme conversamos, montei o estudo de viabilidade solar para o seu projeto com
-                            estimativa de retorno em menos de 3 anos.
-                          </p>
-                          <p>Qualquer dúvida estou à total disposição.</p>
-                        </div>
 
-                        {/* Renderização da Tabela de Assinatura V2 */}
+                      {/* Corpo do E-mail Simulado */}
+                      <div
+                        className={`p-4 transition-colors ${
+                          previewTheme === 'dark'
+                            ? 'bg-[#0f172a] text-slate-200'
+                            : 'bg-[#f8fafc] text-slate-800'
+                        }`}
+                      >
                         <div
-                          className="pt-2 overflow-x-auto"
-                          dangerouslySetInnerHTML={{
-                            __html: generatedHtml.replace(
-                              /https:\/\/www\.avaliasolar\.com\.br\/images\/email\/([a-z0-9.-]+\.png)/gi,
-                              '/images/email/$1'
-                            ),
+                          className={`p-4 rounded-lg border transition-all ${
+                            previewTheme === 'dark'
+                              ? 'bg-[#1e293b] border-slate-700 shadow-md'
+                              : 'bg-white border-slate-200/80 shadow-xs'
+                          }`}
+                          style={{
+                            maxWidth:
+                              previewViewport === 'desktop'
+                                ? '480px'
+                                : previewViewport === 'iphone'
+                                ? '390px'
+                                : previewViewport === 'se'
+                                ? '375px'
+                                : '320px',
+                            margin: '0 auto',
                           }}
-                        />
+                        >
+                          <div className={`text-xs space-y-1.5 mb-4 ${previewTheme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                            <p>Olá, Carlos!</p>
+                            <p>
+                              Conforme conversamos, montei o estudo de viabilidade solar para o seu projeto com
+                              estimativa de retorno em menos de 3 anos.
+                            </p>
+                            <p>Qualquer dúvida estou à total disposição.</p>
+                          </div>
+
+                          {/* Renderização da Tabela de Assinatura Responsiva V3 */}
+                          <div
+                            className="pt-2 overflow-x-auto"
+                            dangerouslySetInnerHTML={{
+                              __html: generatedHtml.replace(
+                                /https:\/\/www\.avaliasolar\.com\.br\/images\/email\/([a-z0-9.-]+\.png)/gi,
+                                '/images/email/$1'
+                              ),
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -952,6 +1066,28 @@ export default function EmailSignaturesPage() {
                         readOnly
                         value={generatedHtml}
                         className="w-full h-[360px] font-mono text-[11px] p-3 rounded-md border border-slate-200 bg-slate-900 text-slate-200 select-all"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Demonstração da Arquitetura Dual: Web/CRM vs E-mail */}
+                <div className="bg-slate-50 p-3.5 rounded-md border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] text-slate-700">
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-slate-900 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Arquitetura Dual do Botão WhatsApp (.button2):
+                    </p>
+                    <p className="text-slate-600 text-[10px]">
+                      <strong>Web/CRM:</strong> componente interativo com hover e profundidade suave. <strong>E-mail:</strong> tabela HTML bulletproof com estilos inline e PNG HTTPS.
+                    </p>
+                  </div>
+                  {phoneInfo.valid && (
+                    <div className="shrink-0 flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-medium">Demonstração Web:</span>
+                      <WhatsAppButton2
+                        phone={phoneInfo.digits}
+                        message={whatsappMessage}
+                        label="WhatsApp"
                       />
                     </div>
                   )}

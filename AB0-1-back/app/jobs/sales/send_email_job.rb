@@ -258,7 +258,7 @@ module Sales
       if custom_sig&.body_html.present?
         normalized = ::Sales::EmailSignature.normalize_html(custom_sig.body_html)
         if custom_sig.avatar.attached? && custom_sig.avatar_public_url.present?
-          normalized = normalized.sub(/(<img\b[^>]*src=["'])([^"']+)(["'][^>]*width=["']83["'])/i, "\\1#{custom_sig.avatar_public_url}\\3")
+          normalized = normalized.sub(/(<img\b[^>]*src=["'])([^"']+)(["'][^>]*width=["'](?:76|83)["'])/i, "\\1#{custom_sig.avatar_public_url}\\3")
         end
         if custom_sig.logo.attached? && custom_sig.logo_public_url.present?
           normalized = normalized.sub(/(<img\b[^>]*src=["'])([^"']+)(["'][^>]*alt=["']Avalia Solar["'])/i, "\\1#{custom_sig.logo_public_url}\\3")

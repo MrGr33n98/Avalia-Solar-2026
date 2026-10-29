@@ -79,6 +79,7 @@ export function VoiceCallProvider({ children }: { children: React.ReactNode }) {
       }
 
       // 2. Import dinâmico do SDK da Twilio (somente no browser)
+      // @ts-ignore optional peer dependency
       const { Device, Call } = await import('@twilio/voice-sdk');
 
       if (!deviceRef.current) {
