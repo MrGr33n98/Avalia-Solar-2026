@@ -15,4 +15,3 @@ module Sales
     end
   end
 end
-

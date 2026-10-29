@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Bell,
   Building2,
   CalendarClock,
   ChevronDown,
@@ -26,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import CRMUserPopover from '@/components/sales/layout/CRMUserPopover';
+import CRMNotificationsPopover from '@/components/sales/layout/CRMNotificationsPopover';
 
 interface CRMTopbarProps {
   onOpenSearch?: () => void;
@@ -105,13 +105,8 @@ export default function CRMTopbar({ onOpenSearch, onOpenAddModal }: CRMTopbarPro
           <HelpCircle className="w-4 h-4" />
         </button>
 
-        <button
-          aria-label="Notificações do sistema"
-          className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-md hover:bg-slate-800/60 relative"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500" />
-        </button>
+        {/* Central de Notificações Interativa do CRM */}
+        <CRMNotificationsPopover />
 
         <CRMUserPopover onOpenInbox={() => onOpenAddModal?.('email')} />
 

@@ -4,13 +4,20 @@ module Sales
   class SyncEmailAccountJob < ApplicationJob
     queue_as :sales_email_sync
 
+    INBOX_FOLDER_NAMES = %w[inbox caixa\ de\ entrada entrada].freeze
+    SENT_FOLDER_NAMES = %w[sent enviados sent\ messages itens\ enviados].freeze
+
     def perform(sales_email_account_id, mode: 'incremental')
       account = Sales::EmailAccount.find_by(id: sales_email_account_id)
       return unless account&.zoho? && account.connection_status != 'disconnected'
 
       token = EmailSync::TokenRefresher.refresh_if_needed!(account)
       unless token
-        account.update!(sync_status: 'error', sync_error: 'Token inválido ou expirado. Reconecte a conta.')
+        account.update!(
+          connection_status: 'needs_reconnect',
+          sync_status: 'error',
+          sync_error: 'Token inválido ou expirado. Reconecte a conta.'
+        )
         return
       end
 
@@ -21,69 +28,86 @@ module Sales
       account_id = account.provider_account_id
       if account_id.blank?
         accounts = client.list_accounts(access_token: token)
-        matched = accounts.find { |a| a[:email] == account.email.downcase } || accounts.first
-        if matched
+        matched = accounts.find { |a| a[:email].to_s.casecmp(account.email.to_s).zero? } || accounts.first
+        if matched && matched[:account_id].present?
           account.update!(provider_account_id: matched[:account_id])
           account_id = matched[:account_id]
         end
       end
 
-      return unless account_id.present?
+      unless account_id.present?
+        account.update!(sync_status: 'error', sync_error: 'ID da caixa Zoho não encontrado para esta conta.')
+        return
+      end
 
-      # Folders to sync: Inbox and Sent
+      # Folders to sync: Inbox and Sent (supports EN and PT-BR folder names/types)
       folders = client.list_folders(access_token: token, account_id: account_id)
-      inbox_folder = folders.find { |f| f[:type].to_s.casecmp('inbox').zero? || f[:name].to_s.casecmp('inbox').zero? }
-      sent_folder = folders.find { |f| f[:type].to_s.casecmp('sent').zero? || f[:name].to_s.casecmp('sent').zero? }
+      inbox_folder = folders.find do |f|
+        INBOX_FOLDER_NAMES.include?(f[:type].to_s.strip.downcase) ||
+          INBOX_FOLDER_NAMES.include?(f[:name].to_s.strip.downcase)
+      end || folders.first
+
+      sent_folder = folders.find do |f|
+        SENT_FOLDER_NAMES.include?(f[:type].to_s.strip.downcase) ||
+          SENT_FOLDER_NAMES.include?(f[:name].to_s.strip.downcase)
+      end
 
       imported_count = 0
 
-      # Sync Inbox
-      if inbox_folder
-        imported_count += sync_folder(client, token, account, account_id, inbox_folder[:folder_id], 'inbound')
+      if inbox_folder && inbox_folder[:folder_id].present?
+        imported_count += sync_folder(client, token, account, account_id, inbox_folder[:folder_id], 'inbound', mode: mode)
       end
 
-      # Sync Sent
-      if sent_folder
-        imported_count += sync_folder(client, token, account, account_id, sent_folder[:folder_id], 'outbound')
+      if sent_folder && sent_folder[:folder_id].present? && sent_folder[:folder_id] != inbox_folder&.dig(:folder_id)
+        imported_count += sync_folder(client, token, account, account_id, sent_folder[:folder_id], 'outbound', mode: mode)
       end
 
       account.update!(
+        connection_status: 'healthy',
         sync_status: 'healthy',
         last_synced_at: Time.current,
-        messages_imported: account.messages_imported + imported_count,
+        messages_imported: account.messages_imported.to_i + imported_count,
         sync_error: nil
       )
+    rescue EmailSync::ZohoApiClient::AuthError => e
+      account&.update!(
+        connection_status: 'needs_reconnect',
+        sync_status: 'error',
+        sync_error: 'Sessão Zoho expirada ou revogada. Reconecte a conta.'
+      )
+      Rails.logger.warn("[SyncEmailAccountJob] Auth error for account #{sales_email_account_id}: #{e.message}")
     rescue EmailSync::ZohoApiClient::RateLimitError => e
-      account.update!(sync_status: 'degraded', sync_error: 'Limite de requisições Zoho atingido. Aguardando intervalo.')
+      account&.update!(sync_status: 'degraded', sync_error: 'Limite de requisições Zoho atingido. Aguardando intervalo.')
       Rails.logger.warn("[SyncEmailAccountJob] Rate limit for account #{sales_email_account_id}: #{e.message}")
     rescue StandardError => e
-      account.update!(sync_status: 'error', sync_error: e.message)
+      account&.update!(sync_status: 'error', sync_error: e.message)
       Rails.logger.error("[SyncEmailAccountJob] Failed for account #{sales_email_account_id}: #{e.class} - #{e.message}")
     end
 
     private
 
-    def sync_folder(client, token, account, account_id, folder_id, direction)
-      # Checkpoint state
+    def sync_folder(client, token, account, account_id, folder_id, direction, mode: 'incremental')
       sync_state = Sales::EmailSyncState.find_or_create_by!(
         company_id: account.company_id,
         sales_email_account_id: account.id,
-        provider_folder_id: folder_id
+        provider_folder_id: folder_id.to_s
       )
 
-      sync_state.update!(last_started_at: Time.current)
+      sync_state.update!(last_started_at: Time.current, last_error_code: nil)
 
       imported = 0
       page = 1
       has_more = true
+      max_pages = mode.to_s == 'full' ? 5 : 2
+      batch_limit = mode.to_s == 'full' ? 50 : 30
 
-      while has_more && page <= 3
-        start_offset = ((page - 1) * 30) + 1
+      while has_more && page <= max_pages
+        start_offset = ((page - 1) * batch_limit) + 1
         messages = client.list_messages(
           access_token: token,
           account_id: account_id,
           folder_id: folder_id,
-          limit: 30,
+          limit: batch_limit,
           start: start_offset
         )
 
@@ -94,7 +118,7 @@ module Sales
 
           existing = Sales::EmailMessage.find_by(
             sales_email_account_id: account.id,
-            provider_message_id: msg[:message_id]
+            provider_message_id: msg[:message_id].to_s
           )
           next if existing
 
@@ -109,7 +133,6 @@ module Sales
             created = ingestion.ingest!
             imported += 1 if created
           else
-            # Outbound import (Sent folder)
             occurred_at = if msg[:received_time].present?
                             Time.at(msg[:received_time].to_i / 1000.0) rescue Time.current
                           else
@@ -138,40 +161,40 @@ module Sales
               sender_user_id: account.user_id,
               from_email: from_email.presence || account.email,
               to_email: to_email.presence || 'cliente@destino.com',
-              subject: msg[:subject] || '(Sem assunto)',
-              body_text: msg[:summary] || '',
+              subject: msg[:subject].presence || '(Sem assunto)',
+              body_text: msg[:summary].to_s,
               status: 'sent',
               direction: 'outbound',
               delivery_status: 'delivered',
-              provider_message_id: msg[:message_id],
-              provider_folder_id: folder_id,
+              provider_message_id: msg[:message_id].to_s,
+              provider_folder_id: folder_id.to_s,
               provider_received_at: occurred_at,
               created_at: occurred_at
             )
-            thread.update!(message_count: thread.messages.count)
+            thread.update!(last_message_at: [thread.last_message_at, occurred_at].compact.max, message_count: thread.messages.count)
             imported += 1
           end
         end
 
         page += 1
-        has_more = messages.size >= 30
+        has_more = messages.size >= batch_limit
       end
 
       sync_state.update!(
-        last_synced_at: Time.current,
         cursor: "page_#{page}",
-        imported_count: sync_state.imported_count.to_i + imported
-      )
-
-      imported
-
-      sync_state.update!(
         last_succeeded_at: Time.current,
         high_watermark_at: Time.current,
-        last_error_code: nil
+        last_error_code: nil,
+        retry_count: 0
       )
 
       imported
+    rescue StandardError => e
+      sync_state&.update(
+        last_error_code: e.class.name.demodulize,
+        retry_count: sync_state.retry_count.to_i + 1
+      )
+      raise e
     end
   end
 end
