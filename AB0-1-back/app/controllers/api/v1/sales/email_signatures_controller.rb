@@ -34,6 +34,7 @@ module Api
 
         def scoped_signatures
           return ::Sales::EmailSignature.all if current_user.admin?
+
           ::Sales::EmailSignature.where(company_id: current_user.company_id, user_id: current_user.id)
         end
 
@@ -55,7 +56,12 @@ module Api
         end
 
         def serialize(signature)
-          { id: signature.id, name: signature.name, body_html: signature.body_html,
+          normalized_html = ::Sales::EmailSignature.normalize_html(signature.body_html)
+          if normalized_html != signature.body_html && signature.persisted?
+            signature.update_column(:body_html, normalized_html)
+          end
+
+          { id: signature.id, name: signature.name, body_html: normalized_html,
             sales_email_account_id: signature.sales_email_account_id, is_default: signature.is_default,
             updated_at: signature.updated_at }
         end

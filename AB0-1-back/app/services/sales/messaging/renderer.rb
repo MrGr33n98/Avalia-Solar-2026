@@ -7,6 +7,8 @@ module Sales
     class Renderer
       class EmailRenderError < StandardError; end
 
+      DEFAULT_SIGNATURE_AVATAR_URL = 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png'
+
       def self.render(body_json: nil, raw_html: nil, raw_text: nil, subject: nil, preheader: nil, to_email: nil, context: {})
         new(body_json:, raw_html:, raw_text:, subject:, preheader:, to_email:, context:).render
       end
@@ -215,9 +217,20 @@ module Sales
         )
 
         # Remove attributes with unsafe protocols like javascript: or data:
-        sanitized.to_s
-                 .gsub(/(href|src)\s*=\s*(["'])\s*(javascript|data|vbscript):.*?\2/im, '')
-                 .gsub(/(href|src)\s*=\s*(["'])\s*(javascript|data|vbscript):[^"'\s>]*/im, '')
+        result = sanitized.to_s
+                          .gsub(/(href|src)\s*=\s*(["'])\s*(javascript|data|vbscript):.*?\2/im, '')
+                          .gsub(/(href|src)\s*=\s*(["'])\s*(javascript|data|vbscript):[^"'\s>]*/im, '')
+
+        # Garantir que o avatar da assinatura oficial (83x83 / border-radius:50%) sempre tenha URL pública HTTPS válida
+        result.gsub(/<img\b[^>]*>/im) do |img_tag|
+          is_signature_avatar = img_tag.include?('width="83"') || img_tag.include?('border-radius:50%')
+          if is_signature_avatar && !img_tag.match?(/\bsrc\s*=\s*(["'])https?:\/\//i)
+            cleaned_tag = img_tag.gsub(/\bsrc\s*=\s*(["']).*?\1\s*/im, '')
+            cleaned_tag.sub(/\A<img\b/i, %(<img src="#{DEFAULT_SIGNATURE_AVATAR_URL}"))
+          else
+            img_tag
+          end
+        end
       end
 
       def unsafe_protocol?(url)

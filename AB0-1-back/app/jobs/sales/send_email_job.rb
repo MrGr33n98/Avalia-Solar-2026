@@ -284,7 +284,11 @@ module Sales
       return nil if meta['include_signature'] == false || meta['include_signature'] == 'false'
 
       custom_sig = signature_for(email)
-      return custom_sig.body_html if custom_sig&.body_html.present?
+      if custom_sig&.body_html.present?
+        normalized = ::Sales::EmailSignature.normalize_html(custom_sig.body_html)
+        custom_sig.update_column(:body_html, normalized) if normalized != custom_sig.body_html
+        return normalized
+      end
 
       # Fallback para a assinatura oficial padrão quando a inclusão de assinatura estiver ativa
       default_official_signature(email)

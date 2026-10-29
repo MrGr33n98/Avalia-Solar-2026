@@ -94,14 +94,29 @@ export default function EmailSignaturesPage() {
   };
 
   // Gerador dinâmico do HTML de compatibilidade de e-mail (Tabelas e estilos inline)
+  // Nota crítica para Gmail/Outlook: imagens em HTML de e-mail NUNCA podem usar data:image/... (bloqueado pelo Gmail e sanitizador).
+  const resolvedEmailAvatarUrl = useMemo(() => {
+    const fallback = 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png';
+    if (!avatarUrl || avatarUrl.startsWith('data:')) return fallback;
+    if (avatarUrl.startsWith('/')) return `https://www.avaliasolar.com.br${avatarUrl}`;
+    return avatarUrl.replace('felipe-assinatura-avatar.png', 'foto-felipe-assinatura-avalia-solar.png');
+  }, [avatarUrl]);
+
+  const resolvedEmailLogoUrl = useMemo(() => {
+    const fallback = 'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png';
+    if (!logoUrl || logoUrl.startsWith('data:')) return fallback;
+    if (logoUrl.startsWith('/')) return `https://www.avaliasolar.com.br${logoUrl}`;
+    return logoUrl;
+  }, [logoUrl]);
+
   const generatedHtml = useMemo(() => {
     return `<!-- Assinatura Avalia Solar premium: fundo azul-gelo; somente tabelas e CSS inline para compatibilidade com email -->
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="550" bgcolor="#f6f9fd" style="width:550px;max-width:100%;border-collapse:separate;border-spacing:0;background-color:#f6f9fd;border:1px solid #dae5ef;font-family:Arial,Helvetica,sans-serif;color:#0b2944;">
   <tr>
     <td bgcolor="#eef4fa" width="120" valign="top" align="center" style="width:120px;background-color:#eef4fa;vertical-align:top;padding:17px 12px 12px 13px;border-right:3px solid #ffcd2d;">
-      <img src="${avatarUrl || 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png'}" width="83" height="83" alt="${fullName}" style="width:83px;height:83px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;">
+      <img src="${resolvedEmailAvatarUrl}" width="83" height="83" alt="${fullName}" style="width:83px;height:83px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;">
       <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:10px;"><tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:5px 7px;border-radius:4px;">
-        <a href="${websiteUrl}" target="_blank" style="text-decoration:none;"><img src="${logoUrl}" alt="Avalia Solar" width="92" style="display:block;width:92px;height:auto;border:0;"></a>
+        <a href="${websiteUrl}" target="_blank" style="text-decoration:none;"><img src="${resolvedEmailLogoUrl}" alt="Avalia Solar" width="92" style="display:block;width:92px;height:auto;border:0;"></a>
       </td></tr></table>
     </td>
     <td valign="top" style="padding:16px 16px 12px 18px;vertical-align:top;">
@@ -125,7 +140,7 @@ export default function EmailSignaturesPage() {
   </tr>
   <tr><td colspan="2" bgcolor="#e8f0f7" style="background-color:#e8f0f7;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:9px;color:#5d7287;letter-spacing:0.4px;line-height:1.4;">${footerTagline}</td></tr>
 </table>`;
-  }, [fullName, roleTitle, email, phone, avatarUrl, websiteUrl, linkedinUrl, calendlyUrl, ctaText, logoUrl, footerTagline]);
+  }, [fullName, roleTitle, email, phone, resolvedEmailAvatarUrl, websiteUrl, linkedinUrl, calendlyUrl, ctaText, resolvedEmailLogoUrl, footerTagline]);
 
   // Carregar assinaturas existentes
   const loadSignatures = async () => {
@@ -156,8 +171,14 @@ export default function EmailSignaturesPage() {
 
     setSaving(true);
     try {
-      const response = await fetch('/api/v1/sales/email_signatures', {
-        method: 'POST',
+      const existingDefault = signatures.find((s) => s.is_default) || signatures[0];
+      const endpoint = existingDefault
+        ? `/api/v1/sales/email_signatures/${existingDefault.id}`
+        : '/api/v1/sales/email_signatures';
+      const method = existingDefault ? 'PATCH' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
