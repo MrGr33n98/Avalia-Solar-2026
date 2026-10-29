@@ -1071,8 +1071,29 @@ export const salesApi = {
     return res;
   },
 
-  async syncEmailConnection(id: number, mode: 'incremental' | 'full' = 'incremental'): Promise<{ message: string; status: string }> {
-    const res = await request<{ message: string; status: string }>(`/api/v1/sales/email_connections/${id}/sync`, {
+  async syncEmailConnection(
+    id: number,
+    mode: 'incremental' | 'full' = 'incremental'
+  ): Promise<{
+    message: string;
+    error?: string | null;
+    code?: string | null;
+    status: string;
+    imported_now?: number;
+    stored_messages?: number;
+    stored_threads?: number;
+    account?: InboxMailbox;
+  }> {
+    const res = await request<{
+      message: string;
+      error?: string | null;
+      code?: string | null;
+      status: string;
+      imported_now?: number;
+      stored_messages?: number;
+      stored_threads?: number;
+      account?: InboxMailbox;
+    }>(`/api/v1/sales/email_connections/${id}/sync`, {
       method: 'POST',
       body: JSON.stringify({ mode }),
     });

@@ -726,6 +726,15 @@ export interface LeadsAnalyticsResponse {
 // -------------------------------------------------------------
 // Sales Inbox (Opção A - Proposta Bidirecional)
 // -------------------------------------------------------------
+export interface InboxMailboxSyncState {
+  folder_id: string;
+  cursor?: string | null;
+  last_started_at?: string | null;
+  last_succeeded_at?: string | null;
+  last_error_code?: string | null;
+  retry_count?: number;
+}
+
 export interface InboxMailbox {
   id: number;
   email: string;
@@ -736,7 +745,11 @@ export interface InboxMailbox {
   sync_status: 'idle' | 'syncing' | 'healthy' | 'degraded' | 'error' | string;
   last_synced_at?: string | null;
   messages_imported?: number;
+  messages_failed?: number;
+  stored_messages?: number;
+  stored_threads?: number;
   sync_error?: string | null;
+  sync_states?: InboxMailboxSyncState[];
   token_expired?: boolean;
   created_at: string;
 }
