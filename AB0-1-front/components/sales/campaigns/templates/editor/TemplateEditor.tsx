@@ -6,11 +6,15 @@ import { TemplateMetadataForm } from './TemplateMetadataForm';
 import { TemplateBlockPalette } from './TemplateBlockPalette';
 import { TemplateComposer } from './TemplateComposer';
 import { TemplateVariablePanel } from '../variables/TemplateVariablePanel';
+import AIClaimWarnings from '@/components/sales/ai/writing/AIClaimWarnings';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Eye, Send } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Send, Sparkles, Wand2, Loader2 } from 'lucide-react';
+import { createAiGeneration } from '@/lib/api/sales/ai';
+import type { CrmAiWarning } from '@/lib/api/sales/aiTypes';
+import { toast } from 'sonner';
 
 interface TemplateEditorProps {
-  initialTemplate?: EmailTemplate | null;
+  initialTemplate?: EmailTemplate | Partial<EmailTemplate> | null;
   variableGroups: VariableGroup[];
   onSave: (payload: EmailTemplatePayload) => Promise<void>;
   onCancel: () => void;
@@ -38,6 +42,11 @@ export function TemplateEditor({
   const [legacyHtml, setLegacyHtml] = useState(initialTemplate?.body_html || '');
   const [isLegacyMode, setIsLegacyMode] = useState(!initialTemplate?.body_json?.blocks?.length && !!initialTemplate?.body_html);
   const [isDirty, setIsDirty] = useState(false);
+
+  // AI Assistant in Editor State
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [warnings, setWarnings] = useState<CrmAiWarning[]>([]);
 
   const markDirty = () => setIsDirty(true);
 
@@ -89,6 +98,44 @@ export function TemplateEditor({
     markDirty();
   };
 
+  const handleAiSuggestBlock = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiGenerating(true);
+    setWarnings([]);
+
+    try {
+      const response = await createAiGeneration({
+        feature: 'template_block_edit',
+        action: 'suggest_blocks',
+        instructions: `Gerar blocos adicionais para template de ${category}. Instrução: ${aiPrompt.trim()}`,
+        draft: {
+          subject,
+          preheader,
+          blocks,
+        },
+      });
+
+      if (response.warnings?.length) {
+        setWarnings(response.warnings);
+      }
+
+      const generatedBlocks = response.result.body_json?.blocks;
+      if (Array.isArray(generatedBlocks) && generatedBlocks.length > 0) {
+        setBlocks((prev) => [...prev, ...generatedBlocks]);
+        markDirty();
+        setAiPrompt('');
+        toast.success(`${generatedBlocks.length} bloco(s) sugerido(s) pela IA inserido(s).`);
+      } else if (response.result.body_text) {
+        handleAddBlock('text');
+        toast.success('Bloco de texto sugerido adicionado ao template.');
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Falha ao consultar assistente de IA.');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload: EmailTemplatePayload = {
@@ -126,7 +173,7 @@ export function TemplateEditor({
           </Button>
           <div>
             <h2 className="text-xl font-bold tracking-tight">
-              {initialTemplate ? `Editar: ${initialTemplate.name}` : 'Novo Template de E-mail'}
+              {initialTemplate && 'id' in initialTemplate ? `Editar: ${name || initialTemplate.name}` : (name ? `Novo Template: ${name}` : 'Novo Template de E-mail')}
             </h2>
             {isDirty && <span className="text-xs text-amber-600 font-medium">* Alterações não salvas</span>}
           </div>
@@ -176,6 +223,47 @@ export function TemplateEditor({
         isPrivate={isPrivate}
         onPrivateChange={(val) => { setIsPrivate(val); markDirty(); }}
       />
+
+      {/* AI Block Assistant Strip */}
+      <div className="p-3 bg-indigo-50/60 border border-indigo-200/80 rounded-xl space-y-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs font-semibold text-indigo-950">
+            <Sparkles className="w-4 h-4 text-indigo-600" />
+            <span>Assistente de Blocos com IA (OpenRouter)</span>
+          </div>
+          <span className="text-[11px] text-muted-foreground">
+            Descreva novos blocos (ex: &quot;adicionar botão de diagnóstico com link seguro&quot;)
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Instrução para a IA (ex: sugerir bloco de call-to-action focado em agendamento solar)..."
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAiSuggestBlock();
+              }
+            }}
+            className="flex-1 text-xs px-3 py-1.5 rounded-md border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleAiSuggestBlock}
+            disabled={aiGenerating || !aiPrompt.trim()}
+            className="gap-1.5 h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white shrink-0"
+          >
+            {aiGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+            Gerar Bloco
+          </Button>
+        </div>
+
+        {warnings.length > 0 && <AIClaimWarnings warnings={warnings} />}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {!isLegacyMode && (

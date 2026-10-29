@@ -7,10 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import CRMModal from '@/components/sales/ui/CRMModal';
 import { CRMFormField } from '@/components/sales/ui/CRMForm';
+import AIWritingPanel from '@/components/sales/ai/writing/AIWritingPanel';
 import { salesApi } from '@/lib/api/sales/client';
 import { toast } from 'sonner';
 
-interface EmailTemplate { id: number; name: string; subject_template?: string; body_html?: string }
+interface EmailTemplate {
+  id: number;
+  name: string;
+  subject_template?: string;
+  body_html?: string;
+}
 
 interface EmailComposerModalProps {
   open: boolean;
@@ -47,8 +53,16 @@ export default function EmailComposerModal({
   const [trackClicks, setTrackClicks] = useState(true);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [aiStudioOpen, setAiStudioOpen] = useState(false);
 
-  useEffect(() => { if (open) salesApi.getEmailTemplates().then(setTemplates).catch(() => setTemplates([])); }, [open]);
+  useEffect(() => {
+    if (open) {
+      salesApi
+        .getEmailTemplates()
+        .then(setTemplates)
+        .catch(() => setTemplates([]));
+    }
+  }, [open]);
 
   const handleInsertVariable = (variable: string) => {
     setBodyText((prev) => `${prev} {{${variable}}}`);
@@ -94,8 +108,9 @@ export default function EmailComposerModal({
         setSubject('');
         onSuccess?.();
       }, 500);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao enviar e-mail comercial.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar e-mail comercial.';
+      setError(msg);
       setLoading(false);
     }
   };
@@ -167,7 +182,6 @@ export default function EmailComposerModal({
           </div>
         )}
 
-        {/* Recipients */}
         <div className="space-y-4">
           <CRMFormField label="Para (Destinatário)" required>
             <div className="flex items-center gap-2">
@@ -245,10 +259,27 @@ export default function EmailComposerModal({
 
           <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
             <div className="mb-1 text-[11px] font-semibold text-slate-600">Templates salvos</div>
-            {templates.length === 0 ? <p className="text-[11px] text-slate-400">Nenhum template disponível.</p> : <div className="flex flex-wrap gap-1">{templates.map((template) => <button key={template.id} type="button" onClick={() => { setSubject(template.subject_template || ""); setBodyText(template.body_html || ""); }} className="rounded border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700">{template.name}</button>)}</div>}
+            {templates.length === 0 ? (
+              <p className="text-[11px] text-slate-400">Nenhum template disponível.</p>
+            ) : (
+              <div className="flex flex-wrap gap-1">
+                {templates.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => {
+                      setSubject(template.subject_template || '');
+                      setBodyText((template.body_html || '').replace(/<[^>]+>/g, ''));
+                    }}
+                    className="rounded border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700"
+                  >
+                    {template.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Subject */}
           <CRMFormField label="Assunto" required>
             <Input
               placeholder="Ex: Proposta Comercial de Usina Solar 100kWp"
@@ -259,50 +290,76 @@ export default function EmailComposerModal({
             />
           </CRMFormField>
 
-          {/* Variable Helper Toolbar */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Variáveis Dinâmicas:
-            </span>
-            <Button
+          {/* Variable Helper Toolbar + AI Writing Studio Toggle */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Variáveis:
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleInsertVariable('person.first_name')}
+                className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
+              >
+                Primeiro Nome
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleInsertVariable('company.name')}
+                className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
+              >
+                Nome Empresa
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleInsertVariable('opportunity.value')}
+                className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
+              >
+                Valor Proposta
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleInsertVariable('owner.name')}
+                className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
+              >
+                Vendedor
+              </Button>
+            </div>
+
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleInsertVariable('person.first_name')}
-              className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
+              onClick={() => setAiStudioOpen((prev) => !prev)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-indigo-600 text-white text-[11px] font-semibold hover:bg-indigo-700"
             >
-              Primeiro Nome
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleInsertVariable('company.name')}
-              className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
-            >
-              Nome Empresa
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleInsertVariable('lead.value')}
-              className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
-            >
-              Valor Proposta
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleInsertVariable('owner.name')}
-              className="h-7 text-[11px] px-2.5 bg-slate-50 border-slate-200 text-slate-700 rounded-lg"
-            >
-              Vendedor
-            </Button>
+              <Sparkles className="w-3 h-3 text-amber-300" />
+              <span>{aiStudioOpen ? 'Ocultar AI Studio' : '✨ AI Writing Studio'}</span>
+            </button>
           </div>
 
-          {/* Body Editor */}
+          {aiStudioOpen && (
+            <AIWritingPanel
+              contactId={defaultContactId}
+              accountId={defaultAccountId}
+              opportunityId={defaultOpportunityId}
+              currentSubject={subject}
+              currentBody={bodyText}
+              preferPlainText={true}
+              onApplyToDraft={(next) => {
+                if (next.subject !== undefined) setSubject(next.subject);
+                if (next.body !== undefined) setBodyText(next.body);
+                toast.success('Sugestão da IA inserida no rascunho.');
+              }}
+            />
+          )}
+
           <CRMFormField label="Corpo da Mensagem" required>
             <Textarea
               placeholder="Escreva sua mensagem comercial aqui..."

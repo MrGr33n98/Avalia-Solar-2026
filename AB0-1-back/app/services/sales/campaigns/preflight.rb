@@ -31,7 +31,8 @@ module Sales
           warnings: @warnings,
           audience: audience_summary,
           sender: sender_summary,
-          provider: provider_summary
+          provider: provider_summary,
+          qa_audit: qa_audit_summary
         }
       end
 
@@ -51,6 +52,14 @@ module Sales
           @blockers << { code: 'EMPTY_TEMPLATE_BODY', message: 'O template selecionado não possui conteúdo.' }
         elsif template.subject_template.blank?
           @warnings << { code: 'EMPTY_SUBJECT_TEMPLATE', message: 'O template de e-mail não especifica assunto personalizado.' }
+        end
+
+        return if template.nil?
+
+        Array(qa_audit_summary[:findings]).each do |finding|
+          next unless %w[UNKNOWN_PLACEHOLDER INVALID_OR_INSECURE_LINK].include?(finding[:code])
+
+          @warnings << { code: finding[:code], message: finding[:message] }
         end
       end
 
@@ -120,6 +129,28 @@ module Sales
 
       def provider_summary
         @provider_summary ||= ::Sales::Messaging::Providers::HealthCheck.call(from_email: sender_summary[:from_email])
+      end
+
+      def qa_audit_summary
+        @qa_audit_summary ||= begin
+          template = @campaign.email_template
+          if template.nil? || !defined?(::Sales::Ai::ClaimChecker)
+            { checked: false, findings_count: 0, findings: [] }
+          else
+            blocks_text = if template.body_json.is_a?(Hash) && template.body_json['blocks'].is_a?(Array)
+                            template.body_json['blocks'].map { |b| b.is_a?(Hash) ? b.values.join(' ') : b.to_s }.join("\n")
+                          else
+                            ''
+                          end
+            combined = [template.subject_template, template.preheader, template.body_html, blocks_text].compact.join("\n")
+            findings = ::Sales::Ai::ClaimChecker.check(text: combined)
+            {
+              checked: true,
+              findings_count: findings.size,
+              findings: findings
+            }
+          end
+        end
       end
     end
   end

@@ -30,6 +30,7 @@ import { TemplateEditor } from './editor/TemplateEditor';
 import { TemplatePreview } from './preview/TemplatePreview';
 import { TemplateTestEmailDialog } from './dialogs/TemplateTestEmailDialog';
 import { TemplateDeleteDialog } from './dialogs/TemplateDeleteDialog';
+import { TemplateAiCreateDialog } from './dialogs/TemplateAiCreateDialog';
 
 export default function TemplatesWorkspace() {
   const [view, setView] = useState<'library' | 'editor'>('library');
@@ -52,9 +53,10 @@ export default function TemplatesWorkspace() {
   const [page, setPage] = useState(1);
 
   // Editor State
-  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | Partial<EmailTemplate> | null>(null);
 
   // Modals
+  const [aiCreateOpen, setAiCreateOpen] = useState(false);
   const [previewData, setPreviewData] = useState<TemplatePreviewResult | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewContextMode, setPreviewContextMode] = useState<'sample' | 'real'>('sample');
@@ -107,6 +109,17 @@ export default function TemplatesWorkspace() {
     setError('');
   };
 
+  const handleNewTemplateAi = () => {
+    setAiCreateOpen(true);
+  };
+
+  const handleTemplateGenerated = (generated: Partial<EmailTemplate>) => {
+    setEditingTemplate(generated);
+    setView('editor');
+    setSuccess('Estrutura de template gerada pela IA (OpenRouter). Revise e salve como rascunho.');
+    setError('');
+  };
+
   const handleEditTemplate = (template: EmailTemplate) => {
     setEditingTemplate(template);
     setView('editor');
@@ -119,12 +132,12 @@ export default function TemplatesWorkspace() {
     setError('');
     setSuccess('');
     try {
-      if (editingTemplate) {
+      if (editingTemplate && 'id' in editingTemplate && editingTemplate.id) {
         await updateEmailTemplate(editingTemplate.id, payload);
         setSuccess('Template atualizado com sucesso.');
       } else {
         await createEmailTemplate(payload);
-        setSuccess('Template criado com sucesso.');
+        setSuccess('Template criado e salvo com sucesso.');
       }
       setView('library');
       await loadData();
@@ -274,6 +287,7 @@ export default function TemplatesWorkspace() {
           page={page}
           onPageChange={setPage}
           onNewTemplate={handleNewTemplate}
+          onNewTemplateAi={handleNewTemplateAi}
           onEdit={handleEditTemplate}
           onPreview={handleShowPreview}
           onDuplicate={handleDuplicateTemplate}
@@ -290,6 +304,14 @@ export default function TemplatesWorkspace() {
           onPreview={handleShowPreview}
           onTestSend={(t) => setTestSendTarget(t)}
           busy={busy}
+        />
+      )}
+
+      {aiCreateOpen && (
+        <TemplateAiCreateDialog
+          isOpen={aiCreateOpen}
+          onClose={() => setAiCreateOpen(false)}
+          onTemplateGenerated={handleTemplateGenerated}
         />
       )}
 

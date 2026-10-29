@@ -12,6 +12,7 @@ import {
   MapPin,
   Mail,
   Sliders,
+  Sparkles,
   Tag,
   Users,
   Webhook,
@@ -48,6 +49,18 @@ export default function SettingsSubSidebar() {
               <span className="flex items-center gap-2">
                 <Sliders className="w-3.5 h-3.5 text-slate-400" />
                 <span>General Setup</span>
+              </span>
+            </Link>
+            <Link
+              href="/dashboard/sales/settings/ai"
+              className={cn(
+                'flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-slate-800 hover:text-white transition-colors',
+                isCurrent('/dashboard/sales/settings/ai') && 'bg-slate-800 text-white font-medium'
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                <span>AI Models (OpenRouter)</span>
               </span>
             </Link>
             <Link

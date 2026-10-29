@@ -61,6 +61,18 @@ Rails.application.routes.draw do
 
       scope :sales do
         get '/', to: 'sales#index'
+        scope :ai do
+          get 'providers', to: 'sales/ai/providers#index'
+          post 'providers/openrouter/credentials', to: 'sales/ai/providers#update_openrouter_credentials'
+          post 'providers/openrouter/test', to: 'sales/ai/providers#test_openrouter'
+          get 'settings', to: 'sales/ai/settings#show'
+          patch 'settings', to: 'sales/ai/settings#update'
+          put 'settings', to: 'sales/ai/settings#update'
+          post 'generations', to: 'sales/ai/generations#create'
+          get 'generations/:id', to: 'sales/ai/generations#show'
+          post 'generations/:id/feedback', to: 'sales/ai/generations#feedback'
+          get 'usage', to: 'sales/ai/usage#index'
+        end
         get 'today', to: 'sales/today#index'
         get 'search', to: 'sales/search#index'
         get 'analytics', to: 'sales/analytics#index'

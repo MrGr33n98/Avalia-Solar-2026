@@ -6,6 +6,7 @@ import CampaignsHeader from '@/components/sales/campaigns/CampaignsHeader';
 import CampaignAnalyticsCards from '@/components/sales/campaigns/CampaignAnalyticsCards';
 import CampaignsTable from '@/components/sales/campaigns/CampaignsTable';
 import CampaignWizardModal from '@/components/sales/campaigns/CampaignWizardModal';
+import CampaignPreflightModal from '@/components/sales/campaigns/CampaignPreflightModal';
 import {
   fetchCampaigns,
   createCampaign,
@@ -30,6 +31,7 @@ export default function CampaignsWorkspacePage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [preflightTarget, setPreflightTarget] = useState<{ id: number; name: string } | null>(null);
 
   const loadCampaigns = useCallback(() => {
     setLoading(true);
@@ -74,7 +76,12 @@ export default function CampaignsWorkspacePage() {
     }
   };
 
-  const handleDispatch = async (id: number) => {
+  const handleOpenDispatchPreflight = (id: number) => {
+    const c = campaigns.find((item) => item.id === id);
+    setPreflightTarget({ id, name: c?.name || `Campanha #${id}` });
+  };
+
+  const handleExecuteDispatch = async (id: number) => {
     try {
       await dispatchCampaign(id);
       loadCampaigns();
@@ -82,6 +89,7 @@ export default function CampaignsWorkspacePage() {
       const message = err instanceof ApiDomainError ? err.userMessage
         : err instanceof Error ? err.message : 'Erro ao iniciar disparo da campanha.';
       setActionError(message);
+      throw err;
     }
   };
 
@@ -173,7 +181,7 @@ export default function CampaignsWorkspacePage() {
           loading={loading}
           error={error}
           onSnapshot={handleSnapshot}
-          onDispatch={handleDispatch}
+          onDispatch={handleOpenDispatchPreflight}
           onPause={handlePause}
           onResume={handleResume}
           onRetryFailed={handleRetryFailed}
@@ -211,6 +219,16 @@ export default function CampaignsWorkspacePage() {
           onClose={() => setIsWizardOpen(false)}
           onSubmit={handleCreateCampaign}
         />
+
+        {preflightTarget && (
+          <CampaignPreflightModal
+            open={Boolean(preflightTarget)}
+            campaignId={preflightTarget.id}
+            campaignName={preflightTarget.name}
+            onClose={() => setPreflightTarget(null)}
+            onConfirmDispatch={handleExecuteDispatch}
+          />
+        )}
       </div>
     </SalesLayoutWrapper>
   );

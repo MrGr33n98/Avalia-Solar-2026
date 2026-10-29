@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
+import CampaignPreflightModal from '@/components/sales/campaigns/CampaignPreflightModal';
 import {
   fetchCampaign,
   snapshotCampaign,
@@ -17,7 +18,7 @@ import {
 } from '@/lib/api-campaigns';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Megaphone, ArrowLeft, Play, Pause, RotateCcw, RotateCw, CheckCircle2, DollarSign, Send, Eye, MousePointerClick } from 'lucide-react';
+import { Megaphone, ArrowLeft, Play, Pause, RotateCcw, RotateCw, CheckCircle2, Send, Eye } from 'lucide-react';
 import CampaignFunnelChart from '@/components/sales/campaigns/CampaignFunnelChart';
 
 export default function Campaign360DetailPage() {
@@ -33,6 +34,7 @@ export default function Campaign360DetailPage() {
   } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [preflightOpen, setPreflightOpen] = useState(false);
 
   const loadData = useCallback(() => {
     if (!validCampaignId) {
@@ -93,7 +95,11 @@ export default function Campaign360DetailPage() {
   const processed = metrics.processed_recipients || 0;
   const total = metrics.total_recipients || 0;
   const progressPct = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
-  const formattedRevenue = (metrics.attributed_revenue_cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const handleExecuteDispatch = async (id: number) => {
+    await dispatchCampaign(id);
+    loadData();
+  };
 
   return (
     <SalesLayoutWrapper>
@@ -146,10 +152,7 @@ export default function Campaign360DetailPage() {
               {(campaign.status === 'scheduled' || campaign.status === 'draft') && (
                 <Button
                   size="sm"
-                  onClick={async () => {
-                    await dispatchCampaign(campaign.id);
-                    loadData();
-                  }}
+                  onClick={() => setPreflightOpen(true)}
                   className="h-8 text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold"
                 >
                   <Play className="w-3.5 h-3.5 mr-1 fill-white" /> Disparar Agora
@@ -242,67 +245,37 @@ export default function Campaign360DetailPage() {
 
           <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs">
             <div className="flex items-center justify-between text-slate-500 mb-1">
-              <span className="text-xs font-semibold">Taxa Clique</span>
-              <MousePointerClick className="w-4 h-4 text-amber-600" />
+              <span className="text-xs font-semibold">Taxa Cliques</span>
+              <span className="text-xs text-amber-600 font-bold">CTR</span>
             </div>
-            <div className="text-xl font-bold text-amber-800">{metrics.click_rate}%</div>
+            <div className="text-xl font-bold text-amber-700">{metrics.click_rate}%</div>
           </div>
 
           <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs">
             <div className="flex items-center justify-between text-slate-500 mb-1">
-              <span className="text-xs font-semibold">Receita Atribuída</span>
-              <DollarSign className="w-4 h-4 text-emerald-600" />
+              <span className="text-xs font-semibold">Rejeições (Bounce)</span>
+              <span className="text-xs text-rose-500 font-bold">Bounce</span>
             </div>
-            <div className="text-xl font-bold text-slate-900">{formattedRevenue}</div>
+            <div className="text-xl font-bold text-rose-700">{metrics.bounce_rate}%</div>
           </div>
         </div>
 
-        {/* Visual Conversion Funnel & Engagement */}
-        <CampaignFunnelChart
-          metrics={metrics}
-          title={`Funil de Conversão: ${campaign.name}`}
-        />
-
-        {/* Recipients Log Table */}
-        <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
-          <div className="p-4 border-b border-slate-100 font-bold text-sm text-slate-900">
-            Log Recente de Destinatários ({recipients.length})
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs whitespace-nowrap">
-              <thead className="bg-slate-50 text-slate-600 font-semibold">
-                <tr>
-                  <th className="p-3">Destinatário</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Enviado em</th>
-                  <th className="p-3">Entregue em</th>
-                  <th className="p-3">Aberto em</th>
-                  <th className="p-3">Erro</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {recipients.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50">
-                    <td className="p-3">
-                      <span className="font-semibold text-slate-900 block">{r.first_name || 'Contato'}</span>
-                      <span className="text-slate-500 text-[11px] block">{r.email}</span>
-                    </td>
-                    <td className="p-3">
-                      <Badge variant="outline" className="text-[10px]">
-                        {r.status}
-                      </Badge>
-                    </td>
-                    <td className="p-3 text-slate-500">{r.sent_at ? new Date(r.sent_at).toLocaleString('pt-BR') : '—'}</td>
-                    <td className="p-3 text-slate-500">{r.delivered_at ? new Date(r.delivered_at).toLocaleString('pt-BR') : '—'}</td>
-                    <td className="p-3 text-indigo-700">{r.opened_at ? new Date(r.opened_at).toLocaleString('pt-BR') : '—'}</td>
-                    <td className="p-3 text-red-600 max-w-xs truncate">{r.error_message || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Funnel & Recipients */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-12">
+            <CampaignFunnelChart metrics={metrics} />
           </div>
         </div>
+
+        {preflightOpen && (
+          <CampaignPreflightModal
+            open={preflightOpen}
+            campaignId={campaign.id}
+            campaignName={campaign.name}
+            onClose={() => setPreflightOpen(false)}
+            onConfirmDispatch={handleExecuteDispatch}
+          />
+        )}
       </div>
     </SalesLayoutWrapper>
   );

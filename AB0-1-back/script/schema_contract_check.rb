@@ -114,6 +114,49 @@ required_schema = {
     body_html
     is_default
     settings
+  ],
+  sales_ai_settings: %i[
+    company_id
+    provider
+    enabled
+    openrouter_api_key_ciphertext
+    openrouter_masked_key
+    openrouter_key_status
+    monthly_budget_usd
+    daily_user_limit
+    fallback_enabled
+    require_zdr
+    allowed_models
+    allowed_context_fields
+  ],
+  sales_ai_model_profiles: %i[
+    company_id
+    feature
+    primary_model_id
+    fallback_model_id
+    temperature
+    max_tokens
+    enabled
+    quota_daily
+  ],
+  sales_ai_generations: %i[
+    company_id
+    user_id
+    feature
+    action_name
+    provider
+    requested_model
+    resolved_model
+    prompt_version
+    status
+    output_json
+    warnings
+    sources_used
+    missing_fields
+    prompt_tokens
+    completion_tokens
+    estimated_cost_usd
+    latency_ms
   ]
 }.freeze
 
@@ -143,6 +186,7 @@ required_migrations = %w[
   20261028210000
   20261029160000
   20261029163000
+  20261029200000
 ].freeze
 
 required_foreign_keys = {

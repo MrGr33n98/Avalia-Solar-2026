@@ -31,6 +31,7 @@ interface TemplateLibraryProps {
   page: number;
   onPageChange: (page: number) => void;
   onNewTemplate: () => void;
+  onNewTemplateAi?: () => void;
   onEdit: (template: EmailTemplate) => void;
   onPreview: (template: EmailTemplate) => void;
   onDuplicate: (template: EmailTemplate) => void;
@@ -58,6 +59,7 @@ export function TemplateLibrary({
   page: _page,
   onPageChange,
   onNewTemplate,
+  onNewTemplateAi,
   onEdit,
   onPreview,
   onDuplicate,
@@ -73,6 +75,7 @@ export function TemplateLibrary({
         search={search}
         onSearchChange={onSearchChange}
         onNewTemplate={onNewTemplate}
+        onNewTemplateAi={onNewTemplateAi}
       />
 
       <TemplateStats stats={stats} loading={loading && !stats} />
@@ -98,9 +101,9 @@ export function TemplateLibrary({
                 onCategoryChange={onCategoryChange}
                 status={statusFilter}
                 onStatusChange={onStatusChange}
+                categoriesList={categoriesList}
                 sort={sort}
                 onSortChange={onSortChange}
-                categoriesList={categoriesList}
                 onReset={onResetFilters}
               />
             </div>
@@ -116,48 +119,46 @@ export function TemplateLibrary({
                 onClearFilters={onResetFilters}
               />
             ) : (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {templates.map((template) => (
-                    <TemplateCard
-                      key={template.id}
-                      template={template}
-                      onEdit={onEdit}
-                      onPreview={onPreview}
-                      onDuplicate={onDuplicate}
-                      onArchive={onArchive}
-                      onTestSend={onTestSend}
-                    />
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {templates.map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    template={template}
+                    onEdit={onEdit}
+                    onPreview={onPreview}
+                    onDuplicate={onDuplicate}
+                    onArchive={onArchive}
+                    onTestSend={onTestSend}
+                  />
+                ))}
+              </div>
+            )}
 
-                {meta && meta.total_pages > 1 && (
-                  <div className="flex items-center justify-between border-t pt-4 text-sm text-muted-foreground">
-                    <p>
-                      Exibindo página {meta.page} de {meta.total_pages} ({meta.total} templates no total)
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={meta.page <= 1}
-                        onClick={() => onPageChange(meta.page - 1)}
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Anterior
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={meta.page >= meta.total_pages}
-                        onClick={() => onPageChange(meta.page + 1)}
-                      >
-                        Próxima
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
+            {meta && meta.total_pages > 1 && (
+              <div className="flex items-center justify-between border-t border-border pt-4 mt-6">
+                <span className="text-sm text-muted-foreground">
+                  Página {meta.page} de {meta.total_pages} ({meta.total} templates)
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={meta.page <= 1}
+                    onClick={() => onPageChange(meta.page - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={meta.page >= meta.total_pages}
+                    onClick={() => onPageChange(meta.page + 1)}
+                  >
+                    Próxima
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>
