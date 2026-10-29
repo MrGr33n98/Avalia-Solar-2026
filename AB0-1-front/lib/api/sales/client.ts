@@ -984,6 +984,8 @@ export const salesApi = {
     bcc?: string[];
     open_tracking_enabled?: boolean;
     click_tracking_enabled?: boolean;
+    include_signature?: boolean;
+    sales_email_signature_id?: number;
     attachments?: File[];
   }): Promise<{ message: string; email: any }> {
     const { attachments, ...fields } = payload;
@@ -999,6 +1001,15 @@ export const salesApi = {
       body: attachments?.length ? body : JSON.stringify({ email: fields }),
     });
     return res;
+  },
+
+  async getEmailSignatures(): Promise<Array<{ id: number; name: string; body_html: string; is_default?: boolean }>> {
+    try {
+      const res = await request<{ signatures: Array<{ id: number; name: string; body_html: string; is_default?: boolean }> }>('/api/v1/sales/email_signatures');
+      return res.signatures ?? [];
+    } catch {
+      return [];
+    }
   },
 
   // --- Sales Inbox (Opção A - Zoho Mail & Bidirectional Sync) ---

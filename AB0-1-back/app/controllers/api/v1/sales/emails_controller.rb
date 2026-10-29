@@ -118,6 +118,10 @@ module Api
             )
             thread.update!(last_message_at: Time.current, message_count: thread.message_count + 1)
 
+            email_metadata = {}
+            email_metadata['include_signature'] = ActiveModel::Type::Boolean.new.cast(email_params[:include_signature]) unless email_params[:include_signature].nil?
+            email_metadata['sales_email_signature_id'] = email_params[:sales_email_signature_id].to_i if email_params[:sales_email_signature_id].present?
+
             email = ::Sales::EmailMessage.create!(
               company_id: company_id,
               sales_email_thread_id: thread.id,
@@ -136,6 +140,7 @@ module Api
               body_html: email_params[:body_html],
               open_tracking_enabled: email_params[:open_tracking_enabled].nil? ? true : email_params[:open_tracking_enabled],
               click_tracking_enabled: email_params[:click_tracking_enabled].nil? ? true : email_params[:click_tracking_enabled],
+              metadata: email_metadata,
               status: 'queued'
             )
 
@@ -242,7 +247,9 @@ module Api
         def email_params
           params.require(:email).permit(
             :sales_account_id, :sales_contact_id, :sales_opportunity_id,
-            :to_email, :subject, :body, :body_text, :body_html, :open_tracking_enabled, :click_tracking_enabled, :message_id, :in_reply_to, :references_header, cc: [], bcc: [], attachments: [], body_json: {}
+            :to_email, :subject, :body, :body_text, :body_html, :open_tracking_enabled, :click_tracking_enabled, :message_id, :in_reply_to, :references_header,
+            :include_signature, :sales_email_signature_id,
+            cc: [], bcc: [], attachments: [], body_json: {}
           )
         end
 

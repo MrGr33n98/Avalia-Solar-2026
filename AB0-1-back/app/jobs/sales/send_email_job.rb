@@ -226,11 +226,18 @@ module Sales
     end
 
     def signature_for(email)
+      meta = email.metadata.is_a?(Hash) ? email.metadata : {}
+      return nil if meta['include_signature'] == false || meta['include_signature'] == 'false'
       return nil unless email.sender_user_id.present? && email.company_id.present?
 
       scope = ::Sales::EmailSignature.where(user_id: email.sender_user_id, company_id: email.company_id)
+      if meta['sales_email_signature_id'].present?
+        custom = scope.find_by(id: meta['sales_email_signature_id'])
+        return custom if custom
+      end
+
       scope = scope.where(sales_email_account_id: email.sales_email_account_id) if email.sales_email_account_id.present?
-      scope.find_by(is_default: true) || scope.where(sales_email_account_id: nil).find_by(is_default: true)
+      scope.find_by(is_default: true) || scope.where(sales_email_account_id: nil).find_by(is_default: true) || scope.first
     end
 
     def body_with_signature(email)
