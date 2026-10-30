@@ -44,6 +44,7 @@ import CreateTaskModal from '@/components/sales/create/CreateTaskModal';
 import SendEmailModal from '@/components/sales/create/SendEmailModal';
 import AttachCompanyPersonModal from '@/components/sales/create/AttachCompanyPersonModal';
 import OpportunityTagPicker from '@/components/sales/opportunities/OpportunityTagPicker';
+import OpportunitySalesProcessTab from '@/components/sales/opportunities/OpportunitySalesProcessTab';
 import { salesApi } from '@/lib/api/sales/client';
 import { subscribeSalesTimeline } from '@/lib/cable';
 
@@ -615,27 +616,14 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
 
                   {/* TAB 2: SALES PROCESS */}
                   {activeTab === 'sales_process' && (
-                    <div className="space-y-4 text-xs">
-                      <Card className="border-slate-200 bg-white">
-                        <CardContent className="p-4 space-y-3">
-                          <h3 className="font-bold text-slate-900 text-sm">Etapa Atual: {opp.stage?.name || opp.stage_key}</h3>
-                          <p className="text-slate-600">
-                            Checklist e diretrizes comerciais configuradas para o pipeline <strong>{activePipeline?.name}</strong>.
-                          </p>
-                          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
-                            <label className="flex items-center gap-2 text-slate-800 font-semibold">
-                              <input type="checkbox" defaultChecked className="accent-sky-600" /> Confirmar dados do cliente e fatura de energia
-                            </label>
-                            <label className="flex items-center gap-2 text-slate-800 font-semibold">
-                              <input type="checkbox" className="accent-sky-600" /> Realizar dimensionamento preliminar no Software Solar
-                            </label>
-                            <label className="flex items-center gap-2 text-slate-800 font-semibold">
-                              <input type="checkbox" className="accent-sky-600" /> Apresentar proposta comercial de investimento
-                            </label>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
+                    <OpportunitySalesProcessTab
+                      opp={opp}
+                      activePipeline={activePipeline}
+                      onStageChange={(newStageKey) => {
+                        setOpp((prev: any) => ({ ...prev, stage_key: newStageKey }));
+                        if (onUpdated) onUpdated();
+                      }}
+                    />
                   )}
 
                   {/* TAB 3: TASKS */}

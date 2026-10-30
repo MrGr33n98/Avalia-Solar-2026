@@ -9,7 +9,9 @@ import {
   Lock, 
   Eye,
   Edit3,
-  X
+  X,
+  GitBranch,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -536,6 +538,28 @@ export default function SalesGeneralSettingsPage() {
               </div>
 
             </form>
+          </div>
+
+          {/* Card: Pipelines & Processos de Venda */}
+          <div className="bg-white rounded-md border border-slate-200 shadow-xs overflow-hidden p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center font-bold shrink-0">
+                <GitBranch className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Pipelines & Processos de Venda</h3>
+                <p className="text-xs text-slate-500">
+                  Gerencie funis comerciais, ordene etapas, defina probabilidades e configure tarefas do checklist do processo de venda.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/sales/settings/pipelines"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs shadow-xs self-start sm:self-auto shrink-0 transition-colors"
+            >
+              <span>Configurar Etapas</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
           {/* Dialog Modal de Fuso Horário (Acionado por "Change your timezone") */}

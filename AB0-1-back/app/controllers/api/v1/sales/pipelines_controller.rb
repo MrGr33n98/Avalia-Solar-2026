@@ -89,20 +89,106 @@ module Api
         end
 
         def update
-          pipeline = ::Sales::Pipeline.includes(:stages).find(params[:id])
-          if params[:pipeline][:name].present?
-            pipeline.name = params[:pipeline][:name].to_s.strip
-          end
-          if params[:pipeline].key?(:active)
-            pipeline.active = params[:pipeline][:active]
-          end
-          pipeline.save!
+          pipeline = ::Sales::Pipeline.includes(:stages, :opportunities).find(params[:id])
 
-          render json: { pipeline: pipeline_json(pipeline) }
+          ActiveRecord::Base.transaction do
+            if params[:pipeline][:name].present?
+              pipeline.name = params[:pipeline][:name].to_s.strip
+            end
+            if params[:pipeline].key?(:active)
+              pipeline.active = params[:pipeline][:active]
+            end
+            pipeline.save!
+
+            stages_input = params.dig(:pipeline, :stages)
+            if stages_input.present? && stages_input.is_a?(Array)
+              # Offset existing positions to avoid unique constraint collisions during updates
+              pipeline.stages.update_all('position = position + 1000')
+
+              kept_stage_ids = []
+
+              stages_input.each_with_index do |s_param, idx|
+                stage_id = s_param[:id].presence
+                stage_name = s_param[:name].to_s.strip
+                next if stage_name.blank?
+
+                new_pos = s_param[:position].presence || (idx + 1)
+                new_prob = s_param[:probability].nil? ? 0 : s_param[:probability].to_i
+                new_terminal = s_param[:terminal_type].presence
+                raw_key = s_param[:key].presence || stage_name.parameterize.underscore
+
+                existing_stage = stage_id.present? ? pipeline.stages.find_by(id: stage_id) : nil
+
+                if existing_stage
+                  existing_stage.update!(
+                    name: stage_name,
+                    position: new_pos,
+                    probability: new_prob,
+                    terminal_type: new_terminal
+                  )
+                  kept_stage_ids << existing_stage.id
+                else
+                  unique_key = raw_key
+                  counter = 1
+                  while pipeline.stages.exists?(key: unique_key)
+                    unique_key = "#{raw_key}_#{counter}"
+                    counter += 1
+                  end
+
+                  created = pipeline.stages.create!(
+                    name: stage_name,
+                    key: unique_key,
+                    position: new_pos,
+                    probability: new_prob,
+                    terminal_type: new_terminal
+                  )
+                  kept_stage_ids << created.id
+                end
+              end
+
+              # Remove stages not present in payload
+              stages_to_remove = pipeline.stages.where.not(id: kept_stage_ids)
+              stages_to_remove.each do |stg|
+                if stg.opportunities.exists?
+                  raise StandardError, "Não é possível remover a etapa '#{stg.name}' pois existem oportunidades ativas associadas a ela."
+                end
+                stg.destroy!
+              end
+            end
+          end
+
+          render json: { pipeline: pipeline_json(pipeline.reload) }
         rescue ActiveRecord::RecordNotFound
           render_error_response(message: 'Pipeline não encontrado', status: :not_found, code: 'PIPELINE_NOT_FOUND')
         rescue ActiveRecord::RecordInvalid => e
           render_error_response(message: e.record.errors.full_messages.to_sentence, status: :unprocessable_entity, code: 'PIPELINE_INVALID')
+        rescue StandardError => e
+          render_error_response(message: e.message, status: :unprocessable_entity, code: 'PIPELINE_UPDATE_FAILED')
+        end
+
+        def destroy
+          pipeline = ::Sales::Pipeline.includes(:opportunities, :stages).find(params[:id])
+
+          if pipeline.opportunities.exists?
+            return render_error_response(
+              message: "Não é possível excluir o funil '#{pipeline.name}' porque existem oportunidades associadas a ele.",
+              status: :unprocessable_entity,
+              code: 'PIPELINE_HAS_OPPORTUNITIES'
+            )
+          end
+
+          if ::Sales::Pipeline.where(active: true).count <= 1
+            return render_error_response(
+              message: 'Não é possível excluir o único pipeline ativo do CRM.',
+              status: :unprocessable_entity,
+              code: 'PIPELINE_LAST_ACTIVE'
+            )
+          end
+
+          pipeline.destroy!
+          render json: { success: true, message: 'Pipeline excluído com sucesso.' }
+        rescue ActiveRecord::RecordNotFound
+          render_error_response(message: 'Pipeline não encontrado', status: :not_found, code: 'PIPELINE_NOT_FOUND')
         end
 
         private
@@ -150,13 +236,16 @@ module Api
             name: pipeline.name,
             key: pipeline.key,
             active: pipeline.active,
+            opportunities_count: pipeline.respond_to?(:opportunities) ? pipeline.opportunities.count : 0,
             stages: pipeline.stages.order(:position).map do |s|
               {
                 id: s.id,
                 name: s.name,
                 key: s.key,
                 position: s.position,
-                probability: s.probability
+                probability: s.probability,
+                terminal_type: s.terminal_type,
+                opportunities_count: s.respond_to?(:opportunities) ? s.opportunities.count : 0
               }
             end
           }

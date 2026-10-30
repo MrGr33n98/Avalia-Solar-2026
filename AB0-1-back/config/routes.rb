@@ -213,7 +213,7 @@ Rails.application.routes.draw do
           resources :replies, only: %i[create], controller: 'sales/inbox_replies'
         end
         post 'email_events/provider', to: 'sales/ses_webhooks#create'
-        resources :pipelines, only: %i[index show create update], controller: 'sales/pipelines' do
+        resources :pipelines, only: %i[index show create update destroy], controller: 'sales/pipelines' do
           get :board, to: 'sales/pipelines/boards#show', on: :member
         end
         get 'pipelines/board', to: 'sales/pipelines/boards#show'
