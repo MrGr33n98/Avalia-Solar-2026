@@ -82,41 +82,58 @@ describe('Responsive Email Signature V3 & WhatsApp Button', () => {
       expect(html).toContain('role="presentation"');
     });
 
-    it('inclui avatar circular de 76px com borda dourada #ffcd2d', () => {
+    it('garante alinhamento estrito a esquerda com align="left" e neutraliza margin:0 auto', () => {
       const html = buildResponsiveSignatureHtml(sampleFields);
-      expect(html).toContain('width="76"');
-      expect(html).toContain('height="76"');
+      expect(html).toContain('align="left"');
+      expect(html).toContain('margin:0;margin-left:0;margin-right:auto;text-align:left;clear:both;');
+      expect(html).not.toContain('margin:0 auto');
+    });
+
+    it('utiliza background #ffffff e borda fina #dae5ef conforme Imagem B', () => {
+      const html = buildResponsiveSignatureHtml(sampleFields);
+      expect(html).toContain('bgcolor="#ffffff"');
+      expect(html).toContain('background-color:#ffffff');
+      expect(html).toContain('border:1px solid #dae5ef');
+      expect(html).not.toContain('bgcolor="#f6f9fd"');
+    });
+
+    it('inclui avatar circular de 68px com borda dourada #ffcd2d', () => {
+      const html = buildResponsiveSignatureHtml(sampleFields);
+      expect(html).toContain('width="68"');
+      expect(html).toContain('height="68"');
       expect(html).toContain('border-radius:50%');
       expect(html).toContain('#ffcd2d');
     });
 
-    it('renderiza o botão WhatsApp Bulletproof (.button2 inspired) com PNG oficial e URL wa.me', () => {
+    it('renderiza o botao WhatsApp com PNG oficial e URL wa.me', () => {
       const html = buildResponsiveSignatureHtml(sampleFields);
       expect(html).toContain('https://wa.me/5565993465055?text=');
       expect(html).toContain('https://www.avaliasolar.com.br/images/email/whatsapp.png');
       expect(html).toContain('WhatsApp</span>');
       expect(html).toContain('border-radius:8px');
-      expect(html).toContain('#f1f5f9');
+      expect(html).toContain('#f8fafc');
     });
 
-    it('inclui proteção de contraste para logotipo em Dark Mode', () => {
+    it('organiza os CTAs em 2 linhas distintas (Linha 1: Agendar + WhatsApp; Linha 2: Links institucionais)', () => {
+      const html = buildResponsiveSignatureHtml(sampleFields);
+      expect(html).toContain('Agendar 30 min ↗');
+      expect(html).toContain('https://calendly.com/felipe-avaliasolar/30min');
+      expect(html).toContain('WhatsApp');
+      expect(html).toContain('Conhecer a plataforma');
+      expect(html).toContain('Website');
+      expect(html).toContain('https://www.linkedin.com/in/felipe-morais-8bb61a7b/');
+    });
+
+    it('inclui protecao de contraste para logotipo oficial', () => {
       const html = buildResponsiveSignatureHtml(sampleFields);
       expect(html).toContain('background-color:#ffffff');
       expect(html).toContain('Avalia Solar');
     });
 
-    it('remove marca d\'água de 64px para não estrangular largura útil no mobile', () => {
+    it('remove marca d\'agua de 64px para nao estrangular largura util no mobile', () => {
       const html = buildResponsiveSignatureHtml(sampleFields);
       expect(html).not.toContain('avalia-solar-watermark.png');
       expect(html).not.toContain('width="64"');
-    });
-
-    it('mantém CTAs de agendamento e links institucionais funcionais', () => {
-      const html = buildResponsiveSignatureHtml(sampleFields);
-      expect(html).toContain('Agendar 30 min ↗');
-      expect(html).toContain('https://calendly.com/felipe-avaliasolar/30min');
-      expect(html).toContain('https://www.linkedin.com/in/felipe-morais-8bb61a7b/');
-      expect(html).toContain('Website');
     });
   });
 });

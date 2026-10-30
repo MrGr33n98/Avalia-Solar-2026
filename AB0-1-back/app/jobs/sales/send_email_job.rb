@@ -281,7 +281,15 @@ module Sales
       return base_html if base_html.to_s.include?('avalia-solar-logo-horizontal.png')
 
       sig_html = resolved_signature_html(email)
-      [base_html, sig_html].compact_blank.join('<br><br>')
+      return base_html if sig_html.blank?
+
+      sig_wrapper = <<~SIG.strip
+        <div style="margin-top:16px;text-align:left;clear:both;" align="left">
+          #{sig_html}
+        </div>
+      SIG
+
+      [base_html, sig_wrapper].compact_blank.join("\n\n")
     end
 
     def text_with_signature(email)

@@ -1028,7 +1028,7 @@ export default function EmailSignaturesPage() {
                           style={{
                             maxWidth:
                               previewViewport === 'desktop'
-                                ? '480px'
+                                ? '620px'
                                 : previewViewport === 'iphone'
                                 ? '390px'
                                 : previewViewport === 'se'
@@ -1037,13 +1037,12 @@ export default function EmailSignaturesPage() {
                             margin: '0 auto',
                           }}
                         >
-                          <div className={`text-xs space-y-1.5 mb-4 ${previewTheme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
-                            <p>Olá, Carlos!</p>
+                          <div className={`text-xs space-y-2 mb-4 text-left ${previewTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                            <p className="font-medium">Olá, Felipe.</p>
                             <p>
-                              Conforme conversamos, montei o estudo de viabilidade solar para o seu projeto com
-                              estimativa de retorno em menos de 3 anos.
+                              Gostaria de apresentar uma oportunidade de parceria com o Avalia Solar.
                             </p>
-                            <p>Qualquer dúvida estou à total disposição.</p>
+                            <p className="pt-1">Atenciosamente,</p>
                           </div>
 
                           {/* Renderização da Tabela de Assinatura Responsiva V3 */}

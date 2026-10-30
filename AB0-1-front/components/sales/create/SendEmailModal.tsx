@@ -29,6 +29,7 @@ import { listEmailTemplates } from '@/lib/api/sales/emailTemplates';
 import type { EmailTemplate } from '@/components/sales/campaigns/templates/types';
 import { useAuth } from '@/contexts/AuthContext';
 import AIWritingPanel from '@/components/sales/ai/writing/AIWritingPanel';
+import { buildResponsiveSignatureHtml } from '@/app/dashboard/sales/settings/email/signature-utils';
 import CRMRichTextEditor, { CRMRichTextEditorRef } from './CRMRichTextEditor';
 
 interface SignatureItem {
@@ -829,32 +830,17 @@ export default function SendEmailModal({
                             }}
                           />
                         ) : (
-                          <div className="rounded border border-slate-200/80 bg-[#f6f9fd] p-3 flex flex-col sm:flex-row items-start gap-3 shadow-2xs">
-                            <div className="flex flex-col items-center gap-1.5 shrink-0 border-r border-amber-300 pr-3">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src="https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png"
-                                alt={senderName}
-                                className="w-14 h-14 rounded-full object-cover border-2 border-[#ffcd2d]"
-                              />
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src="https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png"
-                                alt="Avalia Solar"
-                                className="w-16 h-auto"
-                              />
-                            </div>
-                            <div className="space-y-1 min-w-0 text-slate-800 text-[11px] leading-tight flex-1">
-                              <p className="font-bold text-sm text-[#0b2944]">{senderName}</p>
-                              <p className="text-[10px] text-slate-500">
-                                Fundador & Equipe Comercial — Avalia Solar
-                              </p>
-                              <p className="text-slate-600 text-[10px]">
-                                <span className="font-medium text-[#0b2944]">{senderEmail}</span> ·
-                                (65) 99346-5055
-                              </p>
-                            </div>
-                          </div>
+                          <div
+                            className="overflow-x-auto max-h-[180px] rounded-lg border border-slate-200/80 bg-white p-2.5 shadow-2xs text-left"
+                            dangerouslySetInnerHTML={{
+                              __html: buildResponsiveSignatureHtml({
+                                fullName: senderName || 'Felipe Henrique',
+                                roleTitle: 'Fundador do Avalia Solar',
+                                email: senderEmail || 'felipe@avaliasolar.com.br',
+                                phone: '(65) 99346-5055',
+                              }),
+                            }}
+                          />
                         )}
                       </div>
                     )}
