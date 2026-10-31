@@ -58,11 +58,12 @@ RSpec.describe Sales::OpportunitiesMapQuery do
   end
 
   it 'maintains strict invariant total_filtered = mappable + unmapped and separates reasons' do
-    account_cuiaba.opportunities.create!(name: 'Mappable', pipeline: pipeline, stage: stage, owner: owner, value_cents: 50_000)
-    account_unsupported.opportunities.create!(name: 'Unsupported', pipeline: pipeline, stage: stage, owner: owner, value_cents: 60_000)
-    account_no_location.opportunities.create!(name: 'Missing City State', pipeline: pipeline, stage: stage, owner: owner, value_cents: 70_000)
+    opp1 = account_cuiaba.opportunities.create!(name: 'Mappable', pipeline: pipeline, stage: stage, owner: owner, value_cents: 50_000)
+    opp2 = account_unsupported.opportunities.create!(name: 'Unsupported', pipeline: pipeline, stage: stage, owner: owner, value_cents: 60_000)
+    opp3 = account_no_location.opportunities.create!(name: 'Missing City State', pipeline: pipeline, stage: stage, owner: owner, value_cents: 70_000)
 
-    result = described_class.call({ all_statuses: true })
+    scope = Sales::Opportunity.where(id: [opp1.id, opp2.id, opp3.id])
+    result = described_class.call({ all_statuses: true }, scope)
 
     summary = result[:summary]
     expect(summary[:total_filtered]).to eq(summary[:mappable] + summary[:unmapped])

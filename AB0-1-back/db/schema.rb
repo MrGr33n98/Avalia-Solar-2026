@@ -4651,6 +4651,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_16_100000) do
     t.integer "lock_version", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "temperature", default: "cold", null: false
+    t.bigint "source_id"
     t.bigint "sales_timeline_sequence", default: 0, null: false
     t.index ["next_activity_at"], name: "index_sales_opportunities_on_next_activity_at"
     t.index ["owner_id"], name: "index_sales_opportunities_on_owner_id"
@@ -4658,6 +4660,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_16_100000) do
     t.index ["sales_account_id"], name: "index_sales_opportunities_on_sales_account_id"
     t.index ["sales_pipeline_id"], name: "index_sales_opportunities_on_sales_pipeline_id"
     t.index ["sales_stage_id"], name: "index_sales_opportunities_on_sales_stage_id"
+    t.index ["source_id"], name: "index_sales_opportunities_on_source_id"
     t.index ["status"], name: "index_sales_opportunities_on_status"
   end
 
@@ -5625,6 +5628,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_16_100000) do
   add_foreign_key "sales_opportunities", "sales_contacts", column: "primary_contact_id"
   add_foreign_key "sales_opportunities", "sales_pipelines"
   add_foreign_key "sales_opportunities", "sales_stages"
+  add_foreign_key "sales_opportunities", "sales_sources", column: "source_id"
   add_foreign_key "sales_opportunities", "users", column: "owner_id"
   add_foreign_key "sales_opportunity_competitors", "sales_competitors"
   add_foreign_key "sales_opportunity_line_items", "sales_products", column: "product_id"

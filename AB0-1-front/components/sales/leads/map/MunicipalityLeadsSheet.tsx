@@ -60,7 +60,7 @@ export const MunicipalityLeadsSheet: React.FC<MunicipalityLeadsSheetProps> = ({
     : 'R$ 0';
 
   const opportunities: SalesLead[] = data || [];
-  const total = location?.count || opportunities.length;
+  const total = location?.lead_count || opportunities.length;
   const totalPages = Math.max(1, Math.ceil(total / 15));
 
   return (

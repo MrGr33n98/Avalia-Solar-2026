@@ -37,6 +37,8 @@ module Sales
 
     TEMPERATURES = %w[cold warm hot].freeze
 
+    attribute :temperature, :string, default: 'cold'
+
     validates :name, :status, presence: true
     validates :temperature, inclusion: { in: TEMPERATURES }
     validate :stage_belongs_to_pipeline
