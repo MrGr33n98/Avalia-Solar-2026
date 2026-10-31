@@ -33,10 +33,7 @@ export const getGaCookieDomain = (overrideHostname?: string): string => {
     return configuredDomain;
   }
 
-  if (hostname.endsWith('avaliasolar.com.br')) {
-    return 'avaliasolar.com.br';
-  }
-
+  // 'auto' permite ao GA4 resolver eTLD+1 sem rejeicao de cookie em browsers com ETP
   return 'auto';
 };
 

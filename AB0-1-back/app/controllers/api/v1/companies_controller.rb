@@ -103,7 +103,7 @@ module Api
       def show
         return render json: { error: 'Company not found' }, status: :not_found unless @company
 
-        render json: { company: company_detail_payload(@company) }, status: :ok
+        render json: { company: cached_company_detail_payload(@company) }, status: :ok
       end
 
       # GET /api/v1/companies/by_slug/:slug
@@ -111,7 +111,7 @@ module Api
         company = find_company_by_id_or_slug(params[:slug])
         return render json: { error: 'Company not found' }, status: :not_found unless company
 
-        render json: { company: company_detail_payload(company) }, status: :ok
+        render json: { company: cached_company_detail_payload(company) }, status: :ok
       end
 
       # GET /api/v1/companies/:id/categories
@@ -713,6 +713,13 @@ module Api
           financing_enabled: company.respond_to?(:financing_enabled) && company.financing_enabled,
           category_id: company.respond_to?(:category_id) ? company.category_id : nil
         }
+      end
+
+      def cached_company_detail_payload(company)
+        cache_key = "company_detail_payload_v1/#{company.id}/#{company.updated_at.to_i}"
+        Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
+          company_detail_payload(company)
+        end
       end
 
       def company_detail_payload(company)

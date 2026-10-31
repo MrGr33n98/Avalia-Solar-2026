@@ -266,6 +266,7 @@ export default function Navbar() {
                       ? '/review-dashboard/notifications'
                       : '/dashboard/notifications'
                   }
+                  prefetch={false}
                   className="relative flex items-center justify-center p-2 text-slate-700 transition-colors hover:bg-slate-100 hover:text-blue-600 rounded-lg focus:outline-none"
                   aria-label="Notificações"
                 >

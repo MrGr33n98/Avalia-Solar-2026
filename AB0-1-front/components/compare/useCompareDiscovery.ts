@@ -35,41 +35,26 @@ export function useRecommendedCompanyCandidates(
   return useQuery<Company[]>({
     queryKey: ['compare-recommendations', categoryIds, normalizedCity],
     queryFn: async () => {
-      const requests: Array<Promise<Company[]>> = [
-        fetchCompanies({ status: 'active', sort: 'recommended', limit: 30 }),
-      ];
+      const params: Record<string, string | number> = {
+        status: 'active',
+        sort: 'recommended',
+        limit: 12,
+      };
       if (categoryIds.length > 0) {
-        requests.push(
-          fetchCompanies({
-            status: 'active',
-            sort: 'recommended',
-            category_ids: categoryIds.join(','),
-            limit: 30,
-          })
-        );
+        params.category_ids = categoryIds.join(',');
       }
       if (normalizedCity) {
-        requests.push(
-          fetchCompanies({
-            status: 'active',
-            sort: 'recommended',
-            city: normalizedCity,
-            limit: 30,
-          })
-        );
+        params.city = normalizedCity;
       }
 
-      const results = await Promise.allSettled(requests);
-      const successful = results.filter(
-        (result): result is PromiseFulfilledResult<Company[]> => result.status === 'fulfilled'
-      );
-      if (successful.length === 0) throw new Error('Não foi possível carregar recomendações.');
+      try {
+        const companies = await fetchCompanies(params);
+        if (companies.length >= 3) return companies;
+      } catch {
+        // Fallback para candidatos padrão
+      }
 
-      return Array.from(
-        new Map(
-          successful.flatMap((result) => result.value).map((company) => [company.id, company])
-        ).values()
-      );
+      return fetchCompanies({ status: 'active', sort: 'recommended', limit: 12 });
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,

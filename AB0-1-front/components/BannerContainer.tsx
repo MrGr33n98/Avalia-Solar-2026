@@ -57,7 +57,7 @@ function BannerImage({
       alt={banner.alt_text?.trim() || banner.title || 'Banner promocional'}
       priority={priority}
       sizes={sizes}
-      quality={100}
+      quality={80}
       ambientBackground={ambientBackground}
       // Banners usam dimensões comerciais fixas; contain preserva a arte completa no responsivo.
       className="absolute inset-0"

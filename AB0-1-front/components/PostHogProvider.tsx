@@ -35,11 +35,11 @@ export const getPostHogCookieDomain = (overrideHostname?: string): string | unde
 
   const configuredDomain = process.env.NEXT_PUBLIC_GA_COOKIE_DOMAIN?.trim().replace(/^\./, '');
   if (configuredDomain && (hostname === configuredDomain || hostname.endsWith(`.${configuredDomain}`))) {
-    return `.${configuredDomain}`;
+    return configuredDomain;
   }
 
   if (hostname.endsWith('avaliasolar.com.br')) {
-    return '.avaliasolar.com.br';
+    return 'avaliasolar.com.br';
   }
 
   return undefined;

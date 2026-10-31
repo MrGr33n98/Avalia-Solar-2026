@@ -187,6 +187,15 @@ class Banner < ApplicationRecord
   def image_url
     return nil unless image.attached?
 
+    # Bypass Rails proxy quando em Spaces publico para evitar saturacao do Puma e latencia de streaming
+    if image.service_name.to_s == 'spaces'
+      begin
+        return image.url
+      rescue StandardError => e
+        Rails.logger.warn("[Banner#image_url] Spaces direct url fallback to proxy: #{e.message}")
+      end
+    end
+
     source = image
     if self.class.banner_variants_enabled?
       variant_limit = if position == 'home_hero'
@@ -209,6 +218,14 @@ class Banner < ApplicationRecord
 
   def image_mobile_url
     return nil unless image_mobile.attached?
+
+    if image_mobile.service_name.to_s == 'spaces'
+      begin
+        return image_mobile.url
+      rescue StandardError => e
+        Rails.logger.warn("[Banner#image_mobile_url] Spaces direct url fallback to proxy: #{e.message}")
+      end
+    end
 
     source = image_mobile
     if self.class.banner_variants_enabled?
