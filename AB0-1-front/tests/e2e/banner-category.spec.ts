@@ -6,7 +6,7 @@ const bannerPayload = [
   {
     id: 901,
     title: 'Patrocinado categoria',
-    image_url: '/images/banner-placeholder.svg',
+    image_url: '/images/home-hero-avalia-solar-1330x230.webp',
     link_url: 'https://example.com/oferta',
     position: 'categories_filter_sidebar',
     sponsored: true,

@@ -5,6 +5,7 @@ import { useBannersQuery } from '@/hooks/useBannersQuery';
 import { BannerContainer } from '@/components/BannerContainer';
 import { resolveBannerAspectRatio } from '@/lib/banners/aspect-ratio';
 import { getPlacementDisplaySpec } from '@/lib/banners/placements';
+import { normalizeBannerImageUrl } from '@/lib/banners/url';
 import { cn } from '@/lib/utils';
 
 interface BannerSlotProps {
@@ -144,8 +145,8 @@ export function BannerSlot({
     alt_text: b.alt_text ?? null,
     banner_type: b.banner_type,
     position: b.position,
-    image_url: b.image_url ?? null,
-    image_mobile_url: b.image_mobile_url ?? null,
+    image_url: normalizeBannerImageUrl(b.image_url),
+    image_mobile_url: normalizeBannerImageUrl(b.image_mobile_url),
     title: b.title,
     link: b.link ?? null,
     link_url: b.link_url ?? null,

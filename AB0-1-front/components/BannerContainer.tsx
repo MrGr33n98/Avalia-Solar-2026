@@ -95,6 +95,7 @@ export function BannerContainer({
   const failedMediaBannerIdsRef = React.useRef<Set<number | string>>(new Set());
   const activeIndexRef = React.useRef(0);
   const containerVisibleRef = React.useRef(false);
+  const [failedMediaIds, setFailedMediaIds] = React.useState<Set<number | string>>(new Set());
 
   const createEventId = React.useCallback(() => {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
@@ -105,6 +106,11 @@ export function BannerContainer({
   const handleMediaError = React.useCallback(
     (banner: BannerData) => {
       failedMediaBannerIdsRef.current.add(banner.id);
+      setFailedMediaIds((prev) => {
+        const next = new Set(prev);
+        next.add(banner.id);
+        return next;
+      });
       track('banner_media_error', {
         banner_id: Number(banner.id),
         banner_position: position || banner.position || 'unknown',
@@ -128,12 +134,15 @@ export function BannerContainer({
   const displayBanners = React.useMemo(() => {
     if (!Array.isArray(banners)) return [];
     return banners.filter((b) => {
+      if (failedMediaIds.has(b.id) && b.creative_mode !== 'photo_with_html') {
+        return false;
+      }
       if (b.creative_mode === 'photo_with_html') {
         return Boolean(b.headline?.trim() || b.title?.trim() || b.image_url);
       }
       return Boolean(b.image_url && b.image_url.trim().length > 0);
     });
-  }, [banners]);
+  }, [banners, failedMediaIds]);
 
   const trackBannerView = React.useCallback(
     (banner: BannerData) => {

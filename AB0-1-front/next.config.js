@@ -242,6 +242,26 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'avalia-solar-assets.nyc3.digitaloceanspaces.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avalia-solar-assets.nyc3.cdn.digitaloceanspaces.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.nyc3.digitaloceanspaces.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.nyc3.cdn.digitaloceanspaces.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: '**.digitaloceanspaces.com',
         pathname: '/**',
       },
@@ -302,6 +322,10 @@ const nextConfig = {
         {
           source: '/users/auth/:path*',
           destination: `${apiProxyTarget}/users/auth/:path*`,
+        },
+        {
+          source: '/rails/active_storage/:path*',
+          destination: `${apiProxyTarget}/rails/active_storage/:path*`,
         },
       ],
     };

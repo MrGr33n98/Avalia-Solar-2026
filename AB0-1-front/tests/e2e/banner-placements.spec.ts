@@ -6,7 +6,7 @@ const navbarBanner = {
   id: 990,
   title: 'Oferta patrocinada no topo',
   alt_text: 'Oferta de energia solar',
-  image_url: '/images/banner-placeholder.svg',
+  image_url: '/images/home-hero-avalia-solar-1330x230.webp',
   link_url: 'https://example.com/oferta',
   position: 'navbar',
   sponsored: true,
