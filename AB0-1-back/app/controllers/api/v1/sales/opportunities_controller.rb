@@ -461,7 +461,7 @@ module Api
             :sales_account_id, :primary_contact_id,
             :sales_pipeline_id, :sales_stage_id, :stage_key,
             :name, :value_cents, :currency, :probability, :probability_overridden,
-            :priority, :source, :expected_close_date, :next_activity_at, :status
+            :priority, :source, :source_id, :expected_close_date, :next_activity_at, :status
           )
         end
 
@@ -469,7 +469,7 @@ module Api
           params.require(:opportunity).permit(
             :sales_account_id, :primary_contact_id, :sales_stage_id,
             :name, :value_cents, :currency, :probability, :probability_overridden,
-            :priority, :source, :expected_close_date, :next_activity_at, :status
+            :priority, :source, :source_id, :expected_close_date, :next_activity_at, :status
           )
         end
 
@@ -486,7 +486,15 @@ module Api
             status: opportunity.status,
             stage_key: opportunity.stage&.key,
             stage_entered_at: opportunity.stage_entered_at || opportunity.created_at,
-            source: opportunity.source,
+            source_id: opportunity.source_id,
+            source: (
+              if opportunity.source.is_a?(::Sales::Source)
+                { id: opportunity.source.id, name: opportunity.source.name, slug: opportunity.source.slug }
+              elsif opportunity.read_attribute(:source).present?
+                { id: nil, name: opportunity.read_attribute(:source), slug: opportunity.read_attribute(:source).to_s.parameterize }
+              end
+            ),
+            source_name: opportunity.source&.name || opportunity.read_attribute(:source),
             sales_account_id: opportunity.sales_account_id,
             sales_pipeline_id: opportunity.sales_pipeline_id,
             account: opportunity.account ? { id: opportunity.account.id, name: opportunity.account.name } : nil,

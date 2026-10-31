@@ -457,6 +457,11 @@ export const salesApi = {
     return res.sources ?? [];
   },
 
+  async createSource(payload: { name: string }): Promise<ApiSource> {
+    const res = await request<{ source: ApiSource }>('/api/v1/sales/sources', { method: 'POST', body: JSON.stringify({ source: payload }) });
+    return res.source;
+  },
+
   async getCompetitors(): Promise<ApiCompetitor[]> {
     const res = await request<{ competitors: ApiCompetitor[] }>('/api/v1/sales/competitors');
     return res.competitors ?? [];

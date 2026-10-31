@@ -91,7 +91,7 @@ module Sales
           weighted_value_cents: weighted_cents,
           priority: record.priority || 'medium',
           temperature: record.temperature || 'warm',
-          source: record.source ? record.source.name : nil,
+          source: record.source&.name || record.read_attribute(:source).presence,
           qualification: qual ? {
             spin_completion: qual.spin_completion.to_i,
             bant_completion: qual.bant_completion.to_i

@@ -262,7 +262,7 @@ Rails.application.routes.draw do
         resources :leads, only: %i[index create show update], controller: 'sales/leads' do
           post :convert, on: :member
         end
-        resources :sources, only: %i[index], controller: 'sales/sources'
+        resources :sources, only: %i[index create], controller: 'sales/sources'
         resources :competitors, only: %i[index create], controller: 'sales/competitors'
         resources :accounts, only: [] do
           resources :contacts, only: %i[index create], controller: 'sales/contacts'

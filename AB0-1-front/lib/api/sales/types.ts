@@ -283,7 +283,9 @@ export interface ApiOpportunity {
   contact_name?: string | null;
   owner_id?: number | null;
   owner?: { id: number; name?: string; email?: string } | null;
-  source?: string | null;
+  source?: { id: number | null; name: string; slug?: string } | string | null;
+  source_id?: number | null;
+  source_name?: string | null;
   stage_entered_at?: string | null;
   next_activity_at?: string | null;
   expected_close_date?: string | null;

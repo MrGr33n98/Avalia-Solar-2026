@@ -48,6 +48,7 @@ import OpportunitySalesProcessTab from '@/components/sales/opportunities/Opportu
 import { salesApi } from '@/lib/api/sales/client';
 import { subscribeSalesTimeline } from '@/lib/cable';
 import { OpportunityStatusDropdown } from '@/components/sales/pipeline/OpportunityStatusDropdown';
+import { OpportunitySourcesCard } from '@/components/sales/opportunities/OpportunitySourcesCard';
 import { OpportunityStatusKey } from '@/components/sales/pipeline/opportunityStatusUtils';
 import LostOpportunityDialog, { type LostOpportunityPayload } from '@/components/sales/opportunities/LostOpportunityDialog';
 
@@ -1089,6 +1090,17 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
                       </CardContent>
                     )}
                   </Card>
+
+                  {/* CARD 6: SOURCES (canal de origem primário) */}
+                  <OpportunitySourcesCard
+                    opportunityId={opp.id}
+                    currentSource={opp.source}
+                    currentSourceId={opp.source_id}
+                    onUpdated={() => {
+                      fetchOpportunityData(opp.id);
+                      onUpdated?.();
+                    }}
+                  />
                 </div>
               </div>
             </div>

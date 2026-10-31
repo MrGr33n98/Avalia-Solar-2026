@@ -54,7 +54,7 @@ module Api
           lead = scoped_opportunities.find(params[:id])
           lead_params = params[:lead] || params[:opportunity] || params
           attributes = lead_params.permit(
-            :name, :value_cents, :temperature, :sales_stage_id, :stage_key, :expected_close_date, :probability
+            :name, :value_cents, :temperature, :sales_stage_id, :stage_key, :expected_close_date, :probability, :source_id
           ).to_h
           stage_key = attributes.delete('stage_key')
           stage_id = attributes.delete('sales_stage_id')
@@ -210,7 +210,15 @@ module Api
             primary_contact_id: contact&.id,
             account: opp.account ? { id: opp.account.id, name: opp.account.name } : nil,
             stage: opp.stage ? { id: opp.stage.id, key: opp.stage.key, name: opp.stage.name } : nil,
-            source: opp.source ? { id: opp.source.id, name: opp.source.name } : nil,
+            source_id: opp.source_id,
+            source: (
+              if opp.source.is_a?(::Sales::Source)
+                { id: opp.source.id, name: opp.source.name, slug: opp.source.slug }
+              elsif opp.read_attribute(:source).present?
+                { id: nil, name: opp.read_attribute(:source), slug: opp.read_attribute(:source).to_s.parameterize }
+              end
+            ),
+            source_name: opp.source&.name || opp.read_attribute(:source),
             competitors: opp.competitors.map { |c| { id: c.id, name: c.name } },
             owner_id: opp.owner_id,
             expected_close_date: opp.expected_close_date,
