@@ -135,7 +135,10 @@ export default function LostOpportunityDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !submitting && onOpenChange(nextOpen)}>
-      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md border-slate-200 bg-white">
+      <DialogContent
+        overlayClassName="z-[10010]"
+        className="z-[10020] w-[calc(100vw-1.5rem)] max-w-md border-slate-200 bg-white"
+      >
         <DialogHeader>
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-100 text-red-700">

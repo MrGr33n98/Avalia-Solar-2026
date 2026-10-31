@@ -131,7 +131,7 @@ export const OpportunityStatusDropdown: React.FC<OpportunityStatusDropdownProps>
 
           <DropdownMenuContent
             align="start"
-            className="w-48 p-1 shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl"
+            className="z-[10050] w-48 p-1 shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {STATUS_LIST.map((item) => {
@@ -195,7 +195,7 @@ export const OpportunityStatusDropdown: React.FC<OpportunityStatusDropdownProps>
 
       <DropdownMenuContent
         align="start"
-        className="w-52 p-1.5 shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl"
+        className="z-[10050] w-52 p-1.5 shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {STATUS_LIST.map((item) => {
