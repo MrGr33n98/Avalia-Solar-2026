@@ -895,6 +895,8 @@ export interface InboxMailbox {
   sync_error?: string | null;
   sync_states?: InboxMailboxSyncState[];
   token_expired?: boolean;
+  needs_reconnect?: boolean;
+  has_refresh_token?: boolean;
   created_at: string;
 }
 

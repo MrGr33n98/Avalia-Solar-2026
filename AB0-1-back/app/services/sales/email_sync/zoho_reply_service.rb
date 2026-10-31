@@ -3,7 +3,7 @@
 module Sales
   module EmailSync
     class ZohoReplyService
-      def self.reply!(thread:, user:, body_text:, body_html: nil, reply_to_provider_message_id: nil)
+      def self.reply!(thread:, user:, body_text:, body_html: nil, cc: nil, bcc: nil, reply_all: false, reply_to_provider_message_id: nil)
         email_account = thread.email_account
         unless email_account
           raise ArgumentError, 'Esta thread não possui uma conta de e-mail conectada vinculada.'
@@ -25,29 +25,37 @@ module Sales
                          end
 
         target_provider_msg_id = target_message&.provider_message_id
+        if target_provider_msg_id.blank?
+          raise ArgumentError, 'Identificador da mensagem original no provedor ausente para responder via Zoho.'
+        end
+
         subject = thread.messages.first&.subject || 'Re: Conversa Comercial'
         subject = "Re: #{subject}" unless subject.start_with?(/Re:/i)
 
         to_email = target_message&.from_email || thread.messages.first&.to_email
-
-        # If we have real provider message ID, execute via Zoho API
-        provider_resp = nil
-        if account_id.present? && target_provider_msg_id.present?
-          begin
-            provider_resp = client.send_reply(
-              access_token: token,
-              account_id: account_id,
-              message_id: target_provider_msg_id,
-              body_text: body_text,
-              body_html: body_html,
-              subject: subject
-            )
-          rescue ZohoApiClient::ApiError => e
-            Rails.logger.warn("[ZohoReplyService] Send reply returned error: #{e.message}. Fallback to recorded message.")
-          end
+        if to_email.blank?
+          raise ArgumentError, 'Destinatário da resposta não identificado.'
         end
 
-        # Record message in database
+        # Se reply_all for solicitado, extrai cc existente
+        target_cc = cc
+        if reply_all && target_cc.blank? && target_message&.raw_headers.is_a?(Hash)
+          existing_cc = target_message.raw_headers['cc']
+          target_cc = existing_cc if existing_cc.present?
+        end
+
+        # Executa envio no provedor Zoho. Erros de API não são engolidos nem mascarados como sucesso.
+        provider_resp = client.send_reply(
+          access_token: token,
+          account_id: account_id,
+          message_id: target_provider_msg_id,
+          body_text: body_text,
+          body_html: body_html,
+          subject: subject,
+          cc: target_cc,
+          bcc: bcc
+        )
+
         provider_msg_id = provider_resp.is_a?(Hash) ? (provider_resp.dig('data', 'messageId') || provider_resp['messageId']) : nil
 
         created_msg = Sales::EmailMessage.create!(
@@ -59,22 +67,26 @@ module Sales
           sales_contact_id: thread.sales_contact_id,
           sales_opportunity_id: thread.sales_opportunity_id,
           from_email: email_account.email,
-          to_email: to_email || 'contato@cliente.com',
+          to_email: to_email,
           subject: subject,
           body_text: body_text,
           body_json: { html: body_html || "<p>#{body_text}</p>" },
           status: 'sent',
           direction: 'outbound',
-          delivery_status: 'delivered',
+          delivery_status: 'sent',
           provider_message_id: provider_msg_id.presence || "zoho_out_#{SecureRandom.hex(12)}",
           provider_folder_id: 'sent',
+          raw_headers: {
+            'cc' => target_cc,
+            'bcc' => bcc
+          }.compact,
           created_at: Time.current
         )
 
         thread.update!(
           last_message_at: Time.current,
           message_count: thread.messages.count,
-          status: 'pending' # Waiting client response
+          status: 'pending'
         )
 
         created_msg

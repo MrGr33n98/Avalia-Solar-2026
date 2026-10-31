@@ -103,18 +103,12 @@ module Api
           account.refresh_token_encrypted = ::Sales::EmailSync::TokenVault.encrypt(refresh_token)
           account.access_token_expires_at = Time.current + (expires_in.positive? ? expires_in : 3600).seconds
           account.connection_status = 'healthy'
-          account.sync_status = 'idle'
+          account.sync_status = 'syncing'
           account.sync_error = nil
           account.save!
 
-          # Executa sincronização inicial imediata + agenda backfill assíncrono completo
-          begin
-            ::Sales::SyncEmailAccountJob.perform_now(account.id, mode: 'incremental')
-            ::Sales::SyncEmailAccountJob.perform_later(account.id, mode: 'full') rescue nil
-          rescue StandardError => sync_err
-            Rails.logger.warn("[EmailConnectionsController] Initial sync inline failed: #{sync_err.message}")
-            ::Sales::SyncEmailAccountJob.perform_later(account.id, mode: 'full') rescue nil
-          end
+          # Agenda sincronização assíncrona em background (nunca bloqueia Puma inline)
+          ::Sales::SyncEmailAccountJob.perform_later(account.id, mode: 'incremental') rescue nil
 
           redirect_with_status('connected')
         rescue StandardError => e
@@ -131,44 +125,33 @@ module Api
         # POST /api/v1/sales/email_connections/:id/sync
         def sync
           mode = params[:mode].presence || 'incremental'
-          before_stored = ::Sales::EmailMessage.where(sales_email_account_id: @account.id).count
+          sync_run_id = SecureRandom.uuid
 
-          ::Sales::SyncEmailAccountJob.perform_now(@account.id, mode: mode)
-          @account.reload
-
-          after_stored = ::Sales::EmailMessage.where(sales_email_account_id: @account.id).count
-          stored_threads = ::Sales::EmailThread.where(sales_email_account_id: @account.id).count
-          imported_delta = [after_stored - before_stored, 0].max
-
-          payload = {
-            message: @account.sync_status == 'error' ? (@account.sync_error || 'Falha na sincronização.') : "Sincronização concluída (#{imported_delta} nova(s), #{after_stored} total).",
-            error: @account.sync_error,
-            code: @account.sync_status == 'error' ? 'EMAIL_SYNC_FAILED' : nil,
-            status: @account.sync_status,
-            imported_now: imported_delta,
-            stored_messages: after_stored,
-            stored_threads: stored_threads,
-            account: serialize_account(@account)
-          }.compact
-
-          if @account.sync_status == 'error'
-            render json: payload, status: :unprocessable_entity
-          else
-            render json: payload, status: :ok
+          if @account.sync_status == 'syncing'
+            return render json: {
+              message: 'Sincronização já em andamento.',
+              sync_run_id: sync_run_id,
+              status: 'syncing',
+              account: serialize_account(@account)
+            }, status: :ok
           end
+
+          @account.update!(sync_status: 'syncing', sync_error: nil)
+          ::Sales::SyncEmailAccountJob.perform_later(@account.id, mode: mode)
+
+          render json: {
+            message: 'Sincronização iniciada em segundo plano.',
+            sync_run_id: sync_run_id,
+            status: 'syncing',
+            account: serialize_account(@account)
+          }, status: :accepted
         rescue StandardError => e
           Rails.logger.error("[EmailConnectionsController#sync] Unexpected sync exception: #{e.class} - #{e.message}")
-          @account.update(sync_status: 'error', sync_error: e.message) if @account&.persisted?
           render json: {
-            message: "Falha na sincronização: #{e.message}",
+            message: 'Erro interno ao enfileirar sincronização.',
             error: e.message,
-            code: 'EMAIL_SYNC_EXCEPTION',
-            status: 'error',
-            imported_now: 0,
-            stored_messages: ::Sales::EmailMessage.where(sales_email_account_id: @account&.id).count,
-            stored_threads: ::Sales::EmailThread.where(sales_email_account_id: @account&.id).count,
-            account: @account ? serialize_account(@account.reload) : nil
-          }, status: :unprocessable_entity
+            status: 'error'
+          }, status: :internal_server_error
         end
 
         private
@@ -176,11 +159,15 @@ module Api
         def set_email_account
           @account = account_scope.find(params[:id])
         rescue ActiveRecord::RecordNotFound
-          render_error_response(message: 'Conta de e-mail não encontrada.', status: :not_found, code: 'MAILBOX_NOT_FOUND')
+          render_error_response(message: 'Conta de e-mail não encontrada.', status: :not_found, code: 'ACCOUNT_NOT_FOUND')
         end
 
         def account_scope
-          ::Sales::EmailAccount.where(company_id: current_user.company_id, user_id: current_user.id)
+          if current_user.admin?
+            ::Sales::EmailAccount.where(company_id: current_user.company_id)
+          else
+            ::Sales::EmailAccount.where(company_id: current_user.company_id, user_id: current_user.id)
+          end
         end
 
         def oauth_configured?
@@ -239,7 +226,9 @@ module Api
             stored_threads: stored_threads,
             sync_error: account.sync_error,
             sync_states: sync_states,
-            token_expired: account.token_expired?,
+            token_expired: account.access_token_refresh_due?,
+            needs_reconnect: account.needs_reconnect?,
+            has_refresh_token: account.has_refresh_token?,
             created_at: account.created_at
           }
         end

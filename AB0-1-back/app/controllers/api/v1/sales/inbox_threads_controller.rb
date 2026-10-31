@@ -93,20 +93,28 @@ module Api
 
         # PATCH /api/v1/sales/email_threads/:id
         def update
-          src = params[:thread].is_a?(ActionController::Parameters) || params[:thread].is_a?(Hash) ? params[:thread] : params
+          src = params[:thread] || params
           attrs = {}
-          if src[:status].present? && ::Sales::EmailThread::STATUSES.include?(src[:status])
-            attrs[:status] = src[:status]
+
+          if src.key?(:status)
+            new_status = src[:status].to_s
+            unless ::Sales::EmailThread::STATUSES.include?(new_status)
+              return render_error_response(message: "Status inválido: #{new_status}", status: :unprocessable_entity, code: 'INVALID_STATUS')
+            end
+            attrs[:status] = new_status
           end
+
           if src.key?(:assigned_user_id)
-            attrs[:assigned_user_id] = src[:assigned_user_id]
+            uid = src[:assigned_user_id]
+            if uid.present?
+              user = ::User.find_by(id: uid, company_id: current_user.company_id)
+              return render_error_response(message: 'Usuário atribuído inválido.', status: :unprocessable_entity, code: 'INVALID_ASSIGNED_USER') unless user
+              attrs[:assigned_user_id] = user.id
+            else
+              attrs[:assigned_user_id] = nil
+            end
           end
-          if src.key?(:sales_contact_id)
-            attrs[:sales_contact_id] = src[:sales_contact_id]
-          end
-          if src.key?(:sales_account_id)
-            attrs[:sales_account_id] = src[:sales_account_id]
-          end
+
           if src.key?(:sales_opportunity_id)
             attrs[:sales_opportunity_id] = src[:sales_opportunity_id]
           end
@@ -120,21 +128,29 @@ module Api
         private
 
         def set_mailbox
+          accounts_scope = if current_user.admin?
+                             ::Sales::EmailAccount.where(company_id: current_user.company_id)
+                           else
+                             ::Sales::EmailAccount.where(company_id: current_user.company_id, user_id: current_user.id)
+                           end
+
           if params[:mailbox_id].present?
-            @mailbox = ::Sales::EmailAccount.where(company_id: current_user.company_id, user_id: current_user.id)
-                                            .find_by(id: params[:mailbox_id])
+            @mailbox = accounts_scope.find_by(id: params[:mailbox_id])
+            unless @mailbox
+              render_error_response(message: 'Caixa de entrada não encontrada ou sem permissão.', status: :not_found, code: 'MAILBOX_NOT_FOUND')
+            end
           else
-            @mailbox = ::Sales::EmailAccount.where(company_id: current_user.company_id, user_id: current_user.id)
-                                            .order(created_at: :asc)
-                                            .first
+            @mailbox = accounts_scope.order(created_at: :asc).first
           end
         end
 
         def mailbox_threads_scope(mailbox)
-          base = ::Sales::EmailThread.where(company_id: current_user.company_id)
-          return base unless mailbox
+          return ::Sales::EmailThread.none unless mailbox
 
-          base.where(sales_email_account_id: mailbox.id)
+          ::Sales::EmailThread.where(
+            company_id: current_user.company_id,
+            sales_email_account_id: mailbox.id
+          )
         end
 
         def reconcile_orphan_threads(mailbox)

@@ -58,7 +58,10 @@ export default function InboxConnectionBanner({
   }
 
   const target = activeMailbox ?? mailboxes[0];
-  const isNeedsReconnect = target.connection_status === 'needs_reconnect' || target.token_expired;
+  const isNeedsReconnect =
+    target.connection_status === 'needs_reconnect' ||
+    target.needs_reconnect === true ||
+    (Boolean(target.token_expired) && target.has_refresh_token === false);
   const isDisconnected = target.connection_status === 'disconnected';
   const isSyncError = target.sync_status === 'error';
   const isDegraded = target.connection_status === 'degraded' || target.sync_status === 'degraded';

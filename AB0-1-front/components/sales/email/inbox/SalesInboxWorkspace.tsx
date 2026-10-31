@@ -57,6 +57,14 @@ export default function SalesInboxWorkspace() {
   const [selectedFolder, setSelectedFolder] = useState<string>('inbox');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const [threads, setThreads] = useState<InboxThreadSummary[]>([]);
   const [counts, setCounts] = useState<InboxCounts>(DEFAULT_COUNTS);
@@ -74,6 +82,22 @@ export default function SalesInboxWorkspace() {
   const [connectRegion, setConnectRegion] = useState('us');
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectError, setConnectError] = useState('');
+
+  const handleSelectMailbox = (id: number | null) => {
+    if (id !== selectedMailboxId) {
+      setSelectedMailboxId(id);
+      setSelectedThreadId(null);
+      setThreadDetail(null);
+    }
+  };
+
+  const handleSelectFolder = (folder: string) => {
+    if (folder !== selectedFolder) {
+      setSelectedFolder(folder);
+      setSelectedThreadId(null);
+      setThreadDetail(null);
+    }
+  };
 
   // 1. Load Mailbox Connections
   const loadMailboxes = useCallback(async () => {
@@ -94,7 +118,7 @@ export default function SalesInboxWorkspace() {
     loadMailboxes();
   }, [loadMailboxes]);
 
-  // 2. Load Threads
+  // 2. Load Threads (com debounce de 300ms e preservação segura de seleção)
   const loadThreads = useCallback(async () => {
     setIsThreadsLoading(true);
     try {
@@ -102,23 +126,30 @@ export default function SalesInboxWorkspace() {
         mailbox_id: selectedMailboxId ?? undefined,
         folder: selectedFolder,
         status: statusFilter !== 'all' ? statusFilter : undefined,
-        search: searchQuery.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
         per_page: 25,
       });
 
       setThreads(res.threads ?? []);
       setCounts(res.counts ?? DEFAULT_COUNTS);
 
-      if (res.threads && res.threads.length > 0 && !selectedThreadId) {
-        setSelectedThreadId(res.threads[0].id);
+      if (res.threads && res.threads.length > 0) {
+        if (!selectedThreadId || !res.threads.some((t) => t.id === selectedThreadId)) {
+          setSelectedThreadId(res.threads[0].id);
+        }
+      } else {
+        setSelectedThreadId(null);
+        setThreadDetail(null);
       }
     } catch (err) {
       console.error('Falha ao carregar threads:', err);
       setThreads([]);
+      setSelectedThreadId(null);
+      setThreadDetail(null);
     } finally {
       setIsThreadsLoading(false);
     }
-  }, [selectedMailboxId, selectedFolder, statusFilter, searchQuery, selectedThreadId]);
+  }, [selectedMailboxId, selectedFolder, statusFilter, debouncedSearch, selectedThreadId]);
 
   useEffect(() => {
     loadThreads();
@@ -252,9 +283,9 @@ export default function SalesInboxWorkspace() {
         <InboxSidebar
           mailboxes={mailboxes}
           selectedMailboxId={selectedMailboxId}
-          onSelectMailbox={setSelectedMailboxId}
+          onSelectMailbox={handleSelectMailbox}
           selectedFolder={selectedFolder}
-          onSelectFolder={setSelectedFolder}
+          onSelectFolder={handleSelectFolder}
           counts={counts}
           onSync={(id) => handleSync(id, false)}
           onOpenConnectModal={() => setIsConnectModalOpen(true)}

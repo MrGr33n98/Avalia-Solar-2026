@@ -210,8 +210,8 @@ export default function EmailAccountsSettingsPage() {
               {accounts.map((acc) => {
                 const isSyncingThis = syncingId === acc.id || acc.sync_status === 'syncing';
                 const isDisconnectingThis = disconnectingId === acc.id;
-                const isOAuthHealthy = acc.connection_status === 'healthy' && !acc.token_expired;
-                const isNeedsReconnect = acc.connection_status === 'needs_reconnect' || acc.token_expired;
+                const isNeedsReconnect = acc.connection_status === 'needs_reconnect' || acc.needs_reconnect === true || (Boolean(acc.token_expired) && acc.has_refresh_token === false);
+                const isOAuthHealthy = acc.connection_status === 'healthy' && !isNeedsReconnect;
                 const isSyncError = acc.sync_status === 'error';
                 const isSyncDegraded = acc.sync_status === 'degraded';
                 const isSyncHealthy = acc.sync_status === 'healthy';

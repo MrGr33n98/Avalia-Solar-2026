@@ -82,7 +82,7 @@ const formatDateTime = (value?: string) =>
       })
     : '';
 
-export default function EmailCenterPage() {
+export default function EmailCenterPage({ hideLayoutWrapper = false }: { hideLayoutWrapper?: boolean } = {}) {
   const [activeFolder, setActiveFolder] = useState<
     'inbox' | 'sent' | 'drafts' | 'scheduled' | 'templates' | 'analytics'
   >('inbox');

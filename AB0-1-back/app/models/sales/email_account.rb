@@ -27,10 +27,21 @@ module Sales
       provider == 'zoho'
     end
 
-    def token_expired?
+    def has_refresh_token?
+      refresh_token_encrypted.present?
+    end
+
+    # Expiração de access token (~1h) é normal no ciclo OAuth; não requer reconexão manual.
+    def access_token_refresh_due?
       return false unless access_token_expires_at
 
       access_token_expires_at <= 5.minutes.from_now
+    end
+    alias token_expired? access_token_refresh_due?
+
+    # Reconexão humana exigida apenas quando refresh token foi revogado ou ausente.
+    def needs_reconnect?
+      connection_status == 'needs_reconnect' || refresh_token_encrypted.blank?
     end
 
     def disconnect!
