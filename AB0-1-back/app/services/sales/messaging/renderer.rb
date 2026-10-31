@@ -102,12 +102,35 @@ module Sales
           when 'text'
             props['html'].to_s.presence || "<p>#{CGI.escapeHTML(props['text'].to_s)}</p>"
           when 'image'
-            raw_src = props['url'].to_s.presence || props['src'].to_s
+            asset_id = props['asset_id'].presence
+            resolved_url = nil
+            if asset_id.present? && defined?(::Sales::EmailAsset)
+              asset = ::Sales::EmailAsset.find_by(id: asset_id)
+              resolved_url = asset.resolve_public_url if asset&.ready?
+            end
+
+            raw_src = resolved_url.presence || props['url'].to_s.presence || props['src'].to_s
             next '' if raw_src.blank? || unsafe_protocol?(raw_src)
 
             src = CGI.escapeHTML(raw_src)
             alt = CGI.escapeHTML(props['alt'].to_s)
-            "<img src=\"#{src}\" alt=\"#{alt}\" style=\"max-width:100%;height:auto;\" />"
+            width = props['width'].to_i
+            width_attr = width.positive? ? %(width="#{width}") : ''
+            width_style = width.positive? ? %(max-width:100%;width:#{width}px;) : 'max-width:100%;'
+            padding_top = [props['padding_top'].to_i, 0].max
+            padding_bottom = [props['padding_bottom'].to_i, 0].max
+            align = %w[left center right].include?(props['align']) ? props['align'] : 'center'
+
+            img_tag = %(<img src="#{src}" alt="#{alt}" #{width_attr} style="#{width_style}height:auto;display:inline-block;border:0;outline:none;text-decoration:none;" />)
+
+            link_url = props['link_url'].to_s.presence || props['link'].to_s.presence
+            wrapped_img = if link_url.present? && !unsafe_protocol?(link_url)
+                            %(<a href="#{CGI.escapeHTML(link_url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;border:none;">#{img_tag}</a>)
+                          else
+                            img_tag
+                          end
+
+            %(<div style="text-align:#{align};padding-top:#{padding_top}px;padding-bottom:#{padding_bottom}px;margin:8px 0;">#{wrapped_img}</div>)
           when 'button'
             label = CGI.escapeHTML(props['label'].to_s.presence || 'Clique aqui')
             raw_url = props['url'].to_s.presence || '#'

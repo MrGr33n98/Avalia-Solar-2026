@@ -170,6 +170,7 @@ Rails.application.routes.draw do
         post 'audiences/preview', to: 'sales/audiences#preview'
         get 'audiences/segments', to: 'sales/audiences#segments'
         resources :emails, only: %i[index create show], controller: 'sales/emails'
+        resources :email_assets, only: %i[index show create update destroy], controller: 'sales/email_assets'
         resources :email_templates, only: %i[index show create update destroy], controller: 'sales/email_templates' do
           collection do
             get :stats

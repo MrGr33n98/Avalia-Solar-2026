@@ -2,6 +2,22 @@ export type TemplateStatus = 'draft' | 'active' | 'archived';
 
 export type BlockType = 'heading' | 'text' | 'image' | 'button' | 'divider' | 'spacer' | 'html';
 
+export interface EmailAsset {
+  id: number;
+  name: string;
+  kind: 'logo' | 'banner' | 'photo' | 'product' | 'other';
+  status: 'pending' | 'processing' | 'ready' | 'failed' | 'archived';
+  alt_text?: string | null;
+  width_px?: number | null;
+  height_px?: number | null;
+  mime_type: string;
+  byte_size: number;
+  public_url?: string | null;
+  in_use_by_campaigns?: boolean;
+  in_use_by_templates?: boolean;
+  created_at: string;
+}
+
 export interface TemplateBlockProps {
   text?: string;
   level?: 1 | 2 | 3;
@@ -13,8 +29,12 @@ export interface TemplateBlockProps {
   align?: 'left' | 'center' | 'right';
   height?: number;
   code?: string;
+  asset_id?: number | null;
+  width?: number;
+  link_url?: string;
+  padding_top?: number;
+  padding_bottom?: number;
 }
-
 export interface TemplateBlock {
   id: string;
   type: BlockType;

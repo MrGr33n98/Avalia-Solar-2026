@@ -61,6 +61,28 @@ module Sales
 
           @warnings << { code: finding[:code], message: finding[:message] }
         end
+
+        check_template_assets(template)
+      end
+
+      def check_template_assets(template)
+        return unless template.body_json.is_a?(Hash)
+        blocks = template.body_json['blocks']
+        return unless blocks.is_a?(Array) && defined?(::Sales::EmailAsset)
+
+        blocks.each do |block|
+          next unless block.is_a?(Hash) && block['type'] == 'image'
+          props = block['props'] || {}
+          asset_id = props['asset_id'].presence
+          next if asset_id.blank?
+
+          asset = ::Sales::EmailAsset.find_by(id: asset_id)
+          if asset.nil? || asset.company_id != @campaign.company_id
+            @blockers << { code: 'INVALID_OR_MISSING_EMAIL_ASSET', message: "A imagem ##{asset_id} vinculada ao template não existe ou não pertence à sua organização." }
+          elsif !asset.ready?
+            @blockers << { code: 'EMAIL_ASSET_NOT_READY', message: "A imagem \"#{asset.name}\" ainda está em processamento ou arquivada. Status atual: #{asset.status}." }
+          end
+        end
       end
 
       def check_sender
