@@ -164,16 +164,16 @@ const groups: Group[] = [
 
 function DisplayValue({ value, suffix = '' }: { value: Value; suffix?: string }) {
   if (value === null || value === undefined || value === '') {
-    return <span className="text-slate-400">Não informado</span>;
+    return <span className="text-slate-400 font-normal">Não informado</span>;
   }
   if (typeof value === 'boolean') {
     return value ? (
       <span className="inline-flex items-center gap-1 font-semibold text-emerald-800">
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 sm:h-4 sm:w-4" aria-hidden="true" /> Sim
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" /> Sim
       </span>
     ) : (
       <span className="inline-flex items-center gap-1 text-slate-500">
-        <MinusCircle className="h-3.5 w-3.5 shrink-0 text-slate-400 sm:h-4 sm:w-4" aria-hidden="true" /> Não
+        <MinusCircle className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" /> Não
       </span>
     );
   }
@@ -214,11 +214,11 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
   return (
     <section aria-label="Tabela de comparação lado a lado">
       {!isFluid && (
-        <p className="mb-2 flex items-center justify-end gap-1 text-[11px] font-medium text-blue-700 md:hidden">
+        <p className="mb-2 flex items-center justify-end gap-1 text-xs font-semibold text-blue-700 md:hidden">
           Arraste para o lado para ver mais empresas <span aria-hidden="true">→</span>
         </p>
       )}
-      <div className="relative min-w-0 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
+      <div className="relative min-w-0 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm">
         <div
           className={
             isFluid
@@ -268,7 +268,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
               <tr className="border-b border-slate-200 align-top">
                 <th
                   scope="col"
-                  className={`border-r border-slate-200 bg-slate-50/90 p-2.5 sm:p-3 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 align-top ${
+                  className={`border-r border-slate-200 bg-slate-50/90 p-3 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 align-top ${
                     isFluid
                       ? 'w-[28%] sm:w-[28%] md:w-44'
                       : 'sticky left-0 z-30 w-32 md:w-44'
@@ -280,7 +280,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   <th
                     key={company.id}
                     scope="col"
-                    className={`border-r border-slate-200 bg-white p-2 sm:p-2.5 md:p-3 align-top ${
+                    className={`border-r border-slate-200 bg-white p-3 align-top ${
                       isFluid ? 'min-w-0' : 'min-w-[180px]'
                     }`}
                   >
@@ -304,8 +304,8 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                         </button>
                       </div>
 
-                      {/* Nome da empresa: linha dedicada com 100% da largura da coluna */}
-                      <div className="min-w-0 w-full">
+                      {/* Nome da empresa */}
+                      <div className="min-w-0 w-full mt-1">
                         <div className="flex items-center gap-1 min-w-0 flex-wrap">
                           <Link
                             href={`/companies/${company.slug || company.id}`}
@@ -320,7 +320,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                             </span>
                           )}
                         </div>
-                        <span className="block truncate text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
+                        <span className="block truncate text-xs text-slate-500 mt-0.5">
                           {[company.city, company.state].filter(Boolean).join(', ') ||
                             'Local não informado'}
                         </span>
@@ -328,9 +328,9 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
 
                       {/* Nota real com estrelas */}
                       {company.rating > 0 && (
-                        <div className="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700">
+                        <div className="flex items-center gap-1 text-xs font-bold text-slate-700 mt-0.5">
                           <Star
-                            className="h-3 w-3 fill-amber-400 text-amber-400 shrink-0"
+                            className="h-3.5 w-3.5 fill-amber-400 text-amber-400 shrink-0"
                             aria-hidden="true"
                           />
                           <span>{company.rating.toFixed(1).replace('.', ',')}</span>
@@ -353,7 +353,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
               <tr className="border-t border-slate-200 bg-slate-50/50 align-top">
                 <th
                   scope="row"
-                  className={`border-r border-slate-200 bg-slate-50/90 p-2 sm:p-2.5 text-[11px] sm:text-xs font-bold text-slate-800 md:p-3.5 ${
+                  className={`border-r border-slate-200 bg-slate-50/90 p-3 text-xs font-bold text-slate-800 ${
                     isFluid ? '' : 'sticky left-0 z-20'
                   }`}
                 >
@@ -364,11 +364,11 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   return (
                     <td
                       key={company.id}
-                      className={`border-r border-slate-200 p-2 sm:p-2.5 align-top ${
+                      className={`border-r border-slate-200 p-3 align-top ${
                         isFluid ? 'min-w-0' : 'min-w-[180px]'
                       }`}
                     >
-                      <div className="flex flex-col items-center gap-1.5 w-full">
+                      <div className="flex flex-col items-center gap-2 w-full">
                         {eligible && (
                           <QuoteCTA
                             context="comparison"
@@ -377,7 +377,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                         )}
                         <Link
                           href={`/companies/${company.slug || company.id}`}
-                          className="w-full py-1 text-center text-[10px] sm:text-[11px] font-medium text-blue-700 hover:text-blue-800 hover:underline leading-tight min-w-0 break-words"
+                          className="w-full py-1 text-center text-xs sm:text-[13px] font-semibold text-blue-700 hover:text-blue-800 hover:underline leading-tight min-w-0 break-words"
                         >
                           Ver perfil completo <span aria-hidden="true">→</span>
                         </Link>
@@ -415,18 +415,18 @@ function TableGroup({
   return (
     <>
       <tbody>
-        <tr className="border-y border-slate-200/90 bg-slate-50/90">
+        <tr className="border-y border-slate-200/90 bg-slate-100/75">
           <th colSpan={companies.length + 1} className="p-0 text-left">
             <button
               type="button"
               aria-expanded={isOpen}
               aria-controls={contentId}
               onClick={() => setIsOpen((current) => !current)}
-              className="flex min-h-[42px] sm:min-h-[46px] w-full items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-2.5 text-left text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-800 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+              className="flex min-h-[44px] w-full items-center justify-between gap-2 px-3.5 py-2.5 sm:px-4 text-left text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-800 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
             >
               <span>{group.label}</span>
               <ChevronDown
-                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-500 transition-transform duration-200 ${
+                className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 ${
                   isOpen ? 'rotate-180' : ''
                 }`}
                 aria-hidden="true"
@@ -440,7 +440,7 @@ function TableGroup({
           <tr key={criterion.label} className="border-b border-slate-100 last:border-b-0">
             <th
               scope="row"
-              className={`border-r border-slate-200 bg-slate-50/70 p-2 sm:px-3 sm:py-2 text-[11px] sm:text-xs font-medium text-slate-600 break-words ${
+              className={`border-r border-slate-200 bg-slate-50/70 p-2.5 sm:px-4 sm:py-3 text-xs sm:text-[13px] font-medium text-slate-700 break-words ${
                 isFluid ? '' : 'sticky left-0 z-20'
               }`}
             >
@@ -449,7 +449,7 @@ function TableGroup({
             {companies.map((company) => (
               <td
                 key={company.id}
-                className={`border-r border-slate-100 p-2 sm:px-3 sm:py-2 text-left sm:text-center text-[11px] sm:text-xs text-slate-800 break-words ${
+                className={`border-r border-slate-100 p-2.5 sm:px-4 sm:py-3 text-left sm:text-center text-xs sm:text-[13px] text-slate-800 break-words ${
                   isFluid ? 'min-w-0' : 'min-w-[180px]'
                 }`}
               >
