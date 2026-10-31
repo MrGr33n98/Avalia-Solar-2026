@@ -22,6 +22,8 @@ module Sales
         opportunity = resolve_opportunity!
         thread = resolve_thread!
         campaign = resolve_campaign!
+        quote = resolve_quote!(opportunity)
+        solar_project = resolve_solar_project!(opportunity, quote)
 
         if account && !@scope.valid_relation?(account: account, contact: contact, opportunity: opportunity)
           raise ForbiddenContextError, 'As entidades de contexto informadas não pertencem à mesma conta comercial.'
@@ -101,6 +103,33 @@ module Sales
           }.compact
         end
 
+        if quote
+          sources_used << "quote:#{quote.id}"
+          total_val = if quote.respond_to?(:total_cents) && quote.total_cents.present?
+                        (quote.total_cents.to_i / 100.0).round(2)
+                      else
+                        quote.try(:total)&.to_f
+                      end
+          payload[:quote] = {
+            id: quote.id,
+            number: sanitize_field(quote.number),
+            status: quote.status,
+            total_value: total_val,
+            expires_on: quote.try(:expires_on)
+          }.compact
+        end
+
+        if solar_project
+          sources_used << "solar_project:#{solar_project.id}"
+          payload[:solar_project] = {
+            id: solar_project.id,
+            system_kwp: solar_project.try(:system_kwp)&.to_f,
+            estimated_generation_kwh: solar_project.try(:estimated_generation_kwh)&.to_f,
+            estimated_cost: (solar_project.try(:estimated_cost_cents).to_i / 100.0).round(2),
+            status: solar_project.try(:status)
+          }.compact
+        end
+
         {
           context_payload: payload,
           sources_used: sources_used.uniq,
@@ -170,6 +199,25 @@ module Sales
         raise ForbiddenContextError, 'Campanha não encontrada ou fora do escopo do tenant.' unless record
 
         record
+      end
+
+      def resolve_quote!(opportunity)
+        qid = @params[:quote_id]
+        if qid.present?
+          record = @scope.quotes.find_by(id: qid)
+          raise ForbiddenContextError, 'Proposta comercial não encontrada ou fora do escopo do tenant.' unless record
+
+          return record
+        end
+
+        opportunity&.quotes&.order(created_at: :desc)&.first if opportunity.respond_to?(:quotes)
+      end
+
+      def resolve_solar_project!(opportunity, quote)
+        return quote.solar_project if quote&.respond_to?(:solar_project) && quote.solar_project.present?
+        return opportunity.solar_project if opportunity&.respond_to?(:solar_project) && opportunity.solar_project.present?
+
+        nil
       end
 
       def extract_thread_messages(thread)

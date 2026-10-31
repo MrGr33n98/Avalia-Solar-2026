@@ -5,30 +5,19 @@ import Link from 'next/link';
 import {
   AlertCircle,
   AlertTriangle,
-  Building2,
-  Calendar,
   CalendarClock,
   CheckCircle2,
-  Clock,
   Clock3,
   Flame,
-  MessageSquare,
-  PhoneCall,
-  Plus,
   RotateCw,
-  Search,
-  Sparkles,
-  Target,
-  Users,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SalesLayoutWrapper from '@/components/sales/layout/SalesLayoutWrapper';
-import SalesOutreachTemplates from '@/components/sales/SalesOutreachTemplates';
 import CallLoggerModal from '@/components/sales/CallLoggerModal';
 import Company360View from '@/components/sales/Company360View';
-import { buildWhatsAppUrl } from '@/lib/phone';
+import DailyFunnelDigestCard from '@/components/sales/ai/digest/DailyFunnelDigestCard';
 
 type TodayData = {
   overdue: Array<{
@@ -160,6 +149,9 @@ export default function SalesTodayWorkQueuePage() {
           </div>
         ) : (
           <>
+            {/* Daily Funnel Digest AI */}
+            <DailyFunnelDigestCard queueData={data} onRefreshQueue={fetchTodayData} />
+
             {/* Executive Metric Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Card className="border-slate-200 bg-white shadow-xs">

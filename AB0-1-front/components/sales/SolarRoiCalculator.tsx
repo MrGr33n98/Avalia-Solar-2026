@@ -4,11 +4,7 @@ import { useState } from 'react';
 import {
   Calculator,
   Check,
-  ChevronRight,
   Copy,
-  DollarSign,
-  FileSpreadsheet,
-  Leaf,
   MessageSquare,
   Sparkles,
   Sun,
@@ -17,11 +13,11 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SolarProposalDefenseModal from '@/components/sales/ai/proposal/SolarProposalDefenseModal';
 
 export default function SolarRoiCalculator({
   companyName = 'Cliente Solar',
@@ -240,6 +236,23 @@ Empresa: ${companyName} (${uf})
               >
                 <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Enviar WhatsApp
               </Button>
+            </div>
+            <div className="pt-2">
+              <SolarProposalDefenseModal
+                companyName={companyName}
+                totalValue={estimatedInvestment}
+                systemKwp={systemKwp}
+                trigger={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-8 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-950 font-bold text-xs gap-1.5"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                    Gerar Carta de Defesa da Proposta com IA
+                  </Button>
+                }
+              />
             </div>
           </div>
         </div>

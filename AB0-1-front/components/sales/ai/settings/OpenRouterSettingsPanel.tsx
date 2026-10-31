@@ -88,6 +88,22 @@ const FEATURE_LABELS: Record<string, { title: string; description: string }> = {
     title: 'Roteiro de Ligação',
     description: 'Perguntas de qualificação e objeções prováveis para chamadas.',
   },
+  whatsapp_followup: {
+    title: 'Script Rápido WhatsApp',
+    description: 'Geração de mensagens curtas de follow-up com pergunta aberta para celular.',
+  },
+  call_organizer: {
+    title: 'Estruturador de Chamadas (Scribe)',
+    description: 'Organização de notas soltas em resumo, objeção, próxima ação e sentimento.',
+  },
+  proposal_defense: {
+    title: 'Defesa Executiva de Proposta Solar',
+    description: 'Comparativo financeiro TIR vs CDB, Payback e argumentos técnicos contra concorrentes.',
+  },
+  daily_digest: {
+    title: 'Digest Matinal do Funil (Today)',
+    description: 'Priorização diária dos 3 principais negócios em risco com ação recomendada.',
+  },
 };
 
 const CONTEXT_FIELD_LABELS: Record<string, string> = {

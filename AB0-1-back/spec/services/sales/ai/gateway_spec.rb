@@ -181,6 +181,94 @@ RSpec.describe Sales::Ai::Gateway do
       expect(response[:status]).to eq('fallback_completed')
       expect(response[:fallback_used]).to be(true)
     end
+
+    describe 'Quick Win Features validation via OutputValidator' do
+      it 'validates and normalizes whatsapp_followup output' do
+        raw = {
+          message_text: 'Olá Carlos, tudo bem? Vi que analisou nossa proposta solar de 8.5kWp. Quer tirar uma dúvida rápida?',
+          variations: ['Olá Carlos! Conseguimos tirar alguma dúvida da proposta hoje?'],
+          rationale: 'Focado em baixo atrito'
+        }.to_json
+
+        res = Sales::Ai::OutputValidator.validate_and_normalize!(
+          feature: 'whatsapp_followup',
+          raw_content: raw,
+          context_payload: {}
+        )
+
+        expect(res[:result][:message_text]).to include('Carlos')
+        expect(res[:result][:variations]).to be_an(Array)
+      end
+
+      it 'validates and normalizes call_organizer output' do
+        raw = {
+          summary: 'Cliente demonstrou interesse em microinversores.',
+          main_objection: 'Custo Inicial',
+          next_action: 'Enviar comparativo de durabilidade',
+          suggested_action_date: '2026-11-05',
+          sentiment: 'positive',
+          key_points: ['Quer prazo', 'Aprovação conjunta com sócio'],
+          formatted_notes: "- Resumo: Interesse em microinversor\n- Objeção: Custo\n- Próximo passo: Comparativo"
+        }.to_json
+
+        res = Sales::Ai::OutputValidator.validate_and_normalize!(
+          feature: 'call_organizer',
+          raw_content: raw,
+          context_payload: {}
+        )
+
+        expect(res[:result][:main_objection]).to eq('Custo Inicial')
+        expect(res[:result][:sentiment]).to eq('positive')
+        expect(res[:result][:formatted_notes]).to include('Interesse')
+      end
+
+      it 'validates and normalizes proposal_defense output' do
+        raw = {
+          executive_summary: 'Projeto de 8.5kWp com geração de alta eficiência.',
+          tir_comparison: 'TIR de 24% ao ano comparada a 10% do CDB.',
+          cumulative_savings_25yr: 'Economia acumulada estimada de R$ 180.000.',
+          payback_years: '3.8 anos',
+          defense_points: ['Módulos Tier 1 com garantia de 25 anos', 'Geração superior em baixa irradiância'],
+          recommended_closing_question: 'Podemos formalizar a reserva do lote de equipamentos?'
+        }.to_json
+
+        res = Sales::Ai::OutputValidator.validate_and_normalize!(
+          feature: 'proposal_defense',
+          raw_content: raw,
+          context_payload: {}
+        )
+
+        expect(res[:result][:defense_points].size).to eq(2)
+        expect(res[:result][:payback_years]).to eq('3.8 anos')
+      end
+
+      it 'validates and normalizes daily_digest output' do
+        raw = {
+          headline: '3 oportunidades prioritárias hoje',
+          priorities: [
+            {
+              opportunity_id: 10,
+              title: 'Energia Solar Fazenda',
+              contact_name: 'Roberto',
+              reason: '5 dias sem retorno após proposta',
+              urgency: 'high',
+              suggested_action: 'Enviar WhatsApp rápido',
+              channel: 'whatsapp'
+            }
+          ],
+          quick_tip: 'Foque nos follow-ups pela manhã.'
+        }.to_json
+
+        res = Sales::Ai::OutputValidator.validate_and_normalize!(
+          feature: 'daily_digest',
+          raw_content: raw,
+          context_payload: {}
+        )
+
+        expect(res[:result][:priorities].first[:title]).to eq('Energia Solar Fazenda')
+        expect(res[:result][:priorities].first[:urgency]).to eq('high')
+      end
+    end
   end
 end
 

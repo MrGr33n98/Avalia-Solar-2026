@@ -4,15 +4,19 @@ import { useState } from 'react';
 import {
   CheckCircle2,
   Clock,
+  Loader2,
   PhoneCall,
   PhoneForwarded,
   PhoneOff,
+  Sparkles,
+  Undo2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useVoiceCallOptional } from '@/contexts/VoiceCallContext';
+import { createAiGeneration } from '@/lib/api/sales/ai';
 
 export default function CallLoggerModal({
   accountId,
@@ -37,6 +41,58 @@ export default function CallLoggerModal({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [rawNotes, setRawNotes] = useState<string | null>(null);
+  const [organizingAi, setOrganizingAi] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    objection?: string;
+    sentiment?: string;
+    nextAction?: string;
+  } | null>(null);
+
+  const handleOrganizeNotesWithAi = async () => {
+    if (!notes.trim()) return;
+    setOrganizingAi(true);
+    setError(null);
+    try {
+      setRawNotes(notes);
+      const res = await createAiGeneration({
+        feature: 'call_organizer',
+        action: 'organize_notes',
+        instructions: 'Organize as notas da ligação telefônica de forma executiva.',
+        draft: { selected_text: notes },
+        context: {
+          contact_id: contactId || null,
+          account_id: accountId || null,
+        },
+      });
+
+      const formatted = res.result?.formatted_notes || res.result?.summary;
+      if (formatted) {
+        setNotes(formatted);
+      }
+      if (res.result?.suggested_action_date && !nextActionAt) {
+        setNextActionAt(res.result.suggested_action_date);
+      }
+      setAiAnalysis({
+        objection: res.result?.main_objection,
+        sentiment: res.result?.sentiment,
+        nextAction: res.result?.next_action,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Falha ao organizar notas com IA.';
+      setError(msg);
+    } finally {
+      setOrganizingAi(false);
+    }
+  };
+
+  const handleUndoOrganize = () => {
+    if (rawNotes !== null) {
+      setNotes(rawNotes);
+      setRawNotes(null);
+      setAiAnalysis(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,8 +137,10 @@ export default function CallLoggerModal({
         setNotes('');
         onSuccess?.();
       }, 1000);
-    } catch (err: any) {
-      setError(err?.message || 'Erro inesperado ao registrar chamada.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro inesperado ao registrar chamada.';
+      setError(msg);
+      
     } finally {
       setLoading(false);
     }
@@ -176,7 +234,7 @@ export default function CallLoggerModal({
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setOutcome(item.id as any)}
+                      onClick={() => setOutcome(item.id as typeof outcome)}
                       className={`p-2 rounded-lg border text-center transition flex flex-col items-center gap-1 ${
                         selected
                           ? 'border-blue-900 bg-blue-50 text-blue-900 font-bold'
@@ -236,14 +294,68 @@ export default function CallLoggerModal({
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Notas / Resumo da Conversa</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-bold text-slate-700 block">Notas / Resumo da Conversa</label>
+                <div className="flex items-center gap-1.5">
+                  {rawNotes !== null && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleUndoOrganize}
+                      className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-700 gap-1"
+                    >
+                      <Undo2 className="w-3 h-3" /> Desfazer
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleOrganizeNotesWithAi()}
+                    disabled={!notes.trim() || organizingAi}
+                    className="h-6 px-2 text-[10px] font-semibold text-blue-900 border-blue-200 hover:bg-blue-50 gap-1 bg-white"
+                  >
+                    {organizingAi ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin text-blue-800" />
+                        Organizando...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3 h-3 text-blue-700" />
+                        Organizar com IA
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={3}
+                rows={4}
                 className="w-full rounded-md border border-slate-300 p-2 text-xs focus:border-blue-900 focus:outline-hidden"
                 placeholder="Ex: Carlos gostou do ROI, solicitou envio de proposta comercial via e-mail até sexta..."
               />
+              {aiAnalysis && (
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  {aiAnalysis.objection && (
+                    <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-200 text-amber-800">
+                      Objeção: {aiAnalysis.objection}
+                    </Badge>
+                  )}
+                  {aiAnalysis.sentiment && (
+                    <Badge variant="outline" className="text-[10px] bg-slate-100 border-slate-200 text-slate-700 font-mono">
+                      Sentimento: {aiAnalysis.sentiment}
+                    </Badge>
+                  )}
+                  {aiAnalysis.nextAction && (
+                    <span className="text-[10px] text-slate-500 italic truncate max-w-full">
+                      Sugerido: {aiAnalysis.nextAction}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">

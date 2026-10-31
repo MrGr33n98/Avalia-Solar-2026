@@ -92,7 +92,11 @@ module Sales
         'opportunity_next_step' => { primary_model_id: 'openai/gpt-4o-mini', fallback_model_id: 'anthropic/claude-3.5-haiku', temperature: 0.2, max_tokens: 700, quota_daily: 150 },
         'sequence_planner' => { primary_model_id: 'openai/gpt-4o', fallback_model_id: 'anthropic/claude-3.5-sonnet', temperature: 0.35, max_tokens: 1800, quota_daily: 80 },
         'campaign_preflight' => { primary_model_id: 'openai/gpt-4o-mini', fallback_model_id: 'anthropic/claude-3.5-haiku', temperature: 0.15, max_tokens: 900, quota_daily: 120 },
-        'call_script' => { primary_model_id: 'openai/gpt-4o-mini', fallback_model_id: 'anthropic/claude-3.5-haiku', temperature: 0.25, max_tokens: 800, quota_daily: 120 }
+        'call_script' => { primary_model_id: 'openai/gpt-4o-mini', fallback_model_id: 'anthropic/claude-3.5-haiku', temperature: 0.25, max_tokens: 800, quota_daily: 120 },
+        'whatsapp_followup' => { primary_model_id: 'openai/gpt-4o-mini', fallback_model_id: 'anthropic/claude-3.5-haiku', temperature: 0.35, max_tokens: 450, quota_daily: 250 },
+        'call_organizer' => { primary_model_id: 'openai/gpt-4o-mini', fallback_model_id: 'anthropic/claude-3.5-haiku', temperature: 0.2, max_tokens: 650, quota_daily: 200 },
+        'proposal_defense' => { primary_model_id: 'openai/gpt-4o', fallback_model_id: 'anthropic/claude-3.5-sonnet', temperature: 0.3, max_tokens: 1200, quota_daily: 100 },
+        'daily_digest' => { primary_model_id: 'openai/gpt-4o-mini', fallback_model_id: 'google/gemini-2.0-flash-001', temperature: 0.25, max_tokens: 900, quota_daily: 150 }
       }.freeze
 
       def self.all_models

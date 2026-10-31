@@ -39,6 +39,14 @@ module Sales
           normalize_template_output(parsed)
         when 'inbox_summary', 'person_briefing', 'account_briefing', 'opportunity_recap', 'opportunity_next_step', 'campaign_preflight', 'call_script'
           normalize_briefing_output(parsed)
+        when 'whatsapp_followup'
+          normalize_whatsapp_output(parsed)
+        when 'call_organizer'
+          normalize_call_organizer_output(parsed)
+        when 'proposal_defense'
+          normalize_proposal_defense_output(parsed)
+        when 'daily_digest'
+          normalize_daily_digest_output(parsed)
         else
           normalize_email_output(parsed)
         end
@@ -141,6 +149,110 @@ module Sales
             summary: summary,
             key_points: key_points,
             next_actions: next_actions,
+            rationale: sanitize_plain(parsed['rationale'])
+          },
+          warnings: warnings
+        }
+      end
+
+      def normalize_whatsapp_output(parsed)
+        message_text = sanitize_plain(parsed['message_text'].presence || parsed['body_text'] || parsed['summary'])
+        variations = Array(parsed['variations']).map { |v| sanitize_plain(v) }.reject(&:blank?)
+        variations = [message_text] if variations.empty? && message_text.present?
+
+        combined_text = [message_text, variations.join("\n")].join("\n")
+        warnings = ClaimChecker.check(text: combined_text, context_payload: @context_payload)
+
+        {
+          result: {
+            message_text: message_text,
+            variations: variations.first(3),
+            body_text: message_text,
+            rationale: sanitize_plain(parsed['rationale'])
+          },
+          warnings: warnings
+        }
+      end
+
+      def normalize_call_organizer_output(parsed)
+        summary = sanitize_plain(parsed['summary'].presence || parsed['body_text'])
+        main_objection = sanitize_plain(parsed['main_objection'])
+        next_action = sanitize_plain(parsed['next_action'])
+        suggested_action_date = sanitize_plain(parsed['suggested_action_date'])
+        sentiment = sanitize_plain(parsed['sentiment'].presence || 'neutral')
+        key_points = Array(parsed['key_points']).map { |kp| sanitize_plain(kp) }.reject(&:blank?)
+        formatted_notes = sanitize_plain(parsed['formatted_notes'].presence || [summary, key_points.map { |k| "- #{k}" }].flatten.join("\n"))
+
+        combined = [summary, main_objection, next_action, formatted_notes].compact.join("\n")
+        warnings = ClaimChecker.check(text: combined, context_payload: @context_payload)
+
+        {
+          result: {
+            summary: summary,
+            main_objection: main_objection,
+            next_action: next_action,
+            suggested_action_date: suggested_action_date,
+            sentiment: sentiment,
+            key_points: key_points,
+            formatted_notes: formatted_notes,
+            body_text: formatted_notes
+          },
+          warnings: warnings
+        }
+      end
+
+      def normalize_proposal_defense_output(parsed)
+        exec_summary = sanitize_plain(parsed['executive_summary'].presence || parsed['summary'])
+        tir_comp = sanitize_plain(parsed['tir_comparison'])
+        cum_savings = sanitize_plain(parsed['cumulative_savings_25yr'])
+        payback = sanitize_plain(parsed['payback_years'])
+        defense_points = Array(parsed['defense_points']).map { |dp| sanitize_plain(dp) }.reject(&:blank?)
+        closing_q = sanitize_plain(parsed['recommended_closing_question'])
+        full_text = sanitize_plain(parsed['full_defense_text'].presence || [exec_summary, tir_comp, defense_points.join("\n"), closing_q].compact.join("\n\n"))
+
+        combined = [exec_summary, tir_comp, cum_savings, full_text].compact.join("\n")
+        warnings = ClaimChecker.check(text: combined, context_payload: @context_payload)
+
+        {
+          result: {
+            executive_summary: exec_summary,
+            tir_comparison: tir_comp,
+            cumulative_savings_25yr: cum_savings,
+            payback_years: payback,
+            defense_points: defense_points,
+            recommended_closing_question: closing_q,
+            full_defense_text: full_text,
+            body_text: full_text,
+            rationale: sanitize_plain(parsed['rationale'])
+          },
+          warnings: warnings
+        }
+      end
+
+      def normalize_daily_digest_output(parsed)
+        headline = sanitize_plain(parsed['headline'].presence || 'Priorização Diária do Funil')
+        priorities = Array(parsed['priorities']).filter_map do |p|
+          next unless p.is_a?(Hash) && p['title'].present?
+
+          {
+            opportunity_id: p['opportunity_id'],
+            title: sanitize_plain(p['title']),
+            contact_name: sanitize_plain(p['contact_name']),
+            reason: sanitize_plain(p['reason']),
+            urgency: sanitize_plain(p['urgency'].presence || 'medium'),
+            suggested_action: sanitize_plain(p['suggested_action']),
+            channel: sanitize_plain(p['channel'].presence || 'whatsapp')
+          }
+        end
+        quick_tip = sanitize_plain(parsed['quick_tip'])
+
+        warnings = ClaimChecker.check(text: [headline, priorities.map { |pr| pr[:reason] }].flatten.join("\n"), context_payload: @context_payload)
+
+        {
+          result: {
+            headline: headline,
+            priorities: priorities,
+            quick_tip: quick_tip,
             rationale: sanitize_plain(parsed['rationale'])
           },
           warnings: warnings

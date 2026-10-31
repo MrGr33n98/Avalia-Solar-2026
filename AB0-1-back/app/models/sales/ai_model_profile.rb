@@ -19,6 +19,10 @@ module Sales
       sequence_planner
       campaign_preflight
       call_script
+      whatsapp_followup
+      call_organizer
+      proposal_defense
+      daily_digest
     ].freeze
 
     belongs_to :company

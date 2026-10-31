@@ -14,7 +14,11 @@ export type CrmAiFeature =
   | 'opportunity_next_step'
   | 'sequence_planner'
   | 'campaign_preflight'
-  | 'call_script';
+  | 'call_script'
+  | 'whatsapp_followup'
+  | 'call_organizer'
+  | 'proposal_defense'
+  | 'daily_digest';
 
 export type CrmAiDecision = 'accepted' | 'edited' | 'rejected';
 
@@ -108,6 +112,39 @@ export interface CrmAiGenerationResultPayload {
   key_points?: string[];
   next_actions?: Array<{ title: string; reason: string }>;
   rationale?: string;
+
+  // WhatsApp Smart Scripts (Quick Win 1)
+  message_text?: string;
+  variations?: string[];
+
+  // Call Logger Scribe (Quick Win 2)
+  main_objection?: string;
+  next_action?: string;
+  suggested_action_date?: string;
+  sentiment?: 'positive' | 'neutral' | 'hesitant' | 'negative';
+  formatted_notes?: string;
+
+  // Solar Proposal Executive Defense (Quick Win 3)
+  executive_summary?: string;
+  tir_comparison?: string;
+  cumulative_savings_25yr?: string;
+  payback_years?: string;
+  defense_points?: string[];
+  recommended_closing_question?: string;
+  full_defense_text?: string;
+
+  // Daily Funnel Morning Digest (Quick Win 4)
+  headline?: string;
+  priorities?: Array<{
+    opportunity_id?: number;
+    title: string;
+    contact_name?: string;
+    reason: string;
+    urgency: 'high' | 'medium' | 'low';
+    suggested_action: string;
+    channel?: 'whatsapp' | 'call' | 'email';
+  }>;
+  quick_tip?: string;
 }
 
 export interface CrmAiGenerationRequest {
@@ -122,6 +159,7 @@ export interface CrmAiGenerationRequest {
     thread_id?: number | null;
     campaign_id?: number | null;
     template_id?: number | null;
+    quote_id?: number | null;
   };
   draft?: {
     subject?: string;

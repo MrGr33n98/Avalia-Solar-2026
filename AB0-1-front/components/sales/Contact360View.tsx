@@ -16,8 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { buildWhatsAppUrl } from '@/lib/phone';
 import CallLoggerModal from '@/components/sales/CallLoggerModal';
+import WhatsAppScriptDrawer from '@/components/sales/ai/whatsapp/WhatsAppScriptDrawer';
 
 type Contact360Data = {
   id: number;
@@ -164,13 +164,21 @@ export default function Contact360View({
                 onSuccess={fetchContactDetails}
               />
               {whatsapp && (
-                <Button
-                  size="sm"
-                  onClick={() => window.open(buildWhatsAppUrl(whatsapp, `Olá ${contactData?.first_name || ''}, tudo bem?`), '_blank')}
-                  className="h-8 bg-emerald-600 hover:bg-emerald-700 font-bold text-white text-xs shadow-xs"
-                >
-                  <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> WhatsApp
-                </Button>
+                <WhatsAppScriptDrawer
+                  contactId={contactId}
+                  accountId={contactData?.account?.id}
+                  contactName={name}
+                  phone={whatsapp}
+                  onActivityLogged={fetchContactDetails}
+                  trigger={
+                    <Button
+                      size="sm"
+                      className="h-8 bg-emerald-600 hover:bg-emerald-700 font-bold text-white text-xs shadow-xs gap-1.5"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" /> WhatsApp IA
+                    </Button>
+                  }
+                />
               )}
               {email && (
                 <Button

@@ -93,6 +93,66 @@ module Sales
               "rationale": "Fontes utilizadas"
             }
           JSON_SCHEMA
+        when 'whatsapp_followup'
+          <<~JSON_SCHEMA
+            {
+              "message_text": "Mensagem curta de no máximo 3 linhas para WhatsApp, terminando com pergunta aberta",
+              "variations": [
+                "Opção 1 mais direta",
+                "Opção 2 mais consultiva",
+                "Opção 3 focada em agendamento"
+              ],
+              "rationale": "Justificativa da abordagem escolhida com base no contexto do lead"
+            }
+          JSON_SCHEMA
+        when 'call_organizer'
+          <<~JSON_SCHEMA
+            {
+              "summary": "Resumo executivo da conversa em 1 ou 2 frases",
+              "main_objection": "Objeção identificada (ex: Custo Inicial, Prazo, Decisão Conjunta, Sem Objeção)",
+              "next_action": "Ação recomendada para o vendedor",
+              "suggested_action_date": "Data sugerida no formato AAAA-MM-DD se mencionada ou amanhã",
+              "sentiment": "positive | neutral | hesitant | negative",
+              "key_points": ["Tópico 1", "Tópico 2"],
+              "formatted_notes": "Notas formatadas em tópicos para salvar na atividade"
+            }
+          JSON_SCHEMA
+        when 'proposal_defense'
+          <<~JSON_SCHEMA
+            {
+              "executive_summary": "Resumo executivo do projeto solar e seu valor estratégico",
+              "tir_comparison": "Comparação entre a TIR do projeto e aplicações financeiras tradicionais (CDB/Poupança)",
+              "cumulative_savings_25yr": "Economia estimada ao longo de 25 anos com base nos dados do projeto",
+              "payback_years": "Tempo estimado de retorno do investimento em anos",
+              "defense_points": [
+                "Ponto forte 1 contra kits baratos de concorrentes",
+                "Ponto forte 2 sobre durabilidade e garantia dos módulos e inversores",
+                "Ponto forte 3 sobre segurança regulatória (Lei 14.300)"
+              ],
+              "recommended_closing_question": "Pergunta final para fechar ou avançar a negociação",
+              "full_defense_text": "Texto completo e articulado pronto para ser enviado por e-mail ou apresentado ao cliente",
+              "rationale": "Fontes técnicas utilizadas nos cálculos"
+            }
+          JSON_SCHEMA
+        when 'daily_digest'
+          <<~JSON_SCHEMA
+            {
+              "headline": "Visão geral do funil de vendas hoje",
+              "priorities": [
+                {
+                  "opportunity_id": 123,
+                  "title": "Título da oportunidade",
+                  "contact_name": "Nome do contato",
+                  "reason": "Motivo do risco ou urgência (ex: 5 dias sem contato após proposta)",
+                  "urgency": "high | medium | low",
+                  "suggested_action": "O que fazer exatamente",
+                  "channel": "whatsapp | call | email"
+                }
+              ],
+              "quick_tip": "Dica rápida para o dia de prospecção",
+              "rationale": "Critérios de priorização utilizados"
+            }
+          JSON_SCHEMA
         else
           <<~JSON_SCHEMA
             {
