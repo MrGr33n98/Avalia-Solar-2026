@@ -845,3 +845,50 @@ export interface InboxThreadsResponse {
 
 
 
+
+export interface MunicipalityLocationDTO {
+  key: string;
+  country: string;
+  state: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+  precision: 'municipality_centroid';
+  lead_count: number;
+  value_cents: number;
+  status_counts: Record<string, number>;
+}
+
+export interface LeadsMapSummaryDTO {
+  total_filtered: number;
+  mappable: number;
+  unmapped: number;
+  missing_city_state: number;
+  unsupported_municipality: number;
+  total_value_cents: number;
+  mapped_value_cents: number;
+}
+
+export interface LeadsMapMetaDTO {
+  location_source: string;
+  location_dataset_version: string;
+  as_of: string;
+  filters_applied: string[];
+}
+
+export interface LeadsMapResponse {
+  summary: LeadsMapSummaryDTO;
+  locations: MunicipalityLocationDTO[];
+  meta: LeadsMapMetaDTO;
+}
+
+export interface LeadsMapParams {
+  pipeline_id?: number | null;
+  q?: string;
+  status?: string;
+  status_in?: string[];
+  states?: string[];
+  city?: string;
+  filters?: NutshellFilterCriteria;
+  [key: string]: unknown;
+}

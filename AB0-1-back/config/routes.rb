@@ -248,8 +248,10 @@ Rails.application.routes.draw do
         end
         post 'opportunities/bulk', to: 'sales/opportunities#bulk'
         get 'opportunities/analytics', to: 'sales/opportunities#analytics'
+        get 'opportunities/map', to: 'sales/opportunities#map'
         resources :opportunities, only: %i[index create show update destroy], controller: 'sales/opportunities' do
           get :analytics, on: :collection
+          get :map, on: :collection
           resources :contacts, only: %i[index create update destroy], controller: 'sales/opportunity_contacts'
           member do
             get :timeline

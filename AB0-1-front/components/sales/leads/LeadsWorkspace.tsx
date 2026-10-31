@@ -27,6 +27,7 @@ import CreateLeadModal from './create/CreateLeadModal';
 import CreatePipelineModal from '../pipeline/CreatePipelineModal';
 import SalesCommandCenter from '@/components/sales/SalesCommandCenter';
 import LeadsAnalyticsView from './views/LeadsAnalyticsView';
+import LeadsMapView from './views/LeadsMapView';
 import { SalesLead, NutshellFilterCriteria } from '@/lib/api/sales/types';
 import { salesKeys } from '@/lib/api/sales/queryKeys';
 import { useSalesPipelines } from '@/lib/api/sales/queries';
@@ -93,6 +94,7 @@ export default function LeadsWorkspace() {
     if (lead.sales_pipeline_id) setSelectedPipelineId(lead.sales_pipeline_id);
     void queryClient.invalidateQueries({ queryKey: salesKeys.pipelines() });
     void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
+    void queryClient.invalidateQueries({ queryKey: salesKeys.opportunitiesMap() });
     setBoardRefreshVersion((current) => current + 1);
   };
 
@@ -138,6 +140,7 @@ export default function LeadsWorkspace() {
                           onClick={() => {
                             setSelectedPipelineId(p.id);
                             void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
+                            void queryClient.invalidateQueries({ queryKey: salesKeys.opportunitiesMap() });
                             setBoardRefreshVersion((v) => v + 1);
                           }}
                           className={`flex items-center justify-between cursor-pointer py-2 ${
@@ -239,10 +242,13 @@ export default function LeadsWorkspace() {
             />
           </div>
         ) : view === 'map' ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 text-slate-500 space-y-2">
-            <MapPin className="w-10 h-10 text-indigo-600 mx-auto" />
-            <h3 className="text-base font-bold text-slate-900">Visão Geográfica de Leads</h3>
-            <p className="text-xs">Mapeamento espacial das usinas e projetos solares dos leads cadastrados.</p>
+          <div className="relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs p-2">
+            <LeadsMapView
+              pipelineId={selectedPipelineId}
+              searchQuery={search}
+              filters={nutshellFilters}
+              onSwitchView={(newView) => handleViewChange(newView)}
+            />
           </div>
         ) : (
           <LeadsAnalyticsView

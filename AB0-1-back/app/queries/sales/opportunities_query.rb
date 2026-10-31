@@ -100,10 +100,19 @@ module Sales
         scope = scope.where('sales_opportunities.last_activity_at >= ?', @params[:last_contacted_days].to_i.days.ago)
       end
 
-      # State (UF)
-      if @params[:states].present?
+      # State (UF) & City
+      if @params[:state].present?
+        scope = scope.joins(:account).where(sales_accounts: { state: @params[:state].to_s.strip.upcase })
+      elsif @params[:states].present?
         ufs = Array(@params[:states]).map(&:to_s).reject(&:blank?)
         scope = scope.joins(:account).where(sales_accounts: { state: ufs })
+      end
+
+      if @params[:city].present?
+        scope = scope.joins(:account).where('LOWER(TRIM(sales_accounts.city)) = ?', @params[:city].to_s.strip.downcase)
+      elsif @params[:cities].present?
+        clean_cities = Array(@params[:cities]).map { |c| c.to_s.strip.downcase }.reject(&:blank?)
+        scope = scope.joins(:account).where('LOWER(TRIM(sales_accounts.city)) IN (?)', clean_cities)
       end
 
       scope.order("#{SORT_FIELDS.fetch(@params[:sort].to_s, SORT_FIELDS['created_at'])} #{direction}")

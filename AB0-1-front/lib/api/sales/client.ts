@@ -19,6 +19,8 @@ import {
   FilterOptionsResponse,
   NutshellFilterCriteria,
   LeadsAnalyticsResponse,
+  LeadsMapParams,
+  LeadsMapResponse,
   InboxMailbox,
   InboxThreadsResponse,
   InboxThreadDetail,
@@ -530,6 +532,25 @@ export const salesApi = {
     const suffix = qs.toString();
     return request<LeadsAnalyticsResponse>(
       `/api/v1/sales/opportunities/analytics${suffix ? `?${suffix}` : ''}`
+    );
+  },
+
+  async getOpportunitiesMap(
+    params: LeadsMapParams = {}
+  ): Promise<LeadsMapResponse> {
+    const qs = new URLSearchParams();
+    const { filters, ...restParams } = params;
+    Object.entries(restParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        qs.set(key, Array.isArray(value) ? value.join(',') : String(value));
+      }
+    });
+    if (filters) {
+      appendFilterCriteriaParams(qs, filters);
+    }
+    const suffix = qs.toString();
+    return request<LeadsMapResponse>(
+      `/api/v1/sales/opportunities/map${suffix ? `?${suffix}` : ''}`
     );
   },
 

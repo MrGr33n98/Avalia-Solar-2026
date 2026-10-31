@@ -15,4 +15,6 @@ export const salesKeys = {
   contactDetail: (id: string | number) => [...salesKeys.all, 'contact', id] as const,
   tasks: (filters?: Record<string, unknown>) => [...salesKeys.all, 'tasks', filters || {}] as const,
   today: () => [...salesKeys.all, 'today'] as const,
+  opportunitiesMap: (params?: Record<string, unknown>) =>
+    [...salesKeys.all, 'opportunities-map', params || {}] as const,
 };

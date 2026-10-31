@@ -248,6 +248,23 @@ module Api
           }, status: :ok
         end
 
+        def map
+          query_params = params.to_unsafe_h.symbolize_keys
+          query_params[:all_statuses] = true if query_params[:status].blank? && query_params[:status_in].blank?
+          scope = scoped_opportunities
+          result = ::Sales::OpportunitiesMapQuery.call(query_params, scope)
+          render json: result
+        rescue StandardError => e
+          Rails.logger.error("[Sales::OpportunitiesController#map] Erro: #{e.message}\n#{e.backtrace&.first(5)&.join("\n")}")
+          render json: {
+            error: {
+              code: 'MAP_QUERY_ERROR',
+              message: 'Não foi possível carregar a distribuição geográfica das oportunidades.',
+              request_id: request.request_id
+            }
+          }, status: :internal_server_error
+        end
+
         def show
           render json: { opportunity: opportunity_json(@opportunity) }
         end
