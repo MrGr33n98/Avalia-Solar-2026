@@ -538,9 +538,20 @@ export const salesApi = {
       appendFilterCriteriaParams(qs, filters);
     }
     const suffix = qs.toString();
-    return request<LeadsAnalyticsResponse>(
+    const res = await request<LeadsAnalyticsResponse & { error?: { code?: string; message?: string; request_id?: string } }>(
       `/api/v1/sales/opportunities/analytics${suffix ? `?${suffix}` : ''}`
     );
+    if (res && (res as any).error) {
+      const err = (res as any).error;
+      throw new SalesApiError(
+        200,
+        err.message || 'Estatísticas temporariamente indisponíveis',
+        err.code || 'ANALYTICS_UNAVAILABLE',
+        undefined,
+        err.request_id
+      );
+    }
+    return res;
   },
 
   async getOpportunitiesMap(

@@ -8,13 +8,17 @@ interface LeadsBreakdownCardProps {
   items: LeadsBreakdownItem[];
   emptyMessage?: string;
   isLoading?: boolean;
+  isOptional?: boolean;
+  totalLeads?: number;
 }
 
 export function LeadsBreakdownCard({
   title,
   items,
-  emptyMessage = "We couldn't find anything with these filters",
+  emptyMessage = 'Nenhum dado encontrado com estes filtros',
   isLoading,
+  isOptional,
+  totalLeads,
 }: LeadsBreakdownCardProps) {
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm flex flex-col min-h-[140px]">
@@ -23,7 +27,7 @@ export function LeadsBreakdownCard({
           {title}
         </h4>
         <span className="text-[11px] text-slate-400 font-medium">
-          {items.length > 0 ? `${items.length} ${items.length === 1 ? 'item' : 'itens'}` : ''}
+          {items.length > 0 ? `${items.length} ${items.length === 1 ? 'categoria' : 'categorias'}` : ''}
         </span>
       </div>
 
@@ -33,10 +37,15 @@ export function LeadsBreakdownCard({
           <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
         </div>
       ) : items.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center py-6 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center py-6 text-center">
           <p className="text-xs text-slate-400 dark:text-slate-500 italic">
             {emptyMessage}
           </p>
+          {!isOptional && (totalLeads || 0) > 0 && (
+            <span className="text-[10px] text-amber-600 dark:text-amber-500 font-medium mt-1">
+              Campo não preenchido nos leads cadastrados
+            </span>
+          )}
         </div>
       ) : (
         <div className="space-y-2.5 flex-1 justify-center flex flex-col">

@@ -826,6 +826,9 @@ export interface LeadsAnalyticsSummary {
   avg_value_formatted: string;
   avg_time_open_days: number;
   win_rate_percentage: number;
+  closed_deals?: number;
+  won_deals?: number;
+  lost_deals?: number;
 }
 
 export interface LeadsTimeSeriesItem {

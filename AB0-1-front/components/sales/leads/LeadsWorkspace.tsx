@@ -95,6 +95,8 @@ export default function LeadsWorkspace() {
     void queryClient.invalidateQueries({ queryKey: salesKeys.pipelines() });
     void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
     void queryClient.invalidateQueries({ queryKey: salesKeys.opportunitiesMap() });
+    void queryClient.invalidateQueries({ queryKey: salesKeys.opportunitiesAnalyticsBase() });
+    void queryClient.invalidateQueries({ queryKey: ['sales-opportunities-analytics'] });
     setBoardRefreshVersion((current) => current + 1);
   };
 
@@ -141,6 +143,8 @@ export default function LeadsWorkspace() {
                             setSelectedPipelineId(p.id);
                             void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
                             void queryClient.invalidateQueries({ queryKey: salesKeys.opportunitiesMap() });
+                            void queryClient.invalidateQueries({ queryKey: salesKeys.opportunitiesAnalyticsBase() });
+                            void queryClient.invalidateQueries({ queryKey: ['sales-opportunities-analytics'] });
                             setBoardRefreshVersion((v) => v + 1);
                           }}
                           className={`flex items-center justify-between cursor-pointer py-2 ${
@@ -233,7 +237,7 @@ export default function LeadsWorkspace() {
             <SalesCommandCenter
               hideLayout
               pipelineOnly
-              pipelineId={selectedPipelineId}
+              pipelineId={effectivePipelineId}
               refreshVersion={boardRefreshVersion}
               initialView={view === 'list' ? 'table' : 'kanban'}
               searchQuery={search}
@@ -244,7 +248,7 @@ export default function LeadsWorkspace() {
         ) : view === 'map' ? (
           <div className="relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs p-2">
             <LeadsMapView
-              pipelineId={selectedPipelineId}
+              pipelineId={effectivePipelineId}
               searchQuery={search}
               filters={nutshellFilters}
               onSwitchView={(newView) => handleViewChange(newView)}
@@ -274,6 +278,8 @@ export default function LeadsWorkspace() {
           setSelectedPipelineId(created.id);
           void queryClient.invalidateQueries({ queryKey: salesKeys.pipelines() });
           void queryClient.invalidateQueries({ queryKey: salesKeys.pipelineBoards() });
+          void queryClient.invalidateQueries({ queryKey: salesKeys.opportunitiesAnalyticsBase() });
+          void queryClient.invalidateQueries({ queryKey: ['sales-opportunities-analytics'] });
           setBoardRefreshVersion((v) => v + 1);
         }}
       />

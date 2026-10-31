@@ -13,6 +13,8 @@ export function useCreateOpportunityMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: salesKeys.opportunities() });
       queryClient.invalidateQueries({ queryKey: salesKeys.pipelines() });
+      queryClient.invalidateQueries({ queryKey: salesKeys.opportunitiesAnalyticsBase() });
+      queryClient.invalidateQueries({ queryKey: ['sales-opportunities-analytics'] });
       toast.success('Oportunidade criada com sucesso!');
     },
     onError: (err: any) => {

@@ -123,6 +123,20 @@ RSpec.describe 'Api::V1::Sales::OpportunitiesController#analytics', type: :reque
         expect(json.dig('summary', 'avg_value_formatted')).to eq('R$ 25.000,00')
         expect(json.dig('summary', 'win_rate_percentage')).to eq(0.0)
       end
+
+      it 'T035: produz distribuições obrigatórias (assignee, stage, age, value_bracket, source, channel) não vazias para 1 lead' do
+        get '/api/v1/sales/opportunities/analytics', headers: headers_for(sales_user)
+
+        expect(response).to have_http_status(:ok)
+        breakdowns = json['breakdowns']
+
+        expect(breakdowns['assignee'].sum { |i| i['count'] }).to eq(1)
+        expect(breakdowns['stage'].sum { |i| i['count'] }).to eq(1)
+        expect(breakdowns['age'].sum { |i| i['count'] }).to eq(1)
+        expect(breakdowns['value_bracket'].sum { |i| i['count'] }).to eq(1)
+        expect(breakdowns['source'].sum { |i| i['count'] }).to eq(1)
+        expect(breakdowns['channel'].sum { |i| i['count'] }).to eq(1)
+      end
     end
 
     context 'TC-003 e TC-004: com múltiplos leads em status open, won e lost' do
@@ -184,7 +198,16 @@ RSpec.describe 'Api::V1::Sales::OpportunitiesController#analytics', type: :reque
 
     context 'TC-006 e TC-007: distribuição por responsável (users.name e fallback)' do
       let(:sales_user_without_name) do
-        create(:user, company: tenant_company, role: :company, name: nil, email: 'semnome@tenant.com')
+        user = build(:user, company: tenant_company, role: :company, name: 'Temp Name', email: 'semnome@tenant.com')
+        user.save!(validate: false)
+        user.update_columns(name: nil)
+        user
+      end
+      let(:user_without_name_or_email) do
+        user = build(:user, company: tenant_company, role: :company, name: 'Temp Name 2', email: 'temp@tenant.com')
+        user.save!(validate: false)
+        user.update_columns(name: nil, email: '')
+        user
       end
 
       before do
@@ -209,7 +232,7 @@ RSpec.describe 'Api::V1::Sales::OpportunitiesController#analytics', type: :reque
         tenant_account.opportunities.create!(
           pipeline: pipeline_a,
           stage: stage_a1,
-          owner: nil,
+          owner: user_without_name_or_email,
           name: 'Lead Desatribuído',
           status: 'open',
           temperature: 'cold',
@@ -395,6 +418,149 @@ RSpec.describe 'Api::V1::Sales::OpportunitiesController#analytics', type: :reque
           'assignee', 'stage', 'product', 'outcome', 'source',
           'competitor', 'tag', 'territory', 'age', 'value_bracket', 'channel'
         )
+      end
+    end
+
+    context 'T036 e E2E-16: quando ocorre falha fatal de agregação' do
+      before do
+        allow_any_instance_of(ActiveRecord::Relation).to receive(:pick).and_raise(ActiveRecord::StatementInvalid.new('Simulated SQL Error'))
+      end
+
+      it 'retorna status 500 com código ANALYTICS_UNAVAILABLE e request_id sem false success 200' do
+        get '/api/v1/sales/opportunities/analytics', headers: headers_for(sales_user)
+
+        expect(response).to have_http_status(:internal_server_error)
+        expect(json).to have_key('error')
+        expect(json.dig('error', 'code')).to eq('ANALYTICS_UNAVAILABLE')
+        expect(json.dig('error', 'message')).to be_present
+        expect(json.dig('error', 'request_id')).to be_present
+        expect(json).not_to have_key('summary')
+      end
+    end
+
+    context 'T039: agregação de tags, concorrentes e território' do
+      let!(:tag) { Sales::Tag.create!(name: 'VIP Solar', entity_type: 'Opportunity') }
+      let!(:competitor) { Sales::Competitor.create!(name: 'Concorrente Alpha') }
+      let!(:opp_rich) do
+        opp = tenant_account.opportunities.create!(
+          pipeline: pipeline_a,
+          stage: stage_a1,
+          owner: sales_user,
+          name: 'Lead com Relações N:M',
+          status: 'open',
+          temperature: 'hot',
+          value_cents: 1_500_000
+        )
+        Sales::Tagging.create!(tag: tag, taggable: opp)
+        Sales::OpportunityCompetitor.create!(opportunity: opp, competitor: competitor)
+        opp
+      end
+
+      it 'calcula corretamente as distribuições de tag, competitor e territory' do
+        get '/api/v1/sales/opportunities/analytics', headers: headers_for(sales_user)
+
+        expect(response).to have_http_status(:ok)
+        breakdowns = json['breakdowns']
+
+        tags = breakdowns['tag']
+        expect(tags.find { |t| t['label'] == 'VIP Solar' }&.dig('count')).to eq(1)
+
+        competitors = breakdowns['competitor']
+        expect(competitors.find { |c| c['label'] == 'Concorrente Alpha' }&.dig('count')).to eq(1)
+
+        territory = breakdowns['territory']
+        expect(territory.find { |t| t['label'] == 'SP' }&.dig('count')).to eq(1)
+      end
+    end
+
+    context 'T016 e T017: normalização de source e channel quando ausentes ou strings vazias' do
+      let!(:opp_blank_source) do
+        opp = tenant_account.opportunities.create!(
+          pipeline: pipeline_a,
+          stage: stage_a1,
+          owner: sales_user,
+          name: 'Lead sem Source',
+          status: 'open',
+          source_id: nil,
+          temperature: 'warm',
+          value_cents: 300_000,
+          metadata: {}
+        )
+        opp.update_column(:source, '   ')
+        opp
+      end
+
+      it 'normaliza source e channel para Não informado sem imputar Direct falsamente' do
+        get '/api/v1/sales/opportunities/analytics', headers: headers_for(sales_user)
+
+        expect(response).to have_http_status(:ok)
+        source_breakdown = json.dig('breakdowns', 'source')
+        expect(source_breakdown.map { |s| s['label'] }).to include('Não informado')
+
+        channel_breakdown = json.dig('breakdowns', 'channel')
+        expect(channel_breakdown.map { |c| c['label'] }).to include('Não informado')
+      end
+    end
+
+    context 'P1: melhorias de qualidade de dados, filtros e agregações' do
+      let!(:opp_high_priority) do
+        tenant_account.opportunities.create!(
+          pipeline: pipeline_a,
+          stage: stage_a1,
+          owner: sales_user,
+          name: 'Lead Prioridade Alta',
+          status: 'open',
+          priority: 'high',
+          value_cents: 5_000_000
+        )
+      end
+
+      let!(:opp_won_with_date) do
+        tenant_account.opportunities.create!(
+          pipeline: pipeline_a,
+          stage: stage_a1,
+          owner: sales_user,
+          name: 'Lead Ganho Realizado',
+          status: 'won',
+          priority: 'medium',
+          value_cents: 10_000_000,
+          won_at: 1.day.ago
+        )
+      end
+
+      it 'filtra por prioridade corretamente via OpportunitiesQuery' do
+        get '/api/v1/sales/opportunities/analytics?priority=high', headers: headers_for(sales_user)
+
+        expect(response).to have_http_status(:ok)
+        expect(json.dig('summary', 'total_leads')).to eq(1)
+        expect(json.dig('summary', 'total_value_cents')).to eq(5_000_000)
+      end
+
+      it 'calcula win_rate_percentage considerando apenas negócios fechados' do
+        get '/api/v1/sales/opportunities/analytics?all_statuses=true', headers: headers_for(sales_user)
+
+        expect(response).to have_http_status(:ok)
+        expect(json.dig('summary', 'win_rate_percentage')).to eq(100.0)
+        outcome = json.dig('breakdowns', 'outcome')
+        expect(outcome.find { |o| o['status'] == 'won' }&.dig('count')).to eq(1)
+        expect(outcome.find { |o| o['status'] == 'lost' }&.dig('count')).to eq(0)
+      end
+
+      it 'suporta date_field=actual_close_date distinguindo fechamento realizado de previsão' do
+        get '/api/v1/sales/opportunities/analytics?date_field=actual_close_date&all_statuses=true', headers: headers_for(sales_user)
+
+        expect(response).to have_http_status(:ok)
+        time_series = json['time_series']
+        expect(time_series.sum { |p| p['quantity'] }).to eq(1)
+      end
+
+      it 'classifica UF não informada na dimensão de território quando o estado está em branco' do
+        tenant_account.update_columns(state: nil)
+        get '/api/v1/sales/opportunities/analytics', headers: headers_for(sales_user)
+
+        expect(response).to have_http_status(:ok)
+        territory = json.dig('breakdowns', 'territory')
+        expect(territory.map { |t| t['label'] }).to include('UF não informada')
       end
     end
   end

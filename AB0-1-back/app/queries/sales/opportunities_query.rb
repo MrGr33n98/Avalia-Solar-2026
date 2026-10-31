@@ -42,10 +42,20 @@ module Sales
       scope = scope.where.not(sales_opportunities: { sales_account_id: ids(:account_ids_not) }) if @params[:account_ids_not].present?
 
       # Pipeline & Stage
-      scope = scope.where(sales_opportunities: { sales_pipeline_id: @params[:pipeline_id] }) if @params[:pipeline_id].present?
+      if @params[:pipeline_id].present? || @params[:pipeline_ids].present?
+        pipe_ids = (ids(:pipeline_ids) + ids(:pipeline_id)).uniq
+        scope = scope.where(sales_opportunities: { sales_pipeline_id: pipe_ids }) if pipe_ids.any?
+      end
       scope = scope.where(sales_opportunities: { sales_stage_id: ids(:stage_id) }) if @params[:stage_id].present?
       scope = scope.where.not(sales_opportunities: { sales_stage_id: ids(:stage_id_not) }) if @params[:stage_id_not].present?
       scope = scope.joins(:stage).where(sales_stages: { key: @params[:stage_key] }) if @params[:stage_key].present?
+
+      # Priority
+      if @params[:priority].present?
+        scope = scope.where(sales_opportunities: { priority: Array(@params[:priority]).map(&:to_s).reject(&:blank?) })
+      elsif @params[:priorities].present?
+        scope = scope.where(sales_opportunities: { priority: Array(@params[:priorities]).map(&:to_s).reject(&:blank?) })
+      end
 
       # Assignee / Owner
       if @params[:owner_id].present?

@@ -166,12 +166,30 @@ describe('LeadsAnalyticsView Frontend Suite (PRD Analytics de Leads)', () => {
       expect(screen.getByText('Carlos Vendedor')).toBeInTheDocument();
     });
 
+    expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText('R$ 1.200.000,00')).toBeInTheDocument();
     expect(screen.getByText('R$ 100.000,00')).toBeInTheDocument();
-    expect(screen.getByText('14.5 days')).toBeInTheDocument();
+    expect(screen.getByText('14.5 dias')).toBeInTheDocument();
     expect(screen.getByText('33.3%')).toBeInTheDocument();
     expect(screen.getByText('Ana Comercial')).toBeInTheDocument();
     expect(screen.getByText('Kit Solar 5kWp')).toBeInTheDocument();
+  });
+
+  it('renders error state with requestId when server returns error with requestId', async () => {
+    const errorWithId = Object.assign(new Error('Serviço de análise temporariamente indisponível'), {
+      requestId: 'req-test-uuid-456',
+    });
+    (salesApi.getOpportunitiesAnalytics as jest.Mock).mockRejectedValue(errorWithId);
+
+    renderWithClient(<LeadsAnalyticsView pipelineId={1} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Erro ao carregar estatísticas do conjunto de leads')
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/req-test-uuid-456/)).toBeInTheDocument();
   });
 
   it('renders empty state cleanly when total_leads is zero without throwing', async () => {

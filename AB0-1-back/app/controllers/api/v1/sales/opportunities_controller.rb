@@ -44,7 +44,16 @@ module Api
           closed_count = won_count + lost_count
           win_rate_percentage = closed_count.positive? ? ((won_count.to_f / closed_count) * 100).round(1) : 0.0
 
-          date_col = params[:date_field] == 'close_date' ? 'COALESCE(sales_opportunities.won_at, sales_opportunities.lost_at, sales_opportunities.expected_close_date::timestamp)' : 'sales_opportunities.created_at'
+          date_col = case params[:date_field]
+                     when 'actual_close_date', 'won_lost_date'
+                       'COALESCE(sales_opportunities.won_at, sales_opportunities.lost_at)'
+                     when 'expected_close_date', 'forecast_date'
+                       'sales_opportunities.expected_close_date::timestamp'
+                     when 'close_date'
+                       'COALESCE(sales_opportunities.won_at, sales_opportunities.lost_at, sales_opportunities.expected_close_date::timestamp)'
+                     else
+                       'sales_opportunities.created_at'
+                     end
           group_trunc = params[:group_by] == 'month' ? 'month' : 'week'
 
           time_series_rows = scope.where("#{date_col} IS NOT NULL")
@@ -73,13 +82,13 @@ module Api
           end
 
           calc_pct = ->(c) { total_leads.positive? ? ((c.to_f / total_leads) * 100).round(1) : 0.0 }
-          safe_calc = ->(fallback = []) do
-            begin
-              yield
-            rescue => e
-              Rails.logger.error("[SALES_ANALYTICS_BREAKDOWN_ERROR] #{e.class}: #{e.message}")
-              fallback
-            end
+          safe_calc = ->(_fallback = [], &block) do
+            raise ArgumentError, 'Bloco de agregação ausente' unless block
+
+            block.call
+          rescue StandardError => e
+            Rails.logger.error("[SALES_ANALYTICS_BREAKDOWN_ERROR] #{e.class}: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
+            raise
           end
 
           assignee_data = safe_calc.call([]) do
@@ -117,11 +126,12 @@ module Api
             { status: 'lost', label: 'Lost', count: lost_count, percentage: calc_pct.call(lost_count), color: '#DC2626' }
           ]
 
+          source_sql = Arel.sql("COALESCE(NULLIF(TRIM(sales_sources.name), ''), NULLIF(TRIM(sales_opportunities.source), ''), 'Não informado')")
           source_data = safe_calc.call([]) do
             scope.joins('LEFT JOIN sales_sources ON sales_sources.id = sales_opportunities.source_id')
-                 .group(Arel.sql("COALESCE(sales_sources.name, sales_opportunities.source, 'Não informado')"))
+                 .group(source_sql)
                  .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                 .pluck(Arel.sql("COALESCE(sales_sources.name, sales_opportunities.source, 'Não informado')"), Arel.sql('COUNT(sales_opportunities.id)'))
+                 .pluck(source_sql, Arel.sql('COUNT(sales_opportunities.id)'))
                  .map { |src, c| { label: src, count: c.to_i, percentage: calc_pct.call(c) } }
           end
 
@@ -141,13 +151,13 @@ module Api
                  .map { |tid, tname, c| { id: tid, label: tname, count: c.to_i, percentage: calc_pct.call(c) } }
           end
 
+          territory_sql = Arel.sql("COALESCE(NULLIF(UPPER(TRIM(sales_accounts.state)), ''), 'UF não informada')")
           territory_data = safe_calc.call([]) do
-            scope.joins(:account)
-                 .where.not(sales_accounts: { state: [nil, ''] })
-                 .group('sales_accounts.state')
+            scope.left_joins(:account)
+                 .group(territory_sql)
                  .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                 .pluck('sales_accounts.state', Arel.sql('COUNT(sales_opportunities.id)'))
-                 .map { |st, c| { label: st.upcase, count: c.to_i, percentage: calc_pct.call(c) } }
+                 .pluck(territory_sql, Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map { |st, c| { label: st, count: c.to_i, percentage: calc_pct.call(c) } }
           end
 
           age_sql = <<-SQL.squish
@@ -181,12 +191,20 @@ module Api
                  .map { |vbucket, c| { label: vbucket, count: c.to_i, percentage: calc_pct.call(c) } }
           end
 
-          channel_sql = "COALESCE(sales_opportunities.metadata->>'channel', sales_opportunities.metadata->>'utm_medium', sales_opportunities.metadata->>'acquisition_channel', sales_sources.name, sales_opportunities.source, 'Direct')"
+          channel_sql = Arel.sql(
+            "COALESCE(" \
+            "NULLIF(TRIM(sales_opportunities.metadata->>'channel'), ''), " \
+            "NULLIF(TRIM(sales_opportunities.metadata->>'utm_medium'), ''), " \
+            "NULLIF(TRIM(sales_opportunities.metadata->>'acquisition_channel'), ''), " \
+            "NULLIF(TRIM(sales_sources.name), ''), " \
+            "NULLIF(TRIM(sales_opportunities.source), ''), " \
+            "'Não informado')"
+          )
           channel_data = safe_calc.call([]) do
             scope.joins('LEFT JOIN sales_sources ON sales_sources.id = sales_opportunities.source_id')
-                 .group(Arel.sql(channel_sql))
+                 .group(channel_sql)
                  .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                 .pluck(Arel.sql(channel_sql), Arel.sql('COUNT(sales_opportunities.id)'))
+                 .pluck(channel_sql, Arel.sql('COUNT(sales_opportunities.id)'))
                  .map { |ch, c| { label: ch, count: c.to_i, percentage: calc_pct.call(c) } }
           end
 
@@ -216,36 +234,15 @@ module Api
             }
           }
         rescue => e
-          Rails.logger.error("[SALES_ANALYTICS_FATAL] #{e.class}: #{e.message}\n#{e.backtrace.first(15).join("\n")}")
+          req_id = request.request_id || SecureRandom.uuid
+          Rails.logger.error("[SALES_ANALYTICS_FATAL] request_id=#{req_id} #{e.class}: #{e.message}\n#{e.backtrace.first(15).join("\n")}")
           render json: {
-            summary: {
-              total_leads: 0,
-              total_value_cents: 0,
-              total_value_formatted: 'R$ 0,00',
-              avg_value_cents: 0,
-              avg_value_formatted: 'R$ 0,00',
-              avg_time_open_days: 0.0,
-              win_rate_percentage: 0.0
-            },
-            time_series: [],
-            breakdowns: {
-              assignee: [],
-              stage: [],
-              product: [],
-              outcome: [],
-              source: [],
-              competitor: [],
-              tag: [],
-              territory: [],
-              age: [],
-              value_bracket: [],
-              channel: []
-            },
             error: {
               code: 'ANALYTICS_UNAVAILABLE',
-              message: 'Estatísticas temporariamente indisponíveis'
+              message: 'Não foi possível carregar os indicadores neste momento.',
+              request_id: req_id
             }
-          }, status: :ok
+          }, status: :internal_server_error
         end
 
         def map

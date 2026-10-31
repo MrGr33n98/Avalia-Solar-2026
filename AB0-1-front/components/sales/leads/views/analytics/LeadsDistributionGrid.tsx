@@ -7,91 +7,110 @@ import { LeadsBreakdownCard } from './LeadsBreakdownCard';
 interface LeadsDistributionGridProps {
   breakdowns: LeadsBreakdowns;
   isLoading?: boolean;
+  totalLeads?: number;
 }
 
-export function LeadsDistributionGrid({ breakdowns, isLoading }: LeadsDistributionGridProps) {
+export function LeadsDistributionGrid({
+  breakdowns,
+  isLoading,
+  totalLeads,
+}: LeadsDistributionGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Coluna 1 (Esquerda no Benchmark) */}
       <div className="space-y-4">
         <LeadsBreakdownCard
-          title="Assignee"
+          title="Responsável"
           items={breakdowns.assignee || []}
           emptyMessage="Nenhum responsável associado aos leads"
           isLoading={isLoading}
+          totalLeads={totalLeads}
         />
 
         <LeadsBreakdownCard
-          title="Product"
+          title="Produtos"
           items={breakdowns.product || []}
-          emptyMessage="We couldn't find anything with these filters"
+          emptyMessage="Nenhum produto vinculado a este conjunto de oportunidades"
           isLoading={isLoading}
+          isOptional={true}
+          totalLeads={totalLeads}
         />
 
         <LeadsBreakdownCard
-          title="Source"
+          title="Origem"
           items={breakdowns.source || []}
           emptyMessage="Nenhuma origem informada"
           isLoading={isLoading}
+          totalLeads={totalLeads}
         />
 
         <LeadsBreakdownCard
-          title="Competitor"
+          title="Concorrentes"
           items={breakdowns.competitor || []}
           emptyMessage="Nenhum concorrente mapeado"
           isLoading={isLoading}
+          isOptional={true}
+          totalLeads={totalLeads}
         />
 
         <LeadsBreakdownCard
-          title="Age"
+          title="Idade do Lead"
           items={breakdowns.age || []}
           emptyMessage="Sem dados de idade disponíveis"
           isLoading={isLoading}
+          totalLeads={totalLeads}
         />
 
         <LeadsBreakdownCard
-          title="Channel"
+          title="Canal de Aquisição"
           items={breakdowns.channel || []}
           emptyMessage="Nenhum canal de marketing registrado"
           isLoading={isLoading}
+          totalLeads={totalLeads}
         />
       </div>
 
       {/* Coluna 2 (Direita no Benchmark) */}
       <div className="space-y-4">
         <LeadsBreakdownCard
-          title="Stage"
+          title="Estágio do Funil"
           items={breakdowns.stage || []}
           emptyMessage="Sem estágios configurados"
           isLoading={isLoading}
+          totalLeads={totalLeads}
         />
 
         <LeadsBreakdownCard
-          title="Outcome"
+          title="Desfecho (Status)"
           items={breakdowns.outcome || []}
           emptyMessage="Sem desfechos registrados"
           isLoading={isLoading}
+          totalLeads={totalLeads}
         />
 
         <LeadsBreakdownCard
-          title="Tag"
+          title="Tags"
           items={breakdowns.tag || []}
           emptyMessage="Nenhuma tag aplicada"
           isLoading={isLoading}
+          isOptional={true}
+          totalLeads={totalLeads}
         />
 
         <LeadsBreakdownCard
-          title="Territory"
+          title="Território (UF)"
           items={breakdowns.territory || []}
-          emptyMessage="Nenhum território informado"
+          emptyMessage="Nenhum estado/território informado"
           isLoading={isLoading}
+          totalLeads={totalLeads}
         />
 
         <LeadsBreakdownCard
-          title="Value"
+          title="Faixa de Valor"
           items={breakdowns.value_bracket || []}
           emptyMessage="Sem valores calculados"
           isLoading={isLoading}
+          totalLeads={totalLeads}
         />
       </div>
     </div>

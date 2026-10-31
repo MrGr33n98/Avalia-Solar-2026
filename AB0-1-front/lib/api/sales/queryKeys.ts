@@ -19,4 +19,7 @@ export const salesKeys = {
   today: () => [...salesKeys.all, 'today'] as const,
   opportunitiesMap: (params?: Record<string, unknown>) =>
     [...salesKeys.all, 'opportunities-map', params || {}] as const,
+  opportunitiesAnalyticsBase: () => [...salesKeys.all, 'opportunities-analytics'] as const,
+  opportunitiesAnalytics: (params?: Record<string, unknown>) =>
+    [...salesKeys.opportunitiesAnalyticsBase(), params || {}] as const,
 };

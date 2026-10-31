@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import posthog from 'posthog-js';
 import { salesApi } from '@/lib/api/sales/client';
+import { salesKeys } from '@/lib/api/sales/queryKeys';
 import type { NutshellFilterCriteria } from '@/lib/api/sales/types';
 import { LeadsKpiSummaryBar } from './analytics/LeadsKpiSummaryBar';
 import { LeadsTimeSeriesSection } from './analytics/LeadsTimeSeriesSection';
@@ -36,7 +37,7 @@ export function LeadsAnalyticsView({
   }, [pipelineId, searchQuery, filters, dateField, groupBy]);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['sales-opportunities-analytics', queryParams],
+    queryKey: salesKeys.opportunitiesAnalytics(queryParams),
     queryFn: () => salesApi.getOpportunitiesAnalytics(queryParams),
     staleTime: 30_000,
   });
@@ -57,6 +58,14 @@ export function LeadsAnalyticsView({
       // Ignora falhas de telemetria
     }
   }, [pipelineId, searchQuery, dateField, groupBy, metric]);
+
+  const fatalError = (data as any)?.error;
+  const isFatal = isError || Boolean(fatalError);
+  const errorMessage =
+    (error as Error)?.message ||
+    fatalError?.message ||
+    'Não foi possível buscar as agregações analíticas.';
+  const requestId = (error as any)?.requestId || fatalError?.request_id;
 
   const summary = data?.summary || {
     total_leads: 0,
@@ -82,7 +91,7 @@ export function LeadsAnalyticsView({
     channel: [],
   };
 
-  if (isError) {
+  if (isFatal) {
     return (
       <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg p-6 text-center space-y-3">
         <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
@@ -90,8 +99,13 @@ export function LeadsAnalyticsView({
           Erro ao carregar estatísticas do conjunto de leads
         </h4>
         <p className="text-xs text-red-700 dark:text-red-400 max-w-md mx-auto">
-          {(error as Error)?.message || 'Não foi possível buscar as agregações analíticas.'}
+          {errorMessage}
         </p>
+        {requestId && (
+          <p className="text-[11px] text-slate-500 font-mono">
+            ID da requisição: {requestId}
+          </p>
+        )}
         <button
           type="button"
           onClick={() => refetch()}
@@ -122,7 +136,7 @@ export function LeadsAnalyticsView({
       />
 
       {/* 3. Grid de 11 Dimensões de Distribuição em 2 Colunas */}
-      <LeadsDistributionGrid breakdowns={breakdowns} isLoading={isLoading} />
+      <LeadsDistributionGrid breakdowns={breakdowns} isLoading={isLoading} totalLeads={summary.total_leads} />
     </div>
   );
 }
