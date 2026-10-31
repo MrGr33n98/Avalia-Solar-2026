@@ -41,7 +41,7 @@ export const BANNER_PLACEMENT_ASPECT_RATIOS: Record<string, string> = {
   companies_right_rail: '1/2',
   companies_footer: '15/2',
   article_footer_cta: '15/2',
-  company_profile_related_carousel: '15/2',
+  company_profile_related_carousel: '4/1',
   comparison_floating_bar: '6/1',
   groups_right_rail: '1/2',
 };
@@ -70,16 +70,25 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     ambientBackground: false,
   },
   company_profile_about_inline: {
-    aspectRatioClass: 'aspect-[4/1] md:aspect-[5/1] lg:aspect-[6/1]',
+    aspectRatioClass: 'aspect-[3/1] md:aspect-[3.5/1] lg:aspect-[4/1]',
     defaultAspectRatio: '4/1',
-    mobileAspectRatio: '4/1',
-    tabletAspectRatio: '5/1',
-    desktopAspectRatio: '6/1',
-    mobileMinHeight: 84,
-    desktopMaxHeight: 200,
-    fit: 'contain',
+    mobileAspectRatio: '3/1',
+    tabletAspectRatio: '3.5/1',
+    desktopAspectRatio: '4/1',
+    mobileMinHeight: 90,
+    desktopMaxHeight: 220,
+    fit: 'cover',
     ambientBackground: true,
     ignoreCreativeDimensions: true,
+  },
+  company_profile_related_carousel: {
+    aspectRatioClass: 'aspect-[3/1] md:aspect-[3.5/1] lg:aspect-[4/1]',
+    defaultAspectRatio: '4/1',
+    mobileAspectRatio: '3/1',
+    tabletAspectRatio: '3.5/1',
+    desktopAspectRatio: '4/1',
+    fit: 'cover',
+    ambientBackground: true,
   },
   compare_page_sidebar: {
     aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
@@ -121,4 +130,3 @@ export type BannerLocation =
   | 'company_profile_sidebar_sponsored'
   | 'company_profile_related_carousel'
   | 'groups_right_rail';
-

@@ -67,7 +67,7 @@ describe('resolveBannerAspectRatio', () => {
   it('retorna a especificação de exibição canônica via getPlacementDisplaySpec', () => {
     const spec = getPlacementDisplaySpec('company_profile_about_inline');
     expect(spec).toBeDefined();
-    expect(spec?.aspectRatioClass).toBe('aspect-[4/1] md:aspect-[5/1] lg:aspect-[6/1]');
+    expect(spec?.aspectRatioClass).toBe('aspect-[3/1] md:aspect-[3.5/1] lg:aspect-[4/1]');
     expect(spec?.ignoreCreativeDimensions).toBe(true);
     expect(spec?.ambientBackground).toBe(true);
   });
@@ -75,7 +75,7 @@ describe('resolveBannerAspectRatio', () => {
   it('retorna a especificação de exibição canônica para compare_page_sidebar (hidden lg:block)', () => {
     const spec = getPlacementDisplaySpec('compare_page_sidebar');
     expect(spec).toBeDefined();
-    expect(spec?.aspectRatioClass).toBe('hidden lg:block lg:aspect-[1/2]');
+    expect(spec?.aspectRatioClass).toBe('w-full max-w-[300px] mx-auto aspect-[1/2]');
     expect(spec?.desktopAspectRatio).toBe('1/2');
     expect(spec?.desktopMaxHeight).toBe(600);
   });

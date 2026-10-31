@@ -52,6 +52,7 @@ export function EmailAssetLibraryDialog({
   const [totalPages, setTotalPages] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const fetchAssets = async () => {
     setLoading(true);
@@ -123,7 +124,7 @@ export function EmailAssetLibraryDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden z-[10060]">
-        <DialogHeader className="p-5 border-b border-slate-200 bg-slate-50/50">
+        <DialogHeader className="p-5 border-b border-slate-200 bg-slate-50/50 pr-12">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-base font-bold text-slate-900">
@@ -133,8 +134,9 @@ export function EmailAssetLibraryDialog({
                 Selecione ou envie imagens otimizadas para templates e campanhas de marketing.
               </DialogDescription>
             </div>
-            <label className="cursor-pointer">
+            <div className="flex items-center gap-2 mr-8">
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
@@ -145,6 +147,7 @@ export function EmailAssetLibraryDialog({
                 type="button"
                 size="sm"
                 disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
                 className="bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs gap-1.5 h-8"
               >
                 {uploading ? (
@@ -154,7 +157,7 @@ export function EmailAssetLibraryDialog({
                 )}
                 <span>Upload Imagem</span>
               </Button>
-            </label>
+            </div>
           </div>
 
           {/* Search + Category Tabs */}
@@ -211,16 +214,33 @@ export function EmailAssetLibraryDialog({
               </Button>
             </div>
           ) : assets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center border-2 border-dashed border-slate-200 rounded-xl">
+            <div
+              onClick={() => !uploading && fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center py-16 gap-3 text-center border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50/70 transition-colors"
+            >
               <div className="p-3 bg-slate-100 rounded-full text-slate-400">
                 <ImageIcon className="w-6 h-6" />
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-700">Nenhuma imagem encontrada</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Faça o upload de uma imagem ou altere o filtro de busca.
+                  Clique aqui ou selecione um arquivo para fazer upload
                 </p>
               </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={uploading}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+                className="mt-1 text-xs gap-1.5 bg-white shadow-2xs"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Selecionar imagem do computador</span>
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">

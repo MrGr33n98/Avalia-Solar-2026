@@ -52,6 +52,7 @@ function BannerImage({
   sizes,
   priority,
   ambientBackground,
+  fit,
   onMediaError,
   onMediaLoad,
 }: {
@@ -59,6 +60,7 @@ function BannerImage({
   sizes: string;
   priority?: boolean;
   ambientBackground?: boolean;
+  fit?: 'contain' | 'cover';
   onMediaError?: () => void;
   onMediaLoad?: () => void;
 }) {
@@ -75,6 +77,7 @@ function BannerImage({
       sizes={sizes}
       quality={80}
       ambientBackground={ambientBackground}
+      fit={fit}
       onMediaError={onMediaError}
       onMediaLoad={onMediaLoad}
       className="absolute inset-0"
@@ -343,6 +346,7 @@ export function BannerContainer({
           priority={isPriority}
           sizes={getSizes(position)}
           ambientBackground={displaySpec?.ambientBackground}
+          fit={displaySpec?.fit || (banner.sponsored ? 'cover' : 'contain')}
           onMediaError={() => handleMediaError(banner)}
           onMediaLoad={() => handleMediaLoad(banner)}
         />
