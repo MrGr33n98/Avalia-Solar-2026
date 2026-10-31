@@ -28,36 +28,36 @@ module Sales
 
       # Status / Outcome
       if @params[:status].present?
-        scope = scope.where(status: @params[:status])
+        scope = scope.where(sales_opportunities: { status: @params[:status] })
       elsif @params[:status_in].present?
-        scope = scope.where(status: Array(@params[:status_in]))
+        scope = scope.where(sales_opportunities: { status: Array(@params[:status_in]) })
       else
-        scope = scope.where(status: 'open') if @params[:all_statuses].blank?
+        scope = scope.where(sales_opportunities: { status: 'open' }) if @params[:all_statuses].blank?
       end
-      scope = scope.where.not(status: Array(@params[:status_not])) if @params[:status_not].present?
+      scope = scope.where.not(sales_opportunities: { status: Array(@params[:status_not]) }) if @params[:status_not].present?
 
       # Account / Company
-      scope = scope.where(sales_account_id: @params[:account_id]) if @params[:account_id].present?
-      scope = scope.where(sales_account_id: ids(:account_ids)) if @params[:account_ids].present?
-      scope = scope.where.not(sales_account_id: ids(:account_ids_not)) if @params[:account_ids_not].present?
+      scope = scope.where(sales_opportunities: { sales_account_id: @params[:account_id] }) if @params[:account_id].present?
+      scope = scope.where(sales_opportunities: { sales_account_id: ids(:account_ids) }) if @params[:account_ids].present?
+      scope = scope.where.not(sales_opportunities: { sales_account_id: ids(:account_ids_not) }) if @params[:account_ids_not].present?
 
       # Pipeline & Stage
-      scope = scope.where(sales_pipeline_id: @params[:pipeline_id]) if @params[:pipeline_id].present?
-      scope = scope.where(sales_stage_id: ids(:stage_id)) if @params[:stage_id].present?
-      scope = scope.where.not(sales_stage_id: ids(:stage_id_not)) if @params[:stage_id_not].present?
+      scope = scope.where(sales_opportunities: { sales_pipeline_id: @params[:pipeline_id] }) if @params[:pipeline_id].present?
+      scope = scope.where(sales_opportunities: { sales_stage_id: ids(:stage_id) }) if @params[:stage_id].present?
+      scope = scope.where.not(sales_opportunities: { sales_stage_id: ids(:stage_id_not) }) if @params[:stage_id_not].present?
       scope = scope.joins(:stage).where(sales_stages: { key: @params[:stage_key] }) if @params[:stage_key].present?
 
       # Assignee / Owner
       if @params[:owner_id].present?
-        scope = scope.where(owner_id: @params[:owner_id]) if numeric?(@params[:owner_id])
-        scope = scope.where(owner_id: nil) if @params[:owner_id].to_s == 'unassigned'
+        scope = scope.where(sales_opportunities: { owner_id: @params[:owner_id] }) if numeric?(@params[:owner_id])
+        scope = scope.where(sales_opportunities: { owner_id: nil }) if @params[:owner_id].to_s == 'unassigned'
       end
-      scope = scope.where(owner_id: ids(:owner_ids)) if @params[:owner_ids].present?
-      scope = scope.where.not(owner_id: ids(:owner_ids_not)) if @params[:owner_ids_not].present?
+      scope = scope.where(sales_opportunities: { owner_id: ids(:owner_ids) }) if @params[:owner_ids].present?
+      scope = scope.where.not(sales_opportunities: { owner_id: ids(:owner_ids_not) }) if @params[:owner_ids_not].present?
 
       # Sources
-      scope = scope.where(source_id: ids(:source_ids)) if @params[:source_ids].present?
-      scope = scope.where.not(source_id: ids(:source_ids_not)) if @params[:source_ids_not].present?
+      scope = scope.where(sales_opportunities: { source_id: ids(:source_ids) }) if @params[:source_ids].present?
+      scope = scope.where.not(sales_opportunities: { source_id: ids(:source_ids_not) }) if @params[:source_ids_not].present?
 
       # Tags
       if @params[:tag_ids].present?

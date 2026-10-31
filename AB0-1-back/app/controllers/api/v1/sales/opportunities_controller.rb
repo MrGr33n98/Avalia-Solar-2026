@@ -73,29 +73,43 @@ module Api
           end
 
           calc_pct = ->(c) { total_leads.positive? ? ((c.to_f / total_leads) * 100).round(1) : 0.0 }
+          safe_calc = ->(fallback = []) do
+            begin
+              yield
+            rescue => e
+              Rails.logger.error("[SALES_ANALYTICS_BREAKDOWN_ERROR] #{e.class}: #{e.message}")
+              fallback
+            end
+          end
 
-          assignee_data = scope.joins('LEFT JOIN users ON users.id = sales_opportunities.owner_id')
-                               .group('users.id', 'users.name', 'users.email')
-                               .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                               .pluck('users.id', 'users.name', 'users.email', Arel.sql('COUNT(sales_opportunities.id)'))
-                               .map do |uid, uname, em, c|
-                                 display_name = uname.presence || em.presence || 'Sem responsável'
-                                 { id: uid, label: display_name, count: c.to_i, percentage: calc_pct.call(c) }
-                               end
+          assignee_data = safe_calc.call([]) do
+            scope.joins('LEFT JOIN users ON users.id = sales_opportunities.owner_id')
+                 .group('users.id', 'users.name', 'users.email')
+                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                 .pluck('users.id', 'users.name', 'users.email', Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map do |uid, uname, em, c|
+                   display_name = uname.presence || em.presence || 'Sem responsável'
+                   { id: uid, label: display_name, count: c.to_i, percentage: calc_pct.call(c) }
+                 end
+          end
 
-          stage_data = scope.joins(:stage)
-                            .group('sales_stages.id', 'sales_stages.name', 'sales_stages.position')
-                            .order('sales_stages.position ASC')
-                            .pluck('sales_stages.id', 'sales_stages.name', Arel.sql('COUNT(sales_opportunities.id)'))
-                            .map do |sid, sname, c|
-                              { id: sid, label: sname, count: c.to_i, percentage: calc_pct.call(c) }
-                            end
+          stage_data = safe_calc.call([]) do
+            scope.joins(:stage)
+                 .group('sales_stages.id', 'sales_stages.name', 'sales_stages.position')
+                 .order('sales_stages.position ASC')
+                 .pluck('sales_stages.id', 'sales_stages.name', Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map do |sid, sname, c|
+                   { id: sid, label: sname, count: c.to_i, percentage: calc_pct.call(c) }
+                 end
+          end
 
-          product_data = scope.joins('INNER JOIN sales_opportunity_line_items ON sales_opportunity_line_items.opportunity_id = sales_opportunities.id INNER JOIN sales_products ON sales_products.id = sales_opportunity_line_items.product_id')
-                              .group('sales_products.id', 'sales_products.name')
-                              .order(Arel.sql('COUNT(DISTINCT sales_opportunities.id) DESC'))
-                              .pluck('sales_products.id', 'sales_products.name', Arel.sql('COUNT(DISTINCT sales_opportunities.id)'))
-                              .map { |pid, pname, c| { id: pid, label: pname, count: c.to_i, percentage: calc_pct.call(c) } }
+          product_data = safe_calc.call([]) do
+            scope.joins('INNER JOIN sales_opportunity_line_items ON sales_opportunity_line_items.opportunity_id = sales_opportunities.id INNER JOIN sales_products ON sales_products.id = sales_opportunity_line_items.product_id')
+                 .group('sales_products.id', 'sales_products.name')
+                 .order(Arel.sql('COUNT(DISTINCT sales_opportunities.id) DESC'))
+                 .pluck('sales_products.id', 'sales_products.name', Arel.sql('COUNT(DISTINCT sales_opportunities.id)'))
+                 .map { |pid, pname, c| { id: pid, label: pname, count: c.to_i, percentage: calc_pct.call(c) } }
+          end
 
           outcome_data = [
             { status: 'won', label: 'Won', count: won_count, percentage: calc_pct.call(won_count), color: '#16A34A' },
@@ -103,30 +117,38 @@ module Api
             { status: 'lost', label: 'Lost', count: lost_count, percentage: calc_pct.call(lost_count), color: '#DC2626' }
           ]
 
-          source_data = scope.joins('LEFT JOIN sales_sources ON sales_sources.id = sales_opportunities.source_id')
-                             .group(Arel.sql("COALESCE(sales_sources.name, sales_opportunities.source, 'Não informado')"))
-                             .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                             .pluck(Arel.sql("COALESCE(sales_sources.name, sales_opportunities.source, 'Não informado')"), Arel.sql('COUNT(sales_opportunities.id)'))
-                             .map { |src, c| { label: src, count: c.to_i, percentage: calc_pct.call(c) } }
+          source_data = safe_calc.call([]) do
+            scope.joins('LEFT JOIN sales_sources ON sales_sources.id = sales_opportunities.source_id')
+                 .group(Arel.sql("COALESCE(sales_sources.name, sales_opportunities.source, 'Não informado')"))
+                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                 .pluck(Arel.sql("COALESCE(sales_sources.name, sales_opportunities.source, 'Não informado')"), Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map { |src, c| { label: src, count: c.to_i, percentage: calc_pct.call(c) } }
+          end
 
-          competitor_data = scope.joins(:competitors)
-                                 .group('sales_competitors.id', 'sales_competitors.name')
-                                 .order(Arel.sql('COUNT(DISTINCT sales_opportunities.id) DESC'))
-                                 .pluck('sales_competitors.id', 'sales_competitors.name', Arel.sql('COUNT(DISTINCT sales_opportunities.id)'))
-                                 .map { |cid, cname, c| { id: cid, label: cname, count: c.to_i, percentage: calc_pct.call(c) } }
+          competitor_data = safe_calc.call([]) do
+            scope.joins(:competitors)
+                 .group('sales_competitors.id', 'sales_competitors.name')
+                 .order(Arel.sql('COUNT(DISTINCT sales_opportunities.id) DESC'))
+                 .pluck('sales_competitors.id', 'sales_competitors.name', Arel.sql('COUNT(DISTINCT sales_opportunities.id)'))
+                 .map { |cid, cname, c| { id: cid, label: cname, count: c.to_i, percentage: calc_pct.call(c) } }
+          end
 
-          tag_data = scope.joins(:tags)
-                          .group('sales_tags.id', 'sales_tags.name')
-                          .order(Arel.sql('COUNT(DISTINCT sales_opportunities.id) DESC'))
-                          .pluck('sales_tags.id', 'sales_tags.name', Arel.sql('COUNT(DISTINCT sales_opportunities.id)'))
-                          .map { |tid, tname, c| { id: tid, label: tname, count: c.to_i, percentage: calc_pct.call(c) } }
+          tag_data = safe_calc.call([]) do
+            scope.joins(:tags)
+                 .group('sales_tags.id', 'sales_tags.name')
+                 .order(Arel.sql('COUNT(DISTINCT sales_opportunities.id) DESC'))
+                 .pluck('sales_tags.id', 'sales_tags.name', Arel.sql('COUNT(DISTINCT sales_opportunities.id)'))
+                 .map { |tid, tname, c| { id: tid, label: tname, count: c.to_i, percentage: calc_pct.call(c) } }
+          end
 
-          territory_data = scope.joins(:account)
-                                .where.not('sales_accounts.state' => [nil, ''])
-                                .group('sales_accounts.state')
-                                .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                                .pluck('sales_accounts.state', Arel.sql('COUNT(sales_opportunities.id)'))
-                                .map { |st, c| { label: st.upcase, count: c.to_i, percentage: calc_pct.call(c) } }
+          territory_data = safe_calc.call([]) do
+            scope.joins(:account)
+                 .where.not(sales_accounts: { state: [nil, ''] })
+                 .group('sales_accounts.state')
+                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                 .pluck('sales_accounts.state', Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map { |st, c| { label: st.upcase, count: c.to_i, percentage: calc_pct.call(c) } }
+          end
 
           age_sql = <<-SQL.squish
             CASE
@@ -136,10 +158,12 @@ module Api
               ELSE '> 3 months'
             END
           SQL
-          age_data = scope.group(Arel.sql(age_sql))
-                          .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                          .pluck(Arel.sql(age_sql), Arel.sql('COUNT(sales_opportunities.id)'))
-                          .map { |bucket, c| { label: bucket, count: c.to_i, percentage: calc_pct.call(c) } }
+          age_data = safe_calc.call([]) do
+            scope.group(Arel.sql(age_sql))
+                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                 .pluck(Arel.sql(age_sql), Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map { |bucket, c| { label: bucket, count: c.to_i, percentage: calc_pct.call(c) } }
+          end
 
           val_sql = <<-SQL.squish
             CASE
@@ -150,17 +174,21 @@ module Api
               ELSE 'R$ 75k+'
             END
           SQL
-          value_data = scope.group(Arel.sql(val_sql))
-                            .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                            .pluck(Arel.sql(val_sql), Arel.sql('COUNT(sales_opportunities.id)'))
-                            .map { |vbucket, c| { label: vbucket, count: c.to_i, percentage: calc_pct.call(c) } }
+          value_data = safe_calc.call([]) do
+            scope.group(Arel.sql(val_sql))
+                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                 .pluck(Arel.sql(val_sql), Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map { |vbucket, c| { label: vbucket, count: c.to_i, percentage: calc_pct.call(c) } }
+          end
 
           channel_sql = "COALESCE(sales_opportunities.metadata->>'channel', sales_opportunities.metadata->>'utm_medium', sales_opportunities.metadata->>'acquisition_channel', sales_sources.name, sales_opportunities.source, 'Direct')"
-          channel_data = scope.joins('LEFT JOIN sales_sources ON sales_sources.id = sales_opportunities.source_id')
-                              .group(Arel.sql(channel_sql))
-                              .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                              .pluck(Arel.sql(channel_sql), Arel.sql('COUNT(sales_opportunities.id)'))
-                              .map { |ch, c| { label: ch, count: c.to_i, percentage: calc_pct.call(c) } }
+          channel_data = safe_calc.call([]) do
+            scope.joins('LEFT JOIN sales_sources ON sales_sources.id = sales_opportunities.source_id')
+                 .group(Arel.sql(channel_sql))
+                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
+                 .pluck(Arel.sql(channel_sql), Arel.sql('COUNT(sales_opportunities.id)'))
+                 .map { |ch, c| { label: ch, count: c.to_i, percentage: calc_pct.call(c) } }
+          end
 
           render json: {
             summary: {
@@ -187,6 +215,37 @@ module Api
               channel: channel_data
             }
           }
+        rescue => e
+          Rails.logger.error("[SALES_ANALYTICS_FATAL] #{e.class}: #{e.message}\n#{e.backtrace.first(15).join("\n")}")
+          render json: {
+            summary: {
+              total_leads: 0,
+              total_value_cents: 0,
+              total_value_formatted: 'R$ 0,00',
+              avg_value_cents: 0,
+              avg_value_formatted: 'R$ 0,00',
+              avg_time_open_days: 0.0,
+              win_rate_percentage: 0.0
+            },
+            time_series: [],
+            breakdowns: {
+              assignee: [],
+              stage: [],
+              product: [],
+              outcome: [],
+              source: [],
+              competitor: [],
+              tag: [],
+              territory: [],
+              age: [],
+              value_bracket: [],
+              channel: []
+            },
+            error: {
+              code: 'ANALYTICS_UNAVAILABLE',
+              message: 'Estatísticas temporariamente indisponíveis'
+            }
+          }, status: :ok
         end
 
         def show

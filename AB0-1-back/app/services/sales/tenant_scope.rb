@@ -35,7 +35,7 @@ module Sales
       # company_id is the canonical tenant anchor when present. A mismatched
       # owner is treated as legacy corruption and must not grant access.
       tenant_accounts = ::Sales::Account.where(company_id: user_company_id)
-                                        .where('owner_id IS NULL OR owner_id IN (?)', tenant_user_ids)
+                                        .where('sales_accounts.owner_id IS NULL OR sales_accounts.owner_id IN (?)', tenant_user_ids)
       legacy_accounts = ::Sales::Account.where(company_id: nil, owner_id: tenant_user_ids)
       tenant_accounts.or(legacy_accounts)
     end
@@ -58,7 +58,7 @@ module Sales
 
       acc_ids = accounts.select(:id)
       ::Sales::Opportunity.where(sales_account_id: acc_ids)
-                          .where('owner_id IS NULL OR owner_id IN (?)', tenant_user_ids)
+                          .where('sales_opportunities.owner_id IS NULL OR sales_opportunities.owner_id IN (?)', tenant_user_ids)
     end
 
     def tasks

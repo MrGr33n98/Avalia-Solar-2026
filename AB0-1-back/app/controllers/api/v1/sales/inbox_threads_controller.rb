@@ -56,7 +56,7 @@ module Api
                                  .limit(per_page)
 
           # Folder counts (column-safe for `is_read` before/after migration)
-          base_mailbox_threads = mailbox_threads_scope(@mailbox)
+          base_mailbox_threads = mailbox_threads_scope(@mailbox).unscope(:order)
           unread_count = compute_unread_threads_count(base_mailbox_threads)
 
           counts = {
