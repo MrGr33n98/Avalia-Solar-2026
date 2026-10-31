@@ -13,6 +13,9 @@ module Sales
     DEFAULT_LOGO_URL = 'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png'
     DEFAULT_WHATSAPP_ICON_URL = 'https://www.avaliasolar.com.br/images/email/whatsapp.png'
     DEFAULT_MAIL_ICON_URL = 'https://www.avaliasolar.com.br/images/email/mail.png'
+    DEFAULT_PHONE_ICON_URL = 'https://www.avaliasolar.com.br/images/email/phone.png'
+    DEFAULT_CALENDAR_ICON_URL = 'https://www.avaliasolar.com.br/images/email/calendar.png'
+    DEFAULT_PLATFORM_ICON_URL = 'https://www.avaliasolar.com.br/images/email/platform.png'
     DEFAULT_GLOBE_ICON_URL = 'https://www.avaliasolar.com.br/images/email/globe.png'
     DEFAULT_LINKEDIN_ICON_URL = 'https://www.avaliasolar.com.br/images/email/linkedin.png'
     DEFAULT_WATERMARK_URL = 'https://www.avaliasolar.com.br/images/email/avalia-solar-watermark.png'
@@ -152,9 +155,9 @@ module Sales
       <<~HTML.strip
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:separate;margin:0;display:inline-block;vertical-align:middle;">
           <tr>
-            <td bgcolor="#f1f5f9" style="background-color:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:6px 13px;text-align:center;vertical-align:middle;">
-              <a href="#{wa_url}" target="_blank" rel="noopener noreferrer" title="Conversar pelo WhatsApp" style="text-decoration:none;display:inline-block;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#0b2944;line-height:16px;white-space:nowrap;">
-                <img src="#{DEFAULT_WHATSAPP_ICON_URL}" width="15" height="15" alt="WhatsApp" style="display:inline-block;vertical-align:middle;width:15px;height:15px;border:0;margin-right:5px;" />
+            <td bgcolor="#f8fafc" style="background-color:#f8fafc;border:1px solid #dae5ef;border-radius:8px;padding:0;text-align:center;vertical-align:middle;">
+              <a href="#{wa_url}" target="_blank" rel="noopener noreferrer" title="Conversar pelo WhatsApp" style="text-decoration:none;display:inline-block;padding:7px 14px;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#0b2944;line-height:16px;white-space:nowrap;">
+                <img src="#{DEFAULT_WHATSAPP_ICON_URL}" width="15" height="15" alt="WhatsApp" style="display:inline-block;vertical-align:middle;width:15px;height:15px;border:0;margin-right:6px;" />
                 <span style="vertical-align:middle;color:#0b2944;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;">WhatsApp</span>
               </a>
             </td>
@@ -174,114 +177,181 @@ module Sales
       linkedin_href = safe_http_url(f[:linkedin_url], 'https://www.linkedin.com/in/felipe-morais-8bb61a7b/')
       calendly_href = safe_http_url(f[:calendly_url], 'https://calendly.com/felipe-avaliasolar/30min')
       cta_label = CGI.escapeHTML((f[:cta_text].presence || 'Agendar 30 min ↗').to_s.strip)
-      footer_label = CGI.escapeHTML((f[:footer_tagline].presence || 'ENERGIA SOLAR ● MOBILIDADE ELÉTRICA ● CONFIANÇA DIGITAL').to_s.strip)
+      footer_label = CGI.escapeHTML((f[:footer_tagline].presence || 'ENERGIA SOLAR • MOBILIDADE ELÉTRICA • CONFIANÇA DIGITAL').to_s.strip)
 
       parsed_phone = parse_whatsapp_phone(f[:phone])
       phone_segment = if parsed_phone[:valid]
-                        %( <span style="color:#cbd5e1;vertical-align:middle;">&nbsp;·&nbsp;</span> <span style="color:#0b2944;vertical-align:middle;white-space:nowrap;font-weight:600;">#{CGI.escapeHTML(parsed_phone[:formatted])}</span>)
+                        <<~PHN.strip
+                          <td width="16" align="center" valign="middle" style="width:16px;text-align:center;vertical-align:middle;padding:0 4px;">
+                            <span style="color:#dae5ef;font-size:13px;line-height:16px;">|</span>
+                          </td>
+                          <td valign="middle" style="vertical-align:middle;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
+                              <tr>
+                                <td width="22" height="22" bgcolor="#ebf3fa" align="center" valign="middle" style="width:22px;height:22px;background-color:#ebf3fa;border-radius:6px;text-align:center;vertical-align:middle;padding:0;">
+                                  <img src="#{DEFAULT_PHONE_ICON_URL}" width="12" height="12" alt="Telefone" style="display:inline-block;vertical-align:middle;width:12px;height:12px;border:0;" />
+                                </td>
+                                <td style="padding-left:6px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;white-space:nowrap;">
+                                  <a href="#{parsed_phone[:url]}" target="_blank" rel="noopener noreferrer" style="color:#0b2944;text-decoration:none;font-weight:500;">#{CGI.escapeHTML(parsed_phone[:formatted])}</a>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        PHN
                       else
                         ''
                       end
 
-      wa_button_html = build_whatsapp_button_html(f[:phone], f[:whatsapp_message])
+      wa_button_cell = if parsed_phone[:valid]
+                         query_msg = f[:whatsapp_message].present? ? "?text=#{CGI.escape(f[:whatsapp_message])}" : ''
+                         wa_url = "#{parsed_phone[:url]}#{query_msg}"
+                         <<~WABTN.strip
+                           <td bgcolor="#f8fafc" style="background-color:#f8fafc;border:1px solid #dae5ef;border-radius:8px;padding:0;text-align:center;vertical-align:middle;">
+                             <a href="#{wa_url}" target="_blank" rel="noopener noreferrer" title="Conversar pelo WhatsApp" style="display:inline-block;padding:7px 14px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;font-weight:700;color:#0b2944;text-decoration:none;white-space:nowrap;">
+                               <img src="#{DEFAULT_WHATSAPP_ICON_URL}" width="15" height="15" alt="WhatsApp" style="display:inline-block;vertical-align:middle;width:15px;height:15px;border:0;margin-right:6px;" />
+                               <span style="vertical-align:middle;color:#0b2944;">WhatsApp</span>
+                             </a>
+                           </td>
+                         WABTN
+                       else
+                         ''
+                       end
 
-      calendly_row_html = if calendly_href.present?
-                            <<~ROW.strip
-                              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:10px;">
-                                <tr>
-                                  <td bgcolor="#0b2944" style="background-color:#0b2944;border-radius:6px;">
-                                    <a href="#{calendly_href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:7px 14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:14px;font-weight:700;text-decoration:none;color:#ffffff;white-space:nowrap;">#{cta_label}</a>
-                                  </td>
-                                  <td width="10" style="width:10px;font-size:1px;line-height:1px;">&nbsp;</td>
-                                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:14px;vertical-align:middle;">
-                                    <a href="#{website_href}" target="_blank" rel="noopener noreferrer" style="font-weight:700;color:#0e5ac9;text-decoration:none;">Conhecer a plataforma</a>
-                                  </td>
-                                </tr>
-                              </table>
-                            ROW
-                          else
-                            ''
-                          end
+      calendly_button_cell = if calendly_href.present?
+                               <<~CBTN.strip
+                                 <td bgcolor="#0b2944" style="background-color:#0b2944;border-radius:8px;padding:0;text-align:center;vertical-align:middle;">
+                                   <a href="#{calendly_href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:8px 14px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;font-weight:700;color:#ffffff;text-decoration:none;white-space:nowrap;">
+                                     <img src="#{DEFAULT_CALENDAR_ICON_URL}" width="14" height="14" alt="" style="display:inline-block;vertical-align:middle;width:14px;height:14px;border:0;margin-right:6px;" />
+                                     <span style="vertical-align:middle;color:#ffffff;">#{cta_label}</span>
+                                   </a>
+                                 </td>
+                               CBTN
+                             else
+                               ''
+                             end
+
+      spacer_cta = (calendly_button_cell.present? && wa_button_cell.present?) ? '<td width="8" style="width:8px;font-size:1px;line-height:1px;">&nbsp;</td>' : ''
+
+      cta_line_1_html = if calendly_button_cell.present? || wa_button_cell.present?
+                          <<~CTA1.strip
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:separate;border-spacing:0;margin:0 0 10px 0;">
+                              <tr>
+                                #{calendly_button_cell}
+                                #{spacer_cta}
+                                #{wa_button_cell}
+                              </tr>
+                            </table>
+                          CTA1
+                        else
+                          ''
+                        end
 
       <<~HTML.strip
-        <!-- Assinatura Corporativa Avalia Solar Responsiva V3 -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="#f6f9fd" style="width:100%;max-width:480px;border-collapse:separate;border-spacing:0;background-color:#f6f9fd;border:1px solid #dae5ef;border-radius:8px;font-family:Arial,Helvetica,sans-serif;color:#0b2944;margin:0 auto;text-align:left;">
+        <!-- Assinatura Corporativa Avalia Solar Responsiva V3 (Design Premium Alinhado a Esquerda) -->
+        <table role="presentation" align="left" dir="ltr" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="#ffffff" style="width:100%;max-width:480px;border-collapse:separate;border-spacing:0;background-color:#ffffff;border:1px solid #dae5ef;border-radius:12px;font-family:Arial,Helvetica,sans-serif;color:#0b2944;margin:0;margin-left:0;margin-right:auto;text-align:left;clear:both;box-shadow:0 2px 8px rgba(11,41,68,0.04);">
           <tr>
-            <td style="padding:14px 16px 12px 16px;vertical-align:top;">
-              <!-- CABEÇALHO / PERFIL COM AVATAR E LOGO -->
+            <td style="padding:16px 18px 14px 18px;vertical-align:top;text-align:left;">
+              <!-- CABEÇALHO / PERFIL COM AVATAR, DADOS E LOGO -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;">
                 <tr>
-                  <!-- AVATAR CIRCULAR (76px desktop, proporção 1:1) -->
-                  <td width="76" valign="top" style="width:76px;vertical-align:top;padding-right:12px;">
-                    <img src="#{avatar_src}" width="76" height="76" alt="#{full_name}" style="width:76px;height:76px;min-width:76px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;" />
+                  <!-- AVATAR CIRCULAR (68px desktop, proporção 1:1, borda amarela #ffcd2d) -->
+                  <td width="68" valign="middle" style="width:68px;vertical-align:middle;padding-right:14px;">
+                    <img src="#{avatar_src}" width="68" height="68" alt="#{full_name}" style="width:68px;height:68px;min-width:68px;max-width:68px;display:block;object-fit:cover;border-radius:50%;border:2px solid #ffcd2d;" />
                   </td>
-                  <!-- NOME, CARGO E LOGO PROTEGIDO -->
-                  <td valign="top" style="vertical-align:top;">
+                  <!-- NOME, CARGO, CONTATOS E LOGO NO CANTO SUPERIOR DIREITO -->
+                  <td valign="middle" style="vertical-align:middle;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;">
                       <tr>
+                        <!-- NOME E CARGO -->
                         <td valign="top" style="vertical-align:top;">
-                          <p style="margin:0 0 2px 0;font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:22px;letter-spacing:-0.3px;font-weight:700;color:#0b2944;">
+                          <p style="margin:0 0 2px 0;font-family:Arial,Helvetica,sans-serif;font-size:19px;line-height:23px;letter-spacing:-0.3px;font-weight:700;color:#0b2944;">
                             <strong>#{full_name}</strong>
                           </p>
-                          <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;color:#5d7287;font-weight:500;">
+                          <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:17px;color:#5d7287;font-weight:400;">
                             #{role_title}
                           </p>
                         </td>
-                        <td width="92" valign="top" align="right" style="width:92px;vertical-align:top;text-align:right;padding-left:6px;">
-                          <!-- LOGO COM PROTEÇÃO PARA DARK MODE -->
-                          <div style="background-color:#ffffff;padding:4px 6px;border-radius:4px;border:1px solid #e2e8f0;display:inline-block;">
+                        <!-- LOGO OFICIAL EM BADGE BRANCO NO CANTO SUPERIOR DIREITO -->
+                        <td width="96" valign="top" align="right" style="width:96px;vertical-align:top;text-align:right;padding-left:8px;">
+                          <div style="background-color:#ffffff;padding:5px 8px;border-radius:8px;border:1px solid #dae5ef;display:inline-block;">
                             <a href="#{website_href}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:block;">
-                              <img src="#{logo_src}" alt="Avalia Solar" width="84" style="display:block;width:84px;height:auto;border:0;" />
+                              <img src="#{logo_src}" alt="Avalia Solar" width="88" style="display:block;width:88px;height:auto;border:0;" />
                             </a>
                           </div>
                         </td>
                       </tr>
                     </table>
 
-                    <!-- LINHA DE CONTATOS (E-MAIL + TELEFONE) -->
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;margin-top:4px;">
+                    <!-- LINHA DE CONTATOS (CÁPSULAS SUAVES COM ÍCONES E LINKS) -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;margin-top:2px;">
                       <tr>
-                        <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#0b2944;">
-                          <a href="mailto:#{email_addr}" style="color:#0b2944;text-decoration:none;font-weight:500;white-space:nowrap;display:inline-block;vertical-align:middle;">
-                            <img src="#{DEFAULT_MAIL_ICON_URL}" width="13" height="13" alt="" style="display:inline-block;vertical-align:middle;width:13px;height:13px;border:0;margin-right:4px;" />
-                            <span style="vertical-align:middle;">#{email_addr}</span>
-                          </a>#{phone_segment}
+                        <!-- E-MAIL COM ÍCONE EM CÁPSULA SUAVE -->
+                        <td valign="middle" style="vertical-align:middle;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
+                            <tr>
+                              <td width="22" height="22" bgcolor="#ebf3fa" align="center" valign="middle" style="width:22px;height:22px;background-color:#ebf3fa;border-radius:6px;text-align:center;vertical-align:middle;padding:0;">
+                                <img src="#{DEFAULT_MAIL_ICON_URL}" width="12" height="12" alt="E-mail" style="display:inline-block;vertical-align:middle;width:12px;height:12px;border:0;" />
+                              </td>
+                              <td style="padding-left:6px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;white-space:nowrap;">
+                                <a href="mailto:#{email_addr}" style="color:#0b2944;text-decoration:none;font-weight:500;">#{email_addr}</a>
+                              </td>
+                            </tr>
+                          </table>
                         </td>
+                        #{phone_segment}
                       </tr>
                     </table>
                   </td>
                 </tr>
               </table>
 
-              <!-- BOTÃO WHATSAPP (.button2 STYLE) & LINKS INSTITUCIONAIS -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0;">
+              <!-- DIVISÓRIA SUTIL -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;margin:12px 0 12px 0;">
                 <tr>
-                  <!-- BOTÃO WHATSAPP INSPIRADO NO .button2 -->
-                  <td valign="middle" style="vertical-align:middle;">
-                    #{wa_button_html}
+                  <td style="border-top:1px solid #dae5ef;font-size:1px;line-height:1px;">&nbsp;</td>
+                </tr>
+              </table>
+
+              <!-- LINHA 1 DE CTAs: AGENDAR 30 MIN + WHATSAPP -->
+              #{cta_line_1_html}
+
+              <!-- LINHA 2 DE CTAs: CONHECER A PLATAFORMA + WEBSITE + LINKEDIN -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;margin:0;">
+                <tr>
+                  <!-- CONHECER A PLATAFORMA -->
+                  <td valign="middle" style="vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15px;white-space:nowrap;">
+                    <a href="#{website_href}" target="_blank" rel="noopener noreferrer" style="color:#0e5ac9;text-decoration:none;font-weight:600;display:inline-block;vertical-align:middle;">
+                      <img src="#{DEFAULT_PLATFORM_ICON_URL}" width="13" height="13" alt="" style="display:inline-block;vertical-align:middle;width:13px;height:13px;border:0;margin-right:4px;" />
+                      <span style="vertical-align:middle;">Conhecer a plataforma</span>
+                    </a>
                   </td>
-                  <!-- LINKS COMPACTOS: WEBSITE | LINKEDIN -->
-                  <td valign="middle" align="right" style="vertical-align:middle;text-align:right;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:16px;">
-                    <a href="#{website_href}" target="_blank" rel="noopener noreferrer" style="color:#0e5ac9;text-decoration:none;font-weight:600;display:inline-block;vertical-align:middle;white-space:nowrap;">
-                      <img src="#{DEFAULT_GLOBE_ICON_URL}" width="12" height="12" alt="" style="display:inline-block;vertical-align:middle;width:12px;height:12px;border:0;margin-right:3px;" />
+                  <td width="16" align="center" valign="middle" style="width:16px;text-align:center;vertical-align:middle;padding:0 4px;">
+                    <span style="color:#dae5ef;font-size:12px;line-height:14px;">|</span>
+                  </td>
+                  <!-- WEBSITE -->
+                  <td valign="middle" style="vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15px;white-space:nowrap;">
+                    <a href="#{website_href}" target="_blank" rel="noopener noreferrer" style="color:#0e5ac9;text-decoration:none;font-weight:600;display:inline-block;vertical-align:middle;">
+                      <img src="#{DEFAULT_GLOBE_ICON_URL}" width="12" height="12" alt="" style="display:inline-block;vertical-align:middle;width:12px;height:12px;border:0;margin-right:4px;" />
                       <span style="vertical-align:middle;">Website</span>
                     </a>
-                    <span style="color:#cbd5e1;vertical-align:middle;">&nbsp;|&nbsp;</span>
-                    <a href="#{linkedin_href}" target="_blank" rel="noopener noreferrer" style="color:#0e5ac9;text-decoration:none;font-weight:600;display:inline-block;vertical-align:middle;white-space:nowrap;">
-                      <img src="#{DEFAULT_LINKEDIN_ICON_URL}" width="12" height="12" alt="" style="display:inline-block;vertical-align:middle;width:12px;height:12px;border:0;margin-right:3px;" />
+                  </td>
+                  <td width="16" align="center" valign="middle" style="width:16px;text-align:center;vertical-align:middle;padding:0 4px;">
+                    <span style="color:#dae5ef;font-size:12px;line-height:14px;">|</span>
+                  </td>
+                  <!-- LINKEDIN -->
+                  <td valign="middle" style="vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15px;white-space:nowrap;">
+                    <a href="#{linkedin_href}" target="_blank" rel="noopener noreferrer" style="color:#0e5ac9;text-decoration:none;font-weight:600;display:inline-block;vertical-align:middle;">
+                      <img src="#{DEFAULT_LINKEDIN_ICON_URL}" width="12" height="12" alt="" style="display:inline-block;vertical-align:middle;width:12px;height:12px;border:0;margin-right:4px;" />
                       <span style="vertical-align:middle;">LinkedIn</span>
                     </a>
                   </td>
                 </tr>
               </table>
-
-              <!-- CTA DE AGENDAMENTO (CALENDLY) -->
-              #{calendly_row_html}
             </td>
           </tr>
           <!-- RODAPÉ INSTITUCIONAL -->
           <tr>
-            <td bgcolor="#e8f0f7" style="background-color:#e8f0f7;padding:6px 14px;border-bottom-left-radius:7px;border-bottom-right-radius:7px;font-family:Arial,Helvetica,sans-serif;font-size:9px;color:#5d7287;letter-spacing:0.4px;line-height:14px;text-align:center;">
+            <td bgcolor="#e8f0f7" style="background-color:#e8f0f7;padding:7px 14px;border-bottom-left-radius:11px;border-bottom-right-radius:11px;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:600;color:#5d7287;letter-spacing:0.5px;line-height:14px;text-align:center;">
               #{footer_label}
             </td>
           </tr>
@@ -405,6 +475,22 @@ module Sales
 
         tag
       end
+
+      # 5. Neutralizar alinhamento centralizado legado (margin: 0 auto) e forçar alinhamento à esquerda
+      html.gsub!(/margin\s*:\s*0\s+auto;?/i, 'margin:0;margin-left:0;margin-right:auto;text-align:left;clear:both;')
+      html.gsub!(/<table\b([^>]*?)(\/?>)/i) do |match|
+        attrs = Regexp.last_match(1)
+        closing = Regexp.last_match(2)
+        if attrs.include?('max-width:480px') || attrs.include?('Avalia Solar')
+          attrs = attrs.gsub(/\balign=(["'])center\1/i, 'align="left"')
+          attrs += ' align="left"' unless attrs.match?(/\balign=/i)
+        end
+        "<table#{attrs}#{closing}"
+      end
+
+      # 6. Atualizar fundo do card de #f6f9fd para o novo padrão premium #ffffff da Imagem B
+      html.gsub!('bgcolor="#f6f9fd"', 'bgcolor="#ffffff"')
+      html.gsub!('background-color:#f6f9fd', 'background-color:#ffffff')
 
       html
     end

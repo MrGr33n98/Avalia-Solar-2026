@@ -13,6 +13,9 @@ export interface ApiStage {
   key: string;
   position: number;
   probability?: number | null;
+  terminal_type?: 'won' | 'lost' | null;
+  opportunities_count?: number;
+  checklist?: string[];
 }
 
 export interface ApiPipeline {
@@ -20,6 +23,7 @@ export interface ApiPipeline {
   name: string;
   key: string;
   active: boolean;
+  opportunities_count?: number;
   stages: ApiStage[];
 }
 

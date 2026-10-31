@@ -221,9 +221,9 @@ module Sales
                           .gsub(/(href|src)\s*=\s*(["'])\s*(javascript|data|vbscript):.*?\2/im, '')
                           .gsub(/(href|src)\s*=\s*(["'])\s*(javascript|data|vbscript):[^"'\s>]*/im, '')
 
-        # Garantir que o avatar da assinatura oficial (83x83 / border-radius:50%) sempre tenha URL pública HTTPS válida
+        # Garantir que o avatar da assinatura oficial (68x68 / border-radius:50%) sempre tenha URL pública HTTPS válida
         result.gsub(/<img\b[^>]*>/im) do |img_tag|
-          is_signature_avatar = img_tag.include?('width="83"') || img_tag.include?('width="76"') || img_tag.include?('border-radius:50%')
+          is_signature_avatar = img_tag.include?('width="68"') || img_tag.include?('width="76"') || img_tag.include?('width="83"') || img_tag.include?('border-radius:50%')
           if is_signature_avatar && !img_tag.match?(/\bsrc\s*=\s*(["'])https?:\/\//i)
             cleaned_tag = img_tag.gsub(/\bsrc\s*=\s*(["']).*?\1\s*/im, '')
             cleaned_tag.sub(/\A<img\b/i, %(<img src="#{DEFAULT_SIGNATURE_AVATAR_URL}"))

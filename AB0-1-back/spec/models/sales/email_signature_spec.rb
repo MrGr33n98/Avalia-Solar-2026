@@ -41,7 +41,7 @@ RSpec.describe Sales::EmailSignature, type: :model do
   end
 
   describe '.build_v2_html' do
-    it 'gera assinatura V2 com ícone e número do WhatsApp no mesmo <a>, ícones de contato e marca d\'água' do
+    it 'gera assinatura premium alinhada a esquerda (align="left" e sem margin:0 auto centralizadora)' do
       html = described_class.build_v2_html(
         full_name: 'Felipe Henrique',
         role_title: 'Fundador do Avalia Solar',
@@ -49,13 +49,22 @@ RSpec.describe Sales::EmailSignature, type: :model do
         phone: '(65) 99346-5055'
       )
 
+      expect(html).to include('align="left"')
+      expect(html).to include('margin:0;margin-left:0;margin-right:auto;text-align:left;clear:both;')
+      expect(html).not_to include('margin:0 auto')
+      expect(html).to include('bgcolor="#ffffff"')
+      expect(html).to include('background-color:#ffffff')
+      expect(html).to include('width="68"')
+      expect(html).to include('height="68"')
+      expect(html).to include('#ffcd2d')
       expect(html).to include('href="https://wa.me/5565993465055"')
       expect(html).to include('https://www.avaliasolar.com.br/images/email/whatsapp.png')
-      expect(html).to include('(65) 99346-5055</span></a>')
-      expect(html).to include('https://www.avaliasolar.com.br/images/email/avalia-solar-watermark.png')
+      expect(html).to include('(65) 99346-5055</a>')
       expect(html).to include('https://www.avaliasolar.com.br/images/email/mail.png')
       expect(html).to include('https://www.avaliasolar.com.br/images/email/globe.png')
       expect(html).to include('https://www.avaliasolar.com.br/images/email/linkedin.png')
+      expect(html).to include('Agendar 30 min ↗')
+      expect(html).to include('Conhecer a plataforma')
     end
 
     it 'omite o bloco do WhatsApp quando o telefone está vazio' do
@@ -95,6 +104,16 @@ RSpec.describe Sales::EmailSignature, type: :model do
       # Idempotência: normalizar novamente não duplica o texto do telefone
       twice = described_class.normalize_html(normalized_v1)
       expect(twice.scan('(65) 99346-5055').size).to eq(1)
+    end
+
+    it 'neutraliza margin:0 auto e atualiza bgcolor legado para #ffffff' do
+      legacy_html = '<table class="sales-signature" style="margin: 0 auto; background-color:#f6f9fd;" bgcolor="#f6f9fd"><tr><td>Assinatura</td></tr></table>'
+      normalized = described_class.normalize_html(legacy_html)
+      expect(normalized).not_to include('margin: 0 auto')
+      expect(normalized).to include('margin:0;margin-left:0;margin-right:auto;text-align:left;clear:both;')
+      expect(normalized).to include('align="left"')
+      expect(normalized).to include('bgcolor="#ffffff"')
+      expect(normalized).to include('background-color:#ffffff')
     end
   end
 end
