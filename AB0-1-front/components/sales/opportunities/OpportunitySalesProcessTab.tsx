@@ -4,12 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ListChecks,
-  CheckCircle2,
-  Circle,
   Settings,
-  ChevronRight,
   TrendingUp,
-  Sliders,
   ArrowRight,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -199,68 +195,6 @@ export default function OpportunitySalesProcessTab({
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* VISÃO GERAL DE TODAS AS ETAPAS DO FUNIL */}
-      <Card className="border-slate-200 bg-white shadow-xs">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <span className="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
-              <Sliders className="w-3.5 h-3.5 text-indigo-600" />
-              Visão Completa do Funil ({stagesList.length} etapas)
-            </span>
-            <Link
-              href="/dashboard/sales/settings/pipelines"
-              className="text-[11px] text-sky-600 hover:underline"
-            >
-              Gerenciar em Settings
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-            {stagesList.map((stg: any, sIdx: number) => {
-              const isCurrent =
-                stg.key === currentStageKey || stg.name === currentStageName;
-              const isPassed = sIdx < currentIndex;
-              const stageTasks = getStageChecklist(pipelineKey, stg.key);
-
-              return (
-                <div
-                  key={stg.id || sIdx}
-                  className={`p-2.5 rounded-md border text-[11px] flex items-center justify-between transition-all ${
-                    isCurrent
-                      ? 'bg-indigo-50/70 border-indigo-300 font-bold text-indigo-950 shadow-2xs'
-                      : isPassed
-                      ? 'bg-emerald-50/40 border-emerald-200 text-slate-700'
-                      : 'bg-slate-50/50 border-slate-200 text-slate-500'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    {isPassed ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    ) : isCurrent ? (
-                      <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0 animate-pulse" />
-                    ) : (
-                      <Circle className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                    )}
-                    <span className="truncate">
-                      #{sIdx + 1} {stg.name}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[10px] text-slate-400">
-                      {stageTasks.length} tarefas
-                    </span>
-                    <span className="bg-white border border-slate-200 px-1.5 py-0.2 rounded font-mono text-[9px]">
-                      {stg.probability || 0}%
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </CardContent>
       </Card>
     </div>
