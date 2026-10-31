@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Building2, ChevronDown, ChevronUp, User } from 'lucide-react';
+import { ChevronDown, ChevronUp, User } from 'lucide-react';
 import { PipelineCardDTO, OpportunityCardDensity } from './OpportunityCard.types';
 import { OpportunityCardHeader } from './OpportunityCardHeader';
 import { OpportunityCardValue } from './OpportunityCardValue';
@@ -11,6 +11,7 @@ import { OpportunityCardNextAction } from './OpportunityCardNextAction';
 import { OpportunityCardFooter } from './OpportunityCardFooter';
 import { OpportunityCardMenu } from './OpportunityCardMenu';
 import { OpportunityTemperatureBadge } from './OpportunityTemperatureBadge';
+import { OpportunityStatusDropdown } from '../OpportunityStatusDropdown';
 
 export interface OpportunityCardProps {
   card: PipelineCardDTO;
@@ -64,6 +65,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     ? `R$ ${(card.value_cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
     : 'R$ 0';
   const agingDays = `${card.aging.days_in_stage}d`;
+  const isHot = card.temperature === 'hot' || Boolean(card.flags?.hot);
 
   return (
     <div
@@ -81,7 +83,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     >
       {isCompact ? (
         <div className="flex flex-col gap-1 min-w-0" data-testid={`opportunity-card-compact-${card.id}`}>
-          {/* Linha 1: Checkbox + Empresa + Temperature */}
+          {/* Linha 1: Checkbox + Status Dropdown + Empresa + Hot + Temperature */}
           <div className="flex items-center justify-between gap-1.5 min-w-0">
             <div className="flex items-center gap-1.5 min-w-0 flex-1">
               <input
@@ -96,14 +98,33 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
                 aria-label={`Selecionar oportunidade ${companyName}`}
                 data-testid={`opportunity-card-checkbox-${card.id}`}
               />
+              <div className="shrink-0 -my-0.5">
+                <OpportunityStatusDropdown
+                  status={card.status}
+                  isHot={isHot}
+                  variant="card"
+                  opportunityId={card.id}
+                  opportunityName={card.name}
+                  onStatusChange={(newStatus) => onAction?.(`status:${newStatus}`, card)}
+                  onOpenLostDialog={() => onAction?.('lost', card)}
+                />
+              </div>
               <div className="flex items-center gap-1 min-w-0 flex-1">
-                <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                 <h4
-                  className="truncate text-[12px] font-semibold text-slate-900 dark:text-slate-100"
+                  className="truncate text-[12px] font-bold text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                   title={companyName}
                 >
                   {companyName}
                 </h4>
+                {isHot && (
+                  <span
+                    className="shrink-0 text-xs animate-pulse select-none"
+                    title="Lead Quente (Hot Deal)"
+                    aria-label="Lead Quente"
+                  >
+                    🔥
+                  </span>
+                )}
               </div>
             </div>
             <OpportunityTemperatureBadge temperature={card.temperature} />
@@ -167,6 +188,8 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
                 card={card}
                 selected={selected}
                 onToggleSelect={() => onToggleSelect?.(card.id)}
+                onStatusChange={(newStatus) => onAction?.(`status:${newStatus}`, card)}
+                onOpenLostDialog={() => onAction?.('lost', card)}
               />
             </div>
             <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>

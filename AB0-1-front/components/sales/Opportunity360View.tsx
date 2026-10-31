@@ -47,6 +47,9 @@ import OpportunityTagPicker from '@/components/sales/opportunities/OpportunityTa
 import OpportunitySalesProcessTab from '@/components/sales/opportunities/OpportunitySalesProcessTab';
 import { salesApi } from '@/lib/api/sales/client';
 import { subscribeSalesTimeline } from '@/lib/cable';
+import { OpportunityStatusDropdown } from '@/components/sales/pipeline/OpportunityStatusDropdown';
+import { OpportunityStatusKey } from '@/components/sales/pipeline/opportunityStatusUtils';
+import LostOpportunityDialog, { type LostOpportunityPayload } from '@/components/sales/opportunities/LostOpportunityDialog';
 
 interface Opportunity360ViewProps {
   opportunityId: number | null;
@@ -87,6 +90,7 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
   const [companiesExpanded, setCompaniesExpanded] = useState(true);
   const [revenueExpanded, setRevenueExpanded] = useState(true);
   const [documentsExpanded, setDocumentsExpanded] = useState(true);
+  const [isLostDialogOpen, setIsLostDialogOpen] = useState(false);
   
   // Editable fields state
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -246,20 +250,33 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
     }
   };
 
-  const handleStatusChange = async (newStatus: 'open' | 'won' | 'lost') => {
+  const handleStatusChange = async (newStatus: OpportunityStatusKey | string) => {
     if (!opp) return;
     try {
       if (newStatus === 'won') {
         await salesApi.markOpportunityWon(opp.id);
       } else if (newStatus === 'lost') {
-        await salesApi.markOpportunityLost(opp.id, { lostReason: 'other' });
+        setIsLostDialogOpen(true);
+        return;
       } else {
-        await salesApi.updateOpportunity(opp.id, { status: 'open' });
+        await salesApi.updateOpportunity(opp.id, { status: newStatus });
       }
       await fetchOpportunityData(opp.id);
       onUpdated?.();
     } catch (err: any) {
       alert(err.message || 'Erro ao atualizar status');
+    }
+  };
+
+  const handleConfirmLost = async (payload: LostOpportunityPayload) => {
+    if (!opp) return;
+    try {
+      await salesApi.markOpportunityLost(opp.id, payload);
+      setIsLostDialogOpen(false);
+      await fetchOpportunityData(opp.id);
+      onUpdated?.();
+    } catch (err: any) {
+      alert(err?.message || 'Erro ao registrar perda da oportunidade.');
     }
   };
 
@@ -793,15 +810,15 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
                       <CardContent className="p-4 space-y-3.5">
                         <div className="flex items-center justify-between">
                           <span className="text-slate-500 font-semibold">Status</span>
-                          <select
-                            value={opp.status || 'open'}
-                            onChange={(e) => handleStatusChange(e.target.value as any)}
-                            className="text-xs font-bold bg-slate-100 border border-slate-300 rounded-md px-2 py-1 text-slate-800"
-                          >
-                            <option value="open">🚩 Open</option>
-                            <option value="won">🟢 Won</option>
-                            <option value="lost">🔴 Lost</option>
-                          </select>
+                          <OpportunityStatusDropdown
+                            status={opp.status || 'open'}
+                            isHot={opp.temperature === 'hot'}
+                            variant="summary"
+                            opportunityId={opp.id}
+                            opportunityName={opp.name}
+                            onStatusChange={handleStatusChange}
+                            onOpenLostDialog={() => setIsLostDialogOpen(true)}
+                          />
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-slate-500 font-semibold">Opened by</span>
@@ -1136,6 +1153,12 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
           }}
         />
       )}
+      <LostOpportunityDialog
+        open={isLostDialogOpen}
+        opportunityName={opp?.name}
+        onOpenChange={setIsLostDialogOpen}
+        onConfirm={handleConfirmLost}
+      />
     </>
   );
 }

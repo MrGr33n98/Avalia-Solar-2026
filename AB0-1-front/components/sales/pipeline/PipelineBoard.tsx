@@ -64,8 +64,9 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       await salesApi.updateOpportunityStage(movingCard.id, stageKey);
       setMovingCard(null);
       await onRefresh();
-    } catch (err: any) {
-      alert(err?.message || 'Não foi possível mover a oportunidade.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Não foi possível mover a oportunidade.';
+      alert(msg);
     } finally {
       setIsTransitioning(false);
     }
@@ -79,6 +80,33 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
   };
 
   const handleCardAction = async (action: string, card: PipelineCardDTO) => {
+    if (action.startsWith('status:')) {
+      const nextStatus = action.replace('status:', '');
+      if (nextStatus === 'won') {
+        if (!window.confirm(`Confirmar que a oportunidade "${card.name}" foi ganha?`)) return;
+        try {
+          await salesApi.markOpportunityWon(card.id);
+          await onRefresh();
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Erro ao marcar oportunidade como ganha.';
+          alert(msg);
+        }
+        return;
+      }
+      if (nextStatus === 'lost') {
+        setLosingCard(card);
+        return;
+      }
+      try {
+        await salesApi.updateOpportunity(card.id, { status: nextStatus });
+        await onRefresh();
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Erro ao alterar status da oportunidade.';
+        alert(msg);
+      }
+      return;
+    }
+
     if (onAction) {
       onAction(action, card);
       return;
@@ -92,8 +120,9 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       try {
         await salesApi.markOpportunityWon(card.id);
         await onRefresh();
-      } catch (err: any) {
-        alert(err?.message || 'Erro ao marcar oportunidade como ganha.');
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Erro ao marcar oportunidade como ganha.';
+        alert(msg);
       }
       return;
     }
@@ -110,8 +139,9 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
       try {
         await salesApi.deleteOpportunity(card.id);
         await onRefresh();
-      } catch (err: any) {
-        alert(err?.message || 'Erro ao excluir oportunidade.');
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Erro ao excluir oportunidade.';
+        alert(msg);
       }
     }
   };
