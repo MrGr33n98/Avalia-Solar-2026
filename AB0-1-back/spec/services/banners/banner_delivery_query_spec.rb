@@ -33,15 +33,39 @@ RSpec.describe Banners::BannerDeliveryQuery do
     expect(result).to include(banner)
   end
 
-  it 'aplica frequency cap por audience_key' do
+  it 'mantém entrega ativa enquanto frequency cap permanece desativado na arquitetura atual' do
     company = create(:company)
-    banner = create(:banner, :approved, active: true, company: company, sponsored: false)
+    banner = create(:banner, :approved, active: true, company: company, sponsored: false, position: 'compare_page_sidebar')
     create(:banner_event, banner: banner, event_type: 'impression', tracked_at: 1.hour.ago,
            metadata_json: { 'audience_key' => 'session-1' }, valid_for_reporting: true)
 
-    result = described_class.call(company_id: company.id, audience_key: 'session-1').to_a
+    result = described_class.call(company_id: company.id, audience_key: 'session-1', position: 'compare_page_sidebar').to_a
 
-    expect(result).not_to include(banner)
+    expect(result).to include(banner)
+  end
+
+  context 'elegibilidade criativa' do
+    it 'não entrega banner image_only que não possui imagem anexada' do
+      banner = create(:banner, :approved, active: true, creative_mode: 'image_only', position: 'compare_page_sidebar')
+      banner.image.purge if banner.image.attached?
+
+      result = described_class.call(position: 'compare_page_sidebar').to_a
+      expect(result).not_to include(banner)
+    end
+
+    it 'entrega banner com imagem anexada' do
+      banner = create(:banner, :approved, active: true, creative_mode: 'image_only', position: 'compare_page_sidebar')
+      result = described_class.call(position: 'compare_page_sidebar').to_a
+      expect(result).to include(banner)
+    end
+
+    it 'entrega banner editorial photo_with_html com headline mesmo se não tiver imagem' do
+      banner = create(:banner, :approved, active: true, creative_mode: 'photo_with_html', headline: 'Economize até 95%', position: 'compare_page_sidebar')
+      banner.image.purge if banner.image.attached?
+
+      result = described_class.call(position: 'compare_page_sidebar').to_a
+      expect(result).to include(banner)
+    end
   end
 
 
@@ -121,11 +145,11 @@ RSpec.describe Banners::BannerDeliveryQuery do
 
     it 'respeita prioridade, patrocinados, fair rotation e limit' do
       # Cria múltiplos banners para testar a ordenação e rotação determinística
-      b1 = create(:banner, :approved, active: true, priority: 10, sponsored: true, created_at: 2.hours.ago)
-      b2 = create(:banner, :approved, active: true, priority: 5, sponsored: true, created_at: 1.hour.ago)
-      b3 = create(:banner, :approved, active: true, priority: 100, sponsored: false, created_at: Time.current)
+      b1 = create(:banner, :approved, active: true, position: 'compare_page_sidebar', priority: 10, sponsored: true, created_at: 2.hours.ago)
+      b2 = create(:banner, :approved, active: true, position: 'compare_page_sidebar', priority: 5, sponsored: true, created_at: 1.hour.ago)
+      b3 = create(:banner, :approved, active: true, position: 'compare_page_sidebar', priority: 100, sponsored: false, created_at: Time.current)
 
-      result = described_class.call(position: b1.position, limit: 2).to_a
+      result = described_class.call(position: 'compare_page_sidebar', limit: 2).to_a
       # Limit deve ser respeitado
       expect(result.size).to be <= 2
 
@@ -135,7 +159,7 @@ RSpec.describe Banners::BannerDeliveryQuery do
     end
 
     it 'não causa exceções de sintaxe SQL ou PG::InvalidColumnReference' do
-      banner = create(:banner, :approved, active: true)
+      banner = create(:banner, :approved, active: true, position: 'compare_page_sidebar')
       category = create(:category)
       banner.categories << category
 
@@ -150,20 +174,20 @@ RSpec.describe Banners::BannerDeliveryQuery do
     let!(:competitor_company) { create(:company) }
 
     let!(:institutional_banner) do
-      create(:banner, :approved, active: true, company: nil, sponsored: false)
+      create(:banner, :approved, active: true, position: 'compare_page_sidebar', company: nil, sponsored: false)
     end
 
     let!(:own_banner) do
-      create(:banner, :approved, active: true, company: company_profile, sponsored: false)
+      create(:banner, :approved, active: true, position: 'compare_page_sidebar', company: company_profile, sponsored: false)
     end
 
     let!(:competitor_banner) do
-      create(:banner, :approved, active: true, company: competitor_company, sponsored: false)
+      create(:banner, :approved, active: true, position: 'compare_page_sidebar', company: competitor_company, sponsored: false)
     end
 
     it 'bloqueia banner de concorrente no servidor quando block_competitors é true' do
       result = described_class.call(
-        position: institutional_banner.position,
+        position: 'compare_page_sidebar',
         profile_company_id: company_profile.id,
         block_competitors: true
       ).to_a
@@ -177,7 +201,7 @@ RSpec.describe Banners::BannerDeliveryQuery do
       allow_any_instance_of(Company).to receive(:has_paid_plan?).and_return(true)
 
       result = described_class.call(
-        position: institutional_banner.position,
+        position: 'compare_page_sidebar',
         profile_company_id: company_profile.id
       ).to_a
 
@@ -188,7 +212,7 @@ RSpec.describe Banners::BannerDeliveryQuery do
       allow_any_instance_of(Company).to receive(:has_paid_plan?).and_return(false)
 
       result = described_class.call(
-        position: institutional_banner.position,
+        position: 'compare_page_sidebar',
         profile_company_id: company_profile.id,
         block_competitors: false
       ).to_a

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface BannerMediaProps {
@@ -16,6 +16,8 @@ export interface BannerMediaProps {
   sizes?: string;
   fallbackSrc?: string;
   className?: string;
+  onMediaLoad?: () => void;
+  onMediaError?: () => void;
 }
 
 export function BannerMedia({
@@ -28,21 +30,53 @@ export function BannerMedia({
   priority = false,
   quality = 90,
   sizes,
-  fallbackSrc = '/images/banner-placeholder.svg',
+  fallbackSrc,
   className,
+  onMediaLoad,
+  onMediaError,
 }: BannerMediaProps) {
   const [currentSrc, setCurrentSrc] = useState(mobileSrc || src);
   const [failed, setFailed] = useState(false);
-  const resolvedSrc = failed ? fallbackSrc : currentSrc;
+
+  // GAP-06: Sincroniza currentSrc e reseta estado quando props mudam em rotação/refetch
+  useEffect(() => {
+    setCurrentSrc(mobileSrc || src);
+    setFailed(false);
+  }, [src, mobileSrc]);
+
   const objectClass = fit === 'cover' ? 'object-cover' : 'object-contain';
 
   const handleError = () => {
-    if (!failed && currentSrc !== src) {
+    if (!failed && currentSrc !== src && src) {
       setCurrentSrc(src);
       return;
     }
     setFailed(true);
+    onMediaError?.();
   };
+
+  const handleLoad = () => {
+    if (!failed) {
+      onMediaLoad?.();
+    }
+  };
+
+  // Se falhou e não há fallback explícito (ex: modo admin), não renderiza SVG cinza com texto "Banner Placeholder"
+  if (failed && !fallbackSrc) {
+    return (
+      <div
+        className={cn('relative h-full w-full overflow-hidden bg-slate-50/50', className)}
+        aria-hidden="true"
+        data-testid="banner-media-failed"
+      />
+    );
+  }
+
+  const resolvedSrc = failed ? fallbackSrc! : currentSrc;
+
+  if (!resolvedSrc) {
+    return null;
+  }
 
   return (
     <div className={cn('relative h-full w-full overflow-hidden', className)}>
@@ -69,6 +103,7 @@ export function BannerMedia({
         className={cn(objectClass, 'h-full w-full', !failed && 'transition-opacity duration-300')}
         style={{ objectPosition: position }}
         onError={handleError}
+        onLoad={handleLoad}
       />
     </div>
   );

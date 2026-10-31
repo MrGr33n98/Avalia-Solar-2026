@@ -178,8 +178,8 @@ ActiveAdmin.register Banner do
 
       tab '4. Mídia Responsiva' do
         f.inputs 'Imagens Art-Directed' do
-          f.input :image, as: :file, label: 'Imagem Principal Desktop (1330×230 px)',
-                          hint: safe_banner_image_tag(f.object, style: 'max-height: 120px; border-radius: 6px;') || 'Recomendado: 1330×230 px (JPG, PNG ou WebP até 10 MB).',
+          f.input :image, as: :file, label: 'Imagem Principal Desktop',
+                          hint: safe_banner_image_tag(f.object, style: 'max-height: 120px; border-radius: 6px;') || 'Dimensão recomendada: 300×600 px para sidebars/compare, 1330×230 px para home_hero (JPG, PNG ou WebP até 10 MB).',
                           input_html: { direct_upload: true, accept: 'image/*' }
           f.input :object_position_desktop_x, label: 'Ponto Focal Desktop X (%)', hint: '0 = Esquerda, 50 = Centro, 100 = Direita'
           f.input :object_position_desktop_y, label: 'Ponto Focal Desktop Y (%)', hint: '0 = Topo, 50 = Centro, 100 = Base'

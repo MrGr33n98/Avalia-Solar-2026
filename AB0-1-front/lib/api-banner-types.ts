@@ -31,11 +31,14 @@ export interface Banner {
   position?: string;
   width?: number | null;
   height?: number | null;
+  company_id?: number | null;
+  category_id?: number | null;
   category_ids?: number[];
   sponsored?: boolean;
   active?: boolean;
   start_date?: string | null;
   end_date?: string | null;
+  benefits?: string[] | null;
 }
 
 export interface BannerPlacement {

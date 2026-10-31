@@ -96,6 +96,8 @@ AB0-1-front/public/avalia-solar-upgrade-assets/
 !AB0-1-front/__tests__/components/ProfileSignalsTab.test.tsx
 !AB0-1-front/__tests__/components/ContentStudioWorkspace.test.tsx
 !AB0-1-front/__tests__/sales-leads-analytics.test.tsx
+!AB0-1-front/__tests__/components/SidebarEditorialCreative.test.tsx
+!AB0-1-front/__tests__/components/BannerMediaRegression.test.tsx
 !AB0-1-back/spec/requests/api/v1/sales/opportunities_analytics_spec.rb
 
 # Ignorar documentações de desenvolvimento
@@ -183,6 +185,8 @@ docs/adr/*
 !AB0-1-front/__tests__/new-relic-csp.test.ts
 !AB0-1-front/components/observability/__tests__/
 !AB0-1-front/components/observability/__tests__/NewRelicBrowser.test.tsx
+!AB0-1-front/components/banners/__tests__/
+!AB0-1-front/components/banners/__tests__/*
 !AB0-1-front/__tests__/lib/
 !AB0-1-front/__tests__/lib/footer-visibility.test.ts
 !AB0-1-front/__tests__/components/CompanyLogoBadge.test.tsx

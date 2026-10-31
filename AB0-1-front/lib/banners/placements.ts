@@ -82,7 +82,7 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     ignoreCreativeDimensions: true,
   },
   compare_page_sidebar: {
-    aspectRatioClass: 'hidden lg:block lg:aspect-[1/2]',
+    aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
     defaultAspectRatio: '1/2',
     desktopAspectRatio: '1/2',
     desktopMaxHeight: 600,

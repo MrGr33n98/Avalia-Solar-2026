@@ -31,7 +31,7 @@ RSpec.describe 'Api::V1::Banners', type: :request do
         expect(response).to have_http_status(:ok)
 
         # Verifica que cache foi criado
-        expect(cache_store).to have_received(:fetch).with(a_string_matching(%r{\Abanners/v2/}), expires_in: 5.minutes)
+        expect(cache_store).to have_received(:fetch).with(a_string_matching(%r{\Abanners/v3/}), expires_in: 5.minutes)
 
         # Segunda chamada: cache hit
         get '/api/v1/banners', params: { position: 'navbar' }
@@ -52,30 +52,36 @@ RSpec.describe 'Api::V1::Banners', type: :request do
     context 'filtering' do
       before { Rails.cache.clear }
 
-      it 'aplica frequency cap recebido pela API por audiencia' do
-      banner = create(:banner, :approved, active: true, sponsored: false, position: 'navbar')
-      create(:banner_event, banner: banner, event_type: 'impression', tracked_at: 1.hour.ago,
-             metadata_json: { 'audience_key' => 'audience-api-1' }, valid_for_reporting: true)
+      it 'mantém entrega ativa sem exclusão quando frequency cap está desativado' do
+        banner = create(:banner, :approved, active: true, sponsored: false, position: 'navbar')
+        create(:banner_event, banner: banner, event_type: 'impression', tracked_at: 1.hour.ago,
+               metadata_json: { 'audience_key' => 'audience-api-1' }, valid_for_reporting: true)
 
-      get '/api/v1/banners', params: { position: 'navbar', audience_key: 'audience-api-1' }
+        get '/api/v1/banners', params: { position: 'navbar', audience_key: 'audience-api-1' }
 
-      expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body).map { |item| item['id'] }).not_to include(banner.id)
-    end
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body).map { |item| item['id'] }).to include(banner.id)
+      end
 
-    it 'isola cache entre audiences no frequency cap' do
-      banner = create(:banner, :approved, active: true, sponsored: false, position: 'navbar')
-      create(:banner_event, banner: banner, event_type: 'impression', tracked_at: 1.hour.ago,
-             metadata_json: { 'audience_key' => 'audience-cache-a' }, valid_for_reporting: true)
+      it 'compartilha cache entre audiences enquanto frequency cap estiver desativado' do
+        banner = create(:banner, :approved, active: true, sponsored: false, position: 'navbar')
 
-      get '/api/v1/banners', params: { position: 'navbar', audience_key: 'audience-cache-a' }
-      first_payload = JSON.parse(response.body)
-      get '/api/v1/banners', params: { position: 'navbar', audience_key: 'audience-cache-b' }
-      second_payload = JSON.parse(response.body)
+        get '/api/v1/banners', params: { position: 'navbar', audience_key: 'audience-cache-a' }
+        first_payload = JSON.parse(response.body)
+        get '/api/v1/banners', params: { position: 'navbar', audience_key: 'audience-cache-b' }
+        second_payload = JSON.parse(response.body)
 
-      expect(first_payload.map { |item| item['id'] }).not_to include(banner.id)
-      expect(second_payload.map { |item| item['id'] }).to include(banner.id)
-    end
+        expect(first_payload.map { |b| b['id'] }).to eq(second_payload.map { |b| b['id'] })
+      end
+
+      it 'filtra banners sem mídia renderizável ou headline' do
+        unrenderable = create(:banner, :approved, active: true, creative_mode: 'image_only', position: 'navbar')
+        unrenderable.image.purge if unrenderable.image.attached?
+
+        get '/api/v1/banners', params: { position: 'navbar' }
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body).map { |item| item['id'] }).not_to include(unrenderable.id)
+      end
 
     it 'filters by position' do
         create(:banner, :approved, active: true, position: 'sidebar')

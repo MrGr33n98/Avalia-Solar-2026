@@ -2,22 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { getBannerAudienceKey } from '@/lib/banner-audience';
 
-export interface Banner {
-  id: number;
-  delivery_id?: string | null;
-  title: string;
-  alt_text?: string | null;
-  image_url?: string | null;
-  link?: string | null;
-  link_url?: string | null;
-  sponsored?: boolean;
-  banner_type?: string;
-  position?: string;
-  company_id?: number | null;
-  width?: number | null;
-  height?: number | null;
-  active?: boolean;
-}
+import { Banner } from '@/lib/api-banner-types';
+export type { Banner };
 
 interface UseBannersQueryOptions {
   position?: string;

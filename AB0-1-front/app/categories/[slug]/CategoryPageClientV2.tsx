@@ -37,7 +37,7 @@ import { Banner, Category, Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { useDebounce } from '@/hooks/useDebounce';
 
-type CategoryBanner = Banner & { company_id?: number };
+type CategoryBanner = Banner & { company_id?: number | null };
 
 interface CategoryPageClientProps {
   initialCategory: Category;

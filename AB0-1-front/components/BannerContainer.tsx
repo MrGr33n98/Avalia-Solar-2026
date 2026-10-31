@@ -11,14 +11,16 @@ import { BANNER_PLACEMENT_ASPECT_RATIOS, getPlacementDisplaySpec } from '@/lib/b
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 import { BannerMedia } from '@/components/banners/BannerMedia';
 import { SponsoredBadge } from '@/components/banners/SponsoredBadge';
+import { BannerCreative } from '@/components/banners/BannerCreative';
 
-interface BannerData {
+export interface BannerData {
   id: number | string;
   delivery_id?: string | null;
   alt_text?: string | null;
   banner_type?: string;
   position?: string;
   image_url: string | null;
+  image_mobile_url?: string | null;
   title: string;
   link?: string | null;
   link_url?: string | null;
@@ -26,9 +28,18 @@ interface BannerData {
   company_id?: number | null;
   width?: number | null;
   height?: number | null;
+  headline?: string | null;
+  subtitle?: string | null;
+  cta_label?: string | null;
+  cta_href?: string | null;
+  cta_enabled?: boolean;
+  cta_variant?: string;
+  theme?: string;
+  creative_mode?: 'photo_with_html' | 'image_only' | string;
+  benefits?: string[] | null;
 }
 
-interface BannerContainerProps {
+export interface BannerContainerProps {
   banners: BannerData[];
   position?: string;
   className?: string;
@@ -36,30 +47,36 @@ interface BannerContainerProps {
   page?: string;
 }
 
-const FALLBACK_BANNER_SRC = '/images/banner-placeholder.svg';
-
 function BannerImage({
   banner,
   sizes,
   priority,
   ambientBackground,
+  onMediaError,
+  onMediaLoad,
 }: {
   banner: BannerData;
   sizes: string;
   priority?: boolean;
   ambientBackground?: boolean;
+  onMediaError?: () => void;
+  onMediaLoad?: () => void;
 }) {
-  const src = banner.image_url || FALLBACK_BANNER_SRC;
+  if (!banner.image_url) {
+    return null;
+  }
 
   return (
     <BannerMedia
-      src={src}
+      src={banner.image_url}
+      mobileSrc={banner.image_mobile_url}
       alt={banner.alt_text?.trim() || banner.title || 'Banner promocional'}
       priority={priority}
       sizes={sizes}
       quality={80}
       ambientBackground={ambientBackground}
-      // Banners usam dimensões comerciais fixas; contain preserva a arte completa no responsivo.
+      onMediaError={onMediaError}
+      onMediaLoad={onMediaLoad}
       className="absolute inset-0"
     />
   );
@@ -75,6 +92,7 @@ export function BannerContainer({
   const containerRef = React.useRef<HTMLDivElement>(null);
   const viewedBannerIdsRef = React.useRef<Set<string>>(new Set());
   const impressionIdsRef = React.useRef<Map<string, string>>(new Map());
+  const failedMediaBannerIdsRef = React.useRef<Set<number | string>>(new Set());
   const activeIndexRef = React.useRef(0);
   const containerVisibleRef = React.useRef(false);
 
@@ -83,12 +101,49 @@ export function BannerContainer({
       return crypto.randomUUID();
     return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }, []);
-  const displayBanners = React.useMemo(() => (Array.isArray(banners) ? banners : []), [banners]);
+
+  const handleMediaError = React.useCallback(
+    (banner: BannerData) => {
+      failedMediaBannerIdsRef.current.add(banner.id);
+      track('banner_media_error', {
+        banner_id: Number(banner.id),
+        banner_position: position || banner.position || 'unknown',
+        error: 'image_load_failed',
+      });
+    },
+    [position]
+  );
+
+  const handleMediaLoad = React.useCallback(
+    (banner: BannerData) => {
+      track('banner_media_ready', {
+        banner_id: Number(banner.id),
+        banner_position: position || banner.position || 'unknown',
+      });
+    },
+    [position]
+  );
+
+  // Filtra banners não renderizáveis na camada pública
+  const displayBanners = React.useMemo(() => {
+    if (!Array.isArray(banners)) return [];
+    return banners.filter((b) => {
+      if (b.creative_mode === 'photo_with_html') {
+        return Boolean(b.headline?.trim() || b.title?.trim() || b.image_url);
+      }
+      return Boolean(b.image_url && b.image_url.trim().length > 0);
+    });
+  }, [banners]);
 
   const trackBannerView = React.useCallback(
     (banner: BannerData) => {
       const bannerId = Number(banner.id);
       if (!Number.isFinite(bannerId)) return;
+
+      // GAP-02 / A09: Não registrar impressão publicitária de criativo cuja mídia falhou
+      if (failedMediaBannerIdsRef.current.has(banner.id) && banner.creative_mode !== 'photo_with_html') {
+        return;
+      }
 
       const placement = position || banner.position || 'unknown';
       const eventKey = `${bannerId}:view:${placement}`;
@@ -208,7 +263,6 @@ export function BannerContainer({
 
   try {
     const displaySpec = position ? getPlacementDisplaySpec(position) : undefined;
-    const hasSponsoredBanner = displayBanners.some((banner) => Boolean(banner.sponsored));
     const isCompactControls = position ? [
       'company_profile_about_inline',
       'home_top',
@@ -230,7 +284,6 @@ export function BannerContainer({
         case 'companies_right_rail':
         case 'categories_right_rail':
         case 'compare_page_sidebar':
-          // Sidebar fixa de 300px. Retina = 600px. Nunca maior que isso.
           return '(max-width: 1023px) 0px, 300px';
         case 'categories_filter_sidebar':
           return '(max-width: 1023px) 0px, 280px';
@@ -246,10 +299,33 @@ export function BannerContainer({
         case 'companies_footer':
         case 'article_footer_cta':
         default:
-          // Banners full-width
           return '(max-width: 640px) 100vw, (max-width: 1280px) 90vw, 1200px';
       }
     };
+
+    // Caso de card lateral único: renderiza diretamente o BannerCreative sem controles redundantes de carrossel
+    if (
+      displayBanners.length === 1 &&
+      (position === 'compare_page_sidebar' || displayBanners[0].creative_mode === 'photo_with_html')
+    ) {
+      const singleBanner = displayBanners[0];
+      return (
+        <div
+          ref={containerRef}
+          className={cn('m-0 w-full min-w-0 max-w-[300px] mx-auto p-0', className)}
+        >
+          <BannerCreative
+            banner={singleBanner}
+            priority={priority}
+            sizes={getSizes(position)}
+            ambientBackground={displaySpec?.ambientBackground}
+            onMediaError={() => handleMediaError(singleBanner)}
+            onMediaLoad={() => handleMediaLoad(singleBanner)}
+            onBannerClick={() => trackBannerClick(singleBanner)}
+          />
+        </div>
+      );
+    }
 
     const renderBannerContent = (banner: BannerData, isPriority = false) => (
       <>
@@ -258,33 +334,52 @@ export function BannerContainer({
           priority={isPriority}
           sizes={getSizes(position)}
           ambientBackground={displaySpec?.ambientBackground}
+          onMediaError={() => handleMediaError(banner)}
+          onMediaLoad={() => handleMediaLoad(banner)}
         />
         {banner.sponsored && <SponsoredBadge />}
       </>
     );
 
-    const renderBannerItem = (banner: BannerData, isPriority = false) => (
-      <div className="relative w-full h-full bg-muted/20">
-        {banner.link_url || banner.link ? (
-          <Link
-            href={`/api/v1/banner_clicks/${banner.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full h-full"
-            aria-label={
-              banner.sponsored
-                ? `Patrocinado: ${banner.alt_text?.trim() || banner.title || 'Abrir anúncio'}`
-                : banner.alt_text?.trim() || banner.title || 'Abrir anúncio'
-            }
-            onClick={() => trackBannerClick(banner)}
-          >
-            {renderBannerContent(banner, isPriority)}
-          </Link>
-        ) : (
-          renderBannerContent(banner, isPriority)
-        )}
-      </div>
-    );
+    const renderBannerItem = (banner: BannerData, isPriority = false) => {
+      if (banner.creative_mode === 'photo_with_html' && (banner.headline || banner.title)) {
+        return (
+          <BannerCreative
+            banner={banner}
+            priority={isPriority}
+            sizes={getSizes(position)}
+            ambientBackground={displaySpec?.ambientBackground}
+            onMediaError={() => handleMediaError(banner)}
+            onMediaLoad={() => handleMediaLoad(banner)}
+            onBannerClick={() => trackBannerClick(banner)}
+            className="w-full h-full"
+          />
+        );
+      }
+
+      return (
+        <div className="relative w-full h-full bg-muted/20">
+          {banner.link_url || banner.link ? (
+            <Link
+              href={`/api/v1/banner_clicks/${banner.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+              aria-label={
+                banner.sponsored
+                  ? `Patrocinado: ${banner.alt_text?.trim() || banner.title || 'Abrir anúncio'}`
+                  : banner.alt_text?.trim() || banner.title || 'Abrir anúncio'
+              }
+              onClick={() => trackBannerClick(banner)}
+            >
+              {renderBannerContent(banner, isPriority)}
+            </Link>
+          ) : (
+            renderBannerContent(banner, isPriority)
+          )}
+        </div>
+      );
+    };
 
     const items = displayBanners.map((banner, idx) =>
       renderBannerItem(banner, priority && idx === 0)
@@ -312,7 +407,6 @@ export function BannerContainer({
             activeIndexRef.current = index;
             trackActiveBannerView();
           }}
-          className={hasSponsoredBanner ? '!rounded-none' : undefined}
           compactControls={isCompactControls}
         />
       </div>

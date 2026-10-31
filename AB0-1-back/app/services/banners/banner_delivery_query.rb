@@ -32,6 +32,7 @@ module Banners
       scope = Banner.currently_active
       scope = apply_catalog_availability(scope)
       scope = apply_contract_eligibility(scope)
+      scope = apply_creative_eligibility(scope)
       scope = scope.where(position: position) if position.present?
       scope = scope.where(slot_key: @params[:slot_key]) if @params[:slot_key].present? && Banner.column_names.include?('slot_key')
       scope = apply_company(scope)
@@ -73,6 +74,27 @@ module Banners
             AND banner_addon_subscriptions.status = 'active'
             AND banner_addon_subscriptions.starts_at <= ?
             AND (banner_addon_subscriptions.ends_at IS NULL OR banner_addon_subscriptions.ends_at >= ?)
+        )
+      SQL
+    end
+
+    def apply_creative_eligibility(scope)
+      # Banners comerciais e institucionais precisam de criativo renderizável para entrega pública:
+      # - Modo photo_with_html: aceito se possuir texto aprovado (headline ou title) ou mídia anexada
+      # - Modo image_only (ou nulo): exige obrigatoriamente mídia anexada no ActiveStorage
+      scope.where(<<~SQL.squish)
+        (
+          banners.creative_mode = 'photo_with_html'
+          AND (
+            (banners.headline IS NOT NULL AND banners.headline != '')
+            OR (banners.title IS NOT NULL AND banners.title != '')
+          )
+        )
+        OR EXISTS (
+          SELECT 1 FROM active_storage_attachments
+          WHERE active_storage_attachments.record_type = 'Banner'
+            AND active_storage_attachments.name IN ('image', 'image_mobile')
+            AND active_storage_attachments.record_id = banners.id
         )
       SQL
     end

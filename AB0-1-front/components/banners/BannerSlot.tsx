@@ -113,7 +113,16 @@ export function BannerSlot({
     );
   }
 
-  let finalBanners = banners || [];
+  // GAP-01 / GAP-03: Filtra anúncios sem arte pública renderizável
+  const renderableBanners = (banners || []).filter((b) => {
+    const isEditorial =
+      b.creative_mode === 'photo_with_html' &&
+      Boolean(b.headline?.trim() || b.title?.trim() || b.image_url);
+    const hasImage = Boolean(b.image_url && b.image_url.trim().length > 0);
+    return isEditorial || hasImage;
+  });
+
+  let finalBanners = renderableBanners;
 
   if (blockCompetitors && companyId) {
     finalBanners = finalBanners.filter(
@@ -123,19 +132,20 @@ export function BannerSlot({
 
   // Slice to the actual limit
   finalBanners = finalBanners.slice(0, limit);
-  // Se houver erros na API ou não houver banners ativos retornados
+  // Se houver erros na API ou não houver banners elegíveis com arte renderizável
   if (error || finalBanners.length === 0) {
     return fallback ? <>{fallback}</> : null;
   }
 
-  // Adapter seguro para mapear as chaves opcionais e evitar erros TypeScript no build de produção
+  // Adapter seguro para mapear chaves completas e evitar erros TypeScript no build de produção
   const formattedBanners = finalBanners.map((b) => ({
     id: b.id,
     delivery_id: b.delivery_id ?? null,
     alt_text: b.alt_text ?? null,
     banner_type: b.banner_type,
     position: b.position,
-    image_url: b.image_url ?? null, // Mapeamento seguro de undefined para null
+    image_url: b.image_url ?? null,
+    image_mobile_url: b.image_mobile_url ?? null,
     title: b.title,
     link: b.link ?? null,
     link_url: b.link_url ?? null,
@@ -143,6 +153,15 @@ export function BannerSlot({
     company_id: b.company_id,
     width: b.width,
     height: b.height,
+    headline: b.headline ?? null,
+    subtitle: b.subtitle ?? null,
+    cta_label: b.cta_label ?? null,
+    cta_href: b.cta_href ?? null,
+    cta_enabled: b.cta_enabled ?? true,
+    cta_variant: b.cta_variant ?? 'outline',
+    theme: b.theme ?? 'light',
+    creative_mode: b.creative_mode ?? 'image_only',
+    benefits: b.benefits ?? null,
   }));
 
   return (
