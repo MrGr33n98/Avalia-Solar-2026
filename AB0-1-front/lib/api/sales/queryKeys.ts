@@ -11,6 +11,8 @@ export const salesKeys = {
   accounts: (search?: string) => [...salesKeys.all, 'accounts', search || ''] as const,
   accountOptions: (search?: string) => [...salesKeys.all, 'account-options', search || ''] as const,
   accountDetail: (id: string | number) => [...salesKeys.all, 'account', id] as const,
+  accountTimeline: (id: string | number, params?: Record<string, unknown>) =>
+    [...salesKeys.accountDetail(id), 'timeline', params || {}] as const,
   contacts: (accountId?: string | number) => [...salesKeys.all, 'contacts', accountId || ''] as const,
   contactDetail: (id: string | number) => [...salesKeys.all, 'contact', id] as const,
   tasks: (filters?: Record<string, unknown>) => [...salesKeys.all, 'tasks', filters || {}] as const,

@@ -141,6 +141,20 @@ module Sales
         }
       end
 
+      # Notes
+      notes.each do |note|
+        events << {
+          id: "note-#{note.id}",
+          type: 'note',
+          kind: 'note',
+          title: note.title.presence || 'Nota Interna',
+          description: note.body,
+          pinned: note.pinned,
+          occurred_at: note.created_at,
+          actor_name: note.author&.name || 'Vendedor'
+        }
+      end
+
       # Account / Contact creation event
       if @account
         events << {
@@ -214,6 +228,18 @@ module Sales
         end
       elsif @opportunity
         Sales::EmailMessage.where(sales_opportunity_id: @opportunity.id).includes(:events, :sender_user)
+      else
+        []
+      end
+    end
+
+    def notes
+      if @account
+        (@scope ? @scope.notes.where(account_id: @account.id) : Sales::Note.where(account_id: @account.id)).includes(:author)
+      elsif @contact
+        (@scope ? @scope.notes.where(contact_id: @contact.id) : Sales::Note.where(contact_id: @contact.id)).includes(:author)
+      elsif @opportunity
+        (@scope ? @scope.notes.where(opportunity_id: @opportunity.id) : Sales::Note.where(opportunity_id: @opportunity.id)).includes(:author)
       else
         []
       end

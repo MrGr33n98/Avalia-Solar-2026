@@ -32,6 +32,15 @@ RSpec.describe Sales::AccountsQuery, type: :query do
       expect(result.pluck(:id)).to eq([acc2.id])
     end
 
+    it 'filters by tag_id using sales_tag_id relation' do
+      tag = Sales::Tag.create!(name: 'VIP Client')
+      Sales::Tagging.create!(taggable: acc1, tag: tag, created_by: user)
+
+      result = described_class.call(Sales::Account.all, tag_id: tag.id)
+      expect(result).to include(acc1)
+      expect(result).not_to include(acc2)
+    end
+
     it 'paginates results cleanly' do
       paginated = described_class.new(Sales::Account.all, {}).call.paginate_result(page: 1, per_page: 10)
       expect(paginated[:records].size).to eq(2)

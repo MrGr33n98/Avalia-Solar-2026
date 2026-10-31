@@ -132,7 +132,7 @@ export default function CompaniesTable({
     );
   }
 
-  const allSelected = accounts.length > 0 && selectedIds.length === accounts.length;
+  const allSelected = accounts.length > 0 && accounts.every((a) => selectedIds.includes(a.id));
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden font-sans">
@@ -201,7 +201,7 @@ export default function CompaniesTable({
               const rawFitScore =
                 typeof account.fit_score === 'number'
                   ? account.fit_score
-                  : account.fit_score?.score ?? 85;
+                  : account.fit_score?.score ?? null;
 
               return (
                 <tr
@@ -375,10 +375,14 @@ export default function CompaniesTable({
                   {/* Fit Score */}
                   {columns.fit_score && (
                     <td className="p-3">
-                      <span className="inline-flex items-center gap-1 font-bold text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                        {rawFitScore}/100
-                      </span>
+                      {rawFitScore !== null ? (
+                        <span className="inline-flex items-center gap-1 font-bold text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                          {rawFitScore}/100
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 font-medium">—</span>
+                      )}
                     </td>
                   )}
 
@@ -493,9 +497,13 @@ export default function CompaniesTable({
                   {/* Data Quality */}
                   {columns.data_quality && (
                     <td className="p-3">
-                      <span className="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full text-[10px] border border-blue-100">
-                        {account.data_quality ?? 90}%
-                      </span>
+                      {account.data_quality !== null && account.data_quality !== undefined ? (
+                        <span className="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full text-[10px] border border-blue-100">
+                          {account.data_quality}%
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 font-medium">—</span>
+                      )}
                     </td>
                   )}
 
@@ -513,9 +521,9 @@ export default function CompaniesTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 text-xs text-sky-600 hover:text-sky-700 px-2"
+                          className="h-7 text-xs font-semibold text-blue-900 hover:text-blue-950 hover:bg-blue-50 px-2"
                         >
-                          Ficha <ChevronRight className="ml-1 h-3 w-3" />
+                          Ficha Completa <ChevronRight className="ml-1 h-3 w-3" />
                         </Button>
                       </Link>
                     </div>

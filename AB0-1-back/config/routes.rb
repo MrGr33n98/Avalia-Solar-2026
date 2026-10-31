@@ -234,6 +234,7 @@ Rails.application.routes.draw do
           end
           member do
             post :merge
+            get :timeline
           end
         end
         resources :contacts, only: %i[index show create update], controller: 'sales/contacts' do

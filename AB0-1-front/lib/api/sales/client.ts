@@ -31,6 +31,9 @@ import {
   ApiActivityReportResponse,
   ActivityFilterCriteria,
   ApiWidgetEngagementReportResponse,
+  DetailedAccount,
+  AccountDetailResponse,
+  AccountTimelineResponse,
 } from './types';
 export type { ApiContactMethod, ContactMethodKind, UpsertContactMethodPayload };
 import type { SalesTimelineResponse } from './timeline-types';
@@ -787,6 +790,47 @@ export const salesApi = {
       `/api/v1/sales/accounts?${qs.toString()}`
     );
     return res.accounts ?? [];
+  },
+
+  async getAccount(
+    id: number | string,
+    options?: { signal?: AbortSignal }
+  ): Promise<DetailedAccount> {
+    const res = await request<AccountDetailResponse>(`/api/v1/sales/accounts/${id}`, {
+      signal: options?.signal,
+    });
+    return res.account;
+  },
+
+  async getAccountTimeline(
+    id: number | string,
+    options?: {
+      signal?: AbortSignal;
+      cursor?: string;
+      limit?: number;
+      type?: string;
+    }
+  ): Promise<AccountTimelineResponse> {
+    const qs = new URLSearchParams();
+    if (options?.cursor) qs.set('cursor', options.cursor);
+    if (options?.limit) qs.set('limit', String(options.limit));
+    if (options?.type) qs.set('type', options.type);
+    const queryString = qs.toString();
+    const url = `/api/v1/sales/accounts/${id}/timeline${queryString ? `?${queryString}` : ''}`;
+    return await request<AccountTimelineResponse>(url, {
+      signal: options?.signal,
+    });
+  },
+
+  async updateAccount(
+    id: number | string,
+    payload: Partial<DetailedAccount>
+  ): Promise<DetailedAccount> {
+    const res = await request<AccountDetailResponse>(`/api/v1/sales/accounts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ account: payload }),
+    });
+    return res.account;
   },
 
   async createAccount(payload: Partial<ApiAccount> & { primary_contact?: any }): Promise<ApiAccount> {

@@ -68,6 +68,141 @@ export interface ApiAccount {
   updated_at?: string;
 }
 
+export interface NextBestActionDTO {
+  action_type: string;
+  title: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent' | string;
+  reason?: string;
+  cta_label?: string;
+  target_contact_id?: number | null;
+  target_opportunity_id?: number | null;
+}
+
+export interface AccountMarketplaceDTO {
+  id: number;
+  name: string;
+  slug?: string | null;
+  rating_avg?: number | null;
+  rating_count?: number | null;
+  verified?: boolean;
+  claimed?: boolean;
+  claim_status?: 'claimed' | 'unclaimed' | 'pending' | 'unknown' | string;
+  city?: string | null;
+  state?: string | null;
+  logo_url?: string | null;
+  profile_url?: string | null;
+}
+
+export interface AccountSummaryDTO {
+  contacts_count?: number;
+  opportunities_count?: number;
+  open_opportunities_count?: number;
+  open_pipeline_value_cents?: number;
+  won_opportunities_count?: number;
+  won_pipeline_value_cents?: number;
+  activities_count?: number;
+  tasks_count?: number;
+  emails_sent_count?: number;
+  emails_opened_count?: number;
+  last_email_sent_at?: string | null;
+  last_activity_at?: string | null;
+}
+
+export interface AccountContactItem {
+  id: number;
+  first_name: string;
+  last_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  job_title?: string | null;
+  decision_role?: string | null;
+  is_primary?: boolean;
+}
+
+export interface AccountOpportunityItem {
+  id: number;
+  name: string;
+  value_cents?: number | null;
+  probability?: number | null;
+  stage_id?: number | null;
+  status?: string | null;
+  expected_close_date?: string | null;
+  created_at?: string;
+}
+
+export interface AccountActivityItem {
+  id: number;
+  activity_type: string;
+  subject: string;
+  body?: string | null;
+  occurred_at: string;
+  actor_name?: string | null;
+}
+
+export interface AccountTaskItem {
+  id: number;
+  title: string;
+  due_at?: string | null;
+  completed_at?: string | null;
+  priority?: string | null;
+  status?: string | null;
+}
+
+export interface DetailedAccount {
+  id: number;
+  name: string;
+  domain?: string | null;
+  website?: string | null;
+  cnpj?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  city?: string | null;
+  state?: string | null;
+  segment?: string | null;
+  status?: string | null;
+  tags?: Array<{ id: number; name: string; color?: string | null }>;
+  owner_name?: string | null;
+  owner_id?: number | null;
+  fit_score?: number | { score: number; breakdown: Record<string, unknown>[] } | null;
+  data_quality?: number | { score: number; missing_fields: string[] } | null;
+  next_best_action?: NextBestActionDTO | null;
+  contacts?: AccountContactItem[];
+  opportunities?: AccountOpportunityItem[];
+  activities?: AccountActivityItem[];
+  tasks?: AccountTaskItem[];
+  marketplace?: AccountMarketplaceDTO | null;
+  summary?: AccountSummaryDTO;
+  solar_project_id?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AccountDetailResponse {
+  account: DetailedAccount;
+  meta?: Record<string, unknown>;
+}
+
+export interface AccountTimelineEvent {
+  id: string;
+  type: string;
+  kind: string;
+  title: string;
+  description?: string | null;
+  occurred_at: string;
+  actor_name?: string | null;
+  activity_type?: string | null;
+  subject?: string | null;
+  preview?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AccountTimelineResponse {
+  events: AccountTimelineEvent[];
+  next_cursor?: string | null;
+  meta?: Record<string, unknown>;
+}
+
 export type ContactMethodKind = 'email' | 'phone' | 'whatsapp' | 'linkedin' | 'instagram' | 'website';
 
 export interface ApiContactMethod {

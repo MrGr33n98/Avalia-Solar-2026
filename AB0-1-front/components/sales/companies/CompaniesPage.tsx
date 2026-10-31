@@ -110,7 +110,11 @@ export default function CompaniesPage() {
           setError(err.message || 'Erro ao conectar à API do CRM.');
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
 
     return () => controller.abort();
   }, [query, selectedOwnerId, selectedType, advancedFilters, page, user?.id]);
@@ -130,10 +134,15 @@ export default function CompaniesPage() {
   }, [fetchAccounts]);
 
   const handleToggleSelectAll = () => {
-    if (selectedIds.length === accounts.length) {
-      setSelectedIds([]);
+    const allPageIdsSelected =
+      accounts.length > 0 && accounts.every((a) => selectedIds.includes(a.id));
+    if (allPageIdsSelected) {
+      const pageIdsSet = new Set(accounts.map((a) => a.id));
+      setSelectedIds((prev) => prev.filter((id) => !pageIdsSet.has(id)));
     } else {
-      setSelectedIds(accounts.map((a) => a.id));
+      const currentSet = new Set(selectedIds);
+      accounts.forEach((a) => currentSet.add(a.id));
+      setSelectedIds(Array.from(currentSet));
     }
   };
 
@@ -151,6 +160,20 @@ export default function CompaniesPage() {
         params.set('owner_id', selectedOwnerId);
       }
       if (selectedType) params.set('segment', selectedType);
+
+      // Advanced Filter parameters for CSV export
+      if (advancedFilters.segment) params.set('segment', advancedFilters.segment);
+      if (advancedFilters.state) params.set('state', advancedFilters.state);
+      if (advancedFilters.city) params.set('city', advancedFilters.city);
+      if (advancedFilters.status) params.set('status', advancedFilters.status);
+      if (advancedFilters.owner_id === 'me' && user?.id) {
+        params.set('owner_id', String(user.id));
+      } else if (advancedFilters.owner_id && advancedFilters.owner_id !== 'me') {
+        params.set('owner_id', advancedFilters.owner_id);
+      }
+      if (advancedFilters.has_email) params.set('has_email', 'true');
+      if (advancedFilters.has_phone) params.set('has_phone', 'true');
+
       if (selectedIds.length > 0) {
         selectedIds.forEach((id) => params.append('ids[]', String(id)));
       }
@@ -196,7 +219,10 @@ export default function CompaniesPage() {
           }}
           count={totalCount}
           selectedOwnerId={selectedOwnerId}
-          onOwnerSelect={setSelectedOwnerId}
+          onOwnerSelect={(value) => {
+            setSelectedOwnerId(value);
+            setPage(1);
+          }}
           selectedType={selectedType}
           onTypeSelect={(value) => {
             setSelectedType(value);

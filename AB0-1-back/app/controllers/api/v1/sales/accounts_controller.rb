@@ -165,22 +165,24 @@ module Api
 
           activity_scope = current_tenant_scope.activities.where(sales_account_id: account_ids)
           task_scope = current_tenant_scope.tasks.where(sales_account_id: account_ids)
-          last_activity_times = activity_scope
-                                                  .group(:sales_account_id)
-                                                  .maximum(:occurred_at)
-          activity_counts = activity_scope
-                                             .group(:sales_account_id)
-                                             .count
-          next_task_dates = task_scope
-                                         .where('due_at >= ?', Time.current)
-                                         .where(completed_at: nil)
-                                         .group(:sales_account_id)
-                                         .minimum(:due_at)
-          overdue_task_counts = task_scope
-                                             .where('due_at < ?', Time.current)
-                                             .where(completed_at: nil)
-                                             .group(:sales_account_id)
-                                             .count
+          email_scope = current_tenant_scope.email_messages.where(sales_account_id: account_ids)
+
+          last_activity_times = activity_scope.group(:sales_account_id).maximum(:occurred_at)
+          activity_counts = activity_scope.group(:sales_account_id).count
+          next_task_dates = task_scope.where('due_at >= ?', Time.current)
+                                      .where(completed_at: nil)
+                                      .group(:sales_account_id)
+                                      .minimum(:due_at)
+          overdue_task_counts = task_scope.where('due_at < ?', Time.current)
+                                          .where(completed_at: nil)
+                                          .group(:sales_account_id)
+                                          .count
+
+          emails_sent_counts = email_scope.where.not(sent_at: nil).group(:sales_account_id).count
+          emails_opened_counts = email_scope.where('open_count > 0 OR first_opened_at IS NOT NULL')
+                                            .group(:sales_account_id)
+                                            .count
+          last_email_sent_times = email_scope.where.not(sent_at: nil).group(:sales_account_id).maximum(:sent_at)
 
           accounts.map do |account|
             contacts = account.contacts.to_a
@@ -189,7 +191,7 @@ module Api
             open_opps = opps.reject { |o| %w[won lost].include?(o.status.to_s.downcase) }
             won_opps = opps.select { |o| o.status.to_s.downcase == 'won' }
             lost_opps = opps.select { |o| o.status.to_s.downcase == 'lost' }
-            last_activity = last_activity_times[account.id] || account.created_at
+            last_activity = last_activity_times[account.id]
 
             {
               id: account.id,
@@ -227,11 +229,11 @@ module Api
               next_activity_at: next_task_dates[account.id],
               activities_count: activity_counts[account.id] || 0,
               overdue_activities_count: overdue_task_counts[account.id] || 0,
-              emails_sent_count: (activity_counts[account.id] || 0) + 1,
-              emails_opened_count: ((activity_counts[account.id] || 0) * 0.7).round,
-              last_email_sent_at: last_activity,
-              fit_score: account.respond_to?(:fit_score) ? account.fit_score : 85,
-              data_quality: account.respond_to?(:data_quality) ? account.data_quality : 90
+              emails_sent_count: emails_sent_counts[account.id] || 0,
+              emails_opened_count: emails_opened_counts[account.id] || 0,
+              last_email_sent_at: last_email_sent_times[account.id],
+              fit_score: ::Sales::FitScoreCalculator.calculate(account)[:score],
+              data_quality: ::Sales::DataQualityCalculator.calculate(account)[:score]
             }
           end
         end
@@ -242,6 +244,17 @@ module Api
 
         def serialize_detailed(account)
           company = account.company
+          opps = account.opportunities.to_a
+          open_opps = opps.reject { |o| %w[won lost].include?(o.status.to_s.downcase) }
+          won_opps = opps.select { |o| o.status.to_s.downcase == 'won' }
+          lost_opps = opps.select { |o| o.status.to_s.downcase == 'lost' }
+
+          email_scope = current_tenant_scope.email_messages.where(sales_account_id: account.id)
+          emails_sent = email_scope.where.not(sent_at: nil).count
+          emails_opened = email_scope.where('open_count > 0 OR first_opened_at IS NOT NULL').count
+          last_email_sent = email_scope.where.not(sent_at: nil).maximum(:sent_at)
+          is_claimed = company ? company.company_members.active.exists? : false
+
           {
             id: account.id,
             name: account.name,
@@ -284,9 +297,28 @@ module Api
               rating_avg: company.try(:rating_avg).to_f,
               rating_count: company.try(:rating_count).to_i,
               verified: company.try(:verified) || false,
+              claimed: is_claimed,
+              claim_status: is_claimed ? 'claimed' : 'unclaimed',
               city: company.city,
               state: company.state,
-            } : nil
+              public_url: company.slug.present? ? "https://avaliasolar.com.br/empresas/#{company.slug}" : nil
+            } : nil,
+            emails_sent_count: emails_sent,
+            emails_opened_count: emails_opened,
+            last_email_sent_at: last_email_sent,
+            last_activity_at: account.activities.maximum(:occurred_at),
+            summary: {
+              open_opportunities_count: open_opps.size,
+              open_pipeline_value_cents: open_opps.sum(&:value_cents),
+              won_opportunities_count: won_opps.size,
+              won_pipeline_value_cents: won_opps.sum(&:value_cents),
+              lost_opportunities_count: lost_opps.size,
+              total_activities_count: account.activities.count,
+              pending_tasks_count: account.tasks.where(completed_at: nil).count,
+              contacts_count: account.contacts.count,
+              emails_sent_count: emails_sent,
+              emails_opened_count: emails_opened
+            }
           }
         end
       end

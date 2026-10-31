@@ -15,10 +15,11 @@ import { useSalesPipelines } from '@/lib/api/sales/queries';
 interface CreateOpportunityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  accountId?: number | string;
   onSuccess?: () => void;
 }
 
-export default function CreateOpportunityDialog({ open, onOpenChange, onSuccess }: CreateOpportunityDialogProps) {
+export default function CreateOpportunityDialog({ open, onOpenChange, accountId, onSuccess }: CreateOpportunityDialogProps) {
   const { data: pipelines } = useSalesPipelines();
   const pipeline = pipelines?.[0];
   const stages = pipeline?.stages || [];
@@ -27,7 +28,7 @@ export default function CreateOpportunityDialog({ open, onOpenChange, onSuccess 
 
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const [selectedAccountId, setSelectedAccountId] = useState('');
+  const [selectedAccountId, setSelectedAccountId] = useState(accountId ? String(accountId) : '');
   const [selectedContactId, setSelectedContactId] = useState('');
   const [isInlineAccount, setIsInlineAccount] = useState(false);
   const [inlineAccountName, setInlineAccountName] = useState('');

@@ -91,7 +91,7 @@ module Sales
       tag_ids = Array(params[:tag_ids] || params[:tag_id]).reject(&:blank?)
       return scope if tag_ids.empty?
 
-      account_ids = ::Sales::Tagging.where(taggable_type: 'Sales::Account', tag_id: tag_ids).select(:taggable_id)
+      account_ids = ::Sales::Tagging.where(taggable_type: 'Sales::Account', sales_tag_id: tag_ids).select(:taggable_id)
       scope.where(id: account_ids)
     end
 
