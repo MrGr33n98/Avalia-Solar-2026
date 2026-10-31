@@ -58,6 +58,24 @@ export default function LeadsWorkspace() {
     return pipelines.find((p) => p.active) || pipelines[0];
   }, [pipelines, selectedPipelineId]);
 
+  const effectivePipelineId = selectedPipelineId ?? activePipeline?.id;
+
+  const dateFilterLabel = useMemo(() => {
+    if (nutshellFilters.closeDate?.from && nutshellFilters.closeDate?.to) {
+      return `${nutshellFilters.closeDate.from} até ${nutshellFilters.closeDate.to}`;
+    }
+    if (nutshellFilters.closeDate?.from) {
+      return `A partir de ${nutshellFilters.closeDate.from}`;
+    }
+    if (nutshellFilters.closeDate?.to) {
+      return `Até ${nutshellFilters.closeDate.to}`;
+    }
+    if (nutshellFilters.age?.min !== undefined || nutshellFilters.age?.max !== undefined) {
+      return `Idade: ${nutshellFilters.age.min || 0} - ${nutshellFilters.age.max || '∞'} dias`;
+    }
+    return 'Todos os períodos';
+  }, [nutshellFilters]);
+
   const handleViewChange = (nextView: 'list' | 'kanban' | 'map' | 'analytics') => {
     setView(nextView);
     startTransition(() => {
@@ -198,6 +216,7 @@ export default function LeadsWorkspace() {
           view={view}
           onViewChange={handleViewChange}
           activePipelineName={activePipeline?.name}
+          dateFilterLabel={dateFilterLabel}
           onClearAll={() => {
             setNutshellFilters({});
             setSearch('');
@@ -227,7 +246,7 @@ export default function LeadsWorkspace() {
           </div>
         ) : (
           <LeadsAnalyticsView
-            pipelineId={selectedPipelineId}
+            pipelineId={effectivePipelineId}
             searchQuery={search}
             filters={nutshellFilters}
           />

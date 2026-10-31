@@ -28,7 +28,7 @@ module Api
         def analytics
           query_params = params.to_unsafe_h.symbolize_keys
           query_params[:all_statuses] = true if query_params[:status].blank? && query_params[:status_in].blank?
-          scope = scoped_opportunities.merge(::Sales::OpportunitiesQuery.call(query_params))
+          scope = scoped_opportunities.merge(::Sales::OpportunitiesQuery.call(query_params)).unscope(:order)
 
           total_leads = scope.count
           total_value_cents = scope.sum(:value_cents) || 0
@@ -59,7 +59,11 @@ module Api
           months_pt = %w[jan fev mar abr mai jun jul ago set out nov dez]
           time_series = time_series_rows.map do |date_val, qty, val_cents|
             d = date_val.is_a?(Time) || date_val.is_a?(DateTime) ? date_val.to_date : Date.parse(date_val.to_s)
-            label = "#{months_pt[d.month - 1]} #{d.strftime('%y')}"
+            label = if group_trunc == 'month'
+                      "#{months_pt[d.month - 1]} #{d.strftime('%y')}"
+                    else
+                      "#{d.strftime('%d/%m')}"
+                    end
             {
               period_label: label,
               start_date: d.to_s,
@@ -71,12 +75,12 @@ module Api
           calc_pct = ->(c) { total_leads.positive? ? ((c.to_f / total_leads) * 100).round(1) : 0.0 }
 
           assignee_data = scope.joins('LEFT JOIN users ON users.id = sales_opportunities.owner_id')
-                               .group('users.id', 'users.first_name', 'users.last_name', 'users.email')
+                               .group('users.id', 'users.name', 'users.email')
                                .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                               .pluck('users.id', 'users.first_name', 'users.last_name', 'users.email', Arel.sql('COUNT(sales_opportunities.id)'))
-                               .map do |uid, fn, ln, em, c|
-                                 name = [fn, ln].compact.join(' ').presence || em.presence || 'Sem responsável'
-                                 { id: uid, label: name, count: c.to_i, percentage: calc_pct.call(c) }
+                               .pluck('users.id', 'users.name', 'users.email', Arel.sql('COUNT(sales_opportunities.id)'))
+                               .map do |uid, uname, em, c|
+                                 display_name = uname.presence || em.presence || 'Sem responsável'
+                                 { id: uid, label: display_name, count: c.to_i, percentage: calc_pct.call(c) }
                                end
 
           stage_data = scope.joins(:stage)
@@ -87,15 +91,11 @@ module Api
                               { id: sid, label: sname, count: c.to_i, percentage: calc_pct.call(c) }
                             end
 
-          product_data = begin
-            scope.joins(:line_items => :product)
-                 .group('sales_products.id', 'sales_products.name')
-                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                 .pluck('sales_products.id', 'sales_products.name', Arel.sql('COUNT(sales_opportunities.id)'))
-                 .map { |pid, pname, c| { id: pid, label: pname, count: c.to_i, percentage: calc_pct.call(c) } }
-          rescue StandardError
-            []
-          end
+          product_data = scope.joins('INNER JOIN sales_opportunity_line_items ON sales_opportunity_line_items.opportunity_id = sales_opportunities.id INNER JOIN sales_products ON sales_products.id = sales_opportunity_line_items.product_id')
+                              .group('sales_products.id', 'sales_products.name')
+                              .order(Arel.sql('COUNT(DISTINCT sales_opportunities.id) DESC'))
+                              .pluck('sales_products.id', 'sales_products.name', Arel.sql('COUNT(DISTINCT sales_opportunities.id)'))
+                              .map { |pid, pname, c| { id: pid, label: pname, count: c.to_i, percentage: calc_pct.call(c) } }
 
           outcome_data = [
             { status: 'won', label: 'Won', count: won_count, percentage: calc_pct.call(won_count), color: '#16A34A' },
@@ -109,25 +109,17 @@ module Api
                              .pluck(Arel.sql("COALESCE(sales_sources.name, sales_opportunities.source, 'Não informado')"), Arel.sql('COUNT(sales_opportunities.id)'))
                              .map { |src, c| { label: src, count: c.to_i, percentage: calc_pct.call(c) } }
 
-          competitor_data = begin
-            scope.joins(:competitors)
-                 .group('sales_competitors.id', 'sales_competitors.name')
-                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                 .pluck('sales_competitors.id', 'sales_competitors.name', Arel.sql('COUNT(sales_opportunities.id)'))
-                 .map { |cid, cname, c| { id: cid, label: cname, count: c.to_i, percentage: calc_pct.call(c) } }
-          rescue StandardError
-            []
-          end
+          competitor_data = scope.joins(:competitors)
+                                 .group('sales_competitors.id', 'sales_competitors.name')
+                                 .order(Arel.sql('COUNT(DISTINCT sales_opportunities.id) DESC'))
+                                 .pluck('sales_competitors.id', 'sales_competitors.name', Arel.sql('COUNT(DISTINCT sales_opportunities.id)'))
+                                 .map { |cid, cname, c| { id: cid, label: cname, count: c.to_i, percentage: calc_pct.call(c) } }
 
-          tag_data = begin
-            scope.joins(:tags)
-                 .group('sales_tags.id', 'sales_tags.name')
-                 .order(Arel.sql('COUNT(sales_opportunities.id) DESC'))
-                 .pluck('sales_tags.id', 'sales_tags.name', Arel.sql('COUNT(sales_opportunities.id)'))
-                 .map { |tid, tname, c| { id: tid, label: tname, count: c.to_i, percentage: calc_pct.call(c) } }
-          rescue StandardError
-            []
-          end
+          tag_data = scope.joins(:tags)
+                          .group('sales_tags.id', 'sales_tags.name')
+                          .order(Arel.sql('COUNT(DISTINCT sales_opportunities.id) DESC'))
+                          .pluck('sales_tags.id', 'sales_tags.name', Arel.sql('COUNT(DISTINCT sales_opportunities.id)'))
+                          .map { |tid, tname, c| { id: tid, label: tname, count: c.to_i, percentage: calc_pct.call(c) } }
 
           territory_data = scope.joins(:account)
                                 .where.not('sales_accounts.state' => [nil, ''])

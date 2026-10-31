@@ -95,6 +95,8 @@ AB0-1-front/public/avalia-solar-upgrade-assets/
 !AB0-1-front/__tests__/dashboard/PlansPricingModal.test.tsx
 !AB0-1-front/__tests__/components/ProfileSignalsTab.test.tsx
 !AB0-1-front/__tests__/components/ContentStudioWorkspace.test.tsx
+!AB0-1-front/__tests__/sales-leads-analytics.test.tsx
+!AB0-1-back/spec/requests/api/v1/sales/opportunities_analytics_spec.rb
 
 # Ignorar documentações de desenvolvimento
 docs/
