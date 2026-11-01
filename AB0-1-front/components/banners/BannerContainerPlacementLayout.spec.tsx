@@ -94,3 +94,32 @@ describe('BannerContainer - seleção de layout por placement', () => {
     expect(collectClassNames(container)).toContain('max-w-[300px]');
   });
 });
+
+describe('BannerContainer - fundo desfocado (ambientBackground)', () => {
+  const imageOnlyBanner: BannerData = {
+    id: 20,
+    title: 'UPFRONT 2027',
+    alt_text: 'UPFRONT 2027',
+    image_url: '/upfront-2027.png',
+    link_url: 'https://example.com',
+    creative_mode: 'image_only',
+    sponsored: true,
+  };
+
+  it.each([
+    'company_profile_sidebar_sponsored',
+    'companies_right_rail',
+    'categories_right_rail',
+    'compare_page_sidebar',
+  ])('placement lateral %s não renderiza cópia desfocada da imagem', (position) => {
+    render(<BannerContainer banners={[imageOnlyBanner]} position={position} />);
+
+    expect(screen.getAllByTestId('banner-image')).toHaveLength(1);
+  });
+
+  it('placement horizontal mantém o fundo desfocado configurado', () => {
+    render(<BannerContainer banners={[imageOnlyBanner]} position="company_profile_about_inline" />);
+
+    expect(screen.getAllByTestId('banner-image')).toHaveLength(2);
+  });
+});

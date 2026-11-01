@@ -323,6 +323,9 @@ export function BannerContainer({
     // A geometria é definida pelo placement; creative_mode define apenas a composição interna.
     const isSidebar = isSidebarPlacement(position);
 
+    // Placements laterais (1:2) nunca usam fundo desfocado: evita faixa azul acima/abaixo da arte.
+    const ambientBackground = isSidebar ? false : displaySpec?.ambientBackground;
+
     // Caso de card lateral único: renderiza diretamente o BannerCreative sem controles redundantes de carrossel
     // Restrito a placements laterais: nunca aplicar o card de 300px em placements horizontais.
     if (
@@ -340,7 +343,7 @@ export function BannerContainer({
             banner={singleBanner}
             priority={priority}
             sizes={getSizes(position)}
-            ambientBackground={displaySpec?.ambientBackground}
+            ambientBackground={ambientBackground}
             onMediaError={() => handleMediaError(singleBanner)}
             onMediaLoad={() => handleMediaLoad(singleBanner)}
             onBannerClick={() => trackBannerClick(singleBanner)}
@@ -355,7 +358,7 @@ export function BannerContainer({
           banner={banner}
           priority={isPriority}
           sizes={getSizes(position)}
-          ambientBackground={displaySpec?.ambientBackground}
+          ambientBackground={ambientBackground}
           fit={displaySpec?.fit || (banner.sponsored ? 'cover' : 'contain')}
           onMediaError={() => handleMediaError(banner)}
           onMediaLoad={() => handleMediaLoad(banner)}
@@ -374,7 +377,7 @@ export function BannerContainer({
             banner={banner}
             priority={isPriority}
             sizes={getSizes(position)}
-            ambientBackground={displaySpec?.ambientBackground}
+            ambientBackground={ambientBackground}
             onMediaError={() => handleMediaError(banner)}
             onMediaLoad={() => handleMediaLoad(banner)}
             onBannerClick={() => trackBannerClick(banner)}
@@ -389,7 +392,7 @@ export function BannerContainer({
             banner={banner}
             priority={isPriority}
             sizes={getSizes(position)}
-            ambientBackground={displaySpec?.ambientBackground}
+            ambientBackground={ambientBackground}
             onMediaError={() => handleMediaError(banner)}
             onMediaLoad={() => handleMediaLoad(banner)}
             onBannerClick={() => trackBannerClick(banner)}

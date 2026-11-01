@@ -145,7 +145,7 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     desktopAspectRatio: '1/2',
     desktopMaxHeight: 600,
     fit: 'contain',
-    ambientBackground: true,
+    ambientBackground: false,
   },
   company_profile_sidebar_sponsored: {
     aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
@@ -153,7 +153,7 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     desktopAspectRatio: '1/2',
     desktopMaxHeight: 600,
     fit: 'contain',
-    ambientBackground: true,
+    ambientBackground: false,
   },
   companies_right_rail: {
     aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
@@ -161,7 +161,7 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     desktopAspectRatio: '1/2',
     desktopMaxHeight: 600,
     fit: 'contain',
-    ambientBackground: true,
+    ambientBackground: false,
   },
   categories_right_rail: {
     aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
@@ -169,7 +169,7 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     desktopAspectRatio: '1/2',
     desktopMaxHeight: 600,
     fit: 'contain',
-    ambientBackground: true,
+    ambientBackground: false,
   },
 };
 
