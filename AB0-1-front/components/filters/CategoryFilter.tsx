@@ -78,11 +78,6 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({ selectedIds, onC
                       ) : null}
                       <span className="truncate">{root.name}</span>
                     </span>
-                    {root.companies_count > 0 && (
-                      <span className="text-[10px] text-slate-400 font-medium">
-                        {root.companies_count}
-                      </span>
-                    )}
                   </div>
                   <div className="grid gap-1.5 pl-1">
                     {root.children.map((child) => (
@@ -105,11 +100,6 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({ selectedIds, onC
                             {child.name}
                           </label>
                         </div>
-                        {child.companies_count > 0 && (
-                          <span className="rounded-sm border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
-                            {child.companies_count}
-                          </span>
-                        )}
                       </div>
                     ))}
                   </div>

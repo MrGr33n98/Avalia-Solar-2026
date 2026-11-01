@@ -47,13 +47,7 @@ export default function CategoryCardMinimal({
 
         {/* Contadores no canto superior direito */}
         <div className="flex flex-col items-end gap-1 ml-2">
-          {displayData.companies_count > 0 && (
-            <div className="flex items-center gap-1 text-xs text-gray-600">
-              <Building2 className="h-3.5 w-3.5" />
-              <span className="font-medium">{displayData.companies_count}</span>
-            </div>
-          )}
-          {displayData.products_count > 0 && (
+                    {displayData.products_count > 0 && (
             <div className="flex items-center gap-1 text-xs text-gray-600">
               <Package className="h-3.5 w-3.5" />
               <span className="font-medium">{displayData.products_count}</span>

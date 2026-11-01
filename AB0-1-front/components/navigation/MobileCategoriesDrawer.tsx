@@ -521,9 +521,6 @@ function MainCategoriesView({
               <p className="line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
                 {category.name}
               </p>
-              <p className="mt-0.5 text-xs font-normal text-slate-500">
-                {formatCount(category.companies_count || 0)}
-              </p>
             </div>
             <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
           </>
@@ -612,11 +609,6 @@ function SubcategoryView({
             <p className="line-clamp-2 min-w-0 flex-1 text-sm font-medium leading-snug text-slate-950">
               {subcategory.name}
             </p>
-            {subcategory.companies_count > 0 && (
-              <span className="shrink-0 rounded-sm border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                {subcategory.companies_count}
-              </span>
-            )}
             <ChevronRight
               className={MOBILE_NAV_CHEVRON_CLASS}
               strokeWidth={1.75}

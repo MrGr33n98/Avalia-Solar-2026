@@ -229,12 +229,7 @@ function FeaturedCard({
               />
             </span>
 
-            <span className="truncate">
-              {category.companies_count ?? 0}{' '}
-              {category.companies_count === 1
-                ? 'empresa'
-                : 'empresas'}
-            </span>
+            <span className="truncate">Ver empresas</span>
           </span>
 
           <span className="inline-flex shrink-0 items-center text-[11px] font-bold text-blue-700">

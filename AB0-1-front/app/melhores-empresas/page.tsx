@@ -112,9 +112,6 @@ export default async function MelhoresEmpresasIndexPage() {
                     Ranking de {category.name}
                   </h2>
                   <div className="flex-grow h-px bg-slate-200"></div>
-                  <span className="text-sm font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                    {category.companies_count} empresas ativas
-                  </span>
                 </div>
 
                 {/* Grid de Estados */}

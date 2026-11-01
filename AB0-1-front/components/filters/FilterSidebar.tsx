@@ -192,11 +192,6 @@ function CategoriesSection({
                       {child.name}
                     </label>
                   </div>
-                  {child.companies_count > 0 && (
-                    <span className="ml-2 shrink-0 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
-                      {child.companies_count}
-                    </span>
-                  )}
                 </div>
               ))}
             </div>

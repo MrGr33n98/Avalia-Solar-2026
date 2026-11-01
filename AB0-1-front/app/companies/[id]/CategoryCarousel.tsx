@@ -97,7 +97,6 @@ export function CategoryCarousel({ data, searchParams }: { data: LocalSolarPageR
                     )}
                   </div>
                   <p className="line-clamp-2 min-h-7 text-[11px] font-bold leading-3.5 text-slate-900">{projectType.name}</p>
-                  <p className="mt-0.5 text-[10px] text-slate-600">{companyCountLabel(projectType.companies_count)}</p>
                 </Link>
               </CarouselItem>
             );

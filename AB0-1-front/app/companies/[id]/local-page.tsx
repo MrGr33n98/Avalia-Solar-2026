@@ -345,7 +345,6 @@ function FilterSidebar({ data, input }: { data: LocalSolarPageResponse; input: L
                   className="h-4 w-4 rounded border-slate-300 text-blue-700"
                 />
                 <span className="min-w-0 flex-1 truncate">{projectType.name}</span>
-                <span className="text-xs text-slate-400">{projectType.companies_count}</span>
               </label>
             ))}
           </div>

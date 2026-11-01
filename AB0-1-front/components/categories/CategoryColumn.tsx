@@ -36,11 +36,6 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
           </span>
           <span className="truncate group-hover:whitespace-normal">{category.name}</span>
         </span>
-        {category.companies_count > 0 && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-            {category.companies_count}
-          </span>
-        )}
       </Link>
 
       {/* Subcategorias */}
@@ -63,11 +58,6 @@ export const CategoryColumn: React.FC<CategoryColumnProps> = ({ category, isPopu
                   </span>
                   <span className="truncate">{child.name}</span>
                 </span>
-                {child.companies_count > 0 && (
-                  <span className="text-[9px] opacity-0 group-hover:opacity-100 text-slate-400 transition-opacity">
-                    {child.companies_count}
-                  </span>
-                )}
               </Link>
             </li>
           );

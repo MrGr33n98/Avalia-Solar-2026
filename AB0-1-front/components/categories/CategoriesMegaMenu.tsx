@@ -479,17 +479,6 @@ export const CategoriesMegaMenu:
                             category.name
                           }
                         </span>
-
-                        <span className="mt-1 block text-[11px] font-medium text-slate-400">
-                          {
-                            category.companies_count
-                          }{' '}
-
-                          {category.companies_count ===
-                          1
-                            ? 'empresa'
-                            : 'empresas'}
-                        </span>
                       </div>
                     </Link>
 

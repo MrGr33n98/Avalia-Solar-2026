@@ -827,14 +827,7 @@ function CategoryResultItem({
             {category.short_description || category.description}
           </p>
           
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            {category.companies_count && (
-              <div className="flex items-center gap-1">
-                <Building2 className="h-3 w-3" />
-                <span>{category.companies_count} empresas</span>
-              </div>
-            )}
-          </div>
+
         </div>
         
         <ChevronRight className={`
