@@ -18,6 +18,55 @@ export const BANNER_PLACEMENTS = {
   },
 } as const;
 
+/** Conjunto canônico de placements laterais/verticais (largura máxima restrita a 300px). */
+export const SIDEBAR_PLACEMENTS = new Set<string>([
+  'compare_page_sidebar',
+  'company_profile_sidebar_sponsored',
+  'companies_right_rail',
+  'categories_right_rail',
+  'categories_filter_sidebar',
+  'sidebar',
+  'groups_right_rail',
+]);
+
+/** Conjunto canônico de placements horizontais (largura total 100%, sem limite de 300px). */
+export const HORIZONTAL_PLACEMENTS = new Set<string>([
+  'company_profile_about_inline',
+  'company_profile_related_carousel',
+  'companies_top',
+  'companies_footer',
+  'categories_top',
+  'home_hero',
+  'home_top',
+  'compare_hero',
+  'compare_page_top',
+  'compare_page_inline',
+  'compare_page_bottom',
+  'search_top',
+  'search_mid',
+  'article_footer_cta',
+  'navbar',
+  'financing_simulator_micro_banner',
+  'comparison_floating_bar',
+]);
+
+/**
+ * Determina se uma posição pertence aos placements de sidebar/lateral.
+ */
+export function isSidebarPlacement(position?: string): boolean {
+  if (!position) return false;
+  return SIDEBAR_PLACEMENTS.has(position);
+}
+
+/**
+ * Determina se uma posição pertence aos placements horizontais.
+ * Nunca assume automaticamente posições desconhecidas como sidebar.
+ */
+export function isHorizontalPlacement(position?: string): boolean {
+  if (!position) return true;
+  return !isSidebarPlacement(position);
+}
+
 /** Proporções padrão usadas somente quando creative não informa dimensões válidas. */
 export const BANNER_PLACEMENT_ASPECT_RATIOS: Record<string, string> = {
   home_hero: '133/23',
@@ -91,6 +140,30 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     ambientBackground: true,
   },
   compare_page_sidebar: {
+    aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
+    defaultAspectRatio: '1/2',
+    desktopAspectRatio: '1/2',
+    desktopMaxHeight: 600,
+    fit: 'contain',
+    ambientBackground: true,
+  },
+  company_profile_sidebar_sponsored: {
+    aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
+    defaultAspectRatio: '1/2',
+    desktopAspectRatio: '1/2',
+    desktopMaxHeight: 600,
+    fit: 'contain',
+    ambientBackground: true,
+  },
+  companies_right_rail: {
+    aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
+    defaultAspectRatio: '1/2',
+    desktopAspectRatio: '1/2',
+    desktopMaxHeight: 600,
+    fit: 'contain',
+    ambientBackground: true,
+  },
+  categories_right_rail: {
     aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
     defaultAspectRatio: '1/2',
     desktopAspectRatio: '1/2',

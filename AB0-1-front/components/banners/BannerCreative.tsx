@@ -3,6 +3,8 @@
 import React from 'react';
 import { SidebarEditorialCreative } from './SidebarEditorialCreative';
 import { SidebarImageOnlyCreative } from './SidebarImageOnlyCreative';
+import { HorizontalBannerCreative } from './HorizontalBannerCreative';
+import { isSidebarPlacement } from '@/lib/banners/placements';
 import type { BannerData } from '@/components/BannerContainer';
 
 export interface BannerCreativeProps {
@@ -21,9 +23,11 @@ export interface BannerCreativeProps {
  * Discriminated union component que seleciona a variante criativa correta:
  * - Modo 'photo_with_html': renderiza SidebarEditorialCreative (card editorial com ilustração/foto, headline, subtítulo, benefícios e CTA outline).
  * - Modo 'image_only' (padrão): renderiza SidebarImageOnlyCreative (arte visual pura em alta fidelidade).
+ * - Quando `position` é informado e não é sidebar, o criativo editorial usa HorizontalBannerCreative (100% da largura).
  */
 export function BannerCreative({
   banner,
+  position,
   priority = false,
   onMediaError,
   onMediaLoad,
@@ -35,6 +39,21 @@ export function BannerCreative({
   const isEditorial =
     banner.creative_mode === 'photo_with_html' &&
     Boolean(banner.headline?.trim() || banner.title?.trim());
+
+  if (isEditorial && position && !isSidebarPlacement(position)) {
+    return (
+      <HorizontalBannerCreative
+        banner={banner}
+        priority={priority}
+        onMediaError={onMediaError}
+        onMediaLoad={onMediaLoad}
+        onBannerClick={onBannerClick}
+        sizes={sizes}
+        ambientBackground={ambientBackground}
+        className={className}
+      />
+    );
+  }
 
   if (isEditorial) {
     return (

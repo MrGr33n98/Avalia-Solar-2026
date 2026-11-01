@@ -7,11 +7,16 @@ import { track } from '@/lib/analytics/lazy';
 import { getBannerAudienceKey } from '@/lib/banner-audience';
 import { cn } from '@/lib/utils';
 import { resolveBannerAspectRatio } from '@/lib/banners/aspect-ratio';
-import { BANNER_PLACEMENT_ASPECT_RATIOS, getPlacementDisplaySpec } from '@/lib/banners/placements';
+import {
+  BANNER_PLACEMENT_ASPECT_RATIOS,
+  getPlacementDisplaySpec,
+  isSidebarPlacement,
+} from '@/lib/banners/placements';
 import { PremiumBannerCarousel } from '@/components/PremiumBannerCarousel';
 import { BannerMedia } from '@/components/banners/BannerMedia';
 import { SponsoredBadge } from '@/components/banners/SponsoredBadge';
 import { BannerCreative } from '@/components/banners/BannerCreative';
+import { HorizontalBannerCreative } from '@/components/banners/HorizontalBannerCreative';
 
 export interface BannerData {
   id: number | string;
@@ -315,9 +320,14 @@ export function BannerContainer({
       }
     };
 
+    // A geometria é definida pelo placement; creative_mode define apenas a composição interna.
+    const isSidebar = isSidebarPlacement(position);
+
     // Caso de card lateral único: renderiza diretamente o BannerCreative sem controles redundantes de carrossel
+    // Restrito a placements laterais: nunca aplicar o card de 300px em placements horizontais.
     if (
       displayBanners.length === 1 &&
+      isSidebar &&
       (position === 'compare_page_sidebar' || displayBanners[0].creative_mode === 'photo_with_html')
     ) {
       const singleBanner = displayBanners[0];
@@ -355,7 +365,25 @@ export function BannerContainer({
     );
 
     const renderBannerItem = (banner: BannerData, isPriority = false) => {
-      if (banner.creative_mode === 'photo_with_html' && (banner.headline || banner.title)) {
+      const isEditorialCreative = banner.creative_mode === 'photo_with_html';
+
+      // Placement horizontal com conteúdo editorial cadastrado: card horizontal em 100% da largura.
+      if (!isSidebar && isEditorialCreative && (banner.headline?.trim() || banner.subtitle?.trim())) {
+        return (
+          <HorizontalBannerCreative
+            banner={banner}
+            priority={isPriority}
+            sizes={getSizes(position)}
+            ambientBackground={displaySpec?.ambientBackground}
+            onMediaError={() => handleMediaError(banner)}
+            onMediaLoad={() => handleMediaLoad(banner)}
+            onBannerClick={() => trackBannerClick(banner)}
+          />
+        );
+      }
+
+      // Placement lateral: mantém os criativos de sidebar (300px).
+      if (isSidebar && isEditorialCreative && (banner.headline || banner.title)) {
         return (
           <BannerCreative
             banner={banner}
@@ -410,7 +438,14 @@ export function BannerContainer({
         );
 
     return (
-      <div ref={containerRef} className={cn('m-0 w-full min-w-0 max-w-full overflow-hidden p-0', className)}>
+      <div
+        ref={containerRef}
+        className={cn(
+          'm-0 w-full min-w-0 overflow-hidden p-0',
+          isSidebar ? 'max-w-full' : 'max-w-none',
+          className
+        )}
+      >
         <PremiumBannerCarousel
           items={items}
           aspectRatios={aspectRatios}
