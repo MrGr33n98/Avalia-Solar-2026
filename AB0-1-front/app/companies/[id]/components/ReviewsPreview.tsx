@@ -27,13 +27,38 @@ export default function ReviewsPreview({
   const companyStats = company as Company & {
     total_reviews?: number | string | null;
     reviews_count?: number | string | null;
+    review_aggregates?: {
+      global?: {
+        average_rating?: number;
+        total_reviews?: number;
+      };
+    };
   };
   const averageRating = Number(
-    companyStats.average_rating ?? companyStats.rating_avg ?? companyStats.rating ?? 0
+    companyStats.rating_avg ??
+    companyStats.review_aggregates?.global?.average_rating ??
+    companyStats.average_rating ??
+    companyStats.rating ??
+    0
   );
   const ratingCount = Number(
-    companyStats.rating_count ?? companyStats.total_reviews ?? companyStats.reviews_count ?? 0
+    companyStats.rating_count ??
+    companyStats.review_aggregates?.global?.total_reviews ??
+    companyStats.total_reviews ??
+    companyStats.reviews_count ??
+    0
   );
+
+  const reputationLabel =
+    ratingCount === 0
+      ? 'Sem avaliações'
+      : averageRating >= 4.5
+      ? 'Excelente reputação geral'
+      : averageRating >= 4.0
+      ? 'Ótima reputação geral'
+      : averageRating >= 3.0
+      ? 'Boa reputação geral'
+      : 'Reputação regular';
 
   const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
 
@@ -93,7 +118,7 @@ export default function ReviewsPreview({
                 </span>
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900">Excelente reputação geral</p>
+                <p className="text-sm font-bold text-slate-900">{reputationLabel}</p>
                 <div className="mt-1 flex items-center gap-2">
                   <RatingStars
                     rating={averageRating}

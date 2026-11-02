@@ -168,7 +168,7 @@ def expire_local_pages_cache_from_category(category)
 end
 
 
-  has_many :reviews, as: :reviewable, dependent: :destroy
+  has_many :reviews, foreign_key: :company_id, dependent: :destroy
   has_many :favorites, as: :favoritable, dependent: :destroy
   has_many :conversations, dependent: :destroy
   has_many :review_aggregates, dependent: :destroy
@@ -451,7 +451,7 @@ end
   end
 
   def recalculate_rating_cache!
-    Reviews::AggregationService.new(self, nil).recalculate!
+    Reviews::AggregationService.recalculate_for_company!(self)
     categories.each(&:update_metrics!)
   end
 

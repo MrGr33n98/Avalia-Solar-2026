@@ -311,40 +311,43 @@ export default function CompanyDetailClient({
   }, [canEdit, showFaq, showFinancing, showGallery]);
 
   const companyStats = useMemo(() => {
-    const normalizedRatings = reviews.map((rev) => toSafeRating((rev as any)?.rating, 0));
-    const fallbackCompanyRating = toSafeRating(
-      (company as any).rating_avg || (company as any).rating,
+    // Fonte canônica única de reputação: objeto Company e agregados oficiais
+    const canonicalRating = toSafeRating(
+      (company as any).rating_avg ??
+      (company as any).review_aggregates?.global?.average_rating ??
+      (company as any).average_rating ??
+      (company as any).rating,
       0
     );
-    const avgRating =
-      normalizedRatings.length > 0
-        ? normalizedRatings.reduce((acc, value) => acc + value, 0) / normalizedRatings.length
-        : fallbackCompanyRating;
-    const rating =
-      reviewAnalytics?.average_rating != null
-        ? toSafeRating(reviewAnalytics.average_rating, avgRating)
-        : avgRating;
-    const reviewCount =
-      reviewAnalytics?.total_reviews != null
-        ? toSafeCount(reviewAnalytics.total_reviews, 0)
-        : toSafeCount(company.rating_count ?? reviews.length, reviews.length);
+
+    const canonicalReviewCount = toSafeCount(
+      (company as any).rating_count ??
+      (company as any).review_aggregates?.global?.total_reviews ??
+      (company as any).reviews_count ??
+      (company as any).total_reviews,
+      0
+    );
+
     const createdYear = company.created_at
       ? new Date(company.created_at).getFullYear()
       : new Date().getFullYear();
+
     return {
-      rating: rating.toFixed(1),
-      reviewCount,
+      rating: canonicalRating.toFixed(1),
+      reviewCount: canonicalReviewCount,
       productCount: products.length,
       yearsInBusiness: Math.max(0, new Date().getFullYear() - createdYear),
     };
   }, [
-    reviews,
-    reviewAnalytics,
     products,
     company.created_at,
     company.rating_avg,
     company.rating,
     company.rating_count,
+    (company as any).review_aggregates,
+    (company as any).average_rating,
+    (company as any).reviews_count,
+    (company as any).total_reviews,
     company,
   ]);
 

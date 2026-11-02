@@ -9,9 +9,21 @@ module Reviews
     end
 
     def calculate
-      return review.rating if use_manual_rating_only?
+      return raw_manual_rating if use_manual_rating_only?
 
-      [(weighted_manual_rating + weighted_granular_scores + completeness_bonus).round(2), 5.0].min
+      score = (weighted_manual_rating + weighted_granular_scores + completeness_bonus).round(2)
+      [[score, 5.0].min, 1.0].max
+    end
+
+    def raw_manual_rating
+      raw = review.metadata&.[]('overall_rating_input')
+      if raw.present? && raw.to_f > 0
+        raw.to_f
+      elsif review.rating_was.present? && review.rating_was.to_f > 0
+        review.rating_was.to_f
+      else
+        (review.rating || 5.0).to_f
+      end
     end
 
     private
@@ -22,7 +34,7 @@ module Reviews
 
     # 40% Rating Geral
     def weighted_manual_rating
-      (review.rating || 0) * 0.4
+      raw_manual_rating * 0.4
     end
 
     # 50% Média Ponderada dos Critérios Granulares
@@ -30,14 +42,14 @@ module Reviews
       scores = review.review_criterion_scores.includes(:rating_criterion)
       return 0 if scores.empty?
 
-      total_weight = 0
-      weighted_sum = 0
+      total_weight = 0.0
+      weighted_sum = 0.0
 
       scores.each do |s|
         next if s.not_applicable? || s.score.nil?
 
-        weight = s.rating_criterion&.weight || 1.0
-        weighted_sum += (s.score * weight)
+        weight = s.weight_snapshot || s.rating_criterion&.weight || 1.0
+        weighted_sum += (s.score.to_f * weight)
         total_weight += weight
       end
 

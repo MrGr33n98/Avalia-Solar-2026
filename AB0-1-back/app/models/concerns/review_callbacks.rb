@@ -18,7 +18,7 @@ module ReviewCallbacks
   def recalculate_company_rating
     company_ids = []
     company_ids.push(company_id, company_id_before_last_save) if destroyed? || saved_change_to_company_id?
-    company_ids << company_id if saved_change_to_rating?
+    company_ids << company_id if saved_change_to_rating? || saved_change_to_status? || saved_change_to_category_id? || previously_new_record?
 
     return if company_ids.compact.empty?
 

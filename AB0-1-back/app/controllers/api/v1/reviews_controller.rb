@@ -22,9 +22,13 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       @reviews = @reviews.where(user_id: current_user.id)
     end
 
-    # Filtra por status se fornecido (útil para dashboards)
+    # Filtra por status: acesso público restrito exclusivamente a avaliações aprovadas
     if params[:status].present?
-      @reviews = @reviews.where(status: params[:status])
+      if params[:status].to_s == 'approved' || (current_user&.respond_to?(:admin?) && current_user.admin?) || (current_user && params[:company_id].present? && current_user.respond_to?(:owner_of?) && current_user.owner_of?(Company.find_by(id: params[:company_id])))
+        @reviews = @reviews.where(status: params[:status])
+      else
+        @reviews = @reviews.where(status: Review.statuses[:approved])
+      end
     elsif !ActiveModel::Type::Boolean.new.cast(params[:mine])
       @reviews = @reviews.where(status: Review.statuses[:approved])
     end

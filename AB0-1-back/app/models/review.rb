@@ -39,7 +39,7 @@ class Review < ApplicationRecord
   # Columns: headline (string), pros (jsonb), cons (jsonb), buyer_tip (text), project_context (jsonb)
   # category_id (fk), is_legacy (boolean), granular_scores_snapshot (jsonb)
 
-  store_accessor :metadata, :cta_clicks, :read_count, :last_aggregated_at, :backfill_method, :backfill_at, :would_recommend, :recommendation_reason
+  store_accessor :metadata, :cta_clicks, :read_count, :last_aggregated_at, :backfill_method, :backfill_at, :would_recommend, :recommendation_reason, :overall_rating_input
 
   # Scopes
   scope :approved_only, -> { where(status: statuses[:approved]) }
@@ -56,6 +56,7 @@ class Review < ApplicationRecord
 
   # Callbacks
   before_validation :set_default_reviewable, prepend: true
+  before_validation :capture_initial_manual_rating, prepend: true
   before_save :persist_granular_scores_snapshot
   after_commit :track_analytics_event, on: :create
   after_commit :notify_slack, on: :create
@@ -201,10 +202,19 @@ class Review < ApplicationRecord
   end
 
   def set_default_reviewable
-    return if company_id.blank?
+    if company_id.present?
+      self.reviewable_type ||= 'Company'
+      self.reviewable_id ||= company_id
+    elsif reviewable_type == 'Company' && reviewable_id.present?
+      self.company_id ||= reviewable_id
+    end
+  end
 
-    self.reviewable_type ||= 'Company'
-    self.reviewable_id ||= company_id
+  def capture_initial_manual_rating
+    return if rating.blank?
+    return if metadata&.[]('overall_rating_input').present?
+
+    self.metadata = (metadata || {}).merge('overall_rating_input' => rating.to_f)
   end
 
   def require_comment_or_criteria

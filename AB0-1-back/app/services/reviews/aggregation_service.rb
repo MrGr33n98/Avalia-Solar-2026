@@ -5,8 +5,30 @@
 module Reviews
   class AggregationService
     def self.call(review_id)
-      review = Review.find(review_id)
-      new(review.company, review.category).recalculate!
+      review = Review.find_by(id: review_id)
+      return unless review&.company
+
+      recalculate_for_company!(review.company)
+    end
+
+    def self.recalculate_for_company!(company)
+      return unless company
+
+      # 1. Recalculate each active category aggregate
+      active_category_ids = company.reviews.published.where.not(category_id: nil).distinct.pluck(:category_id)
+      active_category_ids.each do |cat_id|
+        category = Category.find_by(id: cat_id)
+        new(company, category).recalculate_single_aggregate!
+      end
+
+      # 2. Destroy stale category aggregates that no longer have published reviews
+      ReviewAggregate.where(company_id: company.id)
+                     .where.not(category_id: nil)
+                     .where.not(category_id: active_category_ids)
+                     .destroy_all
+
+      # 3. Recalculate global aggregate and sync denormalized company columns
+      new(company, nil).recalculate_single_aggregate!
     end
 
     def initialize(company, category = nil)
@@ -15,6 +37,10 @@ module Reviews
     end
 
     def recalculate!
+      self.class.recalculate_for_company!(@company)
+    end
+
+    def recalculate_single_aggregate!
       aggregate = fetch_aggregate
       
       reviews = base_scope
@@ -45,15 +71,15 @@ module Reviews
         )
       end
 
-      # Se recalculei uma categoria, dispara a atualização do Bucket Global (category_id: nil)
-      if @category.present?
-        self.class.new(@company, nil).recalculate!
-      else
-        # Sync to Company denormalized cache for high-performance listing access
+      if @category.nil?
+        # Sync to Company denormalized cache for high-performance listing access and bust cache
         @company.update_columns(
           rating_avg: aggregate.total_reviews.positive? ? aggregate.average_rating : nil,
-          rating_count: aggregate.total_reviews
+          rating_count: aggregate.total_reviews,
+          updated_at: Time.current
         )
+        Rails.cache.delete_matched("company_detail_payload_v1/#{@company.id}/*") rescue nil
+        Rails.cache.delete_matched("company_buttons/#{@company.id}/*") rescue nil
       end
     end
 
@@ -71,59 +97,19 @@ module Reviews
       @category.present? ? scope.where(category_id: @category.id) : scope
     end
 
-    # Média ponderada dos critérios snapshots para reviews moderna, ou rating para legadas
+    # Média aritmética das notas oficiais (rating) das avaliações publicadas na categoria
     def calculate_category_average(reviews)
-      total_weighted_sum = 0.0
-      total_count = 0.0
+      return 0.0 if reviews.empty?
 
-      reviews.find_each do |r|
-        if r.granular_scores_snapshot.present?
-          # Usa o snapshot JSONB persistido (Fonte de verdade V2)
-          r_weighted_sum = 0.0
-          r_weight_sum = 0.0
-          
-          r.granular_scores_snapshot.each do |s|
-            weight = s['weight'].to_f > 0 ? s['weight'].to_f : 1.0
-            r_weighted_sum += (s['score'].to_f * weight)
-            r_weight_sum += weight
-          end
-
-          if r_weight_sum > 0
-            total_weighted_sum += (r_weighted_sum / r_weight_sum)
-          else
-            total_weighted_sum += r.rating.to_f
-          end
-        else
-          # Fallback para rating direto (Legado ou sem critérios)
-          total_weighted_sum += r.rating.to_f
-        end
-        total_count += 1.0
-      end
-
-      return 0.0 if total_count.zero?
-      (total_weighted_sum / total_count).round(2)
+      reviews.average(:rating).to_f.round(2)
     end
 
-    # Score Global: Média aritmética simples das médias de cada vertical ativa + bucket global puro (nil)
-    # Isso evita que uma categoria com volume massivo "abafe" a nota de outra especialidade da empresa.
+    # Score Global: Média aritmética das notas oficiais de todas as avaliações publicadas da empresa
     def calculate_global_average
-      category_averages = []
+      all_reviews = @company.reviews.published
+      return 0.0 if all_reviews.empty?
 
-      # 1. Obter médias de cada categoria que possui reviews (calculadas na hora para garantir frescor)
-      active_category_ids = @company.reviews.published.where.not(category_id: nil).distinct.pluck(:category_id)
-      active_category_ids.each do |cat_id|
-        cat_reviews = @company.reviews.published.where(category_id: cat_id)
-        category_averages << calculate_category_average(cat_reviews)
-      end
-
-      # 2. Obter média das reviews que não possuem categoria (Bucket Global puro)
-      uncategorized_reviews = @company.reviews.published.where(category_id: nil)
-      if uncategorized_reviews.exists?
-        category_averages << uncategorized_reviews.average(:rating).to_f
-      end
-
-      return 0.0 if category_averages.empty?
-      (category_averages.sum.to_f / category_averages.size).round(2)
+      all_reviews.average(:rating).to_f.round(2)
     end
 
     def calculate_distribution(reviews)
