@@ -116,9 +116,11 @@ export function CompanyNameWithBadge({
 export function HomeCompanyCard({
   company,
   desktopOnly = false,
+  targetState,
 }: {
   company: Company;
   desktopOnly?: boolean;
+  targetState?: string;
 }) {
   const [logoError, setLogoError] = React.useState(false);
   const companyHref = buildCompanyPath(company.slug, company.name, company.id);
@@ -179,7 +181,7 @@ export function HomeCompanyCard({
       <div className="mt-2 min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:flex lg:flex-col lg:justify-center">
         <CompanyNameWithBadge company={company} href={companyHref} />
 
-        <div className="mt-1 min-w-0 text-[11px] leading-4 text-slate-500 lg:mt-0.5">
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 min-w-0 text-[11px] leading-4 text-slate-500 lg:mt-0.5">
           {rating ? (
             <div className="flex items-center gap-1">
               <Star
@@ -193,6 +195,15 @@ export function HomeCompanyCard({
             </div>
           ) : (
             <span>Sem avaliações</span>
+          )}
+
+          {targetState && company.state && company.state.toUpperCase() !== targetState.toUpperCase() && (
+            <>
+              <span className="text-slate-300 select-none">•</span>
+              <span className="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-medium text-slate-600">
+                Atende {targetState.toUpperCase()}
+              </span>
+            </>
           )}
         </div>
       </div>
@@ -213,8 +224,24 @@ export function HomeCompanyCard({
   );
 }
 
+import { useQuery, QueryClient, QueryClientContext } from '@tanstack/react-query';
 import { useLocation } from '@/contexts/LocationContext';
 import { publicCompaniesApi } from '@/lib/api-public';
+
+let fallbackClient: QueryClient | null = null;
+function getFallbackQueryClient(): QueryClient {
+  if (!fallbackClient) {
+    fallbackClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          staleTime: 60 * 1000,
+        },
+      },
+    });
+  }
+  return fallbackClient;
+}
 
 export function HomeCompaniesRail({
   companies,
@@ -223,11 +250,13 @@ export function HomeCompaniesRail({
   className,
   viewAllHref = '/companies',
 }: HomeCompaniesRailProps) {
-  const { selectedState, stateLabel } = useLocation();
-  const effectiveState = stateCode || selectedState;
+  const contextClient = React.useContext(QueryClientContext);
+  const activeQueryClient = contextClient || getFallbackQueryClient();
 
-  const [dynamicCompanies, setDynamicCompanies] = React.useState<Company[] | null>(null);
-  const [isFetching, setIsFetching] = React.useState(false);
+  const { selectedState, stateLabel } = useLocation();
+  const effectiveState = (stateCode || selectedState || '').trim();
+  const normalizedState = effectiveState.toUpperCase();
+
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
 
   React.useEffect(() => {
@@ -255,73 +284,56 @@ export function HomeCompaniesRail({
 
   // Check if initial SSR companies already have local matches
   const localSsrMatches = React.useMemo(() => {
-    if (!companies || companies.length === 0 || !effectiveState) return [];
-    const normState = effectiveState.toUpperCase();
+    if (!companies || companies.length === 0 || !normalizedState) return [];
     return companies.filter((c) => {
-      if (c.state?.toUpperCase() === normState) return true;
+      if (c.state?.toUpperCase() === normalizedState) return true;
       if (c.coverage_states && Array.isArray(c.coverage_states)) {
-        return c.coverage_states.some((s) => s.toUpperCase() === normState);
+        return c.coverage_states.some((s) => s.toUpperCase() === normalizedState);
       }
       return false;
     });
-  }, [companies, effectiveState]);
+  }, [companies, normalizedState]);
 
-  React.useEffect(() => {
-    if (!companies || companies.length === 0 || !effectiveState) {
-      setDynamicCompanies(null);
-      return;
-    }
+  // Query is needed when an effectiveState is present and SSR does not already have 6+ matches
+  const needsQuery = Boolean(normalizedState && localSsrMatches.length < 6);
 
-    if (localSsrMatches.length >= 6) {
-      setDynamicCompanies(null);
-      return;
-    }
-
-    let isMounted = true;
-    setIsFetching(true);
-
-    async function loadCompaniesForState() {
-      try {
-        let list = await publicCompaniesApi.getAll({
-          serves_state: effectiveState,
+  const {
+    data: queryCompanies,
+    isFetching,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ['home-companies', 'regional', normalizedState, 'v2'],
+    queryFn: async ({ signal }) => {
+      const list = await publicCompaniesApi.getAll(
+        {
+          serves_state: normalizedState,
           status: 'active',
           limit: 9,
+          fields: 'card',
           include:
             'logo_url,banner_url,badges,verified_badge_image_url,verified_badge_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,delivered_projects_score,warranty_years',
-        });
-
-        if (!list || list.length === 0) {
-          list = await publicCompaniesApi.getAll({
-            state: effectiveState,
-            status: 'active',
-            limit: 9,
-            include:
-              'logo_url,banner_url,badges,verified_badge_image_url,verified_badge_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,delivered_projects_score,warranty_years',
-          });
-        }
-
-        if (isMounted) {
-          setDynamicCompanies(list || []);
-        }
-      } catch (err) {
-        console.warn('[HomeCompaniesRail] Erro ao buscar empresas para a UF:', effectiveState, err);
-        if (isMounted) setDynamicCompanies([]);
-      } finally {
-        if (isMounted) setIsFetching(false);
-      }
-    }
-
-    loadCompaniesForState();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [effectiveState, localSsrMatches.length]);
+        },
+        { signal }
+      );
+      return Array.isArray(list) ? list : [];
+    },
+    enabled: needsQuery,
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  }, activeQueryClient);
 
   const { visibleCompanies, hasLocalMatches } = React.useMemo(() => {
-    if (dynamicCompanies !== null) {
-      if (dynamicCompanies.length > 0) {
-        return { visibleCompanies: dynamicCompanies.slice(0, 9), hasLocalMatches: true };
+    if (needsQuery) {
+      if (queryCompanies !== undefined) {
+        if (queryCompanies.length > 0) {
+          return { visibleCompanies: queryCompanies.slice(0, 9), hasLocalMatches: true };
+        }
+        return { visibleCompanies: (companies || []).slice(0, 9), hasLocalMatches: false };
+      }
+      if (localSsrMatches.length > 0) {
+        const others = (companies || []).filter((c) => !localSsrMatches.some((m) => m.id === c.id));
+        return { visibleCompanies: [...localSsrMatches, ...others].slice(0, 9), hasLocalMatches: true };
       }
       return { visibleCompanies: (companies || []).slice(0, 9), hasLocalMatches: false };
     }
@@ -330,7 +342,7 @@ export function HomeCompaniesRail({
       return { visibleCompanies: [], hasLocalMatches: false };
     }
 
-    if (!effectiveState) {
+    if (!normalizedState) {
       return { visibleCompanies: companies.slice(0, 9), hasLocalMatches: true };
     }
 
@@ -340,19 +352,19 @@ export function HomeCompaniesRail({
     }
 
     return { visibleCompanies: companies.slice(0, 9), hasLocalMatches: false };
-  }, [companies, effectiveState, dynamicCompanies, localSsrMatches]);
+  }, [companies, normalizedState, needsQuery, queryCompanies, localSsrMatches]);
 
   const displayTitle =
     title ||
-    (effectiveState
+    (normalizedState
       ? hasLocalMatches
-        ? `Empresas em destaque em ${stateLabel || effectiveState.toUpperCase()}`
+        ? `Empresas em destaque em ${stateLabel || normalizedState}`
         : `Empresas em destaque (atuação nacional)`
       : 'Empresas em destaque');
 
   const effectiveViewAll =
     viewAllHref === '/companies'
-      ? `/companies?state=${encodeURIComponent(effectiveState)}`
+      ? `/companies?state=${encodeURIComponent(normalizedState)}`
       : viewAllHref;
 
   if (!companies || companies.length === 0 || visibleCompanies.length === 0) return null;
@@ -418,10 +430,24 @@ export function HomeCompaniesRail({
             </Link>
           </div>
         </div>
-        {!hasLocalMatches && effectiveState && dynamicCompanies !== null && (
+        {!hasLocalMatches && normalizedState && queryCompanies !== undefined && (
           <p className="text-xs text-slate-500">
-            Ainda não há empresas com sede cadastrada em {stateLabel || effectiveState}. Exibindo empresas em destaque com atuação nacional.
+            Ainda não há empresas com sede cadastrada em {stateLabel || normalizedState}. Exibindo empresas em destaque com atuação nacional.
           </p>
+        )}
+        {isError && needsQuery && (
+          <div className="mt-2 flex items-center justify-between rounded-xl border border-red-200 bg-red-50/70 px-3.5 py-2">
+            <p className="text-xs font-medium text-red-800">
+              Não foi possível carregar empresas para {stateLabel || normalizedState}.
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="rounded-lg border border-red-300 bg-white px-2.5 py-1 text-xs font-bold text-red-800 shadow-2xs hover:bg-red-50 transition"
+            >
+              Tentar novamente
+            </button>
+          </div>
         )}
       </div>
 
@@ -443,6 +469,7 @@ export function HomeCompaniesRail({
               key={company.id}
               company={company}
               index={index}
+              selectedState={normalizedState}
               className={index >= 6 ? 'hidden lg:flex' : undefined}
             />
           ))}
@@ -458,6 +485,7 @@ export function HomeCompaniesRail({
             <HomeCompanyCard
               key={company.id}
               company={company}
+              targetState={normalizedState}
               desktopOnly={index >= 6}
             />
           ))}

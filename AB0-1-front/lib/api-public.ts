@@ -287,8 +287,10 @@ export const publicCompaniesApi = {
       params,
       revalidate: options?.revalidate,
       tags: options?.tags || ['companies'],
-      fallback: options?.fallback || [],
+      fallback: options?.fallback,
       silent: options?.silent,
+      signal: options?.signal,
+      timeoutMs: options?.timeoutMs,
     });
     return unwrapArray<Company>(payload, 'companies');
   },
@@ -299,8 +301,10 @@ export const publicCompaniesApi = {
     const payload = await fetchApiPublic<unknown, Company[]>('companies/featured', {
       revalidate: options?.revalidate,
       tags: options?.tags || ['companies', 'featured-companies'],
-      fallback: options?.fallback || [],
+      fallback: options?.fallback,
       silent: options?.silent,
+      signal: options?.signal,
+      timeoutMs: options?.timeoutMs,
     });
     return unwrapArray<Company>(payload, 'companies');
   },
@@ -315,8 +319,10 @@ export const publicCompaniesApi = {
         params,
         revalidate: options?.revalidate,
         tags: options?.tags || ['companies'],
-        fallback: options?.fallback || { data: [] },
+        fallback: options?.fallback,
         silent: options?.silent,
+        signal: options?.signal,
+        timeoutMs: options?.timeoutMs,
       }
     );
 

@@ -18,12 +18,14 @@ export interface CompanyDirectoryRowProps {
   company: any;
   className?: string;
   index?: number;
+  selectedState?: string;
 }
 
 export function CompanyDirectoryRow({
   company,
   className,
   index,
+  selectedState,
 }: CompanyDirectoryRowProps) {
   const data: CompanyCardData = React.useMemo(
     () => normalizeCompanyData(company),
@@ -48,7 +50,17 @@ export function CompanyDirectoryRow({
 
   const city = data.identity?.city || (data.coverage?.cities && data.coverage.cities[0]);
   const state = data.identity?.state || (data.coverage?.states && data.coverage.states[0]);
-  const location = [city, state].filter(Boolean).join(', ');
+  const rawLocation = [city, state].filter(Boolean).join(', ');
+
+  const normTargetState = selectedState?.trim().toUpperCase();
+  const normHqState = data.identity?.state?.trim().toUpperCase();
+  const isDifferentState = Boolean(normTargetState && normHqState && normHqState !== normTargetState);
+
+  const location = isDifferentState
+    ? rawLocation
+      ? `Sede em ${rawLocation} • Atende ${normTargetState}`
+      : `Atende ${normTargetState}`
+    : rawLocation;
 
   return (
     <article

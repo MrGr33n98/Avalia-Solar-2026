@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { MapPin, ArrowRight, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
 import RecommendedCompanyCard from '@/components/company/RecommendedCompanyCard';
@@ -40,17 +40,23 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
   const [meta, setMeta] = useState<RecommendationMeta | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
+  const requestSeqRef = useRef<number>(0);
 
   const fetchRecommendations = useCallback(async (tabSegment?: string, state?: string, city?: string | null) => {
+    const requestId = ++requestSeqRef.current;
     setLoading(true);
     setError(false);
     try {
-      const response = await publicCompaniesApi.getRecommendations({
-        segment: tabSegment,
-        state: state || undefined,
-        city: city || undefined,
+      const params: { segment?: string; state?: string; city?: string; limit: number } = {
         limit: 8,
-      });
+      };
+      if (tabSegment) params.segment = tabSegment;
+      if (state) params.state = state;
+      if (city) params.city = city;
+
+      const response = await publicCompaniesApi.getRecommendations(params);
+
+      if (requestId !== requestSeqRef.current) return;
 
       if (response && Array.isArray(response.data) && response.data.length > 0) {
         setItems(response.data);
@@ -60,11 +66,14 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
         setItems([]);
         setMeta(response?.meta || null);
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      if (requestId !== requestSeqRef.current) return;
       console.error('[RecommendedCompaniesSection] Error fetching recommendations:', err);
       setError(true);
     } finally {
-      setLoading(false);
+      if (requestId === requestSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -219,7 +228,7 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
                 <h3 className="text-base font-bold text-red-950">Não foi possível carregar as recomendações</h3>
                 <p className="mt-1 text-xs text-red-700">Ocorreu uma falha ao conectar com o serviço contextual.</p>
                 <button
-                  onClick={() => fetchRecommendations(TABS.find((t) => t.id === activeTab)?.segment)}
+                  onClick={() => fetchRecommendations(TABS.find((t) => t.id === activeTab)?.segment, selectedState, selectedCity)}
                   className="mt-4 inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 bg-white border border-red-300 text-xs font-bold text-red-800 rounded-xl hover:bg-red-100 transition"
                 >
                   <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
