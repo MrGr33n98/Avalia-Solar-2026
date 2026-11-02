@@ -56,6 +56,14 @@ jest.mock('@/lib/slug', () => ({
   buildCompanyPath: (_slug: string, _name: string, id: number) => `/companies/${id}`,
 }));
 
+jest.mock('@/hooks/useComparison', () => ({
+  useComparison: () => ({
+    isInComparison: () => false,
+    toggleComparison: jest.fn(),
+    canAddMore: true,
+  }),
+}));
+
 function makeCompany(overrides: Partial<Company> = {}): Company {
   return {
     id: 1,
@@ -287,5 +295,28 @@ describe('rails de identidade visual da home', () => {
 
     expect(screen.getByText('4.9')).toBeInTheDocument();
     expect(screen.getByText('(28)')).toBeInTheDocument();
+  });
+
+  it('permite alternar para modo lista compacta através do switcher de visualização', () => {
+    render(
+      <HomeCompaniesRail
+        companies={[
+          makeCompany({
+            id: 1,
+            name: 'Top Solar SC',
+            average_rating: 4.9,
+            rating_count: 28,
+            city: 'Florianópolis',
+            state: 'SC',
+          }),
+        ]}
+      />
+    );
+
+    const listButton = screen.getByRole('button', { name: 'Visualização em lista' });
+    expect(listButton).toBeInTheDocument();
+    fireEvent.click(listButton);
+
+    expect(screen.getByTestId('company-directory-row-1')).toBeInTheDocument();
   });
 });

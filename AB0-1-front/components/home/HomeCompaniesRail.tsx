@@ -11,6 +11,8 @@ import { FavoriteButton } from '@/components/favorites/FavoriteButton';
 import type { Company } from '@/lib/api';
 import { buildCompanyPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
+import { CompanyDirectoryRow } from '@/components/companies/CompanyDirectoryRow';
+import { track } from '@/lib/analytics/consolidated';
 
 interface HomeCompaniesRailProps {
   companies: Company[];
@@ -226,6 +228,30 @@ export function HomeCompaniesRail({
 
   const [dynamicCompanies, setDynamicCompanies] = React.useState<Company[] | null>(null);
   const [isFetching, setIsFetching] = React.useState(false);
+  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
+
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('avalia.company_view_mode.v1');
+      if (stored === 'list' || stored === 'grid') {
+        setViewMode(stored);
+      } else if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        setViewMode('list');
+      }
+    } catch {
+      // Silencia restrição de localStorage
+    }
+  }, []);
+
+  const handleViewModeChange = React.useCallback((mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('avalia.company_view_mode.v1', mode);
+    } catch {
+      // Silencia restrição de localStorage
+    }
+    track('company_view_mode_changed', { mode, source: 'home_rail' });
+  }, []);
 
   // Check if initial SSR companies already have local matches
   const localSsrMatches = React.useMemo(() => {
@@ -344,13 +370,53 @@ export function HomeCompaniesRail({
           >
             {displayTitle}
           </h2>
-          <Link
-            href={effectiveViewAll}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          >
-            Ver todas
-            <ChevronRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          <div className="flex items-center gap-2">
+            {/* View Mode Switcher: Grid / List */}
+            <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-0.5 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('grid')}
+                aria-label="Visualização em grade"
+                className={cn(
+                  'flex h-7 w-7 items-center justify-center rounded-lg transition-colors',
+                  viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-900'
+                )}
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('list')}
+                aria-label="Visualização em lista"
+                className={cn(
+                  'flex h-7 w-7 items-center justify-center rounded-lg transition-colors',
+                  viewMode === 'list' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-900'
+                )}
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <Link
+              href={effectiveViewAll}
+              className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              Ver todas
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
         </div>
         {!hasLocalMatches && effectiveState && dynamicCompanies !== null && (
           <p className="text-xs text-slate-500">
@@ -365,20 +431,38 @@ export function HomeCompaniesRail({
         - Mobile (>=320px): 2 colunas
         - Desktop (>=1024px / lg): 3 colunas (3x3 com até 9 empresas)
       */}
-      <div
-        className={cn(
-          'grid min-w-0 grid-cols-1 items-stretch gap-2.5 min-[320px]:grid-cols-[repeat(2,minmax(0,1fr))] sm:gap-3 lg:grid-cols-3 transition-opacity duration-200',
-          isFetching && 'opacity-60'
-        )}
-      >
-        {visibleCompanies.map((company, index) => (
-          <HomeCompanyCard
-            key={company.id}
-            company={company}
-            desktopOnly={index >= 6}
-          />
-        ))}
-      </div>
+      {viewMode === 'list' ? (
+        <div
+          className={cn(
+            'flex flex-col gap-2.5 transition-opacity duration-200',
+            isFetching && 'opacity-60'
+          )}
+        >
+          {visibleCompanies.map((company, index) => (
+            <CompanyDirectoryRow
+              key={company.id}
+              company={company}
+              index={index}
+              className={index >= 6 ? 'hidden lg:flex' : undefined}
+            />
+          ))}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'grid min-w-0 grid-cols-1 items-stretch gap-2.5 min-[320px]:grid-cols-[repeat(2,minmax(0,1fr))] sm:gap-3 lg:grid-cols-3 transition-opacity duration-200',
+            isFetching && 'opacity-60'
+          )}
+        >
+          {visibleCompanies.map((company, index) => (
+            <HomeCompanyCard
+              key={company.id}
+              company={company}
+              desktopOnly={index >= 6}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
