@@ -107,7 +107,7 @@ services:
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br"
-      NEXT_PUBLIC_SITE_URL: "https://avaliasolar.com.br"
+      NEXT_PUBLIC_SITE_URL: "https://www.avaliasolar.com.br"
       # URL interna para comunicação entre containers (Docker Network)
       API_URL_INTERNAL: "http://ab0-backend:3001/api/v1"
       NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-p1OVlbHjjYrpDOq7mSMziD6CKXQBa56Wq-02J5ow7go}

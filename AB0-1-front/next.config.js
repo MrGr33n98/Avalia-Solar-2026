@@ -334,6 +334,17 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'avaliasolar.com.br',
+          },
+        ],
+        destination: 'https://www.avaliasolar.com.br/:path*',
+        permanent: true,
+      },
+      {
         source: '/sales/contacts/:id',
         destination: '/dashboard/sales/people/:id',
         permanent: false,

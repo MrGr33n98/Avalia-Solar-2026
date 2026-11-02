@@ -214,6 +214,17 @@ export async function middleware(request: NextRequest) {
 
   // Resolve Product Surface (CRM vs Company App vs Public Platform)
   const host = request.headers.get('host') || '';
+  const cleanHost = host.split(':')[0].toLowerCase().trim();
+
+  // Redirecionamento canônico: apex domain (avaliasolar.com.br) -> www.avaliasolar.com.br (HTTP 308)
+  if (cleanHost === 'avaliasolar.com.br') {
+    const canonicalTarget = new URL(
+      request.nextUrl.pathname + request.nextUrl.search,
+      'https://www.avaliasolar.com.br'
+    );
+    return applyNoStoreHeaders(NextResponse.redirect(canonicalTarget, 308));
+  }
+
   const surface = resolveSurfaceFromHost(host);
   const search = request.nextUrl.search;
 

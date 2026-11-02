@@ -138,7 +138,12 @@ module Api
       end
 
       def frontend_origin
-        ENV.fetch('FRONTEND_URL', 'https://www.avaliasolar.com.br').sub(%r{/+$}, '')
+        raw = ENV.fetch('FRONTEND_URL', 'https://www.avaliasolar.com.br').to_s.strip.sub(%r{/+$}, '')
+        if raw.in?(['https://avaliasolar.com.br', 'http://avaliasolar.com.br']) || raw.end_with?('//avaliasolar.com.br') || raw == 'avaliasolar.com.br'
+          'https://www.avaliasolar.com.br'
+        else
+          raw
+        end
       end
     end
   end

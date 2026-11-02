@@ -13,6 +13,8 @@ export const CANONICAL_CHANNELS: readonly CollectionChannel[] = [
   'widget',
 ] as const;
 
+export const CANONICAL_PUBLIC_ORIGIN = 'https://www.avaliasolar.com.br';
+
 export function normalizeChannel(channel?: string | null): CollectionChannel {
   if (!channel) return 'link';
   const clean = channel.trim().toLowerCase();
@@ -21,44 +23,62 @@ export function normalizeChannel(channel?: string | null): CollectionChannel {
     : 'link';
 }
 
-export function getPublicSiteOrigin(): string {
+export function getPublicSiteOrigin(customOrigin?: string): string {
+  if (customOrigin) {
+    const trimmed = customOrigin.trim().replace(/\/+$/, '');
+    if (
+      trimmed === 'https://avaliasolar.com.br' ||
+      trimmed === 'http://avaliasolar.com.br' ||
+      trimmed.endsWith('//avaliasolar.com.br') ||
+      trimmed === 'avaliasolar.com.br' ||
+      trimmed.includes('app.avaliasolar.com.br') ||
+      trimmed.includes('crm.avaliasolar.com.br') ||
+      trimmed.endsWith('.avaliasolar.com.br')
+    ) {
+      return CANONICAL_PUBLIC_ORIGIN;
+    }
+    return trimmed;
+  }
+
   if (typeof process !== 'undefined') {
     const configuredSite =
       process.env.NEXT_PUBLIC_PUBLIC_ORIGIN ||
       process.env.NEXT_PUBLIC_PUBLIC_URL ||
       process.env.NEXT_PUBLIC_SITE_URL;
     if (configuredSite) {
-      const trimmed = configuredSite.replace(/\/+$/, '');
+      const trimmed = configuredSite.trim().replace(/\/+$/, '');
       if (
         trimmed === 'https://avaliasolar.com.br' ||
         trimmed === 'http://avaliasolar.com.br' ||
-        trimmed.endsWith('//avaliasolar.com.br')
+        trimmed.endsWith('//avaliasolar.com.br') ||
+        trimmed === 'avaliasolar.com.br'
       ) {
-        return 'https://www.avaliasolar.com.br';
+        return CANONICAL_PUBLIC_ORIGIN;
       }
       return trimmed;
     }
   }
 
   if (typeof window !== 'undefined' && window.location?.origin) {
-    const origin = window.location.origin;
+    const origin = window.location.origin.trim();
     // Em ambiente local, mantém a origem do localhost
     if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       return origin;
     }
-    // Em subdomínios B2B/App ou apex domain, normaliza para www.avaliasolar.com.br
+    // Em subdomínios B2B/App, crm ou apex domain, normaliza para www.avaliasolar.com.br
     if (
       origin.includes('app.avaliasolar.com.br') ||
       origin.includes('crm.avaliasolar.com.br') ||
       origin === 'https://avaliasolar.com.br' ||
-      origin === 'http://avaliasolar.com.br'
+      origin === 'http://avaliasolar.com.br' ||
+      origin.endsWith('.avaliasolar.com.br')
     ) {
-      return 'https://www.avaliasolar.com.br';
+      return CANONICAL_PUBLIC_ORIGIN;
     }
     return origin;
   }
 
-  return 'https://www.avaliasolar.com.br';
+  return CANONICAL_PUBLIC_ORIGIN;
 }
 
 export function buildPublicReviewUrl(
@@ -74,7 +94,7 @@ export function buildPublicReviewUrl(
     ? `/${tokenOrPath}`
     : `/f/${tokenOrPath}`;
 
-  const origin = overrideOrigin ? overrideOrigin.replace(/\/+$/, '') : getPublicSiteOrigin();
+  const origin = overrideOrigin ? getPublicSiteOrigin(overrideOrigin) : getPublicSiteOrigin();
   const normalizedChan = normalizeChannel(channel);
 
   return `${origin}${cleanPath}?source=${encodeURIComponent(normalizedChan)}`;
@@ -82,7 +102,5 @@ export function buildPublicReviewUrl(
 
 export function formatShortDisplayUrl(fullUrl: string): string {
   if (!fullUrl) return '';
-  return fullUrl
-    .replace(/^https?:\/\//, '')
-    .replace('avaliasolar.com.br/f/', 'avali.as/f/');
+  return fullUrl.replace(/^https?:\/\//, '');
 }

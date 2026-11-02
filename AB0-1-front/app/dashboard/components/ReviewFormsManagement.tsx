@@ -10,7 +10,6 @@ import {
   FilePlus2,
   Loader2,
   MessageCircle,
-  MoreHorizontal,
   Pencil,
   Power,
   QrCode,
@@ -23,16 +22,12 @@ import {
   Eye,
   TrendingUp,
   Calendar,
-  Sparkles,
   Award,
   Link as LinkIcon,
   CreditCard,
   CheckCircle2,
-  ChevronRight,
-  ShieldCheck,
-  Trash2,
 } from 'lucide-react';
-import { fetchApi } from '@/lib/api';
+import { fetchApi, dashboardApi } from '@/lib/api';
 import { buildApiUrl } from '@/lib/api-config';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -44,6 +39,11 @@ import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics/consolidated';
 import { ReviewCollectionHub } from './review-collection/ReviewCollectionHub';
 import { isFeatureFlagEnabled } from '@/lib/feature-flags';
+import {
+  buildPublicReviewUrl,
+  formatShortDisplayUrl,
+  CollectionChannel,
+} from '@/lib/review-forms/urls';
 
 type ReviewFormSettings = {
   criteria: string[];
@@ -190,10 +190,16 @@ const formatDate = (dateString?: string) => {
 export default function ReviewFormsManagement({ companyId }: { companyId: string }) {
   const { toast } = useToast();
   const [forms, setForms] = useState<ReviewForm[]>([]);
-  const [summary, setSummary] = useState<{ recent_forms_count: number; recent_reviews_count: number }>({
+  const [summary, setSummary] = useState<{
+    recent_forms_count: number;
+    recent_reviews_count: number;
+    approved_reviews_count?: number;
+  }>({
     recent_forms_count: 0,
     recent_reviews_count: 0,
+    approved_reviews_count: 0,
   });
+  const [approvedCount, setApprovedCount] = useState<number>(0);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -203,13 +209,43 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
   const loadForms = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetchApi<{ review_forms: ReviewForm[]; summary: { recent_forms_count: number; recent_reviews_count: number } }>(
-        '/company_admin/review_forms',
-        { noCache: true, params: { company_id: companyId } }
-      );
-      setForms(response.review_forms);
-      setSummary(response.summary || { recent_forms_count: 0, recent_reviews_count: 0 });
-      setSelectedId((current) => current ?? response.review_forms[0]?.id ?? null);
+      const [formsResponse, statsResponse] = await Promise.allSettled([
+        fetchApi<{
+          review_forms: ReviewForm[];
+          summary: {
+            recent_forms_count: number;
+            recent_reviews_count: number;
+            approved_reviews_count?: number;
+          };
+        }>('/company_admin/review_forms', {
+          noCache: true,
+          params: { company_id: companyId },
+        }),
+        dashboardApi.getSocialProofStats({ company_id: companyId }),
+      ]);
+
+      if (formsResponse.status === 'fulfilled') {
+        const data = formsResponse.value;
+        setForms(data.review_forms);
+        setSummary(data.summary || { recent_forms_count: 0, recent_reviews_count: 0, approved_reviews_count: 0 });
+        setSelectedId((current) => current ?? data.review_forms[0]?.id ?? null);
+      } else {
+        toast({ title: 'Não foi possível carregar os formulários', variant: 'destructive' });
+      }
+
+      let canonicalApproved = 0;
+      if (
+        statsResponse.status === 'fulfilled' &&
+        typeof statsResponse.value?.stats?.approved_reviews === 'number'
+      ) {
+        canonicalApproved = statsResponse.value.stats.approved_reviews;
+      } else if (
+        formsResponse.status === 'fulfilled' &&
+        typeof formsResponse.value?.summary?.approved_reviews_count === 'number'
+      ) {
+        canonicalApproved = formsResponse.value.summary.approved_reviews_count;
+      }
+      setApprovedCount(canonicalApproved);
     } catch {
       toast({ title: 'Não foi possível carregar os formulários', variant: 'destructive' });
     } finally {
@@ -250,8 +286,8 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
     };
   }, [forms]);
 
-  const publicUrl = (form: ReviewForm) =>
-    `${typeof window === 'undefined' ? '' : window.location.origin}${form.public_path}`;
+  const publicUrl = (form: ReviewForm, channel: CollectionChannel = 'link') =>
+    buildPublicReviewUrl(form.token, channel);
 
   const saveForm = async () => {
     if (!editor) return;
@@ -302,7 +338,8 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
     toast({ title: 'Link copiado' });
   };
 
-  const duplicate = async (form: ReviewForm) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _duplicate = async (form: ReviewForm) => {
     const response = await fetchApi<{ review_form: ReviewForm }>(
       `/company_admin/review_forms/${form.id}/duplicate`,
       { method: 'POST', params: { company_id: companyId } }
@@ -490,7 +527,7 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
           onCreateForm={() => setEditor(emptyEditor())}
           companyName="Sua Empresa"
           companyId={companyId}
-          approvedReviewsCount={totals.submissions}
+          approvedReviewsCount={approvedCount}
           onTrackAction={(event) => {
             if (selected) {
               void trackAction(selected, event);
@@ -667,7 +704,7 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
                           >
                             <a
                               href={`https://wa.me/?text=${encodeURIComponent(
-                                form.settings.whatsapp_message.replace('{{review_form_link}}', publicUrl(form))
+                                form.settings.whatsapp_message.replace('{{review_form_link}}', publicUrl(form, 'whatsapp'))
                               )}`}
                               target="_blank"
                               rel="noreferrer"
@@ -768,7 +805,6 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
             {selected && (
               <CanalColetaPanel
                 form={selected}
-                publicUrl={publicUrl(selected)}
                 onCopy={() => void copyLink(selected)}
                 onTrack={(event) => void trackAction(selected, event)}
               />
@@ -782,24 +818,22 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
 
 function CanalColetaPanel({
   form,
-  publicUrl,
   onCopy,
   onTrack,
 }: {
   form: ReviewForm;
-  publicUrl: string;
   onCopy: () => void;
   onTrack: (event: string) => void;
 }) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'qr_code' | 'whatsapp' | 'link' | 'card'>('qr_code');
   const qrUrl = buildApiUrl(`/review_forms/${form.token}/qr_code`);
-  const whatsappText = form.settings.whatsapp_message.replace('{{review_form_link}}', publicUrl);
+  const whatsappUrl = buildPublicReviewUrl(form.token, 'whatsapp');
+  const directLinkUrl = buildPublicReviewUrl(form.token, 'link');
+  const whatsappText = form.settings.whatsapp_message.replace('{{review_form_link}}', whatsappUrl);
   
-  // Formatador do link encurtado estético
-  const shortUrl = publicUrl
-    .replace(/^https?:\/\//, '')
-    .replace('avaliasolar.com.br/f/', 'avali.as/');
+  // Formatador limpo do link canônico exibido
+  const displayUrl = formatShortDisplayUrl(directLinkUrl);
 
   const handleCopyMessage = async () => {
     await navigator.clipboard.writeText(whatsappText);
@@ -807,10 +841,10 @@ function CanalColetaPanel({
     toast({ title: 'Mensagem pronta copiada!' });
   };
 
-  const handleCopyShortUrl = async () => {
-    await navigator.clipboard.writeText(`https://${shortUrl}`);
+  const handleCopyDirectUrl = async () => {
+    await navigator.clipboard.writeText(directLinkUrl);
     void onTrack('link_copied');
-    toast({ title: 'Link curto copiado!' });
+    toast({ title: 'Link copiado!' });
   };
 
   return (
@@ -875,13 +909,13 @@ function CanalColetaPanel({
               />
             </div>
 
-            {/* Link Curto Box */}
+            {/* Link Box */}
             <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2.5 border border-slate-100">
-              <span className="truncate text-xs font-bold text-slate-700 select-all">{shortUrl}</span>
+              <span className="truncate text-xs font-bold text-slate-700 select-all">{displayUrl}</span>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleCopyShortUrl}
+                onClick={handleCopyDirectUrl}
                 className="h-8 text-blue-700 hover:text-blue-800 hover:bg-blue-50 font-bold text-xs shrink-0"
               >
                 Copiar
@@ -953,13 +987,13 @@ function CanalColetaPanel({
           <div className="space-y-4">
             <div className="space-y-2">
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Link Curto</p>
-                <p className="text-xs font-bold text-slate-800 mt-1 select-all break-all">{shortUrl}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Endereço do Formulário</p>
+                <p className="text-xs font-bold text-slate-800 mt-1 select-all break-all">{displayUrl}</p>
               </div>
               <div className="pt-2 border-t border-slate-100">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Link Completo</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Link Canônico Completo</p>
                 <p className="text-xs font-normal text-slate-600 mt-1 select-all break-all leading-relaxed">
-                  {publicUrl}
+                  {directLinkUrl}
                 </p>
               </div>
             </div>
@@ -968,7 +1002,7 @@ function CanalColetaPanel({
               <Button
                 variant="outline"
                 className="h-10 text-xs font-bold rounded-xl border-slate-200"
-                onClick={onCopy}
+                onClick={handleCopyDirectUrl}
               >
                 <Copy className="mr-2 h-4 w-4 text-slate-400" />
                 Copiar Link
@@ -978,7 +1012,7 @@ function CanalColetaPanel({
                 className="h-10 text-xs font-bold rounded-xl border-slate-200"
                 asChild
               >
-                <a href={publicUrl} target="_blank" rel="noreferrer">
+                <a href={directLinkUrl} target="_blank" rel="noreferrer">
                   <ExternalLink className="mr-2 h-4 w-4 text-slate-400" />
                   Visualizar
                 </a>

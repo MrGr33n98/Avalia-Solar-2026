@@ -12,11 +12,13 @@ module Api
           forms = policy_scope(@company.review_forms).recent_first
           recent_forms_count = @company.review_forms.where(created_at: 7.days.ago..Time.current).count
           recent_reviews_count = @company.reviews.where(created_at: 7.days.ago..Time.current).count
+          approved_reviews_count = @company.reviews.approved.count
           render json: {
             review_forms: forms.map { |form| serialize_form(form) },
             summary: {
               recent_forms_count: recent_forms_count,
-              recent_reviews_count: recent_reviews_count
+              recent_reviews_count: recent_reviews_count,
+              approved_reviews_count: approved_reviews_count
             }
           }
         end
