@@ -42,6 +42,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics/consolidated';
+import { ReviewCollectionHub } from './review-collection/ReviewCollectionHub';
+import { isFeatureFlagEnabled } from '@/lib/feature-flags';
 
 type ReviewFormSettings = {
   criteria: string[];
@@ -229,6 +231,8 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
   }, [forms, sortBy]);
 
   const selected = forms.find((form) => form.id === selectedId) || null;
+
+  const isHubEnabled = isFeatureFlagEnabled('REVIEW_COLLECTION_HUB_V2');
 
   const totals = useMemo(() => {
     const submissions = forms.reduce((sum, form) => sum + form.metrics.submissions, 0);
@@ -478,7 +482,25 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
         </Card>
       </div>
 
+      {isHubEnabled && (
+        <ReviewCollectionHub
+          forms={forms}
+          selectedFormId={selectedId ?? undefined}
+          onSelectForm={(id) => setSelectedId(id)}
+          onCreateForm={() => setEditor(emptyEditor())}
+          companyName="Sua Empresa"
+          companyId={companyId}
+          approvedReviewsCount={totals.submissions}
+          onTrackAction={(event) => {
+            if (selected) {
+              void trackAction(selected, event);
+            }
+          }}
+        />
+      )}
+
       {forms.length === 0 ? (
+        !isHubEnabled && (
         <Card className="rounded-2xl border-dashed border-slate-300 bg-white">
           <CardContent className="flex min-h-[340px] flex-col items-center justify-center p-8 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
@@ -496,6 +518,7 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
             </Button>
           </CardContent>
         </Card>
+        )
       ) : (
         /* Layout Principal: 2 Colunas (Lista | Painel de Coleta) */
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_420px]">

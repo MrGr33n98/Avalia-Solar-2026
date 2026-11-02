@@ -7,6 +7,7 @@
  * - SEARCH -> feature_search_enabled
  * - REVIEWS -> feature_reviews_enabled
  * - BLOG -> feature_blog_enabled
+ * - REVIEW_COLLECTION_HUB_V2 -> feature_review_collection_hub_v2
  */
 
 import posthog from 'posthog-js';
@@ -18,6 +19,7 @@ export const FEATURE_FLAGS = {
   REVIEWS: 'feature_reviews_enabled',
   BLOG: 'feature_blog_enabled',
   GROUPS: 'feature_groups_enabled',
+  REVIEW_COLLECTION_HUB_V2: 'feature_review_collection_hub_v2',
 } as const;
 
 export type FeatureFlagKey = keyof typeof FEATURE_FLAGS;

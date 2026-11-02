@@ -902,6 +902,7 @@ Rails.application.routes.draw do
           member do
             post :duplicate
             post :event
+            get :channel_metrics
           end
         end
 

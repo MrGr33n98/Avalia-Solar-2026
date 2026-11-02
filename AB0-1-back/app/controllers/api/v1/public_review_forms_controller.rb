@@ -11,7 +11,8 @@ module Api
       before_action :ensure_active, except: :qr_code
 
       def show
-        record_event(params[:source] == 'qr' ? 'qr_scanned' : 'form_viewed')
+        channel = ReviewForms::SourceNormalizer.call(params[:source])
+        record_event(channel == 'qr' ? 'qr_scanned' : 'form_viewed')
         track_public_event('public_review_form_viewed')
         render json: { review_form: serialize_public_form(@review_form) }
       end
@@ -23,9 +24,10 @@ module Api
         return render json: { errors: ['Informe seu nome.'] }, status: :unprocessable_entity if params[:reviewer_name].blank?
         return render json: { errors: ['Informe e-mail ou WhatsApp.'] }, status: :unprocessable_entity if params[:contact].blank?
 
-        source = params[:source] == 'qr' ? 'qr_code_form' : 'custom_review_form'
+        channel = ReviewForms::SourceNormalizer.call(params[:source])
+        source = channel == 'qr' ? 'qr_code_form' : 'custom_review_form'
         review = ReviewForms::SubmissionService.new(
-          review_form: @review_form, params: params, source: source,
+          review_form: @review_form, params: params, source: source, collection_channel: channel,
           request_context: Struct.new(:path, :referrer, :user_agent, :ip_hash).new(request.path, request.referer, request.user_agent, hashed_ip)
         ).call
 
@@ -92,7 +94,7 @@ module Api
         ReviewForms::EventRecorder.call(
           review_form: @review_form,
           event_type: event_type,
-          source: params[:source],
+          source: ReviewForms::SourceNormalizer.call(params[:source]),
           metadata: metadata,
           request_context: Struct.new(:ip_hash, :referrer, :user_agent).new(
             hashed_ip, request.referer, request.user_agent

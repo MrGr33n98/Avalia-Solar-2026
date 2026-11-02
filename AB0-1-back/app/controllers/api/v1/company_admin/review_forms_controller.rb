@@ -2,7 +2,7 @@ module Api
   module V1
     module CompanyAdmin
       class ReviewFormsController < BaseController
-        before_action :set_review_form, only: %i[show update destroy duplicate event]
+        before_action :set_review_form, only: %i[show update destroy duplicate event channel_metrics]
 
         def templates
           render json: { templates: ReviewForms::TemplateCatalog.all }
@@ -61,6 +61,18 @@ module Api
 
           track_posthog('review_form_duplicated', copy)
           render json: { review_form: serialize_form(copy) }, status: :created
+        end
+
+        def channel_metrics
+          authorize @review_form, :show?
+          range = nil
+          if params[:from].present? && params[:to].present?
+            range = Time.zone.parse(params[:from])..Time.zone.parse(params[:to])
+          end
+          metrics = ReviewForms::ChannelMetricsService.call(review_form: @review_form, range: range)
+          render json: { channel_metrics: metrics }
+        rescue ArgumentError, TypeError
+          render json: { error: 'Invalid date range' }, status: :unprocessable_entity
         end
 
         def event

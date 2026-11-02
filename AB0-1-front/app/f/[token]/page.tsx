@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useReviewDraft } from './hooks/useReviewDraft';
 import { track } from '@/lib/analytics/consolidated';
+import { normalizeChannel } from '@/lib/review-forms/urls';
 
 type PublicReviewForm = {
   id: number;
@@ -30,7 +31,7 @@ type PublicReviewForm = {
 
 export default function PublicReviewFormPage({ params }: { params: { token: string } }) {
   const searchParams = useSearchParams();
-  const source = searchParams.get('source') === 'qr' ? 'qr' : 'link';
+  const source = normalizeChannel(searchParams.get('source'));
   const [form, setForm] = useState<PublicReviewForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
