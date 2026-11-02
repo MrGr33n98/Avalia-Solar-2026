@@ -125,7 +125,7 @@ export function CompanyDirectoryRow({
         <CompareCheckboxControl
           companyName={data.name}
           checked={isComparing}
-          onCheckedChange={() => toggleComparison(data)}
+          onCheckedChange={() => toggleComparison(company)}
           disabled={!isComparing && !canAddMore}
           density="compact"
           className="text-xs"
