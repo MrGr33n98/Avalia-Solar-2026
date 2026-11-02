@@ -116,7 +116,7 @@ export interface CompanyCardProps {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const normalizeCompanyData = (raw: any): CompanyCardData => {
+export const normalizeCompanyData = (raw: any): CompanyCardData => {
   const comp = raw || {};
   const isStructured = Boolean(
     comp && comp.identity && comp.trust && comp.reputation && comp.coverage

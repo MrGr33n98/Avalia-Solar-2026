@@ -19,6 +19,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
+import { CompanyDirectoryRow } from '@/components/companies/CompanyDirectoryRow';
 import CompaniesLoading from './loading';
 import type { MapCompany } from '@/components/search/MapProvider';
 import { companiesApiSafe } from '@/lib/api-client';
@@ -74,6 +75,7 @@ interface CompaniesPageClientProps {
 
 type CompaniesContentProps = CompaniesPageClientProps;
 const EMPTY_CATEGORY_IDS: number[] = [];
+const VIEW_MODE_STORAGE_KEY = 'avalia.company_view_mode.v1';
 
 export function CompaniesContent({
   forcedCategoryIds,
@@ -105,6 +107,51 @@ export function CompaniesContent({
     [treeCategories]
   );
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
+
+  useEffect(() => {
+    const urlView = searchParams.get('view');
+    if (urlView === 'list' || urlView === 'grid' || urlView === 'map') {
+      setViewMode(urlView);
+      return;
+    }
+
+    try {
+      const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      if (stored === 'list' || stored === 'grid' || stored === 'map') {
+        setViewMode(stored);
+        return;
+      }
+    } catch {
+      // LocalStorage inacessível em contexto restrito
+    }
+
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setViewMode('list');
+    }
+  }, [searchParams]);
+
+  const handleViewModeChange = useCallback(
+    (newMode: 'grid' | 'list' | 'map') => {
+      setViewMode(newMode);
+      try {
+        localStorage.setItem(VIEW_MODE_STORAGE_KEY, newMode);
+      } catch {
+        // Silencia erro de localStorage
+      }
+      track('company_view_mode_changed', { mode: newMode });
+
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        if (newMode === 'grid') {
+          url.searchParams.delete('view');
+        } else {
+          url.searchParams.set('view', newMode);
+        }
+        window.history.replaceState({}, '', url.toString());
+      }
+    },
+    []
+  );
   const [showMobileLocationGate, setShowMobileLocationGate] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const { detectingGps: detectingLocation, gpsError, getCoordinates } = useCompanyGeolocation();
@@ -800,39 +847,45 @@ export function CompaniesContent({
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Visualização em grade"
+                      aria-pressed={viewMode === 'grid'}
                       className={cn(
                         'h-8 w-8 transition-colors',
                         viewMode === 'grid'
                           ? 'bg-slate-900 text-white hover:bg-slate-800'
                           : 'text-slate-500 hover:bg-slate-50'
                       )}
-                      onClick={() => setViewMode('grid')}
+                      onClick={() => handleViewModeChange('grid')}
                     >
                       <Grid className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Visualização em lista"
+                      aria-pressed={viewMode === 'list'}
                       className={cn(
                         'h-8 w-8 transition-colors',
                         viewMode === 'list'
                           ? 'bg-slate-900 text-white hover:bg-slate-800'
                           : 'text-slate-500 hover:bg-slate-50'
                       )}
-                      onClick={() => setViewMode('list')}
+                      onClick={() => handleViewModeChange('list')}
                     >
                       <List className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Visualização em mapa"
+                      aria-pressed={viewMode === 'map'}
                       className={cn(
                         'h-8 w-8 transition-colors',
                         viewMode === 'map'
                           ? 'bg-slate-900 text-white hover:bg-slate-800'
                           : 'text-slate-500 hover:bg-slate-50'
                       )}
-                      onClick={() => setViewMode('map')}
+                      onClick={() => handleViewModeChange('map')}
                     >
                       <MapIcon className="h-4 w-4" />
                     </Button>
@@ -931,8 +984,10 @@ export function CompaniesContent({
                 {loading ? (
                   <div
                     className={cn(
-                      'grid w-full min-w-0 gap-3 sm:gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]',
-                      viewMode !== 'grid' && 'grid-cols-1'
+                      'grid w-full min-w-0 gap-3 sm:gap-4',
+                      viewMode === 'grid'
+                        ? '[--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]'
+                        : 'grid-cols-1'
                     )}
                     style={
                       viewMode === 'grid'
@@ -940,8 +995,14 @@ export function CompaniesContent({
                         : undefined
                     }
                   >
-                    {[...Array(6)].map((_, i) => (
-                      <Skeleton key={i} className="h-64 rounded-xl bg-white" />
+                    {[...Array(viewMode === 'list' ? 8 : 6)].map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        className={cn(
+                          'rounded-xl bg-white border border-slate-100',
+                          viewMode === 'list' ? 'h-[88px] sm:h-[96px]' : 'h-64'
+                        )}
+                      />
                     ))}
                   </div>
                 ) : visibleCompanies.length > 0 ? (
@@ -969,20 +1030,27 @@ export function CompaniesContent({
                         />
                       </div>
                     ) : (
+                      viewMode === 'list' ? (
+                      <div
+                        data-testid="companies-list"
+                        className="flex flex-col gap-2.5 sm:gap-3 w-full min-w-0"
+                      >
+                        {visibleCompanies.map((company, index) => (
+                          <CompanyDirectoryRow
+                            key={company.id}
+                            company={company}
+                            index={index + ((filters.page || 1) - 1) * PAGE_SIZE}
+                          />
+                        ))}
+                      </div>
+                    ) : (
                       <div
                         data-testid="companies-grid"
-                        className={cn(
-                          'grid w-full min-w-0 gap-3 sm:gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]',
-                          viewMode !== 'grid' && 'grid-cols-1'
-                        )}
-                        style={
-                          viewMode === 'grid'
-                            ? {
-                                gridTemplateColumns:
-                                  'repeat(auto-fit, minmax(min(100%, var(--company-card-min)), 1fr))',
-                              }
-                            : undefined
-                        }
+                        className="grid w-full min-w-0 gap-3 sm:gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]"
+                        style={{
+                          gridTemplateColumns:
+                            'repeat(auto-fit, minmax(min(100%, var(--company-card-min)), 1fr))',
+                        }}
                       >
                         {visibleCompanies.map((company, index) => (
                           <CompanyCard
@@ -992,6 +1060,7 @@ export function CompaniesContent({
                           />
                         ))}
                       </div>
+                    )
                     )}
 
                     {totalPages > 1 && viewMode !== 'map' && (
