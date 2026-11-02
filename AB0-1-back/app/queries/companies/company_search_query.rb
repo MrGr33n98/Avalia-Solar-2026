@@ -108,7 +108,14 @@ module Companies
                                        .map { |s| ::Locations::CoverageNormalizer.normalize_state(s) }
                                        .compact
                                        .reject(&:blank?)
-        scope = scope.where(state: states) if states.any?
+        if ActiveModel::Type::Boolean.new.cast(@params[:scope_coverage] || @params[:include_serving]) && @params[:serves_state].blank?
+          state_scope = states.reduce(::Company.none) do |acc, state|
+            acc.or(::Company.serving_state(state))
+          end
+          scope = scope.where(id: state_scope.select(:id))
+        else
+          scope = scope.where(state: states) if states.any?
+        end
       end
 
       if @params[:city].present?

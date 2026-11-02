@@ -10,6 +10,7 @@ import { FavoriteButton } from '@/components/favorites/FavoriteButton';
 import { normalizeCompanyData, type CompanyCardData } from '@/components/CompanyCard';
 import { useComparison } from '@/hooks/useComparison';
 import { buildCompanyPath } from '@/lib/slug';
+import { track } from '@/lib/analytics/consolidated';
 import { cn } from '@/lib/utils';
 
 export interface CompanyDirectoryRowProps {
@@ -33,6 +34,14 @@ export function CompanyDirectoryRow({
   const isComparing = isInComparison(data.id);
   const href = buildCompanyPath(data.slug, data.name, data.id);
 
+  const handleRowClick = () => {
+    track('company_list_row_clicked', {
+      company_id: data.id,
+      company_name: data.name,
+      position: index,
+    });
+  };
+
   const score = data.reputation?.rating_avg ?? 0;
   const count = data.reputation?.rating_count ?? 0;
   const hasReviews = typeof count === 'number' && count > 0 && typeof score === 'number' && score > 0;
@@ -54,6 +63,7 @@ export function CompanyDirectoryRow({
         href={href}
         title={data.name}
         aria-label={`Ver perfil de ${data.name}`}
+        onClick={handleRowClick}
         className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       />
 
@@ -83,6 +93,11 @@ export function CompanyDirectoryRow({
               <CompanyVerifiedBadge size="sm" className="h-4 w-4" />
             </span>
           )}
+          {Boolean((company as any)?.sponsored || data?.sponsored) && (
+            <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">
+              Patrocinado
+            </span>
+          )}
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
@@ -110,6 +125,15 @@ export function CompanyDirectoryRow({
               </div>
             </>
           )}
+
+          {Boolean((company as any)?.recommendation_reason?.label) && (
+            <>
+              <span className="text-slate-300 select-none hidden sm:inline">•</span>
+              <span className="truncate max-w-[130px] sm:max-w-none text-blue-600 font-medium text-[11px]">
+                {(company as any).recommendation_reason.label}
+              </span>
+            </>
+          )}
         </div>
       </div>
 
@@ -122,14 +146,16 @@ export function CompanyDirectoryRow({
           className="h-10 w-10 sm:h-11 sm:w-11 text-slate-400 hover:text-rose-500"
         />
 
-        <CompareCheckboxControl
-          companyName={data.name}
-          checked={isComparing}
-          onCheckedChange={() => toggleComparison(company)}
-          disabled={!isComparing && !canAddMore}
-          density="compact"
-          className="text-xs"
-        />
+        <div className="[&>label>span:last-child]:hidden min-[400px]:[&>label>span:last-child]:inline">
+          <CompareCheckboxControl
+            companyName={data.name}
+            checked={isComparing}
+            onCheckedChange={() => toggleComparison(company)}
+            disabled={!isComparing && !canAddMore}
+            density="compact"
+            className="text-xs"
+          />
+        </div>
       </div>
     </article>
   );

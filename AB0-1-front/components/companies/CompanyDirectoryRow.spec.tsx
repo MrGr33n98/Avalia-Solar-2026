@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CompanyDirectoryRow } from './CompanyDirectoryRow';
+import { track } from '@/lib/analytics/consolidated';
 
 const mockToggleComparison = jest.fn();
 let mockIsInComparison = false;
@@ -28,7 +29,7 @@ jest.mock('@/lib/api/favorites', () => ({
   },
 }));
 
-jest.mock('@/lib/analytics/lazy', () => ({
+jest.mock('@/lib/analytics/consolidated', () => ({
   track: jest.fn(),
 }));
 
@@ -115,11 +116,31 @@ describe('CompanyDirectoryRow — Mobile Compact Directory Row', () => {
     expect(compareCheckbox).toBeDisabled();
   });
 
-  it('possui link acessível apontando para a página canônica da empresa', () => {
-    render(<CompanyDirectoryRow company={sampleCompany} />);
+  it('possui link acessível apontando para a página canônica da empresa e dispara analytics no clique', () => {
+    render(<CompanyDirectoryRow company={sampleCompany} index={2} />);
 
     const mainLink = screen.getByRole('link', { name: /ver perfil de solar tech brasil/i });
     expect(mainLink).toBeInTheDocument();
     expect(mainLink).toHaveAttribute('href', expect.stringContaining('/companies/solar-tech-brasil'));
+
+    fireEvent.click(mainLink);
+    expect(track).toHaveBeenCalledWith('company_list_row_clicked', {
+      company_id: 42,
+      company_name: 'Solar Tech Brasil',
+      position: 2,
+    });
+  });
+
+  it('exibe badge de Patrocinado e motivo de recomendação quando presentes', () => {
+    const enrichedCompany = {
+      ...sampleCompany,
+      sponsored: true,
+      recommendation_reason: { label: 'Atende Florianópolis' },
+    };
+
+    render(<CompanyDirectoryRow company={enrichedCompany} />);
+
+    expect(screen.getByText('Patrocinado')).toBeInTheDocument();
+    expect(screen.getByText('Atende Florianópolis')).toBeInTheDocument();
   });
 });

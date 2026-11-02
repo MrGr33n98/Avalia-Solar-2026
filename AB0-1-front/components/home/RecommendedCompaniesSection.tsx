@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { MapPin, ArrowRight, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
 import RecommendedCompanyCard from '@/components/company/RecommendedCompanyCard';
+import { CompanyDirectoryRow } from '@/components/companies/CompanyDirectoryRow';
 import PublicCompanyCard, { type PublicCompanyCardData } from '@/components/company/PublicCompanyCard';
 import { publicCompaniesApi } from '@/lib/api-public';
 import type { RecommendationItem, RecommendationMeta } from '@/lib/api-public';
@@ -34,6 +35,7 @@ type RecommendedCompaniesSectionProps = {
 export default function RecommendedCompaniesSection({ initialCompanies }: RecommendedCompaniesSectionProps) {
   const { selectedState, selectedCity, stateLabel } = useLocation();
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [items, setItems] = useState<RecommendationItem[]>([]);
   const [meta, setMeta] = useState<RecommendationMeta | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -104,13 +106,51 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
             </p>
           </div>
 
-          <Link
-            href={`/companies?state=${encodeURIComponent(selectedState)}`}
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-800 transition group self-start md:self-auto"
-          >
-            <span>Ver todas as empresas</span>
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden="true" />
-          </Link>
+          <div className="flex items-center gap-3 self-start md:self-auto">
+            {/* View Mode Switcher */}
+            <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                aria-label="Visualização em grade"
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                  viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                aria-label="Visualização em lista"
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                  viewMode === 'list' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <Link
+              href={`/companies?state=${encodeURIComponent(selectedState)}`}
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-800 transition group"
+            >
+              <span>Ver todas as empresas</span>
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden="true" />
+            </Link>
+          </div>
         </div>
 
         {/* Tab Filters */}
@@ -194,8 +234,15 @@ export default function RecommendedCompaniesSection({ initialCompanies }: Recomm
               <h3 className="text-base font-bold text-slate-900">Nenhuma empresa encontrada neste segmento</h3>
               <p className="mt-1 text-xs text-slate-500">Tente alternar a aba de filtro para visualizar outras categorias disponíveis.</p>
             </div>
+          ) : viewMode === 'list' ? (
+            /* Cards List Mode */
+            <div className="flex flex-col gap-2.5">
+              {items.map((company, index) => (
+                <CompanyDirectoryRow key={company.id} company={company} index={index} />
+              ))}
+            </div>
           ) : (
-            /* Cards Grid */
+            /* Cards Grid Mode */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {items.map((company) => (
                 <RecommendedCompanyCard key={company.id} company={company} meta={meta} />
