@@ -23,9 +23,20 @@ export function normalizeChannel(channel?: string | null): CollectionChannel {
 
 export function getPublicSiteOrigin(): string {
   if (typeof process !== 'undefined') {
-    const configuredSite = process.env.NEXT_PUBLIC_PUBLIC_URL || process.env.NEXT_PUBLIC_SITE_URL;
+    const configuredSite =
+      process.env.NEXT_PUBLIC_PUBLIC_ORIGIN ||
+      process.env.NEXT_PUBLIC_PUBLIC_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL;
     if (configuredSite) {
-      return configuredSite.replace(/\/+$/, '');
+      const trimmed = configuredSite.replace(/\/+$/, '');
+      if (
+        trimmed === 'https://avaliasolar.com.br' ||
+        trimmed === 'http://avaliasolar.com.br' ||
+        trimmed.endsWith('//avaliasolar.com.br')
+      ) {
+        return 'https://www.avaliasolar.com.br';
+      }
+      return trimmed;
     }
   }
 
@@ -35,9 +46,13 @@ export function getPublicSiteOrigin(): string {
     if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       return origin;
     }
-    // Em subdomínios B2B/App (ex: app.avaliasolar.com.br ou crm.avaliasolar.com.br),
-    // redireciona a origem pública para o domínio principal www
-    if (origin.includes('app.avaliasolar.com.br') || origin.includes('crm.avaliasolar.com.br')) {
+    // Em subdomínios B2B/App ou apex domain, normaliza para www.avaliasolar.com.br
+    if (
+      origin.includes('app.avaliasolar.com.br') ||
+      origin.includes('crm.avaliasolar.com.br') ||
+      origin === 'https://avaliasolar.com.br' ||
+      origin === 'http://avaliasolar.com.br'
+    ) {
       return 'https://www.avaliasolar.com.br';
     }
     return origin;
@@ -71,4 +86,3 @@ export function formatShortDisplayUrl(fullUrl: string): string {
     .replace(/^https?:\/\//, '')
     .replace('avaliasolar.com.br/f/', 'avali.as/f/');
 }
-

@@ -8,9 +8,6 @@ import {
   Loader2,
   ShieldCheck,
   Star,
-  Mail,
-  Megaphone,
-  Camera,
   ArrowDown,
 } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
@@ -222,18 +219,22 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
           data-testid="review-invite-hero"
           className="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-12 text-center shadow-xs"
         >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-100 bg-white p-2.5 shadow-2xs">
+          {/* AVATAR DA EMPRESA: PREENCHIMENTO TOTAL DO ESPAÇO */}
+          <div
+            data-testid="company-logo-avatar"
+            className="relative mx-auto flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs"
+          >
             {companyLogoUrl ? (
               <Image
                 src={companyLogoUrl}
                 alt={form.company.name}
-                width={56}
-                height={56}
-                className="h-full w-full object-contain"
+                width={96}
+                height={96}
+                className="h-full w-full object-cover"
                 unoptimized
               />
             ) : (
-              <span className="text-xl font-black text-blue-700">
+              <span className="text-2xl font-black text-blue-700">
                 {form.company.name.slice(0, 2).toUpperCase()}
               </span>
             )}
@@ -260,7 +261,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
           </div>
         </section>
 
-        {/* ─── BOAS PRÁTICAS PARA TER SUA AVALIAÇÃO APROVADA (ESTILO G2) ─── */}
+        {/* ─── BOAS PRÁTICAS PARA TER SUA AVALIAÇÃO APROVADA (ESTILO G2 IDENTICAL ICONS) ─── */}
         <section
           data-testid="review-best-practices"
           className="mt-12 text-center"
@@ -270,60 +271,80 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
           </h2>
 
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-left">
-            {/* 1. Use seu contato real */}
-            <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-800">
-                <Mail className="h-5 w-5" />
-              </div>
+            {/* 1. Use Your Work Email (G2 envelope icon) */}
+            <div className="flex items-start gap-3.5">
+              <svg
+                className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 text-slate-900"
+                viewBox="0 0 32 32"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="2.5" y="6.5" width="27" height="19" rx="1" />
+                <path d="M2.5 7.5L16 17.5L29.5 7.5" />
+                <path d="M2.5 25L12 15.5" />
+                <path d="M29.5 25L20 15.5" />
+              </svg>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Use seu contato real</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Fornecer seu e-mail ou WhatsApp corporativo/pessoal ajuda nossos moderadores a verificar sua identidade mais rápido. Seus dados nunca serão exibidos publicamente.
+                <h3 className="text-base font-bold text-slate-900 leading-snug">Use seu contato real</h3>
+                <p className="mt-1.5 text-xs sm:text-sm leading-5 text-slate-600">
+                  Fornecer seu e-mail ou WhatsApp corporativo/pessoal ajuda nossos moderadores a verificar você com mais rapidez. Seus dados nunca serão exibidos publicamente.
                 </p>
               </div>
             </div>
 
-            {/* 2. Seja autêntico */}
-            <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-800">
-                <Megaphone className="h-5 w-5" />
-              </div>
+            {/* 2. Be Authentic (G2 megaphone icon with sound lines) */}
+            <div className="flex items-start gap-3.5">
+              <svg
+                className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 text-slate-900"
+                viewBox="0 0 32 32"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h5l10-6v19l-10-6H5a1.5 1.5 0 0 1-1.5-1.5v-4A1.5 1.5 0 0 1 5 12z" />
+                <path d="M10 19v6a1.5 1.5 0 0 0 1.5 1.5h1" />
+                <path d="M24 9l2-2" />
+                <path d="M26 15.5h3" />
+                <path d="M24 22l2 2" />
+              </svg>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Seja autêntico</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <h3 className="text-base font-bold text-slate-900 leading-snug">Seja autêntico</h3>
+                <p className="mt-1.5 text-xs sm:text-sm leading-5 text-slate-600">
                   Escreva sobre sua experiência real com a empresa instaladora. O que funcionou bem? O que poderia melhorar? Relatos autênticos têm muito mais valor.
                 </p>
               </div>
             </div>
 
-            {/* 3. Compartilhe detalhes */}
-            <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-800">
-                <Camera className="h-5 w-5" />
-              </div>
+            {/* 3. Share a Screenshot (G2 camera icon) */}
+            <div className="flex items-start gap-3.5">
+              <svg
+                className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 text-slate-900"
+                viewBox="0 0 32 32"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 10a2 2 0 0 1 2-2h4l2-3h8l2 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10z" />
+                <circle cx="16" cy="17" r="4.5" />
+                <circle cx="23" cy="12" r="1" fill="currentColor" />
+              </svg>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Compartilhe detalhes</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <h3 className="text-base font-bold text-slate-900 leading-snug">Compartilhe detalhes</h3>
+                <p className="mt-1.5 text-xs sm:text-sm leading-5 text-slate-600">
                   Informar cidade, detalhes do projeto ou fotos da conta e instalação assegura credibilidade máxima e acelera a validação com selo Verificado.
                 </p>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* ─── BARRA DE PRESTÍGIO / IMPRENSA ESTILO G2 ─── */}
-        <section
-          data-testid="review-press-banner"
-          aria-label="Veículos de referência"
-          className="mt-12 border-t border-slate-200/80 pt-8 pb-4"
-        >
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all select-none">
-            <span className="font-serif font-black text-xl sm:text-2xl tracking-tight text-slate-700">Forbes</span>
-            <span className="font-sans font-black text-xl sm:text-2xl tracking-tighter text-slate-700">TC</span>
-            <span className="font-mono font-bold text-lg sm:text-xl tracking-tight text-slate-700">PCWorld</span>
-            <span className="font-sans font-black text-xl sm:text-2xl tracking-widest text-slate-700">CIO</span>
-            <span className="font-serif font-bold text-base sm:text-lg tracking-tight text-slate-700">Bloomberg</span>
-            <span className="font-sans font-black text-xl sm:text-2xl tracking-tight text-slate-700">VB</span>
           </div>
         </section>
 

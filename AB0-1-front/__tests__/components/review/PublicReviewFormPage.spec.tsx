@@ -72,13 +72,14 @@ describe('PublicReviewFormPage — G2 Review Collection Landing Layout', () => {
     (fetchApi as jest.Mock).mockResolvedValue(mockFormData);
   });
 
-  it('renderiza o Hero de convite no estilo G2 com título, descrição e CTA', async () => {
+  it('renderiza o Hero de convite no estilo G2 com avatar preenchido, título e CTA', async () => {
     render(<PublicReviewFormPage params={{ token: 'token-abc' }} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('review-invite-hero')).toBeInTheDocument();
     });
 
+    expect(screen.getByTestId('company-logo-avatar')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /compartilhe sua experiência sobre solar power brasil/i })
     ).toBeInTheDocument();
@@ -88,7 +89,7 @@ describe('PublicReviewFormPage — G2 Review Collection Landing Layout', () => {
     expect(screen.getByTestId('review-now-cta')).toBeInTheDocument();
   });
 
-  it('renderiza a seção de Boas Práticas inspirada no G2 com os 3 pilares', async () => {
+  it('renderiza a seção de Boas Práticas inspirada no G2 com os 3 pilares e sem logos falsos', async () => {
     render(<PublicReviewFormPage params={{ token: 'token-abc' }} />);
 
     await waitFor(() => {
@@ -99,17 +100,9 @@ describe('PublicReviewFormPage — G2 Review Collection Landing Layout', () => {
     expect(screen.getByText('Use seu contato real')).toBeInTheDocument();
     expect(screen.getByText('Seja autêntico')).toBeInTheDocument();
     expect(screen.getByText('Compartilhe detalhes')).toBeInTheDocument();
-  });
-
-  it('renderiza a barra de veículos de referência e imprensa', async () => {
-    render(<PublicReviewFormPage params={{ token: 'token-abc' }} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('review-press-banner')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('Forbes')).toBeInTheDocument();
-    expect(screen.getByText('Bloomberg')).toBeInTheDocument();
+    // Garante que não existem marcas ou logos inventados
+    expect(screen.queryByTestId('review-press-banner')).not.toBeInTheDocument();
+    expect(screen.queryByText('Forbes')).not.toBeInTheDocument();
   });
 
   it('renderiza o formulário oficial de avaliação logo abaixo', async () => {
