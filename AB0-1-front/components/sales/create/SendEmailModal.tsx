@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   AlertCircle,
   Check,
@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { salesApi } from '@/lib/api/sales/client';
-import { listEmailTemplates } from '@/lib/api/sales/emailTemplates';
+import { listEmailTemplates, previewEmailTemplate } from '@/lib/api/sales/emailTemplates';
 import type { EmailTemplate } from '@/components/sales/campaigns/templates/types';
 import { useAuth } from '@/contexts/AuthContext';
 import AIWritingPanel from '@/components/sales/ai/writing/AIWritingPanel';
@@ -158,6 +158,27 @@ export default function SendEmailModal({
       (t.subject_template || '').toLowerCase().includes(searchTemplate.toLowerCase())
   );
 
+  const resolveMergeTags = useCallback(
+    (text: string): string => {
+      if (!text) return '';
+      const rName = recipientName || contactName || 'Cliente';
+      const rFirstName = rName.split(' ')[0] || rName;
+      const cName = companyName || relatedLead || 'Sua Empresa';
+      const sName = senderName || 'Consultor';
+      const sFirstName = sName.split(' ')[0] || sName;
+
+      return text
+        .replace(/\{\{\s*(person|contact)\.first_name\s*\}\}/gi, rFirstName)
+        .replace(/\{\{\s*(person|contact)\.name\s*\}\}/gi, rName)
+        .replace(/\{\{\s*(company|account|lead)\.name\s*\}\}/gi, cName)
+        .replace(/\{\{\s*(owner|user|sender)\.first_name\s*\}\}/gi, sFirstName)
+        .replace(/\{\{\s*(owner|user|sender)\.name\s*\}\}/gi, sName)
+        .replace(/\{\{\s*(owner|user|sender)\.email\s*\}\}/gi, senderEmail)
+        .replace(/\{\{\s*opportunity\.value\s*\}\}/gi, 'R$ 0,00');
+    },
+    [recipientName, contactName, companyName, relatedLead, senderName, senderEmail]
+  );
+
   const textToHtml = (text: string) => {
     if (!text) return '';
     return text
@@ -166,30 +187,156 @@ export default function SendEmailModal({
       .join('');
   };
 
-  const extractBlocksText = (tmpl: EmailTemplate): string => {
-    if (tmpl.body_html) {
-      return tmpl.body_html.replace(/<[^>]+>/g, '');
-    }
-    const blocks = tmpl.body_json?.blocks;
-    if (Array.isArray(blocks) && blocks.length > 0) {
-      return blocks
-        .map((b) => b.props?.text || b.props?.label || '')
-        .filter(Boolean)
-        .join('\n\n');
-    }
-    return '';
+  const htmlToPlainText = (html: string): string => {
+    if (!html) return '';
+    return html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   };
+
+  const parseBodyJson = (raw: unknown): Record<string, any> | null => {
+    if (!raw) return null;
+    if (typeof raw === 'object') return raw as Record<string, any>;
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const convertTemplateToHtml = useCallback(
+    (tmpl: EmailTemplate): string => {
+      let rawHtml = '';
+      const parsedJson = parseBodyJson(tmpl.body_json);
+
+      if (tmpl.body_html && tmpl.body_html.trim() && tmpl.body_html !== '<p><br></p>') {
+        rawHtml = tmpl.body_html;
+      } else if (parsedJson && Array.isArray(parsedJson.blocks) && parsedJson.blocks.length > 0) {
+        rawHtml = parsedJson.blocks
+          .map((b: any) => {
+            const type = b.type || 'text';
+            const props = b.props || {};
+
+            switch (type) {
+              case 'heading': {
+                const lvl = Math.min(Math.max(Number(props.level) || 2, 1), 3);
+                const txt = props.text || b.text || '';
+                return `<h${lvl} style="margin: 14px 0 8px 0; font-weight: bold; color: #0f172a;">${txt}</h${lvl}>`;
+              }
+              case 'text': {
+                let content = props.html || props.text || b.html || b.text || props.content || '';
+                if (!content) return '';
+                if (!content.trim().startsWith('<')) {
+                  content = `<p style="margin: 0 0 12px 0; line-height: 1.6;">${content.replace(/\n/g, '<br/>')}</p>`;
+                }
+                return content;
+              }
+              case 'button': {
+                const label = props.label || b.label || 'Clique aqui';
+                const url = props.url || b.url || '#';
+                const align = props.align || 'left';
+                return `<div style="text-align: ${align}; margin: 16px 0;"><a href="${url}" target="_blank" rel="noopener noreferrer" style="background-color: #0284c7; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 14px;">${label}</a></div>`;
+              }
+              case 'image': {
+                const src = props.url || props.src || props.public_url || b.src || '';
+                const alt = props.alt || 'Imagem';
+                const align = props.align || 'center';
+                return src
+                  ? `<div style="text-align: ${align}; margin: 14px 0;"><img src="${src}" alt="${alt}" style="max-width: 100%; height: auto; border-radius: 6px;" /></div>`
+                  : '';
+              }
+              case 'divider':
+                return '<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 18px 0;" />';
+              case 'spacer': {
+                const h = Number(props.height) || 20;
+                return `<div style="height: ${h}px;"></div>`;
+              }
+              case 'html':
+                return props.code || props.html || b.code || b.html || '';
+              default:
+                return props.text || props.html || '';
+            }
+          })
+          .filter(Boolean)
+          .join('\n');
+      } else if (parsedJson && parsedJson.text) {
+        rawHtml = `<p style="margin: 0 0 12px 0; line-height: 1.6;">${String(parsedJson.text).replace(/\n/g, '<br/>')}</p>`;
+      }
+
+      if (!rawHtml.trim()) {
+        const rName = recipientName || contactName;
+        const rFirstName = rName ? rName.split(' ')[0] : 'Cliente';
+        rawHtml = `<p>Olá ${rFirstName},</p><p><br/></p>`;
+      }
+
+      return resolveMergeTags(rawHtml);
+    },
+    [recipientName, contactName, resolveMergeTags]
+  );
 
   const applyTemplate = (tmpl: EmailTemplate) => {
     setSelectedTemplateId(tmpl.id);
-    const sub = tmpl.subject_template || '';
-    const plain = extractBlocksText(tmpl);
-    const html = tmpl.body_html || textToHtml(plain);
+    const resolvedSub = resolveMergeTags(tmpl.subject_template || '');
+    const resolvedPre = resolveMergeTags(tmpl.preheader || '');
+    const resolvedHtml = convertTemplateToHtml(tmpl);
+    const resolvedText = htmlToPlainText(resolvedHtml);
 
-    setSubject(sub);
-    setPreheader(tmpl.preheader || '');
-    setBody(plain);
-    setBodyHtml(html);
+    setSubject(resolvedSub);
+    setPreheader(resolvedPre);
+    setBody(resolvedText);
+    setBodyHtml(resolvedHtml);
+
+    // Atualização imperativa imediata do editor WYSIWYG
+    if (editorRef.current) {
+      editorRef.current.setHtml(resolvedHtml);
+    }
+
+    // Busca prévia no servidor em background para enriquecer dados se disponível
+    if (tmpl.id) {
+      const contextIds: Record<string, number> = {};
+      if (contactId) contextIds.contact_id = contactId;
+      if (accountId) contextIds.account_id = accountId;
+      if (opportunityId) contextIds.opportunity_id = opportunityId;
+
+      previewEmailTemplate(tmpl.id, {
+        context_ids: Object.keys(contextIds).length > 0 ? contextIds : undefined,
+      })
+        .then((res) => {
+          if (res?.preview?.body_html) {
+            const serverHtml = res.preview.body_html;
+            const serverText = res.preview.body_text || htmlToPlainText(serverHtml);
+            setBodyHtml((current) => {
+              if (current === resolvedHtml || !current) {
+                editorRef.current?.setHtml(serverHtml);
+                setBody(serverText);
+                return serverHtml;
+              }
+              return current;
+            });
+          }
+        })
+        .catch(() => {
+          // Mantém o HTML renderizado pelo cliente com resiliência
+        });
+    }
+
+    toast.success(`Template "${tmpl.name}" carregado.`);
   };
 
   const handleCreateFromScratch = () => {
@@ -219,9 +366,12 @@ export default function SendEmailModal({
     if (next.body !== undefined) {
       const isHtml = /<[a-z][\s\S]*>/i.test(next.body);
       const htmlValue = isHtml ? next.body : textToHtml(next.body);
-      const plainValue = isHtml ? next.body.replace(/<[^>]+>/g, '') : next.body;
+      const plainValue = isHtml ? htmlToPlainText(next.body) : next.body;
       setBodyHtml(htmlValue);
       setBody(plainValue);
+      if (editorRef.current) {
+        editorRef.current.setHtml(htmlValue);
+      }
     }
     toast.success('Sugestão da IA inserida no rascunho para sua revisão.');
   };

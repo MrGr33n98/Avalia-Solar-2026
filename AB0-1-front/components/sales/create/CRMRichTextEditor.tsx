@@ -38,6 +38,7 @@ export interface CRMRichTextEditorRef {
   getText: () => string;
   focus: () => void;
   clear: () => void;
+  setHtml: (html: string) => void;
 }
 
 interface CRMRichTextEditorProps {
@@ -145,6 +146,11 @@ const CRMRichTextEditor = forwardRef<CRMRichTextEditorRef, CRMRichTextEditorProp
             editorRef.current.innerHTML = '';
             handleInput();
           }
+        },
+        setHtml: (html: string) => {
+          if (!editorRef.current) return;
+          editorRef.current.innerHTML = html || '';
+          handleInput();
         },
       }),
       [handleInput]
