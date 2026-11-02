@@ -194,7 +194,22 @@ export async function requestApi<T>(path: string, options: RequestInit = {}): Pr
         blockers: extractBlockers(snapshot),
       };
     }
+    // Nested in preflight envelope
+    const preflight = parsed.preflight;
+    if (isRecord(preflight) && Array.isArray(preflight.blockers) && preflight.blockers.length > 0) {
+      const first = preflight.blockers[0] as PreflightItem;
+      return {
+        code: first?.code || 'PREFLIGHT_BLOCKED',
+        message: first?.message || 'A campanha possui pendências que impedem o envio.',
+        blockers: extractBlockers(parsed),
+      };
+    }
     return null;
+  }
+
+  // Preflight é uma consulta de QA: payload válido deve ser entregue mesmo sob status 422
+  if (path.includes('/preflight') && isRecord(body) && isRecord(body.preflight)) {
+    return body as T;
   }
 
   if (!res.ok) {

@@ -44,24 +44,27 @@ module Api
             end
           end
 
-          to_email = email_params[:to_email].to_s.strip.downcase.presence || contact&.email.presence
+          raw_recipients = Array(email_params[:to_emails]).presence ||
+                           email_params[:to_email].to_s.split(',').presence ||
+                           Array(contact&.email)
+          recipients_list = raw_recipients.map { |e| e.to_s.strip.downcase }.reject(&:blank?).uniq
 
-          if contact.present? && to_email.present? && contact.email.to_s.strip.downcase != to_email
-            contact = scoped_contacts.find_by('LOWER(email) = ?', to_email)
-          end
-
-          if to_email.blank?
+          if recipients_list.empty?
             return render json: { error: 'Destinatário é obrigatório', code: 'EMAIL_RECIPIENT_REQUIRED' }, status: :unprocessable_entity
           end
 
-          unless URI::MailTo::EMAIL_REGEXP.match?(to_email)
-            return render json: { error: 'Endereço de e-mail inválido', code: 'INVALID_EMAIL_ADDRESS' }, status: :unprocessable_entity
+          invalid_emails = recipients_list.reject { |e| URI::MailTo::EMAIL_REGEXP.match?(e) }
+          if invalid_emails.any?
+            return render json: { error: "Endereço de e-mail inválido: #{invalid_emails.join(', ')}", code: 'INVALID_EMAIL_ADDRESS' }, status: :unprocessable_entity
           end
 
-          # Fallback inteligente: se contact não foi passado explicitamente, associar pelo to_email
+          to_email = recipients_list.first
           if contact.nil? && to_email.present?
             contact = scoped_contacts.find_by('LOWER(email) = ?', to_email)
             account ||= contact&.account
+          elsif contact.present? && contact.email.to_s.strip.downcase != to_email
+            matched = scoped_contacts.find_by('LOWER(email) = ?', to_email)
+            contact = matched if matched.present?
           end
 
           # Se opportunity_id foi fornecido, preenche account e contact se ainda vazios
@@ -92,9 +95,11 @@ module Api
           unless company_id.present?
             return render json: { error: 'Empresa não configurada', code: 'COMPANY_REQUIRED' }, status: :forbidden
           end
-          if ::Sales::Messaging::SuppressionChecker.blocked?(company_id: company_id, email: to_email)
-            return render json: { error: "Destinatário suprimido", code: "EMAIL_SUPPRESSED" }, status: :unprocessable_entity
+          blocked_recipients = recipients_list.select { |e| ::Sales::Messaging::SuppressionChecker.blocked?(company_id: company_id, email: e) }
+          if blocked_recipients.size == recipients_list.size
+            return render json: { error: "Destinatário suprimido: #{blocked_recipients.join(', ')}", code: "EMAIL_SUPPRESSED" }, status: :unprocessable_entity
           end
+          active_recipients = recipients_list - blocked_recipients
 
           unless ::Sales::Messaging::SendingGate.enabled?
             return render_error_response(message: 'Envio de e-mail desabilitado.', status: :service_unavailable,
@@ -105,92 +110,98 @@ module Api
                                          code: 'EMAIL_TRACKING_HOST_MISSING')
           end
 
-          email = nil
+          created_emails = []
           ::Sales::EmailMessage.transaction do
-            thread = find_or_create_thread(
-              company_id: company_id,
-              account: account,
-              contact: contact,
-              to_email: to_email,
-              subject: email_params[:subject],
-              in_reply_to: email_params[:in_reply_to],
-              references_header: email_params[:references_header]
-            )
-            thread.update!(last_message_at: Time.current, message_count: thread.message_count + 1)
-
-            email_metadata = {}
-            email_metadata['include_signature'] = ActiveModel::Type::Boolean.new.cast(email_params[:include_signature]) unless email_params[:include_signature].nil?
-            email_metadata['sales_email_signature_id'] = email_params[:sales_email_signature_id].to_i if email_params[:sales_email_signature_id].present?
-
-            email = ::Sales::EmailMessage.create!(
-              company_id: company_id,
-              sales_email_thread_id: thread.id,
-              sales_account_id: account&.id,
-              sales_contact_id: contact&.id,
-              sales_opportunity_id: email_params[:sales_opportunity_id],
-              message_id: email_params[:message_id].presence || "<#{SecureRandom.uuid}@avaliasolar.com.br>",
-              in_reply_to: email_params[:in_reply_to],
-              references_header: email_params[:references_header],
-              sender_user_id: current_user.id,
-              from_email: current_user.email.to_s.end_with?('@avaliasolar.com.br') ? current_user.email : 'felipe@avaliasolar.com.br',
-              to_email: to_email,
-              subject: email_params[:subject],
-              body_json: parsed_body_json,
-              body_text: email_params[:body_text] || email_params[:body],
-              body_html: email_params[:body_html],
-              open_tracking_enabled: email_params[:open_tracking_enabled].nil? ? true : email_params[:open_tracking_enabled],
-              click_tracking_enabled: email_params[:click_tracking_enabled].nil? ? true : email_params[:click_tracking_enabled],
-              metadata: email_metadata,
-              status: 'queued'
-            )
-
-            participants = {
-              'from' => [email.from_email],
-              'to' => [email.to_email],
-              'cc' => email_params[:cc],
-              'bcc' => email_params[:bcc]
-            }
-            participants.each do |kind, addresses|
-              Array(addresses).flat_map { |value| value.to_s.split(',') }.map(&:strip).reject(&:blank?).each do |address|
-                email.participants.create!(company_id: email.company_id, email: address, participant_type: kind)
-              end
-            end
-
-            Array(email_params[:attachments]).first(10).each do |uploaded_file|
-              next unless uploaded_file.respond_to?(:content_type) && uploaded_file.respond_to?(:size)
-
-              attachment = email.attachments.create!(
-                company_id: email.company_id,
-                file_name: uploaded_file.original_filename.to_s,
-                content_type: uploaded_file.content_type.to_s,
-                file_size: uploaded_file.size,
-                inline: false
+            active_recipients.each do |target_to_email|
+              contact_for_recipient = scoped_contacts.find_by('LOWER(email) = ?', target_to_email) || contact
+              thread = find_or_create_thread(
+                company_id: company_id,
+                account: account,
+                contact: contact_for_recipient,
+                to_email: target_to_email,
+                subject: email_params[:subject],
+                in_reply_to: email_params[:in_reply_to],
+                references_header: email_params[:references_header]
               )
-              attachment.file.attach(uploaded_file)
-              attachment.save!
-            end
+              thread.update!(last_message_at: Time.current, message_count: thread.message_count + 1)
 
-            email.register_event!(event_type: 'queued', source: 'sales_crm', dedupe_key: "queued:#{email.id}",
-                                  occurred_at: email.created_at)
+              email_metadata = {}
+              email_metadata['include_signature'] = ActiveModel::Type::Boolean.new.cast(email_params[:include_signature]) unless email_params[:include_signature].nil?
+              email_metadata['sales_email_signature_id'] = email_params[:sales_email_signature_id].to_i if email_params[:sales_email_signature_id].present?
+
+              email = ::Sales::EmailMessage.create!(
+                company_id: company_id,
+                sales_email_thread_id: thread.id,
+                sales_account_id: account&.id,
+                sales_contact_id: contact_for_recipient&.id,
+                sales_opportunity_id: email_params[:sales_opportunity_id],
+                message_id: "<#{SecureRandom.uuid}@avaliasolar.com.br>",
+                in_reply_to: email_params[:in_reply_to],
+                references_header: email_params[:references_header],
+                sender_user_id: current_user.id,
+                from_email: current_user.email.to_s.end_with?('@avaliasolar.com.br') ? current_user.email : 'felipe@avaliasolar.com.br',
+                to_email: target_to_email,
+                subject: email_params[:subject],
+                body_json: parsed_body_json,
+                body_text: email_params[:body_text] || email_params[:body],
+                body_html: email_params[:body_html],
+                open_tracking_enabled: email_params[:open_tracking_enabled].nil? ? true : email_params[:open_tracking_enabled],
+                click_tracking_enabled: email_params[:click_tracking_enabled].nil? ? true : email_params[:click_tracking_enabled],
+                metadata: email_metadata,
+                status: 'queued'
+              )
+
+              participants = {
+                'from' => [email.from_email],
+                'to' => [email.to_email],
+                'cc' => email_params[:cc],
+                'bcc' => email_params[:bcc]
+              }
+              participants.each do |kind, addresses|
+                Array(addresses).flat_map { |value| value.to_s.split(',') }.map(&:strip).reject(&:blank?).each do |address|
+                  email.participants.create!(company_id: email.company_id, email: address, participant_type: kind)
+                end
+              end
+
+              Array(email_params[:attachments]).first(10).each do |uploaded_file|
+                next unless uploaded_file.respond_to?(:content_type) && uploaded_file.respond_to?(:size)
+
+                attachment = email.attachments.create!(
+                  company_id: email.company_id,
+                  file_name: uploaded_file.original_filename.to_s,
+                  content_type: uploaded_file.content_type.to_s,
+                  file_size: uploaded_file.size,
+                  inline: false
+                )
+                attachment.file.attach(uploaded_file)
+                attachment.save!
+              end
+
+              email.register_event!(event_type: 'queued', source: 'sales_crm', dedupe_key: "queued:#{email.id}",
+                                    occurred_at: email.created_at)
+
+              created_emails << email
+            end
           end
 
-          if ENV.fetch('EXECUTE_JOBS_INLINE', 'false') == 'true' && !Rails.env.production?
-            ::Sales::SendEmailJob.perform_now(email.id)
-          else
-            begin
-              ::Sales::SendEmailJob.perform_later(email.id)
-            rescue StandardError => e
-              Rails.logger.error({ event: 'sales_email_enqueue_failed', email_message_id: email.id,
-                                   tenant_id: email.company_id, error_class: e.class.name }.to_json)
-              email.update!(status: 'failed', metadata: (email.metadata || {}).merge('error' => 'QUEUE_UNAVAILABLE'))
-              return render_error_response(message: 'Fila de envio indisponível; o e-mail foi salvo para revisão.',
-                                           status: :service_unavailable, code: 'EMAIL_QUEUE_UNAVAILABLE')
+          created_emails.each do |email_item|
+            if ENV.fetch('EXECUTE_JOBS_INLINE', 'false') == 'true' && !Rails.env.production?
+              ::Sales::SendEmailJob.perform_now(email_item.id)
+            else
+              begin
+                ::Sales::SendEmailJob.perform_later(email_item.id)
+              rescue StandardError => e
+                Rails.logger.error({ event: 'sales_email_enqueue_failed', email_message_id: email_item.id,
+                                     tenant_id: email_item.company_id, error_class: e.class.name }.to_json)
+                email_item.update!(status: 'failed', metadata: (email_item.metadata || {}).merge('error' => 'QUEUE_UNAVAILABLE'))
+              end
             end
           end
 
           render json: {
-            message: 'E-mail enfileirado para envio com sucesso.',
-            email: serialize_email(email)
+            message: created_emails.size > 1 ? "#{created_emails.size} e-mails enfileirados para envio com sucesso." : 'E-mail enfileirado para envio com sucesso.',
+            email: serialize_email(created_emails.first),
+            emails: created_emails.map { |em| serialize_email(em) }
           }, status: :created
         end
 
@@ -249,7 +260,7 @@ module Api
             :sales_account_id, :sales_contact_id, :sales_opportunity_id,
             :to_email, :subject, :body, :body_text, :body_html, :open_tracking_enabled, :click_tracking_enabled, :message_id, :in_reply_to, :references_header,
             :include_signature, :sales_email_signature_id,
-            cc: [], bcc: [], attachments: [], body_json: {}
+            to_emails: [], cc: [], bcc: [], attachments: [], body_json: {}
           )
         end
 

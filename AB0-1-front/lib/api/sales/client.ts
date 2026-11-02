@@ -1121,7 +1121,8 @@ export const salesApi = {
   },
 
   async sendEmail(payload: {
-    to_email: string;
+    to_email?: string;
+    to_emails?: string[];
     subject: string;
     body_text?: string;
     body_html?: string;
@@ -1136,8 +1137,11 @@ export const salesApi = {
     include_signature?: boolean;
     sales_email_signature_id?: number;
     attachments?: File[];
-  }): Promise<{ message: string; email: any }> {
+  }): Promise<{ message: string; email?: any; emails?: any[] }> {
     const { attachments, ...fields } = payload;
+    if (fields.to_emails && fields.to_emails.length > 0 && !fields.to_email) {
+      fields.to_email = fields.to_emails[0];
+    }
     const body = new FormData();
     Object.entries(fields).forEach(([key, value]) => {
       if (Array.isArray(value)) value.forEach((item) => body.append(`email[${key}][]`, item));

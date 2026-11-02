@@ -10,8 +10,7 @@ module Api
         def preflight
           authorize @campaign
           result = ::Sales::Campaigns::Preflight.call(campaign: @campaign)
-          status = result[:ready] ? :ok : :unprocessable_entity
-          render json: { campaign_id: @campaign.id, preflight: result }, status: status
+          render json: { campaign_id: @campaign.id, preflight: result }
         end
 
         def cancel

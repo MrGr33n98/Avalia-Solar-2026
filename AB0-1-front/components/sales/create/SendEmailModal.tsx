@@ -31,6 +31,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import AIWritingPanel from '@/components/sales/ai/writing/AIWritingPanel';
 import { buildResponsiveSignatureHtml } from '@/app/dashboard/sales/settings/email/signature-utils';
 import CRMRichTextEditor, { CRMRichTextEditorRef } from './CRMRichTextEditor';
+import MultiEmailInput from './MultiEmailInput';
 
 interface SignatureItem {
   id: number;
@@ -72,12 +73,16 @@ export default function SendEmailModal({
     ? user.email
     : 'felipe@avaliasolar.com.br';
 
-  // Email Fields
-  const [toEmail, setToEmail] = useState(contactEmail || '');
+  // Email Fields (Suporte a múltiplos destinatários em chips)
+  const [toEmails, setToEmails] = useState<string[]>(
+    contactEmail && contactEmail !== 'sem-email@exemplo.com' && contactEmail.includes('@')
+      ? [contactEmail.trim().toLowerCase()]
+      : []
+  );
   const [recipientName, setRecipientName] = useState(contactName || 'Contato');
   const [showCc, setShowCc] = useState(false);
-  const [cc, setCc] = useState('');
-  const [bcc, setBcc] = useState('');
+  const [ccEmails, setCcEmails] = useState<string[]>([]);
+  const [bccEmails, setBccEmails] = useState<string[]>([]);
   const [relatedLead, setRelatedLead] = useState(companyName || 'Projeto Solar B2B');
   const [subject, setSubject] = useState('');
   const [preheader, setPreheader] = useState('');
@@ -108,20 +113,14 @@ export default function SendEmailModal({
   );
   const [signatureMenuOpen, setSignatureMenuOpen] = useState(false);
 
-  const [isEditingTo, setIsEditingTo] = useState<boolean>(
-    !contactEmail || contactEmail === 'sem-email@exemplo.com' || !contactEmail.includes('@')
-  );
-
   useEffect(() => {
     if (open) {
       const isValid =
         contactEmail && contactEmail !== 'sem-email@exemplo.com' && contactEmail.includes('@');
       if (isValid) {
-        setToEmail(contactEmail);
-        setIsEditingTo(false);
+        setToEmails([contactEmail.trim().toLowerCase()]);
       } else {
-        setToEmail('');
-        setIsEditingTo(true);
+        setToEmails([]);
       }
       if (contactName && contactName !== 'Contato') setRecipientName(contactName);
       if (companyName) setRelatedLead(companyName);
@@ -234,10 +233,8 @@ export default function SendEmailModal({
   };
 
   const handleSendEmail = async (_mode: 'now' | 'task' | 'schedule' = 'now') => {
-    const trimmedTo = toEmail.trim();
-    if (!trimmedTo || trimmedTo === 'sem-email@exemplo.com' || !trimmedTo.includes('@')) {
-      setIsEditingTo(true);
-      return setError('Informe um e-mail de destinatário válido (ex: cliente@empresa.com.br).');
+    if (toEmails.length === 0) {
+      return setError('Informe ao menos um e-mail de destinatário válido.');
     }
 
     if (!subject.trim()) {
@@ -259,15 +256,16 @@ export default function SendEmailModal({
 
     try {
       await salesApi.sendEmail({
-        to_email: toEmail,
+        to_email: toEmails[0],
+        to_emails: toEmails,
         subject,
         body_text: currentText,
         body_html: currentHtml,
         sales_opportunity_id: opportunityId || undefined,
         sales_contact_id: contactId || undefined,
         sales_account_id: accountId || undefined,
-        cc: cc ? [cc] : undefined,
-        bcc: bcc ? [bcc] : undefined,
+        cc: ccEmails.length ? ccEmails : undefined,
+        bcc: bccEmails.length ? bccEmails : undefined,
         open_tracking_enabled: true,
         click_tracking_enabled: true,
         include_signature: includeSignature,
@@ -464,77 +462,43 @@ export default function SendEmailModal({
                   </div>
                 </div>
 
-                {/* TO ROW */}
-                <div className="flex items-center text-xs pb-1 border-b border-slate-100 justify-between gap-2">
-                  <div className="flex items-center flex-1 gap-2 min-w-0">
-                    <span className="w-20 text-slate-400 font-medium shrink-0">To</span>
-                    {!isEditingTo && toEmail && toEmail !== 'sem-email@exemplo.com' ? (
-                      <div
-                        onClick={() => setIsEditingTo(true)}
-                        className="flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-800 px-2.5 py-0.5 rounded-md text-[11px] font-semibold truncate cursor-pointer hover:bg-slate-200/60"
-                      >
-                        <span className="truncate">
-                          {recipientName ? `${recipientName} ` : ''}&lt;{toEmail}&gt;
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setToEmail('');
-                            setRecipientName('');
-                            setIsEditingTo(true);
-                          }}
-                          className="text-slate-400 hover:text-slate-700 ml-1 shrink-0 p-0.5 rounded hover:bg-slate-200"
-                          title="Remover destinatário"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <Input
-                        type="email"
-                        placeholder="Digite o e-mail do destinatário (ex: cliente@empresa.com)..."
-                        value={toEmail}
-                        onChange={(e) => setToEmail(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && toEmail.trim()) {
-                            e.preventDefault();
-                            setIsEditingTo(false);
-                          }
-                        }}
-                        autoFocus
-                        className="h-7 text-xs border-slate-200 focus:border-sky-500 font-medium text-slate-900 flex-1"
-                      />
-                    )}
+                {/* TO ROW (Multi-Email Chips) */}
+                <div className="flex items-start text-xs pb-1 border-b border-slate-100 justify-between gap-2">
+                  <div className="flex items-start flex-1 gap-2 min-w-0 pt-0.5">
+                    <span className="w-20 text-slate-400 font-medium shrink-0 pt-1">To</span>
+                    <MultiEmailInput
+                      emails={toEmails}
+                      onChange={setToEmails}
+                      placeholder="Digite os e-mails e pressione Enter ou vírgula..."
+                      autoFocus={toEmails.length === 0}
+                    />
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowCc(!showCc)}
-                    className="text-sky-600 font-bold hover:underline text-[11px] shrink-0"
+                    className="text-sky-600 font-bold hover:underline text-[11px] shrink-0 pt-1"
                   >
-                    Cc
+                    {showCc ? 'Ocultar Cc/Bcc' : 'Cc / Bcc'}
                   </button>
                 </div>
 
-                {/* CC / BCC ROWS */}
+                {/* CC / BCC ROWS (Multi-Email Chips) */}
                 {showCc && (
                   <div className="space-y-2 pb-1 border-b border-slate-100 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-20 text-slate-400 font-medium">Cc</span>
-                      <Input
-                        placeholder="copia@empresa.com"
-                        value={cc}
-                        onChange={(e) => setCc(e.target.value)}
-                        className="h-7 text-xs border-slate-200"
+                    <div className="flex items-start gap-2">
+                      <span className="w-20 text-slate-400 font-medium shrink-0 pt-1">Cc</span>
+                      <MultiEmailInput
+                        emails={ccEmails}
+                        onChange={setCcEmails}
+                        placeholder="copia@empresa.com (Enter ou vírgula)..."
                       />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-20 text-slate-400 font-medium">Bcc</span>
-                      <Input
-                        placeholder="copia-oculta@empresa.com"
-                        value={bcc}
-                        onChange={(e) => setBcc(e.target.value)}
-                        className="h-7 text-xs border-slate-200"
+                    <div className="flex items-start gap-2">
+                      <span className="w-20 text-slate-400 font-medium shrink-0 pt-1">Bcc</span>
+                      <MultiEmailInput
+                        emails={bccEmails}
+                        onChange={setBccEmails}
+                        placeholder="copia-oculta@empresa.com (Enter ou vírgula)..."
                       />
                     </div>
                   </div>
