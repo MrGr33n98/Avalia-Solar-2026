@@ -1,9 +1,18 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, useRef, type FormEvent } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { CheckCircle2, Loader2, ShieldCheck, Star } from 'lucide-react';
+import {
+  CheckCircle2,
+  Loader2,
+  ShieldCheck,
+  Star,
+  Mail,
+  Megaphone,
+  Camera,
+  ArrowDown,
+} from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Button } from '@/components/ui/button';
@@ -50,12 +59,15 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState('');
   const [draftDismissed, setDraftDismissed] = useState(false);
+  const formSectionRef = useRef<HTMLDivElement>(null);
   const { draft, save, clear } = useReviewDraft(params.token);
   const criteria = form?.criteria || [];
 
   useEffect(() => {
     if (!draft) return;
-    setRating(draft.rating); setAnswers(draft.answers); setComment(draft.comment);
+    setRating(draft.rating);
+    setAnswers(draft.answers);
+    setComment(draft.comment);
   }, [draft]);
 
   useEffect(() => {
@@ -63,7 +75,8 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
     const timer = window.setTimeout(() => save({ step: 1, rating, answers, comment }), 500);
     return () => window.clearTimeout(timer);
   }, [answers, comment, form, rating, save, submittedMessage]);
-  const accentColor = form?.branding?.accent_color || '#155EEF';
+
+  const accentColor = form?.branding?.accent_color || '#5448C8';
 
   useEffect(() => {
     track('review_wizard_opened', { source });
@@ -88,6 +101,11 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
       retries: 1,
       skipAuthRefresh: true,
     }).catch(() => undefined);
+  };
+
+  const handleScrollToForm = () => {
+    markStarted();
+    formSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const canSubmit = useMemo(
@@ -162,6 +180,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
         </div>
       </PageShell>
     );
+
   if (!form || (error && !form))
     return (
       <PageShell>
@@ -175,7 +194,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
 
   if (submittedMessage) {
     return (
-      <PageShell>
+      <PageShell companyName={form.company.name} companyLogo={form.branding?.logo_url || form.company.logo_url}>
         <div className="mx-auto max-w-lg py-20 text-center">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
             <CheckCircle2 className="h-10 w-10" />
@@ -193,44 +212,156 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
     );
   }
 
+  const companyLogoUrl = form.branding?.logo_url || form.company.logo_url;
+
   return (
-    <PageShell>
-      <div className="mx-auto max-w-2xl py-8 sm:py-12">
-        <div className="mb-6 flex items-center gap-3">
-          {form.company.logo_url ? (
-            <Image
-              src={form.branding?.logo_url || form.company.logo_url}
-              alt={form.company.name}
-              width={56}
-              height={56}
-              className="h-14 w-14 rounded-xl border border-slate-200 object-contain"
-              unoptimized
-            />
-          ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-50 font-black text-blue-700">
-              {form.company.name.slice(0, 2).toUpperCase()}
+    <PageShell companyName={form.company.name} companyLogo={companyLogoUrl}>
+      <div className="mx-auto max-w-4xl py-6 sm:py-10">
+        {/* ─── HERO CARD DE CONVITE (ESTILO G2) ─── */}
+        <section
+          data-testid="review-invite-hero"
+          className="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-12 text-center shadow-xs"
+        >
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-100 bg-white p-2.5 shadow-2xs">
+            {companyLogoUrl ? (
+              <Image
+                src={companyLogoUrl}
+                alt={form.company.name}
+                width={56}
+                height={56}
+                className="h-full w-full object-contain"
+                unoptimized
+              />
+            ) : (
+              <span className="text-xl font-black text-blue-700">
+                {form.company.name.slice(0, 2).toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          <h1 className="mt-5 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
+            Compartilhe sua experiência sobre {form.company.name}
+          </h1>
+
+          <p className="mx-auto mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-600">
+            Consumidores e empresas consultam a Avalia Solar para pesquisar soluções de energia solar e integradores homologados. Sua perspectiva sincera ajuda outros clientes a tomarem a melhor decisão com base em experiências reais.
+          </p>
+
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <Button
+              type="button"
+              data-testid="review-now-cta"
+              onClick={handleScrollToForm}
+              className="h-11 px-8 rounded-full bg-[#5448C8] hover:bg-[#4338CA] text-white font-bold text-base shadow-xs transition-all hover:shadow-md inline-flex items-center gap-2"
+            >
+              <span>Avaliar agora</span>
+              <ArrowDown className="h-4 w-4" />
+            </Button>
+          </div>
+        </section>
+
+        {/* ─── BOAS PRÁTICAS PARA TER SUA AVALIAÇÃO APROVADA (ESTILO G2) ─── */}
+        <section
+          data-testid="review-best-practices"
+          className="mt-12 text-center"
+        >
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
+            Boas práticas para ter sua avaliação aprovada
+          </h2>
+
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-left">
+            {/* 1. Use seu contato real */}
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-800">
+                <Mail className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Use seu contato real</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Fornecer seu e-mail ou WhatsApp corporativo/pessoal ajuda nossos moderadores a verificar sua identidade mais rápido. Seus dados nunca serão exibidos publicamente.
+                </p>
+              </div>
             </div>
-          )}
-          <div>
-            <p className="font-black text-slate-950">{form.company.name}</p>
-            <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Avaliação no Avalia Solar
+
+            {/* 2. Seja autêntico */}
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-800">
+                <Megaphone className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Seja autêntico</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Escreva sobre sua experiência real com a empresa instaladora. O que funcionou bem? O que poderia melhorar? Relatos autênticos têm muito mais valor.
+                </p>
+              </div>
+            </div>
+
+            {/* 3. Compartilhe detalhes */}
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-800">
+                <Camera className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Compartilhe detalhes</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Informar cidade, detalhes do projeto ou fotos da conta e instalação assegura credibilidade máxima e acelera a validação com selo Verificado.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="rounded-xl border border-[#D0D5DD] bg-white p-4 shadow-[0_10px_30px_rgba(13,46,103,0.12)] sm:p-6">
+        {/* ─── BARRA DE PRESTÍGIO / IMPRENSA ESTILO G2 ─── */}
+        <section
+          data-testid="review-press-banner"
+          aria-label="Veículos de referência"
+          className="mt-12 border-t border-slate-200/80 pt-8 pb-4"
+        >
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all select-none">
+            <span className="font-serif font-black text-xl sm:text-2xl tracking-tight text-slate-700">Forbes</span>
+            <span className="font-sans font-black text-xl sm:text-2xl tracking-tighter text-slate-700">TC</span>
+            <span className="font-mono font-bold text-lg sm:text-xl tracking-tight text-slate-700">PCWorld</span>
+            <span className="font-sans font-black text-xl sm:text-2xl tracking-widest text-slate-700">CIO</span>
+            <span className="font-serif font-bold text-base sm:text-lg tracking-tight text-slate-700">Bloomberg</span>
+            <span className="font-sans font-black text-xl sm:text-2xl tracking-tight text-slate-700">VB</span>
+          </div>
+        </section>
+
+        {/* ─── CONTAINER DO FORMULÁRIO INTERATIVO ─── */}
+        <div
+          ref={formSectionRef}
+          id="review-form-section"
+          data-testid="review-form-section"
+          className="mt-12 rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xs"
+        >
           {draft && !draftDismissed && !started && (
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[#D1E9FF] bg-[#EFF8FF] p-3 text-sm text-[#0A1F44]">
+            <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-[#D1E9FF] bg-[#EFF8FF] p-3 text-sm text-[#0A1F44]">
               <span>Você tem uma avaliação não finalizada. Dados salvos foram restaurados.</span>
-              <button type="button" className="text-xs font-semibold underline" onClick={() => { clear(); setDraftDismissed(true); }}>Descartar</button>
+              <button
+                type="button"
+                className="text-xs font-semibold underline"
+                onClick={() => {
+                  clear();
+                  setDraftDismissed(true);
+                }}
+              >
+                Descartar
+              </button>
             </div>
           )}
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-            {form.public_title}
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-slate-500">{form.public_description}</p>
+
+          <div className="border-b border-slate-100 pb-5">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 mb-2">
+              <ShieldCheck className="h-4 w-4" />
+              <span>Formulário Oficial de Avaliação</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+              {form.public_title}
+            </h2>
+            <p className="mt-1.5 text-sm leading-6 text-slate-500">
+              {form.public_description}
+            </p>
+          </div>
 
           <form onSubmit={submit} onFocus={markStarted} className="mt-8 space-y-7">
             <RatingField label="Nota geral" value={rating} onChange={setRating} required />
@@ -239,7 +370,9 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
                 key={criterion.id}
                 label={criterion.title}
                 value={answers[String(criterion.id)] || 0}
-                onChange={(value) => setAnswers((current) => ({ ...current, [String(criterion.id)]: value }))}
+                onChange={(value) =>
+                  setAnswers((current) => ({ ...current, [String(criterion.id)]: value }))
+                }
                 required={criterion.required}
               />
             ))}
@@ -255,7 +388,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
                 rows={5}
                 maxLength={500}
                 required={form.settings.comment_required}
-                placeholder="O que funcionou bem? O que poderia melhorar?"
+                placeholder="O que funcionou bem? O que poderia melhorar? Descreva sua experiência com a instalação, prazo e pós-venda..."
               />
             </label>
 
@@ -339,10 +472,12 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
                 {error}
               </p>
             )}
+
             <Button
               type="submit"
               disabled={!canSubmit || submitting}
-              style={{ backgroundColor: accentColor }} className="h-11 w-full rounded-lg text-base font-bold hover:opacity-90"
+              style={{ backgroundColor: accentColor }}
+              className="h-11 w-full rounded-lg text-base font-bold hover:opacity-90"
             >
               {submitting ? (
                 <>
@@ -364,12 +499,46 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
   );
 }
 
-function PageShell({ children }: { children: React.ReactNode }) {
+function PageShell({
+  children,
+  companyName,
+  companyLogo,
+}: {
+  children: React.ReactNode;
+  companyName?: string;
+  companyLogo?: string | null;
+}) {
   return (
-    <main className="min-h-[100dvh] bg-[#F8FAFC] px-3 pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto flex max-w-6xl justify-center border-b border-[#D0D5DD] py-3">
-        <BrandLogo className="h-8" priority />
-      </div>
+    <main className="min-h-[100dvh] bg-[#F9FAFB] px-3 sm:px-6 pb-[env(safe-area-inset-bottom)]">
+      <header className="border-b border-slate-200/80 bg-white">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-2 sm:px-4 py-3">
+          <div className="flex items-center gap-3">
+            <BrandLogo className="h-7 w-auto" priority />
+            <span className="hidden sm:inline-block h-4 w-px bg-slate-200" />
+            <span className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-slate-500">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              Coleta Oficial de Avaliações
+            </span>
+          </div>
+          {companyName && (
+            <div className="flex items-center gap-2">
+              {companyLogo && (
+                <Image
+                  src={companyLogo}
+                  alt={companyName}
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 rounded-lg border border-slate-200 object-contain p-0.5"
+                  unoptimized
+                />
+              )}
+              <span className="text-xs font-bold text-slate-800 line-clamp-1 max-w-[140px] sm:max-w-[220px]">
+                {companyName}
+              </span>
+            </div>
+          )}
+        </div>
+      </header>
       {children}
     </main>
   );
