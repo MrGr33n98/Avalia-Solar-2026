@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Building2, ChevronRight, Star } from 'lucide-react';
+import { Building2, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
@@ -228,6 +228,15 @@ import { useQuery, QueryClient, QueryClientContext } from '@tanstack/react-query
 import { useLocation } from '@/contexts/LocationContext';
 import { publicCompaniesApi } from '@/lib/api-public';
 
+export interface PaginationMeta {
+  page?: number;
+  per_page?: number;
+  total?: number;
+  total_pages?: number;
+  prev_page?: number | null;
+  next_page?: number | null;
+}
+
 let fallbackClient: QueryClient | null = null;
 function getFallbackQueryClient(): QueryClient {
   if (!fallbackClient) {
@@ -294,40 +303,55 @@ export function HomeCompaniesRail({
     });
   }, [companies, normalizedState]);
 
-  // Query is needed when an effectiveState is present and SSR does not already have 6+ matches
-  const needsQuery = Boolean(normalizedState && localSsrMatches.length < 6);
+  const sectionRef = React.useRef<HTMLElement>(null);
+  const [currentPage, setCurrentPage] = React.useState(1);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [normalizedState]);
+
+  const isPageAdvanced = currentPage > 1;
+  const needsQuery = Boolean(normalizedState || isPageAdvanced);
 
   const {
-    data: queryCompanies,
+    data: paginatedResponse,
     isFetching,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['home-companies', 'regional', normalizedState, 'v2'],
+    queryKey: ['home-companies', normalizedState || 'national', 'page', currentPage, 'v3'],
     queryFn: async ({ signal }) => {
-      const list = await publicCompaniesApi.getAll(
+      const res = await publicCompaniesApi.getAllPaginated(
         {
-          serves_state: normalizedState,
+          ...(normalizedState ? { serves_state: normalizedState } : { featured: true }),
           status: 'active',
-          limit: 9,
+          page: currentPage,
+          per_page: 9,
           fields: 'card',
           include:
             'logo_url,banner_url,badges,verified_badge_image_url,verified_badge_url,average_rating,rating_count,verified,city,state,coverage_cities,coverage_states,response_time_sla,delivered_projects_score,warranty_years',
         },
         { signal }
       );
-      return Array.isArray(list) ? list : [];
+      return res;
     },
     enabled: needsQuery,
+    placeholderData: (previousData) => previousData,
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
   }, activeQueryClient);
+
+  const queryCompanies = paginatedResponse?.data;
+  const paginationMeta = (paginatedResponse?.meta as { pagination?: PaginationMeta } | undefined)?.pagination;
 
   const { visibleCompanies, hasLocalMatches } = React.useMemo(() => {
     if (needsQuery) {
       if (queryCompanies !== undefined) {
         if (queryCompanies.length > 0) {
           return { visibleCompanies: queryCompanies.slice(0, 9), hasLocalMatches: true };
+        }
+        if (currentPage > 1) {
+          return { visibleCompanies: [], hasLocalMatches: true };
         }
         return { visibleCompanies: (companies || []).slice(0, 9), hasLocalMatches: false };
       }
@@ -352,7 +376,49 @@ export function HomeCompaniesRail({
     }
 
     return { visibleCompanies: companies.slice(0, 9), hasLocalMatches: false };
-  }, [companies, normalizedState, needsQuery, queryCompanies, localSsrMatches]);
+  }, [companies, normalizedState, needsQuery, queryCompanies, localSsrMatches, currentPage]);
+
+  const totalPages = React.useMemo(() => {
+    if (paginationMeta?.total_pages) {
+      return Math.max(1, Number(paginationMeta.total_pages));
+    }
+    if (!normalizedState && !paginatedResponse && companies && companies.length > 9) {
+      return Math.ceil(companies.length / 9);
+    }
+    return 1;
+  }, [paginationMeta?.total_pages, normalizedState, paginatedResponse, companies]);
+
+  const totalCount = React.useMemo(() => {
+    if (paginationMeta?.total !== undefined && paginationMeta?.total !== null) {
+      return Number(paginationMeta.total);
+    }
+    if (queryCompanies) {
+      return queryCompanies.length;
+    }
+    return companies ? companies.length : 0;
+  }, [paginationMeta?.total, queryCompanies, companies]);
+
+  const handlePageChange = React.useCallback(
+    (newPage: number) => {
+      if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+      setCurrentPage(newPage);
+      track('company_rail_page_changed', {
+        page: newPage,
+        previous_page: currentPage,
+        state: normalizedState || 'national',
+        total_pages: totalPages,
+        view_mode: viewMode,
+      });
+
+      if (typeof window !== 'undefined' && sectionRef.current) {
+        const rect = sectionRef.current.getBoundingClientRect();
+        if (rect.top < 0) {
+          sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    },
+    [totalPages, currentPage, normalizedState, viewMode]
+  );
 
   const displayTitle =
     title ||
@@ -371,6 +437,7 @@ export function HomeCompaniesRail({
 
   return (
     <section
+      ref={sectionRef}
       className={cn('relative w-full px-4 py-4', className)}
       aria-labelledby="home-companies-title"
     >
@@ -490,6 +557,57 @@ export function HomeCompaniesRail({
             />
           ))}
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <nav
+          aria-label="Navegação entre páginas de empresas em destaque"
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3"
+        >
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1 || isFetching}
+              aria-label="Página anterior"
+              className={cn(
+                'inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-colors',
+                'hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+                'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-slate-700'
+              )}
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              <span>Anterior</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages || isFetching}
+              aria-label="Próxima página"
+              className={cn(
+                'inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-colors',
+                'hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+                'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-slate-700'
+              )}
+            >
+              <span>Próxima</span>
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+            <span>
+              Página <strong className="font-bold text-slate-900">{currentPage}</strong> de{' '}
+              <strong className="font-bold text-slate-900">{totalPages}</strong>
+            </span>
+            {totalCount > 0 && (
+              <span className="text-slate-400">
+                • {totalCount} {totalCount === 1 ? 'empresa' : 'empresas'}
+              </span>
+            )}
+          </div>
+        </nav>
       )}
     </section>
   );
