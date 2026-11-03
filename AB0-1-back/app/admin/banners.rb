@@ -21,7 +21,8 @@ banner_position_options = [
   ['Compare - Sidebar', 'compare_page_sidebar'],
   ['Compare - Bottom (Rodapé)', 'compare_page_bottom'],
   ['Comparação - Barra Flutuante (Patrocínio)', 'comparison_floating_bar'],
-  ['Simulador de Financiamento - Micro Banner', 'financing_simulator_micro_banner']
+  ['Simulador de Financiamento - Micro Banner', 'financing_simulator_micro_banner'],
+  ['Acesso Empresarial — Sidebar 300×250', 'company_access_sidebar']
 ].freeze
 
 def safe_banner_image_tag(record, style: 'max-height: 80px; max-width: 160px; object-fit: contain; background: #f8fafc; border-radius: 4px;')
@@ -242,6 +243,7 @@ ActiveAdmin.register Banner do
             if (position === 'compare_page_top' || position === 'compare_page_inline' || position === 'compare_page_bottom') return { w: 1200, h: 160 };
             if (position === 'compare_page_sidebar') return { w: 300, h: 600 };
             if (position === 'comparison_floating_bar') return { w: 720, h: 120 };
+            if (position === 'company_access_sidebar') return { w: 300, h: 250 };
             return { w: 600, h: 200 };
           }
 

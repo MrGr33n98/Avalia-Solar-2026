@@ -27,6 +27,7 @@ export const SIDEBAR_PLACEMENTS = new Set<string>([
   'categories_filter_sidebar',
   'sidebar',
   'groups_right_rail',
+  'company_access_sidebar',
 ]);
 
 /** Conjunto canônico de placements horizontais (largura total 100%, sem limite de 300px). */
@@ -93,6 +94,7 @@ export const BANNER_PLACEMENT_ASPECT_RATIOS: Record<string, string> = {
   company_profile_related_carousel: '4/1',
   comparison_floating_bar: '6/1',
   groups_right_rail: '1/2',
+  company_access_sidebar: '6/5',
 };
 
 export interface PlacementDisplaySpec {
@@ -171,6 +173,14 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     fit: 'contain',
     ambientBackground: false,
   },
+  company_access_sidebar: {
+    aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[6/5]',
+    defaultAspectRatio: '6/5',
+    desktopAspectRatio: '6/5',
+    desktopMaxHeight: 250,
+    fit: 'contain',
+    ambientBackground: false,
+  },
 };
 
 export function getPlacementDisplaySpec(position?: string): PlacementDisplaySpec | undefined {
@@ -202,4 +212,5 @@ export type BannerLocation =
   | 'company_profile_about_inline'
   | 'company_profile_sidebar_sponsored'
   | 'company_profile_related_carousel'
-  | 'groups_right_rail';
+  | 'groups_right_rail'
+  | 'company_access_sidebar';

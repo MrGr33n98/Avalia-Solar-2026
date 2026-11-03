@@ -301,6 +301,7 @@ export function BannerContainer({
         case 'companies_right_rail':
         case 'categories_right_rail':
         case 'compare_page_sidebar':
+        case 'company_access_sidebar':
           return '(max-width: 1023px) 0px, 300px';
         case 'categories_filter_sidebar':
           return '(max-width: 1023px) 0px, 280px';
@@ -331,7 +332,9 @@ export function BannerContainer({
     if (
       displayBanners.length === 1 &&
       isSidebar &&
-      (position === 'compare_page_sidebar' || displayBanners[0].creative_mode === 'photo_with_html')
+      (position === 'compare_page_sidebar' ||
+       position === 'company_access_sidebar' ||
+       displayBanners[0].creative_mode === 'photo_with_html')
     ) {
       const singleBanner = displayBanners[0];
       return (

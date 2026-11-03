@@ -8,6 +8,7 @@ import {
   companiesApi,
   companyAccessApi,
   type CompanyAccessSuggestedCompany,
+  type CompanyAccessPendingRequest,
   type Company,
 } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ import { normalizeCompanySelectionList } from './company-selection';
 import Image from 'next/image';
 import VerificationBadge from '@/components/company/VerificationBadge';
 import { SearchEmptyPanel, SearchInitialPanel, SearchLoadingPanel } from './FlowPanels';
+import { CompanyAccessSidebar } from '@/components/company-access/CompanyAccessSidebar';
 import { track } from '@/lib/analytics';
 
 const SEARCH_MIN_LENGTH = 2;
@@ -104,6 +106,7 @@ function SelectCompanyContent() {
   const [contextLoading, setContextLoading] = useState(true);
   const [contextError, setContextError] = useState<string | null>(null);
   const [suggestedCompanies, setSuggestedCompanies] = useState<CompanyAccessSuggestedCompany[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<CompanyAccessPendingRequest[]>([]);
   const [pendingRequestIds, setPendingRequestIds] = useState<number[]>([]);
 
   const [searchLoading, setSearchLoading] = useState(false);
@@ -201,9 +204,9 @@ function SelectCompanyContent() {
         if (cancelled) return;
 
         setSuggestedCompanies(context?.suggested_companies || []);
-        setPendingRequestIds(
-          (context?.pending_requests || []).map((request) => request.company_id)
-        );
+        const requests = context?.pending_requests || [];
+        setPendingRequests(requests);
+        setPendingRequestIds(requests.map((request) => request.company_id));
       } catch (error) {
         if (cancelled) return;
         setContextError(
@@ -335,6 +338,14 @@ function SelectCompanyContent() {
         `Solicitacao de acesso enviada via tela de selecao para ${company.company_name}`
       );
 
+      const newReq: CompanyAccessPendingRequest = {
+        id: Date.now(),
+        company_id: companyId,
+        company_name: company.company_name,
+        status: 'pending',
+        requested_at: new Date().toISOString(),
+      };
+      setPendingRequests((current) => [newReq, ...current]);
       setPendingRequestIds((current) => Array.from(new Set([...current, companyId])));
       setActionSuccess(
         `Solicitação enviada para aprovação do admin da empresa ${company.company_name}.`
@@ -425,12 +436,32 @@ function SelectCompanyContent() {
     </form>
   );
 
+  const activeOrSelectedCompany = useMemo(() => {
+    return (
+      activeCompany ||
+      companies[0] ||
+      (pendingRequests[0]
+        ? suggestedCompanies.find((c) => c.company_id === pendingRequests[0].company_id) || null
+        : null)
+    );
+  }, [activeCompany, companies, pendingRequests, suggestedCompanies]);
+
   const shell = (content: React.ReactNode) => (
     <main className="min-h-screen bg-[#f8faff] px-4 py-8">
-      <div className="mx-auto w-full max-w-[620px]">
-        {journeyProgress}
-        {journeyHeader}
-        {content}
+      <div className="mx-auto w-full max-w-[1024px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-8 w-full max-w-[620px] mx-auto lg:max-w-none">
+            {journeyProgress}
+            {journeyHeader}
+            {content}
+          </div>
+          <div className="lg:col-span-4 w-full">
+            <CompanyAccessSidebar
+              selectedCompany={activeOrSelectedCompany}
+              pendingRequest={pendingRequests[0] || null}
+            />
+          </div>
+        </div>
       </div>
     </main>
   );

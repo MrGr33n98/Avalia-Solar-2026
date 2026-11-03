@@ -329,6 +329,7 @@ export const BANNER_POSITIONS = [
   ['compare_page_bottom', 'Comparador: rodapé'],
   ['comparison_floating_bar', 'Comparador: barra flutuante'],
   ['financing_simulator_micro_banner', 'Simulador de financiamento'],
+  ['company_access_sidebar', 'Acesso empresarial: lateral'],
 ] as const;
 
 function errorMessage(error: unknown, fallback: string) {

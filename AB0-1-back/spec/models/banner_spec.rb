@@ -41,7 +41,8 @@ RSpec.describe Banner, type: :model do
           'categories_right_rail',
           'companies_right_rail',
           'compare_hero',
-          'comparison_floating_bar'
+          'comparison_floating_bar',
+          'company_access_sidebar'
         )
       end
     end
@@ -214,6 +215,7 @@ RSpec.describe Banner, type: :model do
   describe '.default_dimensions_for_position' do
     it 'returns dimensions for managed conversion slots' do
       expect(described_class.default_dimensions_for_position('categories_filter_sidebar')).to eq([300, 250])
+      expect(described_class.default_dimensions_for_position('company_access_sidebar')).to eq([300, 250])
       expect(described_class.default_dimensions_for_position('categories_right_rail')).to eq([300, 600])
       expect(described_class.default_dimensions_for_position('companies_right_rail')).to eq([300, 600])
       expect(described_class.default_dimensions_for_position('search_top')).to eq([1200, 180])
