@@ -192,7 +192,7 @@ module Api
           if signature.avatar.attached?
             blob_avatar_url = signature.avatar_public_url
             if blob_avatar_url.present?
-              normalized_html = normalized_html.sub(/(<img\b[^>]*src=["'])([^"']+)(["'][^>]*width=["'](?:76|83)["'])/i, "\\1#{blob_avatar_url}\\3")
+              normalized_html = normalized_html.sub(/(<img\b[^>]*src=["'])([^"']+)(["'][^>]*(?:width=["'](?:58|68|76|83)["']|border-radius:\s*50%|alt=["'][^"']*(?:Avatar|Felipe)))/i, "\\1#{blob_avatar_url}\\3")
             end
           end
 

@@ -21,7 +21,9 @@ export type SignatureRenderFields = {
 };
 
 export const DEFAULT_SIGNATURE_ASSETS = {
-  avatarUrl: 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png',
+  avatarUrl: 'https://api.avaliasolar.com.br/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBbnNFIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--869e21ce613133e913401d335c551e3f11f0b631/felipe.PNG',
+  staticAvatarFallbackUrl: 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png',
+  bookingUrl: 'https://avaliasolar.zohobookings.com/#/5012013000000038045',
   logoUrl: 'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png',
   whatsappIconUrl: 'https://www.avaliasolar.com.br/images/email/whatsapp.png',
   mailIconUrl: 'https://www.avaliasolar.com.br/images/email/mail.png',
@@ -48,7 +50,7 @@ export function sanitizeHttpUrl(rawUrl: string, fallback: string): string {
   return escapeHtml(candidate);
 }
 
-export function sanitizeEmailAddress(rawEmail: string, fallback = 'felipe@avaliasolar.com.br'): string {
+export function sanitizeEmailAddress(rawEmail: string, fallback = 'growth@avaliasolar.com.br'): string {
   const candidate = String(rawEmail ?? '').trim();
   if (!candidate || /[<>"'\s]/.test(candidate)) return fallback;
   return escapeHtml(candidate);
@@ -98,7 +100,7 @@ export function parseAndFormatWhatsappPhone(rawPhone: string, customMessage?: st
  * Estrutura 100% baseada em tabelas fluidas (max 480px, fluida até 320px sem overflow).
  * Compatível com Gmail iOS/Android, Outlook (MSO) e Apple Mail.
  */
-export function buildResponsiveSignatureHtml(fields: SignatureRenderFields): string {
+export function buildLegacyV3SignatureHtml(fields: SignatureRenderFields): string {
   const safeName = escapeHtml(fields.fullName?.trim() || 'Felipe Henrique');
   const safeRole = escapeHtml(fields.roleTitle?.trim() || 'Fundador do Avalia Solar');
   const safeEmail = sanitizeEmailAddress(fields.email || 'felipe@avaliasolar.com.br');
@@ -278,4 +280,94 @@ export function buildResponsiveSignatureHtml(fields: SignatureRenderFields): str
     </td>
   </tr>
 </table>`;
+}
+
+/**
+ * Gerador canônico da Assinatura Growth v4 — Zoho Mail (HTML de tabela e estilos inline).
+ * Estrutura compacta (450px), compatível nativamente com Zoho Mail, Gmail, Outlook e Apple Mail.
+ */
+export function buildGrowthV4SignatureHtml(fields: SignatureRenderFields): string {
+  const safeName = escapeHtml(fields.fullName?.trim() || 'Felipe Henrique');
+  const safeRole = escapeHtml(fields.roleTitle?.trim() || 'Fundador do Avalia Solar');
+  const safeEmail = sanitizeEmailAddress(fields.email || 'growth@avaliasolar.com.br');
+  const safeWebsite = sanitizeHttpUrl(fields.websiteUrl || 'https://www.avaliasolar.com.br/', 'https://www.avaliasolar.com.br/');
+  const bookingUrl = sanitizeHttpUrl(
+    fields.calendlyUrl || DEFAULT_SIGNATURE_ASSETS.bookingUrl,
+    DEFAULT_SIGNATURE_ASSETS.bookingUrl
+  );
+  const safeCta = escapeHtml(fields.ctaText?.trim() || 'Agendar conversa');
+  const safeFooter = escapeHtml(
+    fields.footerTagline?.trim() || 'Energia solar · Mobilidade elétrica · Reputação'
+  );
+
+  const safeAvatarUrl = sanitizeHttpUrl(
+    fields.avatarUrl || DEFAULT_SIGNATURE_ASSETS.avatarUrl,
+    DEFAULT_SIGNATURE_ASSETS.avatarUrl
+  );
+  const safeLogoUrl = sanitizeHttpUrl(
+    fields.logoUrl || DEFAULT_SIGNATURE_ASSETS.logoUrl,
+    DEFAULT_SIGNATURE_ASSETS.logoUrl
+  );
+
+  const phoneInfo = parseAndFormatWhatsappPhone(
+    fields.phone || '(65) 99346-5055',
+    fields.whatsappMessage || 'Olá, Felipe! Gostaria de conversar sobre o Avalia Solar.'
+  );
+
+  const whatsappLink = phoneInfo.valid
+    ? `<a href="${phoneInfo.url}" target="_blank" rel="noopener noreferrer" style="color:#0E58B6;font-weight:600;text-decoration:none;white-space:nowrap;">WhatsApp</a><span style="color:#C7D2DE;padding:0 5px;">|</span>`
+    : '';
+
+  return `<!-- Avalia Solar | Assinatura Growth v4 — Zoho Mail (HTML de tabela e estilos inline) -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" align="left" bgcolor="#ffffff" style="border-collapse:separate;border-spacing:0;width:100%;max-width:450px;font-family:Arial,Helvetica,sans-serif;color:#0B2347;background:#ffffff;background-color:#ffffff;border:1px solid #DEE6EE;margin:0;margin-left:0;margin-right:auto;text-align:left;clear:both;">
+  <tr>
+    <td style="padding:15px 17px 13px 17px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+        <tr>
+          <td width="67" valign="middle" style="width:67px;vertical-align:middle;padding:0 11px 0 0;">
+            <img src="${safeAvatarUrl}" alt="${safeName}" width="58" height="58" style="display:block;border:2px solid #FFCD28;border-radius:50%;width:58px;height:58px;object-fit:cover;background-color:#F1F5F9;color:#0B2347;font-size:10px;" />
+          </td>
+          <td valign="middle" style="vertical-align:middle;text-align:left;">
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:22px;font-weight:700;color:#0B2347;">${safeName}</div>
+            <div style="padding-top:3px;font-size:12px;line-height:17px;color:#52647B;">${safeRole}</div>
+            <div style="padding-top:4px;font-size:11px;line-height:16px;"><a href="mailto:${safeEmail}" style="color:#0B2347;text-decoration:none;">${safeEmail}</a></div>
+          </td>
+          <td width="93" align="right" valign="top" style="width:93px;padding:2px 0 0 6px;text-align:right;vertical-align:top;">
+            <a href="${safeWebsite}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><img src="${safeLogoUrl}" alt="Avalia Solar" width="88" style="display:block;width:88px;max-width:88px;height:auto;border:0;" /></a>
+          </td>
+        </tr>
+      </table>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;margin-top:11px;">
+        <tr><td style="border-top:1px solid #DEE6EE;font-size:1px;line-height:1px;height:1px;">&nbsp;</td></tr>
+      </table>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;margin-top:10px;">
+        <tr>
+          <td align="left" valign="middle" style="padding:8px 0 0 0;vertical-align:middle;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;border-spacing:0;">
+              <tr><td bgcolor="#0B2B50" style="background-color:#0B2B50;border-radius:5px;text-align:center;">
+                <a href="${bookingUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:9px 15px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:16px;color:#FFFFFF;text-decoration:none;white-space:nowrap;">${safeCta}</a>
+              </td></tr>
+            </table>
+          </td>
+          <td align="right" valign="middle" style="padding:8px 0 0 8px;text-align:right;vertical-align:middle;font-size:11px;line-height:17px;">
+            ${whatsappLink}
+            <a href="${safeWebsite}" target="_blank" rel="noopener noreferrer" style="color:#0E58B6;font-weight:600;text-decoration:none;white-space:nowrap;">Site</a>
+          </td>
+        </tr>
+      </table>
+      <div style="padding-top:9px;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:14px;letter-spacing:0.2px;color:#61748A;">${safeFooter}</div>
+    </td>
+  </tr>
+  <tr><td style="height:3px;line-height:3px;font-size:1px;background-color:#FFCC23;">&nbsp;</td></tr>
+</table>`;
+}
+
+export function buildResponsiveSignatureHtml(
+  fields: SignatureRenderFields,
+  version: 'v3' | 'v4' = 'v4'
+): string {
+  if (version === 'v3') {
+    return buildLegacyV3SignatureHtml(fields);
+  }
+  return buildGrowthV4SignatureHtml(fields);
 }

@@ -81,25 +81,25 @@ export default function EmailSignaturesPage() {
   // Campos Estruturados da Assinatura Oficial Avalia Solar
   const [fullName, setFullName] = useState('Felipe Henrique');
   const [roleTitle, setRoleTitle] = useState('Fundador do Avalia Solar');
-  const [email, setEmail] = useState('felipe@avaliasolar.com.br');
+  const [email, setEmail] = useState('growth@avaliasolar.com.br');
   const [phone, setPhone] = useState('(65) 99346-5055');
   const [avatarUrl, setAvatarUrl] = useState(
-    'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png'
+    'https://api.avaliasolar.com.br/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBbnNFIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--869e21ce613133e913401d335c551e3f11f0b631/felipe.PNG'
   );
   const [avatarSignedId, setAvatarSignedId] = useState<string | null>(null);
   const [websiteUrl, setWebsiteUrl] = useState('https://www.avaliasolar.com.br/');
   const [linkedinUrl, setLinkedinUrl] = useState('https://www.linkedin.com/in/felipe-morais-8bb61a7b/');
-  const [calendlyUrl, setCalendlyUrl] = useState('https://calendly.com/felipe-avaliasolar/30min');
-  const [ctaText, setCtaText] = useState('Agendar 30 min ↗');
+  const [calendlyUrl, setCalendlyUrl] = useState('https://avaliasolar.zohobookings.com/#/5012013000000038045');
+  const [ctaText, setCtaText] = useState('Agendar conversa');
   const [logoUrl, setLogoUrl] = useState(
     'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png'
   );
   const [logoSignedId, setLogoSignedId] = useState<string | null>(null);
   const [footerTagline, setFooterTagline] = useState(
-    'ENERGIA SOLAR ● MOBILIDADE ELÉTRICA ● CONFIANÇA DIGITAL'
+    'Energia solar · Mobilidade elétrica · Reputação'
   );
   const [whatsappMessage, setWhatsappMessage] = useState(
-    'Olá! Gostaria de falar sobre os projetos da Avalia Solar.'
+    'Olá, Felipe! Gostaria de conversar sobre o Avalia Solar.'
   );
 
   // Estados de Interface e Persistência
@@ -649,7 +649,7 @@ export default function EmailSignaturesPage() {
                                 type="button"
                                 onClick={() =>
                                   setAvatarUrl(
-                                    'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png'
+                                    'https://api.avaliasolar.com.br/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBbnNFIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--869e21ce613133e913401d335c551e3f11f0b631/felipe.PNG'
                                   )
                                 }
                                 className="absolute -top-1 -right-1 bg-red-600 text-white p-0.5 rounded-full shadow-xs hover:bg-red-700 transition-colors"

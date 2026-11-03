@@ -9,8 +9,10 @@ module Sales
   class EmailSignature < ApplicationRecord
     self.table_name = 'sales_email_signatures'
 
-    DEFAULT_AVATAR_URL = 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png'
+    DEFAULT_AVATAR_URL = 'https://api.avaliasolar.com.br/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBbnNFIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--869e21ce613133e913401d335c551e3f11f0b631/felipe.PNG'
+    STATIC_AVATAR_FALLBACK_URL = 'https://www.avaliasolar.com.br/images/foto-felipe-assinatura-avalia-solar.png'
     DEFAULT_LOGO_URL = 'https://www.avaliasolar.com.br/images/avalia-solar-logo-horizontal.png'
+    DEFAULT_BOOKING_URL = 'https://avaliasolar.zohobookings.com/#/5012013000000038045'
     DEFAULT_WHATSAPP_ICON_URL = 'https://www.avaliasolar.com.br/images/email/whatsapp.png'
     DEFAULT_MAIL_ICON_URL = 'https://www.avaliasolar.com.br/images/email/mail.png'
     DEFAULT_PHONE_ICON_URL = 'https://www.avaliasolar.com.br/images/email/phone.png'
@@ -363,12 +365,81 @@ module Sales
       alias_method :build_v3_html, :build_v2_html
     end
 
+    def self.build_v4_html(fields = {})
+      f = fields.to_h.symbolize_keys
+      full_name = CGI.escapeHTML((f[:full_name].presence || 'Felipe Henrique').to_s.strip)
+      role_title = CGI.escapeHTML((f[:role_title].presence || 'Fundador do Avalia Solar').to_s.strip)
+      email_addr = safe_email_address(f[:email], 'growth@avaliasolar.com.br')
+      avatar_src = safe_http_url(f[:avatar_url], DEFAULT_AVATAR_URL)
+      logo_src = safe_http_url(f[:logo_url], DEFAULT_LOGO_URL)
+      website_href = safe_http_url(f[:website_url], 'https://www.avaliasolar.com.br/')
+      booking_href = safe_http_url(f[:calendly_url].presence || f[:booking_url], DEFAULT_BOOKING_URL)
+      booking_label = CGI.escapeHTML((f[:cta_text].presence || f[:booking_label].presence || 'Agendar conversa').to_s.strip)
+      footer_label = CGI.escapeHTML((f[:footer_tagline].presence || 'Energia solar · Mobilidade elétrica · Reputação').to_s.strip)
+
+      parsed_phone = parse_whatsapp_phone(f[:phone].presence || '(65) 99346-5055')
+      whatsapp_link_html = if parsed_phone[:valid]
+                             query_msg = f[:whatsapp_message].present? ? "?text=#{CGI.escape(f[:whatsapp_message])}" : '?text=Ol%C3%A1%2C%20Felipe!%20Gostaria%20de%20conversar%20sobre%20o%20Avalia%20Solar.'
+                             wa_url = "#{parsed_phone[:url]}#{query_msg}"
+                             %(<a href="#{wa_url}" target="_blank" rel="noopener noreferrer" style="color:#0E58B6;font-weight:600;text-decoration:none;white-space:nowrap;">WhatsApp</a><span style="color:#C7D2DE;padding:0 5px;">|</span>)
+                           else
+                             ''
+                           end
+
+      <<~HTML.strip
+        <!-- Avalia Solar | Assinatura Growth v4 — Zoho Mail (HTML de tabela e estilos inline) -->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" align="left" bgcolor="#ffffff" style="border-collapse:separate;border-spacing:0;width:100%;max-width:450px;font-family:Arial,Helvetica,sans-serif;color:#0B2347;background:#ffffff;background-color:#ffffff;border:1px solid #DEE6EE;margin:0;margin-left:0;margin-right:auto;text-align:left;clear:both;">
+          <tr>
+            <td style="padding:15px 17px 13px 17px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+                <tr>
+                  <td width="67" valign="middle" style="width:67px;vertical-align:middle;padding:0 11px 0 0;">
+                    <img src="#{avatar_src}" alt="#{full_name}" width="58" height="58" style="display:block;border:2px solid #FFCD28;border-radius:50%;width:58px;height:58px;object-fit:cover;background-color:#F1F5F9;color:#0B2347;font-size:10px;" />
+                  </td>
+                  <td valign="middle" style="vertical-align:middle;text-align:left;">
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:22px;font-weight:700;color:#0B2347;">#{full_name}</div>
+                    <div style="padding-top:3px;font-size:12px;line-height:17px;color:#52647B;">#{role_title}</div>
+                    <div style="padding-top:4px;font-size:11px;line-height:16px;"><a href="mailto:#{email_addr}" style="color:#0B2347;text-decoration:none;">#{email_addr}</a></div>
+                  </td>
+                  <td width="93" align="right" valign="top" style="width:93px;padding:2px 0 0 6px;text-align:right;vertical-align:top;">
+                    <a href="#{website_href}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><img src="#{logo_src}" alt="Avalia Solar" width="88" style="display:block;width:88px;max-width:88px;height:auto;border:0;" /></a>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;margin-top:11px;">
+                <tr><td style="border-top:1px solid #DEE6EE;font-size:1px;line-height:1px;height:1px;">&nbsp;</td></tr>
+              </table>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;margin-top:10px;">
+                <tr>
+                  <td align="left" valign="middle" style="padding:8px 0 0 0;vertical-align:middle;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;border-spacing:0;">
+                      <tr><td bgcolor="#0B2B50" style="background-color:#0B2B50;border-radius:5px;text-align:center;">
+                        <a href="#{booking_href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:9px 15px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:16px;color:#FFFFFF;text-decoration:none;white-space:nowrap;">#{booking_label}</a>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td align="right" valign="middle" style="padding:8px 0 0 8px;text-align:right;vertical-align:middle;font-size:11px;line-height:17px;">
+                    #{whatsapp_link_html}
+                    <a href="#{website_href}" target="_blank" rel="noopener noreferrer" style="color:#0E58B6;font-weight:600;text-decoration:none;white-space:nowrap;">Site</a>
+                  </td>
+                </tr>
+              </table>
+              <div style="padding-top:9px;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:14px;letter-spacing:0.2px;color:#61748A;">#{footer_label}</div>
+            </td>
+          </tr>
+          <tr><td style="height:3px;line-height:3px;font-size:1px;background-color:#FFCC23;">&nbsp;</td></tr>
+        </table>
+      HTML
+    end
+
     def self.build_for_sender(user:, company: nil, email_account: nil)
       sender_name = user&.respond_to?(:name) ? user.name.presence : nil
       sender_email = email_account&.respond_to?(:email) ? email_account.email.presence : nil
       sender_email ||= user&.respond_to?(:email) ? user.email.presence : nil
 
-      is_felipe_default = sender_email.nil? || sender_email.to_s.casecmp('felipe@avaliasolar.com.br').zero?
+      is_felipe_default = sender_email.nil? ||
+                          sender_email.to_s.casecmp('felipe@avaliasolar.com.br').zero? ||
+                          sender_email.to_s.casecmp('growth@avaliasolar.com.br').zero?
 
       sender_phone = if user&.respond_to?(:phone) && user.phone.present?
                        user.phone
@@ -394,14 +465,22 @@ module Sales
                       'https://www.avaliasolar.com.br/'
                     end
 
-      build_v2_html(
+      avatar_url = if user&.respond_to?(:avatar) && user.avatar.attached?
+                     blob_public_url(user.avatar)
+                   else
+                     DEFAULT_AVATAR_URL
+                   end
+
+      build_v4_html(
         full_name: sender_name || 'Felipe Henrique',
         role_title: role_title,
-        email: sender_email || 'felipe@avaliasolar.com.br',
+        email: sender_email || 'growth@avaliasolar.com.br',
         phone: sender_phone,
-        avatar_url: DEFAULT_AVATAR_URL,
+        avatar_url: avatar_url,
         logo_url: DEFAULT_LOGO_URL,
-        website_url: website_url
+        website_url: website_url,
+        booking_url: DEFAULT_BOOKING_URL,
+        cta_text: 'Agendar conversa'
       )
     end
 
@@ -533,15 +612,15 @@ module Sales
       {
         full_name: s['full_name'].presence || extract_field_from_html(:full_name) || 'Felipe Henrique',
         role_title: s['role_title'].presence || extract_field_from_html(:role_title) || 'Fundador do Avalia Solar',
-        email: s['email'].presence || extract_field_from_html(:email) || 'felipe@avaliasolar.com.br',
+        email: s['email'].presence || extract_field_from_html(:email) || 'growth@avaliasolar.com.br',
         phone: formatted_phone,
         avatar_url: avatar_public_url,
         logo_url: logo_public_url,
         website_url: s['website_url'].presence || extract_field_from_html(:website_url) || 'https://www.avaliasolar.com.br/',
         linkedin_url: s['linkedin_url'].presence || extract_field_from_html(:linkedin_url) || 'https://www.linkedin.com/in/felipe-morais-8bb61a7b/',
-        calendly_url: s['calendly_url'].presence || extract_field_from_html(:calendly_url) || 'https://calendly.com/felipe-avaliasolar/30min',
-        cta_text: s['cta_text'].presence || extract_field_from_html(:cta_text) || 'Agendar 30 min ↗',
-        footer_tagline: s['footer_tagline'].presence || extract_field_from_html(:footer_tagline) || 'ENERGIA SOLAR ● MOBILIDADE ELÉTRICA ● CONFIANÇA DIGITAL'
+        calendly_url: s['calendly_url'].presence || extract_field_from_html(:calendly_url) || DEFAULT_BOOKING_URL,
+        cta_text: s['cta_text'].presence || extract_field_from_html(:cta_text) || 'Agendar conversa',
+        footer_tagline: s['footer_tagline'].presence || extract_field_from_html(:footer_tagline) || 'Energia solar · Mobilidade elétrica · Reputação'
       }
     end
 
@@ -553,8 +632,10 @@ module Sales
 
       case field
       when :avatar_url
-        html.match(/<img\b[^>]*src=["']([^"']+)["'][^>]*width=["'](?:76|83)["']/i)&.captures&.first ||
-          html.match(/<img\b[^>]*width=["'](?:76|83)["'][^>]*src=["']([^"']+)["']/i)&.captures&.first
+        html.match(/<img\b[^>]*src=["']([^"']+)["'][^>]*width=["'](?:58|68|76|83)["']/i)&.captures&.first ||
+          html.match(/<img\b[^>]*width=["'](?:58|68|76|83)["'][^>]*src=["']([^"']+)["']/i)&.captures&.first ||
+          html.match(/<img\b[^>]*src=["']([^"']+)["'][^>]*border-radius:\s*50%/i)&.captures&.first ||
+          html.match(/<img\b[^>]*border-radius:\s*50%[^>]*src=["']([^"']+)["']/i)&.captures&.first
       when :logo_url
         html.match(/<img\b[^>]*src=["']([^"']+)["'][^>]*alt=["']Avalia Solar["']/i)&.captures&.first ||
           html.match(/<img\b[^>]*alt=["']Avalia Solar["'][^>]*src=["']([^"']+)["']/i)&.captures&.first
