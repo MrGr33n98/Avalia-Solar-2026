@@ -1,4 +1,5 @@
 import './globals.css';
+import '@/styles/article-components.css';
 import '@/lib/env'; // Validate environment variables
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
