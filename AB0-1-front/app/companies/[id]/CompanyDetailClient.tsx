@@ -328,17 +328,25 @@ export default function CompanyDetailClient({
       0
     );
 
+    // Resiliência contra cache denormalizado obsoleto: reconcilia com avaliações reais carregadas
+    const effectiveReviewCount = Math.max(canonicalReviewCount, reviews.length);
+    const effectiveRating =
+      reviews.length > canonicalReviewCount && reviews.length > 0
+        ? reviews.reduce((acc, r) => acc + toSafeRating((r as any)?.rating, 0), 0) / reviews.length
+        : canonicalRating;
+
     const createdYear = company.created_at
       ? new Date(company.created_at).getFullYear()
       : new Date().getFullYear();
 
     return {
-      rating: canonicalRating.toFixed(1),
-      reviewCount: canonicalReviewCount,
+      rating: effectiveRating.toFixed(1),
+      reviewCount: effectiveReviewCount,
       productCount: products.length,
       yearsInBusiness: Math.max(0, new Date().getFullYear() - createdYear),
     };
   }, [
+    reviews,
     products,
     company.created_at,
     company.rating_avg,

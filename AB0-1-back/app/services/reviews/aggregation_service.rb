@@ -80,6 +80,7 @@ module Reviews
         )
         Rails.cache.delete_matched("company_detail_payload_v1/#{@company.id}/*") rescue nil
         Rails.cache.delete_matched("company_buttons/#{@company.id}/*") rescue nil
+        PublicProfileRevalidator.call!(@company) rescue nil
       end
     end
 
@@ -122,13 +123,26 @@ module Reviews
     def calculate_criteria_breakdown(reviews)
       return {} if @category.nil? # Breakdown só por categoria
 
-      # Usa os dados normalizados de review_criterion_scores ou o snapshot?
-      # Para o breakdown agregado, os snapshots em JSONB são mais rápidos se usarmos SQL puro, 
-      # mas para MVP usaremos a associação normalizada baseada em snapshots de título.
       breakdown = {}
       scores = ReviewCriterionScore.where(review_id: reviews.select(:id)).where.not(title_snapshot: nil)
       data = scores.group(:title_snapshot).average(:score)
       data.each { |title, avg| breakdown[title] = avg.to_f.round(2) }
+
+      if breakdown.empty?
+        title_scores = Hash.new { |h, k| h[k] = [] }
+        reviews.find_each do |r|
+          snapshots = r.granular_scores_snapshot || []
+          snapshots.each do |s|
+            title = s['title'] || s[:title]
+            score = s['score'] || s[:score]
+            title_scores[title] << score.to_f if title.present? && score.present?
+          end
+        end
+        title_scores.each do |title, val_list|
+          breakdown[title] = (val_list.sum / val_list.size.to_f).round(2) unless val_list.empty?
+        end
+      end
+
       breakdown
     end
 

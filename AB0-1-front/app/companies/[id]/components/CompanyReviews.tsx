@@ -49,6 +49,49 @@ export default function CompanyReviews({
     return reviews.filter((r) => r.category_id === activeCategoryId);
   }, [reviews, activeCategoryId]);
 
+  const reconciledAggregates = useMemo(() => {
+    const rawGlobal = aggregates?.global;
+    const rawByCategory = aggregates?.by_category || [];
+
+    // Se temos reviews carregadas localmente e a contagem global em cache está defasada:
+    if (reviews.length > 0 && (!rawGlobal || reviews.length > (rawGlobal.total_reviews || 0))) {
+      const avg = Number((reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / reviews.length).toFixed(1));
+
+      const catMap = new Map<number, { name: string; sum: number; count: number }>();
+      reviews.forEach((r) => {
+        if (r.category_id != null) {
+          const catName =
+            rawByCategory.find((c) => c.category_id === r.category_id)?.category_name ||
+            (r as any).category?.name ||
+            'Categoria';
+          const entry = catMap.get(r.category_id) || { name: catName, sum: 0, count: 0 };
+          entry.sum += Number(r.rating) || 0;
+          entry.count += 1;
+          catMap.set(r.category_id, entry);
+        }
+      });
+
+      const reconciledCategories = Array.from(catMap.entries()).map(([catId, val]) => ({
+        category_id: catId,
+        category_name: val.name,
+        average_rating: Number((val.sum / val.count).toFixed(1)),
+        total_reviews: val.count,
+      }));
+
+      return {
+        global: {
+          category_id: null,
+          category_name: null,
+          average_rating: avg,
+          total_reviews: reviews.length,
+        },
+        by_category: reconciledCategories.length > 0 ? reconciledCategories : rawByCategory,
+      };
+    }
+
+    return aggregates;
+  }, [aggregates, reviews]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -83,7 +126,7 @@ export default function CompanyReviews({
       {/* Switcher */}
       <div className="flex items-center gap-4">
         <CompanyReputationSwitcher
-          aggregates={aggregates}
+          aggregates={reconciledAggregates}
           activeCategoryId={activeCategoryId}
           onSwitch={setActiveCategoryId}
         />

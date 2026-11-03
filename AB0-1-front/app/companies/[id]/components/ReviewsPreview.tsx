@@ -34,20 +34,25 @@ export default function ReviewsPreview({
       };
     };
   };
-  const averageRating = Number(
-    companyStats.rating_avg ??
-    companyStats.review_aggregates?.global?.average_rating ??
-    companyStats.average_rating ??
-    companyStats.rating ??
-    0
-  );
-  const ratingCount = Number(
+  const dbCount = Number(
     companyStats.rating_count ??
     companyStats.review_aggregates?.global?.total_reviews ??
     companyStats.total_reviews ??
     companyStats.reviews_count ??
     0
   );
+  const ratingCount = Math.max(dbCount, reviews.length);
+
+  const averageRating =
+    reviews.length > dbCount && reviews.length > 0
+      ? Number((reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / reviews.length).toFixed(1))
+      : Number(
+          companyStats.rating_avg ??
+          companyStats.review_aggregates?.global?.average_rating ??
+          companyStats.average_rating ??
+          companyStats.rating ??
+          0
+        );
 
   const reputationLabel =
     ratingCount === 0
