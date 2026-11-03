@@ -100,8 +100,11 @@ AB0-1-front/public/avalia-solar-upgrade-assets/
 !AB0-1-front/__tests__/components/BannerMediaRegression.test.tsx
 !AB0-1-front/__tests__/banners-url-normalization.test.ts
 !AB0-1-front/__tests__/components/company-access/CompanyAccessSidebar.test.tsx
-!AB0-1-front/__tests__/components/SelectCompanyPageFlow.test.tsx
 !AB0-1-back/spec/requests/api/v1/sales/opportunities_analytics_spec.rb
+!AB0-1-back/spec/services/articles/content_sanitizer_spec.rb
+!AB0-1-back/test/services/articles/content_sanitizer_test.rb
+!AB0-1-front/__tests__/components/ArticleHtmlRenderer.test.tsx
+!AB0-1-front/__tests__/components/ArticleComponentsLaboratory.test.tsx
 
 # Ignorar documentações de desenvolvimento
 docs/

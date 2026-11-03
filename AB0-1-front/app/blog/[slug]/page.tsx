@@ -25,7 +25,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { List } from 'lucide-react';
-import { fixArticleContent } from '@/lib/content-fixer';
+import { ArticleHtmlRenderer } from '@/components/blog/ArticleHtmlRenderer';
 import { toCrawlableImageUrl } from '@/lib/seo/crawlable-image';
 import { SITE, absoluteUrl } from '@/lib/site';
 
@@ -429,7 +429,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
               prose-li:leading-loose
               prose-hr:border-slate-200 prose-hr:my-12"
             >
-              <div dangerouslySetInnerHTML={{ __html: fixArticleContent(article.content) }} />
+              <ArticleHtmlRenderer content={article.content} articleSlug={articleSlug} />
             </article>
 
             {/* Conversion Section (Next Step) */}

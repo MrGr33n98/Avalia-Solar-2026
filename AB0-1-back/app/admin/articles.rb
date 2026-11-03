@@ -59,7 +59,7 @@ ActiveAdmin.register Article do
       row(:seo_title) { |article| article.seo_title.presence || article.meta_title }
       row(:seo_description) { |article| article.seo_description.presence || article.meta_description }
       row :content do |article|
-        raw article.content
+        Articles::ContentSanitizer.call(article.content).html_safe
       end
       row :banner do |article|
         if article.banner.attached?
@@ -102,7 +102,7 @@ ActiveAdmin.register Article do
 
         f.inputs 'Texto' do
           f.input :excerpt, input_html: { rows: 3 }, hint: 'Resumo curto para listagens e cards'
-          f.input :content, as: :quill_editor
+          f.input :content, as: :quill_editor, hint: 'Article Studio A+++ ativo: alterne para o modo HTML-Fonte para inserir e editar componentes (.as-*).'
         end
       end
 

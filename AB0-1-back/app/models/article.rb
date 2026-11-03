@@ -95,34 +95,7 @@ class Article < ApplicationRecord
   def normalize_and_sanitize_content
     return if content.blank?
 
-    # 1. Unescape if double escaped (contains &lt;p or &lt;div or &lt;h)
-    normalized = content
-    if normalized.include?('&lt;') && (normalized.include?('&lt;p') || normalized.include?('&lt;div') || normalized.include?('&lt;h'))
-      normalized = CGI.unescapeHTML(normalized)
-    end
-
-    # 2. Fix specific terms
-    replacements = {
-      'fotoforos' => 'painéis fotovoltaicos',
-      'cérebros celulares' => 'células fotovoltaicas',
-      'fotocatalisador' => 'célula fotovoltaica',
-      'Fotoforos' => 'Painéis fotovoltaicos',
-      'Cérebros celulares' => 'Células fotovoltaicas',
-      'Fotocatalisador' => 'Célula fotovoltaica'
-    }
-    replacements.each do |wrong, correct|
-      normalized = normalized.gsub(wrong, correct)
-    end
-
-    # 3. Sanitizar
-    allowed_tags = %w[p h2 h3 h4 ul ol li a strong em blockquote img figure figcaption table thead tbody tr th td code pre]
-    allowed_attributes = %w[href src alt title class target id]
-
-    self.content = ActionController::Base.helpers.sanitize(
-      normalized,
-      tags: allowed_tags,
-      attributes: allowed_attributes
-    )
+    self.content = Articles::ContentSanitizer.call(content)
   end
 
   def validate_published_banner_dimensions

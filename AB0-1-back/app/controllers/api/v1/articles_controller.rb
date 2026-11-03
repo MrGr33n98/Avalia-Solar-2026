@@ -2,7 +2,9 @@ class Api::V1::ArticlesController < Api::V1::BaseController
   include Cacheable # TASK-015: Enable caching
   include Paginatable # TASK-017: Enable pagination
 
-  before_action :set_article, only: %i[show update destroy]
+  before_action :require_admin, only: %i[create update destroy]
+  before_action :set_public_article, only: %i[show]
+  before_action :set_article, only: %i[update destroy]
   after_action :expire_articles_cache, only: %i[create update destroy]
 
   def index
@@ -71,11 +73,7 @@ class Api::V1::ArticlesController < Api::V1::BaseController
   end
 
   def related
-    @article = begin
-      Article.friendly.find(params[:id])
-    rescue StandardError
-      Article.find(params[:id])
-    end
+    @article = Article.published.friendly.find(params[:id])
 
     # Simple related logic: same category, excluding self
     related_scope = Article.published
@@ -141,6 +139,10 @@ class Api::V1::ArticlesController < Api::V1::BaseController
   end
 
   private
+
+  def set_public_article
+    @article = Article.with_attached_banner.includes(:category, :companies, :author).published.friendly.find(params[:id])
+  end
 
   def set_article
     # Supports both numeric IDs and friendly slugs

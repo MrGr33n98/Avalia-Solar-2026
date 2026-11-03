@@ -1,13 +1,16 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
-one:
-  title: MyString
-  content: MyText
+published_article:
+  title: "Artigo Solar Publicado"
+  slug: "artigo-solar-publicado"
+  content: "<h2>O Futuro Solar</h2><p>Conteúdo publicado com sucesso.</p>"
+  status: "published"
+  published_at: <%= 1.day.ago %>
   category: one
   product: one
 
-two:
-  title: MyString
-  content: MyText
-  category: two
-  product: two
+draft_article:
+  title: "Artigo em Rascunho"
+  slug: "artigo-em-rascunho"
+  content: "<h2>Rascunho Secreto</h2><p>Conteúdo confidencial ainda não publicado.</p>"
+  status: "draft"
+  category: one
+  product: one
