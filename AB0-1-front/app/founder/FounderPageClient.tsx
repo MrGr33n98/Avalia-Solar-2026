@@ -24,9 +24,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
+  Linkedin,
 } from 'lucide-react';
 
 const BOOKING_URL = 'https://zbooking.us/6shCH';
+const LINKEDIN_URL = 'https://www.linkedin.com/in/felipe-morais-8bb61a7b/';
 const CONTACT_EMAIL = 'growth@avaliasolar.com.br';
 
 interface TourStep {
@@ -701,6 +703,65 @@ export default function FounderPageClient() {
                 Sua empresa aproveita os 60 dias de exposição. No encerramento, apresentamos os resultados para
                 você decidir se renova.
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* SEÇÃO: CONVERSE COM O FUNDADOR */}
+        <div className="mt-16 pt-16 border-t border-[#d0d7de]">
+          <div className="max-w-4xl mx-auto rounded-2xl border-2 border-[#09172f] bg-white p-6 sm:p-10 shadow-xl flex flex-col md:flex-row items-center md:items-start gap-8">
+            <div className="relative w-32 h-32 sm:w-36 sm:h-36 rounded-2xl overflow-hidden shrink-0 border-4 border-[#f8ca3a] shadow-lg">
+              <Image
+                src="/images/felipe-morais-fundador.jpg"
+                alt="Felipe Henrique Morais - Fundador Avalia Solar"
+                fill
+                sizes="144px"
+                className="object-cover object-top"
+              />
+            </div>
+
+            <div className="flex-1 text-center md:text-left space-y-3">
+              <div className="flex flex-wrap items-center justify-center md:justify-between gap-3">
+                <div>
+                  <span className="text-xs font-mono font-bold tracking-wider uppercase text-[#0f62fe] bg-[#edf5ff] px-2.5 py-0.5 rounded">
+                    LIDERANÇA &amp; INOVAÇÃO
+                  </span>
+                  <h3 className="text-2xl font-black text-[#09172f] mt-1">Felipe Henrique Morais</h3>
+                  <p className="text-sm font-bold text-[#0f62fe]">Fundador</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={LINKEDIN_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#cbd5e1] hover:border-[#0077b5] text-xs font-bold text-[#334155] hover:text-[#0077b5] hover:bg-[#0077b5]/5 transition-all"
+                  >
+                    <Linkedin className="w-3.5 h-3.5 text-[#0077b5]" />
+                    <span>LinkedIn</span>
+                    <ArrowUpRight className="w-3 h-3 text-slate-400" />
+                  </a>
+                </div>
+              </div>
+
+              <p className="text-sm text-[#475569] leading-relaxed">
+                &ldquo;Construímos o Avalia Solar com o propósito de transformar a reputação e o acesso comercial no
+                setor de energia solar no Brasil. O Plano Founder é a nossa forma de abrir as portas e trabalhar
+                lado a lado com as empresas que compartilham da nossa visão de qualidade e transparência.&rdquo;
+              </p>
+
+              <div className="pt-2">
+                <a
+                  href={BOOKING_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#f8ca3a] hover:bg-[#fed957] text-[#09172f] font-bold text-xs tracking-wide shadow-md transition-all transform hover:-translate-y-0.5"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-[#09172f]" />
+                  <span>Agendar Conversa com o Fundador (zbooking.us/6shCH)</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

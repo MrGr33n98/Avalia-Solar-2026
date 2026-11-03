@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+﻿import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
@@ -352,7 +352,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             <ArticleConversionSection article={article} />
 
             {/* Author Bio */}
-            <AuthorCardWithStats name={authorName} bio={authorBio} avatarUrl={authorAvatarUrl} />
+            <AuthorCardWithStats name={isInstitutional || authorName === 'Equipe Avalia Solar' ? 'Felipe Henrique Morais' : authorName} role="Fundador" bio={authorBio || 'Fundador da Avalia Solar. Conectando pessoas e empresas às melhores soluções de energia solar com transparência e dados reais.'} avatarUrl={authorAvatarUrl || '/images/felipe-morais-fundador.jpg'} bookingUrl="https://zbooking.us/6shCH" linkedinUrl="https://www.linkedin.com/in/felipe-morais-8bb61a7b/" />
 
             {/* Related Posts */}
             <RelatedPostsGrid articles={relatedArticles} />
