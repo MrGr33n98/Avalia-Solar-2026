@@ -1,4 +1,4 @@
-﻿import { Metadata } from 'next';
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
@@ -39,8 +39,8 @@ async function getArticle(slug: string): Promise<Article | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8_000);
 
+  const safeSlug = decodeURIComponent(slug || '').trim();
   try {
-    const safeSlug = decodeURIComponent(slug || '').trim();
     const res = await fetch(buildApiUrl(`articles/${safeSlug || slug}`), {
       headers: getApiRequestHeaders(),
       next: { revalidate: 3600 },
@@ -63,9 +63,93 @@ async function getArticle(slug: string): Promise<Article | null> {
       }
     }
 
+    if (safeSlug === 'plano-founder-avalia-solar' || slug === 'plano-founder-avalia-solar') {
+      return {
+        id: 9999,
+        title: 'Plano Founder Avalia Solar: Brand Page Empresarial e Programa de Lançamento',
+        slug: 'plano-founder-avalia-solar',
+        seo_title: 'Plano Founder Avalia Solar | Brand Page & Programa de Lançamento',
+        seo_description:
+          'Entenda como funciona o Plano Founder da Avalia Solar: dois meses gratuitos no lançamento, Brand Page oficial verificada, catálogo e contato direto.',
+        excerpt:
+          'O Plano Founder é a iniciativa de lançamento da Avalia Solar que concede dois meses gratuitos e estrutura a Brand Page oficial para empresas pioneiras do setor.',
+        content: `
+          <p>O <strong>Plano Founder da Avalia Solar</strong> é o programa de homologação e lançamento oficial voltado aos parceiros pioneiros do setor de energia solar e mobilidade elétrica no Brasil. Com ele, sua empresa assegura presença destacada em um diretório auditado com tecnologia de ponta.</p>
+          
+          <h2>O que é a Brand Page Oficial?</h2>
+          <p>A Brand Page é o endereço corporativo oficial da sua empresa dentro da Avalia Solar. Desenvolvida sobre arquitetura moderna de alta performance, ela reúne:</p>
+          <ul>
+            <li><strong>Identidade institucional homologada:</strong> logotipo em alta resolução, histórico de mercado, especialidades de engenharia e endereço físico verificado.</li>
+            <li><strong>Catálogo técnico de produtos:</strong> vitrine de inversores híbridos, bancos de baterias e módulos fotovoltaicos com fichas técnicas e manuais.</li>
+            <li><strong>Reputação e avaliações autênticas:</strong> espaço auditado onde clientes reais relatam suas experiências com notas por critérios técnicos.</li>
+            <li><strong>Canais de conversão direta:</strong> integração sem intermediários via WhatsApp corporativo, telefone e solicitação de orçamento sem cobrança de taxas por lead.</li>
+          </ul>
+
+          <h2>Como funcionam os 2 meses gratuitos de lançamento?</h2>
+          <p>Durante a fase de inauguração da plataforma, as empresas qualificadas recebem <strong>dois meses de gratuidade completa</strong> de mensalidade para usufruir de todas as funcionalidades da Brand Page oficial. Antes do encerramento dos 60 dias, nossa equipe apresenta o balanço consolidado de métricas e acessos para você decidir se deseja prosseguir no plano comercial definitivo.</p>
+
+          <p>Para conhecer todos os recursos na íntegra e explorar a simulação interativa da tela, visite a <a href="/founder">página oficial do Plano Founder da Avalia Solar</a> ou realize o seu <a href="https://zbooking.us/6shCH" target="_blank" rel="noopener noreferrer">agendamento de apresentação executiva</a>.</p>
+        `,
+        image_url: '/assets/founder-laptop.jpg',
+        published_at: '2026-01-15T10:00:00.000Z',
+        updated_at: '2026-11-03T18:00:00.000Z',
+        author_name: 'Felipe Henrique Morais',
+        author_bio:
+          'Fundador da Avalia Solar. Conectando pessoas e empresas às melhores soluções de energia solar com transparência e dados reais.',
+        author_avatar_url: '/images/felipe-morais-fundador.jpg',
+        category: {
+          id: 1,
+          name: 'Energia Solar',
+          slug: 'energia-solar',
+        },
+      } as Article;
+    }
+
     return null;
   } catch (error) {
     console.error('Failed to fetch article:', error);
+    if (safeSlug === 'plano-founder-avalia-solar' || slug === 'plano-founder-avalia-solar') {
+      return {
+        id: 9999,
+        title: 'Plano Founder Avalia Solar: Brand Page Empresarial e Programa de Lançamento',
+        slug: 'plano-founder-avalia-solar',
+        seo_title: 'Plano Founder Avalia Solar | Brand Page & Programa de Lançamento',
+        seo_description:
+          'Entenda como funciona o Plano Founder da Avalia Solar: dois meses gratuitos no lançamento, Brand Page oficial verificada, catálogo e contato direto.',
+        excerpt:
+          'O Plano Founder é a iniciativa de lançamento da Avalia Solar que concede dois meses gratuitos e estrutura a Brand Page oficial para empresas pioneiras do setor.',
+        content: `
+          <p>O <strong>Plano Founder da Avalia Solar</strong> é o programa de homologação e lançamento oficial voltado aos parceiros pioneiros do setor de energia solar e mobilidade elétrica no Brasil. Com ele, sua empresa assegura presença destacada em um diretório auditado com tecnologia de ponta.</p>
+          
+          <h2>O que é a Brand Page Oficial?</h2>
+          <p>A Brand Page é o endereço corporativo oficial da sua empresa dentro da Avalia Solar. Desenvolvida sobre arquitetura moderna de alta performance, ela reúne:</p>
+          <ul>
+            <li><strong>Identidade institucional homologada:</strong> logotipo em alta resolução, histórico de mercado, especialidades de engenharia e endereço físico verificado.</li>
+            <li><strong>Catálogo técnico de produtos:</strong> vitrine de inversores híbridos, bancos de baterias e módulos fotovoltaicos com fichas técnicas e manuais.</li>
+            <li><strong>Reputação e avaliações autênticas:</strong> espaço auditado onde clientes reais relatam suas experiências com notas por critérios técnicos.</li>
+            <li><strong>Canais de conversão direta:</strong> integração sem intermediários via WhatsApp corporativo, telefone e solicitação de orçamento sem cobrança de taxas por lead.</li>
+          </ul>
+
+          <h2>Como funcionam os 2 meses gratuitos de lançamento?</h2>
+          <p>Durante a fase de inauguração da plataforma, as empresas qualificadas recebem <strong>dois meses de gratuidade completa</strong> de mensalidade para usufruir de todas as funcionalidades da Brand Page oficial. Antes do encerramento dos 60 dias, nossa equipe apresenta o balanço consolidado de métricas e acessos para você decidir se deseja prosseguir no plano comercial definitivo.</p>
+
+          <p>Para conhecer todos os recursos na íntegra e explorar a simulação interativa da tela, visite a <a href="/founder">página oficial do Plano Founder da Avalia Solar</a> ou realize o seu <a href="https://zbooking.us/6shCH" target="_blank" rel="noopener noreferrer">agendamento de apresentação executiva</a>.</p>
+        `,
+        image_url: '/assets/founder-laptop.jpg',
+        published_at: '2026-01-15T10:00:00.000Z',
+        updated_at: '2026-11-03T18:00:00.000Z',
+        author_name: 'Felipe Henrique Morais',
+        author_bio:
+          'Fundador da Avalia Solar. Conectando pessoas e empresas às melhores soluções de energia solar com transparência e dados reais.',
+        author_avatar_url: '/images/felipe-morais-fundador.jpg',
+        category: {
+          id: 1,
+          name: 'Energia Solar',
+          slug: 'energia-solar',
+        },
+      } as Article;
+    }
+
     return null;
   } finally {
     clearTimeout(timeout);
