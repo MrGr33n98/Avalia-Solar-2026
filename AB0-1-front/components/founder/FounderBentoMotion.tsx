@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import {
   ShieldCheck,
   Check,
   TrendingUp,
   Sparkles,
 } from 'lucide-react';
+
+const EASING_CUBIC = [0.16, 1, 0.3, 1] as const;
 
 export default function FounderBentoMotion() {
   const shouldReduceMotion = useReducedMotion();
@@ -41,7 +43,7 @@ export default function FounderBentoMotion() {
     return () => clearInterval(timer);
   }, [hasEnteredView, shouldReduceMotion]);
 
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 25 },
     visible: (i: number) => ({
       opacity: 1,
@@ -49,7 +51,7 @@ export default function FounderBentoMotion() {
       transition: {
         duration: 0.6,
         delay: shouldReduceMotion ? 0 : i * 0.1,
-        ease: [0.16, 1, 0.3, 1],
+        ease: EASING_CUBIC,
       },
     }),
   };

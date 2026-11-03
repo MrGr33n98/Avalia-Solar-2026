@@ -3,12 +3,13 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { Calendar, ArrowRight, ArrowUpRight, Check, Laptop, BookOpen } from 'lucide-react';
 import { trackFounderCtaClick } from './FounderTelemetry';
 
 const BOOKING_URL = 'https://zbooking.us/6shCH';
 const BLOG_URL = '/blog/plano-founder-avalia-solar';
+const EASING_CUBIC = [0.16, 1, 0.3, 1] as const;
 
 export default function FounderHeroMotion() {
   const shouldReduceMotion = useReducedMotion();
@@ -22,7 +23,7 @@ export default function FounderHeroMotion() {
   };
 
   // Variantes para revelação progressiva e suave
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: shouldReduceMotion ? 1 : 0 },
     visible: {
       opacity: 1,
@@ -33,16 +34,16 @@ export default function FounderHeroMotion() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+      transition: { duration: 0.6, ease: EASING_CUBIC },
     },
   };
 
-  const laptopVariants = {
+  const laptopVariants: Variants = {
     hidden: {
       opacity: 0,
       y: shouldReduceMotion ? 0 : 40,
@@ -56,7 +57,7 @@ export default function FounderHeroMotion() {
       scale: 1,
       transition: {
         duration: 0.9,
-        ease: [0.16, 1, 0.3, 1],
+        ease: EASING_CUBIC,
         delay: shouldReduceMotion ? 0 : 0.35,
       },
     },
@@ -113,7 +114,7 @@ export default function FounderHeroMotion() {
                   transition={{
                     duration: 0.7,
                     delay: shouldReduceMotion ? 0 : 0.45,
-                    ease: [0.16, 1, 0.3, 1],
+                    ease: EASING_CUBIC,
                   }}
                   style={{ transformOrigin: 'left center' }}
                   aria-hidden="true"

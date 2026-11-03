@@ -31,6 +31,7 @@ import {
 } from './FounderTelemetry';
 
 const BOOKING_URL = 'https://zbooking.us/6shCH';
+const EASING_CUBIC = [0.16, 1, 0.3, 1] as const;
 
 export interface TourStepConfig {
   id: string;
@@ -352,7 +353,7 @@ export default function FounderCursorTour() {
                         scale: step.zoomScale,
                       }
                 }
-                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.7, ease: EASING_CUBIC }}
                 style={{ transformOrigin: step.zoomOrigin }}
               >
                 {/* CONTEÚDO DA BRAND PAGE (ETAPAS 1 A 6) OU DASHBOARD PRIVADO (ETAPA 7) */}
@@ -582,7 +583,7 @@ export default function FounderCursorTour() {
                     }}
                     transition={{
                       duration: 0.8,
-                      ease: [0.16, 1, 0.3, 1],
+                      ease: EASING_CUBIC,
                     }}
                   >
                     {/* SVG do Cursor com estilo macOS/Screen Studio */}

@@ -6,6 +6,7 @@ import { Search, ShieldCheck, Settings, Check, ArrowUpRight, Sparkles } from 'lu
 import { trackFounderCtaClick } from './FounderTelemetry';
 
 const BOOKING_URL = 'https://zbooking.us/6shCH';
+const EASING_CUBIC = [0.16, 1, 0.3, 1] as const;
 
 interface ProcessStep {
   number: string;
@@ -78,7 +79,7 @@ export default function FounderProcessDraw() {
               transition={{
                 duration: 0.6,
                 delay: shouldReduceMotion ? 0 : idx * 0.25,
-                ease: [0.16, 1, 0.3, 1],
+                ease: EASING_CUBIC,
               }}
             >
               <div>
