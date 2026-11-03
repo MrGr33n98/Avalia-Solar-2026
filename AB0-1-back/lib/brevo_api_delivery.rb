@@ -63,7 +63,7 @@ class BrevoApiDelivery
   def sender_for(mail)
     from = mail.header[:from]&.addrs&.first
     from_name = from&.display_name.presence || ENV.fetch('MAILER_FROM_NAME', 'Avalia Solar')
-    from_email = from&.address || Array(mail.from).first || ENV.fetch('MAILER_FROM_EMAIL', 'noreply@avaliasolar.com.br')
+    from_email = from&.address || Array(mail.from).first || ENV.fetch('MAILER_FROM_EMAIL', 'growth@avaliasolar.com.br')
 
     { name: from_name, email: from_email }
   end

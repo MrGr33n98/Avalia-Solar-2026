@@ -6,7 +6,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def index
     # Eager load associations to prevent N+1 queries
-    @reviews = Review.includes({ user: :reviewer_profile }, :company, review_media: %i[file_attachment file_blob],
+    @reviews = Review.includes({ user: :reviewer_profile }, :company, :category, review_media: %i[file_attachment file_blob],
                    review_criterion_scores: :rating_criterion)
                      .order(created_at: :desc)
 
@@ -50,7 +50,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def mine
     @reviews = current_user.reviews.for_reviewer_dashboard.includes(
-      { user: :reviewer_profile }, :company, review_media: %i[file_attachment file_blob],
+      { user: :reviewer_profile }, :company, :category, review_media: %i[file_attachment file_blob],
       review_criterion_scores: :rating_criterion
     ).order(created_at: :desc)
     render json: {
@@ -191,6 +191,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       user_id: review.user_id,
       company_id: review.company_id,
       category_id: review.category_id,
+      category_name: review.category&.name,
+      category: review.category ? { id: review.category.id, name: review.category.name, slug: review.category.seo_url } : nil,
       status: review.status,
       capture_flow_source: review.capture_flow_source,
       review_form_id: review.review_form_id,

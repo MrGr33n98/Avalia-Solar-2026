@@ -139,7 +139,7 @@ module Api
                 in_reply_to: email_params[:in_reply_to],
                 references_header: email_params[:references_header],
                 sender_user_id: current_user.id,
-                from_email: current_user.email.to_s.end_with?('@avaliasolar.com.br') ? current_user.email : 'felipe@avaliasolar.com.br',
+                from_email: current_user.email.to_s.end_with?('@avaliasolar.com.br') ? current_user.email : (ENV['SALES_EMAIL_FROM'].presence || 'growth@avaliasolar.com.br'),
                 to_email: target_to_email,
                 subject: email_params[:subject],
                 body_json: parsed_body_json,

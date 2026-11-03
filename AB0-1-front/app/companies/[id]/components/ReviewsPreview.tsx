@@ -41,18 +41,25 @@ export default function ReviewsPreview({
     companyStats.reviews_count ??
     0
   );
-  const ratingCount = Math.max(dbCount, reviews.length);
+  const ratingCount = reviews.length > 0 ? Math.max(dbCount, reviews.length) : dbCount;
+
+  const dbRating = Number(
+    companyStats.rating_avg ??
+    companyStats.review_aggregates?.global?.average_rating ??
+    companyStats.average_rating ??
+    companyStats.rating ??
+    0
+  );
+
+  const computedRating =
+    reviews.length > 0
+      ? Number((reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / reviews.length).toFixed(1))
+      : 0;
 
   const averageRating =
-    reviews.length > dbCount && reviews.length > 0
-      ? Number((reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0) / reviews.length).toFixed(1))
-      : Number(
-          companyStats.rating_avg ??
-          companyStats.review_aggregates?.global?.average_rating ??
-          companyStats.average_rating ??
-          companyStats.rating ??
-          0
-        );
+    reviews.length > 0 && (dbCount === 0 || Math.abs(computedRating - dbRating) > 0.05)
+      ? computedRating
+      : dbRating;
 
   const reputationLabel =
     ratingCount === 0

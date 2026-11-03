@@ -18,8 +18,8 @@ namespace :sales do
       puts "AWS Credentials:      #{has_key && has_secret ? 'YES (Access key & Secret present)' : 'NO (Missing AWS credentials)'}"
 
       # Sender Email
-      sender = ENV['SALES_EMAIL_FROM'] || ENV['MAILER_SENDER']
-      puts "Sender Email:         #{sender.present? ? "YES (#{sender})" : 'NO (Missing SALES_EMAIL_FROM)'}"
+      sender = ENV['SALES_EMAIL_FROM'] || ENV['MAILER_FROM_EMAIL'] || ENV['MAILER_SENDER']
+      puts "Sender Email:         #{sender.present? ? "YES (#{sender})" : 'NO (Missing SALES_EMAIL_FROM / MAILER_FROM_EMAIL)'}"
 
       # Webhook Secret
       webhook_secret = ENV['SALES_EMAIL_WEBHOOK_SECRET']

@@ -182,7 +182,7 @@ module Api
           email_message = ::Sales::EmailMessage.create!(
             company_id: current_user.company_id,
             sender_user_id: current_user.id,
-            from_email: current_user.email,
+            from_email: current_user.email.to_s.end_with?('@avaliasolar.com.br') ? current_user.email : (ENV['SALES_EMAIL_FROM'].presence || 'growth@avaliasolar.com.br'),
             to_email: target_email,
             subject: rendered[:subject] || subject,
             body_html: rendered[:body_html] || body_html,

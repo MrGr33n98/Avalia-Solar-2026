@@ -30,7 +30,7 @@ module Sales
         return
       end
 
-      from_email = campaign.company.try(:email).presence || 'contato@avaliasolar.com.br'
+      from_email = ENV['SALES_EMAIL_FROM'].presence || ENV['MAILER_FROM_EMAIL'].presence || campaign.company.try(:email).presence || 'growth@avaliasolar.com.br'
 
       recipients.each do |recipient|
         # Reload campaign status to respect pause/cancel in real-time

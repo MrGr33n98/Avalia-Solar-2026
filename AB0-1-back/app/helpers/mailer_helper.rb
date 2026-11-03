@@ -37,6 +37,6 @@ module MailerHelper
   end
 
   def mailer_support_email
-    ENV.fetch('MAILER_SUPPORT_EMAIL', 'contato@avaliasolar.com.br')
+    ENV.fetch('MAILER_SUPPORT_EMAIL', 'growth@avaliasolar.com.br')
   end
 end

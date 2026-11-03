@@ -2,6 +2,16 @@
 
 class RecalculateAllCompanyReviewAggregates < ActiveRecord::Migration[7.0]
   def up
+    # 0. Aumentar precisão de percentual e NPS para suportar 100.00% e evitar overflow PG::NumericValueOutOfRange
+    if table_exists?(:review_aggregates)
+      if column_exists?(:review_aggregates, :recommendation_rate)
+        change_column :review_aggregates, :recommendation_rate, :decimal, precision: 5, scale: 2
+      end
+      if column_exists?(:review_aggregates, :nps_score)
+        change_column :review_aggregates, :nps_score, :decimal, precision: 5, scale: 2
+      end
+    end
+
     # 1. Sincronizar colunas polimórficas (reviewable) com company_id para consistência bidirecional
     execute <<~SQL
       UPDATE reviews
@@ -21,8 +31,12 @@ class RecalculateAllCompanyReviewAggregates < ActiveRecord::Migration[7.0]
     ).compact.uniq
 
     Company.where(id: company_ids).find_each do |company|
-      Reviews::AggregationService.recalculate_for_company!(company)
-      PublicProfileRevalidator.call!(company) rescue nil
+      begin
+        Reviews::AggregationService.recalculate_for_company!(company)
+        PublicProfileRevalidator.call!(company) rescue nil
+      rescue StandardError => e
+        Rails.logger.error("[RecalculateAllCompanyReviewAggregates] Erro ao recalcular company=#{company.id}: #{e.class}: #{e.message}")
+      end
     end
 
     # 3. Limpar caches de fragmentos e endpoints no Rails
@@ -30,6 +44,9 @@ class RecalculateAllCompanyReviewAggregates < ActiveRecord::Migration[7.0]
   end
 
   def down
-    # Migração de dados idempotente de reconciliação.
+    if table_exists?(:review_aggregates)
+      change_column :review_aggregates, :recommendation_rate, :decimal, precision: 4, scale: 2 rescue nil
+      change_column :review_aggregates, :nps_score, :decimal, precision: 4, scale: 2 rescue nil
+    end
   end
 end

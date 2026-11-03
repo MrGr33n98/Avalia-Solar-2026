@@ -60,13 +60,26 @@ module Reviews
         rec_rate = calculate_recommendation_rate(reviews, count)
         nps_data = calculate_nps(reviews)
 
+        # Proteção contra PG::NumericValueOutOfRange caso recommendation_rate/nps_score ainda estejam em decimal(4,2)
+        rec_rate_safe = if rec_rate.present?
+                          col_prec = ReviewAggregate.columns_hash['recommendation_rate']&.precision
+                          max_v = (col_prec && col_prec <= 4) ? 99.99 : 100.0
+                          [rec_rate.to_f.clamp(0.0, 100.0), max_v].min.round(2)
+                        end
+
+        nps_score_safe = if nps_data[:score].present?
+                           col_prec = ReviewAggregate.columns_hash['nps_score']&.precision
+                           max_v = (col_prec && col_prec <= 4) ? 99.99 : 100.0
+                           nps_data[:score].to_f.clamp(-max_v, max_v).round(2)
+                         end
+
         aggregate.update!(
           average_rating: @category.present? ? calculate_category_average(reviews) : calculate_global_average,
           total_reviews: count,
           scores_distribution: calculate_distribution(reviews),
           criteria_breakdown: calculate_criteria_breakdown(reviews),
-          recommendation_rate: rec_rate,
-          nps_score: nps_data[:score],
+          recommendation_rate: rec_rate_safe,
+          nps_score: nps_score_safe,
           nps_responses: nps_data[:responses]
         )
       end

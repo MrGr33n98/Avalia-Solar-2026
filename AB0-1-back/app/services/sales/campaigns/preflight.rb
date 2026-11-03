@@ -145,7 +145,7 @@ module Sales
         {
           sender_id: user&.id,
           sender_name: user&.name || 'Sistema',
-          from_email: @campaign.company.try(:email).presence || 'contato@avaliasolar.com.br'
+          from_email: ENV['SALES_EMAIL_FROM'].presence || ENV['MAILER_FROM_EMAIL'].presence || @campaign.company.try(:email).presence || 'growth@avaliasolar.com.br'
         }
       end
 

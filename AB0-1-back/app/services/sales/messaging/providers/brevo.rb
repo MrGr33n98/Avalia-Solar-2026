@@ -28,8 +28,8 @@ module Sales
           cc_addresses = participants['cc'].present? ? participants['cc'].map(&:email) : []
           bcc_addresses = participants['bcc'].present? ? participants['bcc'].map(&:email) : []
 
-          sender_name = email_message.sender_user&.name.presence || 'Felipe Henrique'
-          sender_email = email_message.from_email.presence || 'felipe@avaliasolar.com.br'
+          sender_name = email_message.sender_user&.name.presence || ENV.fetch('MAILER_FROM_NAME', 'Avalia Solar')
+          sender_email = email_message.from_email.presence || ENV['SALES_EMAIL_FROM'].presence || ENV['MAILER_FROM_EMAIL'].presence || 'growth@avaliasolar.com.br'
 
           payload = {
             sender: { name: sender_name, email: sender_email },

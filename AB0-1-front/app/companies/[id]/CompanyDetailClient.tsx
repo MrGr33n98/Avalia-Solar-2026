@@ -329,10 +329,14 @@ export default function CompanyDetailClient({
     );
 
     // Resiliência contra cache denormalizado obsoleto: reconcilia com avaliações reais carregadas
-    const effectiveReviewCount = Math.max(canonicalReviewCount, reviews.length);
-    const effectiveRating =
-      reviews.length > canonicalReviewCount && reviews.length > 0
+    const effectiveReviewCount = reviews.length > 0 ? Math.max(canonicalReviewCount, reviews.length) : canonicalReviewCount;
+    const computedAverage =
+      reviews.length > 0
         ? reviews.reduce((acc, r) => acc + toSafeRating((r as any)?.rating, 0), 0) / reviews.length
+        : 0;
+    const effectiveRating =
+      reviews.length > 0 && (canonicalReviewCount === 0 || Math.abs(computedAverage - canonicalRating) > 0.05)
+        ? computedAverage
         : canonicalRating;
 
     const createdYear = company.created_at

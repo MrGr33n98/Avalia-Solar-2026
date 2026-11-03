@@ -193,7 +193,7 @@ module Sales
           sales_contact_id: @enrollment.sales_contact_id,
           sales_opportunity_id: @enrollment.sales_opportunity_id,
           sender_user_id: @enrollment.owner_id,
-          from_email: @enrollment.company.email,
+          from_email: ENV['SALES_EMAIL_FROM'].presence || @enrollment.company.email.presence || 'growth@avaliasolar.com.br',
           to_email: @enrollment.contact.email,
           subject: template.subject_template,
           body_html: template.body_html,

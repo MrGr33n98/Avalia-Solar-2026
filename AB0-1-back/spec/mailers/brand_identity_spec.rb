@@ -55,6 +55,13 @@ RSpec.describe 'Avalia Solar mailer identity', type: :mailer do
       expect(text_part(subject)).to include('Equipe Avalia Solar')
       expect(text_part(subject)).to include('https://www.avaliasolar.com.br')
     end
+
+    it 'uses growth@avaliasolar.com.br as default canonical sender and support identity' do
+      expect(subject.from).to include('growth@avaliasolar.com.br')
+      expect(subject.reply_to).to include('growth@avaliasolar.com.br')
+      expect(html_part(subject)).to include('growth@avaliasolar.com.br')
+      expect(html_part(subject)).not_to include('contato@avaliasolar.com.br')
+    end
   end
 
   describe 'confirmation email' do

@@ -138,7 +138,7 @@ module Sales
       CGI.escapeHTML(candidate)
     end
 
-    def self.safe_email_address(raw_email, fallback = 'contato@avaliasolar.com.br')
+    def self.safe_email_address(raw_email, fallback = 'growth@avaliasolar.com.br')
       candidate = raw_email.to_s.strip
       return fallback if candidate.blank? || candidate.match?(/[<>"'\s]/)
 
