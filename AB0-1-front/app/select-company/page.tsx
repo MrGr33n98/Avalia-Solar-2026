@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Building,
   Building2,
   Check,
   Search,
@@ -23,13 +22,12 @@ import {
   Loader2,
   AlertCircle,
   ArrowRight,
-  Send,
 } from 'lucide-react';
 import { normalizeCompanySelectionList } from './company-selection';
-import Image from 'next/image';
 import VerificationBadge from '@/components/company/VerificationBadge';
 import { SearchEmptyPanel, SearchInitialPanel, SearchLoadingPanel } from './FlowPanels';
 import { CompanyAccessSidebar } from '@/components/company-access/CompanyAccessSidebar';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { track } from '@/lib/analytics';
 
 const SEARCH_MIN_LENGTH = 2;
@@ -121,7 +119,7 @@ function SelectCompanyContent() {
 
   // ── State machine resolution ────────────────────────────────────────────────
   useEffect(() => {
-    if (authLoading || isLoading || contextLoading) {
+    if (authLoading || isLoading) {
       setEntryState('loading');
       return;
     }
@@ -131,9 +129,8 @@ function SelectCompanyContent() {
       return;
     }
 
-    // Esta tela é onboarding por padrão. Usuários já vinculados só chegam aqui
-    // explicitamente quando querem adicionar outra empresa.
-    if (companies.length > 0 && !isAddMode && !autoSelectAttempted) {
+    // 1 empresa e não está em modo de adicionar outra: auto-select e redirecionar
+    if (companies.length === 1 && !isAddMode && !autoSelectAttempted) {
       const company = activeCompany || companies[0];
       setAutoSelectAttempted(true);
       setEntryState('single-membership');
@@ -143,19 +140,30 @@ function SelectCompanyContent() {
       return;
     }
 
+    // 2+ empresas e não está em modo de adicionar outra:
+    if (companies.length > 1 && !isAddMode && !autoSelectAttempted) {
+      if (activeCompany) {
+        setAutoSelectAttempted(true);
+        router.replace(`/dashboard?company_id=${activeCompany.id}`);
+        return;
+      }
+      setEntryState('multiple-memberships');
+      return;
+    }
+
     // Reviewer puro (sem companies) → vai para review-dashboard, não fica nesta tela
     if (user?.role === 'review' && companies.length === 0 && !isAddMode && !autoSelectAttempted) {
       router.replace('/review-dashboard');
       return;
     }
 
-    if (isAddMode) {
-      setEntryState('no-membership');
+    if (companies.length > 1) {
+      setEntryState('multiple-memberships');
       return;
     }
 
-    if (companies.length > 1) {
-      setEntryState('multiple-memberships');
+    if (isAddMode || companies.length === 0) {
+      setEntryState('no-membership');
       return;
     }
 
@@ -169,7 +177,6 @@ function SelectCompanyContent() {
   }, [
     authLoading,
     isLoading,
-    contextLoading,
     isAuthenticated,
     companies,
     activeCompany,
@@ -181,6 +188,7 @@ function SelectCompanyContent() {
     router,
   ]);
 
+  // ── Carregamento resiliente do contexto (não bloqueia a busca) ───────────────
   useEffect(() => {
     if (authLoading) return;
 
@@ -199,7 +207,7 @@ function SelectCompanyContent() {
       try {
         const context = await companyAccessApi.context(
           { limit: 8 },
-          { retries: 5, timeout: 25000, useClientCache: true }
+          { retries: 1, timeout: 8000, useClientCache: true }
         );
         if (cancelled) return;
 
@@ -212,7 +220,7 @@ function SelectCompanyContent() {
         setContextError(
           extractErrorMessage(
             error,
-            'Nao foi possivel carregar as sugestoes de empresas para solicitacao de acesso.'
+            'Não foi possível carregar as sugestões de empresas para solicitação de acesso.'
           )
         );
       } finally {
@@ -229,6 +237,7 @@ function SelectCompanyContent() {
     };
   }, [authLoading, isAuthenticated]);
 
+  // ── Busca debounceada ───────────────────────────────────────────────────────
   useEffect(() => {
     const trimmed = search.trim();
     if (trimmed.length < SEARCH_MIN_LENGTH) {
@@ -249,7 +258,7 @@ function SelectCompanyContent() {
           ? (
               await companyAccessApi.context(
                 { q: trimmed, limit: 20 },
-                { retries: 3, timeout: 20000, useClientCache: false }
+                { retries: 1, timeout: 8000, useClientCache: false }
               )
             ).suggested_companies || []
           : normalizeCompanySelectionList(
@@ -270,7 +279,7 @@ function SelectCompanyContent() {
         setSearchError(
           extractErrorMessage(
             error,
-            'Nao foi possivel pesquisar empresas agora. Tente novamente em instantes.'
+            'Não foi possível pesquisar empresas agora. Tente novamente em instantes.'
           )
         );
       } finally {
@@ -316,7 +325,7 @@ function SelectCompanyContent() {
       router.push(`/dashboard?company_id=${company.id}`);
     } catch (error) {
       setActionError(
-        extractErrorMessage(error, 'Nao foi possivel selecionar a empresa. Tente novamente.')
+        extractErrorMessage(error, 'Não foi possível selecionar a empresa. Tente novamente.')
       );
     } finally {
       setSelectingId(null);
@@ -335,7 +344,7 @@ function SelectCompanyContent() {
 
       await companyAccessApi.createRequest(
         companyId,
-        `Solicitacao de acesso enviada via tela de selecao para ${company.company_name}`
+        `Solicitação de acesso enviada via tela de seleção para ${company.company_name}`
       );
 
       const newReq: CompanyAccessPendingRequest = {
@@ -352,14 +361,23 @@ function SelectCompanyContent() {
       );
     } catch (error) {
       setActionError(
-        extractErrorMessage(error, 'Nao foi possivel enviar a solicitacao de acesso.')
+        extractErrorMessage(error, 'Não foi possível enviar a solicitação de acesso.')
       );
     } finally {
       setRequestingId(null);
     }
   };
 
-  if (entryState === 'loading' || authLoading || isLoading || contextLoading) {
+  // Cálculo da empresa ativa ou selecionada sem Hook (expressão pura sem violar Rules of Hooks)
+  const activeOrSelectedCompany =
+    activeCompany ??
+    companies[0] ??
+    (pendingRequests[0]
+      ? suggestedCompanies.find((c) => c.company_id === pendingRequests[0].company_id) ?? null
+      : null);
+
+  // ── Retornos condicionais de guarda (todos os Hooks já foram chamados acima) ─
+  if (entryState === 'loading' || authLoading || isLoading) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -436,16 +454,6 @@ function SelectCompanyContent() {
     </form>
   );
 
-  const activeOrSelectedCompany = useMemo(() => {
-    return (
-      activeCompany ||
-      companies[0] ||
-      (pendingRequests[0]
-        ? suggestedCompanies.find((c) => c.company_id === pendingRequests[0].company_id) || null
-        : null)
-    );
-  }, [activeCompany, companies, pendingRequests, suggestedCompanies]);
-
   const shell = (content: React.ReactNode) => (
     <main className="min-h-screen bg-[#f8faff] px-4 py-8">
       <div className="mx-auto w-full max-w-[1024px]">
@@ -453,21 +461,198 @@ function SelectCompanyContent() {
           <div className="lg:col-span-8 w-full max-w-[620px] mx-auto lg:max-w-none">
             {journeyProgress}
             {journeyHeader}
+
+            {/* Alertas de Ação e Feedback Visual */}
+            {actionError && (
+              <div
+                role="alert"
+                className="mb-4 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800"
+              >
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                  <span>{actionError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActionError(null)}
+                  className="ml-2 font-bold text-red-600 hover:text-red-800"
+                  aria-label="Fechar mensagem de erro"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {actionSuccess && (
+              <div
+                role="status"
+                className="mb-4 flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800"
+              >
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 shrink-0 text-emerald-600" />
+                  <span>{actionSuccess}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActionSuccess(null)}
+                  className="ml-2 font-bold text-emerald-600 hover:text-emerald-800"
+                  aria-label="Fechar mensagem de sucesso"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {contextError && (
+              <div
+                role="alert"
+                className="mb-4 flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800"
+              >
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                  <span>{contextError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setContextError(null)}
+                  className="ml-2 font-bold text-amber-600 hover:text-amber-800"
+                  aria-label="Fechar aviso"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {searchError && (
+              <div
+                role="alert"
+                className="mb-4 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800"
+              >
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                  <span>{searchError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSearchError(null)}
+                  className="ml-2 font-bold text-red-600 hover:text-red-800"
+                  aria-label="Fechar erro de busca"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             {content}
           </div>
+
           <div className="lg:col-span-4 w-full">
-            <CompanyAccessSidebar
-              selectedCompany={activeOrSelectedCompany}
-              pendingRequest={pendingRequests[0] || null}
-            />
+            <ErrorBoundary
+              fallback={
+                <div className="w-full max-w-[300px] mx-auto rounded-lg border border-slate-200 bg-white p-4 shadow-sm text-xs text-slate-500">
+                  <p className="font-semibold text-slate-700">Informações complementares</p>
+                  <p className="mt-1 text-[11px]">Não foi possível carregar os dados laterais no momento.</p>
+                </div>
+              }
+            >
+              <CompanyAccessSidebar
+                selectedCompany={activeOrSelectedCompany}
+                pendingRequest={pendingRequests[0] || null}
+              />
+            </ErrorBoundary>
           </div>
         </div>
       </div>
     </main>
   );
 
+  // ── Renderização para usuários com 2+ empresas cadastradas ───────────────────
+  if (entryState === 'multiple-memberships') {
+    return shell(
+      <div className="space-y-6">
+        <section className="rounded-xl border border-[#d8e4f8] bg-white p-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#edf1f8]">
+            <div>
+              <h2 className="text-sm font-bold text-[#10265b]">Suas Empresas Vinculadas</h2>
+              <p className="text-xs text-[#60708f] mt-0.5">Selecione a empresa que deseja gerenciar agora:</p>
+            </div>
+            <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 text-[10px]">
+              {companies.length} empresas
+            </Badge>
+          </div>
+
+          <div className="mt-3 space-y-2">
+            {filteredMyCompanies.map((company) => (
+              <div
+                key={company.id}
+                className="flex flex-col gap-3 rounded-lg border border-[#e1e9f8] p-3 sm:flex-row sm:items-center hover:border-[#0755f5]/30 transition-colors"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#e1e9f8] bg-white">
+                  {company.logo_url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={company.logo_url}
+                      alt={company.name}
+                      className="h-full w-full object-contain p-1"
+                    />
+                  ) : (
+                    <Building2 className="h-5 w-5 text-[#0755f5]" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-bold">{company.name}</p>
+                  <p className="text-[10px] text-[#60708f]">
+                    {company.city || '-'}, {company.state || '-'}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-[#0755f5] text-white hover:bg-[#0644c5] text-xs h-8"
+                  disabled={selectingId === company.id}
+                  onClick={() => handleSelect(company)}
+                >
+                  {selectingId === company.id ? (
+                    <>
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      Acessando...
+                    </>
+                  ) : (
+                    <>
+                      <span>Acessar painel</span>
+                      <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-[#d8e4f8] bg-white p-4">
+          <h3 className="text-xs font-bold text-[#10265b] uppercase tracking-wider mb-2">
+            Vincular outra empresa
+          </h3>
+          <p className="text-xs text-[#60708f] mb-3">
+            Precisa gerenciar ou solicitar acesso a outra empresa parceira? Busque pelo nome abaixo:
+          </p>
+          {searchForm}
+        </section>
+      </div>
+    );
+  }
+
   if (flowState === 'initial') {
-    return shell(<SearchInitialPanel>{searchForm}</SearchInitialPanel>);
+    return shell(
+      <SearchInitialPanel>
+        {searchForm}
+        {contextLoading && (
+          <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-[#60708f]">
+            <Loader2 className="h-3 w-3 animate-spin text-[#0755f5]" />
+            <span>Carregando dados iniciais...</span>
+          </div>
+        )}
+      </SearchInitialPanel>
+    );
   }
 
   if (flowState === 'searching') {
@@ -566,6 +751,7 @@ function SelectCompanyContent() {
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#e1e9f8] bg-white">
                   {company.logo_url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={company.logo_url}
                       alt={company.company_name}

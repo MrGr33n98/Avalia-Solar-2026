@@ -1,8 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { CompanyAccessSidebar } from '@/components/company-access/CompanyAccessSidebar';
-import { CompanyAccessStatus } from '@/components/company-access/CompanyAccessStatus';
-import { AvaliaSolarHouseAd } from '@/components/company-access/AvaliaSolarHouseAd';
 import { useBannersQuery } from '@/hooks/useBannersQuery';
 
 // Mock do hook useBannersQuery

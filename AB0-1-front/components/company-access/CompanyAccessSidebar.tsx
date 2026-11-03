@@ -2,8 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Award, ArrowRight } from 'lucide-react';
+import { Award, ArrowRight } from 'lucide-react';
 import { BannerSlot } from '@/components/banners/BannerSlot';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { CompanyAccessStatus } from './CompanyAccessStatus';
 import { AvaliaSolarHouseAd } from './AvaliaSolarHouseAd';
 import { cn } from '@/lib/utils';
@@ -47,12 +48,16 @@ export function CompanyAccessSidebar({
           </span>
         </div>
 
-        <BannerSlot
-          placement="company_access_sidebar"
-          limit={1}
-          lazy
-          fallback={<AvaliaSolarHouseAd source="company_access_sidebar" />}
-        />
+        <ErrorBoundary
+          fallback={<AvaliaSolarHouseAd source="company_access_sidebar_fallback" />}
+        >
+          <BannerSlot
+            placement="company_access_sidebar"
+            limit={1}
+            lazy
+            fallback={<AvaliaSolarHouseAd source="company_access_sidebar" />}
+          />
+        </ErrorBoundary>
       </section>
 
       {/* 3. Segundo Espaço Promocional: Divulgação institucional de autoridade / verificação */}
@@ -80,3 +85,4 @@ export function CompanyAccessSidebar({
     </aside>
   );
 }
+

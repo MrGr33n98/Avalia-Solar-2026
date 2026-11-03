@@ -5,11 +5,8 @@ import Link from 'next/link';
 import {
   Building2,
   Clock,
-  CheckCircle2,
-  XCircle,
   ShieldCheck,
   ChevronRight,
-  ExternalLink,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -79,7 +76,7 @@ export function CompanyAccessStatus({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-bold text-slate-900">
-                  {request.company_name || ('name' in (company || {}) ? (company as any).name : 'Empresa Selecionada')}
+                  {request.company_name || (company && 'name' in company ? company.name : (company && 'company_name' in company ? company.company_name : 'Empresa Selecionada'))}
                 </p>
                 <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
                   <Clock className="h-3 w-3" />

@@ -10,7 +10,7 @@ test.describe('Select Company Flow', () => {
       },
     ]);
 
-    let requestPayload: any = null;
+    let requestPayload: { company_id?: number; [key: string]: unknown } | null = null;
     let queryWasSent = false;
 
     await page.route('**/*', async (route) => {
@@ -119,7 +119,7 @@ test.describe('Select Company Flow', () => {
     await page.click('button:has-text("Solicitar acesso")');
 
     await expect(
-      page.locator('text=Solicitacao enviada para aprovacao do admin da empresa Volitbras.')
+      page.getByText(/Solicita[cç][aã]o enviada para aprova[cç][aã]o do admin da empresa Volitbras/i)
     ).toBeVisible();
     expect(queryWasSent).toBeTruthy();
     expect(requestPayload).toBeTruthy();
@@ -226,5 +226,80 @@ test.describe('Select Company Flow', () => {
     await page.goto('/select-company');
     await expect(page).toHaveURL(/\/dashboard\?company_id=321/, { timeout: 10_000 });
     await expect(page.getByText('Encontre a empresa que você busca')).toHaveCount(0);
+  });
+
+  test('select-company não deve quebrar após carregar dados (sem erros de hooks ou página)', async ({ page, context }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => {
+      errors.push(error.message);
+    });
+
+    await context.addCookies([
+      {
+        name: 'jwt_token',
+        value: 'fake-jwt-token',
+        url: 'http://localhost:3000',
+      },
+    ]);
+
+    await page.route('**/*', async (route) => {
+      const url = route.request().url();
+
+      if (url.includes('/api/v1/auth/me')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            user: {
+              id: 7,
+              email: 'company@example.com',
+              name: 'Company User',
+              role: 'company',
+              status: 'active',
+            },
+          }),
+        });
+        return;
+      }
+
+      if (url.includes('/api/v1/companies/mine')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+        return;
+      }
+
+      if (url.includes('/api/v1/company_access/context')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            active_memberships: [],
+            pending_requests: [],
+            suggested_companies: [
+              {
+                company_id: 11,
+                company_name: 'Solar Hub',
+                company_slug: 'solar-hub',
+                city: 'Goiania',
+                state: 'GO',
+                verified: true,
+                logo_url: null,
+              },
+            ],
+          }),
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+
+    await page.goto('/select-company');
+    await expect(page.getByRole('heading', { name: 'Encontre a empresa que você busca' })).toBeVisible();
+    await expect(page.getByText('Oops! Algo deu errado')).toHaveCount(0);
+    expect(errors).toEqual([]);
   });
 });
