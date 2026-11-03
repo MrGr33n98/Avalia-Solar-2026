@@ -272,7 +272,13 @@ export default function CompanyDetailClient({
   const showCompetitorBanners = currentCompany.feature_access
     ? isFeatureEnabled(currentCompany.feature_access, 'show_competitor_banners')
     : true;
-  const showFinancing = Boolean(currentCompany?.financing_tab_visible);
+  const showFinancing = Boolean(
+    (currentCompany as any)?.public_financing_visible === true ||
+    (
+      currentCompany?.financing_tab_visible === true &&
+      (currentCompany?.financing_enabled === true || (currentCompany as any)?.segment === 'finance')
+    )
+  );
   const enabledRawInit = extendedCompany.cta_whatsapp_enabled ?? extendedCompany.whatsapp_enabled;
 
   const ctaEnabled = canUseWhatsApp

@@ -1098,6 +1098,14 @@ end
     financing_tab_visible
   end
 
+  def public_financing_visible?
+    return true if segment == 'finance' && company_financing_profile&.published?
+    return false unless respond_to?(:financing_enabled) && financing_enabled?
+    return false unless respond_to?(:financing_tab_visible) && financing_tab_visible?
+
+    company_financing_profile&.published? == true
+  end
+
   def whatsapp_enabled?
     # Ensure it returns a boolean even if the column is missing
     return false unless respond_to?(:whatsapp_enabled)

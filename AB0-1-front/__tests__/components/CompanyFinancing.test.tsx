@@ -70,6 +70,6 @@ describe('CompanyFinancing (novo)', () => {
 
     expect(screen.getByText(/Financiamento sob medida/i)).toBeInTheDocument();
     expect(screen.getByText(/Parcela estimada/i)).toBeInTheDocument();
-    expect(screen.getByText(/Bancos e parceiros/i)).toBeInTheDocument();
+    expect(screen.getByText(/Instituições disponíveis/i)).toBeInTheDocument();
   });
 });

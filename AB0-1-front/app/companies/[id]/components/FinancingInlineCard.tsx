@@ -167,6 +167,14 @@ export default function FinancingInlineCard({ company }: FinancingInlineCardProp
   const logoUrl = logoSrc ? getFullImageUrl(logoSrc) : null;
   const isBancoDoBrasil = /banco do brasil|bb/i.test(company.name);
 
+  // Trava de segurança: impede exibição de simulação com defaults sem perfil formalmente publicado
+  const hasPublishedProfile = profile?.status === 'published';
+  const isFinanceSegment = (company as any).segment === 'finance';
+  const isPubliclyVisible = (company as any).public_financing_visible === true;
+  if (!hasPublishedProfile && !isFinanceSegment && !isPubliclyVisible) {
+    return null;
+  }
+
   return (
     <>
       <Card className="rounded-2xl border border-slate-200/90 bg-white p-5 md:p-6 shadow-sm">

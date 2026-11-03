@@ -51,14 +51,21 @@ export default function OverviewTab({
   const paidPlan = hasPaidPlan(company);
   const showGallery = canShowMediaGallery(company);
 
-  // Setup de financiamento da instituição / empresa (US-010 / PRD-FIN-001)
+  // Setup de financiamento da instituição / empresa (PRD-FIN-SCALE)
+  // O simulador inline só deve aparecer se a funcionalidade estiver ativada e com perfil publicado,
+  // ou se for uma instituição financeira com perfil publicado.
+  // Categorias de SEO (ex: 'financiamento-energia-solar') JAMAIS ativam o simulador.
   const hasFinancingSetup = Boolean(
-    company.financing_profile ||
-    company.financing_enabled ||
-    company.financing_tab_visible ||
-    (company as any).segment === 'finance' ||
-    company.category_info?.seo_url?.includes('financ') ||
-    company.categories?.some((c) => c.seo_url?.includes('financ'))
+    (company as any).public_financing_visible === true ||
+    (
+      company.financing_tab_visible === true &&
+      company.financing_enabled === true &&
+      company.financing_profile?.status === 'published'
+    ) ||
+    (
+      (company as any).segment === 'finance' &&
+      company.financing_profile?.status === 'published'
+    )
   );
 
   // Regra de Negócio:

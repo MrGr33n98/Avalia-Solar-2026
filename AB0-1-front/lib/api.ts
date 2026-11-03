@@ -439,6 +439,7 @@ export interface Company {
   faqs?: CompanyFaq[];
   financing_enabled?: boolean;
   financing_feature_allowed?: boolean;
+  public_financing_visible?: boolean;
   financing_profile?: CompanyFinancingProfile | null;
   financing_partners?: CompanyFinancingPartner[];
   financing_offers?: CompanyFinancingOffer[];

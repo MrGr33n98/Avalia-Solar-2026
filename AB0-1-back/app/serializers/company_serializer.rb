@@ -26,6 +26,7 @@ class CompanySerializer < ActiveModel::Serializer
              :financing_enabled,
              :financing_feature_allowed,
              :financing_tab_visible,
+             :public_financing_visible,
              :financing_profile,
              :financing_partners,
              :financing_offers,
@@ -312,6 +313,10 @@ class CompanySerializer < ActiveModel::Serializer
 
   def financing_tab_visible
     object.financing_tab_visible?
+  end
+
+  def public_financing_visible
+    object.respond_to?(:public_financing_visible?) ? !!object.public_financing_visible? : false
   end
 
   def sector_ratings_enabled
