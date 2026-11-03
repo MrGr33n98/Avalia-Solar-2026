@@ -1,7 +1,7 @@
 class CategorySerializer < ActiveModel::Serializer
   include Rails.application.routes.url_helpers
 
-  attributes :id, :name, :seo_url, :seo_title, :seo_keywords, :seo_description,
+  attributes :id, :name, :slug, :seo_url, :seo_title, :seo_keywords, :seo_description,
              :short_description, :description,
              :parent_id, :kind, :status, :featured,
              :average_rating, :reviews_count, :articles_count,
@@ -79,12 +79,17 @@ class CategorySerializer < ActiveModel::Serializer
     Rails.application.routes.url_helpers.rails_storage_proxy_url(object.home_carousel_banner, options)
   end
 
+  def slug
+    object.seo_url
+  end
+
   def parent
     return nil unless object.parent
 
     {
       id: object.parent.id,
       name: object.parent.name,
+      slug: object.parent.seo_url,
       seo_url: object.parent.seo_url
     }
   end
@@ -94,6 +99,7 @@ class CategorySerializer < ActiveModel::Serializer
       {
         id: child.id,
         name: child.name,
+        slug: child.seo_url,
         seo_url: child.seo_url,
         featured: child.featured,
         status: child.status

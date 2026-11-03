@@ -24,7 +24,7 @@ async function BreadcrumbsWrapper({ slug }: { slug: string }) {
         items={[
           { name: 'Início', item: '/' },
           { name: 'Categorias', item: '/categories' },
-          { name: category.name, item: `/categories/${category.slug}` }
+          { name: category.name, item: `/categories/${(category as any).seo_url || category.slug || slug}` }
         ]}
       />
     );
@@ -55,7 +55,8 @@ export async function generateMetadata({ params, searchParams }: CategorySlugPag
       locationSuffix = ` em ${state}`;
     }
 
-    const baseTitle = category.seo_title || category.name;
+    const rawTitle = category.seo_title || category.name;
+    const baseTitle = rawTitle.replace(/\s*\|\s*Avalia Solar$/i, "").trim();
     const title = `${baseTitle}${locationSuffix} | Avalia Solar`;
     const description = [
       category.seo_description || category.short_description || category.description || `Encontre as melhores empresas e orçamentos de ${category.name} no Avalia Solar.`,
