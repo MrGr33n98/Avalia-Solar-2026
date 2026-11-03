@@ -1123,7 +1123,7 @@ export default function Opportunity360View({ opportunityId, initialData, onClose
         open={activeModal === 'email'}
         onClose={() => setActiveModal(null)}
         opportunityId={opp?.id}
-        contactId={opp?.contact_id}
+        contactId={opp?.contact_id || opp?.primary_contact_id}
         accountId={opp?.sales_account_id}
         contactEmail={opp?.contact_email}
         contactName={opp?.contact_name}

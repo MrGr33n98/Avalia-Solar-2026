@@ -79,7 +79,15 @@ module Api
             end
           end
 
-          account ||= contact&.account || opp&.account
+          account ||= opp&.account || contact&.account
+
+          # Se o contato não pertencer à conta da oportunidade/disparo (ex: envio livre para e-mail avulso,
+          # teste ou destinatário externo não vinculado), desvincula o contato para permitir o envio livre
+          # sob a oportunidade/conta sem gerar conflito relacional indevido.
+          if account.present? && contact.present? && !current_tenant_scope.contact_linked_to_account?(contact, account)
+            contact = nil
+          end
+
           if (contact.present? || opp.present?) && account.nil?
             return render_relation_conflict(resource: 'EmailMessage')
           end
@@ -113,7 +121,7 @@ module Api
           created_emails = []
           ::Sales::EmailMessage.transaction do
             active_recipients.each do |target_to_email|
-              contact_for_recipient = scoped_contacts.find_by('LOWER(email) = ?', target_to_email) || contact
+              contact_for_recipient = scoped_contacts.where('LOWER(email) = ?', target_to_email).find { |c| account.nil? || current_tenant_scope.contact_linked_to_account?(c, account) } || (account.nil? || (contact.present? && current_tenant_scope.contact_linked_to_account?(contact, account)) ? contact : nil)
               thread = find_or_create_thread(
                 company_id: company_id,
                 account: account,

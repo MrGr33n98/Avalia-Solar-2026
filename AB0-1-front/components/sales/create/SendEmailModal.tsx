@@ -404,6 +404,12 @@ export default function SendEmailModal({
     setLoading(true);
     setError(null);
 
+    const normalizedContactEmail = contactEmail ? contactEmail.trim().toLowerCase() : '';
+    const isOriginalContactEmail =
+      Boolean(normalizedContactEmail) &&
+      toEmails.length > 0 &&
+      toEmails[0].trim().toLowerCase() === normalizedContactEmail;
+
     try {
       await salesApi.sendEmail({
         to_email: toEmails[0],
@@ -412,7 +418,7 @@ export default function SendEmailModal({
         body_text: currentText,
         body_html: currentHtml,
         sales_opportunity_id: opportunityId || undefined,
-        sales_contact_id: contactId || undefined,
+        sales_contact_id: isOriginalContactEmail ? (contactId || undefined) : undefined,
         sales_account_id: accountId || undefined,
         cc: ccEmails.length ? ccEmails : undefined,
         bcc: bccEmails.length ? bccEmails : undefined,
