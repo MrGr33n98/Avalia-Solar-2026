@@ -64,7 +64,8 @@ export default function CompanyContactCard({
         company.actions?.whatsapp_url || company.whatsapp
       )
     : null;
-  const emailValue = company.email || company.email_public || "";
+  // Only publish the designated public address (never the private company email).
+  const emailValue = company.email_public || "";
   const locationCityState = [company.city, company.state].filter(Boolean).join(", ");
   const locationValue = locationCityState || company.address || "";
   const locationTitle = company.address
