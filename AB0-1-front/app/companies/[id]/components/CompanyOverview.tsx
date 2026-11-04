@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AnswerBlock from '@/components/seo/AnswerBlock';
 import WhatsappButton from '@/components/WhatsappButton';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { Company, Review } from '@/lib/api';
 import {
@@ -346,9 +347,10 @@ function MobileCompanyOverview({ company }: { company: Company }) {
     (Array.isArray(company.services_offered) ? company.services_offered.length : 0);
   const location = [company.address, company.city, company.state].filter(Boolean).join(', ');
   const whatsappUrl = (company as Company & { whatsapp_url?: string | null }).whatsapp_url;
-  const whatsappHref =
-    whatsappUrl ||
-    (company.whatsapp ? `https://wa.me/${String(company.whatsapp).replace(/\D/g, '')}` : null);
+  const whatsappHref = canUsePaidConversion(company, 'whatsapp') &&
+    (company.cta_whatsapp_enabled ?? company.whatsapp_enabled ?? company.actions?.whatsapp_enabled)
+    ? whatsappUrl || company.cta_whatsapp_url || company.actions?.whatsapp_url || null
+    : null;
   const phoneHref = company.phone ? `tel:${String(company.phone).replace(/\D/g, '')}` : null;
 
   const stats = [
@@ -429,7 +431,7 @@ function MobileCompanyOverview({ company }: { company: Company }) {
         </div>
       </section>
 
-      <section className="grid grid-cols-[1.15fr_0.85fr] gap-3">
+      <section className={whatsappHref ? "grid grid-cols-[1.15fr_0.85fr] gap-3" : "grid grid-cols-1 gap-3"}>
         <ReviewCompanyButton
           company={company}
           className="h-14 rounded-2xl bg-blue-700 text-base font-black text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800"
@@ -444,20 +446,10 @@ function MobileCompanyOverview({ company }: { company: Company }) {
             className="h-14 w-full rounded-2xl border border-slate-200 bg-white text-base font-black text-slate-950 shadow-sm hover:bg-slate-50"
             label="WhatsApp"
             companyId={company.id}
-            requireSignup
-            signupGateSource="contact_reveal"
-            signupGateTitle="Crie sua conta para falar no WhatsApp"
-            signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
+            requireSignup={false}
+            preset="brandSolid"
           />
-        ) : (
-          <Button
-            variant="outline"
-            className="h-14 rounded-2xl border-slate-200 text-base font-black text-slate-500"
-            disabled
-          >
-            WhatsApp
-          </Button>
-        )}
+        ) : null}
       </section>
     </div>
   );

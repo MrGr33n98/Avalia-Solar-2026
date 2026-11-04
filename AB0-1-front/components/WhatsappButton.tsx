@@ -110,7 +110,7 @@ export default function WhatsappButton({
     </svg>
   );
 
-  const handleClick = async () => {
+  const handleClick = () => {
     const path = pagePath || (typeof window !== 'undefined' ? window.location.pathname : undefined);
     const returnTo = signupGateReturnTo || (typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : path);
 
@@ -136,7 +136,7 @@ export default function WhatsappButton({
     
     // NEW: Track with unified CTA tracking
     if (companyId) {
-      await trackCTAClick({
+      void trackCTAClick({
         ctaType: 'whatsapp',
         ctaLocation: path?.includes('/companies/') ? 'hero' : 'other',
         companyId: String(companyId),
