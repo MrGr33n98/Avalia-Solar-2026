@@ -56,24 +56,40 @@
 }
 
 /* ==========================================================================
-   Buttons & Interactive CTAs
+   Buttons & Interactive CTAs (Ultra-Premium SaaS Grade)
    ========================================================================== */
 
 .as-article .as-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px; /* Accessible touch target >= 44px */
-  padding: 10px 24px;
-  font-size: 0.975rem;
+  min-height: 48px;
+  padding: 12px 28px;
+  font-size: 1rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
   line-height: 1.4;
   text-decoration: none !important;
-  border-radius: var(--as-radius-btn);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 12px;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   border: 1px solid transparent;
-  gap: 8px;
+  gap: 10px;
+  position: relative;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+/* Margin between consecutive buttons */
+.as-article .as-btn + .as-btn {
+  margin-left: 12px;
+}
+
+@media (max-width: 480px) {
+  .as-article .as-btn + .as-btn {
+    margin-left: 0;
+    margin-top: 10px;
+  }
 }
 
 .as-article .as-btn:focus-visible {
@@ -81,39 +97,51 @@
   outline-offset: 3px;
 }
 
+.as-article .as-btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+
 .as-article .as-btn--primary {
-  background-color: var(--as-color-primary);
+  background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 100%);
   color: #FFFFFF !important;
-  box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 8px 20px -4px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .as-article .as-btn--primary:hover {
-  background-color: var(--as-color-primary-hover);
+  background: linear-gradient(180deg, #3B82F6 0%, #1D4ED8 100%);
   color: #FFFFFF !important;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px 0 rgba(37, 99, 235, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08), 0 14px 28px -4px rgba(37, 99, 235, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .as-article .as-btn--secondary {
-  background-color: var(--as-color-ink);
+  background: linear-gradient(180deg, #0F172A 0%, #020617 100%);
   color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1), 0 8px 16px -4px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .as-article .as-btn--secondary:hover {
-  opacity: 0.92;
+  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
   color: #FFFFFF !important;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.1), 0 12px 24px -4px rgba(15, 23, 42, 0.4);
 }
 
 .as-article .as-btn--outline {
-  background-color: transparent;
-  color: var(--as-color-primary) !important;
-  border-color: var(--as-color-primary);
+  background: #FFFFFF;
+  color: #0F172A !important;
+  border: 1.5px solid #CBD5E1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
 .as-article .as-btn--outline:hover {
-  background-color: var(--as-color-primary-soft);
-  color: var(--as-color-primary-hover) !important;
+  background: #F8FAFC;
+  border-color: #94A3B8;
+  color: #0F172A !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .as-article .as-btn--full {
@@ -127,12 +155,12 @@
 .as-article .as-cta-card {
   position: relative;
   margin: var(--as-space-xl) 0;
-  padding: var(--as-space-lg);
+  padding: 28px 32px;
   background: var(--as-color-surface-card);
   border: 1px solid var(--as-color-border);
   border-radius: var(--as-radius-card);
-  box-shadow: var(--as-shadow-card);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
   overflow: hidden;
 }
 
@@ -143,7 +171,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--as-color-primary), var(--as-color-accent));
+  background: linear-gradient(90deg, #2563EB, #F59E0B);
 }
 
 .as-article .as-cta-card:hover {

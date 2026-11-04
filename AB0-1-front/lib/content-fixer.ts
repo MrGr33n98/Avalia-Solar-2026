@@ -31,5 +31,22 @@ export function fixArticleContent(content: string | null | undefined): string {
     return `<div class="as-table-wrap table-responsive">${match}</div>`;
   });
 
+  // 3. Auto-promote raw CTA links (legacy posts) into premium .as-btn components
+  fixedContent = fixedContent.replace(
+    /<a\b([^>]*href=["'][^"']*(?:\/founder|avaliasolar\.com\.br\/founder)["'][^>]*)>(.*?)<\/a>/gi,
+    (match, attrs, text) => {
+      if (attrs.includes('as-btn')) return match;
+      return `<a ${attrs} class="as-btn as-btn--primary" data-as-track="cta_click">${text}</a>`;
+    }
+  );
+
+  fixedContent = fixedContent.replace(
+    /<a\b([^>]*href=["'][^"']*zbooking\.us[^"']*["'][^>]*)>(.*?)<\/a>/gi,
+    (match, attrs, text) => {
+      if (attrs.includes('as-btn')) return match;
+      return `<a ${attrs} class="as-btn as-btn--outline" target="_blank" rel="noopener noreferrer" data-as-track="cta_click">${text}</a>`;
+    }
+  );
+
   return fixedContent;
 }
