@@ -76,10 +76,10 @@ test.describe('Avalia Solar Founder Motion System E2E', () => {
 
     // Verifica labels de Antes e Depois
     await expect(page.locator('text=Antes · Perfil Básico').first()).toBeVisible();
-    await expect(page.locator('text=Depois · Brand Page Oficial').first()).toBeVisible();
+    await expect(page.locator('text=Depois · Brand Page').first()).toBeVisible();
 
     // Testa os botões de alternância rápida
-    const buttonAfter = page.locator('button:has-text("Ver Brand Page Homologada (100%)")');
+    const buttonAfter = page.locator('button:has-text("Ver Brand Page (100%)")');
     await buttonAfter.click();
     await expect(slider).toHaveAttribute('aria-valuenow', '100');
   });
