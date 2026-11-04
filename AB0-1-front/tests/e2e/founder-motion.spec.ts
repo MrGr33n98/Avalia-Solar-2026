@@ -55,16 +55,35 @@ test.describe('Avalia Solar Founder Motion System E2E', () => {
     await expect(page.locator('text=Catálogo de Produtos Fotovoltaicos').first()).toBeVisible();
   });
 
-  test('deve exibir os módulos Bento com distinção de pacotes e count-up', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
+  test('não deve renderizar a seção de módulos técnicos removida', async ({ page }) => {
     await page.goto('/founder');
 
-    // Verifica presença dos módulos técnicos
-    await expect(page.locator('text=Vitrine de Inversores, Baterias e Sistemas Homologados').first()).toBeVisible();
-    await expect(page.locator('text=Avaliações com Critérios Técnicos').first()).toBeVisible();
-    await expect(page.locator('text=Sem Taxas Ocultas por Lead').first()).toBeVisible();
-    await expect(page.locator('text=Painel Analítico de Acessos').first()).toBeVisible();
-    await expect(page.locator('text=Bloqueio de Anúncios Competitivos').first()).toBeVisible();
+    const viewports = [360, 390, 768, 1280, 1440];
+    const removedContent = [
+      'Estrutura técnica desenhada para conversão e autoridade',
+      'Vitrine de Inversores, Baterias e Sistemas Homologados',
+      'Avaliações com Critérios Técnicos',
+      'Sem Taxas Ocultas por Lead',
+      'Painel Analítico de Acessos',
+      'Bloqueio de Anúncios Competitivos',
+    ];
+
+    for (const width of viewports) {
+      await page.setViewportSize({ width, height: 900 });
+
+      for (const content of removedContent) {
+        await expect(page.getByText(content, { exact: true })).toHaveCount(0);
+      }
+
+      await expect(
+        page.getByRole('heading', { name: 'Veja como a Brand Page opera na tela do computador' })
+      ).toBeVisible();
+      await expect(
+        page.getByRole('heading', {
+          name: 'Veja a diferença entre um perfil básico e uma Brand Page completa.',
+        })
+      ).toBeVisible();
+    }
   });
 
   test('deve renderizar o comparador Before / After arrastável e acessível', async ({ page }) => {

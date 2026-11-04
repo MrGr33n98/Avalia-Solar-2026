@@ -14,7 +14,6 @@ import {
 
 import FounderHeroMotion from '@/components/founder/FounderHeroMotion';
 import FounderCursorTour from '@/components/founder/FounderCursorTour';
-import FounderBentoMotion from '@/components/founder/FounderBentoMotion';
 import FounderBeforeAfter from '@/components/founder/FounderBeforeAfter';
 import FounderProcessDraw from '@/components/founder/FounderProcessDraw';
 import { trackFounderPageView, trackFounderCtaClick } from '@/components/founder/FounderTelemetry';
@@ -127,9 +126,6 @@ export default function FounderPageClient() {
 
       {/* REQUISITO 3: INTERACTIVE BRAND PAGE TOUR (SOLARMAX INTEGRADORA) */}
       <FounderCursorTour />
-
-      {/* REQUISITO 4: BENTO MOTION BUILD & COUNT-UP */}
-      <FounderBentoMotion />
 
       {/* REQUISITO 5: BEFORE / AFTER INTERATIVO ARRASTÁVEL */}
       <FounderBeforeAfter />
