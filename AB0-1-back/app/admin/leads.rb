@@ -19,9 +19,9 @@ ActiveAdmin.register Lead do
   scope 'MobiVolt AI', ->(leads) { leads.where(source: 'mobivolt_ai') }
   scope 'Leads Quentes', ->(leads) { leads.where('lead_score >= 70') }
   scope 'Orçamento Solicitado', ->(leads) { leads.where.not(quote_requested_company_id: nil) }
-  scope 'Com Patrocinada', show_count: false, lambda { |leads|
+  scope 'Com Patrocinada', ->(leads) {
     leads.where(source: 'mobivolt_ai').where('recommended_company_ids::text LIKE ?', '%"sponsored":true%')
-  }
+  }, show_count: false
 
   # Filtros na barra lateral
   filter :name
