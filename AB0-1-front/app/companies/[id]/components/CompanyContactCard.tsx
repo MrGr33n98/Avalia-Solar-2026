@@ -1,13 +1,24 @@
 "use client";
 
-import { Phone, Mail, Globe, MapPin } from "lucide-react";
+import { Phone, Mail, Globe, MapPin, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Company } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
 import { trackCTAClick } from "@/lib/analytics/track-cta";
-import { useCopyIntent, useHoverIntent } from "@/lib/analytics/hooks/useIntentTracking";
-import { openSignupGate } from "@/lib/signup-gate";
+import { useHoverIntent } from "@/lib/analytics/hooks/useIntentTracking";
 import { cn } from "@/lib/utils";
+import { canUsePaidConversion } from "@/lib/feature-access";
+
+// Only publish a WhatsApp CTA when the company has explicitly configured one.
+const normalizeWhatsAppLink = (value?: string | null): string | null => {
+  if (!value) return null;
+  const raw = value.trim();
+  if (/^https:\/\/(?:wa\.me|api\.whatsapp\.com)(?:\/|\?)/i.test(raw)) return raw;
+  if (/^[a-z]+:\/\//i.test(raw)) return null;
+
+  const digits = raw.replace(/\D/g, "");
+  if (![10, 11, 12, 13].includes(digits.length)) return null;
+  return "https://wa.me/" + (digits.startsWith("55") && digits.length >= 12 ? digits : "55" + digits);
+};
 
 interface CompanyContactCardProps {
   company: Company;
@@ -20,23 +31,10 @@ export default function CompanyContactCard({
   className,
   hideHeader = false,
 }: CompanyContactCardProps) {
-  const { isAuthenticated, loading: authLoading } = useAuth();
   const intentCompanyId = String(company.id);
-
-  const currentReturnTo = typeof window !== "undefined"
-    ? `${window.location.pathname}${window.location.search}`
-    : `/companies/${company.slug || company.id}`;
 
   // Telemetria de intenção (hover e copy) mantida intacta
   const phoneHoverIntent = useHoverIntent(intentCompanyId, "phone", 800, {
-    signalCategory: "contact_intent",
-    elementSelector: "company-sidebar-phone",
-    metadata: {
-      source: "company_profile_sidebar",
-    },
-  });
-
-  const phoneCopyIntent = useCopyIntent(intentCompanyId, "phone", {
     signalCategory: "contact_intent",
     elementSelector: "company-sidebar-phone",
     metadata: {
@@ -52,21 +50,20 @@ export default function CompanyContactCard({
     },
   });
 
-  const emailCopyIntent = useCopyIntent(intentCompanyId, "email", {
-    signalCategory: "contact_intent",
-    elementSelector: "company-sidebar-email",
-    metadata: {
-      source: "company_profile_sidebar",
-    },
-  });
-
   const formatUrl = (url?: string) => {
     if (!url) return "";
     return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
   };
 
-  const phoneValue = company.phone || company.whatsapp || "";
-  const isWhatsappFallback = !company.phone && Boolean(company.whatsapp);
+  const phoneValue = company.phone || "";
+  const whatsappEnabled = company.cta_whatsapp_enabled ??
+    company.whatsapp_enabled ?? company.actions?.whatsapp_enabled ?? false;
+  const whatsappHref = canUsePaidConversion(company, "whatsapp") && whatsappEnabled
+    ? normalizeWhatsAppLink(
+        company.cta_whatsapp_url || company.whatsapp_url ||
+        company.actions?.whatsapp_url || company.whatsapp
+      )
+    : null;
   const emailValue = company.email || company.email_public || "";
   const locationCityState = [company.city, company.state].filter(Boolean).join(", ");
   const locationValue = locationCityState || company.address || "";
@@ -76,7 +73,7 @@ export default function CompanyContactCard({
       : company.address
     : locationValue;
 
-  const hasAnyContact = Boolean(phoneValue || emailValue || company.website || locationValue);
+  const hasAnyContact = Boolean(whatsappHref || phoneValue || emailValue || company.website || locationValue);
   if (!hasAnyContact) return null;
 
   return (
@@ -91,33 +88,44 @@ export default function CompanyContactCard({
       <CardContent className="p-0">
         <div className="grid grid-cols-2 gap-x-3 sm:gap-x-5 gap-y-4 min-w-0">
           
-          {/* 1. TELEFONE COMERCIAL (Linha 1, Coluna 1) */}
-          {phoneValue && (
-            <div className="flex items-start gap-2 sm:gap-2.5 min-w-0">
-              <div className="pt-0.5 text-slate-800 shrink-0" aria-hidden="true">
-                <Phone className="h-[18px] w-[18px]" />
+          {/* Contato principal: WhatsApp direto, sem login. Nunca exponha número mascarado. */}
+          {whatsappHref ? (
+            <div className="flex min-w-0 items-start gap-2 sm:gap-2.5">
+              <div className="shrink-0 pt-0.5 text-emerald-700" aria-hidden="true">
+                <MessageCircle className="h-[18px] w-[18px]" />
               </div>
-              <div className="flex flex-col min-w-0 flex-1">
+              <div className="min-w-0 flex-1">
                 <a
-                  href={!isAuthenticated ? "#" : `tel:${phoneValue.replace(/\D/g, "")}`}
-                  className="text-xs sm:text-[13px] font-bold text-slate-900 hover:text-blue-700 transition-colors inline-flex items-center truncate max-w-full"
-                  title={isAuthenticated ? phoneValue : "Clique para ver o telefone completo"}
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={"Conversar com " + company.name + " no WhatsApp"}
+                  className="inline-flex min-h-9 max-w-full items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 transition-colors hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:text-[13px]"
+                  onClick={() => {
+                    void trackCTAClick({
+                      ctaType: "whatsapp",
+                      ctaLocation: "sidebar",
+                      companyId: String(company.id),
+                      companyName: company.name,
+                    });
+                  }}
+                >
+                  Conversar no WhatsApp
+                </a>
+                <span className="mt-1 block text-[11px] text-slate-500">Atendimento direto</span>
+              </div>
+            </div>
+          ) : phoneValue ? (
+            <div className="flex min-w-0 items-start gap-2 sm:gap-2.5">
+              <Phone className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-800" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <a
+                  href={"tel:" + phoneValue.replace(/\D/g, "")}
+                  className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 sm:text-[13px]"
                   onMouseEnter={phoneHoverIntent.onMouseEnter}
                   onMouseLeave={phoneHoverIntent.onMouseLeave}
-                  onCopy={phoneCopyIntent.onCopy}
-                  onClick={async (e) => {
-                    if (!authLoading && !isAuthenticated) {
-                      e.preventDefault();
-                      openSignupGate({
-                        source: "contact_reveal",
-                        returnTo: currentReturnTo,
-                        title: "Crie sua conta para ver os contatos",
-                        description: "Libere telefone, e-mail e outros canais de contato desta empresa.",
-                      });
-                      return;
-                    }
-
-                    await trackCTAClick({
+                  onClick={() => {
+                    void trackCTAClick({
                       ctaType: "phone",
                       ctaLocation: "sidebar",
                       companyId: String(company.id),
@@ -125,53 +133,26 @@ export default function CompanyContactCard({
                     });
                   }}
                 >
-                  {!isAuthenticated && !authLoading ? (
-                    <>
-                      <span className="opacity-80 truncate">
-                        {phoneValue.length > 6 ? `${phoneValue.substring(0, 6)}****` : phoneValue}
-                      </span>
-                      <span className="text-[8.5px] bg-blue-100/80 text-blue-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border border-blue-200 ml-1.5 shrink-0 inline-flex items-center">
-                        Ver
-                      </span>
-                    </>
-                  ) : (
-                    <span className="truncate">{phoneValue}</span>
-                  )}
+                  Ligar para empresa
                 </a>
-                <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5 truncate">
-                  {isWhatsappFallback ? "WhatsApp comercial" : "Telefone comercial"}
-                </span>
+                <span className="mt-1 block text-[11px] text-slate-500">Telefone comercial</span>
               </div>
             </div>
-          )}
+          ) : null}
 
-          {/* 2. E-MAIL CORPORATIVO (Linha 1, Coluna 2) */}
+          {/* E-mail público acessível sem criação de conta */}
           {emailValue && (
-            <div className="flex items-start gap-2 sm:gap-2.5 min-w-0">
-              <div className="pt-0.5 text-slate-800 shrink-0" aria-hidden="true">
-                <Mail className="h-[18px] w-[18px]" />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
+            <div className="flex min-w-0 items-start gap-2 sm:gap-2.5">
+              <Mail className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-800" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
                 <a
-                  href={!isAuthenticated ? "#" : `mailto:${emailValue}`}
-                  className="text-xs sm:text-[13px] font-bold text-slate-900 hover:text-blue-700 transition-colors inline-flex items-center truncate max-w-full"
-                  title={isAuthenticated ? emailValue : "Clique para ver o e-mail completo"}
+                  href={"mailto:" + emailValue}
+                  className="inline-flex max-w-full truncate text-xs font-bold text-slate-900 transition-colors hover:text-blue-700 sm:text-[13px]"
+                  title={emailValue}
                   onMouseEnter={emailHoverIntent.onMouseEnter}
                   onMouseLeave={emailHoverIntent.onMouseLeave}
-                  onCopy={emailCopyIntent.onCopy}
-                  onClick={async (e) => {
-                    if (!authLoading && !isAuthenticated) {
-                      e.preventDefault();
-                      openSignupGate({
-                        source: "contact_reveal",
-                        returnTo: currentReturnTo,
-                        title: "Crie sua conta para ver os contatos",
-                        description: "Libere telefone, e-mail e outros canais de contato desta empresa.",
-                      });
-                      return;
-                    }
-
-                    await trackCTAClick({
+                  onClick={() => {
+                    void trackCTAClick({
                       ctaType: "email",
                       ctaLocation: "sidebar",
                       companyId: String(company.id),
@@ -179,24 +160,9 @@ export default function CompanyContactCard({
                     });
                   }}
                 >
-                  {!isAuthenticated && !authLoading ? (
-                    <>
-                      <span className="opacity-80 truncate">
-                        {emailValue.includes("@")
-                          ? `${emailValue.split("@")[0].substring(0, 3)}****@${emailValue.split("@")[1]}`
-                          : `${emailValue.substring(0, 3)}****`}
-                      </span>
-                      <span className="text-[8.5px] bg-blue-100/80 text-blue-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border border-blue-200 ml-1.5 shrink-0 inline-flex items-center">
-                        Ver
-                      </span>
-                    </>
-                  ) : (
-                    <span className="truncate">{emailValue}</span>
-                  )}
+                  <span className="truncate">{emailValue}</span>
                 </a>
-                <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5 truncate">
-                  E-mail corporativo
-                </span>
+                <span className="mt-1 block text-[11px] text-slate-500">E-mail corporativo</span>
               </div>
             </div>
           )}
