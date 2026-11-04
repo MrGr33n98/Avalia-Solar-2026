@@ -14,6 +14,7 @@ import {
 
 import FounderHeroMotion from '@/components/founder/FounderHeroMotion';
 import FounderCursorTour from '@/components/founder/FounderCursorTour';
+import FounderConversionTour from '@/components/founder/FounderConversionTour';
 import FounderBeforeAfter from '@/components/founder/FounderBeforeAfter';
 import FounderProcessDraw from '@/components/founder/FounderProcessDraw';
 import { trackFounderPageView, trackFounderCtaClick } from '@/components/founder/FounderTelemetry';
@@ -303,6 +304,9 @@ export default function FounderPageClient() {
           </div>
         </div>
       </section>
+
+      {/* ÚLTIMO BLOCO DE CONTEÚDO: TOUR DOS PONTOS DE CONVERSÃO */}
+      <FounderConversionTour />
 
       {/* NOTA DE RODAPÉ JURÍDICA E DISCLAIMER */}
       <footer className="py-8 px-4 text-center text-xs text-[#64748b] border-t border-[#d0d7de] max-w-7xl mx-auto font-mono">

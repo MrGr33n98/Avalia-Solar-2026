@@ -106,3 +106,37 @@ export function trackFounderCtaClick(ctaName: string, destinationUrl: string) {
     destination_url: destinationUrl,
   });
 }
+
+export function trackFounderConversionViewed() {
+  safeCapture('founder_conversion_tour_viewed');
+}
+
+export function trackFounderConversionStarted(mode: 'auto' | 'manual') {
+  safeCapture('founder_conversion_tour_started', { interaction_mode: mode });
+}
+
+export function trackFounderConversionStep(
+  stepId: string,
+  stepIndex: number,
+  stepName: string,
+  interactionMode: 'manual' | 'autoplay'
+) {
+  safeCapture('founder_conversion_tour_step_viewed', {
+    step_id: stepId,
+    step_name: stepName,
+    step_index: stepIndex,
+    interaction_mode: interactionMode,
+  });
+}
+
+export function trackFounderConversionPaused() {
+  safeCapture('founder_conversion_tour_paused');
+}
+
+export function trackFounderConversionCompleted(totalSteps: number) {
+  safeCapture('founder_conversion_tour_completed', { total_steps: totalSteps });
+}
+
+export function trackFounderConversionBookingClicked() {
+  safeCapture('founder_conversion_tour_booking_clicked');
+}
