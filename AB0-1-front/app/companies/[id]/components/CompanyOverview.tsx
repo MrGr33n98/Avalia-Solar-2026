@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import type { ComponentType } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import AnswerBlock from '@/components/seo/AnswerBlock';
 import WhatsappButton from '@/components/WhatsappButton';
 import { canUsePaidConversion } from '@/lib/feature-access';
