@@ -36,6 +36,7 @@ RSpec.describe 'Company public profile access contract', type: :request do
       expect(payload['plan_features']['custom_ctas']).to be(true)
       expect(payload['feature_access']).to be_a(Hash)
       expect(payload.dig('feature_access', 'custom_ctas', 'state')).to eq('enabled')
+      expect(payload.dig('feature_access', 'whatsapp_contact_button', 'state')).to eq('enabled')
       expect(payload.dig('feature_access', 'faq_block', 'state')).to eq('enabled')
       expect(payload['faqs']).to be_an(Array)
       expect(payload['faqs'].first['question']).to eq(faq.question)
@@ -85,6 +86,7 @@ RSpec.describe 'Company public profile access contract', type: :request do
 
       payload = JSON.parse(response.body).fetch('company')
       expect(payload.dig('feature_access', 'faq_block', 'state')).to eq('locked')
+      expect(payload.dig('feature_access', 'whatsapp_contact_button', 'state')).to eq('locked')
       expect(payload['faqs']).to eq([])
     end
   end

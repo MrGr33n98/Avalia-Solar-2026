@@ -55,7 +55,7 @@ export type ConversionFeature = 'quote' | 'whatsapp' | 'custom_cta';
 
 const PAID_CONVERSION_FEATURE_KEYS: Record<ConversionFeature, string> = {
   quote: 'custom_ctas',
-  whatsapp: 'custom_ctas',
+  whatsapp: 'whatsapp_contact_button',
   custom_cta: 'custom_ctas',
 };
 

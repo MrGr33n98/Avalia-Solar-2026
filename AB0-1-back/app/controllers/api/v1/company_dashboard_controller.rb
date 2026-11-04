@@ -2090,7 +2090,7 @@ module Api
         }
 
         scalar_args = %i[
-          name description website phone phone_alt whatsapp email_public
+          name description website phone phone_alt whatsapp whatsapp_url email_public
           address state city cnpj instagram facebook linkedin working_hours
           certifications awards founded_year employees_count latitude longitude
           minimum_ticket maximum_ticket financing_options financing_availability financing_enabled
@@ -2103,11 +2103,13 @@ module Api
           seo_title seo_description meta_description seo_keywords
         ]
 
-        if company_p[:payment_methods].is_a?(Array)
-          company_p.permit(*scalar_args, array_args.merge(payment_methods: []))
-        else
-          company_p.permit(*scalar_args, :payment_methods, array_args)
-        end
+        attrs = if company_p[:payment_methods].is_a?(Array)
+                  company_p.permit(*scalar_args, array_args.merge(payment_methods: []))
+                else
+                  company_p.permit(*scalar_args, :payment_methods, array_args)
+                end
+        attrs[:whatsapp_enabled] = attrs[:cta_whatsapp_enabled] if attrs.key?(:cta_whatsapp_enabled) && !attrs.key?(:whatsapp_enabled)
+        attrs.except(:cta_whatsapp_enabled)
       end
 
 

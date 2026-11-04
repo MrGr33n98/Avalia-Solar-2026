@@ -620,7 +620,8 @@ end
     self.phone_alt = normalize_phone_value(phone_alt)
     self.whatsapp = normalize_phone_value(whatsapp)
 
-    return unless whatsapp.present? && whatsapp_url.blank?
+    # Regenerate canonical URL after editing the WhatsApp number.
+    return unless whatsapp.present? && (whatsapp_url.blank? || will_save_change_to_whatsapp?)
 
     digits = whatsapp.to_s
     digits = digits.sub(/\A55/, '') if digits.length > 11
@@ -924,17 +925,51 @@ end
     ) == true
   end
 
-  # Backward-compatible CTA aliases used by API payloads and serializers.
-  def cta_whatsapp_enabled
-    return false unless quote_feature_enabled?
+  # WhatsApp is a paid Brand Page feature, independent of the quote CTA.
+  def whatsapp_contact_button_entitled?
+    has_paid_plan? && feature_enabled_from_plan?(:whatsapp_contact_button, include_defaults: true)
+  end
 
-    whatsapp_enabled?
+  # Brazilian DDD+number or 55+DDD+number. Never redirect to arbitrary URLs.
+  def whatsapp_contact_number
+    digits = whatsapp.to_s.gsub(/\D/, '')
+
+    if digits.blank? && whatsapp_url.present?
+      uri = URI.parse(whatsapp_url.to_s.strip)
+      return nil unless uri.is_a?(URI::HTTPS) && %w[wa.me api.whatsapp.com].include?(uri.host&.downcase)
+      return nil if uri.userinfo.present? || uri.port != 443
+
+      supplied_number = if uri.host.casecmp('wa.me').zero?
+                          uri.path.delete_prefix('/')
+                        else
+                          URI.decode_www_form(uri.query.to_s).find { |key, _| key == 'phone' }&.last
+                        end
+      digits = supplied_number.to_s.gsub(/\D/, '')
+    end
+
+    digits = "55#{digits}" if digits.match?(/\A\d{10,11}\z/)
+    digits if digits.match?(/\A55\d{10,11}\z/)
+  rescue URI::InvalidURIError, ArgumentError
+    nil
+  end
+
+  def whatsapp_contact_button_enabled?
+    whatsapp_contact_button_entitled? && whatsapp_enabled? && whatsapp_contact_number.present?
+  end
+
+  def whatsapp_contact_url
+    return nil unless whatsapp_contact_button_enabled?
+
+    "https://wa.me/#{whatsapp_contact_number}"
+  end
+
+  # Legacy API aliases are derived from canonical configuration.
+  def cta_whatsapp_enabled
+    whatsapp_contact_button_enabled?
   end
 
   def cta_whatsapp_url
-    return nil unless cta_whatsapp_enabled
-
-    respond_to?(:whatsapp_url) ? whatsapp_url : nil
+    whatsapp_contact_url
   end
 
   def financing_feature_allowed?

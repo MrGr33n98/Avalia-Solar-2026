@@ -38,13 +38,23 @@ describe('canUsePaidConversion', () => {
     expect(canUsePaidConversion(company(true, featureAccess), 'quote')).toBe(false);
   });
 
-  it('compartilha a mesma autorização canônica para WhatsApp', () => {
-    expect(
-      canUsePaidConversion(
-        company(true, { custom_ctas: { state: 'enabled', value: true } }),
-        'whatsapp'
-      )
-    ).toBe(true);
+  it('libera WhatsApp pela entitlement própria sem depender de orçamento', () => {
+    expect(canUsePaidConversion(company(true, {
+      custom_ctas: { state: 'locked', value: false },
+      whatsapp_contact_button: { state: 'enabled', value: true },
+    }), 'whatsapp')).toBe(true);
+  });
+
+  it('bloqueia WhatsApp no Free mesmo com entitlement indevida', () => {
+    expect(canUsePaidConversion(company(false, {
+      whatsapp_contact_button: { state: 'enabled', value: true },
+    }), 'whatsapp')).toBe(false);
+  });
+
+  it('não libera WhatsApp apenas por custom_ctas', () => {
+    expect(canUsePaidConversion(company(true, {
+      custom_ctas: { state: 'enabled', value: true },
+    }), 'whatsapp')).toBe(false);
   });
 });
 

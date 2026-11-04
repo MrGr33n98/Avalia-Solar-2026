@@ -4,7 +4,7 @@ class CompanyFieldPolicy
   FIELD_GROUPS = {
     description: %w[description],
     business_hours: %w[working_hours],
-    contact: %w[website phone phone_alt whatsapp email_public instagram facebook linkedin],
+    contact: %w[website phone phone_alt whatsapp whatsapp_url cta_whatsapp_enabled email_public instagram facebook linkedin],
     identity: %w[name],
     legal_identity: %w[cnpj],
     location: %w[address city state],

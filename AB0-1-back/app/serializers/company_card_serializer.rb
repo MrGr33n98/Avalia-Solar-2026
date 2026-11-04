@@ -39,11 +39,11 @@ class CompanyCardSerializer < ActiveModel::Serializer
   end
 
   def whatsapp_enabled
-    has_paid_plan && object.try(:whatsapp_enabled) == true
+    object.whatsapp_contact_button_enabled?
   end
 
   def whatsapp_url
-    whatsapp_enabled ? (object.try(:whatsapp_url) || object.try(:cta_whatsapp_url)) : nil
+    object.whatsapp_contact_url
   end
 
   def p2p_chat_enabled
@@ -56,6 +56,10 @@ class CompanyCardSerializer < ActiveModel::Serializer
       'custom_ctas' => {
         'state' => is_quote ? 'enabled' : 'locked',
         'value' => is_quote
+      },
+      'whatsapp_contact_button' => {
+        'state' => object.whatsapp_contact_button_entitled? ? 'enabled' : 'locked',
+        'value' => object.whatsapp_contact_button_entitled?
       }
     }
   end
