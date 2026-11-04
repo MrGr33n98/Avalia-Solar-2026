@@ -88,4 +88,18 @@ RSpec.describe 'Rotas corrigidas do Active Admin', type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(publication.title)
   end
+
+  it 'carrega o índice de leads do marketplace e aceita filtros por source e score' do
+    lead = create(:lead, name: 'Lead Teste Ransack', source: 'portal', lead_score: 85)
+
+    get '/admin/leads'
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('Lead Teste Ransack')
+
+    get '/admin/leads', params: { q: { source_eq: 'portal', lead_score_gteq: 70 } }
+    expect(response).to have_http_status(:ok)
+
+    get "/admin/leads/#{lead.id}"
+    expect(response).to have_http_status(:ok)
+  end
 end

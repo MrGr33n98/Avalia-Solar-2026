@@ -19,19 +19,15 @@ ActiveAdmin.register Lead do
   scope 'MobiVolt AI', ->(leads) { leads.where(source: 'mobivolt_ai') }
   scope 'Leads Quentes', ->(leads) { leads.where('lead_score >= 70') }
   scope 'Orçamento Solicitado', ->(leads) { leads.where.not(quote_requested_company_id: nil) }
-  scope 'Com Patrocinada', lambda { |leads|
-    begin
-      leads.where(source: 'mobivolt_ai').where('recommended_company_ids::text LIKE ?', '%"sponsored":true%')
-    rescue StandardError
-      leads.none
-    end
+  scope 'Com Patrocinada', show_count: false, lambda { |leads|
+    leads.where(source: 'mobivolt_ai').where('recommended_company_ids::text LIKE ?', '%"sponsored":true%')
   }
 
   # Filtros na barra lateral
   filter :name
   filter :email
   filter :phone
-  filter :source, as: :select, collection: -> { Lead.pluck(:source).uniq.compact }
+  filter :source, as: :select, collection: -> { %w[portal mobivolt_ai] }
   filter :lead_score
   filter :qualification_level, as: :select, collection: %w[quente morno frio]
   filter :vertical, as: :select, collection: %w[solar electric_mobility]

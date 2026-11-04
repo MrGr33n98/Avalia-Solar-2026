@@ -84,12 +84,15 @@ class Lead < ApplicationRecord
   # Add these methods for Ransack
   def self.ransackable_attributes(_auth_object = nil)
     %w[
-      address_full bill_value city company company_id consent_at consent_ip created_at
-      decision_timeline email estimated_budget id location message monthly_kwh
-      name otp_attempts otp_sent_at otp_verified_at phone product_vertical
-      project_profile project_type quote_type state system_size_band updated_at
-      wizard_status zipcode utm_source utm_medium utm_campaign utm_content utm_term
-      gclid fbclid msclkid landing_path referrer_host attribution_json
+      address_full bill_value cached_score category_id chat_lead_id chat_session_id
+      city clicked_company_id company company_id consent_at consent_ip created_at
+      decision_timeline email estimated_budget fbclid gclid id intent_type landing_path
+      lead_score location message monthly_kwh msclkid name otp_attempts
+      otp_sent_at otp_verified_at phone product_vertical project_profile project_type
+      qualification_level quote_requested_company_id quote_type referrer_host score_band
+      source state system_size_band template_key template_version updated_at
+      utm_campaign utm_content utm_medium utm_source utm_term vertical
+      whatsapp_clicked_company_id wizard_status zipcode attribution_json
     ]
   end
 
