@@ -716,8 +716,8 @@ module Api
       end
 
       def cached_company_detail_payload(company)
-        cache_key = "company_detail_payload_v1/#{company.id}/#{company.updated_at.to_i}"
-        Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
+        cache_key = "company_detail_payload_v2/#{company.id}/#{company.updated_at.to_i}/#{company.plan&.updated_at&.to_i}"
+        Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
           company_detail_payload(company)
         end
       end
@@ -817,6 +817,7 @@ module Api
           :founded_year, :employees_count,
           :cnpj, :email, :email_public, :instagram, :facebook, :linkedin,
           :working_hours, :payment_methods, :certifications,
+          :whatsapp, :whatsapp_enabled, :whatsapp_url,
           :cta_whatsapp_enabled, :cta_whatsapp_url,
           :logo, :coverage_states, :coverage_cities,
           { whatsapp_button_style_json: %i[
@@ -830,7 +831,10 @@ module Api
         permitted << :primary_category_id
         permitted += %i[featured status verified plan_id plan_status social_proof_enabled] if current_user&.admin?
 
-        params.require(:company).permit(*permitted)
+        attrs = params.require(:company).permit(*permitted)
+        attrs[:whatsapp_enabled] = attrs[:cta_whatsapp_enabled] if attrs.key?(:cta_whatsapp_enabled) && !attrs.key?(:whatsapp_enabled)
+        attrs[:whatsapp_url] = attrs[:cta_whatsapp_url] if attrs.key?(:cta_whatsapp_url) && !attrs.key?(:whatsapp_url)
+        attrs.except(:cta_whatsapp_enabled, :cta_whatsapp_url)
       end
 
       def set_company

@@ -1,6 +1,7 @@
 class CompanyFeatureAccessResolver
   RUNTIME_VALUE_RESOLVERS = {
     'custom_ctas' => ->(company) { company.quote_feature_enabled? },
+    'whatsapp_contact_button' => ->(company) { company.whatsapp_contact_button_entitled? },
     'featured_review' => ->(company) { company.can_use_social_proof? },
     'social_proof' => ->(company) { company.can_use_social_proof? },
     'media_upload' => ->(company) { company.media_upload_allowed? },

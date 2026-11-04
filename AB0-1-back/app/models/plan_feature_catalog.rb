@@ -86,6 +86,15 @@ module PlanFeatureCatalog
       group: 'conversion',
       aliases: %w[active_admin quote_feature quote_feature_enabled quote_requests quote_requests_enabled cta_whatsapp]
     },
+    'whatsapp_contact_button' => {
+      label: 'Botão de WhatsApp no perfil',
+      description: 'Contato direto e público por WhatsApp na Brand Page.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'conversion'
+    },
     'pricing_table' => {
       label: 'Tabela de Preços/Planos',
       description: 'Exibe uma tabela comparativa de valores no perfil da empresa.',
@@ -422,6 +431,7 @@ module PlanFeatureCatalog
       'verified_product' => true,
       'highlight_badges' => true,
       'custom_ctas' => true,
+      'whatsapp_contact_button' => true,
       'pricing_table' => false,
       'special_offer' => false,
       'sponsored_description' => false,
@@ -459,6 +469,7 @@ module PlanFeatureCatalog
       'verified_product' => true,
       'highlight_badges' => true,
       'custom_ctas' => true,
+      'whatsapp_contact_button' => true,
       'pricing_table' => true,
       'special_offer' => true,
       'sponsored_description' => true,
@@ -496,6 +507,7 @@ module PlanFeatureCatalog
       'verified_product' => true,
       'highlight_badges' => true,
       'custom_ctas' => true,
+      'whatsapp_contact_button' => true,
       'pricing_table' => true,
       'special_offer' => true,
       'sponsored_description' => true,

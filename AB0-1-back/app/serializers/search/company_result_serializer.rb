@@ -5,7 +5,7 @@ module Search
     include Rails.application.routes.url_helpers
     include CompanyBadgesSerialization
 
-    MINIMAL_FEATURE_KEYS = %w[custom_ctas p2p_chat].freeze
+    MINIMAL_FEATURE_KEYS = %w[custom_ctas whatsapp_contact_button p2p_chat].freeze
 
     def initialize(company)
       @company = company
@@ -19,7 +19,7 @@ module Search
         description: company.description,
         website: company.website,
         phone: company.phone,
-        whatsapp: paid? ? company.whatsapp : nil,
+        whatsapp: company.whatsapp_contact_button_enabled? ? company.whatsapp : nil,
         state: company.state,
         city: company.city,
         address: company.address,
@@ -31,10 +31,10 @@ module Search
         sponsored: company.sponsored,
         active_admin: company.active_admin,
         p2p_chat_enabled: company.p2p_chat_enabled,
-        cta_whatsapp_enabled: paid? && company.try(:whatsapp_enabled) == true,
-        cta_whatsapp_url: paid? ? (company.try(:whatsapp_url) || company.try(:cta_whatsapp_url)) : nil,
-        whatsapp_enabled: paid? && company.try(:whatsapp_enabled) == true,
-        whatsapp_url: paid? ? company.try(:whatsapp_url) : nil,
+        cta_whatsapp_enabled: company.whatsapp_contact_button_enabled?,
+        cta_whatsapp_url: company.whatsapp_contact_url,
+        whatsapp_enabled: company.whatsapp_contact_button_enabled?,
+        whatsapp_url: company.whatsapp_contact_url,
         has_paid_plan: paid?,
         rating_avg: company.rating_avg,
         average_rating: company.rating_avg,

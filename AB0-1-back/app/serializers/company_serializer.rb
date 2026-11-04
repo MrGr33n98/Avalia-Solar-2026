@@ -193,28 +193,24 @@ class CompanySerializer < ActiveModel::Serializer
     generate_attachment_url(object.verified_badge)
   end
 
-  def cta_whatsapp_enabled
-    return false unless quote_feature_enabled?
+  def whatsapp
+    object.whatsapp if object.whatsapp_contact_button_enabled?
+  end
 
-    object.respond_to?(:whatsapp_enabled) ? !!object.whatsapp_enabled : false
+  def cta_whatsapp_enabled
+    object.whatsapp_contact_button_enabled?
   end
 
   def cta_whatsapp_url
-    return nil unless quote_feature_enabled?
-
-    object.respond_to?(:whatsapp_url) ? object.whatsapp_url : nil
+    object.whatsapp_contact_url
   end
 
   def whatsapp_enabled
-    return false unless quote_feature_enabled?
-
-    object.respond_to?(:whatsapp_enabled) ? !!object.whatsapp_enabled : false
+    cta_whatsapp_enabled
   end
 
   def whatsapp_url
-    return nil unless quote_feature_enabled?
-
-    object.respond_to?(:whatsapp_url) ? object.whatsapp_url : nil
+    cta_whatsapp_url
   end
 
   def active_admin

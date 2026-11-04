@@ -38,15 +38,15 @@ class CompanyListSerializer < ActiveModel::Serializer
   end
 
   def whatsapp
-    has_paid_plan ? object.whatsapp : nil
+    object.whatsapp if object.whatsapp_contact_button_enabled?
   end
 
   def cta_whatsapp_enabled
-    has_paid_plan && object.try(:whatsapp_enabled) == true
+    object.whatsapp_contact_button_enabled?
   end
 
   def cta_whatsapp_url
-    cta_whatsapp_enabled ? (object.try(:whatsapp_url) || object.try(:cta_whatsapp_url)) : nil
+    object.whatsapp_contact_url
   end
 
   def whatsapp_enabled
