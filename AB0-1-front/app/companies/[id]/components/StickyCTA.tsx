@@ -6,21 +6,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Company } from '@/lib/api';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { track } from '@/lib/analytics/lazy';
-import WhatsappButton from '@/components/WhatsappButton';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 
 interface StickyCTAProps {
   company: Company;
   canRequestQuote?: boolean;
-  ctaEnabled: boolean;
-  ctaUrl: string | null;
 }
 
 export default function StickyCTA({
   company,
   canRequestQuote,
-  ctaEnabled,
-  ctaUrl,
 }: StickyCTAProps) {
   const [isVisible, setIsVisible] = useState(false);
   const quoteEnabled = Boolean(canRequestQuote);
@@ -95,31 +90,7 @@ export default function StickyCTA({
                 />
               )}
 
-              {ctaEnabled && ctaUrl && (
-                <div className="flex-1 md:flex-none">
-                  <WhatsappButton
-                    size="default"
-                    enabled
-                    href={ctaUrl}
-                    styles={{
-                      variant: 'solid',
-                      bg_color: '#25D366',
-                      hover_bg_color: '#1ebe5d',
-                      text_color: '#ffffff',
-                      border_color: '#25D366',
-                      icon_color: '#ffffff',
-                    }}
-                    className="w-full h-11 md:h-10 font-bold px-6"
-                    label="WhatsApp"
-                    companyId={company.id}
-                    pagePath={typeof window !== 'undefined' ? window.location.pathname : undefined}
-                    requireSignup
-                    signupGateSource="contact_reveal"
-                    signupGateTitle="Crie sua conta para falar no WhatsApp"
-                    signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
-                  />
-                </div>
-              )}
+
             </div>
           </div>
         </motion.div>
