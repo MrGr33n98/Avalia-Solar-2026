@@ -27,7 +27,7 @@ test.describe('Avalia Solar Founder Motion System E2E', () => {
     await expect(blogLink).toBeVisible();
   });
 
-  test('deve exibir o Tour Interativo com a empresa fictícia SolarMax Integradora e permitir navegação manual', async ({
+  test('deve exibir o Tour Interativo cinematográfico e permitir navegar pelas dez etapas', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -36,23 +36,73 @@ test.describe('Avalia Solar Founder Motion System E2E', () => {
     const tourSection = page.locator('#tour-interativo');
     await expect(tourSection).toBeVisible();
 
-    // Verifica a empresa fictícia do tour
-    await expect(page.locator('text=SolarMax Integradora').first()).toBeVisible();
-
-    // Verifica aviso de dados ilustrativos
-    await expect(
-      page.locator('text=Dados ilustrativos da empresa fictícia SolarMax Integradora')
-    ).toBeVisible();
+    await expect(tourSection.getByText('01 / 10')).toBeVisible();
+    await expect(tourSection.getByText('Hero Banner Customizável')).toBeVisible();
+    await expect(tourSection.locator('img[alt*="Captura original da Brand Page"]')).toHaveAttribute(
+      'src',
+      /brand-page-premium/
+    );
 
     // Interação com o botão de avançar
-    const nextButton = page.locator('button:has-text("Avançar para Próximo"), button:has-text("Próximo Recurso")').first();
+    const nextButton = tourSection.getByRole('button', { name: 'Próximo recurso' });
     await nextButton.click();
 
     // Deve ativar o controle manual e pausar o autoplay
-    await expect(page.locator('text=Controle manual ativo').first()).toBeVisible();
+    await expect(tourSection.getByText('02 / 10')).toBeVisible();
+    await expect(tourSection.getByText('Selo de Verificação')).toBeVisible();
 
-    // Deve ter avançado para a etapa 2
-    await expect(page.locator('text=Catálogo de Produtos Fotovoltaicos').first()).toBeVisible();
+    const titles = [
+      'Hero Banner Customizável',
+      'Selo de Verificação',
+      'Solicitar Orçamento',
+      'Sobre a Empresa',
+      'Produtos em Destaque',
+      'Botão WhatsApp',
+      'Materiais Baixáveis',
+      'Avaliações em Destaque',
+      'Portfólio e Projetos',
+      'Perfil Protegido Exclusivo',
+    ];
+    for (const [index, title] of titles.entries()) {
+      await tourSection
+        .getByRole('button', { name: `Ir para etapa ${index + 1}: ${title}` })
+        .click();
+      await expect(tourSection.getByRole('heading', { name: title })).toBeVisible();
+      const cursor = await tourSection.getByTestId('founder-cinematic-cursor').boundingBox();
+      const frame = await tourSection.locator('[aria-label^="Imagem real da Brand Page"]').boundingBox();
+      expect(cursor).not.toBeNull();
+      expect(frame).not.toBeNull();
+      expect(cursor!.x).toBeGreaterThanOrEqual(frame!.x);
+      expect(cursor!.y).toBeGreaterThanOrEqual(frame!.y);
+      expect(cursor!.x + cursor!.width).toBeLessThanOrEqual(frame!.x + frame!.width);
+      expect(cursor!.y + cursor!.height).toBeLessThanOrEqual(frame!.y + frame!.height);
+    }
+    await expect(tourSection.getByRole('link', { name: 'Agendar apresentação do Plano Founder' })).toHaveAttribute(
+      'href',
+      'https://zbooking.us/6shCH'
+    );
+  });
+
+  test('tour mantém viewport e controles usáveis em mobile e tablet', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto('/founder');
+    const tour = page.locator('#tour-interativo');
+    const image = tour.locator('img[alt*="Captura original da Brand Page"]');
+    await image.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth), { timeout: 15000 })
+      .toBeGreaterThan(0);
+
+    for (const width of [320, 375, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect(tour.getByRole('button', { name: 'Recurso anterior' })).toBeVisible();
+      await expect(tour.getByRole('button', { name: 'Próximo recurso' })).toBeVisible();
+      await expect(image).toBeVisible();
+      const bounds = await image.boundingBox();
+      expect(bounds?.width).toBeGreaterThan(0);
+      expect(bounds?.height).toBeGreaterThan(0);
+      await expect(tour).toHaveJSProperty('scrollWidth', await tour.evaluate((node) => node.clientWidth));
+    }
   });
 
   test('não deve renderizar a seção de módulos técnicos removida', async ({ page }) => {

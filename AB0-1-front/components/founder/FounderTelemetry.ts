@@ -35,12 +35,22 @@ export function trackFounderPageView() {
   safeCapture('founder_page_viewed', { page_path: window.location.pathname });
 }
 
-export function trackFounderTourStarted(method: 'auto' | 'manual' = 'auto') {
+export function trackFounderTourStarted(method: 'auto' | 'manual' | 'resume' = 'auto') {
   safeCapture('founder_tour_started', { method });
 }
 
-export function trackFounderTourStep(stepIndex: number, stepId: string, title: string) {
-  safeCapture('founder_tour_step', { step_index: stepIndex, step_id: stepId, step_title: title });
+export function trackFounderTourStep(
+  stepIndex: number,
+  stepId: string,
+  title: string,
+  interactionMode: 'manual' | 'autoplay' = 'manual'
+) {
+  safeCapture('founder_tour_step_viewed', {
+    step_index: stepIndex,
+    step_id: stepId,
+    step_name: title,
+    interaction_mode: interactionMode,
+  });
 }
 
 export function trackFounderTourCompleted(totalSteps: number) {
@@ -52,7 +62,15 @@ export function trackFounderTourPaused() {
 }
 
 export function trackFounderTourResumed() {
-  safeCapture('founder_tour_resumed');
+  safeCapture('founder_tour_started', { method: 'resume' });
+}
+
+export function trackFounderTourRestarted() {
+  safeCapture('founder_tour_restarted');
+}
+
+export function trackFounderTourBookingClicked() {
+  safeCapture('founder_tour_booking_clicked');
 }
 
 export function trackFounderBeforeAfter(position: number) {
