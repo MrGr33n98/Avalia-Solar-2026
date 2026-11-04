@@ -14,6 +14,7 @@ class Article < ApplicationRecord
   has_one_attached :banner
 
   before_validation :normalize_and_sanitize_content
+  after_commit :schedule_frontend_revalidation, on: %i[create update destroy]
 
   validates :title, presence: true
   validates :category, presence: true
@@ -45,6 +46,15 @@ class Article < ApplicationRecord
 
   def should_generate_new_friendly_id?
     title_changed?
+  end
+
+  def schedule_frontend_revalidation
+    slugs = [previous_changes.dig('slug', 0), slug].compact.uniq
+    return if slugs.empty?
+
+    ArticleRevalidationJob.perform_later(slugs)
+  rescue StandardError => e
+    Rails.logger.error("[Article] Failed to enqueue frontend revalidation: #{e.message} article_id=#{id}")
   end
 
   # Add these methods for Ransack

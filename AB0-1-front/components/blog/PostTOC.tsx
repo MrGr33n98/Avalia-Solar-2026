@@ -15,12 +15,14 @@ export function PostTOC({ className, showOnMobile = false }: PostTOCProps) {
   const [activeId, setActiveId] = useState<string>('');
 
   useEffect(() => {
-    // Finds all h2 and h3 elements inside the article content
-    const articleContent = document.querySelector('article');
+    // Inclui somente títulos editoriais do conteúdo do artigo.
+    const articleContent = document.querySelector('.as-article');
     if (!articleContent) return;
 
-    const elements = articleContent.querySelectorAll('h2, h3');
-    const items = Array.from(elements).map((elem, index) => {
+    const elements = Array.from(articleContent.querySelectorAll('h2, h3')).filter(
+      (elem) => !elem.closest('[data-as-component]')
+    );
+    const items = elements.map((elem, index) => {
       if (!elem.id) {
         elem.id = `heading-${index}`;
       }
@@ -53,15 +55,17 @@ export function PostTOC({ className, showOnMobile = false }: PostTOCProps) {
 
   return (
     <div className={cn(showOnMobile ? 'block' : 'hidden lg:block', 'mb-8', className)}>
-      <div className="flex items-center gap-2 mb-4 text-sm font-bold text-slate-900 uppercase tracking-wider">
-        <List className="w-4 h-4" />
-        Neste artigo
-      </div>
+      {!showOnMobile && (
+        <div className="flex items-center gap-2 mb-4 text-sm font-bold text-slate-900 uppercase tracking-wider">
+          <List className="w-4 h-4" />
+          Neste artigo
+        </div>
+      )}
       <nav className="relative">
         <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-200" />
         <ul className="space-y-3">
           {headings.map((heading) => (
-            <li key={heading.id} className={cn("pl-4 relative", heading.level === 3 && "pl-8")}>
+            <li key={heading.id} className={cn('pl-4 relative', heading.level === 3 && 'pl-8')}>
               <a
                 href={`#${heading.id}`}
                 onClick={(e) => {
@@ -69,10 +73,8 @@ export function PostTOC({ className, showOnMobile = false }: PostTOCProps) {
                   document.getElementById(heading.id)?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className={cn(
-                  "block text-sm transition-colors duration-200 line-clamp-2 hover:text-primary",
-                  activeId === heading.id
-                    ? "text-primary font-medium"
-                    : "text-slate-600"
+                  'block text-sm transition-colors duration-200 line-clamp-2 hover:text-primary',
+                  activeId === heading.id ? 'text-primary font-medium' : 'text-slate-600'
                 )}
               >
                 {heading.text}

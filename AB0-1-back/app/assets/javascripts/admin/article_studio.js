@@ -192,7 +192,17 @@
     // If initial content has components, automatically start in Code Mode for protection
     if (hasAdvancedComponents) {
       warningBox.classList.add('is-visible');
-      switchToCodeMode();
+      // O Quill pode ter convertido componentes antes da inicialização do Studio.
+      codeEditor.value = initialContent;
+      rawTextarea.value = initialContent;
+      if (quillWrapper) {
+        quillWrapper.style.display = 'none';
+      }
+      codeWrapper.classList.add('is-visible');
+      btnCode.classList.add('as-btn-active');
+      btnVisual.classList.remove('as-btn-active');
+      currentMode = 'code';
+      updateStats(initialContent);
     } else {
       updateStats(initialContent);
     }
@@ -394,6 +404,12 @@
       form.addEventListener('submit', function () {
         var finalContent = (currentMode === 'code') ? codeEditor.value : getQuillHtml();
         rawTextarea.value = finalContent;
+      });
+      // formdata ocorre após os handlers de submit do Quill e define o valor enviado.
+      form.addEventListener('formdata', function (event) {
+        if (currentMode === 'code') {
+          event.formData.set(rawTextarea.name, codeEditor.value);
+        }
       });
     }
   }

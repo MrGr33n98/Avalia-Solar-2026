@@ -21,7 +21,9 @@ export interface CategoryWithCount {
 }
 
 export const blogApi = {
-  async fetchPosts(params: { page?: number; per_page?: number; q?: string; category?: string; sort?: string } = {}): Promise<PostsResponse> {
+  async fetchPosts(
+    params: { page?: number; per_page?: number; q?: string; category?: string; sort?: string } = {}
+  ): Promise<PostsResponse> {
     try {
       const searchParams = new URLSearchParams();
       if (params.page) searchParams.append('page', String(params.page));
@@ -32,7 +34,7 @@ export const blogApi = {
 
       const res = await fetch(buildApiUrl(`articles?${searchParams.toString()}`), {
         headers: getApiRequestHeaders(),
-        next: { revalidate: 300 }
+        next: { revalidate: 300, tags: ['articles'] },
       });
 
       if (!res.ok) throw new Error('Failed to fetch posts');
@@ -56,13 +58,13 @@ export const blogApi = {
     try {
       const res = await fetch(buildApiUrl('articles?featured=true&per_page=3'), {
         headers: getApiRequestHeaders(),
-        next: { revalidate: 300 }
+        next: { revalidate: 300, tags: ['articles'] },
       });
       if (!res.ok) return [];
       const payload = await res.json();
       if (Array.isArray(payload)) return payload;
       return payload?.data || [];
-    } catch (error) {
+    } catch {
       // Fallback to fetching latest posts if featured endpoint missing
       const latest = await this.fetchPosts({ per_page: 3 });
       return latest.data as Article[];
@@ -73,20 +75,26 @@ export const blogApi = {
     try {
       const res = await fetch(buildApiUrl('categories?view=cards&limit=200'), {
         headers: getApiRequestHeaders(),
-        next: { revalidate: 3600 }
+        next: { revalidate: 3600 },
       });
       if (!res.ok) return [];
       const payload = await res.json();
-      const list = Array.isArray(payload) ? payload : payload?.data || [];
-      return list.map((item: any) => ({
+      const list = (Array.isArray(payload) ? payload : payload?.data || []) as Array<{
+        id: number;
+        name: string;
+        seo_url?: string | null;
+        slug?: string | null;
+        articles_count?: number | null;
+      }>;
+      return list.map((item) => ({
         id: item.id,
         name: item.name,
         slug: item.seo_url || item.slug || undefined,
         seo_url: item.seo_url || null,
         articles_count: item.articles_count ?? 0,
-        count: item.articles_count ?? 0
+        count: item.articles_count ?? 0,
       }));
-    } catch (error) {
+    } catch {
       return [];
     }
   },
@@ -97,7 +105,7 @@ export const blogApi = {
       title: 'Checklist Energia Solar',
       description: 'O guia definitivo para não errar na compra.',
       image_url: '/images/checklist-cover.jpg',
-      download_url: '#'
+      download_url: '#',
     };
   },
 
@@ -106,7 +114,7 @@ export const blogApi = {
     try {
       const res = await fetch(buildApiUrl('companies?verified=true&limit=3'), {
         headers: getApiRequestHeaders(),
-        next: { revalidate: 3600 }
+        next: { revalidate: 3600 },
       });
       if (!res.ok) return [];
       return res.json();
@@ -114,8 +122,8 @@ export const blogApi = {
       return [
         { id: 1, name: 'Solarium Energy', rating: 4.9, city: 'São Paulo, SP' },
         { id: 2, name: 'EcoPower', rating: 4.8, city: 'Campinas, SP' },
-        { id: 3, name: 'GreenLight', rating: 4.7, city: 'Rio de Janeiro, RJ' }
+        { id: 3, name: 'GreenLight', rating: 4.7, city: 'Rio de Janeiro, RJ' },
       ];
     }
-  }
+  },
 };

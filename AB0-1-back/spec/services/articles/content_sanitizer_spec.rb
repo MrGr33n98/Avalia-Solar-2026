@@ -43,7 +43,10 @@ RSpec.describe Articles::ContentSanitizer do
 
       it 'is strictly idempotent' do
         second_pass = described_class.call(sanitized)
+        third_pass = described_class.call(second_pass)
+
         expect(second_pass).to eq(sanitized)
+        expect(third_pass).to eq(second_pass)
       end
     end
 
