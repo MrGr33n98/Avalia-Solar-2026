@@ -40,6 +40,31 @@ RSpec.describe 'Local solar pages', type: :request do
   end
 
   describe 'GET /api/v1/local_solar_pages/:state/:city' do
+    it 'retorna métricas qualificadas para Florianópolis com filtros de destaque' do
+      company = create(
+        :company,
+        name: 'Empresa Solar Florianópolis',
+        state: 'SC',
+        city: 'Florianópolis',
+        featured: true,
+        verified: true,
+        sponsored: true,
+        categories: [category]
+      )
+
+      get '/api/v1/local_solar_pages/sc/florianopolis',
+          params: { vertical: 'energia-solar', featured: true, verified: true }
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body.fetch('companies').map { |item| item.fetch('id') }).to include(company.id)
+      expect(body.fetch('stats')).to include(
+        'verified_companies' => 1,
+        'featured_companies' => 1,
+        'sponsored_companies' => 1
+      )
+    end
+
     it 'does not include companies with state-only coverage in city pages' do
       get '/api/v1/local_solar_pages/pr/curitiba'
 

@@ -1,11 +1,9 @@
 ActiveAdmin.register Pricing do
   menu false
-  # Update the permitted parameters if needed
-  permit_params :price, :product_id
+  permit_params :value, :product_id
 
-  # Fix the filters section - remove any reference to 'title'
   filter :product
-  filter :price
+  filter :value, label: 'Preço'
   filter :created_at
   filter :updated_at
 
@@ -13,7 +11,7 @@ ActiveAdmin.register Pricing do
     selectable_column
     id_column
     column :product
-    column :price
+    column 'Preço', :value
     column :created_at
     actions
   end
@@ -21,7 +19,7 @@ ActiveAdmin.register Pricing do
   form do |f|
     f.inputs do
       f.input :product
-      f.input :price
+      f.input :value, label: 'Preço'
     end
     f.actions
   end

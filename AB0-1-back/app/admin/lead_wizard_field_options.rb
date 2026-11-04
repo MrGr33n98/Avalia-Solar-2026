@@ -7,7 +7,7 @@ ActiveAdmin.register LeadWizardFieldOption do
 
   permit_params :lead_wizard_field_id, :label, :value, :position
 
-  filter :lead_wizard_field_lead_wizard_section_lead_wizard_version
+  filter :lead_wizard_field
   filter :label
   filter :value
   filter :created_at

@@ -56,7 +56,7 @@ ActiveAdmin.register_page 'Usuarios Acesso' do
         panel 'Administradores Ativos' do
           table_for AdminUser.order(updated_at: :desc).limit(5) do
             column('E-mail') { |admin| admin.email }
-            column('2FA Habilitado?') { |admin| status_tag(admin.otp_required_for_login? ? 'Sim' : 'Não') }
+            column('2FA Habilitado?') { |admin| status_tag(admin.two_factor_enabled? ? 'Sim' : 'Não') }
             column('Ações') { |admin| link_to 'Editar', edit_admin_admin_user_path(admin) }
           end
         end

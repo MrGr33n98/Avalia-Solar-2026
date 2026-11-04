@@ -1,4 +1,6 @@
 class BannerAddonSubscription < ApplicationRecord
+  alias_attribute :payment_gateway, :payment_provider
+
   belongs_to :company
   belongs_to :banner, optional: true
   belongs_to :banner_addon
@@ -13,6 +15,17 @@ class BannerAddonSubscription < ApplicationRecord
 
   scope :active, -> { where(status: 'active') }
   scope :pending, -> { where(status: 'pending_payment') }
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      id company_id banner_id banner_addon_id status payment_gateway
+      payment_provider starts_at ends_at created_at updated_at
+    ]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[company banner banner_addon]
+  end
   
   # Delegate rule reading to snapshot for safety (keeps historical value)
   def effective_rules

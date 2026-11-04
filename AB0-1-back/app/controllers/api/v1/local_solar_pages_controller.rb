@@ -103,11 +103,11 @@ module Api
         end
 
         if params[:featured].present?
-          filtered = filtered.where(featured: ActiveModel::Type::Boolean.new.cast(params[:featured]))
+          filtered = filtered.where(companies: { featured: ActiveModel::Type::Boolean.new.cast(params[:featured]) })
         end
 
         if params[:verified].present?
-          filtered = filtered.where(verified: ActiveModel::Type::Boolean.new.cast(params[:verified]))
+          filtered = filtered.where(companies: { verified: ActiveModel::Type::Boolean.new.cast(params[:verified]) })
         end
 
         filtered = filtered.where('companies.rating_avg >= ?', params[:min_rating].to_f) if params[:min_rating].present?
@@ -117,7 +117,7 @@ module Api
 
         project_types = parsed_project_types
         if project_types.any?
-          conditions = project_types.map { 'project_types @> ?::jsonb' }.join(' OR ')
+          conditions = project_types.map { 'companies.project_types @> ?::jsonb' }.join(' OR ')
           values = project_types.map { |type| [type].to_json }
           filtered = filtered.where(conditions, *values)
         end
@@ -212,9 +212,9 @@ module Api
       def stats_payload(scope)
         {
           total_companies: scope.count,
-          verified_companies: scope.where(verified: true).count,
-          featured_companies: scope.where(featured: true).count,
-          sponsored_companies: scope.where(sponsored: true).count,
+          verified_companies: scope.where(companies: { verified: true }).count,
+          featured_companies: scope.where(companies: { featured: true }).count,
+          sponsored_companies: scope.where(companies: { sponsored: true }).count,
           generated_at: Time.current.iso8601
         }
       end

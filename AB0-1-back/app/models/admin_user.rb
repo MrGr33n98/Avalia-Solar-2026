@@ -25,6 +25,10 @@ class AdminUser < ApplicationRecord
   # Validations
   validates :billing_role, inclusion: { in: BILLING_ROLES }, allow_nil: true
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[id email name created_at]
+  end
+
   # Two-Factor Authentication
   serialize :otp_backup_codes, type: Array, coder: YAML
 

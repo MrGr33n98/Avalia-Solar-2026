@@ -1,9 +1,9 @@
 ActiveAdmin.register BannerAddon do
   menu false
 
-  permit_params :name, :code, :category, :description, :price_cents, :promo_price_cents,
+  permit_params :name, :code, :category, :description, :price_cents, :promotional_price_cents,
                 :currency, :duration_days, :benefits, :rules, :priority_boost,
-                :stackable, :auto_apply, :active
+                :stackable, :automatic_application, :is_active
 
   index do
     selectable_column
@@ -15,7 +15,7 @@ ActiveAdmin.register BannerAddon do
       number_to_currency(addon.price_cents.to_f / 100, unit: 'R$ ', separator: ',', delimiter: '.')
     end
     column 'Duração (dias)', :duration_days
-    column :active
+    column 'Ativo', :is_active
     column :priority_boost
     actions
   end
@@ -23,7 +23,7 @@ ActiveAdmin.register BannerAddon do
   filter :name
   filter :code
   filter :category
-  filter :active
+  filter :is_active, label: 'Ativo'
 
   form do |f|
     f.inputs 'Detalhes Básicos' do
@@ -31,11 +31,11 @@ ActiveAdmin.register BannerAddon do
       f.input :code
       f.input :category
       f.input :description
-      f.input :active
+      f.input :is_active, label: 'Ativo'
     end
     f.inputs 'Comercial' do
       f.input :price_cents, label: 'Preço (em centavos)'
-      f.input :promo_price_cents, label: 'Preço Promocional (em centavos)'
+      f.input :promotional_price_cents, label: 'Preço Promocional (em centavos)'
       f.input :currency, input_html: { value: f.object.currency || 'BRL' }
       f.input :duration_days
     end
@@ -46,7 +46,7 @@ ActiveAdmin.register BannerAddon do
     f.inputs 'Configurações Técnicas' do
       f.input :priority_boost
       f.input :stackable
-      f.input :auto_apply
+      f.input :automatic_application
     end
     f.actions
   end
@@ -58,19 +58,19 @@ ActiveAdmin.register BannerAddon do
       row :code
       row :category
       row :description
-      row :active
+      row :is_active
       row 'Preço' do |addon|
         number_to_currency(addon.price_cents.to_f / 100, unit: 'R$ ', separator: ',', delimiter: '.')
       end
       row 'Preço Promocional' do |addon|
-        if addon.promo_price_cents
-          number_to_currency(addon.promo_price_cents.to_f / 100, unit: 'R$ ', separator: ',', delimiter: '.')
+        if addon.promotional_price_cents
+          number_to_currency(addon.promotional_price_cents.to_f / 100, unit: 'R$ ', separator: ',', delimiter: '.')
         end
       end
       row :duration_days
       row :priority_boost
       row :stackable
-      row :auto_apply
+      row :automatic_application
       row :benefits do |addon|
         pre JSON.pretty_generate(addon.benefits || {})
       end

@@ -1,6 +1,6 @@
 class ReviewerPublicationPolicy < ApplicationPolicy
   def show?
-    owner?
+    user.is_a?(AdminUser) || owner?
   end
 
   alias_method :update?, :show?
@@ -10,6 +10,8 @@ class ReviewerPublicationPolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
+      return scope.all if user.is_a?(AdminUser)
+
       scope.where(user: user)
     end
   end
@@ -17,6 +19,6 @@ class ReviewerPublicationPolicy < ApplicationPolicy
   private
 
   def owner?
-    record.user_id == user.id
+    user.present? && record.user_id == user.id
   end
 end

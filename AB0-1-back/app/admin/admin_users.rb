@@ -18,17 +18,15 @@ ActiveAdmin.register AdminUser do
     column :name
     column :email
     column :otp_enabled? do |admin|
-      status_tag (admin.otp_required_for_login ? 'Habilitado' : 'Desabilitado'),
-                 (admin.otp_required_for_login ? :ok : :warning)
+      enabled = admin.two_factor_enabled?
+      status_tag(enabled ? 'Habilitado' : 'Desabilitado', class: enabled ? 'ok' : 'warning')
     end
-    column :current_sign_in_at
     column :created_at
     actions
   end
 
   filter :email
   filter :name
-  filter :current_sign_in_at
   filter :created_at
 
   form html: { multipart: true } do |f|

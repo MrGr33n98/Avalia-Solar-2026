@@ -9,7 +9,7 @@ ActiveAdmin.register LeadWizardField do
                 :depends_on_operator, :depends_on_value, :default_value,
                 :choice_options_text
 
-  filter :lead_wizard_section_lead_wizard_version
+  filter :lead_wizard_section
   filter :field_type, as: :select, collection: proc { LeadWizardField::FIELD_TYPES }
   filter :target, as: :select, collection: proc { LeadWizardField::TARGETS }
   filter :key

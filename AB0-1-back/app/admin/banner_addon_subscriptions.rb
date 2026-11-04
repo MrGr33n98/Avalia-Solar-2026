@@ -1,7 +1,7 @@
 ActiveAdmin.register BannerAddonSubscription do
   menu false
 
-  permit_params :company_id, :banner_id, :banner_addon_id, :status, :payment_gateway,
+  permit_params :company_id, :banner_id, :banner_addon_id, :status, :payment_provider,
                 :payment_reference, :starts_at, :ends_at, :price_paid_cents, :discount_cents
 
   index do
@@ -25,7 +25,7 @@ ActiveAdmin.register BannerAddonSubscription do
   filter :banner
   filter :banner_addon
   filter :status
-  filter :payment_gateway
+  filter :payment_provider
   filter :starts_at
   filter :ends_at
 
@@ -46,7 +46,7 @@ ActiveAdmin.register BannerAddonSubscription do
       end
       row :starts_at
       row :ends_at
-      row :payment_gateway
+      row :payment_provider
       row :payment_reference
       row :addon_snapshot do |sub|
         pre JSON.pretty_generate(sub.addon_snapshot || {})
