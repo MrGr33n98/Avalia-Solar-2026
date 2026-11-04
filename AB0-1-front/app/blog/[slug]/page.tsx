@@ -88,7 +88,7 @@ async function getArticle(slug: string): Promise<Article | null> {
           <h2>Como funcionam os 2 meses gratuitos de lançamento?</h2>
           <p>Durante a fase de inauguração da plataforma, as empresas qualificadas recebem <strong>dois meses de gratuidade completa</strong> de mensalidade para usufruir de todas as funcionalidades da Brand Page oficial. Antes do encerramento dos 60 dias, nossa equipe apresenta o balanço consolidado de métricas e acessos para você decidir se deseja prosseguir no plano comercial definitivo.</p>
 
-          <p>Para conhecer todos os recursos na íntegra e explorar a simulação interativa da tela, visite a <a href="/founder">página oficial do Plano Founder da Avalia Solar</a> ou realize o seu <a href="https://zbooking.us/6shCH" target="_blank" rel="noopener noreferrer">agendamento de apresentação executiva</a>.</p>
+          <p>Para conhecer todos os recursos na íntegra e explorar a simulação interativa da tela, visite a <a href="/founder">página oficial do Plano Founder da Avalia Solar</a> e garanta seus dois meses de gratuidade.</p>
         `,
         image_url: '/assets/founder-laptop.jpg',
         published_at: '2026-01-15T10:00:00.000Z',
@@ -133,7 +133,7 @@ async function getArticle(slug: string): Promise<Article | null> {
           <h2>Como funcionam os 2 meses gratuitos de lançamento?</h2>
           <p>Durante a fase de inauguração da plataforma, as empresas qualificadas recebem <strong>dois meses de gratuidade completa</strong> de mensalidade para usufruir de todas as funcionalidades da Brand Page oficial. Antes do encerramento dos 60 dias, nossa equipe apresenta o balanço consolidado de métricas e acessos para você decidir se deseja prosseguir no plano comercial definitivo.</p>
 
-          <p>Para conhecer todos os recursos na íntegra e explorar a simulação interativa da tela, visite a <a href="/founder">página oficial do Plano Founder da Avalia Solar</a> ou realize o seu <a href="https://zbooking.us/6shCH" target="_blank" rel="noopener noreferrer">agendamento de apresentação executiva</a>.</p>
+          <p>Para conhecer todos os recursos na íntegra e explorar a simulação interativa da tela, visite a <a href="/founder">página oficial do Plano Founder da Avalia Solar</a> e garanta seus dois meses de gratuidade.</p>
         `,
         image_url: '/assets/founder-laptop.jpg',
         published_at: '2026-01-15T10:00:00.000Z',
