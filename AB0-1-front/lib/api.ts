@@ -340,6 +340,8 @@ export interface Company {
   languages?: string;
   email_public?: string;
   whatsapp?: string;
+  whatsapp_enabled?: boolean;
+  whatsapp_url?: string | null;
   phone_alt?: string;
   delivered_projects_score?: number;
   delivered_projects_count?: number;
