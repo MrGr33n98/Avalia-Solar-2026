@@ -1,0 +1,823 @@
+{
+  "summary": {
+    "totalAvaliaSolar": 467,
+    "totalEnfProcessed": 1320,
+    "totalDuplicateFound": 36,
+    "exactNameMatches": 16,
+    "domainMatches": 0,
+    "slugMatches": 20,
+    "partialMatches": 0,
+    "cleanNewCompanies": 1284,
+    "newCompaniesPercentage": "97.3%"
+  },
+  "exactMatches": [
+    {
+      "enf": {
+        "id": "192256",
+        "name": "Clean Solar",
+        "state": "Rio de Janeiro"
+      },
+      "avalia": [
+        {
+          "id": 523,
+          "name": "CLEAN ENERGIA",
+          "state": "RS",
+          "city": "Ibiraiaras"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"clean\""
+    },
+    {
+      "enf": {
+        "id": "191852",
+        "name": "Suno Solar Ltda",
+        "state": "Tocantins"
+      },
+      "avalia": [
+        {
+          "id": 501,
+          "name": "SUNO ENGENHARIA LTDA",
+          "state": "MG",
+          "city": "Conselheiro Lafaiete"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"suno\""
+    },
+    {
+      "enf": {
+        "id": "189806",
+        "name": "Cymaz Engenharia Solar Ltda.",
+        "state": "São Paulo"
+      },
+      "avalia": [
+        {
+          "id": 516,
+          "name": "CYMAZ",
+          "state": "SP",
+          "city": "Piracicaba"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"cymaz\""
+    },
+    {
+      "enf": {
+        "id": "187621",
+        "name": "Impacto Energia Solar",
+        "state": null
+      },
+      "avalia": [
+        {
+          "id": 708,
+          "name": "Impacto Energia Solar",
+          "state": "MG",
+          "city": "Campo Belo"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"impacto\""
+    },
+    {
+      "enf": {
+        "id": "158044",
+        "name": "Genial Energia",
+        "state": "Santa Catarina"
+      },
+      "avalia": [
+        {
+          "id": 794,
+          "name": "Genial Solar",
+          "state": "SP",
+          "city": "São Paulo"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"genial\""
+    },
+    {
+      "enf": {
+        "id": "155757",
+        "name": "JF Energia Fotovoltaica",
+        "state": "São Paulo"
+      },
+      "avalia": [
+        {
+          "id": 497,
+          "name": "JF Energia",
+          "state": "SP",
+          "city": "São José dos Campos"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"jf\""
+    },
+    {
+      "enf": {
+        "id": "155229",
+        "name": "Engesol",
+        "state": "Minas Gerais"
+      },
+      "avalia": [
+        {
+          "id": 709,
+          "name": "Engesol Energia Solar",
+          "state": "MG",
+          "city": "Lambari"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"engesol\""
+    },
+    {
+      "enf": {
+        "id": "142257",
+        "name": "Ideal Comercio e Servicos de Coberturas Ltda",
+        "state": "São Paulo"
+      },
+      "avalia": [
+        {
+          "id": 524,
+          "name": "Ideal Comércio e Serviços de Coberturas",
+          "state": "SP",
+          "city": "Araras"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"ideal e de coberturas\""
+    },
+    {
+      "enf": {
+        "id": "140711",
+        "name": "Impacto Solar",
+        "state": "Rondônia"
+      },
+      "avalia": [
+        {
+          "id": 708,
+          "name": "Impacto Energia Solar",
+          "state": "MG",
+          "city": "Campo Belo"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"impacto\""
+    },
+    {
+      "enf": {
+        "id": "141006",
+        "name": "Shop Solar do Brasil – Energia Solar Ltda",
+        "state": "Rio de Janeiro"
+      },
+      "avalia": [
+        {
+          "id": 570,
+          "name": "SHOP SOLAR DO BRASIL – ENERGIA SOLAR LTDA",
+          "state": "RJ",
+          "city": "Rio das Ostras"
+        },
+        {
+          "id": 552,
+          "name": "SHOP SOLAR DO BRASIL – ENERGIA SOLAR LTDA",
+          "state": "RJ",
+          "city": "Rio das Ostras"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"shop do\""
+    },
+    {
+      "enf": {
+        "id": "103304",
+        "name": "Expertise Energia Solar",
+        "state": "Amazonas"
+      },
+      "avalia": [
+        {
+          "id": 903,
+          "name": "Expertise Solar",
+          "state": "SC",
+          "city": "Florianópolis"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"expertise\""
+    },
+    {
+      "enf": {
+        "id": "135593",
+        "name": "Solturi",
+        "state": "Santa Catarina"
+      },
+      "avalia": [
+        {
+          "id": 750,
+          "name": "Solturi",
+          "state": "MT",
+          "city": "Nova Mutum"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"solturi\""
+    },
+    {
+      "enf": {
+        "id": "136101",
+        "name": "RR Energia Solar",
+        "state": "Bahia"
+      },
+      "avalia": [
+        {
+          "id": 407,
+          "name": "RR Solar",
+          "state": "SP",
+          "city": "São Paulo"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"rr\""
+    },
+    {
+      "enf": {
+        "id": "57507",
+        "name": "EngeSol Energia Solar",
+        "state": "Pernambuco"
+      },
+      "avalia": [
+        {
+          "id": 709,
+          "name": "Engesol Energia Solar",
+          "state": "MG",
+          "city": "Lambari"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"engesol\""
+    },
+    {
+      "enf": {
+        "id": "57319",
+        "name": "Solled Energia",
+        "state": "Rio Grande do Sul"
+      },
+      "avalia": [
+        {
+          "id": 627,
+          "name": "Solled Energia",
+          "state": "RS",
+          "city": "Xangri-lá"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"solled\""
+    },
+    {
+      "enf": {
+        "id": "78121",
+        "name": "SunTech Energia Solar",
+        "state": "Ceará"
+      },
+      "avalia": [
+        {
+          "id": 399,
+          "name": "Suntech Brasil",
+          "state": "SP",
+          "city": "São Paulo"
+        }
+      ],
+      "reason": "Nome normalizado idêntico: \"suntech\""
+    }
+  ],
+  "domainMatches": [],
+  "slugMatches": [
+    {
+      "enf": {
+        "id": "191877",
+        "name": "Rudnik Soluções e Tecnologia",
+        "slug": "rudnik",
+        "state": "Santa Catarina"
+      },
+      "avalia": {
+        "id": 1018,
+        "name": "Rudnik",
+        "slug": "rudnik",
+        "state": "SP"
+      },
+      "reason": "Mesmo slug canônico: rudnik"
+    },
+    {
+      "enf": {
+        "id": "191873",
+        "name": "ME Energia Solar",
+        "slug": "me-energia-solar",
+        "state": "Espírito Santo"
+      },
+      "avalia": {
+        "id": 609,
+        "name": "Da Cas Soluções Elétricas",
+        "slug": "me-energia-solar",
+        "state": "RS"
+      },
+      "reason": "Mesmo slug canônico: me-energia-solar"
+    },
+    {
+      "enf": {
+        "id": "118117",
+        "name": "Fenattech Engenharia e Consultoria",
+        "slug": "fenattech",
+        "state": "Rio de Janeiro"
+      },
+      "avalia": {
+        "id": 347,
+        "name": "Fenattech",
+        "slug": "fenattech",
+        "state": null
+      },
+      "reason": "Mesmo slug canônico: fenattech"
+    },
+    {
+      "enf": {
+        "id": "189220",
+        "name": "Única Solar Ltda",
+        "slug": "unica-solar",
+        "state": "Mato Grosso"
+      },
+      "avalia": {
+        "id": 986,
+        "name": "Única Solar",
+        "slug": "unica-solar",
+        "state": "MT"
+      },
+      "reason": "Mesmo slug canônico: unica-solar"
+    },
+    {
+      "enf": {
+        "id": "172561",
+        "name": "Âmbito Energia",
+        "slug": "ambito-energia",
+        "state": "Mato Grosso"
+      },
+      "avalia": {
+        "id": 1001,
+        "name": "Âmbito Energia",
+        "slug": "ambito-energia",
+        "state": "MT"
+      },
+      "reason": "Mesmo slug canônico: ambito-energia"
+    },
+    {
+      "enf": {
+        "id": "187560",
+        "name": "Ever Energia",
+        "slug": "ever-energia",
+        "state": "Santa Catarina"
+      },
+      "avalia": {
+        "id": 1129,
+        "name": "Ever Energia",
+        "slug": "ever-energia",
+        "state": "SC"
+      },
+      "reason": "Mesmo slug canônico: ever-energia"
+    },
+    {
+      "enf": {
+        "id": "187436",
+        "name": "Borne Energia",
+        "slug": "borne-energia",
+        "state": "Paraná"
+      },
+      "avalia": {
+        "id": 483,
+        "name": "Latin America Solar",
+        "slug": "borne-energia",
+        "state": "SP"
+      },
+      "reason": "Mesmo slug canônico: borne-energia"
+    },
+    {
+      "enf": {
+        "id": "154883",
+        "name": "Cabugi Solar",
+        "slug": "cabugi-solar",
+        "state": "Rio Grande do Norte"
+      },
+      "avalia": {
+        "id": 434,
+        "name": "Cabugi Solar",
+        "slug": "cabugi-solar",
+        "state": "RN"
+      },
+      "reason": "Mesmo slug canônico: cabugi-solar"
+    },
+    {
+      "enf": {
+        "id": "141029",
+        "name": "Cuiabá Energia Solar",
+        "slug": "cuiaba-energia-solar",
+        "state": "Mato Grosso"
+      },
+      "avalia": {
+        "id": 997,
+        "name": "Cuiabá Energia",
+        "slug": "cuiaba-energia-solar",
+        "state": "MT"
+      },
+      "reason": "Mesmo slug canônico: cuiaba-energia-solar"
+    },
+    {
+      "enf": {
+        "id": "145803",
+        "name": "Invoga Energia Solar Consultoria e Tecnologias Inovadora",
+        "slug": "invoga",
+        "state": "Goiás"
+      },
+      "avalia": {
+        "id": 339,
+        "name": "Invoga",
+        "slug": "invoga",
+        "state": null
+      },
+      "reason": "Mesmo slug canônico: invoga"
+    },
+    {
+      "enf": {
+        "id": "142086",
+        "name": "Teck Home",
+        "slug": "teck-home",
+        "state": "São Paulo"
+      },
+      "avalia": {
+        "id": 413,
+        "name": "Teck Home",
+        "slug": "teck-home",
+        "state": "SP"
+      },
+      "reason": "Mesmo slug canônico: teck-home"
+    },
+    {
+      "enf": {
+        "id": "141031",
+        "name": "VC Energia Solar",
+        "slug": "vc-energia-solar",
+        "state": "Mato Grosso"
+      },
+      "avalia": {
+        "id": 993,
+        "name": "VC Energia",
+        "slug": "vc-energia-solar",
+        "state": "MT"
+      },
+      "reason": "Mesmo slug canônico: vc-energia-solar"
+    },
+    {
+      "enf": {
+        "id": "135576",
+        "name": "Indusol Energias Renovaveis",
+        "slug": "indusol",
+        "state": "Santa Catarina"
+      },
+      "avalia": {
+        "id": 617,
+        "name": "STROM Energia",
+        "slug": "indusol",
+        "state": "PR"
+      },
+      "reason": "Mesmo slug canônico: indusol"
+    },
+    {
+      "enf": {
+        "id": "182452",
+        "name": "ElétronSun Engenharia Solar",
+        "slug": "eletronsun",
+        "state": "Minas Gerais"
+      },
+      "avalia": {
+        "id": 410,
+        "name": "Elétronsun",
+        "slug": "eletronsun",
+        "state": "MG"
+      },
+      "reason": "Mesmo slug canônico: eletronsun"
+    },
+    {
+      "enf": {
+        "id": "135581",
+        "name": "Eletricista Florianópolis \\| Desterro Eletricidade",
+        "slug": "desterro-eletricidade",
+        "state": "Santa Catarina"
+      },
+      "avalia": {
+        "id": 801,
+        "name": "Desterro Eletricidade",
+        "slug": "desterro-eletricidade",
+        "state": "SC"
+      },
+      "reason": "Mesmo slug canônico: desterro-eletricidade"
+    },
+    {
+      "enf": {
+        "id": "182378",
+        "name": "J3 Energia",
+        "slug": "j3-energia",
+        "state": "Rio de Janeiro"
+      },
+      "avalia": {
+        "id": 359,
+        "name": "J3 Energia",
+        "slug": "j3-energia",
+        "state": null
+      },
+      "reason": "Mesmo slug canônico: j3-energia"
+    },
+    {
+      "enf": {
+        "id": "182375",
+        "name": "Bruky Energy Brazil",
+        "slug": "bruky",
+        "state": "São Paulo"
+      },
+      "avalia": {
+        "id": 356,
+        "name": "Bruky",
+        "slug": "bruky",
+        "state": "BA"
+      },
+      "reason": "Mesmo slug canônico: bruky"
+    },
+    {
+      "enf": {
+        "id": "182369",
+        "name": "Brazil Solution Ltda",
+        "slug": "brazil-solution",
+        "state": "Rio de Janeiro"
+      },
+      "avalia": {
+        "id": 346,
+        "name": "Brazil Solution",
+        "slug": "brazil-solution",
+        "state": null
+      },
+      "reason": "Mesmo slug canônico: brazil-solution"
+    },
+    {
+      "enf": {
+        "id": "182367",
+        "name": "Smart Haus Elétrica",
+        "slug": "smart-haus-eletrica",
+        "state": "São Paulo"
+      },
+      "avalia": {
+        "id": 337,
+        "name": "Smart Haus Elétrica",
+        "slug": "smart-haus-eletrica",
+        "state": null
+      },
+      "reason": "Mesmo slug canônico: smart-haus-eletrica"
+    },
+    {
+      "enf": {
+        "id": "57545",
+        "name": "Limersol Energia Solar",
+        "slug": "limersol",
+        "state": "São Paulo"
+      },
+      "avalia": {
+        "id": 491,
+        "name": "Duo Soluções Energéticas Eireli",
+        "slug": "limersol",
+        "state": "SP"
+      },
+      "reason": "Mesmo slug canônico: limersol"
+    }
+  ],
+  "partialMatches": [],
+  "newCompaniesSample": [
+    {
+      "id": "140971",
+      "name": "i9 Solar",
+      "slug": "i9-solar",
+      "state": "São Paulo",
+      "phone": "+55 1138 851 919",
+      "website": "https://www.i9solar.com",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 7,
+      "panelCount": 8
+    },
+    {
+      "id": "118915",
+      "name": "Edir Casa Solar",
+      "slug": "edir-casa-solar",
+      "state": "Minas Gerais",
+      "phone": "+55 3199 6180 147",
+      "website": "https://edirsolar.com.br",
+      "hasLogo": true,
+      "hasBattery": true,
+      "inverterCount": 3,
+      "panelCount": 0
+    },
+    {
+      "id": "125697",
+      "name": "GMV Engenharia e Energia Solar",
+      "slug": "gmv-engenharia",
+      "state": "Amazonas",
+      "phone": "+55 9299 3318 174",
+      "website": null,
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "144554",
+      "name": "BASE Energia Sustentável",
+      "slug": "base-energia-sustentavel",
+      "state": "Distrito Federal",
+      "phone": "+55 6130 319 110",
+      "website": "https://basengenharia.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "130988",
+      "name": "Mais Solar",
+      "slug": "mais-solar",
+      "state": "Rio de Janeiro",
+      "phone": "+55 2141 419 447",
+      "website": "https://www.mais-solar.com",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "102971",
+      "name": "Etcom Energia Solar",
+      "slug": "etcom",
+      "state": "Rio de Janeiro",
+      "phone": "+55 2134 143 930",
+      "website": "https://www.etcom.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "144468",
+      "name": "Soluti Energia",
+      "slug": "soluti-energia",
+      "state": "Minas Gerais",
+      "phone": "+55 3599 9353 971",
+      "website": "https://solutienergia.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 1,
+      "panelCount": 0
+    },
+    {
+      "id": "146453",
+      "name": "Trisolar Engenharia Elétrica",
+      "slug": "trisolar-1",
+      "state": "Mato Grosso",
+      "phone": "+55 6599 2465 510",
+      "website": "https://trisolar.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "118948",
+      "name": "Dek Energia Solar",
+      "slug": "deksolar",
+      "state": "Rio de Janeiro",
+      "phone": "+55 2131 019 245",
+      "website": "https://deksolar.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "170002",
+      "name": "Doutor Da Engenharia Servicos De Engenharia Eletrica E Assessoria De Vendas Ltda",
+      "slug": "dr-engenharia-eletric",
+      "state": "Bahia",
+      "phone": "+55 7399 1027 743",
+      "website": "https://www.drdaengenharia.online",
+      "hasLogo": true,
+      "hasBattery": true,
+      "inverterCount": 1,
+      "panelCount": 0
+    },
+    {
+      "id": "144170",
+      "name": "i9Electro",
+      "slug": "i9electro",
+      "state": "São Paulo",
+      "phone": "+55 1151 084 503",
+      "website": "https://www.i9electro.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "82777",
+      "name": "IG Energias Renováveis ​​Ltda.",
+      "slug": "ig-energias-renovaveis",
+      "state": "Santa Catarina",
+      "phone": "+55 8000 036 357",
+      "website": "https://igenergia.com.br",
+      "hasLogo": true,
+      "hasBattery": true,
+      "inverterCount": 1,
+      "panelCount": 1
+    },
+    {
+      "id": "103112",
+      "name": "SERVINDU Servicos Industriais Ltda",
+      "slug": "servindu",
+      "state": "Rio Grande do Norte",
+      "phone": "+55 8433 143 361",
+      "website": "https://servindu.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 1,
+      "panelCount": 1
+    },
+    {
+      "id": "194629",
+      "name": "Confiance Energy",
+      "slug": "confiance-energy",
+      "state": "Rio Grande do Norte",
+      "phone": "+55 84 9914 65777",
+      "website": "https://confianceenergy.com",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "65459",
+      "name": "Ecori Energia Solar Ltda",
+      "slug": "ecori",
+      "state": "São Paulo",
+      "phone": "+55 1732 281 200",
+      "website": "https://www.ecorienergiasolar.com.br",
+      "hasLogo": true,
+      "hasBattery": true,
+      "inverterCount": 6,
+      "panelCount": 7
+    },
+    {
+      "id": "135765",
+      "name": "Varimaster Group",
+      "slug": "varimaster-group",
+      "state": "São Paulo",
+      "phone": "+55 1156 132 000",
+      "website": "https://www.varimaster.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 3,
+      "panelCount": 3
+    },
+    {
+      "id": "130753",
+      "name": "Almax Energia",
+      "slug": "almax-energia",
+      "state": "Rio de Janeiro",
+      "phone": "+55 2122 257 270",
+      "website": null,
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "95875",
+      "name": "AJ Solar Energia – Comercio E Locação De Equipamentos Fotovoltaicos Ltda",
+      "slug": "aj-solar",
+      "state": "São Paulo",
+      "phone": "+55 1147 246 352",
+      "website": "https://ajsolar.com.br",
+      "hasLogo": true,
+      "hasBattery": true,
+      "inverterCount": 0,
+      "panelCount": 0
+    },
+    {
+      "id": "65161",
+      "name": "Suntec Energy",
+      "slug": "suntec-energy",
+      "state": "São Paulo",
+      "phone": "+55 1898 1464 069",
+      "website": "https://suntec.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 3,
+      "panelCount": 0
+    },
+    {
+      "id": "146235",
+      "name": "S\\|R Lambert Elétrica e Solar",
+      "slug": "s-r-lambert",
+      "state": "São Paulo",
+      "phone": "+55 1193 4691 146",
+      "website": "https://srlambert.com.br",
+      "hasLogo": true,
+      "hasBattery": false,
+      "inverterCount": 1,
+      "panelCount": 1
+    }
+  ]
+}

@@ -1,0 +1,1402 @@
+[
+  {
+    "id": "140971",
+    "name": "i9 Solar",
+    "slug": "i9-solar",
+    "enfUrl": "https://www.enfsolar.com/i9-solar?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "118915",
+    "name": "Edir Casa Solar",
+    "slug": "edir-casa-solar",
+    "enfUrl": "https://www.enfsolar.com/edir-casa-solar?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "125697",
+    "name": "GMV Engenharia",
+    "slug": "gmv-engenharia",
+    "enfUrl": "https://www.enfsolar.com/gmv-engenharia?directory=installer&amp;list=Brazil",
+    "state": "Amazonas",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "144554",
+    "name": "BASE Energia Sustentável",
+    "slug": "base-energia-sustentavel",
+    "enfUrl": "https://www.enfsolar.com/base-energia-sustentavel?directory=installer&amp;list=Brazil",
+    "state": "Distrito Federal",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "130988",
+    "name": "Mais Solar",
+    "slug": "mais-solar",
+    "enfUrl": "https://www.enfsolar.com/mais-solar?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "102971",
+    "name": "Etcom",
+    "slug": "etcom",
+    "enfUrl": "https://www.enfsolar.com/etcom?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": "2017",
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "144468",
+    "name": "Soluti Energia",
+    "slug": "soluti-energia",
+    "enfUrl": "https://www.enfsolar.com/soluti-energia?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "146453",
+    "name": "Trisolar",
+    "slug": "trisolar-1",
+    "enfUrl": "https://www.enfsolar.com/trisolar-1?directory=installer&amp;list=Brazil",
+    "state": "Mato Grosso",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "118948",
+    "name": "DekSolar",
+    "slug": "deksolar",
+    "enfUrl": "https://www.enfsolar.com/deksolar?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "170002",
+    "name": "DR Engenharia Elétric",
+    "slug": "dr-engenharia-eletric",
+    "enfUrl": "https://www.enfsolar.com/dr-engenharia-eletric?directory=installer&amp;list=Brazil",
+    "state": "Bahia",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "144170",
+    "name": "i9Electro",
+    "slug": "i9electro",
+    "enfUrl": "https://www.enfsolar.com/i9electro?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "82777",
+    "name": "IG Energias Renováveis",
+    "slug": "ig-energias-renovaveis",
+    "enfUrl": "https://www.enfsolar.com/ig-energias-renovaveis?directory=installer&amp;list=Brazil",
+    "state": "Santa Catarina",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "103112",
+    "name": "Servindu",
+    "slug": "servindu",
+    "enfUrl": "https://www.enfsolar.com/servindu?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Norte",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "194629",
+    "name": "Confiance Energy",
+    "slug": "confiance-energy",
+    "enfUrl": "https://www.enfsolar.com/confiance-energy?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Norte",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "65459",
+    "name": "Ecori",
+    "slug": "ecori",
+    "enfUrl": "https://www.enfsolar.com/ecori?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "135765",
+    "name": "Varimaster Group",
+    "slug": "varimaster-group",
+    "enfUrl": "https://www.enfsolar.com/varimaster-group?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "130753",
+    "name": "Almax Energia",
+    "slug": "almax-energia",
+    "enfUrl": "https://www.enfsolar.com/almax-energia?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "95875",
+    "name": "AJ Solar",
+    "slug": "aj-solar",
+    "enfUrl": "https://www.enfsolar.com/aj-solar?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "65161",
+    "name": "Suntec Energy",
+    "slug": "suntec-energy",
+    "enfUrl": "https://www.enfsolar.com/suntec-energy?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "146235",
+    "name": "S|R Lambert",
+    "slug": "s-r-lambert",
+    "enfUrl": "https://www.enfsolar.com/s-r-lambert?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "116068",
+    "name": "STK Solar",
+    "slug": "stk-solar",
+    "enfUrl": "https://www.enfsolar.com/stk-solar?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "122704",
+    "name": "Eletromecan",
+    "slug": "eletromecan",
+    "enfUrl": "https://www.enfsolar.com/eletromecan?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "140927",
+    "name": "EngWatt",
+    "slug": "engwatt",
+    "enfUrl": "https://www.enfsolar.com/engwatt?directory=installer&amp;list=Brazil",
+    "state": "Goiás",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "64937",
+    "name": "SolarWatts",
+    "slug": "solarwatts",
+    "enfUrl": "https://www.enfsolar.com/solarwatts?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "141050",
+    "name": "WB Energy",
+    "slug": "wb-energy",
+    "enfUrl": "https://www.enfsolar.com/wb-energy?directory=installer&amp;list=Brazil",
+    "state": "Mato Grosso do Sul",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "87678",
+    "name": "P-Max",
+    "slug": "p-max",
+    "enfUrl": "https://www.enfsolar.com/p-max?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "187555",
+    "name": "Eletroserv Engenharia",
+    "slug": "eletroserv-engenharia",
+    "enfUrl": "https://www.enfsolar.com/eletroserv-engenharia?directory=installer&amp;list=Brazil",
+    "state": "Paraíba",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "141101",
+    "name": "Argos Solar",
+    "slug": "argos-solar",
+    "enfUrl": "https://www.enfsolar.com/argos-solar?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "119267",
+    "name": "MS Energia Solar",
+    "slug": "ms-energia-solar",
+    "enfUrl": "https://www.enfsolar.com/ms-energia-solar?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Sul",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "79325",
+    "name": "Via Solar",
+    "slug": "via-solar",
+    "enfUrl": "https://www.enfsolar.com/via-solar?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "139054",
+    "name": "Alpha &amp; Omega Solar",
+    "slug": "alpha-omega-solar-1",
+    "enfUrl": "https://www.enfsolar.com/alpha-omega-solar-1?directory=installer&amp;list=Brazil",
+    "state": "Santa Catarina",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "128323",
+    "name": "Quasat Solar",
+    "slug": "quasat-solar",
+    "enfUrl": "https://www.enfsolar.com/quasat-solar?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Sul",
+    "batteryStorage": false,
+    "startingDate": "2014",
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "140893",
+    "name": "E-Horse Power",
+    "slug": "e-horse-power",
+    "enfUrl": "https://www.enfsolar.com/e-horse-power?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Sul",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "193810",
+    "name": "KN Solar",
+    "slug": "kn-solar",
+    "enfUrl": "https://www.enfsolar.com/kn-solar?directory=installer&amp;list=Brazil",
+    "state": "Paraná",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "138737",
+    "name": "EBP",
+    "slug": "ebp-1",
+    "enfUrl": "https://www.enfsolar.com/ebp-1?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "66189",
+    "name": "Fratelli",
+    "slug": "fratelli",
+    "enfUrl": "https://www.enfsolar.com/fratelli?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Sul",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "78087",
+    "name": "Engegrid",
+    "slug": "engegrid",
+    "enfUrl": "https://www.enfsolar.com/engegrid?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "78255",
+    "name": "Engesolver",
+    "slug": "engesolver",
+    "enfUrl": "https://www.enfsolar.com/engesolver?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "90208",
+    "name": "Solar E2",
+    "slug": "solar-e2",
+    "enfUrl": "https://www.enfsolar.com/solar-e2?directory=installer&amp;list=Brazil",
+    "state": "Piauí",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "193527",
+    "name": "Rio RJ Solar",
+    "slug": "rio-rj-solar",
+    "enfUrl": "https://www.enfsolar.com/rio-rj-solar?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "118167",
+    "name": "Prisma Solar",
+    "slug": "prisma-solar",
+    "enfUrl": "https://www.enfsolar.com/prisma-solar?directory=installer&amp;list=Brazil",
+    "state": "Maranhão",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "193336",
+    "name": "Veltech",
+    "slug": "veltech-1",
+    "enfUrl": "https://www.enfsolar.com/veltech-1?directory=installer&amp;list=Brazil",
+    "state": null,
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "103094",
+    "name": "Inovacare Solar",
+    "slug": "inovacare-solar",
+    "enfUrl": "https://www.enfsolar.com/inovacare-solar?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "193135",
+    "name": "DGE Energia",
+    "slug": "dge-energia",
+    "enfUrl": "https://www.enfsolar.com/dge-energia?directory=installer&amp;list=Brazil",
+    "state": "Bahia",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192743",
+    "name": "Wide Energy",
+    "slug": "wide-energy",
+    "enfUrl": "https://www.enfsolar.com/wide-energy?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Sul",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192742",
+    "name": "Dalbene",
+    "slug": "dalbene",
+    "enfUrl": "https://www.enfsolar.com/dalbene?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192385",
+    "name": "Solarux",
+    "slug": "solarux",
+    "enfUrl": "https://www.enfsolar.com/solarux?directory=installer&amp;list=Brazil",
+    "state": "Paraná",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192386",
+    "name": "SolSupri",
+    "slug": "solsupri",
+    "enfUrl": "https://www.enfsolar.com/solsupri?directory=installer&amp;list=Brazil",
+    "state": "Paraná",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192387",
+    "name": "Zuz Elétrica",
+    "slug": "zuz-eletrica",
+    "enfUrl": "https://www.enfsolar.com/zuz-eletrica?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "46465",
+    "name": "Minha Casa Solar",
+    "slug": "minha-casa-solar",
+    "enfUrl": "https://www.enfsolar.com/minha-casa-solar?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192238",
+    "name": "Renove Energia Solar",
+    "slug": "renove-energia-solar",
+    "enfUrl": "https://www.enfsolar.com/renove-energia-solar?directory=installer&amp;list=Brazil",
+    "state": "Piauí",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192228",
+    "name": "RT Energia Solar",
+    "slug": "rt-energia-solar",
+    "enfUrl": "https://www.enfsolar.com/rt-energia-solar?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192229",
+    "name": "Seja Energia Solar",
+    "slug": "seja-energia-solar",
+    "enfUrl": "https://www.enfsolar.com/seja-energia-solar?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192230",
+    "name": "Soft Solar",
+    "slug": "soft-solar",
+    "enfUrl": "https://www.enfsolar.com/soft-solar?directory=installer&amp;list=Brazil",
+    "state": "Paraná",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192231",
+    "name": "Solar Brusque",
+    "slug": "solar-brusque",
+    "enfUrl": "https://www.enfsolar.com/solar-brusque?directory=installer&amp;list=Brazil",
+    "state": "Santa Catarina",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192232",
+    "name": "Solar Power PA",
+    "slug": "solar-power-pa",
+    "enfUrl": "https://www.enfsolar.com/solar-power-pa?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192233",
+    "name": "SolarTeó",
+    "slug": "solarteo",
+    "enfUrl": "https://www.enfsolar.com/solarteo?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192234",
+    "name": "MD Solar",
+    "slug": "md-solar-1",
+    "enfUrl": "https://www.enfsolar.com/md-solar-1?directory=installer&amp;list=Brazil",
+    "state": "Paraná",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192235",
+    "name": "Mizmet",
+    "slug": "mizmet",
+    "enfUrl": "https://www.enfsolar.com/mizmet?directory=installer&amp;list=Brazil",
+    "state": "Paraná",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192236",
+    "name": "Opa Solar",
+    "slug": "opa-solar",
+    "enfUrl": "https://www.enfsolar.com/opa-solar?directory=installer&amp;list=Brazil",
+    "state": "Goiás",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192276",
+    "name": "Max Energy",
+    "slug": "max-energy-1",
+    "enfUrl": "https://www.enfsolar.com/max-energy-1?directory=installer&amp;list=Brazil",
+    "state": "Paraná",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192275",
+    "name": "Lumisol",
+    "slug": "lumisol-1",
+    "enfUrl": "https://www.enfsolar.com/lumisol-1?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192274",
+    "name": "V. C. Silva Energia Solar",
+    "slug": "v-c-silva-energia-solar",
+    "enfUrl": "https://www.enfsolar.com/v-c-silva-energia-solar?directory=installer&amp;list=Brazil",
+    "state": "Bahia",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192273",
+    "name": "Leak Solar",
+    "slug": "leak-solar",
+    "enfUrl": "https://www.enfsolar.com/leak-solar?directory=installer&amp;list=Brazil",
+    "state": "Paraná",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192272",
+    "name": "Leader",
+    "slug": "leader",
+    "enfUrl": "https://www.enfsolar.com/leader?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192237",
+    "name": "Raio Solar",
+    "slug": "raio-solar-3",
+    "enfUrl": "https://www.enfsolar.com/raio-solar-3?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192239",
+    "name": "Revert Solar",
+    "slug": "revert-solar",
+    "enfUrl": "https://www.enfsolar.com/revert-solar?directory=installer&amp;list=Brazil",
+    "state": "Paraná",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192240",
+    "name": "Solarcos",
+    "slug": "solarcos-1",
+    "enfUrl": "https://www.enfsolar.com/solarcos-1?directory=installer&amp;list=Brazil",
+    "state": null,
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192263",
+    "name": "Innovare",
+    "slug": "innovare-3",
+    "enfUrl": "https://www.enfsolar.com/innovare-3?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Sul",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192262",
+    "name": "Guriri Solar",
+    "slug": "guriri-solar",
+    "enfUrl": "https://www.enfsolar.com/guriri-solar?directory=installer&amp;list=Brazil",
+    "state": "Espírito Santo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192261",
+    "name": "Greenlight Solar",
+    "slug": "greenlight-solar-1",
+    "enfUrl": "https://www.enfsolar.com/greenlight-solar-1?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192260",
+    "name": "Gironi Energia",
+    "slug": "gironi-energia",
+    "enfUrl": "https://www.enfsolar.com/gironi-energia?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192259",
+    "name": "Ex2 Energy",
+    "slug": "ex2-energy",
+    "enfUrl": "https://www.enfsolar.com/ex2-energy?directory=installer&amp;list=Brazil",
+    "state": "Espírito Santo",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192258",
+    "name": "Energix",
+    "slug": "energix-1",
+    "enfUrl": "https://www.enfsolar.com/energix-1?directory=installer&amp;list=Brazil",
+    "state": "Minas Gerais",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192257",
+    "name": "ECOSOL Energy",
+    "slug": "ecosol-energy",
+    "enfUrl": "https://www.enfsolar.com/ecosol-energy?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192255",
+    "name": "CDE Solar",
+    "slug": "cde-solar-1",
+    "enfUrl": "https://www.enfsolar.com/cde-solar-1?directory=installer&amp;list=Brazil",
+    "state": null,
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192254",
+    "name": "Carga Ativa",
+    "slug": "carga-ativa",
+    "enfUrl": "https://www.enfsolar.com/carga-ativa?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192252",
+    "name": "Atsun",
+    "slug": "atsun",
+    "enfUrl": "https://www.enfsolar.com/atsun?directory=installer&amp;list=Brazil",
+    "state": null,
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192256",
+    "name": "Clean Solar",
+    "slug": "clean-solar-1",
+    "enfUrl": "https://www.enfsolar.com/clean-solar-1?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192253",
+    "name": "Brasil Energia Sustentável",
+    "slug": "brasil-energia-sustentavel",
+    "enfUrl": "https://www.enfsolar.com/brasil-energia-sustentavel?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Sul",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192189",
+    "name": "Alta Energia",
+    "slug": "alta-energia",
+    "enfUrl": "https://www.enfsolar.com/alta-energia?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Sul",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192188",
+    "name": "ABL Solar",
+    "slug": "abl-solar",
+    "enfUrl": "https://www.enfsolar.com/abl-solar?directory=installer&amp;list=Brazil",
+    "state": null,
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192013",
+    "name": "VinTech",
+    "slug": "vintech",
+    "enfUrl": "https://www.enfsolar.com/vintech?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192012",
+    "name": "Veluz Solar",
+    "slug": "veluz-solar",
+    "enfUrl": "https://www.enfsolar.com/veluz-solar?directory=installer&amp;list=Brazil",
+    "state": "Distrito Federal",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192009",
+    "name": "Soluran",
+    "slug": "soluran",
+    "enfUrl": "https://www.enfsolar.com/soluran?directory=installer&amp;list=Brazil",
+    "state": null,
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192008",
+    "name": "Solid",
+    "slug": "solid-1",
+    "enfUrl": "https://www.enfsolar.com/solid-1?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192007",
+    "name": "SolarV Engenharia",
+    "slug": "solarv-engenharia",
+    "enfUrl": "https://www.enfsolar.com/solarv-engenharia?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192006",
+    "name": "SolarTecvolts",
+    "slug": "solartecvolts",
+    "enfUrl": "https://www.enfsolar.com/solartecvolts?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192005",
+    "name": "Solar Araçatuba",
+    "slug": "solar-aracatuba",
+    "enfUrl": "https://www.enfsolar.com/solar-aracatuba?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192004",
+    "name": "Service Energy",
+    "slug": "service-energy-1",
+    "enfUrl": "https://www.enfsolar.com/service-energy-1?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192002",
+    "name": "Ricosol",
+    "slug": "ricosol-1",
+    "enfUrl": "https://www.enfsolar.com/ricosol-1?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192001",
+    "name": "Power Solar Dourados",
+    "slug": "power-solar-dourados",
+    "enfUrl": "https://www.enfsolar.com/power-solar-dourados?directory=installer&amp;list=Brazil",
+    "state": "Mato Grosso do Sul",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "192000",
+    "name": "Orla Solar",
+    "slug": "orla-solar",
+    "enfUrl": "https://www.enfsolar.com/orla-solar?directory=installer&amp;list=Brazil",
+    "state": "Rio Grande do Sul",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "191999",
+    "name": "Ninja Solar",
+    "slug": "ninja-solar",
+    "enfUrl": "https://www.enfsolar.com/ninja-solar?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "191998",
+    "name": "Luis Solar",
+    "slug": "luis-solar",
+    "enfUrl": "https://www.enfsolar.com/luis-solar?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "191997",
+    "name": "InfiniteSun",
+    "slug": "infinitesun",
+    "enfUrl": "https://www.enfsolar.com/infinitesun?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "191996",
+    "name": "HDSolar",
+    "slug": "hdsolar-1",
+    "enfUrl": "https://www.enfsolar.com/hdsolar-1?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "191991",
+    "name": "GRD Solar",
+    "slug": "grd-solar",
+    "enfUrl": "https://www.enfsolar.com/grd-solar?directory=installer&amp;list=Brazil",
+    "state": "São Paulo",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "191990",
+    "name": "ExSolar",
+    "slug": "exsolar-1",
+    "enfUrl": "https://www.enfsolar.com/exsolar-1?directory=installer&amp;list=Brazil",
+    "state": "Bahia",
+    "batteryStorage": false,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  },
+  {
+    "id": "191989",
+    "name": "E-Sun",
+    "slug": "e-sun",
+    "enfUrl": "https://www.enfsolar.com/e-sun?directory=installer&amp;list=Brazil",
+    "state": "Rio de Janeiro",
+    "batteryStorage": true,
+    "startingDate": null,
+    "installationSizes": [
+      "smaller",
+      "1mwp_plus"
+    ],
+    "country": "Brazil"
+  }
+]

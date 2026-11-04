@@ -27,16 +27,16 @@ import {
 const BOOKING_URL = 'https://zbooking.us/6shCH';
 const IMAGE_RATIO = 1055 / 1491;
 const TOUR_STEPS = [
-  { id: 'hero-banner', title: 'Hero Banner Customizável', desc: 'Personalize a apresentação da sua marca com um banner exclusivo, imagens e mensagens institucionais.', pin: [0.033, 0.054], target: [0.39, 0.077], entry: 'left', zoom: 1.8, duration: 1100, legend: 'right' },
-  { id: 'verification-seal', title: 'Selo de Verificação', desc: 'Identifique empresas com administração verificada na plataforma, conforme os critérios de elegibilidade.', pin: [0.498, 0.173], target: [0.391, 0.19], entry: 'top', zoom: 2.35, duration: 1000, legend: 'right' },
-  { id: 'quote-request', title: 'Solicitar Orçamento', desc: 'Facilite o contato direto entre visitantes e empresas por meio do canal de orçamento.', pin: [0.853, 0.181], target: [0.84, 0.251], entry: 'right', zoom: 2.35, duration: 1050, legend: 'left' },
-  { id: 'about-company', title: 'Sobre a Empresa', desc: 'Apresente sua trajetória e ajude visitantes a compreenderem a experiência da sua empresa.', pin: [0.059, 0.335], target: [0.244, 0.34], entry: 'left', zoom: 2.1, duration: 1150, legend: 'right' },
-  { id: 'featured-products', title: 'Produtos em Destaque', desc: 'Apresente suas principais soluções com imagens, especificações e acesso aos detalhes.', pin: [0.028, 0.485], target: [0.24, 0.51], entry: 'left', zoom: 2.1, duration: 1200, legend: 'right' },
-  { id: 'whatsapp', title: 'Botão WhatsApp', desc: 'Permita que potenciais clientes iniciem uma conversa diretamente com sua empresa.', pin: [0.906, 0.419], target: [0.785, 0.469], entry: 'right', zoom: 2.35, duration: 950, legend: 'left' },
-  { id: 'downloadable-materials', title: 'Materiais Baixáveis', desc: 'Disponibilize catálogos, manuais e conteúdos técnicos para apoiar a avaliação de produtos.', pin: [0.916, 0.648], target: [0.766, 0.689], entry: 'right', zoom: 2.2, duration: 1100, legend: 'left' },
-  { id: 'featured-reviews', title: 'Avaliações em Destaque', desc: 'Apresente experiências de clientes e construa seu histórico de reputação.', pin: [0.028, 0.669], target: [0.26, 0.687], entry: 'left', zoom: 2.15, duration: 1050, legend: 'right' },
-  { id: 'portfolio-projects', title: 'Portfólio e Projetos', desc: 'Organize fotografias e vídeos dos trabalhos realizados para demonstrar a experiência da empresa.', pin: [0.027, 0.811], target: [0.23, 0.82], entry: 'left', zoom: 2.15, duration: 1150, legend: 'right' },
-  { id: 'protected-profile', title: 'Perfil Protegido Exclusivo', desc: 'Conheça os recursos de proteção e apresentação exclusiva disponíveis conforme as condições do plano.', pin: [0.035, 0.925], target: [0.26, 0.928], entry: 'bottom', zoom: 2.1, duration: 1100, legend: 'right' },
+  { id: 'hero-banner', title: 'Hero Banner Customizável', desc: 'Personalize a apresentação da sua marca com um banner exclusivo, imagens e mensagens institucionais.', pin: [0.033, 0.054], target: [0.39, 0.077], entry: 'left', zoom: 1.22, duration: 1100, legend: 'right' },
+  { id: 'verification-seal', title: 'Selo de Verificação', desc: 'Identifique empresas com administração verificada na plataforma, conforme os critérios de elegibilidade.', pin: [0.498, 0.173], target: [0.391, 0.19], entry: 'top', zoom: 1.35, duration: 1000, legend: 'right' },
+  { id: 'quote-request', title: 'Solicitar Orçamento', desc: 'Facilite o contato direto entre visitantes e empresas por meio do canal de orçamento.', pin: [0.853, 0.181], target: [0.84, 0.251], entry: 'right', zoom: 1.35, duration: 1050, legend: 'left' },
+  { id: 'about-company', title: 'Sobre a Empresa', desc: 'Apresente sua trajetória e ajude visitantes a compreenderem a experiência da sua empresa.', pin: [0.059, 0.335], target: [0.244, 0.34], entry: 'left', zoom: 1.28, duration: 1150, legend: 'right' },
+  { id: 'featured-products', title: 'Produtos em Destaque', desc: 'Apresente suas principais soluções com imagens, especificações e acesso aos detalhes.', pin: [0.028, 0.485], target: [0.24, 0.51], entry: 'left', zoom: 1.28, duration: 1200, legend: 'right' },
+  { id: 'whatsapp', title: 'Botão WhatsApp', desc: 'Permita que potenciais clientes iniciem uma conversa diretamente com sua empresa.', pin: [0.906, 0.419], target: [0.785, 0.469], entry: 'right', zoom: 1.35, duration: 950, legend: 'left' },
+  { id: 'downloadable-materials', title: 'Materiais Baixáveis', desc: 'Disponibilize catálogos, manuais e conteúdos técnicos para apoiar a avaliação de produtos.', pin: [0.916, 0.648], target: [0.766, 0.689], entry: 'right', zoom: 1.32, duration: 1100, legend: 'left' },
+  { id: 'featured-reviews', title: 'Avaliações em Destaque', desc: 'Apresente experiências de clientes e construa seu histórico de reputação.', pin: [0.028, 0.669], target: [0.26, 0.687], entry: 'left', zoom: 1.3, duration: 1050, legend: 'right' },
+  { id: 'portfolio-projects', title: 'Portfólio e Projetos', desc: 'Organize fotografias e vídeos dos trabalhos realizados para demonstrar a experiência da empresa.', pin: [0.027, 0.811], target: [0.23, 0.82], entry: 'left', zoom: 1.3, duration: 1150, legend: 'right' },
+  { id: 'protected-profile', title: 'Perfil Protegido Exclusivo', desc: 'Conheça os recursos de proteção e apresentação exclusiva disponíveis conforme as condições do plano.', pin: [0.035, 0.925], target: [0.26, 0.928], entry: 'bottom', zoom: 1.28, duration: 1100, legend: 'right' },
 ] as const;
 
 type TourStep = (typeof TOUR_STEPS)[number];
@@ -203,7 +203,7 @@ export default function FounderCursorTour() {
 
           <div
             ref={frameRef}
-            className="relative mx-auto aspect-[4/5] w-full max-w-[520px] overflow-hidden rounded-lg border border-white/20 bg-slate-100 shadow-2xl sm:aspect-[16/10] lg:max-w-none"
+            className="relative mx-auto aspect-[4/5] w-full max-w-[520px] overflow-hidden rounded-lg border border-white/20 bg-[#09172f] shadow-2xl sm:aspect-[16/10] lg:max-w-none"
             onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null; }}
             onTouchEnd={(event) => {
               if (touchStartX.current === null) return;
@@ -218,15 +218,23 @@ export default function FounderCursorTour() {
               initial={false}
               animate={{ x: camera.x, y: camera.y, scale: camera.scale }}
               transition={reducedMotion ? { duration: 0 } : { duration: step.duration / 1000, ease: [0.16, 1, 0.3, 1] }}
-              style={{ aspectRatio: `${IMAGE_RATIO}`, transformOrigin: 'top left' }}
+              style={{
+                aspectRatio: `${IMAGE_RATIO}`,
+                transformOrigin: 'top left',
+                willChange: 'transform',
+                transform: 'translateZ(0)',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden',
+              }}
             >
               <Image
-                src="/assets/brand-page-premium.png"
+                src="/assets/brand-page-premium.webp"
                 alt="Captura original da Brand Page Premium Solaris Energia, com anotações numeradas dos recursos"
                 width={1055}
                 height={1491}
-                sizes="(max-width: 767px) 100vw, (max-width: 1023px) 90vw, 700px"
-                loading="eager"
+                sizes="(max-width: 767px) 100vw, (max-width: 1280px) 1055px, 1055px"
+                quality={95}
+                priority
                 className="h-full w-full select-none object-fill"
                 draggable={false}
               />

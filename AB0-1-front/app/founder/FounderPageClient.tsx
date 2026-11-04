@@ -131,6 +131,9 @@ export default function FounderPageClient() {
       {/* REQUISITO 5: BEFORE / AFTER INTERATIVO ARRASTÁVEL */}
       <FounderBeforeAfter />
 
+      {/* TOUR DOS PONTOS DE CONVERSÃO */}
+      <FounderConversionTour />
+
       {/* REQUISITO 6: PROCESS DRAW (3 ETAPAS DA JORNADA REAL) */}
       <FounderProcessDraw />
 
@@ -304,9 +307,6 @@ export default function FounderPageClient() {
           </div>
         </div>
       </section>
-
-      {/* ÚLTIMO BLOCO DE CONTEÚDO: TOUR DOS PONTOS DE CONVERSÃO */}
-      <FounderConversionTour />
 
       {/* NOTA DE RODAPÉ JURÍDICA E DISCLAIMER */}
       <footer className="py-8 px-4 text-center text-xs text-[#64748b] border-t border-[#d0d7de] max-w-7xl mx-auto font-mono">

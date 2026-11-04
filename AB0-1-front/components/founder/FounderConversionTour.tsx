@@ -32,11 +32,11 @@ const STEPS: ConversionTourStep[] = [
     title: 'Sua empresa aparece na pesquisa',
     description:
       'Na busca do Avalia Solar, o visitante pode encontrar sua empresa e iniciar uma solicitação de orçamento diretamente na listagem, quando esse recurso está habilitado.',
-    imageSrc: '/assets/avalia-solar-btn-01.PNG',
+    imageSrc: '/assets/avalia-solar-btn-01.webp',
     width: 861,
     height: 634,
     hotspots: [{ x: 0.65, y: 0.5, caption: 'Ponto de contato na busca' }],
-    zoomScale: 1.45,
+    zoomScale: 1.25,
     durationMs: 7000,
   },
   {
@@ -44,14 +44,14 @@ const STEPS: ConversionTourStep[] = [
     title: 'O orçamento também está no comparador',
     description:
       'Enquanto compara empresas e critérios técnicos, o visitante encontra caminhos diretos para solicitar orçamento.',
-    imageSrc: '/assets/avalia-solar-btn-02.PNG',
+    imageSrc: '/assets/avalia-solar-btn-02.webp',
     width: 898,
     height: 634,
     hotspots: [
       { x: 0.38, y: 0.71, caption: 'Solicitação para a primeira empresa' },
       { x: 0.57, y: 0.71, caption: 'Solicitação para a segunda empresa' },
     ],
-    zoomScale: 1.55,
+    zoomScale: 1.3,
     durationMs: 9000,
   },
   {
@@ -59,11 +59,11 @@ const STEPS: ConversionTourStep[] = [
     title: 'Contato no momento da recomendação',
     description:
       'A comparação completa permite apresentar um caminho de contato próximo à recomendação contextual da plataforma.',
-    imageSrc: '/assets/avalia-solar-btn-03.PNG',
+    imageSrc: '/assets/avalia-solar-btn-03.webp',
     width: 830,
     height: 632,
     hotspots: [{ x: 0.51, y: 0.115, caption: 'Contato próximo à recomendação' }],
-    zoomScale: 1.7,
+    zoomScale: 1.35,
     durationMs: 7000,
   },
   {
@@ -71,14 +71,14 @@ const STEPS: ConversionTourStep[] = [
     title: 'Sua empresa continua acessível durante a comparação',
     description:
       'Mesmo ao analisar diferentes critérios, o visitante pode identificar os caminhos de solicitação de orçamento disponíveis para cada empresa.',
-    imageSrc: '/assets/avalia-solar-btn-03.PNG',
+    imageSrc: '/assets/avalia-solar-btn-03.webp',
     width: 830,
     height: 632,
     hotspots: [
       { x: 0.27, y: 0.95, caption: 'Solicitação para a empresa da primeira coluna' },
       { x: 0.47, y: 0.95, caption: 'Solicitação para a empresa da segunda coluna' },
     ],
-    zoomScale: 1.65,
+    zoomScale: 1.35,
     durationMs: 9000,
   },
   {
@@ -325,7 +325,7 @@ export default function FounderConversionTour() {
                       src={step.imageSrc}
                       alt={`Captura real da plataforma Avalia Solar: ${step.title}`}
                       fill
-                      priority={stepIndex === 0}
+                      quality={92}
                       sizes="(max-width: 1023px) 100vw, 65vw"
                       className="object-contain"
                     />
@@ -413,7 +413,7 @@ export default function FounderConversionTour() {
                         src={src}
                         alt={`Captura demonstrativa: ${title}`}
                         fill
-                        priority
+                        quality={90}
                         sizes="(max-width: 639px) 90vw, 30vw"
                         className="object-contain"
                       />

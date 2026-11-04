@@ -22,7 +22,7 @@ test.describe('Tour dos pontos de conversão Founder', () => {
     await expect
       .poll(() => image.evaluate((node: HTMLImageElement) => node.naturalWidth))
       .toBeGreaterThan(0);
-    expect(await image.getAttribute('src')).toContain('avalia-solar-btn-01.PNG');
+    expect(await image.getAttribute('src')).toMatch(/avalia-solar-btn-01\.(PNG|webp)/i);
 
     await tour.getByRole('button', { name: 'Próximo' }).click();
     await expect(tour.getByText('02 / 05')).toBeVisible();
@@ -35,7 +35,7 @@ test.describe('Tour dos pontos de conversão Founder', () => {
       .click();
     await expect(tour.locator('img[alt*="Captura real da plataforma"]')).toHaveAttribute(
       'src',
-      /avalia-solar-btn-03\.PNG/
+      /avalia-solar-btn-03\.(PNG|webp)/i
     );
 
     await tour
@@ -56,6 +56,54 @@ test.describe('Tour dos pontos de conversão Founder', () => {
       '#tour-interativo'
     );
     await page.screenshot({ path: 'test-results/founder-conversion-desktop.png', fullPage: false });
+  });
+
+  test('monta o tour após o comparador, antes do Process Draw, e só inicia autoplay ao entrar na viewport', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto('/founder', { waitUntil: 'domcontentloaded' });
+
+    const order = await page.evaluate(() => {
+      const comparator = document.querySelector('#comparador-visual');
+      const conversion = document.querySelector('#founder-conversion-tour');
+      const process = Array.from(document.querySelectorAll('section')).find((section) =>
+        section.textContent?.includes('Como funciona a ativação do Plano Founder')
+      );
+      const footer = document.querySelector('footer');
+
+      return {
+        instances: document.querySelectorAll('#founder-conversion-tour').length,
+        afterComparator: Boolean(
+          comparator &&
+          conversion &&
+          comparator.compareDocumentPosition(conversion) & Node.DOCUMENT_POSITION_FOLLOWING
+        ),
+        beforeProcess: Boolean(
+          conversion &&
+          process &&
+          conversion.compareDocumentPosition(process) & Node.DOCUMENT_POSITION_FOLLOWING
+        ),
+        beforeFooter: Boolean(
+          conversion &&
+          footer &&
+          conversion.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING
+        ),
+      };
+    });
+
+    expect(order).toEqual({
+      instances: 1,
+      afterComparator: true,
+      beforeProcess: true,
+      beforeFooter: true,
+    });
+
+    const tour = page.locator('#founder-conversion-tour');
+    await expect(tour.getByRole('button', { name: 'Reproduzir' })).toBeVisible();
+    await page.screenshot({ path: 'test-results/founder-conversion-order.png', fullPage: true });
+    await tour.scrollIntoViewIfNeeded();
+    await expect(tour.getByRole('button', { name: 'Pausar' })).toBeVisible();
   });
 
   for (const width of [320, 375, 390, 768, 1024, 1440]) {

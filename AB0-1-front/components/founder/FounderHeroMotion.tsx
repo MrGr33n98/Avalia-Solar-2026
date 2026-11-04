@@ -205,10 +205,11 @@ export default function FounderHeroMotion() {
               <div className="relative rounded-2xl p-2 bg-gradient-to-b from-white/20 to-white/5 border border-white/20 shadow-2xl backdrop-blur-md">
                 <div className="relative overflow-hidden rounded-xl bg-black aspect-[4/3] w-full">
                   <Image
-                    src="/assets/founder-laptop.jpg"
+                    src="/assets/founder-laptop.webp"
                     alt="Notebook exibindo Brand Page corporativa no Avalia Solar"
                     fill
                     priority
+                    quality={92}
                     sizes="(max-width: 1024px) 100vw, 520px"
                     className="object-contain"
                   />
