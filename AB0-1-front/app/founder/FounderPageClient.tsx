@@ -17,6 +17,7 @@ import FounderCursorTour from '@/components/founder/FounderCursorTour';
 import FounderConversionTour from '@/components/founder/FounderConversionTour';
 import FounderBeforeAfter from '@/components/founder/FounderBeforeAfter';
 import FounderProcessDraw from '@/components/founder/FounderProcessDraw';
+import FounderSuccessJourneySection from '@/components/founder/FounderSuccessJourneySection';
 import { trackFounderPageView, trackFounderCtaClick } from '@/components/founder/FounderTelemetry';
 
 const BOOKING_URL = 'https://zbooking.us/6shCH';
@@ -124,6 +125,8 @@ export default function FounderPageClient() {
 
       {/* REQUISITO 2: HERO REVEAL MOTION PACK */}
       <FounderHeroMotion />
+
+      <FounderSuccessJourneySection />
 
       {/* REQUISITO 3: INTERACTIVE BRAND PAGE TOUR (SOLARMAX INTEGRADORA) */}
       <FounderCursorTour />
