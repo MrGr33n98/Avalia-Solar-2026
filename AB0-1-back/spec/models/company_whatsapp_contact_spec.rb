@@ -16,7 +16,7 @@ RSpec.describe 'WhatsApp paid profile contact', type: :model do
     expect(company.whatsapp_contact_url).to be_nil
   end
 
-  it 'honors the company's WhatsApp opt-out' do
+  it "honors the company's WhatsApp opt-out" do
     company = create(:company, plan: paid_plan, whatsapp: '48999700506', whatsapp_enabled: false)
     expect(company.whatsapp_contact_button_entitled?).to be(true)
     expect(company.whatsapp_contact_url).to be_nil

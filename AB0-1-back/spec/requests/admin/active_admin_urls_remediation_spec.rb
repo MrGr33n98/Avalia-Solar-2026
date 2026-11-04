@@ -95,6 +95,10 @@ RSpec.describe 'Rotas corrigidas do Active Admin', type: :request do
     get '/admin/leads'
     expect(response).to have_http_status(:ok)
     expect(response.body).to include('Lead Teste Ransack')
+    expect(response.body).to include('MobiVolt AI')
+    expect(response.body).to include('Leads Quentes')
+    expect(response.body).to include('Orçamento Solicitado')
+    expect(response.body).to include('Com Patrocinada')
 
     get '/admin/leads', params: { q: { source_eq: 'portal', lead_score_gteq: 70 } }
     expect(response).to have_http_status(:ok)

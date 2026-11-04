@@ -16,12 +16,21 @@ ActiveAdmin.register Lead do
 
   # Scopes no topo da Listagem
   scope 'Todos', :all, default: true
-  scope 'MobiVolt AI', ->(leads) { leads.where(source: 'mobivolt_ai') }
-  scope 'Leads Quentes', ->(leads) { leads.where('lead_score >= 70') }
-  scope 'Orçamento Solicitado', ->(leads) { leads.where.not(quote_requested_company_id: nil) }
-  scope 'Com Patrocinada', ->(leads) {
+  # ActiveAdmin expects a scope block. Passing a lambda as the second positional
+  # argument makes it call a method named after the label on ActiveRecord::Relation
+  # (for example "MobiVolt AI"), raising NoMethodError and breaking /admin/leads.
+  scope 'MobiVolt AI' do |leads|
+    leads.where(source: 'mobivolt_ai')
+  end
+  scope 'Leads Quentes' do |leads|
+    leads.where('lead_score >= 70')
+  end
+  scope 'Orçamento Solicitado' do |leads|
+    leads.where.not(quote_requested_company_id: nil)
+  end
+  scope 'Com Patrocinada', show_count: false do |leads|
     leads.where(source: 'mobivolt_ai').where('recommended_company_ids::text LIKE ?', '%"sponsored":true%')
-  }, show_count: false
+  end
 
   # Filtros na barra lateral
   filter :name
