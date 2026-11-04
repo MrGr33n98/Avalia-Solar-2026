@@ -105,13 +105,6 @@ interface CompanyDetailClientProps {
   initialReviewsLoaded?: boolean;
 }
 
-interface ExtendedCompany extends Company {
-  cta_whatsapp_enabled?: boolean;
-  whatsapp_enabled?: boolean;
-  cta_whatsapp_url?: string;
-  whatsapp_url?: string;
-  active_admin?: boolean;
-}
 
 const toFiniteNumber = (value: unknown, fallback = 0): number => {
   const parsed = typeof value === 'number' ? value : Number.parseFloat(String(value ?? ''));
@@ -258,9 +251,7 @@ export default function CompanyDetailClient({
     return user?.role === 'company' && user?.company_id === companyId;
   }, [companyId, isAuthenticated, user?.company_id, user?.role]);
 
-  const extendedCompany = currentCompany as ExtendedCompany;
   const canRequestQuote = canUsePaidConversion(currentCompany, 'quote');
-  const canUseWhatsApp = canUsePaidConversion(currentCompany, 'whatsapp');
   const showFaq = true;
   const showGallery = canShowMediaGallery(currentCompany);
   const showSocialProof = currentCompany.feature_access
@@ -279,20 +270,6 @@ export default function CompanyDetailClient({
       (currentCompany?.financing_enabled === true || (currentCompany as any)?.segment === 'finance')
     )
   );
-  const enabledRawInit = extendedCompany.cta_whatsapp_enabled ?? extendedCompany.whatsapp_enabled;
-
-  const ctaEnabled = canUseWhatsApp
-    ? enabledRawInit === undefined || enabledRawInit === null
-      ? true
-      : Boolean(enabledRawInit)
-    : false;
-
-  const ctaUrl = canUseWhatsApp
-    ? extendedCompany.cta_whatsapp_url ||
-      extendedCompany.whatsapp_url ||
-      (currentCompany as any)?.whatsapp ||
-      null
-    : null;
   const scrollPauseMetadata = useMemo(
     () => ({
       source: 'company_profile',
@@ -503,8 +480,6 @@ export default function CompanyDetailClient({
               logoError={logoError}
               setLogoError={setLogoError}
               canRequestQuote={canRequestQuote}
-              ctaEnabled={ctaEnabled}
-              ctaUrl={ctaUrl}
               tabs={tabs}
               activeTab={activeTab}
               onTabChange={handleTabChange}
@@ -642,8 +617,6 @@ export default function CompanyDetailClient({
       <StickyCTA
         company={currentCompany}
         canRequestQuote={canRequestQuote}
-        ctaEnabled={ctaEnabled}
-        ctaUrl={ctaUrl}
       />
 
       <ReviewIdentityModalTrigger activeTab={activeTab} />
