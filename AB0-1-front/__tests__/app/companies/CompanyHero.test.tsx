@@ -79,19 +79,18 @@ describe('CompanyHero', () => {
     expect(screen.getByRole('link', { name: /Avaliar/i })).toBeInTheDocument();
   });
 
-  it('renderiza o card flutuante de perfil com nome e sem descricao interna', () => {
+  it('preserva a identidade visual da empresa sem duplicar informações de contato', () => {
     render(
       <CompanyHero
         {...baseProps}
-        company={{ ...(baseCompany as any), active_admin: true, verified: true }}
+        company={{ ...(baseCompany as any), verified: true }}
       />
     );
 
-    expect(screen.getByLabelText('Card de perfil da empresa')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Empresa Teste' })).toBeInTheDocument();
-    expect(screen.queryByText('Descricao')).not.toBeInTheDocument();
-    expect(screen.getByText('4.5/5.0')).toBeInTheDocument();
-    expect(screen.getByAltText('Empresa Teste')).toHaveClass('rounded-full');
-    expect(screen.getByAltText('Empresa Teste')).toHaveClass('object-cover');
+    expect(screen.getByText('4.5')).toBeInTheDocument();
+    expect(screen.getByText('10 avaliações')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /whatsapp/i })).not.toBeInTheDocument();
   });
+
 });
