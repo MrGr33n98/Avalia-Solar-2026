@@ -27,7 +27,7 @@ const mockCompany: Company = {
   description: 'Fabricante de soluções solares',
   website: 'https://www.weg.net/',
   phone: '0800 701 0701',
-  email: 'energia@weg.net',
+  email_public: 'energia@weg.net',
   address: 'Av. Prefeito Waldemar Grubba, 3300',
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
