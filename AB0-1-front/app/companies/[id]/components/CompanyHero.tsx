@@ -9,7 +9,6 @@ import { MessageCircle, Share2, ArrowLeft, MapPin, Star } from 'lucide-react';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import WhatsappButton from '@/components/WhatsappButton';
 import { Company } from '@/lib/api';
 import VerificationBadge from '@/components/company/VerificationBadge';
 
@@ -48,8 +47,6 @@ interface CompanyHeroProps {
   logoError: boolean;
   setLogoError: (error: boolean) => void;
   canRequestQuote?: boolean;
-  ctaEnabled: boolean;
-  ctaUrl: string | null;
   tabs?: TabItem[];
   activeTab?: string;
   onTabChange?: (value: string) => void;
@@ -65,8 +62,6 @@ export default function CompanyHero({
   logoError,
   setLogoError,
   canRequestQuote,
-  ctaEnabled,
-  ctaUrl,
   tabs = [],
   activeTab: _activeTab = 'overview',
   onTabChange,
@@ -91,13 +86,6 @@ export default function CompanyHero({
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
   const ratingLabel = Number(companyStats.rating).toFixed(1);
   const intentCompanyId = String(company.id);
-  const heroWhatsappHoverIntent = useHoverIntent(intentCompanyId, 'whatsapp', 800, {
-    signalCategory: 'contact_intent',
-    elementSelector: 'company-hero-whatsapp-cta',
-    metadata: {
-      source: 'company_hero',
-    },
-  });
   const heroQuoteHoverIntent = useHoverIntent(intentCompanyId, 'quote_button', 800, {
     signalCategory: 'contact_intent',
     elementSelector: 'company-hero-quote-cta',
@@ -404,24 +392,6 @@ export default function CompanyHero({
                 compactLabel="Avaliar empresa"
                 className="h-12 shrink-0 whitespace-nowrap rounded-xl border border-blue-300 bg-white px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50"
               />
-
-              {/* WhatsApp */}
-              {ctaEnabled && ctaUrl && (
-                <div {...heroWhatsappHoverIntent}>
-                  <WhatsappButton
-                    size="default"
-                    enabled
-                    href={ctaUrl}
-                    className="h-12 shrink-0 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-                    label="WhatsApp"
-                    companyId={company.id}
-                    requireSignup
-                    signupGateSource="contact_reveal"
-                    signupGateTitle="Crie sua conta para falar no WhatsApp"
-                    signupGateDescription="Libere o contato direto desta empresa e volte exatamente para o mesmo lugar depois do cadastro."
-                  />
-                </div>
-              )}
 
               {/* Chat — botão verde simples */}
               {directChatVisible && (
