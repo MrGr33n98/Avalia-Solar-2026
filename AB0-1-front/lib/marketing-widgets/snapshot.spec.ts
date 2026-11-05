@@ -88,10 +88,52 @@ describe('reputation marketing widget snapshots', () => {
       ...BASE,
       logoUrl: 'https://api.avaliasolar.com.br/assets/companies/company-logo.webp',
     }, 'light')!;
-    expect(html).toContain('width:36px;height:36px;border-radius:50%');
+    expect(html).toContain('width:36px;height:36px;min-width:36px;min-height:36px');
+    expect(html).toContain('padding:4px');
+    expect(html).toContain('border-radius:50%');
+    expect(html).toContain('width:100%;height:100%');
+    expect(html).toContain('object-fit:contain');
+    expect(html).toContain('object-position:center center');
     expect(html).toContain('<img src="https://api.avaliasolar.com.br/');
     expect(html).toContain('12 avaliações aprovadas');
     expect(html).not.toContain('width:66%');
+  });
+
+  it.each(['blue', 'navy', 'light'] as const)(
+    'keeps rectangular logos contained and centered for the %s badge',
+    (variant) => {
+      const html = createMarketingWidgetHtml('stars', {
+        ...BASE,
+        logoUrl: 'https://api.avaliasolar.com.br/rails/active_storage/blobs/weg-wide.png',
+      }, 'light', variant)!;
+
+      expect(html).toContain('width:22px;height:22px;min-width:22px;min-height:22px');
+      expect(html).toContain('padding:3px');
+      expect(html).toContain('overflow:hidden;border-radius:50%');
+      expect(html).toContain('display:block;width:100%;height:100%');
+      expect(html).toContain('object-fit:contain');
+      expect(html).toContain('object-position:center center');
+      expect(html).toContain('border-radius:50%');
+      expect(html).toContain('width:120px;height:54px');
+    }
+  );
+
+  it('uses navy monochrome treatment exclusively for WEG on the navy badge', () => {
+    const sample = { ...BASE, companyName: 'WEG', logoUrl: 'https://api.avaliasolar.com.br/assets/weg.png' };
+    const navy = createMarketingWidgetHtml('stars', sample, 'dark', 'navy')!;
+    expect(navy).toContain('background:#0B132B');
+    expect(navy).toContain('filter:grayscale(1) invert(1) contrast(3);mix-blend-mode:screen');
+    expect(navy).toContain('object-fit:contain');
+
+    for (const variant of ['blue', 'light'] as const) {
+      const neutral = createMarketingWidgetHtml('stars', sample, 'light', variant)!;
+      expect(neutral).toContain('background:#FFFFFF');
+      expect(neutral).not.toContain('mix-blend-mode:screen');
+    }
+
+    const otherBrand = createMarketingWidgetHtml('stars', { ...sample, companyName: 'KAJU' }, 'dark', 'navy')!;
+    expect(otherBrand).not.toContain('mix-blend-mode:screen');
+    expect(otherBrand).toContain('background:#FFFFFF');
   });
 
   it('rejects untrusted and non-HTTPS logo sources in exported snapshots', () => {
