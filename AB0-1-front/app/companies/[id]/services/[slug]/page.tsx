@@ -38,7 +38,7 @@ async function getPageData({ id, slug }: Props['params']): Promise<PageData | nu
   });
   if (!company) return null;
 
-  let response: { data: Service };
+  let response: { data: Service } | undefined;
   try {
     response = await fetchApiPublic<{ data: Service }>(
       `companies/${company.id}/services/${encodeURIComponent(slug)}`,
