@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { PropsWithChildren } from 'react';
 import '@testing-library/jest-dom';
 import CtaVisibilitySettings from './CtaVisibilitySettings';
 import { fetchApi } from '@/lib/api';
@@ -8,7 +9,7 @@ jest.mock('@/lib/api', () => ({ fetchApi: jest.fn() }));
 jest.mock('@/lib/analytics/lazy', () => ({ track: jest.fn() }));
 jest.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
+  default: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) =>
     <a {...props}>{children}</a>,
 }));
 
