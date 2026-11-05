@@ -90,7 +90,7 @@ export default function RegisterUserPage() {
     setError(null);
 
     try {
-      const resp: any = await authApi.signup({
+      await authApi.signup({
         name,
         email,
         password,
@@ -98,13 +98,9 @@ export default function RegisterUserPage() {
         date_of_birth: dateOfBirth,
         terms_accepted: true,
       });
+      // Registration requires email confirmation; retain return_to only on
+      // the subsequent login, never redirect an unconfirmed guest.
       setSubmitted(true);
-      if (safeReturnTo) {
-        setTimeout(() => {
-          window.location.href = safeReturnTo;
-        }, 800);
-        return;
-      }
     } catch (err: any) {
       setError(err?.message || 'Falha no cadastro');
     } finally {
@@ -183,26 +179,10 @@ export default function RegisterUserPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 mt-8">
-            <div className="flex -space-x-3">
-              <img className="w-10 h-10 rounded-full border-2 border-slate-50 shadow-sm" src="https://i.pravatar.cc/150?u=1" alt="Usuário 1" />
-              <img className="w-10 h-10 rounded-full border-2 border-slate-50 shadow-sm" src="https://i.pravatar.cc/150?u=2" alt="Usuário 2" />
-              <img className="w-10 h-10 rounded-full border-2 border-slate-50 shadow-sm" src="https://i.pravatar.cc/150?u=3" alt="Usuário 3" />
-            </div>
-            <div className="flex flex-col">
-              <p className="text-sm font-medium text-slate-700">Mais de 10.000 usuários já confiam na Avalia Solar</p>
-              <div className="flex items-center gap-1">
-                <div className="flex text-amber-400">
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                  <Star className="w-4 h-4 fill-current" />
-                </div>
-                <span className="text-xs text-slate-500 ml-1 font-medium">4.9/5 em avaliações</span>
-              </div>
-            </div>
-          </div>
+          <p className="mt-8 text-sm leading-6 text-slate-500">
+            Sua conta será protegida por confirmação de e-mail. Avaliações publicadas
+            seguem as regras de moderação e transparência do Avalia Solar.
+          </p>
         </div>
 
         {/* Coluna da Direita - Formulário */}
