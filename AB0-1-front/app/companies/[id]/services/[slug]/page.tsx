@@ -112,10 +112,6 @@ function structuredData(company: Company, service: ServiceDetail, url: string) {
       name: company.name,
       url: absoluteUrl(buildCompanyPath(company.slug, company.name, company.id)),
     },
-    areaServed: company.city && company.state ? {
-      '@type': 'Place',
-      name: `${company.city}, ${company.state}`,
-    } : undefined,
     offers: service.price_from && service.price_from > 0 ? {
       '@type': 'Offer', price: service.price_from, priceCurrency: 'BRL',
     } : undefined,
