@@ -150,8 +150,8 @@ export default function ReviewerOverviewPage() {
                       {review.rating ?? '—'} de 5 · {formatDate(review.created_at)}
                     </div>
                   </div>
-                  <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusTone(review.status)}`}>
-                    {statusLabel(review.status)}
+                  <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusTone(review.status ?? 'pending')}`}>
+                    {statusLabel(review.status ?? 'pending')}
                   </span>
                 </li>
               );

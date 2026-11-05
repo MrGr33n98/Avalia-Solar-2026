@@ -3,6 +3,7 @@
 module Api
   module V1
     class SavedItemsController < BaseController
+      before_action :require_feed_mvp_enabled!, if: -> { params[:saveable_type] == 'ReviewerPublication' }
       before_action :authenticate_user!
 
       def index
