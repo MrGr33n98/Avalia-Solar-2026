@@ -187,7 +187,7 @@ const formatDate = (dateString?: string) => {
   return date.toLocaleDateString('pt-BR');
 };
 
-export default function ReviewFormsManagement({ companyId }: { companyId: string }) {
+export default function ReviewFormsManagement({ companyId, companyName }: { companyId: string; companyName?: string | null }) {
   const { toast } = useToast();
   const [forms, setForms] = useState<ReviewForm[]>([]);
   const [summary, setSummary] = useState<{
@@ -199,7 +199,7 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
     recent_reviews_count: 0,
     approved_reviews_count: 0,
   });
-  const [approvedCount, setApprovedCount] = useState<number>(0);
+  const [approvedCount, setApprovedCount] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -233,7 +233,7 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
         toast({ title: 'Não foi possível carregar os formulários', variant: 'destructive' });
       }
 
-      let canonicalApproved = 0;
+      let canonicalApproved: number | null = null;
       if (
         statsResponse.status === 'fulfilled' &&
         typeof statsResponse.value?.stats?.approved_reviews === 'number'
@@ -323,7 +323,15 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
     }
   };
 
-  const trackAction = async (form: ReviewForm, eventType: string) => {
+  const trackAction = async (form: ReviewForm, eventType: string, meta: Record<string, unknown> = {}) => {
+    // O Rails aceita um enum menor que os eventos de UI: não enviar eventos inválidos.
+    const persisted = new Set(['link_copied', 'whatsapp_clicked', 'qr_downloaded']);
+    if (!persisted.has(eventType)) {
+      track('review_collection_ui_action', {
+        action: eventType, company_id: companyId, review_form_id: form.id, ...meta,
+      });
+      return;
+    }
     await fetchApi(`/company_admin/review_forms/${form.id}/event`, {
       method: 'POST',
       body: JSON.stringify({ event_type: eventType, source: 'dashboard' }),
@@ -525,12 +533,12 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
           selectedFormId={selectedId ?? undefined}
           onSelectForm={(id) => setSelectedId(id)}
           onCreateForm={() => setEditor(emptyEditor())}
-          companyName="Sua Empresa"
+          companyName={companyName?.trim() || 'Empresa não identificada'}
           companyId={companyId}
           approvedReviewsCount={approvedCount}
-          onTrackAction={(event) => {
+          onTrackAction={(event, meta) => {
             if (selected) {
-              void trackAction(selected, event);
+              void trackAction(selected, event, meta);
             }
           }}
         />
