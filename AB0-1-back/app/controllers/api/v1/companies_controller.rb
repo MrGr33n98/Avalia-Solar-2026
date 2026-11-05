@@ -229,7 +229,7 @@ module Api
             review_summary: {
               count: reviews_count,
               average: reviews_avg,
-              distribution: (1..5).to_h { |rating| [rating, review_counts.sum { |score, qty| score.to_i == rating ? qty : 0 }] }
+              distribution: (1..5).to_h { |rating| [rating, review_counts.sum { |score, qty| score.to_f.round == rating ? qty : 0 }] }
             },
             reviews: reviews,
             created_at: service.created_at,
