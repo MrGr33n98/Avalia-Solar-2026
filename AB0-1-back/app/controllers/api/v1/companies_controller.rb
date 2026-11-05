@@ -179,6 +179,7 @@ module Api
       # Somente dados reais e públicos. Reviews de empresa/categoria não são atribuídas ao serviço.
       def service_detail
         return render json: { code: 'NOT_FOUND', message: 'Empresa não encontrada' }, status: :not_found unless @company
+        return render json: { code: 'NOT_FOUND', message: 'Empresa indisponível' }, status: :not_found unless @company.status.to_s == 'active'
 
         service = @company.company_services.active_status.includes(images_attachments: :blob).find_by(slug: params[:slug])
         return render json: { code: 'NOT_FOUND', message: 'Serviço não encontrado' }, status: :not_found unless service
