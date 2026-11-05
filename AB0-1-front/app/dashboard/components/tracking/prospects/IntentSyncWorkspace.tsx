@@ -178,7 +178,7 @@ export default function IntentSyncWorkspace({ companyId, onBack }: Props) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const tabParam = searchParams.get('integration_tab');
+  const tabParam = searchParams?.get('integration_tab');
   const activeTab: IntentTab = TABS.some(t => t.key === tabParam) ? tabParam as IntentTab : 'overview';
   const [creating, setCreating] = useState(false);
   const [archiving, setArchiving] = useState<number | null>(null);
@@ -227,7 +227,8 @@ export default function IntentSyncWorkspace({ companyId, onBack }: Props) {
   ], [available, audiencesQuery.data?.pagination.total, audiencesQuery.isLoading, sourceItems.length, sourcesQuery.isLoading, historyItems.length, historyQuery.isLoading]);
 
   const selectTab = (next: IntentTab) => {
-    const params = new URLSearchParams(searchParams.toString());
+    if (!pathname) return;
+    const params = new URLSearchParams(searchParams?.toString() || '');
     params.set('integration_tab', next);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
