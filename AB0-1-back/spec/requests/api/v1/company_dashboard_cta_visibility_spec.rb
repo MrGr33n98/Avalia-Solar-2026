@@ -40,6 +40,26 @@ RSpec.describe 'Company dashboard CTA visibility', type: :request do
     expect(company.reload.cta_visibility_version).to eq(1)
   end
 
+  it 'invalidates the Next.js public profile before reporting successful publication' do
+    allow(PublicProfileRevalidator).to receive(:configured?).and_return(true)
+    expect(PublicProfileRevalidator).to receive(:call!).with(have_attributes(id: company.id)).and_return(true)
+
+    patch_config({ quote_cta_enabled: false, expected_version: 0 })
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body)['cache_state']).to eq('revalidated')
+  end
+
+  it 'persists the opt-out and queues cache invalidation on a transient webhook failure' do
+    allow(PublicProfileRevalidator).to receive(:configured?).and_return(true)
+    allow(PublicProfileRevalidator).to receive(:call!).and_raise(PublicProfileRevalidator::Error, 'timeout')
+    expect(PublicProfileRevalidationJob).to receive(:perform_later).with(company.id)
+
+    patch_config({ quote_cta_enabled: false, expected_version: 0 })
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body)['cache_state']).to eq('pending_retry')
+    expect(company.reload.quote_cta_enabled).to eq(false)
+  end
+
   it 'accepts partial updates without modifying the other channel' do
     company.update!(whatsapp_enabled: false)
     patch_config({ quote_cta_enabled: false, expected_version: 0 })
