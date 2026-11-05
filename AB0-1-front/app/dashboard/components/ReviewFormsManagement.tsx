@@ -38,6 +38,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics/consolidated';
 import { ReviewCollectionHub } from './review-collection/ReviewCollectionHub';
+import { ReviewCollectionIcon } from '@/components/reviews/ReviewCollectionIcon';
 import { isFeatureFlagEnabled } from '@/lib/feature-flags';
 import {
   buildPublicReviewUrl,
@@ -444,8 +445,8 @@ export default function ReviewFormsManagement({ companyId, companyName }: { comp
       {/* Grid de Estatísticas (Stats Cards) */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
         {/* Formulários ativos */}
-        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
+        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 p-3 sm:gap-4 sm:p-5">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Formulários ativos</p>
               <p className="mt-2 truncate text-3xl font-black text-slate-950 leading-none">{totals.active}</p>
@@ -453,15 +454,15 @@ export default function ReviewFormsManagement({ companyId, companyName }: { comp
                 +{summary.recent_forms_count} nos últimos 7 dias
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-              <ClipboardList className="h-6 w-6" />
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 sm:flex">
+              <ReviewCollectionIcon name="06_matriz" size={26} />
             </div>
           </CardContent>
         </Card>
 
         {/* Reviews coletados */}
-        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
+        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 p-3 sm:gap-4 sm:p-5">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Reviews coletados</p>
               <p className="mt-2 truncate text-3xl font-black text-slate-950 leading-none">{totals.submissions}</p>
@@ -469,15 +470,15 @@ export default function ReviewFormsManagement({ companyId, companyName }: { comp
                 +{summary.recent_reviews_count} nos últimos 7 dias
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-50">
-              <Star className="h-6 w-6 fill-amber-500 text-amber-500" />
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 sm:flex">
+              <ReviewCollectionIcon name="04_primeira_avaliacao" size={26} />
             </div>
           </CardContent>
         </Card>
 
         {/* Conversão do link */}
-        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
+        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 p-3 sm:gap-4 sm:p-5">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Conversão do link</p>
               <p className="mt-2 truncate text-3xl font-black text-slate-950 leading-none">{totals.conversion}%</p>
@@ -485,15 +486,15 @@ export default function ReviewFormsManagement({ companyId, companyName }: { comp
                 {totals.submissions} envios • {totals.views} visitas
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-              <TrendingUp className="h-6 w-6" />
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 sm:flex">
+              <ReviewCollectionIcon name="07_tendencia" size={26} />
             </div>
           </CardContent>
         </Card>
 
         {/* Melhor formulário */}
-        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
+        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 p-3 sm:gap-4 sm:p-5">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Melhor desempenho</p>
               <p className="mt-2 truncate text-xl font-black text-slate-950 leading-tight max-w-[180px]">{totals.best}</p>
@@ -501,8 +502,8 @@ export default function ReviewFormsManagement({ companyId, companyName }: { comp
                 {totals.bestRate} de conversão
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
-              <Award className="h-6 w-6" />
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 sm:flex">
+              <ReviewCollectionIcon name="09_medalha" size={26} />
             </div>
           </CardContent>
         </Card>
