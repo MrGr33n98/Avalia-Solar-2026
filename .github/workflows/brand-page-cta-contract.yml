@@ -38,7 +38,7 @@ jobs:
       - name: Brand Page PDR acceptance tests
         run: |
           npm test -- --runInBand \
-            'app/companies/\\[id\\]/components/CompanyCTAGroup.spec.tsx' \
+            CompanyCTAGroup.spec.tsx \
             __tests__/components/CompanyContactCard.test.tsx \
             app/dashboard/components/brand-page/BrandPageCTAVisibility.spec.tsx \
             lib/company-cta-visibility.spec.ts
