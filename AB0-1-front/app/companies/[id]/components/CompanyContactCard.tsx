@@ -57,7 +57,7 @@ export default function CompanyContactCard({
   if (!hasAnyContact) return null;
 
   return (
-    <Card className={cn("overflow-hidden border border-slate-100 bg-white p-5 shadow-sm rounded-2xl", className)}>
+    <Card data-testid="company-contact-card" className={cn("overflow-hidden border border-slate-100 bg-white p-5 shadow-sm rounded-2xl", className)}>
       {!hideHeader && (
         <CardHeader className="p-0 border-b border-slate-100 pb-3 mb-4">
           <CardTitle className="text-sm font-semibold text-slate-800 uppercase tracking-wider">
