@@ -41,9 +41,14 @@ class CompanySerializer < ActiveModel::Serializer
              :review_aggregates,
              :featured_products,
              :has_paid_plan,
+             :quote_cta_enabled, :cta_visibility,
              :feature_access,
              :actions,
              :comparison_profile
+
+  def cta_visibility
+    ::CompanyCtaVisibilityResolver.new(object).call
+  end
 
   def commercial_status
     object.commercial_status
