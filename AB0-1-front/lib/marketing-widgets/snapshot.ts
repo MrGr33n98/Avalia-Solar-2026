@@ -86,7 +86,7 @@ function companyAvatarHtml(data: MarketingWidgetSnapshot, size: number): string 
       '" alt="" width="' + (size - 4) + '" height="' + (size - 4) +
       '" loading="lazy" style="display:block;max-width:100%;max-height:100%;object-fit:contain"/></span>';
   }
-  const initials = data.companyName.trim().split(/\\s+/).slice(0, 2).map((v) => v[0] || '').join('').toUpperCase().slice(0, 2);
+  const initials = data.companyName.trim().split(/\s+/).slice(0, 2).map((v) => v[0] || '').join('').toUpperCase().slice(0, 2);
   return '<span style="' + base + 'font-weight:700;font-size:10px;color:#0A1F44">' +
     escapeHtml(initials || 'AS') + '</span>';
 }
@@ -145,7 +145,7 @@ export function createMarketingWidgetHtml(kind: MarketingWidgetKind, data: Marke
     ';padding:16px;text-decoration:none;';
   const brand = '<span style="font-size:11px;color:#0B5FFF;font-weight:700">AVALIA SOLAR</span>';
   if (kind === 'stars') {
-    return '<!-- Avalia Solar: captura estática; atualizar ao alterar as avaliações -->\\n' +
+    return '<!-- Avalia Solar: captura estática; atualizar ao alterar as avaliações -->\n' +
       starWidgetHtml(data, starVariant, profile);
   }
   let content = '';
