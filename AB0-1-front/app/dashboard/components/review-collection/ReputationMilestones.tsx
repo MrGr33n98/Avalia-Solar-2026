@@ -49,7 +49,7 @@ export function ReputationMilestones({ approvedReviewsCount }: ReputationMilesto
   const activeHint = selectedHint === null ? null : active.hints[selectedHint];
 
   // A barra une os três marcos centrais (1/6, 1/2, 5/6), não simula reviews extras.
-  const railCompletion = completed === 0 ? 0 : completed === 1 ? 16.67 : completed === 2 ? 50 : 83.33;
+  const railCompletion = completed === 0 ? 0 : completed === 1 ? 14.91 : completed === 2 ? 50 : 85.09;
 
   const selectMilestone = (id: ReviewMilestoneId, hintIndex: number | null = null) => {
     setSelectedId(id);
@@ -137,7 +137,7 @@ export function ReputationMilestones({ approvedReviewsCount }: ReputationMilesto
                         data-testid={'milestone-' + item.id}
                         aria-label={item.title + '. ' + (achieved ? 'Concluído' : state === 'current' ? 'Próximo marco' : state === 'unavailable' ? 'Sem dados' : 'A conquistar')}
                         aria-expanded={expanded}
-                        aria-controls="milestone-info-panel"
+                        aria-controls={expanded ? "milestone-info-panel" : undefined}
                         onClick={() => selectMilestone(item.id)}
                         className={[
                           'group relative z-20 inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 bg-white shadow-sm',
@@ -163,7 +163,7 @@ export function ReputationMilestones({ approvedReviewsCount }: ReputationMilesto
                             key={item.id + '-' + hintIndex}
                             data-testid={'milestone-hint-' + item.id + '-' + hintIndex}
                             aria-label={hint.label + ': ' + hint.text}
-                            aria-controls="milestone-info-panel"
+                            aria-controls={expanded && selectedHint === hintIndex ? "milestone-info-panel" : undefined}
                             aria-expanded={expanded && selectedHint === hintIndex}
                             onClick={() => selectMilestone(item.id, hintIndex)}
                             style={{ left: 'calc(50% + ' + offset + 'px)' }}
