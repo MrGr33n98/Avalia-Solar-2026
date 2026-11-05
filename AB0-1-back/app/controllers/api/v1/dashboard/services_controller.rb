@@ -9,7 +9,7 @@ module Api
         MAX_UPLOAD_SIZE = 20.megabytes
         ALLOWED_IMAGE_TYPES = %w[image/jpeg image/png image/webp].freeze
 
-        before_action :set_service, only: %i[update destroy]
+        before_action :set_service, only: %i[update destroy add_images remove_image]
 
         def index
           services = current_company.company_services
@@ -76,6 +76,29 @@ module Api
           head :no_content
         end
 
+        def add_images
+          uploads = Array(params[:images])
+          if uploads.empty? || uploads.size + @service.images.count > 12
+            return render json: { errors: ['A galeria permite até 12 imagens.'] }, status: :unprocessable_entity
+          end
+
+          allowed = %w[image/jpeg image/png image/webp]
+          unless uploads.all? { |file| file.respond_to?(:content_type) && allowed.include?(file.content_type) &&
+                                      file.size.positive? && file.size <= 10.megabytes }
+            return render json: { errors: ['Envie imagens JPEG, PNG ou WebP de até 10 MB.'] }, status: :unprocessable_entity
+          end
+
+          @service.images.attach(uploads)
+          render json: { service: service_payload(@service.reload) }, status: :ok
+        end
+
+        def remove_image
+          attachment = @service.images_attachments.find(params[:attachment_id])
+          attachment.purge
+          render json: { service: service_payload(@service.reload) }, status: :ok
+        end
+
+
         private
 
         def set_service
@@ -87,7 +110,7 @@ module Api
         def service_params
           params.require(:service).permit(
             :name, :slug, :category_id, :description, :price_from, :status,
-            coverage: []
+            coverage: [], video_links: []
           )
         end
 
@@ -106,7 +129,7 @@ module Api
           return 'Imagem não pertence a este serviço.' unless (media[:remove_ids] - existing_ids).empty?
 
           final_count = existing_ids.size - media[:remove_ids].size + media[:images].size
-          return "O limite é de #{MAX_GALLERY_IMAGES} imagens na galeria." if final_count > MAX_GALLERY_IMAGES
+          return "O limite é de #{MAX_GALLERY_IMAGES} imagens na galeria." if final_count > MAX_GALLERY_IMAGES && final_count > existing_ids.size
 
           files = media[:images] + [media[:cover]].compact
           files.each do |file|
@@ -179,6 +202,9 @@ module Api
             image_url: cover_url || gallery.first&.dig(:url),
             cover_image_url: cover_url,
             images: gallery,
+            image_urls: gallery.map { |image| image[:url] },
+            service_images: gallery,
+            video_links: service.video_links,
             public_url: "/companies/#{service.company.slug.presence || service.company.id}/services/#{service.slug}",
             created_at: service.created_at,
             updated_at: service.updated_at
