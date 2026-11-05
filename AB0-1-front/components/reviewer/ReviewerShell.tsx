@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { REVIEWS_ONLY_MVP } from '@/lib/mvp-reviews';
 
-const links = [
+const fullLinks = [
   ['Início', '/review-dashboard'],
   ['Avaliações', '/review-dashboard/reviews'],
   ['Empresas', '/review-dashboard/companies'],
@@ -12,6 +13,13 @@ const links = [
   ['Perfil', '/review-dashboard/profile'],
 ] as const;
 
+const links = REVIEWS_ONLY_MVP
+  ? ([['Visão geral', '/review-dashboard'], ['Minhas avaliações', '/review-dashboard/reviews']] as const)
+  : fullLinks;
+const mobileLinks = REVIEWS_ONLY_MVP
+  ? ([['Início', '/review-dashboard'], ['Avaliações', '/review-dashboard/reviews'], ['Avaliar empresa', '/companies']] as const)
+  : ([['Início','/review-dashboard'],['Avaliações','/review-dashboard/reviews'],['+','/reviews/my'],['Notificações','/review-dashboard/notifications'],['Perfil','/review-dashboard/profile']] as const);
+
 export function ReviewerShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh bg-slate-50/70">
@@ -21,7 +29,7 @@ export function ReviewerShell({ children }: { children: ReactNode }) {
       </aside>
       <div className="min-w-0 flex-1">
         <main className="min-h-dvh px-4 py-6 pb-[calc(6rem+var(--safe-area-inset-bottom))] md:px-8 md:py-10"><div className="mx-auto w-full max-w-6xl">{children}</div></main>
-        <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-200 bg-white/95 pb-[var(--safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Navegação móvel Reviewer">{[['Início','/review-dashboard'],['Avaliações','/review-dashboard/reviews'],['+','/reviews/my'],['Notificações','/review-dashboard/notifications'],['Perfil','/review-dashboard/profile']].map(([label, href]) => <Link key={href} href={href} className="flex min-h-12 items-center justify-center px-1 text-center text-[11px] font-bold text-slate-600 hover:text-blue-700">{label}</Link>)}</nav>
+        <nav className={`fixed inset-x-0 bottom-0 z-40 grid ${REVIEWS_ONLY_MVP ? 'grid-cols-3' : 'grid-cols-5'} border-t border-slate-200 bg-white/95 pb-[var(--safe-area-inset-bottom)] backdrop-blur lg:hidden`} aria-label="Navegação móvel Reviewer">{mobileLinks.map(([label, href]) => <Link key={href} href={href} className="flex min-h-12 items-center justify-center px-1 text-center text-[11px] font-bold text-slate-600 hover:text-blue-700">{label}</Link>)}</nav>
       </div>
     </div>
   );
