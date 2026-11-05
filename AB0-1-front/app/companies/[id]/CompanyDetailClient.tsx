@@ -96,7 +96,7 @@ import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { trackCompanyProfileViewed, trackDashboardViewed } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
 import { useScrollPause } from '@/lib/analytics/hooks/useIntentTracking';
-import { isFeatureEnabled, canUsePaidConversion, canShowMediaGallery } from '@/lib/feature-access';
+import { isFeatureEnabled, canShowMediaGallery } from '@/lib/feature-access';
 import CompanyProfileShell from './components/CompanyProfileShell';
 import { getCapitalLocalSolarPage } from '@/lib/locations/local-page-slugs';
 
