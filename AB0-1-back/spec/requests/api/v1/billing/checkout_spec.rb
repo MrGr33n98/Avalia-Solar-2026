@@ -226,6 +226,20 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
         expect(response).to have_http_status(:forbidden)
       end
     end
+    context 'quando a consulta ao armazenamento falha' do
+      it 'retorna erro sem detalhes internos e permite correlacionar o request id' do
+        allow(Billing::CompanySubscription).to receive(:find_by).and_raise(StandardError, 'internal diagnosis')
+
+        get '/api/v1/billing/subscription', params: { company_id: company.id }, headers: auth_headers
+
+        expect(response).to have_http_status(:internal_server_error)
+        payload = JSON.parse(response.body)
+        expect(payload['code']).to eq('BILLING_SUBSCRIPTION_UNAVAILABLE')
+        expect(payload['request_id']).to be_present
+        expect(payload['error']).not_to include('internal diagnosis')
+      end
+    end
+
     context 'quando a empresa não possui assinatura configurada' do
       it 'retorna 404 not_found' do
         get '/api/v1/billing/subscription', params: { company_id: company.id }, headers: auth_headers
