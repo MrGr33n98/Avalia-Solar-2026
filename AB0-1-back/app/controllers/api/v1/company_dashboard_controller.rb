@@ -1419,7 +1419,7 @@ module Api
           else
             requested = present_keys.to_h { |key| [key, params[key]] }
             denied = requested.any? do |key, value|
-              value == true && (
+              value == true && @company.public_send(key) != true && (
                 (key == 'quote_cta_enabled' && !@company.quote_feature_enabled?) ||
                 (key == 'whatsapp_enabled' && !@company.whatsapp_contact_button_entitled?)
               )
@@ -1427,7 +1427,7 @@ module Api
             if denied
               result = { status: :forbidden, body: { error: 'Recurso indisponível no plano atual',
                                                      code: 'entitlement_denied' } }
-            elsif requested['whatsapp_enabled'] == true && @company.whatsapp_contact_number.blank?
+            elsif requested['whatsapp_enabled'] == true && @company.whatsapp_enabled != true && @company.whatsapp_contact_number.blank?
               result = { status: :unprocessable_entity,
                          body: { error: 'Configure um número público válido antes de ativar o WhatsApp',
                                  code: 'whatsapp_not_configured' } }
