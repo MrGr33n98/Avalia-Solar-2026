@@ -97,7 +97,7 @@ function companyAvatarHtml(data: MarketingWidgetSnapshot, size: number, variant:
       '" alt="" width="' + (size - 2 * inset) + '" height="' + (size - 2 * inset) +
       '" loading="lazy" decoding="async" style="' + imgStyle + '"/></span>';
   }
-  const initials = data.companyName.trim().split(/\\s+/).slice(0, 2).map((v) => v[0] || '').join('').toUpperCase().slice(0, 2);
+  const initials = data.companyName.trim().split(/\s+/).slice(0, 2).map((v) => v[0] || '').join('').toUpperCase().slice(0, 2);
   return '<span style="' + base + 'font-weight:700;font-size:' + (size <= 22 ? 8 : 10) +
     'px;color:#0A1F44">' + escapeHtml(initials || 'AS') + '</span>';
 }
