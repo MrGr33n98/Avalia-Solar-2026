@@ -60,28 +60,14 @@ describe('CompanyContactCard — contato direto sem signup', () => {
     expect(screen.getByText('Jaraguá do Sul, SC')).toBeInTheDocument();
   });
 
-  it('oferece WhatsApp em vez do telefone sem exigir cadastro', () => {
+  it('não duplica WhatsApp lateral quando há link pago no hero e mantém o telefone', () => {
     render(<CompanyContactCard company={paidCompany} />);
-
-    const whatsapp = screen.getByRole('link', { name: 'Falar com WEG Solar no WhatsApp' });
-    expect(whatsapp).toHaveAttribute('href', 'https://wa.me/5548996418578');
-    expect(whatsapp).toHaveAttribute('target', '_blank');
-    expect(screen.getByText('Falar no WhatsApp')).toBeInTheDocument();
-    expect(screen.queryByText('Ligar para empresa')).not.toBeInTheDocument();
-
-    fireEvent.click(whatsapp);
-    expect(trackCTAClick).toHaveBeenCalledWith(expect.objectContaining({
-      ctaType: 'whatsapp',
-      ctaLocation: 'sidebar',
-      companyId: '101',
-      companyName: 'WEG Solar',
-    }));
-  });
-
-  it('aceita um número brasileiro configurado e gera wa.me com código do país', () => {
-    render(<CompanyContactCard company={{ ...paidCompany, whatsapp_url: '48996418578' }} />);
-    expect(screen.getByRole('link', { name: /no WhatsApp/ }))
-      .toHaveAttribute('href', 'https://wa.me/5548996418578');
+    expect(screen.queryByRole('link', { name: /no WhatsApp/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Falar no WhatsApp')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ligar para empresa' }))
+      .toHaveAttribute('href', 'tel:08007010701');
+    expect(screen.getByText('www.weg.net')).toBeInTheDocument();
+    expect(screen.getByText('Jaraguá do Sul, SC')).toBeInTheDocument();
   });
 
   it('não ignora plano ou flag explicitamente desabilitados', () => {
