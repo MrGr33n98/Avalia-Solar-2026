@@ -137,7 +137,7 @@ export default function CtaVisibilitySettings({ companyId }: { companyId: string
                   <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-[#0B5FFF]"
                     data-testid={'cta-checkbox-' + item.key}
                     checked={checked}
-                    disabled={saving || (unavailable && !checked)}
+                    disabled={saving || ((!item.available || !item.configured) && !checked)}
                     onChange={(e) => setDraft((prev) => prev ? { ...prev, [item.key]: e.target.checked } : prev)}
                   />
                   <span className="min-w-0 flex-1">
