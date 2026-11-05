@@ -6,13 +6,17 @@ on:
     paths:
       - 'AB0-1-front/app/companies/**'
       - 'AB0-1-front/app/dashboard/components/brand-page/**'
+      - 'AB0-1-front/app/dashboard/components/cta-visibility/**'
       - 'AB0-1-front/app/dashboard/components/CompanySettings.tsx'
       - 'AB0-1-front/lib/company-cta-visibility*'
+      - 'AB0-1-front/lib/feature-access*'
       - 'AB0-1-front/__tests__/components/CompanyContactCard.test.tsx'
       - 'AB0-1-back/app/controllers/api/v1/company_dashboard_controller.rb'
       - 'AB0-1-back/app/serializers/company_serializer.rb'
-      - 'AB0-1-back/db/migrate/*quote_cta*'
+      - 'AB0-1-back/app/services/company_cta_visibility_resolver.rb'
+      - 'AB0-1-back/db/migrate/*cta*'
       - 'AB0-1-back/spec/requests/api/v1/company_dashboard_cta_visibility_spec.rb'
+      - 'AB0-1-back/spec/services/company_cta_visibility_resolver_spec.rb'
       - '.github/workflows/brand-page-cta-contract.yml'
   workflow_dispatch:
 
@@ -41,7 +45,9 @@ jobs:
             CompanyCTAGroup.spec.tsx \
             __tests__/components/CompanyContactCard.test.tsx \
             app/dashboard/components/brand-page/BrandPageCTAVisibility.spec.tsx \
-            lib/company-cta-visibility.spec.ts
+            app/dashboard/components/cta-visibility/CtaVisibilitySettings.spec.tsx \
+            lib/company-cta-visibility.spec.ts \
+            lib/feature-access.spec.ts
       - name: TypeScript
         run: npm run typecheck
 
@@ -87,4 +93,6 @@ jobs:
           SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
         run: |
           bundle exec rails db:create db:schema:load db:migrate
-          bundle exec rspec spec/requests/api/v1/company_dashboard_cta_visibility_spec.rb
+          bundle exec rspec \
+            spec/requests/api/v1/company_dashboard_cta_visibility_spec.rb \
+            spec/services/company_cta_visibility_resolver_spec.rb

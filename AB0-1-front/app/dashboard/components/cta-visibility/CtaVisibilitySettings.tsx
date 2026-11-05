@@ -90,7 +90,7 @@ export default function CtaVisibilitySettings({ companyId }: { companyId: string
         quote_enabled: response.preferences.quote_cta_enabled,
         whatsapp_enabled: response.preferences.whatsapp_enabled,
       });
-    } catch (error) {
+    } catch {
       if (activeId.current !== companyId) return;
       // Discard failed optimistic state, reload authoritative state (including conflict 409).
       setDraft({ ...actual.preferences });
