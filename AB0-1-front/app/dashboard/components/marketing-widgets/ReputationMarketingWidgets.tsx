@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { companyDashboardApi, dashboardApi } from '@/lib/api';
 import { track } from '@/lib/analytics/lazy';
 import {
-  MARKETING_WIDGETS, STAR_WIDGET_VARIANTS, STAR_WIDGET_DIMENSIONS,
+  MARKETING_WIDGETS, STAR_WIDGET_VARIANTS, STAR_WIDGET_DIMENSIONS, MARKETING_AVATAR_INSET_PX,
   createMarketingWidgetHtml, safeCompanyLogoUrl,
   type MarketingWidgetKind, type MarketingWidgetTheme, type MarketingWidgetSnapshot, type StarWidgetVariant,
 } from '@/lib/marketing-widgets/snapshot';
@@ -67,7 +67,7 @@ function WidgetAvatar({
   const darkWeg = variant === 'navy' && /^weg$/i.test(snapshot.companyName.trim()) && Boolean(logo) && !failed;
   const initials = snapshot.companyName.trim().split(/\s+/).slice(0, 2)
     .map((part) => part[0]).join('').toUpperCase() || 'AS';
-  const inset = size === 22 ? 3 : 4;
+  const inset = MARKETING_AVATAR_INSET_PX;
 
   return (
     <span
@@ -162,7 +162,7 @@ function WidgetIllustration({
   const testimonial = snapshot.testimonialAllowed ? snapshot.testimonial : null;
   return (
     <div className={'flex w-full items-center justify-center rounded-xl border border-slate-100 bg-[#FBFCFF] ' +
-      (dense ? 'min-h-[154px] p-3' : kind === 'stars' ? 'h-[192px] p-1.5' : 'h-[182px] p-3')}>
+      (dense ? (kind === 'stars' ? 'min-h-[96px] p-3' : 'min-h-[154px] p-3') : kind === 'stars' ? 'h-[192px] p-1.5' : 'h-[182px] p-3')}>
       {kind === 'ranking' && (
         <div className="relative grid h-40 w-full max-w-[220px] grid-cols-2 grid-rows-2 overflow-hidden rounded-lg border border-blue-200 bg-white text-[10px]">
           {['Desafiadores', 'Líderes', 'Nicho', 'Alta performance'].map((name, i) => (
