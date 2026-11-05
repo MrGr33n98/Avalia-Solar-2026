@@ -41,6 +41,20 @@ RSpec.describe EntitlementService, type: :service do
     end
   end
 
+  describe 'degradacao segura por falha de medicao' do
+    it 'preserva o plano e os recursos mesmo sem um contador de uso' do
+      allow_any_instance_of(described_class).to receive(:usage).and_call_original
+      allow_any_instance_of(described_class).to receive(:usage)
+        .with('company_categories_limit').and_raise(StandardError, 'metric unavailable')
+
+      payload = described_class.call(company: pro_company)
+
+      expect(payload.dig('plan', 'tier')).to eq('pro')
+      expect(payload.dig('features', 'company_categories_limit', 'value')).to eq(5)
+      expect(payload['usage']).not_to have_key('company_categories_limit')
+    end
+  end
+
   describe '.entitled?' do
     context 'with free company' do
       it 'returns false for locked premium features' do
