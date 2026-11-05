@@ -119,6 +119,25 @@ describe('CompanyCTAGroup — Brand Page PWA compacta + gates', () => {
     expect(screen.getByTestId('company-primary-ctas')).toHaveClass('grid-cols-1');
   });
 
+  it.each([
+    [true, true, true, true],
+    [true, false, true, false],
+    [false, true, false, true],
+    [false, false, false, false],
+  ])('preferência de orçamento=%s, WhatsApp=%s => quote=%s e whatsapp=%s',
+    (quote, whatsapp, expectsQuote, expectsWhatsapp) => {
+      const company = {
+        ...paidCompany, quote_cta_enabled: quote, cta_whatsapp_enabled: whatsapp,
+      } as Company;
+      render(<CompanyCTAGroup company={company} canRequestQuote />);
+      expect(Boolean(screen.queryByRole('button', { name: 'Solicitar orçamento' }))).toBe(expectsQuote);
+      expect(Boolean(screen.queryByRole('link', { name: /no WhatsApp/ }))).toBe(expectsWhatsapp);
+      expect(screen.getByText('Comparar')).toBeInTheDocument();
+      expect(screen.getByText('Avaliar')).toBeInTheDocument();
+      expect(Boolean(screen.queryByTestId('company-primary-ctas'))).toBe(expectsQuote || expectsWhatsapp);
+    }
+  );
+
   it('molduras secundárias 36px e alvos acionáveis 44px no mobile/PWA', () => {
     render(<CompanyCTAGroup company={paidCompany} canRequestQuote />);
     const secondary = screen.getByTestId('company-secondary-ctas');
