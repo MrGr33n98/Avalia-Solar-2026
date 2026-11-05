@@ -72,6 +72,19 @@ export function ReputationMilestones({ approvedReviewsCount }: ReputationMilesto
           </span>
         </div>
 
+        <details className="group mt-3 rounded-lg border border-blue-100 bg-blue-50/40 text-xs text-slate-700">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg px-3 font-semibold text-[#0A1F44] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+            <JourneyIcon name="01_estrelas_ia" size={18} />
+            <span>Como o Avalia Solar me ajuda a coletar avaliações?</span>
+            <span aria-hidden="true" className="ml-auto text-blue-600 motion-safe:transition-transform group-open:rotate-90">›</span>
+          </summary>
+          <div className="border-t border-blue-100 px-3 py-3 leading-relaxed">
+            Gere um link público para seu formulário, compartilhe por e-mail, WhatsApp ou QR Code
+            e acompanhe visualizações, envios e aprovações. A coleta é voluntária, sem incentivo
+            a avaliações positivas, e os selos oficiais são concedidos separadamente.
+          </div>
+        </details>
+
         <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar"
           aria-label="Progresso de avaliações aprovadas até a meta de 20"
           aria-valuemin={0} aria-valuemax={20} aria-valuenow={count === null ? undefined : Math.min(count, 20)}
