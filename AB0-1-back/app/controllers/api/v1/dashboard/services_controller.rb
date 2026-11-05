@@ -6,6 +6,7 @@ module Api
       class ServicesController < BaseController
         MAX_GALLERY_IMAGES = 8
         MAX_IMAGE_SIZE = 8.megabytes
+        MAX_UPLOAD_SIZE = 20.megabytes
         ALLOWED_IMAGE_TYPES = %w[image/jpeg image/png image/webp].freeze
 
         before_action :set_service, only: %i[update destroy]
@@ -119,6 +120,7 @@ module Api
             end
             return 'Cada imagem deve ter até 8 MB.' if file.size > MAX_IMAGE_SIZE
           end
+          return 'Envie no máximo 20 MB de imagens por vez.' if files.sum(&:size) > MAX_UPLOAD_SIZE
 
           nil
         end
