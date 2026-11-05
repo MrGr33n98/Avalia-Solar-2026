@@ -1523,6 +1523,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_16_100000) do
     t.decimal "price_from", precision: 12, scale: 2
     t.jsonb "coverage", default: [], null: false
     t.string "status", default: "active", null: false
+    t.jsonb "video_links", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["category_id"], name: "index_company_services_on_category_id"
