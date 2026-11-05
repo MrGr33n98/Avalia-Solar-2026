@@ -1380,6 +1380,81 @@ module Api
         }, status: :ok
       end
 
+      # GET /api/v1/company_dashboard/cta_visibility?company_id=123
+      # Independent of the moderated CTA URL/template update flow.
+      def cta_visibility
+        authorize @company, :edit_company?
+        return render json: { error: 'Empresa não autorizada' }, status: :forbidden unless
+          params[:company_id].present? && @company.id.to_s == params[:company_id].to_s
+
+        render json: ::CompanyCtaVisibilityResolver.new(@company).call.merge(company_id: @company.id)
+      end
+
+      # PATCH /api/v1/company_dashboard/cta_visibility?company_id=123
+      # Strict booleans + optimistic revision; a company setting never grants plan access.
+      def update_cta_visibility
+        authorize @company, :edit_company?
+        return render json: { error: 'Empresa não autorizada' }, status: :forbidden unless
+          params[:company_id].present? && @company.id.to_s == params[:company_id].to_s
+
+        keys = %w[quote_cta_enabled whatsapp_enabled]
+        present_keys = keys.select { |key| params.key?(key) }
+        if present_keys.empty? || present_keys.any? { |key| params[key] != true && params[key] != false }
+          return render json: { error: 'Envie pelo menos um booleano válido' }, status: :unprocessable_entity
+        end
+        version = params[:expected_version]
+        unless version.is_a?(Integer) && version >= 0
+          return render json: { error: 'expected_version deve ser um inteiro não negativo' }, status: :unprocessable_entity
+        end
+
+        result = nil
+        events = []
+        @company.with_lock do
+          if @company.cta_visibility_version != version
+            result = {
+              status: :conflict,
+              body: { error: 'Preferências modificadas por outra sessão', code: 'version_conflict',
+                      current: ::CompanyCtaVisibilityResolver.new(@company).call }
+            }
+          else
+            requested = present_keys.to_h { |key| [key, params[key]] }
+            denied = requested.any? do |key, value|
+              value == true && (
+                (key == 'quote_cta_enabled' && !@company.quote_feature_enabled?) ||
+                (key == 'whatsapp_enabled' && !@company.whatsapp_contact_button_entitled?)
+              )
+            end
+            if denied
+              result = { status: :forbidden, body: { error: 'Recurso indisponível no plano atual',
+                                                     code: 'entitlement_denied' } }
+            else
+              changed = requested.filter_map do |key, value|
+                old = @company.public_send(key)
+                { channel: key, old_value: old, new_value: value } unless old == value
+              end
+              if changed.any?
+                @company.update!(requested.merge(cta_visibility_version: version + 1))
+                events = changed
+              end
+              result = {
+                status: :ok,
+                body: ::CompanyCtaVisibilityResolver.new(@company).call.merge(company_id: @company.id)
+              }
+            end
+          end
+        end
+
+        events.each do |event|
+          audit = { event: 'company_cta_visibility_changed', company_id: @company.id,
+                    actor_id: current_user&.id, channel: event[:channel],
+                    old_value: event[:old_value], new_value: event[:new_value],
+                    config_version: @company.cta_visibility_version }
+          Rails.logger.info(audit.to_json)
+          ActiveSupport::Notifications.instrument('company_cta_visibility_changed', audit)
+        end
+        render json: result[:body], status: result[:status]
+      end
+
       # POST /api/v1/company_dashboard/update_ctas
       def update_ctas
         authorize @company, :edit_company?
