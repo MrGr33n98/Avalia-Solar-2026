@@ -105,6 +105,6 @@ describe('reputation marketing widget snapshots', () => {
     }, 'light', 'blue')!;
     expect(html).not.toContain('attacker.test');
     expect(html).not.toContain('<img');
-    expect(html).toContain('KA');
+    expect(html).toContain('KE');
   });
 });
