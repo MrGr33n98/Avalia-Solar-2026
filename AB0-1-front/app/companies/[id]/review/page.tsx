@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Star, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useCompanySafe } from '@/hooks/useCompaniesSafe';
-import { Company, Review, reviewUploadsApi, reviewsApi } from '@/lib/api';
+import { Company, Review, fetchApi, reviewUploadsApi, reviewsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { useAuth } from '@/hooks/useAuth';
 import { buildCompanyPath } from '@/lib/slug';
@@ -84,6 +84,39 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
   const { user } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  // O serviço é consultado pelo ID/slug real e sempre pertence à empresa.
+  const serviceId = Number(searchParams?.get('service_id') || 0);
+  const serviceSlug = searchParams?.get('service_slug') || '';
+  const [serviceContext, setServiceContext] = useState<{ id: number; slug: string; name: string; category_id: number } | null>(null);
+  const [serviceContextError, setServiceContextError] = useState(false);
+
+  useEffect(() => {
+    if (!serviceId || !serviceSlug) {
+      setServiceContext(null);
+      setServiceContextError(Boolean(serviceId || serviceSlug));
+      return;
+    }
+    let cancelled = false;
+    setServiceContext(null);
+    setServiceContextError(false);
+    fetchApi<{ data: { id: number; slug: string; name: string; category_id: number } }>(
+      `/companies/${company.id}/services/${encodeURIComponent(serviceSlug)}`,
+      { timeout: 8000, retries: 0 }
+    ).then((response) => {
+      if (cancelled) return;
+      if (response.data.id !== serviceId || response.data.slug !== serviceSlug) {
+        setServiceContextError(true);
+        return;
+      }
+      setServiceContext(response.data);
+      setCategoryId(response.data.category_id);
+      setCriterionScores({});
+    }).catch(() => {
+      if (!cancelled) setServiceContextError(true);
+    });
+    return () => { cancelled = true; };
+  }, [company.id, serviceId, serviceSlug]);
+
 
   const returnTo = (() => {
     const query = searchParams?.toString();
@@ -91,17 +124,24 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
     return encodeURIComponent(fullPath || '/');
   })();
 
-  const availableCategories =
+  const allCategories =
     Array.isArray(company?.categories) && company.categories.length > 0
       ? company.categories
       : company?.category_info
         ? [company.category_info]
         : [];
+  const availableCategories = serviceContext
+    ? allCategories.filter(category => category.id === serviceContext.category_id)
+    : allCategories;
 
   const nextStep = () => setStep((s) => s + 1);
   const prevStep = () => setStep((s) => s - 1);
 
   const handleSubmit = async () => {
+    if (serviceId && (!serviceContext || serviceContextError)) {
+      setSubmitError('Não foi possível validar este serviço. Reabra o link da página do serviço.');
+      return;
+    }
     if (!user) {
       setSubmitError('Você precisa estar logado para avaliar.');
       return;
@@ -125,6 +165,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
 
       const reviewPayload: ReviewCreatePayload = {
         company_id: company.id,
+        service_id: serviceContext?.id,
         category_id: categoryId,
         rating: rating || 5,
         headline: editorialData.headline.trim(),
@@ -235,6 +276,16 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
           {step === 1 && (
             <div className="space-y-3">
               <div className="space-y-2">
+                {serviceContext && (
+                  <p className="rounded-lg bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800">
+                    Avaliando: {serviceContext.name}
+                  </p>
+                )}
+                {serviceContextError && (
+                  <p role="alert" className="rounded-lg bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+                    Não foi possível validar o serviço selecionado.
+                  </p>
+                )}
                 <h2 className="text-xl font-bold tracking-tight text-[#0B1F4B] sm:text-[22px]">
                   Sobre qual serviço você deseja falar?
                 </h2>
