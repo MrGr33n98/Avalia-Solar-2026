@@ -344,7 +344,8 @@ export default function PlanAndSubscription({
           onBillingPeriodChange={setBillingPeriod}
           onSelectPlan={(plan, period) => onSelectPlan?.(plan, period)}
           pending={isCheckoutLoading}
-          disabled={!onSelectPlan}
+          disabled={!onSelectPlan || billingAccess === 'restricted' ||
+            billingAccess === 'unavailable' || subscription?.can_manage_billing === false}
         />
       </div>
     </div>
