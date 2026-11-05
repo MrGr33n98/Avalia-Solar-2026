@@ -47,7 +47,8 @@ RSpec.describe 'Company Dashboard CTA visibility', type: :request do
     patch '/api/v1/company_dashboard/cta_visibility',
           params: { company_id: foreign.id, quote_cta_enabled: false },
           headers: headers
-    expect(response).not_to have_http_status(:ok)
+    expect(response).to have_http_status(:forbidden)
     expect(foreign.reload.quote_cta_enabled).to eq(true)
+    expect(company.reload.quote_cta_enabled).to eq(true)
   end
 end
