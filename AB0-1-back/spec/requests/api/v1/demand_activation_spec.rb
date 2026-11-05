@@ -59,9 +59,9 @@ RSpec.describe 'Company Intent Sync API', type: :request do
   it 'rejects a filter that contains an email field' do
     post "#{base}/audiences",
          params: { company_id: company.id, audience: { name: 'Unsafe', filter_definition: { email: 'user@example.com' } } }
-    expect(response).to have_http_status(:created)
-    expect(DemandActivation::AudienceSegment.last.filter_definition).to eq({})
-    # Strong params silently discard unrecognized keys. No identifier is persisted.
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(JSON.parse(response.body)['code']).to eq('INTENT_SYNC_FILTER_BLOCKED')
+    expect(DemandActivation::AudienceSegment.where(name: 'Unsafe').count).to eq(0)
   end
 
   it 'never allows a foreign source to be linked to a draft' do
