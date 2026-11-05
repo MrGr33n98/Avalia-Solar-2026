@@ -4,7 +4,7 @@ module Api
   module V1
     module Dashboard
       class ServicesController < BaseController
-        before_action :set_service, only: %i[update destroy]
+        before_action :set_service, only: %i[update destroy add_images remove_image]
 
         def index
           services = current_company.company_services
@@ -57,6 +57,29 @@ module Api
           head :no_content
         end
 
+        def add_images
+          uploads = Array(params[:images])
+          if uploads.empty? || uploads.size + @service.images.count > 12
+            return render json: { errors: ['A galeria permite até 12 imagens.'] }, status: :unprocessable_entity
+          end
+
+          allowed = %w[image/jpeg image/png image/webp]
+          unless uploads.all? { |file| file.respond_to?(:content_type) && allowed.include?(file.content_type) &&
+                                      file.size.positive? && file.size <= 10.megabytes }
+            return render json: { errors: ['Envie imagens JPEG, PNG ou WebP de até 10 MB.'] }, status: :unprocessable_entity
+          end
+
+          @service.images.attach(uploads)
+          render json: { service: service_payload(@service.reload) }, status: :ok
+        end
+
+        def remove_image
+          attachment = @service.images_attachments.find(params[:attachment_id])
+          attachment.purge
+          render json: { service: service_payload(@service.reload) }, status: :ok
+        end
+
+
         private
 
         def set_service
@@ -107,6 +130,7 @@ module Api
             status: service.status,
             image_url: image_url,
             image_urls: service.images.map { |image| Rails.application.routes.url_helpers.rails_storage_proxy_url(image, Rails.application.routes.default_url_options) },
+            service_images: service.images.map { |image| { id: image.id, url: Rails.application.routes.url_helpers.rails_storage_proxy_url(image, Rails.application.routes.default_url_options) } },
             video_links: service.video_links,
             created_at: service.created_at,
             updated_at: service.updated_at
