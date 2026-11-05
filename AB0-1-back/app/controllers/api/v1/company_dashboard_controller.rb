@@ -1427,6 +1427,10 @@ module Api
             if denied
               result = { status: :forbidden, body: { error: 'Recurso indisponível no plano atual',
                                                      code: 'entitlement_denied' } }
+            elsif requested['whatsapp_enabled'] == true && @company.whatsapp_contact_number.blank?
+              result = { status: :unprocessable_entity,
+                         body: { error: 'Configure um número público válido antes de ativar o WhatsApp',
+                                 code: 'whatsapp_not_configured' } }
             else
               changed = requested.filter_map do |key, value|
                 old = @company.public_send(key)
@@ -1453,6 +1457,8 @@ module Api
           ActiveSupport::Notifications.instrument('company_cta_visibility_changed', audit)
         end
         render json: result[:body], status: result[:status]
+      rescue ActiveRecord::RecordInvalid
+        render json: { error: 'Configuração inválida', code: 'validation_failed' }, status: :unprocessable_entity
       end
 
       # POST /api/v1/company_dashboard/update_ctas
