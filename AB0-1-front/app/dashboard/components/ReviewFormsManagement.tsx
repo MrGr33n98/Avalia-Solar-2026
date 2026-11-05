@@ -423,45 +423,26 @@ export default function ReviewFormsManagement({ companyId, companyName }: { comp
         </Button>
       </div>
 
-      {/* Passo a Passo Visual do Fluxo */}
-      <div className="hidden border border-slate-200 bg-slate-50/50 p-4 md:block rounded-2xl">
-        <div className="mx-auto flex max-w-4xl justify-between gap-4 text-xs font-bold text-slate-500">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-black">1</span>
-            <div>
-              <p className="text-slate-900 font-extrabold">Escolha um modelo</p>
-              <p className="text-[10px] text-slate-400 font-normal">Selecione o tipo de projeto</p>
-            </div>
-          </div>
-          <span className="self-center text-slate-300">➔</span>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-black">2</span>
-            <div>
-              <p className="text-slate-900 font-extrabold">Compartilhe</p>
-              <p className="text-[10px] text-slate-400 font-normal">WhatsApp, QR Code ou link</p>
-            </div>
-          </div>
-          <span className="self-center text-slate-300">➔</span>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-black">3</span>
-            <div>
-              <p className="text-slate-900 font-extrabold">Receba avaliações</p>
-              <p className="text-[10px] text-slate-400 font-normal">Clientes opinam em tempo real</p>
-            </div>
-          </div>
-          <span className="self-center text-slate-300">➔</span>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-black">4</span>
-            <div>
-              <p className="text-slate-900 font-extrabold">Melhore a reputação</p>
-              <p className="text-[10px] text-slate-400 font-normal">Mais reviews traem negócios</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Jornada principal de coleta — antes das métricas, mobile-first */}
+      {isHubEnabled && (
+        <ReviewCollectionHub
+          forms={forms}
+          selectedFormId={selectedId ?? undefined}
+          onSelectForm={(id) => setSelectedId(id)}
+          onCreateForm={() => setEditor(emptyEditor())}
+          companyName={companyName?.trim() || 'Empresa não identificada'}
+          companyId={companyId}
+          approvedReviewsCount={approvedCount}
+          onTrackAction={(event, meta) => {
+            if (selected) {
+              void trackAction(selected, event, meta);
+            }
+          }}
+        />
+      )}
 
       {/* Grid de Estatísticas (Stats Cards) */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
         {/* Formulários ativos */}
         <Card className="rounded-2xl border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-5 flex items-center justify-between gap-4">
@@ -526,23 +507,6 @@ export default function ReviewFormsManagement({ companyId, companyName }: { comp
           </CardContent>
         </Card>
       </div>
-
-      {isHubEnabled && (
-        <ReviewCollectionHub
-          forms={forms}
-          selectedFormId={selectedId ?? undefined}
-          onSelectForm={(id) => setSelectedId(id)}
-          onCreateForm={() => setEditor(emptyEditor())}
-          companyName={companyName?.trim() || 'Empresa não identificada'}
-          companyId={companyId}
-          approvedReviewsCount={approvedCount}
-          onTrackAction={(event, meta) => {
-            if (selected) {
-              void trackAction(selected, event, meta);
-            }
-          }}
-        />
-      )}
 
       {forms.length === 0 ? (
         !isHubEnabled && (
