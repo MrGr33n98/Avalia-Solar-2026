@@ -31,6 +31,28 @@ module Api
         end
       end
 
+      # Paginação cursor-like por página, somente empresas e serviços publicados.
+      def services
+        page = [params[:page].to_i, 1].max
+        per_page = [[params[:per_page].to_i, 1].max, 500].min
+
+        scope = ::CompanyService.joins(:company)
+                                .where(company_services: { status: 'active' }, companies: { status: 'active' })
+                                .order('company_services.id ASC')
+
+        records = scope.limit(per_page).offset((page - 1) * per_page)
+                       .pluck('companies.slug', 'company_services.slug', 'company_services.updated_at')
+        render json: {
+          data: records.filter_map do |company_slug, service_slug, updated_at|
+            next if company_slug.blank? || service_slug.blank?
+            { company_slug: company_slug, service_slug: service_slug, updated_at: updated_at }
+          end
+        }, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[SitemapsController#services] #{e.class}: #{e.message}")
+        render json: { data: [] }, status: :service_unavailable
+      end
+
       private
 
       def fetch_local_rankings

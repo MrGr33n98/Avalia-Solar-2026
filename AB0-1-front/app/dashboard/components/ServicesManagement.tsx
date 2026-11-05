@@ -50,6 +50,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
     addService,
     updateService,
     deleteService,
+    removeServiceImage,
   } = useServices(companyId);
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -64,6 +65,8 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
   const [priceFrom, setPriceFrom] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [submitting, setSubmitting] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [videoLinksInput, setVideoLinksInput] = useState('');
 
   useEffect(() => {
     fetchApi<{ data?: CategoryOption[] } | CategoryOption[]>('/categories', {
@@ -84,6 +87,8 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
     setIsPriceOnRequest(false);
     setPriceFrom('');
     setStatus('active');
+    setImageFiles([]);
+    setVideoLinksInput('');
     setDialogOpen(true);
   };
 
@@ -95,6 +100,8 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
     setIsPriceOnRequest(service.price_from == null || service.price_from === 0);
     setPriceFrom(service.price_from ? String(service.price_from) : '');
     setStatus(service.status);
+    setImageFiles([]);
+    setVideoLinksInput((service.video_links || []).join('\n'));
     setDialogOpen(true);
   };
 
@@ -104,6 +111,15 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
 
     setSubmitting(true);
     try {
+      if (imageFiles.some(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024)) {
+        alert('Use imagens JPG, PNG ou WebP de até 10 MB.');
+        return;
+      }
+      const video_links = videoLinksInput.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      if (video_links.length > 8) {
+        alert('Informe no máximo oito vídeos.');
+        return;
+      }
       const parsedCatId = parseInt(categoryId, 10) || categories[0]?.id || 1;
       const parsedPrice = isPriceOnRequest || !priceFrom ? null : parseFloat(priceFrom);
 
@@ -114,6 +130,8 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
           description: description.trim(),
           price_from: parsedPrice,
           status,
+          video_links,
+          images: imageFiles,
         });
       } else {
         await addService({
@@ -122,6 +140,8 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
           description: description.trim(),
           price_from: parsedPrice,
           status,
+          video_links,
+          images: imageFiles,
         });
       }
       setDialogOpen(false);
@@ -304,7 +324,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
       {/* SERVICE MODAL DIALOG                                               */}
       {/* ------------------------------------------------------------------ */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md rounded-2xl p-6">
+        <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900">
               {editingService ? 'Editar Serviço' : 'Novo Serviço'}
@@ -388,6 +408,43 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
                   />
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+              <label htmlFor="service-photos" className="block text-sm font-semibold text-slate-900">Galeria do serviço</label>
+              <p className="text-xs text-slate-500">Fotos reais dos projetos e instalações. Até 12 imagens JPG, PNG ou WebP de 10 MB cada.</p>
+              <input
+                id="service-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple
+                className="block w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-semibold file:text-blue-700"
+                onChange={event => setImageFiles(Array.from(event.target.files || []))}
+              />
+              {imageFiles.length > 0 && <p className="text-xs font-semibold text-blue-700">{imageFiles.length} fotos selecionadas para envio</p>}
+              {editingService?.service_images && editingService.service_images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {editingService.service_images.map(image => (
+                    <div key={image.id} className="space-y-1">
+                      <img src={image.url} alt={`Imagem do serviço ${editingService.name}`} className="aspect-video w-full rounded-md border border-slate-200 object-cover" />
+                      <button type="button" className="text-xs font-semibold text-rose-700 hover:underline"
+                        onClick={async () => {
+                          if (!confirm('Remover esta foto da galeria?')) return;
+                          try {
+                            const updated = await removeServiceImage(editingService.id, image.id);
+                            setEditingService(updated);
+                          } catch { alert('Não foi possível remover a imagem.'); }
+                        }}>
+                        Remover foto
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="service-video-links" className="text-sm font-semibold text-slate-900">Vídeos do serviço</label>
+              <p className="mb-2 mt-1 text-xs text-slate-500">Cole links HTTPS do YouTube ou Vimeo, um por linha. Não é necessário enviar o vídeo.</p>
+              <Textarea id="service-video-links" rows={3} value={videoLinksInput} onChange={event => setVideoLinksInput(event.target.value)}
+                placeholder={'https://www.youtube.com/watch?v=...'} className="rounded-xl text-sm" />
             </div>
 
             <div>

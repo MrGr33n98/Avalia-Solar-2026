@@ -741,6 +741,7 @@ export interface Review {
   user_id?: number;
   product_id?: number;
   company_id?: number;
+  service_id?: number;
   created_at: string;
   updated_at?: string;
   user?: {
