@@ -12,6 +12,12 @@ class CompanyService < ApplicationRecord
 
   validate :validate_video_links
 
+  validates :name, :slug, presence: true
+  validates :slug, uniqueness: { scope: :company_id }
+  validates :price_from, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+
+  scope :visible, -> { active_status }
+
   private
 
   def validate_video_links
@@ -34,9 +40,4 @@ class CompanyService < ApplicationRecord
   end
 
 
-  validates :name, :slug, presence: true
-  validates :slug, uniqueness: { scope: :company_id }
-  validates :price_from, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-
-  scope :visible, -> { active_status }
 end
