@@ -139,7 +139,7 @@ module Catalog
       if items.size < limit && services_count.positive?
         remaining = limit - items.size
         services = eligible_services_scope
-                   .includes(:category, images_attachments: :blob)
+                   .includes(:category, :cover_image_attachment, images_attachments: :blob)
                    .order(updated_at: :desc, id: :desc)
                    .limit(remaining)
                    .to_a
@@ -151,7 +151,7 @@ module Catalog
 
     def fetch_service_items
       services = eligible_services_scope
-                 .includes(:category, images_attachments: :blob)
+                 .includes(:category, :cover_image_attachment, images_attachments: :blob)
                  .order(updated_at: :desc, id: :desc)
                  .limit(limit)
                  .to_a
@@ -247,11 +247,12 @@ module Catalog
     end
 
     def service_image_url(service)
-      return nil unless service.images.attached?
+      attachment = service.cover_image.attached? ? service.cover_image : service.images.first
+      return nil unless attachment
 
       options = Rails.application.routes.default_url_options.dup
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-      Rails.application.routes.url_helpers.rails_storage_proxy_url(service.images.first, options)
+      Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
     rescue StandardError
       nil
     end
