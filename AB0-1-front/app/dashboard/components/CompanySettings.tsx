@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchApi, type Company } from '@/lib/api';
-import BrandPageCTAVisibility from './brand-page/BrandPageCTAVisibility';
+import CtaVisibilitySettings from './cta-visibility/CtaVisibilitySettings';
 import { useToast } from '@/hooks/use-toast';
 import { startDashboardTour } from '@/lib/tour';
 import Link from 'next/link';
@@ -238,7 +238,9 @@ export default function CompanySettings({ companyId, company }: CompanySettingsP
             ABA 1: CHAMADAS PARA AÇÃO (CTAs) E WHATSAPP
             ======================================================== */}
         <TabsContent value="conversion" className="mt-6 space-y-6">
-          <BrandPageCTAVisibility company={company} companyId={companyId} />
+          {process.env.NEXT_PUBLIC_CTA_VISIBILITY_UI_V1 !== 'false' && (
+            <CtaVisibilitySettings key={companyId} companyId={companyId} />
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Coluna Esquerda: Formulário de CTAs */}
             <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
@@ -401,11 +403,11 @@ export default function CompanySettings({ companyId, company }: CompanySettingsP
                       Visualização do Comprador (Preview)
                     </CardTitle>
                     <Badge variant="secondary" className="text-[9px] uppercase font-bold">
-                      Ao Vivo
+                      Prévia do editor
                     </Badge>
                   </div>
                   <CardDescription className="text-xs text-muted-foreground">
-                    Como os compradores solares visualizam seus botões no perfil público.
+                    Prévia dos CTAs personalizados. O hero oficial usa as preferências de visibilidade acima.
                   </CardDescription>
                 </CardHeader>
 

@@ -20,6 +20,18 @@ describe('canUsePaidConversion', () => {
     ).toBe(false);
   });
 
+  it('preferência explícita OFF oculta orçamento sem alterar entitlement do WhatsApp', () => {
+    const props = {
+      ...company(true, {
+        custom_ctas: { state: 'enabled' as const, value: true },
+        whatsapp_contact_button: { state: 'enabled' as const, value: true },
+      }),
+      quote_cta_enabled: false,
+    };
+    expect(canUsePaidConversion(props, 'quote')).toBe(false);
+    expect(canUsePaidConversion(props, 'whatsapp')).toBe(true);
+  });
+
   it('usa custom_ctas como chave canônica para orçamento', () => {
     expect(
       canUsePaidConversion(

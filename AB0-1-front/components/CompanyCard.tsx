@@ -43,6 +43,7 @@ export interface CompanyCardData {
   sponsored?: boolean;
   verified?: boolean;
   has_paid_plan?: boolean;
+  quote_cta_enabled?: boolean;
   distance_km?: number | null;
   badges?: { image_url?: string | null; name?: string | null }[] | null;
   feature_access?: FeatureAccessMap;
@@ -187,6 +188,7 @@ export const normalizeCompanyData = (raw: any): CompanyCardData => {
       sponsored: comp.sponsored === true,
       verified: isVerified,
       has_paid_plan: hasPaidPlan(comp),
+      quote_cta_enabled: comp.quote_cta_enabled !== false,
       badges: comp.badges || [],
       feature_access: comp.feature_access || {},
       top_criteria: comp.top_criteria || [],
@@ -231,6 +233,7 @@ export const normalizeCompanyData = (raw: any): CompanyCardData => {
     sponsored: comp?.sponsored === true,
     verified: isVerified,
     has_paid_plan: hasPaidPlan(comp),
+    quote_cta_enabled: comp.quote_cta_enabled !== false,
     badges: comp?.badges || [],
     feature_access: comp?.feature_access || {},
     top_criteria: Array.isArray(comp?.top_criteria) ? comp.top_criteria : [],

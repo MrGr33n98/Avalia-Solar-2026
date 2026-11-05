@@ -1380,45 +1380,104 @@ module Api
         }, status: :ok
       end
 
-      # PATCH /api/v1/company_dashboard/cta_visibility
-      # Preferences are immediate, unlike moderated marketing copy or external URLs.
-      def update_cta_visibility
-        # set_company falls back to the user's current company for invalid ids.
-        # This mutation must NEVER silently update that fallback company.
-        requested_id = params[:company_id].presence
-        unless requested_id && requested_id.to_s == @company.id.to_s
-          return render json: { error: 'Company not authorized for this request' }, status: :forbidden
-        end
-
+      # GET /api/v1/company_dashboard/cta_visibility?company_id=123
+      # Independent of the moderated CTA URL/template update flow.
+      def cta_visibility
         authorize @company, :edit_company?
+        return render json: { error: 'Empresa não autorizada' }, status: :forbidden unless
+          params[:company_id].present? && @company.id.to_s == params[:company_id].to_s
 
-        permitted = params.permit(:quote_cta_enabled, :whatsapp_enabled)
-        if permitted.empty? || permitted.values.any? { |v| ![true, false, 'true', 'false', '1', '0', 1, 0].include?(v) }
-          return render json: { error: 'Informe preferências booleanas válidas' }, status: :unprocessable_entity
+        render json: ::CompanyCtaVisibilityResolver.new(@company).call.merge(company_id: @company.id)
+      end
+
+      # PATCH /api/v1/company_dashboard/cta_visibility?company_id=123
+      # Strict booleans + optimistic revision; a company setting never grants plan access.
+      def update_cta_visibility
+        authorize @company, :edit_company?
+        return render json: { error: 'Empresa não autorizada' }, status: :forbidden unless
+          params[:company_id].present? && @company.id.to_s == params[:company_id].to_s
+
+        keys = %w[quote_cta_enabled whatsapp_enabled]
+        present_keys = keys.select { |key| params.key?(key) }
+        if present_keys.empty? || present_keys.any? { |key| params[key] != true && params[key] != false }
+          return render json: { error: 'Envie pelo menos um booleano válido' }, status: :unprocessable_entity
+        end
+        version = params[:expected_version]
+        unless version.is_a?(Integer) && version >= 0
+          return render json: { error: 'expected_version deve ser um inteiro não negativo' }, status: :unprocessable_entity
         end
 
-        # Visibility is not entitlement: no preference can enable a paid feature for Free accounts.
-        attributes = permitted.to_h.transform_values { |value| ActiveModel::Type::Boolean.new.cast(value) }
-        @company.update!(attributes)
-
-        Analytics::TrackEventService.call(
-          company_id: @company.id,
-          event_type: 'dashboard_updated_directly',
-          user: current_user,
-          metadata: request_metadata.merge(change_type: 'cta_visibility', changed_fields: attributes.keys)
-        )
-        begin
-          PublicProfileRevalidationJob.perform_later(@company.id)
-        rescue StandardError => e
-          Rails.logger.warn("[CTAVisibility] revalidation enqueue failed company_id=#{@company.id}: #{e.class}")
+        result = nil
+        events = []
+        @company.with_lock do
+          if @company.cta_visibility_version != version
+            result = {
+              status: :conflict,
+              body: { error: 'Preferências modificadas por outra sessão', code: 'version_conflict',
+                      current: ::CompanyCtaVisibilityResolver.new(@company).call }
+            }
+          else
+            requested = present_keys.to_h { |key| [key, params[key]] }
+            denied = requested.any? do |key, value|
+              value == true && @company.public_send(key) != true && (
+                (key == 'quote_cta_enabled' && !@company.quote_feature_enabled?) ||
+                (key == 'whatsapp_enabled' && !@company.whatsapp_contact_button_entitled?)
+              )
+            end
+            if denied
+              result = { status: :forbidden, body: { error: 'Recurso indisponível no plano atual',
+                                                     code: 'entitlement_denied' } }
+            elsif requested['whatsapp_enabled'] == true && @company.whatsapp_enabled != true && @company.whatsapp_contact_number.blank?
+              result = { status: :unprocessable_entity,
+                         body: { error: 'Configure um número público válido antes de ativar o WhatsApp',
+                                 code: 'whatsapp_not_configured' } }
+            else
+              changed = requested.filter_map do |key, value|
+                old = @company.public_send(key)
+                { channel: key, old_value: old, new_value: value } unless old == value
+              end
+              if changed.any?
+                @company.update!(requested.merge(cta_visibility_version: version + 1))
+                events = changed
+              end
+              result = {
+                status: :ok,
+                body: ::CompanyCtaVisibilityResolver.new(@company).call.merge(company_id: @company.id)
+              }
+            end
+          end
         end
 
-        render json: {
-          quote_cta_enabled: @company.quote_cta_enabled,
-          whatsapp_enabled: @company.whatsapp_enabled,
-          whatsapp_available: @company.whatsapp_contact_button_enabled?,
-          quote_available: @company.quote_feature_enabled? && @company.quote_cta_enabled?
-        }, status: :ok
+        events.each do |event|
+          audit = { event: 'company_cta_visibility_changed', company_id: @company.id,
+                    actor_id: current_user&.id, channel: event[:channel],
+                    old_value: event[:old_value], new_value: event[:new_value],
+                    config_version: @company.cta_visibility_version }
+          Rails.logger.info(audit.to_json)
+          ActiveSupport::Notifications.instrument('company_cta_visibility_changed', audit)
+        end
+        if events.any?
+          # Public pages are ISR cached for 15 minutes. Invalidate before
+          # returning success so an OFF choice is not displayed for that period.
+          begin
+            if PublicProfileRevalidator.configured?
+              PublicProfileRevalidator.call!(@company)
+              result[:body][:cache_state] = 'revalidated'
+            else
+              result[:body][:cache_state] = 'not_configured'
+              Rails.logger.warn("[CtaVisibility] profile revalidation unavailable company_id=#{@company.id}")
+            end
+          rescue StandardError => e
+            PublicProfileRevalidationJob.perform_later(@company.id)
+            result[:body][:cache_state] = 'pending_retry'
+            Rails.logger.error("[CtaVisibility] cache revalidation queued company_id=#{@company.id}: #{e.class}")
+          end
+        else
+          result[:body][:cache_state] = 'unchanged' if result[:status] == :ok
+        end
+        render json: result[:body], status: result[:status]
+      rescue ActiveRecord::RecordInvalid
+        render json: { error: 'Configuração inválida', code: 'validation_failed' }, status: :unprocessable_entity
       end
 
       # POST /api/v1/company_dashboard/update_ctas

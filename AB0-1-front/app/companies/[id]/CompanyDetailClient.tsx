@@ -615,10 +615,13 @@ export default function CompanyDetailClient({
         rank={(currentCompany as any).priority_score >= 100 ? 1 : 0}
       />
 
-      <StickyCTA
-        company={currentCompany}
-        canRequestQuote={canRequestQuote}
-      />
+      {/* Rank-1 sticky and regular sticky must not compete in the same viewport. */}
+      {!((currentCompany as any).priority_score >= 100 && canRequestQuote) && (
+        <StickyCTA
+          company={currentCompany}
+          canRequestQuote={canRequestQuote}
+        />
+      )}
 
       <ReviewIdentityModalTrigger activeTab={activeTab} />
     </div>

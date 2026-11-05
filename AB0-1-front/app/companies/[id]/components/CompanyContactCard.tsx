@@ -57,7 +57,7 @@ export default function CompanyContactCard({
   if (!hasAnyContact) return null;
 
   return (
-    <Card className={cn("overflow-hidden border border-slate-100 bg-white p-5 shadow-sm rounded-2xl", className)}>
+    <Card data-testid="company-contact-card" className={cn("overflow-hidden border border-slate-100 bg-white p-5 shadow-sm rounded-2xl", className)}>
       {!hideHeader && (
         <CardHeader className="p-0 border-b border-slate-100 pb-3 mb-4">
           <CardTitle className="text-sm font-semibold text-slate-800 uppercase tracking-wider">
@@ -66,16 +66,16 @@ export default function CompanyContactCard({
         </CardHeader>
       )}
       <CardContent className="p-0">
-        <div className="grid grid-cols-2 gap-x-3 sm:gap-x-5 gap-y-4 min-w-0">
+        <div className="grid grid-cols-1 gap-x-3 gap-y-4 sm:grid-cols-2 sm:gap-x-5 min-w-0">
           
-          {/* Dados informativos: WhatsApp é exclusivamente um CTA do hero. */}
+          {/* Contact information is informative only; the sole WhatsApp CTA is in the hero. */}
           {phoneValue && (
             <div className="flex min-w-0 items-start gap-2 sm:gap-2.5">
               <Phone className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-800" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <a
                   href={"tel:" + phoneValue.replace(/\D/g, "")}
-                  className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 sm:text-[13px]"
+                  className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 sm:text-[13px]"
                   onMouseEnter={phoneHoverIntent.onMouseEnter}
                   onMouseLeave={phoneHoverIntent.onMouseLeave}
                   onClick={() => {

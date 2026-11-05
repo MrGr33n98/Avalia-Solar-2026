@@ -105,6 +105,7 @@ export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
       cta_location: props.ctaLocation,
       company_id: props.companyId,
       company_name: props.companyName,
+      profile_layout_version: 'cta_single_whatsapp_v1',
       ...metadata,
     };
 

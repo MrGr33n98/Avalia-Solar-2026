@@ -901,6 +901,12 @@ end
     can_use_social_proof?
   end
 
+  # New company preference; entitlement is resolved separately.
+  # Default TRUE in the migration keeps legacy paid profiles unchanged.
+  def quote_cta_visible?
+    quote_cta_enabled? && quote_feature_enabled?
+  end
+
   def quote_feature_enabled?
     return false unless has_paid_plan?
 

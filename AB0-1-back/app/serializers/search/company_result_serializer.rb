@@ -36,6 +36,7 @@ module Search
         whatsapp_enabled: company.whatsapp_contact_button_enabled?,
         whatsapp_url: company.whatsapp_contact_url,
         has_paid_plan: paid?,
+        quote_cta_enabled: company.quote_cta_enabled?,
         rating_avg: company.rating_avg,
         average_rating: company.rating_avg,
         rating_count: company.rating_count,

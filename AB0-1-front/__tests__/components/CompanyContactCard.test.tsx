@@ -60,12 +60,14 @@ describe('CompanyContactCard — contato direto sem signup', () => {
     expect(screen.getByText('Jaraguá do Sul, SC')).toBeInTheDocument();
   });
 
-  it('mantém telefone e demais contatos quando o WhatsApp do hero está ativo', () => {
+  it('não duplica WhatsApp lateral quando há link pago no hero e mantém o telefone', () => {
     render(<CompanyContactCard company={paidCompany} />);
     expect(screen.queryByRole('link', { name: /no WhatsApp/ })).not.toBeInTheDocument();
     expect(screen.queryByText('Falar no WhatsApp')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ligar para empresa' })).toHaveAttribute('href', 'tel:08007010701');
-    expect(screen.getByRole('link', { name: 'energia@weg.net' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ligar para empresa' }))
+      .toHaveAttribute('href', 'tel:08007010701');
+    expect(screen.getByText('www.weg.net')).toBeInTheDocument();
+    expect(screen.getByText('Jaraguá do Sul, SC')).toBeInTheDocument();
   });
 
   it('não ignora plano ou flag explicitamente desabilitados', () => {
