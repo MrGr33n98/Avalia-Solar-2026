@@ -59,7 +59,15 @@ class EntitlementService
     usage_values = MEASURABLE_FEATURE_KEYS.each_with_object({}) do |key, values|
       next unless features.dig(key, 'value').is_a?(Numeric)
 
-      values[key] = usage(key)
+      begin
+        values[key] = usage(key)
+      rescue StandardError => e
+        # A indisponibilidade de uma metrica nao invalida plano e features.
+        Rails.logger.error(
+          "[EntitlementService#usage] company_id=#{@company.id} feature=#{key} " \
+          "error=#{e.class}: #{e.message}"
+        )
+      end
     end
 
     {

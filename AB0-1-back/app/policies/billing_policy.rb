@@ -1,6 +1,8 @@
 class BillingPolicy < ApplicationPolicy
+  # Consulta do plano para qualquer membro ativo do workspace.
+  # Mutacoes financeiras continuam exclusivas de owner/admin.
   def show?
-    admin? || company_owner?
+    admin? || company_member_active?
   end
 
   def checkout?

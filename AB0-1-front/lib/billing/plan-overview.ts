@@ -26,7 +26,7 @@ const dictionary = new Map<string, string>([
   ['sector_question_limit', 'Perguntas setoriais'],
 ]);
 
-const validStates = new Set(['enabled', 'trial', 'limited', 'locked', 'hidden', 'disabled']);
+const validStates = new Set(['enabled', 'trial', 'limited', 'locked', 'hidden', 'disabled', 'unavailable']);
 
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)

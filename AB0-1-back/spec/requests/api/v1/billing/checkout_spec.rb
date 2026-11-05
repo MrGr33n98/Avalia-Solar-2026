@@ -184,6 +184,46 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
   end
 
   describe 'GET /api/v1/billing/subscription' do
+    context 'quando um membro editor consulta os dados comerciais da propria empresa' do
+      let(:editor) { create(:user, role: :company, company: company) }
+      let!(:editor_membership) { create(:company_member, company: company, user: editor, role: :editor, status: 'active') }
+      let(:editor_token) { JWT.encode({ user_id: editor.id }, Rails.application.secret_key_base, 'HS256') }
+      let(:editor_headers) { { 'Authorization' => "Bearer #{editor_token}", 'Content-Type' => 'application/json' } }
+      let!(:editor_subscription) do
+        Billing::CompanySubscription.create!(
+          company: company, plan: plan, status: 'active',
+          stripe_customer_id: 'cus_private', stripe_subscription_id: 'sub_private',
+          current_period_end: 6.months.from_now
+        )
+      end
+
+      it 'retorna o plano sem expor identificadores privados ou liberar gestao financeira' do
+        get '/api/v1/billing/subscription', params: { company_id: company.id }, headers: editor_headers
+
+        expect(response).to have_http_status(:ok)
+        payload = JSON.parse(response.body)
+        expect(payload['status']).to eq('active')
+        expect(payload['plan']['id']).to eq(plan.id)
+        expect(payload['can_manage_billing']).to eq(false)
+        expect(payload).not_to have_key('stripe_customer_id')
+        expect(payload).not_to have_key('stripe_subscription_id')
+        expect(payload).not_to have_key('enterprise_notes')
+      end
+    end
+
+    context 'quando o usuario nao possui vinculo com a empresa solicitada' do
+      let(:external_company) { create(:company, plan: plan) }
+      let(:external_user) { create(:user, role: :company, company: external_company) }
+      let!(:external_membership) { create(:company_member, company: external_company, user: external_user, role: :owner, status: 'active') }
+      let(:external_token) { JWT.encode({ user_id: external_user.id }, Rails.application.secret_key_base, 'HS256') }
+      let(:external_headers) { { 'Authorization' => "Bearer #{external_token}", 'Content-Type' => 'application/json' } }
+
+      it 'bloqueia a consulta de outra empresa com 403' do
+        get '/api/v1/billing/subscription', params: { company_id: company.id }, headers: external_headers
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
     context 'quando a empresa não possui assinatura configurada' do
       it 'retorna 404 not_found' do
         get '/api/v1/billing/subscription', params: { company_id: company.id }, headers: auth_headers
@@ -211,6 +251,7 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
         payload = JSON.parse(response.body)
         expect(payload['status']).to eq('active')
         expect(payload['stripe_subscription_id']).to eq('sub_ok')
+        expect(payload['can_manage_billing']).to eq(true)
         expect(payload['plan']['id']).to eq(plan.id)
       end
     end

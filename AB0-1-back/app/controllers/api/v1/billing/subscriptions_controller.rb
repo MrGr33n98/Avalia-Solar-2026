@@ -13,7 +13,8 @@ module Api
           subscription = ::Billing::CompanySubscription.find_by(company: company)
 
           if subscription
-            render json: subscription, serializer: ::Billing::SubscriptionSerializer, status: :ok
+            render json: subscription, serializer: ::Billing::SubscriptionSerializer,
+                   scope: current_user, status: :ok
           else
             render json: { error: 'Nenhuma assinatura configurada para esta empresa' }, status: :not_found
           end
