@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function Top1StickyCTA({ company, rank }: Props) {
-  if (rank !== 1 || !canUsePaidConversion(company, 'quote')) return null;
+  if (rank !== 1 || !canUsePaidConversion(company, 'quote') || company.quote_cta_enabled === false) return null;
 
   return (
     <AnimatePresence>
