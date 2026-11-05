@@ -122,7 +122,12 @@ function structuredData(company: Company, service: ServiceDetail, url: string) {
       url: absoluteUrl(buildCompanyPath(company.slug, company.name, company.id)),
     },
     offers: service.price_from && service.price_from > 0 ? {
-      '@type': 'Offer', price: service.price_from, priceCurrency: 'BRL',
+      '@type': 'Offer',
+      priceSpecification: {
+        '@type': 'PriceSpecification',
+        minPrice: service.price_from,
+        priceCurrency: 'BRL',
+      },
     } : undefined,
     aggregateRating: count > 0 && average != null ? {
       '@type': 'AggregateRating', ratingValue: average, ratingCount: count,
