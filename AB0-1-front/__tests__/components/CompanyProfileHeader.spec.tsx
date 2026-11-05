@@ -321,7 +321,7 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
 
       const quoteBtn = screen.getByRole('button', { name: 'Solicitar orçamento' });
       expect(quoteBtn).toBeInTheDocument();
-      expect(quoteBtn).toHaveClass('flex-1');
+      expect(quoteBtn).toHaveClass('w-full', 'h-11');
 
       const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: WEG Solar' });
       expect(reviewLink).toBeInTheDocument();
