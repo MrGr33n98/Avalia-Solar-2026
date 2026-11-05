@@ -24,9 +24,9 @@ interface ReviewShareCardProps {
 
 const ICON_SPRITE = '/assets/icons/review-collection/avalia-solar-icons-sprite.svg';
 
-function ActionIcon({ name, size = 19 }: { name: string; size?: number }) {
+function ActionIcon({ name, size = 19, inverse = false }: { name: string; size?: number; inverse?: boolean }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false" className="shrink-0">
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false" className={inverse ? 'shrink-0 brightness-0 invert' : 'shrink-0'}>
       <use href={ICON_SPRITE + '#' + name} />
     </svg>
   );
@@ -108,7 +108,7 @@ export function ReviewShareCard({ form, companyName, onOpenEmailDrawer, onTrack 
             />
             <Button type="button" onClick={() => { void copyDirectLink(); }} disabled={!isActive}
               className="h-11 w-full gap-2 rounded-lg bg-[#0B5FFF] px-4 text-sm font-semibold text-white hover:bg-[#084BD0] sm:w-auto">
-              <ActionIcon name="12_copiar" size={19} />
+              <ActionIcon name="12_copiar" size={19} inverse />
               {copied ? 'Copiado!' : 'Copiar link'}
             </Button>
             <Button type="button" variant="outline" disabled={!isActive}
@@ -129,7 +129,8 @@ export function ReviewShareCard({ form, companyName, onOpenEmailDrawer, onTrack 
                 WhatsApp
               </a>
               <a href={qrDownloadUrl} download
-                onClick={() => onTrack?.('qr_downloaded', { channel: 'qr', form_token: form.token })}
+                // A própria rota pública registra qr_downloaded. Evita duplicação no funil.
+                
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 font-semibold text-[#0A1F44] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                 QR Code · Baixar PNG
               </a>
