@@ -860,7 +860,12 @@ Rails.application.routes.draw do
         # Catálogo privado da empresa. As rotas públicas de produtos continuam
         # estritamente de leitura; criação e edição exigem autenticação do painel.
         resources :products, only: %i[index create update destroy]
-        resources :services, only: %i[index create update destroy]
+        resources :services, only: %i[index create update destroy] do
+          member do
+            post :images, action: :add_images
+            delete 'images/:attachment_id', action: :remove_image
+          end
+        end
         resource :company, only: [:update]
       end
 
