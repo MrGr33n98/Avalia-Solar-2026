@@ -2574,7 +2574,10 @@ module Api
         today = Time.zone.today
         requested_preset = params[:preset].presence
         days_param = params[:days].presence
-        preset = requested_preset || preset_from_days(days_param || default_days)
+        # Datas ISO explicitas tem precedencia sobre o preset padrao.
+        # Um preset explicitamente escolhido pelo cliente continua prioritario.
+        has_explicit_dates = params[:from].present? || params[:to].present?
+        preset = requested_preset || (has_explicit_dates ? 'custom' : preset_from_days(days_param || default_days))
 
         if preset != 'custom' && %w[7d 30d 90d].include?(preset)
           days = preset.delete_suffix('d').to_i
