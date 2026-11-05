@@ -2572,7 +2572,7 @@ module Api
           to_day = today
           from_day = to_day - (days - 1)
         elsif requested_preset.blank? && days_param.present? &&
-              days_param.to_s.match?(/\\A[0-9]{1,3}\\z/) && days_param.to_i.between?(1, 365)
+              days_param.to_s.match?(/\A[0-9]{1,3}\z/) && days_param.to_i.between?(1, 365)
           # Clientes legados enviam ?days=60 ou ?days=180 sem from/to.
           # Aceitar a janela relativa valida, preservando o intervalo real.
           days = days_param.to_i
