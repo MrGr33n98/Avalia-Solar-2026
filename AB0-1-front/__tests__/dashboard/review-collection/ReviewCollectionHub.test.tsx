@@ -145,6 +145,20 @@ describe('ReviewCollectionHub & Children', () => {
   });
 
   describe('ReviewButtonEmbed', () => {
+    it('escapes company-supplied HTML before exporting the embed snippet', () => {
+      render(<ReviewButtonEmbed formToken="tok-widget" companyName={'Empresa <script>alert("x")</script> & Solar'} />);
+      const codeBlock = screen.getByText(/<!-- Avalia Solar Review Button -->/i);
+      expect(codeBlock.textContent).toContain('&lt;script&gt;');
+      expect(codeBlock.textContent).toContain('&amp; Solar');
+      expect(codeBlock.textContent).not.toContain('<script>');
+    });
+
+    it('does not allow a paused form to export an active embed snippet', () => {
+      render(<ReviewButtonEmbed formToken="tok-paused" companyName="Solar Alfa" isActive={false} />);
+      expect(screen.getByText(/Formulário pausado. Ative-o para liberar o código/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Copiar Código' })).toBeDisabled();
+    });
+
     it('generates snippet with widget channel and copies to clipboard', async () => {
       render(<ReviewButtonEmbed formToken="tok-widget" companyName="Solar Alfa" />);
 
