@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { PlansPricingModal } from '@/app/dashboard/components/PlansPricingModal';
 import { billingApi } from '@/lib/api/billing';
 import type { BillingPlan } from '@/lib/api/billing';
@@ -39,8 +40,8 @@ describe('PlansPricingModal — upgrade real', () => {
     const onSelectPlan = jest.fn();
     render(<PlansPricingModal open onOpenChange={jest.fn()} currentPlanTier="free" onSelectPlan={onSelectPlan} />);
     await screen.findByRole('heading', { name: 'Essencial' });
-    fireEvent.click(screen.getByRole('tab', { name: '6 meses' }));
-    expect(screen.getByText('R$ 330,00')).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('tab', { name: '6 meses' }));
+    expect(await screen.findByText('R$ 330,00')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Selecionar plano: Pro' }));
     expect(onSelectPlan).toHaveBeenCalledWith(plans[2], 'six_months');
