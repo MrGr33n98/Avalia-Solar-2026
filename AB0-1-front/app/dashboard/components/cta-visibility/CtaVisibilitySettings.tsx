@@ -13,6 +13,7 @@ type CtaVisibilityResponse = {
   availability: { quote: boolean; whatsapp: boolean; whatsapp_configured: boolean };
   effective: { quote: boolean; whatsapp: boolean };
   version: number;
+  cache_state?: 'revalidated' | 'not_configured' | 'pending_retry' | 'unchanged';
 };
 
 export default function CtaVisibilitySettings({ companyId }: { companyId: string }) {
@@ -77,7 +78,13 @@ export default function CtaVisibilitySettings({ companyId }: { companyId: string
       if (String(response.company_id) !== String(companyId)) throw new Error('tenant_mismatch');
       setSnapshot(response);
       setDraft({ ...response.preferences });
-      setNotice('Preferências publicadas. As mudanças aparecem no perfil público ao atualizar a página.');
+      setNotice(response.cache_state === 'revalidated'
+        ? 'Preferências publicadas. A página pública foi atualizada.'
+        : response.cache_state === 'not_configured'
+          ? 'Preferências salvas, mas a atualização do cache público não está configurada. Confirme a publicação antes de divulgar.'
+          : response.cache_state === 'pending_retry'
+            ? 'Preferências salvas. A atualização do perfil público está em reprocessamento.'
+            : 'Preferências confirmadas.');
       track('company_cta_visibility_saved', {
         company_id: companyId, config_version: response.version,
         quote_enabled: response.preferences.quote_cta_enabled,
