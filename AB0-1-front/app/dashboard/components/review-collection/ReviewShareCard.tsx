@@ -1,31 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { buildPublicReviewUrl, formatShortDisplayUrl } from '@/lib/review-forms/urls';
+import { buildPublicReviewUrl } from '@/lib/review-forms/urls';
 import { buildApiUrl } from '@/lib/api-config';
-import {
-  Link as LinkIcon,
-  MessageCircle,
-  Download,
-  Mail,
-  Check,
-  Copy,
-  AlertTriangle,
-  ExternalLink,
-} from 'lucide-react';
+import { ReviewCollectionIcon, type ReviewCollectionIconName } from '@/components/reviews/ReviewCollectionIcon';
 
 export interface ShareableReviewForm {
   id: number;
   name: string;
   token: string;
   status: 'active' | 'inactive';
-  settings?: {
-    whatsapp_message?: string;
-  };
+  settings?: { whatsapp_message?: string };
 }
 
 interface ReviewShareCardProps {
@@ -35,234 +23,115 @@ interface ReviewShareCardProps {
   onTrack?: (event: string, meta?: Record<string, unknown>) => void;
 }
 
-export function ReviewShareCard({
-  form,
-  companyName,
-  onOpenEmailDrawer,
-  onTrack,
-}: ReviewShareCardProps) {
+function ActionIcon({ name, size = 19, inverse = false }: { name: ReviewCollectionIconName; size?: number; inverse?: boolean }) {
+  return <ReviewCollectionIcon name={name} size={size} className={inverse ? 'brightness-0 invert' : ''} />;
+}
+
+/**
+ * Ações de coleta: link + e-mail prioritários; WhatsApp e QR como alternativas.
+ * Copiar/abrir WhatsApp NÃO equivale a convite entregue nem a avaliação enviada.
+ */
+export function ReviewShareCard({ form, companyName, onOpenEmailDrawer, onTrack }: ReviewShareCardProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
-
+  const resetTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActive = form.status === 'active';
-
-  // URLs por canal
   const directLinkUrl = buildPublicReviewUrl(form.token, 'link');
-  const shortDisplay = formatShortDisplayUrl(directLinkUrl);
+  const whatsappReviewLink = buildPublicReviewUrl(form.token, 'whatsapp');
+  const qrDownloadUrl = buildApiUrl('/review_forms/' + encodeURIComponent(form.token) + '/qr_code') + '?download=1';
+  const defaultMessage = 'Olá! Você poderia avaliar sua experiência com a ' + companyName +
+    ' no Avalia Solar? Sua opinião é importante: ' + whatsappReviewLink;
+  const whatsappMessage = form.settings?.whatsapp_message
+    ? form.settings.whatsapp_message.replaceAll('{{review_form_link}}', whatsappReviewLink)
+    : defaultMessage;
+  const whatsappUrl = 'https://wa.me/?text=' + encodeURIComponent(whatsappMessage);
 
-  const whatsappLink = buildPublicReviewUrl(form.token, 'whatsapp');
-  const defaultWhatsAppMsg = `Olá! Poderia avaliar nosso atendimento na Avalia Solar? Leva menos de 2 minutos: ${whatsappLink}`;
-  const customWhatsAppMsg = form.settings?.whatsapp_message
-    ? form.settings.whatsapp_message.replace('{{review_form_link}}', whatsappLink)
-    : defaultWhatsAppMsg;
+  useEffect(() => () => { if (resetTimeout.current) clearTimeout(resetTimeout.current); }, []);
 
-  const qrDownloadUrl = `${buildApiUrl(`/review_forms/${form.token}/qr_code`)}?download=1`;
-
-  const handleCopyLink = async () => {
+  const copyDirectLink = async () => {
     if (!isActive) return;
     try {
       await navigator.clipboard.writeText(directLinkUrl);
       setCopied(true);
-      toast({
-        title: 'Link copiado com sucesso!',
-        description: 'Compartilhe com seus clientes para coletar avaliações.',
-      });
       onTrack?.('link_copied', { channel: 'link', form_token: form.token });
-      setTimeout(() => setCopied(false), 2000);
+      toast({ title: 'Link copiado', description: 'Compartilhe com clientes que utilizaram seus serviços.' });
+      if (resetTimeout.current) clearTimeout(resetTimeout.current);
+      resetTimeout.current = setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({
-        title: 'Erro ao copiar',
-        description: 'Não foi possível copiar para a área de transferência.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Não foi possível copiar o link', variant: 'destructive' });
     }
   };
 
-  const handleWhatsAppClick = () => {
-    if (!isActive) return;
-    onTrack?.('whatsapp_clicked', { channel: 'whatsapp', form_token: form.token });
-  };
-
-  const handleQrDownload = () => {
-    if (!isActive) return;
-    onTrack?.('qr_downloaded', { channel: 'qr', form_token: form.token });
-  };
-
   return (
-    <Card className="rounded-2xl border-slate-200 bg-white shadow-sm overflow-hidden border">
-      <CardContent className="p-5 md:p-6 space-y-5">
-        {/* Cabeçalho do Card */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-blue-700">
-                Ações Rápidas de Coleta
-              </span>
-              <Badge
-                variant="outline"
-                className={`text-[9px] font-extrabold uppercase rounded-full px-2 py-0.5 ${
-                  isActive
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                    : 'border-slate-200 bg-slate-100 text-slate-500'
-                }`}
-              >
-                {isActive ? 'Formulário Ativo' : 'Pausado'}
-              </Badge>
-            </div>
-            <h3 className="text-base md:text-lg font-black text-slate-950">{form.name}</h3>
-          </div>
-
-          {/* Link encurtado com botão rápido de cópia */}
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
-            <span className="text-xs font-mono font-medium text-slate-600 truncate max-w-[200px]">
-              {shortDisplay}
+    <Card className="overflow-hidden rounded-xl border border-[#DEE5F5] bg-[#F1F3FD] shadow-sm" data-testid="review-share-card">
+      <CardContent className="space-y-4 p-4 sm:p-5">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-[#0A1F44]">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white">
+              <ActionIcon name="11_elo" size={22} />
             </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={!isActive}
-              onClick={handleCopyLink}
-              className="h-6 w-6 text-slate-500 hover:text-blue-700"
-              title="Copiar link direto"
-            >
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base font-bold leading-5 text-[#0A1F44] sm:text-lg">
+              Compartilhe seu link de avaliação diretamente
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
+              Envie este link por e-mail, WhatsApp e outros canais para solicitar opiniões autênticas.
+            </p>
+          </div>
+        </div>
+
+        {!isActive && (
+          <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            Este formulário está inativo no momento. Ative-o para compartilhar ou baixar o QR Code.
+          </p>
+        )}
+
+        <div className="rounded-xl border border-white bg-white p-2.5 shadow-sm sm:p-3">
+          <label htmlFor="review-public-link" className="mb-1 block text-[11px] font-semibold text-slate-600">
+            Link Direto · {form.name}
+          </label>
+          <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
+            <input
+              id="review-public-link"
+              data-testid="review-public-link"
+              type="text"
+              value={directLinkUrl}
+              readOnly
+              aria-label="Link público do formulário de avaliação"
+              className="h-11 min-w-0 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-[#0A1F44] outline-none focus-visible:ring-2 focus-visible:ring-blue-600 sm:text-sm"
+            />
+            <Button type="button" onClick={() => { void copyDirectLink(); }} disabled={!isActive}
+              className="h-11 w-full gap-2 rounded-lg bg-[#0B5FFF] px-4 text-sm font-semibold text-white hover:bg-[#084BD0] sm:w-auto">
+              <ActionIcon name="12_copiar" size={19} inverse />
+              {copied ? 'Copiado!' : 'Copiar link'}
+            </Button>
+            <Button type="button" variant="outline" disabled={!isActive}
+              onClick={onOpenEmailDrawer}
+              className="h-11 w-full gap-2 rounded-lg border-slate-300 px-3 text-sm font-semibold text-[#0A1F44] hover:bg-slate-50 sm:w-auto">
+              Solicitar via e-mail
+              <ActionIcon name="13_seta_direita" size={16} />
             </Button>
           </div>
         </div>
 
-        {/* Alerta de Formulário Inativo */}
-        {!isActive && (
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-            <span>
-              Este formulário está inativo no momento. Ative-o na lista abaixo para habilitar o
-              compartilhamento público.
-            </span>
-          </div>
-        )}
-
-        {/* Grade de 4 Ações Rápidas por Canal */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* 1. Copiar Link Direto */}
-          <div className="flex flex-col justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-blue-200 transition-all space-y-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-blue-700">
-                <LinkIcon className="h-4 w-4" />
-                <span className="text-xs font-bold text-slate-900">Link Direto</span>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Ideal para colar em mensagens privadas, chats e propostas.
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant={copied ? 'outline' : 'default'}
-              disabled={!isActive}
-              onClick={handleCopyLink}
-              className={`w-full text-xs font-bold h-8.5 rounded-lg ${
-                copied
-                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {copied ? (
-                <>
-                  <Check className="h-3.5 w-3.5 mr-1" />
-                  Copiado!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5 mr-1" />
-                  Copiar Link
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* 2. Compartilhar no WhatsApp */}
-          <div className="flex flex-col justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-emerald-200 transition-all space-y-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-emerald-600">
-                <MessageCircle className="h-4 w-4" />
-                <span className="text-xs font-bold text-slate-900">WhatsApp</span>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Mensagem pronta com link para envio rápido pelo WhatsApp.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              disabled={!isActive}
-              asChild={isActive}
-              className="w-full text-xs font-bold h-8.5 rounded-lg border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-            >
-              {isActive ? (
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(customWhatsAppMsg)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={handleWhatsAppClick}
-                >
-                  <MessageCircle className="h-3.5 w-3.5 mr-1 text-emerald-600" />
-                  Enviar WhatsApp
-                </a>
-              ) : (
-                <span>Indisponível</span>
-              )}
-            </Button>
-          </div>
-
-          {/* 3. Solicitar por E-mail (Abre Drawer) */}
-          <div className="flex flex-col justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-indigo-200 transition-all space-y-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-indigo-600">
-                <Mail className="h-4 w-4" />
-                <span className="text-xs font-bold text-slate-900">Via E-mail</span>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Rascunhos prontos para Gmail, Outlook ou app padrão.
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!isActive}
-              onClick={onOpenEmailDrawer}
-              className="w-full text-xs font-bold h-8.5 rounded-lg border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-            >
-              <ExternalLink className="h-3.5 w-3.5 mr-1 text-indigo-600" />
-              Solicitar por E-mail
-            </Button>
-          </div>
-
-          {/* 4. Baixar QR Code */}
-          <div className="flex flex-col justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all space-y-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-slate-700">
-                <Download className="h-4 w-4" />
-                <span className="text-xs font-bold text-slate-900">QR Code</span>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                Para imprimir em cartões de visita, banners e veículos.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              disabled={!isActive}
-              asChild={isActive}
-              className="w-full text-xs font-bold h-8.5 rounded-lg border-slate-300 text-slate-700 hover:bg-slate-100"
-            >
-              {isActive ? (
-                <a href={qrDownloadUrl} download onClick={handleQrDownload}>
-                  <Download className="h-3.5 w-3.5 mr-1" />
-                  Baixar PNG
-                </a>
-              ) : (
-                <span>Indisponível</span>
-              )}
-            </Button>
-          </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {isActive ? (
+            <>
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                onClick={() => onTrack?.('whatsapp_clicked', { channel: 'whatsapp', form_token: form.token })}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 font-semibold text-emerald-800 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
+                WhatsApp
+              </a>
+              <a href={qrDownloadUrl} download
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 font-semibold text-[#0A1F44] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                QR Code · Baixar PNG
+              </a>
+            </>
+          ) : (
+            <span className="text-slate-600">WhatsApp e QR Code indisponíveis enquanto o formulário estiver pausado.</span>
+          )}
+          <span className="ml-auto text-[11px] text-slate-500">Ações de compartilhamento não representam envios concluídos.</span>
         </div>
       </CardContent>
     </Card>

@@ -902,7 +902,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                 className="mt-0 focus-visible:outline-none"
                 data-tour="review-forms"
               >
-                <ReviewFormsManagement companyId={companyId} />
+                <ReviewFormsManagement companyId={companyId} companyName={company?.name} />
               </TabsContent>
 
               <TabsContent value="sector-questions" className="mt-0 focus-visible:outline-none">

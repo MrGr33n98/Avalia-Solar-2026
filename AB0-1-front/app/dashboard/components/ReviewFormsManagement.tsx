@@ -38,6 +38,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics/consolidated';
 import { ReviewCollectionHub } from './review-collection/ReviewCollectionHub';
+import { ReviewCollectionIcon } from '@/components/reviews/ReviewCollectionIcon';
 import { isFeatureFlagEnabled } from '@/lib/feature-flags';
 import {
   buildPublicReviewUrl,
@@ -187,7 +188,7 @@ const formatDate = (dateString?: string) => {
   return date.toLocaleDateString('pt-BR');
 };
 
-export default function ReviewFormsManagement({ companyId }: { companyId: string }) {
+export default function ReviewFormsManagement({ companyId, companyName }: { companyId: string; companyName?: string | null }) {
   const { toast } = useToast();
   const [forms, setForms] = useState<ReviewForm[]>([]);
   const [summary, setSummary] = useState<{
@@ -199,7 +200,7 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
     recent_reviews_count: 0,
     approved_reviews_count: 0,
   });
-  const [approvedCount, setApprovedCount] = useState<number>(0);
+  const [approvedCount, setApprovedCount] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -233,7 +234,7 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
         toast({ title: 'Não foi possível carregar os formulários', variant: 'destructive' });
       }
 
-      let canonicalApproved = 0;
+      let canonicalApproved: number | null = null;
       if (
         statsResponse.status === 'fulfilled' &&
         typeof statsResponse.value?.stats?.approved_reviews === 'number'
@@ -323,7 +324,15 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
     }
   };
 
-  const trackAction = async (form: ReviewForm, eventType: string) => {
+  const trackAction = async (form: ReviewForm, eventType: string, meta: Record<string, unknown> = {}) => {
+    // O Rails aceita um enum menor que os eventos de UI: não enviar eventos inválidos.
+    const persisted = new Set(['link_copied', 'whatsapp_clicked', 'qr_downloaded']);
+    if (!persisted.has(eventType)) {
+      track('review_collection_ui_action', {
+        action: eventType, company_id: companyId, review_form_id: form.id, ...meta,
+      });
+      return;
+    }
     await fetchApi(`/company_admin/review_forms/${form.id}/event`, {
       method: 'POST',
       body: JSON.stringify({ event_type: eventType, source: 'dashboard' }),
@@ -368,7 +377,6 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
     });
   };
 
-  const metaRecommendationPercentage = Math.min(100, (totals.submissions / 60) * 100);
 
   if (loading) {
     return (
@@ -415,48 +423,29 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
         </Button>
       </div>
 
-      {/* Passo a Passo Visual do Fluxo */}
-      <div className="hidden border border-slate-200 bg-slate-50/50 p-4 md:block rounded-2xl">
-        <div className="mx-auto flex max-w-4xl justify-between gap-4 text-xs font-bold text-slate-500">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-black">1</span>
-            <div>
-              <p className="text-slate-900 font-extrabold">Escolha um modelo</p>
-              <p className="text-[10px] text-slate-400 font-normal">Selecione o tipo de projeto</p>
-            </div>
-          </div>
-          <span className="self-center text-slate-300">➔</span>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-black">2</span>
-            <div>
-              <p className="text-slate-900 font-extrabold">Compartilhe</p>
-              <p className="text-[10px] text-slate-400 font-normal">WhatsApp, QR Code ou link</p>
-            </div>
-          </div>
-          <span className="self-center text-slate-300">➔</span>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-black">3</span>
-            <div>
-              <p className="text-slate-900 font-extrabold">Receba avaliações</p>
-              <p className="text-[10px] text-slate-400 font-normal">Clientes opinam em tempo real</p>
-            </div>
-          </div>
-          <span className="self-center text-slate-300">➔</span>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[10px] font-black">4</span>
-            <div>
-              <p className="text-slate-900 font-extrabold">Melhore a reputação</p>
-              <p className="text-[10px] text-slate-400 font-normal">Mais reviews traem negócios</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Jornada principal de coleta — antes das métricas, mobile-first */}
+      {isHubEnabled && (
+        <ReviewCollectionHub
+          forms={forms}
+          selectedFormId={selectedId ?? undefined}
+          onSelectForm={(id) => setSelectedId(id)}
+          onCreateForm={() => setEditor(emptyEditor())}
+          companyName={companyName?.trim() || 'Empresa não identificada'}
+          companyId={companyId}
+          approvedReviewsCount={approvedCount}
+          onTrackAction={(event, meta) => {
+            if (selected) {
+              void trackAction(selected, event, meta);
+            }
+          }}
+        />
+      )}
 
       {/* Grid de Estatísticas (Stats Cards) */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
         {/* Formulários ativos */}
-        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
+        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 p-3 sm:gap-4 sm:p-5">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Formulários ativos</p>
               <p className="mt-2 truncate text-3xl font-black text-slate-950 leading-none">{totals.active}</p>
@@ -464,15 +453,15 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
                 +{summary.recent_forms_count} nos últimos 7 dias
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-              <ClipboardList className="h-6 w-6" />
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 sm:flex">
+              <ReviewCollectionIcon name="06_matriz" size={26} />
             </div>
           </CardContent>
         </Card>
 
         {/* Reviews coletados */}
-        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
+        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 p-3 sm:gap-4 sm:p-5">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Reviews coletados</p>
               <p className="mt-2 truncate text-3xl font-black text-slate-950 leading-none">{totals.submissions}</p>
@@ -480,15 +469,15 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
                 +{summary.recent_reviews_count} nos últimos 7 dias
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-50">
-              <Star className="h-6 w-6 fill-amber-500 text-amber-500" />
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 sm:flex">
+              <ReviewCollectionIcon name="04_primeira_avaliacao" size={26} />
             </div>
           </CardContent>
         </Card>
 
         {/* Conversão do link */}
-        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
+        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 p-3 sm:gap-4 sm:p-5">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Conversão do link</p>
               <p className="mt-2 truncate text-3xl font-black text-slate-950 leading-none">{totals.conversion}%</p>
@@ -496,15 +485,15 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
                 {totals.submissions} envios • {totals.views} visitas
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-              <TrendingUp className="h-6 w-6" />
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 sm:flex">
+              <ReviewCollectionIcon name="07_tendencia" size={26} />
             </div>
           </CardContent>
         </Card>
 
         {/* Melhor formulário */}
-        <Card className="rounded-2xl border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
+        <Card className="rounded-xl border-slate-200 bg-white shadow-sm">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 p-3 sm:gap-4 sm:p-5">
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Melhor desempenho</p>
               <p className="mt-2 truncate text-xl font-black text-slate-950 leading-tight max-w-[180px]">{totals.best}</p>
@@ -512,29 +501,12 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
                 {totals.bestRate} de conversão
               </p>
             </div>
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
-              <Award className="h-6 w-6" />
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 sm:flex">
+              <ReviewCollectionIcon name="09_medalha" size={26} />
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {isHubEnabled && (
-        <ReviewCollectionHub
-          forms={forms}
-          selectedFormId={selectedId ?? undefined}
-          onSelectForm={(id) => setSelectedId(id)}
-          onCreateForm={() => setEditor(emptyEditor())}
-          companyName="Sua Empresa"
-          companyId={companyId}
-          approvedReviewsCount={approvedCount}
-          onTrackAction={(event) => {
-            if (selected) {
-              void trackAction(selected, event);
-            }
-          }}
-        />
-      )}
 
       {forms.length === 0 ? (
         !isHubEnabled && (
@@ -755,49 +727,6 @@ export default function ReviewFormsManagement({ companyId }: { companyId: string
               })}
             </div>
 
-            {/* Banner de Incentivo Inferior (Meta Recomendada) */}
-            <Card className="rounded-2xl border-slate-200 bg-blue-50/30 overflow-hidden mt-6">
-              <CardContent className="p-5 flex flex-col md:flex-row items-center gap-5 justify-between">
-                <div className="flex items-center gap-4">
-                  {/* Ilustração ou Ícone Redondo */}
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md">
-                    <Award className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-slate-900 leading-tight">
-                      Você ainda pode receber mais avaliações!
-                    </h4>
-                    <p className="text-[11px] text-slate-600 mt-1 max-w-md">
-                      Empresas com mais de 10 reviews têm 3x mais chances de fechar novos contratos no Avalia Solar.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Bloco de Meta de Progresso */}
-                <div className="w-full md:w-52 shrink-0">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1.5 uppercase">
-                    <span>Meta recomendada</span>
-                    <span className="text-slate-900 font-extrabold">{totals.submissions}/60 reviews</span>
-                  </div>
-                  {/* Progress Bar Container */}
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-blue-600 h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${metaRecommendationPercentage}%` }}
-                    />
-                  </div>
-                  {totals.submissions < 60 ? (
-                    <p className="text-[9px] text-slate-400 mt-1 text-right font-medium">
-                      Receber mais {60 - totals.submissions} reviews
-                    </p>
-                  ) : (
-                    <p className="text-[9px] text-emerald-600 mt-1 text-right font-bold flex items-center gap-0.5 justify-end">
-                      <Check className="h-2.5 w-2.5" /> Meta batida!
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Coluna Direita: Painel Canal de Coleta */}

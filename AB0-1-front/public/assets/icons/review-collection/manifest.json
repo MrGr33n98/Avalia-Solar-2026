@@ -1,0 +1,100 @@
+{
+  "name": "Avalia Solar Review Collection Icon Pack",
+  "version": "1.0.0",
+  "origin": "13 SVG assets reconstructed for Avalia Solar from G2 layout reference, not G2 source files",
+  "designReference": "PREVIA_13_ICONES.png",
+  "symbolCount": 13,
+  "items": [
+    {
+      "id": "01_estrelas_ia",
+      "label": "Ajuda contextual",
+      "source": "avalia-solar-icons-sprite.svg#01_estrelas_ia",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "02_usuarios",
+      "label": "Comunidade e avaliadores",
+      "source": "avalia-solar-icons-sprite.svg#02_usuarios",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "03_carrinho",
+      "label": "Experiência do comprador",
+      "source": "avalia-solar-icons-sprite.svg#03_carrinho",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "04_primeira_avaliacao",
+      "label": "Primeira avaliação",
+      "source": "avalia-solar-icons-sprite.svg#04_primeira_avaliacao",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "05_globo",
+      "label": "Alcance público",
+      "source": "avalia-solar-icons-sprite.svg#05_globo",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "06_matriz",
+      "label": "Preparação para ranking",
+      "source": "avalia-solar-icons-sprite.svg#06_matriz",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "07_tendencia",
+      "label": "Crescimento de avaliações",
+      "source": "avalia-solar-icons-sprite.svg#07_tendencia",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "08_escudo",
+      "label": "Meta de reconhecimento",
+      "source": "avalia-solar-icons-sprite.svg#08_escudo",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "09_medalha",
+      "label": "Reconhecimento",
+      "source": "avalia-solar-icons-sprite.svg#09_medalha",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "10_raio",
+      "label": "Próximo passo",
+      "source": "avalia-solar-icons-sprite.svg#10_raio",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "11_elo",
+      "label": "Compartilhar link",
+      "source": "avalia-solar-icons-sprite.svg#11_elo",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "12_copiar",
+      "label": "Copiar link",
+      "source": "avalia-solar-icons-sprite.svg#12_copiar",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    },
+    {
+      "id": "13_seta_direita",
+      "label": "Abrir solicitação por e-mail",
+      "source": "avalia-solar-icons-sprite.svg#13_seta_direita",
+      "viewBox": "0 0 64 64",
+      "decorative": true
+    }
+  ]
+}
