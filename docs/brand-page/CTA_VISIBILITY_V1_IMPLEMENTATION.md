@@ -68,9 +68,10 @@
 ## Sequência de deploy
 1. **MIGRATION:** aplicar `20261105173000_add_company_cta_visibility_preferences.rb` antes do backend que lê as colunas.
 2. **BACKEND:** publicar resolver, serializers, GET/PATCH e auditar owner + Free + versionamento.
-3. **FRONTEND:** publicar ajustes públicos e painel juntos, limpando cache de páginas/SSG conforme configuração operacional.
-4. **ROLLBACK:** reverter frontend/backend mantendo colunas intactas; **não** apagar preferências sem migração de dados.
-5. Avaliar feature flag de UI por segmento antes de rollout generalizado; o backend nunca deverá ignorar preferências existentes em um rollback visual.
+3. **CACHE/REVALIDATION:** configurar `NEXT_REVALIDATE_URL` e `NEXT_REVALIDATE_SECRET` em ambos os serviços. O PATCH chama `PublicProfileRevalidator.call!` após commit e retorna `cache_state=revalidated`; falhas enfileiram `PublicProfileRevalidationJob` com `cache_state=pending_retry`. Sem configuração, retorna `not_configured` e o dashboard **não** afirma publicação instantânea. O cache Redis do perfil usa `updated_at` com microssegundos para impedir leitura antiga em mudanças rápidas.
+4. **FRONTEND:** publicar ajustes públicos e painel juntos. `NEXT_PUBLIC_CTA_VISIBILITY_UI_V1=false` oculta apenas a nova interface do painel no rollout/rollback, **sem desativar a proteção das preferências persistidas**.
+5. **ROLLBACK:** reverter frontend/backend mantendo colunas intactas; **não** apagar preferências sem migração de dados.
+6. Avaliar feature flag de UI por segmento antes de rollout generalizado; o backend nunca deverá ignorar preferências existentes em um rollback visual.
 
 ## Testes
 ```bash
