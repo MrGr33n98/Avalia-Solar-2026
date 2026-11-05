@@ -61,10 +61,13 @@ module Api
             active: false
           )
         )
-        if source.save
-          render json: { source: source_payload(source) }, status: :created
-        else
-          render_error_response(message: source.errors.full_messages.to_sentence, status: :unprocessable_entity, code: 'SOURCE_INVALID')
+        ActiveRecord::Base.transaction do
+          if source.save
+            record_audit!('source_registered', 'Source', source.id)
+            render json: { source: source_payload(source) }, status: :created
+          else
+            render_error_response(message: source.errors.full_messages.to_sentence, status: :unprocessable_entity, code: 'SOURCE_INVALID')
+          end
         end
       end
 
@@ -88,10 +91,13 @@ module Api
         segment = ::DemandActivation::AudienceSegment.new(
           audience_attributes.merge(company: @company, created_by: current_user, status: 'draft')
         )
-        if segment.save
-          render json: { audience: audience_payload(segment) }, status: :created
-        else
-          render_error_response(message: segment.errors.full_messages.to_sentence, status: :unprocessable_entity, code: 'AUDIENCE_INVALID')
+        ActiveRecord::Base.transaction do
+          if segment.save
+            record_audit!('audience_created', 'AudienceSegment', segment.id)
+            render json: { audience: audience_payload(segment) }, status: :created
+          else
+            render_error_response(message: segment.errors.full_messages.to_sentence, status: :unprocessable_entity, code: 'AUDIENCE_INVALID')
+          end
         end
       end
 
@@ -102,10 +108,13 @@ module Api
         return render_error_response(message: 'Audiência arquivada', status: :conflict, code: 'AUDIENCE_ARCHIVED') unless segment.editable?
 
         segment.assign_attributes(audience_attributes)
-        if segment.save
-          render json: { audience: audience_payload(segment) }
-        else
-          render_error_response(message: segment.errors.full_messages.to_sentence, status: :unprocessable_entity, code: 'AUDIENCE_INVALID')
+        ActiveRecord::Base.transaction do
+          if segment.save
+            record_audit!('audience_updated', 'AudienceSegment', segment.id)
+            render json: { audience: audience_payload(segment) }
+          else
+            render_error_response(message: segment.errors.full_messages.to_sentence, status: :unprocessable_entity, code: 'AUDIENCE_INVALID')
+          end
         end
       rescue ActiveRecord::StaleObjectError
         render_error_response(message: 'Audiência alterada em outra sessão. Atualize a página.', status: :conflict, code: 'AUDIENCE_STALE')
@@ -113,8 +122,11 @@ module Api
 
       def archive_audience
         segment = scoped_audiences.find(params[:id])
-        segment.update!(status: 'archived')
-        render json: { audience: audience_payload(segment) }
+        ActiveRecord::Base.transaction do
+          segment.update!(status: 'archived')
+          record_audit!('audience_archived', 'AudienceSegment', segment.id)
+          render json: { audience: audience_payload(segment) }
+        end
       end
 
       def connections
@@ -123,6 +135,13 @@ module Api
           connections: %w[linkedin meta google].map do |provider|
             { provider: provider, status: 'not_connected', operational: false, account: nil }
           end
+        }
+      end
+
+      def audit_history
+        events = ::DemandActivation::AuditEvent.where(company_id: @company.id).order(created_at: :desc).limit(100)
+        render json: {
+          events: events.as_json(only: %i[id actor_id action subject_type subject_id created_at])
         }
       end
 
@@ -183,6 +202,13 @@ module Api
           message: 'Filtro não permitido. Identificadores pessoais não são aceitos.',
           status: :unprocessable_entity,
           code: 'INTENT_SYNC_FILTER_BLOCKED'
+        )
+      end
+
+      def record_audit!(action, subject_type, subject_id)
+        ::DemandActivation::AuditEvent.create!(
+          company: @company, actor: current_user, action: action,
+          subject_type: subject_type, subject_id: subject_id
         )
       end
 
