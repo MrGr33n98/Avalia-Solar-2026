@@ -1383,6 +1383,13 @@ module Api
       # PATCH /api/v1/company_dashboard/cta_visibility
       # Preferences are immediate, unlike moderated marketing copy or external URLs.
       def update_cta_visibility
+        # set_company falls back to the user's current company for invalid ids.
+        # This mutation must NEVER silently update that fallback company.
+        requested_id = params[:company_id].presence
+        unless requested_id && requested_id.to_s == @company.id.to_s
+          return render json: { error: 'Company not authorized for this request' }, status: :forbidden
+        end
+
         authorize @company, :edit_company?
 
         permitted = params.permit(:quote_cta_enabled, :whatsapp_enabled)
