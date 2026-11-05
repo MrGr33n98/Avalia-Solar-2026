@@ -9,8 +9,7 @@ import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { track } from '@/lib/analytics/lazy';
 import { buildCompanySubPath } from '@/lib/slug';
-import { canUsePaidConversion } from '@/lib/feature-access';
-import { getCompanyWhatsAppHref } from '@/lib/whatsapp-contact';
+import { resolveCompanyConversionCTAs } from '@/lib/company-cta-visibility';
 import { useComparison } from '@/hooks/useComparison';
 import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 
@@ -30,8 +29,7 @@ export default function CompanyCTAGroup({
 }: CompanyCTAGroupProps) {
   const wizardCategoryId = resolveWizardCategoryId(company);
   const companyIdNum = Number(company.id);
-  const showQuote = canRequestQuote && canUsePaidConversion(company, 'quote') && company.quote_cta_enabled !== false;
-  const whatsappHref = getCompanyWhatsAppHref(company);
+  const { quote: showQuote, whatsappHref } = resolveCompanyConversionCTAs(company, canRequestQuote);
   const hasPrimaryActions = showQuote || Boolean(whatsappHref);
 
   const { isInComparison, addToComparison, removeFromComparison, canAddMore } = useComparison();
