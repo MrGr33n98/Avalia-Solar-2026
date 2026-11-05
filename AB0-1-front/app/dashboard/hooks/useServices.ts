@@ -127,12 +127,12 @@ export function useServices(companyId?: string | number) {
           },
         );
 
+        if (response?.service?.id && images.length) await uploadImages(response.service.id, images);
+
         toast({
           title: 'Serviço cadastrado com sucesso!',
           description: `"${input.name}" foi adicionado ao seu catálogo.`,
         });
-
-        if (response?.service?.id && images.length) await uploadImages(response.service.id, images);
         await loadServices();
         return response?.service;
       } catch (err: unknown) {
@@ -160,12 +160,12 @@ export function useServices(companyId?: string | number) {
           },
         );
 
+        if (images.length) await uploadImages(id, images);
+
         toast({
           title: 'Serviço atualizado!',
           description: 'As alterações foram salvas com sucesso.',
         });
-
-        if (images.length) await uploadImages(id, images);
         await loadServices();
         return response?.service;
       } catch (err: unknown) {
