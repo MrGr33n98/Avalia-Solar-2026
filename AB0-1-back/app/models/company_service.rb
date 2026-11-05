@@ -4,6 +4,7 @@ class CompanyService < ApplicationRecord
 
   enum status: { active: 'active', inactive: 'inactive' }, _suffix: true
 
+  has_one_attached :cover_image
   has_many_attached :images
 
   # Avaliações exclusivamente atribuídas a este serviço (sem confundir com as da empresa).

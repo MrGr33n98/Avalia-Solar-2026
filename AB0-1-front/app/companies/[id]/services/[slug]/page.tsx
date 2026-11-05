@@ -12,6 +12,7 @@ import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import WhatsappButton from '@/components/WhatsappButton';
 import { canUsePaidConversion } from '@/lib/feature-access';
+import ServiceGallery from './ServiceGallery';
 
 type ServiceReview = {
   id: number;
@@ -24,6 +25,7 @@ type ServiceReview = {
 
 type ServiceDetail = {
   id: number;
+  company_id?: number;
   name: string;
   slug: string;
   category?: { id: number; name: string; slug: string } | null;
@@ -33,6 +35,8 @@ type ServiceDetail = {
   status: 'active' | 'inactive';
   image_url?: string | null;
   image_urls?: string[];
+  cover_image_url?: string | null;
+  images?: Array<{ id: number; url: string }>;
   video_links?: string[];
   review_summary?: { count: number; average: number | null; distribution: Record<string, number> };
   reviews?: ServiceReview[];
@@ -58,7 +62,7 @@ async function getCompanyAndService(params: Props['params']) {
         tags: [`company-${company.id}`, `company-service-${company.id}-${params.slug}`],
       }
     );
-    if (!payload?.data) return null;
+    if (!payload?.data || payload.data.status !== 'active' || (payload.data.company_id && payload.data.company_id !== company.id)) return null;
     return { company, service: payload.data };
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
@@ -114,10 +118,19 @@ function whatsappLink(company: Company, service: ServiceDetail): string | null {
   return null;
 }
 
+function serviceMediaUrls(service: ServiceDetail): string[] {
+  return [...new Set([
+    service.cover_image_url,
+    ...(service.image_urls || []),
+    ...(service.images || []).map((item) => item.url),
+    service.image_url,
+  ].filter((url): url is string => typeof url === 'string' && url.trim().length > 0).map(getFullImageUrl))];
+}
+
 function structuredData(company: Company, service: ServiceDetail, url: string) {
   const count = service.review_summary?.count || 0;
   const average = service.review_summary?.average;
-  const images = (service.image_urls || []).filter(Boolean).map(getFullImageUrl);
+  const images = serviceMediaUrls(service);
   return {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -167,7 +180,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${service.name} | ${company.name} — Avalia Solar`;
   const description = (service.description?.trim() ||
     `Conheça ${service.name}, serviço oferecido por ${company.name} no Avalia Solar.`).slice(0, 160);
-  const image = service.image_urls?.[0] || service.image_url || company.banner_url;
+  const image = serviceMediaUrls(service)[0] || company.banner_url;
   return {
     title,
     description,
@@ -191,9 +204,7 @@ export default async function ServiceDetailPage({ params }: Props) {
     permanentRedirect(canonicalPath);
   }
 
-  const images = [...new Set((service.image_urls?.length ? service.image_urls : [service.image_url])
-    .filter((url): url is string => typeof url === 'string' && !!url.trim())
-    .map(getFullImageUrl))];
+  const images = serviceMediaUrls(service);
   const videos = (service.video_links || []).map(safeVideo).filter((v): v is NonNullable<typeof v> => !!v);
   const bannerUrl = company.banner_url?.trim() ? getFullImageUrl(company.banner_url) : null;
   const rating = service.review_summary;
@@ -278,17 +289,7 @@ export default async function ServiceDetailPage({ params }: Props) {
                   <h2 id="galeria-title" className="text-lg font-bold sm:text-xl">Galeria do projeto <span className="text-sm font-normal text-slate-500">({images.length} {images.length === 1 ? 'foto' : 'fotos'})</span></h2>
                   <span className="text-xs text-slate-500">Registros cadastrados pela empresa</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 xl:grid-cols-5">
-                  {images.map((image, index) => (
-                    <a key={image} href={image} target="_blank" rel="noopener noreferrer"
-                      aria-label={`Abrir foto ${index + 1} do serviço ${service.name}`}
-                      className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-50 focus-visible:outline-2 focus-visible:outline-blue-600">
-                      <Image src={image} alt={`${service.name} — foto ${index + 1} enviada por ${company.name}`}
-                        fill unoptimized sizes="(max-width: 640px) 50vw, 220px"
-                        className="object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
-                    </a>
-                  ))}
-                </div>
+                <ServiceGallery serviceName={service.name} images={images} />
               </section>
             )}
 

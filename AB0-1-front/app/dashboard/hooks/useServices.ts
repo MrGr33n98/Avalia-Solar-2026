@@ -10,28 +10,23 @@ export type CompanyService = {
   name: string;
   slug: string;
   category_id: number;
-  category?: {
-    id: number;
-    name: string;
-    slug: string;
-  };
+  category?: { id: number; name: string; slug: string };
   description?: string;
-  price_from?: number;
+  price_from?: number | null;
   coverage?: string[];
   status: 'active' | 'inactive';
-  image_url?: string;
+  image_url?: string | null;
+  cover_image_url?: string | null;
+  images?: Array<{ id: number; url: string }>;
   image_urls?: string[];
   service_images?: Array<{ id: number; url: string }>;
   video_links?: string[];
+  public_url?: string;
   created_at?: string;
   updated_at?: string;
 };
 
-export type ServiceStats = {
-  total: number;
-  active: number;
-  inactive: number;
-};
+export type ServiceStats = { total: number; active: number; inactive: number };
 
 export type ServiceInput = {
   name: string;
@@ -40,8 +35,11 @@ export type ServiceInput = {
   price_from?: number | null;
   coverage?: string[];
   status: 'active' | 'inactive';
-  video_links?: string[];
+  cover_image?: File | null;
   images?: File[];
+  video_links?: string[];
+  remove_image_ids?: number[];
+  remove_cover_image?: boolean;
 };
 
 type ServicesResponse = {
@@ -49,11 +47,31 @@ type ServicesResponse = {
   meta?: { stats?: ServiceStats };
 };
 
-const EMPTY_STATS: ServiceStats = {
-  total: 0,
-  active: 0,
-  inactive: 0,
-};
+const EMPTY_STATS: ServiceStats = { total: 0, active: 0, inactive: 0 };
+
+function buildServiceForm(input: Partial<ServiceInput>): FormData {
+  const form = new FormData();
+  const textFields = ['name', 'description', 'price_from', 'category_id', 'status'] as const;
+
+  textFields.forEach((field) => {
+    const value = input[field];
+    if (value !== undefined) {
+      form.append(`service[${field}]`, value === null ? '' : String(value));
+    }
+  });
+
+  input.coverage?.forEach((location) => form.append('service[coverage][]', location));
+  if (input.video_links !== undefined) {
+    if (input.video_links.length === 0) form.append('service[video_links][]', '');
+    else input.video_links.forEach((link) => form.append('service[video_links][]', link));
+  }
+  if (input.cover_image) form.append('service[cover_image]', input.cover_image);
+  input.images?.forEach((image) => form.append('service[images][]', image));
+  input.remove_image_ids?.forEach((id) => form.append('service[remove_image_ids][]', String(id)));
+  if (input.remove_cover_image) form.append('service[remove_cover_image]', 'true');
+
+  return form;
+}
 
 export function useServices(companyId?: string | number) {
   const { toast } = useToast();
@@ -64,30 +82,20 @@ export function useServices(companyId?: string | number) {
   const loadServices = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetchApi<ServicesResponse>(
-        '/dashboard/services',
-        {
-          params: companyId ? { company_id: companyId } : undefined,
-        },
-      );
-
+      const response = await fetchApi<ServicesResponse>('/dashboard/services', {
+        params: companyId ? { company_id: companyId } : undefined,
+      });
       const items = response?.data || [];
       setServices(items);
-
-      if (response?.meta?.stats) {
-        setStats(response.meta.stats);
-      } else {
-        setStats({
-          total: items.length,
-          active: items.filter((s) => s.status === 'active').length,
-          inactive: items.filter((s) => s.status === 'inactive').length,
-        });
-      }
+      setStats(response?.meta?.stats || {
+        total: items.length,
+        active: items.filter((service) => service.status === 'active').length,
+        inactive: items.filter((service) => service.status === 'inactive').length,
+      });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro ao carregar serviços';
       toast({
         title: 'Erro ao carregar catálogo de serviços',
-        description: message,
+        description: err instanceof Error ? err.message : 'Tente novamente.',
         variant: 'destructive',
       });
     } finally {
@@ -99,13 +107,6 @@ export function useServices(companyId?: string | number) {
     loadServices();
   }, [loadServices]);
 
-  const uploadImages = useCallback(async (id: number, images: File[]) => {
-    if (!images.length) return;
-    const form = new FormData();
-    images.forEach(image => form.append('images[]', image));
-    await fetchApi(`/dashboard/services/${id}/images`, { method: 'POST', body: form, params: companyId ? { company_id: companyId } : undefined });
-  }, [companyId]);
-
   const removeServiceImage = useCallback(async (id: number, attachmentId: number) => {
     const result = await fetchApi<{ service: CompanyService }>(
       `/dashboard/services/${id}/images/${attachmentId}`,
@@ -115,109 +116,63 @@ export function useServices(companyId?: string | number) {
     return result.service;
   }, [loadServices, companyId]);
 
-  const addService = useCallback(
-    async (input: ServiceInput) => {
-      try {
-        const { images = [], ...attributes } = input;
-        const response = await fetchApi<{ service: CompanyService }>(
-          '/dashboard/services',
-          {
-            method: 'POST',
-            body: { service: attributes },
-            params: companyId ? { company_id: companyId } : undefined,
-          },
-        );
+  const addService = useCallback(async (input: ServiceInput) => {
+    try {
+      const response = await fetchApi<{ service: CompanyService }>('/dashboard/services', {
+        method: 'POST',
+        params: companyId ? { company_id: companyId } : undefined,
+        body: buildServiceForm(input),
+      });
+      toast({ title: 'Serviço cadastrado!', description: 'O serviço foi salvo no catálogo.' });
+      await loadServices();
+      return response.service;
+    } catch (err: unknown) {
+      toast({
+        title: 'Erro ao cadastrar serviço',
+        description: err instanceof Error ? err.message : 'Não foi possível salvar.',
+        variant: 'destructive',
+      });
+      throw err;
+    }
+  }, [companyId, loadServices, toast]);
 
-        if (response?.service?.id && images.length) await uploadImages(response.service.id, images);
+  const updateService = useCallback(async (id: number, input: Partial<ServiceInput>) => {
+    try {
+      const response = await fetchApi<{ service: CompanyService }>(`/dashboard/services/${id}`, {
+        method: 'PATCH',
+        params: companyId ? { company_id: companyId } : undefined,
+        body: buildServiceForm(input),
+      });
+      toast({ title: 'Serviço atualizado!', description: 'Alterações salvas com sucesso.' });
+      await loadServices();
+      return response.service;
+    } catch (err: unknown) {
+      toast({
+        title: 'Erro ao atualizar serviço',
+        description: err instanceof Error ? err.message : 'Não foi possível salvar.',
+        variant: 'destructive',
+      });
+      throw err;
+    }
+  }, [companyId, loadServices, toast]);
 
-        toast({
-          title: 'Serviço cadastrado com sucesso!',
-          description: `"${input.name}" foi adicionado ao seu catálogo.`,
-        });
-        await loadServices();
-        return response?.service;
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Erro ao salvar serviço';
-        toast({
-          title: 'Erro ao cadastrar serviço',
-          description: message,
-          variant: 'destructive',
-        });
-        throw err;
-      }
-    },
-    [loadServices, toast, uploadImages, companyId],
-  );
+  const deleteService = useCallback(async (id: number) => {
+    try {
+      await fetchApi(`/dashboard/services/${id}`, {
+        method: 'DELETE',
+        params: companyId ? { company_id: companyId } : undefined,
+      });
+      toast({ title: 'Serviço excluído', description: 'O serviço foi removido do catálogo.' });
+      await loadServices();
+    } catch (err: unknown) {
+      toast({
+        title: 'Erro ao excluir serviço',
+        description: err instanceof Error ? err.message : 'Não foi possível excluir.',
+        variant: 'destructive',
+      });
+      throw err;
+    }
+  }, [companyId, loadServices, toast]);
 
-  const updateService = useCallback(
-    async (id: number, input: Partial<ServiceInput>) => {
-      try {
-        const { images = [], ...attributes } = input;
-        const response = await fetchApi<{ service: CompanyService }>(
-          `/dashboard/services/${id}`,
-          {
-            method: 'PATCH',
-            body: { service: attributes },
-            params: companyId ? { company_id: companyId } : undefined,
-          },
-        );
-
-        if (images.length) await uploadImages(id, images);
-
-        toast({
-          title: 'Serviço atualizado!',
-          description: 'As alterações foram salvas com sucesso.',
-        });
-        await loadServices();
-        return response?.service;
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Erro ao atualizar serviço';
-        toast({
-          title: 'Erro ao atualizar serviço',
-          description: message,
-          variant: 'destructive',
-        });
-        throw err;
-      }
-    },
-    [loadServices, toast, uploadImages, companyId],
-  );
-
-  const deleteService = useCallback(
-    async (id: number) => {
-      try {
-        await fetchApi(`/dashboard/services/${id}`, {
-          method: 'DELETE',
-          params: companyId ? { company_id: companyId } : undefined,
-        });
-
-        toast({
-          title: 'Serviço excluído',
-          description: 'O serviço foi removido do seu catálogo.',
-        });
-
-        await loadServices();
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Erro ao excluir serviço';
-        toast({
-          title: 'Erro ao excluir serviço',
-          description: message,
-          variant: 'destructive',
-        });
-        throw err;
-      }
-    },
-    [loadServices, toast, companyId],
-  );
-
-  return {
-    services,
-    stats,
-    loading,
-    loadServices,
-    addService,
-    updateService,
-    deleteService,
-    removeServiceImage,
-  };
+  return { services, stats, loading, loadServices, addService, updateService, deleteService, removeServiceImage };
 }

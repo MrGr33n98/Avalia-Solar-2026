@@ -181,14 +181,16 @@ module Api
         return render json: { code: 'NOT_FOUND', message: 'Empresa não encontrada' }, status: :not_found unless @company
         return render json: { code: 'NOT_FOUND', message: 'Empresa indisponível' }, status: :not_found unless @company.status.to_s == 'active'
 
-        service = @company.company_services.active_status.includes(images_attachments: :blob).find_by(slug: params[:slug])
+        service = @company.company_services.active_status.includes(:category, :cover_image_attachment, images_attachments: :blob).find_by(slug: params[:slug])
         return render json: { code: 'NOT_FOUND', message: 'Serviço não encontrado' }, status: :not_found unless service
 
         options = Rails.application.routes.default_url_options.dup
         options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-        image_urls = service.images_attachments.map do |attachment|
-          Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
+        gallery = service.images_attachments.map do |attachment|
+          { id: attachment.id, url: Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options) }
         end
+        image_urls = gallery.map { |image| image[:url] }
+        cover_url = Rails.application.routes.url_helpers.rails_storage_proxy_url(service.cover_image, options) if service.cover_image.attached?
 
         reviews_scope = Review.approved_only.where(
           company_id: @company.id, reviewable_type: 'CompanyService', reviewable_id: service.id
@@ -223,7 +225,9 @@ module Api
             price_from: service.price_from&.to_f,
             coverage: service.coverage,
             status: service.status,
-            image_url: image_urls.first,
+            image_url: cover_url || image_urls.first,
+            cover_image_url: cover_url,
+            images: gallery,
             image_urls: image_urls,
             video_links: service.video_links,
             review_summary: {
