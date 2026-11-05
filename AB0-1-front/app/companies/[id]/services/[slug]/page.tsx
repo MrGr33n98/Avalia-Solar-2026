@@ -86,7 +86,16 @@ function safeVideo(url: string): { url: string; thumbnail: string | null; label:
 
 function whatsappLink(company: Company, service: ServiceDetail): string | null {
   if (company.whatsapp_enabled !== true) return null;
-  const digits = String(company.whatsapp || '').replace(/\D/g, '');
+  let rawPhone = String(company.whatsapp || '');
+  if (!rawPhone.trim() && company.whatsapp_url) {
+    try {
+      const saved = new URL(company.whatsapp_url);
+      if (saved.protocol === 'https:' && ['wa.me', 'api.whatsapp.com'].includes(saved.hostname)) {
+        rawPhone = saved.hostname === 'wa.me' ? saved.pathname : saved.searchParams.get('phone') || '';
+      }
+    } catch { /* Prefer hiding the CTA to exposing an unsafe destination. */ }
+  }
+  const digits = rawPhone.replace(/\D/g, '');
   if (digits.length < 10 || digits.length > 13) return null;
   const phone = digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
   const message = `Olá! Vi o serviço "${service.name}" de ${company.name} no Avalia Solar e gostaria de mais informações.`;
@@ -199,7 +208,7 @@ export default async function ServiceDetailPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
 
         {bannerUrl ? (
-          <div className="relative h-[170px] w-full overflow-hidden rounded-2xl bg-slate-100 sm:h-[220px] lg:h-[260px]">
+          <div className="relative aspect-[16/5] w-full overflow-hidden rounded-2xl bg-slate-100">
             <Image src={bannerUrl} alt={`Banner da empresa ${company.name}`} fill priority unoptimized
               sizes="(max-width: 768px) 100vw, 1480px" className="object-cover" />
           </div>
