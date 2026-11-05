@@ -205,7 +205,8 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         setReviewsLoading(true);
         setReviewsError(null);
         try {
-          if (pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/proposals')) {
+          // Overview now shows recent real reviews; keep proposals isolated.
+          if (pathname?.startsWith('/review-dashboard/proposals')) {
             setReviews([]);
             return;
           }
@@ -242,7 +243,8 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
         setLeadsLoading(true);
         setLeadsError(null);
         try {
-          if (pathname === '/review-dashboard' || pathname?.startsWith('/review-dashboard/proposals')) {
+          // The Reviews MVP must not fetch unrelated commercial opportunities.
+          if (!pathname?.startsWith('/review-dashboard/proposals')) {
             setLeads([]);
             return;
           }
