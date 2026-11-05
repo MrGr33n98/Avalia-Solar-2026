@@ -377,7 +377,6 @@ export default function ReviewFormsManagement({ companyId, companyName }: { comp
     });
   };
 
-  const metaRecommendationPercentage = Math.min(100, (totals.submissions / 60) * 100);
 
   if (loading) {
     return (
@@ -728,49 +727,6 @@ export default function ReviewFormsManagement({ companyId, companyName }: { comp
               })}
             </div>
 
-            {/* Banner de Incentivo Inferior (Meta Recomendada) */}
-            <Card className="rounded-2xl border-slate-200 bg-blue-50/30 overflow-hidden mt-6">
-              <CardContent className="p-5 flex flex-col md:flex-row items-center gap-5 justify-between">
-                <div className="flex items-center gap-4">
-                  {/* Ilustração ou Ícone Redondo */}
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md">
-                    <Award className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-slate-900 leading-tight">
-                      Você ainda pode receber mais avaliações!
-                    </h4>
-                    <p className="text-[11px] text-slate-600 mt-1 max-w-md">
-                      Empresas com mais de 10 reviews têm 3x mais chances de fechar novos contratos no Avalia Solar.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Bloco de Meta de Progresso */}
-                <div className="w-full md:w-52 shrink-0">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1.5 uppercase">
-                    <span>Meta recomendada</span>
-                    <span className="text-slate-900 font-extrabold">{totals.submissions}/60 reviews</span>
-                  </div>
-                  {/* Progress Bar Container */}
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-blue-600 h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${metaRecommendationPercentage}%` }}
-                    />
-                  </div>
-                  {totals.submissions < 60 ? (
-                    <p className="text-[9px] text-slate-400 mt-1 text-right font-medium">
-                      Receber mais {60 - totals.submissions} reviews
-                    </p>
-                  ) : (
-                    <p className="text-[9px] text-emerald-600 mt-1 text-right font-bold flex items-center gap-0.5 justify-end">
-                      <Check className="h-2.5 w-2.5" /> Meta batida!
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Coluna Direita: Painel Canal de Coleta */}
