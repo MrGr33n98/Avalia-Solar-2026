@@ -752,7 +752,8 @@ module Api
       end
 
       def cached_company_detail_payload(company)
-        cache_key = "company_detail_payload_v2/#{company.id}/#{company.updated_at.to_i}/#{company.plan&.updated_at&.to_i}"
+        # Microsecond precision ensures a CTA toggle in the same second cannot reuse stale profile data.
+        cache_key = "company_detail_payload_v3/#{company.id}/#{company.updated_at.utc.iso8601(6)}/#{company.plan&.updated_at&.utc&.iso8601(6)}"
         Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
           company_detail_payload(company)
         end
