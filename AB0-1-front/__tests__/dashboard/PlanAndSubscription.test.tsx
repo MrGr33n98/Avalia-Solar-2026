@@ -65,11 +65,36 @@ describe('Plano e Assinatura — contrato e permissões', () => {
       status: 'active',
       current_period_end: '2027-05-05T12:00:00.000Z',
       cancel_at_period_end: false,
+      can_manage_billing: true,
     });
     render(<PlanAndSubscription companyId="1190" />);
     expect(await screen.findByText('05 de maio de 2027')).toBeInTheDocument();
     expect(screen.getByText('Ativa')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Gerenciar pagamento' })).toBeInTheDocument();
+  });
+
+  it('shows current subscription to a manager without payment portal permissions', async () => {
+    (billingApi.getSubscription as jest.Mock).mockResolvedValue({
+      id: 10,
+      company_id: 1190,
+      plan_id: 12,
+      plan: samplePlans[0],
+      status: 'active',
+      current_period_end: '2027-05-05T12:00:00.000Z',
+      can_manage_billing: false,
+    });
+    render(<PlanAndSubscription companyId="1190" />);
+    expect(await screen.findByText('05 de maio de 2027')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Gerenciar pagamento' })).not.toBeInTheDocument();
+  });
+
+  it('preserves public plan comparison when company entitlements are unavailable', async () => {
+    (fetchApiSafe as jest.Mock).mockRejectedValue({ status: 500 });
+    render(<PlanAndSubscription companyId="1190" onSelectPlan={jest.fn()} />);
+    expect(await screen.findByText(/Não foi possível consultar os recursos da empresa/)).toBeInTheDocument();
+    expect(screen.getByText('Compare os planos')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Selecionar plano: Essencial' })).toBeDisabled();
+    expect(screen.queryByText('Plano atual')).not.toBeInTheDocument();
   });
 
   it('fails safely on a malformed server contract', async () => {
