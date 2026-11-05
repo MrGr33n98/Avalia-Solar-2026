@@ -74,7 +74,7 @@ export default function CompanyContactCard({
               <Phone className="mt-0.5 h-[18px] w-[18px] shrink-0 text-slate-800" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <a
-                  href={"tel:" + phoneValue.replace(/\\D/g, "")}
+                  href={"tel:" + phoneValue.replace(/\D/g, "")}
                   className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 sm:text-[13px]"
                   onMouseEnter={phoneHoverIntent.onMouseEnter}
                   onMouseLeave={phoneHoverIntent.onMouseLeave}
