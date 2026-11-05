@@ -147,6 +147,13 @@ describe('resolvePostAuthDestination', () => {
     })).toBe('/profile?tab=security');
   });
 
+  it('[C7b] preserva fragmento do convite após login', () => {
+    expect(resolvePostAuthDestination({
+      user: user('review'),
+      returnTo: '/invite#token=convite-abc',
+    })).toBe('/invite#token=convite-abc');
+  });
+
   // Cenário 8 — returnTo incompatível com role
   it('[C8] returnTo incompatível com role review → ignora, resolve normal', () => {
     expect(resolvePostAuthDestination({
@@ -180,6 +187,10 @@ describe('isSafeReturnTo', () => {
       expect(isSafeReturnTo(returnTo)).toBe(false);
     }
   );
+
+  it('rejeita redirecionamento com barra invertida', () => {
+    expect(isSafeReturnTo('/\\evil.example')).toBe(false);
+  });
 
   it('aceita caminho interno comum', () => {
     expect(isSafeReturnTo('/companies/solar')).toBe(true);

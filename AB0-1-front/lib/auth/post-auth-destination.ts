@@ -17,6 +17,8 @@ export function isSafeReturnTo(returnTo: string | null | undefined): returnTo is
   if (!returnTo.startsWith('/') || returnTo.startsWith('//')) return false;
   try {
     const parsed = new URL(returnTo, 'https://www.avaliasolar.com.br');
+    // Prevent protocol-relative redirects disguised with backslashes.
+    if (parsed.origin !== 'https://www.avaliasolar.com.br') return false;
     return !AUTH_PATHS.some(
       (path) => parsed.pathname === path || parsed.pathname.startsWith(`${path}/`)
     );
@@ -105,8 +107,9 @@ export function resolvePostAuthDestination({
     isSafeReturnTo(returnTo) &&
     isReturnToCompatibleWithRole(returnTo, user, activeMembershipsCount)
   ) {
-    const pathname = new URL(returnTo, 'https://www.avaliasolar.com.br').pathname;
-    const search = new URL(returnTo, 'https://www.avaliasolar.com.br').search;
+    const destination = new URL(returnTo, 'https://www.avaliasolar.com.br');
+    const pathname = destination.pathname;
+    const search = destination.search + (pathname === '/invite' ? destination.hash : '');
     if (pathname.startsWith('/dashboard/sales')) {
       return buildCanonicalUrl('crm', pathname + search);
     }

@@ -24,9 +24,15 @@ export default function ClaimPage({ params }: ClaimPageProps) {
   const [message, setMessage] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(Array.from(e.target.files));
+    const selected = Array.from(e.target.files || []);
+    const allowed = new Set(['application/pdf', 'image/jpeg', 'image/png']);
+    if (selected.length > 5 || selected.some(file => !allowed.has(file.type) || file.size > 5 * 1024 * 1024)) {
+      setFiles([]);
+      e.target.value = '';
+      toast.error('Selecione até 5 arquivos PDF, JPG ou PNG de até 5 MB cada.');
+      return;
     }
+    setFiles(selected);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,8 +58,13 @@ export default function ClaimPage({ params }: ClaimPageProps) {
           body: formData,
         });
 
+        if (response.status === 401) {
+          const destination = `/companies/${encodeURIComponent(params.id)}/claim`;
+          router.push(`/login?return_to=${encodeURIComponent(destination)}`);
+          return;
+        }
         if (!response.ok) {
-          const error = await response.json();
+          const error = await response.json().catch(() => ({}));
           throw new Error(error.message || 'Erro ao enviar solicitação');
         }
 
@@ -131,7 +142,7 @@ export default function ClaimPage({ params }: ClaimPageProps) {
                     </div>
                     <div className="space-y-1">
                       <p className="font-medium">Clique para fazer upload ou arraste e solte</p>
-                      <p className="text-xs text-muted-foreground">PDF, PNG, JPG (máx. 10MB cada)</p>
+                      <p className="text-xs text-muted-foreground">Até 5 arquivos PDF, JPG ou PNG (máx. 5 MB cada)</p>
                     </div>
                     <Input
                       type="file"
@@ -139,7 +150,7 @@ export default function ClaimPage({ params }: ClaimPageProps) {
                       className="hidden"
                       id="file-upload"
                       onChange={handleFileChange}
-                      accept=".pdf,image/*"
+                      accept=".pdf,.png,.jpg,.jpeg"
                     />
                     <Button
                       type="button"
