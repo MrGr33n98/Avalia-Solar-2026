@@ -2,6 +2,7 @@ module Api
   module V1
     module Reviewer
       class ProfileController < Api::V1::Reviewer::BaseController
+        before_action :block_paused_creator_profile_edits, only: %i[update public_banner]
 
         def show
           render json: profile_payload
@@ -50,6 +51,19 @@ module Api
 
         private
 
+
+        def block_paused_creator_profile_edits
+          return if ENV.fetch('REVIEWS_ONLY_MVP', 'true') == 'false' && ENV['CREATOR_EXPERIENCE_ENABLED'] == 'true'
+
+          creator_fields = %w[creator_enabled public_profile public_headline public_bio public_email_enabled lead_capture_enabled]
+          profile_keys = params[:profile].respond_to?(:keys) ? params[:profile].keys.map(&:to_s) : []
+          return unless action_name == 'public_banner' || (profile_keys & creator_fields).any?
+
+          render json: {
+            code: 'FEATURE_TEMPORARILY_DISABLED',
+            message: 'O perfil Creator está temporariamente indisponível.'
+          }, status: :forbidden
+        end
 
         def profile_params
           params.require(:profile).permit(:profession, :company_name, :bio, :birth_date, :linkedin_url, :instagram_url, :website_url, :youtube_url, :whatsapp_url, :public_profile, :public_headline, :public_bio, :public_email_enabled, :lead_capture_enabled, :creator_enabled)
