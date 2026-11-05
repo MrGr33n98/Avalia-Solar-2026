@@ -28,6 +28,19 @@ RSpec.describe EntitlementService, type: :service do
     create(:company, name: 'Empresa Solar Pro', plan: pro_plan)
   end
 
+  describe '.call (dashboard billing contract)' do
+    it 'returns the plan, entitlement map and only verified tenant-scoped usage counters' do
+      payload = described_class.call(company: pro_company)
+      expect(payload.dig('plan', 'tier')).to eq('pro')
+      expect(payload['features']).to be_a(Hash)
+      expect(payload.dig('features', 'company_categories_limit', 'value')).to eq(5)
+      expect(payload.dig('usage', 'company_categories_limit')).to eq(0)
+      expect(payload.dig('usage', 'featured_products')).to eq(0)
+      expect(payload['usage']).not_to have_key('product_images_limit')
+      expect(payload['usage']).not_to have_key('sector_question_limit')
+    end
+  end
+
   describe '.entitled?' do
     context 'with free company' do
       it 'returns false for locked premium features' do
