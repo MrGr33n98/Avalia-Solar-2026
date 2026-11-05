@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="630" viewBox="0 0 540 630" role="img" aria-label="Avalia Solar — Melhor Suporte">
+<title>Avalia Solar — Melhor Suporte</title>
+<defs>
+<linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#72DFEC"/><stop offset="1" stop-color="#06A6E9"/></linearGradient>
+<filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#09172F" flood-opacity=".12"/></filter>
+<clipPath id="shield"><path d="M52 28 H488 Q500 28 500 41 V473 L270 598 40 473 V41 Q40 28 52 28 Z"/></clipPath>
+</defs>
+<path d="M52 28 H488 Q500 28 500 41 V473 L270 598 40 473 V41 Q40 28 52 28 Z" fill="#FFF" stroke="#0A1630" stroke-width="6" stroke-linejoin="round" filter="url(#shadow)"/>
+<g clip-path="url(#shield)">
+<rect x="41" y="29" width="458" height="118" fill="#FBFCFE"/>
+<path d="M40 146 H500" stroke="#0A1630" stroke-width="4"/>
+<path d="M40 461 270 584 500 461 V483 L270 607 40 483Z" fill="url(#accent)"/>
+<path d="M40 450 270 573 500 450" fill="none" stroke="#0A1630" stroke-opacity=".14" stroke-width="2"/>
+<text x="65" y="65" font-family="IBM Plex Sans,Arial,sans-serif" font-size="19" font-weight="700" letter-spacing="2" fill="#4C5C77">EDIÇÃO 2026</text>
+<path d="M77 95 107 79 98 118 91 105 77 95Z" fill="#FFC107"/><path d="M91 105 98 118 112 109 107 79Z" fill="#0B5FFF"/>
+<text x="129" y="111" font-family="IBM Plex Sans,Arial,sans-serif" font-size="31" font-weight="800" letter-spacing="-.8" fill="#081631">AVALIA SOLAR</text>
+<text x="270" y="231" text-anchor="middle" font-size="50" font-weight="800" letter-spacing="-1.4" fill="#09172F" font-family="IBM Plex Sans,Arial,sans-serif">Melhor</text>
+<text x="270" y="288" text-anchor="middle" font-size="49" font-weight="800" letter-spacing="-1.4" fill="#09172F" font-family="IBM Plex Sans,Arial,sans-serif">Suporte</text>
+<text x="270" y="323" text-anchor="middle" font-size="17" font-weight="800" letter-spacing="1.1" fill="#66738D" font-family="IBM Plex Sans,Arial,sans-serif">SATISFAÇÃO NO ATENDIMENTO</text>
+<g fill="none" stroke="#06A6E9" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"><path d="M205 411 v-19 a65 65 0 0 1 130 0 v19"/><path d="M199 399 h16 v44 h-15 a14 14 0 0 1 -14 -14 v-15 a14 14 0 0 1 13 -15ZM325 399h16a14 14 0 0 1 14 14v15a14 14 0 0 1-14 14h-16Z"/><path d="M331 447 q-6 22 -50 22 h-14"/></g><circle cx="261" cy="469" r="7" fill="#06A6E9"/>
+<path d="M40 480 270 598 500 480" stroke="#09172F" stroke-width="4" fill="none"/>
+</g>
+<path d="M52 28 H488 Q500 28 500 41 V473 L270 598 40 473 V41 Q40 28 52 28 Z" fill="none" stroke="#0A1630" stroke-width="5" stroke-linejoin="round"/>
+</svg>
