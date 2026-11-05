@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import {
   Wrench,
   Plus,
@@ -10,6 +12,9 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  ImagePlus,
+  Eye,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -64,6 +69,66 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
   const [priceFrom, setPriceFrom] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [submitting, setSubmitting] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
+  const [removeCover, setRemoveCover] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!coverFile) {
+      setCoverPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(coverFile);
+    setCoverPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [coverFile]);
+
+  useEffect(() => {
+    const urls = galleryFiles.map((file) => URL.createObjectURL(file));
+    setGalleryPreviews(urls);
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [galleryFiles]);
+
+  const clearMedia = () => {
+    setCoverFile(null);
+    setGalleryFiles([]);
+    setRemovedImageIds([]);
+    setRemoveCover(false);
+    setMediaError(null);
+  };
+
+  const checkFiles = (files: File[]): boolean => {
+    const invalid = files.find((file) =>
+      !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) ||
+      file.size > 8 * 1024 * 1024
+    );
+    if (invalid) {
+      setMediaError('Use imagens JPEG, PNG ou WebP com até 8 MB cada.');
+      return false;
+    }
+    setMediaError(null);
+    return true;
+  };
+
+  const selectCover = (file?: File) => {
+    if (!file || !checkFiles([file])) return;
+    setCoverFile(file);
+    setRemoveCover(false);
+  };
+
+  const selectGallery = (files: File[]) => {
+    if (!checkFiles(files)) return;
+    const kept = (editingService?.images || []).filter((image) => !removedImageIds.includes(image.id)).length;
+    if (kept + galleryFiles.length + files.length > 8) {
+      setMediaError('A galeria permite até 8 imagens por serviço.');
+      return;
+    }
+    setGalleryFiles((current) => [...current, ...files]);
+  };
 
   useEffect(() => {
     fetchApi<{ data?: CategoryOption[] } | CategoryOption[]>('/categories', {
@@ -84,6 +149,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
     setIsPriceOnRequest(false);
     setPriceFrom('');
     setStatus('active');
+    clearMedia();
     setDialogOpen(true);
   };
 
@@ -95,20 +161,29 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
     setIsPriceOnRequest(service.price_from == null || service.price_from === 0);
     setPriceFrom(service.price_from ? String(service.price_from) : '');
     setStatus(service.status);
+    clearMedia();
     setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !categoryId || mediaError) return;
 
     setSubmitting(true);
     try {
-      const parsedCatId = parseInt(categoryId, 10) || categories[0]?.id || 1;
+      const parsedCatId = parseInt(categoryId, 10);
       const parsedPrice = isPriceOnRequest || !priceFrom ? null : parseFloat(priceFrom);
+
+      const media = {
+        cover_image: coverFile,
+        images: galleryFiles,
+        remove_image_ids: removedImageIds,
+        remove_cover_image: removeCover,
+      };
 
       if (editingService) {
         await updateService(editingService.id, {
+          ...media,
           name: name.trim(),
           category_id: parsedCatId,
           description: description.trim(),
@@ -117,6 +192,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
         });
       } else {
         await addService({
+          ...media,
           name: name.trim(),
           category_id: parsedCatId,
           description: description.trim(),
@@ -238,6 +314,19 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
               className="flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-slate-300"
             >
               <div>
+                <div className="relative mb-4 flex h-40 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 to-blue-50">
+                  {service.image_url ? (
+                    <Image
+                      src={service.image_url}
+                      alt={`Imagem de ${service.name}`}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 360px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <ImagePlus className="h-9 w-9 text-slate-300" aria-hidden="true" />
+                  )}
+                </div>
                 <div className="flex items-start justify-between gap-2">
                   <Badge
                     variant="outline"
@@ -274,7 +363,23 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
                 </div>
               </div>
 
-              <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+              <div className="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                {service.status === 'active' && service.public_url ? (
+                  <Button asChild size="sm" variant="outline" className="h-8 gap-1 rounded-lg px-2 text-xs">
+                    <Link href={service.public_url} target="_blank" rel="noopener noreferrer">
+                      <Eye className="h-3.5 w-3.5" /> Ver página
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-lg px-2 text-xs"
+                    onClick={() => updateService(service.id, { status: 'active' })}
+                  >
+                    Publicar
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -304,7 +409,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
       {/* SERVICE MODAL DIALOG                                               */}
       {/* ------------------------------------------------------------------ */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md rounded-2xl p-6">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900">
               {editingService ? 'Editar Serviço' : 'Novo Serviço'}
@@ -355,6 +460,84 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
                 className="mt-1 rounded-xl text-sm"
               />
             </div>
+
+            <section aria-label="Imagens do serviço" className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Capa e galeria</h3>
+                <p className="mt-1 text-xs text-slate-500">Imagens reais do serviço, até 8 MB cada. A capa aparece na vitrine e na página pública.</p>
+              </div>
+              <div>
+                <label htmlFor="service-cover" className="mb-2 block text-xs font-semibold text-slate-700">Imagem de capa</label>
+                <div className="relative h-40 overflow-hidden rounded-xl border border-dashed border-slate-300 bg-white">
+                  {coverPreview || (!removeCover && editingService?.cover_image_url) ? (
+                    <Image
+                      src={(coverPreview || editingService?.cover_image_url) as string}
+                      alt="Prévia da capa do serviço"
+                      fill
+                      sizes="600px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-400">
+                      <ImagePlus className="h-8 w-8" />
+                      <span className="text-xs">Recomendado: 1600 × 900 px (16:9)</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <label htmlFor="service-cover" className="cursor-pointer rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">
+                    {coverPreview || editingService?.cover_image_url ? 'Substituir capa' : 'Enviar capa'}
+                  </label>
+                  {((editingService?.cover_image_url && !removeCover) || coverFile) && (
+                    <button type="button" className="text-xs font-medium text-rose-600" onClick={() => { setCoverFile(null); setRemoveCover(true); }}>
+                      Remover capa
+                    </button>
+                  )}
+                </div>
+                <input
+                  id="service-cover"
+                  type="file"
+                  className="sr-only"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) => { selectCover(event.target.files?.[0]); event.target.value = ''; }}
+                />
+              </div>
+              <div>
+                <label htmlFor="service-gallery" className="block text-xs font-semibold text-slate-700">Galeria de imagens (até 8)</label>
+                <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                  {(editingService?.images || []).filter((image) => !removedImageIds.includes(image.id)).map((image) => (
+                    <div key={image.id} className="relative aspect-square overflow-hidden rounded-lg border bg-white">
+                      <Image src={image.url} alt="Imagem cadastrada do serviço" fill sizes="160px" className="object-cover" />
+                      <button
+                        type="button"
+                        aria-label="Remover imagem da galeria"
+                        onClick={() => setRemovedImageIds((previous) => [...previous, image.id])}
+                        className="absolute right-1 top-1 rounded-full bg-slate-900/80 p-1 text-white hover:bg-rose-600"
+                      ><X className="h-3.5 w-3.5" /></button>
+                    </div>
+                  ))}
+                  {galleryPreviews.map((url, index) => (
+                    <div key={url} className="relative aspect-square overflow-hidden rounded-lg border bg-white">
+                      <Image src={url} alt={`Nova imagem ${index + 1}`} fill sizes="160px" unoptimized className="object-cover" />
+                      <button type="button" aria-label="Remover nova imagem" onClick={() => setGalleryFiles((files) => files.filter((_, i) => i !== index))} className="absolute right-1 top-1 rounded-full bg-slate-900/80 p-1 text-white hover:bg-rose-600"><X className="h-3.5 w-3.5" /></button>
+                    </div>
+                  ))}
+                  <label htmlFor="service-gallery" className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100">
+                    <Plus className="h-6 w-6" />
+                    <span className="text-[11px] font-semibold">Adicionar</span>
+                  </label>
+                </div>
+                <input
+                  id="service-gallery"
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={(event) => { selectGallery(Array.from(event.target.files || [])); event.target.value = ''; }}
+                />
+              </div>
+              {mediaError && <p role="alert" className="text-xs font-semibold text-rose-600">{mediaError}</p>}
+            </section>
 
             <div>
               <div className="flex items-center justify-between">
@@ -419,7 +602,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
               </Button>
               <Button
                 type="submit"
-                disabled={submitting || !name.trim()}
+                disabled={submitting || !name.trim() || !categoryId || Boolean(mediaError)}
                 className="h-9 rounded-xl bg-blue-600 text-xs font-semibold text-white hover:bg-blue-700"
               >
                 {submitting ? (
