@@ -181,6 +181,7 @@ export default function IntentSyncWorkspace({ companyId, onBack }: Props) {
   const tabParam = searchParams?.get('integration_tab');
   const activeTab: IntentTab = TABS.some(t => t.key === tabParam) ? tabParam as IntentTab : 'overview';
   const [creating, setCreating] = useState(false);
+  const [page, setPage] = useState(1);
   const [archiving, setArchiving] = useState<number | null>(null);
   const [sourceName, setSourceName] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -196,8 +197,8 @@ export default function IntentSyncWorkspace({ companyId, onBack }: Props) {
   });
   const available = statusQuery.data?.available === true;
   const audiencesQuery = useQuery({
-    queryKey: ['intent-sync-audiences', companyId],
-    queryFn: () => intentSyncApi.audiences(companyId),
+    queryKey: ['intent-sync-audiences', companyId, page],
+    queryFn: () => intentSyncApi.audiences(companyId, page),
     enabled: available,
     retry: false,
   });
@@ -210,6 +211,12 @@ export default function IntentSyncWorkspace({ companyId, onBack }: Props) {
   const historyQuery = useQuery({
     queryKey: ['intent-sync-history', companyId],
     queryFn: () => intentSyncApi.history(companyId),
+    enabled: available,
+    retry: false,
+  });
+  const auditQuery = useQuery({
+    queryKey: ['intent-sync-audit', companyId],
+    queryFn: () => intentSyncApi.audit(companyId),
     enabled: available,
     retry: false,
   });
@@ -365,7 +372,16 @@ export default function IntentSyncWorkspace({ companyId, onBack }: Props) {
                 )}
               </div>
               {(audiencesQuery.data?.pagination.total_pages ?? 0) > 1 && (
-                <p className={cn('text-xs', MUTED)}>Exibindo a primeira página; paginação completa será habilitada após revisão.</p>
+                <div className="flex items-center justify-end gap-2">
+                  <Button type="button" variant="outline" size="sm" className={BTN} disabled={page <= 1 || audiencesQuery.isFetching}
+                    onClick={() => setPage(prev => Math.max(1, prev - 1))}>Anterior</Button>
+                  <span className={cn('text-xs tabular-nums', MUTED)}>
+                    {page} / {audiencesQuery.data?.pagination.total_pages}
+                  </span>
+                  <Button type="button" variant="outline" size="sm" className={BTN}
+                    disabled={page >= (audiencesQuery.data?.pagination.total_pages ?? 1) || audiencesQuery.isFetching}
+                    onClick={() => setPage(prev => prev + 1)}>Próxima</Button>
+                </div>
               )}
             </section>
           )}
@@ -418,7 +434,7 @@ export default function IntentSyncWorkspace({ companyId, onBack }: Props) {
           )}
 
           {activeTab === 'history' && (
-            <section className={PANEL}>
+            <section className={cn(PANEL, 'space-y-0')}>
               <header className="border-b border-slate-100 p-3"><h3 className="text-sm font-semibold">Histórico de sincronizações</h3></header>
               {historyQuery.isLoading ? <p className={cn('p-4 text-xs', MUTED)}>Carregando histórico…</p>
                 : historyQuery.isError ? <div className="p-3"><Notice tone="error">Não foi possível carregar o histórico.</Notice></div>
@@ -431,6 +447,23 @@ export default function IntentSyncWorkspace({ companyId, onBack }: Props) {
                     <span className={MUTED}>{job.created_at ? new Date(job.created_at).toLocaleString('pt-BR') : '—'}</span>
                   </div>
                 ))}
+              <div className="border-t border-slate-100">
+                <h4 className="px-3 py-3 text-xs font-semibold">Registro de alterações</h4>
+                {auditQuery.isLoading ? <p className={cn('px-3 pb-3 text-xs', MUTED)}>Carregando alterações…</p>
+                  : auditQuery.isError ? <p role="alert" className="px-3 pb-3 text-xs text-red-700">Histórico indisponível.</p>
+                  : (auditQuery.data?.events ?? []).length === 0 ? <p className={cn('px-3 pb-3 text-xs', MUTED)}>Nenhuma alteração registrada.</p>
+                  : (auditQuery.data?.events ?? []).map(event => (
+                    <div key={event.id} className="flex flex-wrap justify-between gap-2 border-t border-slate-100 px-3 py-2.5 text-xs">
+                      <span>{({
+                        source_registered: 'Fonte registrada',
+                        audience_created: 'Audiência criada',
+                        audience_updated: 'Audiência atualizada',
+                        audience_archived: 'Audiência arquivada',
+                      } as Record<string, string>)[event.action] ?? event.action}</span>
+                      <span className={MUTED}>{new Date(event.created_at).toLocaleString('pt-BR')}</span>
+                    </div>
+                  ))}
+              </div>
             </section>
           )}
         </>
