@@ -6,19 +6,7 @@ import { Company } from "@/lib/api";
 import { trackCTAClick } from "@/lib/analytics/track-cta";
 import { useHoverIntent } from "@/lib/analytics/hooks/useIntentTracking";
 import { cn } from "@/lib/utils";
-import { canUsePaidConversion } from "@/lib/feature-access";
-
-// Only publish a WhatsApp CTA when the company has explicitly configured one.
-const normalizeWhatsAppLink = (value?: string | null): string | null => {
-  if (!value) return null;
-  const raw = value.trim();
-  if (/^https:\/\/(?:wa\.me|api\.whatsapp\.com)(?:\/|\?)/i.test(raw)) return raw;
-  if (/^[a-z]+:\/\//i.test(raw)) return null;
-
-  const digits = raw.replace(/\D/g, "");
-  if (![10, 11, 12, 13].includes(digits.length)) return null;
-  return "https://wa.me/" + (digits.startsWith("55") && digits.length >= 12 ? digits : "55" + digits);
-};
+import { getCompanyWhatsAppHref } from "@/lib/whatsapp-contact";
 
 interface CompanyContactCardProps {
   company: Company;
@@ -56,14 +44,7 @@ export default function CompanyContactCard({
   };
 
   const phoneValue = company.phone || "";
-  const whatsappEnabled = company.cta_whatsapp_enabled ??
-    company.whatsapp_enabled ?? company.actions?.whatsapp_enabled ?? false;
-  const whatsappHref = canUsePaidConversion(company, "whatsapp") && whatsappEnabled
-    ? normalizeWhatsAppLink(
-        company.cta_whatsapp_url || company.whatsapp_url ||
-        company.actions?.whatsapp_url || company.whatsapp
-      )
-    : null;
+  const whatsappHref = getCompanyWhatsAppHref(company);
   // Only publish the designated public address (never the private company email).
   const emailValue = company.email_public || "";
   const locationCityState = [company.city, company.state].filter(Boolean).join(", ");
