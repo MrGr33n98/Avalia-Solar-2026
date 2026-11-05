@@ -103,17 +103,17 @@ export function useServices(companyId?: string | number) {
     if (!images.length) return;
     const form = new FormData();
     images.forEach(image => form.append('images[]', image));
-    await fetchApi(`/dashboard/services/${id}/images`, { method: 'POST', body: form });
-  }, []);
+    await fetchApi(`/dashboard/services/${id}/images`, { method: 'POST', body: form, params: companyId ? { company_id: companyId } : undefined });
+  }, [companyId]);
 
   const removeServiceImage = useCallback(async (id: number, attachmentId: number) => {
     const result = await fetchApi<{ service: CompanyService }>(
       `/dashboard/services/${id}/images/${attachmentId}`,
-      { method: 'DELETE' }
+      { method: 'DELETE', params: companyId ? { company_id: companyId } : undefined }
     );
     await loadServices();
     return result.service;
-  }, [loadServices]);
+  }, [loadServices, companyId]);
 
   const addService = useCallback(
     async (input: ServiceInput) => {
@@ -124,6 +124,7 @@ export function useServices(companyId?: string | number) {
           {
             method: 'POST',
             body: { service: attributes },
+            params: companyId ? { company_id: companyId } : undefined,
           },
         );
 
@@ -145,7 +146,7 @@ export function useServices(companyId?: string | number) {
         throw err;
       }
     },
-    [loadServices, toast, uploadImages],
+    [loadServices, toast, uploadImages, companyId],
   );
 
   const updateService = useCallback(
@@ -186,6 +187,7 @@ export function useServices(companyId?: string | number) {
       try {
         await fetchApi(`/dashboard/services/${id}`, {
           method: 'DELETE',
+          params: companyId ? { company_id: companyId } : undefined,
         });
 
         toast({
@@ -204,7 +206,7 @@ export function useServices(companyId?: string | number) {
         throw err;
       }
     },
-    [loadServices, toast],
+    [loadServices, toast, companyId],
   );
 
   return {
