@@ -101,6 +101,10 @@ const ContentStudioWorkspace = dynamic(
     loading: () => <DashboardTabSkeleton />,
   }
 );
+const ReputationMarketingWidgets = dynamic(
+  () => import('./marketing-widgets/ReputationMarketingWidgets'),
+  { loading: () => <DashboardTabSkeleton /> }
+);
 const AvaliaBadgesWorkspace = dynamic(
   () => import('./badges/AvaliaBadgesWorkspace'),
   {
@@ -661,6 +665,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
               <TabsContent value="integrations" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab('integrations', <WebhooksManagement companyId={companyId} />)}
+              </TabsContent>
+
+              <TabsContent value="marketing-widgets" className="mt-0 focus-visible:outline-none">
+                <ReputationMarketingWidgets company={company} companyId={companyId} />
               </TabsContent>
 
               <TabsContent value="trust-widget" className="mt-0 focus-visible:outline-none">
