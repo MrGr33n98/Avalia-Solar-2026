@@ -88,6 +88,16 @@ describe('Plano e Assinatura — contrato e permissões', () => {
     expect(screen.queryByRole('button', { name: 'Gerenciar pagamento' })).not.toBeInTheDocument();
   });
 
+  it('does not expose upgrade checkout to an active member without billing management rights', async () => {
+    (billingApi.getSubscription as jest.Mock).mockResolvedValue({
+      id: 10, company_id: 1190, plan_id: 12, plan: samplePlans[0],
+      status: 'active', current_period_end: null, can_manage_billing: false,
+    });
+    render(<PlanAndSubscription companyId="1190" onSelectPlan={jest.fn()} />);
+    expect(await screen.findByText('Recursos do seu plano')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Selecionar plano: Pro' })).toBeDisabled();
+  });
+
   it('preserves public plan comparison when company entitlements are unavailable', async () => {
     (fetchApiSafe as jest.Mock).mockRejectedValue({ status: 500 });
     render(<PlanAndSubscription companyId="1190" onSelectPlan={jest.fn()} />);
