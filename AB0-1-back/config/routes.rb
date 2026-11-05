@@ -44,6 +44,17 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      # Intent Sync: company-owned B2B product, isolated from internal /sales CRM.
+      get 'demand_activation/status', to: 'demand_activation#status'
+      get 'demand_activation/sources', to: 'demand_activation#sources'
+      post 'demand_activation/sources', to: 'demand_activation#create_source'
+      get 'demand_activation/audiences', to: 'demand_activation#audiences'
+      post 'demand_activation/audiences', to: 'demand_activation#create_audience'
+      patch 'demand_activation/audiences/:id', to: 'demand_activation#update_audience'
+      post 'demand_activation/audiences/:id/archive', to: 'demand_activation#archive_audience'
+      get 'demand_activation/connections', to: 'demand_activation#connections'
+      get 'demand_activation/syncs', to: 'demand_activation#sync_history'
+      post 'demand_activation/audiences/:id/sync', to: 'demand_activation#synchronize'
       namespace :mcp do
         post 'tools/:tool_name', to: 'tools#create'
         get 'approvals/stats', to: 'approvals#stats'
