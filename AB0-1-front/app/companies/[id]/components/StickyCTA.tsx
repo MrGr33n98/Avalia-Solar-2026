@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Company } from '@/lib/api';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
 import { openQuoteWizard } from '@/lib/quote-wizard';
-import { canUsePaidConversion } from '@/lib/feature-access';
+import { canShowCompanyQuoteCTA } from '@/lib/company-cta-visibility';
 import { track } from '@/lib/analytics/lazy';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 
@@ -20,7 +20,7 @@ export default function StickyCTA({
   canRequestQuote,
 }: StickyCTAProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const quoteEnabled = Boolean(canRequestQuote) && canUsePaidConversion(company, 'quote') && company.quote_cta_enabled !== false;
+  const quoteEnabled = canShowCompanyQuoteCTA(company, canRequestQuote);
 
   useEffect(() => {
     const handleScroll = () => {
