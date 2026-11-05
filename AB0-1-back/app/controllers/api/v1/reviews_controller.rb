@@ -92,8 +92,8 @@ class Api::V1::ReviewsController < Api::V1::BaseController
                              is_legacy: permitted_review_params[:category_id].blank?,
                              capture_flow_source: permitted_review_params[:capture_flow_source].presence || 'profile',
                              metadata: metadata_with_email,
-                             reviewable_type: service ? 'CompanyService' : 'Company',
-                             reviewable_id: service ? service.id : permitted_review_params[:company_id]
+                             reviewable_type: service ? 'CompanyService' : nil,
+                             reviewable_id: service&.id
                            ))
       @review.rating = params[:review][:rating].to_i if editorial_metadata.present?
       @review.is_legacy = false if editorial_metadata.present?
