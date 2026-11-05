@@ -23,9 +23,10 @@ export function ReviewButtonEmbed({ formToken, companyName, isActive = true, onT
   const widgetUrl = buildPublicReviewUrl(formToken, 'widget');
   const safeCompany = companyName?.trim() || 'Avalia Solar';
   // Código exportado como HTML para outro domínio: escape contextual obrigatório.
-  const escapedCompany = safeCompany.replace(/[&<>"']/g, (char) => ({
+  const htmlEntities: Record<string, string> = {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[char] || char));
+  };
+  const escapedCompany = safeCompany.replace(/[&<>"']/g, (char) => htmlEntities[char] || char);
 
   const themeStyles = {
     blue: 'background-color:#2563eb;color:#ffffff;border:none;',
