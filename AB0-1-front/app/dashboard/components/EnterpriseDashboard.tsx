@@ -34,7 +34,9 @@ import {
 import ThemeToggle from './ThemeToggle';
 import ApprovalsPanel from './ApprovalsPanel';
 import FeatureGuard from './FeatureGuard';
-import { PlansPricingModal, type PlanSlug } from './PlansPricingModal';
+import { PlansPricingModal } from './PlansPricingModal';
+import type { BillingPlan } from '@/lib/api/billing';
+import type { BillingPeriod } from '@/lib/pricing/billing';
 import { billingApi } from '@/lib/api/billing';
 
 // Lazy Loaded Feature Components for Performance
@@ -286,67 +288,51 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const dashboardPlanId = dashboardCompany?.plan_id;
   const dashboardPlanTier = dashboardCompany?.plan_tier;
 
-  const handleSelectPlan = async (planSlug: PlanSlug) => {
-    if (planSlug === 'free') {
-      toast({
-        title: 'Plano Gratuito',
-        description: 'Sua empresa já está cadastrada no plano básico gratuito.',
-      });
+  const handleSelectPlan = async (plan: BillingPlan, period: BillingPeriod) => {
+    const numCompanyId = Number(companyId);
+    if (!Number.isSafeInteger(numCompanyId) || numCompanyId <= 0) {
+      toast({ title: 'Empresa não identificada', description: 'Selecione sua empresa novamente.', variant: 'destructive' });
       return;
     }
-
-    if (planSlug === 'enterprise') {
-      try {
-        setIsCheckoutLoading(true);
-        const numCompanyId = parseInt(companyId, 10);
-        if (!isNaN(numCompanyId)) {
-          await billingApi
-            .createEnterpriseLead(numCompanyId, 4, {
-              justification: 'Solicitação de proposta via Modal de Upgrade do Dashboard',
-              phone_contact: company?.phone || '',
-            })
-            .catch(() => null);
-        }
-        toast({
-          title: 'Solicitação enviada!',
-          description: 'Nossa equipe comercial entrará em contato para alinhar sua proposta Enterprise.',
-        });
-      } catch {
-        toast({
-          title: 'Solicitação registrada',
-          description: 'Entraremos em contato com você em breve.',
-        });
-      } finally {
-        setIsCheckoutLoading(false);
-      }
+    if (plan.slug === dashboardPlanTier || plan.slug === 'free') return;
+    if (!Number.isSafeInteger(plan.id) || plan.id <= 0) {
+      toast({ title: 'Plano indisponível', description: 'Atualize a lista de planos e tente novamente.', variant: 'destructive' });
       return;
     }
 
     try {
       setIsCheckoutLoading(true);
-      const numCompanyId = parseInt(companyId, 10);
-      const planId = planSlug === 'essential' ? 2 : 3;
-      const sUrl = `${window.location.origin}/dashboard?company_id=${companyId}&checkout=success`;
-      const cUrl = window.location.href;
-      const { checkout_url } = await billingApi.createCheckoutSession(
-        numCompanyId,
-        planId,
-        sUrl,
-        cUrl,
-        'twelve_months'
-      );
-      if (checkout_url) {
-        window.location.href = checkout_url;
+      if (plan.slug === 'enterprise') {
+        await billingApi.createEnterpriseLead(numCompanyId, plan.id, {
+          justification: 'Solicitação de proposta no dashboard empresarial',
+          phone_contact: company?.phone || '',
+        });
+        toast({
+          title: 'Proposta solicitada',
+          description: 'A equipe comercial recebeu a solicitação Enterprise.',
+        });
+        setUpgradeModalOpen(false);
+        return;
       }
+
+      const successUrl = `${window.location.origin}/dashboard?company_id=${numCompanyId}&tab=product-pricing&checkout=success`;
+      const cancelUrl = window.location.href;
+      const { checkout_url } = await billingApi.createCheckoutSession(
+        numCompanyId, plan.id, successUrl, cancelUrl, period
+      );
+      const checkout = new URL(checkout_url);
+      if (checkout.protocol !== 'https:' ||
+          !(checkout.hostname === 'stripe.com' || checkout.hostname.endsWith('.stripe.com'))) {
+        throw new Error('O checkout retornou um endereço inválido. Nenhum pagamento foi iniciado.');
+      }
+
+      trackCheckoutStarted(plan.id, undefined, numCompanyId);
+      window.location.assign(checkout.toString());
     } catch (err: unknown) {
-      console.error('[EnterpriseDashboard] Erro ao iniciar checkout:', err);
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Não foi possível conectar ao checkout no momento. Tente novamente mais tarde.';
+      console.error('[EnterpriseDashboard] Falha na contratação:', err);
       toast({
-        title: 'Erro ao iniciar contratação',
-        description: message,
+        title: 'Não foi possível continuar',
+        description: err instanceof Error ? err.message : 'Tente novamente ou consulte o suporte.',
         variant: 'destructive',
       });
     } finally {
@@ -750,7 +736,12 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       Ajuste configurações relacionadas ao seu plano e comercialização.
                     </p>
                   </div>
-                  <PlanAndSubscription companyId={companyId} onOpenPlans={() => setUpgradeModalOpen(true)} />
+                  <PlanAndSubscription
+                     companyId={companyId}
+                     onOpenPlans={() => setUpgradeModalOpen(true)}
+                     onSelectPlan={handleSelectPlan}
+                     isCheckoutLoading={isCheckoutLoading}
+                   />
                 </div>
               </TabsContent>
 
