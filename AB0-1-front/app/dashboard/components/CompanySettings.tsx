@@ -238,7 +238,9 @@ export default function CompanySettings({ companyId, company }: CompanySettingsP
             ABA 1: CHAMADAS PARA AÇÃO (CTAs) E WHATSAPP
             ======================================================== */}
         <TabsContent value="conversion" className="mt-6 space-y-6">
-          <CtaVisibilitySettings key={companyId} companyId={companyId} />
+          {process.env.NEXT_PUBLIC_CTA_VISIBILITY_UI_V1 !== 'false' && (
+            <CtaVisibilitySettings key={companyId} companyId={companyId} />
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Coluna Esquerda: Formulário de CTAs */}
             <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
