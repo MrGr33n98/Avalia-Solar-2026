@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { track } from '@/lib/analytics/lazy';
+import { ReviewCollectionIcon } from '@/components/reviews/ReviewCollectionIcon';
 import {
   REVIEW_MILESTONES,
   completedMilestones,
@@ -11,18 +12,8 @@ import {
   type ReviewMilestoneId,
 } from '@/lib/review-collection/milestones';
 
-const ICON_SPRITE = '/assets/icons/review-collection/avalia-solar-icons-sprite.svg';
-
 interface ReputationMilestonesProps {
   approvedReviewsCount: number | null;
-}
-
-function JourneyIcon({ name, size = 30 }: { name: string; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false" className="shrink-0">
-      <use href={ICON_SPRITE + '#' + name} />
-    </svg>
-  );
 }
 
 /** Marco visual de engajamento: nunca confundir com uma concessão oficial. */
@@ -77,7 +68,7 @@ export function ReputationMilestones({ approvedReviewsCount }: ReputationMilesto
 
         <details className="group mt-3 rounded-lg border border-blue-100 bg-blue-50/40 text-xs text-slate-700">
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg px-3 font-semibold text-[#0A1F44] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
-            <JourneyIcon name="01_estrelas_ia" size={18} />
+            <ReviewCollectionIcon name="01_estrelas_ia" size={18} />
             <span>Como o Avalia Solar me ajuda a coletar avaliações?</span>
             <span aria-hidden="true" className="ml-auto text-blue-600 motion-safe:transition-transform group-open:rotate-90">›</span>
           </summary>
@@ -126,7 +117,7 @@ export function ReputationMilestones({ approvedReviewsCount }: ReputationMilesto
                   'md:h-[54px] md:w-[54px]',
                   selected ? 'border-blue-600 ring-[3px] ring-blue-100' : 'border-slate-200',
                 ].join(' ')}>
-                  <JourneyIcon name={item.icon} size={30} />
+                  <ReviewCollectionIcon name={item.icon} size={30} />
                   {achieved && (
                     <span aria-hidden="true" className="absolute -right-1 -top-1 rounded-full bg-emerald-600 px-1 text-[10px] font-bold text-white">✓</span>
                   )}
@@ -149,7 +140,7 @@ export function ReputationMilestones({ approvedReviewsCount }: ReputationMilesto
           className="mt-4 rounded-lg border border-slate-200 bg-[#F8FAFE] p-3 sm:p-4">
           <div className="flex items-start gap-2.5">
             <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white">
-              <JourneyIcon name={active.icon} size={22} />
+              <ReviewCollectionIcon name={active.icon} size={22} />
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="text-sm font-bold text-[#0A1F44]">{active.title}</h3>
@@ -167,7 +158,7 @@ export function ReputationMilestones({ approvedReviewsCount }: ReputationMilesto
             {active.hints.map((hint) => (
               <li key={hint.label} className="flex min-w-0 items-start gap-2 rounded-md p-1">
                 <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white">
-                  <JourneyIcon name={hint.icon} size={20} />
+                  <ReviewCollectionIcon name={hint.icon} size={20} />
                 </span>
                 <span className="min-w-0">
                   <strong className="block text-[11px] font-semibold text-[#0A1F44]">{hint.label}</strong>
