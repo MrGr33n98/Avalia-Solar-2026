@@ -98,7 +98,7 @@ jobs:
             spec/requests/api/v1/billing/checkout_spec.rb \
             spec/requests/api/v1/company_dashboard_freshness_spec.rb; then
             echo "::group::Billing exception diagnostics"
-            grep -n -A 4 -B 2 'Subscription show error:' log/test.log | tail -n 80 || true
+            grep -n -A 4 -B 2 -E 'BillingSubscription#show|CompanyDashboard#subscription' log/test.log | tail -n 80 || true
             echo "::endgroup::"
             exit 1
           fi
