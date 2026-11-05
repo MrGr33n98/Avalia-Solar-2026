@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Company } from '@/lib/api';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
+import { openQuoteWizard } from '@/lib/quote-wizard';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import { track } from '@/lib/analytics/lazy';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 
@@ -18,7 +20,7 @@ export default function StickyCTA({
   canRequestQuote,
 }: StickyCTAProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const quoteEnabled = Boolean(canRequestQuote);
+  const quoteEnabled = Boolean(canRequestQuote) && canUsePaidConversion(company, 'quote');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,6 +45,8 @@ export default function StickyCTA({
       element_type: 'button',
       action_type: 'click',
     });
+    // QuoteCTA delegates control to onRequest. Without this, the sticky only tracked a click.
+    openQuoteWizard({ preferredCompanyId: Number(company.id), source: 'company-sticky' });
   };
 
   return (
