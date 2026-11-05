@@ -5,6 +5,8 @@ import { ReputationMilestones } from '@/app/dashboard/components/review-collecti
 import { ReviewButtonEmbed } from '@/app/dashboard/components/review-collection/ReviewButtonEmbed';
 import { ShareableReviewForm } from '@/app/dashboard/components/review-collection/ReviewShareCard';
 
+jest.mock('@/lib/analytics/lazy', () => ({ track: jest.fn() }));
+
 // Mock navigator.clipboard
 Object.assign(navigator, {
   clipboard: {
@@ -61,10 +63,10 @@ describe('ReviewCollectionHub & Children', () => {
     );
 
     expect(screen.getAllByText('Formulário Principal').length).toBeGreaterThan(0);
-    expect(screen.getByText('Link Direto')).toBeInTheDocument();
+    expect(screen.getByLabelText('Link público do formulário de avaliação')).toBeInTheDocument();
     expect(screen.getByText('WhatsApp')).toBeInTheDocument();
-    expect(screen.getByText('Via E-mail')).toBeInTheDocument();
-    expect(screen.getByText('QR Code')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Solicitar via e-mail/i })).toBeInTheDocument();
+    expect(screen.getByText(/QR Code · Baixar PNG/)).toBeInTheDocument();
   });
 
   it('renders form selector dropdown when more than 1 form is present', () => {
@@ -111,21 +113,35 @@ describe('ReviewCollectionHub & Children', () => {
   describe('ReputationMilestones', () => {
     it('shows pending status for all milestones when count is 0', () => {
       render(<ReputationMilestones approvedReviewsCount={0} />);
-      expect(screen.getByText('0 Avaliações Aprovadas')).toBeInTheDocument();
-      expect(screen.getByText('Faltam 1 para o marco "Primeiro Depoimento"')).toBeInTheDocument();
+      expect(screen.getByTestId('milestone-completed-count')).toHaveTextContent('0/3 marcos concluídos');
+      expect(screen.getByTestId('milestone-first_review')).toBeInTheDocument();
+      expect(screen.getByTestId('milestone-progress').getAttribute('style')).toContain('width: 0%');
     });
 
     it('shows first milestone achieved when count is 5', () => {
       render(<ReputationMilestones approvedReviewsCount={5} />);
-      expect(screen.getByText('5 Avaliações Aprovadas')).toBeInTheDocument();
-      expect(screen.getByText('Concluído')).toBeInTheDocument();
-      expect(screen.getByText('Faltam 5 para o marco "Reputação Ativa"')).toBeInTheDocument();
+      expect(screen.getByTestId('milestone-completed-count')).toHaveTextContent('1/3 marcos concluídos');
+      expect(screen.getByTestId('milestone-first_review').getAttribute('aria-label')).toContain('Concluído');
+      expect(screen.getByTestId('milestone-ranking_ready').getAttribute('aria-label')).toContain('Próximo marco');
     });
 
     it('shows celebration state when count is 30 or more', () => {
       render(<ReputationMilestones approvedReviewsCount={32} />);
-      expect(screen.getByText('Parabéns! Sua empresa atingiu os principais marcos!')).toBeInTheDocument();
+      expect(screen.getByTestId('milestone-completed-count')).toHaveTextContent('3/3 marcos concluídos');
     });
+  });
+
+  it('milestones support keyboard and show explanatory details without false badge grants', () => {
+    render(<ReputationMilestones approvedReviewsCount={10} />);
+    const last = screen.getByTestId('milestone-community_milestone');
+    fireEvent.click(last);
+    expect(last).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('milestone-info-panel')).toHaveTextContent('não há concessão automática');
+  });
+
+  it('shows no data when approved review totals are unavailable', () => {
+    render(<ReputationMilestones approvedReviewsCount={null} />);
+    expect(screen.getByTestId('milestone-completed-count')).toHaveTextContent('Progresso indisponível');
   });
 
   describe('ReviewButtonEmbed', () => {
