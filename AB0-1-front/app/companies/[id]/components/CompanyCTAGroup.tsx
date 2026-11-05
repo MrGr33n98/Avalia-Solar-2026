@@ -30,7 +30,7 @@ export default function CompanyCTAGroup({
 }: CompanyCTAGroupProps) {
   const wizardCategoryId = resolveWizardCategoryId(company);
   const companyIdNum = Number(company.id);
-  const showQuote = canRequestQuote && canUsePaidConversion(company, 'quote');
+  const showQuote = canRequestQuote && canUsePaidConversion(company, 'quote') && company.quote_cta_enabled !== false;
   const whatsappHref = getCompanyWhatsAppHref(company);
   const hasPrimaryActions = showQuote || Boolean(whatsappHref);
 
