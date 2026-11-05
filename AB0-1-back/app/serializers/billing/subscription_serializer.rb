@@ -17,8 +17,8 @@ module Billing
       can_manage_billing?
     end
 
-    private
-
+    # ActiveModelSerializers utiliza public_send para avaliar `if:`.
+    # Precisa ser publico para impedir 500 no GET /billing/subscription.
     def can_manage_billing?
       return false unless scope
 
