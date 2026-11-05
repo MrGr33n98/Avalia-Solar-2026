@@ -251,7 +251,7 @@ export default function CompanyDetailClient({
     return user?.role === 'company' && user?.company_id === companyId;
   }, [companyId, isAuthenticated, user?.company_id, user?.role]);
 
-  const canRequestQuote = canUsePaidConversion(currentCompany, 'quote');
+  const canRequestQuote = canUsePaidConversion(currentCompany, 'quote') && currentCompany.quote_cta_enabled !== false;
   const showFaq = true;
   const showGallery = canShowMediaGallery(currentCompany);
   const showSocialProof = currentCompany.feature_access
