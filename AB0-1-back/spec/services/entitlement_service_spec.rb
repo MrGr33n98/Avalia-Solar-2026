@@ -34,7 +34,7 @@ RSpec.describe EntitlementService, type: :service do
       expect(payload.dig('plan', 'tier')).to eq('pro')
       expect(payload['features']).to be_a(Hash)
       expect(payload.dig('features', 'company_categories_limit', 'value')).to eq(5)
-      expect(payload.dig('usage', 'company_categories_limit')).to eq(0)
+      expect(payload.dig('usage', 'company_categories_limit')).to eq(pro_company.company_categories.count)
       expect(payload.dig('usage', 'featured_products')).to eq(0)
       expect(payload['usage']).not_to have_key('product_images_limit')
       expect(payload['usage']).not_to have_key('sector_question_limit')
