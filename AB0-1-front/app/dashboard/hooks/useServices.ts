@@ -18,6 +18,9 @@ export type CompanyService = {
   image_url?: string | null;
   cover_image_url?: string | null;
   images?: Array<{ id: number; url: string }>;
+  image_urls?: string[];
+  service_images?: Array<{ id: number; url: string }>;
+  video_links?: string[];
   public_url?: string;
   created_at?: string;
   updated_at?: string;
@@ -34,6 +37,7 @@ export type ServiceInput = {
   status: 'active' | 'inactive';
   cover_image?: File | null;
   images?: File[];
+  video_links?: string[];
   remove_image_ids?: number[];
   remove_cover_image?: boolean;
 };
@@ -57,6 +61,10 @@ function buildServiceForm(input: Partial<ServiceInput>): FormData {
   });
 
   input.coverage?.forEach((location) => form.append('service[coverage][]', location));
+  if (input.video_links !== undefined) {
+    if (input.video_links.length === 0) form.append('service[video_links][]', '');
+    else input.video_links.forEach((link) => form.append('service[video_links][]', link));
+  }
   if (input.cover_image) form.append('service[cover_image]', input.cover_image);
   input.images?.forEach((image) => form.append('service[images][]', image));
   input.remove_image_ids?.forEach((id) => form.append('service[remove_image_ids][]', String(id)));
@@ -98,6 +106,15 @@ export function useServices(companyId?: string | number) {
   useEffect(() => {
     loadServices();
   }, [loadServices]);
+
+  const removeServiceImage = useCallback(async (id: number, attachmentId: number) => {
+    const result = await fetchApi<{ service: CompanyService }>(
+      `/dashboard/services/${id}/images/${attachmentId}`,
+      { method: 'DELETE', params: companyId ? { company_id: companyId } : undefined }
+    );
+    await loadServices();
+    return result.service;
+  }, [loadServices, companyId]);
 
   const addService = useCallback(async (input: ServiceInput) => {
     try {
@@ -157,5 +174,5 @@ export function useServices(companyId?: string | number) {
     }
   }, [companyId, loadServices, toast]);
 
-  return { services, stats, loading, loadServices, addService, updateService, deleteService };
+  return { services, stats, loading, loadServices, addService, updateService, deleteService, removeServiceImage };
 }
