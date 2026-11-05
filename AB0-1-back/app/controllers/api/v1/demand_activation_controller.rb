@@ -83,6 +83,8 @@ module Api
       end
 
       def create_audience
+        return reject_unsafe_filters if unsafe_filters?
+
         segment = ::DemandActivation::AudienceSegment.new(
           audience_attributes.merge(company: @company, created_by: current_user, status: 'draft')
         )
@@ -94,6 +96,8 @@ module Api
       end
 
       def update_audience
+        return reject_unsafe_filters if unsafe_filters?
+
         segment = scoped_audiences.find(params[:id])
         return render_error_response(message: 'Audiência arquivada', status: :conflict, code: 'AUDIENCE_ARCHIVED') unless segment.editable?
 
@@ -167,6 +171,19 @@ module Api
         return if current_user.respond_to?(:owner_of?) && current_user.owner_of?(@company)
 
         render_error_response(message: 'Ação reservada ao responsável da empresa', status: :forbidden, code: 'INTENT_SYNC_ROLE_FORBIDDEN')
+      end
+
+      def unsafe_filters?
+        raw = params.dig(:audience, :filter_definition)
+        raw.respond_to?(:keys) && (raw.keys.map(&:to_s) - %w[region segment customer_type]).any?
+      end
+
+      def reject_unsafe_filters
+        render_error_response(
+          message: 'Filtro não permitido. Identificadores pessoais não são aceitos.',
+          status: :unprocessable_entity,
+          code: 'INTENT_SYNC_FILTER_BLOCKED'
+        )
       end
 
       def scoped_audiences
