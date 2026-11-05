@@ -61,10 +61,12 @@ const PAID_CONVERSION_FEATURE_KEYS: Record<ConversionFeature, string> = {
 
 /** Paid conversion entitlement. Missing entitlement fails closed. */
 export function canUsePaidConversion(
-  company: { has_paid_plan?: boolean | null; feature_access?: FeatureAccessMap },
+  company: { has_paid_plan?: boolean | null; quote_cta_enabled?: boolean | null; feature_access?: FeatureAccessMap },
   feature: ConversionFeature
 ): boolean {
   if (!hasPaidPlan(company)) return false;
+  // Company preference can only narrow plan entitlement, never grant it.
+  if (feature === 'quote' && company.quote_cta_enabled === false) return false;
   const featureKey = PAID_CONVERSION_FEATURE_KEYS[feature];
   const entry = getFeatureAccessEntry(company.feature_access, featureKey);
   return Boolean(entry && isFeatureEnabledEntry(entry));
