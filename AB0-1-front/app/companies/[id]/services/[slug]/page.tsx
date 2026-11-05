@@ -104,7 +104,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export const revalidate = 120;
+export const revalidate = 0;
 
 export default async function ServiceDetailPage({ params }: Props) {
   const data = await getPageData(params);
