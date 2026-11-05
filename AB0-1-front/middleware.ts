@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveSurfaceFromHost } from '@/lib/host-context';
 import { SURFACE_ORIGINS } from '@/lib/routing/surface-origins';
+import { suspendedSocialDestination } from '@/lib/mvp-reviews';
 import {
   HOME_HERO_EXPERIMENT_COOKIE,
   HOME_HERO_EXPERIMENT_TTL_DAYS,
@@ -123,6 +124,16 @@ function buildCompaniesCategoriesPath(
 // This middleware runs on the edge
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const socialDestination = suspendedSocialDestination(pathname);
+  if (socialDestination) {
+    const target = request.nextUrl.clone();
+    target.pathname = socialDestination;
+    target.search = '';
+    const response = NextResponse.redirect(target, 307);
+    response.headers.set('Cache-Control', 'no-store');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return response;
+  }
   const experimentEnabled = isHomeHeroExperimentEnabled();
   const experimentCookieValue = request.cookies.get(HOME_HERO_EXPERIMENT_COOKIE)?.value;
   const resolvedExperimentVariant = resolveHomeHeroVariant({

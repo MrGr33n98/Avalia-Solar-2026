@@ -1,3 +1,4 @@
+import { SOCIAL_FEED_ENABLED } from '@/lib/mvp-reviews';
 import type { User } from '@/lib/api';
 import { ProductSurface } from '@/lib/host-context';
 import { buildCanonicalUrl } from '@/lib/routing/surface-origins';
@@ -152,7 +153,7 @@ export function resolvePostAuthDestination({
   }
 
   if (user.role === 'review') {
-    if (creatorEnabled && creatorSlug) return buildCanonicalUrl('public', '/feed');
+    if (SOCIAL_FEED_ENABLED && creatorEnabled && creatorSlug) return buildCanonicalUrl('public', '/feed');
     return buildCanonicalUrl('public', '/review-dashboard');
   }
 

@@ -92,8 +92,8 @@ export function ReviewerMobileNav() {
             );
           })}
 
-          {/* "Mais" button */}
-          <button
+          {/* The drawer is hidden when only two review tabs are present. */}
+          {mobileDrawerItems.length > 0 && <button
             type="button"
             onClick={() => setDrawerOpen(true)}
             className={cn(
@@ -121,7 +121,7 @@ export function ReviewerMobileNav() {
             <span className="text-[10px] leading-tight tracking-tight whitespace-nowrap">
               Mais
             </span>
-          </button>
+          </button>}
         </div>
       </nav>
 

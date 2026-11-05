@@ -15,6 +15,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { CREATOR_EXPERIENCE_ENABLED, SOCIAL_FEED_ENABLED } from '@/lib/mvp-reviews';
 import { getFullImageUrl } from '@/utils/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
@@ -137,13 +138,13 @@ export function UserAvatarDropdown({
 
         {/* Links do Menu */}
         <div className="p-2 space-y-0.5">
-          <Link
+          {SOCIAL_FEED_ENABLED && <Link
             href="/feed"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
           >
             <Globe className="h-4.5 w-4.5 text-slate-400" />
             Feed
-          </Link>
+          </Link>}
 
           <Link
             href="/review-dashboard"
@@ -153,7 +154,7 @@ export function UserAvatarDropdown({
             Meu Painel
           </Link>
 
-          {isCreator && (
+          {CREATOR_EXPERIENCE_ENABLED && isCreator && (
             <>
               <Link
                 href="/creator-studio"

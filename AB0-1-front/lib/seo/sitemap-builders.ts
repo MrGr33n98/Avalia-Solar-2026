@@ -1,3 +1,4 @@
+import { CREATOR_EXPERIENCE_ENABLED } from '@/lib/mvp-reviews';
 import type { MetadataRoute } from 'next';
 
 import { buildApiUrl } from '@/lib/api-config';
@@ -320,6 +321,7 @@ export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitem
 }
 
 export async function getCreatorSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+  if (!CREATOR_EXPERIENCE_ENABLED) return [];
   const creators = await fetchRecords('creators?per_page=100');
   const entries = await Promise.all(creators.flatMap((creator) => {
     const slug = getString(creator, 'public_slug');

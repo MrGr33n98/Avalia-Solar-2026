@@ -1,3 +1,4 @@
+import { REVIEWS_ONLY_MVP } from '@/lib/mvp-reviews';
 import {
   Home,
   User,
@@ -27,7 +28,7 @@ export interface ReviewerNavItem {
   badge?: 'dot' | number;
 }
 
-export const reviewerNavItems: ReviewerNavItem[] = [
+const fullReviewerNavItems: ReviewerNavItem[] = [
   {
     id: 'dashboard',
     label: 'Meu painel',
@@ -156,6 +157,14 @@ export const reviewerNavItems: ReviewerNavItem[] = [
     analyticsKey: 'reviewer_nav_help',
   },
 ];
+
+/** Only overview and reviews are first-class tabs in the MVP. */
+export const reviewerNavItems: ReviewerNavItem[] = REVIEWS_ONLY_MVP
+  ? fullReviewerNavItems.filter(item => item.id === 'dashboard' || item.id === 'reviews')
+      .map(item => item.id === 'dashboard'
+        ? { ...item, label: 'Visão geral', shortLabel: 'Início' }
+        : { ...item, label: 'Minhas avaliações', shortLabel: 'Avaliações' })
+  : fullReviewerNavItems;
 
 /** Items para o bottom nav mobile (mobilePriority 1-5 + "Mais") */
 export const mobileBottomNavItems = reviewerNavItems.filter((item) => item.mobilePriority <= 5);
