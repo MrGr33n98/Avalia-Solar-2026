@@ -23,8 +23,16 @@ module Api
         rescue Pundit::NotAuthorizedError
           render json: { error: 'Você não tem permissão para realizar esta ação' }, status: :forbidden
         rescue StandardError => e
-          Rails.logger.error("Subscription show error: #{e.message}")
-          render json: { error: 'Erro interno ao consultar assinatura' }, status: :internal_server_error
+          Rails.logger.error(
+            "[BillingSubscription#show] request_id=#{request.request_id} " \
+            "company_id=#{params[:company_id]} error_class=#{e.class} " \
+            "message=#{e.message} trace=#{e.backtrace&.first(5)&.join(' | ')}"
+          )
+          render json: {
+            error: 'Erro interno ao consultar assinatura',
+            code: 'BILLING_SUBSCRIPTION_UNAVAILABLE',
+            request_id: request.request_id
+          }, status: :internal_server_error
         end
       end
     end
