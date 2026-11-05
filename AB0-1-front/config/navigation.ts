@@ -116,6 +116,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         description: 'Criar formulários, links e QR Codes de avaliação',
       },
       {
+        id: 'marketing-widgets',
+        label: 'Widgets de Reputação',
+        icon: ImageIcon,
+        context: ['operational', 'quick_access'],
+        description: 'Modelos de ranking, nota, estrelas e depoimentos para sites e materiais',
+      },
+      {
         id: 'trust-widget',
         label: 'Widget de Confiança',
         icon: ShieldCheck,
