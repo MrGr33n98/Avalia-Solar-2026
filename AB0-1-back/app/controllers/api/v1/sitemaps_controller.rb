@@ -49,7 +49,7 @@ module Api
           end
         }, status: :ok
       rescue StandardError => e
-        Rails.logger.error("[SitemapsController#services] #{'#{e.class}'}: #{'#{e.message}'}")
+        Rails.logger.error("[SitemapsController#services] #{e.class}: #{e.message}")
         render json: { data: [] }, status: :service_unavailable
       end
 
