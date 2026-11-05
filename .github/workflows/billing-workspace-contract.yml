@@ -10,6 +10,13 @@ on:
       - 'AB0-1-front/components/billing/**'
       - 'AB0-1-front/lib/billing/**'
       - 'AB0-1-front/__tests__/dashboard/**'
+      - 'AB0-1-back/app/controllers/api/v1/billing/**'
+      - 'AB0-1-back/app/policies/billing_policy.rb'
+      - 'AB0-1-back/app/serializers/billing/**'
+      - 'AB0-1-back/app/services/company_feature_access_resolver.rb'
+      - 'AB0-1-back/spec/policies/billing_policy_spec.rb'
+      - 'AB0-1-back/spec/requests/api/v1/billing/**'
+      - 'AB0-1-back/spec/services/company_feature_access_resolver_spec.rb'
       - 'AB0-1-back/app/services/entitlement_service.rb'
       - 'AB0-1-back/spec/services/entitlement_service_spec.rb'
       - '.github/workflows/billing-workspace-contract.yml'
@@ -82,4 +89,8 @@ jobs:
         run: |
           bundle exec rails db:create db:schema:load db:migrate
           bundle exec rails runner script/schema_contract_check.rb
-          bundle exec rspec spec/services/entitlement_service_spec.rb
+          bundle exec rspec \
+            spec/services/entitlement_service_spec.rb \
+            spec/services/company_feature_access_resolver_spec.rb \
+            spec/policies/billing_policy_spec.rb \
+            spec/requests/api/v1/billing/checkout_spec.rb
