@@ -341,6 +341,13 @@ export interface Company {
   email_public?: string;
   whatsapp?: string;
   whatsapp_enabled?: boolean;
+  quote_cta_enabled?: boolean;
+  cta_visibility?: {
+    preferences: { whatsapp_enabled: boolean; quote_cta_enabled: boolean };
+    availability: { quote: boolean; whatsapp: boolean; whatsapp_configured: boolean };
+    effective: { quote: boolean; whatsapp: boolean };
+    version: number;
+  };
   whatsapp_url?: string | null;
   phone_alt?: string;
   delivered_projects_score?: number;
