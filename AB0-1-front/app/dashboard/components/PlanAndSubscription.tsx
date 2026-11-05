@@ -310,7 +310,7 @@ export default function PlanAndSubscription({
                       </div>
                       <div className="text-sm font-medium sm:text-right">
                         <span className={enabled ? 'text-blue-700' : 'text-slate-500'}>
-                          {enabled ? isLimit ? 'Disponível' : 'Incluído' : entry.state === 'locked' ? 'Disponível no upgrade' : 'Indisponível'}
+                          {entry.state === 'unavailable' ? 'Consulta indisponível' : enabled ? isLimit ? 'Disponível' : 'Incluído' : entry.state === 'locked' ? 'Disponível no upgrade' : 'Indisponível'}
                         </span>
                       </div>
                     </div>
