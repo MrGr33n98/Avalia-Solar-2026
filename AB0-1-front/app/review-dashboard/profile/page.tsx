@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import type { ChangeEvent, ChangeEventHandler } from 'react';
 import Image from 'next/image';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
+import { CREATOR_EXPERIENCE_ENABLED } from '@/lib/mvp-reviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOptionalDashboardContext } from '../DashboardLayoutClient';
 import { reviewerProfileApi, reviewerSolutionsApi, usersApi } from '@/lib/api';
@@ -208,7 +209,7 @@ export default function MeuPerfilPage() {
         {saveStatus === 'error' && 'Não foi possível salvar. Suas alterações continuam nesta tela.'}
       </p>
 
-      <section
+      {CREATOR_EXPERIENCE_ENABLED && <section
         className="rounded-xl border border-slate-200 bg-white p-6"
         aria-labelledby="public-profile-title"
       >
@@ -325,7 +326,7 @@ export default function MeuPerfilPage() {
             </>
           )}
         </div>
-      </section>
+      </section>}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         {/* Form principal */}
@@ -575,7 +576,7 @@ export default function MeuPerfilPage() {
               Cancelar
             </button>
             <div className="flex gap-3">
-              <button
+              {CREATOR_EXPERIENCE_ENABLED && <button
                 type="button"
                 onClick={() => {
                   if (publicSlug) {
@@ -591,7 +592,7 @@ export default function MeuPerfilPage() {
               >
                 <Eye className="h-4 w-4" />
                 Pré-visualizar
-              </button>
+              </button>}
               <button
                 type="submit"
                 disabled={saving}

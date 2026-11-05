@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/AuthContext';
+import { REVIEWS_ONLY_MVP } from '@/lib/mvp-reviews';
 import {
   Sheet,
   SheetContent,
@@ -71,7 +72,7 @@ type DashboardNavItem = {
   notifications?: boolean;
 };
 
-export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }> = [
+const fullSidebarSections: Array<{ title: string; items: DashboardNavItem[] }> = [
   {
     title: 'Dashboard',
     items: [{ label: 'Meu Dashboard', href: '/review-dashboard', icon: Home }],
@@ -140,13 +141,24 @@ export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }
   },
 ];
 
-const bottomNav: DashboardNavItem[] = [
+export const sidebarSections: Array<{ title: string; items: DashboardNavItem[] }> = REVIEWS_ONLY_MVP
+  ? [{ title: 'Avaliações', items: [
+      { label: 'Visão geral', href: '/review-dashboard', icon: Home },
+      { label: 'Minhas avaliações', href: '/review-dashboard/reviews', icon: ClipboardList },
+    ] }]
+  : fullSidebarSections;
+
+const fullBottomNav: DashboardNavItem[] = [
   { label: 'Dashboard', href: '/review-dashboard', icon: Home },
   { label: 'Avaliações', href: '/review-dashboard/reviews', icon: ClipboardList },
   { label: 'Propostas', href: '/review-dashboard/proposals', icon: MessageCircle },
   { label: 'Reputação', href: '/review-dashboard#reputation', icon: Award },
   { label: 'Perfil', href: '/review-dashboard/profile', icon: UserRound },
 ];
+
+const bottomNav: DashboardNavItem[] = REVIEWS_ONLY_MVP
+  ? fullBottomNav.filter((item) => ['/review-dashboard', '/review-dashboard/reviews'].includes(item.href))
+  : fullBottomNav;
 
 export function Header({
   firstName = 'Felipe',
@@ -380,7 +392,7 @@ export type SidebarCollapsibleGroup = {
   items?: Array<{ label: string; href: string }>;
 };
 
-export const sidebarMenuGroups: SidebarCollapsibleGroup[] = [
+const fullSidebarMenuGroups: SidebarCollapsibleGroup[] = [
   { label: 'Dashboard', href: '/review-dashboard', icon: Home },
   {
     label: 'Conteúdo',
@@ -460,6 +472,13 @@ export const sidebarMenuGroups: SidebarCollapsibleGroup[] = [
     icon: Bell,
   },
 ];
+
+export const sidebarMenuGroups: SidebarCollapsibleGroup[] = REVIEWS_ONLY_MVP
+  ? [
+      { label: 'Visão geral', href: '/review-dashboard', icon: Home },
+      { label: 'Minhas avaliações', href: '/review-dashboard/reviews', icon: Star },
+    ]
+  : fullSidebarMenuGroups;
 
 function SidebarContent({
   repliesCount: _repliesCount,
@@ -603,7 +622,7 @@ export function MobileDashboardNav({ repliesCount }: { repliesCount: number }) {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-2 pb-[max(0.5rem,var(--safe-area-inset-bottom))] pt-2 shadow-[0_-10px_28px_-18px_rgba(15,23,42,0.35)] backdrop-blur-xl lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5">
+      <div className={REVIEWS_ONLY_MVP ? "mx-auto grid max-w-md grid-cols-2" : "mx-auto grid max-w-md grid-cols-5"}>
         {bottomNav.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;

@@ -84,7 +84,7 @@ function MiniKpiCard({
 }
 
 export default function AvaliacoesPage() {
-  const { reviews, reviewsLoading, reviewsError, summary, onRefresh } = useDashboardContext();
+  const { reviews, reviewsLoading, reviewsError, onRefresh } = useDashboardContext();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
@@ -95,12 +95,13 @@ export default function AvaliacoesPage() {
   const inAnalysis = reviews.filter(
     (r) => r.status === 'in_analysis' || r.status === 'pending'
   ).length;
-  const helpfulVotes = summary?.impact?.helpful_votes ?? null;
+  const rejectedCount = reviews.filter((r) => r.status === 'rejected').length;
 
   // Filter & Sort logic in-memory
   const filteredReviews = reviews
     .filter((r) => {
       if (statusFilter === 'all') return true;
+      if (statusFilter === 'in_review') return r.status === 'pending' || r.status === 'in_analysis';
       return r.status === statusFilter;
     })
     .sort((a, b) => {
@@ -179,11 +180,10 @@ export default function AvaliacoesPage() {
           icon={<Clock className="h-5 w-5 text-orange-500" />}
         />
         <MiniKpiCard
-          label="Votos úteis"
-          value={helpfulVotes === null ? 'Indisponível' : helpfulVotes}
-          caption="Feedback positivo"
-          icon={<ThumbsUp className="h-5 w-5 text-blue-600" />}
-          infoTooltip="Quantidade total de votos marcados como úteis por outros usuários em suas avaliações."
+          label="Rejeitadas"
+          value={rejectedCount}
+          caption="Avaliações não publicadas"
+          icon={<AlertCircle className="h-5 w-5 text-rose-500" />}
           highlight
         />
       </div>
@@ -212,12 +212,10 @@ export default function AvaliacoesPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full sm:w-auto h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-semibold text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
               >
-                <option value="all">Status: Todos</option>
-                <option value="approved">Aprovadas</option>
-                <option value="pending">Pendentes</option>
-                <option value="in_analysis">Em análise</option>
-                <option value="rejected">Rejeitadas</option>
-                <option value="archived">Arquivadas</option>
+                <option value="all">Todas ({totalReviews})</option>
+                <option value="approved">Publicadas ({approvedCount})</option>
+                <option value="in_review">Em análise ({inAnalysis})</option>
+                <option value="rejected">Rejeitadas ({rejectedCount})</option>
               </select>
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
             </div>

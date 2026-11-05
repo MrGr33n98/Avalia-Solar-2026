@@ -63,8 +63,8 @@ export function ReviewerSidebar() {
             ))}
           </ul>
 
-          {/* Separator */}
-          <Separator className="my-3 bg-slate-100" />
+          {/* Hide the divider when account links live only in the avatar menu. */}
+          {systemItems.length > 0 && <Separator className="my-3 bg-slate-100" />}
 
           {/* System nav */}
           <ul className="space-y-0.5">
