@@ -144,6 +144,40 @@ describe('ReviewCollectionHub & Children', () => {
     expect(screen.getByTestId('milestone-completed-count')).toHaveTextContent('Progresso indisponível');
   });
 
+  it('renders a single continuous rail with three circular milestones and eight satellites', () => {
+    render(<ReputationMilestones approvedReviewsCount={0} />);
+
+    const rail = screen.getByTestId('milestone-timeline');
+    expect(rail).toBeInTheDocument();
+    expect(rail.querySelectorAll('[data-testid^="milestone-hint-"]')).toHaveLength(8);
+    for (const id of ['first_review', 'ranking_ready', 'community_milestone']) {
+      const node = screen.getByTestId('milestone-' + id);
+      expect(node).toHaveClass('rounded-full');
+      expect(node).not.toHaveClass('rounded-lg');
+    }
+    expect(screen.queryByTestId('milestone-info-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('milestone-completed-count')).toHaveTextContent('0/3');
+  });
+
+  it('opens contextual tips from floating mini-icons without changing completed milestones', () => {
+    render(<ReputationMilestones approvedReviewsCount={1} />);
+
+    fireEvent.click(screen.getByTestId('milestone-hint-first_review-0'));
+    expect(screen.getByTestId('milestone-info-panel')).toHaveTextContent('Convide clientes');
+    expect(screen.getByTestId('milestone-first_review')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('milestone-completed-count')).toHaveTextContent('1/3');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar detalhes do marco' }));
+    expect(screen.queryByTestId('milestone-info-panel')).not.toBeInTheDocument();
+  });
+
+  it('keeps unverified marketing statistics out of tooltips and details', () => {
+    render(<ReputationMilestones approvedReviewsCount={0} />);
+    const journey = screen.getByTestId('review-journey');
+    expect(journey.textContent).not.toMatch(/65%|100x|85%|tráfego orgânico dobra/i);
+    expect(journey).toHaveTextContent('não concedem automaticamente selos');
+  });
+
   describe('ReviewButtonEmbed', () => {
     it('escapes company-supplied HTML before exporting the embed snippet', () => {
       render(<ReviewButtonEmbed formToken="tok-widget" companyName={'Empresa <script>alert("x")</script> & Solar'} />);
