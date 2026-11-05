@@ -49,7 +49,15 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def show
-    render json: serialize_review(@review)
+    # Avaliações não publicadas pertencem somente ao autor ou à moderação.
+    unless @review.approved? || @review.user_id == current_user&.id || current_user&.admin?
+      return render json: { error: 'Avaliação indisponível' }, status: :not_found
+    end
+
+    render json: serialize_review(@review).merge(
+      moderation_notes: @review.user_id == current_user&.id ? @review.moderation_notes : nil,
+      moderated_at: @review.user_id == current_user&.id ? @review.moderated_at : nil
+    )
   end
 
   def mine
