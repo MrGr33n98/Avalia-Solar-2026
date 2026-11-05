@@ -9,7 +9,7 @@ import { RequestReviewEmailDrawer } from './RequestReviewEmailDrawer';
 import { ReputationMilestones } from './ReputationMilestones';
 import { ReviewButtonEmbed } from './ReviewButtonEmbed';
 import { ReviewCollectionAnalytics } from './ReviewCollectionAnalytics';
-import { PlusCircle, QrCode, Sparkles } from 'lucide-react';
+import { PlusCircle, QrCode } from 'lucide-react';
 
 interface ReviewCollectionHubProps {
   forms: ShareableReviewForm[];
@@ -41,7 +41,9 @@ export function ReviewCollectionHub({
 
   if (!forms || forms.length === 0) {
     return (
-      <Card className="rounded-2xl border-dashed border-slate-300 bg-white">
+      <div className="space-y-4">
+        <ReputationMilestones approvedReviewsCount={approvedReviewsCount} />
+        <Card className="rounded-xl border-dashed border-slate-300 bg-white">
         <CardContent className="flex min-h-[300px] flex-col items-center justify-center p-8 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
             <QrCode className="h-7 w-7" />
@@ -61,17 +63,18 @@ export function ReviewCollectionHub({
             Criar Primeiro Formulário
           </Button>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
+      <ReputationMilestones approvedReviewsCount={approvedReviewsCount} />
       {/* Seletor de Formulário (se houver mais de 1) */}
       {forms.length > 1 && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-blue-600" />
             <span className="text-xs font-bold text-slate-800">
               Formulário ativo para compartilhamento:
             </span>
@@ -103,9 +106,6 @@ export function ReviewCollectionHub({
           onTrack={onTrackAction}
         />
       )}
-
-      {/* Marcos de Reputação (1 / 10 / 30 reviews) */}
-      <ReputationMilestones approvedReviewsCount={approvedReviewsCount} />
 
       {/* Funil de Atribuição por Canal (QW-08) */}
       {selectedForm && companyId && (
