@@ -25,7 +25,7 @@ module Api
         # A existência de um badge no catálogo NÃO equivale à sua concessão.
         company_id = params[:company_id].to_s
         requested = company_id.present?
-        company = if requested && company_id.match?(/\\A[0-9]+\\z/)
+        company = if requested && company_id.match?(/\A[0-9]+\z/)
                     ::Company.active.find_by(id: company_id)
                   end
         award_valid = company.present? && ::CompanyBadge.exists?(company_id: company.id, badge_id: badge.id)
