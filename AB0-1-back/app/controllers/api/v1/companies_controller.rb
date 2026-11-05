@@ -176,15 +176,35 @@ module Api
       end
 
       # GET /api/v1/companies/:id/services/:slug
+      # Somente dados reais e públicos. Reviews de empresa/categoria não são atribuídas ao serviço.
       def service_detail
-        service = @company.company_services.active_status.find_by(slug: params[:slug])
+        return render json: { code: 'NOT_FOUND', message: 'Empresa não encontrada' }, status: :not_found unless @company
+
+        service = @company.company_services.active_status.includes(images_attachments: :blob).find_by(slug: params[:slug])
         return render json: { code: 'NOT_FOUND', message: 'Serviço não encontrado' }, status: :not_found unless service
 
-        image_url = if service.images.attached?
-                      options = Rails.application.routes.default_url_options.dup
-                      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-                      Rails.application.routes.url_helpers.rails_storage_proxy_url(service.images.first, options)
-                    end
+        options = Rails.application.routes.default_url_options.dup
+        options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+        image_urls = service.images.map do |attachment|
+          Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
+        end
+
+        reviews_scope = Review.approved_only.where(
+          company_id: @company.id, reviewable_type: 'CompanyService', reviewable_id: service.id
+        )
+        reviews_count = reviews_scope.count
+        reviews_avg = reviews_count.positive? ? reviews_scope.average(:rating).to_f.round(1) : nil
+        review_counts = reviews_scope.group(:rating).count
+        reviews = reviews_scope.includes(:user).order(created_at: :desc).limit(6).map do |review|
+          {
+            id: review.id,
+            rating: review.rating.to_f,
+            headline: review.headline,
+            comment: review.comment,
+            author: review.public_reviewer_name,
+            created_at: review.created_at.iso8601
+          }
+        end
 
         render json: {
           data: {
@@ -202,13 +222,24 @@ module Api
             price_from: service.price_from&.to_f,
             coverage: service.coverage,
             status: service.status,
-            image_url: image_url
+            image_url: image_urls.first,
+            image_urls: image_urls,
+            video_links: service.video_links,
+            review_summary: {
+              count: reviews_count,
+              average: reviews_avg,
+              distribution: (1..5).to_h { |rating| [rating, review_counts.sum { |score, qty| score.to_i == rating ? qty : 0 }] }
+            },
+            reviews: reviews,
+            created_at: service.created_at,
+            updated_at: service.updated_at
           }
         }, status: :ok
       rescue StandardError => e
-        Rails.logger.error("[CompaniesController#service_detail] company_id=#{@company&.id} error=#{e.message}")
+        Rails.logger.error("[CompaniesController#service_detail] company_id=#{'#{@company&.id}'} error=#{'#{e.class}'}: #{'#{e.message}'}")
         render json: { code: 'SERVICE_ERROR', message: 'Erro ao carregar detalhes do serviço' }, status: :internal_server_error
       end
+
 
       # GET /api/v1/companies/:id/feature_access
       def feature_access
