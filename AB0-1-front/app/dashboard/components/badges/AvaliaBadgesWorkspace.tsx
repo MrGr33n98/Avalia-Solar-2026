@@ -89,8 +89,8 @@ export default function AvaliaBadgesWorkspace({ company, companyId }: AvaliaBadg
 
   const selected = AVALIA_BADGES_2026.find((item) => item.id === selectedId) || AVALIA_BADGES_2026[0];
   const selectedAward = findOfficialAward(selected, awards);
-  const verificationPath = selectedAward ? officialBadgeUrl(selectedAward) : null;
-  const embed = selectedAward ? badgeEmbedHtml(selected, selectedAward) : null;
+  const verificationPath = selectedAward ? officialBadgeUrl(selectedAward, resolvedCompanyId) : null;
+  const embed = selectedAward ? badgeEmbedHtml(selected, selectedAward, resolvedCompanyId) : null;
 
   const hasReviewMetric = typeof company?.reviews_count === 'number' &&
     Number.isFinite(company.reviews_count) && company.reviews_count >= 0;
