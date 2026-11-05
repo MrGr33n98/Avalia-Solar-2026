@@ -104,4 +104,11 @@ export const intentSyncApi = {
     fetchApi<{ jobs: ActivationSyncJob[] }>('/demand_activation/syncs', {
       params: context(companyId), silentStatusCodes: [403],
     }),
+
+  audit: (companyId: string | number) =>
+    fetchApi<{ events: { id: number; action: string; subject_type: string; subject_id: number; created_at: string }[] }>(
+      '/demand_activation/audit', {
+        params: context(companyId), silentStatusCodes: [403],
+      }
+    ),
 };
