@@ -108,10 +108,15 @@ module Api
         # Dados escalares são separados dos arquivos para evitar que um PATCH
         # sobrescreva acidentalmente a galeria existente do Active Storage.
         def service_params
-          params.require(:service).permit(
+          submitted = params.require(:service)
+          permitted = submitted.permit(
             :name, :slug, :category_id, :description, :price_from, :status,
             coverage: [], video_links: []
           )
+          # Multipart representa a lista vazia de vídeos com um campo em branco.
+          # Remover esse marcador antes da validação evita bloquear a edição.
+          permitted[:video_links] = Array(submitted[:video_links]).reject(&:blank?) if submitted.key?(:video_links)
+          permitted
         end
 
         def service_media
