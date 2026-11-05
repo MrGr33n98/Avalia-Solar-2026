@@ -38,6 +38,4 @@ class CompanyService < ApplicationRecord
       errors.add(:video_links, 'contém URL inválida')
     end
   end
-
-
 end
