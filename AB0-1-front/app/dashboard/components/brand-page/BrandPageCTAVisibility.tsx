@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Company } from '@/lib/api';
 import { fetchApi } from '@/lib/api';
+import { track } from '@/lib/analytics/lazy';
 import { canUsePaidConversion } from '@/lib/feature-access';
 import { useToast } from '@/hooks/use-toast';
 
@@ -43,6 +44,12 @@ export default function BrandPageCTAVisibility({ company, companyId }: {
       setSelection({
         quote_cta_enabled: updated.quote_cta_enabled,
         whatsapp_enabled: updated.whatsapp_enabled,
+      });
+      void track('company_cta_visibility_updated', {
+        company_id: companyId,
+        cta_type: key === 'quote_cta_enabled' ? 'quote' : 'whatsapp',
+        enabled: checked,
+        source: 'dashboard_company_settings',
       });
       toast({ title: 'Visibilidade atualizada', description: 'Os botões da página pública seguem a nova preferência.' });
     } catch {
