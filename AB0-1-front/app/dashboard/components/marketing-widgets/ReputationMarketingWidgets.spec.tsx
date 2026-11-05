@@ -80,4 +80,46 @@ describe('Widgets de Reputação (mobile-first)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeDisabled());
     expect(screen.getByLabelText('HTML gerado')).toHaveValue('');
   });
+
+  it('renders three G2-sized badges in the catalog and circular company logos in the summary', async () => {
+    stats.mockResolvedValue({ stats: { approved_reviews: 3, average_rating: 3.7 }, data_status: 'complete' });
+    const withLogo = {
+      ...company,
+      logo_url: 'https://api.avaliasolar.com.br/rails/active_storage/blobs/weg-logo.png',
+    };
+    render(<ReputationMarketingWidgets company={withLogo} companyId={372} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeEnabled());
+    for (const variant of ['blue', 'navy', 'light']) {
+      const badge = screen.getByTestId('marketing-star-badge-' + variant);
+      expect(badge).toHaveStyle({ width: '120px', height: '54px' });
+    }
+    const avatars = screen.getAllByTestId('marketing-widget-company-avatar');
+    expect(avatars.length).toBeGreaterThanOrEqual(4);
+    expect(avatars[0].querySelector('img')).toHaveAttribute('src', withLogo.logo_url);
+  });
+
+  it('changes the exported star badge variant without changing the approved rating', async () => {
+    stats.mockResolvedValue({ stats: { approved_reviews: 3, average_rating: 3.7 }, data_status: 'complete' });
+    render(<ReputationMarketingWidgets company={company} companyId={372} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeEnabled());
+    fireEvent.click(screen.getByTestId('select-widget-stars'));
+    expect(screen.getByTestId('star-variant-chooser')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('choose-star-variant-navy'));
+    expect(screen.getByTestId('choose-star-variant-navy')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('background:#0A1F44'));
+    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('width:120px;height:54px'));
+
+    fireEvent.click(screen.getByTestId('choose-star-variant-light'));
+    expect(screen.getByTestId('choose-star-variant-light')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('background:#FFFFFF'));
+    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('3,7'));
+  });
+
+  it('uses a safe initials fallback and does not publish stars with no approved reviews', async () => {
+    render(<ReputationMarketingWidgets company={{ ...company, logo_url: 'javascript:alert(1)' }} companyId={372} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeDisabled());
+    expect(screen.getAllByText('Sem avaliações').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('marketing-widget-company-avatar')[0].querySelector('img')).toBeNull();
+  });
 });
