@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { buildPublicReviewUrl } from '@/lib/review-forms/urls';
 import { buildApiUrl } from '@/lib/api-config';
+import { ReviewCollectionIcon, type ReviewCollectionIconName } from '@/components/reviews/ReviewCollectionIcon';
 
 export interface ShareableReviewForm {
   id: number;
@@ -22,14 +23,8 @@ interface ReviewShareCardProps {
   onTrack?: (event: string, meta?: Record<string, unknown>) => void;
 }
 
-const ICON_SPRITE = '/assets/icons/review-collection/avalia-solar-icons-sprite.svg';
-
-function ActionIcon({ name, size = 19, inverse = false }: { name: string; size?: number; inverse?: boolean }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false" className={inverse ? 'shrink-0 brightness-0 invert' : 'shrink-0'}>
-      <use href={ICON_SPRITE + '#' + name} />
-    </svg>
-  );
+function ActionIcon({ name, size = 19, inverse = false }: { name: ReviewCollectionIconName; size?: number; inverse?: boolean }) {
+  return <ReviewCollectionIcon name={name} size={size} className={inverse ? 'brightness-0 invert' : ''} />;
 }
 
 /**
