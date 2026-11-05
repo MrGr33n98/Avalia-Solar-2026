@@ -25,6 +25,19 @@ RSpec.describe CompanyFeatureAccessResolver, type: :service do
         )
       end
 
+      it 'keeps healthy feature data when one runtime resolver fails' do
+        allow(company).to receive(:quote_feature_enabled?).and_raise(StandardError, 'runtime unavailable')
+
+        access = described_class.call(company: company)
+
+        expect(access['custom_ctas']).to include(
+          'state' => 'unavailable',
+          'value' => nil,
+          'reason' => 'temporarily_unavailable'
+        )
+        expect(access['show_alternatives']).to include('state' => 'enabled', 'value' => true)
+      end
+
       it 'allows admins to manually enable direct chat through the company toggle' do
         company.update!(p2p_chat_enabled: true)
 

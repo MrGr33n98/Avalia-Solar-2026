@@ -22,6 +22,19 @@ class CompanyFeatureAccessResolver
   def call
     PlanFeatureCatalog.known_keys.each_with_object({}) do |key, memo|
       memo[key] = access_payload_for(key)
+    rescue StandardError => e
+      # Uma feature inconsistente nao deve derrubar todo o painel de planos.
+      # Falha fechada: nunca presumir que o recurso esta habilitado.
+      Rails.logger.error(
+        "[CompanyFeatureAccessResolver] company_id=#{company.id} feature=#{key} " \
+        "error=#{e.class}: #{e.message}"
+      )
+      memo[key] = {
+        'state' => 'unavailable',
+        'value' => nil,
+        'source' => 'resolver_error',
+        'reason' => 'temporarily_unavailable'
+      }
     end
   end
 

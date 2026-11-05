@@ -741,6 +741,7 @@ export interface Review {
   user_id?: number;
   product_id?: number;
   company_id?: number;
+  service_id?: number;
   created_at: string;
   updated_at?: string;
   user?: {
@@ -754,7 +755,9 @@ export interface Review {
   company?: string | { id: number; name: string; logo_url?: string | null; slug?: string };
   reply?: string;
   replied_at?: string;
-  status?: 'pending' | 'approved' | 'rejected' | 'in_analysis' | 'draft';
+  status?: 'pending' | 'approved' | 'rejected' | 'in_analysis' | 'draft' | 'archived';
+  moderation_notes?: string | null;
+  moderated_at?: string | null;
   capture_flow_source?: 'profile' | 'lead' | 'chat';
   verified?: boolean;
   featured?: boolean;
@@ -3100,7 +3103,7 @@ export const reviewsApi = {
     };
 
     try {
-      if (GRAPHQL_ENABLED && apolloClient) {
+      if (GRAPHQL_ENABLED && apolloClient && !params.prefer_rest) {
         const { data } = await apolloClient.query({
           query: gql`
             query GetMyReviews($page: Int, $perPage: Int) {

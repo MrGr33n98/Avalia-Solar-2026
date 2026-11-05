@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Award, CheckCircle2, ShieldCheck, Calendar, Tag, Building2, ArrowLeft, ExternalLink, Share2 } from 'lucide-react';
 import { publicBadgesApi } from '@/lib/api-public';
+import { AVALIA_BADGES_2026 } from '@/lib/badges/avalia-badges-2026';
 import { absoluteUrl } from '@/lib/site';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { Button } from '@/components/ui/button';
@@ -12,10 +13,11 @@ import { Badge } from '@/components/ui/badge';
 
 interface Props {
   params: { slug: string };
+  searchParams?: { company_id?: string };
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const data = await publicBadgesApi.getBySlug(params.slug);
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const data = await publicBadgesApi.getBySlug(params.slug, { companyId: searchParams?.company_id });
   if (!data?.badge) {
     return {
       title: 'Selo não encontrado | Avalia Solar',
@@ -26,6 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const badge = data.badge;
   const canonicalUrl = absoluteUrl(`/badges/${badge.public_slug || params.slug}`);
   const title = `${badge.name} | Verificação Oficial Avalia Solar`;
+  const catalogArt = AVALIA_BADGES_2026.find((item) => item.id === badge.public_slug)?.image;
   const description =
     badge.description ||
     `Registro oficial e verificação de autenticidade do selo ${badge.name} emitido pelo ecossistema Avalia Solar.`;
@@ -33,6 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    robots: searchParams?.company_id && !data.award_valid ? { index: false, follow: false } : undefined,
     alternates: {
       canonical: canonicalUrl,
     },
@@ -42,26 +46,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: canonicalUrl,
       type: 'website',
       siteName: 'Avalia Solar',
-      images: badge.image_url ? [{ url: badge.image_url, alt: badge.name }] : undefined,
+      images: badge.image_url || catalogArt ? [{ url: badge.image_url || absoluteUrl(catalogArt!), alt: badge.name }] : undefined,
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: badge.image_url ? [badge.image_url] : undefined,
+      images: badge.image_url || catalogArt ? [badge.image_url || absoluteUrl(catalogArt!)] : undefined,
     },
   };
 }
 
-export default async function BadgeVerificationPage({ params }: Props) {
-  const data = await publicBadgesApi.getBySlug(params.slug);
+export default async function BadgeVerificationPage({ params, searchParams }: Props) {
+  const data = await publicBadgesApi.getBySlug(params.slug, { companyId: searchParams?.company_id });
 
   if (!data?.badge) {
     notFound();
   }
 
-  const { badge, featured_companies = [] } = data;
+  const { badge, featured_companies = [], award_valid, awarded_company } = data;
+  const checkingCompany = Boolean(searchParams?.company_id);
+  const catalogArt = AVALIA_BADGES_2026.find((item) => item.id === badge.public_slug)?.image;
   const canonicalUrl = absoluteUrl(`/badges/${badge.public_slug || params.slug}`);
+  const verificationUrl = checkingCompany ? canonicalUrl + '?company_id=' + encodeURIComponent(searchParams!.company_id!) : canonicalUrl;
   const verificationDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -118,10 +125,16 @@ export default async function BadgeVerificationPage({ params }: Props) {
             <ArrowLeft className="h-4 w-4" />
             Voltar ao ecossistema
           </Link>
-          <Badge variant="outline" className="gap-1.5 py-1 px-3 border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-bold text-xs uppercase tracking-wide">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Selo Válido & Ativo
-          </Badge>
+          {checkingCompany ? (
+            <Badge variant="outline" className={award_valid
+              ? 'gap-1.5 border-emerald-300 bg-emerald-50 text-emerald-800'
+              : 'gap-1.5 border-amber-300 bg-amber-50 text-amber-900'}>
+              {award_valid ? <CheckCircle2 className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+              {award_valid ? 'Concessão confirmada' : 'Concessão não confirmada'}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="border-slate-300 text-slate-600">Selo do catálogo oficial</Badge>
+          )}
         </div>
 
         {/* Hero Card do Selo */}
@@ -130,9 +143,9 @@ export default async function BadgeVerificationPage({ params }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
               <div className="flex justify-center">
                 <div className="relative w-48 h-48 sm:w-56 sm:h-56 p-4 rounded-2xl bg-gradient-to-b from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center border border-slate-200 dark:border-slate-800 shadow-inner">
-                  {badge.image_url ? (
+                  {badge.image_url || catalogArt ? (
                     <Image
-                      src={badge.image_url}
+                      src={badge.image_url || catalogArt!}
                       alt={badge.name}
                       width={200}
                       height={200}
@@ -176,6 +189,15 @@ export default async function BadgeVerificationPage({ params }: Props) {
                   )}
                 </div>
 
+                {checkingCompany && (
+                  <div role="status" className={award_valid
+                    ? 'rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-900'
+                    : 'rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-950'}>
+                    {award_valid && awarded_company
+                      ? 'Concessão oficial confirmada para: ' + awarded_company.name
+                      : 'Não há concessão ativa desse selo para a empresa informada. A existência da arte não comprova a conquista.'}
+                  </div>
+                )}
                 <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed pt-2">
                   {badge.description ||
                     'Este selo atesta reconhecimento formal e destaque no setor de energia solar, validado conforme critérios de governança e auditoria técnica do Avalia Solar.'}
@@ -183,7 +205,7 @@ export default async function BadgeVerificationPage({ params }: Props) {
 
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
                   <div>
-                    Verificação auditada em: <strong className="text-slate-700 dark:text-slate-200">{verificationDate}</strong>
+                    Consulta realizada em: <strong className="text-slate-700 dark:text-slate-200">{verificationDate}</strong>
                   </div>
                   <div className="font-mono text-[11px] truncate max-w-xs">
                     ID: {badge.public_slug || badge.id}
@@ -252,7 +274,7 @@ export default async function BadgeVerificationPage({ params }: Props) {
             A autenticidade deste selo pode ser auditada publicamente pela URL canônica permanente:
           </p>
           <p className="text-xs font-mono text-primary font-semibold select-all break-all">
-            {canonicalUrl}
+            {verificationUrl}
           </p>
         </div>
       </div>

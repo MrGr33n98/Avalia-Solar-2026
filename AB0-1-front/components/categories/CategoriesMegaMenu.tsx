@@ -14,7 +14,6 @@ import {
 import {
   ArrowRight,
   Headphones,
-  Sparkles,
   Zap,
 } from 'lucide-react';
 
@@ -752,28 +751,7 @@ export const CategoriesMegaMenu:
                     lg:px-6
                   "
                 >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="
-                        flex
-                        h-9
-                        w-9
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-xl
-                        border
-                        border-blue-100
-                        bg-blue-50
-                        text-blue-600
-                      "
-                    >
-                      <Sparkles
-                        className="h-4 w-4"
-                        aria-hidden="true"
-                      />
-                    </span>
-
+                  <div className="flex items-center">
                     <div>
                       <p className="text-sm font-bold tracking-[-0.01em] text-slate-950">
                         Explorar

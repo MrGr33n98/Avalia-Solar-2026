@@ -15,6 +15,10 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
     @reviews = @reviews.where(user_id: params[:user_id].to_i) if params[:user_id].present?
 
+    if params[:service_id].present?
+      @reviews = @reviews.where(reviewable_type: 'CompanyService', reviewable_id: params[:service_id].to_i)
+    end
+
     # Filtra por reviews do usuário autenticado, se solicitado
     if ActiveModel::Type::Boolean.new.cast(params[:mine])
       return if authenticate_api_user == false
@@ -45,7 +49,15 @@ class Api::V1::ReviewsController < Api::V1::BaseController
   end
 
   def show
-    render json: serialize_review(@review)
+    # Avaliações não publicadas pertencem somente ao autor ou à moderação.
+    unless @review.approved? || (current_user && @review.user_id == current_user.id) || current_user&.admin?
+      return render json: { error: 'Avaliação indisponível' }, status: :not_found
+    end
+
+    render json: serialize_review(@review).merge(
+      moderation_notes: current_user && @review.user_id == current_user.id ? @review.moderation_notes : nil,
+      moderated_at: current_user && @review.user_id == current_user.id ? @review.moderated_at : nil
+    )
   end
 
   def mine
@@ -54,7 +66,12 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       review_criterion_scores: :rating_criterion
     ).order(created_at: :desc)
     render json: {
-      data: @reviews.map { |r| serialize_review(r) }
+      data: @reviews.map do |review|
+        serialize_review(review).merge(
+          moderation_notes: review.moderation_notes,
+          moderated_at: review.moderated_at
+        )
+      end
     }
   end
 
@@ -68,6 +85,17 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     permitted_review_params[:buyer_tip] ||= editorial_metadata[:buyer_tip] || editorial_metadata['buyer_tip']
     permitted_review_params[:pros] ||= []
     permitted_review_params[:cons] ||= []
+    # O serviço é resolvido e validado no servidor; nunca confiar no company_id enviado isoladamente.
+    service = nil
+    if params.dig(:review, :service_id).present?
+      service = CompanyService.active_status.find_by(
+        id: params.dig(:review, :service_id), company_id: permitted_review_params[:company_id]
+      )
+      unless service
+        return render json: { errors: ['Serviço não encontrado nesta empresa.'] }, status: :unprocessable_entity
+      end
+      permitted_review_params[:category_id] = service.category_id
+    end
     review_media_ids = permitted_review_params.delete(:review_media_ids).to_a.map(&:to_i).uniq
     metadata_with_email = (permitted_review_params[:metadata] || {}).merge(reviewer_email: current_user.email)
 
@@ -76,7 +104,9 @@ class Api::V1::ReviewsController < Api::V1::BaseController
                              user_id: current_user.id,
                              is_legacy: permitted_review_params[:category_id].blank?,
                              capture_flow_source: permitted_review_params[:capture_flow_source].presence || 'profile',
-                             metadata: metadata_with_email
+                             metadata: metadata_with_email,
+                             reviewable_type: service ? 'CompanyService' : nil,
+                             reviewable_id: service&.id
                            ))
       @review.rating = params[:review][:rating].to_i if editorial_metadata.present?
       @review.is_legacy = false if editorial_metadata.present?
@@ -132,20 +162,40 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
   def update
     if @review.user_id == current_user.id
-      # User updating their own review
-      if @review.update(review_params)
-        render json: serialize_review(@review.reload)
-      else
-        render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
+      # A edição do autor não pode publicar conteúdo sem passar pela moderação.
+      unless %w[rejected pending in_analysis].include?(@review.status)
+        return render json: { errors: ['Esta avaliação não pode ser editada diretamente. A atualização de avaliações publicadas exige revisão versionada.'] }, status: :unprocessable_entity
       end
+
+      editable = params.require(:review).permit(:rating, :headline, :comment, :buyer_tip, pros: [], cons: [])
+      if editable.empty?
+        return render json: { errors: ['Informe um campo de avaliação para atualizar.'] }, status: :unprocessable_entity
+      end
+
+      @review.with_lock do
+        previous_status = @review.status
+        previous_content = @review.attributes.slice('rating', 'headline', 'comment', 'buyer_tip', 'pros', 'cons')
+        @review.update!(editable.to_h.merge(
+          status: 'pending', moderation_notes: nil, moderated_at: nil,
+          moderated_by_type: nil, moderated_by_id: nil
+        ))
+        @review.review_audit_events.create!(
+          actor: current_user,
+          event_type: previous_status == 'rejected' ? 'review_resubmitted' : 'review_updated_by_author',
+          previous_value: previous_content.merge('status' => previous_status),
+          new_value: @review.attributes.slice('rating', 'headline', 'comment', 'buyer_tip', 'pros', 'cons', 'status')
+        )
+      end
+      render json: serialize_review(@review.reload).merge(moderation_notes: @review.moderation_notes)
     elsif current_user.company_user? && current_user.active_membership_for?(@review.company_id)
-      # Company replying to a review
       service = Reviews::ReplyService.new(review: @review, actor: current_user)
       @review.reply_active? ? service.update!(reply_params[:reply]) : service.create!(reply_params[:reply])
       render json: serialize_review(@review.reload)
     else
       render json: { error: 'Forbidden' }, status: :forbidden
     end
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   rescue Reviews::ReplyService::ReplyError => e
     render json: { errors: [e.message] }, status: :unprocessable_entity
   end
@@ -191,6 +241,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       user_id: review.user_id,
       company_id: review.company_id,
       category_id: review.category_id,
+      service_id: review.reviewable_type == 'CompanyService' ? review.reviewable_id : nil,
       category_name: review.category&.name,
       category: review.category ? { id: review.category.id, name: review.category.name, slug: review.category.seo_url } : nil,
       status: review.status,

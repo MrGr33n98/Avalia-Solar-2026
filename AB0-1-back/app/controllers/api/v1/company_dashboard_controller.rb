@@ -1038,8 +1038,17 @@ module Api
         subscription_data = ::EntitlementService.call(company: @company)
         render json: subscription_data, status: :ok
       rescue StandardError => e
-        Rails.logger.error("[CompanyDashboard#subscription] #{e.class}: #{e.message}")
-        render json: { error: 'Internal server error' }, status: :internal_server_error
+        Rails.logger.error(
+          "[CompanyDashboard#subscription] request_id=#{request.request_id} " \
+          "company_id=#{@company&.id} user_id=#{current_user&.id} " \
+          "error_class=#{e.class} message=#{e.message} " \
+          "trace=#{e.backtrace&.first(5)&.join(' | ')}"
+        )
+        render json: {
+          error: 'Não foi possível consultar os recursos da empresa',
+          code: 'ENTITLEMENTS_UNAVAILABLE',
+          request_id: request.request_id
+        }, status: :service_unavailable
       end
 
       # GET /api/v1/company_dashboard/stats
@@ -2565,12 +2574,23 @@ module Api
         today = Time.zone.today
         requested_preset = params[:preset].presence
         days_param = params[:days].presence
-        preset = requested_preset || preset_from_days(days_param || default_days)
+        # Datas ISO explicitas tem precedencia sobre o preset padrao.
+        # Um preset explicitamente escolhido pelo cliente continua prioritario.
+        has_explicit_dates = params[:from].present? || params[:to].present?
+        preset = requested_preset || (has_explicit_dates ? 'custom' : preset_from_days(days_param || default_days))
 
         if preset != 'custom' && %w[7d 30d 90d].include?(preset)
           days = preset.delete_suffix('d').to_i
           to_day = today
           from_day = to_day - (days - 1)
+        elsif requested_preset.blank? && days_param.present? &&
+              days_param.to_s.match?(/\A[0-9]{1,3}\z/) && days_param.to_i.between?(1, 365)
+          # Clientes legados enviam ?days=60 ou ?days=180 sem from/to.
+          # Aceitar a janela relativa valida, preservando o intervalo real.
+          days = days_param.to_i
+          to_day = today
+          from_day = to_day - (days - 1)
+          preset = 'custom'
         else
           from_param = params[:from].presence
           to_param = params[:to].presence

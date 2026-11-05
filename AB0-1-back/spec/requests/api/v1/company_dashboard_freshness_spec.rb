@@ -26,6 +26,20 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
     )
   end
 
+  describe 'GET /api/v1/company_dashboard/subscription' do
+    it 'returns an opaque correlated error when entitlement resolution fails' do
+      allow(EntitlementService).to receive(:call).and_raise(StandardError, 'private diagnostic')
+
+      get '/api/v1/company_dashboard/subscription', params: { company_id: company.id }
+
+      expect(response).to have_http_status(:service_unavailable)
+      json = JSON.parse(response.body)
+      expect(json['code']).to eq('ENTITLEMENTS_UNAVAILABLE')
+      expect(json['request_id']).to be_present
+      expect(json['error']).not_to include('private diagnostic')
+    end
+  end
+
   describe 'GET /api/v1/company_dashboard/analytics/overview' do
     it 'includes freshness metadata' do
       get '/api/v1/company_dashboard/analytics/overview'
@@ -85,7 +99,8 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json).to include('views' => 1, 'range' => { 'from' => selected_day.iso8601, 'to' => selected_day.iso8601 })
+      expect(json).to include('views' => 1)
+      expect(json['range']).to include('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
     end
 
     it 'rejects an invalid custom analytics range' do
@@ -106,6 +121,22 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
       expect(json).to have_key('last_aggregated_at')
       expect(json).to have_key('data_freshness_seconds')
       expect(json['data_source']).to eq('company_daily_stats_unavailable')
+    end
+
+    it 'accepts 60-day relative ranges used by legacy clients without from/to' do
+      get '/api/v1/company_dashboard/analytics/timeseries',
+          params: { company_id: company.id, days: 60 }
+
+      expect(response).to have_http_status(:ok)
+      range = JSON.parse(response.body).fetch('range')
+      expect(Date.iso8601(range.fetch('to')) - Date.iso8601(range.fetch('from'))).to eq(59)
+    end
+
+    it 'rejects relative ranges longer than 365 days' do
+      get '/api/v1/company_dashboard/analytics/timeseries',
+          params: { company_id: company.id, days: 366 }
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
 
     it 'flags unavailable canonical source explicitly' do
@@ -167,7 +198,7 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json['range']).to eq('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
+      expect(json['range']).to include('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
       expect(json['data']).to include(hash_including('date' => selected_day.iso8601, 'views' => 1))
     end
 

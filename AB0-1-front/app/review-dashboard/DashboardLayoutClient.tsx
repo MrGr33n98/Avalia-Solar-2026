@@ -210,7 +210,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
             setReviews([]);
             return;
           }
-          const response = await reviewsApi.listMine({ per_page: 20 });
+          const response = await reviewsApi.listMine({ per_page: 100, prefer_rest: true });
           setReviews(
             response.sort(
               (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

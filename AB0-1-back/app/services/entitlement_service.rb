@@ -46,12 +46,33 @@ class EntitlementService
     @company = company
   end
 
+  # Only counters backed by existing, tenant-scoped usage queries are published.
+  MEASURABLE_FEATURE_KEYS = %w[
+    company_categories_limit service_area_states_limit
+    service_area_cities_limit featured_products
+  ].freeze
+
   def call
     features = CompanyFeatureAccessResolver.call(company: @company)
     plan_tier = @company.respond_to?(:inferred_plan_tier) ? @company.inferred_plan_tier : 'free'
 
+    usage_values = MEASURABLE_FEATURE_KEYS.each_with_object({}) do |key, values|
+      next unless features.dig(key, 'value').is_a?(Numeric)
+
+      begin
+        values[key] = usage(key)
+      rescue StandardError => e
+        # A indisponibilidade de uma metrica nao invalida plano e features.
+        Rails.logger.error(
+          "[EntitlementService#usage] company_id=#{@company.id} feature=#{key} " \
+          "error=#{e.class}: #{e.message}"
+        )
+      end
+    end
+
     {
       'features' => features,
+      'usage' => usage_values,
       'plan' => {
         'id' => @company.plan&.id,
         'name' => @company.plan&.name,

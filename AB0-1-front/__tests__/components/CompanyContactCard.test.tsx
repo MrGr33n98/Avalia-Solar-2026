@@ -38,7 +38,10 @@ const paidCompany: Company = {
   has_paid_plan: true,
   whatsapp_enabled: true,
   whatsapp_url: 'https://wa.me/5548996418578',
-  feature_access: { custom_ctas: { state: 'enabled', value: true } },
+  feature_access: {
+    custom_ctas: { state: 'enabled', value: true },
+    whatsapp_contact_button: { state: 'enabled', value: true },
+  },
 };
 
 describe('CompanyContactCard — contato direto sem signup', () => {
@@ -60,10 +63,10 @@ describe('CompanyContactCard — contato direto sem signup', () => {
   it('oferece WhatsApp em vez do telefone sem exigir cadastro', () => {
     render(<CompanyContactCard company={paidCompany} />);
 
-    const whatsapp = screen.getByRole('link', { name: 'Conversar com WEG Solar no WhatsApp' });
+    const whatsapp = screen.getByRole('link', { name: 'Falar com WEG Solar no WhatsApp' });
     expect(whatsapp).toHaveAttribute('href', 'https://wa.me/5548996418578');
     expect(whatsapp).toHaveAttribute('target', '_blank');
-    expect(screen.getByText('Conversar no WhatsApp')).toBeInTheDocument();
+    expect(screen.getByText('Falar no WhatsApp')).toBeInTheDocument();
     expect(screen.queryByText('Ligar para empresa')).not.toBeInTheDocument();
 
     fireEvent.click(whatsapp);

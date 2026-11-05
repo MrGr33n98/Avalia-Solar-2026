@@ -34,6 +34,12 @@ RSpec.describe BillingPolicy, type: :policy do
       expect(described_class.new(user, company).show?).to be true
     end
 
+    it 'nega show para membro com acesso revogado' do
+      user = create(:user, role: :company, company: company)
+      create(:company_member, company: company, user: user, role: :editor, status: :revoked)
+      expect(described_class.new(user, company).show?).to be false
+    end
+
     it 'nao permite show para usuario sem vinculo com a empresa' do
       other_company = create(:company, plan: plan)
       user = create(:user, role: :company, company: other_company)
@@ -61,8 +67,8 @@ RSpec.describe BillingPolicy, type: :policy do
       user = create(:user, role: :company, company: company)
       create(:company_member, company: company, user: user, role: :editor)
       policy = described_class.new(user, company)
-      expect(policy.checkout?).to be true
-      expect(policy.portal?).to be true
+      expect(policy.checkout?).to be false
+      expect(policy.portal?).to be false
     end
 
     it 'nao permite checkout/portal para o manager' do
@@ -94,10 +100,10 @@ RSpec.describe BillingPolicy, type: :policy do
       expect(described_class.new(user, company).enterprise_lead?).to be true
     end
 
-    it 'permite para visualizador / manager da empresa' do
+    it 'nao permite para manager da empresa' do
       user = create(:user, role: :company, company: company)
       create(:company_member, company: company, user: user, role: :manager)
-      expect(described_class.new(user, company).enterprise_lead?).to be true
+      expect(described_class.new(user, company).enterprise_lead?).to be false
     end
 
     it 'nao permite para usuario de outra empresa' do

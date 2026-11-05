@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_10_16_100000) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_05_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -1523,6 +1523,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_10_16_100000) do
     t.decimal "price_from", precision: 12, scale: 2
     t.jsonb "coverage", default: [], null: false
     t.string "status", default: "active", null: false
+    t.jsonb "video_links", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["category_id"], name: "index_company_services_on_category_id"

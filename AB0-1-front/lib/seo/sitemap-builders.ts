@@ -19,6 +19,7 @@ export const SITEMAP_SECTIONS = [
   'company-categories',
   'local-rankings',
   'companies',
+  'services',
   'local-solar',
   'creators',
   'groups',
@@ -267,6 +268,29 @@ export async function getCompanySitemapEntries(): Promise<MetadataRoute.Sitemap>
   );
 }
 
+/** Cada serviço ativo tem URL indexável própria, sem misturar empresas ou rascunhos. */
+export async function getServiceSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+  const entries: MetadataRoute.Sitemap = [];
+  const pageSize = 500;
+  // Limite de segurança: um sitemap XML comporta até 50 mil URLs.
+  for (let page = 1; page <= 100; page += 1) {
+    const records = await fetchRecords(`sitemaps/services?page=${page}&per_page=${pageSize}`, 900);
+    for (const service of records) {
+      const companySlug = getString(service, 'company_slug');
+      const serviceSlug = getString(service, 'service_slug');
+      if (!companySlug || !serviceSlug) continue;
+      entries.push({
+        url: absoluteUrl(`/companies/${companySlug}/services/${serviceSlug}`),
+        lastModified: getString(service, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
+        changeFrequency: 'weekly',
+        priority: 0.75,
+      });
+    }
+    if (records.length < pageSize) break;
+  }
+  return normalizeSitemapEntries(entries);
+}
+
 export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const localPages = [
     ...BRAZIL_STATE_SOLAR_PAGES.map((page) => ({
@@ -397,6 +421,8 @@ export async function getSitemapEntriesBySection(
       return getLocalRankingSitemapEntries();
     case 'companies':
       return getCompanySitemapEntries();
+    case 'services':
+      return getServiceSitemapEntries();
     case 'local-solar':
       return getLocalSolarSitemapEntries();
     case 'creators':
