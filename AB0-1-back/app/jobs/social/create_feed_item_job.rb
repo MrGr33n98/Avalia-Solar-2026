@@ -10,9 +10,7 @@ module Social
 
       # Do not project reviews/publications into the paused social Feed.
       # Group posts remain independent and retain their own group behavior.
-      reviews_only = ENV.fetch('REVIEWS_ONLY_MVP', 'true') != 'false'
-      feed_enabled = !reviews_only && ENV['SOCIAL_FEED_ENABLED'] == 'true'
-      return if !feed_enabled && subject_class != GroupPost
+      return if !ReviewsOnlyMvp.feed_enabled? && subject_class != GroupPost
 
       subject = subject_class.find_by(id: subject_id)
       return unless subject

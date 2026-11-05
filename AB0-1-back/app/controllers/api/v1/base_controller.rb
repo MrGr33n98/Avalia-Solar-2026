@@ -16,7 +16,6 @@ module Api
       skip_before_action :verify_authenticity_token
 
       # Capture Edge Geolocation data from Cloudflare Worker
-      before_action :block_suspended_social_api
       before_action :capture_edge_location
 
       # JSON responses by default
@@ -35,27 +34,6 @@ module Api
       end
 
       private
-
-      # Reviews and community groups remain operational during the social freeze.
-      # Only Creator/Feed routes are denied at the Rails boundary.
-      def block_suspended_social_api
-        path = request.path.to_s
-        return unless path.start_with?('/api/v1/')
-        route = path.delete_prefix('/api/v1/')
-        reviews_only = ENV.fetch('REVIEWS_ONLY_MVP', 'true') != 'false'
-        creator_enabled = !reviews_only && ENV['CREATOR_EXPERIENCE_ENABLED'] == 'true'
-        feed_enabled = !reviews_only && ENV['SOCIAL_FEED_ENABLED'] == 'true'
-
-        creator_route = route.match?(%r{\A(?:creators(?:/|\z)|creator_tree(?:/|\z)|reviewer/(?:publications|tree|creator_leads|analytics)(?:/|\z))})
-        social_route = route.match?(%r{\A(?:feed|follows|reactions|comments|saved_items|polls)(?:/|\z)})
-        return unless (creator_route && !creator_enabled) || (social_route && !feed_enabled)
-
-        Rails.logger.info("[MVP] paused social endpoint path=#{path} method=#{request.request_method}")
-        render json: {
-          code: 'FEATURE_TEMPORARILY_DISABLED',
-          message: 'Esta experiência está temporariamente indisponível. Avaliações continuam disponíveis.'
-        }, status: :forbidden
-      end
 
       def require_role(*roles)
         return if current_user && roles.include?(current_user.role)
