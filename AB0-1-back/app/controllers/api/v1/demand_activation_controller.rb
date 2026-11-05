@@ -52,6 +52,19 @@ module Api
       # Metadata only: no uploads or contact identifiers.
       # A pending source is never eligible for outbound activation.
       def create_source
+        provenance = source_params[:provenance] || {}
+        unless provenance[:purpose].present? && provenance[:legal_basis].in?(%w[consent legitimate_interest other]) &&
+               provenance[:attestation_version] == 'v1'
+          return render_error_response(
+            message: 'Finalidade, base legal declarada e versão de confirmação são obrigatórias.',
+            status: :unprocessable_entity, code: 'SOURCE_ATTESTATION_REQUIRED'
+          )
+        end
+
+        if ::DemandActivation::Source.where(company_id: @company.id).count >= 25
+          return render_error_response(message: 'Limite de 25 fontes em análise por empresa.', status: :unprocessable_entity, code: 'SOURCE_LIMIT_REACHED')
+        end
+
         source = ::DemandActivation::Source.new(
           source_params.merge(
             company: @company,
@@ -87,6 +100,10 @@ module Api
 
       def create_audience
         return reject_unsafe_filters if unsafe_filters?
+
+        if scoped_audiences.where(status: 'draft').count >= 100
+          return render_error_response(message: 'Limite de 100 rascunhos por empresa.', status: :unprocessable_entity, code: 'AUDIENCE_DRAFT_LIMIT_REACHED')
+        end
 
         segment = ::DemandActivation::AudienceSegment.new(
           audience_attributes.merge(company: @company, created_by: current_user, status: 'draft')
