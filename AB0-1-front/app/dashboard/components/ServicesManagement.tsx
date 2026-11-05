@@ -475,6 +475,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
                       alt="Prévia da capa do serviço"
                       fill
                       sizes="600px"
+                      unoptimized={Boolean(coverPreview)}
                       className="object-cover"
                     />
                   ) : (
