@@ -1,0 +1,90 @@
+name: Brand Page CTA — Contract Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'AB0-1-front/app/companies/**'
+      - 'AB0-1-front/app/dashboard/components/brand-page/**'
+      - 'AB0-1-front/app/dashboard/components/CompanySettings.tsx'
+      - 'AB0-1-front/lib/company-cta-visibility*'
+      - 'AB0-1-front/__tests__/components/CompanyContactCard.test.tsx'
+      - 'AB0-1-back/app/controllers/api/v1/company_dashboard_controller.rb'
+      - 'AB0-1-back/app/serializers/company_serializer.rb'
+      - 'AB0-1-back/db/migrate/*quote_cta*'
+      - 'AB0-1-back/spec/requests/api/v1/company_dashboard_cta_visibility_spec.rb'
+      - '.github/workflows/brand-page-cta-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-contract:
+    name: Brand Page UI — Jest and TypeScript
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - run: npm ci
+      - name: Brand Page PDR acceptance tests
+        run: |
+          npm test -- --runInBand \
+            'app/companies/\\[id\\]/components/CompanyCTAGroup.spec.tsx' \
+            __tests__/components/CompanyContactCard.test.tsx \
+            app/dashboard/components/brand-page/BrandPageCTAVisibility.spec.tsx \
+            lib/company-cta-visibility.spec.ts
+      - name: TypeScript
+        run: npm run typecheck
+
+  backend-contract:
+    name: Brand Page API — RSpec
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avaliasolar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+      - name: Run Brand Page CTA API contract
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: |
+          bundle exec rails db:create db:schema:load db:migrate
+          bundle exec rspec spec/requests/api/v1/company_dashboard_cta_visibility_spec.rb
