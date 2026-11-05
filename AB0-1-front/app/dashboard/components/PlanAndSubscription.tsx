@@ -83,23 +83,10 @@ export default function PlanAndSubscription({
       ]);
       if (cancelled) return;
 
-      if (entitlementResult.status === 'rejected') {
-        const status = httpStatus(entitlementResult.reason);
-        setError(status === 403 ? 'Você não tem permissão para visualizar este painel.' :
-          status === 401 ? 'Sua sessão expirou. Entre novamente para consultar o plano.' :
-          'Não foi possível consultar os recursos da empresa. Tente novamente.');
-        setLoading(false);
-        return;
-      }
+      const plans = plansResult.status === 'fulfilled' && Array.isArray(plansResult.value)
+        ? plansResult.value.filter(plan => plan && Number.isSafeInteger(plan.id) && plan.id > 0)
+        : [];
 
-      const entitlements = parseCompanyEntitlements(entitlementResult.value);
-      if (!entitlements) {
-        setError('O servidor retornou um contrato de planos inválido. Nenhuma informação foi presumida.');
-        setLoading(false);
-        return;
-      }
-
-      const response = entitlementResult.value as Record<string, unknown>;
       let billingAccess: BillingAccess = 'not-configured';
       let subscription: BillingSubscription | null = null;
       if (subscriptionResult.status === 'fulfilled') {
@@ -108,9 +95,24 @@ export default function PlanAndSubscription({
       } else {
         billingAccess = httpStatus(subscriptionResult.reason) === 403 ? 'restricted' : 'unavailable';
       }
-      const plans = plansResult.status === 'fulfilled' && Array.isArray(plansResult.value)
-        ? plansResult.value.filter(plan => plan && Number.isSafeInteger(plan.id) && plan.id > 0)
-        : [];
+
+      const entitlements = entitlementResult.status === 'fulfilled'
+        ? parseCompanyEntitlements(entitlementResult.value)
+        : null;
+      const response = entitlementResult.status === 'fulfilled'
+        ? entitlementResult.value as Record<string, unknown>
+        : null;
+
+      // A falha de entitlements nao deve ocultar o catalogo publico de planos.
+      // Nunca supor plano gratuito, assinatura cancelada ou autorizacao de compra.
+      if (entitlementResult.status === 'rejected') {
+        const status = httpStatus(entitlementResult.reason);
+        setError(status === 403 ? 'Você não tem permissão para visualizar este painel.' :
+          status === 401 ? 'Sua sessão expirou. Entre novamente para consultar o plano.' :
+          'Não foi possível consultar os recursos da empresa. Tente novamente.');
+      } else if (!entitlements) {
+        setError('O servidor retornou um contrato de planos inválido. Nenhuma informação foi presumida.');
+      }
 
       setData({
         entitlements,
@@ -118,7 +120,7 @@ export default function PlanAndSubscription({
         billingAccess,
         plans,
         plansError: plansResult.status === 'rejected',
-        usage: parseUsage(response.usage),
+        usage: parseUsage(response?.usage),
       });
       setLoading(false);
     };
@@ -170,13 +172,27 @@ export default function PlanAndSubscription({
 
   if (error || !data?.entitlements) {
     return (
-      <Alert className="rounded-lg border-red-200 bg-red-50 text-red-900">
-        <AlertTitle>Não foi possível carregar Plano e Assinatura</AlertTitle>
-        <AlertDescription className="mt-2 space-y-4">
-          <p>{error || 'As informações estão temporariamente indisponíveis.'}</p>
-          <Button type="button" variant="outline" onClick={retry} className="rounded-sm">Tentar novamente</Button>
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-6 pb-8">
+        <Alert className="rounded-lg border-red-200 bg-red-50 text-red-900" role="alert">
+          <AlertTitle>Não foi possível carregar os recursos da empresa</AlertTitle>
+          <AlertDescription className="mt-2 space-y-4">
+            <p>{error || 'As informações estão temporariamente indisponíveis.'}</p>
+            <Button type="button" variant="outline" onClick={retry} className="rounded-sm">Tentar novamente</Button>
+          </AlertDescription>
+        </Alert>
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">Você ainda pode consultar os planos públicos abaixo. A contratação fica indisponível neste painel até a confirmação do plano atual.</p>
+          <PlanSelector
+            plans={data?.plans || []}
+            currentTier={data?.subscription?.plan?.slug || ''}
+            billingPeriod={billingPeriod}
+            onBillingPeriodChange={setBillingPeriod}
+            onSelectPlan={() => undefined}
+            pending={false}
+            disabled
+          />
+        </div>
+      </div>
     );
   }
 
@@ -189,7 +205,7 @@ export default function PlanAndSubscription({
       ? 'Gratuito'
       : 'Não confirmado';
   const endDate = subscription ? formatBillingDate(subscription.current_period_end) : null;
-  const cancellable = Boolean(subscription && billingAccess === 'available');
+  const cancellable = Boolean(subscription && billingAccess === 'available' && subscription.can_manage_billing === true);
 
   return (
     <div className="space-y-7 pb-8">
