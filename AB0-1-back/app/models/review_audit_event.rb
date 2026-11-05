@@ -7,6 +7,8 @@ class ReviewAuditEvent < ApplicationRecord
     verification_changed
     review_contested
     media_moderation_changed
+    review_updated_by_author
+    review_resubmitted
   ].freeze
 
   belongs_to :review
