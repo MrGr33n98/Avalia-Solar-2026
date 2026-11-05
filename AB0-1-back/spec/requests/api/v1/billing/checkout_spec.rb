@@ -204,6 +204,8 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
         payload = JSON.parse(response.body)
         expect(payload['status']).to eq('active')
         expect(payload['plan']['id']).to eq(plan.id)
+        expect(payload).to include('company_id' => company.id, 'plan_id' => plan.id)
+        expect(payload).not_to have_key('company') # Nao renderizar CompanySerializer completo
         expect(payload['can_manage_billing']).to eq(false)
         expect(payload).not_to have_key('stripe_customer_id')
         expect(payload).not_to have_key('stripe_subscription_id')
@@ -253,6 +255,9 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
         expect(payload['stripe_subscription_id']).to eq('sub_ok')
         expect(payload['can_manage_billing']).to eq(true)
         expect(payload['plan']['id']).to eq(plan.id)
+        expect(payload).to include('company_id' => company.id, 'plan_id' => plan.id)
+        expect(payload).to have_key('created_at')
+        expect(payload).not_to have_key('company')
       end
     end
   end
