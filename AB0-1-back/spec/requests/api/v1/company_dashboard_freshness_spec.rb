@@ -108,6 +108,22 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
       expect(json['data_source']).to eq('company_daily_stats_unavailable')
     end
 
+    it 'accepts 60-day relative ranges used by legacy clients without from/to' do
+      get '/api/v1/company_dashboard/analytics/timeseries',
+          params: { company_id: company.id, days: 60 }
+
+      expect(response).to have_http_status(:ok)
+      range = JSON.parse(response.body).fetch('range')
+      expect(Date.iso8601(range.fetch('to')) - Date.iso8601(range.fetch('from'))).to eq(59)
+    end
+
+    it 'rejects relative ranges longer than 365 days' do
+      get '/api/v1/company_dashboard/analytics/timeseries',
+          params: { company_id: company.id, days: 366 }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
     it 'flags unavailable canonical source explicitly' do
       allow_any_instance_of(CompanyDashboard::MetricsSource).to receive(:available?).and_return(false)
 
