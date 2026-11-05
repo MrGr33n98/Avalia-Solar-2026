@@ -129,8 +129,6 @@ export function ReviewShareCard({ form, companyName, onOpenEmailDrawer, onTrack 
                 WhatsApp
               </a>
               <a href={qrDownloadUrl} download
-                // A própria rota pública registra qr_downloaded. Evita duplicação no funil.
-                
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 font-semibold text-[#0A1F44] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                 QR Code · Baixar PNG
               </a>
