@@ -106,8 +106,6 @@ export default function InviteAcceptPage() {
   };
 
   const isLoggedIn = hasPossibleAuthSession();
-  const inviteReturnTo = token ? `/invite#token=${encodeURIComponent(token)}` : '/invite';
-  const encodedInviteReturnTo = encodeURIComponent(inviteReturnTo);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background flex flex-col justify-center items-center p-4">
@@ -201,13 +199,13 @@ export default function InviteAcceptPage() {
           ) : details && !isLoggedIn ? (
             <div className="w-full space-y-2">
               <Button asChild className="w-full text-xs">
-                <Link href={`/login?return_to=${encodedInviteReturnTo}`}>
+                <Link href={`/login?return_to=${encodeURIComponent(`/invite#token=${token}`)}`}>
                   <LogIn className="w-4 h-4 mr-1.5" />
                   Entrar com minha conta
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full text-xs">
-                <Link href={`/signup?email=${encodeURIComponent(details?.email || '')}&return_to=${encodedInviteReturnTo}`}>
+                <Link href={`/signup?email=${encodeURIComponent(details?.email || '')}&return_to=${encodeURIComponent(`/invite#token=${token}`)}`}>
                   Criar uma nova conta
                 </Link>
               </Button>

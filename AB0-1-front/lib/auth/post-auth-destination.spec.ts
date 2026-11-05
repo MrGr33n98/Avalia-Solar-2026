@@ -147,11 +147,11 @@ describe('resolvePostAuthDestination', () => {
     })).toBe('/profile?tab=security');
   });
 
-  it('[C7b] preserva token de convite no fragmento após autenticação', () => {
+  it('[C7b] preserva fragmento do convite após login', () => {
     expect(resolvePostAuthDestination({
       user: user('review'),
-      returnTo: '/invite#token=convite-test-123',
-    })).toBe('/invite#token=convite-test-123');
+      returnTo: '/invite#token=convite-abc',
+    })).toBe('/invite#token=convite-abc');
   });
 
   // Cenário 8 — returnTo incompatível com role
@@ -188,7 +188,7 @@ describe('isSafeReturnTo', () => {
     }
   );
 
-  it('recusa URL disfarçada com barra invertida', () => {
+  it('rejeita redirecionamento com barra invertida', () => {
     expect(isSafeReturnTo('/\\evil.example')).toBe(false);
   });
 

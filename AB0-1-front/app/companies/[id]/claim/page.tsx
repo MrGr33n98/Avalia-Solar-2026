@@ -29,7 +29,7 @@ export default function ClaimPage({ params }: ClaimPageProps) {
     if (selected.length > 5 || selected.some(file => !allowed.has(file.type) || file.size > 5 * 1024 * 1024)) {
       setFiles([]);
       e.target.value = '';
-      toast.error('Selecione até 5 documentos PDF, JPG ou PNG de até 5 MB cada.');
+      toast.error('Selecione até 5 arquivos PDF, JPG ou PNG de até 5 MB cada.');
       return;
     }
     setFiles(selected);

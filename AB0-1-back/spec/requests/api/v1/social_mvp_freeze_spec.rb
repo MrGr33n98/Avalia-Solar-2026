@@ -1,18 +1,18 @@
 require 'rails_helper'
 
-RSpec.describe 'Reviews-only MVP social freeze', type: :request do
+RSpec.describe 'Reviews-only MVP social guards', type: :request do
   before do
-    allow(ENV).to receive(:fetch).and_call_original
-    allow(ENV).to receive(:fetch).with('REVIEWS_ONLY_MVP', 'true').and_return('true')
+    allow(ReviewsOnlyMvp).to receive(:feed_enabled?).and_return(false)
+    allow(ReviewsOnlyMvp).to receive(:creator_enabled?).and_return(false)
   end
 
-  it 'blocks public feed while paused' do
+  it 'blocks the social feed while reviews remain independent' do
     get '/api/v1/feed'
     expect(response).to have_http_status(:forbidden)
     expect(JSON.parse(response.body)['code']).to eq('FEATURE_TEMPORARILY_DISABLED')
   end
 
-  it 'blocks direct social mutations without touching review endpoints' do
+  it 'blocks publication mutations without affecting regular reviews' do
     post '/api/v1/reviewer/publications', params: { publication: { title: 'Não criar' } }
     expect(response).to have_http_status(:forbidden)
     expect(JSON.parse(response.body)['code']).to eq('FEATURE_TEMPORARILY_DISABLED')

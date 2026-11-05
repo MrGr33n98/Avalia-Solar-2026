@@ -17,7 +17,7 @@ export function isSafeReturnTo(returnTo: string | null | undefined): returnTo is
   if (!returnTo.startsWith('/') || returnTo.startsWith('//')) return false;
   try {
     const parsed = new URL(returnTo, 'https://www.avaliasolar.com.br');
-    // Reject normalized backslash URLs that escape our origin.
+    // Prevent protocol-relative redirects disguised with backslashes.
     if (parsed.origin !== 'https://www.avaliasolar.com.br') return false;
     return !AUTH_PATHS.some(
       (path) => parsed.pathname === path || parsed.pathname.startsWith(`${path}/`)
@@ -109,7 +109,6 @@ export function resolvePostAuthDestination({
   ) {
     const destination = new URL(returnTo, 'https://www.avaliasolar.com.br');
     const pathname = destination.pathname;
-    // Invite tokens must remain in the fragment rather than server logs.
     const search = destination.search + (pathname === '/invite' ? destination.hash : '');
     if (pathname.startsWith('/dashboard/sales')) {
       return buildCanonicalUrl('crm', pathname + search);

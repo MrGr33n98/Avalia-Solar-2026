@@ -53,7 +53,7 @@ module Api
 
 
         def block_paused_creator_profile_edits
-          return if ENV.fetch('REVIEWS_ONLY_MVP', 'true') == 'false' && ENV['CREATOR_EXPERIENCE_ENABLED'] == 'true'
+          return if ReviewsOnlyMvp.creator_enabled?
 
           creator_fields = %w[creator_enabled public_profile public_headline public_bio public_email_enabled lead_capture_enabled]
           profile_keys = params[:profile].respond_to?(:keys) ? params[:profile].keys.map(&:to_s) : []

@@ -98,8 +98,8 @@ export default function RegisterUserPage() {
         date_of_birth: dateOfBirth,
         terms_accepted: true,
       });
-      // Registration requires email confirmation; retain return_to only on
-      // the subsequent login, never redirect an unconfirmed guest.
+      // Do not redirect an unconfirmed user to a protected return_to URL.
+      // Login after email confirmation preserves the original destination.
       setSubmitted(true);
     } catch (err: any) {
       setError(err?.message || 'Falha no cadastro');
@@ -180,8 +180,8 @@ export default function RegisterUserPage() {
           </div>
 
           <p className="mt-8 text-sm leading-6 text-slate-500">
-            Sua conta será protegida por confirmação de e-mail. Avaliações publicadas
-            seguem as regras de moderação e transparência do Avalia Solar.
+            Sua conta será protegida por confirmação de e-mail.
+            Avaliações publicadas seguem as regras de moderação do Avalia Solar.
           </p>
         </div>
 
