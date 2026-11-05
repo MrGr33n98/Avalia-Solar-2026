@@ -20,6 +20,9 @@ export type CompanyService = {
   coverage?: string[];
   status: 'active' | 'inactive';
   image_url?: string;
+  image_urls?: string[];
+  service_images?: Array<{ id: number; url: string }>;
+  video_links?: string[];
   created_at?: string;
   updated_at?: string;
 };
@@ -37,6 +40,8 @@ export type ServiceInput = {
   price_from?: number | null;
   coverage?: string[];
   status: 'active' | 'inactive';
+  video_links?: string[];
+  images?: File[];
 };
 
 type ServicesResponse = {
@@ -94,14 +99,31 @@ export function useServices(companyId?: string | number) {
     loadServices();
   }, [loadServices]);
 
+  const uploadImages = useCallback(async (id: number, images: File[]) => {
+    if (!images.length) return;
+    const form = new FormData();
+    images.forEach(image => form.append('images[]', image));
+    await fetchApi(`/dashboard/services/${id}/images`, { method: 'POST', body: form });
+  }, []);
+
+  const removeServiceImage = useCallback(async (id: number, attachmentId: number) => {
+    const result = await fetchApi<{ service: CompanyService }>(
+      `/dashboard/services/${id}/images/${attachmentId}`,
+      { method: 'DELETE' }
+    );
+    await loadServices();
+    return result.service;
+  }, [loadServices]);
+
   const addService = useCallback(
     async (input: ServiceInput) => {
       try {
+        const { images = [], ...attributes } = input;
         const response = await fetchApi<{ service: CompanyService }>(
           '/dashboard/services',
           {
             method: 'POST',
-            body: { service: input },
+            body: { service: attributes },
           },
         );
 
@@ -110,6 +132,7 @@ export function useServices(companyId?: string | number) {
           description: `"${input.name}" foi adicionado ao seu catálogo.`,
         });
 
+        if (response?.service?.id && images.length) await uploadImages(response.service.id, images);
         await loadServices();
         return response?.service;
       } catch (err: unknown) {
@@ -122,17 +145,18 @@ export function useServices(companyId?: string | number) {
         throw err;
       }
     },
-    [loadServices, toast],
+    [loadServices, toast, uploadImages],
   );
 
   const updateService = useCallback(
     async (id: number, input: Partial<ServiceInput>) => {
       try {
+        const { images = [], ...attributes } = input;
         const response = await fetchApi<{ service: CompanyService }>(
           `/dashboard/services/${id}`,
           {
             method: 'PATCH',
-            body: { service: input },
+            body: { service: attributes },
           },
         );
 
@@ -141,6 +165,7 @@ export function useServices(companyId?: string | number) {
           description: 'As alterações foram salvas com sucesso.',
         });
 
+        if (images.length) await uploadImages(id, images);
         await loadServices();
         return response?.service;
       } catch (err: unknown) {
@@ -153,7 +178,7 @@ export function useServices(companyId?: string | number) {
         throw err;
       }
     },
-    [loadServices, toast],
+    [loadServices, toast, uploadImages],
   );
 
   const deleteService = useCallback(
@@ -190,5 +215,6 @@ export function useServices(companyId?: string | number) {
     addService,
     updateService,
     deleteService,
+    removeServiceImage,
   };
 }
