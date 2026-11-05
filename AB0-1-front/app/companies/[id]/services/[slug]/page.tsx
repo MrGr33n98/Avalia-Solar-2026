@@ -9,6 +9,9 @@ import { absoluteUrl } from '@/lib/site';
 import { buildCompanyPath } from '@/lib/slug';
 import { getFullImageUrl } from '@/utils/image';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
+import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
+import WhatsappButton from '@/components/WhatsappButton';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 type ServiceReview = {
   id: number;
@@ -85,21 +88,30 @@ function safeVideo(url: string): { url: string; thumbnail: string | null; label:
 }
 
 function whatsappLink(company: Company, service: ServiceDetail): string | null {
-  if (company.whatsapp_enabled !== true) return null;
-  let rawPhone = String(company.whatsapp || '');
-  if (!rawPhone.trim() && company.whatsapp_url) {
+  // Alinha a disponibilidade do CTA de WhatsApp ao mesmo entitlement da Brand Page.
+  if (!canUsePaidConversion(company, 'whatsapp')) return null;
+  const enabled = company.cta_whatsapp_enabled ?? company.whatsapp_enabled ?? company.actions?.whatsapp_enabled;
+  if (!enabled) return null;
+
+  const sources = [company.whatsapp_url, company.cta_whatsapp_url, company.actions?.whatsapp_url, company.whatsapp];
+  for (const source of sources) {
+    if (typeof source !== 'string' || !source.trim()) continue;
+    let raw = source.trim();
     try {
-      const saved = new URL(company.whatsapp_url);
-      if (saved.protocol === 'https:' && ['wa.me', 'api.whatsapp.com'].includes(saved.hostname)) {
-        rawPhone = saved.hostname === 'wa.me' ? saved.pathname : saved.searchParams.get('phone') || '';
-      }
-    } catch { /* Prefer hiding the CTA to exposing an unsafe destination. */ }
+      const parsed = new URL(raw);
+      if (parsed.protocol !== 'https:' || !['wa.me', 'api.whatsapp.com', 'www.api.whatsapp.com'].includes(parsed.hostname)) continue;
+      raw = parsed.hostname === 'wa.me' ? parsed.pathname : (parsed.searchParams.get('phone') || '');
+    } catch {
+      if (!/^[+\d\s().-]+$/.test(raw)) continue;
+    }
+
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 13) continue;
+    const phone = digits.length <= 11 ? `55${digits}` : digits;
+    const message = `Olá! Vi o serviço "${service.name}" de ${company.name} no Avalia Solar e gostaria de mais informações.`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   }
-  const digits = rawPhone.replace(/\D/g, '');
-  if (digits.length < 10 || digits.length > 13) return null;
-  const phone = digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
-  const message = `Olá! Vi o serviço "${service.name}" de ${company.name} no Avalia Solar e gostaria de mais informações.`;
-  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}&utm_source=avaliasolar&utm_medium=service_page`;
+  return null;
 }
 
 function structuredData(company: Company, service: ServiceDetail, url: string) {
@@ -191,9 +203,9 @@ export default async function ServiceDetailPage({ params }: Props) {
   const jsonLd = structuredData(company, service, pageUrl);
 
   return (
-    <main className="min-h-screen bg-white pb-16 text-[#101f3e]">
-      <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-6 lg:px-10">
-        <nav aria-label="Navegação estrutural" className="mb-5 flex flex-wrap gap-2 text-xs text-slate-600 sm:text-sm">
+    <main className="min-h-screen bg-white pb-24 text-[#101f3e] sm:pb-16">
+      <div className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 sm:py-6 lg:px-10">
+        <nav aria-label="Navegação estrutural" className="mb-3 flex flex-wrap gap-1.5 text-xs text-slate-600 sm:mb-5 sm:gap-2 sm:text-sm">
           <Link href="/companies" className="hover:text-blue-700 hover:underline">Empresas</Link>
           <span aria-hidden="true">/</span>
           <Link href={companyPath} className="hover:text-blue-700 hover:underline">{company.name}</Link>
@@ -213,45 +225,45 @@ export default async function ServiceDetailPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
 
         {bannerUrl ? (
-          <div className="relative aspect-[16/5] w-full overflow-hidden rounded-2xl bg-slate-100">
+          <div className="relative aspect-[4/1] w-full overflow-hidden rounded-xl bg-slate-100 sm:aspect-[16/5] sm:rounded-2xl">
             <Image src={bannerUrl} alt={`Banner da empresa ${company.name}`} fill priority unoptimized
               sizes="(max-width: 768px) 100vw, 1480px" className="object-cover" />
           </div>
         ) : (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-12 sm:py-16">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-5 sm:rounded-2xl sm:px-6 sm:py-12">
             <p className="text-sm font-semibold text-blue-700">{company.name}</p>
           </div>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-slate-200 pb-6">
+        <div className="mt-3 flex min-w-0 items-center gap-3 border-b border-slate-200 pb-3 sm:mt-6 sm:gap-4 sm:pb-6">
           {company.logo_url && (
             <Image src={getFullImageUrl(company.logo_url)} alt={`Logo ${company.name}`}
-              width={48} height={48} unoptimized className="h-12 w-12 rounded-lg border border-slate-200 object-contain p-1" />
+              width={48} height={48} unoptimized className="h-11 w-11 shrink-0 rounded-lg border border-slate-200 object-contain p-1 sm:h-12 sm:w-12" />
           )}
-          <Link href={companyPath} className="text-base font-bold text-[#101f3e] hover:text-blue-700">{company.name}</Link>
-          {company.verified === true && (
-            <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-              Empresa verificada
-            </span>
-          )}
+          <div className="flex min-w-0 items-center gap-2">
+            <Link href={companyPath} className="min-w-0 break-words text-base font-bold leading-snug text-[#101f3e] hover:text-blue-700 sm:text-lg">{company.name}</Link>
+            {company.verified === true && (
+              <CompanyVerifiedBadge size="md" triggerClassName="relative after:absolute after:-inset-3 after:content-['']" />
+            )}
+          </div>
         </div>
 
-        <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 border-b border-slate-200 pb-4 text-sm font-semibold">
-          <a href="#sobre" className="border-b-2 border-blue-600 pb-3 text-blue-700">Visão geral</a>
-          {images.length > 0 && <a href="#galeria" className="pb-3 text-slate-700 hover:text-blue-700">Galeria do projeto</a>}
-          {videos.length > 0 && <a href="#videos" className="pb-3 text-slate-700 hover:text-blue-700">Vídeos do serviço</a>}
-          <a href="#avaliacoes" className="pb-3 text-slate-700 hover:text-blue-700">
+        <nav aria-label="Seções do serviço" className="mt-3 flex w-full gap-5 overflow-x-auto border-b border-slate-200 whitespace-nowrap text-xs font-semibold sm:mt-8 sm:gap-8 sm:text-sm">
+          <a href="#sobre" className="shrink-0 border-b-2 border-blue-600 pb-3 text-blue-700">Visão geral</a>
+          {images.length > 0 && <a href="#galeria" className="shrink-0 pb-3 text-slate-700 hover:text-blue-700">Galeria do projeto</a>}
+          {videos.length > 0 && <a href="#videos" className="shrink-0 pb-3 text-slate-700 hover:text-blue-700">Vídeos do serviço</a>}
+          <a href="#avaliacoes" className="shrink-0 pb-3 text-slate-700 hover:text-blue-700">
             Avaliações{rating?.count ? ` (${rating.count})` : ''}
           </a>
-        </div>
+        </nav>
 
-        <div className="mt-7 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_330px]">
-          <div className="min-w-0 space-y-10">
-            <section id="sobre" aria-labelledby="service-title" className="border-b border-slate-200 pb-8">
+        <div className="mt-5 grid grid-cols-1 gap-6 sm:mt-7 lg:grid-cols-[minmax(0,1fr)_330px] lg:gap-8">
+          <div className="min-w-0 space-y-7 sm:space-y-10">
+            <section id="sobre" aria-labelledby="service-title" className="scroll-mt-24 border-b border-slate-200 pb-6 sm:pb-8">
               {service.category?.name && <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-700">{service.category.name}</p>}
-              <h1 id="service-title" className="max-w-4xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{service.name}</h1>
+              <h1 id="service-title" className="max-w-4xl text-2xl font-bold leading-tight tracking-tight sm:text-4xl">{service.name}</h1>
               {service.description?.trim() ? (
-                <p className="mt-5 whitespace-pre-line text-[15px] leading-7 text-slate-700">{service.description}</p>
+                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700 sm:mt-5 sm:text-[15px] sm:leading-7">{service.description}</p>
               ) : (
                 <p className="mt-5 text-sm text-slate-500">A empresa ainda não adicionou uma descrição detalhada deste serviço.</p>
               )}
@@ -261,12 +273,12 @@ export default async function ServiceDetailPage({ params }: Props) {
             </section>
 
             {images.length > 0 && (
-              <section id="galeria" aria-labelledby="galeria-title" className="border-b border-slate-200 pb-9">
-                <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-                  <h2 id="galeria-title" className="text-xl font-bold">Galeria do projeto <span className="text-sm font-normal text-slate-500">({images.length} {images.length === 1 ? 'foto' : 'fotos'})</span></h2>
+              <section id="galeria" aria-labelledby="galeria-title" className="scroll-mt-24 border-b border-slate-200 pb-6 sm:pb-9">
+                <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1.5 sm:mb-4 sm:gap-3">
+                  <h2 id="galeria-title" className="text-lg font-bold sm:text-xl">Galeria do projeto <span className="text-sm font-normal text-slate-500">({images.length} {images.length === 1 ? 'foto' : 'fotos'})</span></h2>
                   <span className="text-xs text-slate-500">Registros cadastrados pela empresa</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 xl:grid-cols-5">
                   {images.map((image, index) => (
                     <a key={image} href={image} target="_blank" rel="noopener noreferrer"
                       aria-label={`Abrir foto ${index + 1} do serviço ${service.name}`}
@@ -281,27 +293,27 @@ export default async function ServiceDetailPage({ params }: Props) {
             )}
 
             {videos.length > 0 && (
-              <section id="videos" aria-labelledby="videos-title" className="border-b border-slate-200 pb-9">
-                <h2 id="videos-title" className="mb-4 text-xl font-bold">Vídeos do serviço <span className="text-sm font-normal text-slate-500">({videos.length})</span></h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <section id="videos" aria-labelledby="videos-title" className="scroll-mt-24 border-b border-slate-200 pb-6 sm:pb-9">
+                <h2 id="videos-title" className="mb-3 text-lg font-bold sm:mb-4 sm:text-xl">Vídeos do serviço <span className="text-sm font-normal text-slate-500">({videos.length})</span></h2>
+                <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 sm:gap-4" role="region" aria-label="Lista horizontal de vídeos do serviço" tabIndex={0}>
                   {videos.map((video, index) => (
                     <a key={video.url} href={video.url} target="_blank" rel="noopener noreferrer"
-                      className="group overflow-hidden rounded-xl border border-slate-200 hover:border-blue-300 focus-visible:outline-2 focus-visible:outline-blue-600">
+                      className="group w-[min(72vw,280px)] shrink-0 snap-start overflow-hidden rounded-xl border border-slate-200 hover:border-blue-300 focus-visible:outline-2 focus-visible:outline-blue-600 sm:w-[280px] xl:w-[300px]">
                       {video.thumbnail && (
                         <div className="relative aspect-video bg-slate-100">
-                          <Image src={video.thumbnail} alt="" fill unoptimized sizes="(max-width: 768px) 100vw, 400px" className="object-cover" />
+                          <Image src={video.thumbnail} alt="" fill unoptimized sizes="(max-width: 640px) 72vw, 300px" className="object-cover" />
                         </div>
                       )}
-                      <div className="px-4 py-3 text-sm font-semibold">Assistir vídeo {index + 1} — {video.label}</div>
+                      <div className="px-3 py-2.5 text-xs font-semibold sm:text-sm">Assistir vídeo {index + 1} — {video.label}</div>
                     </a>
                   ))}
                 </div>
               </section>
             )}
 
-            <section id="avaliacoes" aria-labelledby="avaliacoes-title" className="space-y-5">
+            <section id="avaliacoes" aria-labelledby="avaliacoes-title" className="scroll-mt-24 space-y-4 sm:space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 id="avaliacoes-title" className="text-xl font-bold">Avaliações deste serviço</h2>
+                <h2 id="avaliacoes-title" className="text-lg font-bold sm:text-xl">Avaliações deste serviço</h2>
                 <Link href={`${companyPath}/review?service_id=${service.id}&service_slug=${encodeURIComponent(service.slug)}`}
                   className="rounded-lg border border-blue-600 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
                   Avaliar este serviço
@@ -330,22 +342,29 @@ export default async function ServiceDetailPage({ params }: Props) {
                   </div>
                 </>
               ) : (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-7 text-sm text-slate-600">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 sm:p-7">
                   Este serviço ainda não possui avaliações publicadas. Avaliações gerais da empresa não são contabilizadas aqui.
                 </div>
               )}
             </section>
           </div>
 
-          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 lg:sticky lg:top-28" aria-label="Contato com a empresa">
-            <h2 className="text-xl font-bold">Fale com {company.name}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">Consulte a disponibilidade e as condições deste serviço diretamente com a empresa.</p>
-            <div className="mt-6 space-y-3">
+          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 lg:sticky lg:top-28" aria-label="Contato com a empresa">
+            <h2 className="text-lg font-bold sm:text-xl">Fale com {company.name}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 sm:mt-3">Consulte a disponibilidade e as condições deste serviço diretamente com a empresa.</p>
+            <div className="mt-4 space-y-2 sm:mt-6 sm:space-y-3">
               {whatsapp && (
-                <a href={whatsapp} target="_blank" rel="noopener noreferrer"
-                  className="flex min-h-11 items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-700">
-                  Falar pelo WhatsApp
-                </a>
+                <WhatsappButton
+                  enabled
+                  href={whatsapp}
+                  label="WhatsApp"
+                  preset="brandSolid"
+                  size="default"
+                  className="h-11 w-full rounded-xl text-sm font-semibold"
+                  companyId={company.id}
+                  pagePath={canonicalPath}
+                  requireSignup={false}
+                />
               )}
               <Link href={companyPath}
                 className="flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50">
