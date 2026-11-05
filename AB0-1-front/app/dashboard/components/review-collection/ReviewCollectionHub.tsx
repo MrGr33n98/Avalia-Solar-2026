@@ -117,6 +117,7 @@ export function ReviewCollectionHub({
         <ReviewButtonEmbed
           formToken={selectedForm.token}
           companyName={companyName}
+          isActive={selectedForm.status === 'active'}
           onTrack={onTrackAction}
         />
       )}
