@@ -87,7 +87,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
   // O serviço é consultado pelo ID/slug real e sempre pertence à empresa.
   const serviceId = Number(searchParams?.get('service_id') || 0);
   const serviceSlug = searchParams?.get('service_slug') || '';
-  const [serviceContext, setServiceContext] = useState<{ id: number; slug: string; name: string; category_id: number } | null>(null);
+  const [serviceContext, setServiceContext] = useState<{ id: number; slug: string; name: string; category_id: number; category?: { id: number; name: string; seo_url?: string } | null } | null>(null);
   const [serviceContextError, setServiceContextError] = useState(false);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
     let cancelled = false;
     setServiceContext(null);
     setServiceContextError(false);
-    fetchApi<{ data: { id: number; slug: string; name: string; category_id: number } }>(
+    fetchApi<{ data: { id: number; slug: string; name: string; category_id: number; category?: { id: number; name: string; seo_url?: string } | null } }>(
       `/companies/${company.id}/services/${encodeURIComponent(serviceSlug)}`,
       { timeout: 8000, retries: 0 }
     ).then((response) => {
@@ -131,7 +131,9 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
         ? [company.category_info]
         : [];
   const availableCategories = serviceContext
-    ? allCategories.filter(category => category.id === serviceContext.category_id)
+    ? allCategories.some(category => category.id === serviceContext.category_id)
+      ? allCategories.filter(category => category.id === serviceContext.category_id)
+      : serviceContext.category ? [serviceContext.category as typeof allCategories[number]] : []
     : allCategories;
 
   const nextStep = () => setStep((s) => s + 1);
@@ -218,7 +220,7 @@ function ReviewForm({ company, companyPath }: ReviewFormProps) {
 
   const handleCloseModal = () => {
     setShowConfirmModal(false);
-    router.push(companyPath);
+    router.push(serviceContext ? `${companyPath}/services/${serviceContext.slug}` : companyPath);
   };
 
   if (!user) {
