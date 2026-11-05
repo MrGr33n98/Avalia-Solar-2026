@@ -6,7 +6,7 @@ class CompanyCardSerializer < ActiveModel::Serializer
 
   attributes :id, :name, :slug, :logo_url, :description,
              :city, :state, :verified, :featured, :sponsored,
-             :rating_avg, :rating_count, :has_paid_plan,
+             :rating_avg, :rating_count, :has_paid_plan, :quote_cta_enabled,
              :distance_km, :whatsapp_enabled, :whatsapp_url,
              :p2p_chat_enabled, :feature_access,
              :coverage_states, :coverage_cities,
