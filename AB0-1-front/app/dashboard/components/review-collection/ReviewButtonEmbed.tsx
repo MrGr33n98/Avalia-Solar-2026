@@ -118,6 +118,7 @@ export function ReviewButtonEmbed({ formToken, companyName, isActive = true, onT
             <a
               href={isActive ? widgetUrl : undefined}
               aria-disabled={!isActive}
+              tabIndex={isActive ? 0 : -1}
               target="_blank"
               rel="noopener noreferrer"
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm ${
