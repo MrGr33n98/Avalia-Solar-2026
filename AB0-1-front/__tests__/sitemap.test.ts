@@ -73,6 +73,26 @@ describe('sitemap', () => {
     });
   });
 
+  it('includes real company service URLs in a dedicated indexable sitemap', async () => {
+    jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      return {
+        ok: true,
+        json: async () => ({
+          data: url.includes('sitemaps/services')
+            ? [{ company_slug: 'empresa-teste', service_slug: 'instalacao-bess', updated_at: '2026-11-05T00:00:00Z' }]
+            : [],
+        }),
+      } as Response;
+    });
+
+    const entries = await getSitemapEntriesBySection('services');
+    expect(entries.map(entry => entry.url)).toContain(
+      'https://www.avaliasolar.com.br/companies/empresa-teste/services/instalacao-bess'
+    );
+    expect(entries).toHaveLength(1);
+  });
+
   it('keeps robots pointing to both the sitemap index and legacy sitemap', () => {
     const robotsConfig = robots();
 
