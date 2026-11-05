@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { companyDashboardApi, dashboardApi } from '@/lib/api';
 import { track } from '@/lib/analytics/lazy';
@@ -28,12 +29,8 @@ interface RankingResponse {
 
 function BrandMark() {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-[#0A1F44]">
-      <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M2 8 21 2 13 22 10 13Z" fill="#FFC107" />
-        <path d="m10 13 3 9 4-15Z" fill="#0B5FFF" />
-      </svg>
-      Avalia Solar
+    <span className="inline-flex h-6 w-[99px] shrink-0 items-center">
+      <BrandLogo className="!h-auto !w-full max-w-full" sizes="99px" />
     </span>
   );
 }
