@@ -45,7 +45,7 @@ describe('Widgets de Reputação (mobile-first)', () => {
     stats.mockResolvedValue({ stats: { approved_reviews: 12, average_rating: 4.7 }, data_status: 'complete' });
     render(<ReputationMarketingWidgets company={company} companyId={372} />);
     await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeEnabled());
-    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('4,7'));
+    expect((screen.getByLabelText('HTML gerado') as HTMLTextAreaElement).value).toContain('4,7');
     fireEvent.click(screen.getByRole('button', { name: /Copiar HTML estático/ }));
     await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1));
     expect(String((navigator.clipboard.writeText as jest.Mock).mock.calls[0][0])).toContain('captura estática');
@@ -68,7 +68,7 @@ describe('Widgets de Reputação (mobile-first)', () => {
     render(<ReputationMarketingWidgets company={company} companyId={372} />);
     fireEvent.click(screen.getByTestId('select-widget-testimonial'));
     await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeEnabled());
-    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('Excelente atendimento'));
+    expect((screen.getByLabelText('HTML gerado') as HTMLTextAreaElement).value).toContain('Excelente atendimento');
   });
 
   it('does not share data from previous company after company switch', async () => {
@@ -107,13 +107,13 @@ describe('Widgets de Reputação (mobile-first)', () => {
 
     fireEvent.click(screen.getByTestId('choose-star-variant-navy'));
     expect(screen.getByTestId('choose-star-variant-navy')).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('background:#0A1F44'));
-    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('width:120px;height:54px'));
+    expect((screen.getByLabelText('HTML gerado') as HTMLTextAreaElement).value).toContain('background:#0A1F44');
+    expect((screen.getByLabelText('HTML gerado') as HTMLTextAreaElement).value).toContain('width:120px;height:54px');
 
     fireEvent.click(screen.getByTestId('choose-star-variant-light'));
     expect(screen.getByTestId('choose-star-variant-light')).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('background:#FFFFFF'));
-    expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('3,7'));
+    expect((screen.getByLabelText('HTML gerado') as HTMLTextAreaElement).value).toContain('background:#FFFFFF');
+    expect((screen.getByLabelText('HTML gerado') as HTMLTextAreaElement).value).toContain('3,7');
   });
 
   it('centers and contains a rectangular WEG logo in summary, stars and customizer', async () => {
@@ -173,5 +173,22 @@ describe('Widgets de Reputação (mobile-first)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeDisabled());
     expect(screen.getAllByText('Sem avaliações').length).toBeGreaterThan(0);
     expect(screen.getAllByTestId('marketing-widget-company-avatar')[0].querySelector('img')).toBeNull();
+  });
+
+  it('preserves Avalia Solar BrandLogo, displays verification seal and toggles optional JSON-LD', async () => {
+    stats.mockResolvedValue({ stats: { approved_reviews: 8, average_rating: 4.8 }, data_status: 'complete' });
+    render(<ReputationMarketingWidgets company={company} companyId={372} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeEnabled());
+    expect(screen.getAllByAltText('Avalia Solar').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Auditado por Avalia Solar/i).length).toBeGreaterThan(0);
+
+    const textarea = screen.getByLabelText('HTML gerado') as HTMLTextAreaElement;
+    expect(textarea.value).not.toContain('<script type="application/ld+json">');
+    expect(textarea.value).toContain('data-avalia-verified="true"');
+
+    fireEvent.click(screen.getByTestId('toggle-widget-jsonld'));
+    expect(screen.getByTestId('toggle-widget-jsonld')).toHaveAttribute('aria-pressed', 'true');
+    expect(textarea.value).toContain('<script type="application/ld+json">');
+    expect(textarea.value).toContain('"@type":"AggregateRating"');
   });
 });

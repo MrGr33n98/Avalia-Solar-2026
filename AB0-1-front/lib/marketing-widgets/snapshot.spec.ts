@@ -1,5 +1,8 @@
 import {
-  createMarketingWidgetHtml, escapeHtml, MARKETING_WIDGETS, STAR_WIDGET_DIMENSIONS, STAR_WIDGET_VARIANTS, MARKETING_AVATAR_INSET_PX, safeCompanyLogoUrl,
+  createMarketingWidgetHtml, createMarketingWidgetJsonLd, escapeHtml,
+  MARKETING_WIDGETS, STAR_WIDGET_DIMENSIONS, STAR_WIDGET_VARIANTS,
+  MARKETING_AVATAR_INSET_PX, WIDGET_ROOT_RESET_STYLE,
+  resolveLogoThemePreference, resolveVerifiedAt, safeCompanyLogoUrl, starRatingHtml,
   type MarketingWidgetSnapshot,
 } from './snapshot';
 
@@ -12,6 +15,7 @@ const BASE: MarketingWidgetSnapshot = {
   rankPopulation: null,
   testimonial: null,
   testimonialAllowed: false,
+  verifiedAt: '11/2026',
 };
 
 describe('reputation marketing widget snapshots', () => {
@@ -91,7 +95,7 @@ describe('reputation marketing widget snapshots', () => {
     expect(html).toContain('width:36px;height:36px;min-width:36px;min-height:36px');
     expect(html).toContain('padding:1px');
     expect(MARKETING_AVATAR_INSET_PX).toBe(1);
-    // A usable 32px image area is kept inside the 36px avatar (1px inset + 1px border per side).
+    // A usable 34px image area is kept inside the 36px avatar (1px inset per side).
     expect(html).toContain('width="34" height="34"');
     expect(html).toContain('border-radius:50%');
     expect(html).toContain('width:100%;height:100%');
@@ -112,7 +116,7 @@ describe('reputation marketing widget snapshots', () => {
 
       expect(html).toContain('width:22px;height:22px;min-width:22px;min-height:22px');
       expect(html).toContain('padding:1px');
-      // 18px of actual image drawing area in a 22px badge avatar.
+      // 20px of actual image drawing area in a 22px badge avatar.
       expect(html).toContain('width="20" height="20"');
       expect(html).toContain('overflow:hidden;border-radius:50%');
       expect(html).toContain('display:block;width:100%;height:100%');
@@ -123,7 +127,7 @@ describe('reputation marketing widget snapshots', () => {
     }
   );
 
-  it('uses navy monochrome treatment exclusively for WEG on the navy badge', () => {
+  it('uses navy monochrome treatment for WEG by default and supports configurable logoThemePreference', () => {
     const sample = { ...BASE, companyName: 'WEG', logoUrl: 'https://api.avaliasolar.com.br/assets/weg.png' };
     const navy = createMarketingWidgetHtml('stars', sample, 'dark', 'navy')!;
     expect(navy).toContain('background:#0B132B');
@@ -139,6 +143,18 @@ describe('reputation marketing widget snapshots', () => {
     const otherBrand = createMarketingWidgetHtml('stars', { ...sample, companyName: 'KAJU' }, 'dark', 'navy')!;
     expect(otherBrand).not.toContain('mix-blend-mode:screen');
     expect(otherBrand).toContain('background:#FFFFFF');
+
+    // Configurable logoThemePreference decouples corporate rule from company name hardcode
+    expect(resolveLogoThemePreference({ companyName: 'Outra Solar', logoThemePreference: 'monochrome' })).toBe('monochrome');
+    expect(resolveLogoThemePreference({ companyName: 'WEG', logoThemePreference: 'light' })).toBe('light');
+    const customMono = createMarketingWidgetHtml(
+      'stars',
+      { ...sample, companyName: 'Solaris', logoThemePreference: 'monochrome' },
+      'dark',
+      'navy',
+    )!;
+    expect(customMono).toContain('background:#0B132B');
+    expect(customMono).toContain('mix-blend-mode:screen');
   });
 
   it('rejects untrusted and non-HTTPS logo sources in exported snapshots', () => {
@@ -153,5 +169,48 @@ describe('reputation marketing widget snapshots', () => {
     expect(html).not.toContain('attacker.test');
     expect(html).not.toContain('<img');
     expect(html).toContain('KE');
+  });
+
+  it('applies defensive inline CSS reset against host site CSS leaks', () => {
+    const summaryHtml = createMarketingWidgetHtml('summary', BASE, 'light')!;
+    const starHtml = createMarketingWidgetHtml('stars', BASE, 'light', 'blue')!;
+    for (const snippet of [summaryHtml, starHtml]) {
+      expect(snippet).toContain(WIDGET_ROOT_RESET_STYLE);
+      expect(snippet).toContain('-webkit-font-smoothing:antialiased');
+      expect(snippet).toContain('line-height:1.2');
+      expect(snippet).toContain('letter-spacing:normal');
+      expect(snippet).toContain('text-align:left');
+    }
+  });
+
+  it('renders geometric SVG stars with fractional linearGradient stops for decimal ratings', () => {
+    const svgStars = starRatingHtml(4.7, 11);
+    expect(svgStars).toContain('<svg');
+    expect(svgStars).toContain('linearGradient');
+    expect(svgStars).toContain('offset="70%" stop-color="#FFC107"');
+    expect(svgStars).toContain('offset="70%" stop-color="#BCC9DE"');
+    expect(svgStars).toContain('aria-label="Nota 4,7 de 5"');
+  });
+
+  it('embeds audit seal, verification timestamp and Schema.org microdata + optional safe JSON-LD', () => {
+    expect(resolveVerifiedAt('11/2026')).toBe('11/2026');
+    const summaryHtml = createMarketingWidgetHtml('summary', BASE, 'light')!;
+    expect(summaryHtml).toContain('data-avalia-verified="true"');
+    expect(summaryHtml).toContain('data-avalia-verified-at="11/2026"');
+    expect(summaryHtml).toContain('Auditado por Avalia Solar · Verificado em 11/2026');
+    expect(summaryHtml).toContain('AVALIA SOLAR');
+    expect(summaryHtml).toContain('itemtype="https://schema.org/AggregateRating"');
+    expect(summaryHtml).not.toContain('<script');
+
+    const withJsonLd = createMarketingWidgetHtml('summary', {
+      ...BASE,
+      companyName: 'Solar </script><script>alert(1)</script>',
+    }, 'light', 'blue', { includeJsonLd: true })!;
+    expect(withJsonLd).toContain('<script type="application/ld+json">');
+    expect(withJsonLd).toContain('"@type":"AggregateRating"');
+    expect(withJsonLd).toContain('"ratingValue":"4.5"');
+    expect(withJsonLd).toContain('"reviewCount":"12"');
+    expect(withJsonLd).not.toContain('</script><script>');
+    expect(createMarketingWidgetJsonLd('ranking', { ...BASE, rankPosition: 1, rankPopulation: 10 })).toBeNull();
   });
 });
