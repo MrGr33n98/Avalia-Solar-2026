@@ -158,6 +158,7 @@ export function useServices(companyId?: string | number) {
           {
             method: 'PATCH',
             body: { service: attributes },
+            params: companyId ? { company_id: companyId } : undefined,
           },
         );
 
@@ -179,7 +180,7 @@ export function useServices(companyId?: string | number) {
         throw err;
       }
     },
-    [loadServices, toast, uploadImages],
+    [loadServices, toast, uploadImages, companyId],
   );
 
   const deleteService = useCallback(
