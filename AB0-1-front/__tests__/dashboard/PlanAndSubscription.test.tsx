@@ -67,7 +67,7 @@ describe('Plano e Assinatura — contrato e permissões', () => {
       cancel_at_period_end: false,
     });
     render(<PlanAndSubscription companyId="1190" />);
-    expect(await screen.findByText('5 de maio de 2027')).toBeInTheDocument();
+    expect(await screen.findByText('05 de maio de 2027')).toBeInTheDocument();
     expect(screen.getByText('Ativa')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Gerenciar pagamento' })).toBeInTheDocument();
   });
@@ -86,8 +86,8 @@ describe('Plano e Assinatura — contrato e permissões', () => {
       .mockResolvedValueOnce({ ...entitlements, plan: { name: 'Pro', tier: 'pro', id: 49 } });
     const { rerender } = render(<PlanAndSubscription companyId="1190" />);
     rerender(<PlanAndSubscription companyId="1290" />);
-    expect(await screen.findByText('Pro')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Plano atual: Pro' })).toBeInTheDocument();
     resolveFirst(entitlements);
-    expect(screen.getByText('Pro')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Plano atual: Pro' })).toBeInTheDocument();
   });
 });
