@@ -70,7 +70,6 @@ export function useServices(companyId?: string | number) {
   const [services, setServices] = useState<CompanyService[]>([]);
   const [stats, setStats] = useState<ServiceStats>(EMPTY_STATS);
   const [loading, setLoading] = useState(false);
-  const companyParams = companyId ? { company_id: companyId } : undefined;
 
   const loadServices = useCallback(async () => {
     setLoading(true);
