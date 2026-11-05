@@ -5,6 +5,7 @@ import { fetchApi } from '@/lib/api';
 import type { Company } from '@/lib/api';
 
 jest.mock('@/lib/api', () => ({ fetchApi: jest.fn() }));
+jest.mock('@/lib/analytics/lazy', () => ({ track: jest.fn() }));
 const toast = jest.fn();
 jest.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: (...args: unknown[]) => toast(...args) }) }));
 
