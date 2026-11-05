@@ -17,7 +17,7 @@ class CompanySerializer < ActiveModel::Serializer
              :warranty_years, :installation_warranty_years, :post_sales_support,
              :business_verification_status, :business_verified_at, :business_verification_method,
              :instagram, :facebook, :linkedin,
-             :cta_whatsapp_enabled, :cta_whatsapp_url,
+             :quote_cta_enabled, :cta_whatsapp_enabled, :cta_whatsapp_url,
              :whatsapp_enabled, :whatsapp_url,
              :active_admin, :p2p_chat_enabled,
              :social_proof_enabled, :can_use_social_proof,
