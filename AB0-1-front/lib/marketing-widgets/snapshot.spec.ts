@@ -1,5 +1,5 @@
 import {
-  createMarketingWidgetHtml, escapeHtml, MARKETING_WIDGETS, STAR_WIDGET_DIMENSIONS, STAR_WIDGET_VARIANTS, safeCompanyLogoUrl,
+  createMarketingWidgetHtml, escapeHtml, MARKETING_WIDGETS, STAR_WIDGET_DIMENSIONS, STAR_WIDGET_VARIANTS, MARKETING_AVATAR_INSET_PX, safeCompanyLogoUrl,
   type MarketingWidgetSnapshot,
 } from './snapshot';
 
@@ -89,7 +89,10 @@ describe('reputation marketing widget snapshots', () => {
       logoUrl: 'https://api.avaliasolar.com.br/assets/companies/company-logo.webp',
     }, 'light')!;
     expect(html).toContain('width:36px;height:36px;min-width:36px;min-height:36px');
-    expect(html).toContain('padding:4px');
+    expect(html).toContain('padding:1px');
+    expect(MARKETING_AVATAR_INSET_PX).toBe(1);
+    // A usable 32px image area is kept inside the 36px avatar (1px inset + 1px border per side).
+    expect(html).toContain('width="34" height="34"');
     expect(html).toContain('border-radius:50%');
     expect(html).toContain('width:100%;height:100%');
     expect(html).toContain('object-fit:contain');
@@ -108,7 +111,9 @@ describe('reputation marketing widget snapshots', () => {
       }, 'light', variant)!;
 
       expect(html).toContain('width:22px;height:22px;min-width:22px;min-height:22px');
-      expect(html).toContain('padding:3px');
+      expect(html).toContain('padding:1px');
+      // 18px of actual image drawing area in a 22px badge avatar.
+      expect(html).toContain('width="20" height="20"');
       expect(html).toContain('overflow:hidden;border-radius:50%');
       expect(html).toContain('display:block;width:100%;height:100%');
       expect(html).toContain('object-fit:contain');
