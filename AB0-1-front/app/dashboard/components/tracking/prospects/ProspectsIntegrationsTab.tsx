@@ -22,9 +22,10 @@ export default function ProspectsIntegrationsTab({ data, companyId, onRefresh }:
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const showingIntentSync = searchParams.get('integration') === 'intent_sync';
+  const showingIntentSync = searchParams?.get('integration') === 'intent_sync';
   const navigateIntentSync = (show: boolean) => {
-    const next = new URLSearchParams(searchParams.toString());
+    if (!pathname) return;
+    const next = new URLSearchParams(searchParams?.toString() || '');
     next.set('section', 'integrations');
     if (show) {
       next.set('integration', 'intent_sync');
