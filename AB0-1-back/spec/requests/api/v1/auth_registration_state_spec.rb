@@ -43,6 +43,25 @@ RSpec.describe 'Estados de cadastro da autenticação', type: :request do
     expect(body).not_to have_key('token')
   end
 
+  it 'nunca permite autoconceder perfil de administrador via registro público' do
+    post '/api/v1/auth/register', params: {
+      user: {
+        name: 'Admin Tentativa',
+        email: 'privilege-attempt@example.com',
+        password: password,
+        password_confirmation: password,
+        role: 'admin',
+        city: 'São Paulo',
+        state: 'SP',
+        terms_accepted: true
+      }, terms_accepted: true
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(JSON.parse(response.body)['code']).to eq('INVALID_REGISTRATION_ROLE')
+    expect(User.find_by(email: 'privilege-attempt@example.com')).to be_nil
+  end
+
   it 'recusa domínio público no cadastro de empresa' do
     post '/api/v1/auth/register', params: {
       user: {

@@ -54,6 +54,17 @@ RSpec.describe 'Company Access API', type: :request do
       expect(body['request']['status']).to eq('pending')
     end
 
+    it 'accepts the nested contract used by the public claim page' do
+      auth = auth_headers(review_user)
+      post '/api/v1/company_access_requests',
+           params: { company_access_request: { company_id: company.id, message: 'Sou representante.' } }.to_json,
+           headers: auth
+
+      expect(response).to have_http_status(:created)
+      request = CompanyAccessRequest.find_by!(user: review_user, company: company)
+      expect(request.message).to eq('Sou representante.')
+    end
+
     it 'creates a pending request for company users' do
       auth = auth_headers(company_user)
       post '/api/v1/company_access_requests',

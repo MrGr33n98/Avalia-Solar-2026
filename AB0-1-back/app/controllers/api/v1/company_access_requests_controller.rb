@@ -13,7 +13,25 @@ module Api
           return render_error_response(message: 'Não autorizado', status: :forbidden, code: 'FORBIDDEN')
         end
 
-        company = ::Company.find_by(id: params[:company_id])
+        # Accept both the canonical JSON contract and the legacy claim form.
+        attributes = params[:company_access_request]
+        company_id = params[:company_id].presence || attributes&.[](:company_id)
+        message = params[:message].presence || attributes&.[](:message)
+        documents = Array(attributes&.[](:documents)).compact
+
+        # Validate evidence before attaching to avoid storing unchecked files.
+        if documents.size > 5 || documents.any? { |doc|
+          !doc.respond_to?(:size) || doc.size > 5.megabytes ||
+            !%w[application/pdf image/jpeg image/png].include?(doc.content_type)
+        }
+          return render_error_response(
+            message: 'Envie no máximo 5 documentos PDF, JPG ou PNG de até 5 MB cada.',
+            status: :unprocessable_entity,
+            code: 'INVALID_CLAIM_DOCUMENTS'
+          )
+        end
+
+        company = ::Company.find_by(id: company_id)
         unless company
           return render_error_response(message: 'Empresa não encontrada', status: :not_found, code: 'COMPANY_NOT_FOUND')
         end
@@ -56,7 +74,8 @@ module Api
 
         request = current_user.company_access_requests.new(
           company: company,
-          message: params[:message]
+          message: message,
+          documents: documents
         )
 
         if request.save

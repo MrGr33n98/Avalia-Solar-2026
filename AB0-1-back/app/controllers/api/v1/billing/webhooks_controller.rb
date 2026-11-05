@@ -38,8 +38,8 @@ module Api
             end
           end
 
-          # Still return 200 to Stripe (don't retry failed webhooks)
-          render json: { status: 'error', error: e.message }, status: :ok
+          # Stripe must retry a valid event after a transient processing failure.
+          render json: { status: 'error', error: 'Webhook processing failed' }, status: :service_unavailable
         end
       end
     end

@@ -75,7 +75,7 @@ class CompanyAccessRequest < ApplicationRecord
   def verify_company
     company.update!(
       active_admin: true,
-      moderation_status: 'active',
+      moderation_status: 'approved',
       approved_at: Time.current,
       approved_by_admin_user_id: reviewed_by_admin_user_id
     )

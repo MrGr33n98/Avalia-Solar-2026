@@ -64,7 +64,10 @@ export default function ApiKeysSettingsPage() {
       });
       if (!res.ok) throw new Error('Erro ao gerar chave de API.');
       const data = await res.json();
-      const generatedSecret = data.api_key?.secret || data.api_key?.token || `as_live_${Math.random().toString(36).substring(2, 18)}`;
+      const generatedSecret = data.api_key?.secret || data.api_key?.token;
+      if (typeof generatedSecret !== 'string' || !generatedSecret.trim()) {
+        throw new Error('A API não retornou a chave secreta. Não é possível exibir uma chave fictícia.');
+      }
       setCreatedToken(generatedSecret);
       setName('');
       setIsAdding(false);

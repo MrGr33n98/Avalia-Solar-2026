@@ -122,7 +122,14 @@ module Api
         end
 
         requested_role = params[:role] || (params[:user] && params[:user][:role]) || 'review'
-        requested_role = 'review' unless User::ROLES.include?(requested_role)
+        # Never allow a public registration to self-assign admin privileges.
+        unless %w[review company].include?(requested_role)
+          return render_error_response(
+            message: 'Tipo de conta inválido para cadastro público.',
+            status: :unprocessable_entity,
+            code: 'INVALID_REGISTRATION_ROLE'
+          )
+        end
 
         user = User.new(attrs.merge(
                           terms_accepted: true,

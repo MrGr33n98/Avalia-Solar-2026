@@ -8,7 +8,7 @@ module Api
                     only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories catalog
                              catalog_showcase service_detail feature_access social_proof views_count track_view]
       before_action :authenticate_api_user,
-                    only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
+                    only: %i[create update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
                              analytics_traffic mine]
       before_action :authorize_company_update!, only: %i[update destroy request_admin_access]
       before_action :authorize_company_scope!,
