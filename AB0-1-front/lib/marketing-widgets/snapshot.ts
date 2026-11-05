@@ -14,6 +14,12 @@ export const STAR_WIDGET_VARIANTS: readonly { id: StarWidgetVariant; label: stri
 /** Proporções da referência enviada: 120 × 54 pixels, sem aumentar o badge no embed. */
 export const STAR_WIDGET_DIMENSIONS = { width: 120, height: 54 } as const;
 
+/** Keep a 1px optical breathing room inside the avatar border.
+ * Previously 3px on a 22px badge + 1px border left only 14px of visible logo.
+ * Share this token between React preview and exported HTML to prevent drift.
+ */
+export const MARKETING_AVATAR_INSET_PX = 1 as const;
+
 export function safeCompanyLogoUrl(value?: string | null): string | null {
   if (!value) return null;
   try {
@@ -83,7 +89,7 @@ function companyAvatarHtml(data: MarketingWidgetSnapshot, size: number, variant:
   const safeLogo = safeCompanyLogoUrl(data.logoUrl);
   const darkWeg = variant === 'navy' && /^weg$/i.test(data.companyName.trim()) && Boolean(safeLogo);
   const background = darkWeg ? '#0B132B' : '#FFFFFF';
-  const inset = size <= 22 ? 3 : 4;
+  const inset = MARKETING_AVATAR_INSET_PX;
   const base = 'display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;' +
     'width:' + size + 'px;height:' + size + 'px;min-width:' + size + 'px;min-height:' + size + 'px;' +
     'flex:0 0 ' + size + 'px;box-sizing:border-box;overflow:hidden;border-radius:50%;' +
