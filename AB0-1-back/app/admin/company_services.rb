@@ -2,7 +2,7 @@
 
 ActiveAdmin.register CompanyService do
   menu false
-  permit_params :company_id, :category_id, :name, :slug, :description, :price_from, :status, coverage: [], images: []
+  permit_params :company_id, :category_id, :name, :slug, :description, :price_from, :status, :cover_image, coverage: [], images: []
 
   scope :all, default: true
   scope('Ativos') { |scope| scope.where(status: 'active') }
@@ -82,6 +82,9 @@ ActiveAdmin.register CompanyService do
       row('Status') do |service|
         status_tag(service.status.to_s.upcase, class: service.active_status? ? 'yes' : 'no')
       end
+      row('Capa') do |service|
+        service.cover_image.attached? ? image_tag(url_for(service.cover_image), size: '200x112', style: 'object-fit: cover; border-radius: 8px;') : 'Sem capa'
+      end
       row('Imagens') do |service|
         if service.images.attached?
           div style: 'display: flex; gap: 8px; flex-wrap: wrap;' do
@@ -107,6 +110,7 @@ ActiveAdmin.register CompanyService do
       f.input :description
       f.input :price_from
       f.input :status, as: :select, collection: CompanyService.statuses.keys
+      f.input :cover_image, as: :file
       f.input :images, as: :file, input_html: { multiple: true }
     end
     f.actions
