@@ -1,63 +1,57 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { PlansPricingModal } from '@/app/dashboard/components/PlansPricingModal';
+import { billingApi } from '@/lib/api/billing';
+import type { BillingPlan } from '@/lib/api/billing';
 
-describe('PlansPricingModal', () => {
-  it('renders modal with all 4 official plans and correct reference prices when open', () => {
-    const handleSelectPlan = jest.fn();
-    render(
-      <PlansPricingModal
-        open={true}
-        onOpenChange={jest.fn()}
-        currentPlanTier="free"
-        onSelectPlan={handleSelectPlan}
-      />
-    );
+jest.mock('@/lib/api/billing', () => ({
+  billingApi: { getPlans: jest.fn() },
+}));
 
-    // Title
-    expect(screen.getByText('Escolha o plano ideal para sua empresa')).toBeInTheDocument();
+const plans = [
+  { id: 1, slug: 'free', name: 'Gratuito', features: {}, summary: 'Perfil básico' },
+  { id: 12, slug: 'essential', name: 'Essencial', features: { custom_ctas: true }, summary: 'Presença premium' },
+  { id: 41, slug: 'pro', name: 'Pro', features: { media_gallery: true }, summary: 'Visibilidade comercial' },
+  { id: 54, slug: 'enterprise', name: 'Enterprise', features: {}, summary: 'Sob medida' },
+] as BillingPlan[];
 
-    // 4 Plans
-    expect(screen.getByRole('heading', { level: 3, name: 'Gratuito' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: 'Essencial' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: 'Pro' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: 'Enterprise' })).toBeInTheDocument();
-
-    // Pro Featured Badge
-    expect(screen.getByText('⭐ MAIS VENDIDO')).toBeInTheDocument();
-
-    // Annual prices by default
-    expect(screen.getByText('R$ 590')).toBeInTheDocument();
-    expect(screen.getByText('R$ 1.500')).toBeInTheDocument();
-
-    // Current plan button is disabled
-    expect(screen.getByRole('button', { name: 'Plano Atual' })).toBeDisabled();
-
-    // Select Essencial
-    const essencialButton = screen.getByRole('button', { name: 'Escolher Essencial' });
-    fireEvent.click(essencialButton);
-    expect(handleSelectPlan).toHaveBeenCalledWith('essential');
-
-    // Select Pro
-    const proButton = screen.getByRole('button', { name: 'Fazer Upgrade para Pro' });
-    fireEvent.click(proButton);
-    expect(handleSelectPlan).toHaveBeenCalledWith('pro');
+describe('PlansPricingModal — upgrade real', () => {
+  beforeEach(() => {
+    (billingApi.getPlans as jest.Mock).mockResolvedValue(plans);
   });
 
-  it('switches between annual and monthly equivalent billing view', () => {
-    render(
-      <PlansPricingModal
-        open={true}
-        onOpenChange={jest.fn()}
-        currentPlanTier="free"
-      />
-    );
+  afterEach(() => jest.clearAllMocks());
 
-    // Switch to monthly equivalent
-    const monthlyToggle = screen.getByRole('button', { name: /mensal equivalente/i });
-    fireEvent.click(monthlyToggle);
+  it('loads real plan IDs and keeps current plan unavailable for duplicate checkout', async () => {
+    const onSelectPlan = jest.fn();
+    render(<PlansPricingModal open onOpenChange={jest.fn()} currentPlanTier="free" onSelectPlan={onSelectPlan} />);
+    expect(await screen.findByRole('heading', { name: 'Essencial' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Pro' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Enterprise' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Plano atual: Gratuito' })).toBeDisabled();
+    expect(screen.getByText('R$ 590,00')).toBeInTheDocument();
 
-    expect(screen.getByText('R$ 49,17')).toBeInTheDocument();
-    expect(screen.getByText('R$ 125,00')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar plano: Essencial' }));
+    expect(onSelectPlan).toHaveBeenCalledWith(plans[1], 'twelve_months');
+  });
+
+  it('passes a six-month period to checkout rather than only changing displayed prices', async () => {
+    const onSelectPlan = jest.fn();
+    render(<PlansPricingModal open onOpenChange={jest.fn()} currentPlanTier="free" onSelectPlan={onSelectPlan} />);
+    await screen.findByRole('heading', { name: 'Essencial' });
+    await userEvent.setup().click(screen.getByRole('tab', { name: '6 meses' }));
+    expect(await screen.findByText('R$ 330,00')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar plano: Pro' }));
+    expect(onSelectPlan).toHaveBeenCalledWith(plans[2], 'six_months');
+  });
+
+  it('fails closed when plan catalogue is unavailable', async () => {
+    (billingApi.getPlans as jest.Mock).mockRejectedValue(new Error('network'));
+    const onSelectPlan = jest.fn();
+    render(<PlansPricingModal open onOpenChange={jest.fn()} currentPlanTier="free" onSelectPlan={onSelectPlan} />);
+    expect(await screen.findByText('O catálogo de planos não está disponível no momento. Nenhuma contratação foi iniciada.')).toBeInTheDocument();
+    expect(onSelectPlan).not.toHaveBeenCalled();
   });
 });
