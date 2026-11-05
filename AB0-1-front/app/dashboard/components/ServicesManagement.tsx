@@ -116,12 +116,23 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
 
   const selectCover = (file?: File) => {
     if (!file || !checkFiles([file])) return;
+    const total = file.size + galleryFiles.reduce((sum, gallery) => sum + gallery.size, 0);
+    if (total > 20 * 1024 * 1024) {
+      setMediaError('Envie no máximo 20 MB de imagens por vez.');
+      return;
+    }
     setCoverFile(file);
     setRemoveCover(false);
   };
 
   const selectGallery = (files: File[]) => {
     if (!checkFiles(files)) return;
+    const total = (coverFile?.size || 0) +
+      [...galleryFiles, ...files].reduce((sum, image) => sum + image.size, 0);
+    if (total > 20 * 1024 * 1024) {
+      setMediaError('Envie no máximo 20 MB de imagens por vez.');
+      return;
+    }
     const kept = (editingService?.images || []).filter((image) => !removedImageIds.includes(image.id)).length;
     if (kept + galleryFiles.length + files.length > 8) {
       setMediaError('A galeria permite até 8 imagens por serviço.');
@@ -464,7 +475,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
             <section aria-label="Imagens do serviço" className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Capa e galeria</h3>
-                <p className="mt-1 text-xs text-slate-500">Imagens reais do serviço, até 8 MB cada. A capa aparece na vitrine e na página pública.</p>
+                <p className="mt-1 text-xs text-slate-500">Imagens reais do serviço: até 8 MB por arquivo e 20 MB por envio. A capa aparece na vitrine e na página pública.</p>
               </div>
               <div>
                 <label htmlFor="service-cover" className="mb-2 block text-xs font-semibold text-slate-700">Imagem de capa</label>
