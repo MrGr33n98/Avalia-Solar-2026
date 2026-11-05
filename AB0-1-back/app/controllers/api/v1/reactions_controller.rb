@@ -3,6 +3,7 @@
 module Api
   module V1
     class ReactionsController < BaseController
+      before_action :require_feed_mvp_enabled!, if: -> { params[:reactable_type] == 'ReviewerPublication' }
       before_action :authenticate_api_user
 
       def create

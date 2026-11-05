@@ -10,6 +10,7 @@ module Api
       include Pundit::Authorization
       include JwtAuthenticatable
       include EffectiveTenancyResolvable
+      include SocialMvpGuard
 
       # Skip CSRF for API requests
       skip_before_action :verify_authenticity_token

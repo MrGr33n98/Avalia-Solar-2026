@@ -1,6 +1,7 @@
 module Api
   module V1
     class CreatorsController < Api::V1::BaseController
+        before_action :require_creator_mvp_enabled!
       around_action :log_creator_request
       def index
         profiles = ReviewerProfile.where(creator_enabled: true).includes(:user).order(id: :desc)

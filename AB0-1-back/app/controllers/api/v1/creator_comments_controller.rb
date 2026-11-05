@@ -1,6 +1,7 @@
 module Api
   module V1
     class CreatorCommentsController < Api::V1::BaseController
+        before_action :require_creator_mvp_enabled!
 
       def index
         profile = ReviewerProfile.includes(:user).find_by!(public_slug: params[:creator_slug], creator_enabled: true)

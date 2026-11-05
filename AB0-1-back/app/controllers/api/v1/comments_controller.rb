@@ -3,6 +3,7 @@
 module Api
   module V1
     class CommentsController < BaseController
+      before_action :require_feed_mvp_enabled!, if: :social_publication_comment?
       before_action :authenticate_api_user, only: %i[create update destroy]
 
       def index
@@ -47,6 +48,13 @@ module Api
       end
 
       private
+
+      def social_publication_comment?
+        return true if params[:commentable_type] == 'ReviewerPublication'
+        return false unless action_name == 'destroy'
+
+        Comment.where(id: params[:id], commentable_type: 'ReviewerPublication').exists?
+      end
 
       def find_commentable
         type = params[:commentable_type]

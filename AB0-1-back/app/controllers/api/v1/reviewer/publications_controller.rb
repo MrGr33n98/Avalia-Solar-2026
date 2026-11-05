@@ -2,6 +2,7 @@ module Api
   module V1
     module Reviewer
       class PublicationsController < BaseController
+        before_action :require_creator_mvp_enabled!
         before_action :load_publication, only: %i[show update destroy publish archive]
 
         def index

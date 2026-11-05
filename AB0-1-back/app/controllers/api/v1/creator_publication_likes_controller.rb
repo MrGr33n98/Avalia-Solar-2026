@@ -1,6 +1,7 @@
 module Api
   module V1
     class CreatorPublicationLikesController < Api::V1::BaseController
+        before_action :require_creator_mvp_enabled!
       before_action :load_publication
       def show
         response.headers['Cache-Control'] = 'private, no-store'

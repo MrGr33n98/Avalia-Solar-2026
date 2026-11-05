@@ -4,6 +4,7 @@ module Api
   module V1
     module Reviewer
       class TreeSettingsController < BaseController
+        before_action :require_creator_mvp_enabled!
         MAX_IMAGE_BYTES = 5.megabytes
         ALLOWED_IMAGE_TYPES = %w[image/jpeg image/png image/webp].freeze
         before_action :authenticate_api_user

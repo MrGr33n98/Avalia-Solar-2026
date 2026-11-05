@@ -3,6 +3,7 @@
 module Api
   module V1
     class SocialFollowsController < BaseController
+      before_action :require_feed_mvp_enabled!
       before_action :authenticate_api_user
 
       def index

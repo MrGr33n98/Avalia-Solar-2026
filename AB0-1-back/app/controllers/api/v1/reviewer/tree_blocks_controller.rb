@@ -4,6 +4,7 @@ module Api
   module V1
     module Reviewer
       class TreeBlocksController < BaseController
+        before_action :require_creator_mvp_enabled!
         before_action :authenticate_api_user
         before_action :require_reviewer_role
         before_action :set_block, only: %i[update destroy]

@@ -1,6 +1,7 @@
 module Api
   module V1
     class CreatorLeadsController < Api::V1::BaseController
+        before_action :require_creator_mvp_enabled!
 
       def create
         profile = ReviewerProfile.find_by(public_slug: params[:creator_slug], creator_enabled: true)

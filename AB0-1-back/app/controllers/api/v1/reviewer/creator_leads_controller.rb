@@ -2,6 +2,7 @@ module Api
   module V1
     module Reviewer
       class CreatorLeadsController < BaseController
+        before_action :require_creator_mvp_enabled!
         def index
           leads = CreatorLead.where(creator_user: current_user)
           leads = leads.where(status: params[:status]) if CreatorLead::STATUSES.include?(params[:status].to_s)

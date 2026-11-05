@@ -5,6 +5,7 @@ require 'uri'
 module Api
   module V1
     class CreatorTreeController < BaseController
+        before_action :require_creator_mvp_enabled!
       def show
         slug = params[:slug].to_s
         payload = Rails.cache.fetch("creator/public-tree/#{slug}/v1", expires_in: 5.minutes) do

@@ -3,6 +3,7 @@
 module Api
   module V1
     class FeedController < BaseController
+        before_action :require_feed_mvp_enabled!
       skip_before_action :authenticate_user!, only: [:index], raise: false
 
       def index
