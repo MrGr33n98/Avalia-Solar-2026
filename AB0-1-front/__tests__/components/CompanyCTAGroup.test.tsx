@@ -30,16 +30,23 @@ const mockCompany: Company = {
   phone: '4733330000',
   description: 'Soluções que impulsionam um futuro mais sustentável.',
   cta_whatsapp_enabled: true,
+  cta_whatsapp_url: 'https://wa.me/5547999545370',
+  has_paid_plan: true,
+  feature_access: {
+    custom_ctas: { state: 'enabled', value: true },
+    whatsapp_contact_button: { state: 'enabled', value: true },
+  },
 };
 
 describe('CompanyCTAGroup', () => {
-  it('renders primary 3-CTA row: Solicitar contato, Comparar, and Avaliar empresa', () => {
+  it('renders two compact rows with paid Orçamento and WhatsApp, and public Comparar and Avaliar', () => {
     render(
       <CompanyCTAGroup company={mockCompany} canRequestQuote={true} />
     );
 
-    expect(screen.getByText('Solicitar contato')).toBeInTheDocument();
+    expect(screen.getByText('Solicitar orçamento')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /no WhatsApp/ })).toBeInTheDocument();
     expect(screen.getByText('Comparar')).toBeInTheDocument();
-    expect(screen.getByText('Avaliar empresa')).toBeInTheDocument();
+    expect(screen.getByText('Avaliar')).toBeInTheDocument();
   });
 });
