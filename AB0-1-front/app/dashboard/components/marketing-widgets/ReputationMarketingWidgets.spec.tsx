@@ -128,18 +128,22 @@ describe('Widgets de Reputação (mobile-first)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeEnabled());
     const summaryAvatar = screen.getAllByTestId('marketing-widget-company-avatar')
       .find((avatar) => avatar.getAttribute('style')?.includes('width: 36px'));
-    expect(summaryAvatar).toHaveStyle({ width: '36px', height: '36px', padding: '4px' });
+    expect(summaryAvatar).toHaveStyle({ width: '36px', height: '36px', padding: '1px' });
     expect(summaryAvatar?.querySelector('img')).toHaveClass('object-contain', 'object-center', 'h-full', 'w-full', 'rounded-full');
 
     const darkBadge = screen.getByTestId('marketing-star-badge-navy');
     const navyAvatar = darkBadge.querySelector('[data-testid="marketing-widget-company-avatar"]');
     const navyImage = navyAvatar?.querySelector('img');
-    expect(navyAvatar).toHaveStyle({ width: '22px', height: '22px', padding: '3px' });
+    expect(navyAvatar).toHaveStyle({ width: '22px', height: '22px', padding: '1px' });
     expect(navyAvatar).toHaveClass('rounded-full', 'bg-[#0B132B]');
     expect(navyImage).toHaveClass('object-contain', 'object-center', 'grayscale', 'invert', 'mix-blend-screen');
     expect(navyImage).toHaveAttribute('src', withLogo.logo_url);
 
     fireEvent.click(screen.getByTestId('select-widget-stars'));
+    // A single 54px badge should not float inside a 154px tall empty canvas.
+    const customizer = document.getElementById('widget-customizer')!;
+    const compactStage = customizer.querySelector('[class*="min-h-\\[96px\\]"]');
+    expect(compactStage).toBeTruthy();
     fireEvent.click(screen.getByTestId('choose-star-variant-navy'));
     const renderedHtml = (screen.getByLabelText('HTML gerado') as HTMLTextAreaElement).value;
     expect(renderedHtml).toContain('width:100%;height:100%');
