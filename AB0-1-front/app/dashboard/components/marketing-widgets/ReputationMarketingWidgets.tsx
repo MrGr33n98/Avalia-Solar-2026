@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -10,11 +10,19 @@ import { companyDashboardApi, dashboardApi } from '@/lib/api';
 import { track } from '@/lib/analytics/lazy';
 import {
   MARKETING_WIDGETS, STAR_WIDGET_VARIANTS, STAR_WIDGET_DIMENSIONS, MARKETING_AVATAR_INSET_PX,
-  createMarketingWidgetHtml, safeCompanyLogoUrl,
-  type MarketingWidgetKind, type MarketingWidgetTheme, type MarketingWidgetSnapshot, type StarWidgetVariant,
+  createMarketingWidgetHtml, resolveLogoThemePreference, resolveVerifiedAt, safeCompanyLogoUrl,
+  type LogoThemePreference, type MarketingWidgetKind, type MarketingWidgetTheme,
+  type MarketingWidgetSnapshot, type StarWidgetVariant,
 } from '@/lib/marketing-widgets/snapshot';
 
-interface CompanyInfo { id?: string | number; name?: string; slug?: string; logo_url?: string | null; identity?: { logo_url?: string | null } | null; }
+interface CompanyInfo {
+  id?: string | number;
+  name?: string;
+  slug?: string;
+  logo_url?: string | null;
+  logo_theme_preference?: LogoThemePreference;
+  identity?: { logo_url?: string | null; logo_theme_preference?: LogoThemePreference } | null;
+}
 interface MarketingWidgetsProps { company: CompanyInfo | null; companyId: string | number; }
 interface StatsResponse { stats?: { approved_reviews?: number; average_rating?: number }; data_status?: string; }
 interface ReviewItem { id: number; rating: number; comment: string; user_name?: string; featured: boolean; status: string; }
@@ -29,6 +37,14 @@ interface RankingResponse {
   ranking?: { position?: number | null; population?: number | null };
 }
 
+const STAR_PATHS_5 = [
+  'M6 .6l1.62 3.28 3.62.53-2.62 2.55.62 3.61L6 8.86 2.76 10.57l.62-3.61L.76 4.41l3.62-.53L6 .6z',
+  'M19 .6l1.62 3.28 3.62.53-2.62 2.55.62 3.61L19 8.86l-3.24 1.71.62-3.61-2.62-2.55 3.62-.53L19 .6z',
+  'M32 .6l1.62 3.28 3.62.53-2.62 2.55.62 3.61L32 8.86l-3.24 1.71.62-3.61-2.62-2.55 3.62-.53L32 .6z',
+  'M45 .6l1.62 3.28 3.62.53-2.62 2.55.62 3.61L45 8.86l-3.24 1.71.62-3.61-2.62-2.55 3.62-.53L45 .6z',
+  'M58 .6l1.62 3.28 3.62.53-2.62 2.55.62 3.61L58 8.86l-3.24 1.71.62-3.61-2.62-2.55 3.62-.53L58 .6z',
+] as const;
+
 function BrandMark() {
   return (
     <span className="inline-flex h-6 w-[99px] shrink-0 items-center">
@@ -37,20 +53,67 @@ function BrandMark() {
   );
 }
 
+function VerifiedMicroSeal({ verifiedAt }: { verifiedAt: string }) {
+  return (
+    <div className="mt-2 flex items-center gap-1 border-t border-slate-100 pt-1.5 text-[10px] leading-tight text-slate-500">
+      <svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true" className="shrink-0 text-[#0B5FFF]">
+        <path
+          fill="currentColor"
+          d="M8 1L2 3.5v4.2c0 3.7 2.56 6.96 6 7.8 3.44-.84 6-4.1 6-7.8V3.5L8 1zm-.7 9.7L4.6 8l1.06-1.06 1.64 1.64 3.44-3.44L11.8 6.2 7.3 10.7z"
+        />
+      </svg>
+      <span>Auditado por Avalia Solar · Verificado em {verifiedAt}</span>
+    </div>
+  );
+}
+
 function Stars({ rating, small = false }: { rating: number | null; small?: boolean }) {
+  const uid = useId().replace(/:/g, '');
   if (rating === null) return <span className="text-xs text-slate-500">Sem nota publicada</span>;
-  return <span aria-label={'Nota ' + rating.toFixed(1).replace('.', ',') + ' de 5'} className="inline-flex items-center gap-0.5 text-[#F3A000]">
-    {Array.from({ length: 5 }, (_, i) => (
-      <span key={i} aria-hidden="true" className={small ? 'text-[12px]' : 'text-lg'} style={{ opacity: rating >= i + 1 ? 1 : rating > i ? .6 : .22 }}>★</span>
-    ))}
-  </span>;
+  const safeRating = Math.min(5, Math.max(0, rating));
+  const size = small ? 11 : 15;
+  const width = Math.round((size * 64) / 12);
+  const partialIdx = STAR_PATHS_5.findIndex((_, i) => {
+    const fill = Math.min(1, Math.max(0, safeRating - i));
+    return fill > 0.01 && fill < 0.99;
+  });
+  const partialPct = partialIdx >= 0 ? Math.round((safeRating - partialIdx) * 100) : 0;
+  const gradId = `star-${uid}-${partialIdx}-${partialPct}`;
+
+  return (
+    <span
+      aria-label={'Nota ' + safeRating.toFixed(1).replace('.', ',') + ' de 5'}
+      className="inline-flex items-center text-[#F3A000]"
+    >
+      <svg width={width} height={size} viewBox="0 0 64 12" aria-hidden="true" className="inline-block shrink-0">
+        {partialIdx >= 0 && (
+          <defs>
+            <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset={`${partialPct}%`} stopColor="#FFC107" />
+              <stop offset={`${partialPct}%`} stopColor="#BCC9DE" />
+            </linearGradient>
+          </defs>
+        )}
+        {STAR_PATHS_5.map((d, i) => {
+          const fill = Math.min(1, Math.max(0, safeRating - i));
+          return (
+            <path
+              key={i}
+              fill={fill >= 0.99 ? '#FFC107' : fill <= 0.01 ? '#BCC9DE' : `url(#${gradId})`}
+              d={d}
+            />
+          );
+        })}
+      </svg>
+    </span>
+  );
 }
 
 function isNum(n: unknown): n is number { return typeof n === 'number' && Number.isFinite(n); }
 function isCount(n: unknown): n is number { return isNum(n) && Number.isSafeInteger(n) && n >= 0; }
 
 /** Shared avatar geometry in every widget preview.
- * Only WEG in the navy badge gets an explicitly branded monochrome treatment.
+ * Uses configurable logoThemePreference (with fallback to WEG monochrome on navy).
  * Other companies retain their real logo colors on the neutral surface.
  */
 function WidgetAvatar({
@@ -64,7 +127,11 @@ function WidgetAvatar({
 }) {
   const [failed, setFailed] = useState(false);
   const logo = safeCompanyLogoUrl(snapshot.logoUrl);
-  const darkWeg = variant === 'navy' && /^weg$/i.test(snapshot.companyName.trim()) && Boolean(logo) && !failed;
+  const monochrome =
+    variant === 'navy' &&
+    resolveLogoThemePreference(snapshot) === 'monochrome' &&
+    Boolean(logo) &&
+    !failed;
   const initials = snapshot.companyName.trim().split(/\s+/).slice(0, 2)
     .map((part) => part[0]).join('').toUpperCase() || 'AS';
   const inset = MARKETING_AVATAR_INSET_PX;
@@ -74,7 +141,7 @@ function WidgetAvatar({
       data-testid="marketing-widget-company-avatar"
       aria-label={'Logo da empresa ' + snapshot.companyName}
       className={'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 font-bold ' +
-        (darkWeg ? 'bg-[#0B132B] text-white' : 'bg-white text-[#0A1F44]')}
+        (monochrome ? 'bg-[#0B132B] text-white' : 'bg-white text-[#0A1F44]')}
       style={{
         width: size,
         height: size,
@@ -100,7 +167,7 @@ function WidgetAvatar({
           height={size - 2 * inset}
           onError={() => setFailed(true)}
           className={'block h-full w-full min-h-0 min-w-0 max-h-full max-w-full rounded-full object-contain object-center ' +
-            (darkWeg ? 'grayscale invert contrast-[3] mix-blend-screen' : '')}
+            (monochrome ? 'grayscale invert contrast-[3] mix-blend-screen' : '')}
         />
       ) : (
         <span aria-hidden="true">{initials.slice(0, 2)}</span>
@@ -160,6 +227,7 @@ function WidgetIllustration({
 }: { kind: MarketingWidgetKind; snapshot: MarketingWidgetSnapshot; dense?: boolean; starVariant?: StarWidgetVariant }) {
   const hasReviews = isCount(snapshot.approvedCount) && snapshot.approvedCount > 0 && isNum(snapshot.rating);
   const testimonial = snapshot.testimonialAllowed ? snapshot.testimonial : null;
+  const verifiedAt = resolveVerifiedAt(snapshot.verifiedAt);
   return (
     <div className={'flex w-full items-center justify-center rounded-xl border border-slate-100 bg-[#FBFCFF] ' +
       (dense ? (kind === 'stars' ? 'min-h-[96px] p-3' : 'min-h-[154px] p-3') : kind === 'stars' ? 'h-[192px] p-1.5' : 'h-[182px] p-3')}>
@@ -187,7 +255,7 @@ function WidgetIllustration({
             </span>
             <BrandMark />
           </div>
-          <div className="my-3 flex items-center gap-2">
+          <div className="my-2.5 flex items-center gap-2">
             <span className="text-2xl font-extrabold text-[#0A1F44]">
               {hasReviews ? snapshot.rating!.toFixed(1).replace('.', ',') : '—'}
             </span>
@@ -196,7 +264,7 @@ function WidgetIllustration({
           <div className="text-[11px] text-slate-600">
             {snapshot.approvedCount === null ? 'Dados indisponíveis' : snapshot.approvedCount + ' avaliações aprovadas'}
           </div>
-          
+          {hasReviews && <VerifiedMicroSeal verifiedAt={verifiedAt} />}
         </div>
       )}
       {kind === 'stars' && (
@@ -224,7 +292,10 @@ function WidgetIllustration({
               </div>
             </>
           )}
-          <div className="mt-3 border-t border-slate-100 pt-2"><BrandMark /></div>
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
+            <BrandMark />
+            {testimonial && <span className="text-[10px] font-medium text-slate-500">Verificado {verifiedAt}</span>}
+          </div>
         </div>
       )}
     </div>
@@ -239,6 +310,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
   const [active, setActive] = useState<MarketingWidgetKind>('summary');
   const [theme, setTheme] = useState<MarketingWidgetTheme>('light');
   const [starVariant, setStarVariant] = useState<StarWidgetVariant>('blue');
+  const [includeJsonLd, setIncludeJsonLd] = useState(false);
   const [data, setData] = useState<{ count: number | null; rating: number | null; review: MarketingWidgetSnapshot['testimonial']; testimonialAllowed: boolean }>({
     count: null, rating: null, review: null, testimonialAllowed: false,
   });
@@ -254,6 +326,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
   const name = company?.name?.trim() || 'Empresa';
   const slug = company?.slug?.trim() || '';
   const logoUrl = safeCompanyLogoUrl(getFullImageUrl(company?.logo_url || company?.identity?.logo_url || null));
+  const logoThemePreference = company?.logo_theme_preference ?? company?.identity?.logo_theme_preference;
 
   useEffect(() => {
     let cancelled = false;
@@ -301,7 +374,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
   }, [id, retry]);
 
   useEffect(() => {
-    if (active !== 'ranking' || !id || rankStatus !== 'idle') return;
+    if (active !== 'ranking' || !id || loading || dataScope !== id || rankStatus !== 'idle') return;
     let cancelled = false;
     setRankStatus('loading');
     companyDashboardApi.getRanking(id).then((payload) => {
@@ -319,17 +392,19 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
       }
     }).catch(() => { if (!cancelled) { setRank(null); setRankStatus('unavailable'); } });
     return () => { cancelled = true; };
-  }, [active, id, rankStatus]);
+  }, [active, id, loading, dataScope, rankStatus]);
 
   const scopedData = dataScope === id ? data : { count: null, rating: null, review: null, testimonialAllowed: false };
   const scopedRank = rankScope === id ? rank : null;
   const snapshot: MarketingWidgetSnapshot = useMemo(() => ({
-    companyName: name, slug, logoUrl,
+    companyName: name, slug, logoUrl, logoThemePreference,
     approvedCount: scopedData.count, rating: scopedData.rating,
     rankPosition: scopedRank?.position ?? null, rankPopulation: scopedRank?.population ?? null,
     testimonial: scopedData.review, testimonialAllowed: scopedData.testimonialAllowed,
-  }), [name, slug, logoUrl, scopedData.count, scopedData.rating, scopedData.review, scopedData.testimonialAllowed, scopedRank]);
-  const snippet = dataScope === id ? createMarketingWidgetHtml(active, snapshot, theme, starVariant) : null;
+  }), [name, slug, logoUrl, logoThemePreference, scopedData.count, scopedData.rating, scopedData.review, scopedData.testimonialAllowed, scopedRank]);
+  const snippet = dataScope === id
+    ? createMarketingWidgetHtml(active, snapshot, theme, starVariant, { includeJsonLd })
+    : null;
 
   const copy = async () => {
     if (!snippet) return;
@@ -337,7 +412,12 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
       await navigator.clipboard.writeText(snippet);
       toast.success('HTML estático copiado. Atualize-o quando os dados mudarem.');
       track('reputation_marketing_widget_snapshot_copied', {
-        company_id: id, widget_type: active, theme, star_variant: active === 'stars' ? starVariant : undefined, export_format: 'static_html',
+        company_id: id,
+        widget_type: active,
+        theme,
+        star_variant: active === 'stars' ? starVariant : undefined,
+        include_json_ld: includeJsonLd,
+        export_format: 'static_html',
       });
     } catch {
       toast.error('Não foi possível copiar o HTML.');
@@ -384,7 +464,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
         <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
           <h2 className="text-base font-bold text-[#0A1F44]">Personalizar · {MARKETING_WIDGETS.find((item) => item.id === active)?.title}</h2>
           <p className="mt-1 text-xs text-slate-600">Prévia com informações reais da empresa, sem dados de demonstração.</p>
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             {active !== 'stars' && (['light', 'dark'] as const).map((t) => (
               <button key={t} type="button" onClick={() => setTheme(t)} aria-pressed={theme === t}
                 className={'inline-flex h-11 items-center rounded-lg border px-4 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ' +
@@ -392,6 +472,18 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
                 Tema {t === 'light' ? 'claro' : 'escuro'}
               </button>
             ))}
+            {active !== 'ranking' && (
+              <button
+                type="button"
+                data-testid="toggle-widget-jsonld"
+                aria-pressed={includeJsonLd}
+                onClick={() => setIncludeJsonLd((prev) => !prev)}
+                className={'inline-flex h-11 items-center rounded-lg border px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ' +
+                  (includeJsonLd ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600')}
+              >
+                Incluir JSON-LD (SEO)
+              </button>
+            )}
           </div>
           {active === 'stars' && (
             <fieldset className="mt-4">
@@ -404,7 +496,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
                     data-testid={'choose-star-variant-' + variant.id}
                     aria-pressed={starVariant === variant.id}
                     onClick={() => setStarVariant(variant.id)}
-                    className={'min-h-11 rounded-lg border px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ' +
+                    className={'inline-flex h-11 items-center rounded-lg border px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ' +
                       (starVariant === variant.id ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700')}
                   >
                     {variant.label}
@@ -417,7 +509,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
             <WidgetIllustration kind={active} snapshot={snapshot} dense starVariant={starVariant} />
           </div>
           {active === 'ranking' && (
-            <Link href={'/dashboard?company_id=' + encodeURIComponent(id) + '&tab=ranking-performance'} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-blue-700 underline-offset-4 hover:underline">
+            <Link href={'/dashboard?company_id=' + encodeURIComponent(id) + '&tab=ranking-performance'} className="mt-3 inline-flex h-11 items-center text-sm font-semibold text-blue-700 underline-offset-4 hover:underline">
               Consultar metodologia e posicionamento oficial →
             </Link>
           )}
@@ -435,10 +527,12 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
             <p className="mt-4 rounded-lg bg-slate-50 p-4 text-xs text-slate-600" role="status">Consultando avaliações e permissões...</p>
           ) : (
             <>
-              {loadError && dataScope === id && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" role="alert">
-                Algumas informações não puderam ser consultadas. Não publicaremos números incompletos.
-                <button type="button" onClick={() => setRetry((k) => k + 1)} className="ml-2 font-semibold underline">Tentar novamente</button>
-              </p>}
+              {loadError && dataScope === id && (
+                <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" role="alert">
+                  Algumas informações não puderam ser consultadas. Não publicaremos números incompletos.
+                  <button type="button" onClick={() => setRetry((k) => k + 1)} className="ml-2 font-semibold underline">Tentar novamente</button>
+                </p>
+              )}
               {active === 'ranking' && rankStatus === 'loading' && <p className="mt-3 text-xs text-slate-500">Consultando posição oficial...</p>}
               <div className="mt-4 flex-1">
                 <label htmlFor="marketing-widget-snippet" className="mb-2 block text-xs font-semibold text-slate-700">HTML gerado</label>
@@ -449,15 +543,21 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
                   className="h-40 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] leading-relaxed text-[#0A1F44] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                 />
               </div>
-              {!snippet && <p className="mb-2 text-xs leading-relaxed text-slate-600">
-                {active === 'ranking'
-                  ? 'O ranking só pode ser exibido quando a API confirmar uma posição oficial, não uma prévia ou posição bloqueada.'
-                  : active === 'testimonial'
-                    ? 'Selecione uma avaliação aprovada e destacada na gestão de avaliações, com prova social habilitada.'
-                    : 'É necessária ao menos uma avaliação aprovada com nota publicada.'}
-              </p>}
-              <Button type="button" disabled={!snippet} onClick={() => { void copy(); }}
-                className="mt-2 h-11 w-full bg-[#0B5FFF] text-white hover:bg-blue-700 sm:w-auto sm:self-end">
+              {!snippet && (
+                <p className="mb-2 text-xs leading-relaxed text-slate-600">
+                  {active === 'ranking'
+                    ? 'O ranking só pode ser exibido quando a API confirmar uma posição oficial, não uma prévia ou posição bloqueada.'
+                    : active === 'testimonial'
+                      ? 'Selecione uma avaliação aprovada e destacada na gestão de avaliações, com prova social habilitada.'
+                      : 'É necessária ao menos uma avaliação aprovada com nota publicada.'}
+                </p>
+              )}
+              <Button
+                type="button"
+                disabled={!snippet}
+                onClick={() => { void copy(); }}
+                className="mt-2 h-11 w-full bg-[#0B5FFF] text-white hover:bg-blue-700 sm:w-auto sm:self-end"
+              >
                 Copiar HTML estático
               </Button>
             </>
