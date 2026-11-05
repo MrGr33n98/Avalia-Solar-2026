@@ -129,8 +129,8 @@ module Api
             coverage: service.coverage,
             status: service.status,
             image_url: image_url,
-            image_urls: service.images.map { |image| Rails.application.routes.url_helpers.rails_storage_proxy_url(image, Rails.application.routes.default_url_options) },
-            service_images: service.images.map { |image| { id: image.id, url: Rails.application.routes.url_helpers.rails_storage_proxy_url(image, Rails.application.routes.default_url_options) } },
+            image_urls: service.images_attachments.map { |image| Rails.application.routes.url_helpers.rails_storage_proxy_url(image, Rails.application.routes.default_url_options) },
+            service_images: service.images_attachments.map { |image| { id: image.id, url: Rails.application.routes.url_helpers.rails_storage_proxy_url(image, Rails.application.routes.default_url_options) } },
             video_links: service.video_links,
             created_at: service.created_at,
             updated_at: service.updated_at
