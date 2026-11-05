@@ -52,7 +52,7 @@ function isCount(n: unknown): n is number { return isNum(n) && Number.isSafeInte
 function WidgetAvatar({ snapshot, size }: { snapshot: MarketingWidgetSnapshot; size: 22 | 36 }) {
   const [failed, setFailed] = useState(false);
   const logo = safeCompanyLogoUrl(snapshot.logoUrl);
-  const initials = snapshot.companyName.trim().split(/\\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'AS';
+  const initials = snapshot.companyName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'AS';
   return (
     <span
       data-testid="marketing-widget-company-avatar"
@@ -90,8 +90,8 @@ function StarBadge({ variant, snapshot }: { variant: StarWidgetVariant; snapshot
       {variant === 'light' ? (
         <>
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1">
-            <Stars rating={rating} small />
-            <span className="text-[9px] font-semibold text-[#0A1F44]">Nota {score}/5</span>
+            {rating === null ? <span className="text-[9px] font-semibold text-slate-500">Sem nota</span> : <Stars rating={rating} small />}
+            <span className="text-[9px] font-semibold text-[#0A1F44]">{rating === null ? 'Sem avaliações' : 'Nota ' + score + '/5'}</span>
           </div>
           <div className="flex w-[42px] flex-col items-center justify-center gap-0.5 bg-[#0B5FFF]">
             <WidgetAvatar key={(snapshot.logoUrl || '') + snapshot.companyName} snapshot={snapshot} size={22} />
@@ -101,7 +101,7 @@ function StarBadge({ variant, snapshot }: { variant: StarWidgetVariant; snapshot
       ) : (
         <>
           <div className={'flex h-[21px] shrink-0 items-center justify-between px-1 ' + (variant === 'navy' ? 'bg-[#09152C]' : 'bg-[#0B5FFF]')}>
-            <Stars rating={rating} small />
+            {rating === null ? <span className="text-[9px] text-white">Sem avaliações</span> : <Stars rating={rating} small />}
             <strong className="text-[11px] leading-none text-white">{score}</strong>
           </div>
           <div className={'flex flex-1 items-center gap-1 px-1 ' + (variant === 'navy' ? 'bg-[#0A1F44]' : 'bg-[#143DB7]')}>
