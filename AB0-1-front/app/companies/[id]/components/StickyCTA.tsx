@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Company } from '@/lib/api';
 import { QuoteCTA } from '@/components/quote/QuoteCTA';
+import { openQuoteWizard } from '@/lib/quote-wizard';
+import { canShowCompanyQuoteCTA } from '@/lib/company-cta-visibility';
 import { track } from '@/lib/analytics/lazy';
 import ReviewCompanyButton from '@/components/company/ReviewCompanyButton';
 
@@ -18,7 +20,7 @@ export default function StickyCTA({
   canRequestQuote,
 }: StickyCTAProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const quoteEnabled = Boolean(canRequestQuote);
+  const quoteEnabled = canShowCompanyQuoteCTA(company, canRequestQuote);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,6 +38,7 @@ export default function StickyCTA({
   }, []);
 
   const handleQuoteClick = () => {
+    openQuoteWizard({ source: 'company-sticky', preferredCompanyId: company.id });
     track('company_sticky_quote_click', {
       company_id: company.id,
       company_name: company.name,

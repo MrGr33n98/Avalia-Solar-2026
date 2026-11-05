@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchApi, type Company } from '@/lib/api';
+import BrandPageCTAVisibility from './brand-page/BrandPageCTAVisibility';
 import { useToast } from '@/hooks/use-toast';
 import { startDashboardTour } from '@/lib/tour';
 import Link from 'next/link';
@@ -237,6 +238,7 @@ export default function CompanySettings({ companyId, company }: CompanySettingsP
             ABA 1: CHAMADAS PARA AÇÃO (CTAs) E WHATSAPP
             ======================================================== */}
         <TabsContent value="conversion" className="mt-6 space-y-6">
+          <BrandPageCTAVisibility company={company} companyId={companyId} />
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Coluna Esquerda: Formulário de CTAs */}
             <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">

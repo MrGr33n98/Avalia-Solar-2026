@@ -1380,6 +1380,47 @@ module Api
         }, status: :ok
       end
 
+      # PATCH /api/v1/company_dashboard/cta_visibility
+      # Preferences are immediate, unlike moderated marketing copy or external URLs.
+      def update_cta_visibility
+        # set_company falls back to the user's current company for invalid ids.
+        # This mutation must NEVER silently update that fallback company.
+        requested_id = params[:company_id].presence
+        unless requested_id && requested_id.to_s == @company.id.to_s
+          return render json: { error: 'Company not authorized for this request' }, status: :forbidden
+        end
+
+        authorize @company, :edit_company?
+
+        permitted = params.permit(:quote_cta_enabled, :whatsapp_enabled)
+        if permitted.empty? || permitted.values.any? { |v| ![true, false, 'true', 'false', '1', '0', 1, 0].include?(v) }
+          return render json: { error: 'Informe preferências booleanas válidas' }, status: :unprocessable_entity
+        end
+
+        # Visibility is not entitlement: no preference can enable a paid feature for Free accounts.
+        attributes = permitted.to_h.transform_values { |value| ActiveModel::Type::Boolean.new.cast(value) }
+        @company.update!(attributes)
+
+        Analytics::TrackEventService.call(
+          company_id: @company.id,
+          event_type: 'dashboard_updated_directly',
+          user: current_user,
+          metadata: request_metadata.merge(change_type: 'cta_visibility', changed_fields: attributes.keys)
+        )
+        begin
+          PublicProfileRevalidationJob.perform_later(@company.id)
+        rescue StandardError => e
+          Rails.logger.warn("[CTAVisibility] revalidation enqueue failed company_id=#{@company.id}: #{e.class}")
+        end
+
+        render json: {
+          quote_cta_enabled: @company.quote_cta_enabled,
+          whatsapp_enabled: @company.whatsapp_enabled,
+          whatsapp_available: @company.whatsapp_contact_button_enabled?,
+          quote_available: @company.quote_feature_enabled? && @company.quote_cta_enabled?
+        }, status: :ok
+      end
+
       # POST /api/v1/company_dashboard/update_ctas
       def update_ctas
         authorize @company, :edit_company?

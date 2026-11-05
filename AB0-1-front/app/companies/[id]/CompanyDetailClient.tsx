@@ -1,4 +1,5 @@
 'use client';
+import { canShowCompanyQuoteCTA } from '@/lib/company-cta-visibility';
 
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import Link from 'next/link';
@@ -95,7 +96,7 @@ import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { trackCompanyProfileViewed, trackDashboardViewed } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
 import { useScrollPause } from '@/lib/analytics/hooks/useIntentTracking';
-import { isFeatureEnabled, canUsePaidConversion, canShowMediaGallery } from '@/lib/feature-access';
+import { isFeatureEnabled, canShowMediaGallery } from '@/lib/feature-access';
 import CompanyProfileShell from './components/CompanyProfileShell';
 import { getCapitalLocalSolarPage } from '@/lib/locations/local-page-slugs';
 
@@ -251,7 +252,7 @@ export default function CompanyDetailClient({
     return user?.role === 'company' && user?.company_id === companyId;
   }, [companyId, isAuthenticated, user?.company_id, user?.role]);
 
-  const canRequestQuote = canUsePaidConversion(currentCompany, 'quote');
+  const canRequestQuote = canShowCompanyQuoteCTA(currentCompany);
   const showFaq = true;
   const showGallery = canShowMediaGallery(currentCompany);
   const showSocialProof = currentCompany.feature_access
