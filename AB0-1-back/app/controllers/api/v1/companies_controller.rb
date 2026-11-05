@@ -236,7 +236,7 @@ module Api
           }
         }, status: :ok
       rescue StandardError => e
-        Rails.logger.error("[CompaniesController#service_detail] company_id=#{'#{@company&.id}'} error=#{'#{e.class}'}: #{'#{e.message}'}")
+        Rails.logger.error("[CompaniesController#service_detail] company_id=#{@company&.id} error=#{e.class}: #{e.message}")
         render json: { code: 'SERVICE_ERROR', message: 'Erro ao carregar detalhes do serviço' }, status: :internal_server_error
       end
 
