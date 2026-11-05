@@ -12,7 +12,7 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
   let(:company) { create(:company, plan: plan) }
   let(:user) { create(:user, role: :company, company: company) }
   
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) { JWT.encode({ user_id: user.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256') }
   let(:auth_headers) { { 'Authorization' => "Bearer #{token}", 'Content-Type' => 'application/json' } }
   let(:headers) { { 'Content-Type' => 'application/json' } }
 
@@ -39,7 +39,7 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
       let(:other_company) { create(:company, plan: plan) }
       let(:other_user) { create(:user, role: :company, company: other_company) }
       let!(:other_membership) { create(:company_member, company: other_company, user: other_user, role: :owner, status: 'active') }
-      let(:other_token) { JWT.encode({ user_id: other_user.id }, Rails.application.secret_key_base, 'HS256') }
+      let(:other_token) { JWT.encode({ user_id: other_user.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256') }
       let(:other_headers) { { 'Authorization' => "Bearer #{other_token}", 'Content-Type' => 'application/json' } }
 
       it 'retorna 403 forbidden' do
@@ -187,7 +187,7 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
     context 'quando um membro editor consulta os dados comerciais da propria empresa' do
       let(:editor) { create(:user, role: :company, company: company) }
       let!(:editor_membership) { create(:company_member, company: company, user: editor, role: :editor, status: 'active') }
-      let(:editor_token) { JWT.encode({ user_id: editor.id }, Rails.application.secret_key_base, 'HS256') }
+      let(:editor_token) { JWT.encode({ user_id: editor.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256') }
       let(:editor_headers) { { 'Authorization' => "Bearer #{editor_token}", 'Content-Type' => 'application/json' } }
       let!(:editor_subscription) do
         Billing::CompanySubscription.create!(
@@ -215,7 +215,7 @@ RSpec.describe 'Api::V1::Billing Checkout & Subscriptions API', type: :request d
       let(:external_company) { create(:company, plan: plan) }
       let(:external_user) { create(:user, role: :company, company: external_company) }
       let!(:external_membership) { create(:company_member, company: external_company, user: external_user, role: :owner, status: 'active') }
-      let(:external_token) { JWT.encode({ user_id: external_user.id }, Rails.application.secret_key_base, 'HS256') }
+      let(:external_token) { JWT.encode({ user_id: external_user.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256') }
       let(:external_headers) { { 'Authorization' => "Bearer #{external_token}", 'Content-Type' => 'application/json' } }
 
       it 'bloqueia a consulta de outra empresa com 403' do
