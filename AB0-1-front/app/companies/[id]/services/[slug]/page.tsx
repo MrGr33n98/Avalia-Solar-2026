@@ -7,6 +7,7 @@ import {
   ExternalLink, MapPin, MessageCircle, ShieldCheck,
 } from 'lucide-react';
 import { publicCompaniesApi, fetchApiPublic } from '@/lib/api-public';
+import { ApiError } from '@/lib/api-error';
 import type { Company } from '@/lib/api';
 import { absoluteUrl } from '@/lib/site';
 import { buildCompanyPath } from '@/lib/slug';
@@ -37,15 +38,20 @@ async function getPageData({ id, slug }: Props['params']): Promise<PageData | nu
   });
   if (!company) return null;
 
-  const response = await fetchApiPublic<{ data: Service }, null>(
-    `companies/${company.id}/services/${encodeURIComponent(slug)}`,
-    {
-      revalidate: 120,
-      tags: [`company-${company.id}`, `service-${company.id}-${slug}`],
-      silent: true,
-      fallback: null,
-    },
-  );
+  let response: { data: Service };
+  try {
+    response = await fetchApiPublic<{ data: Service }>(
+      `companies/${company.id}/services/${encodeURIComponent(slug)}`,
+      {
+        revalidate: 120,
+        tags: [`company-${company.id}`, `service-${company.id}-${slug}`],
+        silent: true,
+      },
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error; // Erros de infraestrutura não podem se transformar em 404 indexável.
+  }
 
   const service = response?.data;
   if (!service || service.status !== 'active' || service.company_id !== company.id) return null;
