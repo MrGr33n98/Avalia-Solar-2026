@@ -1,121 +1,336 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Zap, AlertCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { billingApi, type BillingPlan, type BillingSubscription } from '@/lib/api/billing';
+import { fetchApiSafe } from '@/lib/api-client';
+import type { BillingPeriod } from '@/lib/pricing/billing';
+import {
+  featureLabel, formatBillingDate, isFeatureEnabled, parseBillingStatus,
+  parseCompanyEntitlements, type CompanyEntitlements,
+} from '@/lib/billing/plan-overview';
+import { PlanSelector } from '@/components/billing/PlanSelector';
 
-interface SubscriptionData {
-  plan_tier: string;
-  is_active: boolean;
-  limits: Record<string, any>;
-  usage: Record<string, any>;
-  features: string[];
+type BillingAccess = 'available' | 'not-configured' | 'restricted' | 'unavailable';
+
+type Props = {
+  companyId: string;
+  onOpenPlans?: () => void;
+  onSelectPlan?: (plan: BillingPlan, period: BillingPeriod) => void;
+  isCheckoutLoading?: boolean;
+};
+
+type BillingData = {
+  entitlements: CompanyEntitlements | null;
+  subscription: BillingSubscription | null;
+  billingAccess: BillingAccess;
+  plans: BillingPlan[];
+  plansError: boolean;
+  usage: Record<string, number>;
+};
+
+function httpStatus(error: unknown): number | null {
+  if (error && typeof error === 'object' && 'status' in error && typeof error.status === 'number') {
+    return error.status;
+  }
+  return null;
+}
+
+function parseUsage(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+    .filter(([, usage]) => typeof usage === 'number' && Number.isFinite(usage) && usage >= 0)
+  ) as Record<string, number>;
 }
 
 export default function PlanAndSubscription({
-  companyId,
-  onOpenPlans,
-}: {
-  companyId: string;
-  onOpenPlans?: () => void;
-}) {
-  const [data, setData] = useState<SubscriptionData | null>(null);
+  companyId, onOpenPlans, onSelectPlan, isCheckoutLoading = false,
+}: Props) {
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('twelve_months');
+  const [data, setData] = useState<BillingData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
-    async function fetchSubscription() {
-      try {
-        const response = await fetch(`/api/v1/company_dashboard/subscription?company_id=${companyId}`);
-        if (response.ok) {
-          const result = await response.json();
-          setData(result);
-        }
-      } catch (e) {
-        console.error('Failed to fetch subscription', e);
-      } finally {
-        setLoading(false);
-      }
+    const id = Number(companyId);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      setError('Identificador de empresa inválido.');
+      setData(null);
+      setLoading(false);
+      return;
     }
-    fetchSubscription();
-  }, [companyId]);
+    let cancelled = false;
+    setData(null);
+    setError(null);
+    setActionError(null);
+    setLoading(true);
 
-  if (loading) return <div>Carregando...</div>;
-  if (!data) return <div>Não foi possível carregar as informações do plano.</div>;
+    const load = async () => {
+      const [entitlementResult, subscriptionResult, plansResult] = await Promise.allSettled([
+        fetchApiSafe<unknown>(`company_dashboard/subscription?company_id=${id}`, { retries: 0, cacheTtlMs: 0 }),
+        billingApi.getSubscription(id),
+        billingApi.getPlans(),
+      ]);
+      if (cancelled) return;
+
+      if (entitlementResult.status === 'rejected') {
+        const status = httpStatus(entitlementResult.reason);
+        setError(status === 403 ? 'Você não tem permissão para visualizar este painel.' :
+          status === 401 ? 'Sua sessão expirou. Entre novamente para consultar o plano.' :
+          'Não foi possível consultar os recursos da empresa. Tente novamente.');
+        setLoading(false);
+        return;
+      }
+
+      const entitlements = parseCompanyEntitlements(entitlementResult.value);
+      if (!entitlements) {
+        setError('O servidor retornou um contrato de planos inválido. Nenhuma informação foi presumida.');
+        setLoading(false);
+        return;
+      }
+
+      const response = entitlementResult.value as Record<string, unknown>;
+      let billingAccess: BillingAccess = 'not-configured';
+      let subscription: BillingSubscription | null = null;
+      if (subscriptionResult.status === 'fulfilled') {
+        subscription = subscriptionResult.value;
+        billingAccess = subscription ? 'available' : 'not-configured';
+      } else {
+        billingAccess = httpStatus(subscriptionResult.reason) === 403 ? 'restricted' : 'unavailable';
+      }
+      const plans = plansResult.status === 'fulfilled' && Array.isArray(plansResult.value)
+        ? plansResult.value.filter(plan => plan && Number.isSafeInteger(plan.id) && plan.id > 0)
+        : [];
+
+      setData({
+        entitlements,
+        subscription,
+        billingAccess,
+        plans,
+        plansError: plansResult.status === 'rejected',
+        usage: parseUsage(response.usage),
+      });
+      setLoading(false);
+    };
+
+    void load();
+    return () => { cancelled = true; };
+  }, [companyId, revision]);
+
+  const retry = useCallback(() => setRevision(value => value + 1), []);
+
+  const features = useMemo(() =>
+    Object.entries(data?.entitlements?.features || {})
+      .filter(([, entry]) => entry.state !== 'hidden')
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB, 'pt-BR')),
+    [data?.entitlements]
+  );
+
+  const enabledCount = features.filter(([, entry]) => isFeatureEnabled(entry)).length;
+  const visibleFeatures = showAllFeatures ? features : features.slice(0, 12);
+
+  const openBillingPortal = async () => {
+    setPortalLoading(true);
+    setActionError(null);
+    try {
+      const { portal_url: portalUrl } = await billingApi.createPortalSession(Number(companyId), window.location.href);
+      const url = new URL(portalUrl);
+      if (url.protocol !== 'https:' || !url.hostname.endsWith('stripe.com')) {
+        throw new Error('O provedor retornou um endereço de faturamento inválido.');
+      }
+      window.location.assign(url.toString());
+    } catch (reason) {
+      setActionError(httpStatus(reason) === 403
+        ? 'Somente um proprietário autorizado pode gerenciar pagamentos.'
+        : reason instanceof Error ? reason.message : 'Não foi possível abrir o portal de faturamento.');
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div aria-label="Carregando plano e assinatura" className="space-y-5">
+        <Skeleton className="h-44 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
+        <Skeleton className="h-80 w-full rounded-lg" />
+      </div>
+    );
+  }
+
+  if (error || !data?.entitlements) {
+    return (
+      <Alert className="rounded-lg border-red-200 bg-red-50 text-red-900">
+        <AlertTitle>Não foi possível carregar Plano e Assinatura</AlertTitle>
+        <AlertDescription className="mt-2 space-y-4">
+          <p>{error || 'As informações estão temporariamente indisponíveis.'}</p>
+          <Button type="button" variant="outline" onClick={retry} className="rounded-sm">Tentar novamente</Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  const { entitlements, subscription, billingAccess, plans, usage } = data;
+  const planTier = entitlements.plan.tier;
+  const planName = entitlements.plan.name || (planTier === 'free' ? 'Gratuito' : planTier.toUpperCase());
+  const status = subscription
+    ? parseBillingStatus(subscription.status)
+    : planTier === 'free' && billingAccess === 'not-configured'
+      ? 'Gratuito'
+      : 'Não confirmado';
+  const endDate = subscription ? formatBillingDate(subscription.current_period_end) : null;
+  const cancellable = Boolean(subscription && billingAccess === 'available');
 
   return (
-    <div className="space-y-6">
-      <Card className="border-primary/20 bg-primary/5">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl flex items-center gap-2">
-              Plano Atual: <span className="uppercase text-primary">{data.plan_tier}</span>
-            </CardTitle>
-            <Badge variant={data.is_active ? 'default' : 'destructive'}>
-              {data.is_active ? 'Ativo' : 'Inativo'}
-            </Badge>
+    <div className="space-y-7 pb-8">
+      <div className="border-b border-slate-200 pb-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-700">Conta empresarial / Assinatura</p>
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#10244b] sm:text-4xl">Plano e Assinatura</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Veja seus recursos, compare opções e gerencie o plano da empresa com segurança.</p>
+      </div>
+
+      <Card className="overflow-hidden rounded-lg border-slate-200 shadow-none">
+        <div className="h-1 w-full bg-blue-700" aria-hidden="true" />
+        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-6">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Plano atual</p>
+            <CardTitle className="text-3xl font-semibold tracking-tight text-[#10244b]">{planName}</CardTitle>
+            <p className="mt-2 text-sm text-slate-600">O acesso aos recursos segue as permissões efetivas da empresa.</p>
           </div>
-          <CardDescription>
-            Informações sobre sua assinatura e limites de uso.
-          </CardDescription>
+          <Badge variant="outline" className="rounded-sm border-slate-300 px-3 py-1 text-xs text-slate-700">{status}</Badge>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                <Zap className="h-5 w-5 text-amber-500" />
-                Uso de Recursos
-              </h3>
-              
-              {/* Example metrics based on limits and usage */}
-              {Object.keys(data.limits).map(limitKey => {
-                const limitValue = data.limits[limitKey];
-                const usageValue = data.usage[limitKey] || 0;
-                
-                // If limit is boolean (feature flag), we don't show a progress bar
-                if (typeof limitValue === 'boolean') return null;
-
-                const percentage = limitValue > 0 ? Math.min(100, Math.round((usageValue / limitValue) * 100)) : 0;
-                
-                return (
-                  <div key={limitKey} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="capitalize">{limitKey.replace(/_/g, ' ')}</span>
-                      <span className="text-muted-foreground">{usageValue} / {limitValue === -1 ? 'Ilimitado' : limitValue}</span>
-                    </div>
-                    {limitValue !== -1 && (
-                      <Progress value={percentage} className="h-2" />
-                    )}
-                  </div>
-                );
-              })}
+        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <dl className="grid gap-5 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-xs text-slate-500">Vigência do período atual</dt>
+              <dd className="mt-1 font-semibold text-slate-900">{endDate || (planTier === 'free' ? 'Sem vencimento' : 'Não disponível')}</dd>
             </div>
-            
-            <div className="space-y-4">
-               <h3 className="font-semibold text-lg flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                Funcionalidades Habilitadas
-              </h3>
-              <ul className="space-y-2">
-                {data.features.map(feature => (
-                  <li key={feature} className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    <span className="capitalize">{feature.replace(/_/g, ' ')}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="pt-4">
-                <Button onClick={onOpenPlans} className="w-full">
-                  Fazer Upgrade de Plano
-                </Button>
-              </div>
+            <div>
+              <dt className="text-xs text-slate-500">Cobrança</dt>
+              <dd className="mt-1 font-semibold text-slate-900">{subscription?.cancel_at_period_end
+                ? 'Cancelamento programado'
+                : billingAccess === 'restricted' ? 'Acesso restrito'
+                  : billingAccess === 'available' ? 'Consulte o portal Stripe'
+                    : planTier === 'free' ? 'Sem cobrança' : 'Detalhes não disponíveis'}</dd>
             </div>
+          </dl>
+          <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end">
+            {cancellable && (
+              <Button variant="outline" className="min-h-11 rounded-sm border-blue-300 text-blue-800"
+                disabled={portalLoading} onClick={() => void openBillingPortal()}>
+                {portalLoading ? 'Abrindo...' : 'Gerenciar pagamento'}
+              </Button>
+            )}
+            {onOpenPlans && (
+              <Button className="min-h-11 rounded-sm bg-blue-700 text-white hover:bg-blue-800"
+                onClick={onOpenPlans}>Ver opções de upgrade</Button>
+            )}
+            <Button asChild variant="ghost" className="min-h-10 rounded-sm text-blue-700">
+              <Link href="/pricing">Ver condições comerciais</Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {billingAccess === 'restricted' && (
+        <Alert className="rounded-lg border-slate-200 bg-slate-50">
+          <AlertTitle>Gerenciamento de pagamentos restrito</AlertTitle>
+          <AlertDescription>Um proprietário autorizado pode consultar a assinatura comercial e gerenciar pagamentos. Os recursos disponíveis do plano continuam visíveis abaixo.</AlertDescription>
+        </Alert>
+      )}
+      {billingAccess === 'unavailable' && (
+        <Alert className="rounded-lg border-amber-200 bg-amber-50">
+          <AlertTitle>Faturamento temporariamente indisponível</AlertTitle>
+          <AlertDescription>Os recursos do plano foram carregados, mas os detalhes de cobrança não puderam ser consultados. Nenhuma alteração foi efetuada. <button type="button" onClick={retry} className="font-semibold underline">Tentar novamente</button>.</AlertDescription>
+        </Alert>
+      )}
+      {actionError && (
+        <Alert className="rounded-lg border-red-200 bg-red-50" role="alert">
+          <AlertTitle>Não foi possível concluir a operação</AlertTitle>
+          <AlertDescription>{actionError}</AlertDescription>
+        </Alert>
+      )}
+
+      <section aria-labelledby="features-heading" className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 id="features-heading" className="text-xl font-semibold tracking-tight text-[#10244b]">Recursos do seu plano</h3>
+            <p className="mt-1 text-sm text-slate-600">Dados do motor de permissões; não são estimativas de consumo.</p>
+          </div>
+          <p className="text-sm font-medium text-slate-700">{enabledCount} recursos habilitados</p>
+        </div>
+        <Card className="rounded-lg border-slate-200 shadow-none">
+          <CardContent className="p-0">
+            {visibleFeatures.length ? (
+              <div className="divide-y divide-slate-100">
+                {visibleFeatures.map(([key, entry]) => {
+                  const enabled = isFeatureEnabled(entry);
+                  const isLimit = typeof entry.value === 'number';
+                  const consumed = usage[key];
+                  const hasUsage = isLimit && Number.isFinite(consumed) && consumed >= 0;
+                  const limit = isLimit ? Number(entry.value) : null;
+                  return (
+                    <div key={key} className="grid gap-2 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_170px] sm:items-center">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900">{featureLabel(key)}</p>
+                        {isLimit && (
+                          <div className="mt-1 text-xs text-slate-600">
+                            Limite do plano: {limit} {hasUsage ? `· Utilizado: ${consumed}` : '· Consumo não disponível'}
+                          </div>
+                        )}
+                        {isLimit && hasUsage && limit !== null && limit > 0 && (
+                          <Progress className="mt-2 h-1.5 max-w-xs" value={Math.min(100, Math.round((consumed / limit) * 100))} />
+                        )}
+                      </div>
+                      <div className="text-sm font-medium sm:text-right">
+                        <span className={enabled ? 'text-blue-700' : 'text-slate-500'}>
+                          {enabled ? isLimit ? 'Disponível' : 'Incluído' : entry.state === 'locked' ? 'Disponível no upgrade' : 'Indisponível'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : <p className="p-6 text-sm text-slate-600">Nenhum recurso foi informado para esta empresa.</p>}
+            {features.length > 12 && (
+              <div className="border-t border-slate-200 p-4 text-center">
+                <Button variant="ghost" onClick={() => setShowAllFeatures(value => !value)}
+                  className="rounded-sm text-blue-700">
+                  {showAllFeatures ? 'Mostrar menos recursos' : `Ver todos os ${features.length} recursos`}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <div id="comparar-planos" className="scroll-mt-24 border-t border-slate-200 pt-7">
+        {data.plansError && (
+          <Alert className="mb-4 rounded-lg border-amber-200 bg-amber-50">
+            <AlertTitle>Catálogo de planos indisponível</AlertTitle>
+            <AlertDescription>Não foi possível consultar os planos públicos. <button className="font-semibold underline" type="button" onClick={retry}>Tentar novamente</button>.</AlertDescription>
+          </Alert>
+        )}
+        <PlanSelector
+          plans={plans}
+          currentTier={planTier}
+          billingPeriod={billingPeriod}
+          onBillingPeriodChange={setBillingPeriod}
+          onSelectPlan={(plan, period) => onSelectPlan?.(plan, period)}
+          pending={isCheckoutLoading}
+          disabled={!onSelectPlan}
+        />
+      </div>
     </div>
   );
 }
