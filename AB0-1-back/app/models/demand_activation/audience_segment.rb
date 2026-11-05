@@ -31,7 +31,7 @@ module DemandActivation
       allowed = %w[region segment customer_type]
       errors.add(:filter_definition, 'contém filtros não permitidos') if (filter_definition.keys - allowed).any?
       filter_definition.each do |key, value|
-        errors.add(:filter_definition, "#{key} inválido") unless value.is_a?(String) && value.length <= 80
+        errors.add(:filter_definition, "#{key} inválido") unless value.is_a?(String) && value.length <= 80 && !value.include?('@')
       end
     end
 
