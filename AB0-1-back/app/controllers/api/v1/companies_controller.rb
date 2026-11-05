@@ -185,7 +185,7 @@ module Api
 
         options = Rails.application.routes.default_url_options.dup
         options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-        image_urls = service.images.map do |attachment|
+        image_urls = service.images_attachments.map do |attachment|
           Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
         end
 
