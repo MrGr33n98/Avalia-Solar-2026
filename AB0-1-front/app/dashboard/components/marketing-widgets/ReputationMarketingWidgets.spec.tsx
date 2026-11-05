@@ -142,8 +142,8 @@ describe('Widgets de Reputação (mobile-first)', () => {
     fireEvent.click(screen.getByTestId('select-widget-stars'));
     // A single 54px badge should not float inside a 154px tall empty canvas.
     const customizer = document.getElementById('widget-customizer')!;
-    const compactStage = customizer.querySelector('[class*="min-h-\\[96px\\]"]');
-    expect(compactStage).toBeTruthy();
+    const compactStage = customizer.querySelector('[class*="min-h-"]');
+    expect(compactStage).toHaveClass('min-h-[96px]');
     fireEvent.click(screen.getByTestId('choose-star-variant-navy'));
     const renderedHtml = (screen.getByLabelText('HTML gerado') as HTMLTextAreaElement).value;
     expect(renderedHtml).toContain('width:100%;height:100%');
