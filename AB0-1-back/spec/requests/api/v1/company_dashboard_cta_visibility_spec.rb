@@ -1,12 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe 'Company Dashboard CTA visibility', type: :request do
-  let(:user) { create(:user, status: :active, role: :company) }
+  let(:user) { create(:user, status: :active, role: 'company', company: company) }
   let(:company) { create(:company, status: :active) }
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) do
+    JWT.encode({ user_id: user.id, typ: 'access', exp: 1.hour.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256')
+  end
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
-  before { create(:company_member, user: user, company: company, role: 'owner') }
+  before { create(:company_member, user: user, company: company, role: :owner, status: 'active') }
 
   it 'updates the quote preference without mutating WhatsApp preference or creating a pending change' do
     original_whatsapp = company.whatsapp_enabled
