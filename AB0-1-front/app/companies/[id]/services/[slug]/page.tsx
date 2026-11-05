@@ -292,7 +292,7 @@ export default async function ServiceDetailPage({ params }: Props) {
             <section id="avaliacoes" aria-labelledby="avaliacoes-title" className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 id="avaliacoes-title" className="text-xl font-bold">Avaliações deste serviço</h2>
-                <Link href={`${companyPath}/review?service_id=${service.id}`}
+                <Link href={`${companyPath}/review?service_id=${service.id}&service_slug=${encodeURIComponent(service.slug)}`}
                   className="rounded-lg border border-blue-600 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
                   Avaliar este serviço
                 </Link>
