@@ -31,7 +31,10 @@ export function ReputationMilestones({ approvedReviewsCount }: ReputationMilesto
   const completed = completedMilestones(count);
   const [selectedId, setSelectedId] = useState<ReviewMilestoneId | null>(null);
   const currentMilestone = REVIEW_MILESTONES.find((item) => count !== null && count < item.target);
-  const activeId = selectedId || currentMilestone?.id || REVIEW_MILESTONES[REVIEW_MILESTONES.length - 1].id;
+  const defaultId = count === null
+    ? REVIEW_MILESTONES[0].id
+    : currentMilestone?.id || REVIEW_MILESTONES[REVIEW_MILESTONES.length - 1].id;
+  const activeId = selectedId || defaultId;
   const active = REVIEW_MILESTONES.find((item) => item.id === activeId) || REVIEW_MILESTONES[0];
   const progress = milestoneProgress(count);
 
