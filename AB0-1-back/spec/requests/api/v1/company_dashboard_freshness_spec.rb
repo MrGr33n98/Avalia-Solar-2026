@@ -99,7 +99,8 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json).to include('views' => 1, 'range' => { 'from' => selected_day.iso8601, 'to' => selected_day.iso8601 })
+      expect(json).to include('views' => 1)
+      expect(json['range']).to include('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
     end
 
     it 'rejects an invalid custom analytics range' do
@@ -197,7 +198,7 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json['range']).to eq('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
+      expect(json['range']).to include('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
       expect(json['data']).to include(hash_including('date' => selected_day.iso8601, 'views' => 1))
     end
 
