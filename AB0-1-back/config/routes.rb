@@ -554,6 +554,7 @@ Rails.application.routes.draw do
         post 'add_categories', to: 'company_dashboard#add_categories'
         post 'remove_category', to: 'company_dashboard#remove_category'
         post 'update_ctas', to: 'company_dashboard#update_ctas'
+        patch 'cta_visibility', to: 'company_dashboard#update_cta_visibility'
         post 'upload_media', to: 'company_dashboard#upload_media'
         post 'add_video', to: 'company_dashboard#add_video'
         delete 'remove_video', to: 'company_dashboard#remove_video'
