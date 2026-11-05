@@ -149,10 +149,10 @@ function ConfirmEmailContent() {
                 Ir para Login
               </Button>
               <Button
-                onClick={() => router.push('/resend-confirmation')}
+                onClick={() => router.push('/login')}
                 className="w-full"
               >
-                Reenviar Email de Confirmação
+                Voltar ao login para reenviar o e-mail
               </Button>
             </div>
           )}

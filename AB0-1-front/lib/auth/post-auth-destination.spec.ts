@@ -2,6 +2,7 @@ import {
   isSafeReturnTo,
   resolvePostAuthDestination,
   hasCompanyWorkspaceAccess,
+  hasCrmWorkspaceAccess,
   resolveCompanyId,
 } from './post-auth-destination';
 import type { User } from '@/lib/api';
@@ -13,6 +14,17 @@ const user = (role: User['role']): User => ({
   role,
   created_at: '2026-08-05T00:00:00Z',
   updated_at: '2026-08-05T00:00:00Z',
+});
+
+describe('hasCrmWorkspaceAccess — RBAC vindo do backend', () => {
+  it('não autoriza acesso apenas por domínio de e-mail corporativo', () => {
+    expect(hasCrmWorkspaceAccess({ ...user('review'), email: 'contato@avaliasolar.com.br' })).toBe(false);
+  });
+
+  it('aceita sales role autorizada pela API e administradores', () => {
+    expect(hasCrmWorkspaceAccess({ ...user('review'), crm_access: true })).toBe(true);
+    expect(hasCrmWorkspaceAccess(user('admin'))).toBe(true);
+  });
 });
 
 // ─── hasCompanyWorkspaceAccess ─────────────────────────────────────────────────
@@ -88,13 +100,13 @@ describe('resolvePostAuthDestination', () => {
   });
 
   // Cenário 5 — review + creator
-  it('[C5] review creator habilitado → feed', () => {
+  it('[C5] Creator pausado → dashboard de avaliações', () => {
     expect(resolvePostAuthDestination({
       user: user('review'),
       activeMembershipsCount: 0,
       creatorEnabled: true,
       creatorSlug: 'felipe',
-    })).toBe('/feed');
+    })).toBe('/review-dashboard');
   });
 
   it('[C5b] creator sem slug → review-dashboard', () => {

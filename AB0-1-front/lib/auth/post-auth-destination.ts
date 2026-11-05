@@ -27,12 +27,10 @@ export function isSafeReturnTo(returnTo: string | null | undefined): returnTo is
 
 /**
  * Determina se um usuário tem capability de acesso ao CRM interno.
- * Regra: role = admin ou e-mail corporativo interno (@avaliasolar.com.br).
+ * A API retorna crm_access conforme Sales::AuthorizationService (SalesRole/RBAC).
  */
-export function hasCrmWorkspaceAccess(user: Pick<User, 'role' | 'email'>): boolean {
-  if (user.role === 'admin') return true;
-  if (user.email?.toLowerCase().endsWith('@avaliasolar.com.br')) return true;
-  return false;
+export function hasCrmWorkspaceAccess(user: Pick<User, 'role' | 'crm_access'>): boolean {
+  return user.role === 'admin' || user.crm_access === true;
 }
 
 /**
@@ -65,7 +63,7 @@ export function resolveCompanyId({
 
 export function isReturnToCompatibleWithRole(
   returnTo: string,
-  user: Pick<User, 'role' | 'email'>,
+  user: Pick<User, 'role' | 'crm_access'>,
   activeMembershipsCount = 0
 ): boolean {
   const pathname = new URL(returnTo, 'https://www.avaliasolar.com.br').pathname;

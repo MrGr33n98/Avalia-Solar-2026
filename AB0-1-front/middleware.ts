@@ -124,6 +124,15 @@ function buildCompaniesCategoriesPath(
 // This middleware runs on the edge
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  // Internal preview/import tools must not be exposed to anonymous production visitors.
+  if (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_EXPOSE_INTERNAL_TOOLS !== 'true' &&
+      ['/admin/categories', '/debug-design', '/test-images', '/banner-studio']
+        .some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
+    return new NextResponse('Not Found', {
+      status: 404,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' },
+    });
+  }
   const socialDestination = suspendedSocialDestination(pathname);
   if (socialDestination) {
     const target = request.nextUrl.clone();
