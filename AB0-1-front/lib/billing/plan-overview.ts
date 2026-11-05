@@ -16,9 +16,15 @@ export interface CompanyEntitlements {
   features: Record<string, EntitlementEntry>;
 }
 
-const dictionary = new Map(
-  pricingFeatureGroups.flatMap(group => group.rows.map(row => [row.key, row.label] as const))
-);
+const dictionary = new Map<string, string>([
+  ...pricingFeatureGroups.flatMap(group => group.rows.map(row => [row.key, row.label] as const)),
+  ['company_categories_limit', 'Categorias atendidas'],
+  ['service_area_states_limit', 'Estados atendidos'],
+  ['service_area_cities_limit', 'Cidades atendidas'],
+  ['featured_products', 'Produtos em destaque'],
+  ['product_images_limit', 'Imagens por produto'],
+  ['sector_question_limit', 'Perguntas setoriais'],
+]);
 
 const validStates = new Set(['enabled', 'trial', 'limited', 'locked', 'hidden', 'disabled']);
 
