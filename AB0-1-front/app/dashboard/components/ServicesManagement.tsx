@@ -69,6 +69,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
   const [priceFrom, setPriceFrom] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [submitting, setSubmitting] = useState(false);
+  const [videoLinksInput, setVideoLinksInput] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
@@ -160,6 +161,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
     setIsPriceOnRequest(false);
     setPriceFrom('');
     setStatus('active');
+    setVideoLinksInput('');
     clearMedia();
     setDialogOpen(true);
   };
@@ -172,6 +174,7 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
     setIsPriceOnRequest(service.price_from == null || service.price_from === 0);
     setPriceFrom(service.price_from ? String(service.price_from) : '');
     setStatus(service.status);
+    setVideoLinksInput((service.video_links || []).join('\n'));
     clearMedia();
     setDialogOpen(true);
   };
@@ -185,7 +188,13 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
       const parsedCatId = parseInt(categoryId, 10);
       const parsedPrice = isPriceOnRequest || !priceFrom ? null : parseFloat(priceFrom);
 
+      const video_links = videoLinksInput.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
+      if (video_links.length > 8) {
+        setMediaError('Informe no máximo oito links de vídeos.');
+        return;
+      }
       const media = {
+        video_links,
         cover_image: coverFile,
         images: galleryFiles,
         remove_image_ids: removedImageIds,
@@ -550,6 +559,19 @@ export default function ServicesManagement({ companyId }: ServicesManagementProp
               </div>
               {mediaError && <p role="alert" className="text-xs font-semibold text-rose-600">{mediaError}</p>}
             </section>
+
+            <div>
+              <label htmlFor="service-video-links" className="text-xs font-semibold text-slate-700">Vídeos do serviço</label>
+              <p className="mb-2 mt-1 text-xs text-slate-500">Até oito links HTTPS do YouTube ou Vimeo, um por linha.</p>
+              <Textarea
+                id="service-video-links"
+                rows={3}
+                value={videoLinksInput}
+                onChange={(event) => setVideoLinksInput(event.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="rounded-xl text-sm"
+              />
+            </div>
 
             <div>
               <div className="flex items-center justify-between">
