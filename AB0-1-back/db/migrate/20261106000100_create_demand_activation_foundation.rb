@@ -51,5 +51,15 @@ class CreateDemandActivationFoundation < ActiveRecord::Migration[7.0]
       t.timestamps
     end
     add_index :demand_activation_sync_jobs, [:company_id, :idempotency_key], unique: true, name: 'idx_activation_sync_jobs_idempotency'
+
+    create_table :demand_activation_audit_events do |t|
+      t.references :company, null: false, foreign_key: true
+      t.references :actor, null: false, foreign_key: { to_table: :users }
+      t.string :action, null: false
+      t.string :subject_type, null: false
+      t.bigint :subject_id, null: false
+      t.timestamps
+    end
+    add_index :demand_activation_audit_events, [:company_id, :created_at], name: 'idx_activation_audit_tenant_time'
   end
 end
