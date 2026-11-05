@@ -140,10 +140,12 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
     count: null, rating: null, review: null, testimonialAllowed: false,
   });
   const [loading, setLoading] = useState(true);
+  const [dataScope, setDataScope] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
   const [rank, setRank] = useState<{ position: number; population: number } | null>(null);
   const [rankStatus, setRankStatus] = useState<'idle' | 'loading' | 'ready' | 'unavailable'>('idle');
+  const [rankScope, setRankScope] = useState<string | null>(null);
 
   const id = String(company?.id ?? companyId ?? '').trim();
   const name = company?.name?.trim() || 'Empresa';
@@ -153,7 +155,8 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
     let cancelled = false;
     setLoading(true); setLoadError(false);
     setData({ count: null, rating: null, review: null, testimonialAllowed: false });
-    setRank(null); setRankStatus('idle');
+    setDataScope(null);
+    setRank(null); setRankScope(null); setRankStatus('idle');
     if (!id) {
       setLoading(false); setLoadError(true);
       return;
@@ -187,6 +190,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
         testimonialAllowed: Boolean(allowed),
       });
       setLoadError(statsResult.status === 'rejected' || reviewsResult.status === 'rejected' || Boolean(!s));
+      setDataScope(id);
       setLoading(false);
     });
     return () => { cancelled = true; };
@@ -204,6 +208,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
         isNum(source?.position) && source!.position! > 0 &&
         isNum(source?.population) && source!.population! >= source!.position!) {
         setRank({ position: source!.position!, population: source!.population! });
+        setRankScope(id);
         setRankStatus('ready');
       } else {
         setRank(null); setRankStatus('unavailable');
@@ -212,12 +217,14 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
     return () => { cancelled = true; };
   }, [active, id, rankStatus]);
 
+  const scopedData = dataScope === id ? data : { count: null, rating: null, review: null, testimonialAllowed: false };
+  const scopedRank = rankScope === id ? rank : null;
   const snapshot: MarketingWidgetSnapshot = useMemo(() => ({
     companyName: name, slug,
-    approvedCount: data.count, rating: data.rating,
-    rankPosition: rank?.position ?? null, rankPopulation: rank?.population ?? null,
-    testimonial: data.review, testimonialAllowed: data.testimonialAllowed,
-  }), [name, slug, data, rank]);
+    approvedCount: scopedData.count, rating: scopedData.rating,
+    rankPosition: scopedRank?.position ?? null, rankPopulation: scopedRank?.population ?? null,
+    testimonial: scopedData.review, testimonialAllowed: scopedData.testimonialAllowed,
+  }), [name, slug, scopedData.count, scopedData.rating, scopedData.review, scopedData.testimonialAllowed, scopedRank]);
   const snippet = createMarketingWidgetHtml(active, snapshot, theme);
 
   const copy = async () => {
@@ -300,11 +307,11 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
           <p className="mt-1 text-xs leading-relaxed text-slate-600">
             Exportação HTML <strong>estática</strong>, com link para o perfil oficial. Não sincroniza automaticamente avaliações ou ranking.
           </p>
-          {loading ? (
+          {loading || dataScope !== id ? (
             <p className="mt-4 rounded-lg bg-slate-50 p-4 text-xs text-slate-600" role="status">Consultando avaliações e permissões...</p>
           ) : (
             <>
-              {loadError && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" role="alert">
+              {loadError && dataScope === id && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950" role="alert">
                 Algumas informações não puderam ser consultadas. Não publicaremos números incompletos.
                 <button type="button" onClick={() => setRetry((k) => k + 1)} className="ml-2 font-semibold underline">Tentar novamente</button>
               </p>}
