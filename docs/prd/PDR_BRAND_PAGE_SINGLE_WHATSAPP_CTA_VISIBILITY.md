@@ -36,6 +36,8 @@
 - `PATCH /api/v1/company_dashboard/cta_visibility?company_id={id}` recebe somente `quote_cta_enabled` e/ou `whatsapp_enabled` como booleanos; autenticação de dashboard e `authorize @company, :edit_company?`.
 - Atualização é imediata. A moderação de URLs e textos continua em `POST update_ctas` com `PendingChange`.
 - O serializer público inclui `quote_cta_enabled` para a Brand Page e mantém o campo WhatsApp efetivo já existente.
+- `lib/company-cta-visibility.ts` é o resolvedor único de elegibilidade por plano e preferência, usado no hero, sticky desktop e Top1 mobile.
+- Após alteração, o backend registra auditoria e enfileira `PublicProfileRevalidationJob` para invalidar o cache da página pública.
 
 ### Matriz decisória
 | Plano/entitlement | Quote pref. | WhatsApp pref. + URL válida | Hero |
@@ -53,6 +55,8 @@
 - [x] Adicionar `quote_cta_enabled` ao contrato público.
 - [x] Criar endpoint autenticado, isolado por empresa, com parâmetros estritos.
 - [x] Adicionar controles visuais independentes no dashboard.
+- [x] Centralizar resolução de CTA num helper compartilhado e adicionar testes das quatro combinações.
+- [x] Registrar auditoria de alterações e enfileirar revalidação do perfil público.
 - [x] Preservar gate de WhatsApp pago e validado.
 - [x] Respeitar preferência de orçamento no hero, no sticky desktop, no Top1 mobile e na ajuda do sidebar.
 - [x] Corrigir caminho de abertura do wizard no sticky desktop com `onRequest`.
