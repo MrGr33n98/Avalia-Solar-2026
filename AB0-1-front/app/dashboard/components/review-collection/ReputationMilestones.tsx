@@ -1,164 +1,172 @@
 'use client';
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Award, CheckCircle2, CircleDashed, Flame, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { track } from '@/lib/analytics/lazy';
+import {
+  REVIEW_MILESTONES,
+  completedMilestones,
+  milestoneProgress,
+  milestoneState,
+  normalizedApprovedCount,
+  type ReviewMilestoneId,
+} from '@/lib/review-collection/milestones';
+
+const ICON_SPRITE = '/assets/icons/review-collection/avalia-solar-icons-sprite.svg';
 
 interface ReputationMilestonesProps {
-  approvedReviewsCount: number;
+  approvedReviewsCount: number | null;
 }
 
-interface Milestone {
-  target: number;
-  label: string;
-  description: string;
-  benefit: string;
-}
-
-const MILESTONES: readonly Milestone[] = [
-  {
-    target: 1,
-    label: 'Primeiro Depoimento',
-    description: 'Inicie sua prova social pública na plataforma.',
-    benefit: 'Ativa sua nota pública de satisfação.',
-  },
-  {
-    target: 10,
-    label: 'Reputação Ativa',
-    description: 'Alcançou a marca recomendada para compradores.',
-    benefit: 'Empresas com 10+ reviews convertem 3x mais.',
-  },
-  {
-    target: 30,
-    label: 'Referência no Setor',
-    description: 'Alto volume de validação e confiança comercial.',
-    benefit: 'Destaque de solidez frente à concorrência.',
-  },
-] as const;
-
-export function ReputationMilestones({ approvedReviewsCount }: ReputationMilestonesProps) {
-  const current = Math.max(0, approvedReviewsCount || 0);
-
-  // Determina o próximo marco a ser atingido
-  const nextMilestone =
-    MILESTONES.find((m) => current < m.target) || MILESTONES[MILESTONES.length - 1];
-
-  const previousTarget =
-    MILESTONES.slice()
-      .reverse()
-      .find((m) => current >= m.target)?.target || 0;
-
-  // Cálculo de progresso percentual entre o marco anterior e o próximo
-  const progressPercent =
-    current >= 30
-      ? 100
-      : Math.min(
-          100,
-          Math.max(
-            5,
-            Math.round(
-              ((current - previousTarget) / (nextMilestone.target - previousTarget)) * 100
-            )
-          )
-        );
-
+function JourneyIcon({ name, size = 30 }: { name: string; size?: number }) {
   return (
-    <Card className="rounded-2xl border-slate-200 bg-white shadow-sm overflow-hidden border">
-      <CardContent className="p-5 md:p-6 space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 flex items-center gap-1">
-                <Flame className="h-3.5 w-3.5 text-amber-500" />
-                Marcos de Reputação
-              </span>
-              <Badge
-                variant="outline"
-                className="text-[9px] font-extrabold uppercase rounded-full px-2 py-0.5 border-blue-200 bg-blue-50 text-blue-800"
-              >
-                {current} {current === 1 ? 'Avaliação Aprovada' : 'Avaliações Aprovadas'}
-              </Badge>
-            </div>
-            <h3 className="text-base font-black text-slate-950">
-              {current >= 30
-                ? 'Parabéns! Sua empresa atingiu os principais marcos!'
-                : `Faltam ${nextMilestone.target - current} para o marco "${nextMilestone.label}"`}
-            </h3>
-          </div>
-
-          {/* Barra de progresso com contador */}
-          <div className="w-full sm:w-56 space-y-1.5">
-            <div className="flex justify-between text-[11px] font-bold text-slate-600">
-              <span>Progresso</span>
-              <span className="text-blue-700">
-                {current} / {nextMilestone.target}
-              </span>
-            </div>
-            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
-              <div
-                className="bg-blue-600 h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 3 Cartões de Marcos */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {MILESTONES.map((m) => {
-            const isAchieved = current >= m.target;
-            const isNext = !isAchieved && nextMilestone.target === m.target;
-
-            return (
-              <div
-                key={m.target}
-                className={`p-4 rounded-xl border transition-all flex flex-col justify-between space-y-3 ${
-                  isAchieved
-                    ? 'border-emerald-200 bg-emerald-50/40 text-emerald-950'
-                    : isNext
-                    ? 'border-blue-300 bg-blue-50/30 text-blue-950 ring-1 ring-blue-200'
-                    : 'border-slate-200 bg-slate-50/50 text-slate-600'
-                }`}
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
-                      {isAchieved ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                      ) : isNext ? (
-                        <Sparkles className="h-4 w-4 text-blue-600" />
-                      ) : (
-                        <CircleDashed className="h-4 w-4 text-slate-400" />
-                      )}
-                      {m.target} {m.target === 1 ? 'Review' : 'Reviews'}
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                        isAchieved
-                          ? 'border-emerald-300 bg-emerald-100 text-emerald-800'
-                          : isNext
-                          ? 'border-blue-300 bg-blue-100 text-blue-800'
-                          : 'border-slate-200 bg-white text-slate-500'
-                      }`}
-                    >
-                      {isAchieved ? 'Concluído' : isNext ? 'Próximo' : 'Pendente'}
-                    </Badge>
-                  </div>
-                  <h4 className="text-sm font-bold">{m.label}</h4>
-                  <p className="text-[11px] leading-relaxed text-slate-600">{m.description}</p>
-                </div>
-
-                <div className="pt-2 border-t border-slate-200/60 text-[10px] font-semibold text-slate-500">
-                  {m.benefit}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false" className="shrink-0">
+      <use href={ICON_SPRITE + '#' + name} />
+    </svg>
   );
 }
 
+/** Marco visual de engajamento: nunca confundir com uma concessão oficial. */
+export function ReputationMilestones({ approvedReviewsCount }: ReputationMilestonesProps) {
+  const count = normalizedApprovedCount(approvedReviewsCount);
+  const completed = completedMilestones(count);
+  const [selectedId, setSelectedId] = useState<ReviewMilestoneId | null>(null);
+  const currentMilestone = REVIEW_MILESTONES.find((item) => count !== null && count < item.target);
+  const activeId = selectedId || currentMilestone?.id || REVIEW_MILESTONES[REVIEW_MILESTONES.length - 1].id;
+  const active = REVIEW_MILESTONES.find((item) => item.id === activeId) || REVIEW_MILESTONES[0];
+  const progress = milestoneProgress(count);
+
+  const selectMilestone = (id: ReviewMilestoneId) => {
+    setSelectedId(id);
+    track('review_collection_milestone_opened', {
+      milestone_id: id,
+      approved_reviews_count: count,
+      ui_version: 'collection_journey_v3',
+    });
+  };
+
+  return (
+    <section
+      aria-labelledby="review-journey-title"
+      data-testid="review-journey"
+      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+    >
+      <div className="px-4 pb-5 pt-5 sm:px-6 sm:pt-6">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-700">
+              Avalia Solar / Engajamento
+            </p>
+            <h2 id="review-journey-title" className="text-lg font-bold leading-tight tracking-tight text-[#0A1F44] sm:text-xl">
+              Seu caminho para mais avaliações
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
+              Cada marco aproxima sua empresa de um histórico público mais completo.
+            </p>
+          </div>
+          <span
+            aria-live="polite"
+            data-testid="milestone-completed-count"
+            className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold tabular-nums text-slate-700"
+          >
+            {count === null ? 'Progresso indisponível' : completed + '/3 marcos concluídos'}
+          </span>
+        </div>
+
+        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar"
+          aria-label="Progresso de avaliações aprovadas até a meta de 20"
+          aria-valuemin={0} aria-valuemax={20} aria-valuenow={count === null ? undefined : Math.min(count, 20)}
+          aria-valuetext={count === null ? 'Dados indisponíveis' : Math.min(count, 20) + ' de 20 avaliações aprovadas'}
+        >
+          <div data-testid="milestone-progress" className="h-full rounded-full bg-[#0B5FFF] motion-safe:transition-[width] motion-safe:duration-500 motion-reduce:transition-none"
+            style={{ width: progress + '%' }} />
+        </div>
+
+        <div className="relative mt-5 grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-4">
+          <div aria-hidden="true" className="pointer-events-none absolute left-[16%] right-[16%] top-[27px] hidden h-0.5 bg-slate-200 md:block" />
+          {REVIEW_MILESTONES.map((item, index) => {
+            const state = milestoneState(item.target, count);
+            const selected = activeId === item.id;
+            const achieved = state === 'achieved';
+            return (
+              <button
+                type="button"
+                key={item.id}
+                data-testid={'milestone-' + item.id}
+                aria-expanded={selected}
+                aria-controls="milestone-info-panel"
+                aria-label={item.title + '. ' + (achieved ? 'Concluído' : state === 'current' ? 'Próximo marco' : 'A conquistar')}
+                onClick={() => selectMilestone(item.id)}
+                className={[
+                  'relative z-10 flex w-full min-h-[68px] min-w-0 items-center gap-3 rounded-lg border bg-white p-3 text-left',
+                  'outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2',
+                  'motion-safe:transition-[border-color,background-color,transform] motion-safe:duration-200',
+                  'motion-safe:hover:-translate-y-0.5 motion-reduce:transform-none',
+                  'md:min-h-[140px] md:flex-col md:gap-2 md:py-3 md:text-center',
+                  selected ? 'border-blue-600 bg-blue-50/50' : 'border-slate-200 hover:border-slate-300',
+                ].join(' ')}
+              >
+                <span className={[
+                  'relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border bg-white shadow-sm',
+                  'md:h-[54px] md:w-[54px]',
+                  selected ? 'border-blue-600 ring-[3px] ring-blue-100' : 'border-slate-200',
+                ].join(' ')}>
+                  <JourneyIcon name={item.icon} size={30} />
+                  {achieved && (
+                    <span aria-hidden="true" className="absolute -right-1 -top-1 rounded-full bg-emerald-600 px-1 text-[10px] font-bold text-white">✓</span>
+                  )}
+                </span>
+                <span className="min-w-0 flex-1 md:flex-none">
+                  <span className="block text-xs font-bold leading-4 text-[#0A1F44] sm:text-sm">{item.title}</span>
+                  <span className="mt-1 block text-[11px] text-slate-600">
+                    {achieved ? 'Concluído' : state === 'current' ? 'Próximo passo' : state === 'unavailable' ? 'Sem dados' : 'A conquistar'}
+                    <span aria-hidden="true" className="px-1 text-slate-300">·</span>
+                    {item.target} {item.target === 1 ? 'avaliação' : 'avaliações'}
+                  </span>
+                </span>
+                <span className="shrink-0 text-[11px] font-medium text-blue-700 md:hidden">{index + 1}/3</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div id="milestone-info-panel" data-testid="milestone-info-panel"
+          className="mt-4 rounded-lg border border-slate-200 bg-[#F8FAFE] p-3 sm:p-4">
+          <div className="flex items-start gap-2.5">
+            <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white">
+              <JourneyIcon name={active.icon} size={22} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-bold text-[#0A1F44]">{active.title}</h3>
+              <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{active.summary}</p>
+              <p className="mt-2 flex items-start gap-2 text-xs font-medium text-slate-800">
+                <span role="checkbox" aria-checked={count !== null && count >= active.target} aria-readonly="true"
+                  className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-slate-400 bg-white text-[11px] text-emerald-700">
+                  {count !== null && count >= active.target ? '✓' : ''}
+                </span>
+                <span>{active.task}</span>
+              </p>
+            </div>
+          </div>
+          <ul className="mt-3 grid gap-2 border-t border-slate-200 pt-3 sm:grid-cols-2 lg:grid-cols-3">
+            {active.hints.map((hint) => (
+              <li key={hint.label} className="flex min-w-0 items-start gap-2 rounded-md p-1">
+                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white">
+                  <JourneyIcon name={hint.icon} size={20} />
+                </span>
+                <span className="min-w-0">
+                  <strong className="block text-[11px] font-semibold text-[#0A1F44]">{hint.label}</strong>
+                  <span className="block text-[11px] leading-4 text-slate-600">{hint.text}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="mt-3 text-[11px] leading-4 text-slate-500">
+          Os marcos são metas de engajamento. Rankings e selos oficiais exigem critérios próprios;
+          alcançar um número de avaliações não garante premiação, posição ou visibilidade.
+        </p>
+      </div>
+    </section>
+  );
+}
