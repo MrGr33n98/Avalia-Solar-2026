@@ -1456,6 +1456,25 @@ module Api
           Rails.logger.info(audit.to_json)
           ActiveSupport::Notifications.instrument('company_cta_visibility_changed', audit)
         end
+        if events.any?
+          # Public pages are ISR cached for 15 minutes. Invalidate before
+          # returning success so an OFF choice is not displayed for that period.
+          begin
+            if PublicProfileRevalidator.configured?
+              PublicProfileRevalidator.call!(@company)
+              result[:body][:cache_state] = 'revalidated'
+            else
+              result[:body][:cache_state] = 'not_configured'
+              Rails.logger.warn("[CtaVisibility] profile revalidation unavailable company_id=#{@company.id}")
+            end
+          rescue StandardError => e
+            PublicProfileRevalidationJob.perform_later(@company.id)
+            result[:body][:cache_state] = 'pending_retry'
+            Rails.logger.error("[CtaVisibility] cache revalidation queued company_id=#{@company.id}: #{e.class}")
+          end
+        else
+          result[:body][:cache_state] = 'unchanged' if result[:status] == :ok
+        end
         render json: result[:body], status: result[:status]
       rescue ActiveRecord::RecordInvalid
         render json: { error: 'Configuração inválida', code: 'validation_failed' }, status: :unprocessable_entity
