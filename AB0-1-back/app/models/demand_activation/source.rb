@@ -26,6 +26,11 @@ module DemandActivation
       return errors.add(:provenance, 'inválida') unless provenance.is_a?(Hash)
       allowed = %w[purpose legal_basis attestation_version policy_version reviewed_at]
       errors.add(:provenance, 'contém chaves não permitidas') if (provenance.keys - allowed).any?
+      provenance.each_value do |value|
+        next if value.is_a?(String) && value.length <= 255 && !value.match?(/[^\\s@]+@[^\\s@]+/)
+
+        errors.add(:provenance, 'contém conteúdo inválido')
+      end
     end
   end
 end
