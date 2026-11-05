@@ -130,7 +130,7 @@ export function ReviewCollectionAnalytics({ formId, companyId }: ReviewCollectio
                 variant="outline"
                 className="text-[9px] font-extrabold uppercase rounded-full px-2 py-0.5 border-emerald-200 bg-emerald-50 text-emerald-800"
               >
-                Funil em Tempo Real
+                Métricas sob consulta
               </Badge>
             </div>
             <h3 className="text-base font-black text-slate-950">Desempenho por Canal de Coleta</h3>
