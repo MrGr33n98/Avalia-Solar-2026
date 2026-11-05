@@ -26,6 +26,20 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
     )
   end
 
+  describe 'GET /api/v1/company_dashboard/subscription' do
+    it 'returns an opaque correlated error when entitlement resolution fails' do
+      allow(EntitlementService).to receive(:call).and_raise(StandardError, 'private diagnostic')
+
+      get '/api/v1/company_dashboard/subscription', params: { company_id: company.id }
+
+      expect(response).to have_http_status(:service_unavailable)
+      json = JSON.parse(response.body)
+      expect(json['code']).to eq('ENTITLEMENTS_UNAVAILABLE')
+      expect(json['request_id']).to be_present
+      expect(json['error']).not_to include('private diagnostic')
+    end
+  end
+
   describe 'GET /api/v1/company_dashboard/analytics/overview' do
     it 'includes freshness metadata' do
       get '/api/v1/company_dashboard/analytics/overview'
