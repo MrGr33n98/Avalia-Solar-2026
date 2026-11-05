@@ -1038,8 +1038,17 @@ module Api
         subscription_data = ::EntitlementService.call(company: @company)
         render json: subscription_data, status: :ok
       rescue StandardError => e
-        Rails.logger.error("[CompanyDashboard#subscription] #{e.class}: #{e.message}")
-        render json: { error: 'Internal server error' }, status: :internal_server_error
+        Rails.logger.error(
+          "[CompanyDashboard#subscription] request_id=#{request.request_id} " \
+          "company_id=#{@company&.id} user_id=#{current_user&.id} " \
+          "error_class=#{e.class} message=#{e.message} " \
+          "trace=#{e.backtrace&.first(5)&.join(' | ')}"
+        )
+        render json: {
+          error: 'Não foi possível consultar os recursos da empresa',
+          code: 'ENTITLEMENTS_UNAVAILABLE',
+          request_id: request.request_id
+        }, status: :service_unavailable
       end
 
       # GET /api/v1/company_dashboard/stats
