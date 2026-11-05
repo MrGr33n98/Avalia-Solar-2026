@@ -33,6 +33,7 @@ export interface BillingSubscription {
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   stripe_subscription_id: string | null;
+  can_manage_billing?: boolean;
   created_at: string;
   updated_at: string;
 }
