@@ -66,7 +66,7 @@ module Api
         def service_params
           params.require(:service).permit(
             :name, :slug, :category_id, :description, :price_from, :status,
-            coverage: [], images: []
+            coverage: [], images: [], video_links: []
           )
         end
 
@@ -106,6 +106,8 @@ module Api
             coverage: service.coverage,
             status: service.status,
             image_url: image_url,
+            image_urls: service.images.map { |image| Rails.application.routes.url_helpers.rails_storage_proxy_url(image, Rails.application.routes.default_url_options) },
+            video_links: service.video_links,
             created_at: service.created_at,
             updated_at: service.updated_at
           }
