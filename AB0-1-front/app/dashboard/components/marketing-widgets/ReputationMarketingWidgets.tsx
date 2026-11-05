@@ -49,21 +49,59 @@ function Stars({ rating, small = false }: { rating: number | null; small?: boole
 function isNum(n: unknown): n is number { return typeof n === 'number' && Number.isFinite(n); }
 function isCount(n: unknown): n is number { return isNum(n) && Number.isSafeInteger(n) && n >= 0; }
 
-function WidgetAvatar({ snapshot, size }: { snapshot: MarketingWidgetSnapshot; size: 22 | 36 }) {
+/** Shared avatar geometry in every widget preview.
+ * Only WEG in the navy badge gets an explicitly branded monochrome treatment.
+ * Other companies retain their real logo colors on the neutral surface.
+ */
+function WidgetAvatar({
+  snapshot,
+  size,
+  variant = 'neutral',
+}: {
+  snapshot: MarketingWidgetSnapshot;
+  size: 22 | 36;
+  variant?: 'neutral' | 'navy';
+}) {
   const [failed, setFailed] = useState(false);
   const logo = safeCompanyLogoUrl(snapshot.logoUrl);
-  const initials = snapshot.companyName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'AS';
+  const darkWeg = variant === 'navy' && /^weg$/i.test(snapshot.companyName.trim()) && Boolean(logo) && !failed;
+  const initials = snapshot.companyName.trim().split(/\s+/).slice(0, 2)
+    .map((part) => part[0]).join('').toUpperCase() || 'AS';
+  const inset = size === 22 ? 3 : 4;
+
   return (
     <span
       data-testid="marketing-widget-company-avatar"
       aria-label={'Logo da empresa ' + snapshot.companyName}
-      className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white font-bold text-[#0A1F44]"
-      style={{ width: size, height: size, fontSize: size === 22 ? 8 : 10 }}
+      className={'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 font-bold ' +
+        (darkWeg ? 'bg-[#0B132B] text-white' : 'bg-white text-[#0A1F44]')}
+      style={{
+        width: size,
+        height: size,
+        minWidth: size,
+        minHeight: size,
+        padding: inset,
+        boxSizing: 'border-box',
+        flex: '0 0 ' + size + 'px',
+        fontSize: size === 22 ? 8 : 10,
+      }}
     >
       {logo && !failed ? (
-        // Logotipo do perfil da empresa, com fallback quando indisponível.
+        // Logotipo do perfil da empresa. A imagem usa um quadrado interno fixo,
+        // mas preserva a proporção original com contain e centralização.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={logo} alt="" loading="lazy" onError={() => setFailed(true)} className="h-full w-full object-contain p-[2px]" />
+        <img
+          data-testid="marketing-widget-logo-image"
+          src={logo}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          width={size - 2 * inset}
+          height={size - 2 * inset}
+          onError={() => setFailed(true)}
+          className={'block h-full w-full min-h-0 min-w-0 max-h-full max-w-full rounded-full object-contain object-center ' +
+            (darkWeg ? 'grayscale invert contrast-[3] mix-blend-screen' : '')}
+        />
       ) : (
         <span aria-hidden="true">{initials.slice(0, 2)}</span>
       )}
@@ -105,7 +143,7 @@ function StarBadge({ variant, snapshot }: { variant: StarWidgetVariant; snapshot
             <strong className="text-[11px] leading-none text-white">{score}</strong>
           </div>
           <div className={'flex flex-1 items-center gap-1 px-1 ' + (variant === 'navy' ? 'bg-[#0A1F44]' : 'bg-[#143DB7]')}>
-            <WidgetAvatar key={(snapshot.logoUrl || '') + snapshot.companyName} snapshot={snapshot} size={22} />
+            <WidgetAvatar key={(snapshot.logoUrl || '') + snapshot.companyName} snapshot={snapshot} size={22} variant={variant === 'navy' ? 'navy' : 'neutral'} />
             <span className="text-[9px] leading-[1.1] text-white">
               {variant === 'navy' ? 'Avaliações no' : 'Leia avaliações no'}<br />
               <b>Avalia Solar</b>

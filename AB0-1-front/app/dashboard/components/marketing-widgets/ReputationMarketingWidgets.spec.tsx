@@ -116,6 +116,54 @@ describe('Widgets de Reputação (mobile-first)', () => {
     expect(screen.getByLabelText('HTML gerado')).toHaveValue(expect.stringContaining('3,7'));
   });
 
+  it('centers and contains a rectangular WEG logo in summary, stars and customizer', async () => {
+    stats.mockResolvedValue({ stats: { approved_reviews: 3, average_rating: 3.7 }, data_status: 'complete' });
+    const withLogo = {
+      id: 372,
+      name: 'WEG',
+      slug: 'weg',
+      logo_url: 'https://api.avaliasolar.com.br/assets/weg-wide.png',
+    };
+    render(<ReputationMarketingWidgets company={withLogo} companyId={372} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeEnabled());
+    const summaryAvatar = screen.getAllByTestId('marketing-widget-company-avatar')
+      .find((avatar) => avatar.getAttribute('style')?.includes('width: 36px'));
+    expect(summaryAvatar).toHaveStyle({ width: '36px', height: '36px', padding: '4px' });
+    expect(summaryAvatar?.querySelector('img')).toHaveClass('object-contain', 'object-center', 'h-full', 'w-full', 'rounded-full');
+
+    const darkBadge = screen.getByTestId('marketing-star-badge-navy');
+    const navyAvatar = darkBadge.querySelector('[data-testid="marketing-widget-company-avatar"]');
+    const navyImage = navyAvatar?.querySelector('img');
+    expect(navyAvatar).toHaveStyle({ width: '22px', height: '22px', padding: '3px' });
+    expect(navyAvatar).toHaveClass('rounded-full', 'bg-[#0B132B]');
+    expect(navyImage).toHaveClass('object-contain', 'object-center', 'grayscale', 'invert', 'mix-blend-screen');
+    expect(navyImage).toHaveAttribute('src', withLogo.logo_url);
+
+    fireEvent.click(screen.getByTestId('select-widget-stars'));
+    fireEvent.click(screen.getByTestId('choose-star-variant-navy'));
+    const renderedHtml = (screen.getByLabelText('HTML gerado') as HTMLTextAreaElement).value;
+    expect(renderedHtml).toContain('width:100%;height:100%');
+    expect(renderedHtml).toContain('object-fit:contain');
+    expect(renderedHtml).toContain('object-position:center center');
+    expect(renderedHtml).toContain('filter:grayscale(1) invert(1) contrast(3)');
+    expect(renderedHtml).toContain('background:#0B132B');
+  });
+
+  it('falls back to initials on a broken logo while retaining a neutral circular surface', async () => {
+    const withLogo = {
+      ...company,
+      logo_url: 'https://api.avaliasolar.com.br/assets/unavailable.png',
+    };
+    render(<ReputationMarketingWidgets company={withLogo} companyId={372} />);
+    const avatar = screen.getAllByTestId('marketing-widget-company-avatar')[0];
+    const image = avatar.querySelector('img');
+    expect(image).toHaveClass('object-contain');
+    fireEvent.error(image!);
+    expect(avatar.querySelector('img')).toBeNull();
+    expect(avatar).toHaveTextContent('KE');
+    expect(avatar).toHaveClass('bg-white');
+  });
+
   it('uses a safe initials fallback and does not publish stars with no approved reviews', async () => {
     render(<ReputationMarketingWidgets company={{ ...company, logo_url: 'javascript:alert(1)' }} companyId={372} />);
     await waitFor(() => expect(screen.getByRole('button', { name: /Copiar HTML estático/ })).toBeDisabled());
