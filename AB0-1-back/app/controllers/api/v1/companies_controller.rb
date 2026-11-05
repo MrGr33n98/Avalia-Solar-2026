@@ -177,14 +177,21 @@ module Api
 
       # GET /api/v1/companies/:id/services/:slug
       def service_detail
-        service = @company.company_services.active_status.find_by(slug: params[:slug])
+        service = @company.company_services.active_status
+                          .includes(:category, :cover_image_attachment, images_attachments: :blob)
+                          .find_by(slug: params[:slug])
         return render json: { code: 'NOT_FOUND', message: 'Serviço não encontrado' }, status: :not_found unless service
 
-        image_url = if service.images.attached?
-                      options = Rails.application.routes.default_url_options.dup
-                      options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
-                      Rails.application.routes.url_helpers.rails_storage_proxy_url(service.images.first, options)
-                    end
+        options = Rails.application.routes.default_url_options.dup
+        options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
+        url_for_attachment = lambda do |attachment|
+          Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
+        end
+
+        cover_url = url_for_attachment.call(service.cover_image) if service.cover_image.attached?
+        gallery = service.images_attachments.map do |attachment|
+          { id: attachment.id, url: url_for_attachment.call(attachment) }
+        end
 
         render json: {
           data: {
@@ -202,7 +209,9 @@ module Api
             price_from: service.price_from&.to_f,
             coverage: service.coverage,
             status: service.status,
-            image_url: image_url
+            image_url: cover_url || gallery.first&.dig(:url),
+            cover_image_url: cover_url,
+            images: gallery
           }
         }, status: :ok
       rescue StandardError => e
