@@ -660,15 +660,23 @@ export type PublicBadgeResponse = {
     slug: string;
     logo_url?: string | null;
   }>;
+  award_valid?: boolean | null;
+  awarded_company?: {
+    id: number;
+    name: string;
+    slug: string;
+  } | null;
 };
 
 export const publicBadgesApi = {
   getBySlug: async (
     slug: string,
-    options?: PublicFetchOptions<PublicBadgeResponse | null>
+    options?: PublicFetchOptions<PublicBadgeResponse | null> & { companyId?: number | string }
   ): Promise<PublicBadgeResponse | null> => {
-    return fetchApiPublic<PublicBadgeResponse, null>(`badges/${encodeURIComponent(slug)}`, {
-      revalidate: options?.revalidate ?? 3600,
+    const companyQuery = options?.companyId ? '?company_id=' + encodeURIComponent(String(options.companyId)) : '';
+    return fetchApiPublic<PublicBadgeResponse, null>(`badges/${encodeURIComponent(slug)}` + companyQuery, {
+      // Concessões revogadas não devem continuar públicas em cache.
+      revalidate: options?.companyId ? 0 : (options?.revalidate ?? 3600),
       tags: options?.tags || [`badge-${slug}`, 'badges'],
       fallback: null,
       silent: options?.silent ?? true,

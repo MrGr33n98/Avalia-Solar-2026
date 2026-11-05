@@ -112,7 +112,7 @@ function normalize(value: string): string {
  */
 export function findOfficialAward(definition: AvaliaBadgeDefinition, awards: readonly Badge[]): Badge | undefined {
   return awards.find((award) => {
-    if (!award || !award.id || !award.public_slug) return false;
+    if (!award || !award.id || !award.public_slug || Number(award.year) !== 2026) return false;
     const name = normalize(award.name || '');
     const slug = normalize(award.public_slug);
     return name === normalize(definition.title) ||
@@ -122,13 +122,14 @@ export function findOfficialAward(definition: AvaliaBadgeDefinition, awards: rea
 }
 
 /** O link de verificação sempre permanece no nosso próprio domínio. */
-export function officialBadgeUrl(award: Badge): string | null {
+export function officialBadgeUrl(award: Badge, companyId?: number | string): string | null {
   if (!award.public_slug) return null;
-  return '/badges/' + encodeURIComponent(award.public_slug);
+  const path = '/badges/' + encodeURIComponent(award.public_slug);
+  return companyId ? path + '?company_id=' + encodeURIComponent(String(companyId)) : path;
 }
 
-export function badgeEmbedHtml(definition: AvaliaBadgeDefinition, award: Badge): string | null {
-  const verificationPath = officialBadgeUrl(award);
+export function badgeEmbedHtml(definition: AvaliaBadgeDefinition, award: Badge, companyId: number | string): string | null {
+  const verificationPath = officialBadgeUrl(award, companyId);
   if (!verificationPath) return null;
   const url = 'https://www.avaliasolar.com.br';
   return [

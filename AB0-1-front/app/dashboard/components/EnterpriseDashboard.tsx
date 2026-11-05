@@ -101,6 +101,12 @@ const ContentStudioWorkspace = dynamic(
     loading: () => <DashboardTabSkeleton />,
   }
 );
+const AvaliaBadgesWorkspace = dynamic(
+  () => import('./badges/AvaliaBadgesWorkspace'),
+  {
+    loading: () => <DashboardTabSkeleton />,
+  }
+);
 const RankingPerformanceTab = dynamic(() => import('./RankingPerformanceTab'), {
   loading: () => <DashboardTabSkeleton />,
 });
@@ -662,7 +668,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
               </TabsContent>
 
               <TabsContent value="avalia-badges" className="mt-0 focus-visible:outline-none">
-                <ContentStudioWorkspace company={company} companyId={companyId} />
+                <AvaliaBadgesWorkspace company={company} companyId={companyId} />
               </TabsContent>
 
               <TabsContent
