@@ -66,7 +66,12 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       review_criterion_scores: :rating_criterion
     ).order(created_at: :desc)
     render json: {
-      data: @reviews.map { |r| serialize_review(r) }
+      data: @reviews.map do |review|
+        serialize_review(review).merge(
+          moderation_notes: review.moderation_notes,
+          moderated_at: review.moderated_at
+        )
+      end
     }
   end
 
