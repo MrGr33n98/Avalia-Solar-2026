@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_05_010000) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_05_173000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -1019,6 +1019,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_05_010000) do
     t.string "plan_status", default: "inactive"
     t.string "whatsapp_url"
     t.boolean "whatsapp_enabled"
+    t.boolean "quote_cta_enabled", default: true, null: false
+    t.integer "cta_visibility_version", default: 0, null: false
     t.boolean "effect", default: false, null: false
     t.integer "profile_views_count", default: 0, null: false
     t.integer "cta_clicks_count", default: 0, null: false
