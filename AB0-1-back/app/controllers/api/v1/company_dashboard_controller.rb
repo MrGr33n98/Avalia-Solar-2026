@@ -1394,6 +1394,18 @@ module Api
         attributes = permitted.to_h.transform_values { |value| ActiveModel::Type::Boolean.new.cast(value) }
         @company.update!(attributes)
 
+        Analytics::TrackEventService.call(
+          company_id: @company.id,
+          event_type: 'dashboard_updated_directly',
+          user: current_user,
+          metadata: request_metadata.merge(change_type: 'cta_visibility', changed_fields: attributes.keys)
+        )
+        begin
+          PublicProfileRevalidationJob.perform_later(@company.id)
+        rescue StandardError => e
+          Rails.logger.warn("[CTAVisibility] revalidation enqueue failed company_id=#{@company.id}: #{e.class}")
+        end
+
         render json: {
           quote_cta_enabled: @company.quote_cta_enabled,
           whatsapp_enabled: @company.whatsapp_enabled,
