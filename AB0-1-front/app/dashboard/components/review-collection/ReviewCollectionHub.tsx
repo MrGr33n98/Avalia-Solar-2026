@@ -18,7 +18,7 @@ interface ReviewCollectionHubProps {
   onCreateForm: () => void;
   companyName: string;
   companyId?: string;
-  approvedReviewsCount: number;
+  approvedReviewsCount: number | null;
   onTrackAction?: (event: string, meta?: Record<string, unknown>) => void;
 }
 
