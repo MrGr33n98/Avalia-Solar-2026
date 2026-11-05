@@ -145,7 +145,7 @@ export default function PlanAndSubscription({
     try {
       const { portal_url: portalUrl } = await billingApi.createPortalSession(Number(companyId), window.location.href);
       const url = new URL(portalUrl);
-      if (url.protocol !== 'https:' || !url.hostname.endsWith('stripe.com')) {
+      if (url.protocol !== 'https:' || !(url.hostname === 'stripe.com' || url.hostname.endsWith('.stripe.com'))) {
         throw new Error('O provedor retornou um endereço de faturamento inválido.');
       }
       window.location.assign(url.toString());
@@ -204,7 +204,7 @@ export default function PlanAndSubscription({
         <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-6">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Plano atual</p>
-            <CardTitle className="text-3xl font-semibold tracking-tight text-[#10244b]">{planName}</CardTitle>
+            <CardTitle aria-label={`Plano atual: ${planName}`} className="text-3xl font-semibold tracking-tight text-[#10244b]">{planName}</CardTitle>
             <p className="mt-2 text-sm text-slate-600">O acesso aos recursos segue as permissões efetivas da empresa.</p>
           </div>
           <Badge variant="outline" className="rounded-sm border-slate-300 px-3 py-1 text-xs text-slate-700">{status}</Badge>
