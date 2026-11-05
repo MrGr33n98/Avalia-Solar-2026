@@ -96,6 +96,17 @@ RSpec.describe 'Company dashboard CTA visibility', type: :request do
     expect(company.whatsapp_enabled).to be(false)
   end
 
+  it 'allows switching an old ON preference off after entitlement expires even when another old ON preference remains' do
+    company.update!(quote_cta_enabled: true, whatsapp_enabled: true, whatsapp_url: 'https://wa.me/5548999545370')
+    # Even though the company no longer has paid entitlement, these are existing
+    # preferences, not a new grant of access.
+    patch_config({ quote_cta_enabled: false, whatsapp_enabled: true, expected_version: 0 })
+    expect(response).to have_http_status(:ok)
+    expect(company.reload.quote_cta_enabled).to eq(false)
+    expect(company.whatsapp_enabled).to eq(true)
+    expect(JSON.parse(response.body)['effective']['whatsapp']).to eq(false)
+  end
+
   it 'does not silently update a different company when the requested ID is not a membership' do
     another = create(:company, status: :active)
     patch_config({ quote_cta_enabled: false, expected_version: 0 }, id: another.id)
