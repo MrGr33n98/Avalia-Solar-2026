@@ -4,15 +4,17 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { BrandLogo } from '@/components/brand/BrandLogo';
+import { getFullImageUrl } from '@/utils/image';
 import { Button } from '@/components/ui/button';
 import { companyDashboardApi, dashboardApi } from '@/lib/api';
 import { track } from '@/lib/analytics/lazy';
 import {
-  MARKETING_WIDGETS, createMarketingWidgetHtml,
-  type MarketingWidgetKind, type MarketingWidgetTheme, type MarketingWidgetSnapshot,
+  MARKETING_WIDGETS, STAR_WIDGET_VARIANTS, STAR_WIDGET_DIMENSIONS,
+  createMarketingWidgetHtml, safeCompanyLogoUrl,
+  type MarketingWidgetKind, type MarketingWidgetTheme, type MarketingWidgetSnapshot, type StarWidgetVariant,
 } from '@/lib/marketing-widgets/snapshot';
 
-interface CompanyInfo { id?: string | number; name?: string; slug?: string; }
+interface CompanyInfo { id?: string | number; name?: string; slug?: string; logo_url?: string | null; identity?: { logo_url?: string | null } | null; }
 interface MarketingWidgetsProps { company: CompanyInfo | null; companyId: string | number; }
 interface StatsResponse { stats?: { approved_reviews?: number; average_rating?: number }; data_status?: string; }
 interface ReviewItem { id: number; rating: number; comment: string; user_name?: string; featured: boolean; status: string; }
@@ -47,14 +49,82 @@ function Stars({ rating, small = false }: { rating: number | null; small?: boole
 function isNum(n: unknown): n is number { return typeof n === 'number' && Number.isFinite(n); }
 function isCount(n: unknown): n is number { return isNum(n) && Number.isSafeInteger(n) && n >= 0; }
 
+function WidgetAvatar({ snapshot, size }: { snapshot: MarketingWidgetSnapshot; size: 22 | 36 }) {
+  const [failed, setFailed] = useState(false);
+  const logo = safeCompanyLogoUrl(snapshot.logoUrl);
+  const initials = snapshot.companyName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'AS';
+  return (
+    <span
+      data-testid="marketing-widget-company-avatar"
+      aria-label={'Logo da empresa ' + snapshot.companyName}
+      className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white font-bold text-[#0A1F44]"
+      style={{ width: size, height: size, fontSize: size === 22 ? 8 : 10 }}
+    >
+      {logo && !failed ? (
+        // Logotipo do perfil da empresa, com fallback quando indisponível.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logo} alt="" loading="lazy" onError={() => setFailed(true)} className="h-full w-full object-contain p-[2px]" />
+      ) : (
+        <span aria-hidden="true">{initials.slice(0, 2)}</span>
+      )}
+    </span>
+  );
+}
+
+function StarBadge({ variant, snapshot }: { variant: StarWidgetVariant; snapshot: MarketingWidgetSnapshot }) {
+  const valid = isCount(snapshot.approvedCount) && snapshot.approvedCount > 0 &&
+    isNum(snapshot.rating) && snapshot.rating >= 0 && snapshot.rating <= 5;
+  const rating = valid ? snapshot.rating : null;
+  const score = rating === null ? '—' : rating.toFixed(1).replace('.', ',');
+  const tone = variant === 'blue'
+    ? 'bg-[#0B5FFF] border-[#0B5FFF]'
+    : variant === 'navy' ? 'bg-[#0A1F44] border-[#081630]' : 'bg-white border-slate-200';
+  return (
+    <div
+      data-testid={'marketing-star-badge-' + variant}
+      style={{ width: STAR_WIDGET_DIMENSIONS.width, height: STAR_WIDGET_DIMENSIONS.height }}
+      className={'flex shrink-0 overflow-hidden border font-sans shadow-sm ' + tone +
+        (variant === 'light' ? ' flex-row' : ' flex-col')}
+      aria-label={variant === 'blue' ? 'Selo azul' : variant === 'navy' ? 'Selo azul-marinho' : 'Selo claro'}
+    >
+      {variant === 'light' ? (
+        <>
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1">
+            {rating === null ? <span className="text-[9px] font-semibold text-slate-500">Sem nota</span> : <Stars rating={rating} small />}
+            <span className="text-[9px] font-semibold text-[#0A1F44]">{rating === null ? 'Sem avaliações' : 'Nota ' + score + '/5'}</span>
+          </div>
+          <div className="flex w-[42px] flex-col items-center justify-center gap-0.5 bg-[#0B5FFF]">
+            <WidgetAvatar key={(snapshot.logoUrl || '') + snapshot.companyName} snapshot={snapshot} size={22} />
+            <span className="text-[7px] font-bold leading-none text-white">Avalia Solar</span>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={'flex h-[21px] shrink-0 items-center justify-between px-1 ' + (variant === 'navy' ? 'bg-[#09152C]' : 'bg-[#0B5FFF]')}>
+            {rating === null ? <span className="text-[9px] text-white">Sem avaliações</span> : <Stars rating={rating} small />}
+            <strong className="text-[11px] leading-none text-white">{score}</strong>
+          </div>
+          <div className={'flex flex-1 items-center gap-1 px-1 ' + (variant === 'navy' ? 'bg-[#0A1F44]' : 'bg-[#143DB7]')}>
+            <WidgetAvatar key={(snapshot.logoUrl || '') + snapshot.companyName} snapshot={snapshot} size={22} />
+            <span className="text-[9px] leading-[1.1] text-white">
+              {variant === 'navy' ? 'Avaliações no' : 'Leia avaliações no'}<br />
+              <b>Avalia Solar</b>
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function WidgetIllustration({
-  kind, snapshot, dense = false,
-}: { kind: MarketingWidgetKind; snapshot: MarketingWidgetSnapshot; dense?: boolean }) {
+  kind, snapshot, dense = false, starVariant = 'blue',
+}: { kind: MarketingWidgetKind; snapshot: MarketingWidgetSnapshot; dense?: boolean; starVariant?: StarWidgetVariant }) {
   const hasReviews = isCount(snapshot.approvedCount) && snapshot.approvedCount > 0 && isNum(snapshot.rating);
   const testimonial = snapshot.testimonialAllowed ? snapshot.testimonial : null;
   return (
     <div className={'flex w-full items-center justify-center rounded-xl border border-slate-100 bg-[#FBFCFF] ' +
-      (dense ? 'min-h-[154px] p-3' : 'h-[182px] p-3')}>
+      (dense ? 'min-h-[154px] p-3' : kind === 'stars' ? 'h-[192px] p-1.5' : 'h-[182px] p-3')}>
       {kind === 'ranking' && (
         <div className="relative grid h-40 w-full max-w-[220px] grid-cols-2 grid-rows-2 overflow-hidden rounded-lg border border-blue-200 bg-white text-[10px]">
           {['Desafiadores', 'Líderes', 'Nicho', 'Alta performance'].map((name, i) => (
@@ -73,7 +143,10 @@ function WidgetIllustration({
       {kind === 'summary' && (
         <div className="w-full max-w-[245px] rounded-xl border border-blue-200 bg-white p-3 shadow-sm">
           <div className="flex items-start justify-between gap-2">
-            <span className="line-clamp-1 text-xs font-bold text-[#0A1F44]">{snapshot.companyName || 'Empresa'}</span>
+            <span className="flex min-w-0 items-center gap-2">
+              <WidgetAvatar key={(snapshot.logoUrl || '') + snapshot.companyName} snapshot={snapshot} size={36} />
+              <span className="line-clamp-2 text-xs font-bold leading-4 text-[#0A1F44]">{snapshot.companyName || 'Empresa'}</span>
+            </span>
             <BrandMark />
           </div>
           <div className="my-3 flex items-center gap-2">
@@ -85,19 +158,13 @@ function WidgetIllustration({
           <div className="text-[11px] text-slate-600">
             {snapshot.approvedCount === null ? 'Dados indisponíveis' : snapshot.approvedCount + ' avaliações aprovadas'}
           </div>
-          <div className="mt-3 h-1.5 rounded-full bg-[#DCE8FF]"><div className="h-full w-2/3 rounded-full bg-blue-600/30" /></div>
+          
         </div>
       )}
       {kind === 'stars' && (
-        <div className="flex w-full max-w-[270px] flex-col gap-2">
-          {(['bg-[#0A1F44] text-white', 'bg-white border border-blue-200 text-[#0A1F44]', 'bg-[#FFFAEB] border border-amber-200 text-[#0A1F44]'] as const).map((klass, i) => (
-            <div key={klass} className={'flex items-center justify-between gap-2 rounded-lg px-3 py-2 shadow-sm ' + klass}>
-              <span className="text-[11px] font-semibold">{['Avaliado no Avalia Solar', 'Veja nossas avaliações', 'Opiniões de clientes'][i]}</span>
-              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold">
-                {hasReviews ? snapshot.rating!.toFixed(1).replace('.', ',') : '—'}
-                <span className="text-[#F3A000]">★</span>
-              </span>
-            </div>
+        <div className="flex w-full flex-col items-center justify-center gap-1.5">
+          {(dense ? [starVariant] : STAR_WIDGET_VARIANTS.map((item) => item.id)).map((variant) => (
+            <StarBadge key={variant} variant={variant} snapshot={snapshot} />
           ))}
         </div>
       )}
@@ -133,6 +200,7 @@ function WidgetIllustration({
 export default function ReputationMarketingWidgets({ company, companyId }: MarketingWidgetsProps) {
   const [active, setActive] = useState<MarketingWidgetKind>('summary');
   const [theme, setTheme] = useState<MarketingWidgetTheme>('light');
+  const [starVariant, setStarVariant] = useState<StarWidgetVariant>('blue');
   const [data, setData] = useState<{ count: number | null; rating: number | null; review: MarketingWidgetSnapshot['testimonial']; testimonialAllowed: boolean }>({
     count: null, rating: null, review: null, testimonialAllowed: false,
   });
@@ -147,6 +215,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
   const id = String(company?.id ?? companyId ?? '').trim();
   const name = company?.name?.trim() || 'Empresa';
   const slug = company?.slug?.trim() || '';
+  const logoUrl = safeCompanyLogoUrl(getFullImageUrl(company?.logo_url || company?.identity?.logo_url || null));
 
   useEffect(() => {
     let cancelled = false;
@@ -217,12 +286,12 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
   const scopedData = dataScope === id ? data : { count: null, rating: null, review: null, testimonialAllowed: false };
   const scopedRank = rankScope === id ? rank : null;
   const snapshot: MarketingWidgetSnapshot = useMemo(() => ({
-    companyName: name, slug,
+    companyName: name, slug, logoUrl,
     approvedCount: scopedData.count, rating: scopedData.rating,
     rankPosition: scopedRank?.position ?? null, rankPopulation: scopedRank?.population ?? null,
     testimonial: scopedData.review, testimonialAllowed: scopedData.testimonialAllowed,
-  }), [name, slug, scopedData.count, scopedData.rating, scopedData.review, scopedData.testimonialAllowed, scopedRank]);
-  const snippet = createMarketingWidgetHtml(active, snapshot, theme);
+  }), [name, slug, logoUrl, scopedData.count, scopedData.rating, scopedData.review, scopedData.testimonialAllowed, scopedRank]);
+  const snippet = dataScope === id ? createMarketingWidgetHtml(active, snapshot, theme, starVariant) : null;
 
   const copy = async () => {
     if (!snippet) return;
@@ -230,7 +299,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
       await navigator.clipboard.writeText(snippet);
       toast.success('HTML estático copiado. Atualize-o quando os dados mudarem.');
       track('reputation_marketing_widget_snapshot_copied', {
-        company_id: id, widget_type: active, theme, export_format: 'static_html',
+        company_id: id, widget_type: active, theme, star_variant: active === 'stars' ? starVariant : undefined, export_format: 'static_html',
       });
     } catch {
       toast.error('Não foi possível copiar o HTML.');
@@ -278,7 +347,7 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
           <h2 className="text-base font-bold text-[#0A1F44]">Personalizar · {MARKETING_WIDGETS.find((item) => item.id === active)?.title}</h2>
           <p className="mt-1 text-xs text-slate-600">Prévia com informações reais da empresa, sem dados de demonstração.</p>
           <div className="mt-4 flex items-center gap-2">
-            {(['light', 'dark'] as const).map((t) => (
+            {active !== 'stars' && (['light', 'dark'] as const).map((t) => (
               <button key={t} type="button" onClick={() => setTheme(t)} aria-pressed={theme === t}
                 className={'inline-flex h-11 items-center rounded-lg border px-4 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ' +
                   (theme === t ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600')}>
@@ -286,8 +355,28 @@ export default function ReputationMarketingWidgets({ company, companyId }: Marke
               </button>
             ))}
           </div>
-          <div className={'mt-4 rounded-xl p-3 ' + (theme === 'dark' ? 'bg-[#0A1F44]' : 'bg-[#F7F9FF]')}>
-            <WidgetIllustration kind={active} snapshot={snapshot} dense />
+          {active === 'stars' && (
+            <fieldset className="mt-4">
+              <legend className="mb-2 text-xs font-semibold text-[#0A1F44]">Modelo do selo · 120 × 54 px</legend>
+              <div className="flex flex-wrap gap-2" data-testid="star-variant-chooser">
+                {STAR_WIDGET_VARIANTS.map((variant) => (
+                  <button
+                    key={variant.id}
+                    type="button"
+                    data-testid={'choose-star-variant-' + variant.id}
+                    aria-pressed={starVariant === variant.id}
+                    onClick={() => setStarVariant(variant.id)}
+                    className={'min-h-11 rounded-lg border px-3 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ' +
+                      (starVariant === variant.id ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700')}
+                  >
+                    {variant.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
+          <div className={'mt-4 rounded-xl p-3 ' + (active !== 'stars' && theme === 'dark' ? 'bg-[#0A1F44]' : 'bg-[#F7F9FF]')}>
+            <WidgetIllustration kind={active} snapshot={snapshot} dense starVariant={starVariant} />
           </div>
           {active === 'ranking' && (
             <Link href={'/dashboard?company_id=' + encodeURIComponent(id) + '&tab=ranking-performance'} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-blue-700 underline-offset-4 hover:underline">

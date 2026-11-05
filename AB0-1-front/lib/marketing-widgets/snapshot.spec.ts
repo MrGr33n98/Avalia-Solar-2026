@@ -1,5 +1,5 @@
 import {
-  createMarketingWidgetHtml, escapeHtml, MARKETING_WIDGETS,
+  createMarketingWidgetHtml, escapeHtml, MARKETING_WIDGETS, STAR_WIDGET_DIMENSIONS, STAR_WIDGET_VARIANTS, safeCompanyLogoUrl,
   type MarketingWidgetSnapshot,
 } from './snapshot';
 
@@ -65,5 +65,46 @@ describe('reputation marketing widget snapshots', () => {
     expect(html).toContain('/companies/empresa%2Fsolar?');
     expect(html).toContain('utm_medium=embed');
     expect(html).toContain('background:#0A1F44');
+  });
+
+  it('exports all three independently selectable 120x54 badges matching the compact reference proportions', () => {
+    expect(STAR_WIDGET_DIMENSIONS).toEqual({ width: 120, height: 54 });
+    expect(STAR_WIDGET_VARIANTS.map((v) => v.id)).toEqual(['blue', 'navy', 'light']);
+    const logoUrl = 'https://api.avaliasolar.com.br/rails/active_storage/blobs/weg-logo.png';
+    for (const variant of ['blue', 'navy', 'light'] as const) {
+      const html = createMarketingWidgetHtml('stars', { ...BASE, logoUrl }, 'light', variant)!;
+      expect(html).toContain('width:120px;height:54px');
+      expect(html).toContain('border-radius:50%');
+      expect(html).toContain('src="' + logoUrl + '"');
+      expect(html).toContain('utm_campaign=stars');
+      expect(html).toContain('captura estática');
+    }
+    const dark = createMarketingWidgetHtml('stars', BASE, 'light', 'navy')!;
+    expect(dark).toContain('background:#0A1F44');
+  });
+
+  it('includes the real company avatar in the summary without inventing progress bars', () => {
+    const html = createMarketingWidgetHtml('summary', {
+      ...BASE,
+      logoUrl: 'https://api.avaliasolar.com.br/assets/companies/company-logo.webp',
+    }, 'light')!;
+    expect(html).toContain('width:36px;height:36px;border-radius:50%');
+    expect(html).toContain('<img src="https://api.avaliasolar.com.br/');
+    expect(html).toContain('12 avaliações aprovadas');
+    expect(html).not.toContain('width:66%');
+  });
+
+  it('rejects untrusted and non-HTTPS logo sources in exported snapshots', () => {
+    expect(safeCompanyLogoUrl('javascript:alert(1)')).toBeNull();
+    expect(safeCompanyLogoUrl('https://avaliasolar.com.br.attacker.test/avatar.png')).toBeNull();
+    expect(safeCompanyLogoUrl('http://api.avaliasolar.com.br/logo.png')).toBeNull();
+    expect(safeCompanyLogoUrl('https://images.bad-example.com/logo.svg')).toBeNull();
+    const html = createMarketingWidgetHtml('stars', {
+      ...BASE,
+      logoUrl: 'https://attacker.test/pixel?x=<script>',
+    }, 'light', 'blue')!;
+    expect(html).not.toContain('attacker.test');
+    expect(html).not.toContain('<img');
+    expect(html).toContain('KE');
   });
 });
