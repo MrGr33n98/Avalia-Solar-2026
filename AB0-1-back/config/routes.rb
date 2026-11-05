@@ -53,6 +53,7 @@ Rails.application.routes.draw do
       patch 'demand_activation/audiences/:id', to: 'demand_activation#update_audience'
       post 'demand_activation/audiences/:id/archive', to: 'demand_activation#archive_audience'
       get 'demand_activation/connections', to: 'demand_activation#connections'
+      get 'demand_activation/audit', to: 'demand_activation#audit_history'
       get 'demand_activation/syncs', to: 'demand_activation#sync_history'
       post 'demand_activation/audiences/:id/sync', to: 'demand_activation#synchronize'
       namespace :mcp do
