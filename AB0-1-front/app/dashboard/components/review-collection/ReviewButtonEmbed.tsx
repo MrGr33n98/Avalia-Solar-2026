@@ -11,16 +11,21 @@ import { Code2, Copy, Check, ExternalLink, ShieldCheck } from 'lucide-react';
 interface ReviewButtonEmbedProps {
   formToken: string;
   companyName: string;
+  isActive?: boolean;
   onTrack?: (event: string, meta?: Record<string, unknown>) => void;
 }
 
-export function ReviewButtonEmbed({ formToken, companyName, onTrack }: ReviewButtonEmbedProps) {
+export function ReviewButtonEmbed({ formToken, companyName, isActive = true, onTrack }: ReviewButtonEmbedProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [theme, setTheme] = useState<'blue' | 'dark' | 'outline'>('blue');
 
   const widgetUrl = buildPublicReviewUrl(formToken, 'widget');
-  const safeCompany = companyName || 'Avalia Solar';
+  const safeCompany = companyName?.trim() || 'Avalia Solar';
+  // Código exportado como HTML para outro domínio: escape contextual obrigatório.
+  const escapedCompany = safeCompany.replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[char] || char));
 
   const themeStyles = {
     blue: 'background-color:#2563eb;color:#ffffff;border:none;',
@@ -31,10 +36,11 @@ export function ReviewButtonEmbed({ formToken, companyName, onTrack }: ReviewBut
   const snippetHtml = `<!-- Avalia Solar Review Button -->
 <a href="${widgetUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;font-family:system-ui,-apple-system,sans-serif;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);${themeStyles[theme]}transition:all 0.2s ease;">
   <span style="color:#f59e0b;font-size:16px;">★</span>
-  <span>Avalie a ${safeCompany} no Avalia Solar</span>
+  <span>Avalie a ${escapedCompany} no Avalia Solar</span>
 </a>`;
 
   const handleCopy = async () => {
+    if (!isActive) return;
     try {
       await navigator.clipboard.writeText(snippetHtml);
       setCopied(true);
@@ -110,7 +116,8 @@ export function ReviewButtonEmbed({ formToken, companyName, onTrack }: ReviewBut
               Prévia Visual
             </span>
             <a
-              href={widgetUrl}
+              href={isActive ? widgetUrl : undefined}
+              aria-disabled={!isActive}
               target="_blank"
               rel="noopener noreferrer"
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm ${
@@ -136,6 +143,7 @@ export function ReviewButtonEmbed({ formToken, companyName, onTrack }: ReviewBut
                 variant="outline"
                 size="sm"
                 onClick={handleCopy}
+                disabled={!isActive}
                 className="h-7 text-xs font-bold border-slate-300"
               >
                 {copied ? (
@@ -152,7 +160,7 @@ export function ReviewButtonEmbed({ formToken, companyName, onTrack }: ReviewBut
               </Button>
             </div>
             <pre className="p-3 bg-slate-900 text-slate-100 rounded-xl text-[11px] font-mono overflow-x-auto max-h-32 border border-slate-800 leading-relaxed">
-              <code>{snippetHtml}</code>
+              <code>{isActive ? snippetHtml : 'Formulário pausado. Ative-o para liberar o código.'}</code>
             </pre>
           </div>
         </div>
