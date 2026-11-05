@@ -76,19 +76,30 @@ function verifiedData(data: MarketingWidgetSnapshot, kind: MarketingWidgetKind):
   return validCount(data.approvedCount) && data.approvedCount > 0 && validRating(data.rating);
 }
 
-function companyAvatarHtml(data: MarketingWidgetSnapshot, size: number): string {
+/** UI/HTML parity: the rendered image has a fixed drawing box on every host site.
+ * Preserve original aspect ratio, including rectangular logos or transparent assets.
+ */
+function companyAvatarHtml(data: MarketingWidgetSnapshot, size: number, variant: 'neutral' | 'navy' = 'neutral'): string {
   const safeLogo = safeCompanyLogoUrl(data.logoUrl);
-  const base = 'display:inline-flex;align-items:center;justify-content:center;width:' + size +
-    'px;height:' + size + 'px;border-radius:50%;border:1px solid #D8E2F0;background:#FFFFFF;' +
-    'overflow:hidden;flex:none;box-sizing:border-box;';
+  const darkWeg = variant === 'navy' && /^weg$/i.test(data.companyName.trim()) && Boolean(safeLogo);
+  const background = darkWeg ? '#0B132B' : '#FFFFFF';
+  const inset = size <= 22 ? 3 : 4;
+  const base = 'display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;' +
+    'width:' + size + 'px;height:' + size + 'px;min-width:' + size + 'px;min-height:' + size + 'px;' +
+    'flex:0 0 ' + size + 'px;box-sizing:border-box;overflow:hidden;border-radius:50%;' +
+    'padding:' + inset + 'px;border:1px solid #D8E2F0;background:' + background + ';';
   if (safeLogo) {
+    const imgStyle = 'display:block;width:100%;height:100%;min-width:0;min-height:0;' +
+      'max-width:100%;max-height:100%;box-sizing:border-box;object-fit:contain;' +
+      'object-position:center center;border-radius:50%;' +
+      (darkWeg ? 'filter:grayscale(1) invert(1) contrast(3);mix-blend-mode:screen;' : '');
     return '<span style="' + base + '"><img src="' + escapeHtml(safeLogo) +
-      '" alt="" width="' + (size - 4) + '" height="' + (size - 4) +
-      '" loading="lazy" style="display:block;max-width:100%;max-height:100%;object-fit:contain"/></span>';
+      '" alt="" width="' + (size - 2 * inset) + '" height="' + (size - 2 * inset) +
+      '" loading="lazy" decoding="async" style="' + imgStyle + '"/></span>';
   }
-  const initials = data.companyName.trim().split(/\s+/).slice(0, 2).map((v) => v[0] || '').join('').toUpperCase().slice(0, 2);
-  return '<span style="' + base + 'font-weight:700;font-size:10px;color:#0A1F44">' +
-    escapeHtml(initials || 'AS') + '</span>';
+  const initials = data.companyName.trim().split(/\\s+/).slice(0, 2).map((v) => v[0] || '').join('').toUpperCase().slice(0, 2);
+  return '<span style="' + base + 'font-weight:700;font-size:' + (size <= 22 ? 8 : 10) +
+    'px;color:#0A1F44">' + escapeHtml(initials || 'AS') + '</span>';
 }
 
 function starRatingHtml(rating: number): string {
@@ -102,7 +113,7 @@ function starWidgetHtml(data: MarketingWidgetSnapshot, variant: StarWidgetVarian
   const name = escapeHtml(data.companyName);
   const rating = data.rating!;
   const stars = starRatingHtml(rating);
-  const avatar = companyAvatarHtml(data, 22);
+  const avatar = companyAvatarHtml(data, 22, variant === 'navy' ? 'navy' : 'neutral');
   const heading = rating.toFixed(1).replace('.', ',');
   // Minimal fixed-size badges inspired by the visual hierarchy of the supplied G2 samples.
   const box = 'width:120px;height:54px;box-sizing:border-box;display:flex;flex-direction:column;' +
