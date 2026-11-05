@@ -1,4 +1,5 @@
 'use client';
+import { canShowCompanyQuoteCTA } from '@/lib/company-cta-visibility';
 
 import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import Link from 'next/link';
@@ -251,7 +252,7 @@ export default function CompanyDetailClient({
     return user?.role === 'company' && user?.company_id === companyId;
   }, [companyId, isAuthenticated, user?.company_id, user?.role]);
 
-  const canRequestQuote = canUsePaidConversion(currentCompany, 'quote') && currentCompany.quote_cta_enabled !== false;
+  const canRequestQuote = canShowCompanyQuoteCTA(currentCompany);
   const showFaq = true;
   const showGallery = canShowMediaGallery(currentCompany);
   const showSocialProof = currentCompany.feature_access
