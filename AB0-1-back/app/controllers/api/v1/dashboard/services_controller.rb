@@ -109,7 +109,14 @@ module Api
 
           files = media[:images] + [media[:cover]].compact
           files.each do |file|
-            return 'Formato inválido. Envie JPEG, PNG ou WebP.' unless ALLOWED_IMAGE_TYPES.include?(file.content_type)
+            unless file.respond_to?(:tempfile) && file.respond_to?(:content_type) && file.respond_to?(:size)
+              return 'Arquivo de imagem inválido.'
+            end
+
+            detected_type = Marcel::MimeType.for(file.tempfile, name: file.original_filename)
+            unless ALLOWED_IMAGE_TYPES.include?(file.content_type) && ALLOWED_IMAGE_TYPES.include?(detected_type)
+              return 'Formato inválido. Envie JPEG, PNG ou WebP.'
+            end
             return 'Cada imagem deve ter até 8 MB.' if file.size > MAX_IMAGE_SIZE
           end
 
