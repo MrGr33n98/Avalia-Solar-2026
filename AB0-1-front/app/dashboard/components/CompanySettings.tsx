@@ -401,11 +401,11 @@ export default function CompanySettings({ companyId, company }: CompanySettingsP
                       Visualização do Comprador (Preview)
                     </CardTitle>
                     <Badge variant="secondary" className="text-[9px] uppercase font-bold">
-                      Ao Vivo
+                      Prévia do editor
                     </Badge>
                   </div>
                   <CardDescription className="text-xs text-muted-foreground">
-                    Como os compradores solares visualizam seus botões no perfil público.
+                    Prévia dos CTAs personalizados. O hero oficial usa as preferências de visibilidade acima.
                   </CardDescription>
                 </CardHeader>
 
