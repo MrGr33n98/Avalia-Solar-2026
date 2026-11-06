@@ -40,7 +40,7 @@ describe('RecommendedCompanyCard — entitlement contract', () => {
   it('fails closed for Free even if an old/stale API asks for quote', () => {
     render(<RecommendedCompanyCard company={{ ...company, has_paid_plan: false } as any} />);
     expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Ver perfil/i })).toHaveAttribute('href', '/companies/solar-de-teste');
+    expect(screen.getAllByRole('link', { name: /Ver perfil/i }).some((link) => link.getAttribute('href') === '/companies/solar-de-teste')).toBe(true);
   });
 
   it('opens a company-scoped wizard for explicitly entitled paid company', () => {

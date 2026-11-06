@@ -32,14 +32,14 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !impressionTracked.current && !dwellTimer) {
-            dwellTimer = window.setTimeout(() => {
+            dwellTimer = setTimeout(() => {
               impressionTracked.current = true;
               trackRecommendedCompanyImpression(company, meta);
               observer.disconnect();
               dwellTimer = null;
             }, 1000);
           } else if (!entry.isIntersecting && dwellTimer) {
-            window.clearTimeout(dwellTimer);
+            clearTimeout(dwellTimer);
             dwellTimer = null;
           }
         });
@@ -52,7 +52,7 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
     }
 
     return () => {
-      if (dwellTimer) window.clearTimeout(dwellTimer);
+      if (dwellTimer) clearTimeout(dwellTimer);
       observer.disconnect();
     };
   }, [company, meta]);
