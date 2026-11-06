@@ -401,6 +401,18 @@ export const EMPTY_REPORTING_DATA: BuyerIntentReportingData = {
   ],
 };
 
+export async function fetchBuyerIntentAccountDetail(
+  companyId: string | number,
+  scoreId: string | number
+): Promise<BuyerIntentAccount> {
+  const params = new URLSearchParams({ company_id: String(companyId) });
+  const detail = await fetchIntentJson(`/api/v1/intent_scores/${encodeURIComponent(String(scoreId))}?${params}`);
+  if (!detail || typeof detail !== 'object' || String((detail as BuyerIntentAccount).id) !== String(scoreId)) {
+    throw new BuyerIntentApiError(200, 'INVALID_DETAIL_CONTRACT', 'invalid_response');
+  }
+  return detail as BuyerIntentAccount;
+}
+
 export async function fetchBuyerIntentReporting(
   companyId: string | number,
   days: 7 | 30 | 90 | 365 = 30
