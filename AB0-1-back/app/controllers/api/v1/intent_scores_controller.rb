@@ -150,7 +150,7 @@ module Api
           ]
 
           scores.each do |s|
-            lead_name = s.lead_record&.name.presence || "Conta em Pesquisa ##{s.id.to_s[0..7]}"
+            lead_name = "Sessão de pesquisa ##{s.id.to_s[0..7]}"
             csv << [
               s.id,
               lead_name,
@@ -308,20 +308,17 @@ module Api
       end
 
       def score_json(score, detailed: false)
-        lead = score.lead_record
-        lead_name = lead&.name.presence || "Conta Corporativa / Anônima ##{score.id.to_s[0..7]}"
-        location = if lead&.city.present? && lead&.state.present?
-                     "#{lead.city}, #{lead.state}"
-                   else
-                     "Brasil (Sinal de Rede)"
-                   end
+        # Neither an anonymous session nor a User ID proves the visitor's
+        # employer. Lead and User IDs share the same integer namespace.
+        # Do not expose a coincidentally matching Lead name or invented city.
+        lead_name = "Sessão de pesquisa ##{score.id.to_s[0..7]}"
+        location = 'Não verificada'
 
         base = {
           id: score.id,
           company_id: score.company_id,
           company_name: score.company&.name,
-          lead_id: score.lead_id,
-          anonymous_id: score.anonymous_id,
+          identity_status: 'unverified',
           account_name: lead_name,
           location: location,
           buying_stage: score.buying_stage,
@@ -329,7 +326,8 @@ module Api
           total_score: score.total_score,
           direct_pageviews: score.direct_pageviews,
           competitive_pageviews: score.competitive_pageviews,
-          unique_visitors: score.unique_sessions_count.to_i,
+          unique_sessions: score.unique_sessions_count.to_i,
+          unique_visitors: score.unique_sessions_count.to_i, # Legacy alias; UI must label this as sessions.
           intent_level: score.intent_level,
           thermometer: score.thermometer_emoji,
           recommended_action: score.recommended_action,
@@ -341,7 +339,25 @@ module Api
         }
 
         if detailed
+          activity_scope = BuyerIntentActivity.where(company_id: score.company_id)
+          activity_scope = if score.lead_id.present?
+                             activity_scope.where(user_id: score.lead_id)
+                           else
+                             activity_scope.where(anonymous_id: score.anonymous_id)
+                           end
+          recent_activities = activity_scope.order(tracked_at: :desc, id: :desc).limit(100)
           base.merge!(
+            timeline: recent_activities.map do |activity|
+              {
+                id: activity.id,
+                signal_type: activity.signal_type,
+                signal_category: activity.signal_category,
+                description: activity.signal_type.tr('_', ' ').humanize,
+                tracked_at: activity.tracked_at,
+                intent_weight: activity.intent_weight,
+                element_type: activity.element_type
+              }
+            end,
             category_scores: {
               micro_interaction: score.micro_interaction_score,
               research_intent: score.research_intent_score,
