@@ -118,12 +118,12 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
   });
 
   const data = query.data;
-  const isTagMissing = data?.status === 'tag_not_installed';
+  const isTagMissing = data?.status === 'not_configured';
   const isInactive = data?.status === 'inactive';
   const isUnavailable = query.isError || data?.status === 'unavailable' || data?.status === 'error';
 
   const statusDescription = useMemo(() => {
-    if (isTagMissing) return 'A tag de rastreamento ainda não foi instrumentada no site parceiro.';
+    if (isTagMissing) return 'Site parceiro ainda não configurado. Cadastre um domínio autorizado e instale o snippet.';
     if (isInactive) return 'O rastreamento da tag está pausado no momento.';
     if (data?.status === 'configured_no_evidence') return 'Tag configurada. Aguardando os primeiros cliques e chegadas.';
     if (data?.status === 'active_no_attributed_traffic') return 'Nenhum tráfego atribuído foi identificado neste período selecionado.';

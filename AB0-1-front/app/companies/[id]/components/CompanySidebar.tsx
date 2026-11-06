@@ -171,7 +171,7 @@ export default function CompanySidebar({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-600 mb-0.5 uppercase tracking-wide">Website</p>
                 <a
-                  href={company.website}
+                  href={`/api/v1/outbound/redirect?company_id=${encodeURIComponent(String(company.id))}&source_context=profile`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-base font-semibold hover:text-primary transition-colors flex items-center gap-1.5 hover:underline decoration-primary/30 underline-offset-4 truncate w-full"

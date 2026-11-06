@@ -54,7 +54,7 @@ module CompanyDashboard
     private
 
     def resolve_workspace_status(site)
-      return 'tag_not_installed' unless site
+      return 'not_configured' unless site
       return 'inactive' unless site.active
 
       has_any_history = ::OutboundClick.where(company_id: @company.id).exists? ||
@@ -72,7 +72,7 @@ module CompanyDashboard
     end
 
     def sessions_scope
-      ::Sales::TrackingSession.where(company_id: @company.id, started_at: @from_time..@to_time)
+      ::Sales::TrackingSession.where(company_id: @company.id, consent_state: 'granted', started_at: @from_time..@to_time)
     end
 
     def events_scope
@@ -81,20 +81,25 @@ module CompanyDashboard
 
     def calculate_summary
       clicks = clicks_scope.count
-      landings = sessions_scope.with_outbound_click.count
-      form_submits = events_scope.where(event_name: 'form_submitted').count
-      conversions = events_scope.where(event_name: %w[lead_confirmed quote_request_submitted]).count
+      landings = sessions_scope.with_outbound_click.distinct.count(:outbound_click_id)
+      form_submits = observed_form_events.distinct.count(:event_uuid)
+      form_landings = observed_form_events.joins(:session).where(sales_tracking_sessions: { consent_state: 'granted' })
+                                          .distinct.count('sales_tracking_sessions.outbound_click_id')
+      conversions = 0
 
       landing_rate = clicks.positive? ? (landings.to_f / clicks * 100).round(1) : nil
-      conversion_rate = landings.positive? ? (conversions.to_f / landings * 100).round(1) : nil
+      form_observation_rate = landings.positive? ? (form_landings.to_f / landings * 100).round(1) : nil
 
       period_duration = @to_time - @from_time
       prev_from = @from_time - period_duration
       prev_to = @from_time
 
       prev_clicks = ::OutboundClick.where(company_id: @company.id, clicked_at: prev_from..prev_to).count
-      prev_landings = ::Sales::TrackingSession.where(company_id: @company.id, started_at: prev_from..prev_to).with_outbound_click.count
-      prev_conversions = ::Sales::TrackingEvent.where(company_id: @company.id, occurred_at: prev_from..prev_to, event_name: %w[lead_confirmed quote_request_submitted]).count
+      prev_landings = ::Sales::TrackingSession.where(company_id: @company.id, started_at: prev_from..prev_to).with_outbound_click.distinct.count(:outbound_click_id)
+      prev_forms = ::Sales::TrackingEvent.where(company_id: @company.id, occurred_at: prev_from..prev_to,
+                                                event_name: %w[form_submitted quote_request_submitted])
+                                         .joins(:session).where(sales_tracking_sessions: { consent_state: 'granted' })
+                                         .distinct.count(:event_uuid)
 
       {
         clicks: clicks,
@@ -102,11 +107,13 @@ module CompanyDashboard
         form_submissions: form_submits,
         confirmed_conversions: conversions,
         landing_rate: landing_rate,
-        conversion_rate: conversion_rate,
+        conversion_rate: nil,
+        form_observation_rate: form_observation_rate,
         trends: {
           clicks_change_pct: calculate_change_pct(clicks, prev_clicks),
           landings_change_pct: calculate_change_pct(landings, prev_landings),
-          conversions_change_pct: calculate_change_pct(conversions, prev_conversions)
+          conversions_change_pct: nil,
+          form_submissions_change_pct: calculate_change_pct(form_submits, prev_forms)
         }
       }
     end
@@ -129,12 +136,11 @@ module CompanyDashboard
       # Agrupa landings verificadas por data
       landings_by_day = sessions_scope.with_outbound_click
                                       .group("DATE(started_at AT TIME ZONE 'America/Sao_Paulo')")
-                                      .count
+                                      .distinct.count(:outbound_click_id)
 
       # Agrupa conversões por data
-      conversions_by_day = events_scope.where(event_name: %w[lead_confirmed quote_request_submitted])
-                                       .group("DATE(occurred_at AT TIME ZONE 'America/Sao_Paulo')")
-                                       .count
+      forms_by_day = observed_form_events.group("DATE(occurred_at AT TIME ZONE 'America/Sao_Paulo')")
+                                         .distinct.count(:event_uuid)
 
       days.map do |day|
         day_str = day.iso8601
@@ -142,7 +148,8 @@ module CompanyDashboard
           date: day_str,
           clicks: clicks_by_day[day] || 0,
           verified_landings: landings_by_day[day] || 0,
-          conversions: conversions_by_day[day] || 0
+          conversions: 0,
+          form_submissions: forms_by_day[day] || 0
         }
       end
     end
@@ -153,12 +160,9 @@ module CompanyDashboard
       landings_by_src = ::Sales::TrackingSession.joins(:outbound_click)
                                                 .where(sales_tracking_sessions: { company_id: @company.id, started_at: @from_time..@to_time })
                                                 .group('outbound_clicks.source_context')
-                                                .count
+                                                .distinct.count(:outbound_click_id)
 
-      conversions_by_src = ::Sales::TrackingEvent.joins(session: :outbound_click)
-                                                 .where(sales_tracking_events: { company_id: @company.id, occurred_at: @from_time..@to_time, event_name: %w[lead_confirmed quote_request_submitted] })
-                                                 .group('outbound_clicks.source_context')
-                                                 .count
+      conversions_by_src = {}
 
       SOURCE_LABELS.keys.map do |src|
         c = clicks_by_src[src] || 0
@@ -193,6 +197,12 @@ module CompanyDashboard
         scope = scope.where.not(id: ::Sales::TrackingSession.where(company_id: @company.id).select(:outbound_click_id))
       when 'landing_verified'
         scope = scope.where(id: ::Sales::TrackingSession.where(company_id: @company.id).select(:outbound_click_id))
+      when 'form_event_observed'
+        session_ids = ::Sales::TrackingSession.where(company_id: @company.id, consent_state: 'granted').select(:session_id)
+        observed_click_ids = ::Sales::TrackingEvent.where(company_id: @company.id, session_id: session_ids,
+                                                          event_name: %w[form_submitted quote_request_submitted])
+                                                   .joins(:session).select('sales_tracking_sessions.outbound_click_id')
+        scope = scope.where(id: observed_click_ids)
       end
 
       total_count = scope.count
@@ -203,12 +213,13 @@ module CompanyDashboard
 
       # Pré-carrega sessões associadas aos cliques desta página
       click_ids = clicks.map(&:id)
-      sessions_by_click = ::Sales::TrackingSession.where(company_id: @company.id, outbound_click_id: click_ids)
+      sessions_by_click = ::Sales::TrackingSession.where(company_id: @company.id, consent_state: 'granted', outbound_click_id: click_ids)
                                                   .includes(:account, :events)
-                                                  .index_by(&:outbound_click_id)
+                                                  .group_by(&:outbound_click_id)
 
       records = clicks.map do |click|
-        session = sessions_by_click[click.id]
+        sessions = sessions_by_click[click.id] || []
+        session = sessions.max_by(&:started_at)
         evidence = determine_evidence_status(session)
 
         {
@@ -223,9 +234,10 @@ module CompanyDashboard
           landing_verified_at: session&.started_at&.iso8601,
           referrer_host: session&.referrer_host,
           duration_seconds: calculate_session_duration(session),
-          events_count: session&.events&.length || 0,
+          events_count: sessions.sum { |item| item.events.length },
+          sessions_count: sessions.length,
           account_name: session&.account&.name || 'Não identificado',
-          country: 'Brasil'
+          country: nil
         }
       end
 
@@ -244,10 +256,10 @@ module CompanyDashboard
       return 'click_only' unless session
 
       events = session.events
-      if events.any? { |e| %w[lead_confirmed quote_request_submitted].include?(e.event_name) }
-        'lead_confirmed'
-      elsif events.any? { |e| e.event_name == 'form_submitted' }
+      if events.any? { |e| %w[form_submitted quote_request_submitted].include?(e.event_name) }
         'form_event_observed'
+      elsif events.any? { |e| e.event_name == 'lead_confirmed' }
+        'lead_confirmed'
       else
         'landing_verified'
       end
@@ -263,7 +275,7 @@ module CompanyDashboard
     end
 
     def build_tag_info(site)
-      return { configured: false, status: 'tag_not_installed' } unless site
+      return { configured: false, status: 'not_configured' } unless site
 
       last_telemetry = ::Sales::TrackingEvent.where(company_id: @company.id).maximum(:occurred_at) ||
                        ::Sales::TrackingSession.where(company_id: @company.id).maximum(:started_at)
@@ -288,6 +300,11 @@ module CompanyDashboard
         status: tag_status,
         settings: site.settings || {}
       }
+    end
+
+    def observed_form_events
+      events_scope.where(event_name: %w[form_submitted quote_request_submitted])
+                  .joins(:session).where(sales_tracking_sessions: { consent_state: 'granted' })
     end
 
     def build_integrations(site)

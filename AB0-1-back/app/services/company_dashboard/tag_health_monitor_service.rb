@@ -61,7 +61,7 @@ module CompanyDashboard
       {
         configured: false,
         active: false,
-        status: 'tag_not_installed',
+        status: 'not_configured',
         public_key: nil,
         allowed_origins: [],
         validated_https_origins: false,

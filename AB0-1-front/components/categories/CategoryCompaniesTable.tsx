@@ -422,7 +422,7 @@ export default function CategoryCompaniesTable({
 
                                   {company.website ? (
                                     <a
-                                      href={company.website}
+                                      href={`/api/v1/outbound/redirect?company_id=${encodeURIComponent(String(company.id))}&source_context=directory`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="font-bold text-blue-600 hover:underline flex items-center gap-0.5"

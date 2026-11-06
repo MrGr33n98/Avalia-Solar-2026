@@ -10,7 +10,7 @@ module Api
           MAX_PAYLOAD_BYTES = 16.kilobytes
           ALLOWED_EVENTS = %w[
             page_view company_view cta_click quote_request_started quote_request_submitted
-            form_started form_submitted lead_confirmed consent_granted consent_revoked
+            form_started form_submitted consent_granted consent_revoked
           ].freeze
 
           skip_before_action :authenticate_api_user
@@ -34,12 +34,16 @@ module Api
 
             raw_consent = params.dig(:session, :consent_state).to_s.strip.downcase
             consent_state = %w[granted denied].include?(raw_consent) ? raw_consent : 'unknown'
+            unless consent_state == 'granted'
+              return render json: { code: 'CONSENT_REQUIRED', message: 'Consentimento necessário para iniciar telemetria.' },
+                            status: :precondition_required
+            end
 
             as_click_id = params.dig(:session, :as_click_id).presence || params[:as_click_id].presence
             outbound_click = nil
             click_hash = nil
 
-            if as_click_id.present? && consent_state != 'denied'
+            if as_click_id.present?
               outbound_click, click_hash = resolve_verified_outbound_click(as_click_id)
             end
 
@@ -76,8 +80,8 @@ module Api
             session = ::Sales::TrackingSession.where(company_id: @site.company_id)
                                               .find_by!(session_id: attributes[:session_id])
 
-            if session.consent_denied? && attributes[:event_name] != 'consent_granted'
-              return render json: { accepted: false, reason: 'consent_denied' }, status: :ok
+            if session.consent_state != 'granted' && attributes[:event_name] != 'consent_granted'
+              return render json: { accepted: false, reason: 'consent_required' }, status: :ok
             end
 
             if attributes[:event_name] == 'consent_revoked'

@@ -129,7 +129,7 @@ export default function CompanyContactCard({
               </div>
               <div className="flex flex-col min-w-0 flex-1">
                 <a
-                  href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
+                  href={`/api/v1/outbound/redirect?company_id=${encodeURIComponent(String(company.id))}&source_context=profile`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs sm:text-[13px] font-bold text-slate-900 hover:text-blue-700 transition-colors inline-flex items-center truncate max-w-full"

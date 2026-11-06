@@ -126,7 +126,7 @@ RSpec.describe 'Track Your Prospects End-to-End Cycle', type: :request do
     expect(response).to have_http_status(:accepted)
 
     # -------------------------------------------------------------------------
-    # ETAPA 5: Telemetria da Tag — Lead confirmado (Conversão final)
+    # ETAPA 5: A tag não pode declarar conversão confirmada pelo navegador.
     # -------------------------------------------------------------------------
     post events_url,
          params: {
@@ -139,8 +139,8 @@ RSpec.describe 'Track Your Prospects End-to-End Cycle', type: :request do
          },
          headers: origin_headers
 
-    expect(response).to have_http_status(:accepted)
-    expect(tracking_session.events.count).to eq(2)
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(tracking_session.events.count).to eq(1)
 
     # -------------------------------------------------------------------------
     # ETAPA 6: Consulta ao Dashboard de Prospects da Empresa Autenticada
@@ -154,13 +154,14 @@ RSpec.describe 'Track Your Prospects End-to-End Cycle', type: :request do
     expect(dashboard_data['status']).to eq('ready')
     expect(dashboard_data['summary']['clicks']).to eq(1)
     expect(dashboard_data['summary']['verified_landings']).to eq(1)
-    expect(dashboard_data['summary']['confirmed_conversions']).to eq(1)
+    expect(dashboard_data['summary']['confirmed_conversions']).to eq(0)
+    expect(dashboard_data['summary']['form_submissions']).to eq(1)
     expect(dashboard_data['summary']['landing_rate']).to eq(100.0)
-    expect(dashboard_data['summary']['conversion_rate']).to eq(100.0)
+    expect(dashboard_data['summary']['conversion_rate']).to be_nil
 
     record = dashboard_data['records'].first
     expect(record['id']).to eq(outbound_click.id)
-    expect(record['evidence_status']).to eq('lead_confirmed')
+    expect(record['evidence_status']).to eq('form_event_observed')
     expect(record['session_id']).to eq(tracking_session.session_id)
 
     # -------------------------------------------------------------------------
@@ -172,7 +173,8 @@ RSpec.describe 'Track Your Prospects End-to-End Cycle', type: :request do
     journey_data = JSON.parse(response.body)
     expect(journey_data['click_id']).to eq(outbound_click.id)
     steps = journey_data['timeline'].map { |t| t['step'] }
-    expect(steps).to include('outbound_click', 'landing_verified', 'form_submitted', 'lead_confirmed')
+    expect(steps).to include('outbound_click', 'landing_verified', 'form_submitted')
+    expect(steps).not_to include('lead_confirmed')
 
     # -------------------------------------------------------------------------
     # ETAPA 8: Diagnóstico de Saúde da Tag (Tag Health Monitor)
@@ -184,7 +186,7 @@ RSpec.describe 'Track Your Prospects End-to-End Cycle', type: :request do
     expect(health_data['configured']).to be(true)
     expect(health_data['active']).to be(true)
     expect(health_data['status']).to eq('healthy')
-    expect(health_data['events_last_24h']).to eq(2)
+    expect(health_data['events_last_24h']).to eq(1)
     expect(health_data['sessions_last_7d']).to eq(1)
     expect(health_data['consent_grant_rate']).to eq(100.0)
     expect(health_data['validated_https_origins']).to be(true)

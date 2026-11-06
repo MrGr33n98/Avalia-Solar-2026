@@ -72,8 +72,8 @@ export default function ProspectsOverviewTab({
         );
       case 'lead_confirmed':
         return (
-          <Badge variant="outline" className="border-purple-500/30 text-purple-600 bg-purple-500/10">
-            Lead confirmado
+          <Badge variant="outline" className="border-amber-500/30 text-amber-600 bg-amber-500/10">
+            Declaração não verificada
           </Badge>
         );
       default:
@@ -146,22 +146,22 @@ export default function ProspectsOverviewTab({
           </div>
         </div>
 
-        {/* Card 3: Conversões Confirmadas */}
+        {/* Eventos observados no site parceiro; não comprovam conversão */}
         <div className="rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--dashboard-muted))]">
-              Conversões Confirmadas
+              Formulários Observados
             </span>
             <div className="rounded-xl p-2 bg-purple-500/10 text-purple-600">
               <ShieldCheck className="h-4 w-4" />
             </div>
           </div>
           <p className="mt-3 text-3xl font-bold tracking-tight text-[hsl(var(--dashboard-ink))]">
-            {summary.confirmed_conversions.toLocaleString('pt-BR')}
+            {summary.form_submissions.toLocaleString('pt-BR')}
           </p>
           <div className="mt-2 flex items-center justify-between">
-            {renderTrend(summary.trends.conversions_change_pct)}
-            <span className="text-[11px] text-[hsl(var(--dashboard-muted))]">Verificadas</span>
+            {renderTrend(summary.trends.form_submissions_change_pct)}
+            <span className="text-[11px] text-[hsl(var(--dashboard-muted))]">Evento do navegador</span>
           </div>
         </div>
 
@@ -169,19 +169,19 @@ export default function ProspectsOverviewTab({
         <div className="rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--dashboard-muted))]">
-              Taxa de Conversão
+              Taxa de Formulário Observado
             </span>
             <div className="rounded-xl p-2 bg-amber-500/10 text-amber-600">
               <TrendingUp className="h-4 w-4" />
             </div>
           </div>
           <p className="mt-3 text-3xl font-bold tracking-tight text-[hsl(var(--dashboard-ink))]">
-            {summary.conversion_rate !== null ? `${summary.conversion_rate}%` : '—'}
+            {summary.form_observation_rate !== null ? `${summary.form_observation_rate}%` : '—'}
           </p>
           <div className="mt-2">
             <span className="text-[11px] text-[hsl(var(--dashboard-muted))]">
               {summary.verified_landings > 0
-                ? `${summary.confirmed_conversions} de ${summary.verified_landings} chegadas`
+                ? `${summary.form_submissions} envios observados em ${summary.verified_landings} chegadas`
                 : 'Aguardando chegadas'}
             </span>
           </div>
@@ -198,7 +198,7 @@ export default function ProspectsOverviewTab({
                 Evolução Temporal no Período
               </h3>
               <p className="text-xs text-[hsl(var(--dashboard-muted))]">
-                Cliques de saída no marketplace vs. chegadas verificadas no seu site
+                Cliques, chegadas e formulários observados no site parceiro
               </p>
             </div>
             <div className="flex items-center gap-3 text-xs">
@@ -208,8 +208,8 @@ export default function ProspectsOverviewTab({
               <span className="flex items-center gap-1 text-[hsl(var(--dashboard-muted))]">
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Chegadas
               </span>
-              <span className="flex items-center gap-1 text-[hsl(var(--dashboard-muted))]">
-                <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Conversões
+                <span className="flex items-center gap-1 text-[hsl(var(--dashboard-muted))]">
+                <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Formulários observados
               </span>
             </div>
           </div>
@@ -222,9 +222,10 @@ export default function ProspectsOverviewTab({
             <div className="h-52 w-full pt-4">
               <div className="flex h-40 items-end gap-1.5 overflow-x-auto pb-2">
                 {timeseries.map((pt, i) => {
-                  const maxVal = Math.max(...timeseries.map((t) => Math.max(t.clicks, t.verified_landings)), 1);
+                  const maxVal = Math.max(...timeseries.map((t) => Math.max(t.clicks, t.verified_landings, t.form_submissions)), 1);
                   const clicksH = Math.max((pt.clicks / maxVal) * 100, 4);
                   const landingsH = Math.max((pt.verified_landings / maxVal) * 100, pt.verified_landings > 0 ? 4 : 0);
+                  const formsH = Math.max((pt.form_submissions / maxVal) * 100, pt.form_submissions > 0 ? 4 : 0);
                   const shortDate = pt.date.slice(5);
 
                   return (
@@ -235,7 +236,7 @@ export default function ProspectsOverviewTab({
                       {/* Tooltip */}
                       <div className="absolute -top-12 z-20 hidden rounded-md bg-slate-900 px-2 py-1 text-[11px] text-white shadow-lg group-hover:block whitespace-nowrap">
                         <div className="font-semibold">{pt.date}</div>
-                        <div>Cliques: {pt.clicks} | Chegadas: {pt.verified_landings} | Conv: {pt.conversions}</div>
+                        <div>Cliques: {pt.clicks} | Chegadas: {pt.verified_landings} | Formulários observados: {pt.form_submissions}</div>
                       </div>
 
                       {/* Bar columns */}
@@ -248,6 +249,12 @@ export default function ProspectsOverviewTab({
                           <div
                             style={{ height: `${landingsH}%` }}
                             className="w-2 rounded-t-xs bg-emerald-500/80 hover:bg-emerald-600 transition-all"
+                          />
+                        )}
+                        {pt.form_submissions > 0 && (
+                          <div
+                            style={{ height: `${formsH}%` }}
+                            className="w-2 rounded-t-xs bg-purple-500/80 hover:bg-purple-600 transition-all"
                           />
                         )}
                       </div>

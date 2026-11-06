@@ -2181,7 +2181,7 @@ export type ProspectsWorkspaceStatus =
   | 'empty'
   | 'configured_no_evidence'
   | 'active_no_attributed_traffic'
-  | 'tag_not_installed'
+  | 'not_configured'
   | 'inactive'
   | 'unavailable'
   | 'error';
@@ -2199,8 +2199,9 @@ export interface ProspectRecord {
   referrer_host?: string | null;
   duration_seconds?: number | null;
   events_count: number;
+  sessions_count?: number;
   account_name: string;
-  country: string;
+  country: string | null;
 }
 
 export interface ProspectJourneyStep {
@@ -2227,7 +2228,7 @@ export interface ProspectJourneyResponse {
     source_context: string;
     target_url: string;
     total_steps: number;
-    session_id?: string | null;
+    session_ids?: string[];
     account_name: string;
   };
 }
@@ -2242,10 +2243,12 @@ export interface ProspectsWorkspaceResponse {
     confirmed_conversions: number;
     landing_rate: number | null;
     conversion_rate: number | null;
+    form_observation_rate: number | null;
     trends: {
       clicks_change_pct: number | null;
       landings_change_pct: number | null;
       conversions_change_pct: number | null;
+      form_submissions_change_pct: number | null;
     };
   };
   timeseries: Array<{
@@ -2253,6 +2256,7 @@ export interface ProspectsWorkspaceResponse {
     clicks: number;
     verified_landings: number;
     conversions: number;
+    form_submissions: number;
   }>;
   source_breakdown: Array<{
     source: string;
@@ -2276,7 +2280,7 @@ export interface ProspectsWorkspaceResponse {
     allowed_origins?: string[];
     snippet_url?: string;
     last_seen_at?: string | null;
-    status: 'healthy' | 'possibly_inactive' | 'configured_no_evidence' | 'inactive' | 'tag_not_installed';
+    status: 'healthy' | 'possibly_inactive' | 'configured_no_evidence' | 'inactive' | 'not_configured';
     settings?: Record<string, unknown>;
   };
   integrations: {

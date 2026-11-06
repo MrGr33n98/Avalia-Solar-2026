@@ -8,7 +8,7 @@ module CompanyDashboard
       'click_only' => 'Apenas clique',
       'landing_verified' => 'Chegada verificada',
       'form_event_observed' => 'Formulário observado',
-      'lead_confirmed' => 'Lead confirmado'
+      'lead_confirmed' => 'Declaração não verificada'
     }.freeze
 
     SOURCE_LABELS = {
@@ -49,14 +49,20 @@ module CompanyDashboard
         scope = scope.where.not(id: ::Sales::TrackingSession.where(company_id: @company.id).select(:outbound_click_id))
       when 'landing_verified'
         scope = scope.where(id: ::Sales::TrackingSession.where(company_id: @company.id).select(:outbound_click_id))
+      when 'form_event_observed'
+        sessions = ::Sales::TrackingSession.where(company_id: @company.id, consent_state: 'granted').select(:session_id)
+        click_ids = ::Sales::TrackingEvent.where(company_id: @company.id, session_id: sessions,
+                                                 event_name: %w[form_submitted quote_request_submitted])
+                                          .joins(:session).select('sales_tracking_sessions.outbound_click_id')
+        scope = scope.where(id: click_ids)
       end
 
       clicks = scope.order(clicked_at: :desc).limit(10_000)
       click_ids = clicks.map(&:id)
 
-      sessions_by_click = ::Sales::TrackingSession.where(company_id: @company.id, outbound_click_id: click_ids)
+      sessions_by_click = ::Sales::TrackingSession.where(company_id: @company.id, consent_state: 'granted', outbound_click_id: click_ids)
                                                   .includes(:account, :events)
-                                                  .index_by(&:outbound_click_id)
+                                                  .group_by(&:outbound_click_id)
 
       # UTF-8 BOM (\uFEFF) para garantir abertura correta de acentuação no Excel
       bom = "\uFEFF"
@@ -78,27 +84,28 @@ module CompanyDashboard
         ]
 
         clicks.each do |click|
-          session = sessions_by_click[click.id]
-          evidence_code = determine_evidence(session)
-          evidence_label = EVIDENCE_LABELS[evidence_code] || evidence_code
+          sessions = sessions_by_click[click.id].presence || [nil]
+          sessions.each do |session|
+            evidence_code = determine_evidence(session)
+            evidence_label = EVIDENCE_LABELS[evidence_code] || evidence_code
+            duration = calculate_duration(session)
 
-          duration = calculate_duration(session)
-
-          csv << [
-            sanitize(click.id),
-            sanitize(click.clicked_at.iso8601),
-            sanitize(SOURCE_LABELS[click.source_context] || click.source_context),
-            sanitize(click.destination_type),
-            sanitize(click.target_url),
-            sanitize(evidence_label),
-            sanitize(session&.session_id),
-            sanitize(session&.started_at&.iso8601),
-            sanitize(session&.referrer_host),
-            sanitize(duration),
-            sanitize(session&.events&.length || 0),
-            sanitize(session&.account&.name || 'Não identificado'),
-            sanitize('Brasil')
-          ]
+            csv << [
+              sanitize(click.id),
+              sanitize(click.clicked_at.iso8601),
+              sanitize(SOURCE_LABELS[click.source_context] || click.source_context),
+              sanitize(click.destination_type),
+              sanitize(click.target_url),
+              sanitize(evidence_label),
+              sanitize(session&.session_id),
+              sanitize(session&.started_at&.iso8601),
+              sanitize(session&.referrer_host),
+              sanitize(duration),
+              sanitize(session&.events&.length || 0),
+              sanitize(session&.account&.name || 'Não identificado'),
+              sanitize('Não informado')
+            ]
+          end
         end
       end
 
@@ -111,10 +118,10 @@ module CompanyDashboard
       return 'click_only' unless session
 
       events = session.events
-      if events.any? { |e| %w[lead_confirmed quote_request_submitted].include?(e.event_name) }
-        'lead_confirmed'
-      elsif events.any? { |e| e.event_name == 'form_submitted' }
+      if events.any? { |e| %w[form_submitted quote_request_submitted].include?(e.event_name) }
         'form_event_observed'
+      elsif events.any? { |e| e.event_name == 'lead_confirmed' }
+        'lead_confirmed'
       else
         'landing_verified'
       end

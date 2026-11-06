@@ -304,8 +304,9 @@ module Api
           return render_error_response(message: 'Registro de clique não encontrado para esta empresa.', status: :not_found, code: 'CLICK_NOT_FOUND')
         end
 
-        session = ::Sales::TrackingSession.find_by(outbound_click_id: click.id, company_id: @company.id)
-        events = session ? session.events.order(:occurred_at) : []
+        sessions = ::Sales::TrackingSession.where(outbound_click_id: click.id, company_id: @company.id,
+                                                  consent_state: 'granted')
+                                           .includes(:account, :events).order(:started_at)
 
         timeline = []
         timeline << {
@@ -318,7 +319,7 @@ module Api
           evidence_type: 'marketplace_telemetry'
         }
 
-        if session
+        sessions.each do |session|
           timeline << {
             step: 'landing_verified',
             label: 'Chegada verificada no site parceiro',
@@ -330,10 +331,10 @@ module Api
             evidence_type: 'verified_tag_attribution'
           }
 
-          events.each do |event|
+          session.events.sort_by(&:occurred_at).each do |event|
             timeline << {
               step: event.event_name,
-              label: event.event_name.humanize,
+              label: event.event_name == 'lead_confirmed' ? 'Declaração não verificada' : event.event_name.humanize,
               occurred_at: event.occurred_at.iso8601,
               path: event.path,
               properties: event.properties,
@@ -350,8 +351,8 @@ module Api
             source_context: click.source_context,
             target_url: click.target_url,
             total_steps: timeline.length,
-            session_id: session&.session_id,
-            account_name: session&.account&.name || 'Não identificado'
+            session_ids: sessions.map(&:session_id),
+            account_name: sessions.filter_map { |session| session.account&.name }.first || 'Não identificado'
           }
         }, status: :ok
       end
@@ -2699,7 +2700,7 @@ module Api
         has_explicit_dates = params[:from].present? || params[:to].present?
         preset = requested_preset || (has_explicit_dates ? 'custom' : preset_from_days(days_param || default_days))
 
-        if preset != 'custom' && %w[7d 30d 90d].include?(preset)
+        if preset != 'custom' && %w[7d 30d 90d 180d 365d].include?(preset)
           days = preset.delete_suffix('d').to_i
           to_day = today
           from_day = to_day - (days - 1)
@@ -2733,6 +2734,8 @@ module Api
         when 7 then '7d'
         when 30 then '30d'
         when 90 then '90d'
+        when 180 then '180d'
+        when 365 then '365d'
         else 'custom'
         end
       end

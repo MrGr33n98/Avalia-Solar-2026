@@ -190,8 +190,8 @@ RSpec.describe 'Public Sales Tracking V2 - Consent, Attribution & Privacy', type
       end
     end
 
-    context 'com consent_state = denied' do
-      it 'não associa as_click_id mesmo que o token seja matematicamente válido' do
+    context 'sem consentimento concedido' do
+      it 'não persiste sessão nem associa o token se a decisão foi negada' do
         post sessions_url,
              params: {
                session: {
@@ -202,14 +202,18 @@ RSpec.describe 'Public Sales Tracking V2 - Consent, Attribution & Privacy', type
              },
              headers: origin_headers
 
-        expect(response).to have_http_status(:created)
-        json = JSON.parse(response.body)
-        expect(json['attributed']).to be(false)
-        expect(json['consent_state']).to eq('denied')
+        expect(response).to have_http_status(:precondition_required)
+        expect(JSON.parse(response.body)['code']).to eq('CONSENT_REQUIRED')
+        expect(Sales::TrackingSession.where(company: company).count).to eq(0)
+      end
 
-        session = Sales::TrackingSession.find_by!(session_id: json['session_id'])
-        expect(session.outbound_click_id).to be_nil
-        expect(session.consent_state).to eq('denied')
+      it 'não persiste sessão quando o estado é desconhecido' do
+        post sessions_url,
+             params: { session: { landing_path: '/landing', as_click_id: valid_token } },
+             headers: origin_headers
+
+        expect(response).to have_http_status(:precondition_required)
+        expect(Sales::TrackingSession.where(company: company).count).to eq(0)
       end
     end
   end

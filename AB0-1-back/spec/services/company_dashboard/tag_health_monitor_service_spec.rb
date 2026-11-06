@@ -13,7 +13,7 @@ RSpec.describe CompanyDashboard::TagHealthMonitorService, type: :service do
 
         expect(result[:configured]).to be(false)
         expect(result[:active]).to be(false)
-        expect(result[:status]).to eq('tag_not_installed')
+        expect(result[:status]).to eq('not_configured')
         expect(result[:public_key]).to be_nil
         expect(result[:events_last_24h]).to eq(0)
         expect(result[:consent_grant_rate]).to be_nil

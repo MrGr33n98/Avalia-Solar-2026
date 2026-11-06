@@ -317,7 +317,7 @@ export default function CompanyIdentityCard({
                   <div className="flex items-center gap-1">
                     <Globe className="h-3.5 w-3.5 text-blue-600 shrink-0" aria-hidden="true" />
                     <a
-                      href={websiteHref}
+                      href={`/api/v1/outbound/redirect?company_id=${encodeURIComponent(String(company.id))}&source_context=profile`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-bold text-blue-600 hover:underline inline-flex items-center gap-0.5"

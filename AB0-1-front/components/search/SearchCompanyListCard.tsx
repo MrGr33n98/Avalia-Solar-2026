@@ -112,7 +112,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                         <span className="text-slate-400 font-semibold">Site oficial</span>
                         {company.website ? (
                           <a
-                            href={company.website}
+                            href={`/api/v1/outbound/redirect?company_id=${encodeURIComponent(String(company.id))}&source_context=search`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-bold text-blue-600 hover:underline flex items-center gap-0.5"

@@ -419,7 +419,12 @@ function MobileCompanyOverview({ company }: { company: Company }) {
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 text-sm font-bold text-slate-800">
-          <ContactCell icon={Globe2} label="Site" href={company.website || undefined} external />
+          <ContactCell
+            icon={Globe2}
+            label="Site"
+            href={company.website ? `/api/v1/outbound/redirect?company_id=${encodeURIComponent(String(company.id))}&source_context=profile` : undefined}
+            external
+          />
           <ContactCell icon={Phone} label="Ligar" href={phoneHref || undefined} />
           <ContactCell icon={MapPin} label={location || 'Localização não informada'} />
           <ContactCell

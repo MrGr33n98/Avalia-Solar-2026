@@ -21,6 +21,7 @@ module Sales
             let inMemorySessionId = null;
             let inMemoryConsent = null;
             const eventQueue = [];
+            let flushingEvents = false;
 
             const eventId = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
               const r = (Math.random() * 16) | 0;
@@ -80,19 +81,25 @@ module Sales
               } catch (_) {}
             };
 
-            const startSession = (clickId, consentGranted) => {
-              if (inMemorySessionId) return Promise.resolve(inMemorySessionId);
+            const initialUrl = new URL(location.href);
+            let pendingClickId = initialUrl.searchParams.get('as_click_id');
+            if (pendingClickId) cleanClickIdFromUrl();
 
-              try {
-                const stored = sessionStorage.getItem(storageKey);
-                if (stored) {
-                  inMemorySessionId = stored;
-                  return Promise.resolve(stored);
-                }
-              } catch (_) {}
+            const startSession = (clickId, consentGranted) => {
+              const resolvedClickId = clickId || pendingClickId;
+              if (inMemorySessionId && !resolvedClickId) return Promise.resolve(inMemorySessionId);
+
+              if (!resolvedClickId) {
+                try {
+                  const stored = sessionStorage.getItem(storageKey);
+                  if (stored) {
+                    inMemorySessionId = stored;
+                    return Promise.resolve(stored);
+                  }
+                } catch (_) {}
+              }
 
               const query = new URLSearchParams(location.search);
-              const resolvedClickId = clickId || query.get('as_click_id');
 
               return post('sessions', {
                 session: {
@@ -112,24 +119,39 @@ module Sales
                 if (consentGranted) {
                   try { sessionStorage.setItem(storageKey, data.session_id); } catch (_) {}
                 }
+                pendingClickId = null;
                 cleanClickIdFromUrl();
                 return data.session_id;
               }).catch(() => null);
             };
 
             const flushQueue = (sessionId) => {
-              while (eventQueue.length > 0) {
-                const item = eventQueue.shift();
-                post('events', {
+              if (flushingEvents) return Promise.resolve(false);
+              flushingEvents = true;
+              const sendNext = () => {
+                if (eventQueue.length === 0) {
+                  flushingEvents = false;
+                  return Promise.resolve(true);
+                }
+                const item = eventQueue[0];
+                return post('events', {
                   event: {
-                    session_id: sessionId,
+                    session_id: item.sessionId || sessionId,
                     event_uuid: item.uuid,
                     event_name: item.name,
                     path: item.path,
                     properties: item.properties
                   }
-                }).catch(() => {});
-              }
+                }).then((res) => {
+                  if (!res.ok) throw new Error('Event delivery failed');
+                  eventQueue.shift();
+                  return sendNext();
+                }).catch(() => {
+                  flushingEvents = false;
+                  return false;
+                });
+              };
+              return sendNext();
             };
 
             const track = (name, properties = {}) => {
@@ -137,48 +159,34 @@ module Sales
 
               if (consent === false && name !== 'consent_revoked') return Promise.resolve(false);
 
-              if (consent !== true && name !== 'consent_granted') {
+              if (consent !== true && name !== 'consent_granted') return Promise.resolve(false);
+
+              return startSession(null, true).then((sessionId) => {
+                if (!sessionId) return false;
+                if (eventQueue.length >= 100) return false;
                 eventQueue.push({
                   uuid: eventId(),
+                  sessionId,
                   name,
                   path: location.pathname,
                   properties: typeof properties === 'object' && properties !== null ? properties : {}
                 });
-                return Promise.resolve(true);
-              }
-
-              return startSession(null, true).then((sessionId) => {
-                if (!sessionId) return false;
-                flushQueue(sessionId);
-                return post('events', {
-                  event: {
-                    session_id: sessionId,
-                    event_uuid: eventId(),
-                    event_name: name,
-                    path: location.pathname,
-                    properties: typeof properties === 'object' && properties !== null ? properties : {}
-                  }
-                }).then((res) => res.ok).catch(() => false);
+                return flushQueue(sessionId);
               });
             };
 
             const grantConsent = (options) => {
               inMemoryConsent = true;
-              const query = new URLSearchParams(location.search);
-              const clickId = query.get('as_click_id');
-
-              return startSession(clickId, true).then((sessionId) => {
+              return startSession(pendingClickId, true).then((sessionId) => {
                 if (sessionId) {
-                  flushQueue(sessionId);
-                  post('events', {
-                    event: {
-                      session_id: sessionId,
-                      event_uuid: eventId(),
-                      event_name: 'consent_granted',
-                      path: location.pathname,
-                      properties: { source: options && options.source ? String(options.source) : 'cmp' }
-                    }
-                  }).catch(() => {});
+                  eventQueue.push({
+                    uuid: eventId(),
+                    sessionId,
+                    name: 'consent_granted',
+                    path: location.pathname,
+                    properties: { source: options && options.source ? String(options.source) : 'cmp' }
+                  });
+                  return flushQueue(sessionId);
                 }
                 return true;
               });
@@ -189,6 +197,7 @@ module Sales
               const sessionId = inMemorySessionId;
               inMemorySessionId = null;
               eventQueue.length = 0;
+              pendingClickId = null;
 
               try { sessionStorage.removeItem(storageKey); } catch (_) {}
 

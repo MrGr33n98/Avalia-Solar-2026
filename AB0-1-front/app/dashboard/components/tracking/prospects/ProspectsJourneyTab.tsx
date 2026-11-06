@@ -22,8 +22,7 @@ export default function ProspectsJourneyTab({ data, onSelectProspect }: Props) {
           <span>Atribuição Determinística e Trilha Auditável</span>
         </div>
         <p className="text-xs text-[hsl(var(--dashboard-muted))] leading-relaxed">
-          Cada jornada rastreia a transição do comprador entre a intenção no Avalia Solar e a navegação no seu site.
-          Nenhuma inferência probabilística: a correlação só ocorre quando a Tag Parceira valida o token assinado (`as_click_id`) com integridade HMAC-SHA256 e consentimento explícito.
+          Cada jornada mostra o clique e as chegadas/eventos observados com token válido e consentimento. Eventos do navegador não comprovam conversão.
         </p>
       </div>
 
@@ -145,13 +144,12 @@ export default function ProspectsJourneyTab({ data, onSelectProspect }: Props) {
                         r.evidence_status === 'lead_confirmed' ? 'text-purple-600' : 'text-[hsl(var(--dashboard-muted))]'
                       }`}
                     >
-                      <span>4. Conversão Final</span>
-                      {r.evidence_status === 'lead_confirmed' && <CheckCircle2 className="h-3.5 w-3.5" />}
+                      <span>4. Conversão verificada</span>
                     </div>
                     <div className="text-[hsl(var(--dashboard-muted))]">
-                      {r.evidence_status === 'lead_confirmed' ? 'Lead auditado' : 'Não convertido'}
+                      Sem integração servidor a servidor
                     </div>
-                    <div className="text-[11px] text-[hsl(var(--dashboard-muted))]">Atribuição comprovada</div>
+                    <div className="text-[11px] text-[hsl(var(--dashboard-muted))]">Não verificada</div>
                   </div>
                 </div>
               </div>

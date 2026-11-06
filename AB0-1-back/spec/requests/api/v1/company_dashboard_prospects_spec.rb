@@ -13,12 +13,12 @@ RSpec.describe 'Company Dashboard Prospects API', type: :request do
   end
 
   describe 'GET /api/v1/company_dashboard/analytics/prospects' do
-    it 'retorna status tag_not_installed quando não há site configurado' do
+    it 'retorna status not_configured quando não há site configurado' do
       get '/api/v1/company_dashboard/analytics/prospects', params: { company_id: company.id }
 
       expect(response).to have_http_status(:ok)
       payload = JSON.parse(response.body)
-      expect(payload['status']).to eq('tag_not_installed')
+      expect(payload['status']).to eq('not_configured')
       expect(payload['summary']['clicks']).to eq(0)
       expect(payload['tag_info']['configured']).to be(false)
     end
@@ -47,7 +47,7 @@ RSpec.describe 'Company Dashboard Prospects API', type: :request do
         session: session,
         company: company,
         event_uuid: SecureRandom.uuid,
-        event_name: 'lead_confirmed',
+        event_name: 'form_submitted',
         path: '/obrigado',
         occurred_at: 2.days.ago + 5.minutes
       )
@@ -59,11 +59,12 @@ RSpec.describe 'Company Dashboard Prospects API', type: :request do
       expect(payload['status']).to eq('ready')
       expect(payload['summary']['clicks']).to eq(1)
       expect(payload['summary']['verified_landings']).to eq(1)
-      expect(payload['summary']['confirmed_conversions']).to eq(1)
+      expect(payload['summary']['confirmed_conversions']).to eq(0)
+      expect(payload['summary']['form_submissions']).to eq(1)
       expect(payload['summary']['landing_rate']).to eq(100.0)
-      expect(payload['summary']['conversion_rate']).to eq(100.0)
+      expect(payload['summary']['conversion_rate']).to be_nil
       expect(payload['records'].length).to eq(1)
-      expect(payload['records'].first['evidence_status']).to eq('lead_confirmed')
+      expect(payload['records'].first['evidence_status']).to eq('form_event_observed')
       expect(payload['tag_info']['status']).to eq('healthy')
     end
 
