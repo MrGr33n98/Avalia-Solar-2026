@@ -1487,9 +1487,10 @@ module Api
               Rails.logger.warn("[CtaVisibility] profile revalidation unavailable company_id=#{@company.id}")
             end
           rescue StandardError => e
-            PublicProfileRevalidationJob.perform_later(@company.id)
+            # Company#schedule_public_profile_revalidation already enqueued the
+            # retry after commit. Do not double-enqueue it on webhook failure.
             result[:body][:cache_state] = 'pending_retry'
-            Rails.logger.error("[CtaVisibility] cache revalidation queued company_id=#{@company.id}: #{e.class}")
+            Rails.logger.error("[CtaVisibility] existing cache revalidation retry company_id=#{@company.id}: #{e.class}")
           end
         else
           result[:body][:cache_state] = 'unchanged' if result[:status] == :ok

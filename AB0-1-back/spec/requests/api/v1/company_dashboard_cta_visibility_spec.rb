@@ -87,7 +87,7 @@ RSpec.describe 'Company dashboard CTA visibility', type: :request do
   end
 
   it 'does not let Free plans enable restricted quote or WhatsApp buttons' do
-    company.update!(quote_cta_enabled: false, whatsapp_enabled: false)
+    company.update!(plan: create(:plan, name: 'Gratuito CTA', price: 0, features: {}), quote_cta_enabled: false, whatsapp_enabled: false)
     patch_config({ quote_cta_enabled: true, expected_version: 0 })
     expect(response).to have_http_status(:forbidden)
     patch_config({ whatsapp_enabled: true, expected_version: 0 })
