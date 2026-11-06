@@ -291,46 +291,83 @@ export const MOCK_REPORTING_DATA: BuyerIntentReportingData = {
   ],
 };
 
+export type BuyerIntentApiFailureKind =
+  | 'feature_locked'
+  | 'forbidden'
+  | 'unauthorized'
+  | 'unavailable'
+  | 'invalid_response';
+
+export class BuyerIntentApiError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+    public readonly kind: BuyerIntentApiFailureKind
+  ) {
+    super(`Buyer intent API unavailable: HTTP ${status} (${code})`);
+    this.name = 'BuyerIntentApiError';
+  }
+}
+
+/** A denied/failed request is NOT a valid zero-signals response. */
+async function fetchIntentJson(url: string): Promise<unknown> {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+      cache: 'no-store',
+    });
+  } catch {
+    throw new BuyerIntentApiError(0, 'NETWORK_ERROR', 'unavailable');
+  }
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    const rawCode = payload && typeof payload === 'object'
+      ? (payload.code || payload.error?.code)
+      : null;
+    const code = typeof rawCode === 'string' ? rawCode : `HTTP_${response.status}`;
+    let kind: BuyerIntentApiFailureKind = 'unavailable';
+    if (response.status === 401) kind = 'unauthorized';
+    else if (response.status === 403) {
+      kind = code === 'INTENT_SCORES_NOT_AVAILABLE' ? 'feature_locked' : 'forbidden';
+    }
+    throw new BuyerIntentApiError(response.status, code, kind);
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    throw new BuyerIntentApiError(response.status, 'INVALID_JSON', 'invalid_response');
+  }
+}
+
 export async function fetchBuyerIntentAccounts(
   companyId: string | number,
   filters?: IcpFilterCriteria
 ): Promise<{ total: number; scores: BuyerIntentAccount[] }> {
-  try {
-    const params = new URLSearchParams({
-      company_id: String(companyId),
-    });
-
-    if (filters?.buying_stage && filters.buying_stage !== 'all') {
-      params.append('buying_stage', filters.buying_stage);
-    }
-    if (filters?.activity_level && filters.activity_level !== 'all') {
-      params.append('activity_level', filters.activity_level);
-    }
-    if (filters?.date_range) {
-      const daysMap: Record<string, string> = { '7d': '7', '30d': '30', '90d': '90' };
-      if (daysMap[filters.date_range]) {
-        params.append('days', daysMap[filters.date_range]);
-      }
-    }
-
-    const res = await fetch(`/api/v1/intent_scores?${params.toString()}`, {
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data && Array.isArray(data.scores)) {
-        return data;
-      }
-    } else {
-      console.warn(`[BuyerIntentApi] Erro HTTP ${res.status} ao consultar intent_scores.`);
-    }
-  } catch (err) {
-    console.warn('[BuyerIntentApi] Erro na requisição de intent_scores:', err);
+  const params = new URLSearchParams({ company_id: String(companyId) });
+  if (filters?.buying_stage && filters.buying_stage !== 'all') {
+    params.set('buying_stage', filters.buying_stage);
   }
-
-  return { total: 0, scores: [] };
+  if (filters?.activity_level && filters.activity_level !== 'all') {
+    params.set('activity_level', filters.activity_level);
+  }
+  if (filters?.date_range) {
+    const daysMap: Record<string, string> = { '7d': '7', '30d': '30', '90d': '90' };
+    const days = daysMap[filters.date_range];
+    if (days) params.set('days', days);
+  }
+  const data = await fetchIntentJson(`/api/v1/intent_scores?${params.toString()}`);
+  if (
+    !data || typeof data !== 'object' ||
+    !Array.isArray((data as { scores?: unknown }).scores) ||
+    typeof (data as { total?: unknown }).total !== 'number'
+  ) {
+    throw new BuyerIntentApiError(200, 'INVALID_CONTRACT', 'invalid_response');
+  }
+  return data as { total: number; scores: BuyerIntentAccount[] };
 }
 
 export const EMPTY_REPORTING_DATA: BuyerIntentReportingData = {
@@ -361,24 +398,23 @@ export const EMPTY_REPORTING_DATA: BuyerIntentReportingData = {
 export async function fetchBuyerIntentReporting(
   companyId: string | number
 ): Promise<BuyerIntentReportingData> {
-  try {
-    const res = await fetch(`/api/v1/intent_scores/reporting?company_id=${companyId}`, {
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data) {
-        return {
-          ...EMPTY_REPORTING_DATA,
-          ...data,
-        };
-      }
-    } else {
-      console.warn(`[BuyerIntentApi] Erro HTTP ${res.status} ao consultar reporting.`);
-    }
-  } catch (err) {
-    console.warn('[BuyerIntentApi] Erro na requisição de reporting:', err);
+  const params = new URLSearchParams({ company_id: String(companyId) });
+  const data = await fetchIntentJson(`/api/v1/intent_scores/reporting?${params.toString()}`);
+  if (!data || typeof data !== 'object') {
+    throw new BuyerIntentApiError(200, 'INVALID_CONTRACT', 'invalid_response');
   }
-  return EMPTY_REPORTING_DATA;
+  const report = data as Partial<BuyerIntentReportingData>;
+  if (
+    typeof report.total_accounts !== 'number' ||
+    !report.buying_stage_distribution ||
+    !report.activity_level_distribution ||
+    !report.traffic_ratio ||
+    !Array.isArray(report.top_signals_summary)
+  ) {
+    throw new BuyerIntentApiError(200, 'INVALID_CONTRACT', 'invalid_response');
+  }
+  return {
+    ...EMPTY_REPORTING_DATA,
+    ...report,
+  } as BuyerIntentReportingData;
 }

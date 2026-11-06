@@ -87,11 +87,11 @@ export default function ProfileSignalsTab({
       } else if (sectionFilter === 'projects') {
         matchesSection =
           acc.timeline?.some((t) => t.signal_type.includes('portfolio') || t.description.toLowerCase().includes('projeto')) ??
-          true;
+          false;
       } else if (sectionFilter === 'materials') {
         matchesSection =
           acc.timeline?.some((t) => t.signal_type.includes('download') || t.description.toLowerCase().includes('material')) ??
-          (acc.pageviews_breakdown?.pricing ?? 0) > 0;
+          false;
       }
 
       return matchesSearch && matchesStage && matchesSection;
@@ -102,13 +102,9 @@ export default function ProfileSignalsTab({
   const paginatedAccounts = filteredAccounts.slice((page - 1) * pageSize, page * pageSize);
 
   // KPIs computados do perfil
-  const totalProfileViews = useMemo(() => {
-    const fromReporting =
-      reportingData.top_signals_summary?.find((s) => s.type === 'profile')?.count ??
-      reportingData.traffic_ratio.direct_pageviews;
-    if (fromReporting > 0) return fromReporting;
-    return profileVisitorAccounts.reduce((sum, acc) => sum + (acc.direct_pageviews || 0), 0);
-  }, [reportingData, profileVisitorAccounts]);
+  // A signal labelled 'profile' also counts FAQ/review interactions.
+  // Show actual direct pageviews, never a mix of unrelated engagement events.
+  const totalProfileViews = reportingData.traffic_ratio.direct_pageviews;
 
   const highIntentVisitors = useMemo(() => {
     return profileVisitorAccounts.filter(
@@ -116,11 +112,11 @@ export default function ProfileSignalsTab({
     ).length;
   }, [profileVisitorAccounts]);
 
-  const directConversionRate = useMemo(() => {
-    if (totalProfileViews === 0) return '0%';
-    const rate = (highIntentVisitors / Math.max(1, profileVisitorAccounts.length)) * 100;
+  const highIntentAccountRate = useMemo(() => {
+    if (profileVisitorAccounts.length === 0) return '0%';
+    const rate = (highIntentVisitors / profileVisitorAccounts.length) * 100;
     return `${Math.min(100, rate).toFixed(0)}%`;
-  }, [totalProfileViews, highIntentVisitors, profileVisitorAccounts.length]);
+  }, [highIntentVisitors, profileVisitorAccounts.length]);
 
   return (
     <div className="space-y-6">
@@ -213,14 +209,14 @@ export default function ProfileSignalsTab({
               <Zap className="h-4 w-4" />
             </div>
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              Taxa de Decisão no Perfil
+              Contas com alta intenção
             </span>
           </div>
           <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
-            {directConversionRate}
+            {highIntentAccountRate}
           </div>
           <div className="mt-1 text-[11px] text-slate-500">
-            Visitantes do perfil que avançaram no funil
+            Proporção de contas visitantes com sinais fortes
           </div>
         </div>
       </div>
@@ -233,11 +229,11 @@ export default function ProfileSignalsTab({
               Seções Mais Acessadas no Perfil
             </h3>
             <p className="text-[11px] text-slate-500">
-              Onde os compradores dedicam mais tempo ao analisar sua empresa
+              As visualizações por seção ainda não têm contadores de eventos certificados.
             </p>
           </div>
           <Badge variant="outline" className="text-[10px] self-start sm:self-auto bg-white dark:bg-slate-800">
-            Telemetria de Conteúdo
+            Mensuração por seção pendente
           </Badge>
         </div>
 
@@ -248,7 +244,7 @@ export default function ProfileSignalsTab({
               <span>Avaliações &amp; Notas</span>
             </div>
             <div className="text-lg font-black text-slate-900 dark:text-white mt-1.5">
-              {Math.max(1, Math.round(totalProfileViews * 0.42))} <span className="text-xs font-normal text-slate-400">acessos</span>
+              <span className="text-xs font-medium text-slate-500">Não mensurado</span>
             </div>
           </div>
 
@@ -258,7 +254,7 @@ export default function ProfileSignalsTab({
               <span>Portfólio &amp; Projetos</span>
             </div>
             <div className="text-lg font-black text-slate-900 dark:text-white mt-1.5">
-              {Math.max(1, Math.round(totalProfileViews * 0.28))} <span className="text-xs font-normal text-slate-400">acessos</span>
+              <span className="text-xs font-medium text-slate-500">Não mensurado</span>
             </div>
           </div>
 
@@ -268,7 +264,7 @@ export default function ProfileSignalsTab({
               <span>Datasheets &amp; Mídia</span>
             </div>
             <div className="text-lg font-black text-slate-900 dark:text-white mt-1.5">
-              {Math.max(1, Math.round(totalProfileViews * 0.18))} <span className="text-xs font-normal text-slate-400">acessos</span>
+              <span className="text-xs font-medium text-slate-500">Não mensurado</span>
             </div>
           </div>
 
@@ -278,7 +274,7 @@ export default function ProfileSignalsTab({
               <span>Botão de Contato/WhatsApp</span>
             </div>
             <div className="text-lg font-black text-slate-900 dark:text-white mt-1.5">
-              {Math.max(1, Math.round(totalProfileViews * 0.12))} <span className="text-xs font-normal text-slate-400">acessos</span>
+              <span className="text-xs font-medium text-slate-500">Não mensurado</span>
             </div>
           </div>
         </div>
@@ -473,7 +469,7 @@ export default function ProfileSignalsTab({
                 Como converter mais visitantes do seu perfil em clientes fechados?
               </h4>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                Empresas no Avalia Solar com perfil 100% preenchido e avaliações ativas convertem até <strong>3.2x mais</strong> orçamentos do que perfis básicos.
+                Mantenha projetos, avaliações e informações de contato atualizados. Acompanhe as interações verificadas para avaliar o resultado das melhorias no perfil.
               </p>
             </div>
           </div>

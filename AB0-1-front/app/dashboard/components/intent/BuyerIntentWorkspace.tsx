@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -32,6 +32,7 @@ import {
   type BuyerIntentReportingData,
   type IcpFilterCriteria,
   EMPTY_REPORTING_DATA,
+  BuyerIntentApiError,
 } from '@/lib/api/buyer-intent';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,14 +56,6 @@ type TabType =
   | 'segments'
   | 'alerts'
   | 'method';
-
-const CATEGORIES = [
-  'Solar residencial',
-  'Solar comercial',
-  'Recarga de veículos',
-  'Solar rural',
-  'Manutenção e O&M',
-];
 
 export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntentWorkspaceProps) {
   const { activeCompany } = useCompanyContext();
@@ -98,6 +91,8 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
   const [totalAccounts, setTotalAccounts] = useState<number>(0);
   const [reportingData, setReportingData] =
     useState<BuyerIntentReportingData>(EMPTY_REPORTING_DATA);
+  const [dataError, setDataError] = useState<BuyerIntentApiError | null>(null);
+  const requestSequence = useRef(0);
 
   // Filtros da aba de sinais
   const [signalSearch, setSignalSearch] = useState('');
@@ -120,15 +115,16 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
   const [minEvents, setMinEvents] = useState(10);
 
   // Linhas ocultas no gráfico
-  const [hiddenLines, setHiddenLines] = useState<Set<number>>(new Set());
 
   // Carregar dados reais da API
   const loadData = useCallback(
     async (selectedDays: '7d' | '30d' | '90d', isSilent = false) => {
+      const sequence = ++requestSequence.current;
       if (!effectiveCompanyId) {
         setAccounts([]);
         setTotalAccounts(0);
         setReportingData(EMPTY_REPORTING_DATA);
+        setDataError(new BuyerIntentApiError(0, 'MISSING_COMPANY', 'unavailable'));
         setLoading(false);
         setRefreshing(false);
         return;
@@ -136,6 +132,7 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
 
       try {
         if (!isSilent) setLoading(true);
+        setDataError(null);
         const filterCriteria: IcpFilterCriteria = {
           date_range: selectedDays,
           buying_stage: 'all',
@@ -147,27 +144,35 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
           fetchBuyerIntentReporting(effectiveCompanyId),
         ]);
 
-        setAccounts(accRes.scores || []);
-        setTotalAccounts(accRes.total || 0);
-        setReportingData(repRes || EMPTY_REPORTING_DATA);
+        if (requestSequence.current !== sequence) return;
+        setAccounts(accRes.scores);
+        setTotalAccounts(accRes.total);
+        setReportingData(repRes);
+        setDataError(null);
       } catch (err) {
-        console.warn('[BuyerIntentWorkspace] Erro ao carregar dados:', err);
-        toast({
-          title: 'Erro de sincronização',
-          description: 'Não foi possível carregar os sinais de intenção em tempo real.',
-          variant: 'destructive',
-        });
+        if (requestSequence.current !== sequence) return;
+        setAccounts([]);
+        setTotalAccounts(0);
+        setReportingData(EMPTY_REPORTING_DATA);
+        setSelectedAccount(null);
+        setDataError(err instanceof BuyerIntentApiError
+          ? err
+          : new BuyerIntentApiError(0, 'UNKNOWN_ERROR', 'unavailable'));
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (requestSequence.current === sequence) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [effectiveCompanyId, toast]
   );
 
   useEffect(() => {
-    loadData(days);
-  }, [days, loadData]);
+    // Track Your Prospects has its own API. Do not call gated intent_scores
+    // while the user is viewing the independent attribution workspace.
+    if (!isProspects) void loadData(days);
+  }, [days, loadData, isProspects]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -211,31 +216,13 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
     }
   };
 
-  const toggleLine = (lineIdx: number) => {
-    setHiddenLines((prev) => {
-      const next = new Set(prev);
-      if (next.has(lineIdx)) next.delete(lineIdx);
-      else next.add(lineIdx);
-      return next;
-    });
-  };
-
-  // KPIs reais baseados nos dados
-  const profileViews =
-    reportingData.top_signals_summary?.find((s) => s.type === 'profile')?.count ??
-    reportingData.traffic_ratio.direct_pageviews;
-
-  const comparisons =
-    reportingData.top_signals_summary?.find((s) => s.type === 'compare')?.count ??
-    reportingData.traffic_ratio.competitive_pageviews;
-
-  const quoteStarts =
-    reportingData.top_signals_summary?.find((s) => s.type === 'pricing')?.count ??
-    reportingData.activity_level_distribution.medium;
-
-  const ordersSent =
-    reportingData.buying_stage_distribution.decision ??
-    accounts.filter((a) => a.buying_stage === 'decision').length;
+  // The API reports direct views, competitor views, pricing interactions and
+  // stage-classified accounts. None of these are sent quote requests.
+  const profileViews = reportingData.traffic_ratio.direct_pageviews;
+  const comparisons = reportingData.traffic_ratio.competitive_pageviews;
+  const pricingInteractions =
+    reportingData.top_signals_summary?.find((item) => item.type === 'pricing')?.count ?? 0;
+  const decisionAccounts = reportingData.buying_stage_distribution.decision;
 
   const profileVisitorCount = useMemo(() => {
     return accounts.filter(
@@ -308,6 +295,65 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
     );
   }
 
+  if (!loading && dataError) {
+    const locked = dataError.kind === 'feature_locked';
+    const unauthorized = dataError.kind === 'unauthorized';
+    const forbidden = dataError.kind === 'forbidden';
+    const title = locked
+      ? 'Pontuação de intenção não incluída no plano'
+      : unauthorized
+        ? 'Sessão não autenticada'
+        : forbidden
+          ? 'Acesso à empresa não autorizado'
+          : 'Não foi possível consultar a intenção de compra';
+    const explanation = locked
+      ? 'Os scores de contas exigem o recurso intent_scores habilitado. Analytics avançado e pontuação de intenção são recursos diferentes.'
+      : unauthorized
+        ? 'Entre novamente na sua conta para consultar os dados da empresa.'
+        : forbidden
+          ? 'Verifique se sua conta possui vínculo ativo e permissão para consultar esta empresa.'
+          : 'A consulta falhou ou apresentou uma resposta inválida. Tente novamente.';
+
+    return (
+      <main className="space-y-4" aria-labelledby="buyer-intent-access-heading">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            Inteligência de demanda · Estado da consulta
+          </p>
+          <h1 className="mt-1 text-xl font-semibold text-slate-950 dark:text-white">
+            Intenção de Compra
+          </h1>
+        </div>
+        <section role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-slate-900 dark:border-amber-900 dark:bg-amber-950/20 dark:text-white">
+          <h2 id="buyer-intent-access-heading" className="font-semibold">{title}</h2>
+          <p className="mt-2 text-xs leading-relaxed">{explanation}</p>
+          <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+            Os números não são exibidos como zero quando a consulta não é autorizada ou falha.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="sm" type="button" onClick={() => void loadData(days)} className="h-8 text-xs">
+              Tentar novamente
+            </Button>
+            {locked && (
+              <Button size="sm" variant="outline" type="button"
+                onClick={() => router.push(`/dashboard?company_id=${encodeURIComponent(String(effectiveCompanyId))}&tab=product-pricing`)}
+                className="h-8 text-xs">
+                Consultar planos
+              </Button>
+            )}
+            <Button size="sm" variant="outline" type="button" onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.set('subtab', 'prospects');
+              router.push(`${pathname}?${params.toString()}`);
+            }} className="h-8 text-xs">
+              Track Your Prospects
+            </Button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Topo: Kicker, Título, Subtítulo e Ações */}
@@ -340,6 +386,7 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
           <Button
             size="sm"
             onClick={handleDownloadCsv}
+            disabled={loading || Boolean(dataError)}
             className="h-9 gap-1.5 bg-blue-600 text-white font-semibold text-xs shadow-xs hover:bg-blue-700"
           >
             <Download className="h-3.5 w-3.5" />
@@ -413,8 +460,13 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
         {/* Toolbar: Status e Período */}
         <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-xs bg-white dark:bg-slate-900">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-400">
-              ● Telemetria ativa (dados reais)
+            <span className={cn(
+              'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold',
+              loading
+                ? 'border-slate-200 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400'
+            )}>
+              {loading ? 'Verificando disponibilidade de dados' : 'Consulta de intenção disponível'}
             </span>
             <span className="text-slate-500 hidden sm:inline">
               Eventos internos de compradores no marketplace
@@ -520,14 +572,14 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
                       <Target className="h-4 w-4" />
                     </div>
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Orçamentos iniciados
+                      Interações com preços
                     </span>
                   </div>
                   <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
-                    {quoteStarts.toLocaleString('pt-BR')}
+                    {pricingInteractions.toLocaleString('pt-BR')}
                   </div>
                   <div className="mt-1 text-[11px] text-slate-500">
-                    Sinal de <strong className="text-slate-700 dark:text-slate-300">avaliação</strong> na calculadora/orçamento
+                    Interações registradas com preços e calculadora
                   </div>
                 </div>
 
@@ -537,14 +589,14 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
                       <Check className="h-4 w-4" />
                     </div>
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Pedidos enviados
+                      Contas em decisão
                     </span>
                   </div>
                   <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
-                    {ordersSent.toLocaleString('pt-BR')}
+                    {decisionAccounts.toLocaleString('pt-BR')}
                   </div>
                   <div className="mt-1 text-[11px] text-slate-500">
-                    Sinal de <strong className="text-slate-700 dark:text-slate-300">ação</strong> · Propostas solicitadas
+                    Contas classificadas como decisão; não são pedidos enviados
                   </div>
                 </div>
               </div>
@@ -600,161 +652,55 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
                     </Button>
                   </div>
 
-                  {totalAccounts === 0 && profileViews === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500">
-                      <Activity className="h-8 w-8 text-slate-300 mb-2" />
-                      <div className="text-sm font-semibold">Sem eventos no período</div>
-                      <p className="text-xs text-slate-400 max-w-sm">
-                        Quando compradores interagirem com seu perfil ou comparador, os sinais serão plotados aqui.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mt-6 space-y-4">
-                      {/* Gráfico SVG nativo e responsivo */}
-                      <div className="h-44 w-full">
-                        <svg className="h-full w-full" viewBox="0 0 500 150" preserveAspectRatio="none">
-                          <line x1="0" y1="120" x2="500" y2="120" stroke="#e2e8f0" strokeDasharray="3 3" />
-                          <line x1="0" y1="60" x2="500" y2="60" stroke="#e2e8f0" strokeDasharray="3 3" />
-                          {!hiddenLines.has(0) && (
-                            <polyline
-                              fill="none"
-                              stroke="#2563eb"
-                              strokeWidth="3"
-                              points={`0,${120 - Math.min(100, profileViews * 2)} 150,${110 - Math.min(90, profileViews * 1.5)} 300,${90 - Math.min(70, profileViews * 1.8)} 500,${50 - Math.min(40, profileViews)}`}
-                            />
-                          )}
-                          {!hiddenLines.has(1) && (
-                            <polyline
-                              fill="none"
-                              stroke="#9333ea"
-                              strokeWidth="3"
-                              points={`0,${130 - Math.min(80, comparisons * 2)} 150,${125 - Math.min(70, comparisons * 1.6)} 300,${110 - Math.min(60, comparisons * 1.4)} 500,${70 - Math.min(50, comparisons)}`}
-                            />
-                          )}
-                          {!hiddenLines.has(2) && (
-                            <polyline
-                              fill="none"
-                              stroke="#f59e0b"
-                              strokeWidth="3"
-                              points={`0,${140 - Math.min(60, quoteStarts * 3)} 150,${135 - Math.min(50, quoteStarts * 2)} 300,${125 - Math.min(40, quoteStarts * 1.5)} 500,${90 - Math.min(30, quoteStarts)}`}
-                            />
-                          )}
-                        </svg>
-                      </div>
-
-                      {/* Legenda interativa */}
-                      <div className="flex flex-wrap gap-4 text-xs text-slate-600">
-                        <button
-                          type="button"
-                          onClick={() => toggleLine(0)}
-                          className={cn('flex items-center gap-1.5', hiddenLines.has(0) && 'opacity-40')}
-                        >
-                          <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
-                          Visitas ao perfil ({profileViews})
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => toggleLine(1)}
-                          className={cn('flex items-center gap-1.5', hiddenLines.has(1) && 'opacity-40')}
-                        >
-                          <span className="h-2.5 w-2.5 rounded-full bg-purple-600" />
-                          Comparações ({comparisons})
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => toggleLine(2)}
-                          className={cn('flex items-center gap-1.5', hiddenLines.has(2) && 'opacity-40')}
-                        >
-                          <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                          Orçamentos iniciados ({quoteStarts})
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex min-h-[180px] flex-col items-center justify-center gap-2 py-8 text-center">
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      Evolução diária ainda não disponível
+                    </p>
+                    <p className="max-w-md text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                      A API retorna totais agregados, não uma série temporal diária.
+                      Não exibimos curvas estimadas como se fossem eventos históricos.
+                    </p>
+                  </div>
                 </div>
 
-                {/* Interesse por etapa (Funil Proporcional) */}
+                {/* Distribution from real score classifications, not a conversion funnel. */}
                 <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                      Interesse por etapa
+                      Contas por estágio de intenção
                     </h2>
                     <Badge variant="outline" className="text-[10px]">
-                      Funil de Intenção
+                      Classificação de contas
                     </Badge>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
-                    Distribuição dos estágios de consideração
+                    Distribuição dos scores por estágio, não etapas de um funil de pedidos.
                   </p>
-
-                  <div className="mt-6 space-y-4 text-xs">
-                    <div>
-                      <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300">
-                        <span>1. Descoberta (Perfil)</span>
-                        <span>{profileViews}</span>
-                      </div>
-                      <div className="mt-1.5 h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-blue-600 transition-all"
-                          style={{ width: `${profileViews > 0 ? 100 : 0}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300">
-                        <span>2. Consideração (Comparador)</span>
-                        <span>{comparisons}</span>
-                      </div>
-                      <div className="mt-1.5 h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-purple-600 transition-all"
-                          style={{
-                            width: `${
-                              profileViews > 0 ? Math.min(100, (comparisons / profileViews) * 100) : 0
-                            }%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300">
-                        <span>3. Avaliação (Simulador/Orçamento)</span>
-                        <span>{quoteStarts}</span>
-                      </div>
-                      <div className="mt-1.5 h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-amber-500 transition-all"
-                          style={{
-                            width: `${
-                              profileViews > 0 ? Math.min(100, (quoteStarts / profileViews) * 100) : 0
-                            }%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300">
-                        <span>4. Ação (Pedido Enviado)</span>
-                        <span>{ordersSent}</span>
-                      </div>
-                      <div className="mt-1.5 h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-emerald-600 transition-all"
-                          style={{
-                            width: `${
-                              profileViews > 0 ? Math.min(100, (ordersSent / profileViews) * 100) : 0
-                            }%`,
-                          }}
-                        />
-                      </div>
-                    </div>
+                  <div className="mt-5 space-y-4 text-xs">
+                    {([
+                      { key: 'awareness', label: 'Descoberta' },
+                      { key: 'consideration', label: 'Consideração' },
+                      { key: 'decision', label: 'Decisão' },
+                    ] as const).map(({ key, label }) => {
+                      const count = reportingData.buying_stage_distribution[key] ?? 0;
+                      const total = reportingData.total_accounts;
+                      const percentage = total > 0 ? Math.min(100, (count / total) * 100) : 0;
+                      return (
+                        <div key={key}>
+                          <div className="flex justify-between font-medium text-slate-700 dark:text-slate-300">
+                            <span>{label}</span>
+                            <span>{count.toLocaleString('pt-BR')} contas</span>
+                          </div>
+                          <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                            <div className="h-full rounded-full bg-blue-600 transition-all"
+                              style={{ width: `${percentage}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-
-                  <p className="mt-5 text-[11px] leading-relaxed text-slate-400">
-                    Contagens calculadas estritamente a partir de eventos reais do marketplace.
+                  <p className="mt-4 text-[11px] text-slate-500">
+                    Nenhum estágio equivale automaticamente a um orçamento enviado.
                   </p>
                 </div>
               </div>
@@ -1164,29 +1110,9 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {CATEGORIES.map((cat, idx) => (
-                  <div
-                    key={cat}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900"
-                  >
-                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                      {cat}
-                    </div>
-                    <div className="mt-2 text-xl font-black text-slate-900 dark:text-white">
-                      {totalAccounts > 0 ? Math.max(0, Math.round(totalAccounts / (idx + 1))) : 0}
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">interações registradas</div>
-                    <div className="mt-3 h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-blue-600"
-                        style={{
-                          width: `${totalAccounts > 0 ? Math.max(10, 100 - idx * 20) : 0}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-5 text-xs leading-relaxed text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                A distribuição por categoria ainda não possui eventos associados a categorias auditados.
+                Aguardando mensuração. Nenhuma interação por categoria é estimada.
               </div>
             </div>
           )}

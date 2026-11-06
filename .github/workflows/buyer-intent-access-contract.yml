@@ -1,0 +1,36 @@
+name: Buyer Intent — Access and Truthful Data Contracts
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'AB0-1-front/lib/api/buyer-intent.ts'
+      - 'AB0-1-front/hooks/buyer-intent.spec.tsx'
+      - 'AB0-1-front/app/dashboard/components/intent/**'
+      - '.github/workflows/buyer-intent-access-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  buyer-intent:
+    name: Buyer Intent — Jest and TypeScript
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Regressions — 403 feature/policy, 401, 500, valid zero
+        run: npm test -- --runInBand hooks/buyer-intent.spec.tsx app/dashboard/components/intent/ProfileSignalsTab.spec.tsx
+      - name: TypeScript contracts
+        run: npm run typecheck
