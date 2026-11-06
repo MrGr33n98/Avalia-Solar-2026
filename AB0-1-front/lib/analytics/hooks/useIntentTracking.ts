@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { track } from '../index';
 import { getSessionId } from '../session';
+import { hasAnalyticsConsent } from '../consent';
+import { getAnonymousId as getPersistentAnonymousId } from '../identity-stitch';
 
 export type IntentSignalType =
   // Sinais originais
@@ -80,6 +82,7 @@ type IntentMetadataRecord = {
 
 export interface IntentSignalPayload {
   company_id: string | number;
+  event_id?: string;
   user_id?: string | number;
   anonymous_id?: string;
   session_id?: string;
@@ -104,14 +107,17 @@ const getAnonymousId = (): string | undefined => {
   if (typeof window === 'undefined') return undefined;
 
   try {
-    return (
-      window.localStorage.getItem('as_anonymous_id') ||
-      window.localStorage.getItem('ajs_anonymous_id') ||
-      undefined
-    );
+    return getPersistentAnonymousId() || undefined;
   } catch {
     return undefined;
   }
+};
+
+const newIntentEventId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `intent-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 };
 
 const getReferrerHost = (): string | undefined => {
@@ -128,8 +134,13 @@ const getReferrerHost = (): string | undefined => {
 const buildBasePayload = (payload: IntentSignalPayload): IntentSignalPayload => {
   if (typeof window === 'undefined') return payload;
 
+  const safePayload = { ...payload };
+  // Identity is verified from the server-side JWT, never from browser input.
+  delete safePayload.user_id;
+
   return {
-    ...payload,
+    ...safePayload,
+    event_id: payload.event_id || newIntentEventId(),
     anonymous_id: payload.anonymous_id || getAnonymousId(),
     session_id: payload.session_id || getSessionId(),
     page_path: payload.page_path || window.location.pathname,
@@ -143,21 +154,30 @@ const buildBasePayload = (payload: IntentSignalPayload): IntentSignalPayload => 
  * Envia sinal de intent para o backend dedicado e espelha o evento para PostHog/GA4.
  */
 export const sendIntentSignal = (payload: IntentSignalPayload): void => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !hasAnalyticsConsent()) return;
 
   const body = buildBasePayload(payload);
-  const isNumericCompanyId = typeof body.company_id === 'number' || 
-    (typeof body.company_id === 'string' && /^\d+$/.test(body.company_id));
+  const isNumericCompanyId =
+    (typeof body.company_id === 'number' && Number.isSafeInteger(body.company_id) && body.company_id > 0) ||
+    (typeof body.company_id === 'string' && /^[1-9]\d*$/.test(body.company_id));
 
   if (isNumericCompanyId) {
     void fetch('/api/v1/intent_signals', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       keepalive: true,
-    }).catch(() => {});
+    }).then((response) => {
+      // A resolved HTTP 422/403 is still a failed ingestion, unlike a
+      // successful PostHog event. Do not expose payload/identity in logs.
+      if (!response.ok && process.env.NODE_ENV !== 'production') {
+        console.warn(`[BuyerIntent] ingestion rejected (HTTP ${response.status})`);
+      }
+    }).catch(() => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[BuyerIntent] ingestion network error');
+      }
+    });
   }
 
   track(
