@@ -10,7 +10,6 @@ import {
   Building2,
   Calendar,
   ChevronDown,
-  CheckCircle2,
   Clock,
   DollarSign,
   ExternalLink,
