@@ -33,6 +33,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchApi, type Company } from '@/lib/api';
 import CtaVisibilitySettings from './cta-visibility/CtaVisibilitySettings';
+import ConversionSurfacesOverview from './conversion-surfaces/ConversionSurfacesOverview';
 import { useToast } from '@/hooks/use-toast';
 import { startDashboardTour } from '@/lib/tour';
 import Link from 'next/link';
@@ -238,6 +239,9 @@ export default function CompanySettings({ companyId, company }: CompanySettingsP
             ABA 1: CHAMADAS PARA AÇÃO (CTAs) E WHATSAPP
             ======================================================== */}
         <TabsContent value="conversion" className="mt-6 space-y-6">
+          {process.env.NEXT_PUBLIC_CONVERSION_SURFACES_DASHBOARD_ENABLED === 'true' && (
+            <ConversionSurfacesOverview key={companyId} companyId={companyId} />
+          )}
           {process.env.NEXT_PUBLIC_CTA_VISIBILITY_UI_V1 !== 'false' && (
             <CtaVisibilitySettings key={companyId} companyId={companyId} />
           )}
