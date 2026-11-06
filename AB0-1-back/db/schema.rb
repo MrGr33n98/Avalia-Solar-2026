@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_05_010000) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_06_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -3022,6 +3022,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_05_010000) do
     t.index ["user_id"], name: "index_pending_changes_on_user_id"
   end
 
+  create_table "plan_configuration_audits", force: :cascade do |t|
+    t.bigint "plan_id"
+    t.bigint "admin_user_id"
+    t.json "before_state", default: {}, null: false
+    t.json "after_state", default: {}, null: false
+    t.string "change_reason", limit: 300
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["admin_user_id"], name: "index_plan_configuration_audits_on_admin_user_id"
+    t.index ["created_at"], name: "index_plan_configuration_audits_on_created_at"
+    t.index ["plan_id"], name: "index_plan_configuration_audits_on_plan_id"
+  end
+
   create_table "plans", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -5670,6 +5683,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_05_010000) do
   add_foreign_key "sector_ratings", "users"
   add_foreign_key "seo_landing_pages", "categories"
   add_foreign_key "social_follows", "users", column: "follower_id"
+  add_foreign_key "plan_configuration_audits", "admin_users", on_delete: :nullify
+  add_foreign_key "plan_configuration_audits", "plans", on_delete: :nullify
   add_foreign_key "sponsored_plans", "categories"
   add_foreign_key "sponsored_plans", "plans"
   add_foreign_key "sponsored_plans", "products"
