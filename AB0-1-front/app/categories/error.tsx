@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import * as Sentry from '@sentry/nextjs'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, RefreshCw, Home, FolderTree } from 'lucide-react'
+import { RefreshCw, Home, FolderTree } from 'lucide-react'
 import Link from 'next/link'
 
 /**
@@ -49,17 +49,10 @@ export default function CategoriesError({
           </p>
         </div>
 
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-4 bg-muted rounded-lg text-left">
-            <p className="text-sm font-mono text-destructive break-words">
-              {error?.message || 'Unknown error'}
-            </p>
-            {error?.digest && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Error ID: {error.digest}
-              </p>
-            )}
-          </div>
+        {error?.digest && (
+          <p className="text-xs font-mono text-muted-foreground mt-2">
+            Error ID: {error.digest}
+          </p>
         )}
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

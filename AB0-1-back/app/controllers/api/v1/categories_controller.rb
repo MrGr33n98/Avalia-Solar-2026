@@ -71,7 +71,6 @@ module Api
       # GET /categories/:id
       # =========================
       def show
-        @category.increment!(:views_count)
         cache_key = "categories/show/#{@category.id}/#{@category.updated_at.to_i}"
 
         cached_json(cache_key, expires_in: 1.hour) do
@@ -357,12 +356,17 @@ module Api
       # GET /categories/by_slug/:slug
       # (melhoria: rota dedicada a slug, sem “params[:id]”)
       # =========================
-      def show_by_slug
-        slug = params.require(:slug)
-        @category = ::Category.find_by!(seo_url: slug)
-        @category.increment!(:views_count)
+      VALID_CATEGORY_SLUG_REGEX = /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/
 
-        cache_key = "categories/slug/#{slug}/#{@category.updated_at.to_i}"
+      def show_by_slug
+        raw_slug = params.require(:slug).to_s.strip.downcase
+        unless raw_slug.length <= 160 && raw_slug.match?(VALID_CATEGORY_SLUG_REGEX)
+          raise ActiveRecord::RecordNotFound, "Category with slug '#{raw_slug}' not found"
+        end
+
+        @category = ::Category.active.find_by!(seo_url: raw_slug)
+
+        cache_key = "categories/slug/#{@category.seo_url}/#{@category.updated_at.to_i}"
 
         cached_json(cache_key, expires_in: 1.hour) do
           category_json(@category)
@@ -409,7 +413,7 @@ module Api
 
       def handle_standard_error(e)
         Rails.logger.error("Categories error: #{e.message}\n#{e.backtrace.take(5).join("\n")}")
-        render json: { error: 'Erro interno no servidor', details: e.message }, status: :internal_server_error
+        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       # -------------------------
@@ -462,10 +466,14 @@ module Api
       end
 
       def set_category
-        @category = ::Category.find_by(id: params[:id]) ||
-                    ::Category.find_by(seo_url: params[:id]) ||
-                    ::Category.find_by(slug: params[:id]) ||
-                    ::Category.find(params[:id])
+        scope = %w[update destroy].include?(action_name) ? ::Category : ::Category.active
+        identifier = params[:id].to_s.strip
+
+        @category = (identifier.match?(/\A\d+\z/) && scope.find_by(id: identifier.to_i)) ||
+                    scope.find_by(seo_url: identifier.downcase) ||
+                    (::Category.column_names.include?('slug') && scope.find_by(slug: identifier.downcase))
+
+        raise ActiveRecord::RecordNotFound, "Category '#{identifier}' not found" unless @category
       end
 
       def category_params
@@ -485,8 +493,9 @@ module Api
       end
 
       def apply_category_filters(query)
-        if ::Category.column_names.include?('status') && params[:status].present?
-          query = query.where(status: params[:status])
+        if ::Category.column_names.include?('status')
+          effective_status = params[:status].presence || 'active'
+          query = query.where(status: effective_status)
         end
 
         if ::Category.column_names.include?('featured') && params[:featured].present?

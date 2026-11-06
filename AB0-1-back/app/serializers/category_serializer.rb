@@ -84,7 +84,7 @@ class CategorySerializer < ActiveModel::Serializer
   end
 
   def parent
-    return nil unless object.parent
+    return nil unless object.parent && object.parent.status == 'active'
 
     {
       id: object.parent.id,
@@ -95,7 +95,7 @@ class CategorySerializer < ActiveModel::Serializer
   end
 
   def subcategories
-    object.children.order(:name).map do |child|
+    object.children.where(status: 'active').order(:name).map do |child|
       {
         id: child.id,
         name: child.name,
