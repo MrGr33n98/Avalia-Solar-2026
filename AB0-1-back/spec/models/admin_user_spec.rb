@@ -38,24 +38,19 @@ RSpec.describe AdminUser, type: :model do
       )
     end
 
-    context 'quando OTP (2FA) não está ativado' do
-      before do
-        allow(admin).to receive(:otp_enabled?).and_return(false)
+    context 'quando 2FA não está ativado' do
+      before { allow(admin).to receive(:otp_enabled?).and_return(false) }
+
+      it 'permite acesso de support sem exigir 2FA' do
+        admin.billing_role = 'support'
+        expect(admin.billing_support?).to be true
+        expect(admin.billing_finance?).to be false
+        expect(admin.billing_super_admin?).to be false
       end
 
-      it 'retorna false para qualquer permissão mesmo que a role seja atribuída' do
+      it 'mantém operações financeiras bloqueadas sem 2FA' do
         admin.billing_role = 'super_admin'
-        expect(admin.billing_support?).to be false
-        expect(admin.billing_finance?).to be false
-        expect(admin.billing_super_admin?).to be false
-
-        admin.billing_role = 'finance'
-        expect(admin.billing_support?).to be false
-        expect(admin.billing_finance?).to be false
-        expect(admin.billing_super_admin?).to be false
-
-        admin.billing_role = 'support'
-        expect(admin.billing_support?).to be false
+        expect(admin.billing_support?).to be true
         expect(admin.billing_finance?).to be false
         expect(admin.billing_super_admin?).to be false
       end

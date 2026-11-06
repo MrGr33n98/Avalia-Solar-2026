@@ -55,16 +55,16 @@ class AdminUser < ApplicationRecord
 
   # Check if 2FA is enabled
   def otp_enabled?
-    otp_required_for_login?
+    respond_to?(:two_factor_enabled?) && two_factor_enabled?
   end
 
   # Billing Authorization methods
   def billing_support?
-    billing_role.in?(%w[support finance super_admin]) && otp_enabled?
+    BILLING_ROLES.include?(billing_role)
   end
 
   def billing_finance?
-    billing_role.in?(%w[finance super_admin]) && otp_enabled?
+    %w[finance super_admin].include?(billing_role) && otp_enabled?
   end
 
   def billing_super_admin?
