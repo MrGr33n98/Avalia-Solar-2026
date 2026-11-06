@@ -101,19 +101,16 @@ class IntentScore < ApplicationRecord
     end
   end
 
-  # G2 Direct Pageviews (profile, pricing, sponsored, docs)
+  # These counters represent actual page-view signals only.
+  # Hover, pricing, selected checkboxes and downloads are not pageviews.
   def direct_pageviews
     counts = score_breakdown.is_a?(Hash) ? (score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
-    (counts['profile_view'] || counts['review_read'] || counts['faq_interaction']).to_i +
-      counts['pricing_interaction'].to_i +
-      counts['calculator_usage'].to_i +
-      counts['document_download'].to_i
+    counts.fetch('profile_view', 0).to_i
   end
 
-  # G2 Competitive Pageviews (compare & alternatives)
   def competitive_pageviews
     counts = score_breakdown.is_a?(Hash) ? (score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
-    counts['comparison_view'].to_i + counts['comparison_usage'].to_i
+    counts.fetch('comparison_view', 0).to_i + counts.fetch('alternatives_view', 0).to_i
   end
 
   private
