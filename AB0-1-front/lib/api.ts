@@ -2751,6 +2751,7 @@ export const companyDashboardApi = {
   getIntentSummary: (companyId?: string | number) =>
     fetchApi<IntentSummary>('/company_dashboard/intent_summary', {
       params: companyId ? { company_id: companyId } : undefined,
+      silentStatusCodes: [403],
     }),
   getCertificationProgress: (companyId?: string | number) =>
     fetchApi<CertificationProgress>('/company_dashboard/certification_progress', {

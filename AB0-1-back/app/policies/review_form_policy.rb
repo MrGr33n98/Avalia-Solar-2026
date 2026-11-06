@@ -5,6 +5,8 @@ class ReviewFormPolicy < ApplicationPolicy
   def update? = index?
   def destroy? = index?
   def duplicate? = index?
+  def event? = index?
+  def channel_metrics? = index?
 
   class Scope < Scope
     def resolve

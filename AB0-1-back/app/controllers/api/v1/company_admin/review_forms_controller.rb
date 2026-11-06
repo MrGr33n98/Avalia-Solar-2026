@@ -129,8 +129,10 @@ module Api
           Analytics::PostHogService.capture(
             event_name,
             { company_id: @company.id, review_form_id: form.id, form_type: form.form_type },
-            distinct_id: current_user.posthog_distinct_id
+            distinct_id: current_user&.respond_to?(:posthog_distinct_id) ? current_user.posthog_distinct_id : "company_#{@company.id}"
           )
+        rescue StandardError => e
+          Rails.logger.warn("[ReviewFormsController] PostHog capture warning for #{event_name}: #{e.class}: #{e.message}")
         end
       end
     end

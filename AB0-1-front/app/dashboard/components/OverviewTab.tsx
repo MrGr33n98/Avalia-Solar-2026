@@ -316,6 +316,7 @@ function getActionColor(severity: string) {
 export default function OverviewTab({
   companyId,
   company,
+  featureAccess,
   onNavigateToTab,
   health,
   nextBestActions,
@@ -348,10 +349,14 @@ export default function OverviewTab({
     enabled: Boolean(companyId),
     retry: false,
   });
+  const hasIntentScoresAccess =
+    featureAccess?.intent_scores?.state === 'enabled' ||
+    (featureAccess === undefined && analyticsQuery.data?.is_premium_analytics === true);
+
   const intentQuery = useQuery({
     queryKey: ['overview-intent', companyId],
     queryFn: () => companyDashboardApi.getIntentSummary(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && hasIntentScoresAccess,
     retry: false,
   });
 

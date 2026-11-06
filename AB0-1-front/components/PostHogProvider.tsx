@@ -183,6 +183,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
           posthog.init(POSTHOG_KEY, {
             api_host: POSTHOG_HOST,
+            cross_subdomain_cookie: false,
             // @ts-ignore
             cookie_domain: getPostHogCookieDomain(),
 

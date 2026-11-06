@@ -35,7 +35,7 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
         gtag('js', new Date());
         var h = window.location.hostname;
         var isLocal = h === 'localhost' || h === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(h);
-        var cd = isLocal ? 'none' : 'auto';
+        var cd = isLocal ? 'none' : (h === 'avaliasolar.com.br' || /\.avaliasolar\.com\.br$/.test(h) ? 'avaliasolar.com.br' : 'none');
         gtag('set', {
           cookie_domain: cd,
           cookie_flags: window.location.protocol === 'https:' ? 'SameSite=Lax;Secure' : 'SameSite=Lax'
