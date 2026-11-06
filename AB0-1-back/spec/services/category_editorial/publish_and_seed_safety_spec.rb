@@ -138,3 +138,4 @@ RSpec.describe 'CategoryEditorial Workflow, Revisions & Seed Safety (R12-R13, R2
     end
   end
 end
+

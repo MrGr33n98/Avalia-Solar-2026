@@ -32,3 +32,4 @@ RSpec.describe CategoryDiscovery::LocalPagePolicy do
     end
   end
 end
+

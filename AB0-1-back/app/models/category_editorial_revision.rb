@@ -76,3 +76,4 @@ class CategoryEditorialRevision < ApplicationRecord
     errors.add(:payload_json, 'deve ser um objeto JSON') unless payload_json.is_a?(Hash)
   end
 end
+

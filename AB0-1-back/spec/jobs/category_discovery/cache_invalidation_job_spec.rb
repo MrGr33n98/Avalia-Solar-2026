@@ -43,3 +43,4 @@ RSpec.describe CategoryDiscovery::CacheInvalidationJob, type: :job do
     end
   end
 end
+

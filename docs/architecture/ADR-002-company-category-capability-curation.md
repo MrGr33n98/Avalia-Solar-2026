@@ -28,3 +28,4 @@ Durante a auditoria (`CDSI-086`), constatou-se que o banco já possui a tabela `
    - Permitir segmentação explícita entre `saas` (`monitoring_software`, `software`) e `field_service` (`field_om`, `maintenance`, `inspection`).
    - Isolar o ranking orgânico (`rating_avg`, `rating_count`, `verified`, `id ASC`) de flags comerciais (`featured` / `sponsored`), que devem ser rotulados separadamente.
    - Nunca expor dados internos de membros, leads ou evidências privadas na API pública (`R38`).
+

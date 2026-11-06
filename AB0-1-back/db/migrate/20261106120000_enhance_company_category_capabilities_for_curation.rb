@@ -13,3 +13,4 @@ class EnhanceCompanyCategoryCapabilitiesForCuration < ActiveRecord::Migration[7.
               if_not_exists: true
   end
 end
+

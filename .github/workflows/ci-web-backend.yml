@@ -284,9 +284,59 @@ jobs:
       - name: Lint Ranking Performance files
         run: npx eslint app/dashboard/components/RankingPerformanceTab.tsx app/dashboard/components/ranking app/dashboard/components/MagicQuadrant.tsx
 
+  category-seo-contract-gate:
+    name: Category Discovery & SEO Contract Gate
+    needs: fast-feedback
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Category SEO & Discovery Jest Suite
+        run: |
+          npx jest \
+            lib/server/category-discovery/__tests__/get-public-category.test.ts \
+            lib/seo/__tests__/category-metadata.test.ts \
+            lib/seo/__tests__/category-sitemap.test.ts \
+            lib/seo/__tests__/facets-and-pagination.test.tsx \
+            lib/seo/__tests__/local-and-locale-policy.test.ts \
+            lib/seo/__tests__/revalidate-route.test.ts \
+            __tests__/categories/CategoryEditorialAndSchema.test.tsx \
+            --runInBand --no-coverage
+      - name: Typecheck Frontend
+        run: npm run typecheck
+      - name: Lint Category Discovery & SEO Modules (Strict)
+        run: |
+          npx eslint \
+            lib/server/category-discovery/get-public-category.ts \
+            lib/seo/category-metadata.ts \
+            lib/seo/category-schema.ts \
+            lib/seo/sitemap-builders.ts \
+            lib/seo/facets-policy.ts \
+            lib/seo/locale-policy.ts \
+            lib/seo/search-params.ts \
+            app/robots.ts \
+            app/api/revalidate/route.ts \
+            "app/sitemaps/[section]/sitemap.xml/route.ts" \
+            "app/categories/[slug]/page.tsx" \
+            "app/categories/[slug]/CategoryPageServer.tsx" \
+            "app/categories/[slug]/CategoryPageClientV2.tsx" \
+            components/categories/CategoryEditorialSection.tsx \
+            components/categories/CategoryNichesCarousel.tsx \
+            components/categories/CategoryCompaniesTable.tsx
+
   e2e-tests:
     name: E2E Playwright Tests
-    needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate]
+    needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

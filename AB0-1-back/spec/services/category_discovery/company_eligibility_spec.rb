@@ -101,3 +101,4 @@ RSpec.describe CategoryDiscovery::CompanyEligibilityPolicy do
     end
   end
 end
+

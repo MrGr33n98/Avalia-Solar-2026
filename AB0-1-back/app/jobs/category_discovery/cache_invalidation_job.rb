@@ -82,3 +82,4 @@ module CategoryDiscovery
     end
   end
 end
+

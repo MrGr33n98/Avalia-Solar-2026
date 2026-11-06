@@ -23,3 +23,4 @@ namespace :category_editorial do
     puts "[category_editorial:backfill_baseline] created=#{created} skipped=#{skipped}"
   end
 end
+

@@ -29,3 +29,4 @@ class AddEditorialWorkflowAndRevisionsToCategories < ActiveRecord::Migration[7.0
               if_not_exists: true
   end
 end
+
