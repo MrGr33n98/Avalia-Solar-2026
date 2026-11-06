@@ -2,7 +2,7 @@ ActiveAdmin.register Plan do
   menu label: 'Planos (Catálogo)', priority: 18
 
   permit_params do
-    permitted = %i[name description price plan_tier_template stripe_product_id stripe_price_id_monthly
+    permitted = %i[name description price plan_tier_template change_reason stripe_product_id stripe_price_id_monthly
                    stripe_price_id_yearly is_public display_order]
     # Allow features_json keys explicitly
     # Feature changes go through the validated virtual form fields only.
@@ -166,6 +166,21 @@ ActiveAdmin.register Plan do
       end
     end
 
+    panel 'Histórico de Alterações do Plano' do
+      audits = resource.plan_configuration_audits.includes(:admin_user).order(created_at: :desc).limit(15)
+      if audits.any?
+        table_for audits do
+          column('Data', &:created_at)
+          column('Administrador') { |audit| audit.admin_user&.email || 'Conta removida' }
+          column('Motivo') { |audit| audit.change_reason.presence || 'Não informado' }
+          column('Antes') { |audit| pre JSON.pretty_generate(audit.before_state) }
+          column('Depois') { |audit| pre JSON.pretty_generate(audit.after_state) }
+        end
+      else
+        para 'Nenhuma alteração auditada até o momento.'
+      end
+    end
+
     active_admin_comments
   end
 
@@ -306,6 +321,11 @@ ActiveAdmin.register Plan do
       )
     end
 
+    f.inputs 'Auditoria da Alteração' do
+      f.input :change_reason, label: 'Justificativa (opcional)',
+              hint: 'Registrada no histórico sempre que os dados do plano forem alterados.'
+    end
+
     f.inputs 'Integração Stripe (Faturamento)' do
       f.input :stripe_product_id, label: 'Stripe Product ID', hint: 'Ex: prod_XXXX'
       f.input :stripe_price_id_monthly, label: 'Stripe Price ID — 6 meses',
@@ -349,5 +369,50 @@ ActiveAdmin.register Plan do
     end
 
     f.actions
+  end
+  controller do
+    before_action :capture_plan_configuration, only: :update
+    after_action :audit_plan_configuration, only: :update
+
+    private
+
+    def plan_configuration_snapshot(plan)
+      {
+        'name' => plan.name,
+        'description' => plan.description,
+        'price' => plan.price.to_s,
+        'stripe_product_id' => plan.stripe_product_id,
+        'stripe_price_id_monthly' => plan.stripe_price_id_monthly,
+        'stripe_price_id_yearly' => plan.stripe_price_id_yearly,
+        'is_public' => plan.is_public,
+        'display_order' => plan.display_order,
+        'features_json' => plan.feature_flags
+      }
+    end
+
+    def capture_plan_configuration
+      @plan_configuration_before = plan_configuration_snapshot(resource)
+    end
+
+    def audit_plan_configuration
+      return if @plan_configuration_before.blank? || !response.redirect?
+
+      updated = Plan.find_by(id: params[:id])
+      return unless updated
+
+      after = plan_configuration_snapshot(updated)
+      return if after == @plan_configuration_before
+
+      PlanConfigurationAudit.create!(
+        plan: updated,
+        admin_user: current_admin_user,
+        before_state: @plan_configuration_before,
+        after_state: after,
+        change_reason: params.dig(:plan, :change_reason).to_s.truncate(300)
+      )
+    rescue StandardError => e
+      Rails.logger.error("[PlanAudit] Failed to record update for plan=#{params[:id]}: #{e.class}: #{e.message}")
+      # Do not leak params or backtraces to the browser.
+    end
   end
 end
