@@ -4,6 +4,7 @@ import {
   MOCK_BUYER_INTENT_ACCOUNTS,
   MOCK_REPORTING_DATA,
   EMPTY_REPORTING_DATA,
+  BuyerIntentApiError,
   type IcpFilterCriteria,
 } from '@/lib/api/buyer-intent';
 
@@ -126,9 +127,10 @@ describe('Buyer Intent (G2 Standard) — Frontend API & Filtering Logic', () => 
       } as Response)
     );
 
-    const res = await fetchBuyerIntentAccounts(1);
-    expect(res.total).toBe(0);
-    expect(res.scores).toEqual([]);
+    await expect(fetchBuyerIntentAccounts(1)).rejects.toMatchObject({
+      status: 401,
+      kind: 'unauthorized',
+    });
   });
 
   it('retorna EMPTY_REPORTING_DATA se o endpoint de reporting falhar com erro HTTP', async () => {
@@ -140,9 +142,62 @@ describe('Buyer Intent (G2 Standard) — Frontend API & Filtering Logic', () => 
       } as Response)
     );
 
-    const data = await fetchBuyerIntentReporting(1);
-    expect(data.total_accounts).toBe(0);
-    expect(data.buying_stage_distribution.awareness).toBe(0);
-    expect(data.top_signals_summary.every((s) => s.count === 0)).toBe(true);
+    await expect(fetchBuyerIntentReporting(1)).rejects.toMatchObject({
+      status: 500,
+      kind: 'unavailable',
+    });
+  });
+
+  it('não mascara 403 de plano sem entitlement como zero visitas ou zero contas', async () => {
+    global.fetch = jest.fn(() => Promise.resolve({
+      ok: false,
+      status: 403,
+      json: () => Promise.resolve({
+        code: 'INTENT_SCORES_NOT_AVAILABLE',
+        feature: 'intent_scores',
+        reason: 'not_in_plan',
+      }),
+    } as Response));
+    await expect(fetchBuyerIntentAccounts(372)).rejects.toMatchObject({
+      status: 403,
+      kind: 'feature_locked',
+      code: 'INTENT_SCORES_NOT_AVAILABLE',
+    });
+    await expect(fetchBuyerIntentReporting(372)).rejects.toMatchObject({
+      status: 403,
+      kind: 'feature_locked',
+    });
+  });
+
+  it('não confunde 403 da política de acesso com falta de entitlement', async () => {
+    global.fetch = jest.fn(() => Promise.resolve({
+      ok: false,
+      status: 403,
+      json: () => Promise.resolve({ code: 'POLICY_FORBIDDEN' }),
+    } as Response));
+    await expect(fetchBuyerIntentAccounts(372)).rejects.toMatchObject({
+      status: 403,
+      kind: 'forbidden',
+    });
+  });
+
+  it('rejeita resposta HTTP 200 inválida, sem preencher o painel com zeros', async () => {
+    global.fetch = jest.fn(() => Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({}),
+    } as Response));
+    await expect(fetchBuyerIntentAccounts(372)).rejects.toMatchObject({
+      kind: 'invalid_response',
+    });
+    await expect(fetchBuyerIntentReporting(372)).rejects.toMatchObject({
+      kind: 'invalid_response',
+    });
+  });
+
+  it('exporta um tipo de erro categorizado para o estado visual', () => {
+    const error = new BuyerIntentApiError(403, 'POLICY_FORBIDDEN', 'forbidden');
+    expect(error).toBeInstanceOf(Error);
+    expect(error.kind).toBe('forbidden');
   });
 });
