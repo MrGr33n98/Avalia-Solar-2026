@@ -22,6 +22,7 @@ export interface IdentityStitchPayload {
  * Call this immediately after user login/signup
  */
 export const stitchIdentity = async (payload: IdentityStitchPayload) => {
+  if (!hasAnalyticsConsent()) return null;
   try {
     const userId = opaqueUserId(payload.user_id);
     const anonymousId = payload.anonymous_id || getAnonymousId();
@@ -49,7 +50,7 @@ export const stitchIdentity = async (payload: IdentityStitchPayload) => {
 
     // 2. Register proof of the current anonymous session before requesting
     // linkage. An arbitrary browser-supplied user_id is never authoritative.
-    if (!hasAnalyticsConsent() || !anonymousId) return null;
+    if (!anonymousId) return null;
     const registered = await trackSession({
       anonymous_id: anonymousId,
       company_id: payload.company_id != null ? String(payload.company_id) : undefined,
