@@ -169,8 +169,10 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
   );
 
   useEffect(() => {
-    loadData(days);
-  }, [days, loadData]);
+    // Track Your Prospects has its own API. Do not call gated intent_scores
+    // while the user is viewing the independent attribution workspace.
+    if (!isProspects) void loadData(days);
+  }, [days, loadData, isProspects]);
 
   const handleRefresh = () => {
     setRefreshing(true);

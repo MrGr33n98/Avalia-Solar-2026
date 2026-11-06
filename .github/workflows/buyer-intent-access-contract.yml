@@ -31,6 +31,6 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Regressions — 403 feature/policy, 401, 500, valid zero
-        run: npm test -- --runInBand hooks/buyer-intent.spec.tsx
+        run: npm test -- --runInBand hooks/buyer-intent.spec.tsx app/dashboard/components/intent/ProfileSignalsTab.spec.tsx
       - name: TypeScript contracts
         run: npm run typecheck
