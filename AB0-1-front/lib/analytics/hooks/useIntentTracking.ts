@@ -372,7 +372,7 @@ export const useImageGalleryWatch = (companyId: string | number) => {
 
       sendIntentSignal({
         company_id: companyId,
-        signal_type: 'comparison_view',
+        signal_type: 'photo_gallery_5plus',
         signal_category: 'research_intent',
         element_type: 'image_gallery',
         duration_ms: Math.round(timeMs),
