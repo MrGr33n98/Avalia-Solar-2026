@@ -1,0 +1,37 @@
+name: Dashboard Seller Information UX Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'AB0-1-front/app/dashboard/components/CompanyInfo.tsx'
+      - 'AB0-1-front/app/dashboard/components/SellerInformationPanel.tsx'
+      - 'AB0-1-front/__tests__/components/SellerInformationPanel.test.tsx'
+      - '.github/workflows/dashboard-seller-info-ux.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  seller-information:
+    name: G2-style Seller Information / TypeScript / Jest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate TypeScript
+        run: npm run typecheck
+      - name: Run focused UI interaction specs
+        run: npm test -- SellerInformationPanel --runInBand --no-coverage
+      - name: Lint modified UI components
+        run: npx eslint app/dashboard/components/CompanyInfo.tsx app/dashboard/components/SellerInformationPanel.tsx __tests__/components/SellerInformationPanel.test.tsx

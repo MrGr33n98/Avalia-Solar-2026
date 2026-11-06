@@ -10,7 +10,6 @@ import {
   Building2,
   Calendar,
   ChevronDown,
-  CheckCircle2,
   Clock,
   DollarSign,
   ExternalLink,
@@ -35,6 +34,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import SellerInformationPanel, { type SellerEditorMode } from './SellerInformationPanel';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -62,6 +62,7 @@ interface CompanyInfoProps {
 
 interface CompanyData {
   id?: string;
+  slug?: string;
   name?: string;
   description?: string;
   website?: string;
@@ -382,14 +383,13 @@ function handleNumberValue(value: string) {
 function SectionCard({
   title,
   description,
-  icon: Icon,
   actions,
   children,
   className,
 }: {
   title: string;
   description?: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -398,39 +398,29 @@ function SectionCard({
   const contentId = useId();
 
   return (
-    <Card
-      className={cn(
-        'min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm',
-        className
-      )}
-    >
-      <CardHeader className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
-        <div className="flex min-w-0 gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-brand-blue">
-            <Icon className="h-4 w-4" />
-          </div>
-          <div className="min-w-0">
-            <CardTitle className="break-words text-base font-bold text-slate-950">{title}</CardTitle>
-            {description && <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>}
-          </div>
+    <Card className={cn('min-w-0 overflow-hidden rounded-[15px] border border-[#e3e3e8] bg-white shadow-none', className)}>
+      <CardHeader className="flex flex-row items-start justify-between gap-3 border-b border-[#efeff1] px-5 py-4 sm:px-6">
+        <div className="min-w-0">
+          <CardTitle className="break-words text-[17px] font-bold leading-6 tracking-tight text-[#292532]">{title}</CardTitle>
+          {description && <p className="mt-1 text-[12px] leading-[18px] text-[#777380]">{description}</p>}
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           {actions}
-          <Button
+          <button
             type="button"
-            variant="outline"
-            className="h-11 rounded-lg border-slate-200 px-3 text-xs font-bold uppercase tracking-wide text-slate-600"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[#594bbc] transition-colors hover:bg-[#f0edfb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#594bbc]"
             onClick={() => setIsOpen((current) => !current)}
+            aria-label={isOpen ? `Recolher ${title}` : `Expandir ${title}`}
+            title={isOpen ? 'Recolher' : 'Expandir'}
             aria-expanded={isOpen}
             aria-controls={contentId}
           >
-            {isOpen ? 'Recolher' : 'Expandir'}
-            <ChevronDown className={cn('ml-2 h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
-          </Button>
+            <ChevronDown className={cn('h-[18px] w-[18px] transition-transform', isOpen && 'rotate-180')} aria-hidden="true" />
+          </button>
         </div>
       </CardHeader>
       {isOpen ? (
-        <CardContent id={contentId} className="p-4 sm:p-5">
+        <CardContent id={contentId} className="p-5 sm:px-6 sm:py-5">
           {children}
         </CardContent>
       ) : null}
@@ -442,7 +432,6 @@ function InfoItem({
   label,
   value,
   fallback = NOT_INFORMED,
-  icon: Icon,
 }: {
   label: string;
   value?: ReactNode;
@@ -450,12 +439,9 @@ function InfoItem({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-      <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        {Icon && <Icon className="h-3.5 w-3.5 text-brand-blue" />}
-        {label}
-      </div>
-      <div className="min-w-0 break-words text-sm font-semibold text-slate-950">{isBlank(value) ? fallback : value}</div>
+    <div className="min-w-0 space-y-1 py-1">
+      <div className="text-[12px] font-semibold leading-4 text-[#5a5663]">{label}</div>
+      <div className="min-w-0 break-words text-[13px] leading-5 text-[#2d2936]">{isBlank(value) ? fallback : value}</div>
     </div>
   );
 }
@@ -579,6 +565,9 @@ function ChecklistGrid({
 
 export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [sellerEditorOpen, setSellerEditorOpen] = useState(false);
+  const [sellerEditorMode, setSellerEditorMode] = useState<SellerEditorMode>('profile');
+  const [sellerRefreshing, setSellerRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [company, setCompany] = useState<CompanyData | null>(null);
@@ -665,9 +654,32 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     handleInputChange(field, nextValues);
   };
 
-  const handleStartEditing = () => {
+  const openSellerEditor = (mode: SellerEditorMode) => {
+    if (isEditing) {
+      toast({
+        title: 'Edição já em andamento',
+        description: 'Salve ou cancele os ajustes avançados antes de editar o perfil.',
+      });
+      return;
+    }
+    setSellerEditorMode(mode);
     setFormData(normalizeSeoFields(company));
-    setIsEditing(true);
+    setSellerEditorOpen(true);
+  };
+
+  const handleSellerEditorOpenChange = (open: boolean) => {
+    if (saving && !open) return;
+    setSellerEditorOpen(open);
+    if (!open) setFormData(normalizeSeoFields(company));
+  };
+
+  const handleSellerRefresh = async () => {
+    setSellerRefreshing(true);
+    try {
+      await fetchCompanyData();
+    } finally {
+      setSellerRefreshing(false);
+    }
   };
 
   const handleCancelEditing = () => {
@@ -718,6 +730,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           });
           window.setTimeout(() => setPendingApproval(false), 8000);
         }
+        setSellerEditorOpen(false);
         await fetchCompanyData();
         return;
       }
@@ -849,7 +862,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     );
   }
 
-  const currentData = formData || company;
+  // Changes in the dialog remain a draft until the existing API confirms the save.
+  const currentData = isEditing ? formData || company : company || formData;
 
   if (!currentData) {
     return (
@@ -872,7 +886,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const primaryLocation = [currentData.city, currentData.state].filter(Boolean).join(', ') || TO_DEFINE;
 
   return (
-    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6 pb-24">
+    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 pb-24">
       <AnimatePresence>
         {pendingApproval && (
           <motion.div
@@ -893,18 +907,17 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="rounded-full border-blue-100 bg-blue-50 px-3 py-1 text-brand-blue">
+            <Badge variant="outline" className="rounded-md border-[#e5e2f0] bg-[#f4f2fa] px-2 py-0.5 text-[11px] text-[#594bbc]">
               Central Institucional
             </Badge>
-            <Badge variant="outline" className={cn('rounded-full px-3 py-1', publicationClass(currentData.status))}>
-              <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+            <Badge variant="outline" className={cn('rounded-md px-2 py-0.5 text-[11px]', publicationClass(currentData.status))}>
               {publicationLabel(currentData.status)}
             </Badge>
           </div>
-          <h2 className="break-words text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Informações gerais</h2>
+          <h2 className="break-words text-2xl font-bold tracking-tight text-[#24212b]">Informações gerais</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Gerencie os dados da empresa, ativos de marca e informações públicas usadas no ecossistema Avalia Solar.
-            As alterações enviadas por empresas seguem para aprovação no Active Admin.
+            Gerencie o perfil público, a identidade da marca e os dados apresentados aos compradores.
+            Alterações podem passar por revisão antes da publicação.
           </p>
         </div>
 
@@ -921,7 +934,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               </Button>
             </>
           ) : (
-            <Button onClick={handleStartEditing} className="w-full rounded-lg bg-brand-blue text-white hover:bg-blue-700 sm:w-auto">
+            <Button onClick={() => openSellerEditor('profile')} className="w-full rounded-md bg-[#594bbc] text-white hover:bg-[#493da5] sm:w-auto">
               <Pencil className="mr-2 h-4 w-4" />
               Editar informações
             </Button>
@@ -929,7 +942,21 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         </div>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
+      <SellerInformationPanel
+        company={currentData}
+        draft={formData}
+        editorOpen={sellerEditorOpen}
+        editorMode={sellerEditorMode}
+        saving={saving}
+        refreshing={sellerRefreshing}
+        onEdit={openSellerEditor}
+        onEditorOpenChange={handleSellerEditorOpenChange}
+        onFieldChange={handleInputChange}
+        onSave={handleSave}
+        onRefresh={handleSellerRefresh}
+      />
+
+      <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-3">
         <SectionCard
           title="Ativo Corporativo da Marca"
           description={`Atualizado em: ${formatDateTime(currentData.updated_at)}`}
@@ -1015,82 +1042,14 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
       <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-2">
         <SectionCard
-          title="Informações Técnicas Essenciais"
-          description="Dados jurídicos, descrição institucional e conformidade."
-          icon={Building2}
-          actions={
-            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar
-            </Button>
-          }
-        >
-          {isEditing ? (
-            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="company-name">Nome jurídico</Label>
-                <Input id="company-name" value={formData?.name || ''} onChange={(event) => handleInputChange('name', event.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="company-cnpj">CNPJ</Label>
-                <Input id="company-cnpj" value={formData?.cnpj || ''} onChange={(event) => handleInputChange('cnpj', event.target.value)} />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="company-description">Descrição corporativa</Label>
-                <Textarea
-                  id="company-description"
-                  value={formData?.description || ''}
-                  onChange={(event) => handleInputChange('description', event.target.value)}
-                  rows={5}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="company-founded">Fundação</Label>
-                <Input
-                  id="company-founded"
-                  type="number"
-                  value={formData?.founded_year ?? ''}
-                  onChange={(event) => handleInputChange('founded_year', handleNumberValue(event.target.value))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="company-employees">Capacidade produtiva</Label>
-                <Input
-                  id="company-employees"
-                  type="number"
-                  value={formData?.employees_count ?? ''}
-                  onChange={(event) => handleInputChange('employees_count', handleNumberValue(event.target.value))}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="min-w-0 space-y-4">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <InfoItem label="Nome jurídico" value={currentData.name} />
-                <InfoItem label="CNPJ" value={currentData.cnpj} />
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Descrição corporativa</p>
-                <p className="break-words text-sm leading-6 text-slate-700">{displayText(currentData.description)}</p>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <InfoItem label="Fundação" value={currentData.founded_year} icon={Calendar} />
-                <InfoItem label="Capacidade produtiva" value={currentData.employees_count} icon={Users} />
-                <InfoItem label="Conformidade" value={currentData.verified ? 'Verificada' : 'Aguardando verificação'} icon={CheckCircle2} />
-              </div>
-            </div>
-          )}
-        </SectionCard>
-
-        <SectionCard
-          title="Conectividade Global"
-          description="Canais de contato e presença digital."
+          title="Canais de contato"
+          description="Telefone, e-mail e presença digital da empresa."
           icon={Globe}
+          className="xl:col-span-2"
           actions={
-            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar
-            </Button>
+            <button type="button" onClick={() => openSellerEditor('contacts')} className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[#594bbc] hover:bg-[#f0edfb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#594bbc]" aria-label="Editar canais de contato" title="Editar canais de contato">
+              <Pencil className="h-[18px] w-[18px]" aria-hidden="true" />
+            </button>
           }
         >
           {isEditing ? (
