@@ -125,7 +125,7 @@ describe('ChatCompanyRecommendations', () => {
 
     render(<ChatCompanyRecommendations {...defaultProps} metadata={validMetadata} />);
 
-    const compareBtn = screen.getByRole('button', {
+    const compareBtn = screen.getByRole('checkbox', {
       name: /Adicionar Solar Prime à comparação/i,
     });
     fireEvent.click(compareBtn);
