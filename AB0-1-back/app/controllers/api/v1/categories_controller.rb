@@ -86,9 +86,10 @@ module Api
 
         companies_scope = @category.companies
 
-        # Filtros de Status
-        if params[:status].present? && ::Company.column_names.include?('status')
-          companies_scope = companies_scope.where(status: params[:status])
+        # CDSI-092: Listagem pública de categoria filtra apenas empresas ativas por padrão
+        if ::Company.column_names.include?('status')
+          effective_status = params[:status].presence || 'active'
+          companies_scope = companies_scope.where(status: effective_status)
         end
 
         # Filtro de Busca (Search Term)
@@ -483,10 +484,10 @@ module Api
 
       def apply_company_sort(scope)
         case params[:sort].to_s
-        when 'name_asc' then scope.order(name: :asc)
-        when 'reviews_desc' then scope.order(rating_count: :desc, rating_avg: :desc, name: :asc)
-        when 'rating_desc' then scope.order(rating_avg: :desc, rating_count: :desc, name: :asc)
-        else scope.order(featured: :desc, rating_avg: :desc, rating_count: :desc, name: :asc)
+        when 'name_asc' then scope.order(name: :asc, id: :asc)
+        when 'reviews_desc' then scope.order(rating_count: :desc, rating_avg: :desc, name: :asc, id: :asc)
+        when 'rating_desc' then scope.order(rating_avg: :desc, rating_count: :desc, name: :asc, id: :asc)
+        else scope.order(featured: :desc, rating_avg: :desc, rating_count: :desc, name: :asc, id: :asc)
         end
       end
 

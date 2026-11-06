@@ -12,7 +12,9 @@ import CategoryFiltersPanel, {
   CategoryFilters,
 } from '@/components/categories/CategoryFiltersPanel';
 import CategoryNichesCarousel from '@/components/categories/CategoryNichesCarousel';
-import CategoryCompaniesTable from '@/components/categories/CategoryCompaniesTable';
+import CategoryCompaniesTable, {
+  type ServerPaginationMeta,
+} from '@/components/categories/CategoryCompaniesTable';
 import FeaturedCompanyCard from '@/components/categories/FeaturedCompanyCard';
 import {
   HeroSkeleton,
@@ -44,20 +46,20 @@ interface CategoryPageClientProps {
   initialCategory: Category;
   initialCompanies: Company[];
   initialBanners: CategoryBanner[];
-  paginationMeta: unknown;
+  paginationMeta: ServerPaginationMeta | null;
 }
 
 export default function CategoryPageClient({
   initialCategory,
   initialCompanies,
   initialBanners,
-  paginationMeta: _paginationMeta,
+  paginationMeta,
 }: CategoryPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const slug = initialCategory?.slug || '';
+  const slug = initialCategory?.seo_url || initialCategory?.slug || '';
   const categoryName = initialCategory?.name || '';
   const categoryId = initialCategory?.id || '';
 
@@ -410,7 +412,11 @@ export default function CategoryPageClient({
                   </div>
 
                   {/* 📋 Section 2: More Companies Table */}
-                  <CategoryCompaniesTable companies={filteredCompanies} />
+                  <CategoryCompaniesTable
+                    companies={filteredCompanies}
+                    paginationMeta={paginationMeta}
+                    basePath={slug ? `/categories/${slug}` : undefined}
+                  />
                 </div>
               </div>
 

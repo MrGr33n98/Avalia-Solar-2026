@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import type { Category } from '@/lib/api';
 import { absoluteUrl } from '@/lib/site';
-import {
-  shouldNoindexSearchParams,
-  type SeoSearchParams,
-} from '@/lib/seo/search-params';
+import { type SeoSearchParams } from '@/lib/seo/search-params';
+import { evaluateCategoryFacetsPolicy } from '@/lib/seo/facets-policy';
 import { normalizeCategorySlug } from '@/lib/server/category-discovery/get-public-category';
 
 const BRAND_SUFFIX = ' | Avalia Solar';
@@ -94,30 +92,12 @@ export function sanitizeMetaDescription(
   return `${safePrefix.trim()}...`;
 }
 
-function resolveLocationSuffix(searchParams?: SeoSearchParams): string {
-  const city = typeof searchParams?.city === 'string' ? searchParams.city.trim() : '';
-  const state =
-    typeof searchParams?.state === 'string' ? searchParams.state.trim().toUpperCase() : '';
-
-  if (city) {
-    const formattedCity = city
-      .split('-')
-      .filter(Boolean)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-    return ` em ${formattedCity}${state ? ` - ${state}` : ''}`;
-  }
-
-  if (state) {
-    return ` em ${state}`;
-  }
-
-  return '';
-}
-
 /**
- * CDSI-042 / CDSI-043 / CDSI-050: Constrói o Metadata de Next.js para páginas de categoria
- * garantindo canonical invariante a UTM/tracking, título sem marca duplicada e meta description sanitizada.
+ * CDSI-042 / CDSI-043 / CDSI-050 / CDSI-064 / CDSI-065 / CDSI-101:
+ * Constrói o Metadata de Next.js para páginas de categoria:
+ * - Canonical derivada do DTO (`canonical_path` / `seo_url`).
+ * - Paginação limpa (`?page=N`, N >= 2) sem facetas recebe self-canonical (`/categories/:slug?page=N`) e permanece indexável.
+ * - Filtros de faceta (`state`, `city`, `sort`, `min_rating`, etc.) recebem `noindex,follow`, canonical base e NÃO injetam cidade no `<title>` global para evitar páginas doorway falsas (CDSI-101).
  */
 export function buildCategoryPageMetadata({
   category,
@@ -125,12 +105,23 @@ export function buildCategoryPageMetadata({
   searchParams,
   subpath,
 }: BuildCategoryPageMetadataInput): Metadata {
-  const canonicalPath = resolveCategoryCanonicalPath(category, requestedSlug, subpath);
-  const canonicalUrl = absoluteUrl(canonicalPath);
-  const locationSuffix = resolveLocationSuffix(searchParams);
+  const baseCanonicalPath = resolveCategoryCanonicalPath(category, requestedSlug, subpath);
+  const facetsDecision = evaluateCategoryFacetsPolicy(searchParams);
+
+  const canonicalPathWithPage =
+    !subpath && facetsDecision.selfCanonicalPageNumber
+      ? `${baseCanonicalPath}?page=${facetsDecision.selfCanonicalPageNumber}`
+      : baseCanonicalPath;
+
+  const canonicalUrl = absoluteUrl(canonicalPathWithPage);
+
+  const pageSuffix =
+    !subpath && facetsDecision.selfCanonicalPageNumber
+      ? ` — Página ${facetsDecision.selfCanonicalPageNumber}`
+      : '';
 
   const rawTitle = category.seo_title || category.name;
-  const title = formatCategoryTitle(rawTitle, locationSuffix);
+  const title = formatCategoryTitle(rawTitle, pageSuffix);
 
   const rawDescriptionSource =
     category.seo_description ||
@@ -138,20 +129,13 @@ export function buildCategoryPageMetadata({
     category.description ||
     `Encontre as melhores empresas e orçamentos de ${category.name} no Avalia Solar.`;
 
-  const combinedDescription = [
-    sanitizeMetaDescription(rawDescriptionSource, MAX_META_DESCRIPTION_LENGTH),
-    locationSuffix ? `Atendendo na região de ${locationSuffix.replace(/^ em /, '')}.` : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  const description = sanitizeMetaDescription(combinedDescription, MAX_META_DESCRIPTION_LENGTH);
+  const description = sanitizeMetaDescription(rawDescriptionSource, MAX_META_DESCRIPTION_LENGTH);
 
   const keywords =
     category.seo_keywords || ['energia solar', category.name, 'melhores empresas'].join(', ');
 
   const policyNoindex = category.indexability?.indexable === false;
-  const noindex = shouldNoindexSearchParams(searchParams) || policyNoindex;
+  const noindex = facetsDecision.noindex || policyNoindex;
 
   return {
     title,

@@ -9,6 +9,7 @@ import {
   resolveCategoryCanonicalPath,
   resolveCategoryCanonicalSlug,
 } from '@/lib/seo/category-metadata';
+import { parsePositivePageParam } from '@/lib/seo/facets-policy';
 import { buildCategoryBreadcrumbItems } from '@/lib/seo/category-schema';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -129,6 +130,11 @@ function CategoryLoadingFallback() {
 
 export default async function CategorySlugPage({ params, searchParams }: CategorySlugPageProps) {
   if (REDIRECT_SLUGS.has(params.slug)) redirect('/signup');
+
+  const parsedPage = parsePositivePageParam(searchParams?.page);
+  if (!parsedPage.valid) {
+    notFound();
+  }
 
   // CDSI-012 / CDSI-013 / CDSI-046: Resolve existência e redirect canônico ANTES do Suspense.
   // - 404 legítimo -> notFound() imediato (HTTP 404 nos headers iniciais).

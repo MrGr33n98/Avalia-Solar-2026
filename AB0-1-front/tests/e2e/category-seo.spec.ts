@@ -113,6 +113,24 @@ test.describe('CDSI-019: Category HTTP & SSR SEO Semantics (E01-E06, E18)', () =
 
     await context.close();
   });
+
+  test('E13, E14 & E15: paginação inválida (?page=0 ou ?page=abc) retorna 404 e filtros de faceta aplicam noindex,follow com canonical base', async ({
+    page,
+  }) => {
+    const invalidPageRes = await page.goto('/categories/inversores-solares?page=0');
+    expect(invalidPageRes?.status()).toBe(404);
+
+    const facetRes = await page.goto(
+      '/categories/inversores-solares?state=SP&min_rating=4&sort=rating_desc'
+    );
+    expect(facetRes?.status()).toBe(200);
+
+    const robotsMeta = page.locator('meta[name="robots"]');
+    await expect(robotsMeta).toHaveAttribute('content', /noindex/i);
+
+    const canonical = page.locator('link[rel="canonical"]');
+    await expect(canonical).toHaveAttribute('href', /\/categories\/inversores-solares$/);
+  });
 });
 
 

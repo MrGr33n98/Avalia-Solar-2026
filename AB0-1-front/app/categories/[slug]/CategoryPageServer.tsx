@@ -4,6 +4,7 @@ import CategoryPageClientV2 from './CategoryPageClientV2';
 import type { Banner, Category } from '@/lib/api';
 import { publicBannersApi, publicCategoriesApi } from '@/lib/api-public';
 import { getCachedPublicCategory } from '@/lib/server/category-discovery/get-public-category';
+import { parsePositivePageParam } from '@/lib/seo/facets-policy';
 import { buildCategoryCollectionPageSchema } from '@/lib/seo/category-schema';
 import CategoryEditorialSection from '@/components/categories/CategoryEditorialSection';
 import FAQSection from '@/components/seo/FAQSection';
@@ -72,6 +73,11 @@ export default async function CategoryPageServer({
     category = result.category;
   }
 
+  const parsedPage = parsePositivePageParam(searchParams.page);
+  if (!parsedPage.valid) {
+    notFound();
+  }
+
   const filters = {
     status: 'active',
     searchTerm: (searchParams.search as string) || (searchParams.searchTerm as string) || undefined,
@@ -82,7 +88,7 @@ export default async function CategoryPageServer({
     niche_tag: (searchParams.niche_tag as string) || undefined,
     sort: (searchParams.sort as string) || undefined,
     project_type: (searchParams.project_type as string) || undefined,
-    page: Number((searchParams.page as string) || 1),
+    page: parsedPage.page,
     per_page: 20,
   };
 
@@ -92,7 +98,24 @@ export default async function CategoryPageServer({
   ]);
 
   const companies = companiesResponse?.companies || [];
-  const paginationMeta = companiesResponse?.meta || null;
+  const paginationMeta = (companiesResponse?.meta || null) as {
+    current_page?: number;
+    per_page?: number;
+    total?: number;
+    total_items?: number;
+    total_pages?: number;
+  } | null;
+
+  // CDSI-068 (E14): Se page > 1 estiver fora do range real de páginas retornadas ou não retornar itens, retorna 404
+  if (
+    parsedPage.page > 1 &&
+    (companies.length === 0 ||
+      (typeof paginationMeta?.total_pages === 'number' &&
+        paginationMeta.total_pages > 0 &&
+        parsedPage.page > paginationMeta.total_pages))
+  ) {
+    notFound();
+  }
 
   const now = new Date();
 
