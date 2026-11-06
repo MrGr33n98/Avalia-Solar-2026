@@ -384,14 +384,13 @@ function handleNumberValue(value: string) {
 function SectionCard({
   title,
   description,
-  icon: Icon,
   actions,
   children,
   className,
 }: {
   title: string;
   description?: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -400,39 +399,29 @@ function SectionCard({
   const contentId = useId();
 
   return (
-    <Card
-      className={cn(
-        'min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm',
-        className
-      )}
-    >
-      <CardHeader className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
-        <div className="flex min-w-0 gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-50 text-brand-blue">
-            <Icon className="h-4 w-4" />
-          </div>
-          <div className="min-w-0">
-            <CardTitle className="break-words text-base font-bold text-slate-950">{title}</CardTitle>
-            {description && <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>}
-          </div>
+    <Card className={cn('min-w-0 overflow-hidden rounded-[15px] border border-[#e3e3e8] bg-white shadow-none', className)}>
+      <CardHeader className="flex flex-row items-start justify-between gap-3 border-b border-[#efeff1] px-5 py-4 sm:px-6">
+        <div className="min-w-0">
+          <CardTitle className="break-words text-[17px] font-bold leading-6 tracking-tight text-[#292532]">{title}</CardTitle>
+          {description && <p className="mt-1 text-[12px] leading-[18px] text-[#777380]">{description}</p>}
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           {actions}
-          <Button
+          <button
             type="button"
-            variant="outline"
-            className="h-11 rounded-lg border-slate-200 px-3 text-xs font-bold uppercase tracking-wide text-slate-600"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[#594bbc] transition-colors hover:bg-[#f0edfb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#594bbc]"
             onClick={() => setIsOpen((current) => !current)}
+            aria-label={isOpen ? `Recolher ${title}` : `Expandir ${title}`}
+            title={isOpen ? 'Recolher' : 'Expandir'}
             aria-expanded={isOpen}
             aria-controls={contentId}
           >
-            {isOpen ? 'Recolher' : 'Expandir'}
-            <ChevronDown className={cn('ml-2 h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
-          </Button>
+            <ChevronDown className={cn('h-[18px] w-[18px] transition-transform', isOpen && 'rotate-180')} aria-hidden="true" />
+          </button>
         </div>
       </CardHeader>
       {isOpen ? (
-        <CardContent id={contentId} className="p-4 sm:p-5">
+        <CardContent id={contentId} className="p-5 sm:px-6 sm:py-5">
           {children}
         </CardContent>
       ) : null}
@@ -444,7 +433,6 @@ function InfoItem({
   label,
   value,
   fallback = NOT_INFORMED,
-  icon: Icon,
 }: {
   label: string;
   value?: ReactNode;
@@ -452,12 +440,9 @@ function InfoItem({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-      <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        {Icon && <Icon className="h-3.5 w-3.5 text-brand-blue" />}
-        {label}
-      </div>
-      <div className="min-w-0 break-words text-sm font-semibold text-slate-950">{isBlank(value) ? fallback : value}</div>
+    <div className="min-w-0 space-y-1 py-1">
+      <div className="text-[12px] font-semibold leading-4 text-[#5a5663]">{label}</div>
+      <div className="min-w-0 break-words text-[13px] leading-5 text-[#2d2936]">{isBlank(value) ? fallback : value}</div>
     </div>
   );
 }
