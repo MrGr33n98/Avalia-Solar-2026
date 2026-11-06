@@ -27,8 +27,6 @@ RSpec.describe 'ActiveAdmin Plan feature editor', type: :request do
   end
 
   before do
-    # MFA is required in production; isolate HTML/controller behavior here.
-    allow_any_instance_of(AdminUser).to receive(:billing_super_admin?).and_return(true)
     sign_in admin_user
   end
 
@@ -105,7 +103,7 @@ RSpec.describe 'ActiveAdmin Plan feature editor', type: :request do
     end
 
     it 'denies changes for accounts without billing super-admin privileges' do
-      allow_any_instance_of(AdminUser).to receive(:billing_super_admin?).and_return(false)
+      admin_user.update!(billing_role: 'support')
       original = plan.reload.feature_flags.deep_dup
       patch admin_plan_path(plan), params: {
         plan: { plan_feature_fields: { custom_ctas: '0' } }
