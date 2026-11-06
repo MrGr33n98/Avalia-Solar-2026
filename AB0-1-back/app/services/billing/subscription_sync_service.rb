@@ -83,7 +83,7 @@ module Billing
       # Resolve o plano e associa para evitar erro de validação (Plan must exist)
       plan = ::Plan.find_by(stripe_price_id_monthly: price_id) || ::Plan.find_by(stripe_price_id_yearly: price_id)
       sub.plan = plan if plan
-      sub.plan ||= ::Plan.find_by(name: 'Free') || ::Plan.first
+      sub.plan ||= free_plan!
 
       sub.update!(
         stripe_customer_id: @stripe_sub.customer,
@@ -105,10 +105,10 @@ module Billing
 
       # Se for active ou trialing, aplica o plano resolvido (ou mantém o plano da assinatura se não achou por price_id)
       target_plan = if sub.active_or_trialing?
-                      plan || sub.plan || ::Plan.find_by(name: 'Free') || ::Plan.first
+                      plan || sub.plan || free_plan!
                     else
                       # Caso contrário, volta pro Free
-                      ::Plan.find_by(name: 'Free') || ::Plan.first
+                      free_plan!
                     end
 
       # Só atualiza o plano da empresa se for diferente, evitando callbacks desnecessários
@@ -118,6 +118,13 @@ module Billing
       return unless plan && sub.plan_id != plan.id
 
       sub.update!(plan: plan)
+    end
+
+    # A missing free tier must never fall back to a paid Plan.first.
+    # Fail the webhook transaction and retry after correcting pricing data.
+    def free_plan!
+      ::Plan.find_by(name: 'Free', price: 0) || ::Plan.where(price: 0).order(:id).first ||
+        (raise ActiveRecord::RecordNotFound, 'Billing Free plan is missing')
     end
 
     def notify_status_change(sub, old_status)

@@ -1380,6 +1380,25 @@ module Api
         }, status: :ok
       end
 
+      # GET /api/v1/company_dashboard/conversion_surfaces?company_id=123&period=30d
+      # Dashboard only: the registry counts potential/eligible surface placement,
+      # while impressions and clicks require real, opted-in instrumentation.
+      def conversion_surfaces
+        authorize @company, :view_dashboard?
+        requested_id = params[:company_id].to_s
+        if requested_id.present? && requested_id != @company.id.to_s
+          return render json: { error: 'Company not found' }, status: :not_found
+        end
+
+        preset = params[:period].presence || '30d'
+        return render json: { error: 'Invalid period' }, status: :unprocessable_entity unless
+          ::CompanyConversion::SurfaceSnapshot::PERIODS.key?(preset)
+
+        payload = ::CompanyConversion::SurfaceSnapshot.new(company: @company, preset: preset).call
+        response.headers['Cache-Control'] = 'private, no-store, max-age=0'
+        render json: payload
+      end
+
       # GET /api/v1/company_dashboard/cta_visibility?company_id=123
       # Independent of the moderated CTA URL/template update flow.
       def cta_visibility
@@ -1468,9 +1487,10 @@ module Api
               Rails.logger.warn("[CtaVisibility] profile revalidation unavailable company_id=#{@company.id}")
             end
           rescue StandardError => e
-            PublicProfileRevalidationJob.perform_later(@company.id)
+            # Company#schedule_public_profile_revalidation already enqueued the
+            # retry after commit. Do not double-enqueue it on webhook failure.
             result[:body][:cache_state] = 'pending_retry'
-            Rails.logger.error("[CtaVisibility] cache revalidation queued company_id=#{@company.id}: #{e.class}")
+            Rails.logger.error("[CtaVisibility] existing cache revalidation retry company_id=#{@company.id}: #{e.class}")
           end
         else
           result[:body][:cache_state] = 'unchanged' if result[:status] == :ok

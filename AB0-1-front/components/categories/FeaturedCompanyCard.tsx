@@ -159,7 +159,7 @@ export default function FeaturedCompanyCard({
       <div className="mt-auto">
         {/* Primary CTA */}
         {canRequestQuote && (
-          <QuoteCTA context="card" source="category-featured-card" className="mb-3" />
+          <QuoteCTA companyId={company.id} context="card" source="category-featured-card" className="mb-3" />
         )}
 
         {/* Secondary Link */}

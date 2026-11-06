@@ -1,40 +1,9 @@
 # frozen_string_literal: true
 
 module Recommendation
+  # A recommendation is discovery. Segment, sponsored position and verification
+  # never grant conversion entitlement. The company resolver is authoritative.
   class CtaResolver
-    CTA_MAPPING = {
-      'installer' => {
-        type: 'request_quote',
-        label: 'Solicitar orçamento',
-        action: 'open_lead_modal'
-      },
-      'integrator' => {
-        type: 'request_quote',
-        label: 'Solicitar orçamento',
-        action: 'open_lead_modal'
-      },
-      'mobility' => {
-        type: 'request_quote',
-        label: 'Solicitar orçamento',
-        action: 'open_lead_modal'
-      },
-      'supplier' => {
-        type: 'find_installers',
-        label: 'Encontrar integradores',
-        action: 'open_lead_modal'
-      },
-      'distributor' => {
-        type: 'find_installers',
-        label: 'Encontrar integradores',
-        action: 'open_lead_modal'
-      },
-      'finance' => {
-        type: 'simulate_financing',
-        label: 'Simular financiamento',
-        action: 'open_lead_modal'
-      }
-    }.freeze
-
     DEFAULT_PRIMARY_CTA = {
       type: 'view_profile',
       label: 'Ver perfil',
@@ -50,32 +19,32 @@ module Recommendation
     end
 
     def call
-      segment_key = company.segment.to_s.strip.downcase
-      primary = CTA_MAPPING.fetch(segment_key, DEFAULT_PRIMARY_CTA).dup
-      profile_url = build_profile_url(company)
-
-      primary[:url] = profile_url
-
-      secondary = {
-        type: 'rate_company',
-        label: 'Avaliar essa empresa',
-        action: 'open_review_form',
-        url: profile_url
-      }
+      profile_url = "/companies/#{company.slug.presence || company.id}"
+      visibility = CompanyCtaVisibilityResolver.new(company).call.fetch(:effective)
+      primary =
+        if visibility[:quote] == true
+          { type: 'request_quote', label: 'Solicitar orçamento',
+            action: 'open_quote_wizard', preferred_company_id: company.id, url: profile_url }
+        elsif visibility[:whatsapp] == true && company.whatsapp_contact_url.present?
+          { type: 'whatsapp', label: 'WhatsApp',
+            action: 'open_whatsapp', url: company.whatsapp_contact_url }
+        else
+          DEFAULT_PRIMARY_CTA.merge(url: profile_url)
+        end
 
       {
         primary: primary,
-        secondary: secondary
+        secondary: {
+          type: 'rate_company',
+          label: 'Avaliar essa empresa',
+          action: 'open_review_form',
+          url: profile_url
+        }
       }
     end
 
     private
 
     attr_reader :company
-
-    def build_profile_url(company)
-      identifier = company.slug.presence || company.id
-      "/companies/#{identifier}"
-    end
   end
 end

@@ -38,6 +38,13 @@ export interface Company {
   id: number;
   p2p_chat_enabled?: boolean;
   has_paid_plan?: boolean;
+  cta_whatsapp_url?: string | null;
+  whatsapp_url?: string | null;
+  cta_visibility?: {
+    effective?: { quote?: boolean; whatsapp?: boolean };
+    availability?: { quote?: boolean; whatsapp?: boolean; whatsapp_configured?: boolean };
+    version?: number;
+  };
   name: string;
   slug: string;
   description?: string | null;

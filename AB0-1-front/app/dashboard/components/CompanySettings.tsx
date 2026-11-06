@@ -33,6 +33,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchApi, type Company } from '@/lib/api';
 import CtaVisibilitySettings from './cta-visibility/CtaVisibilitySettings';
+import ConversionSurfacesOverview from './conversion-surfaces/ConversionSurfacesOverview';
 import { useToast } from '@/hooks/use-toast';
 import { startDashboardTour } from '@/lib/tour';
 import Link from 'next/link';
@@ -180,7 +181,7 @@ export default function CompanySettings({ companyId, company }: CompanySettingsP
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/50 border border-border/40 text-xs text-muted-foreground">
             <CheckCircle2 className={`w-4 h-4 ${configuredCtas > 0 ? 'text-emerald-500' : 'text-amber-500'}`} />
             <span className="font-semibold text-foreground">{configuredCtas}/2</span>
-            <span>CTAs ativos</span>
+            <span>Links configurados</span>
           </div>
 
           <Button
@@ -238,6 +239,9 @@ export default function CompanySettings({ companyId, company }: CompanySettingsP
             ABA 1: CHAMADAS PARA AÇÃO (CTAs) E WHATSAPP
             ======================================================== */}
         <TabsContent value="conversion" className="mt-6 space-y-6">
+          {process.env.NEXT_PUBLIC_CONVERSION_SURFACES_DASHBOARD_ENABLED === 'true' && (
+            <ConversionSurfacesOverview key={companyId} companyId={companyId} />
+          )}
           {process.env.NEXT_PUBLIC_CTA_VISIBILITY_UI_V1 !== 'false' && (
             <CtaVisibilitySettings key={companyId} companyId={companyId} />
           )}

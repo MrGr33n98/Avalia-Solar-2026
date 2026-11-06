@@ -100,6 +100,9 @@ class RecommendationSerializer
         count: projects_cnt > 0 ? projects_cnt : nil,
         label: projects_label
       },
+      # Public, additive contract. Entitlements never come from segment or ranking.
+      has_paid_plan: company.has_paid_plan? == true,
+      cta_visibility: CompanyCtaVisibilityResolver.new(company).call,
       primary_cta: res.primary_cta,
       secondary_cta: res.secondary_cta,
       comparison: {

@@ -20,6 +20,24 @@ module Billing
 
     validates :status, presence: true, inclusion: { in: STATUSES }
 
+    # Stripe updates the subscription first; plan_id on Company can remain
+    # unchanged. Bust cached public CTAs on status/plan changes as well.
+    after_update_commit :revalidate_company_conversion_ctas, if: :public_conversion_changed?
+
+    private
+
+    def public_conversion_changed?
+      saved_change_to_status? || saved_change_to_plan_id? || saved_change_to_current_period_end?
+    end
+
+    def revalidate_company_conversion_ctas
+      PublicProfileRevalidationJob.perform_later(company_id)
+    rescue StandardError => e
+      Rails.logger.error("[Billing::CompanySubscription] revalidation enqueue failed company_id=#{company_id}: #{e.class}")
+    end
+
+    public
+
     # Scopes
     scope :active_saas, -> { where(status: %w[active trialing past_due manual]) }
     scope :past_due, -> { where(status: 'past_due') }

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Colors } from '@/constants/theme';
-import { StyleSheet, ScrollView, View, TouchableOpacity, ActivityIndicator, useColorScheme , useColorScheme } from 'react-native';
+import { StyleSheet, ScrollView, View, TouchableOpacity, ActivityIndicator, useColorScheme } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { companiesApi } from '@/lib/api';
+import { canRequestCompanyQuote } from '@/lib/company-conversion';
 
 export default function CompanyServicesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -133,7 +133,7 @@ export default function CompanyServicesScreen() {
 
               <View style={styles.cardDivider} />
 
-              {company?.has_paid_plan === true && <TouchableOpacity
+              {canRequestCompanyQuote(company) && <TouchableOpacity
                 style={styles.quoteRedirectBtn}
                 onPress={() => router.push(`/company/${id}/lead`)}
               >
@@ -147,7 +147,7 @@ export default function CompanyServicesScreen() {
 
       {/* Botão de Rodapé Fixo */}
       <View style={[styles.footer, { borderTopColor: colors.border }]}>
-        {company?.has_paid_plan === true && <TouchableOpacity
+        {canRequestCompanyQuote(company) && <TouchableOpacity
           style={styles.quoteButton}
           onPress={() => router.push(`/company/${id}/lead`)}
         >

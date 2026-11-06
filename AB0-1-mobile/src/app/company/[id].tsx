@@ -49,6 +49,7 @@ import { Colors, Spacing, Radius, Shadows } from '@/constants/theme';
 import { companiesApi, reviewsApi, Company, Review } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useTracking } from '@/hooks/useTracking';
+import { canRequestCompanyQuote, companyWhatsAppHref } from '@/lib/company-conversion';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // Banner height 3:1 ratio compacto
@@ -198,7 +199,9 @@ export default function CompanyDetailScreen() {
   const isVerified = company.identity?.verification
     ? company.identity.verification.verified
     : Boolean(company.verified);
-  const isPaid = company.commercial_status?.paid ?? company.has_paid_plan ?? false;
+  const isPaid = company.has_paid_plan === true;
+  const canRequestQuote = canRequestCompanyQuote(company);
+  const whatsappHref = companyWhatsAppHref(company);
   const commercialTier = isPaid
     ? company.commercial_status?.tier?.toUpperCase() || 'PRO'
     : null;
@@ -673,6 +676,20 @@ export default function CompanyDetailScreen() {
                   </TouchableOpacity>
                 )}
 
+                {whatsappHref && (
+                  <TouchableOpacity
+                    accessibilityRole="link"
+                    accessibilityLabel={`Falar com ${company.name} no WhatsApp`}
+                    style={[styles.contactItem, { backgroundColor: '#16a34a', borderColor: '#16a34a' }]}
+                    onPress={() => {
+                      haptic();
+                      void Linking.openURL(whatsappHref).catch(() => {});
+                    }}
+                  >
+                    <ThemedText style={[styles.contactItemText, { color: '#fff', fontWeight: '600' }]}>WhatsApp</ThemedText>
+                  </TouchableOpacity>
+                )}
+
                 {company.phone && (
                   <TouchableOpacity
                     style={[styles.contactItem, { backgroundColor: colors.backgroundElement, borderColor: colors.border }]}
@@ -715,8 +732,7 @@ export default function CompanyDetailScreen() {
       </ScrollView>
 
       {/* ── STICKY BOTTOM CTA BAR ────────────────────────────────────────── */}
-      {isPaid && (
-        <View
+      <View
           style={[
             styles.stickyBar,
             {
@@ -726,6 +742,7 @@ export default function CompanyDetailScreen() {
             },
           ]}
         >
+          {canRequestQuote && (
           <TouchableOpacity
             style={[styles.ctaPrimary, { backgroundColor: colors.tint }]}
             onPress={() => {
@@ -734,8 +751,9 @@ export default function CompanyDetailScreen() {
             }}
             activeOpacity={0.85}
           >
-            <ThemedText style={styles.ctaPrimaryText}>Solicitar Orçamento Grátis</ThemedText>
+            <ThemedText style={styles.ctaPrimaryText}>Solicitar orçamento</ThemedText>
           </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.ctaSecondary, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
@@ -748,7 +766,6 @@ export default function CompanyDetailScreen() {
             <UserCheck size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
-      )}
     </ThemedView>
   );
 }

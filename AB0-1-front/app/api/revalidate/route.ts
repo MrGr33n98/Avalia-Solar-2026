@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const ALLOWED_PATH_PATTERNS: RegExp[] = [
   /^\/$/,
   /^\/categories$/,
+  /^\/companies$/,
   /^\/categories\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/(?:solutions|compare|matching))?$/,
   /^\/companies\/[a-z0-9-]+$/,
   /^\/blog\/[a-z0-9-]+$/,
@@ -16,6 +17,9 @@ const ALLOWED_TAG_PATTERNS: RegExp[] = [
   /^articles$/,
   /^article-[a-z0-9-]+$/,
   /^categories$/,
+  /^companies$/,
+  /^featured-companies$/,
+  /^recommendations$/,
   /^category-[a-z0-9]+(?:-[a-z0-9]+)*$/,
   /^category-solution-types$/,
 ];

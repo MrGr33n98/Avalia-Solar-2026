@@ -7,17 +7,13 @@ import { Award, ChevronRight, MapPin, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Company } from '@/lib/api';
 import { openQuoteWizard } from '@/lib/quote-wizard';
+import { canUsePaidConversion } from '@/lib/feature-access';
 
 interface TopRankingSectionProps {
   companies: Company[];
   category: string;
   onMethodologyClick?: () => void;
 }
-
-type RankingCompany = Company & {
-  feature_access?: Record<string, { state?: string; value?: unknown }>;
-  sponsored?: boolean;
-};
 
 export default function TopRankingSection({
   companies,
@@ -94,18 +90,8 @@ function RankingCompanyCard({
       : rank === 2
         ? 'hover:border-teal-200'
         : 'hover:border-green-200';
-  const rankingCompany = company as RankingCompany;
-  const featureAccess = rankingCompany.feature_access ?? {};
-  const customCta = featureAccess.custom_ctas;
-  const canQuote =
-    Object.keys(featureAccess).length > 0
-      ? Boolean(
-          customCta &&
-          ['enabled', 'limited', 'trial'].includes(customCta.state || '') &&
-          customCta.value !== false &&
-          customCta.value !== null
-        )
-      : rankingCompany.sponsored === true;
+  // Sponsorship changes placement, never the company's commercial entitlement.
+  const canQuote = canUsePaidConversion(company, 'quote');
 
   return (
     <article
@@ -162,7 +148,7 @@ function RankingCompanyCard({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              openQuoteWizard({ source: 'category-ranking' });
+              openQuoteWizard({ preferredCompanyId: company.id, source: 'category-ranking' });
             }}
             className="h-8 min-w-0 rounded-[6px] border border-[#FDBA74] bg-[#FFF7ED] px-1.5 text-[10px] font-bold text-[#C2410C] shadow-none hover:bg-[#FFEED5] sm:h-9 sm:text-xs"
           >

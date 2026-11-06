@@ -75,7 +75,7 @@ describe('ChatCompanyRecommendations', () => {
 
   it('permite solicitar orçamento e chama callback correto', () => {
     const validMetadata = {
-      companies: [{ id: 42, name: 'Energia Boa' }],
+      companies: [{ id: 42, name: 'Energia Boa', has_paid_plan: true, cta_visibility: { effective: { quote: true, whatsapp: false } } }],
     };
 
     render(<ChatCompanyRecommendations {...defaultProps} metadata={validMetadata} />);
@@ -84,6 +84,22 @@ describe('ChatCompanyRecommendations', () => {
     fireEvent.click(quoteBtn);
 
     expect(defaultProps.onRequestQuote).toHaveBeenCalledWith(42);
+  });
+
+  it('oculta o orçamento para empresa Free patrocinada, sem prejudicar a comparação', () => {
+    render(<ChatCompanyRecommendations {...defaultProps} metadata={{
+      companies: [{ id: 77, name: 'Solar Free', sponsored: true, has_paid_plan: false,
+        cta_visibility: { effective: { quote: true } } }],
+    }} />);
+    expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
+    expect(screen.getByText('Solar Free')).toBeInTheDocument();
+  });
+
+  it('oculta orçamento para empresa paga quando entitlement não é retornado', () => {
+    render(<ChatCompanyRecommendations {...defaultProps} metadata={{
+      companies: [{ id: 78, name: 'Paga Sem Entitlement', has_paid_plan: true }],
+    }} />);
+    expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
   });
 
   it('renderiza múltiplos cards quando há várias empresas', () => {
@@ -109,7 +125,7 @@ describe('ChatCompanyRecommendations', () => {
 
     render(<ChatCompanyRecommendations {...defaultProps} metadata={validMetadata} />);
 
-    const compareBtn = screen.getByRole('button', {
+    const compareBtn = screen.getByRole('checkbox', {
       name: /Adicionar Solar Prime à comparação/i,
     });
     fireEvent.click(compareBtn);

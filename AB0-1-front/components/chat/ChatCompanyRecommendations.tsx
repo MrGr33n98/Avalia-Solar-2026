@@ -140,6 +140,9 @@ const RecommendationsContent: React.FC<ChatCompanyRecommendationsProps> = ({
           }
         };
 
+        const quoteEntitled = rawCompany?.has_paid_plan === true &&
+          rawCompany?.cta_visibility?.effective?.quote === true;
+
         const handleBudgetClick = () => {
           if (trackableCompanyId !== null) {
             onRequestQuote(trackableCompanyId);
@@ -155,7 +158,7 @@ const RecommendationsContent: React.FC<ChatCompanyRecommendationsProps> = ({
             maxComparison={maxComparison}
             onCompare={MOBIVOLT_COMPARE_BUTTON_ENABLED ? handleCompareClick : undefined}
             onReviews={handleReviewsClick}
-            onBudget={handleBudgetClick}
+            onBudget={quoteEntitled ? handleBudgetClick : undefined}
             compareEnabled={MOBIVOLT_COMPARE_BUTTON_ENABLED}
             showServices={false}
           />

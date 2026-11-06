@@ -18,6 +18,7 @@ module Chat
 
         basic_info.merge(metrics_and_links)
                   .merge(recommendation_data)
+                  .merge(conversion_eligibility)
                   .merge(additional_info)
       rescue StandardError => e
         error_msg = "[Chat::Mobivolt::SafeCompanySerializer] Error serializing company #{@company&.id}: #{e.message}"
@@ -50,6 +51,16 @@ module Chat
           verificada: boolean_flag(@company.verified),
           sponsored_placement_score: sponsored_placement_score,
           recommendation_reason: build_recommendation_reason
+        }
+      end
+
+      # Only an effective boolean decision is exposed. Never disclose contacts
+      # or assume a sponsored placement grants a premium quote workflow.
+      def conversion_eligibility
+        decision = CompanyCtaVisibilityResolver.new(@company).call
+        {
+          has_paid_plan: @company.has_paid_plan? == true,
+          cta_visibility: { effective: decision.fetch(:effective) }
         }
       end
 
