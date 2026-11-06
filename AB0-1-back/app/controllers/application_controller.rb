@@ -49,7 +49,15 @@ class ApplicationController < ActionController::Base
     (respond_to?(:current_user) && current_user) || (respond_to?(:current_admin_user) && current_admin_user)
   end
 
-  def access_denied(exception)
-    redirect_to root_path, alert: exception.message
+  # ActiveAdmin calls the configured unauthorized handler via public_send.
+  # Keeping it private turns a legitimate 403 into a 500 (NoMethodError).
+  public
+
+  def access_denied(_exception)
+    if active_admin_request?
+      redirect_to admin_root_path, alert: 'Você não tem permissão para executar esta ação.'
+    else
+      redirect_to root_path, alert: 'Você não tem permissão para executar esta ação.'
+    end
   end
 end
