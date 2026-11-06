@@ -70,7 +70,11 @@ module CompanyConversion
         summary: {
           catalog_candidates: registry.all.size,
           certified_live_surfaces: rows.count { |row| row[:certified] },
-          applicable_surfaces: rows.select { |row| row[:applicable] }.map { |row| row[:variant_group] }.uniq.size,
+          # Eligible means that at least one paid channel is EFFECTIVELY allowed.
+          # A Free company may be listed everywhere, but has zero paid CTA surfaces.
+          applicable_surfaces: rows.select do |row|
+            row[:applicable] && row[:channels].keys.any? { |channel| visibility.dig(:effective, channel.to_sym) == true }
+          end.map { |row| row[:variant_group] }.uniq.size,
           active_surface_count: rows.select { |row| row[:channels].values.any? { |channel| channel[:enabled] } }
                                     .map { |row| row[:variant_group] }.uniq.size,
           active_quote_points: active_quote.map { |row| row[:variant_group] }.uniq.size,

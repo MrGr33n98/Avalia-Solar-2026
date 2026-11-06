@@ -25,9 +25,22 @@ RSpec.describe CompanyConversion::SurfaceSnapshot do
       snapshot = described_class.new(company: company).call
       expect(snapshot[:summary][:catalog_candidates]).to eq(24)
       expect(snapshot[:summary][:active_quote_points]).to eq(0)
+      expect(snapshot[:summary][:applicable_surfaces]).to eq(0)
       expect(snapshot[:summary][:observed_surface_count]).to be_nil
       expect(snapshot[:summary][:quote_clicks]).to be_nil
       expect(snapshot[:data_status]).to eq('unavailable')
+    end
+  end
+
+  it 'counts paid eligible surface groups even when uncertified, without declaring them live' do
+    allow(CompanyCtaVisibilityResolver).to receive(:new).and_return(
+      double(call: { effective: { quote: true, whatsapp: false } })
+    )
+    with_modified_env(CONVERSION_EVENTS_V2_ENABLED: 'false', CONVERSION_CERTIFIED_SURFACE_IDS: '') do
+      snapshot = described_class.new(company: company).call
+      expect(snapshot[:summary][:applicable_surfaces]).to be > 0
+      expect(snapshot[:summary][:active_quote_points]).to eq(0)
+      expect(snapshot[:summary][:impressions]).to be_nil
     end
   end
 
