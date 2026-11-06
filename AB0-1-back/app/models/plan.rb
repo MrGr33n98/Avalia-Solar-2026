@@ -10,7 +10,7 @@ class Plan < ApplicationRecord
   validates :price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   # Virtual attributes to store feature flags, tier, and status during form submission or specs
-  attr_accessor :plan_feature_fields, :plan_tier_template, :status
+  attr_accessor :plan_feature_fields, :plan_tier_template, :change_reason, :status
 
   def tier=(val)
     self.plan_tier_template = val
@@ -48,6 +48,13 @@ class Plan < ApplicationRecord
 
     source = existing.merge(submitted)
     normalized = PlanFeatureCatalog.normalize(source, plan_tier: tier)
+    # Blank numeric inputs intentionally clear optional limits instead of
+    # silently restoring the tier default.
+    submitted.each do |key, value|
+      if value == '' && PlanFeatureCatalog.feature_definition(key)[:type] == :integer
+        normalized[key] = nil
+      end
+    end
     self.features_json = normalized if respond_to?(:features_json=)
     self.features = normalized.to_json if self.class.column_names.include?('features')
   rescue StandardError => e
