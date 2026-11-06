@@ -114,7 +114,7 @@
       if (inputs.some(function (input) {
         return input.dataset.planFeatureType === 'integer' &&
           input.value.trim() !== '' &&
-          (!/^\\d+$/.test(input.value.trim()) || Number(input.value) > 2147483647);
+          (!/^\d+$/.test(input.value.trim()) || Number(input.value) > 2147483647);
       })) {
         event.preventDefault();
         window.alert('Revise os limites: use somente inteiros não negativos.');
