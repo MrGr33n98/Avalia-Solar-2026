@@ -1,6 +1,7 @@
 class Plan < ApplicationRecord
   # Associations
   has_many :companies, dependent: :nullify
+  has_many :plan_configuration_audits, dependent: :nullify
   has_many :subscription_plans, dependent: :destroy
   has_many :billing_company_subscriptions, class_name: 'Billing::CompanySubscription', dependent: :destroy
 
