@@ -21,9 +21,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
   const { category } = result;
   const canonicalPath = resolveCategoryCanonicalPath(category, params.slug, 'solutions');
+  const hasSolutions = Array.isArray(category.solution_types) && category.solution_types.length > 0;
   return {
     title: `Tipos de soluções de ${category.name} | Avalia Solar`,
     description: `Conheça os tipos de soluções disponíveis em ${category.name} e compare opções para o seu projeto.`,
+    robots: hasSolutions ? undefined : { index: false, follow: true },
     alternates: { canonical: absoluteUrl(canonicalPath) },
   };
 }

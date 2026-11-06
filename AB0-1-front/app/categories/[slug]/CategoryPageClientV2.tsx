@@ -34,6 +34,7 @@ import { Search, X } from 'lucide-react';
 import { trackCategorySelected } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
 import { Banner, Category, Company } from '@/lib/api';
+import { buildCategoryNavigationCapabilities } from '@/lib/seo/category-schema';
 import { openQuoteWizard } from '@/lib/quote-wizard';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -279,15 +280,7 @@ export default function CategoryPageClient({
           />
 
           <nav aria-label="Navegação da categoria" className="mx-auto flex max-w-[1280px] gap-2 overflow-x-auto px-4 py-3 sm:px-6">
-            {[
-              ['Empresas', `/categories/${slug}`],
-              ['Sobre a categoria', `/categories/${slug}/about`],
-              ['Tipos de soluções', `/categories/${slug}/solutions`],
-              ['Comparar soluções', `/categories/${slug}/compare`],
-              ['Guias e conteúdo', `/categories/${slug}/guides`],
-              ['Avaliações', `/categories/${slug}/reviews`],
-              ['Empresas para seu projeto', `/categories/${slug}/matching`],
-            ].map(([label, href]) => (
+            {buildCategoryNavigationCapabilities(initialCategory, slug).map(({ label, href }) => (
               <Link key={href} href={href} className="min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700">
                 {label}
               </Link>

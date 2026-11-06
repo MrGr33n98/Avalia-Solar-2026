@@ -101,15 +101,15 @@ export default function CategoryHero({
   return (
     <section className="bg-white pb-2 pt-3 md:pb-4 md:pt-4">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6">
-        <nav className="mb-3 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-[12px] font-semibold text-slate-500 md:text-sm">
+        <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-[12px] font-semibold text-slate-500 md:text-sm">
           <Link href="/" className="transition-colors hover:text-blue-600">
-            Home
+            Início
           </Link>
           <ChevronRight className="h-3 w-3 opacity-50" />
           <Link href="/categories" className="transition-colors hover:text-blue-600">
-            Empresas
+            Categorias
           </Link>
-          {parentCategory && (
+          {parentCategory && (parentCategory.seo_url || parentCategory.slug) && (
             <>
               <ChevronRight className="h-3 w-3 opacity-50" />
               <Link

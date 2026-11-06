@@ -9,6 +9,7 @@ import {
   resolveCategoryCanonicalPath,
   resolveCategoryCanonicalSlug,
 } from '@/lib/seo/category-metadata';
+import { buildCategoryBreadcrumbItems } from '@/lib/seo/category-schema';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -30,23 +31,9 @@ const REDIRECT_SLUGS = new Set([
 ]);
 
 function BreadcrumbsWrapper({ category, fallbackSlug }: { category: Category; fallbackSlug: string }) {
-  const canonicalSlug = resolveCategoryCanonicalSlug(category, fallbackSlug);
-  const parentCanonicalSlug = category.parent?.seo_url || category.parent?.slug;
   return (
     <BreadcrumbSchema
-      items={[
-        { name: 'Início', item: '/' },
-        { name: 'Categorias', item: '/categories' },
-        ...(category.parent?.name && parentCanonicalSlug
-          ? [
-              {
-                name: category.parent.name,
-                item: `/categories/${parentCanonicalSlug}`,
-              },
-            ]
-          : []),
-        { name: category.name, item: `/categories/${canonicalSlug}` },
-      ]}
+      items={buildCategoryBreadcrumbItems(category, fallbackSlug)}
     />
   );
 }

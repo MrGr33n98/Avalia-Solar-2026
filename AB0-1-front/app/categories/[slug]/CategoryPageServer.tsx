@@ -4,7 +4,8 @@ import CategoryPageClientV2 from './CategoryPageClientV2';
 import type { Banner, Category } from '@/lib/api';
 import { publicBannersApi, publicCategoriesApi } from '@/lib/api-public';
 import { getCachedPublicCategory } from '@/lib/server/category-discovery/get-public-category';
-import AnswerBlock from '@/components/seo/AnswerBlock';
+import { buildCategoryCollectionPageSchema } from '@/lib/seo/category-schema';
+import CategoryEditorialSection from '@/components/categories/CategoryEditorialSection';
 import FAQSection from '@/components/seo/FAQSection';
 
 interface CategorySlugPageProps {
@@ -105,8 +106,32 @@ export default async function CategoryPageServer({
     banners = [...banners, ...fallbackTopBanners];
   }
 
+  const totalCompaniesCount =
+    typeof (paginationMeta as { total?: number; total_items?: number } | null)?.total === 'number'
+      ? Number((paginationMeta as { total?: number }).total)
+      : typeof (paginationMeta as { total_items?: number } | null)?.total_items === 'number'
+        ? Number((paginationMeta as { total_items?: number }).total_items)
+        : companies.length;
+
+  const collectionPageSchema = buildCategoryCollectionPageSchema({
+    category,
+    companies,
+    totalCount: totalCompaniesCount,
+    fallbackSlug: params.slug,
+  });
+
+  const publishedFaqs = Array.isArray(category.faqs)
+    ? category.faqs.filter((f) => f.question?.trim() && f.answer?.trim())
+    : [];
+
   return (
     <div className="relative">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageSchema) }}
+      />
+
       <Suspense fallback={<div className="container mx-auto px-4 py-8 text-center">Carregando categoria...</div>}>
         <CategoryPageClientV2
           initialCategory={category}
@@ -116,31 +141,26 @@ export default async function CategoryPageServer({
         />
       </Suspense>
 
-      <section className="bg-white py-10">
-        <div className="container mx-auto max-w-5xl px-4 md:px-6">
-          <AnswerBlock
-            question={`Como escolher empresas de ${category.name}?`}
-            answer={`Para escolher empresas de ${category.name}, compare reputação, cidade atendida, categorias de projeto, documentação, tempo de resposta e histórico de avaliações. O Avalia Solar organiza esses sinais para reduzir pesquisa manual e ajudar o usuário a separar fornecedores verificados, especialistas locais e opções que realmente atendem ao tipo de projeto buscado.`}
-            facts={[
-              `${companies.length} empresas nesta listagem`,
-              `${category.name}`,
-              'Comparação por reputação',
-            ]}
-            href="/help"
-            linkLabel="Entenda como comparar empresas"
-          />
-        </div>
-      </section>
+      <CategoryEditorialSection
+        category={category}
+        eligibleCompaniesCount={totalCompaniesCount}
+        fallbackSlug={params.slug}
+      />
 
-      <section className="bg-slate-50 border-t border-slate-200/60 py-16 md:py-24">
-        <div className="container mx-auto max-w-4xl px-4 md:px-6">
-          <FAQSection
-            title={`Dúvidas Frequentes sobre ${category.name}`}
-            subtitle={`Veja respostas rápidas para as principais dúvidas sobre ${category.name.toLowerCase()} e compare com segurança.`}
-            items={category.faqs || []}
-          />
-        </div>
-      </section>
+      {publishedFaqs.length > 0 && (
+        <section
+          id="category-faq-section"
+          className="bg-slate-50 border-t border-slate-200/60 py-16 md:py-24"
+        >
+          <div className="container mx-auto max-w-4xl px-4 md:px-6">
+            <FAQSection
+              title={`Dúvidas Frequentes sobre ${category.name}`}
+              subtitle={`Veja respostas rápidas para as principais dúvidas sobre ${category.name.toLowerCase()} e compare com segurança.`}
+              items={publishedFaqs}
+            />
+          </div>
+        </section>
+      )}
     </div>
   );
 }

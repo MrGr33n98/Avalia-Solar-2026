@@ -84,6 +84,35 @@ test.describe('CDSI-019: Category HTTP & SSR SEO Semantics (E01-E06, E18)', () =
     await expect(canonical).toHaveCount(1);
     await expect(canonical.first()).toHaveAttribute('href', /\/companies\/categorias\//);
   });
+
+  test('E09, E10 & E17: com JavaScript desativado, renderiza H1 único, seção editorial H2, links válidos de navegação e CollectionPage JSON-LD', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+
+    const response = await page.goto('/categories/monitoramento-operacao-manutencao');
+    expect(response?.status()).toBe(200);
+
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('#editorial-category-heading')).toBeVisible();
+
+    const navLinks = page.locator('nav[aria-label="Navegação da categoria"] a');
+    const hrefs = await navLinks.evaluateAll((els) =>
+      els.map((el) => el.getAttribute('href') || '')
+    );
+    expect(hrefs.some((h) => h.endsWith('/about'))).toBe(false);
+    expect(hrefs.some((h) => h.endsWith('/guides'))).toBe(false);
+    expect(hrefs.some((h) => h.endsWith('/reviews'))).toBe(false);
+
+    const ldScripts = await page
+      .locator('script[type="application/ld+json"]')
+      .evaluateAll((els) => els.map((el) => el.textContent || ''));
+    expect(ldScripts.some((txt) => txt.includes('"CollectionPage"'))).toBe(true);
+    expect(ldScripts.some((txt) => txt.includes('"BreadcrumbList"'))).toBe(true);
+
+    await context.close();
+  });
 });
 
 

@@ -29,14 +29,15 @@ const baseCategory: Category = {
   indexability: {
     indexable: true,
     publicly_accessible: true,
-    robots: 'index,follow',
+    include_in_sitemap: true,
+    robots_directive: 'index,follow',
     canonical_slug: 'monitoramento-operacao-manutencao',
     canonical_path: '/categories/monitoramento-operacao-manutencao',
     reason_codes: [],
     advisory_warnings: [],
-    eligible_companies_count: 14,
     mode: 'shadow',
   },
+  logo: null,
 };
 
 describe('Category SEO Metadata, Canonical & Redirect Contract (J05–J08, J29)', () => {
