@@ -5,7 +5,7 @@ ActiveAdmin.register Plan do
     permitted = %i[name description price plan_tier_template stripe_product_id stripe_price_id_monthly
                    stripe_price_id_yearly is_public display_order]
     # Allow features_json keys explicitly
-    permitted << { features_json: PlanFeatureCatalog.known_keys }
+    # Feature changes go through the validated virtual form fields only.
     # Allow dynamic feature fields hash
     permitted << { plan_feature_fields: {} }
     permitted
@@ -91,7 +91,8 @@ ActiveAdmin.register Plan do
 
   show title: proc { |p| "Plano: #{p.name}" } do
     grouped_features = PlanFeatureCatalog.known_keys.group_by do |key|
-      PlanFeatureCatalog.feature_definition(key)[:group]
+      group = PlanFeatureCatalog.feature_definition(key)[:group]
+      group == 'analytics' ? 'insights' : group
     end
     feature_groups =
       FEATURE_GROUP_ORDER.each_with_object({}) do |group_key, memo|
@@ -172,14 +173,16 @@ ActiveAdmin.register Plan do
     view_helpers = f.template.helpers
     selected_tier = f.object.plan_tier_template.presence || f.object.inferred_plan_tier
     tier_defaults = PlanFeatureCatalog.defaults_for_tier(selected_tier)
-    preview_flags =
-      if f.object.persisted?
-        f.object.feature_flags
-      else
-        tier_defaults
-      end
+    preview_flags = PlanFeatureCatalog.normalize(
+      f.object.persisted? ? f.object.feature_flags : tier_defaults,
+      plan_tier: selected_tier
+    )
+    defaults_by_tier = PlanFeatureCatalog::PLAN_TIERS.index_with do |tier|
+      PlanFeatureCatalog.defaults_for_tier(tier)
+    end
     grouped_features = PlanFeatureCatalog.known_keys.group_by do |key|
-      PlanFeatureCatalog.feature_definition(key)[:group]
+      group = PlanFeatureCatalog.feature_definition(key)[:group]
+      group == 'analytics' ? 'insights' : group
     end
     feature_groups =
       FEATURE_GROUP_ORDER.each_with_object({}) do |group_key, memo|
@@ -212,8 +215,17 @@ ActiveAdmin.register Plan do
       input_id = "plan_plan_feature_fields_#{key}"
       current_value = preview_flags[key]
       default_value = tier_defaults[key]
-      state = PlanFeatureCatalog.access_state_for(key, current_value)
+      state = definition[:type] == :integer ? 'CONFIGURADO' :
+                (ActiveModel::Type::Boolean.new.cast(current_value) ? 'ATIVO' : 'BLOQUEADO')
       hint = render_feature_hint.call(key, definition, default_value)
+      field_defaults = defaults_by_tier.transform_values { |defaults| defaults[key] }
+      input_metadata = {
+        plan_feature_input: 'true',
+        plan_feature_key: key,
+        plan_feature_type: definition[:type].to_s,
+        plan_feature_original: current_value.nil? ? '' : current_value.to_s,
+        plan_feature_defaults: field_defaults.to_json
+      }
 
       view_helpers.content_tag(
         :li,
@@ -227,7 +239,8 @@ ActiveAdmin.register Plan do
             view_helpers.content_tag(:p, definition[:description], class: 'feature-description-text')
           )
           view_helpers.concat(
-            view_helpers.content_tag(:p, "Status: #{state == 'enabled' ? 'ATIVO' : 'BLOQUEADO'}", class: 'inline-hints')
+            view_helpers.content_tag(:span, state, class: 'plan-feature-state',
+                                    data: { plan_feature_state: 'true' })
           )
 
           if definition[:type] == :integer
@@ -239,7 +252,8 @@ ActiveAdmin.register Plan do
                 id: input_id,
                 min: 0,
                 step: 1,
-                placeholder: default_value || '0'
+                placeholder: default_value || '0',
+                data: input_metadata
               )
             )
           else
@@ -248,8 +262,10 @@ ActiveAdmin.register Plan do
             view_helpers.concat(
               view_helpers.label_tag(input_id, class: 'label') do
                 view_helpers.capture do
-                  view_helpers.concat(view_helpers.check_box_tag(input_name, '1', checked, id: input_id))
-                  view_helpers.concat(' Ativar recurso para este plano')
+                  view_helpers.concat(
+                    view_helpers.check_box_tag(input_name, '1', checked, id: input_id, data: input_metadata)
+                  )
+                  view_helpers.concat(' Ativar')
                 end
               end
             )
@@ -282,8 +298,12 @@ ActiveAdmin.register Plan do
               collection: PlanFeatureCatalog::PLAN_TIERS.map { |tier| [tier.humanize, tier] },
               include_blank: false,
               selected: selected_tier,
-              hint: 'A troca do template redefine os valores padrão abaixo.'
-      nil
+              hint: 'Selecionar não altera as funcionalidades. Use Aplicar padrão para substituir os valores.'
+      text_node(
+        view_helpers.button_tag('Aplicar padrão selecionado',
+                                type: 'button', id: 'plan-apply-template',
+                                class: 'plan-template-apply')
+      )
     end
 
     f.inputs 'Integração Stripe (Faturamento)' do
@@ -298,54 +318,36 @@ ActiveAdmin.register Plan do
 
     feature_groups.each do |group_key, feature_keys|
       f.inputs(FEATURE_GROUP_LABELS[group_key] || group_key.to_s.humanize) do
-      para "Alteração afeta empresas que usam este Plan. Confirme impacto antes de salvar.", class: "inline-hints"
-        view_helpers.safe_join(
-          [
-            if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
-              view_helpers.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
-            end,
-            render_feature_group.call(feature_keys)
-          ].compact
+        para 'Alterações afetam empresas vinculadas a este plano.', class: 'inline-hints'
+        # Formtastic/Arbre does not render a SafeBuffer returned by the block
+        # unless it is explicitly appended to the component tree.
+        text_node(
+          view_helpers.safe_join(
+            [
+              if FEATURE_GROUP_DESCRIPTIONS[group_key].present?
+                view_helpers.content_tag(:p, FEATURE_GROUP_DESCRIPTIONS[group_key], class: 'inline-hints')
+              end,
+              render_feature_group.call(feature_keys)
+            ].compact
+          )
         )
       end
     end
 
     f.inputs 'Resumo da Configuração Resultante' do
-      enabled = preview_flags.each_with_object([]) do |(key, value), memo|
-        next unless PlanFeatureCatalog.access_state_for(key, value) == 'enabled'
-
-        label = render_feature_label.call(key)
-        memo << (value.is_a?(Integer) ? "#{label}: #{value}" : label)
-      end
-
-      view_helpers.safe_join(
-        [
-          view_helpers.content_tag(:p, "Tier de Referência: #{selected_tier.upcase}", class: 'inline-hints'),
-          view_helpers.content_tag(
-            :p,
-            "Total de itens liberados: #{enabled.any? ? enabled.join(', ') : 'Nenhum'}",
-            class: 'inline-hints'
-          )
-        ]
+      text_node(
+        view_helpers.content_tag(
+          :div, '',
+          id: 'plan-feature-summary',
+          class: 'plan-feature-summary',
+          role: 'status',
+          aria: { live: 'polite' },
+          data: { plan_tier: selected_tier, plan_company_count: f.object.persisted? ? f.object.companies.count : 0 }
+        )
       )
+      para 'O resumo e a lista de alterações são atualizados ao marcar os campos.', class: 'inline-hints'
     end
 
     f.actions
-  end
-
-  controller do
-    def update
-      super
-    rescue StandardError => e
-      render plain: "ERRO FATAL: #{e.class} - #{e.message}\n\nParams:\n#{params.inspect}\n\n#{e.backtrace.first(15).join("\n")}",
-             status: 500
-    end
-
-    def create
-      super
-    rescue StandardError => e
-      render plain: "ERRO FATAL: #{e.class} - #{e.message}\n\nParams:\n#{params.inspect}\n\n#{e.backtrace.first(15).join("\n")}",
-             status: 500
-    end
   end
 end
