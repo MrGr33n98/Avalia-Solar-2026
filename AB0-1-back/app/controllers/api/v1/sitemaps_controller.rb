@@ -5,6 +5,24 @@ module Api
       skip_before_action :authenticate_request, raise: false
       skip_before_action :authorize_request, raise: false
 
+      def categories
+        result = ::CategoryDiscovery::SitemapExporter.call(
+          cursor: params[:cursor],
+          limit: params[:limit] || params[:per_page]
+        )
+
+        Rails.logger.info(
+          "[SitemapsController#categories] count=#{result.dig(:meta, :count)} " \
+          "has_more=#{result.dig(:meta, :has_more)} duration_ms=#{result.dig(:meta, :duration_ms)}"
+        )
+
+        render json: result, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[SitemapsController#categories] #{e.class}: #{e.message}")
+        Sentry.capture_exception(e) if defined?(Sentry)
+        render json: { error: 'Falha ao exportar sitemap de categorias' }, status: :service_unavailable
+      end
+
       def local_rankings
         begin
           data = Rails.cache.fetch('sitemap_local_rankings', expires_in: 1.hour) do
@@ -65,7 +83,7 @@ module Api
         # Vamos assumir: status: 'active' e, se existir published_at, ele deve estar preenchido.
         
         results = ::Company.joins(:categories)
-                         .where(companies: { status: 'active' })
+                         .where(companies: { status: 'active' }, categories: { status: 'active' })
                          .where.not(companies: { city: [nil, ''], state: [nil, ''] })
                          .group('categories.seo_url', 'companies.state', 'companies.city')
                          .having('COUNT(companies.id) >= 3')

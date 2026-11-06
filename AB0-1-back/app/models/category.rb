@@ -301,4 +301,33 @@ class Category < ApplicationRecord
 
     errors.add(:home_carousel_banner, 'deve ter no máximo 500KB')
   end
+
+  public
+
+  # CDSI-036: Incrementa views_count sem alterar updated_at para não poluir lastmod do sitemap
+  def increment_views_without_touch!
+    return unless persisted?
+
+    self.class.where(id: id).update_all('views_count = COALESCE(views_count, 0) + 1')
+    self.views_count = (views_count || 0) + 1
+  end
+
+  # CDSI-036: Timestamp significativo para SEO / Sitemap
+  def content_last_modified_at
+    timestamps = [
+      (respond_to?(:published_at) ? published_at : nil),
+      updated_at,
+      created_at
+    ].compact
+
+    if association(:category_faqs).loaded?
+      timestamps.concat(category_faqs.select { |f| f.status == 'published' }.map(&:updated_at).compact)
+    end
+
+    if association(:category_solution_types).loaded?
+      timestamps.concat(category_solution_types.select(&:active).map(&:updated_at).compact)
+    end
+
+    timestamps.max
+  end
 end
