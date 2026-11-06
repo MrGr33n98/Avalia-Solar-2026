@@ -24,6 +24,7 @@ RSpec.describe 'Leads wizard API', type: :request do
       city: 'Rio de Janeiro',
       phone: '21999999999',
       status: 'active',
+      moderation_status: 'approved',
       verified: true,
       featured: false,
       active_admin: true,

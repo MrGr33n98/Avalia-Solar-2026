@@ -153,6 +153,7 @@ module LeadWizard
         state: value_for(core_params, 'state') || @edge_location&.dig(:state),
         category_id: category_id,
         company_id: (company_available ? company_id : nil),
+        quote_requested_company_id: (company_available ? company_id : nil),
         product_vertical: resolved_vertical,
         project_profile: value_for(core_params, 'project_profile', 'projectProfile'),
         quote_type: resolved_quote_type,

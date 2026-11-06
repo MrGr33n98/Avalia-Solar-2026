@@ -179,9 +179,20 @@ class Lead < ApplicationRecord
 
     company = Company.find_by(id: company_id)
     return if company.nil?
-    return if company.status == 'active' && company.moderation_status == 'approved' && company.quote_cta_visible?
 
-    # Business rule: quote/whatsapp CTAs are paid and require active_admin.
+    # An ordinary association to a Company is not necessarily a directed
+    # purchase intent (e.g. CRM attribution, analytics and internal workflows).
+    # Preserve the existing paid entitlement guard for these legacy records.
+    # A customer-selected quote must ALSO respect moderation and CTA opt-out.
+    if quote_requested_company_id.present?
+      return if company_id == quote_requested_company_id &&
+                company.status == 'active' &&
+                company.moderation_status == 'approved' &&
+                company.quote_cta_visible?
+    else
+      return if company.quote_feature_enabled?
+    end
+
     errors.add(:company_id, 'empresa não habilitada para orçamentos')
   end
 
