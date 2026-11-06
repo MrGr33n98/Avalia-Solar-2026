@@ -12,6 +12,8 @@ interface CTAClickProperties {
   ctaLocation: 'hero' | 'sidebar' | 'footer' | 'floating' | 'overview' | 'reviews' | 'other';
   companyId: string;
   companyName: string;
+  surfaceId?: string;
+  placement?: string;
 }
 
 interface TrackingMetadata {
@@ -106,6 +108,11 @@ export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
       company_id: props.companyId,
       company_name: props.companyName,
       profile_layout_version: 'cta_single_whatsapp_v1',
+      ...(props.surfaceId && process.env.NEXT_PUBLIC_CONVERSION_EVENTS_V2_ENABLED === 'true' ? {
+        surface_id: props.surfaceId,
+        surface: 'company_profile',
+        placement: props.placement || props.ctaLocation,
+      } : {}),
       ...metadata,
     };
 

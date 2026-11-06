@@ -3,6 +3,14 @@
 require 'rails_helper'
 
 RSpec.describe CompanyConversion::SurfaceSnapshot do
+  def with_modified_env(**values)
+    previous = values.transform_keys(&:to_s).to_h { |key, _| [key, ENV[key]] }
+    values.each { |key, value| ENV[key.to_s] = value }
+    yield
+  ensure
+    previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+  end
+
   let(:company) { build_stubbed(:company, status: 'active', moderation_status: 'approved') }
 
   before do
@@ -13,7 +21,7 @@ RSpec.describe CompanyConversion::SurfaceSnapshot do
   end
 
   it 'counts registry candidates but never fabricates observed impressions' do
-    ClimateControl.modify(CONVERSION_EVENTS_V2_ENABLED: 'false', CONVERSION_CERTIFIED_SURFACE_IDS: '') do
+    with_modified_env(CONVERSION_EVENTS_V2_ENABLED: 'false', CONVERSION_CERTIFIED_SURFACE_IDS: '') do
       snapshot = described_class.new(company: company).call
       expect(snapshot[:summary][:catalog_candidates]).to eq(24)
       expect(snapshot[:summary][:active_quote_points]).to eq(0)

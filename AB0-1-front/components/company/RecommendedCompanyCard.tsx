@@ -27,13 +27,20 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
       return;
     }
 
+    let dwellTimer: ReturnType<typeof setTimeout> | null = null;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !impressionTracked.current) {
-            impressionTracked.current = true;
-            trackRecommendedCompanyImpression(company, meta);
-            observer.disconnect();
+          if (entry.isIntersecting && !impressionTracked.current && !dwellTimer) {
+            dwellTimer = window.setTimeout(() => {
+              impressionTracked.current = true;
+              trackRecommendedCompanyImpression(company, meta);
+              observer.disconnect();
+              dwellTimer = null;
+            }, 1000);
+          } else if (!entry.isIntersecting && dwellTimer) {
+            window.clearTimeout(dwellTimer);
+            dwellTimer = null;
           }
         });
       },
@@ -44,7 +51,10 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
       observer.observe(cardRef.current);
     }
 
-    return () => observer.disconnect();
+    return () => {
+      if (dwellTimer) window.clearTimeout(dwellTimer);
+      observer.disconnect();
+    };
   }, [company, meta]);
 
   // Profile identity must never point to an external or untrusted CTA URL.

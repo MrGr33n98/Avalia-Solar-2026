@@ -41,6 +41,8 @@ export default function CompanyCTAGroup({
       ctaLocation: 'hero',
       companyId: String(company.id),
       companyName: company.name,
+      surfaceId: 'CV-BRAND-HERO',
+      placement: 'hero',
     });
     openLeadModal({
       preferredCompanyId: company.id,
@@ -109,6 +111,8 @@ export default function CompanyCTAGroup({
                   ctaLocation: 'hero',
                   companyId: String(company.id),
                   companyName: company.name,
+                  surfaceId: 'CV-BRAND-HERO',
+                  placement: 'hero',
                 });
               }}
               className="relative inline-flex h-11 min-h-11 w-full min-w-0 items-center justify-center gap-1 rounded-[10px] bg-[#16a34a] px-2 text-xs font-semibold leading-none text-white shadow-sm transition-colors hover:bg-[#15803d] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:ring-offset-2 min-[380px]:gap-1.5 min-[380px]:text-sm lg:h-10 lg:min-h-10 lg:w-auto lg:min-w-[120px] lg:px-3"
