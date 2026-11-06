@@ -198,7 +198,9 @@ export default function CompanyDetailScreen() {
   const isVerified = company.identity?.verification
     ? company.identity.verification.verified
     : Boolean(company.verified);
-  const isPaid = company.commercial_status?.paid ?? company.has_paid_plan ?? false;
+  const isPaid = company.has_paid_plan === true;
+  const canRequestQuote = company.has_paid_plan === true &&
+    company.cta_visibility?.effective?.quote === true;
   const commercialTier = isPaid
     ? company.commercial_status?.tier?.toUpperCase() || 'PRO'
     : null;
@@ -715,8 +717,7 @@ export default function CompanyDetailScreen() {
       </ScrollView>
 
       {/* ── STICKY BOTTOM CTA BAR ────────────────────────────────────────── */}
-      {isPaid && (
-        <View
+      <View
           style={[
             styles.stickyBar,
             {
@@ -726,6 +727,7 @@ export default function CompanyDetailScreen() {
             },
           ]}
         >
+          {canRequestQuote && (
           <TouchableOpacity
             style={[styles.ctaPrimary, { backgroundColor: colors.tint }]}
             onPress={() => {
@@ -734,8 +736,9 @@ export default function CompanyDetailScreen() {
             }}
             activeOpacity={0.85}
           >
-            <ThemedText style={styles.ctaPrimaryText}>Solicitar Orçamento Grátis</ThemedText>
+            <ThemedText style={styles.ctaPrimaryText}>Solicitar orçamento</ThemedText>
           </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.ctaSecondary, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
@@ -748,7 +751,6 @@ export default function CompanyDetailScreen() {
             <UserCheck size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
-      )}
     </ThemedView>
   );
 }

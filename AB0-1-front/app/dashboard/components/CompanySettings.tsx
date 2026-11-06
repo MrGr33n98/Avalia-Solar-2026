@@ -180,7 +180,7 @@ export default function CompanySettings({ companyId, company }: CompanySettingsP
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/50 border border-border/40 text-xs text-muted-foreground">
             <CheckCircle2 className={`w-4 h-4 ${configuredCtas > 0 ? 'text-emerald-500' : 'text-amber-500'}`} />
             <span className="font-semibold text-foreground">{configuredCtas}/2</span>
-            <span>CTAs ativos</span>
+            <span>Links configurados</span>
           </div>
 
           <Button
