@@ -23,9 +23,15 @@ module Api
 
         sidebar_data = cached_sidebar_payload(state, city, params[:vertical])
 
+        local_decision = ::CategoryDiscovery::LocalPagePolicy.evaluate(
+          scope: base_scope,
+          state: state,
+          city: city
+        )
+
         render json: {
           location: location_payload(state, city),
-          seo: seo_payload(state, city, base_scope.exists?),
+          seo: seo_payload(state, city, local_decision),
           stats: sidebar_data[:stats],
           categories: sidebar_data[:categories],
           project_types: sidebar_data[:project_types],
@@ -192,7 +198,7 @@ module Api
         end
       end
 
-      def seo_payload(state, city, indexable)
+      def seo_payload(state, city, local_decision)
         locality = city.present? ? "#{city}/#{state}" : state_name(state)
         vertical_name = 'energia solar'
         if params[:vertical].present?
@@ -202,10 +208,16 @@ module Api
         title = "Empresas de #{vertical_name} em #{locality} | Avalia Solar"
         description = "Compare empresas de #{vertical_name} que atendem #{locality}. Veja reputação, serviços, localização e canais oficiais no Avalia Solar."
 
+        indexable = local_decision.respond_to?(:indexable) ? local_decision.indexable : !!local_decision
+        robots = local_decision.respond_to?(:robots) ? local_decision.robots : (indexable ? 'index,follow' : 'noindex,follow')
+        reason_codes = local_decision.respond_to?(:reason_codes) ? local_decision.reason_codes : []
+
         {
           title: title,
           description: description,
-          indexable: indexable
+          indexable: indexable,
+          robots: robots,
+          reason_codes: reason_codes
         }
       end
 

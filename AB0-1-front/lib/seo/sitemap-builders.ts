@@ -32,6 +32,21 @@ type ApiRecord = Record<string, unknown>;
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
 const SITEMAP_FETCH_TIMEOUT_MS = 6_000;
+const MAX_URLS_PER_SITEMAP = 50_000;
+const CATEGORY_SITEMAP_PAGE_SIZE = 200;
+const CATEGORY_SITEMAP_MAX_PAGES = 250;
+
+export class SitemapUpstreamError extends Error {
+  public readonly section: string;
+  public readonly httpStatus?: number;
+
+  constructor(section: string, message: string, httpStatus?: number) {
+    super(message);
+    this.name = 'SitemapUpstreamError';
+    this.section = section;
+    this.httpStatus = httpStatus;
+  }
+}
 const PRIVATE_OR_ACTION_PATH_PATTERNS = [
   /^\/admin(?:\/|$)/,
   /^\/api(?:\/|$)/,
@@ -80,23 +95,26 @@ const normalizeSitemapEntries = (entries: MetadataRoute.Sitemap): MetadataRoute.
   const seen = new Set<string>();
   const normalized: MetadataRoute.Sitemap = [];
 
-  entries.forEach((entry) => {
+  for (const entry of entries) {
+    if (normalized.length >= MAX_URLS_PER_SITEMAP) break;
+
     try {
       const parsed = new URL(entry.url);
       parsed.hash = '';
       parsed.search = '';
       const path = parsed.pathname.replace(/\/+$/, '') || '/';
+      parsed.pathname = path;
 
-      if (PRIVATE_OR_ACTION_PATH_PATTERNS.some((pattern) => pattern.test(path))) return;
+      if (PRIVATE_OR_ACTION_PATH_PATTERNS.some((pattern) => pattern.test(path))) continue;
 
       const url = parsed.toString();
-      if (seen.has(url)) return;
+      if (seen.has(url)) continue;
       seen.add(url);
       normalized.push({ ...entry, url });
     } catch {
       // Drop malformed sitemap entries instead of emitting invalid XML.
     }
-  });
+  }
 
   return normalized;
 };
@@ -188,43 +206,127 @@ export async function getBlogSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   );
 }
 
+const isEligibleCategorySitemapRecord = (record: ApiRecord): boolean => {
+  const status = getString(record, 'status');
+  if (status && status !== 'active') return false;
+
+  if (record.include_in_sitemap === false) return false;
+
+  const indexability = isRecord(record.indexability) ? record.indexability : null;
+  if (indexability && indexability.include_in_sitemap === false) return false;
+
+  const slug = getString(record, 'slug') || getString(record, 'seo_url');
+  if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return false;
+
+  return true;
+};
+
+async function fetchCategorySitemapFeed(revalidate = 3600): Promise<ApiRecord[]> {
+  const records: ApiRecord[] = [];
+  let cursor: number | null = null;
+
+  for (let page = 1; page <= CATEGORY_SITEMAP_MAX_PAGES; page += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), SITEMAP_FETCH_TIMEOUT_MS);
+    const query = cursor
+      ? `sitemaps/categories?limit=${CATEGORY_SITEMAP_PAGE_SIZE}&cursor=${cursor}`
+      : `sitemaps/categories?limit=${CATEGORY_SITEMAP_PAGE_SIZE}`;
+
+    try {
+      const response = await fetch(buildApiUrl(query), {
+        next: { revalidate, tags: ['categories', 'sitemap-categories'] },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        console.error(
+          `[Sitemap][categories] Upstream HTTP ${response.status} on ${query}`
+        );
+        throw new SitemapUpstreamError(
+          'categories',
+          `Falha no feed de sitemap de categorias (HTTP ${response.status})`,
+          response.status
+        );
+      }
+
+      const payload = (await response.json()) as unknown;
+      const batch = unwrapData(payload);
+      records.push(...batch.filter(isEligibleCategorySitemapRecord));
+
+      const meta = isRecord(payload) && isRecord(payload.meta) ? payload.meta : null;
+      const hasMore = meta?.has_more === true;
+      const nextCursor = meta ? getNumber(meta, 'next_cursor') : undefined;
+
+      if (!hasMore || !nextCursor || nextCursor <= (cursor || 0)) {
+        break;
+      }
+
+      cursor = nextCursor;
+    } catch (error) {
+      if (error instanceof SitemapUpstreamError) {
+        throw error;
+      }
+      console.error('[Sitemap][categories] Network/timeout failure:', error);
+      throw new SitemapUpstreamError(
+        'categories',
+        'Falha de comunicação ou timeout ao exportar sitemap de categorias',
+        503
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  return records;
+}
+
 export async function getCategorySitemapEntries(): Promise<MetadataRoute.Sitemap> {
-  const categories = await fetchRecords('categories?per_page=100');
+  const categories = await fetchCategorySitemapFeed();
   return normalizeSitemapEntries(
-    categories
-      .filter((category) => getString(category, 'seo_url'))
-      .map((category) => ({
-      url: absoluteUrl(`/categories/${getString(category, 'seo_url')}`),
-      lastModified: getString(category, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-      }))
+    categories.map((category) => {
+      const slug = getString(category, 'slug') || getString(category, 'seo_url');
+      const canonicalPath =
+        getString(category, 'canonical_path') || `/categories/${slug}`;
+      return {
+        url: absoluteUrl(canonicalPath),
+        lastModified:
+          getString(category, 'lastmod') ||
+          getString(category, 'updated_at') ||
+          STATIC_SITEMAP_LAST_MODIFIED,
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      };
+    })
   );
 }
 
 export async function getCompanyCategorySitemapEntries(): Promise<MetadataRoute.Sitemap> {
-  const categories = await fetchRecords('categories?per_page=100');
+  const categories = await fetchCategorySitemapFeed();
   return normalizeSitemapEntries(
     categories
       .filter((category) => {
-      const id = getNumber(category, 'id');
-      const name = getString(category, 'name');
-      const seoUrl = getString(category, 'seo_url');
-      const companiesCount = getNumber(category, 'companies_count') || 0;
-      return Boolean(id && name && seoUrl && companiesCount > 0);
+        const id = getNumber(category, 'id');
+        const name = getString(category, 'name');
+        const seoUrl = getString(category, 'seo_url') || getString(category, 'slug');
+        const companiesCount = getNumber(category, 'companies_count') || 0;
+        return Boolean(id && name && seoUrl && companiesCount > 0);
       })
       .map((category) => {
-      const id = getNumber(category, 'id') as number;
-      const name = getString(category, 'name') as string;
-      const seoUrl = getString(category, 'seo_url') as string;
-      return {
-        url: absoluteUrl(
-          `/companies/categorias/${buildCategorySegment({ id, name, seo_url: seoUrl })}`
-        ),
-        lastModified: getString(category, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
-        changeFrequency: 'weekly' as const,
-        priority: 0.75,
-      };
+        const id = getNumber(category, 'id') as number;
+        const name = getString(category, 'name') as string;
+        const seoUrl = (getString(category, 'seo_url') ||
+          getString(category, 'slug')) as string;
+        return {
+          url: absoluteUrl(
+            `/companies/categorias/${buildCategorySegment({ id, name, seo_url: seoUrl })}`
+          ),
+          lastModified:
+            getString(category, 'lastmod') ||
+            getString(category, 'updated_at') ||
+            STATIC_SITEMAP_LAST_MODIFIED,
+          changeFrequency: 'weekly' as const,
+          priority: 0.75,
+        };
       })
   );
 }

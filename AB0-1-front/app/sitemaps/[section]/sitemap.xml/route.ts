@@ -18,12 +18,25 @@ export async function GET(
     return new Response('Not found', { status: 404 });
   }
 
-  const entries = await getSitemapEntriesBySection(params.section);
+  try {
+    const entries = await getSitemapEntriesBySection(params.section);
 
-  return new Response(serializeSitemapUrlset(entries), {
-    headers: {
-      'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
-    },
-  });
+    return new Response(serializeSitemapUrlset(entries), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+      },
+    });
+  } catch (error) {
+    console.error(`[SitemapRoute] Failed to build section=${params.section}:`, error);
+    return new Response('Service Unavailable', {
+      status: 503,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'Retry-After': '300',
+      },
+    });
+  }
 }

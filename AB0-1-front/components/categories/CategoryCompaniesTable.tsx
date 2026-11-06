@@ -42,22 +42,61 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface CategoryCompaniesTableProps {
-  companies: Company[];
+export interface ServerPaginationMeta {
+  current_page?: number;
+  per_page?: number;
+  total?: number;
+  total_items?: number;
+  total_pages?: number;
 }
 
-export default function CategoryCompaniesTable({ companies }: CategoryCompaniesTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+interface CategoryCompaniesTableProps {
+  companies: Company[];
+  paginationMeta?: ServerPaginationMeta | null;
+  basePath?: string;
+}
 
-  const [perPage, setPerPage] = useState(18);
+export default function CategoryCompaniesTable({
+  companies,
+  paginationMeta,
+  basePath,
+}: CategoryCompaniesTableProps) {
+  const isServerPaginated = Boolean(
+    paginationMeta &&
+      typeof paginationMeta.total_pages === 'number' &&
+      paginationMeta.total_pages >= 1
+  );
 
-  const totalCompanies = companies.length;
+  const [currentPage, setCurrentPage] = useState(
+    () => Number(paginationMeta?.current_page) || 1
+  );
 
-  const totalPages = Math.ceil(totalCompanies / perPage);
+  const [perPage, setPerPage] = useState(
+    () => Number(paginationMeta?.per_page) || 18
+  );
 
-  const startIndex = (currentPage - 1) * perPage;
+  const totalCompanies = isServerPaginated
+    ? Number(paginationMeta?.total_items ?? paginationMeta?.total ?? companies.length)
+    : companies.length;
 
-  const paginatedCompanies = companies.slice(startIndex, startIndex + perPage);
+  const totalPages = isServerPaginated
+    ? Math.max(1, Number(paginationMeta?.total_pages || 1))
+    : Math.ceil(totalCompanies / perPage);
+
+  const effectiveCurrentPage = isServerPaginated
+    ? Number(paginationMeta?.current_page || currentPage || 1)
+    : currentPage;
+
+  const startIndex = (effectiveCurrentPage - 1) * perPage;
+
+  const paginatedCompanies = isServerPaginated
+    ? companies
+    : companies.slice(startIndex, startIndex + perPage);
+
+  const buildPageHref = (pageNum: number) => {
+    const cleanBase = basePath || '';
+    return pageNum <= 1 ? cleanBase || '?' : `${cleanBase}?page=${pageNum}`;
+  };
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -89,13 +128,13 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) range.push(i);
     } else {
-      if (currentPage <= 4) {
+      if (effectiveCurrentPage <= 4) {
         for (let i = 1; i <= maxVisible; i++) range.push(i);
 
         range.push('...');
 
         range.push(totalPages);
-      } else if (currentPage >= totalPages - 3) {
+      } else if (effectiveCurrentPage >= totalPages - 3) {
         range.push(1);
 
         range.push('...');
@@ -106,7 +145,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
         range.push('...');
 
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) range.push(i);
+        for (let i = effectiveCurrentPage - 1; i <= effectiveCurrentPage + 1; i++) range.push(i);
 
         range.push('...');
 
@@ -261,18 +300,19 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
               const href = company.slug ? `/companies/${company.slug}` : `/companies/${company.id}`;
 
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-
               const isVerified = Boolean(
-                company.verified || (company as any).trust?.verification_status === 'verified'
+                company.verified || company.trust?.verification_status === 'verified'
               );
 
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const legacyCompany = company as Company & {
+                projects_count?: number | null;
+                project_count?: number | null;
+              };
 
               const projectsCount =
                 company.delivered_projects_count ??
-                (company as any).projects_count ??
-                (company as any).project_count;
+                legacyCompany.projects_count ??
+                legacyCompany.project_count;
 
               return (
                 <tr
@@ -724,17 +764,37 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
           className="flex items-center justify-center gap-1 mt-6"
         >
           {/* Previous Page */}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="h-9 px-3 rounded-xl border-slate-200 text-slate-600 hover:text-slate-900 disabled:opacity-50 text-xs font-bold gap-1 shadow-none"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Anterior
-          </Button>
+          {isServerPaginated && basePath ? (
+            effectiveCurrentPage > 1 ? (
+              <Link
+                href={buildPageHref(effectiveCurrentPage - 1)}
+                rel="prev"
+                className="inline-flex items-center h-9 px-3 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 text-xs font-bold gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Anterior
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex items-center h-9 px-3 rounded-xl border border-slate-200 text-slate-400 opacity-50 text-xs font-bold gap-1 select-none"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Anterior
+              </span>
+            )
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(effectiveCurrentPage - 1)}
+              disabled={effectiveCurrentPage === 1}
+              className="h-9 px-3 rounded-xl border-slate-200 text-slate-600 hover:text-slate-900 disabled:opacity-50 text-xs font-bold gap-1 shadow-none"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Anterior
+            </Button>
+          )}
 
           {/* Page numbers window */}
 
@@ -753,6 +813,24 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
 
               const pageNum = p as number;
 
+              if (isServerPaginated && basePath) {
+                return (
+                  <Link
+                    key={`page-${pageNum}`}
+                    href={buildPageHref(pageNum)}
+                    aria-current={effectiveCurrentPage === pageNum ? 'page' : undefined}
+                    className={cn(
+                      'w-9 h-9 rounded-xl text-xs font-bold flex items-center justify-center transition-all',
+                      effectiveCurrentPage === pageNum
+                        ? 'bg-blue-600 text-white hover:bg-blue-700 font-extrabold'
+                        : 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
+                    )}
+                  >
+                    {pageNum}
+                  </Link>
+                );
+              }
+
               return (
                 <Button
                   key={`page-${pageNum}`}
@@ -760,7 +838,7 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
                   className={cn(
                     'w-9 h-9 rounded-xl text-xs font-bold p-0 shadow-none transition-all',
 
-                    currentPage === pageNum
+                    effectiveCurrentPage === pageNum
                       ? 'bg-blue-600 text-white hover:bg-blue-700 font-extrabold'
                       : 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
                   )}
@@ -772,17 +850,37 @@ export default function CategoryCompaniesTable({ companies }: CategoryCompaniesT
           </div>
 
           {/* Next Page */}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="h-9 px-3 rounded-xl border-slate-200 text-slate-600 hover:text-slate-900 disabled:opacity-50 text-xs font-bold gap-1 shadow-none"
-          >
-            Próxima
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+          {isServerPaginated && basePath ? (
+            effectiveCurrentPage < totalPages ? (
+              <Link
+                href={buildPageHref(effectiveCurrentPage + 1)}
+                rel="next"
+                className="inline-flex items-center h-9 px-3 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 text-xs font-bold gap-1"
+              >
+                Próxima
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex items-center h-9 px-3 rounded-xl border border-slate-200 text-slate-400 opacity-50 text-xs font-bold gap-1 select-none"
+              >
+                Próxima
+                <ChevronRight className="w-4 h-4" />
+              </span>
+            )
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(effectiveCurrentPage + 1)}
+              disabled={effectiveCurrentPage === totalPages}
+              className="h-9 px-3 rounded-xl border-slate-200 text-slate-600 hover:text-slate-900 disabled:opacity-50 text-xs font-bold gap-1 shadow-none"
+            >
+              Próxima
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          )}
         </nav>
       )}
     </section>
@@ -838,7 +936,7 @@ function CategoryCompanyCard({ company, position }: { company: Company; position
             </div>
 
             <ComparisonToggleButton
-              company={company as any}
+              company={company}
               variant="minimal"
               size="sm"
               className="shrink-0"
@@ -890,7 +988,7 @@ function CategoryCompanyActions({
     >
       {!mobile && (
         <ComparisonToggleButton
-          company={company as any}
+          company={company}
           variant="minimal"
           size="sm"
           className="shrink-0"

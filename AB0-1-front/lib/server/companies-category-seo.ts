@@ -3,11 +3,26 @@ import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import { CategorySeoDescriptor, parseCategorySegment } from '@/lib/seo/companies-category-url';
 import { slugify } from '@/lib/slug';
 
+/**
+ * CDSI-049: Matriz de Intenção e Prevenção de Canibalização SEO
+ *
+ * 1. `/categories/[slug]` -> Hub Editorial & AEO Canônico da Categoria:
+ *    - Intenção dominante: descoberta vertical, guia editorial técnico, FAQs estruturadas,
+ *      soluções por tecnologia e vitrine curada da categoria única.
+ *    - Canonical: `https://www.avaliasolar.com.br/categories/${seo_url}`
+ *
+ * 2. `/companies/categorias/[...categorySlugs]` -> Diretório Transacional Multi-Filtro:
+ *    - Intenção dominante: filtragem combinada do diretório geral de empresas (`/companies`)
+ *      com segmentos `<slug>--<id>` (suporta interseção/união de múltiplas categorias).
+ *    - Canonical: `https://www.avaliasolar.com.br/companies/categorias/${segments}`
+ *    - Não substitui nem recebe links editoriais primários no lugar de `/categories/[slug]`.
+ */
 interface CategoryTreeLike {
   id?: number;
   name?: string;
   seo_url?: string;
   slug?: string;
+  status?: string;
   children?: CategoryTreeLike[];
   subcategories?: CategoryTreeLike[];
 }
@@ -34,6 +49,7 @@ function flattenCategories(nodes: CategoryTreeLike[]): CategorySeoDescriptor[] {
   while (queue.length > 0) {
     const current = queue.shift();
     if (!current || typeof current.id !== 'number') continue;
+    if (typeof current.status === 'string' && current.status !== 'active') continue;
 
     items.push({
       id: current.id,

@@ -5,12 +5,40 @@ require 'English'
 ActiveAdmin.register Category, namespace: :admin do
   menu false
   permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured,
-                :banner, :icon, :home_carousel_banner, :permissions_config, :seo_keywords, :seo_description, company_ids: [], product_ids: [],
+                :banner, :icon, :home_carousel_banner, :permissions_config, :seo_keywords, :seo_description,
+                :lock_version, :editorial_status, company_ids: [], product_ids: [],
                 category_faqs_attributes: [:id, :question, :answer, :status, :position, :_destroy],
                 category_solution_types_attributes: %i[id name slug short_description description visual_key technology_family speed_class position active featured attributes_json use_cases _destroy]
 
   after_save do |category|
     category.clear_query_cache! if category.respond_to?(:clear_query_cache!)
+  end
+
+  member_action :publish_revision, method: :post do
+    revision = resource.category_editorial_revisions.find(params[:revision_id])
+    result = CategoryEditorial::PublishRevision.call(
+      revision: revision,
+      actor_id: current_admin_user&.id
+    )
+    if result.success?
+      redirect_to admin_category_path(resource), notice: "Revisão v#{revision.version_number} publicada com sucesso."
+    else
+      redirect_to admin_category_path(resource), alert: "Falha ao publicar revisão: #{result.error_message}"
+    end
+  end
+
+  member_action :rollback_revision, method: :post do
+    revision = resource.category_editorial_revisions.find(params[:revision_id])
+    result = CategoryEditorial::RollbackRevision.call(
+      category: resource,
+      target_revision: revision,
+      actor_id: current_admin_user&.id
+    )
+    if result.success?
+      redirect_to admin_category_path(resource), notice: "Rollback para v#{revision.version_number} concluído."
+    else
+      redirect_to admin_category_path(resource), alert: "Falha no rollback: #{result.error_message}"
+    end
   end
 
   action_item :import_csv, only: :index do
@@ -200,6 +228,44 @@ ActiveAdmin.register Category, namespace: :admin do
         end
       else
         para 'Nenhuma versão criada ainda.'
+      end
+    end
+
+    panel 'SEO Health Advisory & Preview SERP (Shadow Mode)' do
+      decision = CategoryDiscovery::IndexabilityPolicy.evaluate(category)
+      attributes_table_for decision do
+        row('Elegível para Indexação') { |d| status_tag(d.indexable ? 'Indexable' : 'Hold / Thin', class: d.indexable ? 'ok' : 'warning') }
+        row('Reason Codes') { |d| d.reason_codes.join(', ').presence || 'ALL_SIGNALS_HEALTHY' }
+        row('Palavras na Descrição Longa') { |d| d.word_count }
+        row('FAQs Publicadas') { |d| d.published_faqs_count }
+        row('Tipos de Solução Ativos') { |d| d.active_solution_types_count }
+        row('Empresas Ativas Elegíveis') { |d| d.eligible_companies_count }
+        row('SERP Title Preview') { |_d| category.seo_title.presence || "#{category.name} — Empresas, Avaliações e Orçamento | Avalia Solar" }
+        row('SERP URL Canônica') { |_d| "https://www.avaliasolar.com.br/categories/#{category.seo_url}" }
+        row('SERP Description Preview') { |_d| category.try(:seo_description).presence || category.short_description.presence || 'Sem descrição curta definida' }
+      end
+    end
+
+    panel 'Histórico de Revisões Editoriais (Draft / Review / Published)' do
+      revisions = category.category_editorial_revisions.ordered.limit(20)
+      if revisions.any?
+        table_for revisions do
+          column :version_number
+          column(:status) { |rev| status_tag(rev.status) }
+          column :change_reason
+          column :published_at
+          column :updated_at
+          column('Ações') do |rev|
+            links = []
+            if rev.status != 'published'
+              links << link_to('Publicar', publish_revision_admin_category_path(category, revision_id: rev.id), method: :post)
+            end
+            links << link_to('Rollback', rollback_revision_admin_category_path(category, revision_id: rev.id), method: :post)
+            safe_join(links, ' | ')
+          end
+        end
+      else
+        para 'Nenhuma revisão editorial registrada ainda.'
       end
     end
 

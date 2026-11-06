@@ -982,6 +982,18 @@ export interface CategorySolutionType {
   use_cases?: string[];
 }
 
+export interface CategoryIndexability {
+  publicly_accessible: boolean;
+  indexable: boolean;
+  include_in_sitemap: boolean;
+  robots_directive: string;
+  canonical_slug?: string | null;
+  canonical_path?: string | null;
+  reason_codes: string[];
+  advisory_warnings: string[];
+  mode: 'shadow' | 'enforced' | string;
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -993,7 +1005,7 @@ export interface Category {
   short_description?: string;
   description?: string;
   parent_id?: number | null;
-  parent?: { id: number; name: string; seo_url: string } | null;
+  parent?: { id: number; name: string; seo_url: string; slug?: string } | null;
   articles_count?: number;
   companies_count?: number;
   products_count?: number;
@@ -1002,6 +1014,7 @@ export interface Category {
   products?: Product[];
   faqs?: CategoryFaq[];
   solution_types?: CategorySolutionType[];
+  indexability?: CategoryIndexability | null;
   kind: string;
   status: string;
   featured: boolean;

@@ -11,24 +11,12 @@ interface CategoryNiche {
   name: string;
   slug?: string;
   seo_url?: string;
+  status?: string;
 }
 
 interface CategoryNichesCarouselProps {
   niches?: CategoryNiche[];
 }
-
-const FALLBACK_NICHES: CategoryNiche[] = [
-  { name: 'Energia Solar Residencial', seo_url: 'energia-solar-residencial' },
-  { name: 'Energia Solar Comercial e Industrial', seo_url: 'energia-solar-comercial-industrial' },
-  { name: 'Energia Solar Rural / Agronegócio', seo_url: 'energia-solar-rural' },
-  { name: 'Baterias e Armazenamento de Energia', seo_url: 'baterias-armazenamento' },
-  { name: 'Carport Solar / Coberturas Solares', seo_url: 'carport-solar' },
-  { name: 'Painéis Solares', seo_url: 'paineis-solares' },
-  { name: 'Inversores', seo_url: 'inversores-solares' },
-  { name: 'Monitoramento e O&M', seo_url: 'monitoramento-operacao-manutencao' },
-  { name: 'Financiamento de Energia Solar', seo_url: 'financiamento-energia-solar' },
-  { name: 'Instaladores de Energia Solar', seo_url: 'instaladores-energia-solar' },
-];
 
 const SHORT_NAME_BY_LONG_NAME: Record<string, string> = {
   'Energia Solar Residencial': 'Residencial',
@@ -49,11 +37,19 @@ function getShortName(name: string) {
 
 function getNicheHref(niche: CategoryNiche) {
   const slug = niche.seo_url || niche.slug;
-  return slug ? `/categories/${slug}` : `/categories?search=${encodeURIComponent(niche.name)}`;
+  return slug ? `/categories/${slug}` : null;
 }
 
 export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCarouselProps) {
-  const displayNiches = (niches.length > 0 ? niches : FALLBACK_NICHES).slice(0, 10);
+  // CDSI-060 (J19 / J20): Exibe exclusivamente subcategorias/nichos reais e ativos.
+  // Não injeta FALLBACK_NICHES genéricos em categorias sem filhos.
+  const displayNiches = niches
+    .filter((niche) => (!niche.status || niche.status === 'active') && Boolean(getNicheHref(niche)))
+    .slice(0, 10);
+
+  if (displayNiches.length === 0) {
+    return null;
+  }
 
   return (
     <section className="bg-transparent py-4 sm:py-6">
@@ -77,11 +73,13 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
               const label = getShortName(niche.name);
               const visual = resolveCategoryVisual(niche.seo_url || niche.slug, niche.name);
               const iconSrc = visual?.src || null;
+              const href = getNicheHref(niche);
+              if (!href) return null;
 
               return (
                 <Link
                   key={`${niche.id || niche.seo_url || niche.slug || niche.name}`}
-                  href={getNicheHref(niche)}
+                  href={href}
                   className="group flex w-[76px] sm:w-[88px] lg:w-[96px] shrink-0 flex-col items-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 active:scale-95"
                 >
                   <span className="w-14 h-14 flex items-center justify-center relative bg-transparent border-0 shadow-none outline-none">

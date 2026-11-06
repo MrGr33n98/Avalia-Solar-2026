@@ -1,6 +1,39 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
+const ALLOWED_PATH_PATTERNS: RegExp[] = [
+  /^\/$/,
+  /^\/categories$/,
+  /^\/categories\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/(?:solutions|compare|matching))?$/,
+  /^\/companies\/[a-z0-9-]+$/,
+  /^\/blog\/[a-z0-9-]+$/,
+  /^\/sitemap\.xml$/,
+  /^\/sitemaps\/categories\/sitemap\.xml$/,
+];
+
+const ALLOWED_TAG_PATTERNS: RegExp[] = [
+  /^(?:company|home|banner)(?:-[a-z0-9-]+)?$/,
+  /^articles$/,
+  /^article-[a-z0-9-]+$/,
+  /^categories$/,
+  /^category-[a-z0-9]+(?:-[a-z0-9]+)*$/,
+  /^category-solution-types$/,
+];
+
+export function isAllowedRevalidatePath(path: unknown): path is string {
+  return (
+    typeof path === 'string' &&
+    ALLOWED_PATH_PATTERNS.some((pattern) => pattern.test(path))
+  );
+}
+
+export function isAllowedRevalidateTag(tag: unknown): tag is string {
+  return (
+    typeof tag === 'string' &&
+    ALLOWED_TAG_PATTERNS.some((pattern) => pattern.test(tag))
+  );
+}
+
 export async function POST(request: NextRequest) {
   const expectedSecret = process.env.NEXT_REVALIDATE_SECRET;
   const authorization = request.headers.get('authorization');
@@ -15,22 +48,10 @@ export async function POST(request: NextRequest) {
   } | null;
   const payload = body ?? {};
   const paths = Array.isArray(payload.paths)
-    ? payload.paths.filter(
-        (path): path is string =>
-          typeof path === 'string' &&
-          (path === '/' ||
-            /^\/companies\/[a-z0-9-]+$/.test(path) ||
-            /^\/blog\/[a-z0-9-]+$/.test(path))
-      )
+    ? payload.paths.filter(isAllowedRevalidatePath)
     : [];
   const tags = Array.isArray(payload.tags)
-    ? payload.tags.filter(
-        (tag): tag is string =>
-          typeof tag === 'string' &&
-          (/^(?:company|home|banner)(?:-[a-z0-9-]+)?$/.test(tag) ||
-            tag === 'articles' ||
-            /^article-[a-z0-9-]+$/.test(tag))
-      )
+    ? payload.tags.filter(isAllowedRevalidateTag)
     : [];
 
   if (paths.length === 0 && tags.length === 0) {

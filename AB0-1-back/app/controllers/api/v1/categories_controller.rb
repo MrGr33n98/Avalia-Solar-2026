@@ -71,7 +71,6 @@ module Api
       # GET /categories/:id
       # =========================
       def show
-        @category.increment!(:views_count)
         cache_key = "categories/show/#{@category.id}/#{@category.updated_at.to_i}"
 
         cached_json(cache_key, expires_in: 1.hour) do
@@ -87,9 +86,10 @@ module Api
 
         companies_scope = @category.companies
 
-        # Filtros de Status
-        if params[:status].present? && ::Company.column_names.include?('status')
-          companies_scope = companies_scope.where(status: params[:status])
+        # CDSI-092: Listagem pública de categoria filtra apenas empresas ativas por padrão
+        if ::Company.column_names.include?('status')
+          effective_status = params[:status].presence || 'active'
+          companies_scope = companies_scope.where(status: effective_status)
         end
 
         # Filtro de Busca (Search Term)
@@ -129,6 +129,15 @@ module Api
           project_type = params[:project_type].to_s
           allowed_types = ::Company.const_defined?(:PROJECT_TYPES) ? ::Company::PROJECT_TYPES : []
           companies_scope = companies_scope.where('project_types @> ?', [project_type].to_json) if allowed_types.include?(project_type)
+        end
+
+        if params[:capability_type].present? || params[:delivery_mode].present?
+          capability_ids = CategoryDiscovery::CompanyEligibilityPolicy.eligible_companies_scope(
+            category: @category,
+            capability_type: params[:capability_type],
+            delivery_mode: params[:delivery_mode]
+          ).select(:id)
+          companies_scope = companies_scope.where(id: capability_ids)
         end
 
         companies_scope = apply_company_sort(companies_scope)
@@ -357,12 +366,50 @@ module Api
       # GET /categories/by_slug/:slug
       # (melhoria: rota dedicada a slug, sem “params[:id]”)
       # =========================
-      def show_by_slug
-        slug = params.require(:slug)
-        @category = ::Category.find_by!(seo_url: slug)
-        @category.increment!(:views_count)
+      VALID_CATEGORY_SLUG_REGEX = /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/
 
-        cache_key = "categories/slug/#{slug}/#{@category.updated_at.to_i}"
+      def show_by_slug
+        raw_slug = params.require(:slug).to_s.strip.downcase
+        unless ::CategoryDiscovery::IndexabilityPolicy.valid_slug?(raw_slug)
+          raise ActiveRecord::RecordNotFound, "Category with slug '#{raw_slug}' not found"
+        end
+
+        redirected_from_slug = nil
+        @category = ::Category.active
+                              .preload(:parent, :children, :category_faqs, :category_solution_types, :banner_attachment, :icon_attachment)
+                              .find_by(seo_url: raw_slug)
+
+        if @category.nil? && defined?(::CategorySlugRedirect)
+          @category = ::CategorySlugRedirect.resolve(raw_slug)
+          redirected_from_slug = raw_slug if @category.present?
+        end
+
+        raise ActiveRecord::RecordNotFound, "Category with slug '#{raw_slug}' not found" if @category.nil?
+
+        decision = ::CategoryDiscovery::IndexabilityPolicy.evaluate(@category)
+
+        unless decision.publicly_accessible?
+          raise ActiveRecord::RecordNotFound, "Category with slug '#{raw_slug}' not publicly accessible"
+        end
+
+        if decision.advisory_warnings.any?
+          Rails.logger.info(
+            "[CategoryDiscovery::ShadowIndexability] slug=#{@category.seo_url} mode=#{decision.mode} " \
+            "indexable=#{decision.indexable?} warnings=#{decision.advisory_warnings.join(',')}"
+          )
+        end
+
+        if redirected_from_slug.present?
+          response.set_header('X-Canonical-Redirect-Slug', @category.seo_url)
+          payload = category_json(@category).merge(
+            redirect_from_slug: redirected_from_slug,
+            canonical_redirect_slug: @category.seo_url
+          )
+          render json: payload, status: :ok
+          return
+        end
+
+        cache_key = "categories/slug/#{@category.seo_url}/#{@category.updated_at.to_i}/#{decision.mode}"
 
         cached_json(cache_key, expires_in: 1.hour) do
           category_json(@category)
@@ -409,7 +456,7 @@ module Api
 
       def handle_standard_error(e)
         Rails.logger.error("Categories error: #{e.message}\n#{e.backtrace.take(5).join("\n")}")
-        render json: { error: 'Erro interno no servidor', details: e.message }, status: :internal_server_error
+        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
       # -------------------------
@@ -448,10 +495,10 @@ module Api
 
       def apply_company_sort(scope)
         case params[:sort].to_s
-        when 'name_asc' then scope.order(name: :asc)
-        when 'reviews_desc' then scope.order(rating_count: :desc, rating_avg: :desc, name: :asc)
-        when 'rating_desc' then scope.order(rating_avg: :desc, rating_count: :desc, name: :asc)
-        else scope.order(featured: :desc, rating_avg: :desc, rating_count: :desc, name: :asc)
+        when 'name_asc' then scope.order(name: :asc, id: :asc)
+        when 'reviews_desc' then scope.order(rating_count: :desc, rating_avg: :desc, name: :asc, id: :asc)
+        when 'rating_desc' then scope.order(rating_avg: :desc, rating_count: :desc, name: :asc, id: :asc)
+        else scope.order(featured: :desc, rating_avg: :desc, rating_count: :desc, name: :asc, id: :asc)
         end
       end
 
@@ -462,10 +509,14 @@ module Api
       end
 
       def set_category
-        @category = ::Category.find_by(id: params[:id]) ||
-                    ::Category.find_by(seo_url: params[:id]) ||
-                    ::Category.find_by(slug: params[:id]) ||
-                    ::Category.find(params[:id])
+        scope = %w[update destroy].include?(action_name) ? ::Category : ::Category.active
+        identifier = params[:id].to_s.strip
+
+        @category = (identifier.match?(/\A\d+\z/) && scope.find_by(id: identifier.to_i)) ||
+                    scope.find_by(seo_url: identifier.downcase) ||
+                    (::Category.column_names.include?('slug') && scope.find_by(slug: identifier.downcase))
+
+        raise ActiveRecord::RecordNotFound, "Category '#{identifier}' not found" unless @category
       end
 
       def category_params
@@ -485,8 +536,9 @@ module Api
       end
 
       def apply_category_filters(query)
-        if ::Category.column_names.include?('status') && params[:status].present?
-          query = query.where(status: params[:status])
+        if ::Category.column_names.include?('status')
+          effective_status = params[:status].presence || 'active'
+          query = query.where(status: effective_status)
         end
 
         if ::Category.column_names.include?('featured') && params[:featured].present?

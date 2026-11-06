@@ -37,6 +37,8 @@ class Category < ApplicationRecord
   has_many :category_faqs, dependent: :destroy, inverse_of: :category
   has_many :category_solution_types, dependent: :destroy, inverse_of: :category
   has_many :company_category_capabilities, dependent: :destroy
+  has_many :slug_redirects, class_name: 'CategorySlugRedirect', dependent: :destroy, inverse_of: :category
+  has_many :category_editorial_revisions, dependent: :destroy, inverse_of: :category
 
   accepts_nested_attributes_for :category_faqs, allow_destroy: true
   accepts_nested_attributes_for :category_solution_types, allow_destroy: true
@@ -48,7 +50,9 @@ class Category < ApplicationRecord
   # =========================
   # Validations
   # =========================
+  before_validation :preserve_or_assign_seo_url
   validates :name, presence: true, uniqueness: true
+  validates :seo_url, presence: true, uniqueness: { case_sensitive: false }
   validates :description, presence: true
   validate :validate_parent_constraints
   validate :validate_banner_technical_requirements
@@ -123,6 +127,13 @@ class Category < ApplicationRecord
   def clear_query_cache!
     Rails.cache.delete_matched('categories/*')
     Rails.cache.delete('categories/tree')
+    if defined?(CategoryDiscovery::CacheInvalidationJob) && seo_url.present? && id.present?
+      CategoryDiscovery::CacheInvalidationJob.perform_later(
+        category_id: id,
+        slug: seo_url,
+        previous_slug: saved_change_to_seo_url? ? seo_url_before_last_save : nil
+      )
+    end
     true
   end
 
@@ -300,5 +311,54 @@ class Category < ApplicationRecord
     return unless blob.byte_size > 500.kilobytes
 
     errors.add(:home_carousel_banner, 'deve ter no máximo 500KB')
+  end
+
+  public
+
+  # CDSI-036: Incrementa views_count sem alterar updated_at para não poluir lastmod do sitemap
+  def increment_views_without_touch!
+    return unless persisted?
+
+    self.class.where(id: id).update_all('views_count = COALESCE(views_count, 0) + 1')
+    self.views_count = (views_count || 0) + 1
+  end
+
+  # CDSI-036: Timestamp significativo para SEO / Sitemap
+  def content_last_modified_at
+    timestamps = [
+      (respond_to?(:published_at) ? published_at : nil),
+      updated_at,
+      created_at
+    ].compact
+
+    if association(:category_faqs).loaded?
+      timestamps.concat(category_faqs.select { |f| f.status == 'published' }.map(&:updated_at).compact)
+    end
+
+    if association(:category_solution_types).loaded?
+      timestamps.concat(category_solution_types.select(&:active).map(&:updated_at).compact)
+    end
+
+    timestamps.max
+  end
+
+  # CDSI-045: Habilita troca explícita de slug via CategoryTaxonomy::RenameSlug
+  def allow_explicit_slug_change!
+    @explicit_slug_change_allowed = true
+  end
+
+  private
+
+  # CDSI-044 / CDSI-045 (R14):
+  # - Na criação: preenche seo_url a partir de name.parameterize se em branco
+  # - Na atualização: preserva seo_url publicado mesmo se name mudar ou se seo_url vier em branco
+  def preserve_or_assign_seo_url
+    if persisted? && seo_url_in_database.present? && seo_url.blank?
+      self.seo_url = seo_url_in_database
+    elsif seo_url.blank? && name.present?
+      self.seo_url = name.to_s.parameterize
+    elsif seo_url.present?
+      self.seo_url = seo_url.to_s.strip.downcase
+    end
   end
 end
