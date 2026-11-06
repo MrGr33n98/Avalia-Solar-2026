@@ -1,4 +1,8 @@
 class Api::V1::PlansController < Api::V1::BaseController
+  # Public catalog reads remain available; commercial mutations require an
+  # authenticated platform admin and must never be reachable anonymously.
+  before_action :authenticate_api_user, only: %i[create update destroy]
+  before_action :require_admin, only: %i[create update destroy]
   before_action :set_plan, only: %i[show update destroy]
 
   def index

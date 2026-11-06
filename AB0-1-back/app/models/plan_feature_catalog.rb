@@ -579,8 +579,6 @@ module PlanFeatureCatalog
       end
 
       normalized
-    rescue StandardError
-      apply_defaults ? defaults_for_tier(plan_tier) : {}
     end
 
     def explicit_value(features, key)
@@ -606,14 +604,22 @@ module PlanFeatureCatalog
       FEATURE_DEFINITIONS[canonical_key_for(key)] || {}
     end
 
+    # Configurable limits are not boolean entitlements. A disabled toggle must
+    # never be counted as available simply because its behavior is :toggle.
     def access_state_for(key, value)
       definition = feature_definition(key)
       behavior = definition[:access_behavior]
 
-      return 'enabled' if %i[toggle config].include?(behavior)
+      return 'enabled' if behavior == :config
+      return ActiveModel::Type::Boolean.new.cast(value) ? 'enabled' : 'hidden' if behavior == :toggle
       return 'enabled' if ActiveModel::Type::Boolean.new.cast(value)
 
       definition[:teaser] == :hidden ? 'hidden' : 'locked'
+    end
+
+    def enabled_boolean_feature?(key, value)
+      feature_definition(key)[:type] == :boolean &&
+        ActiveModel::Type::Boolean.new.cast(value) == true
     end
 
     def normalize_plan_tier(plan_tier)

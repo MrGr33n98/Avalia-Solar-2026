@@ -6,6 +6,7 @@
 //= require admin/category_company_selector
 //= require admin/company_reject_prompt
 //= require admin/article_studio
+//= require admin/plan_features
 
 function initAvaliaAdminLocationSelector() {
   if (
