@@ -80,8 +80,8 @@ RSpec.describe 'Api::V1::Recommendations', type: :request do
     end
 
     it 'identifies sponsored placements explicitly' do
-      create(
-        :recommendation_placement,
+      RecommendationPlacement.create!(
+        active: true,
         company: company_no_reviews,
         placement_type: 'sponsored',
         state_code: 'SC',

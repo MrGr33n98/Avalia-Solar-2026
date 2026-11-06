@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe 'Company dashboard CTA visibility', type: :request do
   let(:user) { create(:user, status: :active, role: :company) }
   let(:company) { create(:company, status: :active, featured: true) }
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) { JWT.encode({ user_id: user.id, typ: 'access', exp: 1.hour.from_now.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{token}", 'Content-Type' => 'application/json' } }
   let(:path) { '/api/v1/company_dashboard/cta_visibility' }
 
