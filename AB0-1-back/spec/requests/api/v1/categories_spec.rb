@@ -15,6 +15,13 @@ RSpec.describe 'Api::V1::Categories', type: :request do
       json = JSON.parse(response.body)
       expect(json['id']).to eq(active_cat.id)
       expect(json['seo_url']).to eq('monitoramento-operacao-manutencao')
+      expect(json['indexability']).to include(
+        'publicly_accessible' => true,
+        'indexable' => true,
+        'include_in_sitemap' => true,
+        'canonical_slug' => 'monitoramento-operacao-manutencao',
+        'canonical_path' => '/categories/monitoramento-operacao-manutencao'
+      )
     end
 
     it 'R02: returns 404 for a nonexistent category slug' do

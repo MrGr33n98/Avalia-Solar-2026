@@ -65,7 +65,8 @@ export async function generateMetadata({ params, searchParams }: CategorySlugPag
   }
 
   const { category } = result;
-  const canonicalSlug = category.seo_url || category.slug || params.slug;
+  const canonicalSlug =
+    category.indexability?.canonical_slug || category.seo_url || category.slug || params.slug;
 
   const city = typeof searchParams?.city === 'string' ? searchParams.city : '';
   const state = typeof searchParams?.state === 'string' ? searchParams.state.toUpperCase() : '';
@@ -96,7 +97,8 @@ export async function generateMetadata({ params, searchParams }: CategorySlugPag
     .slice(0, 160);
   const keywords =
     category.seo_keywords || ['energia solar', category.name, 'melhores empresas'].join(', ');
-  const noindex = shouldNoindexSearchParams(searchParams);
+  const policyNoindex = category.indexability?.indexable === false;
+  const noindex = shouldNoindexSearchParams(searchParams) || policyNoindex;
 
   return {
     title,

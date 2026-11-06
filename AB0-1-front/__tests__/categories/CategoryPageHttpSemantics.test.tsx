@@ -132,6 +132,31 @@ describe('J04 / CDSI-012..CDSI-018: Semântica HTTP de rotas de categoria', () =
     expect(okMeta.alternates?.canonical).toContain(
       '/categories/monitoramento-operacao-manutencao'
     );
+
+    mockGetCachedPublicCategory.mockResolvedValueOnce({
+      status: 'ok',
+      category: {
+        id: 8,
+        name: 'Categoria Enforced Noindex',
+        seo_url: 'categoria-enforced-noindex',
+        indexability: {
+          publicly_accessible: true,
+          indexable: false,
+          include_in_sitemap: false,
+          robots_directive: 'noindex,follow',
+          canonical_slug: 'categoria-enforced-noindex',
+          canonical_path: '/categories/categoria-enforced-noindex',
+          reason_codes: ['empty_without_editorial_utility'],
+          advisory_warnings: ['empty_without_editorial_utility'],
+          mode: 'enforced',
+        },
+      },
+    });
+    const policyNoindexMeta = await generateMetadata({
+      params: { slug: 'categoria-enforced-noindex' },
+      searchParams: {},
+    });
+    expect(policyNoindexMeta.robots).toEqual({ index: false, follow: true });
   });
 
   it('CDSI-018: rotas auxiliares (solutions, compare, matching) chamam notFound() quando categoria não existe', async () => {

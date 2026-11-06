@@ -360,13 +360,25 @@ module Api
 
       def show_by_slug
         raw_slug = params.require(:slug).to_s.strip.downcase
-        unless raw_slug.length <= 160 && raw_slug.match?(VALID_CATEGORY_SLUG_REGEX)
+        unless ::CategoryDiscovery::IndexabilityPolicy.valid_slug?(raw_slug)
           raise ActiveRecord::RecordNotFound, "Category with slug '#{raw_slug}' not found"
         end
 
         @category = ::Category.active.find_by!(seo_url: raw_slug)
+        decision = ::CategoryDiscovery::IndexabilityPolicy.evaluate(@category)
 
-        cache_key = "categories/slug/#{@category.seo_url}/#{@category.updated_at.to_i}"
+        unless decision.publicly_accessible?
+          raise ActiveRecord::RecordNotFound, "Category with slug '#{raw_slug}' not publicly accessible"
+        end
+
+        if decision.advisory_warnings.any?
+          Rails.logger.info(
+            "[CategoryDiscovery::ShadowIndexability] slug=#{@category.seo_url} mode=#{decision.mode} " \
+            "indexable=#{decision.indexable?} warnings=#{decision.advisory_warnings.join(',')}"
+          )
+        end
+
+        cache_key = "categories/slug/#{@category.seo_url}/#{@category.updated_at.to_i}/#{decision.mode}"
 
         cached_json(cache_key, expires_in: 1.hour) do
           category_json(@category)

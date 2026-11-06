@@ -8,7 +8,7 @@ class CategorySerializer < ActiveModel::Serializer
              :companies_count, :products_count,
              :created_at, :updated_at, :banner_url, :icon_url, :home_carousel_banner_url,
              :visual_key,
-             :parent, :subcategories, :faqs, :solution_types
+             :parent, :subcategories, :faqs, :solution_types, :indexability
   # :banner_sponsored, :banners  # Temporarily commented out
 
   # Remove has_many associations that cause N+1 queries and complex serialization
@@ -22,6 +22,10 @@ class CategorySerializer < ActiveModel::Serializer
 
   def visual_key
     object.respond_to?(:visual_key) ? object.visual_key : nil
+  end
+
+  def indexability
+    ::CategoryDiscovery::IndexabilityPolicy.evaluate(object).as_json
   end
 
   def solution_types
