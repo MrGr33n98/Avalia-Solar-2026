@@ -24,25 +24,34 @@ class Plan < ApplicationRecord
   # =========================================================================
 
   before_validation :normalize_feature_fields
+  validate :validate_feature_dependencies
+  validate :validate_feature_limits
 
   def normalize_feature_fields
-    return unless plan_feature_fields.present? || plan_tier_template.present?
+    return if plan_feature_fields.nil? && plan_tier_template.blank?
 
     tier = plan_tier_template.presence || inferred_plan_tier || 'free'
-    current_features = respond_to?(:features_json) && features_json.present? ? features_json : (features || {})
-    raw = if plan_feature_fields.present?
-            plan_feature_fields.respond_to?(:to_unsafe_h) ? plan_feature_fields.to_unsafe_h : plan_feature_fields.to_h
-          else
-            current_features
-          end
+    existing = raw_feature_flags
+    # An edit without explicit feature fields must not reset custom plan values.
+    submitted = plan_feature_fields.nil? ? {} : feature_field_hash(plan_feature_fields)
+    unknown = submitted.keys - PlanFeatureCatalog.known_keys
+    if unknown.any?
+      errors.add(:features_json, "contém campos desconhecidos: #{unknown.join(', ')}")
+      return
+    end
 
-    normalized = PlanFeatureCatalog.normalize(raw, plan_tier: tier)
+    unless submitted.all? { |key, value| valid_feature_input?(key, value) }
+      errors.add(:features_json, 'contém limites inválidos; use somente inteiros não negativos')
+      return
+    end
 
+    source = existing.merge(submitted)
+    normalized = PlanFeatureCatalog.normalize(source, plan_tier: tier)
     self.features_json = normalized if respond_to?(:features_json=)
     self.features = normalized.to_json if self.class.column_names.include?('features')
   rescue StandardError => e
-    Rails.logger.error "[PlanModel] Coercion failed: #{e.message}"
-    self.features_json = {} if respond_to?(:features_json=)
+    Rails.logger.error("[PlanModel] Feature normalization failed: #{e.class}: #{e.message}")
+    errors.add(:features_json, 'não pôde ser processado; nenhuma alteração foi aplicada')
   end
 
   def feature_flags
@@ -59,7 +68,7 @@ class Plan < ApplicationRecord
   end
 
   def enabled_feature_keys
-    feature_flags.select { |_, v| PlanFeatureCatalog.access_state_for(_, v) == 'enabled' }.keys
+    feature_flags.select { |key, value| PlanFeatureCatalog.enabled_boolean_feature?(key, value) }.keys
   end
 
   def inferred_plan_tier
@@ -119,9 +128,49 @@ class Plan < ApplicationRecord
 
   private
 
+  def feature_field_hash(fields)
+    raw = fields.respond_to?(:to_unsafe_h) ? fields.to_unsafe_h : fields.to_h
+    raw.stringify_keys
+  end
+
+  def valid_feature_input?(key, value)
+    definition = PlanFeatureCatalog.feature_definition(key)
+    return true unless definition[:type] == :integer
+    return true if value.nil? || value == ''
+
+    value.to_s.match?(/\\A\\d+\\z/)
+  end
+
+  def validate_feature_limits
+    PlanFeatureCatalog.known_keys.each do |key|
+      next unless PlanFeatureCatalog.feature_definition(key)[:type] == :integer
+
+      value = PlanFeatureCatalog.explicit_value(raw_feature_flags, key)
+      next if value.nil?
+
+      unless value.is_a?(Integer) && value >= 0
+        errors.add(:features_json, "#{key} deve ser inteiro não negativo")
+      end
+    end
+  end
+
+  def validate_feature_dependencies
+    flags = raw_feature_flags
+    active = ->(key) { ActiveModel::Type::Boolean.new.cast(flags[key]) == true }
+    if (active.call('pricing_table') || active.call('special_offer')) && !active.call('custom_ctas')
+      errors.add(:features_json, 'pricing_table e special_offer exigem custom_ctas habilitado')
+    end
+    if active.call('intent_scores') && !active.call('advanced_analytics')
+      errors.add(:features_json, 'intent_scores exige advanced_analytics')
+    end
+    if active.call('webhooks') && !active.call('intent_scores')
+      errors.add(:features_json, 'webhooks exige intent_scores')
+    end
+  end
+
   def parse_feature_payload(payload)
     return {} if payload.blank?
-    return payload if payload.is_a?(Hash)
+    return payload.stringify_keys if payload.is_a?(Hash)
 
     JSON.parse(payload) if payload.is_a?(String)
   rescue JSON::ParserError, TypeError
