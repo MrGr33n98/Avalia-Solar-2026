@@ -25,6 +25,21 @@ RSpec.describe Lead, type: :model do
     expect(lead).not_to be_valid
   end
 
+  it 'bloqueia orçamento direcionado sem empresa associada (fail closed)' do
+    company = create(:company, moderation_status: 'approved')
+    lead = build(:lead, company: nil, quote_requested_company_id: company.id)
+
+    expect(lead).not_to be_valid
+    expect(lead.errors[:company_id]).to be_present
+  end
+
+  it 'bloqueia orçamento direcionado para uma empresa removida' do
+    lead = build(:lead, company_id: 999_999_999, quote_requested_company_id: 999_999_999)
+
+    expect(lead).not_to be_valid
+    expect(lead.errors[:company_id]).to be_present
+  end
+
   it 'bloqueia criar lead quando a empresa tem active_admin false' do
     company = create(:company, active_admin: false)
     lead = build(:lead, company: company)

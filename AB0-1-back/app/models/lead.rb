@@ -175,10 +175,17 @@ class Lead < ApplicationRecord
   end
 
   def validate_company_quote_access
+    if quote_requested_company_id.present? && company_id.blank?
+      errors.add(:company_id, 'empresa não habilitada para orçamentos')
+      return
+    end
     return if company_id.blank?
 
     company = Company.find_by(id: company_id)
-    return if company.nil?
+    if company.nil?
+      errors.add(:company_id, 'empresa não habilitada para orçamentos') if quote_requested_company_id.present?
+      return
+    end
 
     # An ordinary association to a Company is not necessarily a directed
     # purchase intent (e.g. CRM attribution, analytics and internal workflows).

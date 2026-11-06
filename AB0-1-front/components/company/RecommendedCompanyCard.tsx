@@ -65,7 +65,7 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
     company.primary_cta?.type === 'request_quote';
   const whatsAppUrl = isPaid && effective?.whatsapp === true &&
     company.primary_cta?.type === 'whatsapp' &&
-    /^https:\/\/(?:wa\.me|api\.whatsapp\.com)\//.test(company.primary_cta.url || '')
+    /^https:\/\/wa\.me\/55\d{10,11}$/.test(company.primary_cta.url || '')
     ? company.primary_cta.url : null;
 
   const comparisonCompany = {

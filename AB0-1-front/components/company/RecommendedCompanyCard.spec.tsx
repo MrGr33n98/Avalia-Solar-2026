@@ -54,6 +54,26 @@ describe('RecommendedCompanyCard — entitlement contract', () => {
     });
   });
 
+  it('shows a canonical paid WhatsApp link, with safe outbound rel', () => {
+    render(<RecommendedCompanyCard company={{
+      ...company, has_paid_plan: true,
+      primary_cta: { type: 'whatsapp', label: 'WhatsApp', action: 'open_whatsapp', url: 'https://wa.me/5548999700506' },
+      cta_visibility: { effective: { quote: false, whatsapp: true } },
+    } as any} />);
+    expect(screen.getByRole('link', { name: 'WhatsApp' })).toHaveAttribute('href', 'https://wa.me/5548999700506');
+    expect(screen.getByRole('link', { name: 'WhatsApp' })).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('falls back to profile when WhatsApp URL is not the canonical server link', () => {
+    render(<RecommendedCompanyCard company={{
+      ...company, has_paid_plan: true,
+      primary_cta: { type: 'whatsapp', label: 'WhatsApp', action: 'open_whatsapp', url: 'https://wa.me/evil' },
+      cta_visibility: { effective: { quote: false, whatsapp: true } },
+    } as any} />);
+    expect(screen.queryByRole('link', { name: 'WhatsApp' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Ver perfil/i }).length).toBeGreaterThan(0);
+  });
+
   it('does not grant quote when paid plan exists but effective entitlement is missing', () => {
     render(<RecommendedCompanyCard company={{ ...company, has_paid_plan: true } as any} />);
     expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
