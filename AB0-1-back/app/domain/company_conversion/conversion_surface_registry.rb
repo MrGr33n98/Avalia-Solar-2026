@@ -59,6 +59,10 @@ module CompanyConversion
         channels: %w[quote], lifecycle: 'conditional', variant_group: 'native_services' },
     ].map { |entry| entry.merge(channels: entry.fetch(:channels).freeze).freeze }.freeze
 
+    # Instrumentation coverage is not equivalent to candidate or certified UI.
+    # Do not display artificial zeroes for the remaining uninstrumented surfaces.
+    INSTRUMENTED_IDS = %w[CV-HOME-REC CV-BRAND-HERO].freeze
+
     def self.all
       ENTRIES
     end

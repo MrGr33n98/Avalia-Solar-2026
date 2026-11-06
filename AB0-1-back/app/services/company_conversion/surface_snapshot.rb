@@ -50,11 +50,14 @@ module CompanyConversion
       metrics = metrics_for(period_start, period_end, registry.ids)
       rows.each do |row|
         surface = metrics[:by_surface].fetch(row[:surface_id], {})
+        observed_ready = metrics[:status] == 'ready' && registry::INSTRUMENTED_IDS.include?(row[:surface_id])
+        # CV-BRAND-HERO currently emits clicks, but no qualified impression event.
+        impression_ready = observed_ready && row[:surface_id] == 'CV-HOME-REC'
         row[:observed] = {
-          data_status: metrics[:status],
-          impressions: metrics[:status] == 'ready' ? surface.fetch(:impressions, 0) : nil,
-          quote_clicks: metrics[:status] == 'ready' ? surface.fetch(:quote_clicks, 0) : nil,
-          whatsapp_clicks: metrics[:status] == 'ready' ? surface.fetch(:whatsapp_clicks, 0) : nil
+          data_status: observed_ready ? 'ready' : 'unavailable',
+          impressions: impression_ready ? surface.fetch(:impressions, 0) : nil,
+          quote_clicks: observed_ready ? surface.fetch(:quote_clicks, 0) : nil,
+          whatsapp_clicks: observed_ready ? surface.fetch(:whatsapp_clicks, 0) : nil
         }
       end
       active_quote = rows.select { |row| row.dig(:channels, 'quote', :enabled) }

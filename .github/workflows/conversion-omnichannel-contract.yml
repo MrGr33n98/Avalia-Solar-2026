@@ -100,6 +100,7 @@ jobs:
             spec/services/recommendation/engine_spec.rb \
             spec/services/chat/mobivolt/safe_company_serializer_spec.rb \
             spec/services/public_profile_revalidator_spec.rb \
+            spec/requests/api/v1/company_dashboard_conversion_surfaces_spec.rb \
             spec/requests/api/v1/recommendations_quote_visibility_spec.rb
 
   mobile-contract:
