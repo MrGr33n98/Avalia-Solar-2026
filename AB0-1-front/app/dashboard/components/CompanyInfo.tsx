@@ -1043,82 +1043,14 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
 
       <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-2">
         <SectionCard
-          title="Informações Técnicas Essenciais"
-          description="Dados jurídicos, descrição institucional e conformidade."
-          icon={Building2}
-          actions={
-            <Button type="button" variant="outline" onClick={() => openSellerEditor('profile')} className="h-10 w-10 rounded-md border-0 bg-transparent p-0 text-[#594bbc] shadow-none hover:bg-[#f0edfb]" aria-label="Editar informações técnicas" title="Editar informações técnicas">
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar
-            </Button>
-          }
-        >
-          {isEditing ? (
-            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="company-name">Nome jurídico</Label>
-                <Input id="company-name" value={formData?.name || ''} onChange={(event) => handleInputChange('name', event.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="company-cnpj">CNPJ</Label>
-                <Input id="company-cnpj" value={formData?.cnpj || ''} onChange={(event) => handleInputChange('cnpj', event.target.value)} />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="company-description">Descrição corporativa</Label>
-                <Textarea
-                  id="company-description"
-                  value={formData?.description || ''}
-                  onChange={(event) => handleInputChange('description', event.target.value)}
-                  rows={5}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="company-founded">Fundação</Label>
-                <Input
-                  id="company-founded"
-                  type="number"
-                  value={formData?.founded_year ?? ''}
-                  onChange={(event) => handleInputChange('founded_year', handleNumberValue(event.target.value))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="company-employees">Capacidade produtiva</Label>
-                <Input
-                  id="company-employees"
-                  type="number"
-                  value={formData?.employees_count ?? ''}
-                  onChange={(event) => handleInputChange('employees_count', handleNumberValue(event.target.value))}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="min-w-0 space-y-4">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <InfoItem label="Nome jurídico" value={currentData.name} />
-                <InfoItem label="CNPJ" value={currentData.cnpj} />
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Descrição corporativa</p>
-                <p className="break-words text-sm leading-6 text-slate-700">{displayText(currentData.description)}</p>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <InfoItem label="Fundação" value={currentData.founded_year} icon={Calendar} />
-                <InfoItem label="Capacidade produtiva" value={currentData.employees_count} icon={Users} />
-                <InfoItem label="Conformidade" value={currentData.verified ? 'Verificada' : 'Aguardando verificação'} icon={CheckCircle2} />
-              </div>
-            </div>
-          )}
-        </SectionCard>
-
-        <SectionCard
-          title="Conectividade Global"
-          description="Canais de contato e presença digital."
+          title="Canais de contato"
+          description="Telefone, e-mail e presença digital da empresa."
           icon={Globe}
+          className="xl:col-span-2"
           actions={
-            <Button type="button" variant="outline" onClick={() => openSellerEditor('contacts')} className="h-10 w-10 rounded-md border-0 bg-transparent p-0 text-[#594bbc] shadow-none hover:bg-[#f0edfb]" aria-label="Editar canais de contato" title="Editar canais de contato">
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar
-            </Button>
+            <button type="button" onClick={() => openSellerEditor('contacts')} className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[#594bbc] hover:bg-[#f0edfb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#594bbc]" aria-label="Editar canais de contato" title="Editar canais de contato">
+              <Pencil className="h-[18px] w-[18px]" aria-hidden="true" />
+            </button>
           }
         >
           {isEditing ? (
