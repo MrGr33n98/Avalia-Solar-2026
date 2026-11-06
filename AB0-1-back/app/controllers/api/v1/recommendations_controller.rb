@@ -17,18 +17,17 @@ module Api
           current_user: current_user_or_nil
         )
 
-        cache_key = "recommendations:v1:#{Digest::MD5.hexdigest(permitted_params.to_h.sort.to_json)}"
-        payload = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
-          results = Recommendation::Engine.call(context: context, limit: limit)
-          RecommendationSerializer.render(
-            results: results,
-            context: context,
-            request_id: request_id
-          )
-        end
 
-        expires_in 5.minutes, public: true, stale_while_revalidate: 1.day
-        render json: payload
+        # Never cache a payload containing plan-dependent CTAs. Cached recommendation
+        # IDs may be added separately once hydrated from fresh Company records.
+        # Request context can also depend on cookies, authentication and edge geo.
+        response.headers['Cache-Control'] = 'private, no-store, max-age=0'
+        results = Recommendation::Engine.call(context: context, limit: limit)
+        render json: RecommendationSerializer.render(
+          results: results,
+          context: context,
+          request_id: request_id
+        )
       end
 
       private

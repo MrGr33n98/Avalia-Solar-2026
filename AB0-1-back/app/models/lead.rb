@@ -179,7 +179,7 @@ class Lead < ApplicationRecord
 
     company = Company.find_by(id: company_id)
     return if company.nil?
-    return if company.quote_feature_enabled?
+    return if company.status == 'active' && company.moderation_status == 'approved' && company.quote_cta_visible?
 
     # Business rule: quote/whatsapp CTAs are paid and require active_admin.
     errors.add(:company_id, 'empresa não habilitada para orçamentos')

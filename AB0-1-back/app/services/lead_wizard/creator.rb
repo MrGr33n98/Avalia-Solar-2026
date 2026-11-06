@@ -135,7 +135,7 @@ module LeadWizard
 
       if company_id.present? && company_available
         preferred_company = Company.find_by(id: company_id)
-        unless preferred_company&.has_paid_plan?
+        unless preferred_company&.status == 'active' && preferred_company&.moderation_status == 'approved' && preferred_company&.quote_cta_visible?
           @errors['preferred_company_id'] = ['não possui entitlement de conversão pago']
         end
       end

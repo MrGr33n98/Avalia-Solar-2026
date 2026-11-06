@@ -39,7 +39,7 @@ RSpec.describe Recommendation::Engine do
       expect(results).not_to be_empty
       expect(results.first.company).to eq(company1)
       expect(results.first.organic_score).to be > results.last.organic_score
-      expect(results.first.primary_cta[:label]).to eq('Solicitar orçamento')
+      expect(results.first.primary_cta[:label]).to eq('Ver perfil')
     end
 
     it 'inserts active sponsored placements at top slots' do

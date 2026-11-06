@@ -37,6 +37,13 @@ export type RecommendationItem = {
   verified?: boolean | null;
   sponsored?: boolean | null;
   featured?: boolean | null;
+  has_paid_plan?: boolean | null;
+  cta_visibility?: {
+    effective?: { quote?: boolean; whatsapp?: boolean };
+    availability?: { quote?: boolean; whatsapp?: boolean; whatsapp_configured?: boolean };
+    preferences?: { quote_cta_enabled?: boolean; whatsapp_enabled?: boolean };
+    version?: number;
+  } | null;
   city?: string | null;
   state?: string | null;
   rating_avg?: number | null;
@@ -66,6 +73,7 @@ export type RecommendationItem = {
     label?: string | null;
     action?: string | null;
     url?: string | null;
+    preferred_company_id?: number | null;
   } | null;
   secondary_cta?: {
     type?: string | null;

@@ -90,11 +90,13 @@ describe('RecommendedCompaniesSection', () => {
           count: 85,
           label: '85 projetos verificados',
         },
+        has_paid_plan: false,
+        cta_visibility: { effective: { quote: false, whatsapp: false } },
         primary_cta: {
-          type: 'request_quote',
-          label: 'Solicitar orçamento',
-          action: 'open_quote_form',
-          url: '/empresas/empresa-teste-recomendada',
+          type: 'view_profile',
+          label: 'Ver perfil',
+          action: 'navigate_profile',
+          url: '/companies/empresa-teste-recomendada',
         },
       },
     ],
@@ -122,7 +124,8 @@ describe('RecommendedCompaniesSection', () => {
     await waitFor(() => {
       expect(screen.getByText('Empresa Teste Recomendada')).toBeInTheDocument();
     });
-    expect(screen.getByText('Solicitar orçamento')).toBeInTheDocument();
+    expect(screen.queryByText('Solicitar orçamento')).not.toBeInTheDocument();
+    expect(screen.getByText('Ver perfil')).toBeInTheDocument();
     expect(screen.getByText('Patrocinado')).toBeInTheDocument();
   });
 

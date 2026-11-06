@@ -7,6 +7,7 @@ import { CompanyIdentityLine } from '@/components/company/CompanyIdentityLine';
 import type { Company } from '@/lib/api';
 import type { RecommendationItem, RecommendationMeta } from '@/lib/api-public';
 import { buildCompanyPath } from '@/lib/slug';
+import { openQuoteWizard } from '@/lib/quote-wizard';
 import {
   trackRecommendedCompanyImpression,
   trackRecommendedPrimaryCtaClicked,
@@ -46,7 +47,16 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
     return () => observer.disconnect();
   }, [company, meta]);
 
-  const href = company.primary_cta?.url || buildCompanyPath(company.slug, company.name, company.id);
+  // Profile identity must never point to an external or untrusted CTA URL.
+  const href = buildCompanyPath(company.slug, company.name, company.id);
+  const isPaid = company.has_paid_plan === true;
+  const effective = company.cta_visibility?.effective;
+  const canQuote = isPaid && effective?.quote === true &&
+    company.primary_cta?.type === 'request_quote';
+  const whatsAppUrl = isPaid && effective?.whatsapp === true &&
+    company.primary_cta?.type === 'whatsapp' &&
+    /^https:\/\/(?:wa\.me|api\.whatsapp\.com)\//.test(company.primary_cta.url || '')
+    ? company.primary_cta.url : null;
 
   const comparisonCompany = {
     id: company.id,
@@ -75,8 +85,7 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
   const responseLabel = company.response_time?.value || company.response_time?.label || 'Tempo de resposta não informado';
   const projectsLabel = company.projects?.count ? `${company.projects.count}` : (company.projects?.label || 'Não informado');
 
-  const primaryCtaText = company.primary_cta?.label || 'Avaliar essa empresa';
-  const primaryCtaUrl = company.primary_cta?.url || href;
+  const primaryCtaText = canQuote ? 'Solicitar orçamento' : whatsAppUrl ? 'WhatsApp' : 'Ver perfil';
 
   return (
     <article
@@ -87,7 +96,7 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
     >
       {/* Header: Logo + Title + Verified + Location */}
       <div className="flex items-start gap-3.5">
-        <Link href={primaryCtaUrl} className="shrink-0" aria-label={`Ver perfil de ${company.name}`}>
+        <Link href={href} className="shrink-0" aria-label={`Ver perfil de ${company.name}`}>
           <CompanyLogo
             logoUrl={company.logo_url}
             name={company.name}
@@ -97,7 +106,7 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
 
         <CompanyIdentityLine
           name={company.name}
-          href={primaryCtaUrl}
+          href={href}
           verified={Boolean(company.verified)}
           sponsored={isSponsored}
           className="flex-1 min-w-0"
@@ -147,13 +156,28 @@ export default function RecommendedCompanyCard({ company, meta }: RecommendedCom
           variant="card"
           size="sm"
         />
-        <Link
-          href={primaryCtaUrl}
-          onClick={() => trackRecommendedPrimaryCtaClicked(company, meta)}
-          className="inline-flex h-10 min-h-[40px] px-3 items-center justify-center rounded-xl border border-blue-600 bg-blue-600 text-xs font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex-1 max-w-[140px]"
-        >
-          {primaryCtaText}
-        </Link>
+        {canQuote ? (
+          <button
+            type="button"
+            onClick={() => {
+              trackRecommendedPrimaryCtaClicked(company, meta);
+              openQuoteWizard({ preferredCompanyId: company.id, source: 'home-recommendations' });
+            }}
+            className="inline-flex h-10 min-h-[40px] px-3 items-center justify-center rounded-xl border border-blue-600 bg-blue-600 text-xs font-bold text-white transition hover:bg-blue-700 focus-visible:outline focus-visible:ring-2 focus-visible:ring-blue-500 flex-1 max-w-[140px]"
+          >
+            {primaryCtaText}
+          </button>
+        ) : (
+          <Link
+            href={whatsAppUrl || href}
+            target={whatsAppUrl ? '_blank' : undefined}
+            rel={whatsAppUrl ? 'noopener noreferrer' : undefined}
+            onClick={() => trackRecommendedPrimaryCtaClicked(company, meta)}
+            className="inline-flex h-10 min-h-[40px] px-3 items-center justify-center rounded-xl border border-blue-600 bg-blue-600 text-xs font-bold text-white transition hover:bg-blue-700 focus-visible:outline focus-visible:ring-2 focus-visible:ring-blue-500 flex-1 max-w-[140px]"
+          >
+            {primaryCtaText}
+          </Link>
+        )}
       </div>
     </article>
   );
