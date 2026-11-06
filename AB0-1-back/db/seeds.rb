@@ -124,19 +124,19 @@ puts "\n==> Categorias / Hubs"
 category_counts = { created: 0, updated: 0 }
 
 # 1. Hub Principal: Mobilidade Elétrica (sempre primeiro)
-root_mob = Category.find_or_initialize_by(seo_url: 'mobilidade-eletrica')
-root_mob.assign_attributes(
-  name: 'Mobilidade Elétrica',
-  seo_title: 'Mobilidade Elétrica no Brasil 2026 | Carregadores, Veículos e Reviews',
-  short_description: 'Reviews de carregadores EV, eletropostos, veículos elétricos e integração solar.',
-  description: 'Guia completo de mobilidade elétrica com avaliações reais. Foco em carregadores residenciais, comerciais, estações públicas, instaladores e veículos elétricos.',
-  kind: 'main',
-  status: 'active',
-  featured: true
+root_mob = CategoryEditorial::SeedGuard.upsert_category!(
+  seo_url: 'mobilidade-eletrica',
+  attributes: {
+    name: 'Mobilidade Elétrica',
+    seo_title: 'Mobilidade Elétrica no Brasil 2026 | Carregadores, Veículos e Reviews',
+    short_description: 'Reviews de carregadores EV, eletropostos, veículos elétricos e integração solar.',
+    description: 'Guia completo de mobilidade elétrica com avaliações reais. Foco em carregadores residenciais, comerciais, estações públicas, instaladores e veículos elétricos.',
+    kind: 'main',
+    status: 'active',
+    featured: true
+  }
 )
-if root_mob.save
-  category_counts[root_mob.previous_changes.key?('id') ? :created : :updated] += 1
-end
+category_counts[root_mob.previous_changes.key?('id') ? :created : :updated] += 1
 
 mob_children = [
   {
@@ -186,37 +186,37 @@ mob_children = [
 mob_children_records = {}
 
 mob_children.each do |data|
-  cat = Category.find_or_initialize_by(seo_url: data[:seo_url])
-  cat.assign_attributes(
-    name: data[:name],
-    parent_id: root_mob.id,
-    seo_title: data[:seo_title],
-    short_description: data[:short_description],
-    description: data[:description],
-    kind: 'main',
-    status: 'active',
-    featured: true
+  cat = CategoryEditorial::SeedGuard.upsert_category!(
+    seo_url: data[:seo_url],
+    attributes: {
+      name: data[:name],
+      parent_id: root_mob.id,
+      seo_title: data[:seo_title],
+      short_description: data[:short_description],
+      description: data[:description],
+      kind: 'main',
+      status: 'active',
+      featured: true
+    }
   )
-  if cat.save
-    category_counts[cat.previous_changes.key?('id') ? :created : :updated] += 1
-  end
+  category_counts[cat.previous_changes.key?('id') ? :created : :updated] += 1
   mob_children_records[data[:seo_url]] = cat
 end
 
 # 2. Hub: Energia Solar
-root_solar = Category.find_or_initialize_by(seo_url: 'energia-solar')
-root_solar.assign_attributes(
-  name: 'Energia Solar',
-  seo_title: 'Energia Solar no Brasil 2026 | Instaladores, Equipamentos e Reviews',
-  short_description: 'Guia de energia solar com reviews de instaladores, equipamentos e soluções.',
-  description: 'O hub completo de energia solar no Brasil: instaladores, projetos residenciais e comerciais, armazenamento em baterias, inversores, painéis, estruturas e O&M. Conteúdo focado em reviews.',
-  kind: 'main',
-  status: 'active',
-  featured: true
+root_solar = CategoryEditorial::SeedGuard.upsert_category!(
+  seo_url: 'energia-solar',
+  attributes: {
+    name: 'Energia Solar',
+    seo_title: 'Energia Solar no Brasil 2026 | Instaladores, Equipamentos e Reviews',
+    short_description: 'Guia de energia solar com reviews de instaladores, equipamentos e soluções.',
+    description: 'O hub completo de energia solar no Brasil: instaladores, projetos residenciais e comerciais, armazenamento em baterias, inversores, painéis, estruturas e O&M. Conteúdo focado em reviews.',
+    kind: 'main',
+    status: 'active',
+    featured: true
+  }
 )
-if root_solar.save
-  category_counts[root_solar.previous_changes.key?('id') ? :created : :updated] += 1
-end
+category_counts[root_solar.previous_changes.key?('id') ? :created : :updated] += 1
 
 solar_children = [
   { name: 'Instaladores de Energia Solar', seo_url: 'instaladores-energia-solar', seo_title: 'Instaladores de Energia Solar 2026 | Reviews no Brasil' },
@@ -235,20 +235,20 @@ solar_children = [
 solar_children_records = {}
 
 solar_children.each do |data|
-  cat = Category.find_or_initialize_by(seo_url: data[:seo_url])
-  cat.assign_attributes(
-    name: data[:name],
-    parent_id: root_solar.id,
-    seo_title: data[:seo_title],
-    short_description: data[:name],
-    description: data[:name],
-    kind: 'main',
-    status: 'active',
-    featured: true
+  cat = CategoryEditorial::SeedGuard.upsert_category!(
+    seo_url: data[:seo_url],
+    attributes: {
+      name: data[:name],
+      parent_id: root_solar.id,
+      seo_title: data[:seo_title],
+      short_description: data[:name],
+      description: data[:name],
+      kind: 'main',
+      status: 'active',
+      featured: true
+    }
   )
-  if cat.save
-    category_counts[cat.previous_changes.key?('id') ? :created : :updated] += 1
-  end
+  category_counts[cat.previous_changes.key?('id') ? :created : :updated] += 1
   solar_children_records[data[:seo_url]] = cat
 end
 
@@ -312,35 +312,35 @@ new_hubs = [
 ]
 
 new_hubs.each do |hub|
-  root = Category.find_or_initialize_by(seo_url: hub[:root_seo])
-  root.assign_attributes(
-    name: hub[:root_name],
-    seo_title: hub[:root_seo_title],
-    short_description: hub[:root_name],
-    description: hub[:root_name],
-    kind: 'main',
-    status: 'active',
-    featured: true
-  )
-  if root.save
-    category_counts[root.previous_changes.key?('id') ? :created : :updated] += 1
-  end
-
-  hub[:children].each do |child_data|
-    cat = Category.find_or_initialize_by(seo_url: child_data[:seo_url])
-    cat.assign_attributes(
-      name: child_data[:name],
-      parent_id: root.id,
-      seo_title: "#{child_data[:name]} 2026 | Reviews Brasil",
-      short_description: child_data[:name],
-      description: child_data[:name],
+  root = CategoryEditorial::SeedGuard.upsert_category!(
+    seo_url: hub[:root_seo],
+    attributes: {
+      name: hub[:root_name],
+      seo_title: hub[:root_seo_title],
+      short_description: hub[:root_name],
+      description: hub[:root_name],
       kind: 'main',
       status: 'active',
       featured: true
+    }
+  )
+  category_counts[root.previous_changes.key?('id') ? :created : :updated] += 1
+
+  hub[:children].each do |child_data|
+    cat = CategoryEditorial::SeedGuard.upsert_category!(
+      seo_url: child_data[:seo_url],
+      attributes: {
+        name: child_data[:name],
+        parent_id: root.id,
+        seo_title: "#{child_data[:name]} 2026 | Reviews Brasil",
+        short_description: child_data[:name],
+        description: child_data[:name],
+        kind: 'main',
+        status: 'active',
+        featured: true
+      }
     )
-    if cat.save
-      category_counts[cat.previous_changes.key?('id') ? :created : :updated] += 1
-    end
+    category_counts[cat.previous_changes.key?('id') ? :created : :updated] += 1
   end
 end
 

@@ -38,6 +38,7 @@ class Category < ApplicationRecord
   has_many :category_solution_types, dependent: :destroy, inverse_of: :category
   has_many :company_category_capabilities, dependent: :destroy
   has_many :slug_redirects, class_name: 'CategorySlugRedirect', dependent: :destroy, inverse_of: :category
+  has_many :category_editorial_revisions, dependent: :destroy, inverse_of: :category
 
   accepts_nested_attributes_for :category_faqs, allow_destroy: true
   accepts_nested_attributes_for :category_solution_types, allow_destroy: true
