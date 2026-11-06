@@ -287,10 +287,10 @@ export default function SellerInformationPanel({
                     <span className="block text-[11px] font-normal text-[#85818c]">O endereço do perfil é administrado pela plataforma.</span>
                   </label>
                   <EditableField label="Nome da empresa" value={draftData.name} onChange={(v) => onFieldChange('name', v)} />
-                  <EditableField label="Site oficial" type="url" placeholder="https://empresa.com.br" value={draftData.website} onChange={(v) => onFieldChange('website', v)} />
+                  <EditableField label="Site oficial" placeholder="https://empresa.com.br" value={draftData.website} onChange={(v) => onFieldChange('website', v)} />
                   <EditableField label="CNPJ" value={draftData.cnpj} onChange={(v) => onFieldChange('cnpj', v)} />
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <EditableField label="Ano de fundação" type="number" min={1800} max={2100} value={draftData.founded_year} onChange={(v) => numberChange('founded_year', v)} />
+                    <EditableField label="Ano de fundação" type="number" value={draftData.founded_year} onChange={(v) => numberChange('founded_year', v)} />
                     <EditableField label="Número de colaboradores" type="number" min={0} value={draftData.employees_count} onChange={(v) => numberChange('employees_count', v)} />
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -312,7 +312,7 @@ export default function SellerInformationPanel({
                   <EditableField label="Telefone" type="tel" value={draftData.phone} onChange={(v) => onFieldChange('phone', v)} />
                   <EditableField label="WhatsApp" type="tel" value={draftData.whatsapp} onChange={(v) => onFieldChange('whatsapp', v)} />
                   <EditableField label="E-mail público" type="email" value={draftData.email_public} onChange={(v) => onFieldChange('email_public', v)} />
-                  <EditableField label="Website" type="url" value={draftData.website} onChange={(v) => onFieldChange('website', v)} />
+                  <EditableField label="Website" value={draftData.website} onChange={(v) => onFieldChange('website', v)} />
                   <EditableField label="LinkedIn" value={draftData.linkedin} onChange={(v) => onFieldChange('linkedin', v)} />
                   <EditableField label="Instagram" value={draftData.instagram} onChange={(v) => onFieldChange('instagram', v)} />
                   <EditableField label="Facebook" value={draftData.facebook} onChange={(v) => onFieldChange('facebook', v)} />
