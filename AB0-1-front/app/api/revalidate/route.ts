@@ -20,14 +20,14 @@ const ALLOWED_TAG_PATTERNS: RegExp[] = [
   /^category-solution-types$/,
 ];
 
-export function isAllowedRevalidatePath(path: unknown): path is string {
+function isAllowedRevalidatePath(path: unknown): path is string {
   return (
     typeof path === 'string' &&
     ALLOWED_PATH_PATTERNS.some((pattern) => pattern.test(path))
   );
 }
 
-export function isAllowedRevalidateTag(tag: unknown): tag is string {
+function isAllowedRevalidateTag(tag: unknown): tag is string {
   return (
     typeof tag === 'string' &&
     ALLOWED_TAG_PATTERNS.some((pattern) => pattern.test(tag))
