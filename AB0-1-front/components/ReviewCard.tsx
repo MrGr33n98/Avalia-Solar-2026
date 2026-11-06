@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Star, User, Building2, ArrowRight, ThumbsUp, Check, X } from 'lucide-react';
 import { Review, fetchApi } from '@/lib/api';
 import { hasAnalyticsConsent } from '@/lib/analytics/consent';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -122,6 +123,15 @@ export default function ReviewCard({ review, className = "", variant = 'user', o
 
   const trackEvent = async (eventType: 'review_read' | 'review_cta_click') => {
     if (!hasAnalyticsConsent()) return;
+    if (eventType === 'review_read' && review.company_id) {
+      sendIntentSignal({
+        company_id: review.company_id,
+        signal_type: 'review_read',
+        signal_category: 'research_intent',
+        element_type: 'review_card',
+        metadata: { review_id: review.id, source: 'review_card' },
+      });
+    }
 
     try {
       await fetchApi('/analytics/track', {
