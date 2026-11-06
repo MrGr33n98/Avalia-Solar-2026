@@ -40,7 +40,13 @@ export interface BuyerIntentAccount {
   }>;
 }
 
+export type IntentSectionStatus = 'not_instrumented' | 'partial' | 'collecting' | 'measured';
+export interface IntentSectionStat { count: number; status: IntentSectionStatus; }
+
 export interface BuyerIntentReportingData {
+  period_days?: number;
+  scoring_window_days?: number;
+  section_breakdown?: { reviews: IntentSectionStat; portfolio: IntentSectionStat; datasheets: IntentSectionStat; contact: IntentSectionStat };
   total_accounts: number;
   buying_stage_distribution: {
     awareness: number;
@@ -396,9 +402,10 @@ export const EMPTY_REPORTING_DATA: BuyerIntentReportingData = {
 };
 
 export async function fetchBuyerIntentReporting(
-  companyId: string | number
+  companyId: string | number,
+  days: 7 | 30 | 90 | 365 = 30
 ): Promise<BuyerIntentReportingData> {
-  const params = new URLSearchParams({ company_id: String(companyId) });
+  const params = new URLSearchParams({ company_id: String(companyId), days: String(days) });
   const data = await fetchIntentJson(`/api/v1/intent_scores/reporting?${params.toString()}`);
   if (!data || typeof data !== 'object') {
     throw new BuyerIntentApiError(200, 'INVALID_CONTRACT', 'invalid_response');
