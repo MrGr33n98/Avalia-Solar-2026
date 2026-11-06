@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { publicCategoriesApi } from '@/lib/api-public';
 import { getCachedPublicCategory } from '@/lib/server/category-discovery/get-public-category';
+import {
+  resolveCategoryCanonicalPath,
+  resolveCategoryCanonicalSlug,
+} from '@/lib/seo/category-metadata';
 import type { CategorySolutionType } from '@/lib/api';
 import { absoluteUrl } from '@/lib/site';
 import CategoryVisualAsset from '@/components/categories/CategoryVisualAsset';
@@ -16,11 +20,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     return { title: 'Tipos de soluções | Avalia Solar', robots: { index: false, follow: true } };
   }
   const { category } = result;
-  const canonicalSlug = category.seo_url || category.slug || params.slug;
+  const canonicalPath = resolveCategoryCanonicalPath(category, params.slug, 'solutions');
   return {
     title: `Tipos de soluções de ${category.name} | Avalia Solar`,
     description: `Conheça os tipos de soluções disponíveis em ${category.name} e compare opções para o seu projeto.`,
-    alternates: { canonical: absoluteUrl(`/categories/${canonicalSlug}/solutions`) },
+    alternates: { canonical: absoluteUrl(canonicalPath) },
   };
 }
 
@@ -29,8 +33,11 @@ export default async function CategorySolutionsPage({ params }: { params: { slug
   if (result.status === 'not_found') {
     notFound();
   }
+  if (result.status === 'redirect') {
+    permanentRedirect(`${result.destinationPath}/solutions`);
+  }
   const { category } = result;
-  const canonicalSlug = category.seo_url || category.slug || params.slug;
+  const canonicalSlug = resolveCategoryCanonicalSlug(category, params.slug);
 
   const solutions = category.solution_types?.length
     ? category.solution_types

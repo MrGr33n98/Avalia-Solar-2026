@@ -1,12 +1,15 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
+import { notFound, redirect, permanentRedirect } from 'next/navigation';
 import CategoryPageServer from './CategoryPageServer';
 import type { Category } from '@/lib/api';
 import { getCachedPublicCategory } from '@/lib/server/category-discovery/get-public-category';
+import {
+  buildCategoryPageMetadata,
+  resolveCategoryCanonicalPath,
+  resolveCategoryCanonicalSlug,
+} from '@/lib/seo/category-metadata';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
-import { absoluteUrl } from '@/lib/site';
-import { shouldNoindexSearchParams } from '@/lib/seo/search-params';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const revalidate = 1800; // ISR - 30 minutos
@@ -27,17 +30,18 @@ const REDIRECT_SLUGS = new Set([
 ]);
 
 function BreadcrumbsWrapper({ category, fallbackSlug }: { category: Category; fallbackSlug: string }) {
-  const canonicalSlug = category.seo_url || category.slug || fallbackSlug;
+  const canonicalSlug = resolveCategoryCanonicalSlug(category, fallbackSlug);
+  const parentCanonicalSlug = category.parent?.seo_url || category.parent?.slug;
   return (
     <BreadcrumbSchema
       items={[
         { name: 'Início', item: '/' },
         { name: 'Categorias', item: '/categories' },
-        ...(category.parent?.name && category.parent.seo_url
+        ...(category.parent?.name && parentCanonicalSlug
           ? [
               {
                 name: category.parent.name,
-                item: `/categories/${category.parent.seo_url}`,
+                item: `/categories/${parentCanonicalSlug}`,
               },
             ]
           : []),
@@ -64,63 +68,11 @@ export async function generateMetadata({ params, searchParams }: CategorySlugPag
     };
   }
 
-  const { category } = result;
-  const canonicalSlug =
-    category.indexability?.canonical_slug || category.seo_url || category.slug || params.slug;
-
-  const city = typeof searchParams?.city === 'string' ? searchParams.city : '';
-  const state = typeof searchParams?.state === 'string' ? searchParams.state.toUpperCase() : '';
-
-  let locationSuffix = '';
-  if (city) {
-    const formattedCity = city
-      .split('-')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-    locationSuffix = ` em ${formattedCity}${state ? ` - ${state}` : ''}`;
-  } else if (state) {
-    locationSuffix = ` em ${state}`;
-  }
-
-  const rawTitle = category.seo_title || category.name;
-  const baseTitle = rawTitle.replace(/\s*\|\s*Avalia Solar$/i, '').trim();
-  const title = `${baseTitle}${locationSuffix} | Avalia Solar`;
-  const description = [
-    category.seo_description ||
-      category.short_description ||
-      category.description ||
-      `Encontre as melhores empresas e orçamentos de ${category.name} no Avalia Solar.`,
-    locationSuffix ? `Atendendo na região de ${locationSuffix.replace(' em ', '')}.` : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .slice(0, 160);
-  const keywords =
-    category.seo_keywords || ['energia solar', category.name, 'melhores empresas'].join(', ');
-  const policyNoindex = category.indexability?.indexable === false;
-  const noindex = shouldNoindexSearchParams(searchParams) || policyNoindex;
-
-  return {
-    title,
-    description,
-    keywords,
-    robots: noindex ? { index: false, follow: true } : undefined,
-    alternates: {
-      canonical: absoluteUrl(`/categories/${canonicalSlug}`),
-    },
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-      images: category.banner_url ? [category.banner_url] : [],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: category.banner_url ? [category.banner_url] : [],
-    },
-  };
+  return buildCategoryPageMetadata({
+    category: result.category,
+    requestedSlug: params.slug,
+    searchParams,
+  });
 }
 
 function CategoryLoadingFallback() {
@@ -191,15 +143,24 @@ function CategoryLoadingFallback() {
 export default async function CategorySlugPage({ params, searchParams }: CategorySlugPageProps) {
   if (REDIRECT_SLUGS.has(params.slug)) redirect('/signup');
 
-  // CDSI-012 / CDSI-013: Resolve existência da categoria ANTES de abrir streaming Suspense.
+  // CDSI-012 / CDSI-013 / CDSI-046: Resolve existência e redirect canônico ANTES do Suspense.
   // - 404 legítimo -> notFound() imediato (HTTP 404 nos headers iniciais).
+  // - slug antigo (histórico) -> permanentRedirect (HTTP 308 em 1 hop para canonical_path).
   // - 5xx / timeout -> propaga exceção para error.tsx (HTTP 500, nunca soft 404).
   const result = await getCachedPublicCategory(params.slug, { revalidate: 3600 });
   if (result.status === 'not_found') {
     notFound();
   }
 
+  if (result.status === 'redirect') {
+    permanentRedirect(result.destinationPath);
+  }
+
   const { category } = result;
+  const canonicalPath = resolveCategoryCanonicalPath(category, params.slug);
+  if (params.slug.trim().toLowerCase() !== resolveCategoryCanonicalSlug(category, params.slug)) {
+    permanentRedirect(canonicalPath);
+  }
 
   return (
     <>

@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { publicCategoriesApi } from '@/lib/api-public';
 import { getCachedPublicCategory } from '@/lib/server/category-discovery/get-public-category';
+import { resolveCategoryCanonicalSlug } from '@/lib/seo/category-metadata';
 import CategoryVisualAsset from '@/components/categories/CategoryVisualAsset';
 
 export const revalidate = 1800;
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const result = await getCachedPublicCategory(params.slug, { revalidate: 1800 });
-  const category = result.status === 'ok' ? result.category : null;
+  const category = result.status !== 'not_found' ? result.category : null;
   return {
     title: category
       ? `Compare soluções de ${category.name} | Avalia Solar`
@@ -29,8 +30,11 @@ export default async function CategoryComparePage({
   if (result.status === 'not_found') {
     notFound();
   }
+  if (result.status === 'redirect') {
+    permanentRedirect(`${result.destinationPath}/compare`);
+  }
   const { category } = result;
-  const canonicalSlug = category.seo_url || category.slug || params.slug;
+  const canonicalSlug = resolveCategoryCanonicalSlug(category, params.slug);
 
   const allSolutions = category.solution_types?.length
     ? category.solution_types

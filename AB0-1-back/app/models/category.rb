@@ -37,6 +37,7 @@ class Category < ApplicationRecord
   has_many :category_faqs, dependent: :destroy, inverse_of: :category
   has_many :category_solution_types, dependent: :destroy, inverse_of: :category
   has_many :company_category_capabilities, dependent: :destroy
+  has_many :slug_redirects, class_name: 'CategorySlugRedirect', dependent: :destroy, inverse_of: :category
 
   accepts_nested_attributes_for :category_faqs, allow_destroy: true
   accepts_nested_attributes_for :category_solution_types, allow_destroy: true
@@ -48,7 +49,9 @@ class Category < ApplicationRecord
   # =========================
   # Validations
   # =========================
+  before_validation :preserve_or_assign_seo_url
   validates :name, presence: true, uniqueness: true
+  validates :seo_url, presence: true, uniqueness: { case_sensitive: false }
   validates :description, presence: true
   validate :validate_parent_constraints
   validate :validate_banner_technical_requirements
@@ -329,5 +332,25 @@ class Category < ApplicationRecord
     end
 
     timestamps.max
+  end
+
+  # CDSI-045: Habilita troca explícita de slug via CategoryTaxonomy::RenameSlug
+  def allow_explicit_slug_change!
+    @explicit_slug_change_allowed = true
+  end
+
+  private
+
+  # CDSI-044 / CDSI-045 (R14):
+  # - Na criação: preenche seo_url a partir de name.parameterize se em branco
+  # - Na atualização: preserva seo_url publicado mesmo se name mudar ou se seo_url vier em branco
+  def preserve_or_assign_seo_url
+    if persisted? && seo_url_in_database.present? && seo_url.blank?
+      self.seo_url = seo_url_in_database
+    elsif seo_url.blank? && name.present?
+      self.seo_url = name.to_s.parameterize
+    elsif seo_url.present?
+      self.seo_url = seo_url.to_s.strip.downcase
+    end
   end
 end

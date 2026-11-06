@@ -84,3 +84,24 @@ export function shouldNoindexSearchParams(
     return true;
   });
 }
+
+/**
+ * CDSI-050: Remove parâmetros de tracking (UTM, gclid, fbclid, msclkid)
+ * preservando apenas parâmetros funcionais.
+ */
+export function stripTrackingParamsFromSearchParams(
+  searchParams?: SeoSearchParams
+): SeoSearchParams {
+  if (!searchParams) return {};
+
+  const ignoredKeys = new Set<string>(SEO_TRACKING_PARAM_KEYS);
+  const cleaned: SeoSearchParams = {};
+
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (ignoredKeys.has(key) || !hasValue(value)) continue;
+    cleaned[key] = value;
+  }
+
+  return cleaned;
+}
+

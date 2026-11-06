@@ -42,5 +42,48 @@ test.describe('CDSI-019: Category HTTP & SSR SEO Semantics (E01-E06, E18)', () =
     const content = await page.content();
     expect(content).not.toMatch(/PG::|ActiveRecord::|ECONNREFUSED|127\.0\.0\.1:3001/i);
   });
+
+  test('E04: slug legado em next.config.js redireciona 301/308 em 1 hop para slug canônico', async ({
+    request,
+  }) => {
+    const response = await request.get('/categories/monitoramento-om', {
+      maxRedirects: 0,
+    });
+    expect([301, 308]).toContain(response.status());
+    expect(response.headers()['location']).toMatch(
+      /\/categories\/monitoramento-operacao-manutencao$/
+    );
+  });
+
+  test('E07 & E16: exatamente uma canonical limpa mesmo com parâmetros UTM na URL', async ({
+    page,
+  }) => {
+    const response = await page.goto(
+      '/categories/monitoramento-operacao-manutencao?utm_source=google&utm_medium=cpc&gclid=test123'
+    );
+    expect(response?.status()).toBe(200);
+
+    const canonicals = page.locator('link[rel="canonical"]');
+    await expect(canonicals).toHaveCount(1);
+    await expect(canonicals.first()).toHaveAttribute(
+      'href',
+      /\/categories\/monitoramento-operacao-manutencao$/
+    );
+
+    const robotsMeta = page.locator('meta[name="robots"]');
+    if ((await robotsMeta.count()) > 0) {
+      await expect(robotsMeta.first()).not.toHaveAttribute('content', /noindex/i);
+    }
+  });
+
+  test('E24: /companies/categorias/[slug] mantém canonical próprio de diretório multi-filtro sem canibalizar /categories/[slug]', async ({
+    page,
+  }) => {
+    await page.goto('/companies/categorias/inversores-solares--1');
+    const canonical = page.locator('link[rel="canonical"]');
+    await expect(canonical).toHaveCount(1);
+    await expect(canonical.first()).toHaveAttribute('href', /\/companies\/categorias\//);
+  });
 });
+
 

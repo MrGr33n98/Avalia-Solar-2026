@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { publicCategoriesApi } from '@/lib/api-public';
 import { getCachedPublicCategory } from '@/lib/server/category-discovery/get-public-category';
+import { resolveCategoryCanonicalSlug } from '@/lib/seo/category-metadata';
 import MatchingResults from './MatchingResults';
 
 export const revalidate = 0;
@@ -21,8 +22,11 @@ export default async function CategoryMatchingPage({
   if (result.status === 'not_found') {
     notFound();
   }
+  if (result.status === 'redirect') {
+    permanentRedirect(`${result.destinationPath}/matching`);
+  }
   const { category } = result;
-  const canonicalSlug = category.seo_url || category.slug || params.slug;
+  const canonicalSlug = resolveCategoryCanonicalSlug(category, params.slug);
 
   const solutionTypes = category.solution_types?.length
     ? category.solution_types

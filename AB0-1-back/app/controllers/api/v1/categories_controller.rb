@@ -364,7 +364,16 @@ module Api
           raise ActiveRecord::RecordNotFound, "Category with slug '#{raw_slug}' not found"
         end
 
-        @category = ::Category.active.find_by!(seo_url: raw_slug)
+        redirected_from_slug = nil
+        @category = ::Category.active.find_by(seo_url: raw_slug)
+
+        if @category.nil? && defined?(::CategorySlugRedirect)
+          @category = ::CategorySlugRedirect.resolve(raw_slug)
+          redirected_from_slug = raw_slug if @category.present?
+        end
+
+        raise ActiveRecord::RecordNotFound, "Category with slug '#{raw_slug}' not found" if @category.nil?
+
         decision = ::CategoryDiscovery::IndexabilityPolicy.evaluate(@category)
 
         unless decision.publicly_accessible?
@@ -376,6 +385,16 @@ module Api
             "[CategoryDiscovery::ShadowIndexability] slug=#{@category.seo_url} mode=#{decision.mode} " \
             "indexable=#{decision.indexable?} warnings=#{decision.advisory_warnings.join(',')}"
           )
+        end
+
+        if redirected_from_slug.present?
+          response.set_header('X-Canonical-Redirect-Slug', @category.seo_url)
+          payload = category_json(@category).merge(
+            redirect_from_slug: redirected_from_slug,
+            canonical_redirect_slug: @category.seo_url
+          )
+          render json: payload, status: :ok
+          return
         end
 
         cache_key = "categories/slug/#{@category.seo_url}/#{@category.updated_at.to_i}/#{decision.mode}"

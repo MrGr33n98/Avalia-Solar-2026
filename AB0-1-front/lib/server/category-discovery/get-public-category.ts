@@ -26,6 +26,12 @@ export class CategoryTimeoutError extends Error {
 
 export type PublicCategoryResult =
   | { status: 'ok'; category: Category }
+  | {
+      status: 'redirect';
+      category: Category;
+      destinationSlug: string;
+      destinationPath: string;
+    }
   | { status: 'not_found' };
 
 export interface GetPublicCategoryOptions {
@@ -119,13 +125,42 @@ export async function getPublicCategory(
         );
       }
 
-      const data = (await response.json()) as Category | null;
+      const data = (await response.json()) as (Category & {
+        redirect_from_slug?: string;
+        canonical_redirect_slug?: string;
+      }) | null;
       if (!data || typeof data !== 'object') {
         return { status: 'not_found' };
       }
 
       if (typeof data.status === 'string' && data.status !== 'active') {
         return { status: 'not_found' };
+      }
+
+      const headerRedirectSlug = normalizeCategorySlug(
+        typeof response.headers?.get === 'function'
+          ? response.headers.get('x-canonical-redirect-slug')
+          : null
+      );
+      const canonicalSlug = normalizeCategorySlug(
+        headerRedirectSlug ||
+          data.canonical_redirect_slug ||
+          data.indexability?.canonical_slug ||
+          data.seo_url ||
+          data.slug
+      );
+
+      if (
+        canonicalSlug &&
+        canonicalSlug !== slug &&
+        (headerRedirectSlug || data.redirect_from_slug || data.seo_url !== slug)
+      ) {
+        return {
+          status: 'redirect',
+          category: data,
+          destinationSlug: canonicalSlug,
+          destinationPath: `/categories/${canonicalSlug}`,
+        };
       }
 
       return { status: 'ok', category: data };
