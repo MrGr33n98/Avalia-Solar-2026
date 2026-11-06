@@ -106,6 +106,21 @@ export default function ProfileSignalsTab({
   // Show actual direct pageviews, never a mix of unrelated engagement events.
   const totalProfileViews = reportingData.traffic_ratio.direct_pageviews;
 
+  const renderSectionMeasurement = (
+    section: keyof NonNullable<BuyerIntentReportingData['section_breakdown']>
+  ) => {
+    const metric = reportingData.section_breakdown?.[section];
+    if (!metric || metric.status === 'not_instrumented') {
+      return <span className="text-xs font-medium text-slate-500">Instrumentação pendente</span>;
+    }
+    return (
+      <span className="flex items-baseline gap-2">
+        <span>{metric.count.toLocaleString('pt-BR')}</span>
+        {metric.status !== 'measured' && <span className="text-[10px] font-normal text-amber-700">Coleta parcial</span>}
+      </span>
+    );
+  };
+
   const highIntentVisitors = useMemo(() => {
     return profileVisitorAccounts.filter(
       (acc) => acc.buying_stage === 'decision' || acc.hot_signals_count > 0 || (acc.pageviews_breakdown?.contact ?? 0) > 0
@@ -175,14 +190,14 @@ export default function ProfileSignalsTab({
               <Building2 className="h-4 w-4" />
             </div>
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              Empresas Identificadas
+              Sessões com atividade
             </span>
           </div>
           <div className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
             {profileVisitorAccounts.length}
           </div>
           <div className="mt-1 text-[11px] text-slate-500">
-            Contas corporativas que navegaram no seu perfil
+            Registros de pesquisa; identidade empresarial não presumida
           </div>
         </div>
 
@@ -229,11 +244,11 @@ export default function ProfileSignalsTab({
               Seções Mais Acessadas no Perfil
             </h3>
             <p className="text-[11px] text-slate-500">
-              As visualizações por seção ainda não têm contadores de eventos certificados.
+              Dados por seção refletem eventos recebidos no Buyer Intent; áreas sem integração permanecem pendentes.
             </p>
           </div>
           <Badge variant="outline" className="text-[10px] self-start sm:self-auto bg-white dark:bg-slate-800">
-            Mensuração por seção pendente
+            Cobertura parcial de telemetria
           </Badge>
         </div>
 
@@ -244,7 +259,7 @@ export default function ProfileSignalsTab({
               <span>Avaliações &amp; Notas</span>
             </div>
             <div className="text-lg font-black text-slate-900 dark:text-white mt-1.5">
-              <span className="text-xs font-medium text-slate-500">Não mensurado</span>
+              {renderSectionMeasurement('reviews')}
             </div>
           </div>
 
@@ -254,7 +269,7 @@ export default function ProfileSignalsTab({
               <span>Portfólio &amp; Projetos</span>
             </div>
             <div className="text-lg font-black text-slate-900 dark:text-white mt-1.5">
-              <span className="text-xs font-medium text-slate-500">Não mensurado</span>
+              {renderSectionMeasurement('portfolio')}
             </div>
           </div>
 
@@ -264,7 +279,7 @@ export default function ProfileSignalsTab({
               <span>Datasheets &amp; Mídia</span>
             </div>
             <div className="text-lg font-black text-slate-900 dark:text-white mt-1.5">
-              <span className="text-xs font-medium text-slate-500">Não mensurado</span>
+              {renderSectionMeasurement('datasheets')}
             </div>
           </div>
 
@@ -274,7 +289,7 @@ export default function ProfileSignalsTab({
               <span>Botão de Contato/WhatsApp</span>
             </div>
             <div className="text-lg font-black text-slate-900 dark:text-white mt-1.5">
-              <span className="text-xs font-medium text-slate-500">Não mensurado</span>
+              {renderSectionMeasurement('contact')}
             </div>
           </div>
         </div>
