@@ -138,7 +138,7 @@ class Plan < ApplicationRecord
     return true unless definition[:type] == :integer
     return true if value.nil? || value == ''
 
-    value.to_s.match?(/\\A\\d+\\z/)
+    value.to_s.match?(/\A\d+\z/)
   end
 
   def validate_feature_limits
