@@ -44,7 +44,10 @@ RSpec.describe PublicProfileRevalidator do
     expect(described_class.call!(company)).to eq(true)
 
     payload = JSON.parse(request_sent.body)
-    expect(payload.fetch('paths')).to eq(['/companies/empresa-de-teste'])
-    expect(payload.fetch('tags')).to include('company-profile', 'company-empresa-de-teste')
+    expect(payload.fetch('paths')).to include('/', '/companies', '/companies/empresa-de-teste')
+    expect(payload.fetch('tags')).to include(
+      'company-profile', 'company-empresa-de-teste',
+      'companies', 'home-data', 'home-companies', 'recommendations'
+    )
   end
 end

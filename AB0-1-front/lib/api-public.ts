@@ -370,7 +370,9 @@ export const publicCompaniesApi = {
   ): Promise<RecommendationResponse> => {
     const payload = await fetchApiPublic<unknown, RecommendationResponse>('recommendations', {
       params,
-      revalidate: options?.revalidate ?? 120,
+      // The API includes commercial entitlements; stale ISR could expose
+      // paid WhatsApp URLs after cancellation, so never cache this response.
+      revalidate: 0,
       tags: options?.tags || ['recommendations'],
       fallback: options?.fallback,
       silent: options?.silent,

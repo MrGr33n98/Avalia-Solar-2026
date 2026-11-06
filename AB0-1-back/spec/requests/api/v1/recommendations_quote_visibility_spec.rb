@@ -4,8 +4,8 @@ require 'rails_helper'
 
 RSpec.describe 'Recommendation paid conversion contracts', type: :request do
   it 'never returns a quote action for an approved Free installer' do
-    company = create(:company, segment: 'installer', status: 'active', moderation_status: 'approved')
-    allow_any_instance_of(Company).to receive(:quote_feature_enabled?).and_return(false)
+    company = create(:company, segment: 'installer', status: 'active', moderation_status: 'approved',
+                     plan: create(:plan, price: 0, features: {}))
 
     get '/api/v1/recommendations', params: { segment: 'installer' }
 

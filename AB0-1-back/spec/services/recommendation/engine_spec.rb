@@ -8,6 +8,7 @@ RSpec.describe Recommendation::Engine do
       :company,
       status: 'active',
       moderation_status: 'approved',
+      plan: create(:plan, price: 0, features: {}),
       segment: 'installer',
       state: 'SC',
       city: 'Florianópolis',
@@ -43,8 +44,8 @@ RSpec.describe Recommendation::Engine do
     end
 
     it 'inserts active sponsored placements at top slots' do
-      placement = create(
-        :recommendation_placement,
+      RecommendationPlacement.create!(
+        active: true,
         company: company2,
         placement_type: 'sponsored',
         state_code: 'SC',
@@ -59,6 +60,7 @@ RSpec.describe Recommendation::Engine do
       expect(results.first.company).to eq(company2)
       expect(results.first.sponsored?).to be true
       expect(results.first.recommendation_reason[:code]).to eq('SPONSORED_PLACEMENT')
+      expect(results.first.primary_cta[:type]).to eq('view_profile')
     end
   end
 end
