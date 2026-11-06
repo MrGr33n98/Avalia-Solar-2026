@@ -141,7 +141,7 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
 
         const [accRes, repRes] = await Promise.all([
           fetchBuyerIntentAccounts(effectiveCompanyId, filterCriteria),
-          fetchBuyerIntentReporting(effectiveCompanyId),
+          fetchBuyerIntentReporting(effectiveCompanyId, Number(selectedDays.slice(0, -1)) as 7 | 30 | 90),
         ]);
 
         if (requestSequence.current !== sequence) return;
