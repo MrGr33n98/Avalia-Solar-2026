@@ -375,7 +375,9 @@ module Api
         end
 
         redirected_from_slug = nil
-        @category = ::Category.active.find_by(seo_url: raw_slug)
+        @category = ::Category.active
+                              .preload(:parent, :children, :category_faqs, :category_solution_types, :banner_attachment, :icon_attachment)
+                              .find_by(seo_url: raw_slug)
 
         if @category.nil? && defined?(::CategorySlugRedirect)
           @category = ::CategorySlugRedirect.resolve(raw_slug)

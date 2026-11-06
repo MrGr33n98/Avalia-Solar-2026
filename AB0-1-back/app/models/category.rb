@@ -127,6 +127,13 @@ class Category < ApplicationRecord
   def clear_query_cache!
     Rails.cache.delete_matched('categories/*')
     Rails.cache.delete('categories/tree')
+    if defined?(CategoryDiscovery::CacheInvalidationJob) && seo_url.present? && id.present?
+      CategoryDiscovery::CacheInvalidationJob.perform_later(
+        category_id: id,
+        slug: seo_url,
+        previous_slug: saved_change_to_seo_url? ? seo_url_before_last_save : nil
+      )
+    end
     true
   end
 
