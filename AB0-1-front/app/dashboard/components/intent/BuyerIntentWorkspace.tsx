@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -32,6 +32,7 @@ import {
   type BuyerIntentReportingData,
   type IcpFilterCriteria,
   EMPTY_REPORTING_DATA,
+  BuyerIntentApiError,
 } from '@/lib/api/buyer-intent';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -98,6 +99,8 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
   const [totalAccounts, setTotalAccounts] = useState<number>(0);
   const [reportingData, setReportingData] =
     useState<BuyerIntentReportingData>(EMPTY_REPORTING_DATA);
+  const [dataError, setDataError] = useState<BuyerIntentApiError | null>(null);
+  const requestSequence = useRef(0);
 
   // Filtros da aba de sinais
   const [signalSearch, setSignalSearch] = useState('');
@@ -125,10 +128,12 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
   // Carregar dados reais da API
   const loadData = useCallback(
     async (selectedDays: '7d' | '30d' | '90d', isSilent = false) => {
+      const sequence = ++requestSequence.current;
       if (!effectiveCompanyId) {
         setAccounts([]);
         setTotalAccounts(0);
         setReportingData(EMPTY_REPORTING_DATA);
+        setDataError(new BuyerIntentApiError(0, 'MISSING_COMPANY', 'unavailable'));
         setLoading(false);
         setRefreshing(false);
         return;
@@ -136,6 +141,7 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
 
       try {
         if (!isSilent) setLoading(true);
+        setDataError(null);
         const filterCriteria: IcpFilterCriteria = {
           date_range: selectedDays,
           buying_stage: 'all',
@@ -147,19 +153,25 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
           fetchBuyerIntentReporting(effectiveCompanyId),
         ]);
 
-        setAccounts(accRes.scores || []);
-        setTotalAccounts(accRes.total || 0);
-        setReportingData(repRes || EMPTY_REPORTING_DATA);
+        if (requestSequence.current !== sequence) return;
+        setAccounts(accRes.scores);
+        setTotalAccounts(accRes.total);
+        setReportingData(repRes);
+        setDataError(null);
       } catch (err) {
-        console.warn('[BuyerIntentWorkspace] Erro ao carregar dados:', err);
-        toast({
-          title: 'Erro de sincronização',
-          description: 'Não foi possível carregar os sinais de intenção em tempo real.',
-          variant: 'destructive',
-        });
+        if (requestSequence.current !== sequence) return;
+        setAccounts([]);
+        setTotalAccounts(0);
+        setReportingData(EMPTY_REPORTING_DATA);
+        setSelectedAccount(null);
+        setDataError(err instanceof BuyerIntentApiError
+          ? err
+          : new BuyerIntentApiError(0, 'UNKNOWN_ERROR', 'unavailable'));
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (requestSequence.current === sequence) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [effectiveCompanyId, toast]
@@ -308,6 +320,65 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
     );
   }
 
+  if (!loading && dataError) {
+    const locked = dataError.kind === 'feature_locked';
+    const unauthorized = dataError.kind === 'unauthorized';
+    const forbidden = dataError.kind === 'forbidden';
+    const title = locked
+      ? 'Pontuação de intenção não incluída no plano'
+      : unauthorized
+        ? 'Sessão não autenticada'
+        : forbidden
+          ? 'Acesso à empresa não autorizado'
+          : 'Não foi possível consultar a intenção de compra';
+    const explanation = locked
+      ? 'Os scores de contas exigem o recurso intent_scores habilitado. Analytics avançado e pontuação de intenção são recursos diferentes.'
+      : unauthorized
+        ? 'Entre novamente na sua conta para consultar os dados da empresa.'
+        : forbidden
+          ? 'Verifique se sua conta possui vínculo ativo e permissão para consultar esta empresa.'
+          : 'A consulta falhou ou apresentou uma resposta inválida. Tente novamente.';
+
+    return (
+      <main className="space-y-4" aria-labelledby="buyer-intent-access-heading">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            Inteligência de demanda · Estado da consulta
+          </p>
+          <h1 className="mt-1 text-xl font-semibold text-slate-950 dark:text-white">
+            Intenção de Compra
+          </h1>
+        </div>
+        <section role="alert" className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-slate-900 dark:border-amber-900 dark:bg-amber-950/20 dark:text-white">
+          <h2 id="buyer-intent-access-heading" className="font-semibold">{title}</h2>
+          <p className="mt-2 text-xs leading-relaxed">{explanation}</p>
+          <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+            Os números não são exibidos como zero quando a consulta não é autorizada ou falha.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="sm" type="button" onClick={() => void loadData(days)} className="h-8 text-xs">
+              Tentar novamente
+            </Button>
+            {locked && (
+              <Button size="sm" variant="outline" type="button"
+                onClick={() => router.push(`/dashboard?company_id=${encodeURIComponent(String(effectiveCompanyId))}&tab=product-pricing`)}
+                className="h-8 text-xs">
+                Consultar planos
+              </Button>
+            )}
+            <Button size="sm" variant="outline" type="button" onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.set('subtab', 'prospects');
+              router.push(`${pathname}?${params.toString()}`);
+            }} className="h-8 text-xs">
+              Track Your Prospects
+            </Button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Topo: Kicker, Título, Subtítulo e Ações */}
@@ -340,6 +411,7 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
           <Button
             size="sm"
             onClick={handleDownloadCsv}
+            disabled={loading || Boolean(dataError)}
             className="h-9 gap-1.5 bg-blue-600 text-white font-semibold text-xs shadow-xs hover:bg-blue-700"
           >
             <Download className="h-3.5 w-3.5" />
@@ -413,8 +485,13 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
         {/* Toolbar: Status e Período */}
         <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-xs bg-white dark:bg-slate-900">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-400">
-              ● Telemetria ativa (dados reais)
+            <span className={cn(
+              'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold',
+              loading
+                ? 'border-slate-200 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400'
+            )}>
+              {loading ? 'Verificando disponibilidade de dados' : 'Consulta de intenção disponível'}
             </span>
             <span className="text-slate-500 hidden sm:inline">
               Eventos internos de compradores no marketplace
