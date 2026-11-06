@@ -35,6 +35,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import SellerInformationPanel, { type SellerEditorMode } from './SellerInformationPanel';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -62,6 +63,7 @@ interface CompanyInfoProps {
 
 interface CompanyData {
   id?: string;
+  slug?: string;
   name?: string;
   description?: string;
   website?: string;
@@ -579,6 +581,9 @@ function ChecklistGrid({
 
 export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [sellerEditorOpen, setSellerEditorOpen] = useState(false);
+  const [sellerEditorMode, setSellerEditorMode] = useState<SellerEditorMode>('profile');
+  const [sellerRefreshing, setSellerRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [company, setCompany] = useState<CompanyData | null>(null);
@@ -665,9 +670,32 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     handleInputChange(field, nextValues);
   };
 
-  const handleStartEditing = () => {
+  const openSellerEditor = (mode: SellerEditorMode) => {
+    if (isEditing) {
+      toast({
+        title: 'Edição já em andamento',
+        description: 'Salve ou cancele os ajustes avançados antes de editar o perfil.',
+      });
+      return;
+    }
+    setSellerEditorMode(mode);
     setFormData(normalizeSeoFields(company));
-    setIsEditing(true);
+    setSellerEditorOpen(true);
+  };
+
+  const handleSellerEditorOpenChange = (open: boolean) => {
+    if (saving && !open) return;
+    setSellerEditorOpen(open);
+    if (!open) setFormData(normalizeSeoFields(company));
+  };
+
+  const handleSellerRefresh = async () => {
+    setSellerRefreshing(true);
+    try {
+      await fetchCompanyData();
+    } finally {
+      setSellerRefreshing(false);
+    }
   };
 
   const handleCancelEditing = () => {
@@ -718,6 +746,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           });
           window.setTimeout(() => setPendingApproval(false), 8000);
         }
+        setSellerEditorOpen(false);
         await fetchCompanyData();
         return;
       }
@@ -849,7 +878,8 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     );
   }
 
-  const currentData = formData || company;
+  // Changes in the dialog remain a draft until the existing API confirms the save.
+  const currentData = isEditing ? formData || company : company || formData;
 
   if (!currentData) {
     return (
@@ -872,7 +902,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const primaryLocation = [currentData.city, currentData.state].filter(Boolean).join(', ') || TO_DEFINE;
 
   return (
-    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6 pb-24">
+    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 pb-24">
       <AnimatePresence>
         {pendingApproval && (
           <motion.div
@@ -893,18 +923,17 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="rounded-full border-blue-100 bg-blue-50 px-3 py-1 text-brand-blue">
+            <Badge variant="outline" className="rounded-md border-[#e5e2f0] bg-[#f4f2fa] px-2 py-0.5 text-[11px] text-[#594bbc]">
               Central Institucional
             </Badge>
-            <Badge variant="outline" className={cn('rounded-full px-3 py-1', publicationClass(currentData.status))}>
-              <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+            <Badge variant="outline" className={cn('rounded-md px-2 py-0.5 text-[11px]', publicationClass(currentData.status))}>
               {publicationLabel(currentData.status)}
             </Badge>
           </div>
-          <h2 className="break-words text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Informações gerais</h2>
+          <h2 className="break-words text-2xl font-bold tracking-tight text-[#24212b]">Informações gerais</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Gerencie os dados da empresa, ativos de marca e informações públicas usadas no ecossistema Avalia Solar.
-            As alterações enviadas por empresas seguem para aprovação no Active Admin.
+            Gerencie o perfil público, a identidade da marca e os dados apresentados aos compradores.
+            Alterações podem passar por revisão antes da publicação.
           </p>
         </div>
 
@@ -921,7 +950,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               </Button>
             </>
           ) : (
-            <Button onClick={handleStartEditing} className="w-full rounded-lg bg-brand-blue text-white hover:bg-blue-700 sm:w-auto">
+            <Button onClick={() => openSellerEditor('profile')} className="w-full rounded-md bg-[#594bbc] text-white hover:bg-[#493da5] sm:w-auto">
               <Pencil className="mr-2 h-4 w-4" />
               Editar informações
             </Button>
@@ -929,7 +958,21 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
         </div>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
+      <SellerInformationPanel
+        company={currentData}
+        draft={formData}
+        editorOpen={sellerEditorOpen}
+        editorMode={sellerEditorMode}
+        saving={saving}
+        refreshing={sellerRefreshing}
+        onEdit={openSellerEditor}
+        onEditorOpenChange={handleSellerEditorOpenChange}
+        onFieldChange={handleInputChange}
+        onSave={handleSave}
+        onRefresh={handleSellerRefresh}
+      />
+
+      <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-3">
         <SectionCard
           title="Ativo Corporativo da Marca"
           description={`Atualizado em: ${formatDateTime(currentData.updated_at)}`}
@@ -1019,7 +1062,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           description="Dados jurídicos, descrição institucional e conformidade."
           icon={Building2}
           actions={
-            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+            <Button type="button" variant="outline" onClick={() => openSellerEditor('profile')} className="h-10 w-10 rounded-md border-0 bg-transparent p-0 text-[#594bbc] shadow-none hover:bg-[#f0edfb]" aria-label="Editar informações técnicas" title="Editar informações técnicas">
               <Pencil className="mr-2 h-4 w-4" />
               Editar
             </Button>
@@ -1087,7 +1130,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           description="Canais de contato e presença digital."
           icon={Globe}
           actions={
-            <Button type="button" variant="outline" onClick={handleContextEdit} className="w-full rounded-lg text-brand-blue sm:w-auto">
+            <Button type="button" variant="outline" onClick={() => openSellerEditor('contacts')} className="h-10 w-10 rounded-md border-0 bg-transparent p-0 text-[#594bbc] shadow-none hover:bg-[#f0edfb]" aria-label="Editar canais de contato" title="Editar canais de contato">
               <Pencil className="mr-2 h-4 w-4" />
               Editar
             </Button>
