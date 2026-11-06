@@ -61,6 +61,24 @@ RSpec.describe Chat::Mobivolt::SafeCompanySerializer, type: :service do
       end
     end
 
+    it 'nega orçamento e WhatsApp para empresa Free mesmo quando patrocinada' do
+      allow(company).to receive(:has_paid_plan?).and_return(false)
+      allow(CompanyCtaVisibilityResolver).to receive(:new).with(company).and_return(
+        double(call: { effective: { quote: false, whatsapp: false } })
+      )
+      expect(serialized[:has_paid_plan]).to eq(false)
+      expect(serialized.dig(:cta_visibility, :effective, :quote)).to eq(false)
+    end
+
+    it 'transmite apenas a decisão comercial efetiva de uma empresa paga' do
+      allow(company).to receive(:has_paid_plan?).and_return(true)
+      allow(CompanyCtaVisibilityResolver).to receive(:new).with(company).and_return(
+        double(call: { effective: { quote: true, whatsapp: false } })
+      )
+      expect(serialized[:has_paid_plan]).to eq(true)
+      expect(serialized[:cta_visibility][:effective]).to eq(quote: true, whatsapp: false)
+    end
+
     it 'não inclui chaves ou campos privados sensíveis de LGPD/Negócio' do
       expect(serialized.keys).not_to include(:cnpj)
       expect(serialized.keys).not_to include(:api_key)

@@ -23,6 +23,7 @@ RSpec.describe Recommendation::Engine do
       :company,
       status: 'active',
       moderation_status: 'approved',
+      plan: create(:plan, price: 0, features: {}),
       segment: 'installer',
       state: 'SP',
       city: 'São Paulo',
