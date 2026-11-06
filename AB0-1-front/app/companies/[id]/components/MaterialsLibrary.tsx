@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { fetchApi } from '@/lib/api';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { toast } from '@/hooks/use-toast';
 
 export type FormField = { key: string; label: string; type: 'text' | 'email' | 'tel' | 'select'; required?: boolean; options?: string[] };
@@ -49,6 +50,14 @@ export default function MaterialsLibrary({ companyId }: { companyId: number | st
       const response = await fetchApi<{ download_id: string; authorization_token: string; delivery?: string }>(`/material_downloads`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ company_id: companyId, material_slug: material.slug, utm_source: campaign.get('utm_source') || undefined, utm_medium: campaign.get('utm_medium') || undefined, utm_campaign: campaign.get('utm_campaign') || undefined, ...values }) });
       const fileResponse = await fetch(`/api/v1/material_downloads/${response.download_id}/file`, { headers: { 'X-Material-Download-Token': response.authorization_token } });
       if (!fileResponse.ok) throw new Error(`HTTP ${fileResponse.status}`);
+       sendIntentSignal({
+         company_id: companyId,
+         event_id: `material-${response.download_id}`,
+         signal_type: 'material_delivered',
+         signal_category: 'research_intent',
+         element_type: 'material_download',
+         metadata: { material_id: material.id, material_slug: material.slug },
+       });
       const blob = await fileResponse.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = material.title; link.click(); URL.revokeObjectURL(url);
       if (response.delivery !== 'email') setSelected(null);
     } catch (error) { toast({ title: 'Não foi possível preparar o download', description: 'Tente novamente em alguns instantes.', variant: 'destructive' }); throw error; }
