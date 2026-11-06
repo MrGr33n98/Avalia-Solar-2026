@@ -24,6 +24,7 @@ import ProspectsJourneyTab from './prospects/ProspectsJourneyTab';
 import ProspectsVisitorsTab from './prospects/ProspectsVisitorsTab';
 import ProspectsInstallationTab from './prospects/ProspectsInstallationTab';
 import ProspectsIntegrationsTab from './prospects/ProspectsIntegrationsTab';
+import IntentSyncWorkspace from './prospects/IntentSyncWorkspace';
 import ProspectsSettingsTab from './prospects/ProspectsSettingsTab';
 import ProspectJourneyDrawer from './prospects/ProspectJourneyDrawer';
 import UtmLinkBuilder from './UtmLinkBuilder';
@@ -92,6 +93,15 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
   const [search, setSearch] = useState('');
   const [evidenceFilter, setEvidenceFilter] = useState('');
   const [selectedClickId, setSelectedClickId] = useState<string | null>(null);
+  const intentSyncSelected = activeTab === 'integrations' && searchParams?.get('integration') === 'intent_sync';
+  const closeIntentSync = () => {
+    if (!pathname) return;
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.delete('integration');
+    params.delete('integration_tab');
+    params.set('section', 'integrations');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const query = useQuery({
     queryKey: ['prospects-workspace', companyId, preset, page, search, evidenceFilter],
@@ -103,7 +113,7 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
         search: search || undefined,
         evidence_status: evidenceFilter || undefined,
       }),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !intentSyncSelected,
     retry: 1,
   });
 
@@ -193,7 +203,7 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
         </div>
 
         <p role="status" className="mt-4 text-xs font-medium text-[hsl(var(--dashboard-muted))]">
-          {statusDescription}
+          {intentSyncSelected ? 'Intent Sync: gestão de audiências da empresa, independente da telemetria.' : statusDescription}
         </p>
       </header>
 
@@ -228,7 +238,9 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
       </nav>
 
       {/* Main Content Area */}
-      {query.isLoading ? (
+      {intentSyncSelected ? (
+        <IntentSyncWorkspace companyId={companyId} onBack={closeIntentSync} />
+      ) : query.isLoading ? (
         <div className="space-y-4" aria-label="Carregando workspace">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Skeleton className="h-32 rounded-2xl" />

@@ -365,6 +365,15 @@ module PlanFeatureCatalog
       group: 'insights',
       aliases: %w[webhook webhook_access]
     },
+    'intent_sync' => {
+      label: 'Intent Sync — ativação de audiências',
+      description: 'Audiências próprias da empresa para ativação publicitária, sujeitas a aprovação e política de dados.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'insights'
+    },
     'intent_scores' => {
       label: 'Score de Intenção de Compra',
       description: 'Usa IA para classificar quais leads têm maior probabilidade de fechar.',

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import IntentSyncWorkspace from './IntentSyncWorkspace';
 import { BarChart3, Key, Check, AlertCircle, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +19,23 @@ interface Props {
 
 export default function ProspectsIntegrationsTab({ data, companyId, onRefresh }: Props) {
   const { integrations } = data;
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const showingIntentSync = searchParams?.get('integration') === 'intent_sync';
+  const navigateIntentSync = (show: boolean) => {
+    if (!pathname) return;
+    const next = new URLSearchParams(searchParams?.toString() || '');
+    next.set('section', 'integrations');
+    if (show) {
+      next.set('integration', 'intent_sync');
+      next.set('integration_tab', 'overview');
+    } else {
+      next.delete('integration');
+      next.delete('integration_tab');
+    }
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  };
   const [ga4Id, setGa4Id] = useState(integrations.ga4.measurement_id || '');
   const [ga4Error, setGa4Error] = useState('');
   const [customIdsEnabled, setCustomIdsEnabled] = useState(integrations.custom_ids.enabled);
@@ -66,6 +85,10 @@ export default function ProspectsIntegrationsTab({ data, companyId, onRefresh }:
       console.error('Erro ao atualizar custom IDs:', err);
     }
   };
+
+  if (showingIntentSync) {
+    return <IntentSyncWorkspace companyId={companyId} onBack={() => navigateIntentSync(false)} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -180,6 +203,19 @@ export default function ProspectsIntegrationsTab({ data, companyId, onRefresh }:
           <p className="text-xs text-[hsl(var(--dashboard-muted))] pt-1">
             Qualquer tentativa de envio de chaves contendo PII (<code className="font-mono">email</code>, <code className="font-mono">phone</code>, <code className="font-mono">name</code>, <code className="font-mono">token</code>) é bloqueada e descartada automaticamente pelo sanitizador.
           </p>
+        </div>
+      </section>
+      {/* Intent Sync belongs to companies, never to the internal Sales CRM. */}
+      <section className="rounded-md border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-3 sm:p-4" aria-labelledby="intent-sync-integration">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h3 id="intent-sync-integration" className="text-sm font-semibold text-[hsl(var(--dashboard-ink))]">Intent Sync</h3>
+            <p className="mt-1 max-w-lg text-xs text-[hsl(var(--dashboard-muted))]">
+              Audiências próprias, conexões publicitárias e histórico de sincronização. Ativação externa sujeita a aprovação.
+            </p>
+          </div>
+          <Button type="button" variant="outline" size="sm" className="h-8 rounded-md px-3 text-xs"
+            onClick={() => navigateIntentSync(true)}>Abrir Intent Sync</Button>
         </div>
       </section>
     </div>
