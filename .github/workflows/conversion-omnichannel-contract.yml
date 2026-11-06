@@ -44,6 +44,7 @@ jobs:
             components/company/RecommendedCompanyCard.spec.tsx \
             __tests__/components/RecommendedCompaniesSection.test.tsx \
             app/dashboard/components/conversion-surfaces/ConversionSurfacesOverview.spec.tsx \
+            components/__tests__/ChatCompanyRecommendations.test.tsx \
             app/dashboard/components/cta-visibility/CtaVisibilitySettings.spec.tsx \
             lib/feature-access.spec.ts
       - name: TypeScript
@@ -97,4 +98,25 @@ jobs:
             spec/services/company_conversion/surface_snapshot_spec.rb \
             spec/services/recommendation/cta_resolver_spec.rb \
             spec/services/recommendation/engine_spec.rb \
+            spec/services/chat/mobivolt/safe_company_serializer_spec.rb \
+            spec/services/public_profile_revalidator_spec.rb \
             spec/requests/api/v1/recommendations_quote_visibility_spec.rb
+
+  mobile-contract:
+    name: Native Company Conversion — Jest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./AB0-1-mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+          cache-dependency-path: AB0-1-mobile/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Native conversion access contracts
+        run: npm test -- --runInBand src/lib/company-conversion.test.ts
