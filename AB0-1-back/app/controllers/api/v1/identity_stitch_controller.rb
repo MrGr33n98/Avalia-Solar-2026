@@ -52,6 +52,9 @@ module Api
         end
 
         session.track_visit(company_id, page_url) if company_id.present? && page_url.present?
+        # A consented login may register an already-known anonymous session.
+        # Refresh its server-side proof timestamp without requiring a new visit.
+        session.touch
 
         render json: {
           anonymous_id: anonymous_id,
