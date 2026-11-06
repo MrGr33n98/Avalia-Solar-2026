@@ -131,6 +131,15 @@ module Api
           companies_scope = companies_scope.where('project_types @> ?', [project_type].to_json) if allowed_types.include?(project_type)
         end
 
+        if params[:capability_type].present? || params[:delivery_mode].present?
+          capability_ids = CategoryDiscovery::CompanyEligibilityPolicy.eligible_companies_scope(
+            category: @category,
+            capability_type: params[:capability_type],
+            delivery_mode: params[:delivery_mode]
+          ).select(:id)
+          companies_scope = companies_scope.where(id: capability_ids)
+        end
+
         companies_scope = apply_company_sort(companies_scope)
         # Log count before limit/pagination
         total_count = companies_scope.count
