@@ -355,7 +355,8 @@ export async function fetchBuyerIntentAccounts(
     params.set('activity_level', filters.activity_level);
   }
   if (filters?.date_range) {
-    const days = { '7d': '7', '30d': '30', '90d': '90' }[filters.date_range];
+    const daysMap: Record<string, string> = { '7d': '7', '30d': '30', '90d': '90' };
+    const days = daysMap[filters.date_range];
     if (days) params.set('days', days);
   }
   const data = await fetchIntentJson(`/api/v1/intent_scores?${params.toString()}`);
