@@ -22,7 +22,8 @@ interface CompanyCTAGroupProps {
 /**
  * Brand Page: hierarquia idêntica em web móvel e PWA.
  * Primários: orçamento + WhatsApp, cada um condicionado ao entitlement real.
- * Secundários: Comparar + Avaliar, disponíveis inclusive no plano Free.
+ * Mobile: Comparar discreto à direita; Avaliar aparece como estrela junto ao favorito.
+ * Desktop: Comparar + Avaliar continuam disponíveis, inclusive no plano Free.
  */
 export default function CompanyCTAGroup({
   company,
@@ -100,14 +101,14 @@ export default function CompanyCTAGroup({
       {hasPrimaryActions && (
         <div
           data-testid="company-primary-ctas"
-          className={`grid w-full min-w-0 gap-1.5 ${showQuote && whatsappHref ? 'grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]' : 'grid-cols-1'} lg:flex lg:w-auto lg:items-center lg:gap-2`}
+          className={`grid w-full min-w-0 gap-1.5 ${showQuote && whatsappHref ? 'grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]' : 'grid-cols-1'} lg:flex lg:w-auto lg:items-center lg:gap-2`}
         >
           {showQuote && (
             <Button
               type="button"
               size="default"
               onClick={handleRequestQuote}
-              className="relative flex h-11 min-h-11 w-full min-w-0 items-center justify-center gap-1 rounded-[10px] bg-blue-600 px-2 text-xs font-semibold leading-none text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-[0.99] min-[380px]:gap-1.5 min-[380px]:text-sm lg:h-10 lg:min-h-10 lg:w-auto lg:min-w-[155px] lg:px-3"
+              className="company-quote-cta relative flex h-11 !min-h-11 w-full min-w-0 items-center justify-center gap-1 rounded-[10px] bg-blue-600 px-1.5 text-[12px] font-semibold leading-none text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-[0.99] min-[380px]:gap-1.5 min-[380px]:text-[13px] min-[420px]:text-sm lg:h-10 lg:!min-h-10 lg:w-auto lg:min-w-[155px] lg:px-3"
             >
               <Send className="h-4 w-4 shrink-0 fill-current" aria-hidden="true" />
               <span className="truncate">Solicitar orçamento</span>
@@ -137,7 +138,7 @@ export default function CompanyCTAGroup({
                   placement: 'hero',
                 });
               }}
-              className="relative inline-flex h-11 min-h-11 w-full min-w-0 items-center justify-center gap-1 rounded-[10px] bg-[#16a34a] px-2 text-xs font-semibold leading-none text-white shadow-sm transition-colors hover:bg-[#15803d] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:ring-offset-2 min-[380px]:gap-1.5 min-[380px]:text-sm lg:h-10 lg:min-h-10 lg:w-auto lg:min-w-[120px] lg:px-3"
+              className="relative inline-flex h-11 !min-h-11 w-full min-w-0 items-center justify-center gap-1 rounded-[10px] bg-[#16a34a] px-1.5 text-[12px] font-semibold leading-none text-white shadow-sm transition-colors hover:bg-[#15803d] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16a34a] focus-visible:ring-offset-2 min-[380px]:gap-1.5 min-[380px]:text-[13px] min-[420px]:text-sm lg:h-10 lg:!min-h-10 lg:w-auto lg:min-w-[120px] lg:px-3"
             >
               {/* Marca do WhatsApp em SVG, não ícone de chat genérico. */}
               <svg viewBox="0 0 24 24" fill="currentColor" className="h-[18px] w-[18px] shrink-0" aria-hidden="true">
@@ -150,28 +151,25 @@ export default function CompanyCTAGroup({
         </div>
       )}
 
-      {/* A moldura visual tem 36px; a área acionável mantém 44px no PWA. */}
+      {/* Comparar: ação terciária sem moldura, alinhada à direita no PWA. */}
       <div
         data-testid="company-secondary-ctas"
-        className="grid w-full min-w-0 grid-cols-2 gap-1.5 lg:flex lg:w-auto lg:items-center lg:gap-2"
+        className="flex w-full min-w-0 items-center justify-end gap-2 lg:w-auto"
       >
-        <div className="flex h-11 min-w-0 items-center lg:w-auto">
-          <div className="flex h-9 w-full min-w-0 items-center justify-center rounded-[10px] border border-slate-200/90 bg-white lg:px-1">
-            <CompareCheckboxControl
-              companyName={company.name}
-              checked={isCompared}
-              disabled={!isCompared && !canAddMore}
-              onCheckedChange={handleCompareChange}
-              className="!min-h-11 w-full !px-1 lg:w-auto"
-            />
-          </div>
-        </div>
+        <CompareCheckboxControl
+          companyName={company.name}
+          checked={isCompared}
+          disabled={!isCompared && !canAddMore}
+          onCheckedChange={handleCompareChange}
+          className="!min-h-11 !px-2 [&>span:last-child]:text-[13px] [&>span:last-child]:font-medium"
+        />
 
+        {/* Desktop mantém Avaliar nesta faixa; no PWA a estrela fica ao lado do coração. */}
         <Link
           href={reviewPath}
           aria-label={`Avaliar empresa: ${company.name}`}
           title={`Avaliar empresa: ${company.name}`}
-          className="relative flex h-11 min-w-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 lg:w-auto"
+          className="relative hidden h-11 min-w-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 lg:flex lg:w-auto"
         >
           <span className="inline-flex h-9 w-full min-w-0 items-center justify-center gap-1.5 rounded-[10px] border border-amber-400/80 bg-amber-500/[0.06] px-2 text-xs font-semibold leading-none text-slate-900 transition-colors hover:bg-amber-500/[0.12] lg:min-w-[100px]">
             <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
