@@ -41,7 +41,7 @@ export function CompanyAccessSidebar({
           only then reuse the existing 300×600 company-profile sidebar inventory,
           explicitly requested for this page. Server-side contract, moderation,
           location targeting and priority still determine eligibility. */}
-      <ErrorBoundary fallback={null}>
+      <ErrorBoundary fallback={<></>}>
         <BannerSlot
           placement="company_access_sidebar"
           fallbackPositions={['company_profile_sidebar_sponsored']}
