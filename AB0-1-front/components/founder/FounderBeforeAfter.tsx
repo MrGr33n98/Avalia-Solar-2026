@@ -36,6 +36,7 @@ export default function FounderBeforeAfter() {
   const hasAnimatedRef = useRef(false);
   const userInteractedRef = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
+  const lastAnimationPaintRef = useRef(0);
 
   // Registro de visualização da seção com IntersectionObserver
   useEffect(() => {
@@ -91,7 +92,11 @@ export default function FounderBeforeAfter() {
         currentVal = 65 - 15 * (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
       }
 
-      setPremiumPercent(Math.round(currentVal));
+      // Keep the 1.4s reveal but cap React state updates to ~30fps.
+      if (currentTime - lastAnimationPaintRef.current >= 32 || progress >= 1) {
+        setPremiumPercent(Math.round(currentVal));
+        lastAnimationPaintRef.current = currentTime;
+      }
 
       if (progress < 1) {
         animationFrameRef.current = requestAnimationFrame(animate);
@@ -323,7 +328,7 @@ export default function FounderBeforeAfter() {
                 }
                 width={1672}
                 height={941}
-                quality={92}
+                quality={84}
                 className="w-full h-full object-contain"
                 draggable={false}
               />

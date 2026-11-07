@@ -193,8 +193,8 @@ export default function ComparisonImageViewer({
               alt={currentImage.alt}
               width={1672}
               height={941}
-              quality={95}
-              priority
+              quality={85}
+              loading="lazy"
               className="w-full h-full object-contain"
               draggable={false}
             />
