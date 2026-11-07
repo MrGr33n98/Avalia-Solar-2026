@@ -86,6 +86,28 @@ describe('BannerContainer - seleção de layout por placement', () => {
     expect(collectClassNames(container)).not.toContain('max-w-[300px]');
   });
 
+  it('keeps a 300x250 HTML campaign compact on the company-access slot', () => {
+    const compact: BannerData = {
+      ...editorialBanner,
+      id: 502,
+      position: 'company_access_sidebar',
+      width: 300,
+      height: 250,
+    };
+
+    render(
+      <BannerContainer
+        banners={[compact]}
+        position="company_access_sidebar"
+        showDisclosure
+      />
+    );
+
+    const creative = screen.getByRole('article', { name: /Anúncio editorial/ });
+    expect(creative).toHaveStyle({ minHeight: '250px', height: '250px' });
+    expect(screen.getByText('Publicidade')).toBeInTheDocument();
+  });
+
   it('removes the disclosure when the only campaign image fails to load', () => {
     const invalidCampaign: BannerData = {
       id: 501,
