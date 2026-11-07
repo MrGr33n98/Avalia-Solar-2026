@@ -110,4 +110,46 @@ describe('CompanyDirectoryList — Mobile & Desktop Directory List Mode', () => 
     expect(checkboxes[1]).not.toBeChecked();
     expect(checkboxes[2]).not.toBeChecked();
   });
+  it('puts favorite, gated WhatsApp, gated quote and comparison in that order', () => {
+    const paid = {
+      id: 372, name: 'WEG', slug: 'weg', city: 'Florianópolis', state: 'SC',
+      has_paid_plan: true, quote_cta_enabled: true,
+      cta_whatsapp_enabled: true, cta_whatsapp_url: 'https://wa.me/5547999700506',
+      feature_access: {
+        custom_ctas: { state: 'enabled', value: true },
+        whatsapp_contact_button: { state: 'enabled', value: true },
+      },
+    };
+    render(<CompanyDirectoryRow company={paid} />);
+    const actions = screen.getByTestId('company-directory-actions');
+    expect(actions.querySelector('[aria-label="Adicionar aos favoritos"]')).toBeTruthy();
+    expect(actions.querySelector('a[aria-label="Falar com WEG no WhatsApp"]')).toBeTruthy();
+    expect(actions.querySelector('button[aria-label="Solicitar orçamento"]')).toBeTruthy();
+    expect(actions.querySelector('input[type="checkbox"]')).toBeTruthy();
+    const descendants = [
+      actions.querySelector('[aria-label="Adicionar aos favoritos"]'),
+      actions.querySelector('a[aria-label="Falar com WEG no WhatsApp"]'),
+      actions.querySelector('button[aria-label="Solicitar orçamento"]'),
+      actions.querySelector('input[type="checkbox"]'),
+    ];
+    expect(descendants.every(Boolean)).toBe(true);
+    // Four actions appear in the intended order, not mixed into the company link.
+    for (let i = 0; i < descendants.length - 1; i++) {
+      expect(
+        descendants[i]?.compareDocumentPosition(descendants[i + 1] as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    }
+  });
+
+  it('retains favorites and comparison, but never inserts paid CTAs on Free', () => {
+    render(<CompanyDirectoryRow company={companies[2]} />);
+    const actions = screen.getByTestId('company-directory-actions');
+    expect(actions.querySelector('[aria-label="Adicionar aos favoritos"]')).toBeTruthy();
+    expect(actions.querySelector('input[type="checkbox"]')).toBeTruthy();
+    expect(actions.querySelector('a[aria-label*="WhatsApp"]')).toBeNull();
+    expect(actions.querySelector('button[aria-label="Solicitar orçamento"]')).toBeNull();
+    expect(screen.getByRole('link', { name: /Ver perfil de Empresa Nova Solar/ })).toHaveAttribute('href', '/companies/empresa-nova-solar');
+  });
+
 });
