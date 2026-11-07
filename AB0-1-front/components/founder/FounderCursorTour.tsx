@@ -179,7 +179,7 @@ export default function FounderCursorTour() {
       ref={tourRef}
       tabIndex={0}
       onKeyDown={onKeyDown}
-      className="mx-auto max-w-7xl px-4 py-14 outline-none sm:px-6 sm:py-20 lg:px-8"
+      className="mx-auto max-w-7xl px-4 py-10 outline-none sm:px-6 sm:py-14 lg:px-8"
       aria-label="Tour interativo da Brand Page Premium"
     >
       <header className="mx-auto mb-8 max-w-3xl text-center sm:mb-10">
@@ -233,8 +233,8 @@ export default function FounderCursorTour() {
                 width={1055}
                 height={1491}
                 sizes="(max-width: 767px) 100vw, (max-width: 1280px) 1055px, 1055px"
-                quality={95}
-                priority
+                quality={82}
+                loading="lazy"
                 className="h-full w-full select-none object-fill"
                 draggable={false}
               />
