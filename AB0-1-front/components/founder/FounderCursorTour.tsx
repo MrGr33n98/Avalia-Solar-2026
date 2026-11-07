@@ -123,10 +123,11 @@ export default function FounderCursorTour() {
   }, []);
 
   useEffect(() => {
-    const element = tourRef.current;
+    // Autoplay acompanha a imagem, não toda a seção (que pode continuar na tela sem o preview).
+    const element = frameRef.current;
     if (!element) return;
-    const observer = new IntersectionObserver(([entry]) => setIsInView(entry.isIntersecting), {
-      threshold: 0.1,
+    const observer = new IntersectionObserver(([entry]) => setIsInView(entry.intersectionRatio >= 0.25), {
+      threshold: [0, 0.25],
     });
     observer.observe(element);
     return () => observer.disconnect();
@@ -178,24 +179,26 @@ export default function FounderCursorTour() {
       ref={tourRef}
       tabIndex={0}
       onKeyDown={onKeyDown}
-      className="mx-auto max-w-7xl px-4 py-10 outline-none sm:px-6 sm:py-14 lg:px-8"
+      className="mx-auto max-w-7xl px-4 py-6 outline-none sm:px-6 sm:py-10 lg:px-8 lg:py-14"
       aria-label="Tour interativo da Brand Page Premium"
     >
-      <header className="mb-6 max-w-3xl text-left sm:mb-8">
-        <div className="mb-3 inline-flex items-center rounded-md border border-[#d0e2ff] bg-[#edf5ff] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#0043ce]">
+      <header className="mb-4 max-w-3xl text-left sm:mb-8">
+        <div className="mb-2 inline-flex items-center rounded-md border border-[#d0e2ff] bg-[#edf5ff] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#0043ce]">
           Tour interativo · Brand Page Premium
         </div>
-        <h2 className="text-2xl font-bold tracking-tight text-[#09172f] sm:text-3xl lg:text-4xl">
+        <h2 className="text-[clamp(1.45rem,5vw,1.8rem)] font-bold leading-tight tracking-tight text-[#09172f] sm:text-3xl lg:text-4xl">
           Veja como a Brand Page opera na tela do computador
         </h2>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
+        <p className="mt-2 text-[13px] leading-5 text-slate-600 sm:mt-3 sm:text-base sm:leading-relaxed">
           Explore os recursos da página real da Solaris Energia. Use os controles ou as setas do teclado.
         </p>
       </header>
 
-      <div className="overflow-hidden rounded-xl border border-[#dde1e6] bg-white lg:grid lg:grid-cols-12">
-        <div className="bg-[#f4f7fb] p-2.5 sm:p-5 lg:col-span-7 lg:p-6">
-          <div className="mb-2.5 flex items-center justify-between gap-3 text-[11px] text-[#475569] sm:text-xs">
+      <div className="overflow-hidden rounded-xl border border-[#dde1e6] bg-white lg:grid lg:grid-cols-12 lg:grid-rows-[minmax(0,1fr)_auto_auto]">
+        {/* Preview: permanece ao lado do texto no desktop. */}
+
+        <div className="bg-[#f4f7fb] p-2.5 pb-1 sm:p-5 sm:pb-2 lg:col-span-7 lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:p-6">
+          <div className="mb-2 flex items-center justify-between gap-3 text-[11px] text-[#475569] sm:text-xs">
             <span className="font-mono">SOLARIS ENERGIA · BRAND PAGE</span>
             <span aria-live="polite" className="font-semibold">{String(currentStep + 1).padStart(2, '0')} / 10</span>
           </div>
@@ -242,36 +245,22 @@ export default function FounderCursorTour() {
               <FounderCinematicCursor x={camera.cursorX} y={camera.cursorY} pinX={camera.pinX} pinY={camera.pinY} duration={step.duration} entry={step.entry} reducedMotion={Boolean(reducedMotion)} />
             )}
           </div>
-          <p className="mt-2 text-center text-[10px] text-[#66758a] sm:text-[11px]">Imagem original preservada · navegação sem ações externas</p>
+          <p className="sr-only lg:not-sr-only lg:mt-2 lg:text-center lg:text-[11px] lg:text-[#66758a]">Imagem original preservada · navegação sem ações externas</p>
         </div>
 
-        <div className="flex flex-col justify-between p-4 sm:p-6 lg:col-span-5 lg:p-7">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Recurso {String(currentStep + 1).padStart(2, '0')}</span>
-              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">Brand Page Premium</span>
-            </div>
-            <div aria-live="polite" aria-atomic="true" data-caption-position={step.legend} className="min-h-[150px] pt-5">
-              <h3 className="text-xl font-black leading-snug text-[#09172f] sm:text-2xl">{step.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">{step.desc}</p>
-            </div>
-            <div className="mb-5 flex items-start gap-2 rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-900">
-              <Check className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>Explore o ponto indicado na captura original da página.</span>
-            </div>
-          </div>
-
-          <div className="space-y-4 border-t border-slate-200 pt-5">
-            <div className="flex items-center gap-3">
+        {/* Mobile: controles imediatamente abaixo da imagem, sem texto intermediário. */}
+        <div data-testid="founder-tour-controls" className="space-y-2 bg-[#f4f7fb] px-2.5 pb-3 pt-1 sm:px-5 sm:pb-4 lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:space-y-3 lg:border-t lg:border-slate-200 lg:bg-white lg:px-7 lg:pb-3 lg:pt-5">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button type="button" onClick={() => goTo(currentStep - 1)} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-800 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600" aria-label="Recurso anterior"><ArrowLeft className="h-5 w-5" /></button>
-              <button type="button" onClick={playing ? () => { setPlaying(false); trackFounderTourPaused(); } : start} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-[#0f62fe] px-3 text-sm font-bold text-white hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+              <button type="button" onClick={playing ? () => { setPlaying(false); trackFounderTourPaused(); } : start} className="flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg bg-[#0f62fe] px-2 text-xs font-bold sm:px-3 sm:text-sm text-white hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
                 {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                {playing ? 'Pausar demonstração' : 'Reproduzir demonstração'}
+                <span className="sm:hidden">{playing ? 'Pausar tour' : 'Reproduzir tour'}</span>
+                <span className="hidden sm:inline">{playing ? 'Pausar demonstração' : 'Reproduzir demonstração'}</span>
               </button>
               <button type="button" onClick={() => goTo(currentStep + 1)} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-800 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600" aria-label="Próximo recurso"><ArrowRight className="h-5 w-5" /></button>
             </div>
 
-            <div className="-mx-1 grid grid-cols-10 items-center gap-0.5 sm:mx-0 sm:flex sm:flex-wrap sm:justify-center sm:gap-2" role="group" aria-label="Escolher etapa do tour">
+            <div className="grid grid-cols-10 items-center gap-0.5 sm:flex sm:flex-wrap sm:justify-center sm:gap-2" role="group" aria-label="Escolher etapa do tour">
               {TOUR_STEPS.map((item, index) => (
                 <button
                   key={item.id}
@@ -279,11 +268,28 @@ export default function FounderCursorTour() {
                   onClick={() => goTo(index)}
                   aria-label={`Ir para etapa ${index + 1}: ${item.title}`}
                   aria-current={index === currentStep ? 'step' : undefined}
-                  className={`mx-auto flex aspect-square w-full max-w-7 items-center justify-center rounded-full border p-0 text-[11px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:aspect-auto sm:h-9 sm:min-w-9 sm:w-auto sm:max-w-none sm:px-2 sm:text-xs ${index === currentStep ? 'border-blue-700 bg-blue-700 text-white' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
+                  className={`founder-tour-step mx-auto flex aspect-square w-full max-w-[30px] min-w-0 min-h-0 items-center justify-center rounded-full border p-0 text-[11px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:aspect-auto sm:h-9 sm:w-9 sm:max-w-none sm:text-xs ${index === currentStep ? 'border-blue-700 bg-blue-700 text-white' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
                 >{index + 1}</button>
               ))}
             </div>
+        </div>
 
+        <div data-testid="founder-tour-details" className="px-4 pb-2 pt-4 sm:px-6 sm:pt-6 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:px-7 lg:pb-4 lg:pt-7">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2.5 sm:pb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Recurso {String(currentStep + 1).padStart(2, '0')}</span>
+              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">Brand Page Premium</span>
+            </div>
+            <div aria-live="polite" aria-atomic="true" data-caption-position={step.legend} className="pt-3 lg:min-h-[150px] lg:pt-5">
+              <h3 className="text-xl font-bold leading-snug text-[#09172f] sm:text-2xl">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600 lg:mt-3">{step.desc}</p>
+            </div>
+            <div className="mt-3 flex items-center gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs leading-relaxed text-emerald-900 lg:mt-5 lg:items-start lg:p-3 lg:text-sm">
+              <Check className="h-4 w-4 shrink-0 lg:mt-0.5" aria-hidden="true" />
+              <span>Explore o ponto indicado na captura original da página.</span>
+            </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-4 pt-1 sm:px-6 lg:col-span-5 lg:col-start-8 lg:row-start-3 lg:px-7 lg:pb-6 lg:pt-2">
             <div className="flex items-center justify-between gap-3">
               <button type="button" onClick={restart} className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"><RotateCcw className="h-4 w-4" /> Reiniciar tour</button>
               {currentStep === TOUR_STEPS.length - 1 && (
@@ -292,7 +298,6 @@ export default function FounderCursorTour() {
                 </a>
               )}
             </div>
-          </div>
         </div>
       </div>
     </section>
