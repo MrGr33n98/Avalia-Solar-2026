@@ -494,6 +494,7 @@ function SearchPageContent() {
                   </SheetHeader>
                   <div className="p-4">
                     <SearchFilters
+                      activeTab={activeTab}
                       value={filters}
                       counts={counts}
                       categories={categories}
@@ -620,6 +621,7 @@ function SearchPageContent() {
               <aside className="hidden space-y-4 lg:block">
                 <div className="sticky top-24 space-y-4">
                   <SearchFilters
+                      activeTab={activeTab}
                     value={filters}
                     counts={counts}
                     categories={categories}
