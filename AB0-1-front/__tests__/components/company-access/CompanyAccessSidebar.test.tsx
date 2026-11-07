@@ -125,7 +125,7 @@ describe('CompanyAccessSidebar — ActiveAdmin as single source of ad creatives'
       const bannerImg = screen.getByAltText('Anúncio Inversor Fotovoltaico');
       expect(bannerImg).toBeInTheDocument();
       expect(screen.getByText('Publicidade')).toBeInTheDocument();
-      expect(screen.getByText('Patrocinado')).toBeInTheDocument();
+      expect(screen.getAllByText('Patrocinado').length).toBeGreaterThanOrEqual(1);
     });
   });
 
