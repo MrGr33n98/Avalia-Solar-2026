@@ -83,32 +83,79 @@ test.describe('Avalia Solar Founder Motion System E2E', () => {
     );
   });
 
-  test('PWA exibe as dez etapas em uma linha compacta sem perder navegação', async ({ page }) => {
-    for (const width of [320, 375, 390]) {
+  test('PWA aproxima controles da imagem e evita sobreposição entre as dez etapas', async ({ page }) => {
+    for (const width of [320, 360, 375, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto('/founder');
 
       const tour = page.locator('#tour-interativo');
+      const imageFrame = tour.locator('[aria-label^="Imagem real da Brand Page"]');
+      const controls = tour.getByTestId('founder-tour-controls');
+      const details = tour.getByTestId('founder-tour-details');
       const navigation = tour.getByRole('group', { name: 'Escolher etapa do tour' });
       const steps = navigation.getByRole('button');
       await expect(steps).toHaveCount(10);
 
-      const first = await steps.first().boundingBox();
-      const last = await steps.last().boundingBox();
-      const container = await navigation.boundingBox();
-      expect(first).not.toBeNull();
-      expect(last).not.toBeNull();
-      expect(container).not.toBeNull();
-      expect(Math.abs(first!.y - last!.y)).toBeLessThanOrEqual(2);
-      expect(first!.width).toBeLessThanOrEqual(30);
-      expect(last!.width).toBeLessThanOrEqual(30);
-      expect(last!.x + last!.width).toBeLessThanOrEqual(container!.x + container!.width + 1);
+      const frameBox = await imageFrame.boundingBox();
+      const controlsBox = await controls.boundingBox();
+      const detailsBox = await details.boundingBox();
+      const navBox = await navigation.boundingBox();
+      expect(frameBox).not.toBeNull();
+      expect(controlsBox).not.toBeNull();
+      expect(detailsBox).not.toBeNull();
+      expect(navBox).not.toBeNull();
+
+      // A reprodução acompanha a imagem, sem descrição ou aviso entre os dois.
+      expect(controlsBox!.y - (frameBox!.y + frameBox!.height)).toBeGreaterThanOrEqual(-1);
+      expect(controlsBox!.y - (frameBox!.y + frameBox!.height)).toBeLessThanOrEqual(20);
+      expect(detailsBox!.y).toBeGreaterThanOrEqual(controlsBox!.y + controlsBox!.height - 1);
+
+      const boxes = [];
+      for (let index = 0; index < 10; index++) {
+        const indicator = steps.nth(index);
+        const box = await indicator.boundingBox();
+        expect(box).not.toBeNull();
+        boxes.push(box!);
+        const minWidth = await indicator.evaluate((button) => getComputedStyle(button).minWidth);
+        expect(minWidth).toBe('0px');
+        expect(box!.width).toBeGreaterThanOrEqual(24);
+        expect(box!.width).toBeLessThanOrEqual(31);
+        expect(box!.x).toBeGreaterThanOrEqual(navBox!.x - 1);
+        expect(box!.x + box!.width).toBeLessThanOrEqual(navBox!.x + navBox!.width + 1);
+      }
+
+      for (let index = 1; index < boxes.length; index++) {
+        expect(Math.abs(boxes[index].y - boxes[0].y)).toBeLessThanOrEqual(2);
+        expect(boxes[index - 1].x + boxes[index - 1].width).toBeLessThanOrEqual(boxes[index].x + 0.5);
+      }
 
       await tour.getByRole('button', { name: 'Ir para etapa 7: Materiais Baixáveis' }).click();
       await expect(tour.getByRole('heading', { name: 'Materiais Baixáveis' })).toBeVisible();
       await expect(tour.getByRole('button', { name: 'Ir para etapa 7: Materiais Baixáveis' }))
         .toHaveAttribute('aria-current', 'step');
+
+      // O botão de conversão da última etapa não pode produzir overflow horizontal.
+      await tour.getByRole('button', { name: /Ir para etapa 10:/ }).click();
+      await expect(tour.getByRole('link', { name: 'Agendar apresentação do Plano Founder' })).toBeVisible();
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+      expect(overflow).toBe(false);
     }
+  });
+
+  test('no desktop preserva layout de imagem à esquerda e descrição acima dos controles', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/founder');
+
+    const tour = page.locator('#tour-interativo');
+    const frame = await tour.locator('[aria-label^="Imagem real da Brand Page"]').boundingBox();
+    const controls = await tour.getByTestId('founder-tour-controls').boundingBox();
+    const details = await tour.getByTestId('founder-tour-details').boundingBox();
+    expect(frame).not.toBeNull();
+    expect(controls).not.toBeNull();
+    expect(details).not.toBeNull();
+    expect(controls!.x).toBeGreaterThan(frame!.x);
+    expect(details!.x).toBeGreaterThan(frame!.x);
+    expect(details!.y).toBeLessThan(controls!.y);
   });
 
   test('tour mantém viewport e controles usáveis em mobile e tablet', async ({ page }) => {
