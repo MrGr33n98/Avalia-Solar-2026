@@ -290,10 +290,10 @@ export default function FounderCursorTour() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-4 pt-1 sm:px-6 lg:col-span-5 lg:col-start-8 lg:row-start-3 lg:px-7 lg:pb-6 lg:pt-2">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex w-full flex-wrap items-center justify-between gap-2">
               <button type="button" onClick={restart} className="inline-flex min-h-11 items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"><RotateCcw className="h-4 w-4" /> Reiniciar tour</button>
               {currentStep === TOUR_STEPS.length - 1 && (
-                <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" onClick={() => { trackFounderTourBookingClicked(); trackFounderCtaClick('founder_tour_booking', BOOKING_URL); }} className="inline-flex min-h-11 items-center rounded-lg bg-amber-400 px-3 text-center text-xs font-extrabold text-[#09172f] hover:bg-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600">
+                <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" onClick={() => { trackFounderTourBookingClicked(); trackFounderCtaClick('founder_tour_booking', BOOKING_URL); }} className="inline-flex min-h-11 max-w-full items-center rounded-lg bg-amber-400 px-3 text-center text-xs font-extrabold text-[#09172f] hover:bg-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600">
                   Agendar apresentação do Plano Founder
                 </a>
               )}
