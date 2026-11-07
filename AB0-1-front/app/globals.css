@@ -1154,6 +1154,13 @@ body[data-scroll-locked] [data-chat-widget] {
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Tour /founder: 10 etapas cabem em 320px. A regra global de 48px
+     não deve alargar os indicadores e causar sobreposição no grid. */
+  #tour-interativo button.founder-tour-step {
+    min-width: 0;
+    min-height: 0;
+  }
 }
 
 /* 4. TIPOGRAFIA FLUIDA RESPONSIVA (mobile-first premium) */
