@@ -30,9 +30,9 @@ module VoiceReviews
 
       digest = Digest::SHA256.hexdigest(raw_body)
       record = VoiceReviewMessage.create_with(
-        provider_session: provider_session, message_type: message['type'].to_s, payload_digest: digest,
+        message_type: message['type'].to_s, payload_digest: digest,
         payload_minimal: minimal_payload(message), received_at: Time.current
-      ).find_or_create_by!(provider: provider, provider_message_id: provider_id)
+      ).find_or_create_by!(provider: provider, provider_session: provider_session, provider_message_id: provider_id)
       return if record.processed_at.present?
 
       contact = message['from'].to_s

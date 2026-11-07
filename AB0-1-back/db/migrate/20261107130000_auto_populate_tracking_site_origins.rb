@@ -2,6 +2,8 @@
 
 class AutoPopulateTrackingSiteOrigins < ActiveRecord::Migration[7.0]
   def up
+    return unless defined?(::Sales::TrackingSite) && connection.data_source_exists?('sales_tracking_sites')
+
     # Preenche allowed_origins em todos os tracking_sites que possuam empresa com domínios autorizados
     ::Sales::TrackingSite.find_each do |site|
       next unless site.company
@@ -18,3 +20,4 @@ class AutoPopulateTrackingSiteOrigins < ActiveRecord::Migration[7.0]
     # Migração idempotente e segura sem reversão destrutiva
   end
 end
+
