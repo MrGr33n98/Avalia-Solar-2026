@@ -1162,6 +1162,13 @@ body[data-scroll-locked] [data-chat-widget] {
     min-width: 0;
     min-height: 0;
   }
+
+  /* /founder: chips Antes/Depois possuem altura visual compacta
+     sem herdar a regra global de 48px dos botões de ação. */
+  #comparador-visual button.founder-before-after-tab {
+    min-width: 0;
+    min-height: 40px;
+  }
 }
 
 /* 4. TIPOGRAFIA FLUIDA RESPONSIVA (mobile-first premium) */
