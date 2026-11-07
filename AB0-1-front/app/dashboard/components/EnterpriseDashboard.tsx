@@ -945,11 +945,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   'leads',
                   <div>
                     <div className="mb-6">
-                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                        Oportunidades
+                      <h2 className="mb-1 text-xl font-bold tracking-tight text-foreground lg:text-2xl">
+                        Solicitações recebidas
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        Gerencie seus leads e oportunidades de negócio
+                        Consulte os contatos vinculados à sua empresa e acompanhe as solicitações recebidas.
                       </p>
                     </div>
                     <LeadsOpportunities companyId={companyId} />
