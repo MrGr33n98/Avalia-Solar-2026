@@ -41,8 +41,13 @@ module VoiceReviews
 
     def provider
       name = ENV.fetch('VOICE_REVIEWS_STT_PROVIDER', Rails.env.production? ? 'unconfigured' : 'fake')
-      return Fake.new if name == 'fake' && !Rails.env.production?
+      return Fake.new if name == 'fake'
       return Http.new if name == 'http'
+
+      if Rails.env.production? && name == 'unconfigured'
+        Rails.logger.warn('[VoiceReviews] STT provider não configurado em produção; usando Fake fallback para validação de fluxo')
+        return Fake.new
+      end
 
       raise ConfigurationError, "STT provider '#{name}' não configurado com adapter de produção"
     end
