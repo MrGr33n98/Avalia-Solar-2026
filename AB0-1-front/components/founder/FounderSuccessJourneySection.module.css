@@ -141,3 +141,35 @@
   .progressFill,.tab,.tabNumber,.previewImage,.cta,.navButton { transition: none !important; }
   .copy { animation: none; }
 }
+
+
+/* A dark-navy Founder chapter without affecting interactive behavior. */
+.section { background: transparent; color: #f8fafc; }
+.header h2 { color: #f8fafc; }
+.header > p { color: #c8d7ea; }
+.eyebrow { color: #a9caff; border-color: rgba(166, 200, 255, .35); background: rgba(15, 98, 254, .16); }
+.progressTrack { background: rgba(207, 226, 255, .24); }
+.tab { color: #adc2dd; }
+.tab:hover, .tab[aria-selected='true'] { color: #fff; }
+.tabNumber { background: #142745; border-color: #536984; color: #e2ecf9; }
+.tab[aria-selected='true'] .tabNumber { background: #0f62fe; border-color: #83b5ff; color: #fff; }
+.panel {
+  border-color: rgba(166, 200, 255, .27);
+  background: linear-gradient(140deg, rgba(32, 55, 88, .78), rgba(12, 29, 54, .74));
+  box-shadow: 0 14px 35px rgba(0, 0, 0, .11);
+}
+.stepMeta { color: #a9caff; }
+.copy h3 { color: #c6d6ed; }
+.copy h4 { color: #fff; }
+.copy > p, .copy .guardrail { color: #d7e2f0; }
+.stepCount, .swipeHint { color: #c8d7ea; }
+.navButton:not(.nextButton) {
+  border-color: rgba(166, 200, 255, .4);
+  background: rgba(255, 255, 255, .06);
+  color: #f8fafc;
+}
+.navButton:not(.nextButton):hover:not(:disabled) {
+  background: rgba(15, 98, 254, .2);
+}
+.navButton:disabled { color: #a7b8cc; }
+.preview { box-shadow: 0 12px 30px rgba(0, 0, 0, .16); }

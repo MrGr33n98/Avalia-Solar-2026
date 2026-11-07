@@ -5,7 +5,7 @@
   --founder-yellow: #f8ca3a;
   --founder-muted: #475569;
   --founder-border: #dde1e6;
-  background: #fff;
+  background: #f8fafc;
   color: #161616;
   overflow-x: clip;
 }
@@ -239,4 +239,99 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .asideLink { transition: none; }
+}
+
+
+/* === Founder premium atmosphere (visual-only, no behavioral changes) ===
+   Brand: Avalia navy #09172f, Carbon blue #0f62fe, solar gold #f8ca3a.
+   This intentionally affects /founder only; no global theme leakage. */
+.page {
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(ellipse 55% 23% at 8% 35%, rgba(15, 98, 254, .025), transparent 85%),
+    radial-gradient(ellipse 42% 20% at 90% 70%, rgba(248, 202, 58, .035), transparent 85%);
+}
+.editorialShell {
+  position: relative;
+  border-inline: 1px dashed rgba(148, 163, 184, .25);
+}
+.editorialContent { position: relative; z-index: 1; }
+.sectionSlot { border-bottom-color: rgba(148, 163, 184, .32); }
+
+/* Chapters use deliberate surface changes; actual text/actions stay untouched. */
+.sectionSlot[id='founder-processo'] {
+  margin-top: 24px;
+  padding-inline: clamp(14px, 2.4vw, 28px);
+  border: 1px solid rgba(191, 207, 226, .7);
+  border-radius: 18px;
+  background: linear-gradient(160deg, #f1f6ff 0%, #f6f9fd 55%, #f8fafc 100%);
+  box-shadow: 0 8px 30px rgba(9, 23, 47, .035);
+}
+.sectionSlot[id='founder-metodologia'] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-block: 24px;
+  padding-inline: clamp(14px, 2.4vw, 28px);
+  border: 1px solid rgba(83, 129, 189, .36);
+  border-radius: 20px;
+  background: #0a162b;
+  box-shadow: 0 26px 52px rgba(9, 23, 47, .13);
+}
+.sectionSlot[id='founder-metodologia']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 64% 54% at 4% 9%, rgba(15, 98, 254, .20), transparent 78%),
+    radial-gradient(ellipse 48% 45% at 102% 100%, rgba(248, 202, 58, .09), transparent 80%),
+    linear-gradient(to right, rgba(209, 225, 255, .035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(209, 225, 255, .035) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+  mask-image: linear-gradient(to bottom, #000 4%, transparent 100%);
+}
+.sectionSlot[id='founder-metodologia'] > :global(section) {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+.sectionSlot[id='founder-tour'],
+.sectionSlot[id='founder-comparador'],
+.sectionSlot[id='founder-conversao'] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .78), rgba(248, 250, 252, .5));
+}
+.sectionSlot[id='founder-equipe'] { background: #f8fafc; }
+.founderCard {
+  box-shadow: 0 12px 36px rgba(9, 23, 47, .055);
+  border-color: #d8e1ed;
+}
+.finalCallout {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(248, 202, 58, .11), transparent 55%),
+    linear-gradient(135deg, #eef5ff 0%, #f8fafc 75%);
+  box-shadow: 0 12px 36px rgba(9, 23, 47, .06);
+}
+.aside {
+  margin-top: 28px;
+  padding: 18px 12px;
+  border: 1px solid rgba(191, 207, 226, .82);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .91);
+  box-shadow: 0 12px 32px rgba(9, 23, 47, .045);
+}
+
+@media (max-width: 1023px) {
+  .editorialShell { border-inline: 0; }
+  .sectionSlot[id='founder-processo'],
+  .sectionSlot[id='founder-metodologia'] { margin-block: 16px; }
+}
+@media (max-width: 639px) {
+  .sectionSlot[id='founder-processo'],
+  .sectionSlot[id='founder-metodologia'] {
+    padding-inline: 12px;
+    border-radius: 12px;
+  }
+  .sectionSlot[id='founder-metodologia'] { box-shadow: 0 16px 28px rgba(9, 23, 47, .11); }
 }
