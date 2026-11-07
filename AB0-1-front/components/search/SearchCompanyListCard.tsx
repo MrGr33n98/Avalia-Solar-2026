@@ -20,7 +20,7 @@ interface SearchCompanyListCardProps {
 
 export function SearchCompanyListCard({ company, className }: SearchCompanyListCardProps) {
   const rating = Number(company.rating_avg || company.average_rating || company.rating || 0);
-  const ratingLabel = rating > 0 ? rating.toFixed(1) : '0.0';
+  const ratingLabel = rating > 0 ? rating.toFixed(1) : 'Sem nota';
   const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
   const href = buildCompanyPath(company.slug, company.name, company.id);
   const reviewsHref = `${href}#avaliacoes`;
@@ -29,22 +29,29 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
   const description =
     company.description ||
     company.about ||
-    'Especialista em soluções de energia solar e eficiência energética.';
-  const slaLabel =
-    (company as any).operations?.sla_label || (company as any).response_time_sla || '24h';
-  const coverageLabel = 'Consulte'; // Could map from API if available
+    'Descrição ainda não informada pela empresa.';
+  // Do not claim an SLA or operating region without real company data.
+  const rawSla = (company as any).operations?.sla_label || (company as any).response_time_sla;
+  const slaLabel = typeof rawSla === 'string' && rawSla.trim() ? rawSla.trim() : 'Não informado';
+  const rawCoverage = (company as any).coverage;
+  const coverageLabel =
+    typeof rawCoverage === 'string' && rawCoverage.trim()
+      ? rawCoverage
+      : rawCoverage && typeof rawCoverage.label === 'string' && rawCoverage.label.trim()
+        ? rawCoverage.label
+        : 'Não informado';
 
   const canRequestQuote = canUsePaidConversion(company, 'quote');
 
   return (
     <article
       className={cn(
-        'flex min-w-0 flex-col lg:flex-row items-stretch overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300',
+        'flex min-w-0 flex-col xl:flex-row items-stretch overflow-hidden rounded-xl border border-[#dde1e6] bg-white shadow-[0_3px_14px_rgba(9,23,47,0.035)] transition-[border-color,box-shadow] duration-200 hover:shadow-[0_8px_24px_rgba(9,23,47,0.075)] hover:border-[#a6c8ff]',
         className
       )}
     >
       {/* Left Column: Logo & Info */}
-      <div className="flex w-full lg:w-[28%] flex-col justify-center p-5 border-b lg:border-b-0 lg:border-r border-slate-100">
+      <div className="flex w-full xl:w-[31%] flex-col justify-center p-4 border-b xl:border-b-0 xl:border-r border-slate-100">
         <div className="flex items-center gap-4">
           <Link href={href} className="shrink-0">
             <CompanyLogo
@@ -81,13 +88,12 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                           {company.name}
                         </div>
                         <div className="text-[10px] text-slate-400 mt-0.5">
-                          Desde {company.founded_year || 2018} no Brasil
+                          {company.founded_year ? `Desde ${company.founded_year} no Brasil` : 'Fundação não informada'}
                         </div>
                       </div>
                     </div>
                     <p className="text-[11px] text-slate-500 leading-relaxed">
-                      {company.description ||
-                        `${company.name} é uma empresa parceira credenciada, especializada em homologação, projetos e instalações fotovoltaicas de alta eficiência.`}
+                      {description}
                     </p>
                     <div className="border-t border-slate-100 pt-3 space-y-2 text-[11px]">
                       <div className="flex justify-between">
@@ -105,7 +111,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                       <div className="flex justify-between">
                         <span className="text-slate-400 font-semibold">Presença no Brasil</span>
                         <span className="font-bold text-slate-900">
-                          Desde {company.founded_year || 2018}
+                          {company.founded_year ? `Desde ${company.founded_year}` : 'Não informado'}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -133,81 +139,11 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
             <div className="mt-1 flex items-center gap-2 text-[11px] sm:text-xs text-slate-500">
               <span className="flex items-center gap-1 font-bold text-slate-900">
                 <Star className="w-3.5 h-3.5 fill-slate-900 text-slate-900" />
-                {ratingLabel}
+                {rating > 0 && reviewCount > 0 ? ratingLabel : 'Sem nota'}
               </span>
               <span className="text-slate-300">|</span>
-              <span>{reviewCount} aval.</span>
-              <Popover>
-                <PopoverTrigger className="hover:text-blue-600 text-slate-400 p-0.5 shrink-0 transition-colors">
-                  <Info className="w-3.5 h-3.5" />
-                </PopoverTrigger>
-                <PopoverContent className="w-85 bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 rounded-[1.75rem] shadow-xl text-xs text-slate-600 font-medium z-50">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl font-black text-slate-900 leading-none">
-                        {ratingLabel}
-                      </span>
-                      <div>
-                        <div className="flex items-center">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={cn(
-                                'w-3.5 h-3.5',
-                                i < Math.floor(rating)
-                                  ? 'fill-amber-400 text-amber-400'
-                                  : 'text-slate-200 fill-slate-200'
-                              )}
-                            />
-                          ))}
-                        </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
-                          ({reviewCount} avaliações registradas)
-                        </div>
-                      </div>
-                    </div>
+              <span>{reviewCount} {reviewCount === 1 ? 'avaliação' : 'avaliações'}</span>
 
-                    {/* Stars breakdown */}
-                    <div className="space-y-1.5 pt-2">
-                      {[
-                        { label: '5 estrelas', pct: '96%' },
-                        { label: '4 estrelas', pct: '3%' },
-                        { label: '3 estrelas', pct: '1%' },
-                        { label: '2 estrelas', pct: '0%' },
-                        { label: '1 estrela', pct: '0%' },
-                      ].map((starRow) => (
-                        <div key={starRow.label} className="flex items-center gap-3 text-[10px]">
-                          <span className="w-16 text-slate-400 font-semibold">{starRow.label}</span>
-                          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className="bg-amber-400 h-full rounded-full"
-                              style={{ width: starRow.pct }}
-                            />
-                          </div>
-                          <span className="w-8 text-right text-slate-500 font-bold">
-                            {starRow.pct}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-4">
-                      <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1 shrink-0">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        Última avaliação: recente
-                      </span>
-                      <Button
-                        asChild
-                        size="sm"
-                        variant="link"
-                        className="text-blue-600 font-bold p-0 text-xs hover:underline h-auto"
-                      >
-                        <Link href={href}>Ver todas as avaliações</Link>
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
             </div>
 
             <div className="mt-2 flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-500">
@@ -231,27 +167,10 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                       </div>
                     </div>
 
-                    {/* Google Map Iframe */}
-                    <div className="relative h-28 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200/60 shadow-inner">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        style={{ border: 0 }}
-                        loading="lazy"
-                        allowFullScreen
-                        referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(location || 'Brasil')}&t=&z=12&ie=UTF8&iwloc=&output=embed`}
-                      />
-                    </div>
-
-                    <div className="text-[11px] text-slate-500 leading-normal">
-                      <span className="font-bold text-slate-700 block mb-1">
-                        Endereço de Homologação:
-                      </span>
-                      {company.city
-                        ? `Área Comercial Solar, Centro, ${company.city} - ${company.state || 'BR'}`
-                        : 'Abrangência nacional, sede sob consulta comercial.'}
-                    </div>
+                    <p className="text-[11px] leading-relaxed text-slate-600">
+                      {location ? `Sede informada: ${location}` : 'Localização não informada.'}
+                      {' '}Consulte o perfil para conhecer os canais de contato disponíveis.
+                    </p>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -261,24 +180,26 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
       </div>
 
       {/* Middle Column 1: Description & Quick Features */}
-      <div className="flex flex-1 flex-col justify-center p-5 border-b lg:border-b-0 lg:border-r border-slate-100">
+      <div className="flex flex-1 flex-col justify-center p-4 border-b xl:border-b-0 xl:border-r border-slate-100">
         <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed">
           {description}
         </p>
         <div className="mt-3 flex items-center gap-4 text-[11px] sm:text-xs text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>Todo o Brasil</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>Resp: {slaLabel}</span>
-          </div>
+          {coverageLabel !== 'Não informado' ? (
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />{coverageLabel}
+            </span>
+          ) : null}
+          {slaLabel !== 'Não informado' ? (
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle className="h-3.5 w-3.5 shrink-0 text-slate-400" />Resp: {slaLabel}
+            </span>
+          ) : null}
         </div>
       </div>
 
       {/* Middle Column 2: Stats (Respostas / Cobertura) */}
-      <div className="hidden lg:flex w-[120px] flex-col justify-center items-center gap-4 p-5 border-r border-slate-100 text-center bg-slate-50/30">
+      <div className="hidden xl:flex w-[105px] flex-col justify-center items-center gap-4 p-3 border-r border-slate-100 text-center bg-slate-50/30">
         <div>
           <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
             Respostas
@@ -294,7 +215,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
       </div>
 
       {/* Middle Column 3: Secondary Actions */}
-      <div className="hidden lg:flex flex-col justify-center items-start gap-2 p-4 border-r border-slate-100 w-[140px]">
+      <div className="hidden xl:flex flex-col justify-center items-start gap-2 p-3 border-r border-slate-100 w-[122px]">
         <ComparisonToggleButton
           company={company as any}
           variant="default"
@@ -314,7 +235,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
       </div>
 
       {/* Right Column: Primary CTA — desktop only (lg+) */}
-      <div className="hidden min-w-0 shrink-0 lg:flex lg:w-[196px] flex-col justify-center gap-2 p-5 bg-slate-50/50">
+      <div className="hidden min-w-0 shrink-0 xl:flex xl:w-[178px] flex-col justify-center gap-2 p-3 bg-slate-50/50">
         {canRequestQuote && (
           <QuoteCTA
             context="card"
@@ -341,14 +262,14 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
               : 'bg-blue-600 hover:bg-blue-700 text-white'
           )}
         >
-          <Link href={reviewsHref}>
-            Ver avaliações {reviewCount} <ChevronRight className="w-4 h-4" />
+          <Link href={reviewCount > 0 ? reviewsHref : href}>
+            {reviewCount > 0 ? `Ver avaliações ${reviewCount}` : 'Ver perfil'} <ChevronRight className="w-4 h-4" />
           </Link>
         </Button>
       </div>
 
       {/* Mobile footer: todas as ações numa barra inferior separada */}
-      <div className="flex lg:hidden w-full border-t border-slate-100 bg-slate-50/50">
+      <div className="flex xl:hidden w-full border-t border-slate-100 bg-slate-50/50">
         {canRequestQuote ? (
           // Com orçamento: [Comparar] [Avaliar] | [Solicitar orçamento (destaque)]
           <>
@@ -409,8 +330,8 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
               variant="ghost"
               className="flex-1 h-11 rounded-none font-bold text-xs text-blue-600 hover:bg-blue-50 shadow-none gap-1"
             >
-              <Link href={reviewsHref}>
-                Ver {reviewCount} <ChevronRight className="w-3.5 h-3.5" />
+              <Link href={reviewCount > 0 ? reviewsHref : href}>
+                {reviewCount > 0 ? `Ver ${reviewCount}` : 'Ver perfil'} <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </Button>
           </div>
