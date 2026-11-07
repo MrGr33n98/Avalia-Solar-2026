@@ -5,7 +5,7 @@ import { BannerContainer, type BannerData } from '@/components/BannerContainer';
 jest.mock('next/image', () => ({
   __esModule: true,
   default: ({ alt, onError }: { alt?: string; onError?: () => void }) => (
-    <span data-testid="banner-image" onClick={onError}>{alt}</span>
+    <span data-testid="banner-image" onError={onError}>{alt}</span>
   ),
 }));
 
@@ -107,7 +107,7 @@ describe('BannerContainer - seleção de layout por placement', () => {
     );
 
     expect(screen.getByText('Publicidade')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('banner-image'));
+    fireEvent.error(screen.getByTestId('banner-image'));
 
     expect(screen.queryByText('Publicidade')).not.toBeInTheDocument();
     expect(screen.queryByText('Patrocinado')).not.toBeInTheDocument();
