@@ -59,6 +59,7 @@ export function BannerCreative({
     return (
       <SidebarEditorialCreative
         banner={banner}
+        compact={position === 'company_access_sidebar'}
         priority={priority}
         onMediaError={onMediaError}
         onMediaLoad={onMediaLoad}
