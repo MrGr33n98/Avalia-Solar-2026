@@ -8,6 +8,25 @@ import { hasAnalyticsConsent } from '../consent';
 import { getAnonymousId as getPersistentAnonymousId } from '../identity-stitch';
 
 export type IntentSignalType =
+  // Sinais de domínio operacionais (mantidos no mesmo catálogo do Rails)
+  | 'profile_view'
+  | 'category_view'
+  | 'alternatives_view'
+  | 'sponsored_view'
+  | 'licensed_content_view'
+  | 'reference_project_view'
+  | 'competitive_view'
+  | 'product_view'
+  | 'contact_clicked'
+  | 'quote_started'
+  | 'material_section_view'
+  | 'material_delivered'
+  | 'section_engaged'
+  | 'portfolio_view'
+  | 'review_section_view'
+  | 'contact_section_view'
+  | 'datasheet_section_view'
+  | 'comparison_started'
   // Sinais originais
   | 'hover_intent'
   | 'copy_clipboard'
