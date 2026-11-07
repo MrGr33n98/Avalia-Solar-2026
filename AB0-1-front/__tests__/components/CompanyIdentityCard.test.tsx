@@ -48,9 +48,9 @@ describe('CompanyIdentityCard Responsive Layout', () => {
     const section = container.querySelector('#company-identity-card');
     expect(section).toBeInTheDocument();
 
-    const mainWrapper = section?.querySelector('.flex.min-w-0.flex-row');
+    const mainWrapper = section?.querySelector('.flex.w-full.flex-col');
     expect(mainWrapper).toBeInTheDocument();
-    expect(mainWrapper).toHaveClass('flex-row');
+    expect(mainWrapper).toHaveClass('flex-col', 'lg:flex-row');
   });
 
   test('renders company name, location, rating, favorite and share action buttons', () => {
