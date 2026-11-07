@@ -37,10 +37,12 @@ module VoiceReviews
 
       contact = message['from'].to_s
       invite = find_invite(message)
-      session = (find_existing_session(contact) if message['type'] == 'audio') || if invite
+      session = if invite
         VoiceReviews::SessionService.open!(invite:, provider_contact: contact, provider_message_id: provider_id,
                                            provider: provider, provider_session: provider_session,
                                            provider_chat_id: message['chat_id'])
+      else
+        find_existing_session(contact)
       end
       record.update!(voice_review_session: session) if session && record.voice_review_session_id.blank?
       process_message(record, session, message) if session
@@ -69,10 +71,10 @@ module VoiceReviews
       hash = OpenSSL::HMAC.hexdigest('SHA256', VoiceReviews::Config.contact_pepper.to_s, contact.to_s)
       sessions = VoiceReviewSession.where(provider: provider, provider_session: provider_session, provider_contact_hash: hash)
         .where('expires_at > ?', Time.current)
-        .where.not(state: %w[completed expired revoked abandoned failed_permanent]).to_a
-      return sessions.first if sessions.one? && sessions.first.active_now?
+        .where.not(state: %w[completed expired revoked abandoned failed_permanent])
+        .order(last_inbound_at: :desc, created_at: :desc)
+      return sessions.first if sessions.first&.active_now?
 
-      Rails.logger.info("[VoiceReviews] ambiguous contact session provider=#{provider} count=#{sessions.length}") if sessions.many?
       nil
     end
 
