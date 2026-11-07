@@ -58,7 +58,7 @@ test.describe('Tour dos pontos de conversão Founder', () => {
     await page.screenshot({ path: 'test-results/founder-conversion-desktop.png', fullPage: false });
   });
 
-  test('monta o tour após o comparador, antes do Process Draw, e só inicia autoplay ao entrar na viewport', async ({
+  test('mantém processo antes do tour e o tour depois do comparador, com autoplay apenas na viewport', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
@@ -79,10 +79,10 @@ test.describe('Tour dos pontos de conversão Founder', () => {
           conversion &&
           comparator.compareDocumentPosition(conversion) & Node.DOCUMENT_POSITION_FOLLOWING
         ),
-        beforeProcess: Boolean(
-          conversion &&
+        processBeforeConversion: Boolean(
           process &&
-          conversion.compareDocumentPosition(process) & Node.DOCUMENT_POSITION_FOLLOWING
+          conversion &&
+          process.compareDocumentPosition(conversion) & Node.DOCUMENT_POSITION_FOLLOWING
         ),
         beforeFooter: Boolean(
           conversion &&
