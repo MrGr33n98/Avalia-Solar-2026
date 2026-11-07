@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { BannerSlot } from '@/components/banners/BannerSlot';
 import { SearchCompanyListCard } from '@/components/search/SearchCompanyListCard';
+import { EnterpriseSearchPagination } from '@/components/search/EnterpriseSearchPagination';
+import { normalizeSearchPage, normalizeSearchPageSize } from '@/components/search/searchPagination';
 import ReviewCard from '@/components/ReviewCard';
 import { ProductCardEnhanced } from '@/components/search/ProductCardEnhanced';
 import { SearchHero } from '@/components/search/SearchHero';
@@ -32,14 +34,6 @@ import { SearchTabs, type SearchTab } from '@/components/search/SearchTabs';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
 import type { Company, Product, SearchAllResponse } from '@/lib/api';
 import { searchApi } from '@/lib/api';
 import { companiesApiSafe } from '@/lib/api-client';
@@ -59,21 +53,7 @@ const getProductCategory = (product: Product) =>
 
 const getProductBrand = (product: Product) => product.brand?.name || product.company?.name || '';
 
-const getCompanyRating = (company: Company) =>
-  Number(
-    company.reputation?.rating_avg ||
-      company.average_rating ||
-      company.rating_avg ||
-      company.rating ||
-      0
-  );
-
 const getProductRating = (product: Product) => Number(product.company?.rating_avg || 0);
-
-const isCompanyVerified = (company: Company) =>
-  Boolean(
-    company.verified || ['verified', 'premium'].includes(company.trust?.verification_status || '')
-  );
 
 const isProductVerified = (product: Product) => Boolean(product.company?.verified);
 
@@ -114,7 +94,9 @@ function SearchPageContent() {
   const urlCity = searchParams.get('city') || '';
   const urlVerified = searchParams.get('verified') === 'true';
   const urlCategory = searchParams.get('category') || '';
-  const pageParam = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+  const urlState = searchParams.get('state') || '';
+  const pageParam = normalizeSearchPage(searchParams.get('page'));
+  const pageSize = normalizeSearchPageSize(searchParams.get('per_page'));
   const tabParam = searchParams.get('tab');
   const sortParam = searchParams.get('sort');
 
@@ -139,6 +121,7 @@ function SearchPageContent() {
     category: urlCategory,
   });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const previousPageRef = useRef(pageParam);
   const [productFavorites, setProductFavorites] = useState<Set<number>>(new Set());
   const { isAuthenticated } = useAuth();
 
@@ -160,6 +143,13 @@ function SearchPageContent() {
   useEffect(() => {
     setSort(isSearchSort(sortParam) ? sortParam : 'relevance');
   }, [sortParam]);
+
+  // Follow page navigation into the result region without shifting on first load.
+  useEffect(() => {
+    if (previousPageRef.current === pageParam) return;
+    previousPageRef.current = pageParam;
+    document.getElementById('search-results')?.scrollIntoView({ block: 'start' });
+  }, [pageParam]);
 
   useEffect(() => {
     if (!isAuthenticated || results.products.length === 0) return;
@@ -189,21 +179,25 @@ function SearchPageContent() {
     try {
       const apiFilters = {
         ...(urlCity ? { city: urlCity } : {}),
+        ...(urlState ? { state: urlState } : {}),
+        ...(urlVerified ? { verified: true } : {}),
+        ...(urlCategory ? { category: urlCategory } : {}),
         sort: toApiSort(sort),
         page: pageParam,
-        per_page: 24,
+        per_page: pageSize,
       };
       const response = await searchApi.all(query, apiFilters);
       const companies = response.companies || [];
       const fallbackCompanies =
-        query.trim() && companies.length === 0
+        query.trim() && companies.length === 0 && !urlVerified && !urlCategory
           ? await companiesApiSafe.getAll({
               q: query.trim(),
               ...(urlCity ? { city: urlCity } : {}),
+              ...(urlState ? { state: urlState } : {}),
               status: 'active',
               sort: toApiSort(sort),
               page: pageParam,
-              limit: 24,
+              limit: pageSize,
               fields: 'card',
             })
           : [];
@@ -221,7 +215,7 @@ function SearchPageContent() {
       const totalPagesVal =
         response.pagination?.total_pages ||
         response.meta?.total_pages ||
-        Math.max(1, Math.ceil(totalCompaniesCount / 24));
+        Math.max(1, Math.ceil(totalCompaniesCount / pageSize));
 
       setResults({
         companies: mergedCompanies,
@@ -251,7 +245,7 @@ function SearchPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [query, sort, urlCity, pageParam]);
+  }, [query, sort, urlCity, urlState, urlVerified, urlCategory, pageParam, pageSize]);
 
   useEffect(() => {
     void performSearch();
@@ -267,11 +261,12 @@ function SearchPageContent() {
             ...(company.categories || []).map((category) => category.name),
           ]),
           ...results.categories.map((category) => category.name),
+          filters.category,
         ])
       )
         .filter(Boolean)
         .sort((a, b) => a.localeCompare(b, 'pt-BR')),
-    [results]
+    [results, filters.category]
   );
 
   const brands = useMemo(
@@ -304,46 +299,28 @@ function SearchPageContent() {
     return list;
   }, [filters, results.products, sort]);
 
-  const filteredCompanies = useMemo(() => {
-    if (!filters.includeCompanies) return [];
-    const cityFilter = normalize(filters.city);
-    const list = results.companies.filter((company) => {
-      if (filters.verifiedOnly && !isCompanyVerified(company)) return false;
-      if (
-        cityFilter &&
-        !normalize(`${company.city} ${company.state}`).includes(cityFilter.replace(',', ' '))
-      ) {
-        return false;
-      }
-      if (filters.category) {
-        const companyCategories = [
-          company.category_name,
-          company.primary_category,
-          company.category,
-          ...(company.categories || []).map((category) => category.name),
-        ].map(normalize);
-        if (!companyCategories.includes(normalize(filters.category))) return false;
-      }
-      return true;
-    });
-
-    if (sort === 'rating')
-      return [...list].sort((a, b) => getCompanyRating(b) - getCompanyRating(a));
-    return list;
-  }, [filters, results.companies, sort]);
+  // Filtering and company ordering happen on the complete set in the API.
+  const filteredCompanies = filters.includeCompanies ? results.companies : [];
 
   const counts: Record<SearchTab, number> = {
-    all: filteredProducts.length + (paginationMeta.total_count || filteredCompanies.length),
+    all: filteredProducts.length + (filters.includeCompanies ? paginationMeta.total_count : 0),
     products: filteredProducts.length,
-    companies: paginationMeta.total_count || filteredCompanies.length,
+    companies: filters.includeCompanies ? paginationMeta.total_count : 0,
     reviews: results.reviews?.length || 0,
   };
 
-  const handlePageChange = (newPage: number) => {
+  const hrefForPage = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
     if (newPage <= 1) params.delete('page');
     else params.set('page', newPage.toString());
-    router.push(`/search?${params.toString()}`);
+    return `/search?${params.toString()}`;
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('per_page', normalizeSearchPageSize(String(size)).toString());
+    params.delete('page');
+    router.push(`/search?${params.toString()}`, { scroll: false });
   };
 
   const handleSubmit = (event: FormEvent) => {
@@ -367,6 +344,11 @@ function SearchPageContent() {
     const params = new URLSearchParams(searchParams.toString());
     if (tab === 'all') params.delete('tab');
     else params.set('tab', tab);
+    params.delete('page');
+    if (tab === 'companies' && (sort === 'price_asc' || sort === 'price_desc')) {
+      params.delete('sort');
+      setSort('relevance');
+    }
     router.replace(`/search?${params.toString()}`, { scroll: false });
   };
 
@@ -407,7 +389,7 @@ function SearchPageContent() {
     setFilters(defaultSearchFilters);
     setLocationTerm('');
     const params = new URLSearchParams(searchParams.toString());
-    ['city', 'verified', 'category', 'brand', 'price'].forEach((key) => params.delete(key));
+    ['city', 'state', 'verified', 'category', 'brand', 'price', 'page'].forEach((key) => params.delete(key));
     router.replace(`/search?${params.toString()}`, { scroll: false });
   };
 
@@ -447,7 +429,7 @@ function SearchPageContent() {
 
       <BannerSlot placement="search_top" className="mx-auto my-3 max-w-[1240px]" limit={2} />
 
-      <section className="mx-auto max-w-[1240px] px-4 pt-3 pb-8 sm:px-6">
+      <section id="search-results" className="mx-auto max-w-[1240px] scroll-mt-24 px-4 pt-3 pb-8 sm:px-6">
         {error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
             <p>{error}</p>
@@ -466,7 +448,7 @@ function SearchPageContent() {
             <SearchResultsHeader
               query={query}
               productsCount={filteredProducts.length}
-              companiesCount={filteredCompanies.length}
+              companiesCount={paginationMeta.total_count}
               reviewsCount={results.reviews?.length || 0}
               sort={sort}
               onSortChange={handleSortChange}
@@ -530,63 +512,14 @@ function SearchPageContent() {
                           ))}
                         </div>
 
-                        {paginationMeta.total_pages > 1 && (
-                          <div className="mt-6 flex justify-center">
-                            <Pagination>
-                              <PaginationContent>
-                                <PaginationItem>
-                                  <PaginationPrevious
-                                    href="#"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      if (paginationMeta.page > 1)
-                                        handlePageChange(paginationMeta.page - 1);
-                                    }}
-                                    className={
-                                      paginationMeta.page <= 1
-                                        ? 'pointer-events-none opacity-50'
-                                        : ''
-                                    }
-                                  />
-                                </PaginationItem>
-                                {Array.from({ length: paginationMeta.total_pages }).map(
-                                  (_, idx) => {
-                                    const p = idx + 1;
-                                    return (
-                                      <PaginationItem key={p}>
-                                        <PaginationLink
-                                          href="#"
-                                          isActive={p === paginationMeta.page}
-                                          onClick={(e) => {
-                                            e.preventDefault();
-                                            handlePageChange(p);
-                                          }}
-                                        >
-                                          {p}
-                                        </PaginationLink>
-                                      </PaginationItem>
-                                    );
-                                  }
-                                )}
-                                <PaginationItem>
-                                  <PaginationNext
-                                    href="#"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      if (paginationMeta.page < paginationMeta.total_pages)
-                                        handlePageChange(paginationMeta.page + 1);
-                                    }}
-                                    className={
-                                      paginationMeta.page >= paginationMeta.total_pages
-                                        ? 'pointer-events-none opacity-50'
-                                        : ''
-                                    }
-                                  />
-                                </PaginationItem>
-                              </PaginationContent>
-                            </Pagination>
-                          </div>
-                        )}
+                        <EnterpriseSearchPagination
+                          page={paginationMeta.page}
+                          totalPages={paginationMeta.total_pages}
+                          totalCount={paginationMeta.total_count}
+                          perPage={pageSize}
+                          hrefForPage={hrefForPage}
+                          onPageSizeChange={handlePageSizeChange}
+                        />
                       </ResultSection>
                     ) : null}
 
