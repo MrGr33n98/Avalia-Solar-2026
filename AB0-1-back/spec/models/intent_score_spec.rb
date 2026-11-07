@@ -86,4 +86,3 @@ RSpec.describe IntentScore, type: :model do
     end
   end
 end
-

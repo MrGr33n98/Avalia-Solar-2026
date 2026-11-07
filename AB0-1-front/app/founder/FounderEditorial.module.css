@@ -1,0 +1,242 @@
+/* Founder editorial design system. Scoped to /founder; no site-wide overrides. */
+.page {
+  --founder-ink: #09172f;
+  --founder-blue: #0f62fe;
+  --founder-yellow: #f8ca3a;
+  --founder-muted: #475569;
+  --founder-border: #dde1e6;
+  background: #fff;
+  color: #161616;
+  overflow-x: clip;
+}
+
+.skipLink {
+  position: absolute;
+  z-index: 100;
+  left: 16px;
+  top: -80px;
+  padding: 12px 16px;
+  background: #09172f;
+  color: white;
+  border-radius: 6px;
+}
+.skipLink:focus { top: 12px; }
+
+.utilityBar {
+  background: #fff;
+  border-bottom: 1px solid var(--founder-border);
+}
+.utilityInner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  max-width: 1320px;
+  min-height: 42px;
+  margin: auto;
+  padding: 6px 24px;
+}
+.utilityLabel {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 9px;
+  color: #09172f;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .065em;
+}
+.utilityDot {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f8ca3a;
+}
+.utilityLink {
+  flex: 0 0 auto;
+  color: #0043ce;
+  font-weight: 650;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.editorialShell {
+  max-width: 1392px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 195px;
+  gap: clamp(26px, 3vw, 58px);
+  align-items: start;
+}
+.editorialContent { min-width: 0; }
+.sectionSlot {
+  min-width: 0;
+  scroll-margin-top: 82px;
+  border-bottom: 1px solid #e5e9ee;
+}
+.sectionSlot > :global(section) {
+  width: 100%;
+  max-width: 100%;
+  padding: clamp(42px, 5vw, 68px) clamp(0px, 1vw, 10px);
+  margin: 0;
+}
+.sectionSlot > :global(section) :global(h2) {
+  letter-spacing: -.035em;
+}
+.sectionSlot > :global(section) :global(p) { text-wrap: pretty; }
+.sectionSlot:last-child { border-bottom: 0; }
+.aside {
+  position: sticky;
+  top: 85px;
+  align-self: start;
+  border-left: 1px solid #dde1e6;
+  margin-top: 44px;
+  padding: 4px 0 14px 18px;
+  max-height: calc(100dvh - 105px);
+  overflow-y: auto;
+}
+.asideHeading {
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .12em;
+  color: #697688;
+}
+.asideList {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.asideLink {
+  display: block;
+  padding: 9px 11px;
+  border-left: 2px solid transparent;
+  color: #5a6475;
+  font-size: 12px;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+.asideLink:hover { color: #09172f; background: #f4f7fb; }
+.asideLink[data-active='true'] {
+  border-left-color: #0f62fe;
+  background: #edf5ff;
+  color: #0043ce;
+  font-weight: 700;
+}
+.mobileIndex { display: none; }
+.founderCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 26px;
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 24px;
+  border: 1px solid #dde1e6;
+  border-radius: 12px;
+  background: #fff;
+}
+.founderPortrait {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  flex: 0 0 112px;
+  overflow: hidden;
+  border-radius: 9px;
+  border: 1px solid #dde1e6;
+  background: #f4f7fb;
+}
+.founderCopy { flex: 1; min-width: 0; }
+.founderActions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.faqHeading { margin-bottom: 28px; }
+.faqList { border-top: 1px solid #dde1e6; }
+.faqItem { border-bottom: 1px solid #dde1e6; }
+.faqQuestion {
+  width: 100%;
+  min-height: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  gap: 15px;
+  padding: 16px 6px;
+  color: #09172f;
+  font-size: 14px;
+  font-weight: 650;
+}
+.faqQuestion:hover { color: #0043ce; }
+.faqAnswer { padding: 0 6px 18px; color: #475569; font-size: 14px; line-height: 1.65; }
+.finalCallout {
+  border: 1px solid #dde1e6;
+  border-top: 3px solid #f8ca3a;
+  border-radius: 12px;
+  background: #f4f7fb;
+  padding: clamp(24px, 4vw, 44px);
+}
+.footer {
+  max-width: 1300px;
+  margin: auto;
+  padding: 26px 24px 34px;
+  border-top: 1px solid #dde1e6;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: center;
+}
+.footerLinks { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; margin-top: 14px; color: #0043ce; }
+.footerLinks a:hover { text-decoration: underline; }
+
+@media (max-width: 1023px) {
+  .editorialShell { display: block; max-width: 900px; padding: 0 20px; }
+  .aside { display: none; }
+  .mobileIndex {
+    display: block;
+    border: 1px solid #dde1e6;
+    background: #fff;
+    border-radius: 8px;
+    margin: 16px 0 0;
+    color: #09172f;
+  }
+  .mobileIndex summary {
+    cursor: pointer;
+    list-style-position: inside;
+    min-height: 44px;
+    padding: 13px 16px;
+    font-size: 13px;
+    font-weight: 650;
+  }
+  .mobileIndex nav {
+    padding: 0 10px 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px;
+  }
+}
+@media (max-width: 639px) {
+  .utilityInner { padding: 8px 16px; min-height: 40px; }
+  .utilityLabel { max-width: 70%; font-size: 10px; letter-spacing: .025em; }
+  .utilityLink { font-size: 11px; }
+  .editorialShell { padding: 0 16px; }
+  .sectionSlot { scroll-margin-top: 60px; }
+  .sectionSlot > :global(section) { padding: 36px 0 40px; }
+  .sectionSlot > :global(section) :global(h2) { font-size: clamp(23px, 6.5vw, 29px); line-height: 1.2; }
+  .founderCard { flex-direction: column; align-items: flex-start; gap: 16px; padding: 18px; }
+  .founderPortrait { width: 76px; height: 76px; flex-basis: 76px; }
+  .founderActions { flex-direction: column; align-items: stretch; }
+  .founderActions > :global(a) { width: 100%; min-height: 44px; justify-content: center; text-align: center; }
+  .mobileIndex nav { grid-template-columns: 1fr; }
+  .faqHeading { margin-bottom: 18px; }
+  .faqQuestion { padding: 13px 4px; font-size: 13px; }
+  .faqAnswer { font-size: 13px; }
+  .finalCallout { padding: 22px 18px; }
+  .footer { padding: 24px 16px 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .asideLink { transition: none; }
+}

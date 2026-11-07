@@ -147,8 +147,8 @@ export default function ComparisonSlider({
             alt="Captura de tela real do perfil básico gratuito no Avalia Solar (GoodWe Brasil)"
             width={1672}
             height={941}
-            quality={92}
-            priority
+            quality={84}
+            loading="lazy"
             className="w-full h-full object-contain"
             draggable={false}
           />
@@ -168,8 +168,8 @@ export default function ComparisonSlider({
             alt="Captura ilustrativa da Brand Page Premium no Avalia Solar (GoodWe Brasil)"
             width={1672}
             height={941}
-            quality={92}
-            priority
+            quality={84}
+            loading="lazy"
             className="w-full h-full object-contain"
             draggable={false}
           />

@@ -44,7 +44,7 @@ export default function ComparisonSideBySide({ onExpand }: ComparisonSideBySideP
               alt="Captura real da página básica de empresa no Avalia Solar (GoodWe Brasil)"
               width={1672}
               height={941}
-              quality={90}
+              quality={84}
               className="w-full h-full object-contain"
               draggable={false}
             />
@@ -100,7 +100,7 @@ export default function ComparisonSideBySide({ onExpand }: ComparisonSideBySideP
               alt="Captura ilustrativa da Brand Page Premium no Avalia Solar (GoodWe Brasil)"
               width={1672}
               height={941}
-              quality={90}
+              quality={84}
               className="w-full h-full object-contain"
               draggable={false}
             />
