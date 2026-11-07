@@ -88,7 +88,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                           {company.name}
                         </div>
                         <div className="text-[10px] text-slate-400 mt-0.5">
-                          {company.founded_year ? `Desde ${company.founded_year} no Brasil` : 'Fundação não informada'}
+                          {company.founded_year ? `Fundada em ${company.founded_year}` : 'Fundação não informada'}
                         </div>
                       </div>
                     </div>
@@ -106,12 +106,6 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                         <span className="text-slate-400 font-semibold">Sede</span>
                         <span className="font-bold text-slate-900">
                           {company.city || 'Não informado'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400 font-semibold">Presença no Brasil</span>
-                        <span className="font-bold text-slate-900">
-                          {company.founded_year ? `Desde ${company.founded_year}` : 'Não informado'}
                         </span>
                       </div>
                       <div className="flex justify-between">
