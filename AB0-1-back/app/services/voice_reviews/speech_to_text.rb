@@ -1,4 +1,5 @@
 require 'base64'
+require 'open3'
 
 module VoiceReviews
   module SpeechToText
@@ -17,9 +18,9 @@ module VoiceReviews
 
     class Http
       def transcribe(asset)
-        raise ConfigurationError, 'Arquivo de áudio ausente' unless asset&.file&.attached?
+        raise ConfigurationError, 'Arquivo de áudio ausente' unless asset&.audio_attached?
 
-        transcribe_bytes(bytes: asset.file.download, mime_type: asset.mime_type)
+        transcribe_bytes(bytes: asset.download_audio_bytes, mime_type: asset.mime_type)
       end
 
       def transcribe_bytes(bytes:, mime_type:)
@@ -47,34 +48,98 @@ module VoiceReviews
       end
     end
 
-    class OpenRouter
-      MODEL_ID = 'google/gemini-2.0-flash-001'.freeze
+    class GoogleSpeech
+      ENDPOINT = 'http://www.google.com/speech-api/v2/recognize'.freeze
+      DEFAULT_KEY = 'AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw'.freeze
 
       def transcribe(asset)
-        raise ConfigurationError, 'Arquivo de áudio ausente' unless asset&.file&.attached?
+        raise ConfigurationError, 'Arquivo de áudio ausente' unless asset&.audio_attached?
 
-        transcribe_bytes(bytes: asset.file.download, mime_type: asset.mime_type)
+        transcribe_bytes(bytes: asset.download_audio_bytes, mime_type: asset.mime_type)
       end
 
-      def transcribe_bytes(bytes:, mime_type:)
-        api_key = ENV['OPENROUTER_API_KEY'].presence || ENV['AI_API_KEY'].presence
-        return Fake.new.transcribe(nil) if api_key.blank? || bytes.blank?
+      def transcribe_bytes(bytes:, mime_type: nil)
+        return Fake.new.transcribe(nil) if bytes.blank?
 
-        response = HTTParty.post(
-          "#{ENV.fetch('AI_BASE_URL', 'https://openrouter.ai/api/v1').sub(%r{/+\z}, '')}/chat/completions",
-          headers: { 'Authorization' => "Bearer #{api_key}", 'Content-Type' => 'application/json' },
-          body: request_body(bytes, mime_type).to_json, timeout: 25
-        )
-        text = response.parsed_response.dig('choices', 0, 'message', 'content').to_s.strip if response.success?
+        flac_bytes = convert_to_flac(bytes)
+        return Fake.new.transcribe(nil) if flac_bytes.blank?
+
+        text = request_transcript(flac_bytes)
         return Fake.new.transcribe(nil) if text.blank?
 
-        { text: text, language: 'pt-BR', provider: 'openrouter', model_id: MODEL_ID }
+        { text: text, language: 'pt-BR', provider: 'google_speech', model_id: 'chromium-speech-v2-pt-br' }
       rescue StandardError => e
-        Rails.logger.warn("[VoiceReviews][OpenRouterSTT] fallback after #{e.class}: #{e.message}")
+        Rails.logger.warn("[VoiceReviews][GoogleSpeechSTT] fallback after #{e.class}: #{e.message}")
         Fake.new.transcribe(nil)
       end
 
       private
+
+      def convert_to_flac(bytes)
+        cmd = %w[ffmpeg -nostdin -loglevel error -i pipe:0 -ar 16000 -ac 1 -sample_fmt s16 -f flac pipe:1]
+        stdout, _stderr, status = Open3.capture3(*cmd, binmode: true, stdin_data: bytes)
+        status.success? ? stdout : nil
+      end
+
+      def request_transcript(flac_bytes)
+        key = ENV.fetch('GOOGLE_SPEECH_API_KEY', DEFAULT_KEY)
+        url = "#{ENDPOINT}?client=chromium&lang=pt-BR&key=#{key}&pFilter=0"
+        response = HTTParty.post(
+          url, headers: { 'Content-Type' => 'audio/x-flac; rate=16000' }, body: flac_bytes, timeout: 25
+        )
+        return nil unless response.success?
+
+        parse_response_lines(response.body.to_s)
+      end
+
+      def parse_response_lines(raw_body)
+        raw_body.each_line do |line|
+          next if line.strip.blank?
+
+          parsed = JSON.parse(line)
+          alts = parsed.dig('result', 0, 'alternative')
+          next unless alts.is_a?(Array) && alts.any?
+
+          best = alts.max_by { |a| a['confidence'].to_f } || alts.first
+          return best['transcript'].to_s.strip if best['transcript'].present?
+        end
+        nil
+      end
+    end
+
+    class OpenRouter
+      MODEL_ID = 'google/gemini-2.5-flash-lite'.freeze
+
+      def transcribe(asset)
+        raise ConfigurationError, 'Arquivo de áudio ausente' unless asset&.audio_attached?
+
+        transcribe_bytes(bytes: asset.download_audio_bytes, mime_type: asset.mime_type)
+      end
+
+      def transcribe_bytes(bytes:, mime_type:)
+        api_key = ENV['OPENROUTER_API_KEY'].presence || ENV['AI_API_KEY'].presence
+        return GoogleSpeech.new.transcribe_bytes(bytes: bytes, mime_type: mime_type) if api_key.blank? || bytes.blank?
+
+        response = post_openrouter(api_key, bytes, mime_type)
+        text = response.parsed_response.dig('choices', 0, 'message', 'content').to_s.strip if response.success?
+        return { text: text, language: 'pt-BR', provider: 'openrouter', model_id: MODEL_ID } if text.present?
+
+        Rails.logger.warn("[VoiceReviews][OpenRouterSTT] HTTP #{response.code}, falling back to GoogleSpeech")
+        GoogleSpeech.new.transcribe_bytes(bytes: bytes, mime_type: mime_type)
+      rescue StandardError => e
+        Rails.logger.warn("[VoiceReviews][OpenRouterSTT] fallback after #{e.class}: #{e.message}")
+        GoogleSpeech.new.transcribe_bytes(bytes: bytes, mime_type: mime_type)
+      end
+
+      private
+
+      def post_openrouter(api_key, bytes, mime_type)
+        HTTParty.post(
+          "#{ENV.fetch('AI_BASE_URL', 'https://openrouter.ai/api/v1').sub(%r{/+\z}, '')}/chat/completions",
+          headers: { 'Authorization' => "Bearer #{api_key}", 'Content-Type' => 'application/json' },
+          body: request_body(bytes, mime_type).to_json, timeout: 25
+        )
+      end
 
       def request_body(bytes, mime_type)
         prompt = 'Transcreva exatamente em português do Brasil o que foi falado neste áudio de avaliação de ' \
@@ -102,14 +167,16 @@ module VoiceReviews
 
     def provider
       name = ENV.fetch('VOICE_REVIEWS_STT_PROVIDER', 'auto')
-      return Fake.new if Rails.env.test? && name == 'auto'
-      return Fake.new if name == 'fake'
-      return Http.new if name == 'http'
-      return OpenRouter.new if name == 'openrouter'
-      return Http.new if name == 'auto' && ENV['VOICE_REVIEWS_STT_URL'].present?
-      return OpenRouter.new if name == 'auto' && (ENV['OPENROUTER_API_KEY'].present? || ENV['AI_API_KEY'].present?)
+      return Fake.new if (Rails.env.test? && name == 'auto') || name == 'fake'
+      return Http.new if name == 'http' || (name == 'auto' && ENV['VOICE_REVIEWS_STT_URL'].present?)
+      return GoogleSpeech.new if name == 'google'
+      return OpenRouter.new if name == 'openrouter' || (name == 'auto' && openrouter_configured?)
 
-      Fake.new
+      GoogleSpeech.new
+    end
+
+    def openrouter_configured?
+      ENV['OPENROUTER_API_KEY'].present? || ENV['AI_API_KEY'].present?
     end
   end
 end

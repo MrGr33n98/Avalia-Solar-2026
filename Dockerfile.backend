@@ -60,6 +60,7 @@ RUN apt-get update -qq && \
       clamav \
       libpq5 \
       curl \
+      ffmpeg \
       nodejs \
       libvips && \
     apt-get clean && \

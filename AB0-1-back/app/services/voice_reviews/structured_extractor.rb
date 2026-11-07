@@ -35,8 +35,8 @@ module VoiceReviews
       result = client.chat!(
         model_id: 'openai/gpt-4o-mini', messages: prompt_messages, temperature: 0.15, max_tokens: 700
       )
-      parsed = JSON.parse(result[:content])
-      normalize_payload(parsed)
+      json_str = result[:content].to_s.gsub(/\A```(?:json)?\s*|\s*```\z/m, '').strip
+      normalize_payload(JSON.parse(json_str))
     end
 
     def prompt_messages
@@ -49,11 +49,12 @@ module VoiceReviews
     end
 
     def system_prompt
-      'Você estrutura transcrições de áudio de clientes de energia solar no Brasil para auditoria do Avalia Solar. ' \
-        'REGRAS: 1) Limpe vícios de fala ("ééé", "tipo assim") mantendo 1a pessoa e fidelidade a elogios/críticas. ' \
-        '2) Gere JSON: headline (até 70 chars), clean_comment (até 480 chars), inferred_rating (1..5), ' \
-        'inferred_criteria (array de {criterion_id, criterion_slug, title, score: 1..5 ou null}), ' \
-        'mentioned_equipment (array de strings), project_type (string|null), ' \
+      'Você estrutura transcrições de áudio (ASR) de clientes de energia solar no Brasil para o Avalia Solar. ' \
+        'REGRAS: 1) Corrija erros fonéticos do STT (ex: homófonos do nome da empresa como "velha/veg/ueg" -> ' \
+        'nome da empresa, "desinstalaram" em contexto positivo -> "instalaram", "solista" -> "solícita") e ' \
+        'limpe vícios de fala mantendo 1a pessoa. 2) Gere JSON puro: headline (até 70 chars), clean_comment ' \
+        '(até 480 chars), inferred_rating (1..5), inferred_criteria (array de {criterion_id, criterion_slug, ' \
+        'title, score: 1..5 ou null}), mentioned_equipment (array de strings), project_type (string|null), ' \
         'contains_offensive_language (boolean).'
     end
 
@@ -87,7 +88,7 @@ module VoiceReviews
     end
 
     def heuristic_payload
-      cleaned = raw_text.gsub(/\b(é+|hm+|tipo assim)\b/i, '').squeeze(' ').strip
+      cleaned = clean_asr_text(raw_text)
       clean = cleaned.presence || 'Experiência registrada por áudio.'
       rating = initial_rating || infer_overall_rating(clean)
       {
@@ -99,6 +100,19 @@ module VoiceReviews
         'project_type' => review_form&.form_type,
         'contains_offensive_language' => false
       }
+    end
+
+    def clean_asr_text(text)
+      out = text.to_s.gsub(/\b(é+|hm+|tipo assim)\b/i, '')
+      out = out.gsub(/\b(com a|da|na|pela)\s+(velha|veg|ueg)\b/i, "\\1 #{company_name}") if company_name.casecmp?('weg')
+      out = out.gsub(/\bfoi desinstalaram\b/i, 'eles instalaram')
+        .gsub(/\bdesinstalaram aqui\b/i, 'instalaram aqui')
+        .gsub(/\bbem solista\b/i, 'bem solícita')
+        .squeeze(' ').strip
+      return '' if out.blank?
+
+      out = "#{out[0].upcase}#{out[1..]}"
+      out.end_with?('.', '!', '?') ? out : "#{out}."
     end
 
     def infer_overall_rating(text)

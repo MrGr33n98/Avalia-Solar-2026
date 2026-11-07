@@ -22,9 +22,7 @@ module VoiceReviews
           raise 'Checksum da mídia não confere' unless Digest::SHA256.hexdigest(response.body) == asset.sha256
         end
 
-        asset.file.attach(io: StringIO.new(response.body), filename: "#{asset.id}.audio", content_type: asset.mime_type,
-                          key: asset.storage_key)
-        asset.update!(byte_size: response.body.bytesize, status: 'stored')
+        asset.upload_bytes!(response.body)
       end
     end
 
@@ -39,9 +37,7 @@ module VoiceReviews
         raise 'Mídia de voz excede o limite' if response.body.bytesize > 10.megabytes
         raise 'Formato de áudio não permitido' unless asset.mime_type.to_s.match?(/\Aaudio\/(ogg|mpeg|mp4|webm)/i)
 
-        asset.file.attach(io: StringIO.new(response.body), filename: "#{asset.id}.audio", content_type: asset.mime_type,
-                          key: asset.storage_key)
-        asset.update!(byte_size: response.body.bytesize, status: 'stored')
+        asset.upload_bytes!(response.body)
       rescue URI::InvalidURIError
         raise 'URL de mídia WAHA inválida'
       end
