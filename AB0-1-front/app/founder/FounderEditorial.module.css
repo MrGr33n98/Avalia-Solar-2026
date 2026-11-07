@@ -191,7 +191,6 @@
 }
 .footerLinks { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; margin-top: 14px; color: #0043ce; }
 .footerLinks a:hover { text-decoration: underline; }
-:global(html) { scroll-behavior: smooth; }
 
 @media (max-width: 1023px) {
   .editorialShell { display: block; max-width: 900px; padding: 0 20px; }
@@ -239,6 +238,5 @@
   .footer { padding: 24px 16px 30px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  :global(html) { scroll-behavior: auto; }
   .asideLink { transition: none; }
 }
