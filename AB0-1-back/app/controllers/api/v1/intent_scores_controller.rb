@@ -79,17 +79,16 @@ module Api
         counts = activities.group(:signal_type).count
         event_count = counts.values.sum
 
+        scores_array = score_scope.limit(200).to_a
         stage_dist = {
-          awareness: score_scope.where(intent_level: 'cold').count,
-          consideration: score_scope.where(intent_level: %w[warm hot]).count,
-          decision: score_scope.where(intent_level: %w[boiling immediate declared]).count
+          awareness: scores_array.count { |s| s.buying_stage == 'awareness' },
+          consideration: scores_array.count { |s| s.buying_stage == 'consideration' },
+          decision: scores_array.count { |s| s.buying_stage == 'decision' }
         }
-        high_predicate = 'total_score >= 71 OR hot_signals_count >= 3'
         activity_dist = {
-          high: score_scope.where(high_predicate).count,
-          medium: score_scope.where('total_score < 71 AND hot_signals_count < 3')
-                             .where('total_score >= 31 OR total_signals_count >= 4').count,
-          low: score_scope.where('total_score < 31 AND hot_signals_count < 3 AND total_signals_count < 4').count
+          high: scores_array.count { |s| s.activity_level == 'high' },
+          medium: scores_array.count { |s| s.activity_level == 'medium' },
+          low: scores_array.count { |s| s.activity_level == 'low' }
         }
 
         profile_views = counts.fetch('profile_view', 0)
