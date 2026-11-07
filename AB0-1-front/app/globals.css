@@ -1139,8 +1139,9 @@ body[data-scroll-locked] [data-chat-widget] {
   --sal: env(safe-area-inset-left, 0px);
 }
 
-/* 3. ÁREA DE TOQUE MÍNIMA 48x48 — garantida via utilitário global
-   (conforme WCAG 2.2 Success Criterion 2.5.5 Target Size) */
+/* 3. CONVENÇÃO INTERNA DE ALVOS DE TOQUE 48x48 NO MOBILE.
+   Não é exigência universal da WCAG 2.2 AA (2.5.8); controles densos,
+   como as etapas do tour, exigem exceção local e checagem de espaçamento. */
 @media (max-width: 767px) {
   button,
   [role="button"],
