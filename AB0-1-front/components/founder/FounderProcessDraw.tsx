@@ -68,7 +68,7 @@ export default function FounderProcessDraw() {
           {PROCESS_STEPS.map((step, idx) => (
             <motion.div
               key={step.number}
-              className="relative flex flex-col justify-between rounded-lg border border-[#dde1e6] bg-white p-4 transition-colors hover:border-[#a6c8ff] sm:p-5"
+              className="relative flex flex-col justify-between rounded-lg border border-[#d8e1ed] bg-white p-4 shadow-[0_8px_30px_rgba(9,23,47,0.055)] transition-[border-color,box-shadow] hover:border-[#a6c8ff] hover:shadow-[0_12px_35px_rgba(9,23,47,0.08)] sm:p-5"
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: shouldReduceMotion ? 0 : 30 }}
               transition={{
