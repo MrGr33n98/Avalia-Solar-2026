@@ -372,6 +372,7 @@ export function BannerContainer({
         >
           <BannerCreative
             banner={singleBanner}
+            position={position}
             priority={priority}
             sizes={getSizes(position)}
             ambientBackground={ambientBackground}
