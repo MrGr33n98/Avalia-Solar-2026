@@ -47,7 +47,7 @@ export function EnterpriseSearchPagination({
         {totalPages > 1 && (
           <nav aria-label="Páginas de empresas" className="flex items-center gap-1.5">
             {current > 1 ? (
-              <Link href={hrefForPage(current - 1)} aria-label="Página anterior" className={neutral + ' px-3'}>
+              <Link scroll={false} href={hrefForPage(current - 1)} aria-label="Página anterior" className={neutral + ' px-3'}>
                 <span aria-hidden="true" className="mr-1">‹</span><span className="hidden sm:inline">Anterior</span>
               </Link>
             ) : (
@@ -67,7 +67,7 @@ export function EnterpriseSearchPagination({
                 ) : (
                   <Link
                     key={item}
-                    href={hrefForPage(item)}
+                    scroll={false} href={hrefForPage(item)}
                     aria-label={'Página ' + item}
                     aria-current={item === current ? 'page' : undefined}
                     className={item === current
@@ -80,7 +80,7 @@ export function EnterpriseSearchPagination({
               )}
             </div>
             {current < totalPages ? (
-              <Link href={hrefForPage(current + 1)} aria-label="Próxima página" className={neutral + ' px-3'}>
+              <Link scroll={false} href={hrefForPage(current + 1)} aria-label="Próxima página" className={neutral + ' px-3'}>
                 <span className="hidden sm:inline">Próxima</span><span aria-hidden="true" className="ml-1">›</span>
               </Link>
             ) : (
