@@ -54,6 +54,7 @@ test.describe('Founder 2026 — G2 editorial mobile-first redesign', () => {
     const compare = page.locator('#comparador-visual');
     await compare.scrollIntoViewIfNeeded();
     await expect(compare).toBeVisible();
+    await compare.getByRole('button', { name: 'Comparar com divisor' }).click();
     await expect(compare.getByRole('slider')).toBeVisible();
 
     const tour = page.locator('#tour-interativo');
