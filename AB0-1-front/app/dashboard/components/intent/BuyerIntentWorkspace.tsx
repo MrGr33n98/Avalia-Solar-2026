@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import {
   fetchBuyerIntentAccounts,
   fetchBuyerIntentReporting,
+  fetchBuyerIntentAccountDetail,
   type BuyerIntentAccount,
   type BuyerIntentReportingData,
   type IcpFilterCriteria,
@@ -104,6 +105,25 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
   // Drawer de Detalhes
   const [selectedAccount, setSelectedAccount] = useState<BuyerIntentAccount | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [accountDetailLoading, setAccountDetailLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isDrawerOpen || !selectedAccount?.id || !effectiveCompanyId) return;
+    let active = true;
+    setAccountDetailLoading(true);
+    void fetchBuyerIntentAccountDetail(effectiveCompanyId, selectedAccount.id)
+      .then((detail) => {
+        if (active) setSelectedAccount((current) => current && String(current.id) === String(detail.id) ? { ...current, ...detail } : current);
+      })
+      .catch(() => {
+        // No fabricated timeline on a failed detail request.
+      })
+      .finally(() => {
+        if (active) setAccountDetailLoading(false);
+      });
+    return () => { active = false; };
+  }, [isDrawerOpen, selectedAccount?.id, effectiveCompanyId]);
+
 
   // Alertas locais
   const [alertRules, setAlertRules] = useState({
@@ -141,7 +161,7 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
 
         const [accRes, repRes] = await Promise.all([
           fetchBuyerIntentAccounts(effectiveCompanyId, filterCriteria),
-          fetchBuyerIntentReporting(effectiveCompanyId),
+          fetchBuyerIntentReporting(effectiveCompanyId, Number(selectedDays.slice(0, -1)) as 7 | 30 | 90),
         ]);
 
         if (requestSequence.current !== sequence) return;
@@ -1387,6 +1407,24 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
                   </div>
                 </dl>
               </div>
+
+              <section aria-label="Histórico de atividades" className="space-y-2">
+                <h4 className="font-bold text-slate-900 dark:text-white">Histórico de atividades</h4>
+                {accountDetailLoading ? (
+                  <p className="text-slate-500">Carregando eventos verificados...</p>
+                ) : selectedAccount.timeline?.length ? (
+                  <ol className="space-y-2 border-l border-slate-200 pl-4 dark:border-slate-700">
+                    {selectedAccount.timeline.map((event) => (
+                      <li key={event.id} className="relative rounded-md border border-slate-100 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-800/40">
+                        <p className="font-medium text-slate-900 dark:text-slate-100">{event.description}</p>
+                        <p className="mt-1 text-[11px] text-slate-500">{new Date(event.tracked_at).toLocaleString('pt-BR')} · {event.signal_category}</p>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-slate-500">Nenhum evento detalhado disponível para esta sessão.</p>
+                )}
+              </section>
 
               {selectedAccount.recommended_action && (
                 <div className="rounded-lg border border-blue-100 bg-blue-50/70 p-3 text-xs text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300">

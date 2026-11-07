@@ -154,16 +154,10 @@ export function AccountDetailDrawer({
             </h3>
 
             <div className="relative pl-6 space-y-4 border-l-2 border-slate-100 dark:border-slate-800">
-              {(account.timeline || [
-                {
-                  id: 'def-1',
-                  signal_type: 'profile_view',
-                  signal_category: 'research_intent',
-                  description: 'Acessou o perfil da empresa no catálogo regional',
-                  tracked_at: account.last_interaction_at,
-                  intent_weight: 4,
-                },
-              ]).map((evt) => (
+              {!account.timeline?.length && (
+                <p className="text-xs text-slate-500">Nenhum evento cronológico disponível.</p>
+              )}
+              {(account.timeline || []).map((evt) => (
                 <div key={evt.id} className="relative">
                   <div className="absolute -left-[31px] top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-white ring-4 ring-white dark:ring-slate-900">
                     <span className="h-1.5 w-1.5 rounded-full bg-white"></span>

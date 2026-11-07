@@ -56,6 +56,8 @@ import { openLeadModal } from '@/lib/lead-engine';
 import { buildCompanyPath } from '@/lib/slug';
 import { absoluteUrl } from '@/lib/site';
 import { canUsePaidConversion } from '@/lib/feature-access';
+import { hasAnalyticsConsent } from '@/lib/analytics/consent';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 
 import {
@@ -114,6 +116,33 @@ function ComparePageContent() {
     [visibleList]
   );
   const selectedIds = useMemo(() => companies.map((company) => company.id), [companies]);
+  const comparedSelectionKey = useMemo(
+    () => selectedIds.filter((id) => Number.isSafeInteger(id) && id > 0).sort((a, b) => a - b).join('-'),
+    [selectedIds]
+  );
+  const comparisonIntentSeenRef = useRef(new Set<string>());
+  useEffect(() => {
+    if (isStorageLoading || isResolvingUrl || loadError || selectedIds.length < 2 || !hasAnalyticsConsent()) return;
+    if (!comparedSelectionKey || comparisonIntentSeenRef.current.has(comparedSelectionKey)) return;
+    comparisonIntentSeenRef.current.add(comparedSelectionKey);
+
+    // Only a rendered comparison is counted, not an add/remove checkbox action.
+    const participants = comparedSelectionKey.split('-').map(Number);
+    participants.forEach((companyId) => {
+      sendIntentSignal({
+        company_id: companyId,
+        signal_type: 'comparison_view',
+        signal_category: 'research_intent',
+        element_type: 'compare_page',
+        metadata: {
+          source: 'compare_page',
+          compared_company_ids: participants,
+          comparison_size: participants.length,
+        },
+      });
+    });
+  }, [comparedSelectionKey, isStorageLoading, isResolvingUrl, loadError, selectedIds.length]);
+
   const contextCity = searchParams.get('city') || user?.city || companies[0]?.city || null;
 
   const candidatesQuery = useRecommendedCompanyCandidates(companies, contextCity);

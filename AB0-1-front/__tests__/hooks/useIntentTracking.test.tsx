@@ -33,6 +33,7 @@ describe('useIntentTracking hooks', () => {
     jest.clearAllMocks();
     global.fetch = fetchMock as typeof fetch;
     window.localStorage.setItem('as_anonymous_id', 'anon-123');
+    window.localStorage.setItem('avaliasolar_consent', JSON.stringify({ analytics: true, marketing: false, lastUpdated: Date.now() }));
     window.history.pushState({}, '', '/companies/empresa-teste');
   });
 
@@ -179,6 +180,26 @@ describe('useIntentTracking hooks', () => {
       }),
       expect.any(Object)
     );
+  });
+
+  it('does not emit behavioral events without analytics consent', () => {
+    window.localStorage.setItem('avaliasolar_consent', JSON.stringify({ analytics: false, marketing: false, lastUpdated: Date.now() }));
+    const { result } = renderHook(() => useComparisonIntent('42'));
+
+    act(() => result.current.trackComparisonUsage('view'));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(trackMock).not.toHaveBeenCalled();
+  });
+
+  it('includes an event ID and does not trust browser-provided user IDs', () => {
+    const { result } = renderHook(() => useComparisonIntent('42'));
+    act(() => result.current.trackComparisonUsage('view'));
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(String(options.body));
+    expect(body.event_id).toEqual(expect.any(String));
+    expect(body.anonymous_id).toBe('anon-123');
+    expect(body.user_id).toBeUndefined();
   });
 
   it('tracks comparison usage with explicit comparison_usage signal', () => {

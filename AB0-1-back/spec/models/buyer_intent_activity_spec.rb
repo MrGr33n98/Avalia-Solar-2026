@@ -43,6 +43,21 @@ RSpec.describe BuyerIntentActivity, type: :model do
     end
   end
 
+  it 'generates a unique event identifier for each accepted activity' do
+    a = described_class.create!(base_attributes)
+    b = described_class.create!(base_attributes)
+    expect(a.event_id).to be_present
+    expect(a.event_id).not_to eq(b.event_id)
+  end
+
+  it 'rejects duplicate event IDs for a single company' do
+    event_id = SecureRandom.uuid
+    described_class.create!(base_attributes.merge(event_id: event_id))
+    duplicate = described_class.new(base_attributes.merge(event_id: event_id))
+    expect(duplicate).not_to be_valid
+    expect(duplicate.errors[:event_id]).to be_present
+  end
+
   describe 'associations' do
     it 'belongs to a company' do
       association = described_class.reflect_on_association(:company)

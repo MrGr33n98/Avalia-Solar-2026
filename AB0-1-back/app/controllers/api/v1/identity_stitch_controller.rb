@@ -1,28 +1,34 @@
 module Api
   module V1
     class IdentityStitchController < BaseController
-      before_action :authenticate_api_user, only: []
+      before_action :authenticate_api_user, only: :create
 
       # POST /api/v1/identity/stitch
       # Stitch anonymous session to identified user
       def create
-        analytics_user_id = params[:user_id].to_s
-        user_id = analytics_user_id.delete_prefix('user_')
-        anonymous_id = params[:anonymous_id]
-
-        if user_id.blank? || anonymous_id.blank? || !user_id.match?(/\A\d+\z/)
-          return render json: {
-            error: 'user_id and anonymous_id required'
-          }, status: :bad_request
+        # The account identifier is resolved from the authenticated JWT.
+        # Never stitch arbitrary user IDs supplied by the browser.
+        anonymous_id = params[:anonymous_id].to_s
+        if anonymous_id.blank? || anonymous_id.length > 128
+          return render json: { error: 'anonymous_id required' }, status: :bad_request
         end
 
-        # Trigger async stitching
-        StitchIdentityJob.perform_later(user_id, anonymous_id)
+        session = AnonymousSession.find_by(anonymous_id: anonymous_id)
+        unless session && session.updated_at >= 30.days.ago &&
+               ActiveSupport::SecurityUtils.secure_compare(
+                 session.ip_hash.to_s, Digest::SHA256.hexdigest(request.ip.to_s)
+               ) &&
+               ActiveSupport::SecurityUtils.secure_compare(
+                 session.user_agent_hash.to_s, Digest::SHA256.hexdigest(request.user_agent.to_s)
+               )
+          return render json: { error: 'Session ownership could not be verified' }, status: :forbidden
+        end
+
+        StitchIdentityJob.perform_later(current_user.id, anonymous_id)
 
         render json: {
           status: 'stitching_scheduled',
-          user_id: "user_#{user_id}",
-          anonymous_id: anonymous_id
+          user_id: "user_#{current_user.id}"
         }
       end
 
@@ -46,6 +52,9 @@ module Api
         end
 
         session.track_visit(company_id, page_url) if company_id.present? && page_url.present?
+        # A consented login may register an already-known anonymous session.
+        # Refresh its server-side proof timestamp without requiring a new visit.
+        session.touch
 
         render json: {
           anonymous_id: anonymous_id,

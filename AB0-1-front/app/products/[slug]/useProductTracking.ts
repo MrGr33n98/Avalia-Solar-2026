@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { Company, Product, ProductReviewsResponse } from '@/lib/api';
 import { track } from '@/lib/analytics/lazy';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 
 interface UseProductTrackingParams {
   product: Product;
@@ -51,6 +52,16 @@ export function useProductTracking({
       $current_url: window.location.href,
       referrer: document.referrer,
     });
+    const context = getBasePayload();
+    if (context.company_id) {
+      sendIntentSignal({
+        company_id: context.company_id,
+        signal_type: 'product_view',
+        signal_category: 'research_intent',
+        element_type: 'product_page',
+        metadata: { product_id: product.id, category_id: context.category_id, source: 'product_page' },
+      });
+    }
   }, [getBasePayload]);
 
   const trackCTA = useCallback(

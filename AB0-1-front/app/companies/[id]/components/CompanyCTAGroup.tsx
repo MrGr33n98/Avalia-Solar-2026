@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { track } from '@/lib/analytics/lazy';
 import { buildCompanySubPath } from '@/lib/slug';
 import { resolveCompanyConversionCTAs } from '@/lib/company-cta-visibility';
@@ -44,6 +45,13 @@ export default function CompanyCTAGroup({
       surfaceId: 'CV-BRAND-HERO',
       placement: 'hero',
     });
+    sendIntentSignal({
+      company_id: company.id,
+      signal_type: 'quote_started',
+      signal_category: 'contact_intent',
+      element_type: 'quote_button',
+      metadata: { source: 'company_hero' },
+    });
     openLeadModal({
       preferredCompanyId: company.id,
       categoryId: wizardCategoryId,
@@ -61,6 +69,13 @@ export default function CompanyCTAGroup({
         company_id: company.id,
         company_name: company.name,
         action: 'add',
+      });
+      sendIntentSignal({
+        company_id: company.id,
+        signal_type: 'comparison_usage',
+        signal_category: 'research_intent',
+        element_type: 'comparison_toggle',
+        metadata: { action: 'add', source: 'company_hero' },
       });
       addToComparison(company);
       toast.success(`${company.name} adicionada para comparação!`);
@@ -106,6 +121,13 @@ export default function CompanyCTAGroup({
               rel="noopener noreferrer"
               aria-label={`Falar com ${company.name} no WhatsApp`}
               onClick={() => {
+                sendIntentSignal({
+                  company_id: company.id,
+                  signal_type: 'contact_clicked',
+                  signal_category: 'contact_intent',
+                  element_type: 'whatsapp_button',
+                  metadata: { source: 'company_hero' },
+                });
                 void trackCTAClick({
                   ctaType: 'whatsapp',
                   ctaLocation: 'hero',

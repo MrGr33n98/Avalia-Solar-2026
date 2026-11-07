@@ -6,6 +6,7 @@ import { Building2, ChevronDown, ImageIcon, Play, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { fetchApi } from '@/lib/api';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 
 type ProjectAsset = {
   id: number;
@@ -171,7 +172,16 @@ export default function ProjectsGallery({ companyId, companyName }: { companyId:
         const cover = project.assets.find((asset) => asset.kind === 'image') || project.assets[0];
         const isVideo = cover?.kind === 'video';
         const imageSrc = cover?.file_url || cover?.external_url;
-        return <button type="button" key={project.id} onClick={() => setSelected(project)} className="overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        return <button type="button" key={project.id} onClick={() => {
+          setSelected(project);
+          sendIntentSignal({
+            company_id: companyId,
+            signal_type: 'reference_project_view',
+            signal_category: 'research_intent',
+            element_type: 'project_detail',
+            metadata: { project_id: project.id, source: 'projects_gallery' },
+          });
+        }} className="overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
           <div className="relative aspect-[16/10] bg-slate-100">
             {imageSrc && !isVideo ? <Image src={imageSrc} alt={cover?.alt_text || project.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" unoptimized /> : <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-700 to-slate-800"><ImageIcon className="h-10 w-10 text-white/70" /></div>}
             <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded bg-slate-950/75 px-2 py-1 text-[11px] font-semibold text-white">{isVideo ? <Play className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}{isVideo ? 'Vídeo' : 'Foto'}</span>

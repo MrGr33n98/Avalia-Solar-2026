@@ -78,12 +78,49 @@ class IntentScore < ApplicationRecord
     end
   end
 
+  DECISION_SIGNALS = %w[
+    pricing_interaction
+    calculator_usage
+    bill_value_entered
+    financing_multiple_simulations
+    contact_clicked
+    whatsapp_click
+    mobile_contact_tap
+    contact_info_reveal
+    quote_wizard_step
+    quote_submission
+    quote_started
+  ].freeze
+
+  CONSIDERATION_SIGNALS = %w[
+    comparison_view
+    comparison_usage
+    comparison_third_added
+    alternatives_view
+    review_read
+    review_deep_read
+    negative_review_deep_read
+    reference_project_view
+    portfolio_view
+    document_download
+    material_delivered
+    product_view
+  ].freeze
+
   # G2 Buying Stage (Awareness, Consideration, Decision)
+  # Derived from actual interaction depth, avoiding hover inflation.
   def buying_stage
-    case intent_level
-    when 'immediate', 'declared', 'boiling'
+    return 'decision' if %w[immediate declared].include?(intent_level)
+
+    type_counts = signal_type_counts
+
+    if DECISION_SIGNALS.any? { |s| type_counts.fetch(s, 0).positive? }
       'decision'
-    when 'hot', 'warm'
+    elsif CONSIDERATION_SIGNALS.any? { |s| type_counts.fetch(s, 0).positive? } || type_counts.fetch('profile_view', 0) >= 2
+      'consideration'
+    elsif total_score.to_i >= 71 && hot_signals_count.to_i >= 2
+      'decision'
+    elsif total_score.to_i >= 31 || total_signals_count.to_i >= 3
       'consideration'
     else
       'awareness'
@@ -92,7 +129,7 @@ class IntentScore < ApplicationRecord
 
   # G2 Activity Level (Low, Medium, High)
   def activity_level
-    if total_score.to_i >= 71 || hot_signals_count.to_i >= 3
+    if total_score.to_i >= 71 || hot_signals_count.to_i >= 3 || total_signals_count.to_i >= 8
       'high'
     elsif total_score.to_i >= 31 || total_signals_count.to_i >= 4
       'medium'
@@ -101,19 +138,22 @@ class IntentScore < ApplicationRecord
     end
   end
 
-  # G2 Direct Pageviews (profile, pricing, sponsored, docs)
-  def direct_pageviews
-    counts = score_breakdown.is_a?(Hash) ? (score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
-    (counts['profile_view'] || counts['review_read'] || counts['faq_interaction']).to_i +
-      counts['pricing_interaction'].to_i +
-      counts['calculator_usage'].to_i +
-      counts['document_download'].to_i
+  def signal_type_counts
+    return {} unless score_breakdown.is_a?(Hash)
+
+    score_breakdown.dig('signal_counts', 'by_type') || {}
   end
 
-  # G2 Competitive Pageviews (compare & alternatives)
+  # These counters represent actual page-view signals only.
+  # Hover, pricing, selected checkboxes and downloads are not pageviews.
+  def direct_pageviews
+    counts = score_breakdown.is_a?(Hash) ? (score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
+    counts.fetch('profile_view', 0).to_i
+  end
+
   def competitive_pageviews
     counts = score_breakdown.is_a?(Hash) ? (score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
-    counts['comparison_view'].to_i + counts['comparison_usage'].to_i
+    counts.fetch('comparison_view', 0).to_i + counts.fetch('alternatives_view', 0).to_i
   end
 
   private

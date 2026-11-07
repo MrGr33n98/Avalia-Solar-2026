@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 
 const SESSION_KEY_PREFIX = 'cpv_tracked_'; // company_profile_view_tracked_<companyId>
 const MIN_VISIBLE_MS = 3000;
@@ -27,17 +28,31 @@ export function useProfileViewTracker(companyId: number | string | undefined) {
     if (sessionStorage.getItem(sessionKey)) return;
 
     function sendTrackRequest() {
-      if (trackedRef.current) return;
+      const trackedCompanyId = companyId;
+      if (trackedRef.current || !trackedCompanyId) return;
       trackedRef.current = true;
       sessionStorage.setItem(sessionKey, '1');
 
-      fetch(`/api/v1/companies/${companyId}/track_view`, {
+      void fetch(`/api/v1/companies/${companyId}/track_view`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // keepalive garante envio mesmo se o usuário navegar
         keepalive: true,
+      }).then(async (response) => {
+        if (!response.ok) return;
+        const result: { tracked?: boolean } = await response.json();
+        // Only a server-confirmed, deduplicated profile view becomes a
+        // Buyer Intent signal; impressions rejected as bots/self-view do not.
+        if (result.tracked === true) {
+          sendIntentSignal({
+            company_id: trackedCompanyId,
+            signal_type: 'profile_view',
+            signal_category: 'research_intent',
+            element_type: 'profile_page',
+            metadata: { source: 'verified_profile_view' },
+          });
+        }
       }).catch(() => {
-        // silencioso — não interrompe a experiência
+        // Tracking failures never block the public profile experience.
       });
     }
 

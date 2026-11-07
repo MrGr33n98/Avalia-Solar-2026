@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_06_190000) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_06_235900) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -593,12 +593,14 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_06_190000) do
     t.string "referrer_host"
     t.integer "duration_ms"
     t.jsonb "metadata", default: {}, null: false
+    t.string "event_id", limit: 128
     t.string "ip_hash"
     t.string "user_agent"
     t.string "device_type"
     t.datetime "tracked_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["company_id", "event_id"], name: "idx_buyer_intent_company_event_unique", unique: true, where: "(event_id IS NOT NULL)"
     t.index ["anonymous_id", "tracked_at"], name: "idx_intent_anon_time", where: "(anonymous_id IS NOT NULL)"
     t.index ["anonymous_id"], name: "index_buyer_intent_activities_on_anonymous_id"
     t.index ["company_id", "signal_type", "tracked_at"], name: "idx_intent_company_signal_time"

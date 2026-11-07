@@ -36,16 +36,18 @@ module Api
           when 'high'
             scope = scope.where('total_score >= 71 OR hot_signals_count >= 3')
           when 'medium'
-            scope = scope.where('total_score BETWEEN 31 AND 70')
+            scope = scope.where('total_score < 71 AND hot_signals_count < 3')
+                         .where('total_score >= 31 OR total_signals_count >= 4')
           when 'low'
-            scope = scope.where('total_score <= 30')
+            scope = scope.where('total_score < 31 AND hot_signals_count < 3 AND total_signals_count < 4')
           end
         end
 
-        # Filtro de Data
-        if params[:days].present?
-          scope = scope.where('last_interaction_at >= ?', params[:days].to_i.days.ago)
-        end
+        # Same reporting window for summary, table and activity source.
+        days = intent_period_days
+        return render json: { error: 'days must be between 1 and 365' }, status: :unprocessable_entity unless days
+
+        scope = scope.where('last_interaction_at >= ?', days.days.ago)
 
         limit = params[:limit].present? ? [params[:limit].to_i, 100].min : 50
         offset = params[:offset].to_i
@@ -64,55 +66,63 @@ module Api
       # GET /api/v1/intent_scores/reporting
       # G2 Buyer Intent Reporting panel (Buying Stage & Activity Level distributions)
       def reporting
-        company_id = params[:company_id]
-        scope = IntentScore.where(company_id: company_id)
+        days = intent_period_days
+        return render json: { error: 'days must be between 1 and 365' }, status: :unprocessable_entity unless days
 
-        total_accounts = scope.count
-        scores_array = scope.limit(200).to_a
+        # Raw event counts are the only reliable source of event-level metrics.
+        # Score snapshots are rolling aggregates and must not be added as
+        # though they represented pageviews in the selected reporting period.
+        score_scope = IntentScore.where(company_id: @company.id)
+                                 .where('last_interaction_at >= ?', days.days.ago)
+        activities = BuyerIntentActivity.where(company_id: @company.id)
+                                        .where('tracked_at >= ?', days.days.ago)
+        counts = activities.group(:signal_type).count
+        event_count = counts.values.sum
 
+        scores_array = score_scope.limit(200).to_a
         stage_dist = {
-          awareness: scope.where(intent_level: 'cold').count,
-          consideration: scope.where(intent_level: %w[warm hot]).count,
-          decision: scope.where(intent_level: %w[boiling immediate declared]).count
+          awareness: scores_array.count { |s| s.buying_stage == 'awareness' },
+          consideration: scores_array.count { |s| s.buying_stage == 'consideration' },
+          decision: scores_array.count { |s| s.buying_stage == 'decision' }
         }
-
         activity_dist = {
-          low: scope.where('total_score <= 30').count,
-          medium: scope.where('total_score BETWEEN 31 AND 70').count,
-          high: scope.where('total_score >= 71 OR hot_signals_count >= 3').count
+          high: scores_array.count { |s| s.activity_level == 'high' },
+          medium: scores_array.count { |s| s.activity_level == 'medium' },
+          low: scores_array.count { |s| s.activity_level == 'low' }
         }
 
-        direct_views = scores_array.sum(&:direct_pageviews)
-        competitive_views = scores_array.sum(&:competitive_pageviews)
-
-        profile_count = scores_array.sum do |s|
-          counts = s.score_breakdown.is_a?(Hash) ? (s.score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
-          counts['profile_view'].to_i + counts['review_read'].to_i + counts['faq_interaction'].to_i
-        end
-
-        pricing_count = scores_array.sum do |s|
-          counts = s.score_breakdown.is_a?(Hash) ? (s.score_breakdown.dig('signal_counts', 'by_type') || {}) : {}
-          counts['pricing_interaction'].to_i + counts['calculator_usage'].to_i
-        end
-
-        compare_count = competitive_views
-        contact_count = scores_array.sum { |s| s.hot_signals_count.to_i }
+        profile_views = counts.fetch('profile_view', 0)
+        competitive_views = counts.fetch('comparison_view', 0) + counts.fetch('alternatives_view', 0)
+        pricing = counts.fetch('pricing_interaction', 0) + counts.fetch('calculator_usage', 0)
+        contacts = counts.fetch('contact_clicked', 0) + counts.fetch('mobile_contact_tap', 0)
+        reviews = counts.fetch('review_read', 0) + counts.fetch('review_deep_read', 0) +
+                  counts.fetch('review_section_view', 0)
+        portfolio = counts.fetch('reference_project_view', 0) + counts.fetch('portfolio_view', 0)
+        datasheets = counts.fetch('document_download', 0) + counts.fetch('material_delivered', 0)
 
         render json: {
-          total_accounts: total_accounts,
+          period_days: days,
+          scoring_window_days: 90,
+          total_accounts: score_scope.count,
           buying_stage_distribution: stage_dist,
           activity_level_distribution: activity_dist,
           traffic_ratio: {
-            direct_pageviews: direct_views,
+            direct_pageviews: profile_views,
             competitive_pageviews: competitive_views,
-            total_intent_signals: scores_array.sum(&:total_signals_count)
+            total_intent_signals: event_count
           },
           top_signals_summary: [
-            { type: 'profile', label: 'Visualizações de Perfil', count: profile_count },
-            { type: 'pricing', label: 'Simulador / Preços', count: pricing_count },
-            { type: 'compare', label: 'Comparador Solar', count: compare_count },
-            { type: 'contact', label: 'Cliques WhatsApp / Fone', count: contact_count }
-          ]
+            { type: 'profile', label: 'Visualizações de Perfil', count: profile_views },
+            { type: 'pricing', label: 'Simulador / Preços', count: pricing },
+            { type: 'compare', label: 'Comparações efetivas', count: counts.fetch('comparison_view', 0) },
+            { type: 'contact', label: 'Cliques de contato', count: contacts }
+          ],
+          section_breakdown: {
+            reviews: { count: reviews, status: 'partial' },
+            portfolio: { count: portfolio, status: 'partial' },
+            datasheets: { count: datasheets, status: 'partial' },
+            contact: { count: contacts, status: 'partial' }
+          }
         }
       end
 
@@ -139,7 +149,7 @@ module Api
           ]
 
           scores.each do |s|
-            lead_name = s.lead_record&.name.presence || "Conta em Pesquisa ##{s.id.to_s[0..7]}"
+            lead_name = "Sessão de pesquisa ##{s.id.to_s[0..7]}"
             csv << [
               s.id,
               lead_name,
@@ -249,6 +259,14 @@ module Api
 
       private
 
+      def intent_period_days
+        value = params[:days].presence || '30'
+        return nil unless value.to_s.match?(/\A\d{1,3}\z/)
+
+        days = value.to_i
+        days if days.between?(1, 365)
+      end
+
       def set_company_for_intent_scores
         if params[:id].present?
           score = IntentScore.find_by(id: params[:id])
@@ -289,20 +307,17 @@ module Api
       end
 
       def score_json(score, detailed: false)
-        lead = score.lead_record
-        lead_name = lead&.name.presence || "Conta Corporativa / Anônima ##{score.id.to_s[0..7]}"
-        location = if lead&.city.present? && lead&.state.present?
-                     "#{lead.city}, #{lead.state}"
-                   else
-                     "Brasil (Sinal de Rede)"
-                   end
+        # Neither an anonymous session nor a User ID proves the visitor's
+        # employer. Lead and User IDs share the same integer namespace.
+        # Do not expose a coincidentally matching Lead name or invented city.
+        lead_name = "Sessão de pesquisa ##{score.id.to_s[0..7]}"
+        location = 'Não verificada'
 
         base = {
           id: score.id,
           company_id: score.company_id,
           company_name: score.company&.name,
-          lead_id: score.lead_id,
-          anonymous_id: score.anonymous_id,
+          identity_status: 'unverified',
           account_name: lead_name,
           location: location,
           buying_stage: score.buying_stage,
@@ -310,7 +325,8 @@ module Api
           total_score: score.total_score,
           direct_pageviews: score.direct_pageviews,
           competitive_pageviews: score.competitive_pageviews,
-          unique_visitors: score.unique_sessions_count.to_i,
+          unique_sessions: score.unique_sessions_count.to_i,
+          unique_visitors: score.unique_sessions_count.to_i, # Legacy alias; UI must label this as sessions.
           intent_level: score.intent_level,
           thermometer: score.thermometer_emoji,
           recommended_action: score.recommended_action,
@@ -322,7 +338,25 @@ module Api
         }
 
         if detailed
+          activity_scope = BuyerIntentActivity.where(company_id: score.company_id)
+          activity_scope = if score.lead_id.present?
+                             activity_scope.where(user_id: score.lead_id)
+                           else
+                             activity_scope.where(anonymous_id: score.anonymous_id)
+                           end
+          recent_activities = activity_scope.order(tracked_at: :desc, id: :desc).limit(100)
           base.merge!(
+            timeline: recent_activities.map do |activity|
+              {
+                id: activity.id,
+                signal_type: activity.signal_type,
+                signal_category: activity.signal_category,
+                description: activity.signal_type.tr('_', ' ').humanize,
+                tracked_at: activity.tracked_at,
+                intent_weight: activity.intent_weight,
+                element_type: activity.element_type
+              }
+            end,
             category_scores: {
               micro_interaction: score.micro_interaction_score,
               research_intent: score.research_intent_score,

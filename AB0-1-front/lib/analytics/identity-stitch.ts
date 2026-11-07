@@ -3,6 +3,7 @@
 import { alias, identify } from './index';
 import { opaqueUserId } from './sanitize';
 import { buildApiUrl } from '@/lib/api-config';
+import { hasAnalyticsConsent } from './consent';
 
 const ANONYMOUS_ID_STORAGE_KEYS = ['ajs_anonymous_id', 'as_anonymous_id'] as const;
 const IDENTITY_STITCHED_KEY = 'avalia.identity_stitched';
@@ -21,6 +22,7 @@ export interface IdentityStitchPayload {
  * Call this immediately after user login/signup
  */
 export const stitchIdentity = async (payload: IdentityStitchPayload) => {
+  if (!hasAnalyticsConsent()) return null;
   try {
     const userId = opaqueUserId(payload.user_id);
     const anonymousId = payload.anonymous_id || getAnonymousId();
@@ -46,12 +48,22 @@ export const stitchIdentity = async (payload: IdentityStitchPayload) => {
       alias(userId);
     }
 
-    // 2. Backend stitching
+    // 2. Register proof of the current anonymous session before requesting
+    // linkage. An arbitrary browser-supplied user_id is never authoritative.
+    if (!anonymousId) return null;
+    const registered = await trackSession({
+      anonymous_id: anonymousId,
+      company_id: payload.company_id != null ? String(payload.company_id) : undefined,
+      page_url: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    });
+    if (!registered) return null;
+
     const response = await fetch(buildApiUrl('identity/stitch'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({
         user_id: userId,
         anonymous_id: anonymousId,
@@ -96,6 +108,7 @@ export const trackSession = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify(params),
     });
 
@@ -157,6 +170,7 @@ export const handleUserIdentified = async (user: {
   session_id?: string | number;
   tracked_at?: string;
 }) => {
+  if (!hasAnalyticsConsent()) return;
   const anonymousId = getAnonymousId();
 
   if (!anonymousId) {
