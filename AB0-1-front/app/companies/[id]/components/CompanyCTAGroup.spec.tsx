@@ -1,17 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import type { PropsWithChildren } from 'react';
 import CompanyCTAGroup from './CompanyCTAGroup';
 import type { Company } from '@/lib/api';
-import { useComparison } from '@/hooks/useComparison';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
-
-jest.mock('next/link', () => ({
-  __esModule: true,
-  default: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => (
-    <a {...props}>{children}</a>
-  ),
-}));
+import { openLeadModal } from '@/lib/lead-engine';
 
 jest.mock('@/lib/lead-engine', () => ({
   openLeadModal: jest.fn(),
@@ -22,12 +14,8 @@ jest.mock('@/lib/analytics/track-cta', () => ({
   trackCTAClick: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('@/lib/analytics/lazy', () => ({
-  track: jest.fn(),
-}));
-
-jest.mock('@/hooks/useComparison', () => ({
-  useComparison: jest.fn(),
+jest.mock('@/lib/analytics/hooks/useIntentTracking', () => ({
+  sendIntentSignal: jest.fn(),
 }));
 
 const paidCompany = {
@@ -43,70 +31,55 @@ const paidCompany = {
   },
 } as unknown as Company;
 
-describe('CompanyCTAGroup — Brand Page PWA compacta + gates', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (useComparison as jest.Mock).mockReturnValue({
-      isInComparison: jest.fn().mockReturnValue(false),
-      addToComparison: jest.fn(),
-      removeFromComparison: jest.fn(),
-      canAddMore: true,
-    });
-  });
+describe('CompanyCTAGroup — only paid conversion channels', () => {
+  beforeEach(() => jest.clearAllMocks());
 
-  it('plano pago ativo: orçamento + WhatsApp equilibrados, Comparar discreto e Avaliar preservado no desktop', () => {
+  it('renders quote + WhatsApp in one right-aligned shelf without duplicating quick actions', async () => {
     render(<CompanyCTAGroup company={paidCompany} canRequestQuote />);
 
     const quote = screen.getByRole('button', { name: 'Solicitar orçamento' });
     const whatsapp = screen.getByRole('link', { name: 'Falar com Empresa Teste no WhatsApp' });
-    const compare = screen.getByRole('checkbox', { name: /Adicionar Empresa Teste à comparação/ });
-    const review = screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' });
 
     expect(quote).toHaveClass('h-11', '!min-h-11', 'w-full', 'text-[12px]', 'font-semibold');
     expect(whatsapp).toHaveAttribute('href', 'https://wa.me/5547999545370');
     expect(whatsapp).toHaveAttribute('target', '_blank');
-    expect(compare).toBeInTheDocument();
-    expect(screen.getByText('Comparar')).toBeInTheDocument();
-    expect(review).toHaveTextContent('Avaliar');
-    expect(review).not.toHaveTextContent('Avaliar empresa');
     expect(screen.getByTestId('company-primary-ctas')).toHaveClass(
       'grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]'
     );
-    expect(screen.getByTestId('company-secondary-ctas')).toHaveClass('flex', 'justify-end');
-    expect(screen.getByTestId('company-secondary-ctas')).not.toHaveClass('grid-cols-2');
-    expect(review).toHaveClass('hidden', 'lg:flex');
+    expect(document.getElementById('company-cta-group')).toHaveClass('justify-end');
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Avaliar empresa/ })).not.toBeInTheDocument();
 
     fireEvent.click(whatsapp);
     expect(trackCTAClick).toHaveBeenCalledWith(expect.objectContaining({
-      ctaType: 'whatsapp',
-      ctaLocation: 'hero',
-      companyId: '1',
+      ctaType: 'whatsapp', ctaLocation: 'hero', companyId: '1',
     }));
+    fireEvent.click(quote);
+    await waitFor(() => expect(openLeadModal).toHaveBeenCalledWith(expect.objectContaining({
+      preferredCompanyId: 1, source: 'company-hero',
+    })));
   });
 
-  it('Free: não libera conversão paga mesmo que flags e números estejam configurados', () => {
-    render(<CompanyCTAGroup company={{ ...paidCompany, has_paid_plan: false }} canRequestQuote />);
-
-    expect(screen.queryByTestId('company-primary-ctas')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /no WhatsApp/ })).not.toBeInTheDocument();
-    expect(screen.getByText('Comparar')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' })).toHaveTextContent('Avaliar');
+  it('Free: never renders paid conversion actions or empty CTA shelf', () => {
+    const { container } = render(
+      <CompanyCTAGroup company={{ ...paidCompany, has_paid_plan: false }} canRequestQuote />
+    );
+    expect(container).toBeEmptyDOMElement();
   });
 
   it.each([
-    ['assinatura sem entitlement WhatsApp', { feature_access: { custom_ctas: { state: 'enabled', value: true } } }],
-    ['WhatsApp desabilitado', { cta_whatsapp_enabled: false }],
-    ['sem contato', { cta_whatsapp_url: null, whatsapp_url: null, whatsapp: null }],
-    ['link externo inválido', { cta_whatsapp_url: 'https://evil.example/' }],
-  ])('%s: mantém orçamento sem exibir WhatsApp', (_label, override) => {
+    ['no WhatsApp entitlement', { feature_access: { custom_ctas: { state: 'enabled', value: true } } }],
+    ['WhatsApp disabled', { cta_whatsapp_enabled: false }],
+    ['no WhatsApp contact', { cta_whatsapp_url: null, whatsapp_url: null, whatsapp: null }],
+    ['invalid external URL', { cta_whatsapp_url: 'https://evil.example/' }],
+  ])('%s: preserves quote while suppressing WhatsApp', (_name, override) => {
     render(<CompanyCTAGroup company={{ ...paidCompany, ...override } as Company} canRequestQuote />);
     expect(screen.getByRole('button', { name: 'Solicitar orçamento' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /no WhatsApp/ })).not.toBeInTheDocument();
     expect(screen.getByTestId('company-primary-ctas')).toHaveClass('grid-cols-1');
   });
 
-  it('plano pago com quote bloqueado: pode manter WhatsApp se esse entitlement estiver ativo', () => {
+  it('quote blocked, WhatsApp entitlement active: renders WhatsApp only', () => {
     const company = {
       ...paidCompany,
       feature_access: {
@@ -115,7 +88,6 @@ describe('CompanyCTAGroup — Brand Page PWA compacta + gates', () => {
       },
     } as unknown as Company;
     render(<CompanyCTAGroup company={company} canRequestQuote />);
-
     expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /no WhatsApp/ })).toBeInTheDocument();
     expect(screen.getByTestId('company-primary-ctas')).toHaveClass('grid-cols-1');
@@ -126,37 +98,16 @@ describe('CompanyCTAGroup — Brand Page PWA compacta + gates', () => {
     [true, false, true, false],
     [false, true, false, true],
     [false, false, false, false],
-  ])('preferência de orçamento=%s, WhatsApp=%s => quote=%s e whatsapp=%s',
+  ])('saved preferences quote=%s WhatsApp=%s => effective quote=%s WhatsApp=%s',
     (quote, whatsapp, expectsQuote, expectsWhatsapp) => {
       const company = {
         ...paidCompany, quote_cta_enabled: quote, cta_whatsapp_enabled: whatsapp,
       } as Company;
-      render(<CompanyCTAGroup company={company} canRequestQuote />);
+      const { container } = render(<CompanyCTAGroup company={company} canRequestQuote />);
       expect(Boolean(screen.queryByRole('button', { name: 'Solicitar orçamento' }))).toBe(expectsQuote);
       expect(Boolean(screen.queryByRole('link', { name: /no WhatsApp/ }))).toBe(expectsWhatsapp);
-      expect(screen.getByText('Comparar')).toBeInTheDocument();
-      expect(screen.getByText('Avaliar')).toBeInTheDocument();
       expect(Boolean(screen.queryByTestId('company-primary-ctas'))).toBe(expectsQuote || expectsWhatsapp);
+      if (!expectsQuote && !expectsWhatsapp) expect(container).toBeEmptyDOMElement();
     }
   );
-
-  it('PWA: comparar sem moldura externa, alinhado ao canto direito com área de toque de 44px', () => {
-    render(<CompanyCTAGroup company={paidCompany} canRequestQuote />);
-    const secondary = screen.getByTestId('company-secondary-ctas');
-    const compareLabel = screen.getByText('Comparar').closest('label');
-    expect(secondary).toHaveClass('flex', 'justify-end');
-    expect(compareLabel).toHaveClass('!min-h-11', '!px-2');
-    expect(compareLabel?.parentElement).toBe(secondary);
-    expect(secondary).not.toHaveClass('border', 'rounded-[10px]');
-    expect(screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' })).toHaveClass('hidden', 'lg:flex');
-  });
-
-  it('CTAs principais mantêm tipografia GitHub-like e alvos de 44px', () => {
-    render(<CompanyCTAGroup company={paidCompany} canRequestQuote />);
-    const quote = screen.getByRole('button', { name: 'Solicitar orçamento' });
-    const whatsapp = screen.getByRole('link', { name: /no WhatsApp/ });
-    expect(quote).toHaveClass('!min-h-11', 'font-semibold', 'text-[12px]');
-    expect(whatsapp).toHaveClass('!min-h-11', 'font-semibold', 'text-[12px]');
-    expect(screen.getByTestId('company-primary-ctas')).toHaveClass('gap-1.5');
-  });
 });

@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CompanyIdentityCard from '@/app/companies/[id]/components/CompanyIdentityCard';
 import CompanyPremiumHero from '@/app/companies/[id]/components/CompanyPremiumHero';
 import CompanyCTAGroup from '@/app/companies/[id]/components/CompanyCTAGroup';
+import CompanyCompareToggle from '@/app/companies/[id]/components/CompanyCompareToggle';
 import { OFFICIAL_VERIFIED_MESSAGE } from '@/components/company/CompanyVerifiedBadge';
 import type { Company } from '@/lib/api';
 
@@ -37,6 +38,7 @@ jest.mock('@/hooks/useComparison', () => ({
     isInComparison: jest.fn().mockReturnValue(false),
     addToComparison: jest.fn(),
     removeFromComparison: jest.fn(),
+    canAddMore: true,
   }),
 }));
 
@@ -249,50 +251,41 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
     });
   });
 
-  describe('Ações Secundárias — Favoritar e Compartilhar', () => {
-    it('mantém dimensão visual de 36px no mobile e hit target acessível (>=44px)', () => {
+  describe('Ações rápidas do header — ordem e acessibilidade', () => {
+    it('renderiza Comparar primeiro, Favoritar, Compartilhar e Avaliar com apenas ícones nos três últimos', () => {
       render(
         <CompanyIdentityCard
           company={mockCompanyVerified}
           companyStats={{ rating: '4.9', reviewCount: 85 }}
-          logoUrl="https://example.com/logo.png"
+          logoUrl="https://example.com/weg-logo.png"
           logoError={false}
           setLogoError={jest.fn()}
+          compareControl={<CompanyCompareToggle company={mockCompanyVerified} />}
         />
       );
 
-      const favBtn = screen.getByRole('button', { name: 'Favoritar empresa' });
-      expect(favBtn).toHaveClass(
-        'h-[36px]',
-        'w-[36px]',
-        '!min-h-0',
-        '!min-w-0',
-        'after:-inset-y-1',
-        'after:-left-2',
-        'after:right-0'
-      );
+      const actions = screen.getByTestId('company-quick-actions');
+      const compare = within(actions).getByRole('checkbox', { name: 'Adicionar WEG Solar à comparação' });
+      const favorite = within(actions).getByRole('button', { name: 'Favoritar empresa' });
+      const share = within(actions).getByRole('button', { name: 'Compartilhar empresa' });
+      const review = within(actions).getByRole('link', { name: 'Avaliar empresa: WEG Solar' });
 
-      const shareBtn = screen.getByRole('button', { name: 'Compartilhar empresa' });
-      expect(shareBtn).toHaveClass(
-        'h-[36px]',
-        'w-[36px]',
-        '!min-h-0',
-        '!min-w-0',
-        'after:-inset-y-1',
-        'after:left-0',
-        'after:-right-2'
-      );
+      expect(actions.children[0]).toBe(screen.getByTestId('company-compare-action'));
+      expect(actions.children[1]).toBe(favorite);
+      expect(actions.children[2]).toBe(share);
+      expect(actions.children[3]).toBe(review);
+      expect(compare).not.toBeChecked();
+      expect(within(actions).getAllByText('Comparar')).toHaveLength(1);
+      expect(review).toHaveAttribute('href', expect.stringMatching(/\/review(?:\/|$)/));
 
-      expect(favBtn.parentElement).toHaveClass('gap-[6px]');
-      expect(favBtn).toHaveClass('focus-visible:ring-2');
-      expect(shareBtn).toHaveClass('focus-visible:ring-2');
-      expect(shareBtn).toHaveClass('hidden', 'lg:flex');
-
-      const reviewStar = screen.getByRole('link', { name: 'Avaliar empresa: WEG Solar' });
-      expect(reviewStar).toHaveAttribute('href', expect.stringMatching(/\/review(?:\/|$)/));
-      expect(reviewStar).toHaveClass('h-[36px]', 'w-[36px]', 'lg:hidden');
-      expect(reviewStar.querySelector('svg')).toBeInTheDocument();
-      expect(reviewStar).not.toHaveTextContent('Avaliar');
+      for (const control of [favorite, share, review]) {
+        expect(control).toHaveClass('h-11', 'w-11', 'focus-visible:ring-2');
+        expect(control.querySelector('svg')).toBeInTheDocument();
+        expect(control).toHaveTextContent('');
+      }
+      expect(share).not.toHaveClass('hidden', 'lg:flex');
+      expect(review).not.toHaveClass('lg:hidden');
+      expect(screen.getAllByRole('link', { name: 'Avaliar empresa: WEG Solar' })).toHaveLength(1);
     });
   });
 
@@ -318,36 +311,17 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
     });
   });
 
-  describe('Matriz de Entitlements — CompanyCTAGroup', () => {
-    it('com entitlement ativo: exibe Checkbox e Solicitar orçamento na linha 1 e Avaliar empresa na linha 2', () => {
-      render(<CompanyCTAGroup company={mockCompanyVerified} canRequestQuote={true} />);
-
-      const compareControl = screen.getByRole('checkbox', { name: /WEG Solar/i });
-      expect(compareControl).toBeInTheDocument();
-      expect(screen.getByText('Comparar')).toBeInTheDocument();
-
-      const quoteBtn = screen.getByRole('button', { name: 'Solicitar orçamento' });
-      expect(quoteBtn).toBeInTheDocument();
-      expect(quoteBtn).toHaveClass('w-full', 'h-11');
-
-      const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: WEG Solar' });
-      expect(reviewLink).toBeInTheDocument();
+  describe('Matriz de entitlements — conversão separada da pesquisa', () => {
+    it('plano pago: orçamento disponível sem duplicar Comparar nem Avaliar', () => {
+      render(<CompanyCTAGroup company={mockCompanyVerified} canRequestQuote />);
+      expect(screen.getByRole('button', { name: 'Solicitar orçamento' })).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Avaliar empresa/ })).not.toBeInTheDocument();
     });
 
-    it('empresa Free: Solicitar orçamento NÃO é renderizado e Comparar + Avaliar ficam no topo sem espaço vazio', () => {
-      render(<CompanyCTAGroup company={mockCompanyFreeUnverified} canRequestQuote={false} />);
-
-      expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
-
-      const compareControl = screen.getByRole('checkbox', { name: /Instaladora Local/i });
-      expect(compareControl).toBeInTheDocument();
-      expect(screen.getByText('Comparar')).toBeInTheDocument();
-
-      const reviewLink = screen.getByRole('link', { name: 'Avaliar empresa: Instaladora Local' });
-      expect(reviewLink).toBeInTheDocument();
-
-      const group = document.getElementById('company-cta-group');
-      expect(group?.firstElementChild).toBe(compareControl.closest('.grid'));
+    it('empresa Free: CTA pago não aparece, ações de pesquisa pertencem ao header', () => {
+      const { container } = render(<CompanyCTAGroup company={mockCompanyFreeUnverified} canRequestQuote={false} />);
+      expect(container).toBeEmptyDOMElement();
     });
   });
 });

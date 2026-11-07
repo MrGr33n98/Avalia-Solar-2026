@@ -1,14 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import CompanyCTAGroup from '@/app/companies/[id]/components/CompanyCTAGroup';
-import { Company } from '@/lib/api';
-
-jest.mock('@/hooks/useComparison', () => ({
-  useComparison: () => ({
-    isInComparison: jest.fn().mockReturnValue(false),
-    addToComparison: jest.fn(),
-    removeFromComparison: jest.fn(),
-  }),
-}));
+import type { Company } from '@/lib/api';
 
 jest.mock('@/lib/lead-engine', () => ({
   openLeadModal: jest.fn(),
@@ -19,8 +11,8 @@ jest.mock('@/lib/analytics/track-cta', () => ({
   trackCTAClick: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock('@/lib/analytics/lazy', () => ({
-  track: jest.fn(),
+jest.mock('@/lib/analytics/hooks/useIntentTracking', () => ({
+  sendIntentSignal: jest.fn(),
 }));
 
 const mockCompany: Company = {
@@ -38,15 +30,12 @@ const mockCompany: Company = {
   },
 };
 
-describe('CompanyCTAGroup', () => {
-  it('renders two compact rows with paid Orçamento and WhatsApp, and public Comparar and Avaliar', () => {
-    render(
-      <CompanyCTAGroup company={mockCompany} canRequestQuote={true} />
-    );
-
+describe('CompanyCTAGroup — regression', () => {
+  it('renders only two conversion actions; research and social actions live in the header', () => {
+    render(<CompanyCTAGroup company={mockCompany} canRequestQuote />);
     expect(screen.getByText('Solicitar orçamento')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /no WhatsApp/ })).toBeInTheDocument();
-    expect(screen.getByText('Comparar')).toBeInTheDocument();
-    expect(screen.getByText('Avaliar')).toBeInTheDocument();
+    expect(screen.queryByText('Comparar')).not.toBeInTheDocument();
+    expect(screen.queryByText('Avaliar')).not.toBeInTheDocument();
   });
 });

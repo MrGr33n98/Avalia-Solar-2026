@@ -43,6 +43,10 @@ jobs:
         run: |
           npm test -- --runInBand \
             CompanyCTAGroup.spec.tsx \
+            CompanyCompareToggle.spec.tsx \
+            __tests__/components/CompanyCTAGroup.test.tsx \
+            __tests__/components/CompanyProfileHeader.spec.tsx \
+            __tests__/components/CompanyIdentityCard.test.tsx \
             __tests__/components/CompanyContactCard.test.tsx \
             app/dashboard/components/brand-page/BrandPageCTAVisibility.spec.tsx \
             app/dashboard/components/cta-visibility/CtaVisibilitySettings.spec.tsx \

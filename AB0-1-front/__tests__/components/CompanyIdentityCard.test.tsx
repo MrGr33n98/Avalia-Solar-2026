@@ -2,6 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import CompanyIdentityCard from '@/app/companies/[id]/components/CompanyIdentityCard';
 
+jest.mock('@/app/companies/[id]/components/CompanyViewCounter', () => () => (
+  <span data-testid="company-views">42 visualizações</span>
+));
+
 const mockToggleFavorite = jest.fn();
 
 jest.mock('@/hooks/useFavorites', () => ({
@@ -48,9 +52,9 @@ describe('CompanyIdentityCard Responsive Layout', () => {
     const section = container.querySelector('#company-identity-card');
     expect(section).toBeInTheDocument();
 
-    const mainWrapper = section?.querySelector('.flex.min-w-0.flex-row');
+    const mainWrapper = section?.querySelector('.flex.w-full.flex-col');
     expect(mainWrapper).toBeInTheDocument();
-    expect(mainWrapper).toHaveClass('flex-row');
+    expect(mainWrapper).toHaveClass('flex-col', 'lg:flex-row');
   });
 
   test('renders company name, location, rating, favorite and share action buttons', () => {
@@ -64,7 +68,7 @@ describe('CompanyIdentityCard Responsive Layout', () => {
       />
     );
 
-    expect(screen.getByText('SB Solar')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/SB\s+Solar/);
     expect(screen.getByText('São João da Boa Vista, SP')).toBeInTheDocument();
     expect(screen.getByText('4.8')).toBeInTheDocument();
 

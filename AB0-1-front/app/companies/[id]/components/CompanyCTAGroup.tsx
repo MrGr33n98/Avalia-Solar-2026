@@ -1,18 +1,12 @@
 'use client';
 
-import Link from 'next/link';
-import { Star, Send } from 'lucide-react';
-import { toast } from 'sonner';
+import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
 import { openLeadModal, resolveWizardCategoryId } from '@/lib/lead-engine';
 import { trackCTAClick } from '@/lib/analytics/track-cta';
 import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
-import { track } from '@/lib/analytics/lazy';
-import { buildCompanySubPath } from '@/lib/slug';
 import { resolveCompanyConversionCTAs } from '@/lib/company-cta-visibility';
-import { useComparison } from '@/hooks/useComparison';
-import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 
 interface CompanyCTAGroupProps {
   company: Company;
@@ -22,20 +16,16 @@ interface CompanyCTAGroupProps {
 /**
  * Brand Page: hierarquia idêntica em web móvel e PWA.
  * Primários: orçamento + WhatsApp, cada um condicionado ao entitlement real.
- * Mobile: Comparar discreto à direita; Avaliar aparece como estrela junto ao favorito.
- * Desktop: Comparar + Avaliar continuam disponíveis, inclusive no plano Free.
+ * Comparar, Favoritos, Compartilhar e Avaliar vivem na camada de identidade.
+ * Este componente concentra somente as conversões pagas e seus feature gates.
  */
 export default function CompanyCTAGroup({
   company,
   canRequestQuote = false,
 }: CompanyCTAGroupProps) {
   const wizardCategoryId = resolveWizardCategoryId(company);
-  const companyIdNum = Number(company.id);
   const { quote: showQuote, whatsappHref } = resolveCompanyConversionCTAs(company, canRequestQuote);
   const hasPrimaryActions = showQuote || Boolean(whatsappHref);
-
-  const { isInComparison, addToComparison, removeFromComparison, canAddMore } = useComparison();
-  const isCompared = isInComparison(companyIdNum);
 
   const handleRequestQuote = async () => {
     await trackCTAClick({
@@ -61,42 +51,13 @@ export default function CompanyCTAGroup({
     });
   };
 
-  const handleCompareChange = (next: boolean) => {
-    if (next === isCompared) return;
-
-    if (next) {
-      if (!canAddMore) return;
-      track('company_compare_click', {
-        company_id: company.id,
-        company_name: company.name,
-        action: 'add',
-      });
-      sendIntentSignal({
-        company_id: company.id,
-        signal_type: 'comparison_usage',
-        signal_category: 'research_intent',
-        element_type: 'comparison_toggle',
-        metadata: { action: 'add', source: 'company_hero' },
-      });
-      addToComparison(company);
-      toast.success(`${company.name} adicionada para comparação!`);
-    } else {
-      track('company_compare_click', {
-        company_id: company.id,
-        company_name: company.name,
-        action: 'remove',
-      });
-      removeFromComparison(companyIdNum);
-      toast.info(`${company.name} removida da comparação.`);
-    }
-  };
-
-  const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
+  // Entitlements are resolved by the same canonical domain policy as before.
+  if (!hasPrimaryActions) return null;
 
   return (
     <div
       id="company-cta-group"
-      className="flex w-full min-w-0 flex-col gap-1.5 lg:w-auto lg:flex-row lg:items-center lg:justify-end lg:gap-2"
+      className="flex w-full min-w-0 justify-end lg:w-auto"
     >
       {hasPrimaryActions && (
         <div
@@ -151,32 +112,6 @@ export default function CompanyCTAGroup({
         </div>
       )}
 
-      {/* Comparar: ação terciária sem moldura, alinhada à direita no PWA. */}
-      <div
-        data-testid="company-secondary-ctas"
-        className="flex w-full min-w-0 items-center justify-end gap-2 lg:w-auto"
-      >
-        <CompareCheckboxControl
-          companyName={company.name}
-          checked={isCompared}
-          disabled={!isCompared && !canAddMore}
-          onCheckedChange={handleCompareChange}
-          className="!min-h-11 !px-2 [&>span:last-child]:text-[13px] [&>span:last-child]:font-medium"
-        />
-
-        {/* Desktop mantém Avaliar nesta faixa; no PWA a estrela fica ao lado do coração. */}
-        <Link
-          href={reviewPath}
-          aria-label={`Avaliar empresa: ${company.name}`}
-          title={`Avaliar empresa: ${company.name}`}
-          className="relative hidden h-11 min-w-0 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 lg:flex lg:w-auto"
-        >
-          <span className="inline-flex h-9 w-full min-w-0 items-center justify-center gap-1.5 rounded-[10px] border border-amber-400/80 bg-amber-500/[0.06] px-2 text-xs font-semibold leading-none text-slate-900 transition-colors hover:bg-amber-500/[0.12] lg:min-w-[100px]">
-            <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
-            <span>Avaliar</span>
-          </span>
-        </Link>
-      </div>
     </div>
   );
 }

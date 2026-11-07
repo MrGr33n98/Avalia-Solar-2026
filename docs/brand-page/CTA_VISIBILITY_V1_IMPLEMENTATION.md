@@ -135,3 +135,25 @@ Esta seção altera somente o **layout**, sem alterar elegibilidade ou caminhos 
   alternar comparação e testar plano Free, pago, vencido e estados sem contato.
 - **Validação de execução não presumida:** confirmar CI, WebKit/iOS,
   permissões e versão publicada antes de marcar rollout concluído.
+
+## UI-CTA-03 — Quick actions no header (2026-11-07)
+
+**Decisão aprovada:** na Brand Page, a ordem do header é **[☐ Comparar] [♡ Favoritos] [Compartilhar] [★ Avaliar]**.
+Somente Comparar tem texto visível; os três ícones têm nome acessível por `aria-label` e `title`.
+Os CTAs pagos ficam isolados em uma segunda linha à direita: Orçamento + WhatsApp. Nunca
+duplicar Comparar, Favoritar, Compartilhar ou Avaliar na shelf de conversão.
+
+**Bounded contexts de UI:**
+- `CompanyCompareToggle`: comparação pública, store único, limite, intent/tracking e estado do checkbox.
+- `CompanyIdentityCard`: composição da identidade e das ações públicas; usa slot `compareControl`.
+- `CompanyCTAGroup`: somente conversões controladas pelo resolver existente de entitlements.
+- `CompanyProfileShell`: composição dos slots. Não duplica regras de domínio.
+
+**Responsividade:** em telas estreitas, a barra pública ocupa uma linha própria abaixo do
+nome para evitar overflow; em desktop, aparece à direita na primeira linha. Áreas de toque
+`44×44px` com ícones dentro de caixas visuais de `36×36px`. Botões de orçamento e
+WhatsApp continuam sujeitos às preferências e aos gates de plano já implementados.
+
+**TDD:** nova spec de adicionar/remover/desabilitar comparação, matriz de gates em
+`CompanyCTAGroup.spec.tsx`, regressões no `CompanyProfileHeader.spec.tsx`
+e Playwright em seis larguras de viewport. Não declarar release sem validação de CI/E2E.

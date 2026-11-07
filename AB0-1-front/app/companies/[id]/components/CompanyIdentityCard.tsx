@@ -27,6 +27,7 @@ interface CompanyIdentityCardProps {
   logoError: boolean;
   setLogoError: (error: boolean) => void;
   children?: ReactNode;
+  compareControl?: ReactNode;
 }
 
 export default function CompanyIdentityCard({
@@ -36,6 +37,7 @@ export default function CompanyIdentityCard({
   logoError,
   setLogoError,
   children,
+  compareControl,
 }: CompanyIdentityCardProps) {
   const [badgeImageError, setBadgeImageError] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -174,7 +176,7 @@ export default function CompanyIdentityCard({
       </div>
 
       {/* Linha Principal de Identidade: Logo + Nome/Badges (Esquerda) + Ações (Direita) */}
-      <div className="flex w-full items-start justify-between gap-2 sm:gap-4">
+      <div className="flex w-full flex-col gap-1.5 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
         {/* Lado Esquerdo: Logo + Nome + Badges */}
         <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4 lg:gap-5">
           {/* Box da Logo (Overlapping no Banner) - Moldura única de 2px e 62px mobile */}
@@ -242,39 +244,56 @@ export default function CompanyIdentityCard({
           </div>
         </div>
 
-        {/* Ações de confiança no PWA: Favoritar e Avaliar. Compartilhar continua no desktop. */}
-        <div className="ml-auto flex shrink-0 items-center gap-[6px] pt-0.5 sm:pt-1.5">
+
+        {/* Ações rápidas do perfil: primeiro comparar; depois favoritos, compartilhar e avaliar. */}
+        <div
+          data-testid="company-quick-actions"
+          className="ml-auto flex w-full min-w-0 shrink-0 items-center justify-end gap-1 pt-0.5 sm:gap-1.5 lg:w-auto lg:pt-1.5"
+        >
+          {compareControl && (
+            <div data-testid="company-compare-action" className="flex min-w-0 shrink-0 items-center">
+              {compareControl}
+            </div>
+          )}
           <button
             type="button"
             onClick={handleToggleFavorite}
             aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
-            className={cn(
-              "relative flex h-[36px] w-[36px] !min-h-0 !min-w-0 touch-manipulation items-center justify-center rounded-xl border transition-colors after:absolute after:-inset-y-1 after:-left-2 after:right-0 after:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2",
+            title={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
+            className="group inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+          >
+            <span className={cn(
+              'inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-colors',
               isFav
                 ? 'border-red-200 bg-red-50 text-red-600'
-                : 'border-slate-200/90 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-            )}
-          >
-            <Heart className={cn('h-[17px] w-[17px]', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
+                : 'border-slate-200/90 bg-white text-slate-700 group-hover:border-slate-300 group-hover:bg-slate-50'
+            )}>
+              <Heart className={cn('h-[17px] w-[17px]', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
+            </span>
           </button>
-          <Link
-            href={reviewPath}
-            aria-label={`Avaliar empresa: ${company.name}`}
-            title={`Avaliar empresa: ${company.name}`}
-            data-testid="company-mobile-review-star"
-            className="relative flex h-[36px] w-[36px] !min-h-0 !min-w-0 touch-manipulation items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-500 transition-colors after:absolute after:-inset-y-1 after:left-0 after:-right-2 after:content-[''] hover:border-amber-300 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 lg:hidden"
-          >
-            <Star className="h-[17px] w-[17px] fill-amber-400 text-amber-500" aria-hidden="true" />
-          </Link>
           <button
             type="button"
             onClick={handleShare}
             disabled={isSharing}
             aria-label="Compartilhar empresa"
-            className="relative hidden h-[36px] w-[36px] !min-h-0 !min-w-0 touch-manipulation items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors after:absolute after:-inset-y-1 after:left-0 after:-right-2 after:content-[''] hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50 lg:flex"
+            title="Compartilhar empresa"
+            className="group inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50"
           >
-            <Share2 className="h-[17px] w-[17px] text-slate-600" aria-hidden="true" />
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors group-hover:border-slate-300 group-hover:bg-slate-50">
+              <Share2 className="h-[17px] w-[17px] text-slate-600" aria-hidden="true" />
+            </span>
           </button>
+          <Link
+            href={reviewPath}
+            aria-label={`Avaliar empresa: ${company.name}`}
+            title={`Avaliar empresa: ${company.name}`}
+            data-testid="company-review-star"
+            className="group inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+          >
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-500 transition-colors group-hover:border-amber-300 group-hover:bg-amber-100">
+              <Star className="h-[17px] w-[17px] fill-amber-400 text-amber-500" aria-hidden="true" />
+            </span>
+          </Link>
         </div>
       </div>
 
@@ -362,26 +381,8 @@ export default function CompanyIdentityCard({
 
         {/* Lado Direito: CTA Shelf Estilo WEG (Todos os CTAs juntos abaixo da curva) */}
         {children && (
-          <div className="relative w-full shrink-0 pt-1.5 lg:w-auto lg:pt-0">
-            {/* Wrapper Desktop com a Curva Côncava na borda esquerda da Shelf */}
-            <div className="relative hidden lg:block">
-              {/* SVG Curva Côncava (Subida suave do banner para a Shelf de CTAs) */}
-              <div className="absolute -left-9 top-0 h-7 w-9 pointer-events-none z-10">
-                <svg viewBox="0 0 36 28" className="h-7 w-9 text-white fill-current shrink-0" preserveAspectRatio="none" aria-hidden="true">
-                  <path d="M 0,28 C 18,28 18,0 36,0 L 36,28 Z" />
-                </svg>
-              </div>
-
-              {/* Shelf Branca de CTAs elevada com cantos arredondados no topo */}
-              <div className="relative z-20 bg-white pt-1.5 pb-1 pl-2 pr-1 rounded-t-2xl lg:rounded-tr-2xl">
-                {children}
-              </div>
-            </div>
-
-            {/* Layout Mobile / Tablet */}
-            <div className="block lg:hidden w-full">
-              {children}
-            </div>
+          <div data-testid="company-bottom-actions" className="w-full shrink-0 pt-1.5 lg:ml-auto lg:w-auto lg:pl-4 lg:pt-0">
+            {children}
           </div>
         )}
       </div>
