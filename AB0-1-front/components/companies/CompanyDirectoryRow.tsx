@@ -65,106 +65,120 @@ export function CompanyDirectoryRow({
 
   return (
     <article
-      data-testid={`company-directory-row-${data.id}`}
+      data-testid={'company-directory-row-' + data.id}
       className={cn(
-        'group relative flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 sm:p-3 shadow-2xs transition-[border-color,box-shadow] hover:border-slate-300 hover:shadow-xs focus-within:ring-2 focus-within:ring-blue-500',
+        'group relative flex min-w-0 flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-2xs transition-[border-color,box-shadow] hover:border-slate-300 hover:shadow-xs focus-within:ring-2 focus-within:ring-blue-500 sm:gap-2.5',
         className
       )}
     >
-      {/* Link de cobertura em toda a linha para navegação acessível e SEO */}
+      {/* O link cobre o card sem interceptar os controles interativos. */}
       <Link
         href={href}
         title={data.name}
-        aria-label={`Ver perfil de ${data.name}`}
+        aria-label={'Ver perfil de ' + data.name}
         onClick={handleRowClick}
         className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       />
 
-      {/* Zona 1: Logo */}
-      <div className="relative shrink-0 pointer-events-none">
-        <CompanyLogo
-          logoUrl={data.logo_url}
-          name={data.name}
-          size="sm"
-          priority={index !== undefined && index < 4}
-          badges={data.badges}
-        />
-      </div>
-
-      {/* Zona 2: Identidade + Reputação + Localização */}
-      <div className="flex min-w-0 flex-1 flex-col justify-center pointer-events-none xl:min-w-[140px]">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <h3 className="min-w-0 truncate text-[14px] sm:text-[15px] font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
-            {data.name}
-          </h3>
-          {data.verified && (
-            <span
-              className="relative z-10 shrink-0 inline-flex items-center pointer-events-auto"
-              data-testid="verified-badge-wrapper"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <CompanyVerifiedBadge size="sm" className="h-4 w-4" />
-            </span>
-          )}
-          {Boolean((company as any)?.sponsored || data?.sponsored) && (
-            <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">
-              Patrocinado
-            </span>
-          )}
-        </div>
-
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
-          {hasReviews ? (
-            <div className="flex items-center gap-1 font-medium text-slate-700">
-              <Star
-                className="h-3.5 w-3.5 fill-amber-400 text-amber-400 shrink-0"
-                aria-hidden="true"
-              />
-              <span className="font-bold tabular-nums text-slate-900">
-                {score.toFixed(1)}
-              </span>
-              <span className="text-slate-400">({count})</span>
-            </div>
-          ) : (
-            <span className="text-slate-400">Sem avaliações</span>
-          )}
-
-          {location && (
-            <>
-              <span className="text-slate-300 select-none">•</span>
-              <div className="flex items-center gap-1 truncate text-slate-500">
-                <MapPin className="h-3 w-3 text-slate-400 shrink-0" aria-hidden="true" />
-                <span className="truncate">{location}</span>
-              </div>
-            </>
-          )}
-
-          {Boolean((company as any)?.recommendation_reason?.label) && (
-            <>
-              <span className="text-slate-300 select-none hidden sm:inline">•</span>
-              <span className="truncate max-w-[130px] sm:max-w-none text-blue-600 font-medium text-[11px]">
-                {(company as any).recommendation_reason.label}
-              </span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Zona 3: ações públicas + conversões elegíveis. No mobile, shelf na linha de baixo. */}
+      {/* PDR PWA: identidade e conversões na parte superior; quebram em telas estreitas. */}
       <div
-        data-testid="company-directory-actions"
-        className="relative z-10 ml-auto flex w-full min-w-0 items-center justify-end gap-1 sm:gap-1.5 xl:w-auto xl:shrink-0"
+        data-testid="directory-card-top"
+        className="pointer-events-none relative z-10 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-2"
       >
-        <FavoriteButton
-          favoritableType="Company"
-          favoritableId={data.id}
-          source="directory_list"
-          className="h-11 w-11 shrink-0 text-slate-400 hover:text-rose-500"
-        />
+        <div className="flex min-w-[145px] flex-1 items-center gap-2.5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-white">
+            <CompanyLogo
+              logoUrl={data.logo_url}
+              name={data.name}
+              size="sm"
+              priority={index !== undefined && index < 4}
+              badges={data.badges}
+            />
+          </div>
 
-        <CompanyDirectoryConversionActions company={company} />
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <h3 className="min-w-0 truncate text-[15px] font-semibold leading-5 text-slate-900 transition-colors group-hover:text-blue-600">
+                {data.name}
+              </h3>
+              {data.verified && (
+                <span
+                  data-testid="verified-badge-wrapper"
+                  className="pointer-events-auto relative z-10 inline-flex shrink-0 items-center"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <CompanyVerifiedBadge size="sm" className="h-4 w-4" />
+                </span>
+              )}
+              {Boolean(company?.sponsored || data.sponsored) && (
+                <span className="shrink-0 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                  Patrocinado
+                </span>
+              )}
+            </div>
 
-        <div className="shrink-0 [&>label>span:last-child]:hidden min-[400px]:[&>label>span:last-child]:inline">
+            <div
+              data-testid="company-directory-reputation"
+              className="mt-0.5 flex items-center gap-1 text-xs text-slate-500"
+            >
+              {hasReviews ? (
+                <>
+                  <Star
+                    className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400"
+                    aria-hidden="true"
+                  />
+                  <span className="font-semibold tabular-nums text-slate-900">
+                    {score.toFixed(1)}
+                  </span>
+                  <span className="text-slate-400">({count})</span>
+                </>
+              ) : (
+                <span className="text-slate-400">Sem avaliações</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div
+          data-testid="company-directory-primary-actions"
+          className="pointer-events-auto relative z-10 ml-auto flex shrink-0 items-center"
+        >
+          <CompanyDirectoryConversionActions company={company} />
+        </div>
+      </div>
+
+      {/* Localização secundária + favoritos/comparação: sempre abaixo do divisor. */}
+      <div
+        data-testid="directory-card-bottom"
+        className="pointer-events-none relative z-10 flex min-w-0 items-center justify-between gap-1.5 border-t border-slate-200/80 pt-1.5"
+      >
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          {location && (
+            <div
+              className="flex min-w-0 items-center gap-1 text-xs text-slate-500"
+              title={location}
+            >
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+              <span className="min-w-0 truncate">{location}</span>
+            </div>
+          )}
+          {Boolean(company?.recommendation_reason?.label) && (
+            <span className="truncate text-[11px] font-medium text-blue-600">
+              {company.recommendation_reason.label}
+            </span>
+          )}
+        </div>
+
+        <div
+          data-testid="company-directory-actions"
+          className="pointer-events-auto relative z-10 flex shrink-0 items-center gap-0.5"
+        >
+          <FavoriteButton
+            favoritableType="Company"
+            favoritableId={data.id}
+            source="directory_list"
+            className="h-11 w-11 shrink-0 text-slate-400 hover:text-rose-500"
+          />
           <CompareCheckboxControl
             companyName={data.name}
             checked={isComparing}
