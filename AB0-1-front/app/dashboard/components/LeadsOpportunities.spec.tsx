@@ -33,7 +33,7 @@ describe('LeadsOpportunities — solicitações recebidas da empresa', () => {
 
   it('usa a empresa selecionada, mostra dados reais e inicia em seis meses', async () => {
     render(<LeadsOpportunities companyId="372" />);
-    expect(await screen.findByText('1 solicitações encontradas')).toBeInTheDocument();
+    expect(await screen.findByText('1 solicitação encontrada')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '6 meses' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getAllByText('Contato Solar').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Energia Solar').length).toBeGreaterThan(0);
@@ -45,7 +45,7 @@ describe('LeadsOpportunities — solicitações recebidas da empresa', () => {
 
   it('envia os filtros ao backend em vez de filtrar somente a página atual', async () => {
     render(<LeadsOpportunities companyId="372" />);
-    await screen.findByText('1 solicitações encontradas');
+    await screen.findByText('1 solicitação encontrada');
 
     fireEvent.click(screen.getByRole('button', { name: '30 dias' }));
     fireEvent.change(screen.getByLabelText('Tipo de solicitação'), { target: { value: 'quote' } });
@@ -63,7 +63,7 @@ describe('LeadsOpportunities — solicitações recebidas da empresa', () => {
 
   it('abre detalhes da solicitação, sem cartões de terceiros', async () => {
     render(<LeadsOpportunities companyId="1190" />);
-    await screen.findByText('1 solicitações encontradas');
+    await screen.findByText('1 solicitação encontrada');
     fireEvent.click(screen.getAllByRole('button', { name: 'Ver detalhes de Contato Solar' })[0]);
     expect(screen.getByRole('dialog')).toHaveTextContent('Quero um orçamento.');
     expect(screen.getByRole('dialog')).toHaveTextContent('solar@exemplo.com');
