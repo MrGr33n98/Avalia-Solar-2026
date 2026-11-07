@@ -1093,7 +1093,13 @@ export interface SearchAllResponse {
   pagination?: {
     page?: number;
     per_page?: number;
+    total_count?: number;
     total_pages?: number;
+    has_next_page?: boolean;
+    has_previous_page?: boolean;
+  };
+  facets?: {
+    categories?: Array<{ id: number; name: string; count: number }>;
   };
 }
 
