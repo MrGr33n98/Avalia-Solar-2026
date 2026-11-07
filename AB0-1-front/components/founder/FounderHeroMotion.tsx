@@ -65,19 +65,24 @@ export default function FounderHeroMotion() {
 
   return (
     <section className="relative overflow-hidden border-b border-[#dde1e6] bg-white pt-9 pb-11 text-[#09172f] sm:pt-14 sm:pb-16">
-      {/* Malha de fundo arquitetural IBM Carbon */}
+      {/* Architectural grid and solar/tech atmosphere: decorative and paint-only. */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, #0f62fe 1px, transparent 0)',
-          backgroundSize: '32px 32px',
+          backgroundImage:
+            'linear-gradient(to right, rgba(15,98,254,0.10) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,98,254,0.10) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+          maskImage: 'radial-gradient(ellipse 76% 68% at 50% 0%, #000 42%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 76% 68% at 50% 0%, #000 42%, transparent 100%)',
         }}
         aria-hidden="true"
       />
-
-      {/* Brilho sutil de topo */}
       <div
-        className="pointer-events-none absolute right-0 top-0 h-48 w-72 bg-gradient-to-b from-[#0f62fe]/[0.04] to-transparent blur-3xl"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[460px]"
+        style={{
+          background:
+            'radial-gradient(ellipse 40% 72% at 72% 30%, rgba(15,98,254,0.095), transparent 86%), radial-gradient(ellipse 29% 65% at 94% 32%, rgba(248,202,58,0.12), transparent 86%)',
+        }}
         aria-hidden="true"
       />
 
@@ -191,6 +196,14 @@ export default function FounderHeroMotion() {
 
           {/* Coluna Visual: Laptop Teaser com Entrada 3D Suave (5 colunas) */}
           <div className="lg:col-span-5 relative perspective-[1200px]">
+            {/* Anchors the original GoodWe notebook; does not replace its asset. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-x-8 -inset-y-10 rounded-full blur-3xl"
+              style={{
+                background: 'radial-gradient(ellipse at 45% 48%, rgba(15,98,254,.12), transparent 65%), radial-gradient(ellipse at 78% 30%, rgba(248,202,58,.12), transparent 60%)',
+              }}
+            />
             <motion.div
               className="relative mx-auto max-w-[530px] lg:max-w-none"
               variants={laptopVariants}
