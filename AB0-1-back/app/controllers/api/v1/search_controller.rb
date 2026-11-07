@@ -5,13 +5,22 @@ module Api
       def all
         @search_error_stages = []
 
-        query = params[:q].to_s.strip
-        state = params[:state].presence
-        city  = params[:city].presence
-        sort  = params[:sort].presence # 'rating' | 'name' | 'created_at'
-        page  = (params[:page] || 1).to_i
-        per   = (params[:per_page] || 10).to_i
+        filters = ::Search::CompanySearchParams.new(params)
+        query = filters.query
+        state = filters.state
+        city = filters.city
+        sort = filters.sort
+        page = filters.page
+        per = filters.per_page
+        verified = filters.verified
+
+        # The UI sends the visible category name; resolve before filtering and pagination.
+        # An unknown name must produce zero companies, never silently remove the filter.
         category_id = params[:category_id].presence
+        if category_id.blank? && params[:category].present?
+          category_name = params[:category].to_s.strip.downcase
+          category_id = ::Category.where('LOWER(name) = ?', category_name).pick(:id) || -1
+        end
 
         # GEO args
         latitude = params[:latitude].presence
@@ -26,6 +35,7 @@ module Api
           state: state,
           city: city,
           category_id: category_id,
+          verified: verified,
           sort: sort,
           page: page,
           per: per,
@@ -33,8 +43,11 @@ module Api
           longitude: longitude,
           radius_km: radius_km
         )
+        # Legacy fallback is retained for unfiltered searches only. It must never
+        # bypass a verification/category filter that intentionally matches no company.
+        allow_legacy_fallback = verified.nil? && params[:category].blank? && params[:category_id].blank?
         company_results = legacy_company_results(legacy_results[:companies], page: page, per: per) if
-          safe_company_total_count(company_results).zero? && safe_count(legacy_results[:companies]).positive?
+          allow_legacy_fallback && safe_company_total_count(company_results).zero? && safe_count(legacy_results[:companies]).positive?
 
         track_search_event(
           query: query,
@@ -107,10 +120,14 @@ module Api
             articles: articles_json,
             reviews: reviews_json
           },
+          facets: serialize_company_search_facets(company_results),
           pagination: {
             page: page,
             per_page: per,
-            total_pages: [company_results.dig(:page_info, :total_pages).to_i, 1].max
+            total_count: safe_company_total_count(company_results),
+            total_pages: [company_results.dig(:page_info, :total_pages).to_i, 1].max,
+            has_next_page: page < [company_results.dig(:page_info, :total_pages).to_i, 1].max,
+            has_previous_page: page > 1
           },
           meta: meta
         }
@@ -192,6 +209,27 @@ module Api
 
       private
 
+      # Resolve aggregate category IDs to persisted names, not page-local labels.
+      # Searchkick yields integer-string keys; PostgreSQL yields "id:name" keys.
+      def serialize_company_search_facets(results)
+        buckets = Array(results.dig(:facets, :categories))
+        ids = buckets.filter_map do |bucket|
+          id = bucket[:key].to_s.split(':', 2).first.to_i
+          id if id.positive?
+        end
+        names = ::Category.where(id: ids).pluck(:id, :name).to_h
+        {
+          categories: buckets.filter_map do |bucket|
+            key = bucket[:key].to_s
+            id = key.split(':', 2).first.to_i
+            name = names[id] || key.split(':', 2)[1]
+            next if id <= 0 || name.blank?
+            { id: id, name: name, count: bucket[:count].to_i }
+          end
+        }
+      end
+
+
       def safe_legacy_results(query, state:, city:, category_id:)
         ::SearchService.new(query, state: state, city: city, category_id: category_id).call
       rescue StandardError => e
@@ -213,11 +251,11 @@ module Api
       end
 
       def safe_company_results(
-        query:, state:, city:, category_id:, sort:, page:, per:, latitude:, longitude:, radius_km:
+        query:, state:, city:, category_id:, verified:, sort:, page:, per:, latitude:, longitude:, radius_km:
       )
         raw_results = ::Search::CompanySearchService.new(
           q: query, state: state, city: city, category_id: category_id,
-          sort: sort, page: page, limit: per,
+          verified: verified, sort: sort, page: page, limit: per,
           latitude: latitude, longitude: longitude, radius_km: radius_km
         ).call
         normalize_company_results(raw_results, page: page, per: per)

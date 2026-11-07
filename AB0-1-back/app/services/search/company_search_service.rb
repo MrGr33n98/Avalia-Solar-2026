@@ -424,14 +424,23 @@ module Search
       # Computa facetas baseadas no escopo filtrado antes da paginação
       facets = compute_postgresql_facets(scope)
 
-      company_ids = scope.unscope(:order).pluck('companies.id').uniq
-      total_count = company_ids.size
+      # Ordering must happen BEFORE slicing IDs. Ordering only the paged subset
+      # can omit a globally relevant company or repeat it between pages.
+      # The existing implementation already materialized all IDs for faceted results;
+      # keep that contract, but respect global order and stable tie-breaking.
+      ordered_ids = apply_postgresql_sort(scope)
+                    .except(:includes, :preload, :eager_load)
+                    .distinct(false)
+                    .pluck('companies.id')
+                    .uniq
+      total_count = ordered_ids.size
       total_pages = (total_count.to_f / @limit).ceil
       total_pages = 1 if total_pages.zero?
 
-      paged_ids = company_ids.slice((@page - 1) * @limit, @limit) || []
+      paged_ids = ordered_ids.slice((@page - 1) * @limit, @limit) || []
       paged_scope = Company.active.includes(:categories, badges: { image_attachment: :blob }).where(id: paged_ids)
-      nodes = apply_postgresql_sort(paged_scope).to_a
+      companies_by_id = paged_scope.index_by(&:id)
+      nodes = paged_ids.filter_map { |id| companies_by_id[id] }
 
       # Calcula distance_km via Haversine em Ruby quando busca por raio
       if has_geo_filter? && @latitude.present? && @longitude.present?
@@ -465,7 +474,7 @@ module Search
     end
 
     def apply_postgresql_sort(scope)
-      case @sort
+      ordered = case @sort
       when 'rating', 'rating_desc'
         scope.order(rating_avg: :desc, rating_count: :desc)
       when 'reviews_count', 'reviews_desc'
@@ -486,6 +495,7 @@ module Search
           )
         )
       end
+      ordered.order(Arel.sql('companies.id ASC'))
     end
 
     def compute_postgresql_facets(scope)
