@@ -83,6 +83,34 @@ test.describe('Avalia Solar Founder Motion System E2E', () => {
     );
   });
 
+  test('PWA exibe as dez etapas em uma linha compacta sem perder navegação', async ({ page }) => {
+    for (const width of [320, 375, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/founder');
+
+      const tour = page.locator('#tour-interativo');
+      const navigation = tour.getByRole('group', { name: 'Escolher etapa do tour' });
+      const steps = navigation.getByRole('button');
+      await expect(steps).toHaveCount(10);
+
+      const first = await steps.first().boundingBox();
+      const last = await steps.last().boundingBox();
+      const container = await navigation.boundingBox();
+      expect(first).not.toBeNull();
+      expect(last).not.toBeNull();
+      expect(container).not.toBeNull();
+      expect(Math.abs(first!.y - last!.y)).toBeLessThanOrEqual(2);
+      expect(first!.width).toBeLessThanOrEqual(30);
+      expect(last!.width).toBeLessThanOrEqual(30);
+      expect(last!.x + last!.width).toBeLessThanOrEqual(container!.x + container!.width + 1);
+
+      await tour.getByRole('button', { name: 'Ir para etapa 7: Materiais Baixáveis' }).click();
+      await expect(tour.getByRole('heading', { name: 'Materiais Baixáveis' })).toBeVisible();
+      await expect(tour.getByRole('button', { name: 'Ir para etapa 7: Materiais Baixáveis' }))
+        .toHaveAttribute('aria-current', 'step');
+    }
+  });
+
   test('tour mantém viewport e controles usáveis em mobile e tablet', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 900 });
     await page.goto('/founder');
