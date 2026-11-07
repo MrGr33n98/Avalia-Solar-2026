@@ -9,11 +9,13 @@ jest.mock('@/components/BannerContainer', () => ({
     position,
     priority,
     page,
+    showDisclosure,
   }: {
-    banners: Array<{ alt_text?: string | null }>;
+    banners: Array<{ alt_text?: string | null; sponsored?: boolean }>;
     position: string;
     priority: boolean;
     page?: string;
+    showDisclosure?: boolean;
   }) => (
     <div
       data-testid="banner-container"
@@ -21,6 +23,8 @@ jest.mock('@/components/BannerContainer', () => ({
       data-priority={String(priority)}
       data-page={page}
     >
+      {showDisclosure && <span>Publicidade</span>}
+      {showDisclosure && <span>{banners[0]?.sponsored ? 'Patrocinado' : 'Institucional'}</span>}
       {banners[0]?.alt_text}
     </div>
   ),
