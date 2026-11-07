@@ -120,6 +120,7 @@ module Api
             articles: articles_json,
             reviews: reviews_json
           },
+          facets: serialize_company_search_facets(company_results),
           pagination: {
             page: page,
             per_page: per,
@@ -207,6 +208,27 @@ module Api
       end
 
       private
+
+      # Resolve aggregate category IDs to persisted names, not page-local labels.
+      # Searchkick yields integer-string keys; PostgreSQL yields "id:name" keys.
+      def serialize_company_search_facets(results)
+        buckets = Array(results.dig(:facets, :categories))
+        ids = buckets.filter_map do |bucket|
+          id = bucket[:key].to_s.split(':', 2).first.to_i
+          id if id.positive?
+        end
+        names = ::Category.where(id: ids).pluck(:id, :name).to_h
+        {
+          categories: buckets.filter_map do |bucket|
+            key = bucket[:key].to_s
+            id = key.split(':', 2).first.to_i
+            name = names[id] || key.split(':', 2)[1]
+            next if id <= 0 || name.blank?
+            { id: id, name: name, count: bucket[:count].to_i }
+          end
+        }
+      end
+
 
       def safe_legacy_results(query, state:, city:, category_id:)
         ::SearchService.new(query, state: state, city: city, category_id: category_id).call
