@@ -29,7 +29,8 @@ module Api
           raw_body: request.raw_post,
           signature: request.headers['X-Webhook-Hmac'],
           timestamp: request.headers['X-Webhook-Timestamp'],
-          algorithm: request.headers['X-Webhook-Hmac-Algorithm']
+          algorithm: request.headers['X-Webhook-Hmac-Algorithm'],
+          remote_ip: request.remote_ip
         )
         render json: { received: true }
       rescue VoiceReviews::WahaWebhookIngestor::InvalidSignature

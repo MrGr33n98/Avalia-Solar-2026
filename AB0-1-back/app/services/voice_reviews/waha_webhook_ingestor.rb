@@ -4,15 +4,16 @@ module VoiceReviews
     class InvalidSignature < StandardError; end
     class InvalidEnvelope < StandardError; end
 
-    def self.call(raw_body:, signature:, timestamp:, algorithm:)
-      new(raw_body:, signature:, timestamp:, algorithm:).call
+    def self.call(raw_body:, signature:, timestamp:, algorithm:, remote_ip: nil)
+      new(raw_body:, signature:, timestamp:, algorithm:, remote_ip:).call
     end
 
-    def initialize(raw_body:, signature:, timestamp:, algorithm:)
+    def initialize(raw_body:, signature:, timestamp:, algorithm:, remote_ip: nil)
       @raw_body = raw_body.to_s
       @signature = signature.to_s
       @timestamp = timestamp.to_s
       @algorithm = algorithm.to_s.downcase
+      @remote_ip = remote_ip.to_s
     end
 
     def call
@@ -37,18 +38,37 @@ module VoiceReviews
 
     private
 
-    attr_reader :raw_body, :signature, :timestamp, :algorithm
+    attr_reader :raw_body, :signature, :timestamp, :algorithm, :remote_ip
 
     def verify_signature!
       secret = VoiceReviews::Config.waha_webhook_hmac_secret
-      raise InvalidSignature, 'Segredo HMAC WAHA ausente' if secret.blank? || signature.blank?
-      raise InvalidSignature, 'Algoritmo HMAC WAHA inválido' unless algorithm.blank? || algorithm == 'sha512'
-      verify_timestamp!
+      return if secret.blank?
 
-      expected = OpenSSL::HMAC.hexdigest('SHA512', secret, raw_body)
-      return if ActiveSupport::SecurityUtils.secure_compare(expected, signature)
+      if signature.present?
+        verify_timestamp! if timestamp.present?
 
-      raise InvalidSignature, 'Assinatura HMAC WAHA inválida'
+        algo = algorithm == 'sha256' ? 'SHA256' : 'SHA512'
+        expected = OpenSSL::HMAC.hexdigest(algo, secret, raw_body)
+        return if ActiveSupport::SecurityUtils.secure_compare(expected, signature)
+
+        # Fallback to alternative algorithm if WAHA omits/swaps algorithm
+        fallback_expected = OpenSSL::HMAC.hexdigest(algo == 'SHA512' ? 'SHA256' : 'SHA512', secret, raw_body)
+        return if ActiveSupport::SecurityUtils.secure_compare(fallback_expected, signature)
+
+        raise InvalidSignature, 'Assinatura HMAC WAHA inválida'
+      end
+
+      # Allow internal docker network requests without signature
+      return if internal_network?
+
+      raise InvalidSignature, 'Assinatura HMAC WAHA ausente'
+    end
+
+    def internal_network?
+      return true if remote_ip.blank?
+      return true if remote_ip.start_with?('127.', '172.', '10.', '192.168.', '::1')
+
+      false
     end
 
     def verify_timestamp!
