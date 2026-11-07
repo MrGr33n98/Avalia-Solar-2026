@@ -19,7 +19,8 @@ module Search
       @state = raw[:state].to_s.strip.presence
       @city = raw[:city].to_s.strip.presence
       requested_sort = raw[:sort].to_s
-      @sort = ALLOWED_SORTS.include?(requested_sort) ? requested_sort : 'recommended'
+      # Price sorts apply to products, not companies; do not send an unsupported sort to OpenSearch.
+      @sort = ALLOWED_SORTS.include?(requested_sort) && !%w[price_asc price_desc].include?(requested_sort) ? requested_sort : 'recommended'
       @page = positive_integer(raw[:page], default: 1, max: MAX_PAGE)
       @per_page = positive_integer(raw[:per_page], default: 10, max: MAX_PER_PAGE)
       @verified = parse_boolean(raw[:verified])
