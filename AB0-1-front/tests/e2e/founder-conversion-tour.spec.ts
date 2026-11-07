@@ -95,7 +95,7 @@ test.describe('Tour dos pontos de conversão Founder', () => {
     expect(order).toEqual({
       instances: 1,
       afterComparator: true,
-      beforeProcess: true,
+      processBeforeConversion: true,
       beforeFooter: true,
     });
 
