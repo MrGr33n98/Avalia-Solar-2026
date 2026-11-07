@@ -54,7 +54,7 @@ describe('CompanyCTAGroup — Brand Page PWA compacta + gates', () => {
     });
   });
 
-  it('plano pago ativo: orçamento + WhatsApp no topo, Comparar + Avaliar compactos abaixo', () => {
+  it('plano pago ativo: orçamento + WhatsApp equilibrados, Comparar discreto e Avaliar preservado no desktop', () => {
     render(<CompanyCTAGroup company={paidCompany} canRequestQuote />);
 
     const quote = screen.getByRole('button', { name: 'Solicitar orçamento' });
@@ -62,7 +62,7 @@ describe('CompanyCTAGroup — Brand Page PWA compacta + gates', () => {
     const compare = screen.getByRole('checkbox', { name: /Adicionar Empresa Teste à comparação/ });
     const review = screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' });
 
-    expect(quote).toHaveClass('h-11', 'min-h-11', 'w-full');
+    expect(quote).toHaveClass('h-11', '!min-h-11', 'w-full', 'text-[12px]', 'font-semibold');
     expect(whatsapp).toHaveAttribute('href', 'https://wa.me/5547999545370');
     expect(whatsapp).toHaveAttribute('target', '_blank');
     expect(compare).toBeInTheDocument();
@@ -70,9 +70,11 @@ describe('CompanyCTAGroup — Brand Page PWA compacta + gates', () => {
     expect(review).toHaveTextContent('Avaliar');
     expect(review).not.toHaveTextContent('Avaliar empresa');
     expect(screen.getByTestId('company-primary-ctas')).toHaveClass(
-      'grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]'
+      'grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]'
     );
-    expect(screen.getByTestId('company-secondary-ctas')).toHaveClass('grid-cols-2');
+    expect(screen.getByTestId('company-secondary-ctas')).toHaveClass('flex', 'justify-end');
+    expect(screen.getByTestId('company-secondary-ctas')).not.toHaveClass('grid-cols-2');
+    expect(review).toHaveClass('hidden', 'lg:flex');
 
     fireEvent.click(whatsapp);
     expect(trackCTAClick).toHaveBeenCalledWith(expect.objectContaining({
@@ -138,12 +140,23 @@ describe('CompanyCTAGroup — Brand Page PWA compacta + gates', () => {
     }
   );
 
-  it('molduras secundárias 36px e alvos acionáveis 44px no mobile/PWA', () => {
+  it('PWA: comparar sem moldura externa, alinhado ao canto direito com área de toque de 44px', () => {
     render(<CompanyCTAGroup company={paidCompany} canRequestQuote />);
     const secondary = screen.getByTestId('company-secondary-ctas');
-    expect(secondary).toHaveClass('gap-1.5');
-    expect(screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' })).toHaveClass('h-11');
-    expect(screen.getByText('Avaliar').parentElement).toHaveClass('h-9', 'px-2');
-    expect(screen.getByText('Comparar').closest('label')).toHaveClass('!min-h-11');
+    const compareLabel = screen.getByText('Comparar').closest('label');
+    expect(secondary).toHaveClass('flex', 'justify-end');
+    expect(compareLabel).toHaveClass('!min-h-11', '!px-2');
+    expect(compareLabel?.parentElement).toBe(secondary);
+    expect(secondary).not.toHaveClass('border', 'rounded-[10px]');
+    expect(screen.getByRole('link', { name: 'Avaliar empresa: Empresa Teste' })).toHaveClass('hidden', 'lg:flex');
+  });
+
+  it('CTAs principais mantêm tipografia GitHub-like e alvos de 44px', () => {
+    render(<CompanyCTAGroup company={paidCompany} canRequestQuote />);
+    const quote = screen.getByRole('button', { name: 'Solicitar orçamento' });
+    const whatsapp = screen.getByRole('link', { name: /no WhatsApp/ });
+    expect(quote).toHaveClass('!min-h-11', 'font-semibold', 'text-[12px]');
+    expect(whatsapp).toHaveClass('!min-h-11', 'font-semibold', 'text-[12px]');
+    expect(screen.getByTestId('company-primary-ctas')).toHaveClass('gap-1.5');
   });
 });
