@@ -1,10 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { Children, type ReactNode } from 'react';
 import { BannerContainer, type BannerData } from '@/components/BannerContainer';
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ alt }: { alt?: string }) => <span data-testid="banner-image">{alt}</span>,
+  default: ({ alt, onError }: { alt?: string; onError?: () => void }) => (
+    <span data-testid="banner-image" onError={onError}>{alt}</span>
+  ),
 }));
 
 jest.mock('@/components/PremiumBannerCarousel', () => ({
@@ -82,6 +84,33 @@ describe('BannerContainer - seleção de layout por placement', () => {
 
     expect(screen.getByTestId('horizontal-banner-creative')).toBeInTheDocument();
     expect(collectClassNames(container)).not.toContain('max-w-[300px]');
+  });
+
+  it('removes the disclosure when the only campaign image fails to load', () => {
+    const invalidCampaign: BannerData = {
+      id: 501,
+      title: 'Campaign unavailable',
+      image_url: '/broken-image.webp',
+      position: 'company_access_sidebar',
+      width: 300,
+      height: 250,
+      creative_mode: 'image_only',
+      sponsored: true,
+    };
+    render(
+      <BannerContainer
+        banners={[invalidCampaign]}
+        position="company_access_sidebar"
+        showDisclosure
+        page="select-company"
+      />
+    );
+
+    expect(screen.getByText('Publicidade')).toBeInTheDocument();
+    fireEvent.error(screen.getByTestId('banner-image'));
+
+    expect(screen.queryByText('Publicidade')).not.toBeInTheDocument();
+    expect(screen.queryByText('Patrocinado')).not.toBeInTheDocument();
   });
 
   it('placement de sidebar mantém o card lateral limitado a 300px', () => {

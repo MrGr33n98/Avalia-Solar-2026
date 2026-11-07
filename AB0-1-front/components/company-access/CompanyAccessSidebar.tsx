@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { Award, ArrowRight } from 'lucide-react';
 import { BannerSlot } from '@/components/banners/BannerSlot';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { useLocation } from '@/contexts/LocationContext';
 import { CompanyAccessStatus } from './CompanyAccessStatus';
-import { AvaliaSolarHouseAd } from './AvaliaSolarHouseAd';
 import { cn } from '@/lib/utils';
 import type { CompanyAccessSuggestedCompany, CompanyAccessPendingRequest, Company } from '@/lib/api';
 
@@ -21,6 +21,8 @@ export function CompanyAccessSidebar({
   pendingRequest,
   className,
 }: CompanyAccessSidebarProps) {
+  const { selectedState, selectedCity } = useLocation();
+
   return (
     <aside
       aria-label="Informações complementares e publicidade"
@@ -34,31 +36,23 @@ export function CompanyAccessSidebar({
         />
       </section>
 
-      {/* 2. Publicidade Patrocinada: Banner Comercial com identificação clara de anúncio */}
-      <section
-        aria-label="Publicidade"
-        className="space-y-2.5"
-      >
-        <div className="flex items-center justify-between text-xs px-0.5">
-          <span className="font-semibold text-slate-700 tracking-wide uppercase text-[10px]">
-            Publicidade
-          </span>
-          <span className="text-[10px] text-slate-400 font-medium tracking-wide">
-            Patrocinado
-          </span>
-        </div>
-
-        <ErrorBoundary
-          fallback={<AvaliaSolarHouseAd source="company_access_sidebar_fallback" />}
-        >
-          <BannerSlot
-            placement="company_access_sidebar"
-            limit={1}
-            lazy
-            fallback={<AvaliaSolarHouseAd source="company_access_sidebar" />}
-          />
-        </ErrorBoundary>
-      </section>
+      {/* 2. Admin-managed campaign. No fabricated house-ad or misleading "Sponsored" label
+          when there is no eligible campaign. First prefer the 300×250 dedicated slot;
+          only then reuse the existing 300×600 company-profile sidebar inventory,
+          explicitly requested for this page. Server-side contract, moderation,
+          location targeting and priority still determine eligibility. */}
+      <ErrorBoundary fallback={<></>}>
+        <BannerSlot
+          placement="company_access_sidebar"
+          fallbackPositions={['company_profile_sidebar_sponsored']}
+          limit={1}
+          lazy={false}
+          state={selectedState || undefined}
+          city={selectedCity || undefined}
+          page="select-company"
+          showDisclosure
+        />
+      </ErrorBoundary>
 
       {/* 3. Segundo Espaço Promocional: Divulgação institucional de autoridade / verificação */}
       <section

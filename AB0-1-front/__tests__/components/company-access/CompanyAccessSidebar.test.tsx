@@ -3,8 +3,11 @@ import { render, screen } from '@testing-library/react';
 import { CompanyAccessSidebar } from '@/components/company-access/CompanyAccessSidebar';
 import { useBannersQuery } from '@/hooks/useBannersQuery';
 
-// Mock do hook useBannersQuery
+// Mock do hook useBannersQuery; location matches the user-visible "Todo SC" selector.
 jest.mock('@/hooks/useBannersQuery');
+jest.mock('@/contexts/LocationContext', () => ({
+  useLocation: () => ({ selectedState: 'SC', selectedCity: null }),
+}));
 const mockUseBannersQuery = useBannersQuery as jest.MockedFunction<typeof useBannersQuery>;
 
 // Mock do next/image para renderizar img comum
@@ -16,7 +19,7 @@ jest.mock('next/image', () => ({
   },
 }));
 
-describe('CompanyAccessSidebar — Redesign com Avalia Solar Ads', () => {
+describe('CompanyAccessSidebar — ActiveAdmin as single source of ad creatives', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -42,7 +45,7 @@ describe('CompanyAccessSidebar — Redesign com Avalia Solar Ads', () => {
       );
 
       const sections = container.querySelectorAll('section');
-      expect(sections.length).toBeGreaterThanOrEqual(3);
+      expect(sections.length).toBe(2);
 
       // 1ª seção: Status operacional de acesso
       expect(sections[0]).toHaveAttribute('aria-label', 'Status do Acesso');
@@ -50,17 +53,13 @@ describe('CompanyAccessSidebar — Redesign com Avalia Solar Ads', () => {
       expect(sections[0]).toHaveTextContent('Solar Tech Brasil');
       expect(sections[0]).toHaveTextContent('Em análise');
 
-      // 2ª seção: Bloco de publicidade
-      expect(sections[1]).toHaveAttribute('aria-label', 'Publicidade');
-      expect(sections[1]).toHaveTextContent(/Publicidade/i);
-      expect(sections[1]).toHaveTextContent(/Patrocinado/i);
-
-      // 3ª seção: Autoridade institucional secundária
-      expect(sections[2]).toHaveAttribute('aria-label', 'Autoridade e Verificação');
-      expect(sections[2]).toHaveTextContent(/Perfil Verificado 2026/i);
+      // No eligible campaign: the page must not manufacture a "sponsored" placement.
+      expect(sections[1]).toHaveAttribute('aria-label', 'Autoridade e Verificação');
+      expect(sections[1]).toHaveTextContent(/Perfil Verificado 2026/i);
+      expect(screen.queryByText('Patrocinado')).not.toBeInTheDocument();
     });
 
-    it('exibe explicitamente os identificadores "Publicidade" e "Patrocinado"', () => {
+    it('only displays an advertisement label when a real campaign is eligible', () => {
       mockUseBannersQuery.mockReturnValue({
         data: [],
         isLoading: false,
@@ -69,50 +68,35 @@ describe('CompanyAccessSidebar — Redesign com Avalia Solar Ads', () => {
 
       render(<CompanyAccessSidebar />);
 
-      expect(screen.getByText('Publicidade')).toBeInTheDocument();
-      expect(screen.getByText('Patrocinado')).toBeInTheDocument();
+      expect(screen.queryByText('Publicidade')).not.toBeInTheDocument();
+      expect(screen.queryByText('Patrocinado')).not.toBeInTheDocument();
     });
   });
 
-  describe('Ausência de Anúncios Comerciais (Fallback Institucional)', () => {
-    it('exibe a peça institucional AvaliaSolarHouseAd quando não houver campanhas ativas', () => {
+  describe('Empty/error delivery states', () => {
+    it('does not display a fabricated house ad when the catalog is empty', () => {
       mockUseBannersQuery.mockReturnValue({
-        data: [],
-        isLoading: false,
-        error: null,
+        data: [], isLoading: false, error: null,
       } as ReturnType<typeof useBannersQuery>);
 
       render(<CompanyAccessSidebar />);
 
-      const houseAd = screen.getByTestId('avalia-solar-house-ad');
-      expect(houseAd).toBeInTheDocument();
-      expect(screen.getByText(/Avalia Solar/i)).toBeInTheDocument();
-      expect(screen.getByText(/Ads/i)).toBeInTheDocument();
-      expect(screen.getByText(/Sua empresa no radar de quem compra energia solar/i)).toBeInTheDocument();
-
-      // CTA para planos de mídia
-      const ctaLink = screen.getByRole('link', { name: /Conhecer Planos de Mídia/i });
-      expect(ctaLink).toBeInTheDocument();
-      expect(ctaLink).toHaveAttribute(
-        'href',
-        expect.stringContaining('/pricing?utm_source=select_company&utm_medium=sidebar_ad&utm_campaign=company_access_sidebar')
-      );
+      expect(screen.queryByTestId('avalia-solar-house-ad')).not.toBeInTheDocument();
+      expect(screen.queryByText(/300.000 clientes/)).not.toBeInTheDocument();
+      expect(screen.queryByText('Publicidade')).not.toBeInTheDocument();
+      expect(screen.getByText(/Perfil Verificado 2026/)).toBeInTheDocument();
     });
-  });
 
-  describe('Resiliência a Falhas da API de Banners', () => {
-    it('mantém o fallback institucional renderizado sem quebrar a interface em caso de erro da API', () => {
+    it('does not mask API failures with a commercial-looking mockup', () => {
       mockUseBannersQuery.mockReturnValue({
-        data: null,
-        isLoading: false,
-        error: new Error('Network timeout ou indisponibilidade de ads'),
+        data: null, isLoading: false, error: new Error('503'),
       } as ReturnType<typeof useBannersQuery>);
 
       render(<CompanyAccessSidebar />);
 
-      // A interface continua estável e exibe o house ad
-      expect(screen.getByTestId('avalia-solar-house-ad')).toBeInTheDocument();
-      expect(screen.getByText(/Conhecer Planos de Mídia/i)).toBeInTheDocument();
+      expect(screen.queryByText('Patrocinado')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('avalia-solar-house-ad')).not.toBeInTheDocument();
+      expect(screen.getByText(/Perfil Verificado 2026/)).toBeInTheDocument();
     });
   });
 
@@ -127,6 +111,7 @@ describe('CompanyAccessSidebar — Redesign com Avalia Solar Ads', () => {
             image_url: 'https://cdn.example.com/banner-300x250.webp',
             target_url: 'https://patrocinador.com.br/inversores',
             position: 'company_access_sidebar',
+            sponsored: true,
             width: 300,
             height: 250,
           },
@@ -140,8 +125,41 @@ describe('CompanyAccessSidebar — Redesign com Avalia Solar Ads', () => {
       const bannerImg = screen.getByAltText('Anúncio Inversor Fotovoltaico');
       expect(bannerImg).toBeInTheDocument();
       expect(screen.getByText('Publicidade')).toBeInTheDocument();
-      expect(screen.getByText('Patrocinado')).toBeInTheDocument();
+      expect(screen.getAllByText('Patrocinado').length).toBeGreaterThanOrEqual(1);
     });
+  });
+
+  describe('Existing sidebar inventory delivery', () => {
+    it('requests the existing ActiveAdmin sidebar as an explicit secondary placement, with SC targeting', () => {
+      mockUseBannersQuery.mockReturnValue({
+        data: [{
+          id: 14,
+          title: 'UPFRONT 2027',
+          alt_text: 'UPFRONT 2027',
+          image_url: 'https://cdn.example.com/upfront-300x600.webp',
+          position: 'company_profile_sidebar_sponsored',
+          sponsored: true,
+          width: 300, height: 600,
+        }],
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useBannersQuery>);
+
+      render(<CompanyAccessSidebar />);
+
+      expect(mockUseBannersQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          position: 'company_access_sidebar',
+          fallbackPositions: ['company_profile_sidebar_sponsored'],
+          limit: 1,
+          state: 'SC',
+          city: undefined,
+        })
+      );
+      expect(screen.getByAltText('UPFRONT 2027')).toBeInTheDocument();
+      expect(screen.queryByTestId('avalia-solar-house-ad')).not.toBeInTheDocument();
+    });
+
   });
 
   describe('Estados Operacionais do Status de Acesso', () => {

@@ -10,6 +10,15 @@ import { cn } from '@/lib/utils';
 
 interface BannerSlotProps {
   placement: string;
+  /** Explicitly permitted alternate inventory; primary placement is always preferred. */
+  fallbackPositions?: string[];
+  /** Targeting comes from the visible location selection, never inferred from company ID. */
+  state?: string;
+  city?: string;
+  /** Surface for click/impression analytics; delivery retains the actual campaign placement. */
+  page?: string;
+  /** Render the disclosure only with an eligible banner; no empty ad shell. */
+  showDisclosure?: boolean;
   className?: string;
   fallback?: React.ReactNode;
   limit?: number;
@@ -23,6 +32,11 @@ interface BannerSlotProps {
 
 export function BannerSlot({
   placement,
+  fallbackPositions,
+  state,
+  city,
+  page,
+  showDisclosure = false,
   className,
   fallback,
   limit = 3,
@@ -75,6 +89,9 @@ export function BannerSlot({
     error,
   } = useBannersQuery({
     position: placement,
+    fallbackPositions,
+    state,
+    city,
     limit,
     category_id: categoryId,
     company_id: companyId,
@@ -115,7 +132,10 @@ export function BannerSlot({
   }
 
   // GAP-01 / GAP-03: Filtra anúncios sem arte pública renderizável
+  const allowedPositions = new Set([placement, ...(fallbackPositions || [])]);
   const renderableBanners = (banners || []).filter((b) => {
+    // Defence in depth: only placements explicitly requested by this component.
+    if (b.position && !allowedPositions.has(b.position)) return false;
     const isEditorial =
       b.creative_mode === 'photo_with_html' &&
       Boolean(b.headline?.trim() || b.title?.trim() || b.image_url);
@@ -165,13 +185,21 @@ export function BannerSlot({
     benefits: b.benefits ?? null,
   }));
 
+  // Reused 300×600 inventory must retain its own aspect ratio and delivery identity.
+  // The page metadata distinguishes an impression on select-company from a profile view.
+  const deliveredPosition = finalBanners[0]?.position &&
+    allowedPositions.has(finalBanners[0].position)
+    ? finalBanners[0].position
+    : placement;
+
   return (
     <BannerContainer
       banners={formattedBanners}
-      position={placement}
+      position={deliveredPosition}
       priority={priority}
-      page={placement.startsWith('compare_') ? 'compare' : undefined}
+      page={page || (placement.startsWith('compare_') ? 'compare' : undefined)}
       className={className}
+      showDisclosure={showDisclosure}
     />
   );
 }

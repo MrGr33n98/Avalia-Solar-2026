@@ -50,6 +50,7 @@ export interface BannerContainerProps {
   className?: string;
   priority?: boolean;
   page?: string;
+  showDisclosure?: boolean;
 }
 
 function BannerImage({
@@ -96,6 +97,7 @@ export function BannerContainer({
   className,
   priority = false,
   page,
+  showDisclosure = false,
 }: BannerContainerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const viewedBannerIdsRef = React.useRef<Set<string>>(new Set());
@@ -278,6 +280,23 @@ export function BannerContainer({
     return null;
   }
 
+  // Disclosure belongs to the media-aware renderer. On media failure the
+  // creative disappears, so the "Publicidade" label must disappear with it.
+  const withDisclosure = (creative: React.ReactNode) => {
+    if (!showDisclosure) return creative;
+    return (
+      <section aria-label="Publicidade" className={cn('space-y-2.5', className)}>
+        <div className="flex items-center justify-between px-0.5 text-[10px] font-semibold tracking-wide">
+          <span className="uppercase text-[#475569]">Publicidade</span>
+          <span className="text-[#64748b]">
+            {displayBanners.some((banner) => banner.sponsored) ? 'Patrocinado' : 'Institucional'}
+          </span>
+        </div>
+        {creative}
+      </section>
+    );
+  };
+
   try {
     const displaySpec = position ? getPlacementDisplaySpec(position) : undefined;
     const isCompactControls = position ? [
@@ -300,6 +319,7 @@ export function BannerContainer({
       switch (pos) {
         case 'companies_right_rail':
         case 'categories_right_rail':
+        case 'company_profile_sidebar_sponsored':
         case 'compare_page_sidebar':
         case 'company_access_sidebar':
           return '(max-width: 1023px) 0px, 300px';
@@ -337,10 +357,18 @@ export function BannerContainer({
        displayBanners[0].creative_mode === 'photo_with_html')
     ) {
       const singleBanner = displayBanners[0];
-      return (
+      return withDisclosure(
         <div
           ref={containerRef}
-          className={cn('m-0 w-full min-w-0 max-w-[300px] mx-auto p-0', className)}
+          className={cn('m-0 w-full min-w-0 max-w-[300px] mx-auto p-0', !showDisclosure && className)}
+          style={singleBanner.creative_mode === 'photo_with_html'
+            ? undefined
+            : { aspectRatio: resolveBannerAspectRatio({
+                position,
+                sourcePosition: singleBanner.position,
+                width: singleBanner.width,
+                height: singleBanner.height,
+              }) }}
         >
           <BannerCreative
             banner={singleBanner}
@@ -443,13 +471,13 @@ export function BannerContainer({
           })
         );
 
-    return (
+    return withDisclosure(
       <div
         ref={containerRef}
         className={cn(
           'm-0 w-full min-w-0 overflow-hidden p-0',
           isSidebar ? 'max-w-full' : 'max-w-none',
-          className
+          !showDisclosure && className
         )}
       >
         <PremiumBannerCarousel
