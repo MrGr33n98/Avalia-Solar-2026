@@ -182,11 +182,11 @@ export default function FounderCursorTour() {
       className="mx-auto max-w-7xl px-4 py-10 outline-none sm:px-6 sm:py-14 lg:px-8"
       aria-label="Tour interativo da Brand Page Premium"
     >
-      <header className="mx-auto mb-8 max-w-3xl text-center sm:mb-10">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
-          <Sparkles className="h-4 w-4" aria-hidden="true" /> Tour interativo · Brand Page Premium
+      <header className="mb-6 max-w-3xl text-left sm:mb-8">
+        <div className="mb-3 inline-flex items-center rounded-md border border-[#d0e2ff] bg-[#edf5ff] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#0043ce]">
+          Tour interativo · Brand Page Premium
         </div>
-        <h2 className="text-2xl font-black tracking-tight text-[#09172f] sm:text-3xl lg:text-4xl">
+        <h2 className="text-2xl font-bold tracking-tight text-[#09172f] sm:text-3xl lg:text-4xl">
           Veja como a Brand Page opera na tela do computador
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
@@ -194,16 +194,16 @@ export default function FounderCursorTour() {
         </p>
       </header>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl lg:grid lg:grid-cols-12">
-        <div className="bg-[#09172f] p-3 sm:p-6 lg:col-span-7 lg:p-8">
-          <div className="mb-3 flex items-center justify-between gap-3 text-xs text-slate-300">
+      <div className="overflow-hidden rounded-xl border border-[#dde1e6] bg-white lg:grid lg:grid-cols-12">
+        <div className="bg-[#f4f7fb] p-2.5 sm:p-5 lg:col-span-7 lg:p-6">
+          <div className="mb-2.5 flex items-center justify-between gap-3 text-[11px] text-[#475569] sm:text-xs">
             <span className="font-mono">SOLARIS ENERGIA · BRAND PAGE</span>
             <span aria-live="polite" className="font-semibold">{String(currentStep + 1).padStart(2, '0')} / 10</span>
           </div>
 
           <div
             ref={frameRef}
-            className="relative mx-auto aspect-[4/5] w-full max-w-[520px] overflow-hidden rounded-lg border border-white/20 bg-[#09172f] shadow-2xl sm:aspect-[16/10] lg:max-w-none"
+            className="relative mx-auto aspect-[5/4] w-full max-w-[520px] overflow-hidden rounded-md border border-[#dde1e6] bg-white shadow-sm sm:aspect-[16/10] lg:max-w-none"
             onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null; }}
             onTouchEnd={(event) => {
               if (touchStartX.current === null) return;
@@ -232,7 +232,7 @@ export default function FounderCursorTour() {
                 alt="Captura original da Brand Page Premium Solaris Energia, com anotações numeradas dos recursos"
                 width={1055}
                 height={1491}
-                sizes="(max-width: 767px) 100vw, (max-width: 1280px) 1055px, 1055px"
+                sizes="(max-width: 767px) 92vw, (max-width: 1280px) 60vw, 720px"
                 quality={82}
                 loading="lazy"
                 className="h-full w-full select-none object-fill"
@@ -243,10 +243,10 @@ export default function FounderCursorTour() {
               <FounderCinematicCursor x={camera.cursorX} y={camera.cursorY} pinX={camera.pinX} pinY={camera.pinY} duration={step.duration} entry={step.entry} reducedMotion={Boolean(reducedMotion)} />
             )}
           </div>
-          <p className="mt-3 text-center text-[11px] text-slate-400">Imagem original preservada · navegação sem ações externas</p>
+          <p className="mt-2 text-center text-[10px] text-[#66758a] sm:text-[11px]">Imagem original preservada · navegação sem ações externas</p>
         </div>
 
-        <div className="flex flex-col justify-between p-5 sm:p-7 lg:col-span-5 lg:p-8">
+        <div className="flex flex-col justify-between p-4 sm:p-6 lg:col-span-5 lg:p-7">
           <div>
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Recurso {String(currentStep + 1).padStart(2, '0')}</span>
