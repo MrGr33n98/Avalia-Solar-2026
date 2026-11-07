@@ -143,4 +143,60 @@ describe('CompanyDirectoryRow — Mobile Compact Directory Row', () => {
     expect(screen.getByText('Patrocinado')).toBeInTheDocument();
     expect(screen.getByText('Atende Florianópolis')).toBeInTheDocument();
   });
+
+  it('organiza ações de conversão no topo e localização/favoritos/comparar no rodapé', () => {
+    render(<CompanyDirectoryRow company={sampleCompany} />);
+
+    const top = screen.getByTestId('directory-card-top');
+    const bottom = screen.getByTestId('directory-card-bottom');
+
+    expect(top).toContainElement(screen.getByText('Solar Tech Brasil'));
+    expect(top).toContainElement(screen.getByText('4.9'));
+    expect(bottom).toContainElement(screen.getByText('Florianópolis, SC'));
+    expect(bottom).toContainElement(screen.getByRole('button', { name: 'Adicionar aos favoritos' }));
+    expect(bottom).toContainElement(screen.getByRole('checkbox', { name: /comparação/i }));
+    expect(screen.getByText('Comparar')).toBeVisible();
+    expect(top).not.toContainElement(screen.getByRole('checkbox', { name: /comparação/i }));
+  });
+
+  it('aplica gates existentes e mantém WhatsApp/Orçamento apenas na linha superior', () => {
+    const paidCompany = {
+      ...sampleCompany,
+      has_paid_plan: true,
+      quote_cta_enabled: true,
+      cta_whatsapp_enabled: true,
+      cta_whatsapp_url: 'https://wa.me/5547999700506',
+      feature_access: {
+        custom_ctas: { state: 'enabled', value: true },
+        whatsapp_contact_button: { state: 'enabled', value: true },
+      },
+    };
+
+    render(<CompanyDirectoryRow company={paidCompany} />);
+    const top = screen.getByTestId('directory-card-top');
+    const bottom = screen.getByTestId('directory-card-bottom');
+    expect(top).toContainElement(screen.getByRole('link', { name: /Falar com Solar Tech Brasil no WhatsApp/ }));
+    expect(top).toContainElement(screen.getByRole('button', { name: 'Solicitar orçamento' }));
+    expect(bottom).not.toContainElement(screen.getByRole('button', { name: 'Solicitar orçamento' }));
+  });
+
+  it('oculta CTAs premium em plano gratuito sem afetar os controles de comparação', () => {
+    const freeCompany = {
+      ...sampleCompany,
+      has_paid_plan: false,
+      quote_cta_enabled: true,
+      cta_whatsapp_enabled: true,
+      cta_whatsapp_url: 'https://wa.me/5547999700506',
+    };
+    render(<CompanyDirectoryRow company={freeCompany} />);
+    expect(screen.queryByRole('button', { name: 'Solicitar orçamento' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /no WhatsApp/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /comparação/i })).toBeInTheDocument();
+  });
+
+  it('preserva localização estendida de sede e atendimento sem confundi-la com reputação', () => {
+    render(<CompanyDirectoryRow company={sampleCompany} selectedState="MT" />);
+    expect(screen.getByTestId('directory-card-bottom')).toHaveTextContent('Sede em Florianópolis, SC • Atende MT');
+    expect(screen.getByTestId('directory-card-top')).not.toHaveTextContent('Atende MT');
+  });
 });

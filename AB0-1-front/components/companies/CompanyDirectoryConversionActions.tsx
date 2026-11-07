@@ -107,8 +107,8 @@ export function CompanyDirectoryConversionActions({ company }: { company: Compan
         >
           <span className="inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-[9px] bg-blue-600 px-2.5 text-[11px] font-semibold text-white shadow-sm transition-colors group-hover:bg-blue-700 sm:px-3 sm:text-[12px]">
             <Send className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="hidden min-[400px]:inline">Solicitar orçamento</span>
-            <span className="min-[400px]:hidden">Orçamento</span>
+            <span className="sm:hidden">Orçamento</span>
+            <span className="hidden sm:inline">Solicitar orçamento</span>
           </span>
         </button>
       )}
