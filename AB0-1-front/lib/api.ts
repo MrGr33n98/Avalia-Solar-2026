@@ -2668,10 +2668,44 @@ export interface RankingFilterOptions {
   selected_state: string | null;
 }
 
+export interface DashboardCompanyLead {
+  id: number;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  message?: string | null;
+  project_type?: string | null;
+  request_type: 'quote' | 'contact';
+  product_vertical?: string | null;
+  source?: string | null;
+  city?: string | null;
+  state?: string | null;
+  location?: string | null;
+  created_at: string;
+}
+
+export interface DashboardLeadPagination {
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+  next_page?: number | null;
+  prev_page?: number | null;
+}
+
+export interface DashboardLeadsQuery {
+  page?: number;
+  per_page?: number;
+  from_date?: string;
+  to_date?: string;
+  request_type?: 'quote' | 'contact';
+  email?: string;
+}
+
 export const companyDashboardApi = {
-  getLeads: (companyId?: string | number) =>
-    fetchApi<{ data: Array<Record<string, unknown>>; meta?: unknown }>('/dashboard/leads', {
-      params: { company_id: companyId },
+  getLeads: (companyId?: string | number, filters: DashboardLeadsQuery = {}) =>
+    fetchApi<{ data: DashboardCompanyLead[]; meta: { pagination: DashboardLeadPagination } }>('/dashboard/leads', {
+      params: { company_id: companyId, ...filters },
     }),
   getAnalyticsOverview: (companyId?: string | number, query: AnalyticsQueryParams = {}) =>
     fetchApi<CompanyAnalyticsOverview>('/company_dashboard/analytics/overview', {
