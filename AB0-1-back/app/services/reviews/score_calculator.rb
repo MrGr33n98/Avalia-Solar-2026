@@ -29,7 +29,7 @@ module Reviews
     private
 
     def use_manual_rating_only?
-      review.is_legacy || review.review_criterion_scores.empty?
+      review.is_legacy || review.review_criterion_scores.empty? || review.capture_flow_source == 'whatsapp_voice'
     end
 
     # 40% Rating Geral
@@ -39,7 +39,11 @@ module Reviews
 
     # 50% Média Ponderada dos Critérios Granulares
     def weighted_granular_scores
-      scores = review.review_criterion_scores.includes(:rating_criterion)
+      scores = if review.new_record? || review.review_criterion_scores.loaded?
+                 review.review_criterion_scores.to_a
+               else
+                 review.review_criterion_scores.includes(:rating_criterion).to_a
+               end
       return 0 if scores.empty?
 
       total_weight = 0.0

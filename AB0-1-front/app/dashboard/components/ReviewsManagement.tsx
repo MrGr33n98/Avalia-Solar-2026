@@ -136,6 +136,7 @@ const SOURCE_LABELS: Record<string, string> = {
   lead: 'Lead',
   chat: 'Chat',
   whatsapp: 'WhatsApp',
+  whatsapp_voice: 'Áudio WhatsApp (Verificado)',
   email: 'E-mail',
   unknown: 'Outros',
 };
