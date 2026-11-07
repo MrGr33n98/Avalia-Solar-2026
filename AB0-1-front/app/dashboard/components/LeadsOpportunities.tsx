@@ -1,415 +1,411 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { fetchApi, companyDashboardApi } from '@/lib/api';
-import { 
-  Target, 
-  Mail, 
-  Phone, 
-  MessageSquare, 
-  Calendar, 
-  Globe, 
-  TrendingUp, 
-  Lock, 
-  ArrowUpRight,
-  ShieldAlert,
-  Zap,
-  Clock,
-  ExternalLink,
-  ChevronRight,
-  MapPin,
-  AlertTriangle
-} from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import MetricCard from './MetricCard';
+import { useEffect, useMemo, useState } from 'react';
+import { format, subDays, subMonths, subYears } from 'date-fns';
+import {
+  companyDashboardApi,
+  type DashboardCompanyLead,
+  type DashboardLeadsQuery,
+  type DashboardLeadPagination,
+} from '@/lib/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface LeadsOpportunitiesProps {
   companyId: string;
 }
 
-interface MarketInsights {
-  category_name: string;
-  stats: {
-    total_market_leads: number;
-    my_leads_count: number;
-    opportunities_count: number;
-    market_share_percent: number;
-  };
-  opportunities: Array<Record<string, unknown>>;
-  is_premium: boolean;
+type Period = '30d' | '90d' | '6m' | '1y' | 'custom';
+type RequestType = 'all' | 'quote' | 'contact';
+const PAGE_SIZE = 20;
+
+const PERIODS: { value: Period; label: string }[] = [
+  { value: '30d', label: '30 dias' },
+  { value: '90d', label: '90 dias' },
+  { value: '6m', label: '6 meses' },
+  { value: '1y', label: '1 ano' },
+  { value: 'custom', label: 'Personalizado' },
+];
+
+function toDate(value?: string | null) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('pt-BR');
+}
+
+function readable(value?: string | null) {
+  return value?.trim() || 'Não informado';
+}
+
+function requestLabel(value: DashboardCompanyLead['request_type']) {
+  return value === 'quote' ? 'Solicitou orçamento' : 'Solicitou contato';
+}
+
+function csvCell(value: unknown) {
+  const plain = String(value ?? '');
+  // Avoid CSV formula execution when opened in spreadsheet applications.
+  const safe = /^[\s]*[=+\-@\t\r]/.test(plain) ? "'" + plain : plain;
+  return '"' + safe.replace(/"/g, '""') + '"';
+}
+
+function downloadCsv(leads: DashboardCompanyLead[]) {
+  const headings = [
+    'Nome', 'E-mail', 'Telefone', 'Segmento', 'Tipo de solicitação',
+    'Data', 'Cidade', 'Estado', 'Mensagem',
+  ];
+  const lines = leads.map((lead) => [
+    lead.name, lead.email, lead.phone, lead.product_vertical,
+    requestLabel(lead.request_type), toDate(lead.created_at),
+    lead.city, lead.state, lead.message,
+  ].map(csvCell).join(';'));
+  const csv = '\uFEFF' + [headings.map(csvCell).join(';'), ...lines].join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'solicitacoes-avalia-solar-' + format(new Date(), 'yyyy-MM-dd') + '.csv';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProps) {
-  const [leads, setLeads] = useState<Array<Record<string, unknown>>>([]);
-  const [marketData, setMarketData] = useState<MarketInsights | null>(null);
+  const [period, setPeriod] = useState<Period>('6m');
+  const [customFrom, setCustomFrom] = useState(() => format(subMonths(new Date(), 6), 'yyyy-MM-dd'));
+  const [customTo, setCustomTo] = useState(() => format(new Date(), 'yyyy-MM-dd'));
+  const [requestType, setRequestType] = useState<RequestType>('all');
+  const [emailInput, setEmailInput] = useState('');
+  const [emailSearch, setEmailSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [leads, setLeads] = useState<DashboardCompanyLead[]>([]);
+  const [pagination, setPagination] = useState<DashboardLeadPagination | null>(null);
+  const [selected, setSelected] = useState<DashboardCompanyLead | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [response, insightsData] = await Promise.all([
-        companyDashboardApi.getLeads(companyId),
-        fetchApi<MarketInsights>('/company_dashboard/market_insights', { params: { company_id: companyId } }),
-      ]);
-      setLeads(response.data || []);
-      setMarketData(insightsData);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Falha ao carregar dados');
-    } finally {
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [refresh, setRefresh] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setEmailSearch(emailInput.trim());
+      setPage(1);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [emailInput]);
+
+  useEffect(() => {
+    setSelected(null);
+    setPage(1);
+  }, [companyId]);
+
+  const validDates = period !== 'custom' || (
+    Boolean(customFrom && customTo) && customFrom <= customTo
+  );
+
+  const filters = useMemo<DashboardLeadsQuery>(() => {
+    const today = new Date();
+    const start = period === '30d' ? subDays(today, 30)
+      : period === '90d' ? subDays(today, 90)
+      : period === '1y' ? subYears(today, 1)
+      : subMonths(today, 6);
+
+    return {
+      from_date: period === 'custom' ? customFrom : format(start, 'yyyy-MM-dd'),
+      to_date: period === 'custom' ? customTo : format(today, 'yyyy-MM-dd'),
+      ...(requestType !== 'all' ? { request_type: requestType } : {}),
+      ...(emailSearch ? { email: emailSearch } : {}),
+    };
+  }, [period, customFrom, customTo, requestType, emailSearch]);
+
+  useEffect(() => {
+    if (!validDates) {
       setLoading(false);
+      setLeads([]);
+      setPagination(null);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    setError(null);
+    companyDashboardApi.getLeads(companyId, { ...filters, page, per_page: PAGE_SIZE })
+      .then((response) => {
+        if (!active) return;
+        setLeads(response.data ?? []);
+        setPagination(response.meta?.pagination ?? null);
+      })
+      .catch((cause: unknown) => {
+        if (!active) return;
+        setLeads([]);
+        setPagination(null);
+        setError(cause instanceof Error ? cause.message : 'Não foi possível carregar as solicitações.');
+      })
+      .finally(() => { if (active) setLoading(false); });
+
+    return () => { active = false; };
+  }, [companyId, filters, page, refresh, validDates]);
+
+  const clearFilters = () => {
+    setPeriod('6m');
+    setRequestType('all');
+    setEmailInput('');
+    setEmailSearch('');
+    setPage(1);
+    setExportError(null);
+  };
+
+  const exportFiltered = async () => {
+    if (exporting || !validDates || !pagination?.total) return;
+    setExporting(true);
+    setExportError(null);
+
+    try {
+      // Reuse the same tenant-scoped, authorized API as the table.
+      // Export ALL filtered pages, not just the currently visible page.
+      const first = await companyDashboardApi.getLeads(companyId, { ...filters, page: 1, per_page: 100 });
+      const all = [...(first.data ?? [])];
+      const totalPages = first.meta.pagination.total_pages;
+      for (let nextPage = 2; nextPage <= totalPages; nextPage += 1) {
+        const response = await companyDashboardApi.getLeads(companyId, {
+          ...filters,
+          page: nextPage,
+          per_page: 100,
+        });
+        all.push(...(response.data ?? []));
+      }
+      downloadCsv(all);
+    } catch (cause: unknown) {
+      setExportError(cause instanceof Error ? cause.message : 'Erro ao exportar solicitações.');
+    } finally {
+      setExporting(false);
     }
   };
 
-  useEffect(() => {
-    loadData();
-    // loadData intentionally follows companyId; request function is local and stateful.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId]);
-
-  if (loading) return <LeadsSkeleton />;
-  
-  if (error) {
-    return (
-      <div className="p-6 text-center">
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="w-16 h-16 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/50 mb-4">
-            <AlertTriangle className="h-8 w-8 text-red-500 dark:text-red-400" />
-          </div>
-          <h3 className="text-xl font-bold text-destructive">Erro ao carregar leads</h3>
-          <p className="mt-2 text-sm text-destructive/70">{error}</p>
-          <Button variant="outline" onClick={() => {
-            setLoading(true);
-            setError(null);
-            // Trigger a refetch
-            loadData();
-          }}>
-            Tentar novamente
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const marketMetrics = [
-    {
-      title: "Total na Categoria",
-      value: marketData?.stats?.total_market_leads || 0,
-      icon: Target,
-      change: "",
-      changeType: "neutral" as const,
-      color: "brand-blue",
-      trend: []
-    },
-    {
-      title: "Market Share",
-      value: `${marketData?.stats?.market_share_percent}%`,
-      icon: TrendingUp,
-      change: "",
-      changeType: "neutral" as const,
-      color: "brand-green",
-      trend: []
-    },
-    {
-      title: "Oportunidades Perdidas",
-      value: marketData?.stats?.opportunities_count || 0,
-      icon: ArrowUpRight,
-      change: "",
-      changeType: "neutral" as const,
-      color: "brand-yellow",
-      trend: []
-    }
-  ];
+  const total = pagination?.total ?? 0;
+  const totalPages = pagination?.total_pages ?? 0;
 
   return (
-    <div className="space-y-10">
-      {/* Market Overview Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {marketMetrics.map((metric, idx) => (
-          <MetricCard key={idx} {...metric} delay={idx * 0.1} />
+    <section aria-label="Solicitações recebidas" className="overflow-hidden rounded-lg border border-[#dde1e6] bg-white text-[#09172f]">
+      <div className="flex flex-wrap gap-1 border-b border-[#dde1e6] px-3 py-3 sm:gap-2 sm:px-5">
+        {PERIODS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => { setPeriod(option.value); setPage(1); }}
+            aria-pressed={period === option.value}
+            className={
+              'min-h-9 rounded px-2.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f62fe] sm:px-3 ' +
+              (period === option.value
+                ? 'bg-[#0b2d4f] text-white'
+                : 'text-[#525f70] hover:bg-[#edf5ff] hover:text-[#0f62fe]')
+            }
+          >
+            {option.label}
+          </button>
         ))}
       </div>
 
-      <Tabs defaultValue="my-leads" className="w-full">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight uppercase text-foreground dark:text-white">
-              Pipeline de Vendas
-            </h2>
-            <p className="text-sm text-muted-foreground/60 font-medium">
-              Gerencie seus leads diretos e explore inteligência competitiva
-            </p>
+      <div className="border-b border-[#dde1e6] px-4 py-5 sm:px-6">
+        <h2 className="text-sm font-bold">Filtros de solicitações</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
+          <label className="block min-w-0 text-xs font-semibold text-[#424c5b]">
+            Tipo de solicitação
+            <select
+              value={requestType}
+              onChange={(event) => { setRequestType(event.target.value as RequestType); setPage(1); }}
+              className="mt-1.5 h-10 w-full rounded border border-[#c6c6c6] bg-white px-3 text-sm font-normal text-[#242b37] focus:border-[#0f62fe] focus:outline-none focus:ring-1 focus:ring-[#0f62fe]"
+            >
+              <option value="all">Todas</option>
+              <option value="quote">Solicitou orçamento</option>
+              <option value="contact">Solicitou contato</option>
+            </select>
+          </label>
+          <label className="block min-w-0 text-xs font-semibold text-[#424c5b]">
+            E-mail contém
+            <input
+              type="search"
+              value={emailInput}
+              onChange={(event) => setEmailInput(event.target.value)}
+              placeholder="Buscar por e-mail"
+              autoComplete="off"
+              className="mt-1.5 h-10 w-full rounded border border-[#c6c6c6] bg-white px-3 text-sm font-normal text-[#242b37] placeholder:text-slate-400 focus:border-[#0f62fe] focus:outline-none focus:ring-1 focus:ring-[#0f62fe]"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="min-h-10 justify-self-start px-2 text-xs font-semibold text-[#0f62fe] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0f62fe]"
+          >
+            Limpar filtros
+          </button>
+        </div>
+        {period === 'custom' && (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-semibold text-[#424c5b]">
+              Data inicial
+              <input type="date" value={customFrom} onChange={(event) => { setCustomFrom(event.target.value); setPage(1); }} className="mt-1.5 block h-10 w-full rounded border border-[#c6c6c6] bg-white px-3 text-sm font-normal" />
+            </label>
+            <label className="text-xs font-semibold text-[#424c5b]">
+              Data final
+              <input type="date" value={customTo} onChange={(event) => { setCustomTo(event.target.value); setPage(1); }} className="mt-1.5 block h-10 w-full rounded border border-[#c6c6c6] bg-white px-3 text-sm font-normal" />
+            </label>
           </div>
-          
-          <TabsList className="bg-slate-50 dark:bg-slate-900/50 p-1 rounded-xl h-10 border border-slate-200 dark:border-slate-800 backdrop-blur-sm self-start">
-            <TabsTrigger 
-              value="my-leads" 
-              className="rounded-xl px-6 font-bold uppercase text-[10px] tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-brand-blue dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
-            >
-              Meus Leads ({leads.length})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="market" 
-              className="rounded-xl px-6 font-bold uppercase text-[10px] tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-brand-blue dark:data-[state=active]:text-white data-[state=active]:shadow-sm"
-            >
-              Inteligência de Mercado
-            </TabsTrigger>
-          </TabsList>
+        )}
+        {!validDates && <p role="alert" className="mt-2 text-xs text-red-700">Informe um intervalo de datas válido.</p>}
+      </div>
+
+      <div className="px-4 py-5 sm:px-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div aria-live="polite" className="text-sm font-bold">
+            {loading ? 'Carregando solicitações...' : total + ' solicitações encontradas'}
+          </div>
+          <button
+            type="button"
+            onClick={exportFiltered}
+            disabled={loading || exporting || !total || !validDates}
+            className="min-h-9 text-xs font-semibold text-[#0f62fe] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0f62fe] disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+          >
+            {exporting ? 'Exportando...' : 'Baixar solicitações (CSV)'}
+          </button>
         </div>
 
-        <AnimatePresence mode="wait">
-          <TabsContent value="my-leads" className="space-y-4 outline-none">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="grid grid-cols-1 gap-4"
-            >
-              {leads.length === 0 ? (
-                <EmptyState message="Nenhum lead recebido ainda." />
-              ) : (
-                leads.map((lead, idx) => (
-                  <LeadCard 
-                    key={String(lead.id)}
-                    lead={lead} 
-                    delay={idx * 0.05} 
-                  />
-                ))
-              )}
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="market" className="space-y-6 outline-none">
-            <div className="relative min-h-[400px]">
-              {!marketData?.is_premium && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center p-6">
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 text-center max-w-xl relative overflow-hidden"
-                  >
-                    {/* Background Decorative Element */}
-                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-brand-blue/10 blur-[60px] rounded-full" />
-                    <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-brand-blue/10 blur-[60px] rounded-full" />
-                    
-                    <div className="relative">
-                      <div className="w-20 h-20 rounded-xl bg-brand-blue/10 flex items-center justify-center mx-auto mb-6 border border-brand-blue/20 shadow-inner">
-                        <Lock className="h-8 w-8 text-brand-blue" />
-                      </div>
-                      <h3 className="text-xl font-bold uppercase tracking-tight mb-4 text-foreground dark:text-white">
-                        Acesso Elite ao Mercado
-                      </h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 font-medium leading-relaxed">
-                        Desbloqueie agora a visibilidade total da categoria <span className="text-brand-blue font-bold">{marketData?.category_name}</span>. 
-                        Capture leads qualificados antes que eles cheguem aos seus concorrentes com nossa inteligência em tempo real.
-                      </p>
-                      
-                      <div className="grid grid-cols-2 gap-4 mb-10">
-                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-left">
-                          <Zap className="h-5 w-5 text-brand-blue mb-2" />
-                          <p className="text-[10px] font-bold uppercase text-brand-blue/80">Velocidade Máxima</p>
-                          <p className="text-[11px] font-bold text-slate-500">Notificações Instantâneas</p>
-                        </div>
-                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-left">
-                          <Target className="h-5 w-5 text-brand-blue mb-2" />
-                          <p className="text-[10px] font-bold uppercase text-brand-blue/80">Alta Conversão</p>
-                          <p className="text-[11px] font-bold text-slate-500">Leads Enriquecidos</p>
-                        </div>
-                      </div>
-
-                      <Button 
-                        onClick={() => window.location.href='/pricing'} 
-                        className="w-full rounded-xl font-bold uppercase tracking-widest text-[10px] bg-brand-blue hover:bg-blue-700 text-white h-12 shadow-md group transition-all"
-                      >
-                        Conhecer planos com acesso a leads
-                        <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </Button>
+        {exportError && <p role="alert" className="mb-3 text-xs text-red-700">{exportError}</p>}
+        {error ? (
+          <div role="alert" className="rounded border border-red-200 bg-red-50 p-5 text-sm">
+            <p>Não foi possível carregar as solicitações. {error}</p>
+            <button type="button" onClick={() => setRefresh((count) => count + 1)} className="mt-3 font-semibold text-[#0f62fe] underline">
+              Tentar novamente
+            </button>
+          </div>
+        ) : loading ? (
+          <div data-testid="company-leads-loading" className="space-y-2" aria-label="Carregando lista">
+            {[0, 1, 2, 3].map((item) => <div key={item} className="h-12 animate-pulse rounded bg-slate-100" />)}
+          </div>
+        ) : leads.length === 0 ? (
+          <div className="rounded border border-dashed border-[#dde1e6] p-8 text-center">
+            <p className="text-sm font-semibold">Nenhuma solicitação neste período.</p>
+            <p className="mt-2 text-xs text-slate-600">Ajuste os filtros para consultar outros registros.</p>
+          </div>
+        ) : (
+          <>
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full table-fixed border-collapse text-left text-xs">
+                <caption className="sr-only">Solicitações recebidas pela empresa</caption>
+                <thead>
+                  <tr className="border-b border-[#dde1e6] text-[#525f70]">
+                    <th scope="col" className="w-[27%] px-3 py-3 font-semibold">Contato</th>
+                    <th scope="col" className="w-[20%] px-3 py-3 font-semibold">Segmento</th>
+                    <th scope="col" className="w-[23%] px-3 py-3 font-semibold">Tipo de solicitação</th>
+                    <th scope="col" className="w-[18%] px-3 py-3 font-semibold">Data de envio</th>
+                    <th scope="col" className="w-[12%] px-2 py-3 font-semibold">Detalhes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leads.map((lead) => (
+                    <tr key={lead.id} className="border-b border-[#dde1e6] last:border-b-0 hover:bg-[#f4f7fb]">
+                      <td className="px-3 py-3 align-top">
+                        <div className="truncate font-semibold" title={readable(lead.name)}>{readable(lead.name)}</div>
+                        <div className="mt-1 truncate text-[11px] text-[#525f70]" title={lead.email ?? ''}>{readable(lead.email)}</div>
+                      </td>
+                      <td className="px-3 py-3 align-middle text-[#424c5b]">{readable(lead.product_vertical)}</td>
+                      <td className="px-3 py-3 align-middle text-[#424c5b]">{requestLabel(lead.request_type)}</td>
+                      <td className="px-3 py-3 align-middle text-[#424c5b]">{toDate(lead.created_at)}</td>
+                      <td className="px-2 py-3 align-middle">
+                        <button type="button" onClick={() => setSelected(lead)} className="min-h-9 whitespace-nowrap font-semibold text-[#0f62fe] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0f62fe]" aria-label={'Ver detalhes de ' + readable(lead.name)}>
+                          Ver detalhes
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="divide-y divide-[#dde1e6] rounded border border-[#dde1e6] lg:hidden">
+              {leads.map((lead) => (
+                <article key={lead.id} className="px-3 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-semibold">{readable(lead.name)}</h3>
+                      <p className="mt-0.5 truncate text-xs text-[#525f70]">{readable(lead.email)}</p>
                     </div>
-                  </motion.div>
-                </div>
-              )}
-
-              <div className={cn(
-                "grid grid-cols-1 gap-4 transition-all duration-1000", 
-                !marketData?.is_premium && "blur-[12px] grayscale pointer-events-none opacity-30 select-none"
-              )}>
-                {marketData?.opportunities?.map((opp, idx) => (
-                  <LeadCard 
-                    key={String(opp.id)}
-                    lead={opp} 
-                    isOpportunity 
-                    delay={idx * 0.05} 
-                  />
-                ))}
-              </div>
+                    <time className="shrink-0 text-[11px] text-[#525f70]" dateTime={lead.created_at}>{toDate(lead.created_at)}</time>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                    <div className="min-w-0 text-xs text-[#424c5b]">
+                      <span className="font-semibold">{requestLabel(lead.request_type)}</span>
+                      <span aria-hidden="true"> · </span>
+                      <span>{readable(lead.product_vertical)}</span>
+                    </div>
+                    <button type="button" onClick={() => setSelected(lead)} className="min-h-9 whitespace-nowrap text-xs font-semibold text-[#0f62fe] hover:underline" aria-label={'Ver detalhes de ' + readable(lead.name)}>
+                      Ver detalhes
+                    </button>
+                  </div>
+                </article>
+              ))}
             </div>
-          </TabsContent>
-        </AnimatePresence>
-      </Tabs>
+          </>
+        )}
 
-      {/* Leads Intelligence Dossier Sheet */}
-    </div>
-  );
-}
-
-function LeadCard({ 
-  lead, 
-  isOpportunity, 
-  delay = 0,
-}: { 
-  lead: Record<string, unknown>,
-  isOpportunity?: boolean, 
-  delay?: number
-}) {
-  const textValue = (key: string, fallback = '') => {
-    const value = lead[key];
-    return value === null || value === undefined ? fallback : String(value);
-  };
-  const city = textValue('city', 'local não informado');
-  const createdAt = textValue('created_at');
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay, duration: 0.4 }}
-    >
-      <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl group overflow-hidden transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700">
-        <CardContent className="p-6 relative">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            <div className="flex-1 space-y-6">
-              <div className="flex items-center flex-wrap gap-3">
-                <div className={cn(
-                  "px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider border",
-                  isOpportunity 
-                    ? "bg-amber-500/10 text-amber-500 border-amber-500/20" 
-                    : "bg-brand-blue/10 text-brand-blue border-brand-blue/20"
-                )}>
-                  {isOpportunity ? 'Oportunidade Blind' : 'Lead Direto'}
-                </div>
-                <h3 className="font-black text-xl tracking-tight uppercase text-foreground dark:text-white">
-                  {isOpportunity ? `Potencial Cliente em ${city}` : textValue('name', 'Lead')}
-                </h3>
-                
-                {createdAt && (
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground/60 dark:text-white/30 ml-auto lg:ml-0">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span className="font-mono">{new Date(createdAt).toLocaleDateString('pt-BR')}</span>
-                  </div>
-                )}
-
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">Localização</p>
-                  <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
-                    <MapPin className="h-4 w-4 text-brand-blue/50" />
-                    <span>{[textValue('city'), textValue('state')].filter(Boolean).join(' - ') || 'Não informado'}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">E-mail</p>
-                  <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
-                    <Mail className="h-4 w-4 text-brand-blue/50" />
-                    <span className="truncate max-w-[180px]">{isOpportunity ? '••••••••@••••.com' : textValue('email', 'Não informado')}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">Telefone</p>
-                  <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70">
-                    <Phone className="h-4 w-4 text-brand-blue/50" />
-                    <span className="font-mono">{isOpportunity ? '(••) •••••-••••' : textValue('phone', 'Não informado')}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/20">Segmento</p>
-                  <div className="flex items-center gap-2 text-sm font-bold text-foreground/80 dark:text-white/70 text-brand-blue">
-                    <Globe className="h-4 w-4 opacity-50" />
-                    <span className="truncate">{textValue('product_vertical', 'Não informado')}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 relative group-hover:border-slate-200 transition-colors">
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed italic pr-10">
-                  &quot;{textValue('message', 'Mensagem não informada pelo lead.')}&quot;
-                </p>
-                <MessageSquare className="absolute right-4 top-4 h-4 w-4 text-slate-300 dark:text-white/10" />
-              </div>
-            </div>
-            
-            <div className="flex flex-row lg:flex-col gap-3 min-w-[200px]">
-              {!isOpportunity ? (
-                <>
-                  <Button variant="outline" className="flex-1 lg:flex-none h-11 rounded-xl border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                    <Calendar className="h-3.5 w-3.5 mr-2" /> Agendar
-                  </Button>
-                  <Button className="flex-1 lg:flex-none h-11 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-slate-800 dark:hover:bg-slate-200">
-                    <MessageSquare className="h-3.5 w-3.5 mr-2" /> Contato Direto
-                  </Button>
-                </>
-              ) : (
-                <div className="flex flex-col gap-2 w-full">
-                  <Badge variant="outline" className="justify-center h-9 rounded-xl bg-slate-50 dark:bg-slate-900 border-dashed border-slate-300 dark:border-slate-700 text-[10px] text-slate-400">
-                    Lead Protegido
-                  </Badge>
-                  <Button disabled className="h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 text-[10px] font-bold uppercase tracking-widest cursor-not-allowed border border-slate-200 dark:border-slate-700">
-                    <Lock className="h-3.5 w-3.5 mr-2" /> Indisponível
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-             <ExternalLink className="h-4 w-4 text-brand-blue/20" />
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <Card className="border-dashed border-2 border-slate-200 dark:border-slate-800 bg-transparent rounded-xl">
-      <CardContent className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-6 border border-slate-100 dark:border-slate-800">
-          <ShieldAlert className="h-8 w-8 text-slate-300 dark:text-slate-700" />
-        </div>
-        <h3 className="text-xl font-bold uppercase tracking-tight mb-2 text-foreground dark:text-white">Sem Movimentação</h3>
-        <p className="text-sm text-muted-foreground/50 font-medium max-w-xs">{message}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function LeadsSkeleton() {
-  return (
-    <div data-testid="leads-skeleton" className="space-y-10">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 rounded-xl bg-slate-100 dark:bg-slate-900/50" />)}
+        {!loading && !error && totalPages > 1 && (
+          <nav aria-label="Paginação de solicitações" className="mt-5 flex items-center justify-between gap-3 border-t border-[#dde1e6] pt-4">
+            <button
+              type="button"
+              onClick={() => setPage((value) => Math.max(1, value - 1))}
+              disabled={page <= 1}
+              className="min-h-10 rounded border border-[#c6c6c6] px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <span className="text-center text-xs text-[#525f70]">{page} de {totalPages}</span>
+            <button
+              type="button"
+              onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+              disabled={page >= totalPages}
+              className="min-h-10 rounded border border-[#c6c6c6] px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Próxima
+            </button>
+          </nav>
+        )}
       </div>
-      <div className="flex justify-between items-end">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-64 bg-slate-100 dark:bg-slate-900/50" />
-          <Skeleton className="h-4 w-48 bg-slate-100 dark:bg-slate-900/50" />
-        </div>
-        <Skeleton className="h-12 w-80 rounded-xl bg-slate-100 dark:bg-slate-900/50" />
-      </div>
-      <div className="space-y-4">
-        {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-64 rounded-xl bg-slate-100 dark:bg-slate-900/50" />)}
-      </div>
-    </div>
+
+      <Dialog open={Boolean(selected)} onOpenChange={(open) => { if (!open) setSelected(null); }}>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes da solicitação</DialogTitle>
+            <DialogDescription>Informações enviadas diretamente à sua empresa.</DialogDescription>
+          </DialogHeader>
+          {selected && (
+            <dl className="grid gap-4 text-sm sm:grid-cols-2">
+              {([
+                ['Nome', selected.name],
+                ['E-mail', selected.email],
+                ['Telefone', selected.phone],
+                ['Segmento', selected.product_vertical],
+                ['Tipo', requestLabel(selected.request_type)],
+                ['Data', toDate(selected.created_at)],
+                ['Localização', [selected.city, selected.state].filter(Boolean).join(' / ') || selected.location],
+                ['Origem', selected.source],
+              ] as [string, string | null | undefined][]).map(([label, value]) => (
+                <div key={label} className="min-w-0">
+                  <dt className="text-xs font-semibold text-[#525f70]">{label}</dt>
+                  <dd className="mt-1 break-words text-[#09172f]">{readable(value)}</dd>
+                </div>
+              ))}
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-semibold text-[#525f70]">Mensagem</dt>
+                <dd className="mt-1 whitespace-pre-wrap break-words text-[#09172f]">{readable(selected.message)}</dd>
+              </div>
+            </dl>
+          )}
+        </DialogContent>
+      </Dialog>
+    </section>
   );
 }
