@@ -426,12 +426,15 @@ export default function FounderConversionTour() {
               </div>
             )}
 
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs font-bold tabular-nums text-slate-600" aria-live="polite">
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <p
+                className="shrink-0 text-[11px] font-semibold tabular-nums text-slate-600 sm:text-xs"
+                aria-live="polite"
+              >
                 {String(stepIndex + 1).padStart(2, '0')} / {String(STEPS.length).padStart(2, '0')}
               </p>
               <div
-                className="flex flex-wrap items-center gap-2"
+                className="flex shrink-0 items-center gap-0.5 sm:gap-1"
                 aria-label="Selecionar etapa do tour"
               >
                 {STEPS.map((item, index) => (
@@ -441,13 +444,19 @@ export default function FounderConversionTour() {
                     onClick={() => manualStep(index)}
                     aria-label={`Ir para etapa ${index + 1}: ${item.title}`}
                     aria-current={stepIndex === index ? 'step' : undefined}
-                    className={`h-3 rounded-full transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f62fe] ${stepIndex === index ? 'w-8 bg-[#0f62fe]' : 'w-3 bg-slate-300 hover:bg-slate-400'}`}
-                  />
+                    className="group flex h-7 w-7 shrink-0 touch-manipulation appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f62fe]"
+                  >
+                    <span
+                      data-tour-pagination-dot
+                      aria-hidden="true"
+                      className={`block h-[7px] w-[7px] shrink-0 rounded-full transition-colors duration-200 ${stepIndex === index ? 'bg-[#0f62fe]' : 'bg-slate-300 group-hover:bg-slate-400'}`}
+                    />
+                  </button>
                 ))}
               </div>
             </div>
             <div
-              className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"
+              className="mt-1.5 h-[3px] overflow-hidden rounded-full bg-slate-100"
               role="progressbar"
               aria-valuemin={1}
               aria-valuemax={STEPS.length}
