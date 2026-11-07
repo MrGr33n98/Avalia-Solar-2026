@@ -88,6 +88,10 @@ export default function FounderPageClient() {
   const [activeSection, setActiveSection] = useState<string>('founder-processo');
   const mobileIndexRef = useRef<HTMLDetailsElement>(null);
 
+  const toggleFaq = (index: number) => {
+    setOpenFaq((prev) => (prev === index ? null : index));
+  };
+
   useEffect(() => {
     trackFounderPageView();
   }, []);

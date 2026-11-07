@@ -287,31 +287,34 @@ class Rack::Attack
     blocked_ips.include?(req.ip)
   end
 
+  self.throttled_response_retry_after_header = true
+
   ### Customizar Response ###
   # Retornar JSON com informação útil ao cliente
   self.throttled_responder = lambda do |env|
-    match_data = env['rack.attack.match_data'] || {}
+    matched = env['rack.attack.matched']
+    match_data_map = env['rack.attack.match_data'] || {}
+    match_data = match_data_map[matched] || match_data_map.values.first || {}
     now = match_data[:epoch_time] || Time.now.to_i
+    period = match_data[:period] || 60
+    limit = match_data[:limit]
 
     headers = {
       'Content-Type' => 'application/json',
-      'X-RateLimit-Limit' => match_data[:limit].to_s,
+      'X-RateLimit-Limit' => limit.to_s,
       'X-RateLimit-Remaining' => '0',
-      'X-RateLimit-Reset' => (now + (match_data[:period] || 60)).to_s
+      'X-RateLimit-Reset' => (now + period).to_s,
+      'Retry-After' => period.to_s
     }
-
-    # Adicionar Retry-After header
-    if match_data[:period]
-      headers['Retry-After'] = match_data[:period].to_s
-    end
 
     body = {
       code: 'RATE_LIMIT_EXCEEDED',
+      error: 'Rate limit exceeded. Please try again later.',
       message: 'Muitas solicitações. Por favor, tente novamente mais tarde.',
       details: {
-        retry_after_seconds: match_data[:period],
-        limit: match_data[:limit],
-        period: match_data[:period]
+        retry_after_seconds: period,
+        limit: limit,
+        period: period
       }
     }
 
