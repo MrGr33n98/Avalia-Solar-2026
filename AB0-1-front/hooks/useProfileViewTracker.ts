@@ -28,7 +28,7 @@ export function useProfileViewTracker(companyId: number | string | undefined) {
     if (sessionStorage.getItem(sessionKey)) return;
 
     function sendTrackRequest() {
-      if (trackedRef.current) return;
+      if (trackedRef.current || !companyId) return;
       trackedRef.current = true;
       sessionStorage.setItem(sessionKey, '1');
 
