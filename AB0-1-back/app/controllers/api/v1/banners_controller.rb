@@ -21,8 +21,10 @@ class Api::V1::BannersController < Api::V1::BaseController
       serialize_banners(banners)
     end
 
-    # Registra métricas de entrega
-    Banners::Metrics.delivery(status: 'success', position: params[:position].presence || 'all', source: 'cache_or_db')
+    # A 200/[] is a valid empty inventory, not a successful creative delivery.
+    # Keep it distinct from API failures for operational alerting and QA.
+    delivery_status = serialized_banners.empty? ? 'empty' : 'success'
+    Banners::Metrics.delivery(status: delivery_status, position: params[:position].presence || 'all', source: 'cache_or_db')
     render json: serialized_banners
   rescue StandardError => e
     Rails.logger.error("[BannersController#index] Error: #{e.class}: #{e.message}")
