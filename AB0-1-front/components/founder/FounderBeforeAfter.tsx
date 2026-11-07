@@ -260,7 +260,7 @@ export default function FounderBeforeAfter() {
         <div
           role="tablist"
           aria-label="Imagem do comparador"
-          className="flex items-center justify-between gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200 mb-3"
+          className="mb-3 grid grid-cols-2 gap-2.5"
         >
           <button
             id="founder-tab-free"
@@ -273,8 +273,10 @@ export default function FounderBeforeAfter() {
             onClick={() => {
               selectMobileTab('free');
             }}
-            className={`flex-1 py-2 text-xs font-mono font-bold rounded-lg transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f62fe] focus-visible:ring-offset-2 ${
-              mobileTab === 'free' ? 'bg-white text-[#09172f] shadow-sm' : 'text-slate-600'
+            className={`founder-before-after-tab flex h-10 min-w-0 items-center justify-center rounded-lg border px-1.5 text-center text-[clamp(10px,2.9vw,12px)] font-semibold leading-tight tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f62fe] focus-visible:ring-offset-2 ${
+              mobileTab === 'free'
+                ? 'border-[#e89b19] bg-[#fff0cd] text-[#7c3e00] shadow-sm'
+                : 'border-[#e7bf72] bg-[#fffaf0] text-[#995100] hover:bg-[#fff3dc]'
             }`}
           >
             Antes · Perfil Básico
@@ -290,8 +292,10 @@ export default function FounderBeforeAfter() {
             onClick={() => {
               selectMobileTab('premium');
             }}
-            className={`flex-1 py-2 text-xs font-mono font-bold rounded-lg transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f62fe] focus-visible:ring-offset-2 ${
-              mobileTab === 'premium' ? 'bg-[#0f62fe] text-white shadow-sm' : 'text-slate-600'
+            className={`founder-before-after-tab flex h-10 min-w-0 items-center justify-center rounded-lg border px-1.5 text-center text-[clamp(10px,2.9vw,12px)] font-semibold leading-tight tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f62fe] focus-visible:ring-offset-2 ${
+              mobileTab === 'premium'
+                ? 'border-[#0f62fe] bg-[#0f62fe] text-white shadow-sm'
+                : 'border-[#a6c8ff] bg-[#edf5ff] text-[#0043ce] hover:bg-[#d0e2ff]'
             }`}
           >
             Depois · Brand Page
@@ -335,10 +339,12 @@ export default function FounderBeforeAfter() {
               <button
                 type="button"
                 onClick={() => handleOpenViewer(mobileTab)}
-                className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/90 text-white text-xs font-mono font-bold border border-white/20 shadow-md"
+                aria-label="Ampliar para leitura"
+                title="Ampliar para leitura"
+                data-testid="founder-image-expand"
+                className="absolute bottom-2 right-2 inline-flex h-12 w-12 items-center justify-center rounded-lg border border-white/20 bg-[#09172f]/95 text-[#f8ca3a] shadow-lg transition-colors hover:bg-[#09172f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f62fe] focus-visible:ring-offset-2"
               >
-                <Maximize2 className="w-3.5 h-3.5 text-[#f8ca3a]" />
-                Ampliar para leitura
+                <Maximize2 className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           )}
