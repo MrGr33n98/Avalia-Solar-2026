@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Search, ShieldCheck, Settings, Check, ArrowUpRight, Sparkles } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { trackFounderCtaClick } from './FounderTelemetry';
 
 const BOOKING_URL = 'https://zbooking.us/6shCH';
@@ -13,7 +13,6 @@ interface ProcessStep {
   title: string;
   subtitle: string;
   desc: string;
-  icon: React.ReactNode;
 }
 
 const PROCESS_STEPS: ProcessStep[] = [
@@ -22,21 +21,18 @@ const PROCESS_STEPS: ProcessStep[] = [
     title: 'Localizar ou Cadastrar Empresa',
     subtitle: 'Diretório Nacional de Energia Solar',
     desc: 'Localize sua empresa no diretório oficial da Avalia Solar ou efetue um novo registro caso sua marca ainda não conste na base.',
-    icon: <Search className="w-5 h-5 text-[#0f62fe]" />,
   },
   {
     number: '02',
     title: 'Solicitar Administração & Homologação',
     subtitle: 'Comprovação de Titularidade e CNPJ',
     desc: 'Nossa equipe de curadoria valida o CNPJ ativo e a titularidade institucional, liberando as credenciais de gestão e os 2 meses gratuitos.',
-    icon: <ShieldCheck className="w-5 h-5 text-[#107c41]" />,
   },
   {
     number: '03',
     title: 'Configurar Brand Page & Catálogo',
     subtitle: 'Vitrine Técnica e Avaliações Reais',
     desc: 'Insira logotipo em alta resolução, vincule os produtos homologados, configure os botões de contato direto e receba depoimentos de clientes.',
-    icon: <Settings className="w-5 h-5 text-[#f8ca3a]" />,
   },
 ];
 
@@ -45,13 +41,12 @@ export default function FounderProcessDraw() {
   const [isInView, setIsInView] = useState(false);
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#d0d7de]">
-      <div className="max-w-3xl mb-14 text-center mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#edf5ff] border border-[#d0e2ff] text-xs font-mono text-[#0043ce] uppercase tracking-wider mb-2">
-          <Sparkles className="w-3.5 h-3.5" />
-          Jornada Real de Ativação · Process Draw
+    <section className="mx-auto max-w-7xl border-t border-[#dde1e6] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+      <div className="mb-7 max-w-3xl sm:mb-10">
+        <div className="mb-2 inline-flex items-center rounded-md border border-[#d0e2ff] bg-[#edf5ff] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#0043ce]">
+          Jornada de ativação · 3 etapas
         </div>
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#09172f] tracking-tight">
+        <h2 className="text-2xl font-bold tracking-tight text-[#09172f] sm:text-3xl lg:text-4xl">
           Como funciona a ativação do Plano Founder
         </h2>
         <p className="mt-3 text-sm sm:text-base text-[#475569] leading-relaxed">
@@ -66,38 +61,36 @@ export default function FounderProcessDraw() {
         onMouseEnter={() => setIsInView(true)}
       >
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10"
+          className="relative z-10 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-5"
           onViewportEnter={() => setIsInView(true)}
           viewport={{ once: true, amount: 0.3 }}
         >
           {PROCESS_STEPS.map((step, idx) => (
             <motion.div
               key={step.number}
-              className="relative rounded-2xl border border-slate-300 bg-white p-6 sm:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
-              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 30 }}
+              className="relative flex flex-col justify-between rounded-lg border border-[#dde1e6] bg-white p-4 transition-colors hover:border-[#a6c8ff] sm:p-5"
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: shouldReduceMotion ? 0 : 30 }}
               transition={{
-                duration: 0.6,
-                delay: shouldReduceMotion ? 0 : idx * 0.25,
+                duration: 0.36,
+                delay: shouldReduceMotion ? 0 : idx * 0.12,
                 ease: EASING_CUBIC,
               }}
             >
               <div>
                 {/* Cabeçalho do Card */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-[#f1f5f9] border border-slate-200 flex items-center justify-center">
-                    {step.icon}
-                  </div>
-                  <span className="font-mono text-2xl font-black text-slate-300">
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-xl font-semibold tabular-nums tracking-tight text-[#0f62fe]">
                     {step.number}
                   </span>
+                  <span className="h-px w-9 bg-[#d0e2ff]" aria-hidden="true" />
                 </div>
 
                 <span className="font-mono text-[11px] font-bold text-[#0f62fe] uppercase tracking-wider block mb-1">
                   {step.subtitle}
                 </span>
 
-                <h3 className="text-lg font-black text-[#09172f] tracking-tight">
+                <h3 className="text-lg font-bold tracking-tight text-[#09172f]">
                   {step.title}
                 </h3>
 
@@ -106,9 +99,8 @@ export default function FounderProcessDraw() {
                 </p>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2 text-xs text-[#107c41] font-mono font-bold">
-                <Check className="w-4 h-4 shrink-0" />
-                <span>ETAPA HOMOLOGADA</span>
+              <div className="mt-4 border-t border-[#e9edf2] pt-3 text-[10px] font-semibold tracking-wide text-[#66758a]">
+                ETAPA DO PROCESSO
               </div>
             </motion.div>
           ))}
@@ -136,13 +128,13 @@ export default function FounderProcessDraw() {
       </div>
 
       {/* Box de Ação para Iniciar Processo */}
-      <div className="mt-12 text-center">
+      <div className="mt-7 text-left sm:mt-9">
         <a
           href={BOOKING_URL}
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => trackFounderCtaClick('process_draw_agendar', BOOKING_URL)}
-          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#09172f] hover:bg-[#16294a] text-white font-bold text-sm shadow-md transition-all transform hover:-translate-y-0.5"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#09172f] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-[#0043ce]"
         >
           <span>Iniciar Etapa 01 com a Equipe Comercial</span>
           <ArrowUpRight className="w-4 h-4 text-[#f8ca3a]" />
