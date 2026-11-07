@@ -94,6 +94,9 @@ function SearchPageContent() {
   const urlCity = searchParams.get('city') || '';
   const urlVerified = searchParams.get('verified') === 'true';
   const urlCategory = searchParams.get('category') || '';
+  const urlBrand = searchParams.get('brand') || '';
+  const urlPrice = searchParams.get('price') as PriceRange | null;
+  const selectedPrice: PriceRange = urlPrice && ['all', 'under_1000', '1000_3000', '3000_5000', 'over_5000'].includes(urlPrice) ? urlPrice : 'all';
   const urlState = searchParams.get('state') || '';
   const pageParam = normalizeSearchPage(searchParams.get('page'));
   const pageSize = normalizeSearchPageSize(searchParams.get('per_page'));
@@ -119,6 +122,8 @@ function SearchPageContent() {
     city: urlCity,
     verifiedOnly: urlVerified,
     category: urlCategory,
+    brand: urlBrand,
+    priceRange: selectedPrice,
   });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const previousPageRef = useRef(pageParam);
@@ -133,8 +138,10 @@ function SearchPageContent() {
       city: urlCity,
       verifiedOnly: urlVerified,
       category: urlCategory,
+      brand: urlBrand,
+      priceRange: selectedPrice,
     }));
-  }, [query, urlCity, urlVerified, urlCategory]);
+  }, [query, urlCity, urlVerified, urlCategory, urlBrand, selectedPrice]);
 
   useEffect(() => {
     setActiveTab(isSearchTab(tabParam) ? tabParam : 'all');
@@ -382,6 +389,10 @@ function SearchPageContent() {
     else params.delete('verified');
     if (filters.category.trim()) params.set('category', filters.category.trim());
     else params.delete('category');
+    if (filters.brand.trim()) params.set('brand', filters.brand.trim());
+    else params.delete('brand');
+    if (filters.priceRange !== 'all') params.set('price', filters.priceRange);
+    else params.delete('price');
     params.delete('page');
     router.replace(`/search?${params.toString()}`, { scroll: false });
     setMobileFiltersOpen(false);
@@ -452,7 +463,8 @@ function SearchPageContent() {
               productsCount={filteredProducts.length}
               companiesCount={paginationMeta.total_count}
               reviewsCount={results.reviews?.length || 0}
-              sort={sort}
+              sort={activeTab === 'companies' && (sort === 'price_asc' || sort === 'price_desc') ? 'relevance' : sort}
+              showPriceSort={activeTab !== 'companies'}
               onSortChange={handleSortChange}
             />
 
