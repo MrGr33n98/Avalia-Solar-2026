@@ -21,8 +21,8 @@ module Search
       second = CompanySearchService.new(q: token, sort: 'name_asc', page: 2, limit: 1)
       second.define_singleton_method(:search_enabled?) { false }
 
-      assert_match(/ A\\z/, first.call.fetch(:nodes).first.name)
-      assert_match(/ Z\\z/, second.call.fetch(:nodes).first.name)
+      assert_match(/ A\z/, first.call.fetch(:nodes).first.name)
+      assert_match(/ Z\z/, second.call.fetch(:nodes).first.name)
     end
 
     test 'falls back to postgresql when opensearch returns zero companies for a real query' do
