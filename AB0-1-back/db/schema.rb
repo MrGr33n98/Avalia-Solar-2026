@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_06_235900) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_07_033000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -3923,6 +3923,78 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_06_235900) do
     t.index ["company_id"], name: "index_sales_audit_logs_on_company_id"
   end
 
+  create_table "sales_ai_settings", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.string "provider", default: "openrouter", null: false
+    t.boolean "enabled", default: true, null: false
+    t.text "openrouter_api_key_ciphertext"
+    t.string "openrouter_masked_key"
+    t.string "openrouter_key_status", default: "unconfigured", null: false
+    t.datetime "openrouter_key_rotated_at"
+    t.datetime "openrouter_last_tested_at"
+    t.integer "openrouter_last_latency_ms"
+    t.string "openrouter_last_error"
+    t.decimal "monthly_budget_usd", precision: 10, scale: 4, default: "50.0", null: false
+    t.integer "daily_user_limit", default: 100, null: false
+    t.boolean "fallback_enabled", default: true, null: false
+    t.boolean "require_zdr", default: false, null: false
+    t.jsonb "allowed_models", default: [], null: false
+    t.jsonb "allowed_context_fields", default: [], null: false
+    t.jsonb "policies", default: {}, null: false
+    t.bigint "updated_by_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "idx_sales_ai_settings_company_unique", unique: true
+  end
+
+  create_table "sales_ai_model_profiles", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.string "feature", null: false
+    t.string "primary_model_id", null: false
+    t.string "fallback_model_id"
+    t.decimal "temperature", precision: 3, scale: 2, default: "0.3", null: false
+    t.integer "max_tokens", default: 1200, null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "quota_daily", default: 200, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "feature"], name: "idx_sales_ai_profiles_company_feature", unique: true
+    t.index ["company_id"], name: "index_sales_ai_model_profiles_on_company_id"
+  end
+
+  create_table "sales_ai_generations", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "user_id", null: false
+    t.string "feature", null: false
+    t.string "action_name", null: false
+    t.string "provider", default: "openrouter", null: false
+    t.string "requested_model", null: false
+    t.string "resolved_model"
+    t.string "fallback_model_used"
+    t.string "prompt_version", default: "crm-ai-v1", null: false
+    t.string "status", default: "completed", null: false
+    t.string "idempotency_key"
+    t.jsonb "context_refs", default: {}, null: false
+    t.jsonb "sources_used", default: [], null: false
+    t.jsonb "missing_fields", default: [], null: false
+    t.jsonb "warnings", default: [], null: false
+    t.jsonb "output_json", default: {}, null: false
+    t.integer "prompt_tokens", default: 0, null: false
+    t.integer "completion_tokens", default: 0, null: false
+    t.decimal "estimated_cost_usd", precision: 12, scale: 6, default: "0.0", null: false
+    t.integer "latency_ms", default: 0, null: false
+    t.string "error_code"
+    t.string "error_message"
+    t.string "user_decision"
+    t.string "user_feedback_notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "user_id", "created_at"], name: "idx_sales_ai_generations_audit"
+    t.index ["company_id", "user_id", "idempotency_key"], name: "idx_sales_ai_generations_idempotency", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["company_id"], name: "index_sales_ai_generations_on_company_id"
+    t.index ["user_id"], name: "index_sales_ai_generations_on_user_id"
+  end
+
   create_table "sales_campaign_daily_metrics", force: :cascade do |t|
     t.bigint "company_id", null: false
     t.bigint "sales_campaign_id", null: false
@@ -4164,7 +4236,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_06_235900) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "company_id", null: false
+    t.string "provider_account_id"
+    t.string "provider_region", default: "us"
+    t.string "connection_status", default: "pending", null: false
+    t.datetime "access_token_expires_at"
+    t.jsonb "granted_scopes", default: []
     t.index ["company_id", "provider", "email"], name: "idx_email_accounts_company_provider_email", unique: true
+    t.index ["company_id", "provider", "provider_account_id"], name: "idx_crm_mailbox_provider_identity", unique: true, where: "(provider_account_id IS NOT NULL)"
     t.index ["company_id"], name: "index_sales_email_accounts_on_company_id"
     t.index ["user_id", "email"], name: "index_sales_email_accounts_on_user_id_and_email", unique: true
     t.index ["user_id"], name: "index_sales_email_accounts_on_user_id"
@@ -4279,13 +4357,33 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_06_235900) do
     t.datetime "delayed_at"
     t.datetime "rejected_at"
     t.datetime "replied_at"
+    t.string "provider_folder_id"
+    t.datetime "provider_received_at"
+    t.jsonb "raw_headers", default: {}
+    t.bigint "parent_email_message_id"
+    t.bigint "reply_mailbox_id"
+    t.string "reply_to_email"
+    t.string "transport_provider"
+    t.string "rfc_message_id"
+    t.string "in_reply_to_header"
+    t.text "references_header"
+    t.string "inbound_classification", default: "human_reply"
+    t.jsonb "classification_reason", default: {}
+    t.boolean "is_read", default: false, null: false
+    t.datetime "read_at"
+    t.index ["company_id", "in_reply_to_header"], name: "idx_sales_email_messages_company_in_reply_to"
     t.index ["company_id", "message_id"], name: "idx_sales_email_messages_company_message_id", unique: true, where: "(message_id IS NOT NULL)"
+    t.index ["company_id", "rfc_message_id"], name: "idx_sales_email_messages_company_rfc_id"
     t.index ["company_id"], name: "index_sales_email_messages_on_company_id"
+    t.index ["parent_email_message_id"], name: "index_sales_email_messages_on_parent_email_message_id"
     t.index ["provider_message_id"], name: "index_sales_email_messages_on_provider_message_id"
+    t.index ["reply_mailbox_id"], name: "index_sales_email_messages_on_reply_mailbox_id"
     t.index ["sales_account_id"], name: "index_sales_email_messages_on_sales_account_id"
     t.index ["sales_campaign_id"], name: "idx_sales_email_messages_campaign"
     t.index ["sales_campaign_recipient_id"], name: "idx_sales_email_messages_recipient_unique", unique: true, where: "(sales_campaign_recipient_id IS NOT NULL)"
     t.index ["sales_contact_id"], name: "index_sales_email_messages_on_sales_contact_id"
+    t.index ["sales_email_account_id", "is_read"], name: "idx_sales_email_messages_account_is_read"
+    t.index ["sales_email_account_id", "provider_message_id"], name: "idx_crm_mailbox_message_identity", unique: true, where: "((sales_email_account_id IS NOT NULL) AND (provider_message_id IS NOT NULL))"
     t.index ["sales_email_account_id"], name: "index_sales_email_messages_on_sales_email_account_id"
     t.index ["sales_email_sequence_enrollment_step_id"], name: "idx_sales_email_messages_sequence_step_unique", unique: true, where: "(sales_email_sequence_enrollment_step_id IS NOT NULL)"
     t.index ["sales_email_thread_id"], name: "index_sales_email_messages_on_sales_email_thread_id"
@@ -4392,9 +4490,28 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_06_235900) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "company_id", null: false
+    t.jsonb "settings", default: {}, null: false
     t.index ["company_id"], name: "index_sales_email_signatures_on_company_id"
     t.index ["sales_email_account_id"], name: "index_sales_email_signatures_on_sales_email_account_id"
     t.index ["user_id"], name: "index_sales_email_signatures_on_user_id"
+  end
+
+  create_table "sales_email_sync_states", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_email_account_id", null: false
+    t.string "provider_folder_id", null: false
+    t.string "cursor"
+    t.datetime "high_watermark_at"
+    t.datetime "last_started_at"
+    t.datetime "last_succeeded_at"
+    t.string "last_error_code"
+    t.integer "retry_count", default: 0, null: false
+    t.datetime "lease_until"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id"], name: "index_sales_email_sync_states_on_company_id"
+    t.index ["sales_email_account_id", "provider_folder_id"], name: "idx_email_sync_states_account_folder", unique: true
+    t.index ["sales_email_account_id"], name: "index_sales_email_sync_states_on_sales_email_account_id"
   end
 
   create_table "sales_email_suppressions", force: :cascade do |t|
@@ -4439,11 +4556,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_06_235900) do
     t.bigint "company_id", null: false
     t.bigint "sales_account_id"
     t.bigint "sales_contact_id"
+    t.bigint "sales_email_account_id"
+    t.bigint "assigned_user_id"
+    t.string "status", default: "open", null: false
+    t.bigint "sales_opportunity_id"
+    t.index ["assigned_user_id"], name: "index_sales_email_threads_on_assigned_user_id"
     t.index ["company_id", "provider_thread_id"], name: "idx_email_threads_company_provider_id", unique: true
     t.index ["company_id", "sales_account_id", "sales_contact_id"], name: "idx_email_threads_tenant_account_contact"
     t.index ["company_id"], name: "index_sales_email_threads_on_company_id"
     t.index ["sales_account_id"], name: "index_sales_email_threads_on_sales_account_id"
     t.index ["sales_contact_id"], name: "index_sales_email_threads_on_sales_contact_id"
+    t.index ["sales_email_account_id", "status"], name: "idx_email_threads_account_status"
+    t.index ["sales_email_account_id"], name: "index_sales_email_threads_on_sales_email_account_id"
+    t.index ["sales_opportunity_id"], name: "index_sales_email_threads_on_sales_opportunity_id"
   end
 
   create_table "sales_energy_profiles", force: :cascade do |t|
@@ -5604,6 +5729,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_06_235900) do
   add_foreign_key "sales_activities", "sales_contacts"
   add_foreign_key "sales_activities", "sales_opportunities"
   add_foreign_key "sales_activities", "users", column: "actor_id"
+  add_foreign_key "sales_ai_generations", "companies"
+  add_foreign_key "sales_ai_generations", "users"
+  add_foreign_key "sales_ai_model_profiles", "companies"
+  add_foreign_key "sales_ai_settings", "companies"
   add_foreign_key "sales_audiences", "companies"
   add_foreign_key "sales_audiences", "users", column: "created_by_id"
   add_foreign_key "sales_campaigns", "sales_audiences", column: "audience_id"
@@ -5632,6 +5761,11 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_06_235900) do
   add_foreign_key "sales_email_sequences", "users"
   add_foreign_key "sales_email_signatures", "sales_email_accounts"
   add_foreign_key "sales_email_suppressions", "companies"
+  add_foreign_key "sales_email_sync_states", "companies"
+  add_foreign_key "sales_email_sync_states", "sales_email_accounts"
+  add_foreign_key "sales_email_threads", "sales_email_accounts"
+  add_foreign_key "sales_email_threads", "sales_opportunities"
+  add_foreign_key "sales_email_threads", "users", column: "assigned_user_id"
   add_foreign_key "sales_form_submissions", "sales_campaigns", column: "campaign_id"
   add_foreign_key "sales_form_submissions", "sales_forms", column: "form_id"
   add_foreign_key "sales_forms", "sales_campaigns", column: "campaign_id"
