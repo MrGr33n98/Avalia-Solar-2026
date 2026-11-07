@@ -3,7 +3,13 @@ require 'rails_helper'
 RSpec.describe 'Intent scores API', type: :request do
   let(:company) { create(:company, intent_tier: 'pro') }
   let(:user) { create(:user, company: company) }
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) do
+    JWT.encode(
+      { user_id: user.id, typ: 'access', exp: 1.day.from_now.to_i },
+      Rails.application.secret_key_base,
+      'HS256'
+    )
+  end
   let(:headers) do
     {
       'ACCEPT' => 'application/json',

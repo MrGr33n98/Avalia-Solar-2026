@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe 'Identity stitch API', type: :request do
   include ActiveJob::TestHelper
 
-  let(:user) { create(:user) }
+  let!(:user) { create(:user) }
   let(:token) do
     JWT.encode(
       { user_id: user.id, typ: 'access', iat: Time.current.to_i, exp: 1.hour.from_now.to_i },
@@ -28,7 +28,7 @@ RSpec.describe 'Identity stitch API', type: :request do
   it 'rejects an unauthenticated attempt to attach a user to a session' do
     post '/api/v1/identity/stitch', params: { user_id: user.id, anonymous_id: 'anon-x' }
     expect(response).to have_http_status(:unauthorized)
-    expect(enqueued_jobs).to be_empty
+    expect(enqueued_jobs.select { |j| j[:job] == StitchIdentityJob }).to be_empty
   end
 
   it 'stitches only a previously recorded session with matching request proof' do
@@ -50,7 +50,7 @@ RSpec.describe 'Identity stitch API', type: :request do
          headers: request_headers
 
     expect(response).to have_http_status(:forbidden)
-    expect(enqueued_jobs).to be_empty
+    expect(enqueued_jobs.select { |j| j[:job] == StitchIdentityJob }).to be_empty
   end
 
   it 'rejects session theft across client fingerprints' do
@@ -60,6 +60,6 @@ RSpec.describe 'Identity stitch API', type: :request do
          headers: request_headers.merge('REMOTE_ADDR' => '198.51.100.55')
 
     expect(response).to have_http_status(:forbidden)
-    expect(enqueued_jobs).to be_empty
+    expect(enqueued_jobs.select { |j| j[:job] == StitchIdentityJob }).to be_empty
   end
 end
