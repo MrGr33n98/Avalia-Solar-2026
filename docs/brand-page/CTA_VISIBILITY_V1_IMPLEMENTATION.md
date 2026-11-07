@@ -93,3 +93,45 @@ npm run build
 - [ ] Rollout controlado e monitoramento de erros 403/422/500, CTR por canal e plano.
 - [ ] Medição após 7 e 14 dias (depende de passagem de tempo, não executável no commit).
 - [ ] Deprecar aliases antigos somente após confirmar consumidores e compatibilidade.
+
+## UI-CTA-02 — Hierarquia compacta PWA (2026-11-07, main)
+
+Referência visual aprovada: Brand Page WEG com orçamento azul, WhatsApp verde,
+estrela de avaliar junto ao coração e checkbox Comparar sem moldura, alinhado à direita.
+Esta seção altera somente o **layout**, sem alterar elegibilidade ou caminhos de conversão.
+
+### Contrato visual e de interação
+- Em até 1023px, a linha de identidade exibe **Favoritar** e **Avaliar (estrela âmbar)**;
+  compartilhamento continua disponível na experiência desktop. A estrela aponta para
+  o formulário real da empresa com nome acessível `Avaliar empresa: {nome}`.
+- Abaixo das informações da empresa, os CTAs pagos **Solicitar orçamento** e **WhatsApp**
+  ficam na mesma linha, com grid proporcional **1.3:1**, gap **6px** e alvo de **44px**;
+  texto semibold de 12px em 320px, 13px a partir de 380px e 14px a partir de 420px.
+- Abaixo, **Comparar** mantém checkbox nativo e área de interação de pelo menos 44px,
+  sem card ou contorno externo, alinhado à direita. Estado desabilitado e toast mantidos.
+- Acima de 1024px, preserva compartilhamento na identidade e **Avaliar** na faixa
+  de ações. Não renderizar ícones de avaliação duplicados na mesma faixa visível.
+- O componente `Button` aplica `max-sm:min-h-[48px]`, e o CSS global aplica
+  `button { min-height: 48px; }` em mobile; os CTAs pagos utilizam uma
+  exceção **local** via `!min-h-11`, sem alterar as regras compartilhadas.
+- A cor não substitui a identificação por texto/aria-label. Respeitar foco de teclado,
+  contraste e `prefers-reduced-motion`.
+
+### Regras preservadas (obrigatórias)
+- Orçamento e WhatsApp somente quando `resolveCompanyConversionCTAs` autoriza,
+  com preferências independentes por empresa e por plano.
+- **Comparar e Avaliar continuam disponíveis em planos Free**.
+- Um único WhatsApp no hero e nenhum WhatsApp redundante no `CompanyContactCard`.
+- Não alterar URLs, rastreamento (`cta_location: hero`), eventos, consentimento,
+  fluxo do lead wizard ou regras de monetização.
+
+### QA / TDD
+- Testes: `app/companies/[id]/components/CompanyCTAGroup.spec.tsx`,
+  `__tests__/components/CompanyProfileHeader.spec.tsx`,
+  `tests/e2e/brand-page-cta-visibility.spec.ts`.
+- Viewports: 320, 360, 390, 430, 768, 1440px; garantir sem overflow,
+  com estrela visível no mobile e link de avaliação visível no CTA desktop.
+- Validar navegação do link de avaliação, clique no WhatsApp, abrir wizard,
+  alternar comparação e testar plano Free, pago, vencido e estados sem contato.
+- **Validação de execução não presumida:** confirmar CI, WebKit/iOS,
+  permissões e versão publicada antes de marcar rollout concluído.
