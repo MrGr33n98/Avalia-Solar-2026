@@ -259,6 +259,15 @@ function SearchPageContent() {
     void performSearch();
   }, [performSearch]);
 
+  // Avoid trapping users on an out-of-range deep link after a filter changes.
+  useEffect(() => {
+    if (loading || paginationMeta.page !== pageParam || paginationMeta.total_count === 0) return;
+    if ((activeTab !== 'companies' && activeTab !== 'all') || pageParam <= paginationMeta.total_pages) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(paginationMeta.total_pages));
+    router.replace(`/search?${params.toString()}`, { scroll: false });
+  }, [loading, paginationMeta, pageParam, activeTab, searchParams, router]);
+
   const categories = useMemo(
     () =>
       Array.from(
