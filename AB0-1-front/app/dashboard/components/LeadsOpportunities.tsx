@@ -263,7 +263,7 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
       <div className="px-4 py-5 sm:px-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div aria-live="polite" className="text-sm font-bold">
-            {loading ? 'Carregando solicitações...' : total + ' solicitações encontradas'}
+            {loading ? 'Carregando solicitações...' : total + (total === 1 ? ' solicitação encontrada' : ' solicitações encontradas')}
           </div>
           <button
             type="button"
@@ -379,7 +379,7 @@ export default function LeadsOpportunities({ companyId }: LeadsOpportunitiesProp
         <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Detalhes da solicitação</DialogTitle>
-            <DialogDescription>Informações enviadas diretamente à sua empresa.</DialogDescription>
+            <DialogDescription>Informações do registro associado à empresa selecionada.</DialogDescription>
           </DialogHeader>
           {selected && (
             <dl className="grid gap-4 text-sm sm:grid-cols-2">
