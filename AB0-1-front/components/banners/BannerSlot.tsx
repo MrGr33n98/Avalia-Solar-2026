@@ -192,26 +192,14 @@ export function BannerSlot({
     ? finalBanners[0].position
     : placement;
 
-  const creative = (
+  return (
     <BannerContainer
       banners={formattedBanners}
       position={deliveredPosition}
       priority={priority}
       page={page || (placement.startsWith('compare_') ? 'compare' : undefined)}
-      className={showDisclosure ? undefined : className}
+      className={className}
+      showDisclosure={showDisclosure}
     />
-  );
-
-  if (!showDisclosure) return creative;
-
-  const isSponsored = finalBanners.some((banner) => Boolean(banner.sponsored));
-  return (
-    <section aria-label="Publicidade" className={cn('space-y-2.5', className)}>
-      <div className="flex items-center justify-between px-0.5 text-[10px] font-semibold tracking-wide">
-        <span className="uppercase text-[#475569]">Publicidade</span>
-        <span className="text-[#64748b]">{isSponsored ? 'Patrocinado' : 'Institucional'}</span>
-      </div>
-      {creative}
-    </section>
   );
 }
