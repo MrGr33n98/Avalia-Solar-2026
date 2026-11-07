@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CompanyCTAGroup from './CompanyCTAGroup';
 import type { Company } from '@/lib/api';
@@ -55,9 +55,9 @@ describe('CompanyCTAGroup — only paid conversion channels', () => {
       ctaType: 'whatsapp', ctaLocation: 'hero', companyId: '1',
     }));
     fireEvent.click(quote);
-    expect(openLeadModal).toHaveBeenCalledWith(expect.objectContaining({
+    await waitFor(() => expect(openLeadModal).toHaveBeenCalledWith(expect.objectContaining({
       preferredCompanyId: 1, source: 'company-hero',
-    }));
+    })));
   });
 
   it('Free: never renders paid conversion actions or empty CTA shelf', () => {
