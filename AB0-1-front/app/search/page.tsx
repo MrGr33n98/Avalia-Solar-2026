@@ -103,8 +103,8 @@ function SearchPageContent() {
   const [searchTerm, setSearchTerm] = useState(query);
   const [locationTerm, setLocationTerm] = useState(urlCity);
   const [results, setResults] = useState<
-    Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles' | 'reviews'>
-  >({ companies: [], products: [], categories: [], articles: [], reviews: [] });
+    Pick<SearchAllResponse, 'companies' | 'products' | 'categories' | 'articles' | 'reviews' | 'facets'>
+  >({ companies: [], products: [], categories: [], articles: [], reviews: [], facets: { categories: [] } });
   const [paginationMeta, setPaginationMeta] = useState<{
     page: number;
     total_pages: number;
@@ -220,6 +220,7 @@ function SearchPageContent() {
       setResults({
         companies: mergedCompanies,
         products: response.products || [],
+        facets: response.facets || { categories: [] },
         categories: response.categories || [],
         articles: response.articles || [],
         reviews: response.reviews || [],
@@ -261,6 +262,7 @@ function SearchPageContent() {
             ...(company.categories || []).map((category) => category.name),
           ]),
           ...results.categories.map((category) => category.name),
+          ...(results.facets?.categories || []).map((category) => category.name),
           filters.category,
         ])
       )
@@ -605,8 +607,8 @@ function SearchPageContent() {
                     onReset={resetFilters}
                     onApply={handleApplyFilters}
                   />
-                  <PopularList title="Marcas populares" items={brands.slice(0, 6)} />
-                  <PopularList title="Categorias populares" items={categories.slice(0, 6)} />
+                  <PopularList title="Marcas disponíveis" items={brands.slice(0, 6)} />
+                  <PopularList title="Categorias disponíveis" items={categories.slice(0, 6)} />
                 </div>
               </aside>
             </div>
