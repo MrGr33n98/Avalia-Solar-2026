@@ -26,7 +26,8 @@ class Review < ApplicationRecord
     lead: 'lead',
     chat: 'chat',
     custom_review_form: 'custom_review_form',
-    qr_code_form: 'qr_code_form'
+    qr_code_form: 'qr_code_form',
+    whatsapp_voice: 'whatsapp_voice'
   }
   enum verification_status: {
     unverified: 'unverified',

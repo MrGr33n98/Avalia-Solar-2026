@@ -72,6 +72,8 @@ services:
       POSTGRES_HOST: ab0-postgres
       OPENSEARCH_URL: http://ab0-opensearch:9200
       SEARCH_ENABLED: ${SEARCH_ENABLED:-false}
+      VOICE_REVIEWS_PROVIDER: ${VOICE_REVIEWS_PROVIDER:-waha}
+      WAHA_BASE_URL: ${WAHA_BASE_URL:-http://waha:3000}
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
       RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-8}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
@@ -134,6 +136,8 @@ services:
       POSTGRES_HOST: ab0-postgres
       OPENSEARCH_URL: http://ab0-opensearch:9200
       SEARCH_ENABLED: ${SEARCH_ENABLED:-false}
+      VOICE_REVIEWS_PROVIDER: ${VOICE_REVIEWS_PROVIDER:-waha}
+      WAHA_BASE_URL: ${WAHA_BASE_URL:-http://waha:3000}
       RAILS_MAX_THREADS: ${SIDEKIQ_CONCURRENCY:-5}
       SIDEKIQ_CONCURRENCY: ${SIDEKIQ_CONCURRENCY:-5}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
@@ -149,6 +153,46 @@ services:
       - ab0-network
     volumes:
       - storage_data:/app/storage
+
+  # Ative com: docker compose --profile voice-reviews up -d waha
+  # O endpoint fica acessível apenas no host para pareamento/diagnóstico local.
+  waha:
+    image: ${WAHA_IMAGE:-devlikeapro/waha:latest}
+    container_name: ab0-waha
+    restart: unless-stopped
+    profiles: ["voice-reviews"]
+    mem_limit: ${WAHA_MEMORY_LIMIT:-768m}
+    pids_limit: 256
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: ${WAHA_ENGINE:-WEBJS}
+      WAHA_API_KEY: ${WAHA_API_KEY}
+      WAHA_DASHBOARD_ENABLED: ${WAHA_DASHBOARD_ENABLED:-true}
+      WAHA_DASHBOARD_USERNAME: ${WAHA_DASHBOARD_USERNAME:-waha}
+      WAHA_DASHBOARD_PASSWORD: ${WAHA_DASHBOARD_PASSWORD}
+      WHATSAPP_HOOK_URL: http://ab0-backend:3001/api/v1/voice_reviews/webhook/waha
+      WHATSAPP_HOOK_EVENTS: message,session.status
+      WHATSAPP_HOOK_HMAC_KEY: ${WAHA_WEBHOOK_HMAC_SECRET}
+      WHATSAPP_HOOK_RETRIES_POLICY: exponential
+      WHATSAPP_HOOK_RETRIES_DELAY_SECONDS: 2
+      WHATSAPP_HOOK_RETRIES_ATTEMPTS: 8
+      WAHA_EVENTS_DOWNLOAD_MEDIA: "true"
+      WAHA_EVENTS_DOWNLOAD_MEDIA_MIMETYPES: audio
+    expose:
+      - "3000"
+    ports:
+      - "127.0.0.1:${WAHA_PORT:-3002}:3000"
+    networks:
+      - ab0-network
+    volumes:
+      - waha_sessions:/app/.sessions
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
 
   frontend:
     image: ${FRONTEND_IMAGE:-ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest}
@@ -223,6 +267,7 @@ volumes:
   db_data:
   redis_data:
   storage_data:
+  waha_sessions:
   opensearch_data:
 
 networks:

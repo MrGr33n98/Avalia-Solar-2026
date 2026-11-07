@@ -79,6 +79,13 @@ review_source_trace_retention_job:
   description: 'Remove review IP hashes older than 90 days'
   enabled: true
 
+voice_review_purge_expired_assets_job:
+  cron: '15 3 * * *'
+  class: VoiceReviews::PurgeExpiredAssetsJob
+  queue: maintenance
+  description: 'Remove áudio privado após o prazo de retenção das avaliações por voz'
+  enabled: true
+
 # Database backup (if not using managed service)
 # database_backup_job:
 #   cron: '0 1 * * *'  # Every day at 1:00 AM

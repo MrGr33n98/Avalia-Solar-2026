@@ -7,6 +7,7 @@
 # Queues with priority (higher number = higher priority)
 :queues:
   - [critical, 100]         # Critical jobs (payments, urgent notifications)
+  - [voice_reviews, 35]     # Transcrição e continuação de reviews por voz
   - [mailers, 40]           # Email delivery
   - [sales_email_sync, 30]  # Zoho Mail / CRM Inbox bidirectional sync
   - [default, 20]           # Default queue

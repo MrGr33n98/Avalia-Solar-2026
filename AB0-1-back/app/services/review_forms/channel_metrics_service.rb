@@ -2,7 +2,7 @@
 
 module ReviewForms
   class ChannelMetricsService
-    CANONICAL_CHANNELS = %w[link qr whatsapp email widget].freeze
+    CANONICAL_CHANNELS = %w[link qr whatsapp email widget whatsapp_voice].freeze
 
     def self.call(review_form:, range: nil)
       event_scope = review_form.review_form_events
@@ -33,6 +33,8 @@ module ReviewForms
         raw_chan = review.metadata&.dig('collection_channel')
         channel = if raw_chan.present?
                     SourceNormalizer.call(raw_chan)
+                  elsif review.capture_flow_source == 'whatsapp_voice'
+                    'whatsapp_voice'
                   elsif review.capture_flow_source == 'qr_code_form'
                     'qr'
                   else

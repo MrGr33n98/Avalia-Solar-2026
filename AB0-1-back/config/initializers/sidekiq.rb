@@ -23,6 +23,7 @@ end
 # Format: [queue_name, weight]
 SIDEKIQ_QUEUES = [
   ['critical', 10],         # Admin alerts, system critical jobs
+  ['voice_reviews', 8],     # Voice Reviews: transcrição assíncrona e links de continuação
   ['mailers', 7],           # Email sending
   ['sales_email_sync', 6],  # Zoho Mail / CRM Inbox bidirectional sync
   ['default', 5],           # Standard jobs

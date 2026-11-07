@@ -2,7 +2,7 @@
 
 module ReviewForms
   class SourceNormalizer
-    CANONICAL_CHANNELS = %w[link qr whatsapp email widget].freeze
+    CANONICAL_CHANNELS = %w[link qr whatsapp email widget whatsapp_voice].freeze
 
     def self.call(source, allow_internal: false)
       raw = source.to_s.strip.downcase

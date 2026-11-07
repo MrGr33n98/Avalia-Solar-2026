@@ -903,6 +903,10 @@ Rails.application.routes.draw do
       post 'company_invitations/accept', to: 'company_invitations#accept'
 
       namespace :company_admin do
+        resources :voice_review_invites, only: [:create], controller: 'voice_review_invites' do
+          collection { get ':code/public', action: :public }
+        end
+        get 'voice_review_metrics', to: 'voice_review_invites#metrics'
         get 'content_analytics/overview', to: 'content_analytics#overview'
         get 'content_analytics/funnel', to: 'content_analytics#funnel'
         get 'content_analytics/timeseries', to: 'content_analytics#timeseries'
@@ -953,6 +957,13 @@ Rails.application.routes.draw do
       post 'review_forms/:token/submit', to: 'public_review_forms#submit'
       post 'review_forms/:token/event', to: 'public_review_forms#event'
       get 'review_forms/:token/qr_code', to: 'public_review_forms#qr_code'
+
+      get 'voice_review_invites/:code/public', to: 'company_admin/voice_review_invites#public'
+      get 'voice_reviews/webhook', to: 'voice_reviews#webhook_verify'
+      post 'voice_reviews/webhook', to: 'voice_reviews#webhook'
+      post 'voice_reviews/webhook/waha', to: 'voice_reviews#webhook_waha'
+      get 'voice_review_sessions/:id', to: 'voice_reviews#show'
+      post 'voice_review_sessions/:id/confirm', to: 'voice_reviews#confirm'
 
       resources :faqs do
         member do

@@ -13,6 +13,7 @@ import {
   FileText, 
   LayoutDashboard, 
   Mail,
+  Mic2,
   Megaphone,
   Settings,
   Shield, 
@@ -45,6 +46,7 @@ const menuItems = [
     href: "/dashboard/clients" 
   },
   { icon: BriefcaseBusiness, label: "CRM / Vendas", href: "/dashboard/sales" },
+  { icon: Mic2, label: "Avaliações por voz", href: "/dashboard/voice-reviews" },
   { 
     icon: BarChart3, 
     label: "Relatórios", 
