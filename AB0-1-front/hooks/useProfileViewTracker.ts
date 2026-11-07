@@ -28,7 +28,8 @@ export function useProfileViewTracker(companyId: number | string | undefined) {
     if (sessionStorage.getItem(sessionKey)) return;
 
     function sendTrackRequest() {
-      if (trackedRef.current || !companyId) return;
+      const trackedCompanyId = companyId;
+      if (trackedRef.current || !trackedCompanyId) return;
       trackedRef.current = true;
       sessionStorage.setItem(sessionKey, '1');
 
@@ -43,7 +44,7 @@ export function useProfileViewTracker(companyId: number | string | undefined) {
         // Buyer Intent signal; impressions rejected as bots/self-view do not.
         if (result.tracked === true) {
           sendIntentSignal({
-            company_id: companyId,
+            company_id: trackedCompanyId,
             signal_type: 'profile_view',
             signal_category: 'research_intent',
             element_type: 'profile_page',
