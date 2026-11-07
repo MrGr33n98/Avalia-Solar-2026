@@ -120,7 +120,7 @@ module Api
           ],
           section_breakdown: {
             reviews: { count: reviews, status: 'partial' },
-            portfolio: { count: portfolio, status: 'not_instrumented' },
+            portfolio: { count: portfolio, status: 'partial' },
             datasheets: { count: datasheets, status: 'partial' },
             contact: { count: contacts, status: 'partial' }
           }
