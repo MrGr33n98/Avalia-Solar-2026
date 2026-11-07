@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { ReactNode } from 'react';
 import { MapPin, Star, Truck, Calendar, Globe, ExternalLink, Heart, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,6 +12,7 @@ import { getFullImageUrl } from '@/utils/image';
 import { useFavorites } from '@/hooks/useFavorites';
 import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
+import { buildCompanySubPath } from '@/lib/slug';
 
 import CompanyViewCounter from './CompanyViewCounter';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
@@ -40,6 +42,7 @@ export default function CompanyIdentityCard({
   const { isFavorite, toggleFavorite } = useFavorites();
   const companyIdNum = Number(company.id);
   const isFav = isFavorite(companyIdNum);
+  const reviewPath = buildCompanySubPath(company.slug, company.name, 'review', company.id);
 
   const handleToggleFavorite = () => {
     track('company_favorite_click', {
@@ -239,7 +242,7 @@ export default function CompanyIdentityCard({
           </div>
         </div>
 
-        {/* Lado Direito: Botões de Ação Topo Direito (Favoritar e Compartilhar) */}
+        {/* Ações de confiança no PWA: Favoritar e Avaliar. Compartilhar continua no desktop. */}
         <div className="ml-auto flex shrink-0 items-center gap-[6px] pt-0.5 sm:pt-1.5">
           <button
             type="button"
@@ -254,12 +257,21 @@ export default function CompanyIdentityCard({
           >
             <Heart className={cn('h-[17px] w-[17px]', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
           </button>
+          <Link
+            href={reviewPath}
+            aria-label={`Avaliar empresa: ${company.name}`}
+            title={`Avaliar empresa: ${company.name}`}
+            data-testid="company-mobile-review-star"
+            className="relative flex h-[36px] w-[36px] !min-h-0 !min-w-0 touch-manipulation items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-500 transition-colors after:absolute after:-inset-y-1 after:left-0 after:-right-2 after:content-[''] hover:border-amber-300 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 lg:hidden"
+          >
+            <Star className="h-[17px] w-[17px] fill-amber-400 text-amber-500" aria-hidden="true" />
+          </Link>
           <button
             type="button"
             onClick={handleShare}
             disabled={isSharing}
             aria-label="Compartilhar empresa"
-            className="relative flex h-[36px] w-[36px] !min-h-0 !min-w-0 touch-manipulation items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors after:absolute after:-inset-y-1 after:left-0 after:-right-2 after:content-[''] hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50"
+            className="relative hidden h-[36px] w-[36px] !min-h-0 !min-w-0 touch-manipulation items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors after:absolute after:-inset-y-1 after:left-0 after:-right-2 after:content-[''] hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50 lg:flex"
           >
             <Share2 className="h-[17px] w-[17px] text-slate-600" aria-hidden="true" />
           </button>
