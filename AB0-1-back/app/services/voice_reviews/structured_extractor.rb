@@ -76,9 +76,10 @@ module VoiceReviews
     def normalize_criteria(raw_list, fallback)
       return fallback unless raw_list.is_a?(Array) && raw_list.any?
 
-      criteria_catalog.map do |item|
+      criteria_catalog.each_with_index.map do |item, idx|
         match = raw_list.find { |r| criterion_matches?(r, item) }
-        score = match && match['score'].to_i.between?(1, 5) ? match['score'].to_i : nil
+        fb_score = fallback.dig(idx, 'score')
+        score = match && match['score'].to_i.between?(1, 5) ? match['score'].to_i : fb_score
         { 'criterion_id' => item[:id], 'criterion_slug' => item[:slug], 'title' => item[:title], 'score' => score }
       end
     end

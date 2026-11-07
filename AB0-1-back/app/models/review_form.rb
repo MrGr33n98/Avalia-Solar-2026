@@ -53,7 +53,7 @@ class ReviewForm < ApplicationRecord
     return category if category
 
     Rails.logger.warn("[ReviewForms] legacy category fallback form=#{id} company=#{company_id}")
-    company.categories.first
+    resolve_fallback_category
   end
 
   def metrics
@@ -62,6 +62,17 @@ class ReviewForm < ApplicationRecord
   end
 
   private
+
+  def resolve_fallback_category
+    cats = company.categories.to_a
+    with_criteria = cats.select { |c| RatingCriterion.active.where(category_id: c.id).exists? }
+    pool = with_criteria.presence || cats
+    if form_type.to_s.include?('solar') || form_type == 'general'
+      solar = pool.find { |c| c.name.to_s.match?(/solar/i) }
+      return solar if solar
+    end
+    pool.first
+  end
 
   def set_slug
     base = name.to_s.parameterize.presence || 'formulario'

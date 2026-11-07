@@ -45,6 +45,9 @@ module VoiceReviews
                   find_existing_session(contact)
                 end
       record.update!(voice_review_session: session) if session && record.voice_review_session_id.blank?
+      if session && message['sender_name'].present? && session.draft_payload.to_h['reviewer_name'].blank?
+        session.merge_draft!(reviewer_name: message['sender_name'])
+      end
       process_message(record, session, message) if session
       record.update!(processed_at: Time.current, delivery_status: 'processed')
     rescue VoiceReviews::SessionService::Error => e
@@ -115,11 +118,28 @@ module VoiceReviews
                       version: session.version + 1)
       VoiceReviews::EventRecorder.record!(event_name: 'voice_consent_granted', company: session.company, session:,
                                           dedupe_key: "consent:#{session.id}:process_audio")
-      prefix = rating ? "Excelente! Nota *#{rating}/5* registrada. " : 'Obrigado. '
-      prompt = "#{prefix}Para publicar seu depoimento sem que você precise digitar nada, " \
-               '*mande um áudio rápido de 20 a 40 segundos* contando como foi o atendimento, ' \
-               'o prazo da instalação e os equipamentos (inversor/painéis) escolhidos.'
-      gateway.send_message(session, prompt)
+      gateway.send_message(session, build_audio_prompt(session, rating))
+    end
+
+    def build_audio_prompt(session, rating)
+      fname = reviewer_first_name(session)
+      greeting = fname ? "Maravilha, *#{fname}*! " : 'Excelente! '
+      prefix = rating ? "#{greeting}Nota *#{rating}/5* registrada ⭐\n\n" : "#{greeting}\n\n"
+      bullets = criteria_bullets(session)
+      "#{prefix}Para eu montar sua avaliação completa sem você precisar digitar, " \
+        "*mande um áudio rápido de 20 a 40 segundos* comentando sobre:\n#{bullets}"
+    end
+
+    def criteria_bullets(session)
+      items = ReviewForms::CriteriaResolver.call(review_form: session.review_form).map(&:title)
+      items = Array(session.review_form&.normalized_settings&.dig('criteria')) if items.empty?
+      items = ['Atendimento', 'Prazo de Entrega', 'Qualidade Técnica', 'Equipamentos escolhidos'] if items.empty?
+      items.first(5).map { |title| "• *#{title}*" }.join("\n")
+    end
+
+    def reviewer_first_name(session)
+      raw = session.draft_payload.to_h['reviewer_name'].to_s.strip
+      raw.split.first.presence
     end
 
     def handle_confirmation_reply(session, cleaned)
@@ -148,10 +168,12 @@ module VoiceReviews
 
     def send_audit_greeting(session)
       name = session.company.name
+      fname = reviewer_first_name(session)
+      hello = fname ? "Olá, *#{fname}*! 👋" : 'Olá! 👋'
       privacy = "#{VoiceReviews::Config.frontend_origin}/privacy"
-      msg = "Olá! A *#{name}* indicou você para registrar uma avaliação oficial no diretório auditado " \
+      msg = "#{hello} A *#{name}* convidou você para registrar uma avaliação oficial no diretório auditado " \
             "do *Avalia Solar*.\n\nDe *1 a 5 estrelas*, qual sua nota geral para a entrega da *#{name}*?\n" \
-            "*(Responda de 1 a 5 ou ACEITO para processarmos um áudio privado, ou TEXTO para avaliar por escrito. " \
+            "*(Responda de 1 a 5 ou ACEITO para avaliarmos por voz, ou TEXTO para avaliar por escrito. " \
             "Consulte #{privacy})*"
       gateway.send_message(session, msg)
     end

@@ -74,6 +74,7 @@ module VoiceReviews
         'timestamp' => message['timestamp'],
         'from' => message['from'],
         'chat_id' => message['from'],
+        'sender_name' => (message.dig('_data', 'notifyName') || message['notifyName'] || message['pushName']).to_s.strip.presence,
         'from_me' => ActiveModel::Type::Boolean.new.cast(message['fromMe']),
         'type' => type,
         'text' => message['body'],

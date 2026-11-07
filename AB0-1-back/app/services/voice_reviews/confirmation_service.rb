@@ -13,6 +13,7 @@ module VoiceReviews
       token = session.issue_new_token!
       rating = session.draft_rating || transcript.inferred_rating || 5
       text = transcript.text.to_s.strip.truncate(500)
+      reviewer_name = session.draft_payload.to_h['reviewer_name'].to_s.strip.presence
       call(
         session: session,
         token: token,
@@ -21,9 +22,11 @@ module VoiceReviews
           review_text: text.length >= 5 ? text : 'Experiência avaliada por áudio via WhatsApp.',
           headline: transcript.headline,
           rating: rating,
+          reviewer_name: reviewer_name,
           experience_confirmed: true,
           publish_text_consent: true,
-          display_name_mode: 'anonymous',
+          display_name_mode: reviewer_name ? 'full_name' : 'anonymous',
+          full_name_consent: reviewer_name.present?,
           confirmed_via: 'whatsapp_reply'
         }
       )
@@ -94,9 +97,11 @@ module VoiceReviews
     end
 
     def build_metadata(transcript)
+      reviewer_name = (params[:reviewer_name].presence || session.draft_payload.to_h['reviewer_name']).to_s.strip.presence
       {
         'voice_review_session_id' => session.id,
         'voice_review_transcript_id' => transcript.id,
+        'reviewer_name' => reviewer_name,
         'collection_channel' => 'whatsapp_voice',
         'verified_by_voice' => true,
         'voice_badge_label' => 'Avaliação Verificada via Áudio (WhatsApp)',
@@ -105,8 +110,8 @@ module VoiceReviews
         'inferred_criteria_snapshot' => resolve_criteria_snapshot(transcript),
         'display_name_mode' => params[:display_name_mode].to_s,
         'voice_publication_confirmed_at' => Time.current.iso8601,
-        'lgpd_consent' => false
-      }
+        'lgpd_consent' => params[:display_name_mode].to_s == 'full_name'
+      }.compact
     end
 
     def resolve_criteria_snapshot(transcript)
