@@ -110,7 +110,7 @@ describe('CompanyDirectoryList — Mobile & Desktop Directory List Mode', () => 
     expect(checkboxes[1]).not.toBeChecked();
     expect(checkboxes[2]).not.toBeChecked();
   });
-  it('puts favorite, gated WhatsApp, gated quote and comparison in that order', () => {
+  it('separa WhatsApp/Orçamento no topo e favoritos/comparação no rodapé, preservando a ordem interna', () => {
     const paid = {
       id: 372, name: 'WEG', slug: 'weg', city: 'Florianópolis', state: 'SC',
       has_paid_plan: true, quote_cta_enabled: true,
@@ -120,26 +120,24 @@ describe('CompanyDirectoryList — Mobile & Desktop Directory List Mode', () => 
         whatsapp_contact_button: { state: 'enabled', value: true },
       },
     };
+
     render(<CompanyDirectoryRow company={paid} />);
-    const actions = screen.getByTestId('company-directory-actions');
-    expect(actions.querySelector('[aria-label="Adicionar aos favoritos"]')).toBeTruthy();
-    expect(actions.querySelector('a[aria-label="Falar com WEG no WhatsApp"]')).toBeTruthy();
-    expect(actions.querySelector('button[aria-label="Solicitar orçamento"]')).toBeTruthy();
-    expect(actions.querySelector('input[type="checkbox"]')).toBeTruthy();
-    const descendants = [
-      actions.querySelector('[aria-label="Adicionar aos favoritos"]'),
-      actions.querySelector('a[aria-label="Falar com WEG no WhatsApp"]'),
-      actions.querySelector('button[aria-label="Solicitar orçamento"]'),
-      actions.querySelector('input[type="checkbox"]'),
-    ];
-    expect(descendants.every(Boolean)).toBe(true);
-    // Four actions appear in the intended order, not mixed into the company link.
-    for (let i = 0; i < descendants.length - 1; i++) {
-      expect(
-        descendants[i]?.compareDocumentPosition(descendants[i + 1] as Node) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-      ).toBeTruthy();
-    }
+
+    const topActions = screen.getByTestId('company-directory-primary-actions');
+    const bottomActions = screen.getByTestId('company-directory-actions');
+    const whatsapp = screen.getByRole('link', { name: 'Falar com WEG no WhatsApp' });
+    const quote = screen.getByRole('button', { name: 'Solicitar orçamento' });
+    const favorite = screen.getByRole('button', { name: 'Adicionar aos favoritos' });
+    const compare = screen.getByRole('checkbox', { name: /Adicionar WEG à comparação/i });
+
+    expect(topActions).toContainElement(whatsapp);
+    expect(topActions).toContainElement(quote);
+    expect(bottomActions).toContainElement(favorite);
+    expect(bottomActions).toContainElement(compare);
+    expect(screen.getByTestId('directory-card-bottom')).toHaveTextContent('Florianópolis, SC');
+
+    expect(whatsapp.compareDocumentPosition(quote) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(favorite.compareDocumentPosition(compare) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('retains favorites and comparison, but never inserts paid CTAs on Free', () => {

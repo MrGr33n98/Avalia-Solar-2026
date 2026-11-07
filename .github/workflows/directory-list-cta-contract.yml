@@ -36,6 +36,7 @@ jobs:
           npm test -- --runInBand \
             components/companies/CompanyDirectoryConversionActions.spec.tsx \
             components/companies/CompanyDirectoryList.spec.tsx \
+            components/companies/CompanyDirectoryRow.spec.tsx \
             lib/company-cta-visibility.spec.ts \
             lib/whatsapp-contact.spec.ts \
             lib/feature-access.spec.ts
