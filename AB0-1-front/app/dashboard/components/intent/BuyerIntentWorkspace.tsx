@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Search,
   ArrowRight,
+  ArrowUpRight,
   ChevronRight,
   X,
   Link2,
@@ -240,6 +241,7 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
   // stage-classified accounts. None of these are sent quote requests.
   const profileViews = reportingData.traffic_ratio.direct_pageviews;
   const comparisons = reportingData.traffic_ratio.competitive_pageviews;
+  const topCompetitors = reportingData.top_competitors_compared || [];
   const pricingInteractions =
     reportingData.top_signals_summary?.find((item) => item.type === 'pricing')?.count ?? 0;
   const decisionAccounts = reportingData.buying_stage_distribution.decision;
@@ -1031,85 +1033,268 @@ export default function BuyerIntentWorkspace({ companyId, company }: BuyerIntent
           )}
 
           {/* ========================================================= */}
-          {/* ABA 3: COMPARAÇÕES */}
+          {/* ABA 3: COMPARAÇÕES (IBM CARBON DESIGN SYSTEM) */}
           {/* ========================================================= */}
           {activeTab === 'comparisons' && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                  Comparações e avaliação de alternativas
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Entenda a participação da sua empresa nas escolhas do comparador solar
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Participação em comparações
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Sua presença no Comparador Solar
-                  </p>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-center dark:border-slate-800 dark:bg-slate-800/50">
-                      <div className="text-2xl font-black text-slate-900 dark:text-white">
-                        {comparisons}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-1">
-                        Comparações registradas
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-center dark:border-slate-800 dark:bg-slate-800/50">
-                      <div className="text-2xl font-black text-slate-900 dark:text-white">
-                        {profileViews > 0
-                          ? `${((comparisons / profileViews) * 100).toFixed(1)}%`
-                          : '0%'}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-1">
-                        Razão sobre visualizações
-                      </div>
-                    </div>
+              {/* Carbon Module Header */}
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-widest text-[#0f62fe] font-semibold">
+                    BENCHMARK COMPETITIVO // COMPARADOR SOLAR
                   </div>
-
-                  <p className="mt-4 text-[11px] text-slate-400">
-                    *Métrica estritamente calculada a partir de acessos ao comparador de marcas.
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
+                    Comparações e Avaliação de Alternativas
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Métricas auditadas de pareamento direto entre a sua marca e concorrentes no marketplace
                   </p>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5">
+                    JANELA: {days.toUpperCase()}
+                  </span>
+                </div>
+              </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Fluxo de consideração
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Etapas de decisão dentro do marketplace
-                  </p>
+              {/* Carbon Metric Tiles Grid (High Density) */}
+              <div className="grid grid-cols-1 gap-px bg-slate-200 dark:bg-slate-800 sm:grid-cols-2 lg:grid-cols-4 border border-slate-200 dark:border-slate-800">
+                {/* Tile 1 */}
+                <div className="bg-white p-4 dark:bg-slate-900">
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
+                    Volume de Comparações
+                  </div>
+                  <div className="mt-2 text-2xl font-mono font-bold tabular-nums text-slate-900 dark:text-white">
+                    {comparisons.toLocaleString('pt-BR')}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    Acessos registrados no comparador
+                  </div>
+                </div>
 
-                  <div className="mt-4 space-y-3 text-xs">
-                    <div className="flex items-start gap-2.5">
-                      <div className="h-2 w-2 rounded-full bg-blue-600 mt-1.5" />
-                      <div>
-                        <strong className="text-slate-800 dark:text-slate-200">1. Descoberta do perfil</strong>
-                        <p className="text-slate-500 text-[11px]">Busca orgânica ou por categorias no Avalia Solar</p>
-                      </div>
+                {/* Tile 2 */}
+                <div className="bg-white p-4 dark:bg-slate-900">
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
+                    Taxa vs. Visitas do Perfil
+                  </div>
+                  <div className="mt-2 text-2xl font-mono font-bold tabular-nums text-slate-900 dark:text-white">
+                    {profileViews > 0
+                      ? `${((comparisons / profileViews) * 100).toFixed(1)}%`
+                      : '0.0%'}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    Proporção direta de consideração
+                  </div>
+                </div>
+
+                {/* Tile 3 */}
+                <div className="bg-white p-4 dark:bg-slate-900">
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
+                    Concorrentes Mapeados
+                  </div>
+                  <div className="mt-2 text-2xl font-mono font-bold tabular-nums text-slate-900 dark:text-white">
+                    {topCompetitors.length}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    Marcas pareadas na mesma sessão
+                  </div>
+                </div>
+
+                {/* Tile 4 */}
+                <div className="bg-white p-4 dark:bg-slate-900">
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
+                    Fonte dos Dados
+                  </div>
+                  <div className="mt-2 text-xs font-mono font-semibold text-[#0f62fe] flex items-center gap-1.5 pt-1">
+                    <span className="inline-block h-2 w-2 rounded-none bg-[#0f62fe]" />
+                    EVENTOS AUDITADOS
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500 font-mono">
+                    Zero estimativas sintéticas
+                  </div>
+                </div>
+              </div>
+
+              {/* Carbon Data Table: Concorrentes Mais Comparados */}
+              <div className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 dark:border-slate-800 p-4 bg-slate-50/70 dark:bg-slate-800/40">
+                  <div>
+                    <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                      RANKING DE MARCAS MAIS COMPARADAS
+                    </h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Frequência de seleção conjunta no Comparador Solar por integradores e compradores
+                    </p>
+                  </div>
+                  <span className="font-mono text-[11px] text-slate-500 tabular-nums">
+                    {topCompetitors.length} {topCompetitors.length === 1 ? 'concorrente identificado' : 'concorrentes identificados'}
+                  </span>
+                </div>
+
+                {topCompetitors.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-100/60 font-mono text-[10px] uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/60">
+                          <th className="py-2.5 px-4 w-12 text-center">#</th>
+                          <th className="py-2.5 px-4">Marca Concorrente</th>
+                          <th className="py-2.5 px-4 text-right">Ocorrências</th>
+                          <th className="py-2.5 px-4 w-60">Share de Pareamento</th>
+                          <th className="py-2.5 px-4 text-right">Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-sans">
+                        {topCompetitors.map((comp, idx) => {
+                          const rankStr = String(idx + 1).padStart(2, '0');
+                          const compUrl = comp.slug ? `/companies/${comp.slug}` : null;
+                          const compareUrl = comp.id
+                            ? `/compare?ids=${effectiveCompanyId},${comp.id}`
+                            : comp.slug
+                            ? `/compare?companies=${company?.slug || effectiveCompanyId},${comp.slug}`
+                            : null;
+
+                          return (
+                            <tr
+                              key={comp.name || idx}
+                              className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                            >
+                              {/* Ranking Number */}
+                              <td className="py-3 px-4 text-center font-mono text-xs font-bold text-slate-400 dark:text-slate-500 tabular-nums">
+                                {rankStr}
+                              </td>
+
+                              {/* Empresa Concorrente */}
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="flex h-7 w-7 shrink-0 items-center justify-center border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                                    {comp.name.substring(0, 2).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-slate-900 dark:text-white">
+                                        {comp.name}
+                                      </span>
+                                      {comp.verified && (
+                                        <span className="font-mono text-[9px] uppercase tracking-wider px-1 border border-emerald-600/40 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40">
+                                          VERIFICADA
+                                        </span>
+                                      )}
+                                    </div>
+                                    {comp.slug && (
+                                      <div className="font-mono text-[10px] text-slate-400 mt-0.5">
+                                        slug: {comp.slug}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Ocorrências */}
+                              <td className="py-3 px-4 text-right font-mono text-xs font-bold tabular-nums text-slate-900 dark:text-white">
+                                {comp.comparisons_count}{' '}
+                                <span className="font-sans font-normal text-[11px] text-slate-500">
+                                  {comp.comparisons_count === 1 ? 'vez' : 'vezes'}
+                                </span>
+                              </td>
+
+                              {/* Share Bar */}
+                              <td className="py-3 px-4">
+                                <div className="space-y-1">
+                                  <div className="flex items-center justify-between text-[11px] font-mono tabular-nums">
+                                    <span className="text-slate-500">Proporção</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">
+                                      {comp.percentage}%
+                                    </span>
+                                  </div>
+                                  <div className="h-1.5 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                    <div
+                                      className="h-full bg-[#0f62fe] transition-all"
+                                      style={{ width: `${Math.min(100, Math.max(4, comp.percentage))}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Ação / Benchmark */}
+                              <td className="py-3 px-4 text-right">
+                                <div className="inline-flex items-center gap-1.5">
+                                  {compareUrl && (
+                                    <a
+                                      href={compareUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:border-[#0f62fe] hover:text-[#0f62fe] dark:hover:text-[#0f62fe] px-2 py-1 transition-colors"
+                                    >
+                                      <span>Comparar</span>
+                                      <ArrowUpRight className="h-3 w-3" />
+                                    </a>
+                                  )}
+                                  {compUrl && (
+                                    <a
+                                      href={compUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center font-mono text-[10px] uppercase tracking-wider text-slate-500 hover:text-slate-900 dark:hover:text-white p-1 transition-colors"
+                                      title="Ver perfil da empresa"
+                                    >
+                                      <ArrowUpRight className="h-3.5 w-3.5" />
+                                    </a>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="p-8 text-center bg-slate-50/40 dark:bg-slate-900/40">
+                    <div className="font-mono text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                      [STATUS: NENHUM PAREAMENTO MULTI-MARCA NO PERÍODO]
                     </div>
-                    <div className="flex items-start gap-2.5">
-                      <div className="h-2 w-2 rounded-full bg-purple-600 mt-1.5" />
-                      <div>
-                        <strong className="text-slate-800 dark:text-slate-200">2. Avaliação de alternativas</strong>
-                        <p className="text-slate-500 text-[11px]">Comparação de garantia, avaliações e tecnologia</p>
-                      </div>
+                    <p className="mt-2 text-xs text-slate-500 max-w-lg mx-auto leading-relaxed">
+                      Foram registradas {comparisons} comparações gerais, mas os identificadores de marcas parceiras na mesma sessão ainda não acumularam amostra nesta janela de {days}. Conforme compradores utilizem o comparador, o ranking de marcas concorrentes será computado em tempo real.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* IBM Carbon Consideration Pipeline Module */}
+              <div className="border border-slate-200 dark:border-slate-800 bg-white p-5 dark:bg-slate-900">
+                <div className="font-mono text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                  METODOLOGIA DE CONSIDERAÇÃO // PIPELINE DO MARKETPLACE
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-1">
+                  Fluxo de Decisão do Comprador
+                </h3>
+                <div className="mt-4 grid grid-cols-1 gap-px bg-slate-200 dark:bg-slate-800 sm:grid-cols-3 border border-slate-200 dark:border-slate-800">
+                  <div className="bg-white p-3 dark:bg-slate-900">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-slate-400">FASE 01</span>
+                    <div className="font-semibold text-xs text-slate-900 dark:text-white mt-1">
+                      Descoberta de Perfil
                     </div>
-                    <div className="flex items-start gap-2.5">
-                      <div className="h-2 w-2 rounded-full bg-amber-500 mt-1.5" />
-                      <div>
-                        <strong className="text-slate-800 dark:text-slate-200">3. Ação de orçamento</strong>
-                        <p className="text-slate-500 text-[11px]">Envio de proposta formal ou contato direto</p>
-                      </div>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-normal">
+                      Busca orgânica ou por categoria técnica no ecossistema Avalia Solar.
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 dark:bg-slate-900">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-[#0f62fe]">FASE 02 // ATIVA</span>
+                    <div className="font-semibold text-xs text-slate-900 dark:text-white mt-1">
+                      Avaliação de Alternativas
                     </div>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-normal">
+                      Pareamento direto no Comparador Solar avaliando garantia, eficiência e reputação.
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 dark:bg-slate-900">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-slate-400">FASE 03</span>
+                    <div className="font-semibold text-xs text-slate-900 dark:text-white mt-1">
+                      Ação de Orçamento
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-normal">
+                      Solicitação direta de proposta comercial ou clique de contato WhatsApp/telefone.
+                    </p>
                   </div>
                 </div>
               </div>

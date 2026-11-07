@@ -69,9 +69,14 @@ export interface BuyerIntentReportingData {
     count: number;
   }>;
   top_competitors_compared?: Array<{
+    id?: number;
     name: string;
+    slug?: string;
     comparisons_count: number;
     percentage: number;
+    verified?: boolean;
+    rating?: number;
+    reviews_count?: number;
   }>;
 }
 
@@ -399,6 +404,7 @@ export const EMPTY_REPORTING_DATA: BuyerIntentReportingData = {
     { type: 'compare', label: 'Comparador Solar', count: 0 },
     { type: 'contact', label: 'Cliques WhatsApp / Fone', count: 0 },
   ],
+  top_competitors_compared: [],
 };
 
 export async function fetchBuyerIntentAccountDetail(

@@ -100,6 +100,51 @@ module Api
         portfolio = counts.fetch('reference_project_view', 0) + counts.fetch('portfolio_view', 0)
         datasheets = counts.fetch('document_download', 0) + counts.fetch('material_delivered', 0)
 
+        # Agregação de concorrentes comparados a partir dos metadados de comparison_view
+        comparison_activities = activities.where(signal_type: %w[comparison_view comparison_usage alternatives_view])
+        total_comparisons = counts.fetch('comparison_view', 0)
+
+        competitor_counts = Hash.new(0)
+        comparison_activities.pluck(:metadata).each do |meta|
+          next unless meta.is_a?(Hash)
+
+          ids = meta['compared_company_ids'] || meta[:compared_company_ids] ||
+                meta['competitor_ids'] || meta[:competitor_ids] ||
+                meta['competitor_id'] || meta[:competitor_id]
+
+          Array(ids).each do |cid|
+            cid_int = cid.to_i
+            next if cid_int.zero? || cid_int == @company.id
+
+            competitor_counts[cid_int] += 1
+          end
+        end
+
+        top_competitors_compared = []
+        if competitor_counts.any?
+          top_ids = competitor_counts.sort_by { |_id, c| -c }.first(10).map(&:first)
+          companies_map = Company.where(id: top_ids).index_by(&:id)
+
+          top_competitors_compared = top_ids.filter_map do |cid|
+            comp = companies_map[cid]
+            next unless comp
+
+            count = competitor_counts[cid]
+            pct = total_comparisons.positive? ? ((count.to_f / total_comparisons) * 100).round : 0
+
+            {
+              id: comp.id,
+              name: comp.name,
+              slug: comp.slug,
+              comparisons_count: count,
+              percentage: pct,
+              verified: comp.respond_to?(:verified?) ? comp.verified? : false,
+              rating: comp.respond_to?(:rating) ? comp.rating.to_f : 0.0,
+              reviews_count: comp.respond_to?(:reviews_count) ? comp.reviews_count.to_i : 0
+            }
+          end
+        end
+
         render json: {
           period_days: days,
           scoring_window_days: 90,
@@ -122,7 +167,8 @@ module Api
             portfolio: { count: portfolio, status: 'partial' },
             datasheets: { count: datasheets, status: 'partial' },
             contact: { count: contacts, status: 'partial' }
-          }
+          },
+          top_competitors_compared: top_competitors_compared
         }
       end
 

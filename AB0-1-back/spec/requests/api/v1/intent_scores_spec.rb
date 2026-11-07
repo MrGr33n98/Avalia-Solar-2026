@@ -79,6 +79,39 @@ RSpec.describe 'Intent scores API', type: :request do
       expect(data.dig('traffic_ratio', 'total_intent_signals')).to eq(4)
       expect(data.dig('section_breakdown', 'reviews', 'count')).to eq(1)
       expect(data.dig('section_breakdown', 'portfolio', 'status')).to eq('partial')
+      expect(data['top_competitors_compared']).to eq([])
+    end
+
+    it 'returns top_competitors_compared extracted from comparison metadata' do
+      competitor = create(:company, name: 'Concorrente Solar Alpha', slug: 'concorrente-alpha')
+
+      BuyerIntentActivity.create!(
+        company: company,
+        anonymous_id: 'anon-compare',
+        session_id: 'session-compare',
+        signal_type: 'comparison_view',
+        signal_category: 'research_intent',
+        page_path: '/compare',
+        tracked_at: 2.hours.ago,
+        metadata: {
+          'compared_company_ids' => [company.id, competitor.id]
+        }
+      )
+
+      get '/api/v1/intent_scores/reporting',
+          params: { company_id: company.id, days: 30 }, headers: headers
+
+      expect(response).to have_http_status(:ok)
+      data = JSON.parse(response.body)
+      expect(data['top_competitors_compared']).to be_an(Array)
+      expect(data['top_competitors_compared'].size).to eq(1)
+
+      top_comp = data['top_competitors_compared'].first
+      expect(top_comp['id']).to eq(competitor.id)
+      expect(top_comp['name']).to eq('Concorrente Solar Alpha')
+      expect(top_comp['slug']).to eq('concorrente-alpha')
+      expect(top_comp['comparisons_count']).to eq(1)
+      expect(top_comp['percentage']).to eq(100)
     end
 
     it 'rejects periods longer than one year' do
