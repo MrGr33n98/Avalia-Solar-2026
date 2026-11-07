@@ -23,6 +23,7 @@ const mockProspectsData = {
     confirmed_conversions: 12,
     landing_rate: 62.7,
     conversion_rate: 13.5,
+    form_observation_rate: 20.2,
     trends: {
       clicks_change_pct: 15.2,
       landings_change_pct: 8.4,
@@ -122,8 +123,8 @@ describe('TrackYourProspectsWorkspace (PR 3)', () => {
 
     expect(screen.getByText('142')).toBeInTheDocument(); // Cliques
     expect(screen.getByText('89')).toBeInTheDocument(); // Chegadas
-    expect(screen.getByText('12')).toBeInTheDocument(); // Conversões
-    expect(screen.getByText('13.5%')).toBeInTheDocument(); // Taxa de conversão
+    expect(screen.getByText('18')).toBeInTheDocument(); // Formulários observados
+    expect(screen.getByText('20.2%')).toBeInTheDocument(); // Taxa de formulário observado
     expect(screen.getByText(/62.7% do total/i)).toBeInTheDocument(); // Taxa de chegada
   });
 

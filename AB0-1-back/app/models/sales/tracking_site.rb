@@ -58,6 +58,10 @@ module Sales
     end
     private_class_method :origin_with_port
 
+    def effective_allowed_origins
+      (Array(allowed_origins) | (company&.authorized_outbound_origins || [])).uniq
+    end
+
     private
 
     def assign_public_key
@@ -65,6 +69,9 @@ module Sales
     end
 
     def normalize_origins
+      if allowed_origins.blank? && company&.authorized_outbound_origins.present?
+        self.allowed_origins = company.authorized_outbound_origins
+      end
       self.allowed_origins = Array(allowed_origins).filter_map { |origin| normalize_origin(origin) }.uniq
     end
 

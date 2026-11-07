@@ -102,7 +102,7 @@ module Api
             public_key = request.path_parameters[:public_key]
             @site = ::Sales::TrackingSite.find_by!(public_key: public_key, active: true)
             origin = request.headers['Origin'].presence || referer_origin
-            unless origin.present? && @site.allowed_origins.include?(normalize_origin(origin))
+            unless origin.present? && @site.effective_allowed_origins.include?(normalize_origin(origin))
               return render_error_response(message: 'Origem não autorizada para este site.', status: :forbidden,
                                            code: 'TRACKING_ORIGIN_FORBIDDEN')
             end

@@ -223,7 +223,7 @@ export default function ProspectsOverviewTab({
               <div className="flex h-40 items-end gap-1.5 overflow-x-auto pb-2">
                 {timeseries.map((pt, i) => {
                   const maxVal = Math.max(...timeseries.map((t) => Math.max(t.clicks, t.verified_landings, t.form_submissions)), 1);
-                  const clicksH = Math.max((pt.clicks / maxVal) * 100, 4);
+                  const clicksH = pt.clicks > 0 ? Math.max((pt.clicks / maxVal) * 100, 4) : 0;
                   const landingsH = Math.max((pt.verified_landings / maxVal) * 100, pt.verified_landings > 0 ? 4 : 0);
                   const formsH = Math.max((pt.form_submissions / maxVal) * 100, pt.form_submissions > 0 ? 4 : 0);
                   const shortDate = pt.date.slice(5);
@@ -241,10 +241,12 @@ export default function ProspectsOverviewTab({
 
                       {/* Bar columns */}
                       <div className="w-full flex items-end justify-center gap-0.5 h-full">
-                        <div
-                          style={{ height: `${clicksH}%` }}
-                          className="w-2 rounded-t-xs bg-blue-500/80 hover:bg-blue-600 transition-all"
-                        />
+                        {pt.clicks > 0 && (
+                          <div
+                            style={{ height: `${clicksH}%` }}
+                            className="w-2 rounded-t-xs bg-blue-500/80 hover:bg-blue-600 transition-all"
+                          />
+                        )}
                         {pt.verified_landings > 0 && (
                           <div
                             style={{ height: `${landingsH}%` }}

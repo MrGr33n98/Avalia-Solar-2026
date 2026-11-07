@@ -47,7 +47,7 @@ module Api
         source_context = params[:source_context].to_s.presence || params[:source].to_s.presence || 'profile'
         source_context = 'other' unless OutboundClick::ALLOWED_SOURCES.include?(source_context)
 
-        tracking_enabled = ENV.fetch('TRACK_PROSPECTS_ENABLED', 'false').to_s.casecmp?('true')
+        tracking_enabled = ENV.fetch('TRACK_PROSPECTS_ENABLED', 'true').to_s.casecmp?('true')
         unless tracking_enabled
           Rails.logger.info(
             "[OutboundController] TRACK_PROSPECTS_ENABLED=false: direct 302 to #{target_destination} (company_id=#{company.id})"

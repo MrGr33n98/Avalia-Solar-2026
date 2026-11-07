@@ -95,7 +95,7 @@ import { AppBreadcrumb, BreadcrumbItemData } from '@/components/AppBreadcrumb';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { trackCompanyProfileViewed, trackDashboardViewed } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
-import { useScrollPause } from '@/lib/analytics/hooks/useIntentTracking';
+import { useScrollPause, sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { isFeatureEnabled, canShowMediaGallery } from '@/lib/feature-access';
 import CompanyProfileShell from './components/CompanyProfileShell';
 import { getCapitalLocalSolarPage } from '@/lib/locations/local-page-slugs';
@@ -421,6 +421,30 @@ export default function CompanyDetailClient({
       tab_id: value,
       tab_label: tab?.label || value,
     });
+
+    if (value === 'reviews') {
+      sendIntentSignal({
+        company_id: companyId,
+        signal_type: 'review_section_view',
+        signal_category: 'research_intent',
+        metadata: { tab_label: tab?.label },
+      });
+    } else if (value === 'projects' || value === 'portfolio') {
+      sendIntentSignal({
+        company_id: companyId,
+        signal_type: 'portfolio_view',
+        signal_category: 'research_intent',
+        metadata: { tab_label: tab?.label },
+      });
+    } else if (value === 'materials' || value === 'downloads') {
+      sendIntentSignal({
+        company_id: companyId,
+        signal_type: 'datasheet_section_view',
+        signal_category: 'research_intent',
+        metadata: { tab_label: tab?.label },
+      });
+    }
+
     setActiveTab(value);
   };
 

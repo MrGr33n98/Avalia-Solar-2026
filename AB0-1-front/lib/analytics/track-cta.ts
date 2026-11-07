@@ -6,6 +6,7 @@
  */
 
 import { track } from '@/lib/analytics/lazy';
+import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 
 interface CTAClickProperties {
   ctaType: 'whatsapp' | 'email' | 'phone' | 'website' | 'quote';
@@ -118,6 +119,18 @@ export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
 
     // 1. Track generic CTA click event (Unified snake_case)
     await track('company_cta_clicked', baseProperties);
+
+    if (['whatsapp', 'phone', 'email', 'website'].includes(props.ctaType)) {
+      sendIntentSignal({
+        company_id: props.companyId,
+        signal_type: 'contact_clicked',
+        signal_category: 'contact_intent',
+        metadata: {
+          cta_type: props.ctaType,
+          cta_location: props.ctaLocation,
+        },
+      });
+    }
 
     // O backend recebe um único evento canônico; o cta_type é preservado no payload.
 

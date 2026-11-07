@@ -42,7 +42,7 @@ RSpec.describe 'Api::V1::Outbound', type: :request do
       end
     end
 
-    context 'com feature flag desativada (padrão: TRACK_PROSPECTS_ENABLED=false)' do
+    context 'com feature flag explicitamente desativada (TRACK_PROSPECTS_ENABLED=false)' do
       around do |example|
         prev = ENV['TRACK_PROSPECTS_ENABLED']
         ENV['TRACK_PROSPECTS_ENABLED'] = 'false'
@@ -59,6 +59,29 @@ RSpec.describe 'Api::V1::Outbound', type: :request do
         expect(response).to have_http_status(:found)
         expect(response).to redirect_to('https://empresa-solar.com.br')
         expect(response.headers['Location']).not_to include('as_click_id')
+      end
+    end
+
+    context 'com feature flag no padrão (TRACK_PROSPECTS_ENABLED não definido)' do
+      around do |example|
+        prev = ENV['TRACK_PROSPECTS_ENABLED']
+        ENV.delete('TRACK_PROSPECTS_ENABLED')
+        example.run
+      ensure
+        ENV['TRACK_PROSPECTS_ENABLED'] = prev
+      end
+
+      it 'registra OutboundClick e redireciona com token assinado por padrão' do
+        expect do
+          get '/api/v1/outbound/redirect', params: {
+            company_id: company.id,
+            source_context: 'profile',
+            destination_type: 'website'
+          }
+        end.to change(OutboundClick, :count).by(1)
+
+        expect(response).to have_http_status(:found)
+        expect(response.headers['Location']).to include('as_click_id')
       end
     end
 

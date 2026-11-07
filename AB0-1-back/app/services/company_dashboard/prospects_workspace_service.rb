@@ -294,7 +294,7 @@ module CompanyDashboard
         configured: true,
         active: site.active,
         public_key: site.public_key,
-        allowed_origins: site.allowed_origins,
+        allowed_origins: site.effective_allowed_origins,
         snippet_url: "#{@api_root}/api/v1/public/sales/tracking/#{site.public_key}.js",
         last_seen_at: last_telemetry&.iso8601,
         status: tag_status,

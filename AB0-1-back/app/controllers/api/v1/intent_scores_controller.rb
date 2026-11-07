@@ -94,11 +94,13 @@ module Api
         profile_views = counts.fetch('profile_view', 0)
         competitive_views = counts.fetch('comparison_view', 0) + counts.fetch('alternatives_view', 0)
         pricing = counts.fetch('pricing_interaction', 0) + counts.fetch('calculator_usage', 0)
-        contacts = counts.fetch('contact_clicked', 0) + counts.fetch('mobile_contact_tap', 0)
+        contacts = counts.fetch('contact_clicked', 0) + counts.fetch('mobile_contact_tap', 0) +
+                   counts.fetch('contact_section_view', 0)
         reviews = counts.fetch('review_read', 0) + counts.fetch('review_deep_read', 0) +
                   counts.fetch('review_section_view', 0)
         portfolio = counts.fetch('reference_project_view', 0) + counts.fetch('portfolio_view', 0)
-        datasheets = counts.fetch('document_download', 0) + counts.fetch('material_delivered', 0)
+        datasheets = counts.fetch('document_download', 0) + counts.fetch('material_delivered', 0) +
+                     counts.fetch('datasheet_section_view', 0)
 
         # Agregação de concorrentes comparados a partir dos metadados de comparison_view
         comparison_activities = activities.where(signal_type: %w[comparison_view comparison_usage alternatives_view])

@@ -66,6 +66,7 @@ services:
       APP_HOST: "https://api.avaliasolar.com.br"
       EMAIL_TRACKING_HOST: ${EMAIL_TRACKING_HOST:-}
       GROUPS_ENABLED: ${GROUPS_ENABLED:-false}
+      TRACK_PROSPECTS_ENABLED: ${TRACK_PROSPECTS_ENABLED:-true}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.avaliasolar.com.br}
       REDIS_URL: redis://ab0-redis:6379/1
       POSTGRES_HOST: ab0-postgres
