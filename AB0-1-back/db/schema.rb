@@ -4366,7 +4366,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_07_033000) do
     t.string "transport_provider"
     t.string "rfc_message_id"
     t.string "in_reply_to_header"
-    t.text "references_header"
     t.string "inbound_classification", default: "human_reply"
     t.jsonb "classification_reason", default: {}
     t.boolean "is_read", default: false, null: false
