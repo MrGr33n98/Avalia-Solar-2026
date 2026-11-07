@@ -37,6 +37,25 @@ module VoiceReviews
           invite.increment!(:claims_count)
           VoiceReviews::EventRecorder.record!(event_name: 'voice_session_started', company: invite.company, invite:, session:,
                                               dedupe_key: "session-started:#{session.id}", properties: { provider: @provider })
+        elsif session.submitted? || session.completed?
+          raw_token = SecureRandom.urlsafe_base64(32)
+          session.assign_attributes(
+            state: 'awaiting_consent',
+            published_review: nil,
+            expires_at: 24.hours.from_now,
+            processing_consent_at: nil,
+            confirmed_at: nil,
+            draft_payload: {},
+            session_token_digest: VoiceReviewSession.digest_token(raw_token),
+            provider_chat_id: @provider_chat_id,
+            provider_session: @provider_session,
+            last_inbound_at: Time.current,
+            version: session.version + 1
+          )
+          session.raw_session_token = raw_token
+          session.save!
+          VoiceReviews::EventRecorder.record!(event_name: 'voice_session_started', company: invite.company, invite:, session:,
+                                              dedupe_key: "session-reopened:#{session.id}:#{session.version}", properties: { provider: @provider })
         else
           session.update!(last_inbound_at: Time.current, provider_chat_id: @provider_chat_id,
                           provider_session: @provider_session) if session.active_now?

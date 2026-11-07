@@ -92,6 +92,16 @@ module VoiceReviews
       cleaned = body.strip
       return handle_opt_out(session) if cleaned.match?(/\A(TEXTO|PARAR|NAO|NÃO)\z/i)
       return handle_confirmation_reply(session, cleaned) if session.awaiting_confirmation?
+
+      if session.submitted? || session.completed?
+        fname = reviewer_first_name(session)
+        hello = fname ? "Olá, *#{fname}*! 👋" : "Olá! 👋"
+        msg = "#{hello} Sua avaliação para a *#{session.company.name}* já foi registrada e publicada com sucesso! 🎉\n\n" \
+              "Você pode visualizá-la no diretório auditado do *Avalia Solar*. Muito obrigado pelo seu feedback!"
+        gateway.send_message(session, msg)
+        return
+      end
+
       return unless session.awaiting_consent? || session.awaiting_audio?
 
       rating = extract_rating(cleaned)
@@ -139,6 +149,7 @@ module VoiceReviews
 
     def reviewer_first_name(session)
       raw = session.draft_payload.to_h['reviewer_name'].to_s.strip
+      raw = session.voice_review_invite&.customer_name.to_s.strip if raw.blank?
       raw.split.first.presence
     end
 
