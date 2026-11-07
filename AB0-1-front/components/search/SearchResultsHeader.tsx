@@ -9,6 +9,7 @@ interface SearchResultsHeaderProps {
   companiesCount: number;
   reviewsCount: number;
   sort: SearchSort;
+  showPriceSort?: boolean;
   onSortChange: (sort: SearchSort) => void;
 }
 
@@ -18,6 +19,7 @@ export function SearchResultsHeader({
   companiesCount,
   reviewsCount,
   sort,
+  showPriceSort = true,
   onSortChange,
 }: SearchResultsHeaderProps) {
   return (
@@ -64,8 +66,8 @@ export function SearchResultsHeader({
         >
           <option value="relevance">Relevância</option>
           <option value="rating">Melhor avaliação</option>
-          <option value="price_asc">Menor preço</option>
-          <option value="price_desc">Maior preço</option>
+          {showPriceSort ? <option value="price_asc">Menor preço</option> : null}
+          {showPriceSort ? <option value="price_desc">Maior preço</option> : null}
         </select>
       </label>
     </div>
