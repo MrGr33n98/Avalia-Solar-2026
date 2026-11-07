@@ -43,6 +43,65 @@ RSpec.describe 'Intent scores API', type: :request do
     end
   end
 
+  describe 'GET /api/v1/intent_scores/reporting' do
+    it 'counts only persisted events in the selected period, without conflating pricing with profile views' do
+      {
+        'profile_view' => 'research_intent',
+        'pricing_interaction' => 'financial_intent',
+        'comparison_view' => 'research_intent',
+        'review_read' => 'research_intent'
+      }.each do |kind, category|
+        BuyerIntentActivity.create!(
+          company: company, anonymous_id: 'anon-warm', session_id: 'session-warm',
+          signal_type: kind, signal_category: category,
+          page_path: '/companies/test', tracked_at: 1.day.ago
+        )
+      end
+      BuyerIntentActivity.create!(
+        company: company, anonymous_id: 'anon-warm', session_id: 'session-old',
+        signal_type: 'profile_view', signal_category: 'research_intent',
+        page_path: '/companies/test', tracked_at: 70.days.ago
+      )
+
+      get '/api/v1/intent_scores/reporting',
+          params: { company_id: company.id, days: 30 }, headers: headers
+
+      expect(response).to have_http_status(:ok)
+      data = JSON.parse(response.body)
+      expect(data.dig('traffic_ratio', 'direct_pageviews')).to eq(1)
+      expect(data.dig('traffic_ratio', 'competitive_pageviews')).to eq(1)
+      expect(data.dig('traffic_ratio', 'total_intent_signals')).to eq(4)
+      expect(data.dig('section_breakdown', 'reviews', 'count')).to eq(1)
+      expect(data.dig('section_breakdown', 'portfolio', 'status')).to eq('partial')
+    end
+
+    it 'rejects periods longer than one year' do
+      get '/api/v1/intent_scores/reporting',
+          params: { company_id: company.id, days: 9999 }, headers: headers
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
+
+  describe 'GET /api/v1/intent_scores/:id' do
+    it 'returns a real timeline and does not invent a buyer organization' do
+      activity = BuyerIntentActivity.create!(
+        company: company, anonymous_id: 'anon-warm', session_id: 'session-warm',
+        signal_type: 'review_read', signal_category: 'research_intent',
+        page_path: '/companies/test', tracked_at: Time.current
+      )
+
+      get "/api/v1/intent_scores/#{warm_score.id}", headers: headers
+
+      expect(response).to have_http_status(:ok)
+      data = JSON.parse(response.body)
+      expect(data['identity_status']).to eq('unverified')
+      expect(data['location']).to eq('Não verificada')
+      expect(data['timeline'].map { |event| event['id'] }).to include(activity.id)
+      expect(data['account_name']).to start_with('Sessão de pesquisa')
+    end
+  end
+
   describe 'GET /api/v1/intent_scores/summary' do
     it 'returns the level breakdown for the requested company' do
       get '/api/v1/intent_scores/summary', params: { company_id: company.id }, headers: headers
