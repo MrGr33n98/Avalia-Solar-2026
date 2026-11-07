@@ -1,0 +1,43 @@
+name: Directory List — Paid CTA Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'AB0-1-front/components/companies/**'
+      - 'AB0-1-front/lib/company-cta-visibility.ts'
+      - 'AB0-1-front/lib/whatsapp-contact.ts'
+      - 'AB0-1-front/lib/feature-access.ts'
+      - 'AB0-1-back/app/serializers/company_card_serializer.rb'
+      - 'AB0-1-back/spec/requests/api/v1/companies_fast_card_spec.rb'
+      - '.github/workflows/directory-list-cta-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  directory-cta:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - run: npm ci
+      - name: Paid conversion policy + directory card regression tests
+        run: |
+          npm test -- --runInBand \
+            components/companies/CompanyDirectoryConversionActions.spec.tsx \
+            components/companies/CompanyDirectoryList.spec.tsx \
+            lib/company-cta-visibility.spec.ts \
+            lib/whatsapp-contact.spec.ts \
+            lib/feature-access.spec.ts
+      - name: TypeScript typecheck
+        run: npm run typecheck

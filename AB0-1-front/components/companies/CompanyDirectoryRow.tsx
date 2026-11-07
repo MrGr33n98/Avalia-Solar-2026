@@ -7,6 +7,7 @@ import { CompanyLogo } from '@/components/CompanyLogo';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 import { FavoriteButton } from '@/components/favorites/FavoriteButton';
+import { CompanyDirectoryConversionActions } from './CompanyDirectoryConversionActions';
 import { normalizeCompanyData, type CompanyCardData } from '@/components/CompanyCard';
 import { useComparison } from '@/hooks/useComparison';
 import { buildCompanyPath } from '@/lib/slug';
@@ -66,7 +67,7 @@ export function CompanyDirectoryRow({
     <article
       data-testid={`company-directory-row-${data.id}`}
       className={cn(
-        'group relative flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:p-3.5 shadow-2xs transition-all hover:border-slate-300 hover:shadow-xs focus-within:ring-2 focus-within:ring-blue-500',
+        'group relative flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 sm:p-3 shadow-2xs transition-[border-color,box-shadow] hover:border-slate-300 hover:shadow-xs focus-within:ring-2 focus-within:ring-blue-500',
         className
       )}
     >
@@ -91,7 +92,7 @@ export function CompanyDirectoryRow({
       </div>
 
       {/* Zona 2: Identidade + Reputação + Localização */}
-      <div className="min-w-0 flex-1 flex flex-col justify-center pointer-events-none">
+      <div className="flex min-w-0 flex-1 flex-col justify-center pointer-events-none xl:min-w-[140px]">
         <div className="flex items-center gap-1.5 min-w-0">
           <h3 className="min-w-0 truncate text-[14px] sm:text-[15px] font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
             {data.name}
@@ -149,16 +150,21 @@ export function CompanyDirectoryRow({
         </div>
       </div>
 
-      {/* Zona 3: Ações (Favoritos e Comparar) */}
-      <div className="relative z-10 flex shrink-0 items-center gap-1 sm:gap-2">
+      {/* Zona 3: ações públicas + conversões elegíveis. No mobile, shelf na linha de baixo. */}
+      <div
+        data-testid="company-directory-actions"
+        className="relative z-10 ml-auto flex w-full min-w-0 items-center justify-end gap-1 sm:gap-1.5 xl:w-auto xl:shrink-0"
+      >
         <FavoriteButton
           favoritableType="Company"
           favoritableId={data.id}
           source="directory_list"
-          className="h-10 w-10 sm:h-11 sm:w-11 text-slate-400 hover:text-rose-500"
+          className="h-11 w-11 shrink-0 text-slate-400 hover:text-rose-500"
         />
 
-        <div className="[&>label>span:last-child]:hidden min-[400px]:[&>label>span:last-child]:inline">
+        <CompanyDirectoryConversionActions company={company} />
+
+        <div className="shrink-0 [&>label>span:last-child]:hidden min-[400px]:[&>label>span:last-child]:inline">
           <CompareCheckboxControl
             companyName={data.name}
             checked={isComparing}

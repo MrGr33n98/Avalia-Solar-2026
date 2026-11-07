@@ -24,6 +24,11 @@ RSpec.describe 'Companies Fast Card and Count Endpoint (P0-005, P2-001)', type: 
       expect(item).to have_key('identity')
       expect(item).to have_key('reputation')
       expect(item).to have_key('coverage')
+      # Directory list CTA policies consume the same lean card projection as the Brand Page.
+      %w[has_paid_plan quote_cta_enabled feature_access whatsapp_enabled whatsapp_url].each do |field|
+        expect(item).to have_key(field)
+      end
+      expect(item).not_to have_key('phone')
     end
   end
 
