@@ -11,6 +11,7 @@ import { buildCompanyPath } from '@/lib/slug';
 import CompanyPremiumHero from './CompanyPremiumHero';
 import CompanyIdentityCard from './CompanyIdentityCard';
 import CompanyCTAGroup from './CompanyCTAGroup';
+import CompanyCompareToggle from './CompanyCompareToggle';
 import CompanyProfileTabs from './CompanyProfileTabs';
 
 // Novos componentes da Fase 3
@@ -118,6 +119,7 @@ export default function CompanyProfileShell({
                 logoUrl={logoUrl}
                 logoError={logoError}
                 setLogoError={setLogoError}
+                compareControl={<CompanyCompareToggle company={company} />}
               >
                 <CompanyCTAGroup company={company} canRequestQuote={canRequestQuote} />
               </CompanyIdentityCard>
