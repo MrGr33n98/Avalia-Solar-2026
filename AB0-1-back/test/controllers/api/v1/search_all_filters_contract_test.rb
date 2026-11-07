@@ -39,6 +39,26 @@ module Api
         assert_equal 0, json.dig('pagination', 'total_count')
       end
 
+      test 'exposes named full-set category facets to the filter UI' do
+        service = Object.new
+        category = @category
+        service.define_singleton_method(:call) do
+          {
+            nodes: [],
+            page_info: { current_page: 1, total_pages: 1, total_count: 0, per_page: 24 },
+            facets: { categories: [{ key: "#{category.id}:#{category.name}", count: 3 }] }
+          }
+        end
+        with_stubbed_company_service(service, []) do
+          get '/api/v1/search/all', params: { q: 'solar', per_page: 24 }
+        end
+        assert_response :success
+        facet = JSON.parse(response.body).dig('facets', 'categories').first
+        assert_equal @category.id, facet['id']
+        assert_equal @category.name, facet['name']
+        assert_equal 3, facet['count']
+      end
+
       test 'does not reintroduce unfiltered legacy companies when verified filter is set' do
         company = ::Company.create!(
           name: 'Unverified Solar', slug: "unverified-#{SecureRandom.hex(4)}",
