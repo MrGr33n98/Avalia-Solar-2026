@@ -9,7 +9,6 @@ import {
   Pause,
   Play,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
