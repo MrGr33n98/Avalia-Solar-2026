@@ -6,6 +6,29 @@ module VoiceReviews
       new(session:, token:, params:).call
     end
 
+    def self.confirm_from_whatsapp!(session:)
+      transcript = session.latest_transcript
+      raise Error, 'Transcrição indisponível' unless transcript
+
+      token = session.issue_new_token!
+      rating = session.draft_rating || transcript.inferred_rating || 5
+      text = transcript.text.to_s.strip.truncate(500)
+      call(
+        session: session,
+        token: token,
+        params: {
+          transcript_version: transcript.version,
+          review_text: text.length >= 5 ? text : 'Experiência avaliada por áudio via WhatsApp.',
+          headline: transcript.headline,
+          rating: rating,
+          experience_confirmed: true,
+          publish_text_consent: true,
+          display_name_mode: 'anonymous',
+          confirmed_via: 'whatsapp_reply'
+        }
+      )
+    end
+
     def initialize(session:, token:, params:)
       @session = session
       @token = token.to_s
@@ -58,15 +81,60 @@ module VoiceReviews
 
     def build_review(transcript)
       category = session.review_form.experience_category
-      session.company.reviews.create!(review_form: session.review_form, category:, rating: params[:rating].to_i,
-                                      comment: params[:review_text].to_s.strip, is_legacy: category.blank?, status: 'pending',
-                                      verification_status: 'pending', capture_flow_source: 'whatsapp_voice',
-                                      metadata: { 'voice_review_session_id' => session.id,
-                                                  'voice_review_transcript_id' => transcript.id,
-                                                  'collection_channel' => 'whatsapp_voice',
-                                                  'display_name_mode' => params[:display_name_mode].to_s,
-                                                  'voice_publication_confirmed_at' => Time.current.iso8601,
-                                                  'lgpd_consent' => false })
+      review = session.company.reviews.new(
+        review_form: session.review_form, category: category, rating: params[:rating].to_i,
+        headline: (params[:headline].presence || transcript.headline).to_s.strip.truncate(120).presence,
+        comment: params[:review_text].to_s.strip, is_legacy: category.blank?, status: 'pending',
+        verification_status: 'pending', capture_flow_source: 'whatsapp_voice',
+        metadata: build_metadata(transcript)
+      )
+      attach_criterion_scores(review, category, transcript)
+      review.save!
+      review
+    end
+
+    def build_metadata(transcript)
+      {
+        'voice_review_session_id' => session.id,
+        'voice_review_transcript_id' => transcript.id,
+        'collection_channel' => 'whatsapp_voice',
+        'verified_by_voice' => true,
+        'voice_badge_label' => 'Avaliação Verificada via Áudio (WhatsApp)',
+        'confirmed_via' => params[:confirmed_via].presence || 'web_review_card',
+        'mentioned_equipment' => Array(params[:mentioned_equipment].presence || transcript.mentioned_equipment),
+        'inferred_criteria_snapshot' => resolve_criteria_snapshot(transcript),
+        'display_name_mode' => params[:display_name_mode].to_s,
+        'voice_publication_confirmed_at' => Time.current.iso8601,
+        'lgpd_consent' => false
+      }
+    end
+
+    def resolve_criteria_snapshot(transcript)
+      override = params[:criterion_scores]
+      return transcript.inferred_criteria unless override.is_a?(Hash) && override.any?
+
+      transcript.inferred_criteria.map do |item|
+        key = item['criterion_id']&.to_s || item['criterion_slug'].to_s
+        score = override[key].presence || override[item['criterion_slug']].presence || item['score']
+        item.merge('score' => score.to_i.between?(1, 5) ? score.to_i : item['score'])
+      end
+    end
+
+    def attach_criterion_scores(review, category, transcript)
+      allowed = ReviewForms::CriteriaResolver.call(review_form: session.review_form, category: category)
+      return if allowed.empty?
+
+      resolve_criteria_snapshot(transcript).each do |item|
+        score = item['score'].to_i
+        next unless score.between?(1, 5)
+
+        criterion = allowed.find { |c| c.id == item['criterion_id'].to_i || c.slug == item['criterion_slug'].to_s }
+        next unless criterion
+
+        review.review_criterion_scores.build(
+          rating_criterion: criterion, score: score, title_snapshot: criterion.title, weight_snapshot: criterion.weight
+        )
+      end
     end
 
     def persist_consents!

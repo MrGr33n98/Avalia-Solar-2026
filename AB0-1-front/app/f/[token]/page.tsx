@@ -9,6 +9,10 @@ import {
   ShieldCheck,
   Star,
   ArrowDown,
+  Mic,
+  Square,
+  Sparkles,
+  MessageCircle,
 } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 import { BrandLogo } from '@/components/brand/BrandLogo';
@@ -32,6 +36,7 @@ type PublicReviewForm = {
   };
   criteria?: Array<{ id: number; slug: string; title: string; weight?: number; required?: boolean }>;
   branding?: { logo_url?: string | null; cover_url?: string | null; accent_color?: string; company_name?: string };
+  voice_invite?: { short_code: string; public_url: string; whatsapp_url: string | null; qr_code_path: string } | null;
   company: { id: number; name: string; slug: string; logo_url?: string | null };
 };
 
@@ -47,7 +52,14 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
   const [rating, setRating] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [npsScore, setNpsScore] = useState<number | undefined>(undefined);
+  const [headline, setHeadline] = useState('');
   const [comment, setComment] = useState('');
+  const [mentionedEquipment, setMentionedEquipment] = useState<string[]>([]);
+  const [verifiedByVoice, setVerifiedByVoice] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [extractingVoice, setExtractingVoice] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const [reviewerName, setReviewerName] = useState('');
   const [contact, setContact] = useState('');
   const [city, setCity] = useState('');
@@ -105,6 +117,79 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
     formSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const toggleVoiceRecording = async () => {
+    markStarted();
+    if (isRecording && mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        await processRecordedBlob(blob, recorder.mimeType || 'audio/webm');
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch {
+      setError('Não foi possível acessar o microfone. Permita o uso do microfone ou avalie pelo WhatsApp.');
+    }
+  };
+
+  const processRecordedBlob = async (blob: Blob, mimeType: string) => {
+    try {
+      setExtractingVoice(true);
+      setError('');
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result || ''));
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      const res = await fetchApi<{
+        transcript_text: string;
+        structured: {
+          headline?: string;
+          clean_comment?: string;
+          inferred_rating?: number;
+          inferred_criteria?: Array<{ criterion_id?: number | null; criterion_slug: string; title: string; score: number | null }>;
+          mentioned_equipment?: string[];
+        };
+      }>(`/review_forms/${params.token}/voice_extract`, {
+        method: 'POST',
+        body: JSON.stringify({ audio_base64: base64, mime_type: mimeType, initial_rating: rating || undefined }),
+        skipAuthRefresh: true,
+      });
+      const st = res.structured || {};
+      if (st.inferred_rating && st.inferred_rating >= 1 && st.inferred_rating <= 5) setRating(st.inferred_rating);
+      if (st.headline) setHeadline(st.headline);
+      if (st.clean_comment || res.transcript_text) setComment(st.clean_comment || res.transcript_text);
+      if (st.mentioned_equipment) setMentionedEquipment(st.mentioned_equipment);
+      if (st.inferred_criteria && criteria.length > 0) {
+        const nextAnswers: Record<string, number> = { ...answers };
+        st.inferred_criteria.forEach((item) => {
+          if (!item.score) return;
+          const found = criteria.find((c) => c.id === item.criterion_id || c.slug === item.criterion_slug);
+          if (found) nextAnswers[String(found.id)] = item.score;
+        });
+        setAnswers(nextAnswers);
+      }
+      setVerifiedByVoice(true);
+    } catch {
+      setError('Não foi possível transcrever o áudio. Tente novamente ou digite abaixo.');
+    } finally {
+      setExtractingVoice(false);
+    }
+  };
+
   const canSubmit = useMemo(
     () =>
       rating > 0 &&
@@ -137,6 +222,7 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
           method: 'POST',
           body: JSON.stringify({
             rating,
+            headline,
             comment,
             nps_score: npsScore,
             reviewer_name: reviewerName,
@@ -147,6 +233,8 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
             consent_given: consent,
             website,
             answers,
+            verified_by_voice: verifiedByVoice,
+            mentioned_equipment: mentionedEquipment,
             source,
           }),
           retries: 1,
@@ -258,6 +346,15 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
               <span>Avaliar agora</span>
               <ArrowDown className="h-4 w-4" />
             </Button>
+            {(form.voice_invite?.whatsapp_url || form.voice_invite?.public_url) && (
+              <a
+                href={form.voice_invite?.whatsapp_url || form.voice_invite?.public_url}
+                className="h-11 px-6 rounded-full border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-sm inline-flex items-center gap-2 transition-all"
+              >
+                <MessageCircle className="h-4 w-4 text-emerald-700" />
+                <span>Avaliar por Áudio no WhatsApp (30s)</span>
+              </a>
+            )}
           </div>
         </section>
 
@@ -385,6 +482,65 @@ export default function PublicReviewFormPage({ params }: { params: { token: stri
           </div>
 
           <form onSubmit={submit} onFocus={markStarted} className="mt-8 space-y-7">
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+                    <Sparkles className="h-4 w-4 text-emerald-700" />
+                    <span>Sem tempo para digitar? Fale sua experiência!</span>
+                  </div>
+                  <p className="mt-1 text-xs text-emerald-800">
+                    Grave um áudio curto e nossa IA preenche as estrelas dos critérios e o texto para você revisar.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => { void toggleVoiceRecording(); }}
+                    disabled={extractingVoice}
+                    className={`h-10 rounded-xl px-4 text-xs font-bold text-white ${
+                      isRecording ? 'bg-red-600 hover:bg-red-700 animate-pulse' : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
+                  >
+                    {extractingVoice ? (
+                      <>
+                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                        Estruturando com IA...
+                      </>
+                    ) : isRecording ? (
+                      <>
+                        <Square className="mr-1.5 h-4 w-4" />
+                        Parar e preencher formulário
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="mr-1.5 h-4 w-4" />
+                        Falar com microfone aqui
+                      </>
+                    )}
+                  </Button>
+                  {(form.voice_invite?.whatsapp_url || form.voice_invite?.public_url) && (
+                    <a
+                      href={form.voice_invite?.whatsapp_url || form.voice_invite?.public_url}
+                      className="inline-flex h-10 items-center justify-center rounded-xl border border-emerald-300 bg-white px-3 text-xs font-bold text-emerald-900 hover:bg-emerald-100"
+                    >
+                      Mandar áudio no WhatsApp
+                    </a>
+                  )}
+                </div>
+              </div>
+              {verifiedByVoice && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-emerald-200/80 pt-2.5 text-xs font-semibold text-emerald-900">
+                  <span>✅ Campos preenchidos a partir do seu áudio! Revise abaixo antes de enviar.</span>
+                  {mentionedEquipment.map((eq) => (
+                    <span key={eq} className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
+                      🔧 {eq}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <RatingField label="Nota geral" value={rating} onChange={setRating} required />
             {criteria.map((criterion) => (
               <RatingField

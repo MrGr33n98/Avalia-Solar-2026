@@ -23,6 +23,7 @@ module ReviewForms
         company: @review_form.company,
         category: category,
         rating: @params[:rating],
+        headline: @params[:headline].to_s.strip.truncate(120).presence,
         comment: @params[:comment],
         nps_score: @params[:nps_score],
         capture_flow_source: @source,
@@ -49,6 +50,8 @@ module ReviewForms
         referrer: @request_context.referrer.to_s.first(500),
         user_agent: @request_context.user_agent.to_s.first(500),
         ip_hash: @request_context.ip_hash,
+        verified_by_voice: boolean(@params[:verified_by_voice]),
+        mentioned_equipment: Array(@params[:mentioned_equipment]).map(&:to_s).reject(&:blank?),
         submitted_at: Time.current.iso8601
       }
     end

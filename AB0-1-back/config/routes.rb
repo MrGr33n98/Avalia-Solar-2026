@@ -957,6 +957,8 @@ Rails.application.routes.draw do
       post 'review_forms/:token/submit', to: 'public_review_forms#submit'
       post 'review_forms/:token/event', to: 'public_review_forms#event'
       get 'review_forms/:token/qr_code', to: 'public_review_forms#qr_code'
+      get 'review_forms/:token/voice_qr_code', to: 'public_review_forms#voice_qr_code'
+      post 'review_forms/:token/voice_extract', to: 'public_review_forms#voice_extract'
 
       get 'voice_review_invites/:code/public', to: 'company_admin/voice_review_invites#public'
       get 'voice_reviews/webhook', to: 'voice_reviews#webhook_verify'

@@ -42,4 +42,25 @@ RSpec.describe VoiceReviews::ConfirmationService, type: :service do
     expect { described_class.call(session:, token:, params:) }
       .to raise_error(VoiceReviews::ConfirmationService::Error, /nota/i)
   end
+
+  it 'confirms directly from WhatsApp reply with structured headline and equipment metadata' do
+    session.merge_draft!(initial_rating: 5)
+    structured = VoiceReviews::StructuredExtractor.call(
+      raw_text: 'O atendimento foi ótimo e instalaram inversor WEG no prazo.',
+      company_name: company.name,
+      review_form: review_form,
+      initial_rating: 5
+    )
+    if session.latest_transcript.respond_to?(:structured_payload=)
+      session.latest_transcript.update!(structured_payload: structured)
+    end
+
+    result = described_class.confirm_from_whatsapp!(session: session)
+
+    review = Review.find(result[:review_id])
+    expect(review.rating).to eq(5)
+    expect(review.capture_flow_source).to eq('whatsapp_voice')
+    expect(review.metadata['verified_by_voice']).to eq(true)
+    expect(review.metadata['mentioned_equipment']).to include('WEG')
+  end
 end

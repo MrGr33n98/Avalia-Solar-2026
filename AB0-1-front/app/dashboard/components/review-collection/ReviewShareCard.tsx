@@ -14,6 +14,12 @@ export interface ShareableReviewForm {
   token: string;
   status: 'active' | 'inactive';
   settings?: { whatsapp_message?: string };
+  voice_invite?: {
+    short_code: string;
+    public_url: string;
+    whatsapp_url: string | null;
+    qr_code_path: string;
+  } | null;
 }
 
 interface ReviewShareCardProps {
@@ -34,11 +40,14 @@ function ActionIcon({ name, size = 19, inverse = false }: { name: ReviewCollecti
 export function ReviewShareCard({ form, companyName, onOpenEmailDrawer, onTrack }: ReviewShareCardProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [copiedVoice, setCopiedVoice] = useState(false);
   const resetTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActive = form.status === 'active';
   const directLinkUrl = buildPublicReviewUrl(form.token, 'link');
   const whatsappReviewLink = buildPublicReviewUrl(form.token, 'whatsapp');
   const qrDownloadUrl = buildApiUrl('/review_forms/' + encodeURIComponent(form.token) + '/qr_code') + '?download=1';
+  const voiceMagicUrl = form.voice_invite?.whatsapp_url || form.voice_invite?.public_url || '';
+  const voiceQrDownloadUrl = buildApiUrl('/review_forms/' + encodeURIComponent(form.token) + '/voice_qr_code') + '?download=1';
   const defaultMessage = 'Olá! Você poderia avaliar sua experiência com a ' + companyName +
     ' no Avalia Solar? Sua opinião é importante: ' + whatsappReviewLink;
   const whatsappMessage = form.settings?.whatsapp_message
@@ -59,6 +68,19 @@ export function ReviewShareCard({ form, companyName, onOpenEmailDrawer, onTrack 
       resetTimeout.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       toast({ title: 'Não foi possível copiar o link', variant: 'destructive' });
+    }
+  };
+
+  const copyVoiceLink = async () => {
+    if (!isActive || !voiceMagicUrl) return;
+    try {
+      await navigator.clipboard.writeText(voiceMagicUrl);
+      setCopiedVoice(true);
+      onTrack?.('voice_link_copied', { channel: 'whatsapp_voice', form_token: form.token });
+      toast({ title: 'Magic Link de Voz copiado!', description: 'O cliente abrirá o WhatsApp direto para enviar áudio.' });
+      setTimeout(() => setCopiedVoice(false), 2000);
+    } catch {
+      toast({ title: 'Não foi possível copiar o link de voz', variant: 'destructive' });
     }
   };
 
@@ -114,6 +136,46 @@ export function ReviewShareCard({ form, companyName, onOpenEmailDrawer, onTrack 
             </Button>
           </div>
         </div>
+
+        {voiceMagicUrl && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 shadow-xs">
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-950">
+                🎙️ Coleta Nativa por Áudio no WhatsApp (Audio-First + IA em 1 Clique)
+              </span>
+              <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                Selo Verificado por Voz
+              </span>
+            </div>
+            <p className="mb-2.5 text-xs text-emerald-900">
+              O cliente dá a nota geral, grava um áudio de 30s no WhatsApp e a IA preenche os critérios e o texto para aprovação com <strong>SIM</strong>.
+            </p>
+            <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
+              <input
+                type="text"
+                value={voiceMagicUrl}
+                readOnly
+                aria-label="Magic Link de avaliação por áudio no WhatsApp"
+                className="h-10 min-w-0 w-full rounded-lg border border-emerald-200 bg-white px-3 text-xs text-[#0A1F44] outline-none"
+              />
+              <Button
+                type="button"
+                onClick={() => { void copyVoiceLink(); }}
+                disabled={!isActive}
+                className="h-10 w-full rounded-lg bg-emerald-600 px-3.5 text-xs font-bold text-white hover:bg-emerald-700 sm:w-auto"
+              >
+                {copiedVoice ? 'Copiado!' : 'Copiar Magic Link (Áudio)'}
+              </Button>
+              <a
+                href={voiceQrDownloadUrl}
+                download
+                className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-emerald-300 bg-white px-3 text-xs font-bold text-emerald-900 hover:bg-emerald-100 sm:w-auto"
+              >
+                QR Code Pós-Obra (Áudio · PNG)
+              </a>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {isActive ? (

@@ -54,6 +54,21 @@ class VoiceReviewSession < ApplicationRecord
     voice_review_consents.where(purpose: 'process_audio', granted: true, revoked_at: nil).exists?
   end
 
+  def draft_data
+    has_attribute?(:draft_payload) && draft_payload.is_a?(Hash) ? draft_payload : {}
+  end
+
+  def draft_rating
+    value = draft_data['initial_rating'].to_i
+    value.between?(1, 5) ? value : nil
+  end
+
+  def merge_draft!(attrs)
+    return unless has_attribute?(:draft_payload)
+
+    update!(draft_payload: draft_data.merge(attrs.stringify_keys))
+  end
+
   def self.digest_token(token)
     Digest::SHA256.hexdigest(token.to_s)
   end

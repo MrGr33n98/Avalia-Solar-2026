@@ -63,6 +63,12 @@ type ReviewForm = {
   status: 'active' | 'inactive';
   public_path: string;
   settings: ReviewFormSettings;
+  voice_invite?: {
+    short_code: string;
+    public_url: string;
+    whatsapp_url: string | null;
+    qr_code_path: string;
+  } | null;
   metrics: { views: number; submissions: number; conversion_rate: number };
   last_review_at?: string;
 };

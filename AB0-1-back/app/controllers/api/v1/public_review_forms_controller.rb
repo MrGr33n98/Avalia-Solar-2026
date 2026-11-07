@@ -8,7 +8,7 @@ module Api
       RATE_WINDOW = 1.hour
 
       before_action :set_review_form
-      before_action :ensure_active, except: :qr_code
+      before_action :ensure_active, except: %i[qr_code voice_qr_code]
 
       def show
         channel = ReviewForms::SourceNormalizer.call(params[:source])
@@ -58,6 +58,31 @@ module Api
         send_data png.to_s, type: 'image/png', disposition: params[:download].present? ? 'attachment' : 'inline', filename: "qr-#{@review_form.slug}.png"
       end
 
+      def voice_qr_code
+        invite = VoiceReviews::FormInviteResolver.call(@review_form)
+        fallback = "#{frontend_origin}#{@review_form.public_path}?source=qr"
+        url = invite&.dig(:whatsapp_url).presence || invite&.dig(:public_url).presence || fallback
+        png = RQRCode::QRCode.new(url, level: :m).as_png(size: 480, border_modules: 4)
+        record_event('qr_downloaded') if ActiveModel::Type::Boolean.new.cast(params[:download])
+        send_data png.to_s, type: 'image/png', disposition: params[:download].present? ? 'attachment' : 'inline',
+                            filename: "qr-whatsapp-voz-#{@review_form.slug}.png"
+      end
+
+      def voice_extract
+        return render_rate_limited if rate_limited?
+
+        raw_b64 = params[:audio_base64].to_s.sub(/\Adata:[^;]+;base64,/, '')
+        return render json: { error: 'Áudio não enviado.' }, status: :unprocessable_entity if raw_b64.blank?
+
+        bytes = Base64.decode64(raw_b64)
+        stt = VoiceReviews::SpeechToText.provider.transcribe_bytes(bytes: bytes, mime_type: params[:mime_type].to_s)
+        structured = VoiceReviews::StructuredExtractor.call(
+          raw_text: stt[:text], company_name: @review_form.company.name,
+          review_form: @review_form, initial_rating: params[:initial_rating]
+        )
+        render json: { transcript_text: stt[:text], structured: structured }
+      end
+
       private
 
       def set_review_form
@@ -77,6 +102,7 @@ module Api
           settings: form.normalized_settings,
           criteria: ReviewForms::CriteriaResolver.call(review_form: form).map { |criterion| serialize_criterion(criterion) },
           branding: ReviewForms::BrandingResolver.call(form),
+          voice_invite: VoiceReviews::FormInviteResolver.call(form),
           company: { id: form.company.id, name: form.company.name, slug: form.company.slug, logo_url: form.company.logo_url }
         }
       end

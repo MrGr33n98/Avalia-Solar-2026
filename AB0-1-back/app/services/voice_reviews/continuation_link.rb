@@ -8,13 +8,49 @@ module VoiceReviews
       end
     end
 
-    def self.send!(session, _transcript)
+    def self.send!(session, transcript)
       raw_token = session.raw_session_token
       return if raw_token.blank?
 
-      gateway(provider: session.provider).send_message(
-        session, "Revise e confirme sua avaliação: #{Config.frontend_origin}/voice-review/#{session.id}?token=#{CGI.escape(raw_token)}"
-      )
+      edit_url = "#{Config.frontend_origin}/voice-review/#{session.id}?token=#{CGI.escape(raw_token)}"
+      gateway(provider: session.provider).send_message(session, build_review_card(session, transcript, edit_url))
+    end
+
+    def self.build_review_card(session, transcript, edit_url)
+      rating = session.draft_rating || transcript&.inferred_rating || 5
+      headline = transcript&.headline.presence || "Avaliação sobre #{session.company.name}"
+      comment = transcript&.text.to_s.strip
+      intro = 'Transformamos seu áudio em uma avaliação estruturada. ' \
+              "Veja se está tudo certo antes de publicarmos na página da *#{session.company.name}*:"
+      lines = [
+        intro,
+        '',
+        "• *Título sugerido:* #{headline}",
+        "• *Depoimento:* \"#{comment}\"",
+        "• *Nota Geral:* #{rating}/5",
+        format_criteria_line(transcript),
+        format_equipment_line(transcript),
+        '',
+        '👉 Responda *SIM* (ou *1*) para *✅ Aprovar e Publicar*',
+        '🎙️ Envie *outro áudio* para *Gravar Novo Áudio*',
+        "✏️ Ou edite o texto/notas aqui: #{edit_url}"
+      ].compact
+      lines.join("\n")
+    end
+
+    def self.format_criteria_line(transcript)
+      scored = Array(transcript&.inferred_criteria).select { |item| item['score'].to_i.between?(1, 5) }
+      return nil if scored.empty?
+
+      summary = scored.map { |item| "#{item['title']}: #{item['score']}/5" }.join(' • ')
+      "• *Sub-notas inferidas pelo seu áudio:* #{summary}"
+    end
+
+    def self.format_equipment_line(transcript)
+      equip = Array(transcript&.mentioned_equipment).reject(&:blank?)
+      return nil if equip.empty?
+
+      "• *Equipamento citado:* #{equip.join(', ')}"
     end
 
     class FakeGateway

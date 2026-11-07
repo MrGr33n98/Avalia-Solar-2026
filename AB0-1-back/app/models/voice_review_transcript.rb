@@ -8,7 +8,28 @@ class VoiceReviewTranscript < ApplicationRecord
   validates :provider, :model_id, :private_raw_text, presence: true
 
   def text
-    private_raw_text
+    structured_data['clean_comment'].presence || private_raw_text
+  end
+
+  def structured_data
+    has_attribute?(:structured_payload) && structured_payload.is_a?(Hash) ? structured_payload : {}
+  end
+
+  def headline
+    structured_data['headline'].presence
+  end
+
+  def inferred_rating
+    value = structured_data['inferred_rating'].to_i
+    value.between?(1, 5) ? value : nil
+  end
+
+  def inferred_criteria
+    Array(structured_data['inferred_criteria'])
+  end
+
+  def mentioned_equipment
+    Array(structured_data['mentioned_equipment'])
   end
 
   private

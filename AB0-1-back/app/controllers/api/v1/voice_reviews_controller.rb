@@ -44,9 +44,15 @@ module Api
         session = VoiceReviewSession.find(params[:id])
         authenticate_session!(session)
         transcript = session.latest_transcript
-        render json: { session_id: session.id, company_name: session.company.name, state: session.state,
-                       transcript_text: transcript&.text, transcript_version: transcript&.version || 0,
-                       publication_consent_required: true, privacy_url: '/privacy' }
+        render json: {
+          session_id: session.id, company_name: session.company.name, state: session.state,
+          transcript_text: transcript&.text, transcript_version: transcript&.version || 0,
+          headline: transcript&.headline,
+          inferred_rating: session.draft_rating || transcript&.inferred_rating,
+          inferred_criteria: transcript&.inferred_criteria || [],
+          mentioned_equipment: transcript&.mentioned_equipment || [],
+          publication_consent_required: true, privacy_url: '/privacy'
+        }
       rescue VoiceReviews::ConfirmationService::Error
         render json: { code: 'UNAUTHORIZED', message: 'Sessão inválida ou expirada' }, status: :unauthorized
       rescue ActiveRecord::RecordNotFound
@@ -77,8 +83,9 @@ module Api
 
       def confirmation_params
         source = params[:confirmation] || params
-        source.permit(:transcript_version, :review_text, :rating, :experience_confirmed,
-                      :publish_text_consent, :display_name_mode, :full_name_consent, acknowledgements: {})
+        source.permit(:transcript_version, :review_text, :headline, :rating, :experience_confirmed,
+                      :publish_text_consent, :display_name_mode, :full_name_consent,
+                      mentioned_equipment: [], criterion_scores: {}, acknowledgements: {})
       end
     end
   end

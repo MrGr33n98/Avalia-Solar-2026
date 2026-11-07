@@ -120,6 +120,7 @@ module Api
           ).merge(
             public_path: form.public_path,
             qr_code_path: "/api/v1/review_forms/#{form.token}/qr_code",
+            voice_invite: VoiceReviews::FormInviteResolver.call(form),
             metrics: form.metrics,
             last_review_at: last_review&.created_at
           )
