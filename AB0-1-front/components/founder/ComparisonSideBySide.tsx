@@ -29,11 +29,11 @@ export default function ComparisonSideBySide({ onExpand }: ComparisonSideBySideP
             <button
               type="button"
               onClick={() => onExpand('free')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg border border-slate-300 transition-colors"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-[#09172f] text-[#f8ca3a] transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f62fe]"
               title="Ampliar captura do Perfil Básico"
+              aria-label="Ampliar captura do Perfil Básico"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span>Ampliar</span>
+              <Maximize2 className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -85,11 +85,11 @@ export default function ComparisonSideBySide({ onExpand }: ComparisonSideBySideP
             <button
               type="button"
               onClick={() => onExpand('premium')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono text-[#0043ce] hover:text-[#002d9c] bg-white hover:bg-slate-50 rounded-lg border border-[#0043ce]/30 transition-colors font-bold"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#0043ce]/30 bg-[#09172f] text-[#f8ca3a] transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f62fe]"
               title="Ampliar captura da Brand Page Premium"
+              aria-label="Ampliar captura da Brand Page Premium"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span>Ampliar</span>
+              <Maximize2 className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
 
