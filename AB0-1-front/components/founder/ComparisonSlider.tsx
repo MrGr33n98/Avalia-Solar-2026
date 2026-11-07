@@ -108,11 +108,11 @@ export default function ComparisonSlider({
             <button
               type="button"
               onClick={() => onExpand(premiumPercent > 50 ? 'premium' : 'free')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg border border-slate-300 transition-colors"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-[#09172f] text-[#f8ca3a] transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f62fe] focus-visible:ring-offset-2"
               title="Ampliar captura em tela cheia"
+              aria-label="Ampliar captura em tela cheia"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span>Ampliar</span>
+              <Maximize2 className="h-5 w-5" aria-hidden="true" />
             </button>
           )}
           <span className="px-3 py-1 rounded-md bg-[#0043ce] text-white font-bold uppercase tracking-wider shadow-xs">
