@@ -12,7 +12,7 @@ module VoiceReviews
       session = asset.voice_review_session
       return unless session.active_now? && session.consented_to_audio?
 
-      VoiceReviews::MediaDownloader.provider.download!(asset) unless asset.file.attached?
+      VoiceReviews::MediaDownloader.provider(session.provider).download!(asset) unless asset.file.attached?
       session.update!(state: 'transcribing', version: session.version + 1)
       result = VoiceReviews::SpeechToText.provider.transcribe(asset)
       structured = VoiceReviews::StructuredExtractor.call(

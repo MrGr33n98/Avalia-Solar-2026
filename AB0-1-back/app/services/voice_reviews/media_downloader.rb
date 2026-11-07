@@ -60,8 +60,8 @@ module VoiceReviews
 
     module_function
 
-    def provider
-      case VoiceReviews::Config.provider
+    def provider(provider_name = nil)
+      case (provider_name.presence || VoiceReviews::Config.provider).to_s
       when 'meta' then Meta.new
       when 'waha' then Waha.new
       else Fake.new
