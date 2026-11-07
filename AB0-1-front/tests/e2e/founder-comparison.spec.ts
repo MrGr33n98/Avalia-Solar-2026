@@ -90,9 +90,11 @@ test.describe('Comparador Visual Free × Brand Page Premium (/founder)', () => {
     await tabFree.click();
     await expect(section.locator('text=Estrutura padrão gratuita').first()).toBeVisible();
 
-    // Botão de ampliar para leitura
-    const expandButton = section.locator('button:has-text("Ampliar para leitura")').first();
+    // Botão icon-only: acessível por nome, sem rótulo visível.
+    const expandButton = section.getByRole('button', { name: 'Ampliar para leitura' });
     await expect(expandButton).toBeVisible();
+    await expect(expandButton.locator('svg')).toHaveCount(1);
+    await expect(expandButton).toHaveText('');
     await expandButton.click();
 
     // Modal aberto
@@ -103,6 +105,50 @@ test.describe('Comparador Visual Free × Brand Page Premium (/founder)', () => {
     // Fechar modal via botão
     await modal.locator('button[aria-label="Fechar visualizador"]').click();
     await expect(modal).not.toBeVisible();
+  });
+
+  test('CA06c: tabs compactas, separadas e sem ícones em PWA 320–430px', async ({ page }) => {
+    const section = page.locator('#comparador-visual');
+    const before = section.getByRole('tab', { name: 'Antes · Perfil Básico' });
+    const after = section.getByRole('tab', { name: 'Depois · Brand Page' });
+
+    for (const width of [320, 360, 375, 390, 430]) {
+      await page.setViewportSize({ width, height: 844 });
+      await expect(before).toBeVisible();
+      await expect(after).toBeVisible();
+      await expect(before.locator('svg')).toHaveCount(0);
+      await expect(after.locator('svg')).toHaveCount(0);
+
+      const left = await before.boundingBox();
+      const right = await after.boundingBox();
+      expect(left).not.toBeNull();
+      expect(right).not.toBeNull();
+      expect(left!.height).toBe(40);
+      expect(right!.height).toBe(40);
+      expect(right!.x - (left!.x + left!.width)).toBeGreaterThanOrEqual(8);
+      expect(right!.x + right!.width).toBeLessThanOrEqual(width - 12);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+
+      await before.click();
+      await expect(before).toHaveAttribute('aria-selected', 'true');
+      await expect(before).toHaveCSS('background-color', 'rgb(255, 240, 205)');
+      await after.click();
+      await expect(after).toHaveAttribute('aria-selected', 'true');
+      await expect(after).toHaveCSS('background-color', 'rgb(15, 98, 254)');
+    }
+  });
+
+  test('CA06d: ampliar segue icon-only em visualização com divisor', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const section = page.locator('#comparador-visual');
+    await section.getByRole('button', { name: 'Comparar com divisor' }).click();
+
+    const expandButton = section.getByRole('button', { name: 'Ampliar captura em tela cheia' });
+    await expect(expandButton).toBeVisible();
+    await expect(expandButton).toHaveText('');
+    await expect(expandButton.locator('svg')).toHaveCount(1);
+    await expandButton.click();
+    await expect(page.getByRole('dialog')).toBeVisible();
   });
 
   test('CA06b: mobile permite comparar sem overflow horizontal', async ({ page }) => {
