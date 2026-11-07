@@ -16,6 +16,7 @@ export interface SearchFilterState {
 }
 
 interface SearchFiltersProps {
+  activeTab?: SearchTab;
   value: SearchFilterState;
   counts: Record<SearchTab, number>;
   categories: string[];
@@ -36,6 +37,7 @@ export const defaultSearchFilters: SearchFilterState = {
 };
 
 export function SearchFilters({
+  activeTab = 'all',
   value,
   counts,
   categories,
@@ -66,7 +68,7 @@ export function SearchFilters({
         </button>
       </div>
 
-      <fieldset className="space-y-3 border-b border-slate-200 px-5 py-5">
+      {activeTab === 'all' ? <fieldset className="space-y-3 border-b border-slate-200 px-5 py-5">
         <legend className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
           Tipo de resultado
         </legend>
@@ -83,7 +85,7 @@ export function SearchFilters({
           onChange={(checked) => update('includeCompanies', checked)}
         />
         <FilterCheckbox label="Avaliações" count={counts.reviews} checked={false} disabled />
-      </fieldset>
+      </fieldset> : null}
 
       <div className="space-y-4 border-b border-slate-200 px-5 py-5">
         <FilterSelect
@@ -93,13 +95,15 @@ export function SearchFilters({
           options={categories}
           placeholder="Todas"
         />
-        <FilterSelect
-          label="Marca"
-          value={value.brand}
-          onChange={(next) => update('brand', next)}
-          options={brands}
-          placeholder="Todas as marcas"
-        />
+        {activeTab !== 'companies' ? (
+          <FilterSelect
+            label="Marca"
+            value={value.brand}
+            onChange={(next) => update('brand', next)}
+            options={brands}
+            placeholder="Todas as marcas"
+          />
+        ) : null}
         <label className="block text-sm font-semibold text-slate-700">
           Cidade / UF
           <input
@@ -109,7 +113,7 @@ export function SearchFilters({
             className="mt-2 h-10 w-full rounded-none border border-slate-300 px-3 text-sm font-normal outline-none placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           />
         </label>
-        <label className="block text-sm font-semibold text-slate-700">
+        {activeTab !== 'companies' ? <label className="block text-sm font-semibold text-slate-700">
           Faixa de preço
           <select
             value={value.priceRange}
@@ -122,7 +126,7 @@ export function SearchFilters({
             <option value="3000_5000">R$ 3.000 a R$ 5.000</option>
             <option value="over_5000">Acima de R$ 5.000</option>
           </select>
-        </label>
+        </label> : null}
       </div>
 
       <label className="flex cursor-pointer items-center justify-between gap-4 border-b border-slate-200 px-5 py-5 text-sm font-medium text-slate-900 hover:bg-slate-50">
