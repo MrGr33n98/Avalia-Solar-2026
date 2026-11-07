@@ -286,6 +286,13 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
       expect(favBtn.parentElement).toHaveClass('gap-[6px]');
       expect(favBtn).toHaveClass('focus-visible:ring-2');
       expect(shareBtn).toHaveClass('focus-visible:ring-2');
+      expect(shareBtn).toHaveClass('hidden', 'lg:flex');
+
+      const reviewStar = screen.getByRole('link', { name: 'Avaliar empresa: WEG Solar' });
+      expect(reviewStar).toHaveAttribute('href', expect.stringMatching(/\/review(?:\/|$)/));
+      expect(reviewStar).toHaveClass('h-[36px]', 'w-[36px]', 'lg:hidden');
+      expect(reviewStar.querySelector('svg')).toBeInTheDocument();
+      expect(reviewStar).not.toHaveTextContent('Avaliar');
     });
   });
 
