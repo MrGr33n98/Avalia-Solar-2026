@@ -300,6 +300,7 @@ export function BannerContainer({
       switch (pos) {
         case 'companies_right_rail':
         case 'categories_right_rail':
+        case 'company_profile_sidebar_sponsored':
         case 'compare_page_sidebar':
         case 'company_access_sidebar':
           return '(max-width: 1023px) 0px, 300px';
@@ -341,6 +342,14 @@ export function BannerContainer({
         <div
           ref={containerRef}
           className={cn('m-0 w-full min-w-0 max-w-[300px] mx-auto p-0', className)}
+          style={singleBanner.creative_mode === 'photo_with_html'
+            ? undefined
+            : { aspectRatio: resolveBannerAspectRatio({
+                position,
+                sourcePosition: singleBanner.position,
+                width: singleBanner.width,
+                height: singleBanner.height,
+              }) }}
         >
           <BannerCreative
             banner={singleBanner}
