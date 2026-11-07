@@ -15,6 +15,7 @@ export interface SidebarEditorialCreativeProps {
   onMediaLoad?: () => void;
   onCtaClick?: () => void;
   className?: string;
+  compact?: boolean;
 }
 
 /**
@@ -61,6 +62,7 @@ export function SidebarEditorialCreative({
   onMediaLoad,
   onCtaClick,
   className,
+  compact = false,
 }: SidebarEditorialCreativeProps) {
   const headline = banner.headline?.trim() || banner.title?.trim() || '';
   const subtitle = banner.subtitle?.trim() || '';
@@ -80,11 +82,11 @@ export function SidebarEditorialCreative({
         'shadow-[0_3px_12px_rgba(15,23,42,0.06)] transition-all duration-200 hover:shadow-md',
         className
       )}
-      style={{ minHeight: '500px' }}
+      style={compact ? { minHeight: '250px', height: '250px' } : { minHeight: '500px' }}
       aria-label={`Anúncio editorial: ${headline}`}
     >
       {/* Top Media Container: 112–130px com fundo suave #EDF8FC */}
-      <div className="relative h-[120px] w-full shrink-0 overflow-hidden bg-[#EDF8FC]">
+      <div className={cn('relative w-full shrink-0 overflow-hidden bg-[#EDF8FC]', compact ? 'h-[72px]' : 'h-[120px]')}>
         {banner.image_url ? (
           <BannerMedia
             src={banner.image_url}
@@ -108,23 +110,23 @@ export function SidebarEditorialCreative({
       </div>
 
       {/* Content Area: Padding 18px com tipografia com alto contraste */}
-      <div className="flex flex-1 flex-col p-[18px]">
+      <div className={cn('flex min-h-0 flex-1 flex-col', compact ? 'p-3' : 'p-[18px]')}>
         {/* Headline: 17–18px, weight 700/750, line-height 1.3, text-[#0B2944] */}
         {headline && (
-          <h3 className="line-clamp-3 text-[17px] font-bold leading-[1.3] tracking-tight text-[#0B2944]">
+          <h3 className={cn('font-bold tracking-tight text-[#0B2944]', compact ? 'line-clamp-2 text-sm leading-[1.25]' : 'line-clamp-3 text-[17px] leading-[1.3]')}>
             {headline}
           </h3>
         )}
 
         {/* Subtitle: 12–13px, line-height 1.5, text-[#475569] */}
         {subtitle && (
-          <p className="mt-2 line-clamp-4 text-[12.5px] leading-[1.5] text-[#475569]">
+          <p className={cn('text-[#475569]', compact ? 'mt-1 line-clamp-2 text-[11px] leading-[1.3]' : 'mt-2 line-clamp-4 text-[12.5px] leading-[1.5]')}>
             {subtitle}
           </p>
         )}
 
         {/* Lista de benefícios real (apenas se cadastrado formalmente) */}
-        {benefits.length > 0 && (
+        {!compact && benefits.length > 0 && (
           <ul className="mt-3.5 space-y-2 text-[12px] leading-[1.45] text-slate-700">
             {benefits.map((benefit, idx) => (
               <li key={idx} className="flex items-start gap-2">
@@ -139,14 +141,15 @@ export function SidebarEditorialCreative({
 
         {/* CTA: Alinhado à base via mt-auto, min-height 40–44px, radius 8px */}
         {banner.cta_enabled !== false && (
-          <div className="mt-auto pt-4">
+          <div className={compact ? 'mt-auto pt-2' : 'mt-auto pt-4'}>
             <Link
               href={banner.id ? `/api/v1/banner_clicks/${banner.id}` : ctaHref}
               target="_blank"
               rel="noopener noreferrer"
               onClick={onCtaClick}
               className={cn(
-                'inline-flex min-h-[42px] w-full items-center justify-center rounded-[8px] px-4 py-2 text-[13px] font-semibold transition-all',
+                'inline-flex w-full items-center justify-center rounded-[8px] px-4 font-semibold transition-all',
+                compact ? 'min-h-[34px] py-1 text-xs' : 'min-h-[42px] py-2 text-[13px]',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2',
                 isOutline &&
                   'border border-[#2563EB] bg-transparent text-[#1D4ED8] hover:bg-blue-50 active:bg-blue-100',
