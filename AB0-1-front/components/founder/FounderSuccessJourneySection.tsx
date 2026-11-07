@@ -168,9 +168,8 @@ export default function FounderSuccessJourneySection() {
                 alt="Captura da Brand Page Premium da Solaris Energia, com catálogo, avaliações e canais de contato."
                 fill
                 sizes="(max-width: 800px) 100vw, 58vw"
-                quality={88}
-                priority
-                unoptimized
+                quality={82}
+                loading="lazy"
                 className={styles.previewImage}
                 style={{ objectPosition: `50% ${step.previewPosition}%` }}
                 draggable={false}
