@@ -271,7 +271,7 @@ export default function FounderCursorTour() {
               <button type="button" onClick={() => goTo(currentStep + 1)} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-slate-800 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600" aria-label="Próximo recurso"><ArrowRight className="h-5 w-5" /></button>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Escolher etapa do tour">
+            <div className="-mx-1 grid grid-cols-10 items-center gap-0.5 sm:mx-0 sm:flex sm:flex-wrap sm:justify-center sm:gap-2" role="group" aria-label="Escolher etapa do tour">
               {TOUR_STEPS.map((item, index) => (
                 <button
                   key={item.id}
@@ -279,7 +279,7 @@ export default function FounderCursorTour() {
                   onClick={() => goTo(index)}
                   aria-label={`Ir para etapa ${index + 1}: ${item.title}`}
                   aria-current={index === currentStep ? 'step' : undefined}
-                  className={`flex h-9 min-w-9 items-center justify-center rounded-full border px-2 text-xs font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${index === currentStep ? 'border-blue-700 bg-blue-700 text-white' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
+                  className={`mx-auto flex aspect-square w-full max-w-7 items-center justify-center rounded-full border p-0 text-[11px] font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:aspect-auto sm:h-9 sm:min-w-9 sm:w-auto sm:max-w-none sm:px-2 sm:text-xs ${index === currentStep ? 'border-blue-700 bg-blue-700 text-white' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}
                 >{index + 1}</button>
               ))}
             </div>
