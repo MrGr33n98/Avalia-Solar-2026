@@ -32,6 +32,56 @@ RSpec.describe 'Acesso a leads da empresa selecionada', type: :request do
     expect(response.parsed_body['data'].pluck('id')).to match_array([direct.id, distributed.id])
   end
 
+  it 'filtra tipo de solicitação, e-mail e período antes da paginação' do
+    quote = create(:lead, company: company, name: 'Orçamento Solar', email: 'orcamento@exemplo.com',
+                           quote_type: 'Energia Solar', created_at: 5.days.ago)
+    create(:lead, company: company, name: 'Contato Geral', email: 'contato@exemplo.com',
+                  quote_type: nil, quote_requested_company_id: nil, created_at: 3.days.ago)
+    create(:lead, company: company, name: 'Orçamento Antigo', email: 'orcamento-antigo@exemplo.com',
+                  quote_type: 'Energia Solar', created_at: 2.years.ago)
+    create(:lead, company: nil, email: 'externo@exemplo.com', quote_type: 'Energia Solar')
+
+    get '/api/v1/dashboard/leads', params: {
+      company_id: company.id,
+      request_type: 'quote',
+      email: 'orcamento@',
+      from_date: 30.days.ago.to_date.iso8601,
+      to_date: Date.current.iso8601,
+      page: 1,
+      per_page: 20
+    }, headers: headers
+
+    expect(response).to have_http_status(:ok)
+    body = response.parsed_body
+    expect(body['data'].pluck('id')).to eq([quote.id])
+    expect(body['data'].first['request_type']).to eq('quote')
+    expect(body.dig('meta', 'pagination', 'total')).to eq(1)
+  end
+
+  it 'filtra solicitações de contato sem inventar orçamentos' do
+    contact = create(:lead, company: company, quote_type: nil, quote_requested_company_id: nil)
+    create(:lead, company: company, quote_type: 'Energia Solar')
+
+    get '/api/v1/dashboard/leads', params: {
+      company_id: company.id,
+      request_type: 'contact'
+    }, headers: headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body['data'].pluck('id')).to eq([contact.id])
+    expect(response.parsed_body['data'].first['request_type']).to eq('contact')
+  end
+
+  it 'rejeita intervalo inválido em vez de gerar erro 500' do
+    get '/api/v1/dashboard/leads', params: {
+      company_id: company.id,
+      from_date: '2026-99-99',
+      to_date: Date.current.iso8601
+    }, headers: headers
+
+    expect(response).to have_http_status(:unprocessable_entity)
+  end
+
   it 'aceita membro com identidade de consumidor' do
     user.update!(role: 'review')
     get '/api/v1/dashboard/leads', params: { company_id: company.id }, headers: headers
