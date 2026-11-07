@@ -66,7 +66,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <Link href={href}>
-                <h3 className="font-bold text-slate-900 text-base sm:text-lg hover:text-blue-700 transition-colors line-clamp-1">
+                <h3 className="font-bold text-[#09172f] text-sm sm:text-base hover:text-[#0f62fe] transition-colors line-clamp-2">
                   {company.name}
                 </h3>
               </Link>
@@ -138,7 +138,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
 
             <div className="mt-1 flex items-center gap-2 text-[11px] sm:text-xs text-slate-500">
               <span className="flex items-center gap-1 font-bold text-slate-900">
-                <Star className="w-3.5 h-3.5 fill-slate-900 text-slate-900" />
+                {rating > 0 && reviewCount > 0 ? <Star className="w-3.5 h-3.5 fill-slate-900 text-slate-900" /> : null}
                 {rating > 0 && reviewCount > 0 ? ratingLabel : 'Sem nota'}
               </span>
               <span className="text-slate-300">|</span>
@@ -148,7 +148,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
 
             <div className="mt-2 flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-500">
               <MapPin className="w-3.5 h-3.5 shrink-0" />
-              <span className="line-clamp-1">{location || 'Brasil'}</span>
+              <span className="line-clamp-1">{location || 'Localização não informada'}</span>
               <Popover>
                 <PopoverTrigger className="hover:text-blue-600 text-slate-400 p-0.5 shrink-0 transition-colors">
                   <Info className="w-3.5 h-3.5" />
@@ -159,7 +159,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                       <MapPin className="w-4 h-4 text-slate-500" />
                       <div>
                         <div className="font-bold text-slate-900 text-sm">
-                          {location || 'Brasil'}
+                          {location || 'Localização não informada'}
                         </div>
                         <div className="text-[10px] text-slate-400 mt-0.5">
                           Unidade Principal / Sede
@@ -234,7 +234,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
         </Button>
       </div>
 
-      {/* Right Column: Primary CTA — desktop only (lg+) */}
+      {/* Right Column: Primary CTA — desktop only (xl+) */}
       <div className="hidden min-w-0 shrink-0 xl:flex xl:w-[178px] flex-col justify-center gap-2 p-3 bg-slate-50/50">
         {canRequestQuote && (
           <QuoteCTA
