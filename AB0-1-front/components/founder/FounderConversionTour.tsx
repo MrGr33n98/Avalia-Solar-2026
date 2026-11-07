@@ -286,7 +286,7 @@ export default function FounderConversionTour() {
       id="founder-conversion-tour"
       tabIndex={0}
       aria-label="Tour dos pontos de conversão do Avalia Solar"
-      className="border-t border-[#d0d7de] bg-white px-4 py-16 outline-none sm:px-6 sm:py-20 lg:px-8"
+      className="border-t border-[#d0d7de] bg-white px-4 py-10 outline-none sm:px-6 sm:py-14 lg:px-8"
     >
       <div className="mx-auto max-w-7xl">
         <header className="mx-auto mb-9 max-w-3xl text-center sm:mb-12">
@@ -325,7 +325,7 @@ export default function FounderConversionTour() {
                       src={step.imageSrc}
                       alt={`Captura real da plataforma Avalia Solar: ${step.title}`}
                       fill
-                      quality={92}
+                      quality={82}
                       sizes="(max-width: 1023px) 100vw, 65vw"
                       className="object-contain"
                     />
@@ -413,7 +413,7 @@ export default function FounderConversionTour() {
                         src={src}
                         alt={`Captura demonstrativa: ${title}`}
                         fill
-                        quality={90}
+                        quality={80}
                         sizes="(max-width: 639px) 90vw, 30vw"
                         className="object-contain"
                       />
