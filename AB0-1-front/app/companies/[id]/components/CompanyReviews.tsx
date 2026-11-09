@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Review } from '@/lib/api';
+import { Review, type CompanyReviewWhatsAppChannel } from '@/lib/api';
+import ReviewWhatsAppButton from '@/components/company/ReviewWhatsAppButton';
 import ReviewCard from '@/components/ReviewCard';
 import { buildCompanySubPath } from '@/lib/slug';
 import { EditorialReviewCard, ReviewV2 } from '@/components/EditorialReviewCard';
@@ -18,6 +19,7 @@ interface CompanyReviewsProps {
   companyId: number;
   companySlug?: string;
   companyName?: string | null;
+  reviewWhatsapp?: CompanyReviewWhatsAppChannel | null;
   aggregates?: {
     global: ReviewAggregate | null;
     by_category: ReviewAggregate[];
@@ -37,6 +39,7 @@ export default function CompanyReviews({
   companyId,
   companySlug,
   companyName,
+  reviewWhatsapp,
   aggregates = { global: null, by_category: [] },
 }: CompanyReviewsProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
@@ -121,12 +124,20 @@ export default function CompanyReviews({
             Veja o que clientes reais estão dizendo sobre a performance desta empresa.
           </p>
         </div>
-        <Button
-          asChild
-          className="h-12 rounded-lg bg-[#0B1F4B] px-8 font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2"
-        >
-          <Link href={reviewPath}>Avaliar Agora</Link>
-        </Button>
+        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+          <Button
+            asChild
+            className="min-h-11 rounded-lg bg-[#0B1F4B] px-5 text-xs font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2"
+          >
+            <Link href={reviewPath}>Avaliar Agora</Link>
+          </Button>
+          <ReviewWhatsAppButton
+            companyId={companyId}
+            companyName={companyName || 'esta empresa'}
+            channel={reviewWhatsapp}
+            placement="reviews_tab"
+          />
+        </div>
       </div>
 
       {/* Switcher */}
