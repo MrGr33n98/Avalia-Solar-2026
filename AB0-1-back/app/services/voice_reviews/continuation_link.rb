@@ -1,6 +1,8 @@
 module VoiceReviews
   class ContinuationLink
     def self.gateway(provider: nil)
+      return FakeGateway.new if VoiceReviews::Config.provider == 'fake'
+
       case provider.to_s.presence || VoiceReviews::Config.provider
       when 'meta' then MetaGateway.new
       when 'waha' then WahaGateway.new

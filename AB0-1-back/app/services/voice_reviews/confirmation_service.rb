@@ -70,7 +70,7 @@ module VoiceReviews
     attr_reader :session, :token, :params, :skip_token_check
 
     def authenticate!
-      raise Error, 'Sessão inválida ou expirada' unless session.active_now?
+      raise Error, 'Sessão inválida ou expirada' unless session.active_now? || session.submitted?
       return if skip_token_check
 
       raise Error, 'Sessão inválida ou expirada' unless session.token_matches?(token)

@@ -58,7 +58,13 @@ module B2b
     end
 
     def process!
-      if @text.match?(/\A(?:cancelar|sair|reiniciar|parar|recomecar|recomeçar)\z/i) || (@session.current_step != 'ask_cnpj' && @text.match?(/\A(?:cadastrar|cadastro|novo cadastro)\z/i))
+      if @text.match?(/\A(?:cancelar|sair|parar)\z/i)
+        @session.update!(state: 'abandoned')
+        send_message(@session, 'Cadastro cancelado. Quando quiser recomeçar, basta enviar *CADASTRAR*! ☀️')
+        return
+      end
+
+      if @text.match?(/\A(?:reiniciar|recomecar|recomeçar)\z/i) || (@session.current_step != 'ask_cnpj' && @text.match?(/\A(?:cadastrar|cadastro|novo cadastro)\z/i))
         @session.update!(
           state: 'awaiting_cnpj',
           current_step: 'ask_cnpj',
@@ -88,7 +94,7 @@ module B2b
     private
 
     def handle_ask_cnpj
-      result = B2b::BrasilApiClient.fetch(@text)
+      result = B2b::BrasilApiClient.fetch(@text.gsub(/\D/, ''))
       unless result[:success]
         send_message(@session, "⚠️ #{result[:message]}\n\nPor favor, digite novamente o *CNPJ da empresa* (14 dígitos, apenas números):")
         return
@@ -205,9 +211,12 @@ module B2b
         draft = @session.draft_data
         cnpj_data = draft['cnpj_data'] || {}
         company_name = draft['custom_name'].presence || cnpj_data['nome_fantasia'].presence || cnpj_data['razao_social'].presence || 'Integrador Solar'
-        city = cnpj_data['municipio'].presence || 'São Paulo'
-        state_code = cnpj_data['uf'].presence || 'SP'
-        address_line = [cnpj_data['logradouro'], cnpj_data['numero'], cnpj_data['bairro']].reject(&:blank?).join(', ')
+        state_code = Locations::CoverageNormalizer.normalize_state(cnpj_data['uf']).presence || 'SP'
+        raw_city = cnpj_data['municipio'].presence || 'São Paulo'
+        city = Locations::CoverageNormalizer.normalize_city(raw_city, state: state_code).presence ||
+               (Locations::BrLocations.valid_city?(state_code, raw_city) ? raw_city : 'São Paulo')
+        cep_part = cnpj_data['cep'].present? ? "CEP #{cnpj_data['cep']}" : nil
+        address_line = [cnpj_data['logradouro'], cnpj_data['numero'], cnpj_data['bairro'], cep_part].reject(&:blank?).join(', ')
 
         raw_phone = @session.provider_contact.to_s.gsub(/\D/, '')
         contact_phone = raw_phone.length.between?(10, 15) ? raw_phone : cnpj_data['telefone'].to_s.gsub(/\D/, '').presence
@@ -219,7 +228,6 @@ module B2b
           city: city,
           state: state_code,
           address: address_line.presence || city,
-          postal_code: cnpj_data['cep'],
           segment: 'installer',
           status: 'pending',
           moderation_status: 'pending_review',
@@ -228,14 +236,21 @@ module B2b
           description: "Empresa integradora de energia solar atuante em #{city}/#{state_code}. Especialista em instalações #{draft['segment_focus'] || 'residenciais e comerciais'}. Equipamentos: #{draft['brands'] || 'Principais marcas do mercado'}."
         )
 
-        email = cnpj_data['email'].presence || "contato_#{company.id}@avaliasolar.com.br"
+        raw_email = cnpj_data['email'].to_s.strip.downcase.presence
+        email_domain = raw_email&.split('@', 2)&.last
+        valid_corp_email = raw_email.present? &&
+                           Company::SIMPLE_EMAIL_REGEX.match?(raw_email) &&
+                           !User::PUBLIC_EMAIL_DOMAINS.include?(email_domain)
+        email = valid_corp_email ? raw_email : "contato_#{company.id}@avaliasolar.com.br"
+
         user = User.find_by(email: email)
         unless user
-          user_name = draft['sender_name'].presence || company_name
+          raw_user_name = (draft['sender_name'].presence || company_name).to_s.strip.truncate(100, omission: '')
+          user_name = raw_user_name.length >= 3 ? raw_user_name : 'Responsável Integrador'
           user = User.create!(
             name: user_name,
             email: email,
-            password: SecureRandom.urlsafe_base64(16),
+            password: "Aa1!#{SecureRandom.urlsafe_base64(16)}",
             role: 'company',
             city: city,
             state: state_code,

@@ -50,7 +50,7 @@ RSpec.describe B2b::OnboardingSessionService do
       let(:cnpj_payload) do
         {
           success: true,
-          cnpj: '12345678000199',
+          cnpj: '11222333000181',
           razao_social: 'SOLAR ENGENHARIA LTDA',
           nome_fantasia: 'SOLAR CAMPINAS',
           situacao: 'ATIVA',
@@ -66,23 +66,23 @@ RSpec.describe B2b::OnboardingSessionService do
       end
 
       it 'validates CNPJ via BrasilApiClient and transitions to confirming_data' do
-        allow(B2b::BrasilApiClient).to receive(:fetch).with('12345678000199').and_return(cnpj_payload)
+        allow(B2b::BrasilApiClient).to receive(:fetch).with('11222333000181').and_return(cnpj_payload)
 
         expect(gateway).to receive(:send_message).with(session, /Consultamos a base oficial da Receita Federal/)
-        described_class.process_message!(session, { 'body' => '12.345.678/0001-99' })
+        described_class.process_message!(session, { 'body' => '11.222.333/0001-81' })
 
         expect(session.reload.state).to eq('confirming_data')
         expect(session.current_step).to eq('confirm_data')
-        expect(session.cnpj).to eq('12345678000199')
+        expect(session.cnpj).to eq('11222333000181')
         expect(session.draft_data['cnpj_data']['razao_social']).to eq('SOLAR ENGENHARIA LTDA')
       end
 
       it 'warns if company with this CNPJ already exists' do
-        create(:company, cnpj: '12345678000199', name: 'Empresa Existente')
+        create(:company, cnpj: '11222333000181', name: 'Empresa Existente')
         allow(B2b::BrasilApiClient).to receive(:fetch).and_return(cnpj_payload)
 
         expect(gateway).to receive(:send_message).with(session, /já possui cadastro no Avalia Solar/)
-        described_class.process_message!(session, { 'body' => '12345678000199' })
+        described_class.process_message!(session, { 'body' => '11222333000181' })
 
         expect(session.reload.state).to eq('abandoned')
       end
@@ -91,7 +91,7 @@ RSpec.describe B2b::OnboardingSessionService do
     context 'full progression to finalization' do
       let(:cnpj_data) do
         {
-          'cnpj' => '98765432000188',
+          'cnpj' => '06990590000123',
           'razao_social' => 'NOVA ENERGIA SOLAR LTDA',
           'nome_fantasia' => 'NOVA ENERGIA',
           'situacao' => 'ATIVA',
@@ -108,7 +108,7 @@ RSpec.describe B2b::OnboardingSessionService do
 
       it 'completes onboarding creating Company, User and CompanyMember' do
         session.update!(
-          cnpj: '98765432000188',
+          cnpj: '06990590000123',
           current_step: 'confirm_data',
           state: 'confirming_data',
           draft_payload: { 'cnpj_data' => cnpj_data }
@@ -137,8 +137,8 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.current_step).to eq('finish')
         expect(session.company).to be_present
         expect(session.company.name).to eq('NOVA ENERGIA')
-        expect(session.company.cnpj).to eq('98765432000188')
-        expect(session.company.city).to eq('CAMPINAS')
+        expect(session.company.cnpj).to eq('06990590000123')
+        expect(session.company.city).to eq('Campinas')
         expect(session.company.state).to eq('SP')
         expect(session.user).to be_present
         expect(session.company.company_members.where(user: session.user, role: :owner)).to exist
