@@ -30,6 +30,21 @@ describe('ReviewWhatsAppButton', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('matches the adjacent navy review button typography and spacing on web and PWA', () => {
+    render(<ReviewWhatsAppButton {...props} channel={channel} />);
+    const link = screen.getByTestId('review-whatsapp-cta');
+
+    expect(link).toHaveClass('font-bold');
+    expect(link).toHaveClass('text-xs');
+    expect(link).toHaveClass('leading-4');
+    expect(link).toHaveClass('min-h-11');
+    expect(link).toHaveClass('px-4');
+    expect(link).toHaveClass('gap-1.5');
+    expect(link).toHaveClass('rounded-lg');
+    expect(link).toHaveClass('max-sm:min-h-[48px]');
+    expect(link).toHaveClass('max-sm:whitespace-normal');
+  });
+
   it('renders official WhatsApp destination and keeps independent analytics', () => {
     render(<ReviewWhatsAppButton {...props} channel={channel} />);
     const link = screen.getByRole('link', { name: /avaliação de Trends Solar pelo WhatsApp/i });
