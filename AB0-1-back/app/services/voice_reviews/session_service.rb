@@ -37,7 +37,7 @@ module VoiceReviews
           invite.increment!(:claims_count)
           VoiceReviews::EventRecorder.record!(event_name: 'voice_session_started', company: invite.company, invite:, session:,
                                               dedupe_key: "session-started:#{session.id}", properties: { provider: @provider })
-        elsif session.submitted? || session.completed?
+        else
           raw_token = SecureRandom.urlsafe_base64(32)
           session.assign_attributes(
             state: 'awaiting_consent',
@@ -56,9 +56,6 @@ module VoiceReviews
           session.save!
           VoiceReviews::EventRecorder.record!(event_name: 'voice_session_started', company: invite.company, invite:, session:,
                                               dedupe_key: "session-reopened:#{session.id}:#{session.version}", properties: { provider: @provider })
-        else
-          session.update!(last_inbound_at: Time.current, provider_chat_id: @provider_chat_id,
-                          provider_session: @provider_session) if session.active_now?
         end
         session
       rescue ActiveRecord::RecordNotUnique
