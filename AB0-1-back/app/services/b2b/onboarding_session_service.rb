@@ -209,6 +209,10 @@ module B2b
         state_code = cnpj_data['uf'].presence || 'SP'
         address_line = [cnpj_data['logradouro'], cnpj_data['numero'], cnpj_data['bairro']].reject(&:blank?).join(', ')
 
+        raw_phone = @session.provider_contact.to_s.gsub(/\D/, '')
+        contact_phone = raw_phone.length.between?(10, 15) ? raw_phone : cnpj_data['telefone'].to_s.gsub(/\D/, '').presence
+        contact_phone = nil unless contact_phone&.match?(/\A\d{10,15}\z/)
+
         company = Company.create!(
           name: company_name,
           cnpj: @session.cnpj,
@@ -219,8 +223,8 @@ module B2b
           segment: 'installer',
           status: 'pending',
           moderation_status: 'pending_review',
-          phone: @session.provider_contact,
-          whatsapp: @session.provider_contact,
+          phone: contact_phone,
+          whatsapp: contact_phone,
           description: "Empresa integradora de energia solar atuante em #{city}/#{state_code}. Especialista em instalações #{draft['segment_focus'] || 'residenciais e comerciais'}. Equipamentos: #{draft['brands'] || 'Principais marcas do mercado'}."
         )
 
