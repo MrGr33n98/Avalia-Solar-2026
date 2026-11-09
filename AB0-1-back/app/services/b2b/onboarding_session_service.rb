@@ -8,7 +8,7 @@ module B2b
       CompanyOnboardingSession.find_by_contact(contact)
     end
 
-    def self.open!(contact:, provider: 'waha', provider_session: nil, provider_chat_id: nil, sender_name: nil)
+    def self.open!(contact:, provider: 'waha', provider_session: nil, provider_chat_id: nil, sender_name: nil, skip_greeting: false)
       contact_clean = contact.to_s.strip
       older = find_active_by_contact(contact_clean)
       older&.update(state: 'abandoned')
@@ -32,14 +32,17 @@ module B2b
         expires_at: 24.hours.from_now
       )
 
-      fname = sender_name.to_s.split.first.presence
-      hello = fname ? "Olá, *#{fname}*! 👋" : 'Olá! 👋'
-      msg = "#{hello} Boas-vindas ao portal *Avalia Solar*! ☀️\n\n" \
-            "Vamos cadastrar sua empresa integradora para conectar sua equipe a novos clientes de energia solar e permitir a coleta de avaliações auditadas no pós-venda.\n\n" \
-            "Para preenchermos 80% dos dados automaticamente pela Receita Federal:\n" \
-            "👉 *Digite o CNPJ da sua empresa* (apenas números):"
+      unless skip_greeting
+        fname = sender_name.to_s.split.first.presence
+        hello = fname ? "Olá, *#{fname}*! 👋" : 'Olá! 👋'
+        msg = "#{hello} Boas-vindas ao portal *Avalia Solar*! ☀️\n\n" \
+              "Vamos cadastrar sua empresa integradora para conectar sua equipe a novos clientes de energia solar e permitir a coleta de avaliações auditadas no pós-venda.\n\n" \
+              "Para preenchermos 80% dos dados automaticamente pela Receita Federal:\n" \
+              "👉 *Digite o CNPJ da sua empresa* (apenas números):"
 
-      send_message(session, msg)
+        send_message(session, msg)
+      end
+
       session
     end
 

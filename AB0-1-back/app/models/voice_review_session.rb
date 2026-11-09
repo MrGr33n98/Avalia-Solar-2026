@@ -22,7 +22,7 @@ class VoiceReviewSession < ApplicationRecord
   validates :state, inclusion: { in: STATES }
 
   def active_now?
-    !%w[completed expired revoked abandoned failed_permanent].include?(state) && expires_at.future?
+    !%w[completed submitted expired revoked abandoned failed_permanent].include?(state) && expires_at.future?
   end
 
   def token_matches?(raw_token)

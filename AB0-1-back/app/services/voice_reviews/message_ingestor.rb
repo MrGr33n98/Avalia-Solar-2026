@@ -49,6 +49,7 @@ module VoiceReviews
           end
 
           text_body = extract_text_content(message)
+          clean_digits = text_body.gsub(/\D/, '')
           if text_body.match?(/\A(?:CADASTRAR|CADASTRO|NOVO CADASTRO|SOU INTEGRADOR|QUERO CADASTRAR)\b/i)
             B2b::OnboardingSessionService.open!(
               contact: contact,
@@ -57,6 +58,18 @@ module VoiceReviews
               provider_chat_id: message['chat_id'],
               sender_name: message['sender_name']
             )
+            record.update!(processed_at: Time.current, delivery_status: 'processed')
+            return
+          elsif clean_digits.length == 14
+            session = B2b::OnboardingSessionService.open!(
+              contact: contact,
+              provider: provider,
+              provider_session: provider_session,
+              provider_chat_id: message['chat_id'],
+              sender_name: message['sender_name'],
+              skip_greeting: true
+            )
+            B2b::OnboardingSessionService.process_message!(session, message)
             record.update!(processed_at: Time.current, delivery_status: 'processed')
             return
           end
@@ -105,7 +118,7 @@ module VoiceReviews
       hash = OpenSSL::HMAC.hexdigest('SHA256', VoiceReviews::Config.contact_pepper.to_s, contact.to_s)
       sessions = VoiceReviewSession.where(provider: provider, provider_session: provider_session, provider_contact_hash: hash)
         .where('expires_at > ?', Time.current)
-        .where.not(state: %w[completed expired revoked abandoned failed_permanent])
+        .where.not(state: %w[completed submitted expired revoked abandoned failed_permanent])
         .order(last_inbound_at: :desc, created_at: :desc)
       return sessions.first if sessions.first&.active_now?
 
