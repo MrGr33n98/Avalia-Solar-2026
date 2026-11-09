@@ -42,33 +42,16 @@ module VoiceReviews
 
     def verify_signature!
       secret = VoiceReviews::Config.waha_webhook_hmac_secret
-      return if secret.blank?
+      raise InvalidSignature, 'HMAC WAHA não configurado' if secret.blank?
+      raise InvalidSignature, 'Assinatura WAHA ausente' if signature.blank?
+      raise InvalidSignature, 'Timestamp WAHA ausente' if timestamp.blank?
+      raise InvalidSignature, 'Algoritmo WAHA inválido' unless %w[sha256 sha512].include?(algorithm)
 
-      if signature.present?
-        verify_timestamp! if timestamp.present?
-
-        algo = algorithm == 'sha256' ? 'SHA256' : 'SHA512'
-        expected = OpenSSL::HMAC.hexdigest(algo, secret, raw_body)
-        return if ActiveSupport::SecurityUtils.secure_compare(expected, signature)
-
-        # Fallback to alternative algorithm if WAHA omits/swaps algorithm
-        fallback_expected = OpenSSL::HMAC.hexdigest(algo == 'SHA512' ? 'SHA256' : 'SHA512', secret, raw_body)
-        return if ActiveSupport::SecurityUtils.secure_compare(fallback_expected, signature)
-
-        raise InvalidSignature, 'Assinatura HMAC WAHA inválida'
-      end
-
-      # Allow internal docker network requests without signature
-      return if internal_network?
-
-      raise InvalidSignature, 'Assinatura HMAC WAHA ausente'
-    end
-
-    def internal_network?
-      return true if remote_ip.blank?
-      return true if remote_ip.start_with?('127.', '172.', '10.', '192.168.', '::1')
-
-      false
+      verify_timestamp!
+      digest_name = algorithm == 'sha256' ? 'SHA256' : 'SHA512'
+      expected = OpenSSL::HMAC.hexdigest(digest_name, secret, raw_body)
+      raise InvalidSignature, 'Assinatura HMAC WAHA inválida' unless
+        ActiveSupport::SecurityUtils.secure_compare(expected, signature)
     end
 
     def verify_timestamp!
