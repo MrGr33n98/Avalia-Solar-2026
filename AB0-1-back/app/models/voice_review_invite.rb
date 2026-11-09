@@ -15,6 +15,8 @@ class VoiceReviewInvite < ApplicationRecord
   before_validation :ensure_id
 
   def active_now?
+    return false if source == 'brand_page' && (!company.voice_review_cta_enabled? || !company.active_status?)
+
     active? && review_form.active? && (expires_at.blank? || expires_at.future?)
   end
 
