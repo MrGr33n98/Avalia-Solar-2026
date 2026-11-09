@@ -37,8 +37,8 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
   const [rating, setRating] = useState(5);
   const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>({});
   const [nameMode, setNameMode] = useState<'anonymous' | 'initials'>('anonymous');
-  const [experienceConfirmed, setExperienceConfirmed] = useState(true);
-  const [publishConsent, setPublishConsent] = useState(true);
+  const [experienceConfirmed, setExperienceConfirmed] = useState(false);
+  const [publishConsent, setPublishConsent] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
 
@@ -102,9 +102,9 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
     return (
       <main className="mx-auto max-w-lg px-6 py-24 text-center">
         <CheckCircle2 className="mx-auto h-14 w-14 text-emerald-600" />
-        <h1 className="mt-6 text-3xl font-black">Avaliação Verificada por Voz Recebida</h1>
+        <h1 className="mt-6 text-3xl font-black">Avaliação recebida para moderação</h1>
         <p className="mt-3 text-slate-600">
-          Sua avaliação estruturada foi enviada para publicação com o selo Verificado via Áudio (WhatsApp). O áudio original continua privado.
+          Sua avaliação foi enviada para análise e poderá ser publicada após a moderação. Seu áudio original permanece privado.
         </p>
       </main>
     );
@@ -122,7 +122,7 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
       <div className="mx-auto max-w-2xl rounded-3xl border border-slate-200 bg-white p-7 shadow-sm sm:p-10">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
-            <ShieldCheck className="h-5 w-5" /> Avaliação Verificada via Áudio (WhatsApp)
+            <ShieldCheck className="h-5 w-5" /> Avaliação enviada pelo WhatsApp
           </div>
           <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
             <Sparkles className="h-3.5 w-3.5" /> Estruturada por IA
