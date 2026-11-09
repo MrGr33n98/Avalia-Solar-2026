@@ -71,7 +71,7 @@ export const WhatsAppCTAButton = React.forwardRef<HTMLButtonElement, WhatsAppCTA
   }
 );
 
-const WhatsAppIcon = ({ className }: { className?: string }) => (
+export const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 0 24 24"
     fill="currentColor"
