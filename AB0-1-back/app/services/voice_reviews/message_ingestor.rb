@@ -127,7 +127,7 @@ module VoiceReviews
       if session.submitted? || session.completed?
         fname = reviewer_first_name(session)
         hello = fname ? "Olá, *#{fname}*! 👋" : "Olá! 👋"
-        msg = "#{hello} Sua avaliação para a *#{session.company.name}* já foi registrada e publicada com sucesso! 🎉\n\n" \
+        msg = "#{hello} Sua avaliação para a *#{session.company.name}* foi recebida e está em análise.\n\n" \
               "Você pode visualizá-la no diretório auditado do *Avalia Solar*. Muito obrigado pelo seu feedback!"
         gateway.send_message(session, msg)
         return
@@ -366,8 +366,8 @@ module VoiceReviews
     def handle_confirmation_reply(session, cleaned)
       if cleaned.match?(/\A(SIM|1|APROVAR|CONFIRMAR|PUBLICAR)\z/i)
         VoiceReviews::ConfirmationService.confirm_from_whatsapp!(session: session)
-        msg = '✅ *Avaliação aprovada e enviada para publicação!* Seu depoimento recebeu o selo ' \
-              "*Avaliação Verificada via Áudio (WhatsApp)* na página da *#{session.company.name}*. Muito obrigado!"
+        msg = '✅ *Avaliação recebida!* O texto foi confirmado e enviado para moderação. ' \
+              "Você poderá encontrá-lo na página da *#{session.company.name}* após a aprovação."
         gateway.send_message(session, msg)
       elsif cleaned.match?(/\A(2|REGRAVAR|NOVO)\z/i)
         session.update!(state: 'awaiting_audio', version: session.version + 1)
