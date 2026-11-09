@@ -29,7 +29,7 @@ module VoiceReviews
         format_criteria_line(session, transcript),
         format_equipment_line(transcript),
         '',
-        '👉 Responda *SIM* (ou *1*) para *✅ Aprovar e Publicar*',
+        '👉 Responda *SIM* (ou *1*) para *✅ Confirmar e enviar para moderação*',
         '🎙️ Envie *outro áudio* para *Gravar Novo Áudio*',
         "✏️ Ou edite o texto/notas aqui: #{edit_url}"
       ].compact
