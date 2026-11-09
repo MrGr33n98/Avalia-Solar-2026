@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe ReviewCollection::WhatsAppAvailabilityResolver, type: :service do
+RSpec.describe ReviewCollection::WhatsappAvailabilityResolver, type: :service do
   let(:company) { create(:company, status: 'active') }
 
   before do
