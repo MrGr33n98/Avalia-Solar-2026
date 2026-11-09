@@ -10,6 +10,7 @@ import { RatingStars } from '@/components/RatingStars';
 import { getFullImageUrl } from '@/utils/image';
 
 import { buildCompanySubPath } from '@/lib/slug';
+import ReviewWhatsAppButton from '@/components/company/ReviewWhatsAppButton';
 
 interface ReviewsPreviewProps {
   company: Company;
@@ -276,14 +277,22 @@ export default function ReviewsPreview({
               Sua opinião ajuda milhares de consumidores a escolherem o integrador ideal para a
               instalação de energia solar.
             </p>
-            <Button
-              size="sm"
-              onClick={() => onTabChange('reviews')}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#0B1F4B] text-xs font-bold text-white shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2"
-            >
-              Fazer uma avaliação
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Button>
+            <div className="flex w-full flex-col items-stretch justify-center gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <Button
+                size="sm"
+                onClick={() => onTabChange('reviews')}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#0B1F4B] px-4 text-xs font-bold text-white shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2"
+              >
+                Fazer uma avaliação
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Button>
+              <ReviewWhatsAppButton
+                companyId={company.id}
+                companyName={company.name}
+                channel={company.review_channels?.whatsapp}
+                placement="overview_empty"
+              />
+            </div>
           </div>
         )}
       </div>

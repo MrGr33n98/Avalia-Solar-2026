@@ -60,7 +60,8 @@ RSpec.describe VoiceReviews::ConfirmationService, type: :service do
     review = Review.find(result[:review_id])
     expect(review.rating).to eq(5)
     expect(review.capture_flow_source).to eq('whatsapp_voice')
-    expect(review.metadata['verified_by_voice']).to eq(true)
+    expect(review.metadata['verified_by_voice']).to eq(false)
+    expect(review.metadata['submitted_with_audio']).to eq(true)
     expect(review.metadata['mentioned_equipment']).to include('WEG')
   end
 end

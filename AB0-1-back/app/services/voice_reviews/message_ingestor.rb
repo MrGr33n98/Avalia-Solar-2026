@@ -27,6 +27,7 @@ module VoiceReviews
     def ingest_message(message)
       provider_id = message['id'].to_s
       return if provider_id.blank? || message['from_me']
+      return if message['chat_id'].to_s.end_with?('@g.us') || message['from'].to_s.end_with?('@g.us')
 
       digest = Digest::SHA256.hexdigest(raw_body)
       record = VoiceReviewMessage.create_with(
@@ -74,7 +75,7 @@ module VoiceReviews
           session.merge_draft!(reviewer_name: message['sender_name'])
         end
         if invite
-          send_audit_greeting(session)
+          send_consent_prompt(session) if session.awaiting_consent? && !session.consented_to_audio?
         else
           process_message(record, session, message) if session
         end
@@ -126,7 +127,7 @@ module VoiceReviews
       if session.submitted? || session.completed?
         fname = reviewer_first_name(session)
         hello = fname ? "Olá, *#{fname}*! 👋" : "Olá! 👋"
-        msg = "#{hello} Sua avaliação para a *#{session.company.name}* já foi registrada e publicada com sucesso! 🎉\n\n" \
+        msg = "#{hello} Sua avaliação para a *#{session.company.name}* foi recebida e está em análise.\n\n" \
               "Você pode visualizá-la no diretório auditado do *Avalia Solar*. Muito obrigado pelo seu feedback!"
         gateway.send_message(session, msg)
         return
@@ -138,6 +139,21 @@ module VoiceReviews
       end
 
       return unless session.awaiting_consent?
+
+      unless session.consented_to_audio?
+        if cleaned.match?(/\A(ACEITO|CONCORDO|AUTORIZO)\z/i)
+          VoiceReviewConsent.create!(
+            voice_review_session: session, purpose: 'process_audio', granted: true,
+            policy_version: VoiceReviews::Config.policy_version, voice_review_message: record,
+            granted_at: Time.current
+          )
+          session.update!(processing_consent_at: Time.current, version: session.version + 1)
+          send_audit_greeting(session)
+        else
+          send_consent_prompt(session)
+        end
+        return
+      end
 
       rating = extract_rating(cleaned)
       if rating
@@ -182,6 +198,19 @@ module VoiceReviews
       order_slugs = %w[atendimento qualidade_tecnica prazo custo_beneficio]
       criteria = criteria.sort_by { |c| order_slugs.index(c.slug) || 99 }
       criteria.first(4)
+    end
+
+    def send_consent_prompt(session)
+      privacy_url = "#{VoiceReviews::Config.frontend_origin}/privacy"
+      gateway.send_message(
+        session,
+        "Sou o assistente de avaliações do Avalia Solar. Você pode avaliar *#{session.company.name}* " \
+        "por texto ou áudio. Suas mensagens serão tratadas para registrar a avaliação; " \
+        "áudios poderão ser transcritos e organizados com auxílio de IA. " \
+        "Nada será publicado sem sua confirmação e moderação. " \
+        "Veja o aviso de privacidade: #{privacy_url}\n\n" \
+        "Para começar, responda *ACEITO*. Para encerrar, responda *PARAR*."
+      )
     end
 
     def send_audit_greeting(session)
@@ -250,12 +279,6 @@ module VoiceReviews
       draft = session.draft_payload.to_h
       scores = (draft['criterion_scores'] || {}).dup
       current_idx = draft['current_criterion_index'].to_i
-
-      unless session.consented_to_audio?
-        VoiceReviewConsent.create!(voice_review_session: session, purpose: 'process_audio', granted: true,
-                                   policy_version: VoiceReviews::Config.policy_version, voice_review_message: record,
-                                   granted_at: Time.current)
-      end
 
       current_criterion = criteria[current_idx] || criteria.first
       scores[current_criterion.slug] = rating if current_criterion
@@ -343,8 +366,8 @@ module VoiceReviews
     def handle_confirmation_reply(session, cleaned)
       if cleaned.match?(/\A(SIM|1|APROVAR|CONFIRMAR|PUBLICAR)\z/i)
         VoiceReviews::ConfirmationService.confirm_from_whatsapp!(session: session)
-        msg = '✅ *Avaliação aprovada e enviada para publicação!* Seu depoimento recebeu o selo ' \
-              "*Avaliação Verificada via Áudio (WhatsApp)* na página da *#{session.company.name}*. Muito obrigado!"
+        msg = '✅ *Avaliação recebida!* O texto foi confirmado e enviado para moderação. ' \
+              "Você poderá encontrá-lo na página da *#{session.company.name}* após a aprovação."
         gateway.send_message(session, msg)
       elsif cleaned.match?(/\A(2|REGRAVAR|NOVO)\z/i)
         session.update!(state: 'awaiting_audio', version: session.version + 1)
@@ -366,10 +389,10 @@ module VoiceReviews
 
     def process_audio(record, session, audio)
       unless session.consented_to_audio?
-        VoiceReviewConsent.create!(voice_review_session: session, purpose: 'process_audio', granted: true,
-                                   policy_version: VoiceReviews::Config.policy_version, voice_review_message: record,
-                                   granted_at: Time.current)
+        send_consent_prompt(session)
+        return
       end
+      return unless session.awaiting_audio? || session.awaiting_consent?
 
       asset = VoiceReviewAsset.create!(voice_review_session: session, provider_media_id: audio['id'].to_s,
                                        provider_media_url: audio['media_url'],

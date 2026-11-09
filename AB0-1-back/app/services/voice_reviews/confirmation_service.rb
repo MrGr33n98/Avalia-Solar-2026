@@ -23,12 +23,12 @@ module VoiceReviews
           review_text: text.length >= 5 ? text : 'Experiência avaliada por áudio via WhatsApp.',
           headline: transcript.headline,
           rating: rating,
-          reviewer_name: reviewer_name,
+          reviewer_name: nil,
           criterion_scores: criterion_scores,
           experience_confirmed: true,
           publish_text_consent: true,
-          display_name_mode: reviewer_name ? 'full_name' : 'anonymous',
-          full_name_consent: reviewer_name.present?,
+          display_name_mode: 'anonymous',
+          full_name_consent: false,
           confirmed_via: 'whatsapp_reply'
         },
         skip_token_check: true
@@ -110,8 +110,10 @@ module VoiceReviews
         'voice_review_transcript_id' => transcript.id,
         'reviewer_name' => reviewer_name,
         'collection_channel' => 'whatsapp_voice',
-        'verified_by_voice' => true,
-        'voice_badge_label' => 'Avaliação Verificada via Áudio (WhatsApp)',
+        # Transport channel is not proof of a verified commercial experience.
+        'verified_by_voice' => false,
+        'voice_badge_label' => 'Avaliação recebida pelo WhatsApp',
+        'submitted_with_audio' => session.voice_review_assets.where("mime_type LIKE 'audio/%'").exists?,
         'confirmed_via' => params[:confirmed_via].presence || 'web_review_card',
         'mentioned_equipment' => Array(params[:mentioned_equipment].presence || transcript.mentioned_equipment),
         'inferred_criteria_snapshot' => resolve_criteria_snapshot(transcript),

@@ -572,6 +572,7 @@ export default function CompanyDetailClient({
                       loading={reviewsLoading}
                       companyId={companyId}
                       companySlug={currentCompany?.slug}
+                      reviewWhatsapp={currentCompany.review_channels?.whatsapp}
                       companyName={currentCompany?.name}
                       aggregates={currentCompany?.review_aggregates}
                     />

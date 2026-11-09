@@ -191,6 +191,17 @@ export interface CompanyComparisonProfile {
   warranty_confirmed?: boolean | null;
 }
 
+export interface CompanyReviewWhatsAppChannel {
+  enabled: boolean;
+  label: string;
+  href: string | null;
+  landing_url: string | null;
+}
+
+export interface CompanyReviewChannels {
+  whatsapp: CompanyReviewWhatsAppChannel;
+}
+
 export interface Company {
   id: number;
   p2p_chat_enabled?: boolean;
@@ -304,6 +315,7 @@ export interface Company {
   rating_avg?: number;
   average_rating?: number; // Alternative name for rating_avg
   rating_count?: number;
+  review_channels?: CompanyReviewChannels;
   sector_ratings_enabled?: boolean;
   sector_rating_avg?: number;
   sector_rating_count?: number;

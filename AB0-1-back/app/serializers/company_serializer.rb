@@ -38,13 +38,17 @@ class CompanySerializer < ActiveModel::Serializer
              :sector_rating_count,
              :badges,
              :media_urls, :videos,
-             :review_aggregates,
+             :review_aggregates, :review_channels,
              :featured_products,
              :has_paid_plan,
              :quote_cta_enabled, :cta_visibility,
              :feature_access,
              :actions,
              :comparison_profile
+
+  def review_channels
+    { whatsapp: ReviewCollection::WhatsAppAvailabilityResolver.call(company: object) }
+  end
 
   def cta_visibility
     ::CompanyCtaVisibilityResolver.new(object).call

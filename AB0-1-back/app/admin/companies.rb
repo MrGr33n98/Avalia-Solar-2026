@@ -111,6 +111,7 @@ ActiveAdmin.register Company do
     permitted << :whatsapp_enabled
     permitted << :whatsapp_url
     permitted << :sector_ratings_enabled
+    permitted << :voice_review_cta_enabled
     if Company.column_names.include?('whatsapp_button_style_json') || Company.new.respond_to?(:whatsapp_button_style_json)
       permitted + [{ whatsapp_button_style_json: %i[
         variant bg_color text_color border_color
@@ -446,6 +447,12 @@ ActiveAdmin.register Company do
     f.inputs 'CTAs' do
       f.input :whatsapp_enabled, as: :boolean, label: 'Ativar botão WhatsApp'
       f.input :whatsapp_url, label: 'URL do WhatsApp (ex: https://wa.me/...)'
+    end
+
+    f.inputs 'Coleta de Avaliações' do
+      f.input :voice_review_cta_enabled, as: :boolean,
+              label: 'Exibir "Deixe sua avaliação pelo WhatsApp"',
+              hint: 'Canal oficial do Avalia Solar, independente do WhatsApp comercial. Exige WAHA e avaliações por voz habilitados.'
     end
 
     if f.object.respond_to?(:whatsapp_button_style_json)

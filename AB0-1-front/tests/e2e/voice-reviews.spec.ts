@@ -40,6 +40,6 @@ test.describe('Avaliações por voz', () => {
     await page.getByText('Confirmo que este relato descreve uma experiência real minha.').click();
     await page.getByText('Autorizo o envio deste texto para análise e possível publicação após moderação.').click();
     await page.getByRole('button', { name: /Confirmar e enviar/ }).click();
-    await expect(page.getByRole('heading', { name: 'Avaliação recebida' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Avaliação recebida/i })).toBeVisible();
   });
 });

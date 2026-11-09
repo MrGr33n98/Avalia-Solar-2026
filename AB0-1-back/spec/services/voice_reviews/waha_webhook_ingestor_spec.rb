@@ -27,6 +27,25 @@ RSpec.describe VoiceReviews::WahaWebhookIngestor do
     )
   end
 
+  it 'rejeita timestamp ausente' do
+    expect {
+      described_class.call(raw_body: body, signature: signature, timestamp: '', algorithm: 'sha512')
+    }.to raise_error(described_class::InvalidSignature)
+  end
+
+  it 'rejeita segredo não configurado mesmo com IP interno' do
+    allow(VoiceReviews::Config).to receive(:waha_webhook_hmac_secret).and_return(nil)
+    expect {
+      described_class.call(raw_body: body, signature: signature, timestamp: timestamp, algorithm: 'sha512', remote_ip: '172.16.1.2')
+    }.to raise_error(described_class::InvalidSignature)
+  end
+
+  it 'rejeita assinatura ausente mesmo dentro do Docker' do
+    expect {
+      described_class.call(raw_body: body, signature: '', timestamp: timestamp, algorithm: 'sha512', remote_ip: '127.0.0.1')
+    }.to raise_error(described_class::InvalidSignature)
+  end
+
   it 'rejeita assinatura inválida' do
     expect {
       described_class.call(raw_body: body, signature: 'invalid', timestamp:, algorithm: 'sha512')
