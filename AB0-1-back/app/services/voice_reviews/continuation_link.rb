@@ -9,9 +9,7 @@ module VoiceReviews
     end
 
     def self.send!(session, transcript)
-      raw_token = session.raw_session_token
-      return if raw_token.blank?
-
+      raw_token = session.raw_session_token || session.issue_new_token!
       edit_url = "#{Config.frontend_origin}/voice-review/#{session.id}?token=#{CGI.escape(raw_token)}"
       gateway(provider: session.provider).send_message(session, build_review_card(session, transcript, edit_url))
     end
@@ -20,7 +18,7 @@ module VoiceReviews
       rating = session.draft_rating || transcript&.inferred_rating || 5
       headline = transcript&.headline.presence || "Avaliação sobre #{session.company.name}"
       comment = transcript&.text.to_s.strip
-      intro = 'Transformamos seu áudio em uma avaliação estruturada. ' \
+      intro = 'Transformamos seu relato em uma avaliação estruturada. ' \
               "Veja se está tudo certo antes de publicarmos na página da *#{session.company.name}*:"
       lines = [
         intro,
@@ -28,7 +26,7 @@ module VoiceReviews
         "• *Título sugerido:* #{headline}",
         "• *Depoimento:* \"#{comment}\"",
         "• *Nota Geral:* #{rating}/5",
-        format_criteria_line(transcript),
+        format_criteria_line(session, transcript),
         format_equipment_line(transcript),
         '',
         '👉 Responda *SIM* (ou *1*) para *✅ Aprovar e Publicar*',
@@ -38,12 +36,24 @@ module VoiceReviews
       lines.join("\n")
     end
 
-    def self.format_criteria_line(transcript)
+    def self.format_criteria_line(session, transcript)
+      scores = session&.draft_payload.to_h['criterion_scores']
+      if scores.is_a?(Hash) && scores.any?
+        allowed = ReviewForms::CriteriaResolver.call(review_form: session.review_form)
+        allowed = RatingCriterion.active.where(category_id: 70).to_a if allowed.empty?
+        summary = scores.map do |slug, val|
+          crit = allowed.find { |c| c.slug == slug.to_s || c.id.to_s == slug.to_s }
+          name = crit&.title || slug.to_s.humanize
+          "#{name}: #{val}/5"
+        end.join(' • ')
+        return "• *Notas por critério:* #{summary}"
+      end
+
       scored = Array(transcript&.inferred_criteria).select { |item| item['score'].to_i.between?(1, 5) }
       return nil if scored.empty?
 
       summary = scored.map { |item| "#{item['title']}: #{item['score']}/5" }.join(' • ')
-      "• *Sub-notas inferidas pelo seu áudio:* #{summary}"
+      "• *Sub-notas inferidas pelo seu relato:* #{summary}"
     end
 
     def self.format_equipment_line(transcript)

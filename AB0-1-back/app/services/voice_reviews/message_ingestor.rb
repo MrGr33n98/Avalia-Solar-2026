@@ -50,7 +50,11 @@ module VoiceReviews
         if session && message['sender_name'].present? && session.draft_payload.to_h['reviewer_name'].blank?
           session.merge_draft!(reviewer_name: message['sender_name'])
         end
-        process_message(record, session, message) if session
+        if invite
+          send_audit_greeting(session)
+        else
+          process_message(record, session, message) if session
+        end
         record.update!(processed_at: Time.current, delivery_status: 'processed')
       end
     rescue VoiceReviews::SessionService::Error => e
@@ -105,47 +109,201 @@ module VoiceReviews
         return
       end
 
-      return unless session.awaiting_consent? || session.awaiting_audio?
+      if session.awaiting_audio?
+        handle_text_review_submission(record, session, cleaned)
+        return
+      end
+
+      return unless session.awaiting_consent?
 
       rating = extract_rating(cleaned)
-      if rating || cleaned.match?(/\A(ACEITO|SIM|OK|CONCORDO)\z/i)
-        grant_consent_and_prompt_audio!(record, session, rating)
-      elsif session.awaiting_consent?
+      if rating
+        advance_criterion_or_prompt_audio!(record, session, rating)
+      elsif cleaned.match?(/\A(ACEITO|SIM|OK|CONCORDO|COMEÇAR|INICIAR)\z/i)
         send_audit_greeting(session)
+      else
+        criteria = session_criteria(session)
+        current_idx = session.draft_payload.to_h['current_criterion_index'].to_i
+        curr = criteria[current_idx] || criteria.first
+        title = curr&.title || 'este critério'
+        gateway.send_message(
+          session,
+          "Para registrar sua nota para *#{title}*, por favor responda com um número de *1 a 5* (ou envie um áudio a qualquer momento). 😊"
+        )
       end
     end
 
     def extract_rating(cleaned)
-      match = cleaned.match(/\A(?:nota\s*)?([1-5])(?:\s*estrelas?)?\z/i)
-      match ? match[1].to_i : nil
+      case cleaned.to_s.strip.downcase
+      when /\A(?:nota\s*)?1(?:\s*estrelas?)?\z/, /\A(?:um|uma|p[eé]ssim[oa])\z/ then 1
+      when /\A(?:nota\s*)?2(?:\s*estrelas?)?\z/, /\A(?:dois|duas|ruim)\z/ then 2
+      when /\A(?:nota\s*)?3(?:\s*estrelas?)?\z/, /\A(?:tr[eê]s|regular|m[eé]di[oa])\z/ then 3
+      when /\A(?:nota\s*)?4(?:\s*estrelas?)?\z/, /\A(?:quatro|bo[am])\z/ then 4
+      when /\A(?:nota\s*)?5(?:\s*estrelas?)?\z/, /\A(?:cinco|[oó]tim[oa]|excelente|top)\z/ then 5
+      else
+        match = cleaned.match(/\b([1-5])\b/)
+        match ? match[1].to_i : nil
+      end
     end
 
-    def grant_consent_and_prompt_audio!(record, session, rating)
+    def session_criteria(session)
+      criteria = ReviewForms::CriteriaResolver.call(review_form: session.review_form)
+      if criteria.empty?
+        cat = session.review_form.experience_category || session.company.primary_category
+        criteria = RatingCriterion.active.where(category: cat).order(:id).to_a if cat
+      end
+      if criteria.empty?
+        criteria = RatingCriterion.active.where(category_id: 70).order(:id).to_a
+      end
+      order_slugs = %w[atendimento qualidade_tecnica prazo custo_beneficio]
+      criteria = criteria.sort_by { |c| order_slugs.index(c.slug) || 99 }
+      criteria.first(4)
+    end
+
+    def send_audit_greeting(session)
+      criteria = session_criteria(session)
+      session.merge_draft!(current_criterion_index: 0)
+      first_criterion = criteria.first
+      msg = if first_criterion
+              criterion_prompt(session, first_criterion, 1, criteria.length)
+            else
+              fallback_greeting(session)
+            end
+      gateway.send_message(session, msg)
+    end
+
+    def fallback_greeting(session)
+      name = session.company.name
+      fname = reviewer_first_name(session)
+      hello = fname ? "Olá, *#{fname}*! 👋" : 'Olá! 👋'
+      privacy = "#{VoiceReviews::Config.frontend_origin}/privacy"
+      "#{hello} A *#{name}* convidou você para registrar uma avaliação oficial no diretório auditado " \
+      "do *Avalia Solar*.\n\nDe *1 a 5 estrelas*, qual sua nota geral para a entrega da *#{name}*?\n" \
+      "*(Responda de 1 a 5 ou mande um áudio a qualquer momento. Consulte #{privacy})*"
+    end
+
+    def criterion_prompt(session, criterion, current_step, total_steps)
+      name = session.company.name
+      fname = reviewer_first_name(session)
+      greeting = current_step == 1 && fname ? "Olá, *#{fname}*! 👋 " : ""
+
+      question_text = case criterion.slug.to_s
+                      when 'atendimento'
+                        "De *1 a 5 estrelas*, como você avalia o *Atendimento* e a atenção da equipe da *#{name}*?"
+                      when 'qualidade_tecnica'
+                        "De *1 a 5 estrelas*, qual sua nota para a *Qualidade Técnica* da instalação e dos equipamentos?"
+                      when 'prazo'
+                        "De *1 a 5 estrelas*, como foi o cumprimento do *Prazo de Entrega* e instalação?"
+                      when 'custo_beneficio'
+                        "De *1 a 5 estrelas*, qual nota você dá para a transparência e *Custo-Benefício* geral?"
+                      else
+                        "De *1 a 5 estrelas*, qual sua nota para *#{criterion.title}* na entrega da *#{name}*?"
+                      end
+
+      if current_step == 1
+        intro = "#{greeting}A *#{name}* convidou você para avaliar sua usina solar no *Avalia Solar*.\n\n" \
+                "São apenas #{total_steps} perguntas rápidas (menos de 1 minuto):\n\n"
+        "#{intro}⭐ *Pergunta #{current_step} de #{total_steps} — #{criterion.title}:*\n#{question_text}\n\n" \
+          "*(Responda de 1 a 5, ou mande um áudio a qualquer momento)*"
+      else
+        feedback = feedback_for_step(current_step)
+        "#{feedback}\n\n⭐ *Pergunta #{current_step} de #{total_steps} — #{criterion.title}:*\n#{question_text}"
+      end
+    end
+
+    def feedback_for_step(step)
+      case step
+      when 2 then "Ótimo! Nota registrada. 👍"
+      when 3 then "Perfeito! Avançando... ⏱️"
+      when 4 then "Show! Quase no final... 💰"
+      else "Muito bem! Nota registrada. ⭐"
+      end
+    end
+
+    def advance_criterion_or_prompt_audio!(record, session, rating)
+      criteria = session_criteria(session)
+      draft = session.draft_payload.to_h
+      scores = (draft['criterion_scores'] || {}).dup
+      current_idx = draft['current_criterion_index'].to_i
+
       unless session.consented_to_audio?
         VoiceReviewConsent.create!(voice_review_session: session, purpose: 'process_audio', granted: true,
                                    policy_version: VoiceReviews::Config.policy_version, voice_review_message: record,
                                    granted_at: Time.current)
       end
-      session.merge_draft!(initial_rating: rating) if rating
-      session.update!(state: 'awaiting_audio', processing_consent_at: session.processing_consent_at || Time.current,
-                      version: session.version + 1)
-      VoiceReviews::EventRecorder.record!(event_name: 'voice_consent_granted', company: session.company, session:,
-                                          dedupe_key: "consent:#{session.id}:process_audio")
-      gateway.send_message(session, build_audio_prompt(session, rating))
+
+      current_criterion = criteria[current_idx] || criteria.first
+      scores[current_criterion.slug] = rating if current_criterion
+
+      next_idx = current_idx + 1
+
+      if next_idx < criteria.length
+        session.merge_draft!(criterion_scores: scores, current_criterion_index: next_idx)
+        session.update!(processing_consent_at: session.processing_consent_at || Time.current, version: session.version + 1)
+        next_criterion = criteria[next_idx]
+        msg = criterion_prompt(session, next_criterion, next_idx + 1, criteria.length)
+        gateway.send_message(session, msg)
+      else
+        avg_rating = (scores.values.map(&:to_f).sum / [scores.values.length, 1].max).round
+        session.merge_draft!(criterion_scores: scores, initial_rating: avg_rating, current_criterion_index: next_idx)
+        session.update!(state: 'awaiting_audio', processing_consent_at: session.processing_consent_at || Time.current,
+                        version: session.version + 1)
+        VoiceReviews::EventRecorder.record!(event_name: 'voice_consent_granted', company: session.company, session:,
+                                            dedupe_key: "consent:#{session.id}:process_audio")
+        gateway.send_message(session, build_all_criteria_completed_prompt(session, scores, criteria))
+      end
     end
 
-    def build_audio_prompt(session, rating)
+    def build_all_criteria_completed_prompt(session, scores, criteria)
       fname = reviewer_first_name(session)
-      greeting = fname ? "Maravilha, *#{fname}*! " : 'Excelente! '
-      prefix = rating ? "#{greeting}Nota *#{rating}/5* registrada ⭐\n\n" : "#{greeting}\n\n"
-      bullets = criteria_bullets(session)
-      "#{prefix}Para eu montar sua avaliação completa sem você precisar digitar, " \
-        "*mande um áudio rápido de 20 a 40 segundos* comentando sobre:\n#{bullets}"
+      greeting = fname ? "Sensacional, *#{fname}*! " : "Sensacional! "
+
+      lines = criteria.map do |c|
+        val = scores[c.slug] || 5
+        "• *#{c.title}:* #{val}/5"
+      end.join("\n")
+
+      avg = (scores.values.map(&:to_f).sum / [scores.values.length, 1].max).round(1)
+
+      "#{greeting}Todas as suas notas foram registradas com sucesso:\n\n" \
+      "#{lines}\n" \
+      "⭐ *Média Geral:* #{avg} / 5.0\n\n" \
+      "Agora, para receber o selo *Avaliação Verificada via WhatsApp* na página da *#{session.company.name}*, " \
+      "**mande um áudio rápido de 20 a 40 segundos** contando detalhes da sua experiência e como está a geração da usina! 🎙️\n\n" \
+      "*(Ou se preferir, envie uma mensagem de texto com seu relato)*"
+    end
+
+    def handle_text_review_submission(record, session, text)
+      if text.length < 5
+        gateway.send_message(
+          session,
+          "Mande um áudio de *20 a 40 segundos* contando como foi a instalação e o atendimento, ou digite um comentário mais detalhado. 🎙️"
+        )
+        return
+      end
+
+      session.merge_draft!(text_review_comment: text)
+      asset = VoiceReviewAsset.create!(voice_review_session: session, provider_media_id: "text-#{record.id}",
+                                       storage_key: "voice-reviews/#{session.id}/text-#{record.id}",
+                                       sha256: Digest::SHA256.hexdigest(text), mime_type: 'text/plain',
+                                       byte_size: text.bytesize, purge_after_at: 30.days.from_now)
+      structured = VoiceReviews::StructuredExtractor.call(
+        raw_text: text,
+        company_name: session.company.name,
+        review_form: session.review_form,
+        initial_rating: session.draft_rating || 5
+      )
+      transcript = VoiceReviewTranscript.create!(
+        voice_review_session: session, voice_review_asset: asset, provider: 'text_input',
+        model_id: 'structured-v1', language: 'pt-BR', private_raw_text: text,
+        structured_payload: structured, version: (session.latest_transcript&.version || 0) + 1
+      )
+      session.update!(state: 'awaiting_confirmation', version: session.version + 1)
+      ContinuationLink.send!(session, transcript)
     end
 
     def criteria_bullets(session)
-      items = ReviewForms::CriteriaResolver.call(review_form: session.review_form).map(&:title)
-      items = Array(session.review_form&.normalized_settings&.dig('criteria')) if items.empty?
+      items = session_criteria(session).map(&:title)
       items = ['Atendimento', 'Prazo de Entrega', 'Qualidade Técnica', 'Equipamentos escolhidos'] if items.empty?
       items.first(5).map { |title| "• *#{title}*" }.join("\n")
     end
@@ -180,20 +338,12 @@ module VoiceReviews
       )
     end
 
-    def send_audit_greeting(session)
-      name = session.company.name
-      fname = reviewer_first_name(session)
-      hello = fname ? "Olá, *#{fname}*! 👋" : 'Olá! 👋'
-      privacy = "#{VoiceReviews::Config.frontend_origin}/privacy"
-      msg = "#{hello} A *#{name}* convidou você para registrar uma avaliação oficial no diretório auditado " \
-            "do *Avalia Solar*.\n\nDe *1 a 5 estrelas*, qual sua nota geral para a entrega da *#{name}*?\n" \
-            "*(Responda de 1 a 5 ou ACEITO para avaliarmos por voz, ou TEXTO para avaliar por escrito. " \
-            "Consulte #{privacy})*"
-      gateway.send_message(session, msg)
-    end
-
-    def process_audio(_record, session, audio)
-      return session.update!(state: 'failed_permanent') unless session.consented_to_audio?
+    def process_audio(record, session, audio)
+      unless session.consented_to_audio?
+        VoiceReviewConsent.create!(voice_review_session: session, purpose: 'process_audio', granted: true,
+                                   policy_version: VoiceReviews::Config.policy_version, voice_review_message: record,
+                                   granted_at: Time.current)
+      end
 
       asset = VoiceReviewAsset.create!(voice_review_session: session, provider_media_id: audio['id'].to_s,
                                        provider_media_url: audio['media_url'],

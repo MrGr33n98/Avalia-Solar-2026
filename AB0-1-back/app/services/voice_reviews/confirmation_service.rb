@@ -14,6 +14,7 @@ module VoiceReviews
       rating = session.draft_rating || transcript.inferred_rating || 5
       text = transcript.text.to_s.strip.truncate(500)
       reviewer_name = session.draft_payload.to_h['reviewer_name'].to_s.strip.presence
+      criterion_scores = session.draft_payload.to_h['criterion_scores']
       new(
         session: session,
         token: token,
@@ -23,6 +24,7 @@ module VoiceReviews
           headline: transcript.headline,
           rating: rating,
           reviewer_name: reviewer_name,
+          criterion_scores: criterion_scores,
           experience_confirmed: true,
           publish_text_consent: true,
           display_name_mode: reviewer_name ? 'full_name' : 'anonymous',
@@ -120,18 +122,37 @@ module VoiceReviews
     end
 
     def resolve_criteria_snapshot(transcript)
-      override = params[:criterion_scores]
-      return transcript.inferred_criteria unless override.is_a?(Hash) && override.any?
+      override = params[:criterion_scores].presence || session.draft_payload.to_h['criterion_scores']
+      criteria = transcript&.inferred_criteria.presence || []
 
-      transcript.inferred_criteria.map do |item|
-        key = item['criterion_id']&.to_s || item['criterion_slug'].to_s
-        score = override[key].presence || override[item['criterion_slug']].presence || item['score']
-        item.merge('score' => score.to_i.between?(1, 5) ? score.to_i : item['score'])
+      if criteria.any?
+        criteria.map do |item|
+          key = item['criterion_id']&.to_s || item['criterion_slug'].to_s
+          score = override.is_a?(Hash) && (override[key].presence || override[item['criterion_slug']].presence) || item['score']
+          item.merge('score' => score.to_i.between?(1, 5) ? score.to_i : item['score'])
+        end
+      elsif override.is_a?(Hash) && override.any?
+        allowed = ReviewForms::CriteriaResolver.call(review_form: session.review_form)
+        allowed = RatingCriterion.active.where(category_id: 70).to_a if allowed.empty?
+        override.filter_map do |slug_or_id, score|
+          next unless score.to_i.between?(1, 5)
+
+          crit = allowed.find { |c| c.id.to_s == slug_or_id.to_s || c.slug == slug_or_id.to_s }
+          {
+            'criterion_id' => crit&.id,
+            'criterion_slug' => crit&.slug || slug_or_id,
+            'title' => crit&.title || slug_or_id.to_s.humanize,
+            'score' => score.to_i
+          }
+        end
+      else
+        []
       end
     end
 
     def attach_criterion_scores(review, category, transcript)
       allowed = ReviewForms::CriteriaResolver.call(review_form: session.review_form, category: category)
+      allowed = RatingCriterion.active.where(category_id: 70).to_a if allowed.empty?
       return if allowed.empty?
 
       resolve_criteria_snapshot(transcript).each do |item|

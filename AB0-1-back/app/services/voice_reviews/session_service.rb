@@ -27,6 +27,7 @@ module VoiceReviews
           raw_token = SecureRandom.urlsafe_base64(32)
           session.assign_attributes(company: invite.company, review_form: invite.review_form,
                                     state: 'awaiting_consent', expires_at: 24.hours.from_now,
+                                    draft_payload: { 'current_criterion_index' => 0, 'criterion_scores' => {} },
                                     session_token_digest: VoiceReviewSession.digest_token(raw_token),
                                     provider_contact_ciphertext: encrypt(provider_contact),
                                     provider_chat_id: @provider_chat_id,
@@ -46,7 +47,7 @@ module VoiceReviews
             expires_at: 24.hours.from_now,
             processing_consent_at: nil,
             confirmed_at: nil,
-            draft_payload: {},
+            draft_payload: { 'current_criterion_index' => 0, 'criterion_scores' => {} },
             session_token_digest: VoiceReviewSession.digest_token(raw_token),
             provider_chat_id: @provider_chat_id,
             provider_session: @provider_session,
