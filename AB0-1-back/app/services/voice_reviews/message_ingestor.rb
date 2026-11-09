@@ -38,6 +38,29 @@ module VoiceReviews
         return if record.processed_at.present?
 
         contact = message['from'].to_s
+
+        if defined?(B2b::OnboardingSessionService)
+          onboarding_session = B2b::OnboardingSessionService.find_active_by_contact(contact)
+          if onboarding_session
+            B2b::OnboardingSessionService.process_message!(onboarding_session, message)
+            record.update!(processed_at: Time.current, delivery_status: 'processed')
+            return
+          end
+
+          text_body = (message['body'] || message.dig('text', 'body') || '').to_s.strip
+          if text_body.match?(/\A(?:CADASTRAR|CADASTRO|NOVO CADASTRO|SOU INTEGRADOR|QUERO CADASTRAR)\b/i)
+            B2b::OnboardingSessionService.open!(
+              contact: contact,
+              provider: provider,
+              provider_session: provider_session,
+              provider_chat_id: message['chat_id'],
+              sender_name: message['sender_name']
+            )
+            record.update!(processed_at: Time.current, delivery_status: 'processed')
+            return
+          end
+        end
+
         invite = find_invite(message)
         session = if invite
                     VoiceReviews::SessionService.open!(invite:, provider_contact: contact, provider_message_id: provider_id,
