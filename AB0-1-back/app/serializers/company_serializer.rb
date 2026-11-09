@@ -47,7 +47,7 @@ class CompanySerializer < ActiveModel::Serializer
              :comparison_profile
 
   def review_channels
-    { whatsapp: ReviewCollection::WhatsAppAvailabilityResolver.call(company: object) }
+    { whatsapp: ReviewCollection::WhatsappAvailabilityResolver.call(company: object) }
   end
 
   def cta_visibility
