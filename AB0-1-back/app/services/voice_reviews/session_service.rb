@@ -22,7 +22,11 @@ module VoiceReviews
           voice_review_invite: invite, provider: @provider, provider_session: @provider_session,
           provider_contact_hash: contact_hash
         )
-        raise Error, 'Convite inválido ou expirado' unless session.persisted? || invite.claimable?
+        raise Error, 'Convite inválido ou expirado' unless invite.claimable?
+        # Never reset, destroy a publication or rotate credentials for an existing session.
+        # A repeated invite message must be idempotent.
+        return session if session.persisted?
+
         if session.new_record?
           raw_token = SecureRandom.urlsafe_base64(32)
           session.assign_attributes(company: invite.company, review_form: invite.review_form,
@@ -38,26 +42,6 @@ module VoiceReviews
           invite.increment!(:claims_count)
           VoiceReviews::EventRecorder.record!(event_name: 'voice_session_started', company: invite.company, invite:, session:,
                                               dedupe_key: "session-started:#{session.id}", properties: { provider: @provider })
-        else
-          raw_token = SecureRandom.urlsafe_base64(32)
-          session.voice_review_publication&.destroy
-          session.assign_attributes(
-            state: 'awaiting_consent',
-            published_review: nil,
-            expires_at: 24.hours.from_now,
-            processing_consent_at: nil,
-            confirmed_at: nil,
-            draft_payload: { 'current_criterion_index' => 0, 'criterion_scores' => {} },
-            session_token_digest: VoiceReviewSession.digest_token(raw_token),
-            provider_chat_id: @provider_chat_id,
-            provider_session: @provider_session,
-            last_inbound_at: Time.current,
-            version: session.version + 1
-          )
-          session.raw_session_token = raw_token
-          session.save!
-          VoiceReviews::EventRecorder.record!(event_name: 'voice_session_started', company: invite.company, invite:, session:,
-                                              dedupe_key: "session-reopened:#{session.id}:#{session.version}", properties: { provider: @provider })
         end
         session
       rescue ActiveRecord::RecordNotUnique
