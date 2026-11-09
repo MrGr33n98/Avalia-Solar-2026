@@ -80,8 +80,12 @@ module B2b
         handle_ask_cnpj
       when 'confirm_data'
         handle_confirm_data
+      when 'ask_email'
+        handle_ask_email
       when 'ask_segment'
         handle_ask_segment
+      when 'ask_coverage'
+        handle_ask_coverage
       when 'ask_brands'
         handle_ask_brands
       when 'ask_photos'
@@ -136,6 +140,13 @@ module B2b
       send_message(@session, prompt)
     end
 
+    CATEGORY_COMBOS = {
+      '1' => { primary_id: 71, category_ids: [71, 72], name: 'Residencial' },
+      '2' => { primary_id: 71, category_ids: [71, 73], name: 'Comercial e Industrial (C&I)' },
+      '3' => { primary_id: 71, category_ids: [71, 74], name: 'Usinas Rurais / Solo' },
+      '4' => { primary_id: 71, category_ids: [71, 72, 73, 74, 76], name: 'Multi-segmento' }
+    }.freeze
+
     def handle_confirm_data
       clean_digits = @text.gsub(/\D/, '')
       if clean_digits.length == 14
@@ -149,47 +160,118 @@ module B2b
       end
 
       @session.update!(
+        current_step: 'ask_email',
+        state: 'awaiting_email'
+      )
+
+      prompt = "Perfeito! Dados cadastrais confirmados. 👍\n\n" \
+               "👉 *Qual é o seu melhor e-mail profissional?*\n\n" \
+               "Ele será usado para acessar o Painel do Integrador e receber as solicitações de orçamento de novos clientes.\n\n" \
+               "*(Ex: contato@suaempresa.com.br)*"
+
+      send_message(@session, prompt)
+    end
+
+    def handle_ask_email
+      email_candidate = @text.to_s.strip.downcase
+      unless email_candidate.match?(Company::SIMPLE_EMAIL_REGEX)
+        send_message(@session, "⚠️ O e-mail digitado parece inválido.\n\nPor favor, digite seu e-mail profissional completo (ex: contato@suaempresa.com.br):")
+        return
+      end
+
+      @session.merge_draft!(user_email: email_candidate)
+      @session.update!(
         current_step: 'ask_segment',
         state: 'awaiting_segment'
       )
 
-      prompt = "Perfeito! Dados confirmados. 👍\n\n" \
-               "⭐ *Qual é o foco principal de atendimento da sua empresa?*\n\n" \
-               "1️⃣ Residencial\n" \
-               "2️⃣ Comercial e Industrial (C&I)\n" \
-               "3️⃣ Usinas Rurais / Solo\n" \
-               "4️⃣ Multi-segmento (atendemos todos)\n\n" \
+      prompt = "E-mail registrado com sucesso! ✉️\n\n" \
+               "⭐ *Em quais áreas sua empresa atua?*\n*(Vincularemos seu perfil a pelo menos 2 categorias do portal)*:\n\n" \
+               "1️⃣ Residencial *(Instaladores + Residencial)*\n" \
+               "2️⃣ Comercial e Industrial *(Instaladores + C&I)*\n" \
+               "3️⃣ Usinas Rurais / Solo *(Instaladores + Usinas de Solo)*\n" \
+               "4️⃣ Multi-segmento *(Residencial, Comercial, Rural e Baterias)*\n\n" \
                "*(Responda 1, 2, 3 ou 4)*"
 
       send_message(@session, prompt)
     end
 
     def handle_ask_segment
-      segment_name = case @text.strip.downcase
-                     when '1', /\Aresidencial/ then 'Residencial'
-                     when '2', /\Acomercial/, /industrial/ then 'Comercial e Industrial (C&I)'
-                     when '3', /\Ausina/, /rural/, /solo/ then 'Usinas Rurais / Solo'
-                     when '4', /\Amulti/, /todos/ then 'Multi-segmento'
-                     end
+      combo = case @text.strip.downcase
+              when '1', /\Aresidencial/ then CATEGORY_COMBOS['1']
+              when '2', /\Acomercial/, /industrial/ then CATEGORY_COMBOS['2']
+              when '3', /\Ausina/, /rural/, /solo/ then CATEGORY_COMBOS['3']
+              when '4', /\Amulti/, /todos/ then CATEGORY_COMBOS['4']
+              end
 
-      unless segment_name
+      unless combo
         send_message(@session, "Não entendi a opção. 🤔\n\n" \
-                               "⭐ *Qual é o foco principal de atendimento da sua empresa?*\n\n" \
-                               "1️⃣ Residencial\n" \
-                               "2️⃣ Comercial e Industrial (C&I)\n" \
-                               "3️⃣ Usinas Rurais / Solo\n" \
-                               "4️⃣ Multi-segmento (atendemos todos)\n\n" \
+                               "⭐ *Em quais áreas sua empresa atua?*\n\n" \
+                               "1️⃣ Residencial *(Instaladores + Residencial)*\n" \
+                               "2️⃣ Comercial e Industrial *(Instaladores + C&I)*\n" \
+                               "3️⃣ Usinas Rurais / Solo *(Instaladores + Usinas de Solo)*\n" \
+                               "4️⃣ Multi-segmento *(Residencial, Comercial, Rural e Baterias)*\n\n" \
                                '*(Responda 1, 2, 3 ou 4)*')
         return
       end
 
-      @session.merge_draft!(segment_focus: segment_name)
+      @session.merge_draft!(
+        category_ids: combo[:category_ids],
+        primary_category_id: combo[:primary_id],
+        segment_focus: combo[:name]
+      )
+
+      draft = @session.draft_data
+      cnpj_data = draft['cnpj_data'] || {}
+      city = cnpj_data['municipio'].presence || 'sua cidade'
+      state_code = cnpj_data['uf'].presence || 'seu estado'
+
+      @session.update!(
+        current_step: 'ask_coverage',
+        state: 'awaiting_coverage'
+      )
+
+      prompt = "Categorias definidas! ⚡\n\n" \
+               "⭐ *Qual é a região / cidades onde sua equipe atende e instala usinas?*\n\n" \
+               "1️⃣ Apenas em *#{city}/#{state_code}* e região metropolitana\n" \
+               "2️⃣ Em *todo o estado de #{state_code}*\n" \
+               "3️⃣ Cidades vizinhas específicas (digite os nomes separados por vírgula)\n\n" \
+               "*(Responda 1, 2 ou digite as cidades)*"
+
+      send_message(@session, prompt)
+    end
+
+    def handle_ask_coverage
+      draft = @session.draft_data
+      cnpj_data = draft['cnpj_data'] || {}
+      state_code = Locations::CoverageNormalizer.normalize_state(cnpj_data['uf']).presence || 'SP'
+      raw_city = cnpj_data['municipio'].presence || 'São Paulo'
+      city = Locations::CoverageNormalizer.normalize_city(raw_city, state: state_code).presence || raw_city
+
+      coverage_cities = nil
+      coverage_states = state_code
+
+      case @text.strip.downcase
+      when '1', /\A(apenas|regi|metropol)/
+        coverage_cities = city
+      when '2', /\A(todo|estado)/
+        coverage_cities = nil
+        coverage_states = state_code
+      else
+        normalized = Locations::CoverageNormalizer.normalize_cities(@text, state: state_code)
+        coverage_cities = normalized.any? ? normalized.join(', ') : @text.strip.truncate(200)
+      end
+
+      @session.merge_draft!(
+        coverage_cities: coverage_cities,
+        coverage_states: coverage_states
+      )
       @session.update!(
         current_step: 'ask_brands',
         state: 'awaiting_brands'
       )
 
-      prompt = "Show de bola! ⚡\n\n" \
+      prompt = "Região de atendimento registrada! 📍\n\n" \
                "⭐ *Quais as principais marcas de inversores e módulos solares que sua equipe instala?*\n" \
                "*(Ex: WEG, Growatt, Deye, Canadian, Huawei, Fronius, Sungrow)*"
 
@@ -232,34 +314,42 @@ module B2b
         contact_phone = raw_phone.length.between?(10, 15) ? raw_phone : cnpj_data['telefone'].to_s.gsub(/\D/, '').presence
         contact_phone = nil unless contact_phone&.match?(/\A\d{10,15}\z/)
 
+        category_ids = Array(draft['category_ids']).presence || [71, 72]
+        primary_cat_id = draft['primary_category_id'] || category_ids.first
+
+        user_email = draft['user_email'].presence || cnpj_data['email'].to_s.strip.downcase.presence
+        email_domain = user_email&.split('@', 2)&.last
+        valid_corp_email = user_email.present? &&
+                           Company::SIMPLE_EMAIL_REGEX.match?(user_email) &&
+                           !User::PUBLIC_EMAIL_DOMAINS.include?(email_domain)
+        final_email = valid_corp_email ? user_email : "contato_#{@session.id.first(8)}@avaliasolar.com.br"
+
         company = Company.create!(
           name: company_name,
           cnpj: @session.cnpj,
           city: city,
           state: state_code,
           address: address_line.presence || city,
+          coverage_cities: draft['coverage_cities'],
+          coverage_states: draft['coverage_states'] || state_code,
+          category_ids: category_ids,
+          primary_category_id: primary_cat_id,
           segment: 'installer',
           status: 'pending',
           moderation_status: 'pending_review',
           phone: contact_phone,
           whatsapp: contact_phone,
+          email: final_email,
           description: "Empresa integradora de energia solar atuante em #{city}/#{state_code}. Especialista em instalações #{draft['segment_focus'] || 'residenciais e comerciais'}. Equipamentos: #{draft['brands'] || 'Principais marcas do mercado'}."
         )
 
-        raw_email = cnpj_data['email'].to_s.strip.downcase.presence
-        email_domain = raw_email&.split('@', 2)&.last
-        valid_corp_email = raw_email.present? &&
-                           Company::SIMPLE_EMAIL_REGEX.match?(raw_email) &&
-                           !User::PUBLIC_EMAIL_DOMAINS.include?(email_domain)
-        email = valid_corp_email ? raw_email : "contato_#{company.id}@avaliasolar.com.br"
-
-        user = User.find_by(email: email)
+        user = User.find_by(email: final_email)
         unless user
           raw_user_name = (draft['sender_name'].presence || company_name).to_s.strip.truncate(100, omission: '')
           user_name = raw_user_name.length >= 3 ? raw_user_name : 'Responsável Integrador'
           user = User.create!(
             name: user_name,
-            email: email,
+            email: final_email,
             password: "Aa1!#{SecureRandom.urlsafe_base64(16)}",
             role: 'company',
             city: city,
@@ -268,7 +358,8 @@ module B2b
             public_name_consent: true,
             display_full_name_consent: true,
             review_name_consent: true,
-            lgpd_name_consent: true
+            lgpd_name_consent: true,
+            confirmed_at: Time.current
           )
         end
 
@@ -276,6 +367,10 @@ module B2b
           m.role = :owner
           m.status = :active
         end
+
+        # Dispara instruções para o e-mail do usuário
+        user.send_reset_password_instructions rescue nil
+        ::CompanyMailer.registration_received(company).deliver_later rescue nil
 
         @session.update!(
           state: 'completed',
@@ -288,11 +383,14 @@ module B2b
         site_url = "https://avaliasolar.com.br/empresa/#{slug}"
         dashboard_url = 'https://app.avaliasolar.com.br/dashboard'
 
+        cats_names = company.categories.pluck(:name).join(', ')
         success_msg = "🎉 *Parabéns! Sua empresa foi cadastrada com sucesso no Avalia Solar!* ☀️\n\n" \
                       "🏢 *Empresa:* #{company.name}\n" \
-                      "📍 *Cidade:* #{company.city}/#{company.state}\n" \
+                      "🏷️ *Categorias:* #{cats_names.presence || 'Instaladores de Energia Solar'}\n" \
+                      "📍 *Atuação:* #{company.coverage_cities.presence || company.city} (#{company.state})\n" \
                       "🔗 *Sua página pública:* #{site_url}\n" \
-                      "🔑 *Painel do Integrador:* #{dashboard_url}\n\n" \
+                      "🔑 *Painel do Integrador:* #{dashboard_url}\n" \
+                      "📧 *Acesso ao Painel:* Enviamos as instruções de ativação e login para seu e-mail: *#{user.email}*.\n\n" \
                       "💡 *Dica de Ouro:* Empresas com avaliações auditadas no perfil convertem até 3x mais propostas!\n\n" \
                       "👉 Que tal gerar agora seu primeiro convite de *Voice Review* para um cliente recente pelo WhatsApp?\n" \
                       "Responda *1* para ativar seus convites!"

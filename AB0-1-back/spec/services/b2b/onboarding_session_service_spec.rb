@@ -116,19 +116,35 @@ RSpec.describe B2b::OnboardingSessionService do
 
         # 1. Confirma dados
         described_class.process_message!(session, { 'body' => '1' })
-        expect(session.reload.current_step).to eq('ask_segment')
+        expect(session.reload.current_step).to eq('ask_email')
+        expect(session.state).to eq('awaiting_email')
 
-        # 2. Escolhe segmento Residencial
+        # 2. Informa e-mail de trabalho
+        described_class.process_message!(session, { 'body' => 'contato@novasolar.com.br' })
+        expect(session.reload.current_step).to eq('ask_segment')
+        expect(session.state).to eq('awaiting_segment')
+        expect(session.draft_data['user_email']).to eq('contato@novasolar.com.br')
+
+        # 3. Escolhe segmento Residencial (Combo [71, 72])
+        described_class.process_message!(session, { 'body' => '1' })
+        expect(session.reload.current_step).to eq('ask_coverage')
+        expect(session.state).to eq('awaiting_coverage')
+        expect(session.draft_data['category_ids']).to eq([71, 72])
+        expect(session.draft_data['primary_category_id']).to eq(71)
+
+        # 4. Define raio de atendimento (Campinas e região)
         described_class.process_message!(session, { 'body' => '1' })
         expect(session.reload.current_step).to eq('ask_brands')
-        expect(session.draft_data['segment_focus']).to eq('Residencial')
+        expect(session.state).to eq('awaiting_brands')
+        expect(session.draft_data['coverage_cities']).to eq('Campinas')
 
-        # 3. Informa marcas
+        # 5. Informa marcas
         described_class.process_message!(session, { 'body' => 'WEG, Growatt e Deye' })
         expect(session.reload.current_step).to eq('ask_photos')
+        expect(session.state).to eq('awaiting_photos')
         expect(session.draft_data['brands']).to eq('WEG, Growatt e Deye')
 
-        # 4. Envia PULAR na etapa de fotos
+        # 6. Envia PULAR na etapa de fotos
         expect(gateway).to receive(:send_message).with(session, /Parabéns! Sua empresa foi cadastrada com sucesso/)
         described_class.process_message!(session, { 'body' => 'pular' })
 
@@ -140,7 +156,11 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.company.cnpj).to eq('06990590000123')
         expect(session.company.city).to eq('Campinas')
         expect(session.company.state).to eq('SP')
+        expect(session.company.coverage_cities).to eq('Campinas')
+        expect(session.company.category_ids).to include(71, 72)
+        expect(session.company.primary_category_id).to eq(71)
         expect(session.user).to be_present
+        expect(session.user.email).to eq('contato@novasolar.com.br')
         expect(session.company.company_members.where(user: session.user, role: :owner)).to exist
       end
     end
