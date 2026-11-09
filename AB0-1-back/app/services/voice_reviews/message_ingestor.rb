@@ -126,9 +126,10 @@ module VoiceReviews
         current_idx = session.draft_payload.to_h['current_criterion_index'].to_i
         curr = criteria[current_idx] || criteria.first
         title = curr&.title || 'este critério'
+        name = session.company.name
         gateway.send_message(
           session,
-          "Para registrar sua nota para *#{title}*, por favor responda com um número de *1 a 5* (ou envie um áudio a qualquer momento). 😊"
+          "Para avaliar a *#{name}*, por favor responda com uma nota de *1 a 5 estrelas* para o critério *#{title}* ⭐\n\n*(Ou envie um áudio contando sua experiência a qualquer momento)*"
         )
       end
     end
@@ -185,26 +186,27 @@ module VoiceReviews
     def criterion_prompt(session, criterion, current_step, total_steps)
       name = session.company.name
       fname = reviewer_first_name(session)
-      greeting = current_step == 1 && fname ? "Olá, *#{fname}*! 👋 " : ""
+      greeting = fname ? "Olá, *#{fname}*! 👋 " : "Olá! 👋 "
 
       question_text = case criterion.slug.to_s
                       when 'atendimento'
                         "De *1 a 5 estrelas*, como você avalia o *Atendimento* e a atenção da equipe da *#{name}*?"
                       when 'qualidade_tecnica'
-                        "De *1 a 5 estrelas*, qual sua nota para a *Qualidade Técnica* da instalação e dos equipamentos?"
+                        "De *1 a 5 estrelas*, qual sua nota para a *Qualidade Técnica* dos equipamentos e da instalação da *#{name}*?"
                       when 'prazo'
-                        "De *1 a 5 estrelas*, como foi o cumprimento do *Prazo de Entrega* e instalação?"
+                        "De *1 a 5 estrelas*, como foi o cumprimento do *Prazo de Entrega* e instalação da *#{name}*?"
                       when 'custo_beneficio'
-                        "De *1 a 5 estrelas*, qual nota você dá para a transparência e *Custo-Benefício* geral?"
+                        "De *1 a 5 estrelas*, qual nota você dá para a transparência e o *Custo-Benefício* geral da *#{name}*?"
                       else
                         "De *1 a 5 estrelas*, qual sua nota para *#{criterion.title}* na entrega da *#{name}*?"
                       end
 
       if current_step == 1
-        intro = "#{greeting}A *#{name}* convidou você para avaliar sua usina solar no *Avalia Solar*.\n\n" \
-                "São apenas #{total_steps} perguntas rápidas (menos de 1 minuto):\n\n"
+        intro = "#{greeting}Sou o assistente virtual do *Avalia Solar*.\n" \
+                "A *#{name}* convidou você para registrar uma avaliação oficial sobre a instalação da sua usina solar.\n\n" \
+                "São apenas #{total_steps} perguntas rápidas (menos de 1 minuto) para auditarmos a entrega:\n\n"
         "#{intro}⭐ *Pergunta #{current_step} de #{total_steps} — #{criterion.title}:*\n#{question_text}\n\n" \
-          "*(Responda de 1 a 5, ou mande um áudio a qualquer momento)*"
+          "*(Responda com uma nota de 1 a 5, ou se preferir, envie um áudio a qualquer momento)*"
       else
         feedback = feedback_for_step(current_step)
         "#{feedback}\n\n⭐ *Pergunta #{current_step} de #{total_steps} — #{criterion.title}:*\n#{question_text}"
@@ -213,9 +215,9 @@ module VoiceReviews
 
     def feedback_for_step(step)
       case step
-      when 2 then "Ótimo! Nota registrada. 👍"
-      when 3 then "Perfeito! Avançando... ⏱️"
-      when 4 then "Show! Quase no final... 💰"
+      when 2 then "Ótimo! Nota registrada para Atendimento. 👍"
+      when 3 then "Perfeito! Nota registrada para Qualidade Técnica. ⏱️"
+      when 4 then "Show de bola! Nota registrada para Prazo. Última pergunta... 💰"
       else "Muito bem! Nota registrada. ⭐"
       end
     end
@@ -249,12 +251,13 @@ module VoiceReviews
         session.update!(state: 'awaiting_audio', processing_consent_at: session.processing_consent_at || Time.current,
                         version: session.version + 1)
         VoiceReviews::EventRecorder.record!(event_name: 'voice_consent_granted', company: session.company, session:,
-                                            dedupe_key: "consent:#{session.id}:process_audio")
+                                            dedupe_key: "consent:#{session.id}:#{session.version}:process_audio")
         gateway.send_message(session, build_all_criteria_completed_prompt(session, scores, criteria))
       end
     end
 
     def build_all_criteria_completed_prompt(session, scores, criteria)
+      name = session.company.name
       fname = reviewer_first_name(session)
       greeting = fname ? "Sensacional, *#{fname}*! " : "Sensacional! "
 
@@ -265,10 +268,10 @@ module VoiceReviews
 
       avg = (scores.values.map(&:to_f).sum / [scores.values.length, 1].max).round(1)
 
-      "#{greeting}Todas as suas notas foram registradas com sucesso:\n\n" \
+      "#{greeting}Todas as suas notas para a *#{name}* foram registradas com sucesso: ⭐\n\n" \
       "#{lines}\n" \
       "⭐ *Média Geral:* #{avg} / 5.0\n\n" \
-      "Agora, para receber o selo *Avaliação Verificada via WhatsApp* na página da *#{session.company.name}*, " \
+      "Agora, para receber o selo *Avaliação Verificada via WhatsApp* na página da *#{name}*, " \
       "**mande um áudio rápido de 20 a 40 segundos** contando detalhes da sua experiência e como está a geração da usina! 🎙️\n\n" \
       "*(Ou se preferir, envie uma mensagem de texto com seu relato)*"
     end
