@@ -29,6 +29,13 @@ RSpec.describe ReviewCollection::WhatsappAvailabilityResolver, type: :service do
     expect(result[:landing_url]).to include('/v/')
   end
 
+  it 'does not create a second invite during a public availability read' do
+    company.update!(voice_review_cta_enabled: true)
+    expect {
+      described_class.call(company: company)
+    }.not_to change { VoiceReviewInvite.where(company: company, source: 'brand_page').count }
+  end
+
   it 'fails closed when WAHA is not configured' do
     company.update!(voice_review_cta_enabled: true)
     allow(VoiceReviews::Config).to receive(:waha_webhook_hmac_secret).and_return(nil)
