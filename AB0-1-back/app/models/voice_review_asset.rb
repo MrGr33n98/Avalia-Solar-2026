@@ -10,7 +10,7 @@ class VoiceReviewAsset < ApplicationRecord
 
   validates :provider_media_id, :storage_key, :sha256, :mime_type, presence: true
   validates :byte_size, numericality: { greater_than: 0 }
-  validates :mime_type, format: { with: %r{\Aaudio/} }
+  validates :mime_type, format: { with: %r{\A(audio/|text/)} }
 
   def private?
     blob = stored_blob
