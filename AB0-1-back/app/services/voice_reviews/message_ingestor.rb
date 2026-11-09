@@ -33,23 +33,26 @@ module VoiceReviews
         message_type: message['type'].to_s, payload_digest: digest,
         payload_minimal: minimal_payload(message), received_at: Time.current
       ).find_or_create_by!(provider: provider, provider_session: provider_session, provider_message_id: provider_id)
-      return if record.processed_at.present?
 
-      contact = message['from'].to_s
-      invite = find_invite(message)
-      session = if invite
-                  VoiceReviews::SessionService.open!(invite:, provider_contact: contact, provider_message_id: provider_id,
-                                                     provider: provider, provider_session: provider_session,
-                                                     provider_chat_id: message['chat_id'])
-                else
-                  find_existing_session(contact)
-                end
-      record.update!(voice_review_session: session) if session && record.voice_review_session_id.blank?
-      if session && message['sender_name'].present? && session.draft_payload.to_h['reviewer_name'].blank?
-        session.merge_draft!(reviewer_name: message['sender_name'])
+      record.with_lock do
+        return if record.processed_at.present?
+
+        contact = message['from'].to_s
+        invite = find_invite(message)
+        session = if invite
+                    VoiceReviews::SessionService.open!(invite:, provider_contact: contact, provider_message_id: provider_id,
+                                                       provider: provider, provider_session: provider_session,
+                                                       provider_chat_id: message['chat_id'])
+                  else
+                    find_existing_session(contact)
+                  end
+        record.update!(voice_review_session: session) if session && record.voice_review_session_id.blank?
+        if session && message['sender_name'].present? && session.draft_payload.to_h['reviewer_name'].blank?
+          session.merge_draft!(reviewer_name: message['sender_name'])
+        end
+        process_message(record, session, message) if session
+        record.update!(processed_at: Time.current, delivery_status: 'processed')
       end
-      process_message(record, session, message) if session
-      record.update!(processed_at: Time.current, delivery_status: 'processed')
     rescue VoiceReviews::SessionService::Error => e
       record&.update(processed_at: Time.current, delivery_status: 'ignored', processing_error_code: 'invalid_invite')
       Rails.logger.info("[VoiceReviews] ignored message=#{message['id']} reason=#{e.message}")

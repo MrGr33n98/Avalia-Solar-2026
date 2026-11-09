@@ -39,6 +39,7 @@ module VoiceReviews
                                               dedupe_key: "session-started:#{session.id}", properties: { provider: @provider })
         else
           raw_token = SecureRandom.urlsafe_base64(32)
+          session.voice_review_publication&.destroy
           session.assign_attributes(
             state: 'awaiting_consent',
             published_review: nil,

@@ -14,7 +14,7 @@ module VoiceReviews
       rating = session.draft_rating || transcript.inferred_rating || 5
       text = transcript.text.to_s.strip.truncate(500)
       reviewer_name = session.draft_payload.to_h['reviewer_name'].to_s.strip.presence
-      call(
+      new(
         session: session,
         token: token,
         params: {
@@ -28,14 +28,16 @@ module VoiceReviews
           display_name_mode: reviewer_name ? 'full_name' : 'anonymous',
           full_name_consent: reviewer_name.present?,
           confirmed_via: 'whatsapp_reply'
-        }
-      )
+        },
+        skip_token_check: true
+      ).call
     end
 
-    def initialize(session:, token:, params:)
+    def initialize(session:, token:, params:, skip_token_check: false)
       @session = session
       @token = token.to_s
       @params = params
+      @skip_token_check = skip_token_check
     end
 
     def call
@@ -43,7 +45,7 @@ module VoiceReviews
 
       session.with_lock do
         authenticate!
-        return existing_result if session.voice_review_publication.present?
+        return existing_result if session.submitted? && session.voice_review_publication.present?
 
         transcript = session.latest_transcript
         validate!(transcript)
@@ -63,10 +65,13 @@ module VoiceReviews
 
     private
 
-    attr_reader :session, :token, :params
+    attr_reader :session, :token, :params, :skip_token_check
 
     def authenticate!
-      raise Error, 'Sessão inválida ou expirada' unless session.active_now? && session.token_matches?(token)
+      raise Error, 'Sessão inválida ou expirada' unless session.active_now?
+      return if skip_token_check
+
+      raise Error, 'Sessão inválida ou expirada' unless session.token_matches?(token)
     end
 
     def validate!(transcript)
@@ -152,9 +157,11 @@ module VoiceReviews
     end
 
     def existing_result
-      review = session.published_review
+      review = session.published_review || session.voice_review_publication&.review
+      return {} unless review
+
       { review_id: review.id, review_status: review.status, verification_status: review.verification_status,
-        publication_id: session.voice_review_publication.id }
+        publication_id: session.voice_review_publication&.id }
     end
 
     def boolean(value)
