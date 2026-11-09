@@ -35,64 +35,19 @@ module VoiceReviews
         payload_minimal: minimal_payload(message), received_at: Time.current
       ).find_or_create_by!(provider: provider, provider_session: provider_session, provider_message_id: provider_id)
 
+      # Rails 7.0 faz ROLLBACK quando um bloco de transação sai via `return`.
+      # Por isso o roteamento usa if/else e nunca retorna de dentro do with_lock.
       record.with_lock do
-        return if record.processed_at.present?
+        unless record.processed_at.present?
+          contact = message['from'].to_s
+          invite = find_invite(message)
 
-        contact = message['from'].to_s
-
-        if defined?(B2b::OnboardingSessionService)
-          onboarding_session = B2b::OnboardingSessionService.find_active_by_contact(contact)
-          if onboarding_session
-            B2b::OnboardingSessionService.process_message!(onboarding_session, message)
+          if invite.nil? && route_onboarding(contact, message)
             record.update!(processed_at: Time.current, delivery_status: 'processed')
-            return
-          end
-
-          text_body = extract_text_content(message)
-          clean_digits = text_body.gsub(/\D/, '')
-          if text_body.match?(/\A(?:CADASTRAR|CADASTRO|NOVO CADASTRO|SOU INTEGRADOR|QUERO CADASTRAR)\b/i)
-            B2b::OnboardingSessionService.open!(
-              contact: contact,
-              provider: provider,
-              provider_session: provider_session,
-              provider_chat_id: message['chat_id'],
-              sender_name: message['sender_name']
-            )
-            record.update!(processed_at: Time.current, delivery_status: 'processed')
-            return
-          elsif clean_digits.length == 14
-            session = B2b::OnboardingSessionService.open!(
-              contact: contact,
-              provider: provider,
-              provider_session: provider_session,
-              provider_chat_id: message['chat_id'],
-              sender_name: message['sender_name'],
-              skip_greeting: true
-            )
-            B2b::OnboardingSessionService.process_message!(session, message)
-            record.update!(processed_at: Time.current, delivery_status: 'processed')
-            return
+          else
+            process_voice_review(record, message, contact, provider_id, invite)
           end
         end
-
-        invite = find_invite(message)
-        session = if invite
-                    VoiceReviews::SessionService.open!(invite:, provider_contact: contact, provider_message_id: provider_id,
-                                                       provider: provider, provider_session: provider_session,
-                                                       provider_chat_id: message['chat_id'])
-                  else
-                    find_existing_session(contact)
-                  end
-        record.update!(voice_review_session: session) if session && record.voice_review_session_id.blank?
-        if session && message['sender_name'].present? && session.draft_payload.to_h['reviewer_name'].blank?
-          session.merge_draft!(reviewer_name: message['sender_name'])
-        end
-        if invite
-          send_consent_prompt(session) if session.awaiting_consent? && !session.consented_to_audio?
-        else
-          process_message(record, session, message) if session
-        end
-        record.update!(processed_at: Time.current, delivery_status: 'processed')
       end
     rescue VoiceReviews::SessionService::Error => e
       record&.update(processed_at: Time.current, delivery_status: 'ignored', processing_error_code: 'invalid_invite')
@@ -102,6 +57,67 @@ module VoiceReviews
       Rails.logger.info("[VoiceReviews] invalid message=#{message['id']} reason=#{e.record.errors.full_messages.join(', ')}")
     rescue ActiveRecord::RecordNotUnique
       retry
+    end
+
+    # Retorna true quando a mensagem pertence ao fluxo de cadastro B2B.
+    def route_onboarding(contact, message)
+      return false unless defined?(B2b::OnboardingSessionService)
+
+      onboarding_session = B2b::OnboardingSessionService.find_active_by_contact(contact)
+      if onboarding_session
+        B2b::OnboardingSessionService.process_message!(onboarding_session, message)
+        return true
+      end
+
+      text_body = extract_text_content(message)
+      if text_body.match?(/\A(?:CADASTRAR|CADASTRO|NOVO CADASTRO|SOU INTEGRADOR|QUERO CADASTRAR)\b/i)
+        open_onboarding(contact, message)
+        return true
+      end
+
+      if text_body.gsub(/\D/, '').length == 14
+        session = open_onboarding(contact, message, skip_greeting: true)
+        B2b::OnboardingSessionService.process_message!(session, message)
+        return true
+      end
+
+      false
+    end
+
+    def open_onboarding(contact, message, skip_greeting: false)
+      B2b::OnboardingSessionService.open!(
+        contact: contact,
+        provider: provider,
+        provider_session: provider_session,
+        provider_chat_id: message['chat_id'],
+        sender_name: message['sender_name'],
+        skip_greeting: skip_greeting
+      )
+    end
+
+    def process_voice_review(record, message, contact, provider_id, invite)
+      if invite && defined?(B2b::OnboardingSessionService)
+        # Código de convite tem prioridade: encerra cadastro B2B pendente do mesmo contato.
+        B2b::OnboardingSessionService.find_active_by_contact(contact)&.update!(state: 'abandoned')
+      end
+
+      session = if invite
+                  VoiceReviews::SessionService.open!(invite:, provider_contact: contact, provider_message_id: provider_id,
+                                                     provider: provider, provider_session: provider_session,
+                                                     provider_chat_id: message['chat_id'])
+                else
+                  find_existing_session(contact)
+                end
+      record.update!(voice_review_session: session) if session && record.voice_review_session_id.blank?
+      if session && message['sender_name'].present? && session.draft_payload.to_h['reviewer_name'].blank?
+        session.merge_draft!(reviewer_name: message['sender_name'])
+      end
+      if invite
+        send_consent_prompt(session) if session.awaiting_consent? && !session.consented_to_audio?
+      elsif session
+        process_message(record, session, message)
+      end
+      record.update!(processed_at: Time.current, delivery_status: 'processed')
     end
 
     def find_invite(message)

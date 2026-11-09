@@ -165,13 +165,23 @@ module B2b
     end
 
     def handle_ask_segment
-      segment_name = case @text
-                     when '1' then 'Residencial'
-                     when '2' then 'Comercial e Industrial (C&I)'
-                     when '3' then 'Usinas Rurais / Solo'
-                     when '4' then 'Multi-segmento'
-                     else @text.presence || 'Residencial e Comercial'
+      segment_name = case @text.strip.downcase
+                     when '1', /\Aresidencial/ then 'Residencial'
+                     when '2', /\Acomercial/, /industrial/ then 'Comercial e Industrial (C&I)'
+                     when '3', /\Ausina/, /rural/, /solo/ then 'Usinas Rurais / Solo'
+                     when '4', /\Amulti/, /todos/ then 'Multi-segmento'
                      end
+
+      unless segment_name
+        send_message(@session, "Não entendi a opção. 🤔\n\n" \
+                               "⭐ *Qual é o foco principal de atendimento da sua empresa?*\n\n" \
+                               "1️⃣ Residencial\n" \
+                               "2️⃣ Comercial e Industrial (C&I)\n" \
+                               "3️⃣ Usinas Rurais / Solo\n" \
+                               "4️⃣ Multi-segmento (atendemos todos)\n\n" \
+                               '*(Responda 1, 2, 3 ou 4)*')
+        return
+      end
 
       @session.merge_draft!(segment_focus: segment_name)
       @session.update!(
