@@ -50,7 +50,8 @@ module B2b
     def initialize(session, message)
       @session = session
       @message = message
-      @text = (message['body'] || message.dig('text', 'body') || '').to_s.strip
+      raw = message['body'] || message['text']
+      @text = (raw.is_a?(Hash) ? raw['body'] : raw).to_s.strip
     end
 
     def process!
@@ -272,3 +273,4 @@ module B2b
     end
   end
 end
+

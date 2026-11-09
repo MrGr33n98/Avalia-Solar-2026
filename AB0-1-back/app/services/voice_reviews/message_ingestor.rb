@@ -47,7 +47,7 @@ module VoiceReviews
             return
           end
 
-          text_body = (message['body'] || message.dig('text', 'body') || '').to_s.strip
+          text_body = extract_text_content(message)
           if text_body.match?(/\A(?:CADASTRAR|CADASTRO|NOVO CADASTRO|SOU INTEGRADOR|QUERO CADASTRAR)\b/i)
             B2b::OnboardingSessionService.open!(
               contact: contact,
@@ -389,6 +389,17 @@ module VoiceReviews
 
     def gateway
       VoiceReviews::ContinuationLink.gateway(provider: provider)
+    end
+
+    def extract_text_content(message)
+      return '' unless message.is_a?(Hash)
+
+      raw = message['body'] || message['text']
+      if raw.is_a?(Hash)
+        raw['body'].to_s.strip
+      else
+        raw.to_s.strip
+      end
     end
 
     def minimal_payload(message)
