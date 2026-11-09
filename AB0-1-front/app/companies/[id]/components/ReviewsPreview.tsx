@@ -277,7 +277,7 @@ export default function ReviewsPreview({
               Sua opinião ajuda milhares de consumidores a escolherem o integrador ideal para a
               instalação de energia solar.
             </p>
-            <div className="flex w-full flex-col items-stretch justify-center gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <div data-testid="brand-page-review-actions" className="flex w-full flex-col items-stretch justify-center gap-2 sm:w-auto sm:flex-row sm:items-center">
               <Button
                 size="sm"
                 onClick={() => onTabChange('reviews')}
