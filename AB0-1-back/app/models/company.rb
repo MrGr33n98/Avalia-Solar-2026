@@ -103,6 +103,21 @@ end
 
   has_paper_trail # Enable rollback capabilities
 
+  # Brand-page review collection is opt-in and independent of commercial WhatsApp.
+  # Provision once after commit; the public resolver always fails closed on errors.
+  after_commit :provision_brand_page_review_invite, on: %i[create update],
+               if: :voice_review_cta_just_enabled?
+
+  def voice_review_cta_just_enabled?
+    saved_change_to_voice_review_cta_enabled? && voice_review_cta_enabled?
+  end
+
+  def provision_brand_page_review_invite
+    ReviewCollection::BrandPageInviteProvisioner.call(company: self)
+  rescue StandardError => e
+    Rails.logger.error("[ReviewCollection] provision failed company=#{id} error=#{e.class}: #{e.message}")
+  end
+
   ALLOWED_LOGO_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/svg+xml image/webp].freeze
   ALLOWED_BANNER_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/svg+xml image/webp].freeze
   ALLOWED_MEDIA_CONTENT_TYPES = %w[image/png image/jpeg image/jpg image/svg+xml image/webp].freeze
