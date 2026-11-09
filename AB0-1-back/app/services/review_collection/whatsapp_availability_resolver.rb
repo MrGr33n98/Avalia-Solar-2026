@@ -2,7 +2,7 @@
 
 module ReviewCollection
   # Query: zero writes, one canonical public contract for the Review WhatsApp CTA.
-  class WhatsAppAvailabilityResolver
+  class WhatsappAvailabilityResolver
     LABEL = 'Deixe sua avaliação pelo WhatsApp'.freeze
 
     def self.call(company:)
