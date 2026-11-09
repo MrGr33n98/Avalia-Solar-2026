@@ -58,9 +58,14 @@ module B2b
     end
 
     def process!
-      if @text.match?(/\A(?:cancelar|sair|reiniciar|parar)\z/i)
-        @session.update!(state: 'abandoned')
-        send_message(@session, 'Cadastro cancelado. Quando quiser recomeçar, basta enviar *CADASTRAR*! ☀️')
+      if @text.match?(/\A(?:cancelar|sair|reiniciar|parar|recomecar|recomeçar)\z/i) || (@session.current_step != 'ask_cnpj' && @text.match?(/\A(?:cadastrar|cadastro|novo cadastro)\z/i))
+        @session.update!(
+          state: 'awaiting_cnpj',
+          current_step: 'ask_cnpj',
+          cnpj: nil,
+          draft_payload: {}
+        )
+        send_message(@session, "Vamos iniciar o cadastro da sua empresa integradora no Avalia Solar! ☀️\n\n👉 Digite o *CNPJ da sua empresa* (14 dígitos, apenas números):")
         return
       end
 
@@ -126,9 +131,14 @@ module B2b
     end
 
     def handle_confirm_data
+      clean_digits = @text.gsub(/\D/, '')
+      if clean_digits.length == 14
+        return handle_ask_cnpj
+      end
+
       if @text.match?(/\A(?:1|sim|s|ok|correto|confirmo|positivo)\b/i)
         # Mantém o nome fantasia retornado pela API
-      elsif @text.length >= 3
+      elsif @text.length >= 3 && !@text.match?(/\A(?:cadastr|novo)\b/i)
         @session.merge_draft!(custom_name: @text)
       end
 
