@@ -52,7 +52,7 @@ RSpec.describe CompanyFeatureAccessResolver, type: :service do
     end
 
     context 'for an enterprise company' do
-      let(:plan) { create(:plan, name: 'Enterprise', price: 499.0, features_json: { webhooks: true }) }
+      let(:plan) { create(:plan, name: 'Enterprise', price: 499.0, features_json: { advanced_analytics: true, intent_scores: true, webhooks: true }) }
       let(:company) { create(:company, plan: plan, active_admin: false, intent_tier: 'enterprise') }
 
       it 'returns enabled enterprise-only capabilities' do
