@@ -14,7 +14,7 @@ describe('CompanyRegistrationTicker', () => {
     render(<CompanyRegistrationTicker />);
 
     expect(screen.getByTestId('company-registration-ticker')).toBeInTheDocument();
-    expect(screen.getByText('Avalia Solar')).toBeInTheDocument();
+    expect(screen.getAllByText('Avalia Solar')).toHaveLength(2);
     expect(screen.queryByText(/mais clientes|ganhe visibilidade/i)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cadastrar empresa via WhatsApp' })).toHaveTextContent(
       'CADASTRAR'
