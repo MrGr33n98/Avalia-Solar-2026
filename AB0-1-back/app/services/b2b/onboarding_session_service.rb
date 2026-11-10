@@ -392,10 +392,14 @@ module B2b
 
         user = User.find_by(email: user_email)
         if user
+          user.password = temp_password
+          user.password_confirmation = temp_password
           user.skip_corporate_email_validation = true
           user.status = :active
           user.approved_by_admin = true
           user.confirmed_at ||= Time.current
+          user.company_id = company.id if user.company_id.blank?
+          user.role = 'company' if user.role.blank?
           user.save!(validate: false)
         else
           raw_user_name = (draft['sender_name'].presence || company_name).to_s.strip.truncate(100, omission: '')
@@ -406,6 +410,7 @@ module B2b
             password: temp_password,
             password_confirmation: temp_password,
             role: 'company',
+            company_id: company.id,
             status: :active,
             approved_by_admin: true,
             city: city,
@@ -422,10 +427,13 @@ module B2b
           user.save!
         end
 
-        CompanyMember.find_or_create_by!(company: company, user: user) do |m|
-          m.role = :owner
-          m.status = :active
-        end
+        member = CompanyMember.find_or_initialize_by(company: company, user: user)
+        member.role = :owner
+        member.status = :active
+        member.save!
+
+        # Invalida cache de empresas do usuário para garantir listagem imediata
+        Rails.cache.delete_matched("user_#{user.id}_companies_mine_*") rescue nil
 
         # Dispara e-mail de boas-vindas com a senha provisória e dados de acesso
         ::CompanyMailer.welcome_onboarding(company, user, temp_password).deliver_later rescue nil

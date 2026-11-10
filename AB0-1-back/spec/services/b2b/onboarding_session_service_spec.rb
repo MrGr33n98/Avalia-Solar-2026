@@ -189,6 +189,56 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.reload.current_step).to eq('ask_photos')
         expect(session.draft_data['logo_data']).to eq(fake_b64)
       end
+
+      it 'updates password and associates existing user as company owner on onboarding finalization' do
+        existing_user = User.create!(
+          email: 'contato@novasolar.com.br',
+          password: 'OldPassword123!',
+          name: 'Old User',
+          role: 'company',
+          status: :active,
+          approved_by_admin: true,
+          terms_accepted: true,
+          terms_accepted_at: Time.current,
+          public_name_consent: true,
+          display_full_name_consent: true,
+          review_name_consent: true,
+          lgpd_name_consent: true
+        )
+
+        session.update!(
+          current_step: 'ask_photos',
+          state: 'awaiting_photos',
+          cnpj: '06990590000123',
+          draft_payload: {
+            'cnpj_data' => {
+              'razao_social' => 'NOVA ENERGIA LTDA',
+              'nome_fantasia' => 'NOVA ENERGIA',
+              'municipio' => 'Campinas',
+              'uf' => 'SP',
+              'email' => 'financeiro@novasolar.com.br',
+              'telefone' => '19987654321',
+              'situacao' => 'ATIVA'
+            },
+            'user_email' => 'contato@novasolar.com.br',
+            'category_ids' => [71, 72],
+            'primary_category_id' => 71
+          }
+        )
+
+        expect(gateway).to receive(:send_message).with(session, /Parabéns! Sua empresa foi cadastrada com sucesso/)
+        expect(gateway).to receive(:send_message).with(session, /Felipe, fundador do Avalia Solar/)
+
+        described_class.process_message!(session, { 'body' => 'pular' })
+
+        session.reload
+        expect(session.state).to eq('completed')
+        expect(session.user).to eq(existing_user)
+        expect(session.company.company_members.where(user: existing_user, role: :owner, status: :active)).to exist
+
+        # A senha antiga não é mais válida; o usuário foi sincronizado
+        expect(existing_user.reload.valid_password?('OldPassword123!')).to be false
+      end
     end
   end
 end
