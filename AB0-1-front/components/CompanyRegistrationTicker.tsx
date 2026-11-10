@@ -5,7 +5,7 @@ import { track } from '@/lib/analytics';
 // Palavra-chave exata para o fluxo de cadastro no WhatsApp/WAHA.
 // O disparo do bot ocorre somente após o visitante enviar a mensagem.
 export const COMPANY_REGISTRATION_WHATSAPP_URL =
-  'https://wa.me/5547999545370?text=CADASTRAR';
+  'https://wa.me/556593465055?text=CADASTRAR';
 
 export default function CompanyRegistrationTicker() {
   const handleCtaClick = () => {
@@ -47,14 +47,14 @@ export default function CompanyRegistrationTicker() {
         rel="noopener noreferrer"
         aria-label="Cadastrar empresa via WhatsApp"
         data-testid="company-registration-cta"
-        className="inline-flex h-8 shrink-0 items-center justify-center rounded-full bg-[#16A34A] px-3 text-[11px] font-bold tracking-[0.02em] text-white transition-colors hover:bg-[#15803D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#062653] sm:px-4 sm:text-xs"
+        className="inline-flex h-7 shrink-0 items-center justify-center rounded-full bg-[#16A34A] px-3 text-[11px] font-bold tracking-[0.02em] text-white transition-colors hover:bg-[#15803D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#062653] sm:px-4 sm:text-xs"
       >
         CADASTRAR
       </a>
 
       <style jsx>{`
         .company-ticker-track {
-          animation: company-ticker-marquee 18s linear infinite;
+          animation: company-ticker-marquee 10s linear infinite;
         }
         @keyframes company-ticker-marquee {
           from {
