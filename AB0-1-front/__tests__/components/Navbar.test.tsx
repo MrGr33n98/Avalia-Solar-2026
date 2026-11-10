@@ -201,7 +201,7 @@ describe('Navbar', () => {
     expect(screen.getByRole('button', { name: /Categorias/i })).toBeInTheDocument();
   });
 
-  it('mantém hamburger para visitante e avatar compacto para usuário autenticado', () => {
+  it('mantém navegação principal e menu da conta para usuário autenticado', () => {
     const { rerender } = render(<Navbar />);
 
     expect(screen.getByRole('button', { name: 'Abrir menu principal' })).toBeInTheDocument();
@@ -222,7 +222,7 @@ describe('Navbar', () => {
     rerender(<Navbar />);
 
     expect(screen.getByRole('button', { name: 'Abrir menu da conta' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Abrir menu principal' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Abrir menu principal' })).toBeInTheDocument();
   });
 
   it('renders login and register buttons', () => {
