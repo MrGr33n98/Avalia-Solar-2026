@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
-# CI/CD gate: fail closed for backend releases. A frontend-only release may
-# proceed when the pre-existing full RSpec debt is the ONLY failing CI job.
+# CI/CD gate: backend releases fail closed. Frontend-only releases may
+# tolerate legacy RSpec failures only when no backend code is published.
 set -euo pipefail
 
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
 : "${RELEASE_SHA:?RELEASE_SHA is required}"
+
+RELEASE_SCOPE="${RELEASE_SCOPE:-full}"
+if [[ "$RELEASE_SCOPE" != "full" && "$RELEASE_SCOPE" != "frontend_only" ]]; then
+  echo "::error::Escopo de release inválido: $RELEASE_SCOPE"
+  exit 1
+fi
 
 CI_ENDPOINT="repos/$GITHUB_REPOSITORY/actions/workflows/ci-web-backend.yml/runs?head_sha=$RELEASE_SHA&event=push&per_page=20"
 echo "Verificando CI do commit $RELEASE_SHA..."
@@ -36,36 +42,41 @@ for attempt in $(seq 1 90); do
 
   if [ "$conclusion" = "success" ]; then
     echo "CI integral aprovado para $RELEASE_SHA."
-    exit 0
-  fi
+    if [ "$RELEASE_SCOPE" = "full" ]; then
+      exit 0
+    fi
+  else
+    if [ "$conclusion" != "failure" ]; then
+      echo "::error::CI terminou com $conclusion. Deploy bloqueado."
+      exit 1
+    fi
 
-  if [ "$conclusion" != "failure" ]; then
-    echo "::error::CI terminou com $conclusion. Deploy bloqueado."
-    exit 1
-  fi
+    run_id="$(jq -r '.id' <<< "$run")"
+    jobs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100")" || {
+      echo "::error::Sem evidência dos jobs do CI; deploy bloqueado."
+      exit 1
+    }
 
-  run_id="$(jq -r '.id' <<< "$run")"
-  jobs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100")" || {
-    echo "::error::Sem evidência dos jobs do CI; deploy bloqueado."
-    exit 1
-  }
-
-  # Strict allowlist: all other CI jobs MUST pass. E2E is skipped today because
-  # its needs includes backend-tests; do not silently accept additional skips.
-  if ! jq -e '
-    (.jobs | length > 0 and length < 100)
-    and ([.jobs[] | select(.name == "Backend Unit Tests (RSpec)" and .conclusion == "failure")] | length == 1)
-    and ([.jobs[] | select(.name == "Code Quality & Security Scan" and .conclusion == "success")] | length == 1)
-    and ([.jobs[] | select(.name == "Ranking Performance Frontend Contract" and .conclusion == "success")] | length == 1)
-    and ([.jobs[] | select(.name == "Ranking Performance Contract" and .conclusion == "success")] | length == 1)
-    and ([.jobs[] | select(.name == "Category Discovery & SEO Contract Gate" and .conclusion == "success")] | length == 1)
-    and ([.jobs[] | select(.name == "E2E Playwright Tests" and .conclusion == "skipped")] | length == 1)
-    and ([.jobs[] | select(.conclusion == "failure" and .name != "Backend Unit Tests (RSpec)")] | length == 0)
-    and ([.jobs[] | select(.conclusion == "skipped" and .name != "E2E Playwright Tests")] | length == 0)
-    and ([.jobs[] | select(.status != "completed")] | length == 0)
-  ' <<< "$jobs" >/dev/null; then
-    echo "::error::CI possui falhas adicionais ou gates obrigatórios ausentes. Deploy bloqueado."
-    exit 1
+    # Só tolera RSpec legado; todos os outros jobs devem terminar em success,
+    # exceto E2E, que depende do job de backend e deve estar skipped.
+    if ! jq -e '
+      (.jobs | length > 0 and length < 100)
+      and ([.jobs[] | select(.name == "Backend Unit Tests (RSpec)" and .conclusion == "failure")] | length == 1)
+      and ([.jobs[] | select(.name == "Code Quality & Security Scan" and .conclusion == "success")] | length == 1)
+      and ([.jobs[] | select(.name == "Ranking Performance Frontend Contract" and .conclusion == "success")] | length == 1)
+      and ([.jobs[] | select(.name == "Ranking Performance Contract" and .conclusion == "success")] | length == 1)
+      and ([.jobs[] | select(.name == "Category Discovery & SEO Contract Gate" and .conclusion == "success")] | length == 1)
+      and ([.jobs[] | select(.name == "E2E Playwright Tests" and .conclusion == "skipped")] | length == 1)
+      and ([.jobs[] | select(
+        .name != "Backend Unit Tests (RSpec)"
+        and .name != "E2E Playwright Tests"
+        and .conclusion != "success"
+      )] | length == 0)
+      and ([.jobs[] | select(.status != "completed")] | length == 0)
+    ' <<< "$jobs" >/dev/null; then
+      echo "::error::CI possui falhas adicionais ou gates obrigatórios ausentes. Deploy bloqueado."
+      exit 1
+    fi
   fi
 
   # Compare against the most recent successful production release, NOT HEAD^.
@@ -84,13 +95,26 @@ for attempt in $(seq 1 90); do
     exit 1
   fi
 
-  previous_ci_runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci-web-backend.yml/runs?branch=main&per_page=100")" || exit 1
-  if ! jq -e --arg sha "$previous_sha" '
-    [.workflow_runs[] | select(.head_sha == $sha and .event == "push" and .conclusion == "failure")]
-    | length > 0
-  ' <<< "$previous_ci_runs" >/dev/null; then
-    echo "::error::Falha RSpec não confirmada na release anterior; deploy bloqueado."
-    exit 1
+  if [ "$conclusion" = "failure" ]; then
+    previous_ci_runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci-web-backend.yml/runs?branch=main&per_page=100")" || exit 1
+    previous_ci_run="$(jq -c --arg sha "$previous_sha" '
+      [.workflow_runs[] | select(.head_sha == $sha and .event == "push")]
+      | sort_by(.run_number) | last // empty
+    ' <<< "$previous_ci_runs")"
+    if [ -z "$previous_ci_run" ] || [ "$(jq -r '.conclusion' <<< "$previous_ci_run")" != "failure" ]; then
+      echo "::error::Falha da release anterior não confirmada; deploy bloqueado."
+      exit 1
+    fi
+
+    previous_ci_run_id="$(jq -r '.id' <<< "$previous_ci_run")"
+    previous_ci_jobs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$previous_ci_run_id/jobs?per_page=100")" || exit 1
+    if ! jq -e '
+      [.jobs[] | select(.name == "Backend Unit Tests (RSpec)" and .conclusion == "failure")]
+      | length == 1
+    ' <<< "$previous_ci_jobs" >/dev/null; then
+      echo "::error::Falha RSpec não confirmada na release anterior; deploy bloqueado."
+      exit 1
+    fi
   fi
 
   comparison="$(gh api "repos/$GITHUB_REPOSITORY/compare/$previous_sha...$RELEASE_SHA")" || exit 1
@@ -102,17 +126,22 @@ for attempt in $(seq 1 90); do
       (startswith("AB0-1-front/")
        or . == ".github/workflows/ci-web-backend.yml"
        or . == ".github/workflows/cd-production.yml"
+       or . == ".github/workflows/cd-frontend-production.yml"
        or . == ".github/scripts/verify-release-ci.sh"
        or . == ".github/scripts/test-verify-release-ci.sh") | not
     )] | length == 0)
     and ([.files[].filename | select(startswith("AB0-1-front/"))] | length > 0)
   ' <<< "$comparison" >/dev/null; then
-    echo "::error::Delta contém alterações fora do frontend/CI. CI integral obrigatório."
+    echo "::error::Delta fora do escopo permitido para $RELEASE_SCOPE. Deploy bloqueado."
     exit 1
   fi
 
-  echo "::warning::CI mantém falhas RSpec preexistentes. Exceção restrita: diff frontend/CI desde $previous_sha; demais gates verdes."
-  echo "Detalhes: CI run $run_id; testes E2E permanecem bloqueados pelo RSpec legado."
+  if [ "$conclusion" = "success" ]; then
+    echo "Escopo frontend-only validado desde $previous_sha; nenhum serviço backend será publicado."
+  else
+    echo "::warning::CI mantém falhas RSpec legadas. Somente escopo frontend-only validado desde $previous_sha."
+    echo "Detalhes: CI run $run_id; migrations não serão executadas neste fluxo."
+  fi
   exit 0
 done
 

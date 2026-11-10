@@ -13,12 +13,20 @@ set -euo pipefail
 [ "$1" = api ] || exit 2
 case "$2" in
   *"ci-web-backend.yml/runs?head_sha="*)
-    if [ "$SCENARIO" = all_green ]; then
+    if [ "$SCENARIO" = all_green ] || [ "$SCENARIO" = frontend_only_green ]; then
       conclusion=success
     else
       conclusion=failure
     fi
     jq -n --arg c "$conclusion" '{workflow_runs: [{id: 42, run_number: 42, head_sha: "sha-test", head_branch: "main", event: "push", status: "completed", conclusion: $c}]}'
+    ;;
+  *"actions/runs/84/jobs"*)
+    if [ "$SCENARIO" = baseline_not_rspec ]; then
+      conclusion=success
+    else
+      conclusion=failure
+    fi
+    jq -n --arg c "$conclusion" '{jobs:[{name:"Backend Unit Tests (RSpec)",status:"completed",conclusion:$c}]}'
     ;;
   *"actions/runs/42/jobs"*)
     jq -n --arg scenario "$SCENARIO" '
@@ -26,7 +34,7 @@ case "$2" in
         {name: "Backend Unit Tests (RSpec)", status: "completed", conclusion: "failure"},
         {name: "Code Quality & Security Scan", status: "completed", conclusion: (if $scenario == "security_failed" then "failure" else "success" end)},
         {name: "Ranking Performance Frontend Contract", status: "completed", conclusion: "success"},
-        {name: "Ranking Performance Contract", status: "completed", conclusion: "success"},
+        {name: "Ranking Performance Contract", status: "completed", conclusion: (if $scenario == "job_cancelled" then "cancelled" else "success" end)},
         {name: "Category Discovery & SEO Contract Gate", status: "completed", conclusion: "success"},
         {name: "E2E Playwright Tests", status: "completed", conclusion: "skipped"}
       ]}'
@@ -44,19 +52,27 @@ case "$2" in
     else
       conclusion=failure
     fi
-    jq -n --arg c "$conclusion" '{workflow_runs:[{head_sha:"sha-old",event:"push",conclusion:$c}]}'
+    jq -n --arg c "$conclusion" '{workflow_runs:[{id:84,run_number:1,head_sha:"sha-old",event:"push",status:"completed",conclusion:$c}]}'
     ;;
   *"compare/sha-old...sha-test"*)
     case "$SCENARIO" in
       backend_changed) path="AB0-1-back/app/models/company.rb" ;;
+      schema_reconciliation) path="AB0-1-back/db/migrate/20261110100000_reconcile_historical_schema_snapshot.rb" ;;
       unsafe_workflow) path=".github/workflows/other.yml" ;;
       *) path="AB0-1-front/components/CompanyRegistrationTicker.tsx" ;;
     esac
-    jq -n --arg path "$path" '{
+    if [ "$SCENARIO" = schema_reconciliation ]; then
+      extra_path="AB0-1-front/components/CompanyRegistrationTicker.tsx"
+    else
+      extra_path=""
+    fi
+    jq -n --arg path "$path" --arg extra_path "$extra_path" '{
       status:"ahead", ahead_by:2, files:[
         {filename: $path},
+        (if $extra_path == "" then empty else {filename:$extra_path} end),
         {filename: ".github/workflows/cd-production.yml"},
-        {filename: ".github/scripts/verify-release-ci.sh"}
+        {filename: ".github/scripts/verify-release-ci.sh"},
+        {filename: ".github/workflows/cd-frontend-production.yml"}
       ]
     }'
     ;;
@@ -70,8 +86,9 @@ export GITHUB_REPOSITORY="MrGr33n98/Avalia-Solar-2026"
 export RELEASE_SHA="sha-test"
 
 assert_gate() {
-  local scenario="$1" expectation="$2"
+  local scenario="$1" expectation="$2" scope="${3:-full}"
   export SCENARIO="$scenario"
+  export RELEASE_SCOPE="$scope"
   if bash "$ROOT/.github/scripts/verify-release-ci.sh" >"$TMP/log" 2>&1; then
     outcome=pass
   else
@@ -87,8 +104,15 @@ assert_gate() {
 
 assert_gate all_green pass
 assert_gate frontend_only_legacy pass
+assert_gate schema_reconciliation block frontend_only
+assert_gate schema_reconciliation block full
+assert_gate frontend_only_green pass frontend_only
 assert_gate backend_changed block
+assert_gate backend_changed block frontend_only
 assert_gate unsafe_workflow block
 assert_gate security_failed block
+assert_gate job_cancelled block
 assert_gate no_baseline block
 assert_gate baseline_green block
+assert_gate baseline_not_rspec block
+assert_gate frontend_only_legacy block invalid

@@ -1,0 +1,303 @@
+name: CD — Frontend Production Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Commit SHA from main with a frontend-only diff since the last full production release
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-release:
+    name: Validate frontend release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    env:
+      RELEASE_SHA: ${{ inputs.release_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Validate release commit
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Este workflow só pode publicar um SHA da main."
+            exit 1
+          fi
+          if [[ ! "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Informe um SHA completo de 40 caracteres."
+            exit 1
+          fi
+          git fetch origin main --quiet
+          git cat-file -e "${RELEASE_SHA}^{commit}"
+          if ! git merge-base --is-ancestor "$RELEASE_SHA" FETCH_HEAD; then
+            echo "::error::O SHA informado não pertence ao histórico atual da main."
+            exit 1
+          fi
+
+      - name: Verify CI and release scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RELEASE_SCOPE: frontend_only
+        run: bash .github/scripts/verify-release-ci.sh
+
+  build-frontend:
+    name: Build frontend image
+    needs: verify-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      RELEASE_SHA: ${{ inputs.release_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_sha }}
+
+      - name: Lowercase repository name
+        id: repo_name
+        run: echo "repository=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate frontend build secrets
+        env:
+          SERVER_ACTIONS_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+          AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+        run: |
+          set -euo pipefail
+          [ -n "$SERVER_ACTIONS_KEY" ] || { echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY ausente."; exit 1; }
+          [ -n "$AUTH_SECRET" ] || { echo "::error::BETTER_AUTH_SECRET ausente."; exit 1; }
+
+      - name: Build and publish immutable frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: true
+          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:${{ inputs.release_sha }}
+          build-args: |
+            GIT_SHA=${{ inputs.release_sha }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1' }}
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.avaliasolar.com.br' }}
+            NEXT_PUBLIC_ENABLE_ANALYTICS=${{ vars.NEXT_PUBLIC_ENABLE_ANALYTICS || 'true' }}
+            NEXT_PUBLIC_ENABLE_REALTIME=${{ vars.NEXT_PUBLIC_ENABLE_REALTIME || 'false' }}
+            NEXT_PUBLIC_GTM_ID=${{ vars.NEXT_PUBLIC_GTM_ID || 'GTM-5RV76ZKR' }}
+            NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.NEXT_PUBLIC_BETTER_AUTH_URL || 'https://avaliasolar.com.br' }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '' }}
+            NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || '' }}
+            NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY || 'phc_oo5u9eWrjVdqdLRg1UbuiHnh5AZCp8SUxdgi68fGARd' }}
+            NEXT_PUBLIC_POSTHOG_HOST=${{ vars.NEXT_PUBLIC_POSTHOG_HOST || 'https://f.avaliasolar.com.br' }}
+            NEXT_PUBLIC_PUBLIC_ORIGIN=${{ vars.NEXT_PUBLIC_PUBLIC_ORIGIN || 'https://www.avaliasolar.com.br' }}
+            NEXT_PUBLIC_APP_ORIGIN=${{ vars.NEXT_PUBLIC_APP_ORIGIN || 'https://app.avaliasolar.com.br' }}
+            NEXT_PUBLIC_CRM_ORIGIN=${{ vars.NEXT_PUBLIC_CRM_ORIGIN || 'https://crm.avaliasolar.com.br' }}
+            SENTRY_ORG=${{ vars.SENTRY_ORG || '' }}
+            SENTRY_PROJECT=${{ vars.SENTRY_PROJECT || '' }}
+            NEXT_PUBLIC_ENABLE_PREMIUM_PROFILE=true
+            NEXT_PUBLIC_GROUPS_ENABLED=true
+          secrets: |
+            NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
+            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
+            type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  deploy-frontend:
+    name: Deploy frontend only
+    needs: [verify-release, build-frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://www.avaliasolar.com.br
+    permissions:
+      contents: read
+      packages: read
+      actions: read
+    env:
+      RELEASE_SHA: ${{ inputs.release_sha }}
+    steps:
+      - name: Validate SSH secrets
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          [ -n "$SSH_HOST" ] || { echo "::error::SSH_HOST ausente."; exit 1; }
+          [ -n "$SSH_USER" ] || { echo "::error::SSH_USER ausente."; exit 1; }
+          [ -n "$SSH_PRIVATE_KEY" ] || { echo "::error::SSH_PRIVATE_KEY ausente."; exit 1; }
+
+      - name: Update frontend container over SSH
+        id: deploy_frontend
+        uses: appleboy/ssh-action@v1.1.0
+        env:
+          DOCKER_USER: ${{ github.actor }}
+          DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPOSITORY: ${{ github.repository }}
+          GIT_SHA: ${{ env.RELEASE_SHA }}
+          PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          command_timeout: 15m
+          envs: DOCKER_USER,DOCKER_TOKEN,GH_REPOSITORY,GIT_SHA,PRODUCTION_DEPLOY_DIR
+          script: |
+            set -Eeuo pipefail
+            DEPLOY_DIR="${PRODUCTION_DEPLOY_DIR:-${HOME:-}/Avalia-Solar-2026}"
+            cd "$DEPLOY_DIR"
+            test -f docker-compose.yml
+
+            REPO_LOWER="$(printf '%s' "$GH_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+            FRONTEND_IMAGE="ghcr.io/${REPO_LOWER}-frontend:${GIT_SHA}"
+            FRONTEND_ROLLBACK_IMAGE="ghcr.io/${REPO_LOWER}-frontend:rollback"
+            PREVIOUS_IMAGE="$(docker inspect --format='{{.Config.Image}}' ab0-frontend)"
+            [ -n "$PREVIOUS_IMAGE" ] || { echo "Frontend atual ausente; abortando sem trocar serviço."; exit 1; }
+
+            DOCKER_CONFIG="$(mktemp -d)"
+            export DOCKER_CONFIG
+            cleanup_registry_auth() {
+              docker logout ghcr.io >/dev/null 2>&1 || true
+              rm -rf "$DOCKER_CONFIG"
+            }
+            trap cleanup_registry_auth EXIT
+            printf '%s' "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
+            docker pull "$FRONTEND_IMAGE"
+            docker image tag "$PREVIOUS_IMAGE" "$FRONTEND_ROLLBACK_IMAGE"
+
+            wait_for_frontend() {
+              local container_id status state attempt
+              container_id="$(docker compose ps -q frontend)"
+              [ -n "$container_id" ] || return 1
+              for attempt in $(seq 1 180); do
+                status="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container_id" 2>/dev/null || echo missing)"
+                state="$(docker inspect --format='{{.State.Status}}' "$container_id" 2>/dev/null || echo missing)"
+                [ "$status" = healthy ] && return 0
+                if [ "$state" = exited ] || [ "$status" = unhealthy ] || [ "$status" = missing ]; then
+                  docker compose logs --tail=150 frontend || true
+                  return 1
+                fi
+                sleep 2
+              done
+              docker compose logs --tail=150 frontend || true
+              return 1
+            }
+
+            rollback_frontend() {
+              echo "Rollback apenas do frontend para $PREVIOUS_IMAGE"
+              export FRONTEND_IMAGE="$FRONTEND_ROLLBACK_IMAGE"
+              docker compose up -d --no-deps --no-build frontend || true
+              wait_for_frontend || true
+            }
+
+            export FRONTEND_IMAGE
+            if ! docker compose up -d --no-deps --no-build frontend; then
+              rollback_frontend
+              exit 1
+            fi
+            if ! wait_for_frontend; then
+              rollback_frontend
+              exit 1
+            fi
+
+            FRONTEND_CID="$(docker compose ps -q frontend)"
+            if ! docker exec -e EXPECTED_RELEASE_SHA="$GIT_SHA" "$FRONTEND_CID" node -e '
+              (async () => {
+                const response = await fetch("http://127.0.0.1:3000/");
+                const html = await response.text();
+                const required = ["company-registration-ticker", "CADASTRAR", "wa.me/556593465055?text=CADASTRAR"];
+                if (!response.ok || response.headers.get("x-release") !== process.env.EXPECTED_RELEASE_SHA
+                  || required.some((value) => !html.includes(value))) {
+                  throw new Error(`Homepage inválida: HTTP ${response.status}`);
+                }
+                console.log("FRONTEND_TICKER_SMOKE_OK");
+              })().catch((error) => { console.error(error); process.exit(1); });
+            '; then
+              rollback_frontend
+              exit 1
+            fi
+            docker inspect ab0-frontend --format='Frontend image={{.Config.Image}} status={{.State.Status}}'
+
+      - name: Verify public homepage and release SHA
+        env:
+          RELEASE_SHA: ${{ env.RELEASE_SHA }}
+        run: |
+          set -euo pipefail
+          HEADER_FILE="$RUNNER_TEMP/frontend-release-headers"
+          PAGE_FILE="$RUNNER_TEMP/frontend-release-page"
+          for attempt in $(seq 1 12); do
+            if curl -fsSL --max-time 25 -D "$HEADER_FILE" -o "$PAGE_FILE" \
+              -H 'Cache-Control: no-cache, no-store' \
+              "https://www.avaliasolar.com.br/?frontend_release=${RELEASE_SHA}" 2>/dev/null; then
+              RELEASE_HEADER="$(awk 'tolower($1) == "x-release:" { gsub(/[[:space:]]/, "", $2); value = $2 } END { print value }' "$HEADER_FILE")"
+            else
+              RELEASE_HEADER=""
+            fi
+            if [ "$RELEASE_HEADER" = "$RELEASE_SHA" ] \
+              && grep -qF 'company-registration-ticker' "$PAGE_FILE" \
+              && grep -qF 'CADASTRAR' "$PAGE_FILE" \
+              && grep -qF 'wa.me/556593465055?text=CADASTRAR' "$PAGE_FILE"; then
+              echo "Homepage pública serve a faixa no release ${RELEASE_SHA}."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Frontend local atualizado, mas a homepage pública não confirmou a faixa."
+          exit 1
+
+      - name: Roll back frontend if public verification failed
+        if: failure() && steps.deploy_frontend.outcome == 'success'
+        uses: appleboy/ssh-action@v1.1.0
+        env:
+          GH_REPOSITORY: ${{ github.repository }}
+          PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          command_timeout: 10m
+          envs: GH_REPOSITORY,PRODUCTION_DEPLOY_DIR
+          script: |
+            set -Eeuo pipefail
+            DEPLOY_DIR="${PRODUCTION_DEPLOY_DIR:-${HOME:-}/Avalia-Solar-2026}"
+            cd "$DEPLOY_DIR"
+            REPO_LOWER="$(printf '%s' "$GH_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+            export FRONTEND_IMAGE="ghcr.io/${REPO_LOWER}-frontend:rollback"
+            docker image inspect "$FRONTEND_IMAGE" >/dev/null
+            docker compose up -d --no-deps --no-build frontend
+            CID="$(docker compose ps -q frontend)"
+            for attempt in $(seq 1 180); do
+              STATUS="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$CID" 2>/dev/null || echo missing)"
+              [ "$STATUS" = healthy ] && { echo "Frontend restaurado: $FRONTEND_IMAGE"; exit 0; }
+              sleep 2
+            done
+            docker compose logs --tail=150 frontend || true
+            exit 1
