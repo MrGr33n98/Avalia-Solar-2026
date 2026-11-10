@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe Companies::CompanySearchQuery, type: :query do
-  let!(:active_company_sp) { create(:company, name: 'Solar SP', status: :active, state: 'SP', city: 'São Paulo', rating_avg: 4.8, verified: true, whatsapp_enabled: true, financing_enabled: true, latitude: -23.5505, longitude: -46.6333) }
+  let!(:active_company_sp) { create(:company, name: 'Solar SP', status: :active, state: 'SP', city: 'São Paulo', rating_avg: 4.8, verified: true, whatsapp_enabled: true, whatsapp_url: 'https://wa.me/5511999999999', financing_enabled: true, latitude: -23.5505, longitude: -46.6333) }
   let!(:active_company_rj) { create(:company, name: 'Solar RJ', status: :active, state: 'RJ', city: 'Rio de Janeiro', rating_avg: 3.5, verified: false, whatsapp_enabled: false, financing_enabled: false, latitude: -22.9068, longitude: -43.1729) }
   let!(:inactive_company) { create(:company, name: 'Solar Inativo', status: :inactive, state: 'SP', city: 'Campinas') }
   let!(:category_residencial) { create(:category, name: 'Residencial', slug: 'residencial') }

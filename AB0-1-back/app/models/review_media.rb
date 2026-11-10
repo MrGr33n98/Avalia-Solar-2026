@@ -8,7 +8,7 @@ class ReviewMedia < ApplicationRecord
   MEDIA_TYPES = %w[image].freeze
 
   belongs_to :review, optional: true
-  belongs_to :upload_session
+  belongs_to :upload_session, class_name: 'ReviewUploadSession'
   belongs_to :user
   belongs_to :moderated_by, polymorphic: true, optional: true
   has_one_attached :file

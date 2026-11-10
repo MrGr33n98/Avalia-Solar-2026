@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe 'Company dashboard media publication flow', type: :request do
   let(:company) { create(:company, status: :active, featured: true) }
   let(:user) { create(:user, status: :active, role: :company) }
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) { JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256') }
   let(:auth_headers) { { 'Authorization' => "Bearer #{token}" } }
 
   before do
