@@ -34,6 +34,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate production CI gate contract
+        run: bash .github/scripts/test-verify-release-ci.sh
+
       # Ruby Setup
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
