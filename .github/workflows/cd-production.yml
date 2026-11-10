@@ -372,6 +372,10 @@ jobs:
       packages: read
       actions: read
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_SHA }}
+
       - name: Verify CI Status
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
