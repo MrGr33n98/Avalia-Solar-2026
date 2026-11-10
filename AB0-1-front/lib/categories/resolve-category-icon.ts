@@ -53,6 +53,34 @@ export const FALLBACK_UNKNOWN_ICON =
   '/icones-new/A_energia-solar/principal/a_energia-solar.svg';
 
 /**
+ * Assets exclusivos das oito subcategorias do ACL (Mercado Livre de Energia).
+ * Slugs correspondem exatamente ao cadastro em db/migrate/20261103163000.
+ * A categoria principal permanece no catálogo 3D canônico existente.
+ */
+const ACL_SUBCATEGORY_3D_ICONS: Record<string, string> = {
+  'comercializadoras-varejistas-energia': 'comercializadoras-varejistas-de-energia',
+  'compra-energia-contratos-longo-prazo': 'compra-de-energia-e-contratos-de-longo-prazo',
+  'consultoria-migracao-mercado-livre': 'consultoria-para-migracao-ao-mercado-livre',
+  'energia-renovavel-certificados-origem': 'energia-renovavel-e-certificados-de-origem',
+  'gestao-energia-mercado-livre': 'gestao-de-energia-no-mercado-livre',
+  'gestao-riscos-portfolio-energia': 'gestao-de-riscos-e-portfolio-de-energia',
+  'medicao-adequacao-mercado-livre': 'medicao-e-adequacao-para-o-mercado-livre',
+  'software-gestao-energia-acl': 'software-para-gestao-de-energia-no-acl',
+};
+
+const ACL_SUBCATEGORY_3D_NAME_ALIASES: Record<string, string> = {
+  'comercializadoras-varejistas-de-energia': 'comercializadoras-varejistas-energia',
+  'compra-de-energia-e-contratos-de-longo-prazo': 'compra-energia-contratos-longo-prazo',
+  'consultoria-para-migracao-ao-mercado-livre': 'consultoria-migracao-mercado-livre',
+  'energia-renovavel-e-certificados-de-origem': 'energia-renovavel-certificados-origem',
+  'gestao-de-energia-no-mercado-livre': 'gestao-energia-mercado-livre',
+  'gestao-de-riscos-e-portfolio-de-energia': 'gestao-riscos-portfolio-energia',
+  'medicao-e-adequacao-para-o-mercado-livre': 'medicao-adequacao-mercado-livre',
+  'software-para-gestao-de-energia-no-acl': 'software-gestao-energia-acl',
+};
+
+
+/**
  * Normaliza uma string de busca/chave para comparação determinística:
  * minúsculo, sem acentos, pontuação substituída por hífens.
  */
@@ -263,6 +291,27 @@ function getMotionPresetFor3DCode(code?: string): CategoryMotionPreset {
       return 'neutral';
   }
 }
+
+  // As oito subcategorias do ACL recebem assets Airbnb-style específicos.
+  // Correspondência estrita por slug/nome para evitar colisões com outras categorias.
+  // O modo SVG explícito preserva o fallback do catálogo canônico.
+  if (normalizedInput.format !== 'svg') {
+    const aclSlug =
+      (normSlug && ACL_SUBCATEGORY_3D_ICONS[normSlug] ? normSlug : '') ||
+      ACL_SUBCATEGORY_3D_NAME_ALIASES[normName];
+
+    const aclFile = aclSlug ? ACL_SUBCATEGORY_3D_ICONS[aclSlug] : null;
+
+    if (aclFile) {
+      return {
+        src: `/assets/categories/mercado-livre-3d/${aclFile}.webp`,
+        source: 'catalog-3d',
+        catalogId: `ACL:${aclSlug}`,
+        alt: rawName || 'Subcategoria do Mercado Livre de Energia',
+        motionPreset: 'energyMarket',
+      };
+    }
+  }
 
   // -------------------------------------------------------------------------
   // PASSO 0: Consulta prioritária aos 39 ícones 3D refinados

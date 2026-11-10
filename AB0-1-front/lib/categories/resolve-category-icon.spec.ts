@@ -196,3 +196,52 @@ describe('Canonical Category Icon Resolver (47 SVGs)', () => {
     expect(softwareCat.catalogId).toBe('F03');
   });
 });
+
+
+describe('Mercado Livre de Energia - pacote Airbnb-style de oito icones 3D', () => {
+  const cases = [
+    { slug: 'comercializadoras-varejistas-energia', name: 'Comercializadoras Varejistas de Energia', file: 'comercializadoras-varejistas-de-energia' },
+    { slug: 'compra-energia-contratos-longo-prazo', name: 'Compra de Energia e Contratos de Longo Prazo', file: 'compra-de-energia-e-contratos-de-longo-prazo' },
+    { slug: 'consultoria-migracao-mercado-livre', name: 'Consultoria para Migração ao Mercado Livre', file: 'consultoria-para-migracao-ao-mercado-livre' },
+    { slug: 'energia-renovavel-certificados-origem', name: 'Energia Renovável e Certificados de Origem', file: 'energia-renovavel-e-certificados-de-origem' },
+    { slug: 'gestao-energia-mercado-livre', name: 'Gestão de Energia no Mercado Livre', file: 'gestao-de-energia-no-mercado-livre' },
+    { slug: 'gestao-riscos-portfolio-energia', name: 'Gestão de Riscos e Portfólio de Energia', file: 'gestao-de-riscos-e-portfolio-de-energia' },
+    { slug: 'medicao-adequacao-mercado-livre', name: 'Medição e Adequação para o Mercado Livre', file: 'medicao-e-adequacao-para-o-mercado-livre' },
+    { slug: 'software-gestao-energia-acl', name: 'Software para Gestão de Energia no ACL', file: 'software-para-gestao-de-energia-no-acl' },
+  ];
+
+  test.each(cases)('resolve $slug por slug e por nome para o novo WebP transparente', ({ slug, name, file }) => {
+    const expectedPath = `/assets/categories/mercado-livre-3d/${file}.webp`;
+    const result = resolveCategoryIcon({
+      slug,
+      name,
+      iconUrl: '/icones/legacy-placeholder.png',
+    });
+
+    expect(result.src).toBe(expectedPath);
+    expect(result.source).toBe('catalog-3d');
+    expect(result.motionPreset).toBe('energyMarket');
+    expect(result.catalogId).toBe(`ACL:${slug}`);
+    expect(fs.existsSync(path.join(__dirname, '../../public', expectedPath.slice(1)))).toBe(true);
+
+    const byName = resolveCategoryIcon({ name });
+    expect(byName.src).toBe(expectedPath);
+  });
+
+  it('preserva o icone canonico da categoria principal e outros grupos', () => {
+    expect(resolveCategoryIcon({ slug: 'mercado-livre-de-energia' }).src).toBe(
+      '/3d-refined/C01_mercado-livre-de-energia-512.webp'
+    );
+    expect(resolveCategoryIcon({ slug: 'energia-solar-residencial' }).src).toBe(
+      '/3d-refined/A04_energia-solar-residencial-512.webp'
+    );
+  });
+
+  it('mantem a solicitacao explicita de SVG fora do pacote 3D', () => {
+    const result = resolveCategoryIcon({
+      slug: 'comercializadoras-varejistas-energia',
+      format: 'svg',
+    });
+    expect(result.src).not.toContain('/assets/categories/mercado-livre-3d/');
+  });
+});
