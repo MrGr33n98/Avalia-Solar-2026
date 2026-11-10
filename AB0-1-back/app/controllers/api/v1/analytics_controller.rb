@@ -12,6 +12,7 @@ class Api::V1::AnalyticsController < Api::V1::BaseController
     'CTA Clicked' => 'cta_click',
     'cta_clicked' => 'cta_click',
     'company_cta_clicked' => 'cta_click',
+    'contact_cta_clicked' => 'cta_click',
     'company_cta_whatsapp' => 'cta_click',
     'company_cta_email' => 'cta_click',
     'company_cta_phone' => 'cta_click',

@@ -31,6 +31,7 @@ export default function ShareButtons({ title, slug }: ShareButtonsProps) {
       platform: platform,
       element_type: 'button',
       action_type: 'click',
+      internal_promotion: link.internalPromotion,
       link_url: link.url,
       ...link.utm
     });

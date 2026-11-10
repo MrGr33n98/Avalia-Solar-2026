@@ -5,6 +5,7 @@ module Analytics
     PROFILE_VIEW_EVENTS = %w[profile_view view Company Profile Viewed company_profile_viewed company_profile_view].freeze
     CTA_EVENTS = %w[
       cta_click click CTA\ Clicked cta_clicked company_cta_clicked
+      contact_cta_clicked
       company_cta_whatsapp company_cta_email company_cta_phone company_cta_website company_cta_quote
       whatsapp_click WhatsApp\ CTA\ Clicked email_click Email\ CTA\ Clicked phone_click Phone\ CTA\ Clicked
       website_click Website\ CTA\ Clicked quote_click Quote\ Request\ CTA\ Clicked request_quote quote_request
@@ -16,6 +17,7 @@ module Analytics
       'company_profile_viewed' => 'profile_view', 'company_profile_view' => 'profile_view',
       'click' => 'cta_click', 'CTA Clicked' => 'cta_click', 'cta_clicked' => 'cta_click',
       'company_cta_clicked' => 'cta_click', 'company_cta_whatsapp' => 'cta_click',
+      'contact_cta_clicked' => 'cta_click',
       'company_cta_email' => 'cta_click', 'company_cta_phone' => 'cta_click',
       'company_cta_website' => 'cta_click', 'company_cta_quote' => 'cta_click',
       'whatsapp_click' => 'cta_click', 'WhatsApp CTA Clicked' => 'cta_click',

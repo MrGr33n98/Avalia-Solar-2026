@@ -7,6 +7,7 @@
 
 import { track } from '@/lib/analytics/lazy';
 import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
+import { generateEventId } from '@/lib/analytics/dedupe';
 
 interface CTAClickProperties {
   ctaType: 'whatsapp' | 'email' | 'phone' | 'website' | 'quote';
@@ -101,6 +102,7 @@ function getTrackingMetadata(): TrackingMetadata {
 export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
   try {
     const metadata = getTrackingMetadata();
+    const correlationId = generateEventId();
 
     // Prepare base event properties
     const baseProperties = {
@@ -109,6 +111,9 @@ export async function trackCTAClick(props: CTAClickProperties): Promise<void> {
       company_id: props.companyId,
       company_name: props.companyName,
       profile_layout_version: 'cta_single_whatsapp_v1',
+      correlation_id: correlationId,
+      event_kind: 'microconversion',
+      outbound_destination: props.ctaType === 'whatsapp' ? 'whatsapp' : props.ctaType,
       ...(props.surfaceId && process.env.NEXT_PUBLIC_CONVERSION_EVENTS_V2_ENABLED === 'true' ? {
         surface_id: props.surfaceId,
         surface: 'company_profile',
@@ -187,7 +192,7 @@ export async function trackLeadFormSubmit(
   try {
     const metadata = getTrackingMetadata();
 
-    await track('Lead Form Submitted', {
+    await track('quote_contact_submitted', {
       company_id: companyId,
       company_name: companyName,
       form_type: formType,

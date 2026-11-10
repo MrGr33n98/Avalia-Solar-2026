@@ -16,7 +16,7 @@ import {
   getErrorStatus,
 } from '@/lib/api';
 import { getApiOrigin } from '@/lib/api-config';
-import { identify, track, reset } from '@/lib/analytics/lazy';
+import { identify, track, reset, updateContext } from '@/lib/analytics/lazy';
 import { handleUserIdentified } from '@/lib/analytics/identity-stitch';
 import { getSessionId } from '@/lib/analytics/session';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -114,6 +114,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isAdmin = user.role === 'admin';
         const isCrmStaff = Boolean(user.crm_access || (user.sales_capabilities && user.sales_capabilities.length > 0));
         const isInternalTeam = isAdmin || isCrmStaff;
+        updateContext({
+          traffic_actor_class: isInternalTeam ? 'internal_staff' : user.role === 'company' ? 'external_company' : 'external_buyer',
+          is_internal: isInternalTeam,
+          is_admin: isAdmin,
+          is_employee: isCrmStaff,
+          company_id: companyId,
+        });
         if (isAdmin) localStorage.setItem('is_admin_user', 'true');
         if (isCrmStaff) localStorage.setItem('is_employee_user', 'true');
         if (isInternalTeam) localStorage.setItem('is_internal_team', 'true');
@@ -152,6 +159,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('is_employee_user');
         localStorage.removeItem('is_internal_team');
       }
+      updateContext({
+        traffic_actor_class: 'unknown',
+        is_internal: false,
+        is_admin: false,
+        is_employee: false,
+        company_id: undefined,
+      });
     }
   }, [user]);
 

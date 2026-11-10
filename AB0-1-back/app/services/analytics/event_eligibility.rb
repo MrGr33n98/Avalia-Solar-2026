@@ -45,7 +45,9 @@ module Analytics
               (COALESCE(#{json_column}->>'is_internal', 'false') = 'true') OR
               (COALESCE(#{json_column}->>'is_employee', 'false') = 'true') OR
               (COALESCE(#{json_column}->>'is_admin', 'false') = 'true') OR
-              (LOWER(COALESCE(#{json_column}->>'surface', '')) IN ('app', 'admin', 'auth', 'system'))
+              (LOWER(COALESCE(#{json_column}->>'surface', '')) IN ('app', 'admin', 'auth', 'system')) OR
+              (LOWER(COALESCE(#{json_column}->>'surface_kind', '')) IN ('app', 'admin', 'auth', 'system')) OR
+              (LOWER(COALESCE(#{json_column}->>'traffic_actor_class', '')) IN ('internal_staff', 'automation'))
             )
           SQL
         else
@@ -54,7 +56,15 @@ module Analytics
               (COALESCE(json_extract(#{json_column}, '$.is_internal'), 'false') = 'true') OR
               (COALESCE(json_extract(#{json_column}, '$.is_employee'), 'false') = 'true') OR
               (COALESCE(json_extract(#{json_column}, '$.is_admin'), 'false') = 'true') OR
-              (LOWER(COALESCE(json_extract(#{json_column}, '$.surface'), '')) IN ('app', 'admin', 'auth', 'system'))
+              (LOWER(COALESCE(json_extract(#{json_column}, '$.surface'), '')) IN ('app', 'admin', 'auth', 'system')) OR
+              (LOWER(COALESCE(json_extract(#{json_column}, '$.surface_kind'), '')) IN
+                ('app', 'admin', 'auth', 'system')) OR
+              (LOWER(COALESCE(json_extract(#{json_column}, '$.traffic_actor_class'), '')) IN
+                ('internal_staff', 'automation')) OR
+              (LOWER(COALESCE(json_extract(#{json_column}, '$.referrer_host'), '')) IN
+                ('avaliasolar.com.br', 'www.avaliasolar.com.br', 'app.avaliasolar.com.br',
+                 'crm.avaliasolar.com.br', 'accounts.google.com', 'appleid.apple.com',
+                 'login.microsoftonline.com', 'auth.avaliasolar.com.br'))
             )
           SQL
         end
@@ -66,6 +76,8 @@ module Analytics
               (COALESCE(#{json_column}->>'is_employee', 'false') = 'true') OR
               (COALESCE(#{json_column}->>'is_admin', 'false') = 'true') OR
               (LOWER(COALESCE(#{json_column}->>'surface', '')) IN ('app', 'admin', 'auth', 'system')) OR
+              (LOWER(COALESCE(#{json_column}->>'surface_kind', '')) IN ('app', 'admin', 'auth', 'system')) OR
+              (LOWER(COALESCE(#{json_column}->>'traffic_actor_class', '')) IN ('internal_staff', 'automation')) OR
               (COALESCE(#{json_column}->>'referrer_host', '') IN ('avaliasolar.com.br', 'www.avaliasolar.com.br', 'app.avaliasolar.com.br', 'crm.avaliasolar.com.br', 'accounts.google.com', 'appleid.apple.com', 'login.microsoftonline.com', 'auth.avaliasolar.com.br'))
             )
           SQL
@@ -75,7 +87,9 @@ module Analytics
               (COALESCE(json_extract(#{json_column}, '$.is_internal'), 'false') = 'true') OR
               (COALESCE(json_extract(#{json_column}, '$.is_employee'), 'false') = 'true') OR
               (COALESCE(json_extract(#{json_column}, '$.is_admin'), 'false') = 'true') OR
-              (LOWER(COALESCE(json_extract(#{json_column}, '$.surface'), '')) IN ('app', 'admin', 'auth', 'system'))
+              (LOWER(COALESCE(json_extract(#{json_column}, '$.surface'), '')) IN ('app', 'admin', 'auth', 'system')) OR
+              (LOWER(COALESCE(json_extract(#{json_column}, '$.surface_kind'), '')) IN ('app', 'admin', 'auth', 'system')) OR
+              (LOWER(COALESCE(json_extract(#{json_column}, '$.traffic_actor_class'), '')) IN ('internal_staff', 'automation'))
             )
           SQL
         end
@@ -89,9 +103,12 @@ module Analytics
       return excluded(:internal_actor, :actor) if @metadata['is_internal'].to_s == 'true'
       return excluded(:employee, :actor) if @metadata['is_employee'].to_s == 'true'
       return excluded(:admin, :actor) if @metadata['is_admin'].to_s == 'true'
+      return excluded(:internal_actor, :actor) if %w[internal_staff automation].include?(
+        @metadata['traffic_actor_class'].to_s
+      )
 
       # 2. Superfícies técnicas
-      surface = @metadata['surface'].to_s.downcase
+      surface = (@metadata['surface_kind'].presence || @metadata['surface']).to_s.downcase
       return excluded(:technical_surface, :surface) if NON_COMMERCIAL_SURFACES.include?(surface)
 
       # 3. Rotas técnicas
@@ -112,6 +129,10 @@ module Analytics
         return excluded(:system_auth, :attribution)
       end
 
+      if internal_attribution?
+        return excluded(:internal_promotion, :attribution)
+      end
+
       # 5. Check direto de referrer host
       referrer_host = normalize_host(@metadata['referrer_host'] || @metadata['referrer'])
       if referrer_host.present?
@@ -127,9 +148,12 @@ module Analytics
       return excluded(:internal_actor, :actor) if @metadata['is_internal'].to_s == 'true'
       return excluded(:employee, :actor) if @metadata['is_employee'].to_s == 'true'
       return excluded(:admin, :actor) if @metadata['is_admin'].to_s == 'true'
+      return excluded(:internal_actor, :actor) if %w[internal_staff automation].include?(
+        @metadata['traffic_actor_class'].to_s
+      )
 
       # 2. Superfícies técnicas: EXCLUÍDAS
-      surface = @metadata['surface'].to_s.downcase
+      surface = (@metadata['surface_kind'].presence || @metadata['surface']).to_s.downcase
       return excluded(:technical_surface, :surface) if NON_COMMERCIAL_SURFACES.include?(surface)
 
       # 3. Rotas técnicas: EXCLUÍDAS
@@ -196,6 +220,12 @@ module Analytics
 
     def auth_host?(host)
       AUTH_HOSTS.any? { |h| host == h || host.end_with?(".#{h}") }
+    end
+
+    def internal_attribution?
+      source = @metadata['utm_source'].to_s.downcase
+      medium = @metadata['utm_medium'].to_s.downcase
+      medium == 'internal' || %w[blog internal avaliasolar].include?(source)
     end
   end
 end

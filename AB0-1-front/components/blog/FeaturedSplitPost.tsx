@@ -25,7 +25,7 @@ export function FeaturedSplitPost({ post }: FeaturedSplitPostProps) {
   if (!post) return null;
 
   const slugOrId = post.slug || String(post.id);
-  const { url, utm } = buildArticleLink({
+  const { url, utm, internalPromotion } = buildArticleLink({
     slugOrId,
     placement: 'featured_editorial_split',
     category: post.category?.name,
@@ -54,6 +54,7 @@ export function FeaturedSplitPost({ post }: FeaturedSplitPostProps) {
             position: 1,
             link_url: url,
             ...utm,
+            internal_promotion: internalPromotion,
           });
         }}
       >

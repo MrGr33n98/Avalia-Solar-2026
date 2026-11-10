@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import type { Banner } from '@/lib/api';
 import { analyticsApi } from '@/lib/api-analytics';
 import { track } from '@/lib/analytics/lazy';
+import { getSessionId } from '@/lib/analytics/session';
 import { getBannerAudienceKey } from '@/lib/banner-audience';
 import { SponsoredBadge } from '@/components/banners/SponsoredBadge';
 
@@ -144,7 +145,14 @@ export function HomeHeroBanner({
               banner_id: bannerId,
               banner_title: currentBanner.title,
               banner_position: currentBanner.position || 'home_hero',
+              slot: currentBanner.position || 'home_hero',
+              impression_stage: 'viewable_impression',
+              occurrence_key: `banner_impression:${getSessionId()}:${bannerId}:${currentBanner.position || 'home_hero'}`,
               sponsored: Boolean(currentBanner.sponsored),
+            }, {
+              critical: true,
+              occurrenceKey: `banner_impression:${getSessionId()}:${bannerId}:${currentBanner.position || 'home_hero'}`,
+              dedupeTtlMs: 24 * 60 * 60 * 1000,
             });
           }, 1000);
         } else if (timer) {

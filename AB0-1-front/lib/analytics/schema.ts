@@ -8,6 +8,41 @@
  */
 
 export interface EventPayloadMap {
+  '$pageview': {
+    pathname: string;
+    normalized_path?: string;
+    surface_kind?: string;
+    [key: string]: any;
+  };
+
+  company_profile_viewed: {
+    company_id: string | number;
+    surface?: string;
+    placement?: string;
+    [key: string]: any;
+  };
+
+  company_cta_clicked: {
+    company_id: string | number;
+    cta_type: 'whatsapp' | 'email' | 'phone' | 'website' | 'quote' | string;
+    surface?: string;
+    placement?: string;
+    [key: string]: any;
+  };
+
+  lead_created: {
+    lead_id: string | number;
+    company_id: string | number;
+    correlation_id?: string;
+    [key: string]: any;
+  };
+
+  review_published: {
+    review_id?: string | number;
+    company_id?: string | number;
+    [key: string]: any;
+  };
+
   // --- Navegação e Lifecycle ---
   page_view: {
     page_name: string;

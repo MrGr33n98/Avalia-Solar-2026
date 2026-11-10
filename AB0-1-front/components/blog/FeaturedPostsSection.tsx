@@ -84,6 +84,7 @@ export function FeaturedPostsSection({ posts }: FeaturedPostsSectionProps) {
                       position: index + 2,
                       link_url: link.url,
                       ...link.utm,
+                      internal_promotion: link.internalPromotion,
                     })
                   }
                 >

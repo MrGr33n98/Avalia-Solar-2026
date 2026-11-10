@@ -59,6 +59,7 @@ export function RelatedPostsGrid({ articles }: RelatedPostsGridProps) {
                   position: index + 1,
                   link_url: link.url,
                   ...link.utm,
+                  internal_promotion: link.internalPromotion,
                 })
               }
             >

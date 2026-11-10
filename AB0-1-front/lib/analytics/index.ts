@@ -20,6 +20,7 @@ import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
 import { getSessionId } from './session';
 import { shouldTrackEvent, generateEventId } from './dedupe';
+import { ANALYTICS_CONTRACT_VERSION, getSurfaceKind, resolveEventContract } from './contract';
 import { opaqueUserId, sanitizeAnalyticsProperties } from './sanitize';
 import {
   isQueuedOfflineMutationResult,
@@ -182,7 +183,7 @@ export function getAnalyticsContext(): AnalyticsContext {
     return {
       environment: process.env.NODE_ENV || 'production',
       event_version: '1',
-      schema_version: '1.0.0',
+      schema_version: '3.0.0',
       frontend_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
       api_version: 'v1',
       app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
@@ -196,6 +197,10 @@ export function getAnalyticsContext(): AnalyticsContext {
       is_internal: false,
       is_admin: false,
       is_employee: false,
+      traffic_actor_class: 'unknown',
+      surface_kind: 'system',
+      event_origin: 'frontend',
+      producer: 'web.analytics',
     };
   }
   
@@ -217,11 +222,17 @@ export function getAnalyticsContext(): AnalyticsContext {
     }
   }
 
+  const surfaceKind = getSurfaceKind(window.location.pathname);
   const isInternal = localStorage.getItem('is_internal_team') === 'true' ||
     window.location.search.includes('is_internal=true') ||
     window.location.search.includes('internal=true');
   const isAdmin = localStorage.getItem('is_admin_user') === 'true';
   const isEmployee = localStorage.getItem('is_employee_user') === 'true';
+  const trafficActorClass = isInternal || isAdmin || isEmployee
+    ? 'internal_staff'
+    : currentUserId
+      ? 'external_buyer'
+      : 'unknown';
 
   return {
     // VAR-001, VAR-002, VAR-003
@@ -235,7 +246,7 @@ export function getAnalyticsContext(): AnalyticsContext {
     
     environment: getEnvironment(),
     event_version: '1',
-    schema_version: '1.0.0',
+    schema_version: '3.0.0',
     frontend_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
     api_version: 'v1',
     app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
@@ -245,8 +256,13 @@ export function getAnalyticsContext(): AnalyticsContext {
     is_internal: isInternal,
     is_admin: isAdmin,
     is_employee: isEmployee,
+    traffic_actor_class: trafficActorClass,
+    surface_kind: surfaceKind,
+    event_origin: 'frontend',
+    producer: 'web.analytics',
     user_id: currentUserId || undefined,
     source,
+    attribution: attribution || undefined,
     
     // UTMs
     ...utms,
@@ -269,26 +285,13 @@ export function track<K extends AnalyticsEventName>(
     return;
   }
 
-  // Dev warning for unknown events
-  if (process.env.NODE_ENV === 'development') {
-    const knownEvents = [
-      'page_view', 'search_submitted', 'search_results_loaded', 'search_error',
-      'search_performance', 'search_no_results', 'whatsapp_click', 'company_card_click', 'wizard_started',
-      'wizard_step_completed', 'wizard_success', 'blog_cta_click', 'blog_conversion',
-      'web_vital', 'web_vitals', 'cta_click', 'cta_clicked', 'banner_view', 'banner_click',
-      'comparison_add', 'comparison_remove', 'filter_applied', 'quick_filter_click',
-      'creator_share_clicked'
-    ];
-    if (!knownEvents.includes(eventName as string)) {
-      console.warn(`[Analytics] Evento desconhecido ou não mapeado: "${eventName}". Por favor, adicione ao schema.ts.`);
-    }
-  }
-  
   const context = getAnalyticsContext();
   const eventId = options.eventId || context.event_id || generateEventId();
+  const contract = resolveEventContract(eventName as string, properties as Record<string, unknown>);
+  const occurrenceKey = options.occurrenceKey || (properties as Record<string, any>).occurrence_key;
   
   // Dedupe check
-  if (!shouldTrackEvent(eventName, eventId, options.critical)) return;
+  if (!shouldTrackEvent(eventName, eventId, options.critical, occurrenceKey, options.dedupeTtlMs)) return;
   
   // Matrix Property Mapping (VAR-007 to VAR-016)
   const matrixProps = sanitizeAnalyticsProperties({
@@ -297,6 +300,16 @@ export function track<K extends AnalyticsEventName>(
     is_internal: context.is_internal || properties.is_internal,
     original_event: eventName, // VAR-004: Required for GTM triggers
     event_id: eventId,
+    occurrence_key: occurrenceKey,
+    correlation_id: options.correlationId || properties.correlation_id,
+    event_origin: 'frontend',
+    producer: 'web.analytics',
+    contract_version: ANALYTICS_CONTRACT_VERSION,
+    canonical_event_name: contract.canonicalEventName,
+    event_owner: contract.owner,
+    event_kind: contract.kind,
+    contract_valid: contract.valid,
+    contract_missing: contract.missing.length > 0 ? contract.missing : undefined,
     gtm_timestamp: Date.now(), // VAR-019
     company_id: properties.company_id || context.company_id,
     company_name: properties.company_name || context.company_name,
@@ -483,12 +496,18 @@ export function page(
   
   const context = getAnalyticsContext();
   const eventId = generateEventId();
+  const occurrenceKey = `pageview:${getSessionId()}:${context.pathname}`;
+  if (!shouldTrackEvent('page_view', eventId, true, occurrenceKey, 1000)) return;
   
   const pageProps = {
     ...context,
     ...properties,
     page_name: pageName || context.pathname,
     event_id: eventId,
+    occurrence_key: occurrenceKey,
+    event_origin: 'frontend',
+    producer: 'web.analytics',
+    schema_version: '3.0.0',
     timestamp: new Date().toISOString()
   };
   
@@ -498,6 +517,10 @@ export function page(
     ...properties,
     page_name: pageProps.page_name,
     company_id: properties.company_id ?? context.company_id,
+    occurrence_key: occurrenceKey,
+    event_origin: 'frontend',
+    producer: 'web.analytics',
+    schema_version: '3.0.0',
     timestamp: pageProps.timestamp
   });
   
@@ -526,6 +549,10 @@ export function identify(
   if (posthogBridge?.isLoaded()) {
     try {
       posthogBridge.identify(currentUserId, sanitizedTraits as Record<string, unknown>);
+      const companyId = sanitizedTraits.company_id;
+      if (companyId && posthogBridge.group) {
+        posthogBridge.group('company', `company_${String(companyId)}`);
+      }
 
       if (process.env.NODE_ENV === 'development') {
         console.log('[PostHog] Identify:', currentUserId, sanitizedTraits);
@@ -618,3 +645,4 @@ export * from './utm';
 export * from './session';
 export * from './dedupe';
 export * from './sanitize';
+export * from './contract';

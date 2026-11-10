@@ -14,6 +14,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Article } from '@/types/article';
 import { getFullImageUrl } from '@/utils/image';
 import { track } from '@/lib/analytics/lazy';
+import { getSessionId } from '@/lib/analytics/session';
 import ShareButtons from './ShareButtons';
 
 interface PostHeaderProps {
@@ -46,7 +47,15 @@ export function PostHeader({ article }: PostHeaderProps) {
       category_id: article.category?.id,
       author_name: authorName,
       word_count: wordCount,
-      read_time_minutes: readTime
+      read_time_minutes: readTime,
+      occurrence_key: `blog_view:${getSessionId()}:${article.id}`,
+      view_type: 'unique_article_view',
+      surface: 'public',
+      event_kind: 'exposure',
+    }, {
+      critical: true,
+      occurrenceKey: `blog_view:${getSessionId()}:${article.id}`,
+      dedupeTtlMs: 24 * 60 * 60 * 1000,
     });
   }, [article.id, article.title, article.slug, article.category?.name, article.category?.id, authorName, wordCount, readTime]);
 

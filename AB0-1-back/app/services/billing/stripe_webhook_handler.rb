@@ -214,6 +214,24 @@ module Billing
         amount_cents: invoice.amount_paid,
         plan: sub.plan
       )
+
+      Analytics::TrackEventService.call(
+        company_id: sub.company_id,
+        event_type: 'invoice_paid',
+        event_id: "invoice_paid:#{invoice.id}",
+        tracked_at: Time.current,
+        metadata: {
+          event_origin: 'server',
+          producer: 'rails.billing',
+          correlation_id: "company:#{sub.company_id}:invoice:#{invoice.id}",
+          occurrence_key: "invoice_paid:#{invoice.id}",
+          invoice_id: invoice.id,
+          subscription_id: invoice.subscription,
+          amount_cents: invoice.amount_paid,
+          currency: invoice.currency,
+          status: 'paid'
+        }
+      ) if defined?(Analytics::TrackEventService)
     end
 
     def handle_payment_failed(invoice)

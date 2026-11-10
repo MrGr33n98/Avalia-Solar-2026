@@ -58,9 +58,12 @@ class AnalyticsTrackingJob
     # Store UTM attribution data (optional)
     store_utm_attribution(company_id, event_name, properties, metadata) if has_utm_params?(properties)
 
-    # Forward to external analytics platforms
-    forward_to_posthog(event_name, properties, metadata) if ENV['POSTHOG_API_KEY'].present?
-    forward_to_ga4(event_name, properties, metadata) if ENV['GA4_MEASUREMENT_ID'].present?
+    # Microinterações frontend já têm dono no cliente. Worker legado não pode
+    # criar segunda instância PostHog/GA4 para o mesmo gesto.
+    unless metadata['event_origin'].to_s == 'frontend'
+      forward_to_posthog(event_name, properties, metadata) if ENV['POSTHOG_API_KEY'].present?
+      forward_to_ga4(event_name, properties, metadata) if ENV['GA4_MEASUREMENT_ID'].present?
+    end
 
     Rails.logger.info(
       "[AnalyticsTrackingJob] Processed: event=#{event_name} " \

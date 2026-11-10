@@ -14,6 +14,13 @@ export type ArticleLinkMeta = {
   absolute?: boolean;
 };
 
+export type InternalPromotionMeta = {
+  internal_promotion_id: string;
+  surface: 'public';
+  placement: string;
+  article_id: string;
+};
+
 type UTMParams = {
   utm_source: string;
   utm_medium: string;
@@ -33,26 +40,31 @@ const normalizeTerm = (value?: string | null) => {
     .slice(0, 120);
 };
 
-export const buildArticleLink = (meta: ArticleLinkMeta): { url: string; utm: UTMParams } => {
+export const buildArticleLink = (meta: ArticleLinkMeta): {
+  url: string;
+  utm: UTMParams;
+  internalPromotion: InternalPromotionMeta;
+} => {
   const current = getCurrentUTMs();
   const utm: UTMParams = {
-    utm_source: meta.source || current.utm_source || 'blog',
-    utm_medium: meta.medium || current.utm_medium || 'internal',
-    utm_campaign: meta.campaign || current.utm_campaign || 'blog_article',
-    utm_content: meta.content || meta.placement,
-    utm_term: normalizeTerm(meta.term || meta.category || meta.slugOrId || current.utm_term || ''),
+    // UTMs pertencem à aquisição externa. Links internos não podem sobrescrevê-las.
+    utm_source: current.utm_source || '',
+    utm_medium: current.utm_medium || '',
+    utm_campaign: current.utm_campaign || '',
+    utm_content: current.utm_content || '',
+    utm_term: current.utm_term || '',
+  };
+  const internalPromotion: InternalPromotionMeta = {
+    internal_promotion_id: `blog:${normalizeTerm(meta.slugOrId) || 'article'}`,
+    surface: 'public',
+    placement: meta.placement,
+    article_id: String(meta.slugOrId),
   };
   const basePath = `/blog/${encodeURIComponent(meta.slugOrId)}`;
-  const params = new URLSearchParams();
-  Object.entries(utm).forEach(([key, value]) => {
-    if (value) params.set(key, value);
-  });
-
-  const query = params.toString();
-  const relativeUrl = query ? `${basePath}?${query}` : basePath;
+  const relativeUrl = basePath;
 
   if (!meta.absolute) {
-    return { url: relativeUrl, utm };
+    return { url: relativeUrl, utm, internalPromotion };
   }
 
   const origin =
@@ -63,5 +75,6 @@ export const buildArticleLink = (meta: ArticleLinkMeta): { url: string; utm: UTM
   return {
     url: new URL(relativeUrl, origin).toString(),
     utm,
+    internalPromotion,
   };
 };

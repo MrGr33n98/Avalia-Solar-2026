@@ -11,6 +11,11 @@ export interface AnalyticsEvent {
 
 export interface EventOptions {
   critical?: boolean;
+  /** Identidade da ocorrência lógica; diferente do UUID de transporte. */
+  occurrenceKey?: string;
+  /** TTL da deduplicação semântica. Default: 5s. */
+  dedupeTtlMs?: number;
+  correlationId?: string;
   sendTo?: {
     mixpanel?: boolean;
     posthog?: boolean;
@@ -40,6 +45,10 @@ export interface AnalyticsContext {
   // Session & Event
   session_id: string;
   event_id?: string;
+  occurrence_key?: string;
+  correlation_id?: string;
+  event_origin?: 'frontend' | 'backend' | 'server' | 'system';
+  producer?: string;
 
   // UTM Parameters
   source?: string;
@@ -64,6 +73,8 @@ export interface AnalyticsContext {
   is_internal?: boolean;
   is_admin?: boolean;
   is_employee?: boolean;
+  traffic_actor_class?: 'external_buyer' | 'external_company' | 'internal_staff' | 'automation' | 'unknown';
+  surface_kind?: 'public' | 'app' | 'crm' | 'admin' | 'auth' | 'system';
   user_id?: string;
   company_id?: string;
   company_name?: string;
@@ -112,5 +123,8 @@ export type AttributionTouch = {
 export type Attribution = {
   first_touch: AttributionTouch;
   last_touch: AttributionTouch;
+  first_external_touch?: AttributionTouch;
+  last_external_touch?: AttributionTouch;
+  last_internal_interaction?: AttributionTouch;
   ttl_days: number;
 };

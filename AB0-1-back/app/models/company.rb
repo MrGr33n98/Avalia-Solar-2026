@@ -1279,6 +1279,9 @@ end
       company_id: id,
       event_type: 'plan_changed',
       metadata: {
+        event_origin: 'server',
+        producer: 'rails.company',
+        correlation_id: "company:#{id}:plan:#{plan_id}",
         previous_plan_id: plan_id_before_last_save,
         new_plan_id: plan_id,
         status: plan_status
@@ -1304,6 +1307,10 @@ end
       company_id: id,
       event_type: 'company_activated',
       metadata: {
+        event_origin: 'server',
+        producer: 'rails.company',
+        correlation_id: "company:#{id}:activation:#{updated_at.to_i}",
+        occurrence_key: "company_activated:#{id}",
         previous_status: status_before_last_save,
         activation_time: Time.current
       }

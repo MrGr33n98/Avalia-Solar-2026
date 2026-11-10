@@ -175,7 +175,7 @@ export default function SearchBar({
       });
     } else if (type === 'articles') {
       const slugOrId = slug || String(id);
-      const { url, utm } = buildArticleLink({
+      const { url, utm, internalPromotion } = buildArticleLink({
         slugOrId,
         placement: 'search_results',
         source: 'search',
@@ -192,7 +192,8 @@ export default function SearchBar({
         action_type: 'click',
         placement: 'search_results',
         link_url: url,
-        ...utm
+        ...utm,
+        internal_promotion: internalPromotion,
       });
       router.push(url);
       onClose?.();

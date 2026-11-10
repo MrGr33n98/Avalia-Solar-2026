@@ -245,6 +245,10 @@ class Lead < ApplicationRecord
       event_id: "lead_created:#{id}",
       metadata: {
         source: 'lead',
+          event_origin: 'server',
+          producer: 'rails.lead',
+          correlation_id: "lead:#{id}",
+          occurrence_key: "lead_created:#{id}",
         lead_id: id,
         utm_source: self[:utm_source],
         utm_medium: self[:utm_medium],

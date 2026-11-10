@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { analyticsApi } from '@/lib/api-analytics';
 import { track } from '@/lib/analytics/lazy';
+import { getSessionId } from '@/lib/analytics/session';
 import { getBannerAudienceKey } from '@/lib/banner-audience';
 import { cn } from '@/lib/utils';
 import { resolveBannerAspectRatio } from '@/lib/banners/aspect-ratio';
@@ -195,8 +196,15 @@ export function BannerContainer({
         banner_position: placement,
         element_type: 'banner',
         action_type: 'view',
+        slot: placement,
+        impression_stage: 'viewable_impression',
+        occurrence_key: `banner_impression:${getSessionId()}:${bannerId}:${placement}`,
         page,
         sponsored: Boolean(banner.sponsored),
+      }, {
+        critical: true,
+        occurrenceKey: `banner_impression:${getSessionId()}:${bannerId}:${placement}`,
+        dedupeTtlMs: 24 * 60 * 60 * 1000,
       });
     },
     [createEventId, page, position]
@@ -259,21 +267,33 @@ export function BannerContainer({
       return;
     }
 
+    let viewTimer: ReturnType<typeof setTimeout> | null = null;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.35))
+        const isViewable = entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5);
+        if (!isViewable) {
+          if (viewTimer) clearTimeout(viewTimer);
+          viewTimer = null;
           return;
+        }
 
-        containerVisibleRef.current = true;
-        trackActiveBannerView();
-        observer.disconnect();
+        if (!viewTimer) {
+          viewTimer = setTimeout(() => {
+            containerVisibleRef.current = true;
+            trackActiveBannerView();
+            observer.disconnect();
+          }, 1000);
+        }
       },
-      { threshold: 0.35 }
+      { threshold: 0.5 }
     );
 
     observer.observe(node);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (viewTimer) clearTimeout(viewTimer);
+    };
   }, [displayBanners, trackActiveBannerView]);
 
   if (displayBanners.length === 0) {

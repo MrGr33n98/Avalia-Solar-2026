@@ -157,6 +157,7 @@ module Billing
           event_type: 'billing.subscription.activated',
           aggregate: sub,
           company_id: sub.company_id,
+          correlation_id: "company:#{sub.company_id}:subscription:#{sub.id}",
           payload: {
             subscription_id: sub.id,
             company_id: sub.company_id,
@@ -165,11 +166,13 @@ module Billing
             stripe_subscription_id: sub.stripe_subscription_id
           }
         )
+        track_billing_event('subscription_activated', sub, "subscription_activated:#{sub.id}")
       elsif sub.status == 'canceled' && old_status != 'canceled'
         Outbox.record!(
           event_type: 'billing.subscription.canceled',
           aggregate: sub,
           company_id: sub.company_id,
+          correlation_id: "company:#{sub.company_id}:subscription:#{sub.id}",
           payload: {
             subscription_id: sub.id,
             company_id: sub.company_id,
@@ -183,6 +186,7 @@ module Billing
           event_type: 'billing.subscription.updated',
           aggregate: sub,
           company_id: sub.company_id,
+          correlation_id: "company:#{sub.company_id}:subscription:#{sub.id}",
           payload: {
             subscription_id: sub.id,
             company_id: sub.company_id,
@@ -194,6 +198,28 @@ module Billing
       end
     rescue StandardError => e
       Rails.logger.warn("[Billing::SubscriptionSyncService] Failed to record Outbox event: #{e.message}")
+    end
+
+    def track_billing_event(event_type, sub, event_id)
+      return unless defined?(Analytics::TrackEventService)
+
+      Analytics::TrackEventService.call(
+        company_id: sub.company_id,
+        event_type: event_type,
+        event_id: event_id,
+        tracked_at: Time.current,
+        metadata: {
+          event_origin: 'server',
+          producer: 'rails.billing',
+          correlation_id: "company:#{sub.company_id}:subscription:#{sub.id}",
+          occurrence_key: event_id,
+          subscription_id: sub.id,
+          plan_id: sub.plan_id,
+          status: sub.status
+        }
+      )
+    rescue StandardError => e
+      Rails.logger.warn("[Billing::SubscriptionSyncService] Analytics event failed: #{e.message}")
     end
   end
 end

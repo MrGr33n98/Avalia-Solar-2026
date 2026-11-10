@@ -15,6 +15,7 @@ const eventCache = new Map<string, number>();
 // Storage-based cache for critical events (persists across page loads within session)
 const DEDUPE_STORAGE_KEY = 'avaliasolar_event_dedupe';
 const DEDUPE_TTL = 5000; // 5 seconds
+export const LOGICAL_OCCURRENCE_TTL = 24 * 60 * 60 * 1000;
 
 /**
  * Generate cache key for event
@@ -26,17 +27,17 @@ function getCacheKey(eventName: string, eventId?: string): string {
 /**
  * Check if event was recently tracked (in-memory)
  */
-function isRecentInMemory(key: string): boolean {
+function isRecentInMemory(key: string, ttlMs = DEDUPE_TTL): boolean {
   const lastTracked = eventCache.get(key);
   if (!lastTracked) return false;
   
-  return Date.now() - lastTracked < DEDUPE_TTL;
+  return Date.now() - lastTracked < ttlMs;
 }
 
 /**
  * Check if critical event was recently tracked (storage-based)
  */
-function isRecentInStorage(key: string): boolean {
+function isRecentInStorage(key: string, ttlMs = DEDUPE_TTL): boolean {
   if (typeof window === 'undefined') return false;
   
   try {
@@ -48,7 +49,7 @@ function isRecentInStorage(key: string): boolean {
     
     if (!lastTracked) return false;
     
-    return Date.now() - lastTracked < DEDUPE_TTL;
+    return Date.now() - lastTracked < ttlMs;
   } catch (e) {
     return false;
   }
@@ -103,18 +104,22 @@ function markTrackedInStorage(key: string): void {
 export function shouldTrackEvent(
   eventName: string,
   eventId?: string,
-  critical?: boolean
+  critical?: boolean,
+  occurrenceKey?: string,
+  ttlMs = DEDUPE_TTL
 ): boolean {
-  const key = getCacheKey(eventName, eventId);
+  const key = occurrenceKey
+    ? `${eventName}:occurrence:${occurrenceKey}`
+    : getCacheKey(eventName, eventId);
   
   // Check in-memory cache
-  if (isRecentInMemory(key)) {
+  if (isRecentInMemory(key, ttlMs)) {
     console.debug(`[Analytics] Dedupe: ${eventName} (in-memory)`);
     return false;
   }
   
   // For critical events, also check storage-based cache
-  if (critical && isRecentInStorage(key)) {
+  if (critical && isRecentInStorage(key, ttlMs)) {
     console.debug(`[Analytics] Dedupe: ${eventName} (storage)`);
     return false;
   }

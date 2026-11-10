@@ -29,7 +29,7 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
     : 0;
   const readTime = post.reading_time_minutes || Math.ceil(wordCount / 200) || 5;
   const slugOrId = post.slug || String(post.id);
-  const { url, utm } = buildArticleLink({
+  const { url, utm, internalPromotion } = buildArticleLink({
     slugOrId,
     placement,
     category: post.category?.name,
@@ -55,6 +55,7 @@ export function PostCard({ post, position, placement = 'blog_list_card' }: PostC
           position,
           link_url: url,
           ...utm,
+          internal_promotion: internalPromotion,
         });
       }}
     >

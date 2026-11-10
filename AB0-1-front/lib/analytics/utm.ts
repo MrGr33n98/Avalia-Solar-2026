@@ -154,6 +154,12 @@ function buildTouch(values: UTMParameters, pathname?: string, referrer?: string)
   };
 }
 
+function isInternalUtm(values: UTMParameters): boolean {
+  const source = values.utm_source?.toLowerCase();
+  const medium = values.utm_medium?.toLowerCase();
+  return medium === 'internal' || source === 'blog' || source === 'avaliasolar' || source === 'internal';
+}
+
 /**
  * Atualiza/persist a attribution (first/last touch) considerando navegação atual.
  * Deve ser chamado no client ao montar e em cada mudança de rota.
@@ -170,25 +176,33 @@ export function updateAttribution(pathname?: string, searchParams?: URLSearchPar
   const existing = !isExpired(stored) && stored ? stored.attribution : null;
   const hasNewUtm = Object.keys(utmValues).length > 0;
 
-  const first_touch = existing
-    ? existing.first_touch
-    : buildTouch(utmValues, pathname, referrer);
+  const externalUtm = hasNewUtm && !isInternalUtm(utmValues) ? utmValues : {};
+  const internalUtm = hasNewUtm && isInternalUtm(utmValues) ? utmValues : null;
+  const firstExternalTouch = existing?.first_external_touch ||
+    (Object.keys(externalUtm).length > 0 ? buildTouch(externalUtm, pathname, referrer) : undefined);
+  const lastExternalTouch = existing?.last_external_touch || existing?.last_touch;
+  const first_touch = firstExternalTouch || existing?.first_touch || buildTouch({}, pathname, referrer);
 
   const refHost = getReferrerHost(referrer);
   const hasExternalReferrer = !!refHost && !isSameSiteHost(refHost);
   const shouldUpdateLast =
-    hasNewUtm ||
+    Object.keys(externalUtm).length > 0 ||
     !existing ||
     (hasExternalReferrer && refHost !== existing?.last_touch?.referrer_host);
-  const fallbackValues = existing?.last_touch?.values || existing?.first_touch?.values || {};
-  const lastTouchValues = hasNewUtm ? utmValues : fallbackValues;
+  const fallbackValues = lastExternalTouch?.values || firstExternalTouch?.values || {};
+  const lastTouchValues = Object.keys(externalUtm).length > 0 ? externalUtm : fallbackValues;
   const last_touch = shouldUpdateLast
     ? buildTouch(lastTouchValues, pathname, referrer)
-    : (existing?.last_touch || buildTouch(lastTouchValues, pathname, referrer));
+    : (lastExternalTouch || buildTouch(lastTouchValues, pathname, referrer));
 
   const attribution: Attribution = {
     first_touch,
     last_touch,
+    first_external_touch: firstExternalTouch,
+    last_external_touch: shouldUpdateLast ? last_touch : lastExternalTouch,
+    last_internal_interaction: internalUtm
+      ? buildTouch(internalUtm, pathname, referrer)
+      : existing?.last_internal_interaction,
     ttl_days: FIRST_TOUCH_TTL_DAYS,
   };
 
@@ -223,8 +237,9 @@ export function getCurrentUTMs(): UTMParameters {
   const thirtyDaysInMs = LAST_TOUCH_TTL_DAYS * 24 * 60 * 60 * 1000;
   const isLastTouchValid = (Date.now() - lastTouchTs) <= thirtyDaysInMs;
 
-  if (isLastTouchValid && attribution.last_touch?.values && Object.keys(attribution.last_touch.values).length > 0) {
-    return attribution.last_touch.values;
+  const lastExternalTouch = attribution.last_external_touch || attribution.last_touch;
+  if (isLastTouchValid && lastExternalTouch?.values && Object.keys(lastExternalTouch.values).length > 0) {
+    return lastExternalTouch.values;
   }
   
   if (attribution.first_touch?.values) return attribution.first_touch.values;

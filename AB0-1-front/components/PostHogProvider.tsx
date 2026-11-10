@@ -1,12 +1,13 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, Suspense } from 'react';
 import * as Sentry from '@sentry/nextjs';
 
 import { hasAnalyticsConsent, onConsentChange } from '@/lib/analytics/consent';
 import { getPageTemplateInfo } from '@/lib/analytics/page-template';
 import { sanitizeAnalyticsProperties } from '@/lib/analytics/sanitize';
+import { getSurfaceKind } from '@/lib/analytics/contract';
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
@@ -57,6 +58,14 @@ function exposeAnalyticsBridge(posthogInstance: any) {
     identify: (userId, traits = {}) => {
       posthogInstance.identify(userId, sanitizeAnalyticsProperties(traits) as Record<string, unknown>);
     },
+    group: (groupType, groupKey, properties = {}) => {
+      if (typeof posthogInstance.group !== 'function') return;
+      posthogInstance.group(
+        groupType,
+        groupKey,
+        sanitizeAnalyticsProperties(properties) as Record<string, unknown>
+      );
+    },
     isLoaded: () => Boolean(posthogInstance.__loaded),
     reset: () => posthogInstance.reset(),
   };
@@ -87,14 +96,26 @@ function getPageAnalyticsProperties(pathname: string) {
   };
 }
 
+function getTrafficActorClass(): string {
+  if (typeof window === 'undefined') return 'unknown';
+  if (
+    localStorage.getItem('is_internal_team') === 'true' ||
+    localStorage.getItem('is_admin_user') === 'true' ||
+    localStorage.getItem('is_employee_user') === 'true'
+  ) return 'internal_staff';
+  return 'unknown';
+}
+
 /**
  * Rastreia pageviews automaticamente em todas as rotas do Next.js App Router.
- * Separado em componente filho para poder usar useSearchParams dentro de Suspense.
+ * Usa pathname lógico; mudanças apenas na query não criam nova pageview.
  */
 function PostHogPageView({ posthog }: { posthog: any }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const isMounted = useRef(false);
+  const capturedPathRef = useRef<string | null>(null);
+  const [consentVersion, setConsentVersion] = useState(0);
+
+  useEffect(() => onConsentChange(() => setConsentVersion((value) => value + 1)), []);
 
   useEffect(() => {
     if (!POSTHOG_KEY || !posthog || !posthog.__loaded) return;
@@ -124,23 +145,25 @@ function PostHogPageView({ posthog }: { posthog: any }) {
       }
     }
 
-    // Não dispara na montagem inicial — o Provider já captura o primeiro $pageview
-    if (!isMounted.current) {
-      isMounted.current = true;
-      return;
-    }
+    if (!hasAnalyticsConsent() || capturedPathRef.current === pathname) return;
 
     const url = window.location.origin + pathname;
 
     posthog.capture('$pageview', {
       $current_url: url,
       ...getPageAnalyticsProperties(pathname),
+      schema_version: '3.0.0',
+      event_origin: 'frontend',
+      producer: 'web.posthog',
+      surface_kind: getSurfaceKind(pathname),
+      traffic_actor_class: getTrafficActorClass(),
     });
+    capturedPathRef.current = pathname;
 
     if (process.env.NODE_ENV === 'development') {
       console.log('[PostHog] $pageview:', url);
     }
-  }, [pathname, searchParams, posthog]);
+  }, [pathname, posthog, consentVersion]);
 
   return null;
 }
@@ -183,7 +206,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
           posthog.init(POSTHOG_KEY, {
             api_host: POSTHOG_HOST,
-            cross_subdomain_cookie: false,
+            cross_subdomain_cookie: Boolean(getPostHogCookieDomain()),
             // @ts-ignore
             cookie_domain: getPostHogCookieDomain(),
 
@@ -211,13 +234,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
               if (ph.config) {
                 ph.config.disable_dead_clicks = true;
                 ph.config.autocapture = false;
-              }
-
-              if (hasConsent) {
-                ph.capture('$pageview', {
-                  $current_url: window.location.origin + window.location.pathname,
-                  ...getPageAnalyticsProperties(window.location.pathname),
-                });
               }
 
               const distinctId = ph.get_distinct_id();

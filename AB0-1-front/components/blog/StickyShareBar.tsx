@@ -31,6 +31,7 @@ export function StickyShareBar({ title, slug }: StickyShareBarProps) {
       platform: platform,
       element_type: 'sticky',
       action_type: 'click',
+      internal_promotion: link.internalPromotion,
       link_url: link.url,
       ...link.utm
     });

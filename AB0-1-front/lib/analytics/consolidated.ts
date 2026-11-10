@@ -112,7 +112,8 @@ export function trackOtpVerified(userId: string, method: string = 'sms') {
 }
 
 /**
- * Track Lead Success (Lead Created)
+ * Track confirmation UI after lead verification.
+ * `lead_created` is emitted authoritatively by Rails after persistence.
  */
 export function trackLeadSuccess(data: {
   lead_id?: string;
@@ -122,10 +123,12 @@ export function trackLeadSuccess(data: {
   category?: string;
   city?: string;
 }) {
-  track('lead_created', {
+  track('lead_confirmation_viewed', {
     ...data,
     lead_id: data.lead_id,
     company_id: data.company_id ? String(data.company_id) : undefined,
+  }, {
+    sendTo: { backend: false },
   });
 }
 

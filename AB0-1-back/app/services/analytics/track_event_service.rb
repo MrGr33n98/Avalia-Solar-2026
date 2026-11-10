@@ -43,9 +43,18 @@ module Analytics
 
       # Enriquecimento de versionamento e ambiente
       @metadata['event_version'] ||= '1'
-      @metadata['schema_version'] ||= '1.0.0'
+      @metadata['schema_version'] ||= '3.0.0'
       @metadata['api_version'] ||= 'v1'
       @metadata['environment'] ||= Rails.env.to_s
+      @metadata['contract_version'] ||= 'analytics_contract_v3'
+      @metadata['event_origin'] ||= @metadata['source'].to_s == 'server' ? 'server' : 'backend'
+      @metadata['producer'] ||= @metadata['event_origin'] == 'frontend' ? 'web.analytics' : 'rails.analytics'
+      @metadata['company_id'] ||= @company_id if @company_id.present?
+      @metadata['surface_kind'] ||= surface_kind
+      @metadata['traffic_actor_class'] ||= traffic_actor_class
+      if @metadata['event_origin'] == 'frontend' && @metadata['consent_analytics'].nil?
+        @metadata['consent_analytics'] = true
+      end
 
       if @user
         is_employee = @user.email.to_s.end_with?('@avaliasolar.com.br')
@@ -53,6 +62,7 @@ module Analytics
         @metadata['is_admin'] = is_admin if @metadata['is_admin'].nil?
         @metadata['is_employee'] = is_employee if @metadata['is_employee'].nil?
         @metadata['is_internal'] = (is_admin || is_employee) if @metadata['is_internal'].nil?
+        @metadata['traffic_actor_class'] = 'internal_staff' if is_admin || is_employee
       end
     end
 
@@ -175,18 +185,28 @@ module Analytics
       connection = ActiveRecord::Base.connection
       adapter_name = connection.adapter_name.downcase
 
+      occurrence_key = @metadata['occurrence_key'].presence
+      has_occurrence_key = connection.column_exists?(:analytics_event_dedup, :occurrence_key)
+      columns = has_occurrence_key ? 'event_id, occurrence_key, inserted_at' : 'event_id, inserted_at'
+      values = if has_occurrence_key
+                 [connection.quote(@event_id), connection.quote(occurrence_key), connection.quote(Time.current)].join(', ')
+               else
+                 "#{connection.quote(@event_id)}, #{connection.quote(Time.current)}"
+               end
+
       if adapter_name.include?('postgresql')
         # PostgreSQL: INSERT ... ON CONFLICT DO NOTHING com verificação de resultado
-        result = connection.execute("INSERT INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{connection.quote(@event_id)}, #{connection.quote(Time.current)}) ON CONFLICT (event_id) DO NOTHING")
+        sql = "INSERT INTO analytics_event_dedup (#{columns}) VALUES (#{values}) ON CONFLICT DO NOTHING"
+        result = connection.execute(sql)
         result.cmd_tuples.positive?
       elsif adapter_name.include?('sqlite')
         # SQLite: INSERT OR IGNORE com verificação em raw_connection.changes
-        connection.execute("INSERT OR IGNORE INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{connection.quote(@event_id)}, #{connection.quote(Time.current)})")
+        connection.execute("INSERT OR IGNORE INTO analytics_event_dedup (#{columns}) VALUES (#{values})")
         connection.raw_connection.changes.positive?
       else
         # Adapter não configurado - usar exception-based detection
         begin
-          connection.execute("INSERT INTO analytics_event_dedup (event_id, inserted_at) VALUES (#{connection.quote(@event_id)}, #{connection.quote(Time.current)})")
+          connection.execute("INSERT INTO analytics_event_dedup (#{columns}) VALUES (#{values})")
           true # Inserção bem-sucedida
         rescue ActiveRecord::RecordNotUnique
           false # Duplicate constraint violation
@@ -215,17 +235,24 @@ module Analytics
       conn = ActiveRecord::Base.connection
       payload = @metadata.to_json
       context = {}.to_json
+      extra_columns = %w[correlation_id occurrence_key producer environment surface consent_analytics event_origin]
+      available_columns = conn.columns('platform_events').map(&:name)
+      envelope_columns = extra_columns.select { |column| available_columns.include?(column) }
+      columns = %w[
+        event_id event_type schema_version source anonymous_id session_id user_id company_id subject_type subject_id
+        payload context occurred_at created_at
+      ] + envelope_columns
+      values = [
+        conn.quote(@event_id), conn.quote(@event_type), '3', conn.quote(@metadata['source']),
+        conn.quote(@metadata['anonymous_id']), conn.quote(@metadata['session_id']), conn.quote(@user&.id),
+        conn.quote(@company_id), conn.quote(@metadata['subject_type']), conn.quote(@metadata['subject_id']),
+        conn.quote(payload), conn.quote(context), conn.quote(@occurred_at), conn.quote(Time.current)
+      ]
+      values.concat(envelope_columns.map { |column| conn.quote(@metadata[column]) })
 
       <<~SQL
-        INSERT INTO platform_events (
-          event_id, event_type, schema_version, source, anonymous_id, session_id,
-          user_id, company_id, subject_type, subject_id, payload, context, occurred_at, created_at
-        ) VALUES (
-          #{conn.quote(@event_id)}, #{conn.quote(@event_type)}, 1,
-          #{conn.quote(@metadata['source'])}, #{conn.quote(@metadata['anonymous_id'])}, #{conn.quote(@metadata['session_id'])},
-          #{conn.quote(@user&.id)}, #{conn.quote(@company_id)}, #{conn.quote(@metadata['subject_type'])}, #{conn.quote(@metadata['subject_id'])},
-          #{conn.quote(payload)}, #{conn.quote(context)}, #{conn.quote(@occurred_at)}, #{conn.quote(Time.current)}
-        )
+        INSERT INTO platform_events (#{columns.join(', ')})
+        VALUES (#{values.join(', ')})
       SQL
     end
 
@@ -276,7 +303,8 @@ module Analytics
     end
 
     def forward_to_posthog
-      # Evita reenviar page_view e web_vitals do frontend para o PostHog via servidor (evita duplicidade com SDK JS)
+      # Microinterações frontend já têm PostHog JS como fonte autoritativa.
+      return if @metadata['event_origin'].to_s == 'frontend'
       return if %w[page_view page_viewed web_vital web_vitals].include?(@event_type) && @metadata['source'] != 'server'
 
       distinct_id = @user&.posthog_distinct_id || @metadata['distinct_id'] || "company_#{@company_id}"
@@ -321,6 +349,31 @@ module Analytics
       return raw if raw.is_a?(Integer)
 
       raw.to_s.match?(/\A\d+\z/) ? raw.to_i : nil
+    end
+
+    def surface_kind
+      explicit = @metadata['surface_kind'].presence || @metadata['surface'].presence
+      return explicit.to_s.downcase if %w[public app crm admin auth system].include?(explicit.to_s.downcase)
+
+      path = @metadata['path'].to_s
+      return 'admin' if path.start_with?('/admin')
+      return 'crm' if path.start_with?('/crm')
+      return 'app' if path.start_with?('/dashboard', '/review-dashboard')
+      return 'auth' if path.start_with?('/auth', '/login', '/signup')
+
+      'public'
+    end
+
+    def traffic_actor_class
+      if @metadata['is_internal'].to_s == 'true' || @metadata['is_employee'].to_s == 'true' ||
+         @metadata['is_admin'].to_s == 'true'
+        return 'internal_staff'
+      end
+      return 'automation' if @metadata['is_bot'].to_s == 'true' || @metadata['automation'].to_s == 'true'
+      return 'external_company' if @metadata['role'].to_s == 'company'
+      return 'external_buyer' if @metadata['surface_kind'] == 'public'
+
+      'unknown'
     end
   end
 end
