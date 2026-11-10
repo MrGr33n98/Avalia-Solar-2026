@@ -3,10 +3,6 @@ name: CI — Web & Backend (Quality & Tests)
 on:
   push:
     branches: [ "main", "develop", "staging" ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
   pull_request:
     branches: [ "main", "develop" ]
     paths-ignore:

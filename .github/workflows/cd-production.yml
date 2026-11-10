@@ -363,24 +363,59 @@ jobs:
   deploy:
     needs: [build-and-push, zeitwerk-check, ranking-gate, ranking-frontend-gate]
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 60
     environment:
       name: production
       url: https://www.avaliasolar.com.br
     permissions:
       contents: read
       packages: read
+      actions: read
     steps:
       - name: Verify CI Status
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_SHA: ${{ env.RELEASE_SHA }}
         run: |
-          echo "Verificando status das verificações do CI para o SHA ${{ env.RELEASE_SHA }}..."
-          STATUS=$(gh api repos/${{ github.repository }}/commits/${{ env.RELEASE_SHA }}/check-runs --jq '.check_runs[] | select(.name=="rspec") | .conclusion' 2>/dev/null || echo "passed")
-          if [ "$STATUS" = "failure" ]; then
-            echo "::error::O CI RSpec falhou para este commit. Abortando deploy de produção."
-            exit 1
-          fi
+          set -euo pipefail
+          endpoint="repos/${GITHUB_REPOSITORY}/actions/workflows/ci-web-backend.yml/runs?head_sha=${RELEASE_SHA}&event=push&per_page=20"
+
+          echo "Aguardando CI do commit ${RELEASE_SHA}..."
+          for attempt in $(seq 1 90); do
+            runs="$(gh api "$endpoint")" || {
+              echo "::error::Não foi possível consultar o CI. Deploy bloqueado por segurança."
+              exit 1
+            }
+            ci_run="$(jq -c --arg sha "$RELEASE_SHA" '
+              [.workflow_runs[] | select(.head_sha == $sha and .event == "push" and .head_branch == "main")]
+              | sort_by(.run_number)
+              | last // empty
+            ' <<< "$runs")"
+
+            if [ -z "$ci_run" ]; then
+              echo "CI ainda não iniciou (tentativa ${attempt}/90)."
+              sleep 20
+              continue
+            fi
+
+            status="$(jq -r '.status' <<< "$ci_run")"
+            conclusion="$(jq -r '.conclusion // ""' <<< "$ci_run")"
+            if [ "$status" = "completed" ]; then
+              if [ "$conclusion" = "success" ]; then
+                echo "CI aprovado para ${RELEASE_SHA}."
+                exit 0
+              fi
+
+              echo "::error::CI terminou com conclusão '${conclusion}'. Deploy de produção bloqueado."
+              exit 1
+            fi
+
+            echo "CI em andamento: ${status} (tentativa ${attempt}/90)."
+            sleep 20
+          done
+
+          echo "::error::CI não concluiu em 30 minutos. Deploy de produção bloqueado."
+          exit 1
 
       - name: Validate Secrets
         run: |
@@ -777,6 +812,22 @@ jobs:
               exit 1
             fi
 
+            echo "?? Validando HTML da homepage no frontend recém-iniciado..."
+            FRONTEND_CID=$(docker compose ps -q frontend)
+            if ! docker exec "$FRONTEND_CID" node -e '
+              fetch("http://127.0.0.1:3000/", { signal: AbortSignal.timeout(30000) }).then(async response => {
+                const html = await response.text();
+                if (!response.ok || !html.includes("company-registration-ticker") || !html.includes("CADASTRAR")) {
+                  throw new Error(`homepage inválida: status=${response.status}, ticker=${html.includes("company-registration-ticker")}`);
+                }
+                console.log("HOMEPAGE_TICKER_SMOKE_OK");
+              }).catch(error => { console.error(error); process.exit(1); });
+            '; then
+              echo "!! Homepage não contém a faixa CADASTRAR; executando rollback."
+              rollback_apps
+              exit 1
+            fi
+
             echo "?? Atualizando $WORKER_SERVICE somente apos os health checks..."
             docker compose up -d --no-deps --no-build "$WORKER_SERVICE"
             docker compose logs --tail=100 "$WORKER_SERVICE" || true
@@ -855,3 +906,37 @@ jobs:
             docker image prune -f >/dev/null 2>&1 || true
 
             echo "?? Deploy finalizado com sucesso!"
+
+      - name: Verify public homepage release
+        env:
+          RELEASE_SHA: ${{ env.RELEASE_SHA }}
+        run: |
+          set -euo pipefail
+          probe_dir="$(mktemp -d)"
+          trap 'rm -rf "$probe_dir"' EXIT
+
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error --max-time 60 \
+              -H 'Cache-Control: no-cache, no-store' \
+              -H 'Pragma: no-cache' \
+              -D "$probe_dir/headers" \
+              -o "$probe_dir/home.html" \
+              https://www.avaliasolar.com.br/; then
+              release="$(awk 'tolower($1) == "x-release:" { gsub(/[[:space:]]/, "", $2); value = $2 } END { print value }' "$probe_dir/headers")"
+              if [ "$release" = "$RELEASE_SHA" ] \
+                && grep -Fq 'data-testid="company-registration-ticker"' "$probe_dir/home.html" \
+                && grep -Fq 'CADASTRAR' "$probe_dir/home.html"; then
+                echo "Homepage pública serve a faixa na release ${RELEASE_SHA}."
+                exit 0
+              fi
+
+              echo "Homepage pública não corresponde à release esperada (recebida: ${release:-sem X-Release}; tentativa ${attempt}/12)."
+            else
+              echo "Falha ao consultar homepage pública (tentativa ${attempt}/12)."
+            fi
+
+            sleep 15
+          done
+
+          echo "::error::Homepage pública não confirmou faixa e release ${RELEASE_SHA}."
+          exit 1
