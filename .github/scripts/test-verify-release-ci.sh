@@ -46,6 +46,9 @@ case "$2" in
       printf '%s\n' '{"workflow_runs":[{"head_sha":"sha-old","head_branch":"main","event":"push","conclusion":"success","created_at":"2026-11-10T03:00:00Z"}]}'
     fi
     ;;
+  *"cd-frontend-production.yml/runs?branch="*)
+    printf '%s\n' '{"workflow_runs":[]}'
+    ;;
   *"ci-web-backend.yml/runs?branch="*)
     if [ "$SCENARIO" = baseline_green ]; then
       conclusion=success

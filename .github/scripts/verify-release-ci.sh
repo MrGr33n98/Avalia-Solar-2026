@@ -82,13 +82,28 @@ for attempt in $(seq 1 90); do
   # Compare against the most recent successful production release, NOT HEAD^.
   # The whole deployment delta must be frontend/workflow-only, including any
   # commits that were previously blocked from production.
-  previous_runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-production.yml/runs?branch=main&per_page=100")" || exit 1
-  previous_sha="$(jq -r --arg sha "$RELEASE_SHA" '
-    [.workflow_runs[]
-      | select(.head_sha != $sha and .head_branch == "main"
-          and .event == "push" and .conclusion == "success")]
-    | sort_by(.created_at) | last | .head_sha // empty
-  ' <<< "$previous_runs")"
+  previous_runs_file="$(mktemp)"
+  frontend_runs_file="$(mktemp)"
+  trap 'rm -f "$previous_runs_file" "$frontend_runs_file"' EXIT
+
+  gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-production.yml/runs?branch=main&per_page=100" > "$previous_runs_file" || exit 1
+
+  if [ "$RELEASE_SCOPE" = "frontend_only" ]; then
+    gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-frontend-production.yml/runs?branch=main&per_page=100" > "$frontend_runs_file" 2>/dev/null || echo '{"workflow_runs":[]}' > "$frontend_runs_file"
+    previous_sha="$(jq -n -r --arg sha "$RELEASE_SHA" '
+      [inputs.workflow_runs[]?
+        | select(.head_sha != $sha and .head_branch == "main"
+            and (.event == "push" or .event == "workflow_dispatch") and .conclusion == "success")]
+      | sort_by(.created_at) | last | .head_sha // empty
+    ' "$previous_runs_file" "$frontend_runs_file")"
+  else
+    previous_sha="$(jq -r --arg sha "$RELEASE_SHA" '
+      [.workflow_runs[]?
+        | select(.head_sha != $sha and .head_branch == "main"
+            and .event == "push" and .conclusion == "success")]
+      | sort_by(.created_at) | last | .head_sha // empty
+    ' "$previous_runs_file")"
+  fi
 
   if [ -z "$previous_sha" ]; then
     echo "::error::Sem release anterior bem-sucedida. CI integral obrigatório."
