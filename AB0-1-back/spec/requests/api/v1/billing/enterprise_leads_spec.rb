@@ -5,7 +5,7 @@ RSpec.describe 'Api::V1::Billing Enterprise Leads API', type: :request do
   let(:company) { create(:company, plan: plan) }
   let(:user) { create(:user, role: :company, company: company) }
   
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) { JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256') }
   let(:auth_headers) { { 'Authorization' => "Bearer #{token}", 'Content-Type' => 'application/json' } }
   let(:headers) { { 'Content-Type' => 'application/json' } }
 

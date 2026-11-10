@@ -23,7 +23,7 @@ RSpec.describe 'P2P Chat API', type: :request do
   end
 
   def auth_headers_for(user)
-    token = JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256')
+    token = JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256')
     { 'Authorization' => "Bearer #{token}" }
   end
 
