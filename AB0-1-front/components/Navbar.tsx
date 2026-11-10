@@ -9,6 +9,7 @@ import { ChevronDown, Menu, User as UserIcon, Bell, MessageSquare, Search } from
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import LocationSearch from '@/components/LocationSearch';
 import NavbarSearch from '@/components/NavbarSearch';
+import CompanyRegistrationTicker from '@/components/CompanyRegistrationTicker';
 import { UserAvatarDropdown } from '@/components/navigation/UserAvatarDropdown';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -130,6 +131,7 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-white pt-[var(--safe-area-inset-top)] max-w-full overflow-x-clip">
+      <CompanyRegistrationTicker />
       <div className="mx-auto flex h-[56px] max-w-[1500px] items-center gap-1.5 px-3 sm:px-4 dashboard:px-4 xl:h-[60px] xl:gap-3 2xl:gap-4 xl:px-6 min-w-0">
         <Link
           href="/"
