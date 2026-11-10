@@ -99,6 +99,12 @@ jest.mock('@/components/LocationSearch', () =>
   )
 );
 
+// O ticker possui rastreamento próprio testado isoladamente: aqui validamos a integração visual.
+jest.mock('@/components/CompanyRegistrationTicker', () => ({
+  __esModule: true,
+  default: () => <div data-testid="company-registration-ticker" />,
+}));
+
 // Mock NavbarSearch
 jest.mock('@/components/NavbarSearch', () =>
   Object.assign(
@@ -189,6 +195,7 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Conteúdo' })).toBeInTheDocument();
 
     // Check for new components
+    expect(screen.getByTestId('company-registration-ticker')).toBeInTheDocument();
     expect(screen.getByTestId('navbar-search')).toBeInTheDocument();
     expect(screen.getAllByTestId('location-search')).toHaveLength(1);
     expect(screen.getByRole('button', { name: /Categorias/i })).toBeInTheDocument();
