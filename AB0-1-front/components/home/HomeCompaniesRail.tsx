@@ -252,6 +252,36 @@ function getFallbackQueryClient(): QueryClient {
   return fallbackClient;
 }
 
+const STATE_LABELS: Record<string, string> = {
+  AC: 'Acre',
+  AL: 'Alagoas',
+  AP: 'Amapá',
+  AM: 'Amazonas',
+  BA: 'Bahia',
+  CE: 'Ceará',
+  DF: 'Distrito Federal',
+  ES: 'Espírito Santo',
+  GO: 'Goiás',
+  MA: 'Maranhão',
+  MT: 'Mato Grosso',
+  MS: 'Mato Grosso do Sul',
+  MG: 'Minas Gerais',
+  PA: 'Pará',
+  PB: 'Paraíba',
+  PR: 'Paraná',
+  PE: 'Pernambuco',
+  PI: 'Piauí',
+  RJ: 'Rio de Janeiro',
+  RN: 'Rio Grande do Norte',
+  RS: 'Rio Grande do Sul',
+  RO: 'Rondônia',
+  RR: 'Roraima',
+  SC: 'Santa Catarina',
+  SP: 'São Paulo',
+  SE: 'Sergipe',
+  TO: 'Tocantins',
+};
+
 export function HomeCompaniesRail({
   companies,
   title,
@@ -265,6 +295,8 @@ export function HomeCompaniesRail({
   const { selectedState, stateLabel } = useLocation();
   const effectiveState = (stateCode || selectedState || '').trim();
   const normalizedState = effectiveState.toUpperCase();
+  const resolvedStateLabel =
+    (!stateCode && stateLabel) || STATE_LABELS[normalizedState] || stateLabel || normalizedState;
 
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
 
@@ -420,13 +452,13 @@ export function HomeCompaniesRail({
     [totalPages, currentPage, normalizedState, viewMode]
   );
 
-  const displayTitle =
-    title ||
-    (normalizedState
+  const primaryTitle = title || 'Empresas em destaque';
+  const locationSubtitle =
+    !title && normalizedState
       ? hasLocalMatches
-        ? `Empresas em destaque em ${stateLabel || normalizedState}`
-        : `Empresas em destaque (atuação nacional)`
-      : 'Empresas em destaque');
+        ? resolvedStateLabel
+        : 'Atuação nacional'
+      : null;
 
   const effectiveViewAll =
     viewAllHref === '/companies'
@@ -438,26 +470,45 @@ export function HomeCompaniesRail({
   return (
     <section
       ref={sectionRef}
-      className={cn('relative w-full px-4 py-4', className)}
+      className={cn('relative w-full px-4 py-3', className)}
       aria-labelledby="home-companies-title"
     >
-      <div className="mb-3 flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-4">
+      <div className="mb-2 flex flex-col gap-1">
+        <div
+          data-testid="home-companies-header"
+          className="grid grid-cols-1 gap-1.5 min-[360px]:grid-cols-[minmax(0,1fr)_auto] min-[360px]:items-center min-[360px]:gap-2 sm:gap-4"
+        >
           <h2
             id="home-companies-title"
-            className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl"
+            className="flex min-w-0 flex-col gap-0.5"
           >
-            {displayTitle}
+            <span className="truncate text-[15px] font-semibold leading-5 tracking-tight text-slate-950 sm:text-lg sm:font-bold lg:text-xl">
+              {primaryTitle}
+            </span>
+            {locationSubtitle ? (
+              <span
+                data-testid="home-companies-location-subtitle"
+                className="truncate text-xs font-medium leading-4 text-slate-500 sm:text-sm"
+              >
+                {locationSubtitle}
+              </span>
+            ) : null}
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center justify-between gap-1.5 min-[360px]:justify-end">
             {/* View Mode Switcher: Grid / List */}
-            <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-0.5 shadow-2xs">
+            <div
+              role="group"
+              aria-label="Alternar modo de visualização"
+              data-testid="company-view-mode-switcher"
+              className="inline-flex h-8 w-[68px] shrink-0 items-center justify-between gap-0.5 rounded-[10px] border border-[#E0E0E0] bg-white p-0.5 shadow-2xs"
+            >
               <button
                 type="button"
                 onClick={() => handleViewModeChange('grid')}
                 aria-label="Visualização em grade"
+                aria-pressed={viewMode === 'grid'}
                 className={cn(
-                  'flex h-7 w-7 items-center justify-center rounded-lg transition-colors',
+                  "relative flex h-7 w-8 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 before:absolute before:-inset-y-2 before:-left-3 before:right-0 before:content-['']",
                   viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-900'
                 )}
               >
@@ -472,8 +523,9 @@ export function HomeCompaniesRail({
                 type="button"
                 onClick={() => handleViewModeChange('list')}
                 aria-label="Visualização em lista"
+                aria-pressed={viewMode === 'list'}
                 className={cn(
-                  'flex h-7 w-7 items-center justify-center rounded-lg transition-colors',
+                  "relative flex h-7 w-8 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 before:absolute before:-inset-y-2 before:left-0 before:-right-3 before:content-['']",
                   viewMode === 'list' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-900'
                 )}
               >
@@ -490,22 +542,22 @@ export function HomeCompaniesRail({
 
             <Link
               href={effectiveViewAll}
-              className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="inline-flex min-h-11 shrink-0 items-center gap-0.5 rounded-lg px-1.5 text-xs font-semibold leading-none text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:px-2 sm:text-sm"
             >
               Ver todas
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden="true" />
             </Link>
           </div>
         </div>
         {!hasLocalMatches && normalizedState && queryCompanies !== undefined && (
           <p className="text-xs text-slate-500">
-            Ainda não há empresas com sede cadastrada em {stateLabel || normalizedState}. Exibindo empresas em destaque com atuação nacional.
+            Ainda não há empresas com sede cadastrada em {resolvedStateLabel}. Exibindo empresas em destaque com atuação nacional.
           </p>
         )}
         {isError && needsQuery && (
           <div className="mt-2 flex items-center justify-between rounded-xl border border-red-200 bg-red-50/70 px-3.5 py-2">
             <p className="text-xs font-medium text-red-800">
-              Não foi possível carregar empresas para {stateLabel || normalizedState}.
+              Não foi possível carregar empresas para {resolvedStateLabel}.
             </p>
             <button
               type="button"

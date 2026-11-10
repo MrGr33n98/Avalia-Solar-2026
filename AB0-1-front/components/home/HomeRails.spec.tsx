@@ -56,6 +56,12 @@ jest.mock('@/lib/slug', () => ({
   buildCompanyPath: (_slug: string, _name: string, id: number) => `/companies/${id}`,
 }));
 
+jest.mock('@/lib/api-public', () => ({
+  publicCompaniesApi: {
+    getAllPaginated: jest.fn().mockResolvedValue({ data: [], meta: {} }),
+  },
+}));
+
 jest.mock('@/hooks/useComparison', () => ({
   useComparison: () => ({
     isInComparison: () => false,
@@ -314,9 +320,91 @@ describe('rails de identidade visual da home', () => {
     );
 
     const listButton = screen.getByRole('button', { name: 'Visualização em lista' });
+    const gridButton = screen.getByRole('button', { name: 'Visualização em grade' });
     expect(listButton).toBeInTheDocument();
+    expect(gridButton).toHaveAttribute('aria-pressed', 'true');
+    expect(listButton).toHaveAttribute('aria-pressed', 'false');
+
     fireEvent.click(listButton);
 
+    expect(listButton).toHaveAttribute('aria-pressed', 'true');
+    expect(gridButton).toHaveAttribute('aria-pressed', 'false');
+    expect(window.localStorage.getItem('avalia.company_view_mode.v1')).toBe('list');
     expect(screen.getByTestId('company-directory-row-1')).toBeInTheDocument();
+  });
+
+  it('separa semanticamente o título principal e subtítulo de localização para diferentes estados e fallback nacional', () => {
+    const statesToTest = [
+      { code: 'SC', label: 'Santa Catarina' },
+      { code: 'MT', label: 'Mato Grosso' },
+      { code: 'RN', label: 'Rio Grande do Norte' },
+      { code: 'DF', label: 'Distrito Federal' },
+    ];
+
+    const { rerender } = render(
+      <HomeCompaniesRail
+        stateCode="SC"
+        companies={[makeCompany({ id: 1, name: 'Solar SC', state: 'SC' })]}
+      />
+    );
+
+    for (const { code, label } of statesToTest) {
+      rerender(
+        <HomeCompaniesRail
+          stateCode={code}
+          companies={[makeCompany({ id: 1, name: `Solar ${code}`, state: code })]}
+        />
+      );
+
+      const primaryTitle = screen.getByText('Empresas em destaque');
+      const subtitle = screen.getByTestId('home-companies-location-subtitle');
+      expect(primaryTitle).toHaveClass('text-[15px]', 'font-semibold', 'leading-5');
+      expect(subtitle).toHaveTextContent(label);
+      expect(subtitle).toHaveClass('text-xs', 'font-medium', 'leading-4', 'text-slate-500');
+
+      const viewAllLink = screen.getByRole('link', { name: /Ver todas/i });
+      expect(viewAllLink).toHaveAttribute('href', `/companies?state=${code}`);
+      expect(viewAllLink).toHaveClass('min-h-11', 'text-xs', 'font-semibold');
+    }
+
+    // Fallback nacional quando não há match local no estado selecionado
+    rerender(
+      <HomeCompaniesRail
+        stateCode="AC"
+        companies={[makeCompany({ id: 2, name: 'Solar SP', state: 'SP' })]}
+      />
+    );
+
+    expect(screen.getByText('Empresas em destaque')).toBeInTheDocument();
+    expect(screen.getByTestId('home-companies-location-subtitle')).toHaveTextContent(
+      'Atuação nacional'
+    );
+  });
+
+  it('aplica layout compacto IBM Carbon no cabeçalho, seletor 32px e espaçamento vertical reduzido', () => {
+    const { container } = render(
+      <HomeCompaniesRail
+        stateCode="SC"
+        companies={[makeCompany({ id: 1, name: 'Floripa Solar', state: 'SC' })]}
+      />
+    );
+
+    const section = container.querySelector('section');
+    expect(section).toHaveClass('px-4', 'py-3');
+
+    const headerGrid = screen.getByTestId('home-companies-header');
+    expect(headerGrid).toHaveClass(
+      'grid',
+      'grid-cols-1',
+      'min-[360px]:grid-cols-[minmax(0,1fr)_auto]'
+    );
+
+    const switcher = screen.getByTestId('company-view-mode-switcher');
+    expect(switcher).toHaveClass(
+      'h-8',
+      'w-[68px]',
+      'rounded-[10px]',
+      'border-[#E0E0E0]'
+    );
   });
 });
