@@ -151,6 +151,7 @@ RSpec.describe B2b::OnboardingSessionService do
 
         # 7. Envia PULAR na etapa de fotos -> finaliza
         expect(gateway).to receive(:send_message).with(session, /Parabéns! Sua empresa foi cadastrada com sucesso/)
+        expect(gateway).to receive(:send_message).with(session, /Felipe, fundador do Avalia Solar/)
         described_class.process_message!(session, { 'body' => 'pular' })
 
         session.reload

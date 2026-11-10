@@ -35,9 +35,9 @@ module B2b
       unless skip_greeting
         fname = sender_name.to_s.split.first.presence
         hello = fname ? "Olá, *#{fname}*! 👋" : 'Olá! 👋'
-        msg = "#{hello} Boas-vindas ao portal *Avalia Solar*! ☀️\n\n" \
-              "Vamos cadastrar sua empresa integradora para conectar sua equipe a novos clientes de energia solar e permitir a coleta de avaliações auditadas no pós-venda.\n\n" \
-              "Para preenchermos 80% dos dados automaticamente pela Receita Federal:\n" \
+        msg = "#{hello} Boas-vindas ao portal *Avalia Solar*.\n\n" \
+              "Vamos cadastrar sua empresa integradora para conectar sua equipe a novos clientes e coletar avaliações auditadas no pós-venda.\n\n" \
+              "Para preenchermos os dados automaticamente pela Receita Federal:\n" \
               "👉 *Digite o CNPJ da sua empresa* (apenas números):"
 
         send_message(session, msg)
@@ -131,13 +131,13 @@ module B2b
       )
 
       prompt = "Consultamos a base oficial da Receita Federal e localizamos sua empresa:\n\n" \
-               "🏢 *Razão Social:* #{result[:razao_social]}\n" \
-               "🏷️ *Nome Fantasia:* #{result[:nome_fantasia]}\n" \
-               "📍 *Localização:* #{result[:municipio]} / #{result[:uf]}\n" \
-               "⚡ *Atividade:* #{result[:cnae_descricao]}\n\n" \
+               "*Razão Social:* #{result[:razao_social]}\n" \
+               "*Nome Fantasia:* #{result[:nome_fantasia]}\n" \
+               "*Localização:* #{result[:municipio]} / #{result[:uf]}\n" \
+               "*Atividade:* #{result[:cnae_descricao]}\n\n" \
                "Os dados estão corretos?\n" \
-               "👉 Responda *1* (ou *SIM*) para confirmar\n" \
-               "✏️ Ou digite como prefere que o Nome Fantasia apareça publicamente no portal."
+               "- Responda *1* (ou *SIM*) para confirmar\n" \
+               "- Ou digite como prefere que o Nome Fantasia apareça no portal."
 
       send_message(@session, prompt)
     end
@@ -166,8 +166,8 @@ module B2b
         state: 'awaiting_email'
       )
 
-      prompt = "Perfeito! Dados cadastrais confirmados. 👍\n\n" \
-               "👉 *Qual é o seu melhor e-mail profissional?*\n\n" \
+      prompt = "Dados cadastrais confirmados.\n\n" \
+               "*Qual é o seu melhor e-mail profissional?*\n\n" \
                "Ele será usado para acessar o Painel do Integrador e receber as solicitações de orçamento de novos clientes.\n\n" \
                "*(Ex: contato@suaempresa.com.br)*"
 
@@ -187,12 +187,12 @@ module B2b
         state: 'awaiting_segment'
       )
 
-      prompt = "E-mail registrado com sucesso! ✉️\n\n" \
-               "⭐ *Em quais áreas sua empresa atua?*\n*(Vincularemos seu perfil a pelo menos 2 categorias do portal)*:\n\n" \
-               "1️⃣ Residencial *(Instaladores + Residencial)*\n" \
-               "2️⃣ Comercial e Industrial *(Instaladores + C&I)*\n" \
-               "3️⃣ Usinas Rurais / Solo *(Instaladores + Usinas de Solo)*\n" \
-               "4️⃣ Multi-segmento *(Residencial, Comercial, Rural e Baterias)*\n\n" \
+      prompt = "E-mail registrado.\n\n" \
+               "*Em quais áreas sua empresa atua?*\n*(Vincularemos seu perfil às categorias correspondentes no portal)*:\n\n" \
+               "1 - Residencial (Instaladores + Residencial)\n" \
+               "2 - Comercial e Industrial (Instaladores + C&I)\n" \
+               "3 - Usinas Rurais / Solo (Instaladores + Usinas de Solo)\n" \
+               "4 - Multi-segmento (Residencial, Comercial, Rural e Baterias)\n\n" \
                "*(Responda 1, 2, 3 ou 4)*"
 
       send_message(@session, prompt)
@@ -208,11 +208,11 @@ module B2b
 
       unless combo
         send_message(@session, "Não entendi a opção. 🤔\n\n" \
-                               "⭐ *Em quais áreas sua empresa atua?*\n\n" \
-                               "1️⃣ Residencial *(Instaladores + Residencial)*\n" \
-                               "2️⃣ Comercial e Industrial *(Instaladores + C&I)*\n" \
-                               "3️⃣ Usinas Rurais / Solo *(Instaladores + Usinas de Solo)*\n" \
-                               "4️⃣ Multi-segmento *(Residencial, Comercial, Rural e Baterias)*\n\n" \
+                               "*Em quais áreas sua empresa atua?*\n\n" \
+                               "1 - Residencial (Instaladores + Residencial)\n" \
+                               "2 - Comercial e Industrial (Instaladores + C&I)\n" \
+                               "3 - Usinas Rurais / Solo (Instaladores + Usinas de Solo)\n" \
+                               "4 - Multi-segmento (Residencial, Comercial, Rural e Baterias)\n\n" \
                                '*(Responda 1, 2, 3 ou 4)*')
         return
       end
@@ -233,11 +233,11 @@ module B2b
         state: 'awaiting_coverage'
       )
 
-      prompt = "Categorias definidas! ⚡\n\n" \
-               "⭐ *Qual é a região / cidades onde sua equipe atende e instala usinas?*\n\n" \
-               "1️⃣ Apenas em *#{city}/#{state_code}* e região metropolitana\n" \
-               "2️⃣ Em *todo o estado de #{state_code}*\n" \
-               "3️⃣ Cidades vizinhas específicas (digite os nomes separados por vírgula)\n\n" \
+      prompt = "Categorias definidas.\n\n" \
+               "*Qual é a região de atendimento da sua equipe?*\n\n" \
+               "1 - Apenas em *#{city}/#{state_code}* e região metropolitana\n" \
+               "2 - Em *todo o estado de #{state_code}*\n" \
+               "3 - Cidades específicas (digite os nomes separados por vírgula)\n\n" \
                "*(Responda 1, 2 ou digite as cidades)*"
 
       send_message(@session, prompt)
@@ -273,23 +273,28 @@ module B2b
         state: 'awaiting_brands'
       )
 
-      prompt = "Região de atendimento registrada! 📍\n\n" \
-               "⭐ *Quais as principais marcas de inversores e módulos solares que sua equipe instala?*\n" \
-               "*(Ex: WEG, Growatt, Deye, Canadian, Huawei, Fronius, Sungrow)*"
+      prompt = "Região de atendimento registrada.\n\n" \
+               "*Quais as principais marcas de inversores e módulos solares que sua equipe instala?*\n" \
+               "*(Ex: WEG, Growatt, Deye, Canadian, Huawei, Fronius ou responda **PULAR** para adicionar depois)*"
 
       send_message(@session, prompt)
     end
 
     def handle_ask_brands
-      brands_text = @text.presence || 'Principais marcas Tier-1'
-      @session.merge_draft!(brands: brands_text)
+      if @text.strip.match?(/\A(?:pular|ignorar|depois|p)\z/i)
+        brands_text = nil
+      else
+        brands_text = @text.presence
+      end
+
+      @session.merge_draft!(brands: brands_text || 'Principais marcas Tier-1')
       @session.update!(
         current_step: 'ask_logo',
         state: 'awaiting_logo'
       )
 
-      prompt = "Marcas registradas! ⚡\n\n" \
-               "🖼️ *Envie agora uma imagem com o LOGO da sua empresa para destacar seu perfil no Avalia Solar!*\n\n" \
+      prompt = "Marcas registradas.\n\n" \
+               "*Envie agora uma imagem com o LOGO da sua empresa para destacar seu perfil no portal:*\n\n" \
                "*(Envie a imagem aqui como foto no WhatsApp, ou responda **PULAR** se preferir adicionar depois no painel)*"
 
       send_message(@session, prompt)
@@ -307,18 +312,18 @@ module B2b
           current_step: 'ask_photos',
           state: 'awaiting_photos'
         )
-        prompt = "Logotipo registrado com sucesso! 🎨\n\n" \
-                 "📸 Quer enviar de 1 a 3 fotos de instalações feitas pela sua equipe para seu portfólio?\n\n" \
-                 "*(Envie fotos aqui, ou responda **PULAR** para finalizar seu cadastro agora)*"
+        prompt = "Logotipo registrado com sucesso.\n\n" \
+                 "Quer enviar de 1 a 3 fotos de instalações feitas pela sua equipe para seu portfólio?\n\n" \
+                 "*(Envie fotos aqui, ou responda **PULAR** para concluir seu cadastro)*"
         send_message(@session, prompt)
       else
         @session.update!(
           current_step: 'ask_photos',
           state: 'awaiting_photos'
         )
-        prompt = "Sem problemas! Você poderá adicionar ou trocar a logo pelo painel a qualquer momento. 👍\n\n" \
-                 "📸 Quer enviar de 1 a 3 fotos de instalações feitas pela sua equipe para seu portfólio?\n\n" \
-                 "*(Envie fotos aqui, ou responda **PULAR** para finalizar seu cadastro agora)*"
+        prompt = "Sem problemas. Você poderá adicionar ou trocar a logo pelo painel a qualquer momento.\n\n" \
+                 "Quer enviar de 1 a 3 fotos de instalações feitas pela sua equipe para seu portfólio?\n\n" \
+                 "*(Envie fotos aqui, ou responda **PULAR** para concluir seu cadastro)*"
         send_message(@session, prompt)
       end
     end
@@ -353,6 +358,10 @@ module B2b
         # Senha temporária amigável e segura (passa na validação de complexidade)
         temp_password = "Solar##{rand(1000..9999)}!"
 
+        # Trata marcas para campos estruturados da empresa
+        brands_raw = draft['brands'].presence
+        brands_list = brands_raw.to_s.split(/[,;\/|]/).map(&:strip).reject(&:blank?)
+
         company = Company.create!(
           name: company_name,
           cnpj: @session.cnpj,
@@ -363,13 +372,15 @@ module B2b
           coverage_states: draft['coverage_states'] || state_code,
           category_ids: category_ids,
           primary_category_id: primary_cat_id,
+          equipment_brands: brands_list,
+          partner_brands: brands_raw,
           segment: 'installer',
           status: 'active',
           moderation_status: 'pending_review',
           phone: contact_phone,
           whatsapp: contact_phone,
           email: user_email,
-          description: "Empresa integradora de energia solar atuante em #{city}/#{state_code}. Especialista em instalações #{draft['segment_focus'] || 'residenciais e comerciais'}. Equipamentos: #{draft['brands'] || 'Principais marcas do mercado'}."
+          description: "Empresa integradora de energia solar atuante em #{city}/#{state_code}. Especialista em instalações #{draft['segment_focus'] || 'residenciais e comerciais'}. Equipamentos: #{brands_raw || 'Principais marcas do mercado'}."
         )
 
         # Se houver logo registrada no draft, baixa e anexa
@@ -429,21 +440,35 @@ module B2b
         dashboard_url = "https://app.avaliasolar.com.br/login?email=#{CGI.escape(user.email)}"
 
         cats_names = company.categories.pluck(:name).join(', ')
-        success_msg = "🎉 *Parabéns! Sua empresa foi cadastrada com sucesso no Avalia Solar!* ☀️\n\n" \
-                      "🏢 *Empresa:* #{company.name}\n" \
-                      "🏷️ *Categorias:* #{cats_names.presence || 'Instaladores de Energia Solar'}\n" \
-                      "📍 *Atuação:* #{company.coverage_cities.presence || company.city} (#{company.state})\n" \
-                      "🔗 *Sua página pública:* #{site_url}\n\n" \
-                      "🔑 *SEUS DADOS DE ACESSO AO PAINEL:*\n" \
-                      "📧 *Login:* #{user.email}\n" \
-                      "🔒 *Senha provisória:* `#{temp_password}`\n" \
-                      "👉 *Acessar Painel:* #{dashboard_url}\n\n" \
-                      "*(Enviamos também seus dados de acesso com link direto para seu e-mail: #{user.email})*\n\n" \
-                      "💡 *Dica de Ouro:* Empresas com avaliações auditadas no perfil convertem até 3x mais propostas!\n\n" \
-                      "👉 Que tal gerar agora seu primeiro convite de *Voice Review* para um cliente recente pelo WhatsApp?\n" \
-                      "Responda *1* para ativar seus convites!"
 
-        send_message(@session, success_msg)
+        # Mensagem 1: Confirmação e dados de acesso
+        credentials_msg = "*Parabéns! Sua empresa foi cadastrada com sucesso no Avalia Solar.*\n\n" \
+                          "*Empresa:* #{company.name}\n" \
+                          "*Categorias:* #{cats_names.presence || 'Instaladores de Energia Solar'}\n" \
+                          "*Atuação:* #{company.coverage_cities.presence || company.city} (#{company.state})\n" \
+                          "*Página pública:* #{site_url}\n\n" \
+                          "*DADOS DE ACESSO AO PAINEL:*\n" \
+                          "*Login:* #{user.email}\n" \
+                          "*Senha temporária:* `#{temp_password}`\n" \
+                          "👉 *Acessar Painel:* #{dashboard_url}\n\n" \
+                          "*(Uma cópia destes dados também foi enviada para o seu e-mail: #{user.email})*"
+
+        send_message(@session, credentials_msg)
+
+        # Pequena pausa natural de 1.5s antes da mensagem de alinhamento do Felipe
+        sleep 1.5
+
+        # Mensagem 2: Mensagem humanizada do Felipe com agendamento do Zoho
+        booking_url = 'https://avaliasolar.zohobookings.com/5012013000000038009/#/5012013000000038009?bookedFrom=ShortenURL'
+        felipe_msg = "Olá! Aqui é o Felipe, fundador do Avalia Solar. 👋\n\n" \
+                     "Vi que você acabou de cadastrar a *#{company.name}*. Parabéns pelo passo rumo a mais autoridade e conversão de propostas na sua região!\n\n" \
+                     "Para alinharmos o seu *Selo de Empresa Verificada* 🛡️ e deixarmos sua página pronta para receber clientes e ranquear no Google:\n\n" \
+                     "*Podemos fazer um alinhamento rápido de 15 minutos?*\n" \
+                     "Escolha o melhor dia e horário na minha agenda:\n" \
+                     "👉 #{booking_url}\n\n" \
+                     "Ou se preferir, pode me responder por aqui mesmo com o melhor horário pra você!"
+
+        send_message(@session, felipe_msg)
       end
     rescue ActiveRecord::RecordInvalid => e
       Rails.logger.error("[B2B::OnboardingSessionService] Erro ao criar empresa: #{e.record.errors.full_messages.join(', ')}")
