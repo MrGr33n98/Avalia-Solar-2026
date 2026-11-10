@@ -85,6 +85,15 @@ RSpec.describe Notification, type: :model do
     end
   end
 
+  describe 'P2P messages' do
+    it 'accepts the notification type and infers the messages category' do
+      notification = build(:notification, notification_type: 'p2p_message_received', category: nil)
+
+      expect(notification).to be_valid
+      expect(notification.category).to eq('messages')
+    end
+  end
+
   describe 'TYPES' do
     it 'contains the social notification event types' do
       expect(described_class::TYPES).to include(
