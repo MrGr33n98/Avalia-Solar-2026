@@ -12,7 +12,7 @@ RSpec.configure do |config|
   # By default, the operations defined in spec files are added to the first
   # document below. You can override this behavior by adding a swagger_doc tag to the
   # the root example_group in your specs, e.g. describe '...', swagger_doc: 'v2/swagger.json'
-  config.swagger_docs = {
+  swagger_docs = {
     'v1/swagger.yaml' => {
       openapi: '3.0.1',
       info: {
@@ -35,7 +35,8 @@ RSpec.configure do |config|
 
   # Legacy request contracts still reference v1/swagger.json. Serve the same
   # OpenAPI 3 schema in both formats until all callers are migrated.
-  config.swagger_docs['v1/swagger.json'] = config.swagger_docs.fetch('v1/swagger.yaml').deep_dup
+  swagger_docs['v1/swagger.json'] = swagger_docs.fetch('v1/swagger.yaml').deep_dup
+  config.swagger_docs = swagger_docs
 
   # Specify the format of the output Swagger file when running 'rswag:specs:swaggerize'.
   # The swagger_docs configuration option has the filename including format in
