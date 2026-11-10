@@ -10,7 +10,7 @@ export const COMPANY_REGISTRATION_WHATSAPP_URL =
 export default function CompanyRegistrationTicker() {
   const handleCtaClick = () => {
     track('cta_click', {
-      cta_text: 'CADASTRAR',
+      cta_text: 'Cadastrar',
       cta_type: 'whatsapp_company_signup',
       cta_location: 'navbar_top_ticker',
       channel: 'whatsapp',
@@ -47,9 +47,9 @@ export default function CompanyRegistrationTicker() {
         rel="noopener noreferrer"
         aria-label="Cadastrar empresa via WhatsApp"
         data-testid="company-registration-cta"
-        className="inline-flex h-7 shrink-0 items-center justify-center rounded-full bg-[#16A34A] px-3 text-[11px] font-bold tracking-[0.02em] text-white transition-colors hover:bg-[#15803D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#062653] sm:px-4 sm:text-xs"
+        className="relative inline-flex h-[34px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#15803D] px-[14px] text-xs font-semibold leading-none text-white transition-colors hover:bg-[#166534] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white before:absolute before:-inset-y-[5px] before:-inset-x-1 before:content-['']"
       >
-        CADASTRAR
+        Cadastrar
       </a>
 
       <style jsx>{`

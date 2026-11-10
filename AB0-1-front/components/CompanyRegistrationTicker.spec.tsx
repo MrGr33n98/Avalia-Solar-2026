@@ -16,9 +16,9 @@ describe('CompanyRegistrationTicker', () => {
     expect(screen.getByTestId('company-registration-ticker')).toBeInTheDocument();
     expect(screen.getAllByText('Avalia Solar')).toHaveLength(2);
     expect(screen.queryByText(/mais clientes|ganhe visibilidade/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Cadastrar empresa via WhatsApp' })).toHaveTextContent(
-      'CADASTRAR'
-    );
+    const cta = screen.getByRole('link', { name: 'Cadastrar empresa via WhatsApp' });
+    expect(cta).toHaveTextContent('Cadastrar');
+    expect(cta).toHaveClass('h-[34px]', 'px-[14px]', 'rounded-full', 'bg-[#15803D]', 'text-xs', 'font-semibold', 'shrink-0');
   });
 
   it('preenche somente a palavra-chave CADASTRAR no WhatsApp oficial', () => {
@@ -40,7 +40,7 @@ describe('CompanyRegistrationTicker', () => {
     expect(track).toHaveBeenCalledWith(
       'cta_click',
       expect.objectContaining({
-        cta_text: 'CADASTRAR',
+        cta_text: 'Cadastrar',
         cta_type: 'whatsapp_company_signup',
         cta_location: 'navbar_top_ticker',
         keyword: 'CADASTRAR',
