@@ -26,7 +26,7 @@ describe('CompanyRegistrationTicker', () => {
 
     const cta = screen.getByTestId('company-registration-cta');
     expect(COMPANY_REGISTRATION_WHATSAPP_URL).toBe(
-      'https://wa.me/556593465055?text=CADASTRAR'
+      'https://wa.me/5565993465055?text=CADASTRAR'
     );
     expect(cta).toHaveAttribute('href', COMPANY_REGISTRATION_WHATSAPP_URL);
     expect(cta).toHaveAttribute('target', '_blank');
