@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Grid2X2 } from 'lucide-react';
 
 import { resolveCategoryVisual } from '@/lib/categories/category-visual-registry';
+import { cn } from '@/lib/utils';
 
 interface CategoryNiche {
   id?: number;
@@ -52,10 +53,10 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
   }
 
   return (
-    <section className="bg-transparent py-4 sm:py-6">
+    <section className="bg-transparent py-4 sm:py-6" aria-labelledby="category-niches-heading">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500">
+          <h2 id="category-niches-heading" className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500">
             Explorar Nichos
           </h2>
           <Link
@@ -67,8 +68,25 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
           </Link>
         </div>
 
-        <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-          <div className="flex gap-3 sm:gap-4 lg:gap-6">
+        <div
+          role="region"
+          aria-label="Nichos da categoria"
+          className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 xl:overflow-visible no-scrollbar"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          <div
+            className={cn(
+              'flex gap-3 sm:gap-4 lg:gap-5',
+              displayNiches.length <= 8
+                ? 'xl:grid xl:gap-3.5 xl:justify-items-center xl:w-full'
+                : 'xl:grid xl:grid-cols-5 xl:gap-4 xl:w-full'
+            )}
+            style={
+              displayNiches.length <= 8
+                ? { gridTemplateColumns: `repeat(${displayNiches.length}, minmax(0, 1fr))` }
+                : undefined
+            }
+          >
             {displayNiches.map((niche) => {
               const label = getShortName(niche.name);
               const visual = resolveCategoryVisual(niche.seo_url || niche.slug, niche.name);
@@ -80,17 +98,17 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
                 <Link
                   key={`${niche.id || niche.seo_url || niche.slug || niche.name}`}
                   href={href}
-                  className="group flex w-[76px] sm:w-[88px] lg:w-[96px] shrink-0 flex-col items-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 active:scale-95"
+                  className="group flex w-[116px] min-[390px]:w-[124px] sm:w-[136px] xl:w-full xl:max-w-[156px] shrink-0 xl:shrink flex-col items-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 rounded-xl p-1 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 active:scale-95"
                 >
-                  <span className="w-14 h-14 flex items-center justify-center relative bg-transparent border-0 shadow-none outline-none">
+                  <span className="relative flex h-14 w-14 shrink-0 items-center justify-center bg-transparent border-0 shadow-none outline-none">
                     {iconSrc ? (
                       <Image
                         src={iconSrc}
                         alt=""
-                        width={48}
-                        height={48}
+                        width={56}
+                        height={56}
                         sizes="(max-width: 767px) 48px, 56px"
-                        className="w-12 h-12 lg:w-14 lg:h-14 object-contain transition-transform group-hover:scale-105 duration-200"
+                        className="h-12 w-12 lg:h-14 lg:w-14 object-contain transition-transform duration-200 group-hover:scale-105"
                         priority={false}
                       />
                     ) : (
@@ -99,7 +117,7 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
                       </div>
                     )}
                   </span>
-                  <span className="mt-2 line-clamp-2 min-h-[28px] sm:min-h-[32px] text-[11px] font-medium leading-[14px] text-slate-600 sm:text-xs sm:leading-tight sm:font-medium group-hover:text-blue-600 transition-colors">
+                  <span className="mt-2 text-center text-[11px] sm:text-xs font-medium leading-[15px] sm:leading-4 text-slate-700 transition-colors group-hover:text-blue-600 [overflow-wrap:break-word] hyphens-auto">
                     {label}
                   </span>
                 </Link>
@@ -109,7 +127,7 @@ export default function CategoryNichesCarousel({ niches = [] }: CategoryNichesCa
         </div>
 
         {displayNiches.length > 5 && (
-          <div className="mt-3 flex justify-center gap-1 sm:hidden" aria-hidden="true">
+          <div className="mt-3 flex justify-center gap-1 xl:hidden" aria-hidden="true">
             <span className="h-1 w-4 rounded-full bg-blue-600" />
             <span className="h-1 w-3 rounded-full bg-slate-200" />
             <span className="h-1 w-3 rounded-full bg-slate-200" />
