@@ -19,6 +19,7 @@ RSpec.describe P2pMessageNotificationJob, type: :job do
         notification = Notification.last
         expect(notification.user_id).to eq(buyer.id)
         expect(notification.category).to eq('messages')
+        expect(notification.notification_type).to eq('p2p_message_received')
         expect(notification.title).to include(company.name)
         expect(notification.data['destination_url']).to eq("/chat?conversation_id=#{conversation.id}")
       end
