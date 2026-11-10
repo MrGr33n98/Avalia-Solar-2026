@@ -34,6 +34,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate production CI gate contract
+        run: bash .github/scripts/test-verify-release-ci.sh
+
       # Ruby Setup
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -277,6 +280,8 @@ jobs:
         run: npm test -- RankingPerformanceTab --runInBand
       - name: Typecheck frontend
         run: npm run typecheck
+      - name: Run Navbar and registration ticker tests
+        run: npm test -- CompanyRegistrationTicker Navbar.test --runInBand
       - name: Lint Ranking Performance files
         run: npx eslint app/dashboard/components/RankingPerformanceTab.tsx app/dashboard/components/ranking app/dashboard/components/MagicQuadrant.tsx
 
