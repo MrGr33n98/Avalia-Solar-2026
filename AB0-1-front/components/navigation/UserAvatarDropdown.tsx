@@ -61,7 +61,7 @@ export function UserAvatarDropdown({
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label={compact ? 'Abrir menu da conta' : undefined}
+          aria-label="Abrir menu da conta"
           onClick={(event) => {
             if (compact && onCompactClick) {
               event.preventDefault();
