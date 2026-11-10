@@ -66,10 +66,13 @@ module VoiceReviews
 
     def normalize_message(message)
       media = message['media'] || {}
-      mime_type = media['mimetype'].to_s
+      mime_type = media['mimetype'].to_s.presence || message.dig('_data', 'mimetype').to_s
+      data_body = message.dig('_data', 'body')
+      base64_data = (data_body if data_body.is_a?(String) && data_body.length > 50 && !data_body.match?(/\s/))
+
       type = if message['hasMedia'] && mime_type.start_with?('audio/')
                'audio'
-             elsif message['hasMedia'] && mime_type.start_with?('image/')
+             elsif message['hasMedia'] && (mime_type.start_with?('image/') || message.dig('_data', 'type') == 'image' || base64_data.present?)
                'image'
              elsif message['body'].present?
                'text'
@@ -88,8 +91,9 @@ module VoiceReviews
           'file_size' => nil, 'duration_ms' => nil, 'media_url' => media['url']
         } : nil,
         'image' => type == 'image' ? {
-          'id' => message['id'], 'mime_type' => mime_type,
-          'media_url' => media['url'], 'filename' => media['filename']
+          'id' => message['id'], 'mime_type' => mime_type.presence || 'image/jpeg',
+          'media_url' => media['url'], 'filename' => media['filename'],
+          'data' => base64_data
         } : nil
       }
     end

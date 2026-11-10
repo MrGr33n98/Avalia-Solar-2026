@@ -302,11 +302,13 @@ module B2b
 
     def handle_ask_logo
       image_data = @message['image'] || (@message.is_a?(Hash) && @message['type'] == 'image' ? @message : nil)
+      has_image = image_data && (image_data['data'].present? || image_data['media_url'].present?)
 
-      if image_data && image_data['media_url'].present?
+      if has_image
         @session.merge_draft!(
+          logo_data: image_data['data'],
           logo_media_url: image_data['media_url'],
-          logo_mime_type: image_data['mime_type'] || 'image/png'
+          logo_mime_type: image_data['mime_type'] || 'image/jpeg'
         )
         @session.update!(
           current_step: 'ask_photos',
@@ -383,9 +385,9 @@ module B2b
           description: "Empresa integradora de energia solar atuante em #{city}/#{state_code}. Especialista em instalações #{draft['segment_focus'] || 'residenciais e comerciais'}. Equipamentos: #{brands_raw || 'Principais marcas do mercado'}."
         )
 
-        # Se houver logo registrada no draft, baixa e anexa
-        if draft['logo_media_url'].present?
-          attach_company_logo(company, draft['logo_media_url'], draft['logo_mime_type'])
+        # Se houver logo registrada no draft, anexa (via Base64 ou download de URL)
+        if draft['logo_data'].present? || draft['logo_media_url'].present?
+          attach_company_logo(company, media_url: draft['logo_media_url'], base64_data: draft['logo_data'], mime_type: draft['logo_mime_type'])
         end
 
         user = User.find_by(email: user_email)
@@ -475,7 +477,20 @@ module B2b
       send_message(@session, "⚠️ Ocorreu uma inconsistência nos dados da empresa: #{e.record.errors.full_messages.first}. Nossa equipe técnica foi notificada.")
     end
 
-    def attach_company_logo(company, media_url, mime_type)
+    def attach_company_logo(company, media_url: nil, base64_data: nil, mime_type: nil)
+      ext = mime_type.to_s.split('/').last.presence || 'jpeg'
+      ext = 'jpg' if ext == 'jpeg'
+
+      if base64_data.present?
+        decoded = Base64.decode64(base64_data)
+        company.logo.attach(
+          io: StringIO.new(decoded),
+          filename: "logo_#{company.id}.#{ext}",
+          content_type: mime_type.presence || 'image/jpeg'
+        )
+        return
+      end
+
       return if media_url.blank?
 
       base_url = VoiceReviews::Config.waha_base_url
@@ -488,11 +503,10 @@ module B2b
 
       response = HTTParty.get(full_url, headers: { 'X-Api-Key' => api_key }, timeout: 15)
       if response.success? && response.body.present?
-        ext = mime_type.to_s.split('/').last.presence || 'png'
         company.logo.attach(
           io: StringIO.new(response.body),
           filename: "logo_#{company.id}.#{ext}",
-          content_type: mime_type.presence || 'image/png'
+          content_type: mime_type.presence || 'image/jpeg'
         )
       end
     rescue StandardError => e

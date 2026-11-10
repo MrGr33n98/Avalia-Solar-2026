@@ -172,6 +172,23 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.user.approved_by_admin).to be true
         expect(session.company.company_members.where(user: session.user, role: :owner)).to exist
       end
+
+      it 'attaches company logo when image with base64 data is provided' do
+        session.update!(current_step: 'ask_logo', state: 'awaiting_logo')
+        fake_b64 = Base64.encode64('fake image content')
+
+        expect(gateway).to receive(:send_message).with(session, /Logotipo registrado com sucesso/)
+        described_class.process_message!(session, {
+          'type' => 'image',
+          'image' => {
+            'data' => fake_b64,
+            'mime_type' => 'image/png'
+          }
+        })
+
+        expect(session.reload.current_step).to eq('ask_photos')
+        expect(session.draft_data['logo_data']).to eq(fake_b64)
+      end
     end
   end
 end
