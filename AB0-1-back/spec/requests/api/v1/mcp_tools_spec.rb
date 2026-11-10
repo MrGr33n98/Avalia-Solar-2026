@@ -46,7 +46,7 @@ RSpec.describe 'MCP tools API', type: :request do
       company = create(:company, status: :active)
       user = create(:user, company: company, role: 'company')
       create(:company_member, company: company, user: user, status: 'active')
-      token = JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256')
+      token = JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256')
 
       post '/api/v1/mcp/tools/get_company_dashboard_metrics',
            params: { arguments: { company_id: company.id } },

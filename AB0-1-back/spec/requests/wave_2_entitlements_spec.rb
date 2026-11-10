@@ -34,6 +34,8 @@ RSpec.describe 'Wave 2: Canonical Entitlements & Feature Gating Request Specs', 
         'premium_profile' => true,
         'featured_products' => 10,
         'p2p_chat' => true,
+        'advanced_analytics' => true,
+        'intent_scores' => true,
         'webhooks' => true,
         'custom_ctas' => true
       }

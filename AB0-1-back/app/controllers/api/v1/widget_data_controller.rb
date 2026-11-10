@@ -4,7 +4,7 @@ module Api
       # Public endpoint consumed by widget embeds.
       # Routes can send either :id (member route) or :company_id.
       def show
-        company = Company.find_by(id: params[:company_id] || params[:id])
+        company = ::Company.find_by(id: params[:company_id] || params[:id])
         return render json: { error: 'Company not found' }, status: :not_found unless company
 
         # Use stored trust score (unified calculation) with fallback to inline calculation

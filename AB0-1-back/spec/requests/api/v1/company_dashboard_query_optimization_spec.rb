@@ -4,7 +4,7 @@ RSpec.describe 'Company Dashboard Query Optimization', type: :request do
   let(:user) { create(:user) }
   let(:company) { create(:company) }
   let(:token) do
-    JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256')
+    JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256')
   end
 
   before do

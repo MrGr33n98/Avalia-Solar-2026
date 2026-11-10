@@ -4,7 +4,7 @@ RSpec.describe 'Api::V1::CompanyDashboardBanners', type: :request do
   let(:company) { create(:company) }
   let(:user) { create(:user, company: company) }
   let!(:membership) { create(:company_member, user: user, company: company, role: 'owner', status: 'active') }
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) { JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   describe 'GET /api/v1/company_dashboard/banners' do
@@ -255,7 +255,7 @@ RSpec.describe 'Banner lifecycle transitions', type: :request do
   let(:company) { create(:company) }
   let(:user) { create(:user, company: company) }
   let!(:membership) { create(:company_member, user: user, company: company, role: 'owner', status: 'active') }
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) { JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   before do

@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe 'Reviewer solutions API', type: :request do
   let(:reviewer) { create(:user, role: 'review') }
   let(:other_reviewer) { create(:user, role: 'review') }
-  let(:headers) { { 'Authorization' => "Bearer #{JWT.encode({ user_id: reviewer.id }, Rails.application.secret_key_base, 'HS256')}", 'Content-Type' => 'application/json' } }
+  let(:headers) { { 'Authorization' => "Bearer #{JWT.encode({ user_id: reviewer.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256')}", 'Content-Type' => 'application/json' } }
 
   it 'rejects unauthenticated access' do
     get '/api/v1/reviewer_solutions'

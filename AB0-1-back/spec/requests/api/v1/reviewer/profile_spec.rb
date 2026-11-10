@@ -4,7 +4,7 @@ require 'rails_helper'
 
 RSpec.describe 'Reviewer profile API', type: :request do
   let(:reviewer) { create(:user, role: 'review') }
-  let(:token) { JWT.encode({ user_id: reviewer.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) { JWT.encode({ user_id: reviewer.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{token}", 'Content-Type' => 'application/json' } }
 
   it 'requires authentication' do

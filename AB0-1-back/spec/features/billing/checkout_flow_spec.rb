@@ -59,7 +59,7 @@ RSpec.describe 'Billing Checkout Flow', type: :request do
   let(:headers) do
     # Gera cabeçalho JWT de autenticação com algoritmo HS256 explícito
     token = JWT.encode(
-      { user_id: user.id, exp: 24.hours.from_now.to_i },
+      { user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid },
       Rails.application.secret_key_base,
       'HS256'
     )

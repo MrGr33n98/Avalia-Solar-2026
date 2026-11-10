@@ -36,7 +36,7 @@ RSpec.describe 'Api::V1::Sales::Accounts', type: :request do
   def headers_for(user)
     token = JWT.encode(
       { user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, jti: SecureRandom.uuid },
-      Rails.application.credentials.secret_key_base || 'secret',
+      Rails.application.secret_key_base,
       'HS256'
     )
     { 'Authorization' => "Bearer #{token}", 'Content-Type' => 'application/json' }

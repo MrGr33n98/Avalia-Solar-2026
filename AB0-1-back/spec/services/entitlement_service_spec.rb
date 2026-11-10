@@ -17,6 +17,8 @@ RSpec.describe EntitlementService, type: :service do
         'featured_products' => 10,
         'custom_ctas' => true,
         'p2p_chat' => true,
+        'advanced_analytics' => true,
+        'intent_scores' => true,
         'webhooks' => true,
         'company_categories_limit' => 5
       }

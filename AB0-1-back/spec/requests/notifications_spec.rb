@@ -5,8 +5,8 @@ require 'rails_helper'
 RSpec.describe 'Notifications API', type: :request do
   let(:user) { create(:user) }
   let(:company) { create(:company) }
-  let(:company_user) { create(:user, role: 'company_user', company: company) }
-  let(:auth_token) { "Bearer #{JWT.encode({ user_id: company_user.id }, Rails.application.secret_key_base, 'HS256')}" }
+  let(:company_user) { create(:user, role: 'company', company: company) }
+  let(:auth_token) { "Bearer #{JWT.encode({ user_id: company_user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256')}" }
 
   describe 'GET /api/v1/notifications' do
     let!(:notification1) { create(:notification, user: company_user, notification_type: 'new_review', read_at: nil) }
