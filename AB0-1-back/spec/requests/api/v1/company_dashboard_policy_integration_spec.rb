@@ -3,8 +3,8 @@ require 'rails_helper'
 RSpec.describe 'Company Dashboard Policy Integration', type: :request do
   let(:user) { create(:user, status: :active, role: :company) }
   # Default free company
-  let(:company) { create(:company, status: :active, cnpj: '12345678901234', address: 'Rua Antiga', city: 'Sampa', state: 'SP') }
-  let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:company) { create(:company, status: :active, cnpj: '11222333000181', address: 'Rua Antiga', city: 'São Paulo', state: 'SP') }
+  let(:token) { JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i, iat: Time.current.to_i, jti: SecureRandom.uuid }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   before do
@@ -54,7 +54,7 @@ RSpec.describe 'Company Dashboard Policy Integration', type: :request do
 
         # Company field remains unchanged
         company.reload
-        expect(company.cnpj).to eq('12345678901234')
+        expect(company.cnpj).to eq('11222333000181')
 
         # Check pending change
         pc = company.pending_changes.last
@@ -82,7 +82,7 @@ RSpec.describe 'Company Dashboard Policy Integration', type: :request do
         # Direct field updated
         expect(company.description).to eq('Descrição nova e misturada')
         # Restricted field unchanged
-        expect(company.cnpj).to eq('12345678901234')
+        expect(company.cnpj).to eq('11222333000181')
 
         # Scheduled field exists in pending change
         pc = company.pending_changes.last

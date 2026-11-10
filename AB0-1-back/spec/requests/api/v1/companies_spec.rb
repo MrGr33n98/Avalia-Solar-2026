@@ -29,6 +29,7 @@ RSpec.describe 'GET /api/v1/companies', type: :request do
       rating_avg: 4.8,
       rating_count: 12,
       whatsapp_enabled: true,
+      whatsapp_url: 'https://wa.me/5511999999999',
       financing_enabled: true,
       latitude: -23.5505,
       longitude: -46.6333
