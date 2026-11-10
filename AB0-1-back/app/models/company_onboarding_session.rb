@@ -7,10 +7,10 @@ class CompanyOnboardingSession < ApplicationRecord
   belongs_to :user, optional: true
   has_many_attached :portfolio_photos
 
-  STATES = %w[opened awaiting_cnpj confirming_data awaiting_email awaiting_segment awaiting_coverage awaiting_brands awaiting_photos completed failed expired abandoned].freeze
+  STATES = %w[opened awaiting_cnpj confirming_data awaiting_email awaiting_segment awaiting_coverage awaiting_brands awaiting_logo awaiting_photos completed failed expired abandoned].freeze
   enum state: STATES.index_with(&:to_s)
 
-  STEPS = %w[ask_cnpj confirm_data ask_email ask_segment ask_coverage ask_brands ask_photos finish].freeze
+  STEPS = %w[ask_cnpj confirm_data ask_email ask_segment ask_coverage ask_brands ask_logo ask_photos finish].freeze
 
   before_validation :ensure_id
 

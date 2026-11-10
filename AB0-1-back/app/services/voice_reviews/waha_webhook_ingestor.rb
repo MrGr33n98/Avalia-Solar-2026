@@ -69,6 +69,8 @@ module VoiceReviews
       mime_type = media['mimetype'].to_s
       type = if message['hasMedia'] && mime_type.start_with?('audio/')
                'audio'
+             elsif message['hasMedia'] && mime_type.start_with?('image/')
+               'image'
              elsif message['body'].present?
                'text'
              end
@@ -84,6 +86,10 @@ module VoiceReviews
         'audio' => type == 'audio' ? {
           'id' => message['id'], 'sha256' => nil, 'mime_type' => mime_type,
           'file_size' => nil, 'duration_ms' => nil, 'media_url' => media['url']
+        } : nil,
+        'image' => type == 'image' ? {
+          'id' => message['id'], 'mime_type' => mime_type,
+          'media_url' => media['url'], 'filename' => media['filename']
         } : nil
       }
     end

@@ -36,6 +36,18 @@ class CompanyMailer < ApplicationMailer
     )
   end
 
+  def welcome_onboarding(company, user, temp_password)
+    @company = company
+    @user = user
+    @temp_password = temp_password
+    @login_url = frontend_url("/login?email=#{CGI.escape(user.email)}")
+
+    mail(
+      to: user.email,
+      subject: '🎉 Seu acesso ao Painel do Integrador — Avalia Solar'
+    )
+  end
+
   def registration_approved(company)
     @company = company
     @dashboard_url = frontend_url('/login')

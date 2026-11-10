@@ -34,7 +34,7 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
   } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => searchParams.get('email') || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,6 +55,11 @@ export default function LoginTab({ onCreateAccount }: LoginTabProps) {
 
   // Check for error codes in URL
   useEffect(() => {
+    const paramEmail = searchParams.get('email');
+    if (paramEmail) {
+      setEmail(paramEmail);
+    }
+
     const errorCode = searchParams.get('error');
     if (errorCode === 'session_expired') {
       setError('Sua sessão expirou. Por favor, faça login novamente.');

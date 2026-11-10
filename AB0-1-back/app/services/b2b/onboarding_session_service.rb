@@ -88,6 +88,8 @@ module B2b
         handle_ask_coverage
       when 'ask_brands'
         handle_ask_brands
+      when 'ask_logo'
+        handle_ask_logo
       when 'ask_photos'
         handle_ask_photos
       else
@@ -282,15 +284,43 @@ module B2b
       brands_text = @text.presence || 'Principais marcas Tier-1'
       @session.merge_draft!(brands: brands_text)
       @session.update!(
-        current_step: 'ask_photos',
-        state: 'awaiting_photos'
+        current_step: 'ask_logo',
+        state: 'awaiting_logo'
       )
 
-      prompt = "Excelente portfólio! 📸\n\n" \
-               "Para sua empresa se destacar nas buscas da sua região, **envie agora de 1 a 3 fotos de instalações reais** feitas pela sua equipe!\n\n" \
-               "*(Envie como foto normal aqui no WhatsApp, ou responda **PULAR** se preferir adicionar depois no painel)*"
+      prompt = "Marcas registradas! ⚡\n\n" \
+               "🖼️ *Envie agora uma imagem com o LOGO da sua empresa para destacar seu perfil no Avalia Solar!*\n\n" \
+               "*(Envie a imagem aqui como foto no WhatsApp, ou responda **PULAR** se preferir adicionar depois no painel)*"
 
       send_message(@session, prompt)
+    end
+
+    def handle_ask_logo
+      image_data = @message['image'] || (@message.is_a?(Hash) && @message['type'] == 'image' ? @message : nil)
+
+      if image_data && image_data['media_url'].present?
+        @session.merge_draft!(
+          logo_media_url: image_data['media_url'],
+          logo_mime_type: image_data['mime_type'] || 'image/png'
+        )
+        @session.update!(
+          current_step: 'ask_photos',
+          state: 'awaiting_photos'
+        )
+        prompt = "Logotipo registrado com sucesso! 🎨\n\n" \
+                 "📸 Quer enviar de 1 a 3 fotos de instalações feitas pela sua equipe para seu portfólio?\n\n" \
+                 "*(Envie fotos aqui, ou responda **PULAR** para finalizar seu cadastro agora)*"
+        send_message(@session, prompt)
+      else
+        @session.update!(
+          current_step: 'ask_photos',
+          state: 'awaiting_photos'
+        )
+        prompt = "Sem problemas! Você poderá adicionar ou trocar a logo pelo painel a qualquer momento. 👍\n\n" \
+                 "📸 Quer enviar de 1 a 3 fotos de instalações feitas pela sua equipe para seu portfólio?\n\n" \
+                 "*(Envie fotos aqui, ou responda **PULAR** para finalizar seu cadastro agora)*"
+        send_message(@session, prompt)
+      end
     end
 
     def handle_ask_photos
@@ -317,12 +347,11 @@ module B2b
         category_ids = Array(draft['category_ids']).presence || [71, 72]
         primary_cat_id = draft['primary_category_id'] || category_ids.first
 
-        user_email = draft['user_email'].presence || cnpj_data['email'].to_s.strip.downcase.presence
-        email_domain = user_email&.split('@', 2)&.last
-        valid_corp_email = user_email.present? &&
-                           Company::SIMPLE_EMAIL_REGEX.match?(user_email) &&
-                           !User::PUBLIC_EMAIL_DOMAINS.include?(email_domain)
-        final_email = valid_corp_email ? user_email : "contato_#{@session.id.first(8)}@avaliasolar.com.br"
+        user_email = draft['user_email'].to_s.strip.downcase.presence || cnpj_data['email'].to_s.strip.downcase.presence
+        user_email = "contato_#{@session.id.first(8)}@avaliasolar.com.br" unless user_email&.match?(Company::SIMPLE_EMAIL_REGEX)
+
+        # Senha temporária amigável e segura (passa na validação de complexidade)
+        temp_password = "Solar##{rand(1000..9999)}!"
 
         company = Company.create!(
           name: company_name,
@@ -335,32 +364,49 @@ module B2b
           category_ids: category_ids,
           primary_category_id: primary_cat_id,
           segment: 'installer',
-          status: 'pending',
+          status: 'active',
           moderation_status: 'pending_review',
           phone: contact_phone,
           whatsapp: contact_phone,
-          email: final_email,
+          email: user_email,
           description: "Empresa integradora de energia solar atuante em #{city}/#{state_code}. Especialista em instalações #{draft['segment_focus'] || 'residenciais e comerciais'}. Equipamentos: #{draft['brands'] || 'Principais marcas do mercado'}."
         )
 
-        user = User.find_by(email: final_email)
-        unless user
+        # Se houver logo registrada no draft, baixa e anexa
+        if draft['logo_media_url'].present?
+          attach_company_logo(company, draft['logo_media_url'], draft['logo_mime_type'])
+        end
+
+        user = User.find_by(email: user_email)
+        if user
+          user.skip_corporate_email_validation = true
+          user.status = :active
+          user.approved_by_admin = true
+          user.confirmed_at ||= Time.current
+          user.save!(validate: false)
+        else
           raw_user_name = (draft['sender_name'].presence || company_name).to_s.strip.truncate(100, omission: '')
           user_name = raw_user_name.length >= 3 ? raw_user_name : 'Responsável Integrador'
-          user = User.create!(
+          user = User.new(
             name: user_name,
-            email: final_email,
-            password: "Aa1!#{SecureRandom.urlsafe_base64(16)}",
+            email: user_email,
+            password: temp_password,
+            password_confirmation: temp_password,
             role: 'company',
+            status: :active,
+            approved_by_admin: true,
             city: city,
             state: state_code,
             terms_accepted: true,
+            terms_accepted_at: Time.current,
             public_name_consent: true,
             display_full_name_consent: true,
             review_name_consent: true,
             lgpd_name_consent: true,
             confirmed_at: Time.current
           )
+          user.skip_corporate_email_validation = true
+          user.save!
         end
 
         CompanyMember.find_or_create_by!(company: company, user: user) do |m|
@@ -368,9 +414,8 @@ module B2b
           m.status = :active
         end
 
-        # Dispara instruções para o e-mail do usuário
-        user.send_reset_password_instructions rescue nil
-        ::CompanyMailer.registration_received(company).deliver_later rescue nil
+        # Dispara e-mail de boas-vindas com a senha provisória e dados de acesso
+        ::CompanyMailer.welcome_onboarding(company, user, temp_password).deliver_later rescue nil
 
         @session.update!(
           state: 'completed',
@@ -381,16 +426,19 @@ module B2b
 
         slug = company.slug.presence || company.id
         site_url = "https://avaliasolar.com.br/empresa/#{slug}"
-        dashboard_url = 'https://app.avaliasolar.com.br/dashboard'
+        dashboard_url = "https://app.avaliasolar.com.br/login?email=#{CGI.escape(user.email)}"
 
         cats_names = company.categories.pluck(:name).join(', ')
         success_msg = "🎉 *Parabéns! Sua empresa foi cadastrada com sucesso no Avalia Solar!* ☀️\n\n" \
                       "🏢 *Empresa:* #{company.name}\n" \
                       "🏷️ *Categorias:* #{cats_names.presence || 'Instaladores de Energia Solar'}\n" \
                       "📍 *Atuação:* #{company.coverage_cities.presence || company.city} (#{company.state})\n" \
-                      "🔗 *Sua página pública:* #{site_url}\n" \
-                      "🔑 *Painel do Integrador:* #{dashboard_url}\n" \
-                      "📧 *Acesso ao Painel:* Enviamos as instruções de ativação e login para seu e-mail: *#{user.email}*.\n\n" \
+                      "🔗 *Sua página pública:* #{site_url}\n\n" \
+                      "🔑 *SEUS DADOS DE ACESSO AO PAINEL:*\n" \
+                      "📧 *Login:* #{user.email}\n" \
+                      "🔒 *Senha provisória:* `#{temp_password}`\n" \
+                      "👉 *Acessar Painel:* #{dashboard_url}\n\n" \
+                      "*(Enviamos também seus dados de acesso com link direto para seu e-mail: #{user.email})*\n\n" \
                       "💡 *Dica de Ouro:* Empresas com avaliações auditadas no perfil convertem até 3x mais propostas!\n\n" \
                       "👉 Que tal gerar agora seu primeiro convite de *Voice Review* para um cliente recente pelo WhatsApp?\n" \
                       "Responda *1* para ativar seus convites!"
@@ -400,6 +448,30 @@ module B2b
     rescue ActiveRecord::RecordInvalid => e
       Rails.logger.error("[B2B::OnboardingSessionService] Erro ao criar empresa: #{e.record.errors.full_messages.join(', ')}")
       send_message(@session, "⚠️ Ocorreu uma inconsistência nos dados da empresa: #{e.record.errors.full_messages.first}. Nossa equipe técnica foi notificada.")
+    end
+
+    def attach_company_logo(company, media_url, mime_type)
+      return if media_url.blank?
+
+      base_url = VoiceReviews::Config.waha_base_url
+      api_key = VoiceReviews::Config.waha_api_key
+      return if base_url.blank? || api_key.blank?
+
+      uri = URI.parse(media_url)
+      base = URI.parse(base_url)
+      full_url = URI.join("#{base.scheme}://#{base.host}:#{base.port}", uri.path.to_s).to_s
+
+      response = HTTParty.get(full_url, headers: { 'X-Api-Key' => api_key }, timeout: 15)
+      if response.success? && response.body.present?
+        ext = mime_type.to_s.split('/').last.presence || 'png'
+        company.logo.attach(
+          io: StringIO.new(response.body),
+          filename: "logo_#{company.id}.#{ext}",
+          content_type: mime_type.presence || 'image/png'
+        )
+      end
+    rescue StandardError => e
+      Rails.logger.warn("[B2B::OnboardingSessionService] Falha ao anexar logo: #{e.message}")
     end
 
     def send_message(session, text)

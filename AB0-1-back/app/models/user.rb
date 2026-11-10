@@ -51,6 +51,8 @@ class User < ApplicationRecord
   has_many :sales_roles, through: :sales_user_roles, source: :role, class_name: 'Sales::Role'
   accepts_nested_attributes_for :company_members, allow_destroy: true
 
+  attr_accessor :skip_corporate_email_validation
+
   # Role validation
   ROLES = %w[admin company review].freeze
   enum status: { pending: 0, active: 1, rejected: 2, blocked: 3 }, _default: :pending
@@ -380,6 +382,7 @@ class User < ApplicationRecord
   end
 
   def corporate_email_for_company
+    return if skip_corporate_email_validation
     return unless company_user? && email.present?
 
     domain = email.to_s.downcase.split("@", 2).last

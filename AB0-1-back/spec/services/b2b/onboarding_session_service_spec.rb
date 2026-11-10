@@ -138,13 +138,18 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.state).to eq('awaiting_brands')
         expect(session.draft_data['coverage_cities']).to eq('Campinas')
 
-        # 5. Informa marcas
+        # 5. Informa marcas -> avança para ask_logo
         described_class.process_message!(session, { 'body' => 'WEG, Growatt e Deye' })
-        expect(session.reload.current_step).to eq('ask_photos')
-        expect(session.state).to eq('awaiting_photos')
+        expect(session.reload.current_step).to eq('ask_logo')
+        expect(session.state).to eq('awaiting_logo')
         expect(session.draft_data['brands']).to eq('WEG, Growatt e Deye')
 
-        # 6. Envia PULAR na etapa de fotos
+        # 6. Pular etapa de logo -> avança para ask_photos
+        described_class.process_message!(session, { 'body' => 'pular' })
+        expect(session.reload.current_step).to eq('ask_photos')
+        expect(session.state).to eq('awaiting_photos')
+
+        # 7. Envia PULAR na etapa de fotos -> finaliza
         expect(gateway).to receive(:send_message).with(session, /Parabéns! Sua empresa foi cadastrada com sucesso/)
         described_class.process_message!(session, { 'body' => 'pular' })
 
@@ -152,6 +157,7 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.state).to eq('completed')
         expect(session.current_step).to eq('finish')
         expect(session.company).to be_present
+        expect(session.company.status).to eq('active')
         expect(session.company.name).to eq('NOVA ENERGIA')
         expect(session.company.cnpj).to eq('06990590000123')
         expect(session.company.city).to eq('Campinas')
@@ -161,6 +167,8 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.company.primary_category_id).to eq(71)
         expect(session.user).to be_present
         expect(session.user.email).to eq('contato@novasolar.com.br')
+        expect(session.user.status).to eq('active')
+        expect(session.user.approved_by_admin).to be true
         expect(session.company.company_members.where(user: session.user, role: :owner)).to exist
       end
     end

@@ -1,0 +1,14 @@
+Bem-vindo ao Avalia Solar!
+
+Olá, <%= @user.name %>!
+
+O perfil da sua empresa <%= @company.name %> foi registrado com sucesso no Avalia Solar.
+
+Seus dados de acesso ao Painel do Integrador:
+E-mail: <%= @user.email %>
+Senha provisória: <%= @temp_password %>
+
+Acesse seu painel pelo link abaixo:
+<%= @login_url %>
+
+(Recomendamos alterar sua senha após o primeiro acesso através das configurações do perfil).
