@@ -72,18 +72,19 @@ module Analytics
     # ── Inserção ─────────────────────────────────────────────────────────────
 
     def insert_view(ip_hash, user_agent_hash, fingerprint)
-      CompanyProfileView.insert(
-        {
-          company_id:          company_id,
-          session_fingerprint: fingerprint,
-          ip_hash:             ip_hash,
-          user_agent_hash:     user_agent_hash,
-          viewed_at:           Time.current,
-          created_at:          Time.current,
-          updated_at:          Time.current
-        },
-        unique_by: :idx_unique_view_per_fingerprint_24h,
-        returning: false
+      recent_view = CompanyProfileView.where(
+        company_id: company_id,
+        session_fingerprint: fingerprint
+      ).where('viewed_at > ?', 24.hours.ago).exists?
+
+      return Result.new(tracked: false, reason: 'duplicate_fingerprint_24h') if recent_view
+
+      CompanyProfileView.create!(
+        company_id:          company_id,
+        session_fingerprint: fingerprint,
+        ip_hash:             ip_hash,
+        user_agent_hash:     user_agent_hash,
+        viewed_at:           Time.current
       )
 
       invalidate_cache

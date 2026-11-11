@@ -30,12 +30,19 @@ RSpec.describe 'Admin SaaS Leads', type: :request do
     create(
       :lead,
       category: b2b_category,
+      name: 'B2B Lead',
+      phone: '11999998888',
       email: 'b2b@example.com',
       wizard_status: 'verified',
       otp_verified_at: Time.current,
       estimated_budget: 'R$ 90.000',
       decision_timeline: '3_months',
-      project_profile: 'commercial'
+      project_profile: 'commercial',
+      product_vertical: 'commercial',
+      quote_type: 'custom',
+      system_size_band: 'large',
+      address_full: 'Av Paulista 1000',
+      consent_at: Time.current
     )
   end
 

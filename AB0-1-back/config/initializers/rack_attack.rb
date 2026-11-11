@@ -129,9 +129,30 @@ class Rack::Attack
 
   # Limitar tentativas de login por IP
   # Protege contra ataques de força bruta
-  throttle('logins/ip', limit: 5, period: 20.seconds) do |req|
+  throttle('logins/ip', limit: 5, period: 1.minute) do |req|
     if req.path == '/api/v1/auth/login' && req.post?
       req.ip
+    end
+  end
+
+  # Limitar tentativas de registro por IP
+  throttle('auth/register/ip', limit: 3, period: 1.hour) do |req|
+    if req.path == '/api/v1/auth/register' && req.post?
+      req.ip
+    end
+  end
+
+  # Analytics track throttle
+  throttle('analytics/track/ip', limit: 100, period: 1.minute) do |req|
+    if req.path == '/api/v1/analytics/track' && req.post?
+      req.ip
+    end
+  end
+
+  # API token throttle
+  throttle('api/token', limit: 300, period: 5.minutes) do |req|
+    if req.path.start_with?('/api/v1') && req.env['HTTP_AUTHORIZATION']
+      req.env['HTTP_AUTHORIZATION'].to_s.split(' ').last.presence
     end
   end
 
@@ -277,7 +298,7 @@ class Rack::Attack
 
   # Safelist: Sempre permitir localhost (desenvolvimento)
   safelist('allow-localhost') do |req|
-    '127.0.0.1' == req.ip || '::1' == req.ip
+    Rails.env.development? && ('127.0.0.1' == req.ip || '::1' == req.ip)
   end
 
   # Blocklist: Bloquear IPs conhecidos como maliciosos
@@ -309,7 +330,7 @@ class Rack::Attack
 
     body = {
       code: 'RATE_LIMIT_EXCEEDED',
-      error: 'Rate limit exceeded. Please try again later.',
+      error: 'Rate limit exceeded',
       message: 'Muitas solicitações. Por favor, tente novamente mais tarde.',
       details: {
         retry_after_seconds: period,

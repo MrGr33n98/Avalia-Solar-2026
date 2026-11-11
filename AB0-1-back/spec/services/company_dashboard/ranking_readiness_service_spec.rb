@@ -11,6 +11,8 @@ RSpec.describe CompanyDashboard::RankingReadinessService do
       city: 'Florianópolis',
       verified: true,
       whatsapp_enabled: true,
+      whatsapp: '48999999999',
+      whatsapp_url: 'https://wa.me/5548999999999',
       cta_whatsapp_enabled: true,
       social_proof_enabled: true,
       reviews_count: 5,

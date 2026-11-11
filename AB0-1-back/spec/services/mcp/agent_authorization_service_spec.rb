@@ -31,6 +31,13 @@ RSpec.describe Mcp::AgentAuthorizationService do
     user
   end
 
+  def agent_key_header_for(agent_id)
+    return {} unless agent_id.present?
+
+    cred, secret = McpAgentCredential.generate_for_agent!(agent_id: agent_id)
+    { 'X-Agent-Key' => "#{cred.key_id}:#{secret}" }
+  end
+
   describe 'Hard Prohibited Tools Gate' do
     it 'DENY: Raises prohibited_tool error on arbitrary SQL attempts' do
       expect do
@@ -63,7 +70,7 @@ RSpec.describe Mcp::AgentAuthorizationService do
       result = described_class.authorize!(
         tool_name: 'get_system_health',
         arguments: {},
-        headers: { 'X-Agent-Id' => 'agent:observability:primary' }
+        headers: { 'X-Agent-Id' => 'agent:observability:primary' }.merge(agent_key_header_for('agent:observability:primary'))
       )
 
       expect(result[:authorized]).to be(true)
@@ -76,7 +83,7 @@ RSpec.describe Mcp::AgentAuthorizationService do
         described_class.authorize!(
           tool_name: 'create_review_request',
           arguments: { company_id: company_a.id },
-          headers: { 'X-Agent-Id' => 'agent:observability:primary' }
+          headers: { 'X-Agent-Id' => 'agent:observability:primary' }.merge(agent_key_header_for('agent:observability:primary'))
         )
       end.to raise_error(Mcp::Error) { |e|
         expect(e.code).to eq('tool_not_allowed_for_agent')
@@ -88,7 +95,7 @@ RSpec.describe Mcp::AgentAuthorizationService do
       result = described_class.authorize!(
         tool_name: 'recommend_next_actions',
         arguments: { company_id: company_a.id },
-        headers: { 'X-Agent-Id' => 'agent:hermes:outbound' }
+        headers: { 'X-Agent-Id' => 'agent:hermes:outbound' }.merge(agent_key_header_for('agent:hermes:outbound'))
       )
 
       expect(result[:authorized]).to be(true)
@@ -100,7 +107,7 @@ RSpec.describe Mcp::AgentAuthorizationService do
         described_class.authorize!(
           tool_name: 'create_review_request',
           arguments: { company_id: company_a.id },
-          headers: { 'X-Agent-Id' => 'agent:hermes:outbound' }
+          headers: { 'X-Agent-Id' => 'agent:hermes:outbound' }.merge(agent_key_header_for('agent:hermes:outbound'))
         )
       end.to raise_error(Mcp::Error) { |e|
         expect(e.code).to eq('tool_not_allowed_for_agent')
@@ -125,7 +132,7 @@ RSpec.describe Mcp::AgentAuthorizationService do
         described_class.authorize!(
           tool_name: 'get_leads_summary',
           arguments: { company_id: company_b.id },
-          headers: { 'X-Agent-Id' => 'agent:custom:tenant_alpha' }
+          headers: { 'X-Agent-Id' => 'agent:custom:tenant_alpha' }.merge(agent_key_header_for('agent:custom:tenant_alpha'))
         )
       end.to raise_error(Mcp::Error) { |e|
         expect(e.code).to eq('cross_tenant_violation')
@@ -148,7 +155,7 @@ RSpec.describe Mcp::AgentAuthorizationService do
       result = described_class.authorize!(
         tool_name: 'get_leads_summary',
         arguments: { company_id: company_a.id },
-        headers: { 'X-Agent-Id' => 'agent:custom:tenant_alpha' }
+        headers: { 'X-Agent-Id' => 'agent:custom:tenant_alpha' }.merge(agent_key_header_for('agent:custom:tenant_alpha'))
       )
 
       expect(result[:authorized]).to be(true)
@@ -162,7 +169,7 @@ RSpec.describe Mcp::AgentAuthorizationService do
           tool_name: 'send_outbound_campaign',
           arguments: { campaign_name: 'Q3 Solar Blast', recipient_count: 500 },
           user: admin_user,
-          headers: { 'X-Agent-Id' => 'agent:engineering:primary' }
+          headers: { 'X-Agent-Id' => 'agent:engineering:primary' }.merge(agent_key_header_for('agent:engineering:primary'))
         )
       end.to raise_error(Mcp::Error) { |e|
         expect(e.code).to eq('hitl_approval_required')
@@ -192,7 +199,7 @@ RSpec.describe Mcp::AgentAuthorizationService do
           tool_name: 'send_outbound_campaign',
           arguments: { campaign_name: 'Q3 Solar Blast' },
           user: admin_user,
-          headers: { 'X-Agent-Id' => 'agent:engineering:primary' },
+          headers: { 'X-Agent-Id' => 'agent:engineering:primary' }.merge(agent_key_header_for('agent:engineering:primary')),
           params: { approval_request_id: approval_req.request_uuid }
         )
       end.to raise_error(Mcp::Error) { |e|
@@ -215,7 +222,7 @@ RSpec.describe Mcp::AgentAuthorizationService do
         tool_name: 'send_outbound_campaign',
         arguments: { campaign_name: 'Q3 Solar Blast' },
         user: admin_user,
-        headers: { 'X-Agent-Id' => 'agent:engineering:primary' },
+        headers: { 'X-Agent-Id' => 'agent:engineering:primary' }.merge(agent_key_header_for('agent:engineering:primary')),
         params: { approval_request_id: approval_req.request_uuid }
       )
 

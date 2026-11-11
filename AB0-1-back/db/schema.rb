@@ -675,12 +675,35 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_07_033000) do
     t.json "permissions_config"
     t.string "seo_keywords"
     t.text "seo_description"
+    t.integer "lock_version", default: 0, null: false
+    t.string "editorial_status", default: "published", null: false
+    t.datetime "published_at"
+    t.bigint "published_by_id"
     t.index ["average_price"], name: "index_categories_on_average_price"
     t.index ["average_rating"], name: "index_categories_on_average_rating"
     t.index ["companies_count"], name: "index_categories_on_companies_count"
+    t.index ["editorial_status"], name: "index_categories_on_editorial_status"
     t.index ["parent_id"], name: "index_categories_on_parent_id"
+    t.index ["published_by_id"], name: "index_categories_on_published_by_id"
     t.index ["seo_url"], name: "index_categories_on_seo_url", unique: true
     t.index ["views_count"], name: "index_categories_on_views_count"
+  end
+
+  create_table "category_editorial_revisions", force: :cascade do |t|
+    t.bigint "category_id", null: false
+    t.integer "version_number", null: false
+    t.string "status", default: "draft", null: false
+    t.jsonb "payload_json", default: {}, null: false
+    t.text "source_notes"
+    t.string "change_reason"
+    t.bigint "created_by_id"
+    t.bigint "reviewed_by_id"
+    t.datetime "published_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id", "status"], name: "idx_category_editorial_revisions_cat_status"
+    t.index ["category_id", "version_number"], name: "idx_category_editorial_revisions_cat_version", unique: true
+    t.index ["category_id"], name: "index_category_editorial_revisions_on_category_id"
   end
 
   create_table "categories_companies", id: false, force: :cascade do |t|
@@ -1178,13 +1201,19 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_07_033000) do
     t.jsonb "attributes_json", default: {}, null: false
     t.boolean "verified", default: false, null: false
     t.datetime "verified_at"
+    t.string "curation_status", default: "verified", null: false
+    t.string "service_delivery_mode", default: "field_service", null: false
+    t.jsonb "evidence_json", default: {}, null: false
+    t.bigint "curated_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["category_id", "capability_type", "curation_status"], name: "idx_company_cat_capabilities_curation_lookup"
     t.index ["category_id", "capability_type"], name: "idx_ccc_category_capability"
     t.index ["category_id"], name: "idx_ccc_category"
     t.index ["category_solution_type_id"], name: "idx_ccc_solution"
     t.index ["company_id", "category_id", "category_solution_type_id", "capability_type"], name: "idx_ccc_company_category_solution_cap", unique: true
     t.index ["company_id"], name: "idx_ccc_company"
+    t.index ["curated_by_id"], name: "index_company_category_capabilities_on_curated_by_id"
   end
 
   create_table "company_daily_stats", force: :cascade do |t|
@@ -3867,9 +3896,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_07_033000) do
     t.text "body"
     t.datetime "occurred_at", null: false
     t.jsonb "metadata", default: {}, null: false
+    t.integer "duration_seconds"
+    t.string "log_status", default: "completed", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["actor_id"], name: "index_sales_activities_on_actor_id"
+    t.index ["log_status"], name: "index_sales_activities_on_log_status"
+    t.index ["occurred_at", "activity_type"], name: "index_sales_activities_on_occurred_at_and_type"
     t.index ["sales_account_id"], name: "index_sales_activities_on_sales_account_id"
     t.index ["sales_contact_id"], name: "index_sales_activities_on_sales_contact_id"
     t.index ["sales_opportunity_id"], name: "index_sales_activities_on_sales_opportunity_id"
@@ -4810,6 +4843,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_07_033000) do
     t.bigint "sales_opportunity_id", null: false
     t.bigint "sales_competitor_id", null: false
     t.text "notes"
+    t.boolean "won_against", default: false, null: false
+    t.boolean "lost_to", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["sales_competitor_id"], name: "index_sales_opportunity_competitors_on_sales_competitor_id"
@@ -5057,6 +5092,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_07_033000) do
     t.bigint "from_stage_id"
     t.bigint "to_stage_id", null: false
     t.bigint "actor_id"
+    t.bigint "company_id"
     t.datetime "entered_at", null: false
     t.datetime "left_at"
     t.integer "duration_seconds"
@@ -5064,6 +5100,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_07_033000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["actor_id"], name: "index_sales_stage_histories_on_actor_id"
+    t.index ["company_id"], name: "index_sales_stage_histories_on_company_id"
     t.index ["from_stage_id"], name: "index_sales_stage_histories_on_from_stage_id"
     t.index ["to_stage_id"], name: "index_sales_stage_histories_on_to_stage_id"
   end
@@ -5828,6 +5865,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_07_033000) do
   add_foreign_key "subscription_plans", "products"
   add_foreign_key "transactions", "companies"
   add_foreign_key "transactions", "users"
+  add_foreign_key "category_editorial_revisions", "categories"
+  add_foreign_key "sales_stage_histories", "companies"
   add_foreign_key "user_interests", "users"
   add_foreign_key "users", "companies"
 end

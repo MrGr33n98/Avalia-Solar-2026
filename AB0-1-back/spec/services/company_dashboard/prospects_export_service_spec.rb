@@ -50,6 +50,7 @@ RSpec.describe CompanyDashboard::ProspectsExportService, type: :service do
         outbound_click: click,
         session_id: '@session-inj',
         referrer_host: '-calc.com',
+        consent_state: 'granted',
         started_at: 1.day.ago
       )
 
@@ -78,6 +79,7 @@ RSpec.describe CompanyDashboard::ProspectsExportService, type: :service do
         company: company,
         outbound_click: click,
         session_id: SecureRandom.uuid,
+        consent_state: 'granted',
         started_at: 2.days.ago
       )
       Sales::TrackingEvent.create!(
@@ -102,7 +104,7 @@ RSpec.describe CompanyDashboard::ProspectsExportService, type: :service do
       )
 
       expect(csv_output).to include('Calculadora Solar')
-      expect(csv_output).to include('Lead confirmado')
+      expect(csv_output).to include('Declaração não verificada')
       expect(csv_output).to include('135') # Duração em segundos
       expect(csv_output).to include(',2,') # 2 eventos observados
     end
@@ -126,6 +128,7 @@ RSpec.describe CompanyDashboard::ProspectsExportService, type: :service do
         company: company,
         outbound_click: click2,
         session_id: SecureRandom.uuid,
+        consent_state: 'granted',
         started_at: 1.day.ago
       )
 

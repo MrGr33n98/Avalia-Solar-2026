@@ -352,7 +352,12 @@ module B2b
         contact_phone = nil unless contact_phone&.match?(/\A\d{10,15}\z/)
 
         category_ids = Array(draft['category_ids']).presence || [71, 72]
-        primary_cat_id = draft['primary_category_id'] || category_ids.first
+        existing_cat_ids = Category.where(id: category_ids).pluck(:id)
+        if existing_cat_ids.empty? && (fallback_cat = Category.first)
+          existing_cat_ids = [fallback_cat.id]
+        end
+        category_ids = existing_cat_ids if existing_cat_ids.any?
+        primary_cat_id = (category_ids.include?(draft['primary_category_id']) ? draft['primary_category_id'] : category_ids.first)
 
         user_email = draft['user_email'].to_s.strip.downcase.presence || cnpj_data['email'].to_s.strip.downcase.presence
         user_email = "contato_#{@session.id.first(8)}@avaliasolar.com.br" unless user_email&.match?(Company::SIMPLE_EMAIL_REGEX)

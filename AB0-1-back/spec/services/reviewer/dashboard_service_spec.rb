@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Reviewer::DashboardService do
-  let(:user) { create(:user, role: 'review') }
+  let(:user) { create(:user, role: 'review', city: nil, state: nil) }
 
   it 'escopa resumo ao usuário recebido' do
     own_review = create(:review, user: user)

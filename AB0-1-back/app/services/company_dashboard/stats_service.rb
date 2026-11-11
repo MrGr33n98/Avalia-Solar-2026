@@ -146,7 +146,7 @@ module CompanyDashboard
     end
 
     def calculate_conversion_rate(views:, leads:)
-      return nil if views.zero?
+      return nil if views.zero? || leads.zero?
 
       ((leads.to_f / views) * 100).round(2)
     end

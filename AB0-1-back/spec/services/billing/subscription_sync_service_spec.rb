@@ -3,8 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe Billing::SubscriptionSyncService, type: :service do
-  let(:plan) { Plan.find_by(name: 'Integration Plan') || create(:plan, name: 'Integration Plan', stripe_price_id_monthly: 'price_integration') }
-  let(:free_plan) { Plan.find_by(name: 'Free') || create(:plan, name: 'Free', price: 0, features: {}, stripe_price_id_monthly: 'price_free') }
+  let!(:plan) { Plan.find_by(name: 'Integration Plan') || create(:plan, name: 'Integration Plan', stripe_price_id_monthly: 'price_integration') }
+  let!(:free_plan) { Plan.find_by(name: 'Free', price: 0) || create(:plan, name: 'Free', price: 0, features: {}, stripe_price_id_monthly: 'price_free') }
   let(:company) { create(:company, plan: free_plan) }
 
   before do

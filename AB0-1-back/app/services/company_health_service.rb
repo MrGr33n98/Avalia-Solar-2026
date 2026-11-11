@@ -166,6 +166,9 @@ class CompanyHealthService
     miss = []
 
     reviews_count = @company.reviews.count
+    if reviews_count.zero?
+      return [100, %w[reputation_no_reviews_response_default reputation_no_reviews_verified_default], []]
+    end
 
     # 1. Total reviews count (>= 5 is 1.0, 1-4 is 0.5, 0 is 0)
     if reviews_count >= 5

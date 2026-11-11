@@ -33,10 +33,10 @@ RSpec.describe 'GraphQL Sprint B — Articles / Blog', type: :request do
   end
 
   let!(:published_article_1) do
-    Article.create!(
+    art = Article.new(
       title: 'Como economizar energia solar residencial',
       slug: 'como-economizar-energia-solar-residencial',
-      content: 'Este é o conteúdo do artigo 1 com várias palavras úteis para calcular tempo de leitura.',
+      content: '<h2>Economia com Energia Solar</h2> Este é o conteúdo do artigo 1 com várias palavras úteis para calcular tempo de leitura.',
       category: category,
       author: author,
       status: 'published',
@@ -45,13 +45,20 @@ RSpec.describe 'GraphQL Sprint B — Articles / Blog', type: :request do
       meta_title: 'SEO Economia Solar',
       meta_description: 'SEO Descrição Economia Solar'
     )
+    art.banner.attach(
+      io: StringIO.new(Base64.decode64('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')),
+      filename: 'banner.png',
+      content_type: 'image/png'
+    )
+    art.save!
+    art
   end
 
   let!(:published_article_2) do
-    Article.create!(
+    art = Article.new(
       title: 'Guia de Financiamento Solar 2026',
       slug: 'guia-de-financiamento-solar-2026',
-      content: 'Este é o conteúdo do artigo 2 que fala sobre financiamento solar e taxas de juros.',
+      content: '<h2>Financiamento Solar</h2> Este é o conteúdo do artigo 2 que fala sobre financiamento solar e taxas de juros.',
       category: other_category,
       author: author,
       status: 'published',
@@ -60,6 +67,13 @@ RSpec.describe 'GraphQL Sprint B — Articles / Blog', type: :request do
       meta_title: 'SEO Financiamento Solar',
       meta_description: 'SEO Descrição Financiamento Solar'
     )
+    art.banner.attach(
+      io: StringIO.new(Base64.decode64('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')),
+      filename: 'banner.png',
+      content_type: 'image/png'
+    )
+    art.save!
+    art
   end
 
   let!(:draft_article) do

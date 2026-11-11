@@ -83,7 +83,10 @@ module Chat
 
         # Tratamento de FK opcional de Company (se houver quote_requested_company_id, vinculamos como principal)
         primary_company_id = @metadata['quote_requested_company_id'] || @metadata['clicked_company_id']
-        lead_attributes[:company_id] = primary_company_id if primary_company_id.present?
+        if primary_company_id.present?
+          lead_attributes[:company_id] = primary_company_id
+          lead_attributes[:quote_requested_company_id] = @metadata['quote_requested_company_id'] if @metadata['quote_requested_company_id'].present?
+        end
 
         # Cria ou Atualiza de forma idempotente
         lead = if existing_lead

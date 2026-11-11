@@ -429,6 +429,7 @@ module PlanFeatureCatalog
       'service_area_cities_limit' => 3,
       'national_coverage' => false,
       'local_seo_visibility' => false,
+      'show_alternatives' => true,
       'profile_media_direct_update' => false
     },
     'essential' => {
@@ -638,7 +639,7 @@ module PlanFeatureCatalog
       return 'enterprise' if lower_name.include?('enterprise')
       return 'pro' if lower_name.match?(/\b(pro|premium|pago)\b/)
       return 'essential' if lower_name.match?(/\b(essential|essencial)\b/)
-      return 'free' if lower_name.match?(/\b(free|gratis|gratuito|basic|basico)\b/)
+      return 'free' if lower_name.match?(/\b(free|gratis|gratuito)\b/) || (price.to_f.zero? && lower_name.match?(/\b(basic|basico)\b/))
 
       return 'enterprise' if enterprise_capabilities?(raw)
       return 'pro' if price.to_f.positive? || paid_capabilities?(raw)

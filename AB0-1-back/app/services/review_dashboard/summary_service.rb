@@ -3,6 +3,7 @@
 module ReviewDashboard
   class SummaryService
     ACTIVE_SECTIONS = %i[kpis gamification impact recommendations recent_activities charts profile].freeze
+    UNAVAILABLE_SECTIONS = %i[sustainable_journey].freeze
 
     def initialize(user:, clock: -> { Time.current }, request_id: nil)
       @user = user
@@ -27,8 +28,9 @@ module ReviewDashboard
           chart_data ? { activity_30d: chart_data } : nil
         end,
         profile: measure('profile') { profile },
+        sustainable_journey: nil
       }
-      stale_sections = ACTIVE_SECTIONS.filter_map do |name|
+      stale_sections = (ACTIVE_SECTIONS + UNAVAILABLE_SECTIONS).filter_map do |name|
         name.to_s if sections[name].nil?
       end
 
@@ -114,7 +116,7 @@ module ReviewDashboard
 
     def recommendations
       Company.where(status: 'active', verified: true)
-             .select(:name, :city, :state, :rating_avg, :featured)
+             .select(:id, :name, :city, :state, :rating_avg, :featured)
              .order(rating_avg: :desc)
              .limit(3)
              .map do |company|

@@ -1365,6 +1365,41 @@ module Api
         authorize @company, :edit_categories?
 
         category_ids = normalized_category_ids(params[:category_id])
+        policy = CompanyFieldPolicy.new(@company)
+        decision = policy.decision(:categories)
+
+        unless decision[:direct_update]
+          pending_change = create_idempotent_pending_change(
+            change_type: 'categories',
+            data: {
+              action: 'remove',
+              category_ids: category_ids,
+              requires_commercial_approval: true
+            }
+          )
+
+          notify_category_change_request(pending_change, nil, action: 'remove') unless pending_change.previously_persisted?
+
+          Analytics::TrackEventService.call(
+            company_id: @company.id,
+            event_type: 'dashboard_update_requested',
+            user: current_user,
+            metadata: request_metadata.merge(
+              change_type: 'categories',
+              action: 'remove',
+              category_ids: category_ids,
+              requires_commercial_approval: true,
+              pending_change_id: pending_change.id
+            )
+          )
+
+          return render json: {
+            message: pending_change.previously_persisted? ? 'Solicitação de alteração já enviada anteriormente' : 'Solicitação enviada para aprovação comercial',
+            pending_change: pending_change,
+            requires_commercial_approval: true,
+            direct_update: false
+          }, status: pending_change.previously_persisted? ? :ok : :created
+        end
 
         @company.category_ids = (@company.category_ids - category_ids)
 

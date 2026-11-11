@@ -1,6 +1,8 @@
 require 'swagger_helper'
 
 RSpec.describe 'Trust API', type: :request, swagger_doc: 'v1/swagger.json' do
+  let!(:company) { create(:company, api_key: 'test_key', trust_score: 90) }
+
   path '/api/v1/trust/profile' do
     get 'Retrieves company trust profile' do
       tags 'Trust'

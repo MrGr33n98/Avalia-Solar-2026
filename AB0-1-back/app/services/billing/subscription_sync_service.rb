@@ -123,7 +123,9 @@ module Billing
     # A missing free tier must never fall back to a paid Plan.first.
     # Fail the webhook transaction and retry after correcting pricing data.
     def free_plan!
-      ::Plan.find_by(name: 'Free', price: 0) || ::Plan.where(price: 0).order(:id).first ||
+      ::Plan.find_by(name: 'Free', price: 0) ||
+        ::Plan.find_by(name: 'Free') ||
+        ::Plan.where(price: 0).order(:id).first ||
         (raise ActiveRecord::RecordNotFound, 'Billing Free plan is missing')
     end
 

@@ -6,6 +6,7 @@ class CreatorTreeSetting < ApplicationRecord
   SAFE_KEY = /\A[a-zA-Z][a-zA-Z0-9_-]*\z/
   ALLOWED_THEMES = %w[solar dark glass monochrome neo].freeze
   belongs_to :reviewer, class_name: 'ReviewerProfile'
+  belongs_to :reviewer_profile, class_name: 'ReviewerProfile', foreign_key: :reviewer_id, optional: true
   has_one_attached :background_image
 
   validates :theme_key, inclusion: { in: ALLOWED_THEMES }

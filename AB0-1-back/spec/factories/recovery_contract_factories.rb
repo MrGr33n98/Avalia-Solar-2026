@@ -49,6 +49,7 @@ FactoryBot.define do
   factory :company_trust_score do
     association :company
     score { 75.0 }
+    components { { 'reviews' => 80 } }
   end
 
   factory :company_utm_attribution do

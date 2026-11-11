@@ -283,7 +283,8 @@ module Chat
                               'duplicate_prevented' => handoff_result[:duplicate_prevented]
                             })
                             
-        if (handoff_result[:handoff_triggered] || handoff_result[:lead_status] == 'pending_contact_info' || @session.waiting_for_agent?) && @session.metadata['summary_card'].blank?
+        waiting_for_agent = @session.respond_to?(:waiting_for_agent?) ? @session.waiting_for_agent? : false
+        if (handoff_result[:handoff_triggered] || handoff_result[:lead_status] == 'pending_contact_info' || waiting_for_agent) && @session.respond_to?(:metadata) && @session.metadata.is_a?(Hash) && @session.metadata['summary_card'].blank?
           generate_summary_card(history)
         end
       else
@@ -389,6 +390,16 @@ module Chat
     end
 
     private
+
+    def generate_summary_card(history)
+      return unless @session.respond_to?(:metadata) && @session.metadata.is_a?(Hash)
+
+      summary = Array(history).last(5).map { |m| "#{m[:role] || m['role']}: #{m[:content] || m['content']}" }.join("\n")
+      @session.metadata['summary_card'] = summary.truncate(500)
+      @session.save! if @session.respond_to?(:save!)
+    rescue StandardError => e
+      Rails.logger.warn("[Chat::OrchestratorService] Failed to generate summary card: #{e.message}")
+    end
 
     def register_customer_message(message)
       return unless @session.company_id.present?

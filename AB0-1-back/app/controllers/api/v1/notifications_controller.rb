@@ -51,7 +51,7 @@ module Api
 
       # POST /api/v1/notifications/:id/mark_as_read
       def mark_as_read
-        notification = current_user.notifications.find(params[:id])
+        notification = notification_scope.find(params[:id])
         notification.read!
 
         render json: { success: true, notification: notification_json(notification) }
@@ -67,7 +67,7 @@ module Api
 
       # POST /api/v1/notifications/:id/archive
       def archive
-        notification = current_user.notifications.find(params[:id])
+        notification = notification_scope.find(params[:id])
         notification.archive!
 
         render json: { success: true, notification: notification_json(notification) }
@@ -77,7 +77,7 @@ module Api
 
       # POST /api/v1/notifications/:id/unarchive
       def unarchive
-        notification = current_user.notifications.find(params[:id])
+        notification = notification_scope.find(params[:id])
         notification.unarchive!
 
         render json: { success: true, notification: notification_json(notification) }

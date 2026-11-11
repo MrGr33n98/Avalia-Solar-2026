@@ -250,6 +250,7 @@ end
   has_many :members, through: :company_members, source: :user
   has_many :company_service_areas, dependent: :destroy
   has_many :recommendation_placements, dependent: :destroy
+  has_many :billing_company_subscriptions, class_name: 'Billing::CompanySubscription', dependent: :destroy
 
   # =========================
   # Callbacks
@@ -635,12 +636,19 @@ end
     self.phone_alt = normalize_phone_value(phone_alt)
     self.whatsapp = normalize_phone_value(whatsapp)
 
-    # Regenerate canonical URL after editing the WhatsApp number.
-    return unless whatsapp.present? && (whatsapp_url.blank? || will_save_change_to_whatsapp?)
-
-    digits = whatsapp.to_s
-    digits = digits.sub(/\A55/, '') if digits.length > 11
-    self.whatsapp_url = "https://wa.me/55#{digits}"
+    if whatsapp.blank?
+      if phone.present? && !whatsapp_enabled?
+        self.whatsapp = phone
+        digits = phone.to_s.sub(/\A55/, '')
+        self.whatsapp_url = "https://wa.me/55#{digits}"
+      elsif whatsapp_url.blank? && respond_to?(:whatsapp_enabled=)
+        self.whatsapp_enabled = false
+      end
+    elsif !whatsapp_enabled?
+      digits = whatsapp.to_s
+      digits = digits.sub(/\A55/, '') if digits.length > 11
+      self.whatsapp_url = "https://wa.me/55#{digits}" if whatsapp_url.blank? || will_save_change_to_whatsapp?
+    end
   end
 
   def normalize_phone_value(value)
@@ -649,7 +657,11 @@ end
   end
 
   def normalize_cnpj_value(value)
-    digits = value.to_s.gsub(/\D/, '')
+    return nil if value.blank?
+    stripped = value.to_s.strip
+    return stripped if stripped =~ /[^\d.\/\-]/
+
+    digits = stripped.gsub(/\D/, '')
     digits.presence
   end
 
@@ -866,7 +878,7 @@ end
 
     status_allows_plan =
       if respond_to?(:plan_status)
-        plan_status.blank? || plan_status == 'active'
+        plan_status.blank? || plan_status == 'active' || (new_record? && plan_status == 'inactive')
       else
         true
       end
@@ -923,6 +935,7 @@ end
   end
 
   def quote_feature_enabled?
+    return true if respond_to?(:active_admin?) && active_admin?
     return false unless has_paid_plan?
 
     explicit_flag = explicit_feature_value_from_plan?(
@@ -1518,8 +1531,13 @@ end
   end
 
   def invalidate_companies_cache
-    Rails.cache.delete_matched('companies:index:v2:*')
+    if Rails.cache.respond_to?(:delete_matched)
+      Rails.cache.delete_matched('companies:index:*')
+    elsif Rails.cache.respond_to?(:redis) && Rails.cache.redis.respond_to?(:keys)
+      Rails.cache.redis.keys('companies:index:*').each { |k| Rails.cache.delete(k) }
+    end
     Rails.cache.delete('companies_featured_v1')
+    Rails.cache.delete('companies_featured_v3')
     Rails.logger.info("[Company] Cache invalidated for company_id=#{id}")
   rescue StandardError => e
     Rails.logger.error("[Company] Failed to invalidate cache: #{e.message}")

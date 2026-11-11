@@ -2,10 +2,10 @@ require 'base64'
 
 FactoryBot.define do
   factory :plan do
-    name { "Basic Plan #{SecureRandom.hex(6)}" }
-    price { 99.90 }
+    name { "Plan #{SecureRandom.hex(6)}" }
+    price { name.to_s.casecmp('free').zero? ? 0.0 : 99.90 }
     is_public { false }
-    features { { max_products: 50, dashboard_access: true, quote_feature: true, custom_ctas: true, quote_requests: true } }
+    features { { max_products: 50, dashboard_access: true, quote_feature: true, custom_ctas: true, quote_requests: true, ai_live_inbox: true, live_inbox: true, whatsapp_contact_button: true } }
   end
 
   factory :company do
@@ -15,6 +15,10 @@ FactoryBot.define do
     status { 'active' }
     plan_status { 'active' }
     active_admin { true }
+    moderation_status { 'approved' }
+    quote_cta_enabled { true }
+    whatsapp { '11999999999' }
+    whatsapp_url { 'https://wa.me/5511999999999' }
     association :plan
 
     # Campos obrigatórios para ativação (validation)
@@ -53,6 +57,15 @@ FactoryBot.define do
     state { 'SP' }
     terms_accepted { true }
     terms_accepted_at { Time.current }
+
+    trait :buyer do
+      role { :buyer }
+      company { nil }
+    end
+
+    trait :confirmed do
+      confirmed_at { Time.current }
+    end
   end
 
   factory :company_member do

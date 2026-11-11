@@ -32,11 +32,25 @@ module Locations
       { state: 'TO', city: 'Palmas' }
     ].freeze
 
+    STATE_NAME_TO_UF = {
+      'ACRE' => 'AC', 'ALAGOAS' => 'AL', 'AMAPA' => 'AP', 'AMAZONAS' => 'AM',
+      'BAHIA' => 'BA', 'CEARA' => 'CE', 'DISTRITO FEDERAL' => 'DF', 'ESPIRITO SANTO' => 'ES',
+      'GOIAS' => 'GO', 'MARANHAO' => 'MA', 'MATO GROSSO' => 'MT', 'MATO GROSSO DO SUL' => 'MS',
+      'MINAS GERAIS' => 'MG', 'PARA' => 'PA', 'PARAIBA' => 'PB', 'PARANA' => 'PR',
+      'PERNAMBUCO' => 'PE', 'PIAUI' => 'PI', 'RIO DE JANEIRO' => 'RJ', 'RIO GRANDE DO NORTE' => 'RN',
+      'RIO GRANDE DO SUL' => 'RS', 'RONDONIA' => 'RO', 'RORAIMA' => 'RR', 'SANTA CATARINA' => 'SC',
+      'SAO PAULO' => 'SP', 'SERGIPE' => 'SE', 'TOCANTINS' => 'TO'
+    }.freeze
+
     class << self
       def normalize_state(value)
-        state = value.to_s.strip.upcase
-        return nil if state.blank?
-        return state if Locations::BrLocations.valid_state?(state)
+        return nil if value.blank?
+
+        raw = value.to_s.strip.upcase
+        return raw if Locations::BrLocations.valid_state?(raw)
+
+        transliterated = ActiveSupport::Inflector.transliterate(raw).upcase
+        return STATE_NAME_TO_UF[transliterated] if STATE_NAME_TO_UF.key?(transliterated)
 
         nil
       end

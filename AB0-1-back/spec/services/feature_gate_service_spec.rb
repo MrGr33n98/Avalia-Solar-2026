@@ -17,7 +17,7 @@ RSpec.describe FeatureGateService do
     end
 
     context 'for a free company' do
-      let(:plan) { create(:plan, name: 'Free', price: 0) }
+      let(:plan) { Plan.find_by(name: 'Free') || create(:plan, name: 'Free', price: 0) }
       let(:company) { create(:company, plan: plan) }
 
       it 'allows access to view_dashboard' do
@@ -46,7 +46,7 @@ RSpec.describe FeatureGateService do
     end
 
     context 'for a pro company' do
-      let(:plan) { create(:plan, name: 'Pro', price: 99.0) }
+      let(:plan) { Plan.find_by(name: 'Pro') || create(:plan, name: 'Pro', price: 99.0) }
       let(:company) { create(:company, plan: plan) }
 
       before do
@@ -77,7 +77,7 @@ RSpec.describe FeatureGateService do
     end
 
     context 'for an enterprise company' do
-      let(:plan) { create(:plan, name: 'Enterprise', price: 499.0) }
+      let(:plan) { Plan.find_by(name: 'Enterprise') || create(:plan, name: 'Enterprise', price: 499.0) }
       let(:company) { create(:company, plan: plan) }
 
       before do
@@ -116,7 +116,7 @@ RSpec.describe FeatureGateService do
     end
 
     context 'for a free company' do
-      let(:plan) { create(:plan, name: 'Free', price: 0) }
+      let(:plan) { Plan.find_by(name: 'Free') || create(:plan, name: 'Free', price: 0) }
       let(:company) { create(:company, plan: plan) }
 
       it 'returns only free tier features' do
@@ -127,7 +127,7 @@ RSpec.describe FeatureGateService do
     end
 
     context 'for a pro company' do
-      let(:plan) { create(:plan, name: 'Pro', price: 99.0) }
+      let(:plan) { Plan.find_by(name: 'Pro') || create(:plan, name: 'Pro', price: 99.0) }
       let(:company) { create(:company, plan: plan) }
 
       before do
@@ -143,7 +143,7 @@ RSpec.describe FeatureGateService do
     end
 
     context 'for an enterprise company' do
-      let(:plan) { create(:plan, name: 'Enterprise', price: 499.0) }
+      let(:plan) { Plan.find_by(name: 'Enterprise') || create(:plan, name: 'Enterprise', price: 499.0) }
       let(:company) { create(:company, plan: plan) }
 
       before do

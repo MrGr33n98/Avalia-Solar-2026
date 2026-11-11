@@ -6,7 +6,7 @@ RSpec.describe Sales::Reporting::NutshellReportQuery do
   let(:company) { create(:company) }
   let(:user) { create(:user, company: company) }
   let(:account) { Sales::Account.create!(name: 'Conta Teste Nutshell', owner: user, company_id: company.id) }
-  let(:pipeline) { Sales::Pipeline.create!(name: 'Pipeline Solar', company_id: company.id) }
+  let(:pipeline) { Sales::Pipeline.create!(name: 'Pipeline Solar', key: "pipe_#{SecureRandom.hex(4)}") }
   let(:won_stage) { Sales::Stage.create!(sales_pipeline: pipeline, name: 'Fechado Ganho', position: 5, probability: 100) }
 
   before do

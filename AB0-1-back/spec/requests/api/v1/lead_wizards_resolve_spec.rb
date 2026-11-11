@@ -31,6 +31,7 @@ RSpec.describe 'Lead wizards resolve API', type: :request do
   end
 
   def create_wizard_version!(scope:, template_key:, thank_you_title:, field_key:, field_label:, field_type: 'text', target: 'lead', options: [])
+    scope[:category]&.reload if scope[:category]&.persisted?
     version = LeadWizardVersion.create!(
       company: scope[:company],
       category: scope[:category],

@@ -54,7 +54,7 @@ RSpec.describe 'Outbox Event Flow', type: :model do
   end
 
   it 'preserves an approved review event without creating Feed data while paused' do
-    allow(ENV).to receive(:fetch).with('REVIEWS_ONLY_MVP', 'true').and_return('true')
+    allow(ReviewsOnlyMvp).to receive(:reviews_only?).and_return(true)
     review = create(:review, status: 'approved')
     expect { Social::CreateFeedItemJob.perform_now('Review', review.id) }.not_to change(FeedItem, :count)
   end

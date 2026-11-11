@@ -167,8 +167,8 @@ class IntentScore < ApplicationRecord
   def calculate_intent_level
     self.intent_level = case total_score
                         when 0..30 then 'cold'
-                        when 31..50 then 'warm'
-                        when 51..70 then 'hot'
+                        when 31..49 then 'warm'
+                        when 50..70 then 'hot'
                         when 71..85 then 'boiling'
                         when 86..95 then 'immediate'
                         when 96..100 then 'declared'

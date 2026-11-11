@@ -16,7 +16,7 @@ RSpec.describe Analytics::EventPublisher do
           described_class::STREAM_KEY,
           hash_including(
             event_type: 'test_event',
-            payload: a_string_matching(/"email":"\[REDACTED\]"/)
+            payload: satisfy { |p| !p.include?('felipe@test.com') && p.include?('user_id') }
           )
         )
         

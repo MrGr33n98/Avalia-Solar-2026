@@ -89,6 +89,9 @@ RSpec.describe B2b::OnboardingSessionService do
     end
 
     context 'full progression to finalization' do
+      let!(:cat71) { Category.find_by(id: 71) || Category.create!(id: 71, name: 'Energia Solar 71', slug: 'energia-solar-71', seo_url: 'energia-solar-71', description: 'Desc 71') }
+      let!(:cat72) { Category.find_by(id: 72) || Category.create!(id: 72, name: 'Energia Solar 72', slug: 'energia-solar-72', seo_url: 'energia-solar-72', description: 'Desc 72') }
+
       let(:cnpj_data) do
         {
           'cnpj' => '06990590000123',

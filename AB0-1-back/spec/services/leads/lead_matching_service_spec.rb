@@ -9,7 +9,25 @@ RSpec.describe Leads::LeadMatchingService, type: :service do
   end
   let!(:wrong_category) { create(:company, status: :active, active_admin: true, state: 'SP', city: 'São Paulo') }
   let!(:inactive) { create(:company, status: :inactive, active_admin: true, state: 'SP', city: 'São Paulo') }
-  let!(:lead) { create(:lead, wizard_status: :verified, category: category, state: 'SP', city: 'São Paulo') }
+  let!(:lead) do
+    create(
+      :lead,
+      wizard_status: :verified,
+      category: category,
+      state: 'SP',
+      city: 'São Paulo',
+      name: 'Lead Teste',
+      email: 'lead.matching@example.com',
+      phone: '11999998888',
+      product_vertical: 'residential',
+      project_profile: 'residential',
+      quote_type: 'standard',
+      system_size_band: 'medium',
+      decision_timeline: 'immediately',
+      address_full: 'Rua Augusta, 100',
+      consent_at: Time.current
+    )
+  end
 
   before do
     allow(eligible).to receive(:quote_feature_enabled?).and_return(true)

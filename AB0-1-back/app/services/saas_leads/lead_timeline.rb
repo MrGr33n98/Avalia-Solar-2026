@@ -126,7 +126,9 @@ module SaasLeads
         "Sessoes unicas: #{stats[:unique_sessions_count]}",
         "Primeiro evento: #{format_time(stats[:first_event_at])}",
         "Ultimo evento: #{format_time(stats[:last_event_at])}",
-        "Top acoes: #{stats[:top_actions].presence&.join(', ') || '-'}"
+        "Top acoes: #{stats[:top_actions].presence&.join(', ') || '-'}",
+        "anonymous_id: #{stats[:anonymous_ids].presence&.join(', ') || '-'}",
+        "session_id: #{stats[:session_ids].presence&.join(', ') || '-'}"
       ].join("\n")
     end
 

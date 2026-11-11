@@ -59,7 +59,7 @@ module Observability
       # Redact JWT tokens (3 parts separated by dots)
       cleaned.gsub!(/eyJ[A-Za-z0-9_\-]+\.eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+/, '[FILTERED_JWT]')
       # Redact Stripe secret keys
-      cleaned.gsub!(/sk_(live|test)_[0-9a-zA-Z]{24,}/, 'sk_\\1_[FILTERED]')
+      cleaned.gsub!(/sk_(live|test)_[0-9a-zA-Z]+/, 'sk_\\1_[FILTERED]')
       cleaned
     end
   end

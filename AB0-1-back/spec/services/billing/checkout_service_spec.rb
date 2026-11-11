@@ -244,7 +244,7 @@ RSpec.describe Billing::CheckoutService, type: :service do
         create(
           :plan,
           name: "Invalid Twelve Months #{SecureRandom.hex(4)}",
-          stripe_price_id_monthly: 'price_six_months',
+          stripe_price_id_monthly: "price_invalid_#{SecureRandom.hex(4)}",
           stripe_price_id_yearly: nil
         )
       end

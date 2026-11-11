@@ -87,6 +87,7 @@ RSpec.configure do |config|
   # Devise Test Helpers
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include ApiControllerAuthHelpers, type: :controller
+  config.include ApiControllerAuthHelpers, type: :request
   config.include Devise::Test::IntegrationHelpers, type: :request
   config.include Devise::Test::IntegrationHelpers, type: :feature
 end

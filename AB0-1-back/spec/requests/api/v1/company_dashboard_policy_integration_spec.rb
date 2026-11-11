@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe 'Company Dashboard Policy Integration', type: :request do
   let(:user) { create(:user, status: :active, role: :company) }
   # Default free company
-  let(:company) { create(:company, status: :active, cnpj: '12345678901234', address: 'Rua Antiga', city: 'Sampa', state: 'SP') }
+  let(:company) { create(:company, status: :active, cnpj: '11222333000181', address: 'Rua Antiga', city: 'São Paulo', state: 'SP') }
   let(:token) { JWT.encode({ user_id: user.id }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 

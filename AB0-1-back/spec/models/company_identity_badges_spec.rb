@@ -4,15 +4,17 @@ require 'rails_helper'
 
 RSpec.describe 'Company Identity, Commercial Plan & Badges Semantics (Spec 005)', type: :model do
   describe 'Primary Category Governance' do
-    let(:category_solar) { Category.create!(name: 'Energia Solar', slug: 'energia-solar', seo_url: 'energia-solar') }
-    let(:category_ev) { Category.create!(name: 'Mobilidade Elétrica', slug: 'mobilidade-eletrica', seo_url: 'mobilidade-eletrica') }
+    let(:category_solar) { Category.create!(name: 'Energia Solar', slug: 'energia-solar', seo_url: 'energia-solar', description: 'Categoria solar') }
+    let(:category_ev) { Category.create!(name: 'Mobilidade Elétrica', slug: 'mobilidade-eletrica', seo_url: 'mobilidade-eletrica', description: 'Categoria mobilidade') }
     let(:company) do
       Company.new(
         name: 'EcoSolar',
         description: 'Empresa de energia e mobilidade',
         status: 'active',
         state: 'SC',
-        city: 'Florianópolis'
+        city: 'Florianópolis',
+        email: 'contato@ecosolar.com.br',
+        phone: '48999999999'
       )
     end
 

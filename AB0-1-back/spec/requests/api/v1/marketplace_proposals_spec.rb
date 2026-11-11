@@ -181,10 +181,11 @@ RSpec.describe 'Marketplace proposals API', type: :request do
         method.call.merge('p2p_chat' => { 'state' => 'enabled' })
       end
 
-      draft_distribution = create(:lead_distribution, lead: lead, company: company, status: 'sent')
+      test_lead = create(:lead, company: nil, email: buyer.email, name: buyer.name)
+      draft_distribution = create(:lead_distribution, lead: test_lead, company: company, status: 'sent')
       draft_proposal = create(
         :marketplace_proposal,
-        lead: lead,
+        lead: test_lead,
         company: company,
         lead_distribution: draft_distribution,
         buyer_user: buyer,
@@ -222,10 +223,11 @@ RSpec.describe 'Marketplace proposals API', type: :request do
         method.call.merge('p2p_chat' => { 'state' => 'enabled' })
       end
 
-      unlinked_distribution = create(:lead_distribution, lead: lead, company: company, status: 'sent')
+      test_lead = create(:lead, company: nil, email: buyer.email, name: buyer.name)
+      unlinked_distribution = create(:lead_distribution, lead: test_lead, company: company, status: 'sent')
       unlinked_proposal = create(
         :marketplace_proposal,
-        lead: lead,
+        lead: test_lead,
         company: company,
         lead_distribution: unlinked_distribution,
         buyer_user: nil,
@@ -246,10 +248,11 @@ RSpec.describe 'Marketplace proposals API', type: :request do
       end
 
       original_buyer = create(:user, role: 'review', company: nil, status: :active, confirmed_at: Time.current)
-      assigned_distribution = create(:lead_distribution, lead: lead, company: company, status: 'sent')
+      test_lead = create(:lead, company: nil, email: original_buyer.email, name: original_buyer.name)
+      assigned_distribution = create(:lead_distribution, lead: test_lead, company: company, status: 'sent')
       assigned_proposal = create(
         :marketplace_proposal,
-        lead: lead,
+        lead: test_lead,
         company: company,
         lead_distribution: assigned_distribution,
         buyer_user: original_buyer,
@@ -281,10 +284,11 @@ RSpec.describe 'Marketplace proposals API', type: :request do
       expect(conversation.marketplace_proposal_id).to eq(proposal.id)
 
       # Segunda proposta para o mesmo comprador e empresa
-      second_distribution = create(:lead_distribution, lead: lead, company: company, status: 'sent')
+      second_lead = create(:lead, company: nil, email: buyer.email, name: buyer.name)
+      second_distribution = create(:lead_distribution, lead: second_lead, company: company, status: 'sent')
       second_proposal = create(
         :marketplace_proposal,
-        lead: lead,
+        lead: second_lead,
         company: company,
         lead_distribution: second_distribution,
         buyer_user: buyer,

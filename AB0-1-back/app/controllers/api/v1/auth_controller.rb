@@ -121,7 +121,9 @@ module Api
           )
         end
 
-        requested_role = params[:role] || (params[:user] && params[:user][:role]) || 'review'
+        requested_role = params[:role] || (params[:user] && params[:user][:role])
+        requested_role ||= 'company' if (params[:user] && params[:user][:company_id]).present? || params[:company_id].present?
+        requested_role ||= 'review'
         # Never allow a public registration to self-assign admin privileges.
         unless %w[review company].include?(requested_role)
           return render_error_response(

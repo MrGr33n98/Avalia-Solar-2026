@@ -94,8 +94,13 @@ class AnalyticsTrackingJob
       is_first_value = !CompanyDailyStat.where(company_id: company_id).where("#{metric} > 0").exists?
     end
 
-    # Use increment! to update atomically (race-condition safe)
-    stat.increment!(metric, 1)
+    # Use increment! or save! if new record
+    if stat.new_record?
+      stat[metric] = 1
+      stat.save!
+    else
+      stat.increment!(metric, 1)
+    end
 
     # Track "First Value" in PostHog if it's the first one
     if is_first_value
@@ -157,11 +162,13 @@ class AnalyticsTrackingJob
   def store_utm_attribution(company_id, event_name, properties, metadata)
     return unless properties['utm_source'].present?
 
+    utm_campaign = properties['utm_campaign'].presence || properties['utm_source']
+
     attribution = CompanyUtmAttribution.find_or_initialize_by(
       company_id: company_id,
       utm_source: properties['utm_source'],
       utm_medium: properties['utm_medium'],
-      utm_campaign: properties['utm_campaign']
+      utm_campaign: utm_campaign
     )
 
     attribution.utm_content = properties['utm_content'] if properties['utm_content'].present?
@@ -184,7 +191,7 @@ class AnalyticsTrackingJob
       attribution.increment_lead!
     end
 
-    attribution.save!
+    attribution.save! if attribution.changed?
   rescue StandardError => e
     Rails.logger.error(
       "[AnalyticsTrackingJob] Failed to store UTM attribution: " \

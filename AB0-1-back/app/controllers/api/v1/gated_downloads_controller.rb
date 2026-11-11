@@ -27,7 +27,8 @@ module Api
 
       def download_params
         source = params[:gated_download].presence || params
-        ActionController::Parameters.new(source).permit(
+        permitted_source = source.is_a?(ActionController::Parameters) ? source : ActionController::Parameters.new(source)
+        permitted_source.permit(
           :company_id,
           :user_id,
           :anonymous_id,

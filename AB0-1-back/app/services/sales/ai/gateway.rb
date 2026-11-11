@@ -139,7 +139,7 @@ module Sales
           sources_used: generation.sources_used || [],
           missing_fields: generation.missing_fields || [],
           warnings: generation.warnings || [],
-          result: generation.output_json || {},
+          result: (generation.output_json || {}).with_indifferent_access,
           user_decision: generation.user_decision,
           created_at: generation.created_at&.iso8601
         }

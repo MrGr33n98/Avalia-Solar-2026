@@ -14,6 +14,14 @@ class CreatorLead < ApplicationRecord
   STATUSES.each { |status_name| scope "status_#{status_name}", -> { where(status: status_name) } }
   after_create_commit :enqueue_notification
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[admin_notes consent_at created_at creator_user_id email handled_at id intent name publication_id status updated_at visitor_id]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[creator_user publication visitor]
+  end
+
   private
 
   def enqueue_notification

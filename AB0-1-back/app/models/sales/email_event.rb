@@ -16,9 +16,15 @@ module Sales
     validates :signal_class, inclusion: { in: SIGNAL_CLASSES }
     validates :occurred_at, presence: true
 
+    before_validation :set_defaults, on: :create
     after_create_commit :broadcast_timeline_change
 
     private
+
+    def set_defaults
+      self.occurred_at ||= Time.current
+      self.received_at ||= occurred_at || Time.current
+    end
 
     def broadcast_timeline_change
       return unless timeline_sequence.present?

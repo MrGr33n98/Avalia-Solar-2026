@@ -1,7 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe CompanyCatalogBuilder, type: :service do
-  let!(:company) { create(:company, status: :active) }
+  let!(:free_plan) { Plan.find_by(name: 'Free', price: 0) || create(:plan, name: 'Free', price: 0) }
+  let!(:company) { create(:company, status: :active, plan: free_plan) }
   let!(:other_company) { create(:company, status: :active) }
   let!(:category) { create(:category, name: 'Carregadores Veiculares', seo_url: 'carregadores-veiculares') }
   let!(:other_category) { create(:category, name: 'Baterias', seo_url: 'baterias') }

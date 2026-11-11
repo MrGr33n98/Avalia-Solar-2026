@@ -17,8 +17,8 @@ module Api
       after_action :expire_categories_cache, only: %i[create update destroy]
 
       # Global Error Handling
-      rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
       rescue_from StandardError, with: :handle_standard_error
+      rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
 
       # =========================
       # GET /categories

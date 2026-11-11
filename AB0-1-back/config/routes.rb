@@ -514,7 +514,7 @@ Rails.application.routes.draw do
         collection do
           get :tree
           get :featured
-          get 'by_slug/:slug', to: 'categories#show_by_slug'
+          get 'by_slug/*slug', to: 'categories#show_by_slug', format: false
         end
       end
 
@@ -840,9 +840,9 @@ Rails.application.routes.draw do
         end
       end
 
-      namespace :trust do
-        get :profile
-        get 'widgets/config', to: 'trust#widgets_config'
+      scope :trust, controller: :trust do
+        get :profile, action: :profile
+        get 'widgets/config', action: :widgets_config
       end
 
       get 'company_access/context', to: 'company_access#context'

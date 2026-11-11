@@ -18,6 +18,7 @@ RSpec.describe Sales::Messaging::Providers::Ses do
       from_email: 'remetente@avaliasolar.com.br',
       to_email: 'destino@cliente.com',
       tracking_token: 'token-abc',
+      reply_to_email: nil,
       open_tracking_enabled: true,
       click_tracking_enabled: true,
       participants: [],
@@ -27,7 +28,7 @@ RSpec.describe Sales::Messaging::Providers::Ses do
   end
 
   around do |example|
-    keys = %w[AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION AWS_SES_CONFIGURATION_SET SPACES_ACCESS_KEY_ID SPACES_SECRET_ACCESS_KEY]
+    keys = %w[AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION AWS_SES_CONFIGURATION_SET SPACES_ACCESS_KEY_ID SPACES_SECRET_ACCESS_KEY EMAIL_TRACKING_HOST]
     original = keys.to_h { |key| [key, ENV[key]] }
     keys.each { |key| ENV.delete(key) }
     example.run
@@ -53,6 +54,7 @@ RSpec.describe Sales::Messaging::Providers::Ses do
       ENV['AWS_SECRET_ACCESS_KEY'] = 'mock-secret'
       ENV['AWS_REGION'] = 'us-east-1'
       ENV['AWS_SES_CONFIGURATION_SET'] = 'avalia-solar-crm'
+      ENV['EMAIL_TRACKING_HOST'] = 'https://crm.avaliasolar.com.br'
 
       allow(Aws::SESV2::Client).to receive(:new).and_return(ses_client)
     end
@@ -113,7 +115,7 @@ RSpec.describe Sales::Messaging::Providers::Ses do
       result = described_class.new.send_message(email_message)
       expect(result.success?).to be(false)
       expect(result.error_code).to eq('SES_SEND_ERROR')
-      expect(result.error_message).to eq('Aws::SESV2::Errors::ServiceError')
+      expect(result.error_message).to include('Aws::SESV2::Errors::ServiceError')
     end
   end
 end

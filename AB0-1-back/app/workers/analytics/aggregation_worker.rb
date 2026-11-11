@@ -88,7 +88,7 @@ module Analytics
           SELECT 
             company_id, occurred_at::date, #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_quote}, #{filter_leads}, #{filter_reviews}, NOW(), NOW()
           FROM platform_events
-          WHERE occurred_at >= '#{from.iso8601}' AND occurred_at < '#{to.iso8601}' AND company_id IS NOT NULL
+          WHERE occurred_at >= '#{from.utc.iso8601}' AND occurred_at < '#{to.utc.iso8601}' AND company_id IS NOT NULL
             AND #{eligibility_filter}
           GROUP BY 1, 2
           ON CONFLICT (company_id, day) DO UPDATE SET
@@ -111,7 +111,7 @@ module Analytics
           SELECT 
             company_id, date(occurred_at), #{filter_views}, #{filter_ctas}, #{filter_whatsapp}, #{filter_email}, #{filter_phone}, #{filter_website}, #{filter_quote}, #{filter_leads}, #{filter_reviews}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           FROM platform_events
-          WHERE occurred_at >= '#{from.iso8601}' AND occurred_at < '#{to.iso8601}' AND company_id IS NOT NULL
+          WHERE occurred_at >= '#{from.utc.iso8601}' AND occurred_at < '#{to.utc.iso8601}' AND company_id IS NOT NULL
             AND #{eligibility_filter}
           GROUP BY 1, 2
         SQL
@@ -141,11 +141,24 @@ module Analytics
 
     def get_watermark
       res = ActiveRecord::Base.connection.select_one("SELECT last_processed_at FROM analytics_processing_state WHERE pipeline_name = '#{PIPELINE}'")
-      res ? res['last_processed_at'].to_time : 1.day.ago
+      res ? Time.parse(res['last_processed_at'].to_s).utc : 1.day.ago.utc
     end
 
     def update_watermark(ts)
-      ActiveRecord::Base.connection.execute("UPDATE analytics_processing_state SET last_processed_at = '#{ts.iso8601}', updated_at = CURRENT_TIMESTAMP WHERE pipeline_name = '#{PIPELINE}'")
+      is_pg = ActiveRecord::Base.connection.adapter_name =~ /postgre/i
+      ts_utc = ts.utc.iso8601
+      if is_pg
+        ActiveRecord::Base.connection.execute(
+          "INSERT INTO analytics_processing_state (pipeline_name, last_processed_at, updated_at) " \
+          "VALUES ('#{PIPELINE}', '#{ts_utc}', CURRENT_TIMESTAMP) " \
+          "ON CONFLICT (pipeline_name) DO UPDATE SET last_processed_at = EXCLUDED.last_processed_at, updated_at = CURRENT_TIMESTAMP"
+        )
+      else
+        ActiveRecord::Base.connection.execute(
+          "INSERT OR REPLACE INTO analytics_processing_state (pipeline_name, last_processed_at, updated_at) " \
+          "VALUES ('#{PIPELINE}', '#{ts_utc}', CURRENT_TIMESTAMP)"
+        )
+      end
     end
   end
 end

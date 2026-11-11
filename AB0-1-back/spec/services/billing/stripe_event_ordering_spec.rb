@@ -7,7 +7,7 @@ RSpec.describe 'Billing::StripeWebhookHandler Event Ordering & Concurrency (Wave
 
   let!(:pro_plan) { Plan.find_by(stripe_price_id_monthly: 'price_pro_123') || create(:plan, name: 'Pro Stripe', stripe_price_id_monthly: 'price_pro_123') }
   let!(:enterprise_plan) { Plan.find_by(stripe_price_id_monthly: 'price_ent_456') || create(:plan, name: 'Enterprise Stripe', stripe_price_id_monthly: 'price_ent_456') }
-  let!(:free_plan) { Plan.find_by(name: 'Free') || create(:plan, name: 'Free', stripe_price_id_monthly: 'price_free') }
+  let!(:free_plan) { Plan.find_by(name: 'Free', price: 0) || create(:plan, name: 'Free', price: 0, stripe_price_id_monthly: 'price_free') }
   let!(:company) { create(:company, name: 'Empresa Stripe Ordering', plan: pro_plan) }
   let(:signature) { 'mock_sig' }
 

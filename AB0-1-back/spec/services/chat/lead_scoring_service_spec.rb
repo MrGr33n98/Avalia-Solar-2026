@@ -15,8 +15,8 @@ RSpec.describe Chat::LeadScoringService, type: :service do
       }
 
       # vertical_selected (10) + location_provided (15) + wants_quote (40) + contact_with_consent (50) = 115
-      score = described_class.calculate(profile)
-      expect(score).to eq(115)
+      result = described_class.calculate(profile)
+      expect(result[:total_score]).to eq(115)
     end
 
     it 'permite scores superiores a 100 sem clamping no cálculo base' do
@@ -30,8 +30,8 @@ RSpec.describe Chat::LeadScoringService, type: :service do
         metadata: { 'wants_reviews' => true, 'wants_comparison' => true }
       }
 
-      score = described_class.calculate(profile)
-      expect(score).to be > 100
+      result = described_class.calculate(profile)
+      expect(result[:total_score]).to be > 100
     end
   end
 

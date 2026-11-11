@@ -46,7 +46,7 @@ module Analytics
         item_id: lead.company_id, # VAR-014
         category: lead.product_vertical,
         item_category: lead.product_vertical, # VAR-016
-        status: lead.status,
+        status: lead.try(:status) || lead.try(:wizard_status),
         created_at: lead.created_at,
         '$set' => {
           last_lead_at: lead.created_at

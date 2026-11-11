@@ -43,7 +43,8 @@ class RoiCalculationWorker
 
     lead.update_column(:attribution_json, attribution)
 
-    # Trigger LeadScoringWorker (now handled by EventDispatcher)
+    # Trigger LeadScoringWorker
+    LeadScoringWorker.perform_async(lead.id)
   end
 
   private

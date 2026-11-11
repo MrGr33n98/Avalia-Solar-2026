@@ -106,7 +106,10 @@ module Api
       end
 
       def access_token_payload?
-        decoded_token&.[](:typ) == 'access'
+        return false unless decoded_token.present?
+
+        typ = decoded_token[:typ]
+        typ.nil? || typ.to_s == 'access'
       end
 
       def render_error(message, status = :unprocessable_entity, code: nil)

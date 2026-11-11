@@ -40,7 +40,13 @@ module CompanyDashboard
     end
 
     def trust_components
-      trust_record&.components || {}
+      comps = trust_record&.components
+      return {} if comps.blank?
+      return JSON.parse(comps) if comps.is_a?(String)
+
+      comps
+    rescue JSON::ParserError
+      {}
     end
 
     def trust_record

@@ -7,6 +7,7 @@ module Sales
     belongs_to :company
 
     belongs_to :account, class_name: 'Sales::Account', foreign_key: :sales_account_id, optional: true
+    belongs_to :sales_account, class_name: 'Sales::Account', foreign_key: :sales_account_id, optional: true
     belongs_to :contact, class_name: 'Sales::Contact', foreign_key: :sales_contact_id, optional: true
     belongs_to :opportunity, class_name: 'Sales::Opportunity', foreign_key: :sales_opportunity_id, optional: true
     belongs_to :sender_user, class_name: 'User', foreign_key: :sender_user_id, optional: true

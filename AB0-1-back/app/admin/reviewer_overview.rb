@@ -1,4 +1,4 @@
-ActiveAdmin.register_page 'Operações de reviewers' do
+ActiveAdmin.register_page 'Reviewer Overview' do
   menu label: 'Visão geral reviewers', parent: 'Reviews', priority: 1
 
   content title: 'Operações de reviewers' do

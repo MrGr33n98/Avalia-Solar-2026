@@ -3,19 +3,22 @@
 require 'rails_helper'
 
 RSpec.describe CompanyDashboard::FreshnessProvider do
+  include ActiveSupport::Testing::TimeHelpers
+
   describe '.call' do
     let(:now) { Time.zone.parse('2026-03-05 12:00:00') }
 
+    around do |example|
+      travel_to(now) do
+        example.run
+      end
+    end
+
     before do
-      Timecop.freeze(now)
       # Simulating a record in analytics_processing_state
       ActiveRecord::Base.connection.execute(
         "DELETE FROM analytics_processing_state WHERE pipeline_name = 'main_aggregation'"
       )
-    end
-
-    after do
-      Timecop.return
     end
 
     context 'when the pipeline state exists' do

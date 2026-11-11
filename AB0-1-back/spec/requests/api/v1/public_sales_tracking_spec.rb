@@ -73,7 +73,7 @@ RSpec.describe 'Public Sales tracking', type: :request do
   end
 
   it 'ingere evento idempotente e remove propriedades de PII e query string' do
-    post sessions_url, params: { session: { landing_path: '/landing' } }, headers: origin_headers
+    post sessions_url, params: { session: { landing_path: '/landing', consent_state: 'granted' } }, headers: origin_headers
     session_id = JSON.parse(response.body).fetch('session_id')
     event_id = SecureRandom.uuid
     event = { session_id: session_id, event_uuid: event_id, event_name: 'page_view',

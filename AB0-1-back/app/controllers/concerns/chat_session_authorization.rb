@@ -13,12 +13,17 @@ module ChatSessionAuthorization
     if current_user
       return true if session.user_id.present? && session.user_id == current_user.id
       return ::Chat::SessionAccessToken.verify(request.headers['X-Chat-Session-Token'].to_s, session: session) if session.user_id.blank?
-      return render_error_response(message: 'Sessão não pertence ao usuário atual.', status: :forbidden,
+
+      render_error_response(message: 'Sessão não pertence ao usuário atual.', status: :forbidden,
                                    code: 'FORBIDDEN_SESSION')
+      return false
     end
 
     token = request.headers['X-Chat-Session-Token'].presence
-    return invalid_chat_session_token unless token
+    unless token
+      invalid_chat_session_token
+      return false
+    end
     ::Chat::SessionAccessToken.verify(token, session: session)
     true
   end
@@ -26,5 +31,6 @@ module ChatSessionAuthorization
   def invalid_chat_session_token
     render_error_response(message: 'Token de sessão inválido ou expirado.', status: :forbidden,
                           code: 'INVALID_SESSION_TOKEN')
+    false
   end
 end

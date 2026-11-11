@@ -10,6 +10,16 @@ module Mcp
       @user = user
       @headers = headers || {}
       @params = sanitize_hash(params).with_indifferent_access
+
+      # 1. Bloqueio absoluto de ferramentas proibidas por governança (Fail-Closed)
+      if RiskClassifier.prohibited?(@tool_name)
+        raise ::Mcp::Error.new(
+          code: 'prohibited_tool',
+          message: "A execução da ferramenta '#{@tool_name}' é estritamente proibida pelas políticas de governança de segurança.",
+          status: :forbidden
+        )
+      end
+
       @agent = resolve_and_authenticate_agent!
     end
 

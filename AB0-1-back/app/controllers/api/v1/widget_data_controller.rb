@@ -7,12 +7,18 @@ module Api
         company = ::Company.find_by(id: params[:company_id] || params[:id])
         return render json: { error: 'Company not found' }, status: :not_found unless company
 
+        api_key = request.headers['X-Api-Key'] || params[:api_key]
+        if api_key.blank? || company.api_key != api_key
+          return render json: { error: 'Unauthorized: Invalid API Key' }, status: :unauthorized
+        end
+
         # Use stored trust score (unified calculation) with fallback to inline calculation
         trust_score = TrustScore::CalculationService.fetch_stored(company.id)
         trust_score = TrustScore::CalculationService.calculate_inline(company) if trust_score.zero?
 
         render json: {
           id: company.id,
+          company_id: company.id,
           slug: company.slug,
           name: company.name,
           verified: company.verified?,

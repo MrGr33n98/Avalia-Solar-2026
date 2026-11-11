@@ -7,6 +7,14 @@ module Geo
     DATA_PATH = Rails.root.join('config', 'data', 'city_centroids.json')
 
     class << self
+      def data_path
+        if defined?(Rails) && Rails.root.present?
+          Rails.root.join('config', 'data', 'city_centroids.json')
+        else
+          File.expand_path('../../../config/data/city_centroids.json', __dir__)
+        end
+      end
+
       # Retorna { lat: Float, lng: Float } ou nil
       # @param state [String] sigla do estado (ex: "MT")
       # @param city [String] nome da cidade (ex: "Cuiabá")
@@ -23,13 +31,15 @@ module Geo
       private
 
       def data
-        @data ||= load_data
+        @data = load_data if @data.blank?
+        @data || {}
       end
 
       def load_data
-        return {} unless File.exist?(DATA_PATH)
+        target_path = data_path
+        return {} unless File.exist?(target_path)
 
-        raw = JSON.parse(File.read(DATA_PATH))
+        raw = JSON.parse(File.read(target_path))
         # Normaliza as chaves de cidades para busca insensível a acentos
         raw.transform_values do |cities|
           cities.each_with_object({}) do |(city_name, coords), acc|

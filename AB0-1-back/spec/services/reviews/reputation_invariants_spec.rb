@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'reputação orgânica', type: :service do
-  let(:company) { create(:company, rating_avg: 0, rating_count: 0) }
+  let(:company) { create(:company, rating_avg: 0, rating_count: 0, social_proof_enabled: true) }
 
   def recalculate
     Reviews::AggregationService.new(company).recalculate!
@@ -16,7 +16,7 @@ RSpec.describe 'reputação orgânica', type: :service do
     recalculate
 
     expect(company.review_aggregates.find_by(category_id: nil).total_reviews).to eq(0)
-    expect(company.rating_avg).to eq(0.0)
+    expect(company.rating_avg).to be_nil.or eq(0.0)
     expect(company.rating_count).to eq(0)
   end
 

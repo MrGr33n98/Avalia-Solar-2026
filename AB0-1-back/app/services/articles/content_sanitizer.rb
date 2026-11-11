@@ -23,6 +23,8 @@ module Articles
     SAFE_SRC_SCHEMES = %w[http https].freeze
 
     TERM_REPLACEMENTS = {
+      'os cérebros celulares' => 'as células fotovoltaicas',
+      'Os cérebros celulares' => 'As células fotovoltaicas',
       'fotoforos' => 'painéis fotovoltaicos',
       'cérebros celulares' => 'células fotovoltaicas',
       'fotocatalisador' => 'célula fotovoltaica',

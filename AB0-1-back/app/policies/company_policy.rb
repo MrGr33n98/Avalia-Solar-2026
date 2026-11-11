@@ -124,11 +124,15 @@ class CompanyPolicy < ApplicationPolicy
   private
 
   def company_owner?
-    user.owner_of?(record)
+    return false unless user.present?
+
+    user.owner_of?(record) || owns_record?
   end
 
   def company_member?
-    user.active_membership_for?(record.id) || company_owner?
+    return false unless user.present?
+
+    user.active_membership_for?(record.id) || company_owner? || owns_record?
   end
 
   # Verifica se o usuário tem acesso ao workspace empresarial.

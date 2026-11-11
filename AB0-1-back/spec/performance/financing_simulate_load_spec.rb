@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Financing simulate load', type: :request do
-  let!(:company) { Company.create!(name: 'LoadCo', status: 'active') }
+  let!(:company) { create(:company, name: 'LoadCo', status: 'active') }
   let!(:opt) do
     FinancingOption.create!(company: company, institution_name: 'Bank', credit_line: 'Linha', target_audience: 'PF',
                             max_term_months: 60, grace_period_months: 0, interest_rate_percent: 1.2, active: true)

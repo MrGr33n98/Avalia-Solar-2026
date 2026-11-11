@@ -7,11 +7,25 @@ class CompanyUtmAttribution < ApplicationRecord
   belongs_to :company
 
   validates :utm_source, presence: true
+  validates :utm_campaign, presence: true
   validates :company_id, presence: true
   validates :company_id, uniqueness: {
     scope: %i[utm_source utm_medium utm_campaign],
     message: 'UTM combination already exists for this company'
   }
+
+  def self.increment_visit!(company_id, utm_source, utm_medium = nil, utm_campaign = nil)
+    record = find_or_initialize_by(
+      company_id: company_id,
+      utm_source: utm_source,
+      utm_medium: utm_medium,
+      utm_campaign: utm_campaign
+    )
+    record.first_seen_at ||= Date.current
+    record.last_seen_at = Date.current
+    record.increment_visit!
+    record
+  end
 
   scope :recent, -> { where('last_seen_at >= ?', 30.days.ago) }
   scope :by_leads, -> { order(total_leads: :desc) }
@@ -34,33 +48,55 @@ class CompanyUtmAttribution < ApplicationRecord
 
   # Increment metrics
   def increment_visit!
-    increment!(:total_visits)
-    touch(:last_seen_at)
+    if new_record?
+      self.total_visits = 1
+      self.last_seen_at ||= Date.current
+      self.first_seen_at ||= Date.current
+      save!
+    else
+      increment!(:total_visits)
+      touch(:last_seen_at)
+    end
     update_conversion_rate!
   end
 
   def increment_cta_click!(cta_type)
-    increment!(:total_cta_clicks)
+    if new_record?
+      self.total_cta_clicks = 1
+      self.last_seen_at ||= Date.current
+      self.first_seen_at ||= Date.current
+    else
+      increment!(:total_cta_clicks)
+    end
 
     case cta_type.to_s
     when 'whatsapp'
-      increment!(:whatsapp_clicks)
+      new_record? ? self.whatsapp_clicks = 1 : increment!(:whatsapp_clicks)
     when 'email'
-      increment!(:email_clicks)
+      new_record? ? self.email_clicks = 1 : increment!(:email_clicks)
     when 'phone'
-      increment!(:phone_clicks)
+      new_record? ? self.phone_clicks = 1 : increment!(:phone_clicks)
     when 'website'
-      increment!(:website_clicks)
+      new_record? ? self.website_clicks = 1 : increment!(:website_clicks)
     when 'quote'
-      increment!(:quote_clicks) if respond_to?(:quote_clicks)
+      if respond_to?(:quote_clicks)
+        new_record? ? self.quote_clicks = 1 : increment!(:quote_clicks)
+      end
     end
 
-    touch(:last_seen_at)
+    new_record? ? save! : touch(:last_seen_at)
   end
 
   def increment_lead!
-    increment!(:total_leads)
-    touch(:last_seen_at)
+    if new_record?
+      self.total_leads = 1
+      self.last_seen_at ||= Date.current
+      self.first_seen_at ||= Date.current
+      save!
+    else
+      increment!(:total_leads)
+      touch(:last_seen_at)
+    end
     update_conversion_rate!
   end
 

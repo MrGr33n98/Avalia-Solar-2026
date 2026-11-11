@@ -40,11 +40,11 @@ RSpec.describe 'Metering Atomicity & Quota Concurrency (Wave 2C)', type: :servic
       :plan,
       name: 'Unlimited Concurrency',
       features_json: {
-        'featured_products' => true,
-        'company_categories_limit' => true,
-        'service_area_cities_limit' => true,
-        'service_area_states_limit' => true,
-        'product_images_limit' => true,
+        'featured_products' => nil,
+        'company_categories_limit' => nil,
+        'service_area_cities_limit' => nil,
+        'service_area_states_limit' => nil,
+        'product_images_limit' => nil,
         'media_upload' => true
       }
     )

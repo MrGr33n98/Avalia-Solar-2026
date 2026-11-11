@@ -10,6 +10,7 @@ RSpec.describe 'Event Platform Integration DB', type: :model do
       ActiveRecord::Base.connection.execute("TRUNCATE company_daily_stats CASCADE")
       ActiveRecord::Base.connection.execute("TRUNCATE company_feature_daily CASCADE")
       ActiveRecord::Base.connection.execute("TRUNCATE analytics_event_dedup CASCADE")
+      ActiveRecord::Base.connection.execute("TRUNCATE analytics_processing_state CASCADE")
     end
   end
 

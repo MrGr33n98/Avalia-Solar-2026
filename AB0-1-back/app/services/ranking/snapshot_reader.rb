@@ -16,7 +16,11 @@ module Ranking
     end
 
     def legacy_format?
-      @source.is_a?(CompanyRankingSnapshot) || (@source.is_a?(Hash) && !@source.key?(:manifest_release) && !@source.key?('manifest_release'))
+      return true if defined?(CompanyRankingSnapshot) && @source.is_a?(CompanyRankingSnapshot)
+      return true if @source.respond_to?(:definition_version) && !@source.respond_to?(:manifest_release) && !@source.respond_to?(:manifest)
+      return (!@source.key?(:manifest_release) && !@source.key?('manifest_release')) if @source.is_a?(Hash) || @source.respond_to?(:key?)
+
+      !@source.respond_to?(:manifest_release) && !@source.respond_to?(:manifest)
     end
 
     def run_id

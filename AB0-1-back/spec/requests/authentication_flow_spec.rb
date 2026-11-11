@@ -61,10 +61,10 @@ RSpec.describe 'Authentication Flow', type: :request do
     end
 
     it 'allows login after approval' do
-      user.confirm # Ensure the user is confirmed, otherwise Devise blocks them anyway
+      user.update_columns(confirmed_at: Time.current, confirmation_sent_at: Time.current)
       expect(user.active_for_authentication?).to be false
 
-      user.update(status: :active)
+      user.update(status: :active, approved_by_admin: true)
 
       expect(user.active_for_authentication?).to be true
     end

@@ -8,6 +8,10 @@ RSpec.describe 'api/v1/companies/{id}/widget_data', type: :request do
       parameter name: :id, in: :path, type: :string, description: 'ID ou Slug da Empresa'
       parameter name: :api_key, in: :query, type: :string, description: 'API Key do Instalador/Empresa'
 
+      let!(:company) { create(:company, status: 'active', api_key: 'test_widget_key') }
+      let(:id) { company.id }
+      let(:api_key) { 'test_widget_key' }
+
       response '200', 'Dados encontrados' do
         schema type: :object,
           properties: {
@@ -24,10 +28,12 @@ RSpec.describe 'api/v1/companies/{id}/widget_data', type: :request do
       end
 
       response '401', 'Nao autorizado' do
+        let(:api_key) { 'invalid_key' }
         run_test!
       end
       
       response '404', 'Empresa nao encontrada' do
+        let(:id) { 999_999 }
         run_test!
       end
     end

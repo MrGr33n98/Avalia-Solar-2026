@@ -329,7 +329,7 @@ module Api
           linked_conv = proposal.linked_conversations.first ||
                         proposal.conversations.first ||
                         (proposal.buyer_user_id && ::Conversation.find_by(company_id: proposal.company_id, user_id: proposal.buyer_user_id)) ||
-                        (proposal.lead&.user_id && ::Conversation.find_by(company_id: proposal.company_id, user_id: proposal.lead.user_id))
+                        (proposal.lead&.try(:user_id) && ::Conversation.find_by(company_id: proposal.company_id, user_id: proposal.lead.try(:user_id)))
           {
             id: proposal.id,
             reference: proposal.reference,

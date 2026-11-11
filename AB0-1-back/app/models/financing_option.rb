@@ -12,6 +12,7 @@ class FinancingOption < ApplicationRecord
   validates :credit_line, presence: true
   validates :target_audience, inclusion: { in: TARGET_AUDIENCES }, allow_blank: true
   validates :target_audience, presence: true, if: :active?
+  validates :institution_name, presence: true, if: :active?
   validates :amortization_system, inclusion: { in: AMORTIZATION_SYSTEMS }, allow_blank: true
   validates :max_term_months, numericality: { only_integer: true, greater_than_or_equal_to: 1 }, allow_nil: true
   validates :grace_period_months, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true

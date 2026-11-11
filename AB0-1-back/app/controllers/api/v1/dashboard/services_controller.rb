@@ -178,7 +178,8 @@ module Api
         end
 
         def image_url(attachment)
-          options = Rails.application.routes.default_url_options.dup
+          options = (Rails.application.routes.default_url_options || {}).dup
+          options[:host] ||= ENV.fetch('APP_HOST', 'localhost')
           options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
           Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
         end

@@ -66,7 +66,8 @@ RSpec.describe 'Authentication System', type: :model do
         company: company,
         role: 'company',
         terms_accepted: true,
-        approved_by_admin: false
+        approved_by_admin: false,
+        confirmed_at: Time.current
       )
     end
 

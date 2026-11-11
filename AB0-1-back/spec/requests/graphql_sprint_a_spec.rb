@@ -48,12 +48,21 @@ RSpec.describe 'GraphQL Sprint A — User, Leads & Reviews', type: :request do
       name: 'Solar Tech',
       description: 'Uma excelente empresa solar',
       email: 'contato@solartech.com',
-      phone: '(11) 99999-9999',
+      phone: '11999999999',
+      whatsapp: '11999999999',
+      whatsapp_url: 'https://wa.me/5511999999999',
       city: 'São Paulo',
       state: 'SP',
       status: 'active',
-      active_admin: true
+      plan_status: 'active',
+      active_admin: true,
+      moderation_status: 'approved',
+      quote_cta_enabled: true
     )
+    comp.plan = Plan.find_or_create_by!(name: 'Plano Pro Teste') do |p|
+      p.price = 99.0
+      p.features = { quote_feature: true, quote_requests: true, custom_ctas: true }
+    end
     comp.categories << category
     comp.save!
     comp
