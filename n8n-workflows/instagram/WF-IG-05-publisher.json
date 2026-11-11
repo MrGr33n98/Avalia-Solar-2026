@@ -11,7 +11,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Step 1: Kill-switch verification & publish payload setup\nconst item = $input.first().json;\n\nconst autoPublishEnabled = ($env.INSTAGRAM_AUTOPUBLISH_ENABLED || 'false').toLowerCase() === 'true';\nconst igUserId = $env.META_IG_USER_ID || '17841400000000000';\nconst accessToken = $env.META_ACCESS_TOKEN || '';\n\nif (!autoPublishEnabled) {\n  return [{\n    json: {\n      status: 'DRY_RUN',\n      message: 'Publishing aborted by kill-switch: INSTAGRAM_AUTOPUBLISH_ENABLED is false',\n      simulated_payload: {\n        ig_user_id: igUserId,\n        image_url: item.image_url,\n        caption_snippet: (item.full_caption || '').slice(0, 100)\n      },\n      dry_run_at: new Date().toISOString()\n    }\n  }];\n}\n\nif (!accessToken) {\n  throw new Error('META_ACCESS_TOKEN is required for live publishing');\n}\n\nreturn [{\n  json: {\n    ...item,\n    status: 'READY_FOR_META_API',\n    ig_user_id: igUserId,\n    access_token: accessToken,\n    poll_attempts: 0,\n    max_poll_attempts: 12\n  }\n}];"
+        "jsCode": "// Step 1: Kill-switch verification & publish payload setup\nconst item = $input.first().json;\n\nconst autoPublishEnabled = ($env.INSTAGRAM_AUTOPUBLISH_ENABLED || 'false').toLowerCase() === 'true';\nconst igUserId = $env.META_IG_USER_ID || '17841476704762828';\nconst accessToken = $env.META_ACCESS_TOKEN || '';\n\nif (!autoPublishEnabled) {\n  return [{\n    json: {\n      status: 'DRY_RUN',\n      message: 'Publishing aborted by kill-switch: INSTAGRAM_AUTOPUBLISH_ENABLED is false',\n      simulated_payload: {\n        ig_user_id: igUserId,\n        image_url: item.image_url,\n        caption_snippet: (item.full_caption || '').slice(0, 100)\n      },\n      dry_run_at: new Date().toISOString()\n    }\n  }];\n}\n\nif (!accessToken) {\n  throw new Error('META_ACCESS_TOKEN is required for live publishing');\n}\n\nreturn [{\n  json: {\n    ...item,\n    status: 'READY_FOR_META_API',\n    ig_user_id: igUserId,\n    access_token: accessToken,\n    poll_attempts: 0,\n    max_poll_attempts: 12\n  }\n}];"
       },
       "id": "e63d3a01-9a7c-40b1-8b01-000000000052",
       "name": "Check Kill-Switch & Credentials",
@@ -324,3 +324,4 @@
     }
   ]
 }
+

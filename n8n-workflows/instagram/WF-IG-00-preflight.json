@@ -11,7 +11,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Step 1: Read and validate required environment / credential variables\nconst igUserId = $env.META_IG_USER_ID || '17841400000000000';\nconst accessToken = $env.META_ACCESS_TOKEN || '';\nconst autoPublishEnabled = ($env.INSTAGRAM_AUTOPUBLISH_ENABLED || 'false').toLowerCase() === 'true';\n\nif (!accessToken) {\n  return [{\n    json: {\n      status: 'ERROR',\n      message: 'META_ACCESS_TOKEN is missing in environment',\n      kill_switch_active: !autoPublishEnabled,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ig_user_id: igUserId,\n    access_token: accessToken,\n    kill_switch_active: !autoPublishEnabled,\n    target_account: 'avalia_solar',\n    graph_api_version: 'v21.0',\n    timestamp: new Date().toISOString()\n  }\n}];"
+        "jsCode": "// Step 1: Read and validate required environment / credential variables\nconst igUserId = $env.META_IG_USER_ID || '17841476704762828';\nconst accessToken = $env.META_ACCESS_TOKEN || '';\nconst autoPublishEnabled = ($env.INSTAGRAM_AUTOPUBLISH_ENABLED || 'false').toLowerCase() === 'true';\n\nif (!accessToken) {\n  return [{\n    json: {\n      status: 'ERROR',\n      message: 'META_ACCESS_TOKEN is missing in environment',\n      kill_switch_active: !autoPublishEnabled,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ig_user_id: igUserId,\n    access_token: accessToken,\n    kill_switch_active: !autoPublishEnabled,\n    target_account: 'avalia_solar',\n    graph_api_version: 'v21.0',\n    timestamp: new Date().toISOString()\n  }\n}];"
       },
       "id": "e63d3a01-9a7c-40b1-8b01-000000000002",
       "name": "Init & Environment Check",
@@ -108,3 +108,4 @@
     }
   ]
 }
+

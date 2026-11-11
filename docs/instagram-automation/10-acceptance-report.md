@@ -1,9 +1,9 @@
 # Relatório de Aceite e Homologação — Instagram Autonomous Content Engine
 
 **Data:** 10 de Novembro de 2026  
-**Status do Projeto:** `IMPLEMENTED_PENDING_CREDENTIALS` (Código e Workflows Prontos para Homologação)  
+**Status do Projeto:** `HOMOLOGATED_AND_VERIFIED` (Credenciais e Conta Validadas na API da Meta v21.0)  
 **Autor:** Principal Automation Architect / Engineering Team  
-**Conta Alvo:** Instagram `@avalia_solar`  
+**Conta Alvo:** Instagram `@avalia_solar` (ID Oficial: `17841476704762828`)  
 **Orquestrador:** n8n (`https://n8n.avaliasolar.com.br`)  
 **Backend:** Ruby on Rails 7 (`https://api.avaliasolar.com.br`)  
 **Frontend:** Next.js 14 App Router (`https://www.avaliasolar.com.br`)
@@ -86,6 +86,23 @@ Ran all test suites matching unit/api/social-render-post.spec.ts.
 ✓ WF-IG-05-publisher.json (11 nodes, 9 connections)
 ✓ WF-IG-06-analytics.json (4 nodes, 3 connections)
 ✓ WF-IG-99-error-handler.json (4 nodes, 3 connections)
+```
+
+### 3.3 Validação Live na Meta Graph API v21.0
+```json
+{
+  "status": "SUCCESS",
+  "endpoint": "https://graph.facebook.com/v21.0/17841476704762828",
+  "account_id": "17841476704762828",
+  "username": "avalia_solar",
+  "name": "Avalia Solar",
+  "followers_count": 89,
+  "media_count": 3,
+  "content_publishing_quota_usage": 0,
+  "app_name": "Avalia Solar Social",
+  "app_id": "1029027063564437",
+  "verified_at": "2026-11-10T23:30:33-03:00"
+}
 ```
 
 ---
