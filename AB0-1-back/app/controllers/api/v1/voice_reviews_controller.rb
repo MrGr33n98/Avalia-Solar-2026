@@ -45,6 +45,9 @@ module Api
         session = VoiceReviewSession.find(params[:id])
         authenticate_session!(session)
         transcript = session.latest_transcript
+        audio_asset = session.voice_review_assets.where("mime_type LIKE 'audio/%'").order(created_at: :desc).first
+        has_audio = audio_asset&.audio_attached? || false
+
         render json: {
           session_id: session.id, company_name: session.company.name, state: session.state,
           transcript_text: transcript&.text, transcript_version: transcript&.version || 0,
@@ -52,12 +55,31 @@ module Api
           inferred_rating: session.draft_rating || transcript&.inferred_rating,
           inferred_criteria: transcript&.inferred_criteria || [],
           mentioned_equipment: transcript&.mentioned_equipment || [],
+          reviewer_name: session.draft_payload.to_h['reviewer_name'].to_s.strip.presence,
+          has_audio: has_audio,
+          audio_url: has_audio ? "/api/v1/voice_review_sessions/#{session.id}/audio" : nil,
           publication_consent_required: true, privacy_url: '/privacy'
         }
       rescue VoiceReviews::ConfirmationService::Error
         render json: { code: 'UNAUTHORIZED', message: 'Sessão inválida ou expirada' }, status: :unauthorized
       rescue ActiveRecord::RecordNotFound
         render json: { code: 'NOT_FOUND', message: 'Sessão não encontrada' }, status: :not_found
+      end
+
+      def audio
+        return render json: { code: 'FEATURE_DISABLED', message: 'Avaliações por voz indisponíveis' }, status: :service_unavailable unless VoiceReviews::Config.enabled?
+
+        session = VoiceReviewSession.find(params[:id])
+        authenticate_session!(session)
+        audio_asset = session.voice_review_assets.where("mime_type LIKE 'audio/%'").order(created_at: :desc).first
+        blob = audio_asset&.stored_blob
+        return head :not_found unless blob
+
+        send_data blob.download, type: blob.content_type || 'audio/ogg', disposition: 'inline'
+      rescue VoiceReviews::ConfirmationService::Error
+        head :unauthorized
+      rescue ActiveRecord::RecordNotFound
+        head :not_found
       end
 
       def confirm
@@ -75,7 +97,7 @@ module Api
       private
 
       def bearer_token
-        request.headers['Authorization'].to_s.sub(/\ABearer\s+/i, '')
+        request.headers['Authorization'].to_s.sub(/\ABearer\s+/i, '').presence || params[:token].to_s.presence
       end
 
       def authenticate_session!(session)
@@ -85,7 +107,7 @@ module Api
       def confirmation_params
         source = params[:confirmation] || params
         source.permit(:transcript_version, :review_text, :headline, :rating, :experience_confirmed,
-                      :publish_text_consent, :display_name_mode, :full_name_consent,
+                      :publish_text_consent, :display_name_mode, :full_name_consent, :reviewer_name,
                       mentioned_equipment: [], criterion_scores: {}, acknowledgements: {})
       end
     end

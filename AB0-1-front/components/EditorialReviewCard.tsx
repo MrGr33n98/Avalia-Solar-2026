@@ -16,10 +16,14 @@ export interface ReviewV2 {
   buyer_tip: string;
   category_id: number;
   category_name?: string;
-  user: {
+  user?: {
     name: string;
     avatar_url: string | null;
-  };
+  } | null;
+  metadata?: Record<string, any>;
+  public_reviewer_name?: string;
+  display_reviewer_name?: string;
+  capture_flow_source?: string;
   granular_scores?: Array<{
     title: string;
     score: number;
@@ -42,6 +46,20 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
   const cons = normalizeReviewList(review.cons);
   const hasPros = pros.length > 0;
   const hasCons = cons.length > 0;
+  const isWhatsAppReview =
+    review.capture_flow_source === 'whatsapp_voice' ||
+    review.metadata?.collection_channel === 'whatsapp_voice';
+  const authorName =
+    review.user?.name ||
+    review.public_reviewer_name ||
+    review.display_reviewer_name ||
+    review.metadata?.reviewer_name ||
+    'Cliente Verificado';
+  const initials =
+    authorName
+      .replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g, '')
+      .slice(0, 2)
+      .toUpperCase() || 'CV';
 
   return (
     <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -50,17 +68,22 @@ export function EditorialReviewCard({ review }: { review: ReviewV2 }) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3 sm:gap-4">
             <Avatar className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-300 sm:h-12 sm:w-12">
-              <AvatarImage src={review.user.avatar_url || undefined} />
+              <AvatarImage src={review.user?.avatar_url || undefined} />
               <AvatarFallback className="rounded-full bg-slate-100 font-medium text-slate-600">
-                {review.user.name.substring(0, 2).toUpperCase()}
+                {initials}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 space-y-1.5 pt-0.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-base font-medium leading-tight tracking-tight text-slate-950 sm:text-lg">
-                  {review.user.name}
+                  {authorName}
                 </span>
-                {review.verified && (
+                {isWhatsAppReview && (
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-700">
+                    Auditado via WhatsApp
+                  </span>
+                )}
+                {review.verified && !isWhatsAppReview && (
                   <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-slate-600">
                     Verificado
                   </span>

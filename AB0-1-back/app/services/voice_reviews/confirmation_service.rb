@@ -15,6 +15,7 @@ module VoiceReviews
       text = transcript.text.to_s.strip.truncate(500)
       reviewer_name = session.draft_payload.to_h['reviewer_name'].to_s.strip.presence
       criterion_scores = session.draft_payload.to_h['criterion_scores']
+      name_mode = reviewer_name.present? ? 'initials' : 'anonymous'
       new(
         session: session,
         token: token,
@@ -23,11 +24,11 @@ module VoiceReviews
           review_text: text.length >= 5 ? text : 'Experiência avaliada por áudio via WhatsApp.',
           headline: transcript.headline,
           rating: rating,
-          reviewer_name: nil,
+          reviewer_name: reviewer_name,
           criterion_scores: criterion_scores,
           experience_confirmed: true,
           publish_text_consent: true,
-          display_name_mode: 'anonymous',
+          display_name_mode: name_mode,
           full_name_consent: false,
           confirmed_via: 'whatsapp_reply'
         },

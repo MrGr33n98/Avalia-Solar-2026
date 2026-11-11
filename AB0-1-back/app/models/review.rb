@@ -124,7 +124,7 @@ class Review < ApplicationRecord
 
   def anonymized_reviewer_name
     name_source = reviewer_user&.name || metadata&.[]('reviewer_name')
-    if name_source.blank?
+    if name_source.blank? || metadata&.[]('display_name_mode') == 'anonymous'
       'Anônimo'
     elsif reviewer_consented_to_full_name? || ActiveModel::Type::Boolean.new.cast(metadata&.[]('lgpd_consent'))
       name_source
@@ -144,6 +144,8 @@ class Review < ApplicationRecord
   end
 
   def public_reviewer_name
+    return 'Cliente Verificado' if metadata&.[]('display_name_mode') == 'anonymous'
+
     raw_name = (user&.name.presence || metadata&.[]('reviewer_name')).to_s.strip
     return 'Cliente' if raw_name.blank?
     return raw_name if user_consented_to_full_name? || ActiveModel::Type::Boolean.new.cast(metadata&.[]('lgpd_consent'))

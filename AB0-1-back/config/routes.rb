@@ -965,6 +965,7 @@ Rails.application.routes.draw do
       post 'voice_reviews/webhook', to: 'voice_reviews#webhook'
       post 'voice_reviews/webhook/waha', to: 'voice_reviews#webhook_waha'
       get 'voice_review_sessions/:id', to: 'voice_reviews#show'
+      get 'voice_review_sessions/:id/audio', to: 'voice_reviews#audio'
       post 'voice_review_sessions/:id/confirm', to: 'voice_reviews#confirm'
 
       resources :faqs do

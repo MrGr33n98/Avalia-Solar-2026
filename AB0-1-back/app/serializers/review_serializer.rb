@@ -3,11 +3,20 @@ class ReviewSerializer < ActiveModel::Serializer
              :reply, :replied_at, :status, :featured, :display_order, :verified,
              :headline, :project_type, :installation_status, :estimated_power,
              :is_legacy, :content_metadata, :metadata, :display_headline,
-             :pros, :cons, :buyer_tip, :editorial_complete, :helpful_count, :read_count
+             :pros, :cons, :buyer_tip, :editorial_complete, :helpful_count, :read_count,
+             :display_reviewer_name, :public_reviewer_name
 
   belongs_to :user
   belongs_to :company
   has_many :review_criterion_scores
+
+  def display_reviewer_name
+    object.display_reviewer_name
+  end
+
+  def public_reviewer_name
+    object.public_reviewer_name
+  end
 
   def display_headline
     object.headline.presence || object.comment&.truncate(60)

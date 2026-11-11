@@ -64,4 +64,15 @@ RSpec.describe VoiceReviews::ConfirmationService, type: :service do
     expect(review.metadata['submitted_with_audio']).to eq(true)
     expect(review.metadata['mentioned_equipment']).to include('WEG')
   end
+
+  it 'preserves reviewer_name from draft and defaults to initials mode when confirming from WhatsApp' do
+    session.merge_draft!(reviewer_name: 'Felipe Silva', initial_rating: 5)
+    result = described_class.confirm_from_whatsapp!(session: session)
+
+    review = Review.find(result[:review_id])
+    expect(review.metadata['reviewer_name']).to eq('Felipe Silva')
+    expect(review.metadata['display_name_mode']).to eq('initials')
+    expect(review.anonymized_reviewer_name).to eq('F. S.')
+    expect(review.public_reviewer_name).to eq('Felipe S.')
+  end
 end

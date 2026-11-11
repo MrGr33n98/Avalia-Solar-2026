@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { CheckCircle2, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
+import { CheckCircle2, Loader2, Mic2, ShieldCheck, Sparkles, User } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { fetchApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -25,8 +25,27 @@ type Draft = {
   inferred_rating?: number | null;
   inferred_criteria?: InferredCriterion[];
   mentioned_equipment?: string[];
+  reviewer_name?: string | null;
+  has_audio?: boolean;
+  audio_url?: string | null;
   privacy_url: string;
 };
+
+function getInitials(name?: string | null): string {
+  if (!name) return 'CV';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'CV';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getFormattedInitials(name?: string | null): string {
+  if (!name) return 'Cliente Verificado';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'Cliente Verificado';
+  if (parts.length === 1) return `${parts[0][0].toUpperCase()}.`;
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+}
 
 function VoiceReviewConfirmationContent({ params }: { params: { session_id: string } }) {
   const searchParams = useSearchParams();
@@ -36,7 +55,8 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
   const [text, setText] = useState('');
   const [rating, setRating] = useState(5);
   const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>({});
-  const [nameMode, setNameMode] = useState<'anonymous' | 'initials'>('anonymous');
+  const [nameMode, setNameMode] = useState<'full_name' | 'initials' | 'anonymous'>('initials');
+  const [fullNameConsent, setFullNameConsent] = useState(false);
   const [experienceConfirmed, setExperienceConfirmed] = useState(false);
   const [publishConsent, setPublishConsent] = useState(false);
   const [done, setDone] = useState(false);
@@ -52,6 +72,9 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
         setText(value.transcript_text || '');
         setHeadline(value.headline || `Avaliação sobre ${value.company_name}`);
         setRating(value.inferred_rating && value.inferred_rating >= 1 ? value.inferred_rating : 5);
+        if (value.reviewer_name) {
+          setNameMode('initials');
+        }
         const mapped: Record<string, number> = {};
         (value.inferred_criteria || []).forEach((item) => {
           if (item.score && item.score >= 1 && item.score <= 5) {
@@ -64,11 +87,24 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
   }, [params.session_id, token]);
 
   async function confirm() {
-    if (!draft || text.trim().length < 5 || text.length > 500 || rating < 1 || !experienceConfirmed || !publishConsent) return;
+    if (
+      !draft ||
+      text.trim().length < 5 ||
+      text.length > 500 ||
+      rating < 1 ||
+      !experienceConfirmed ||
+      !publishConsent ||
+      (nameMode === 'full_name' && !fullNameConsent)
+    ) {
+      return;
+    }
     try {
       await fetchApi(`/voice_review_sessions/${params.session_id}/confirm`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Idempotency-Key': `voice-confirm-${params.session_id}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Idempotency-Key': `voice-confirm-${params.session_id}`,
+        },
         body: JSON.stringify({
           confirmation: {
             transcript_version: draft.transcript_version,
@@ -77,16 +113,21 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
             rating,
             criterion_scores: criteriaScores,
             mentioned_equipment: draft.mentioned_equipment || [],
+            reviewer_name: draft.reviewer_name,
             experience_confirmed: experienceConfirmed,
             publish_text_consent: publishConsent,
             display_name_mode: nameMode,
-            full_name_consent: false,
+            full_name_consent: nameMode === 'full_name' ? fullNameConsent : false,
           },
         }),
       });
       setDone(true);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Não foi possível confirmar a avaliação.');
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Não foi possível confirmar a avaliação.'
+      );
     }
   }
 
@@ -104,7 +145,8 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
         <CheckCircle2 className="mx-auto h-14 w-14 text-emerald-600" />
         <h1 className="mt-6 text-3xl font-black">Avaliação recebida para moderação</h1>
         <p className="mt-3 text-slate-600">
-          Sua avaliação foi enviada para análise e poderá ser publicada após a moderação. Seu áudio original permanece privado.
+          Sua avaliação foi enviada para análise e poderá ser publicada após a moderação. Seu áudio
+          original permanece privado.
         </p>
       </main>
     );
@@ -131,8 +173,26 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
 
         <h1 className="mt-5 text-3xl font-black">Sobre {draft.company_name}</h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Transformamos seu áudio em uma avaliação estruturada. Revise ou ajuste qualquer detalhe antes de publicar.
+          Transformamos seu áudio em uma avaliação estruturada. Revise ou ajuste qualquer detalhe
+          antes de publicar.
         </p>
+
+        {draft.has_audio && draft.audio_url && (
+          <div className="mt-6 rounded-2xl border border-violet-100 bg-violet-50/60 p-5">
+            <div className="flex items-center gap-2 text-sm font-bold text-violet-900">
+              <Mic2 className="h-4 w-4 text-violet-700" />
+              Ouça seu áudio gravado
+            </div>
+            <p className="mt-1 text-xs text-slate-600">
+              Apenas você tem acesso a esta gravação. O áudio original nunca é publicado.
+            </p>
+            <audio
+              controls
+              src={`${draft.audio_url}?token=${encodeURIComponent(token)}`}
+              className="mt-3 w-full"
+            />
+          </div>
+        )}
 
         <label className="mt-6 block text-sm font-bold" htmlFor="voice-review-headline">
           Título sugerido
@@ -167,7 +227,9 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
                 aria-pressed={rating === value}
                 onClick={() => setRating(value)}
                 className={`h-11 w-11 rounded-full border text-sm font-bold ${
-                  rating === value ? 'border-violet-700 bg-violet-700 text-white' : 'border-slate-300 text-slate-700'
+                  rating === value
+                    ? 'border-violet-700 bg-violet-700 text-white'
+                    : 'border-slate-300 text-slate-700'
                 }`}
               >
                 {value}
@@ -185,7 +247,10 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
               {draft.inferred_criteria.map((item) => {
                 const current = criteriaScores[item.criterion_slug] || 0;
                 return (
-                  <div key={item.criterion_slug} className="flex flex-wrap items-center justify-between gap-2">
+                  <div
+                    key={item.criterion_slug}
+                    className="flex flex-wrap items-center justify-between gap-2"
+                  >
                     <span className="text-sm font-semibold text-slate-800">{item.title}</span>
                     <div className="flex gap-1.5">
                       {[1, 2, 3, 4, 5].map((score) => (
@@ -216,28 +281,139 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold text-slate-500">Equipamento citado:</span>
             {draft.mentioned_equipment.map((eq) => (
-              <span key={eq} className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+              <span
+                key={eq}
+                className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800"
+              >
                 {eq}
               </span>
             ))}
           </div>
         )}
 
-        <fieldset className="mt-6">
-          <legend className="text-sm font-bold">Como seu nome deve aparecer?</legend>
-          <div className="mt-2.5 flex flex-wrap gap-3">
-            {(['anonymous', 'initials'] as const).map((value) => (
-              <label key={value} className="flex items-center gap-2 text-sm">
+        <fieldset className="mt-8">
+          <legend className="text-sm font-bold text-slate-900">
+            Como você deseja ser identificado na página da empresa?
+          </legend>
+          <p className="mt-1 text-xs text-slate-500">
+            Você está no controle da sua privacidade segundo a LGPD. Escolha uma das opções:
+          </p>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            {/* Modo 1: Iniciais (Recomendado) */}
+            <div
+              onClick={() => setNameMode('initials')}
+              className={`cursor-pointer rounded-2xl border p-4 transition-all ${
+                nameMode === 'initials'
+                  ? 'border-violet-600 bg-violet-50/50 ring-2 ring-violet-500/20'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-800">
+                  Recomendado
+                </span>
                 <input
                   type="radio"
                   name="display-name"
-                  checked={nameMode === value}
-                  onChange={() => setNameMode(value)}
+                  checked={nameMode === 'initials'}
+                  onChange={() => setNameMode('initials')}
+                  className="text-violet-600"
                 />
-                {value === 'anonymous' ? 'Anônimo' : 'Somente iniciais'}
-              </label>
-            ))}
+              </div>
+              <div className="mt-3 flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-200 font-bold text-violet-900 text-xs">
+                  {getInitials(draft.reviewer_name)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-900 truncate">
+                    {getFormattedInitials(draft.reviewer_name)}
+                  </p>
+                  <p className="text-[11px] text-slate-500">Iniciais seguras</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modo 2: Nome Completo */}
+            <div
+              onClick={() => setNameMode('full_name')}
+              className={`cursor-pointer rounded-2xl border p-4 transition-all ${
+                nameMode === 'full_name'
+                  ? 'border-violet-600 bg-violet-50/50 ring-2 ring-violet-500/20'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500">Perfil Público</span>
+                <input
+                  type="radio"
+                  name="display-name"
+                  checked={nameMode === 'full_name'}
+                  onChange={() => setNameMode('full_name')}
+                  className="text-violet-600"
+                />
+              </div>
+              <div className="mt-3 flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 font-bold text-emerald-800 text-xs">
+                  {getInitials(draft.reviewer_name)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-900 truncate">
+                    {draft.reviewer_name || 'Nome Completo'}
+                  </p>
+                  <p className="text-[11px] text-slate-500">Maior autoridade</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modo 3: Anônimo */}
+            <div
+              onClick={() => setNameMode('anonymous')}
+              className={`cursor-pointer rounded-2xl border p-4 transition-all ${
+                nameMode === 'anonymous'
+                  ? 'border-violet-600 bg-violet-50/50 ring-2 ring-violet-500/20'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500">Privacidade Total</span>
+                <input
+                  type="radio"
+                  name="display-name"
+                  checked={nameMode === 'anonymous'}
+                  onChange={() => setNameMode('anonymous')}
+                  className="text-violet-600"
+                />
+              </div>
+              <div className="mt-3 flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 font-bold text-slate-700 text-xs">
+                  <User className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-900 truncate">Cliente Verificado</p>
+                  <p className="text-[11px] text-slate-500">100% anônimo</p>
+                </div>
+              </div>
+            </div>
           </div>
+
+          {nameMode === 'full_name' && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
+              <label className="flex items-start gap-2.5 text-xs text-amber-900 font-medium cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={fullNameConsent}
+                  onChange={(e) => setFullNameConsent(e.target.checked)}
+                  className="mt-0.5 rounded text-violet-600"
+                />
+                <span>
+                  Autorizo expressamente o Avalia Solar a exibir meu nome completo (
+                  {draft.reviewer_name || 'informado'}) nesta avaliação pública, ciente dos termos
+                  da LGPD.
+                </span>
+              </label>
+            </div>
+          )}
         </fieldset>
 
         <div className="mt-6 space-y-3 text-sm">
@@ -263,9 +439,16 @@ function VoiceReviewConfirmationContent({ params }: { params: { session_id: stri
           className="mt-8 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
           size="lg"
           onClick={confirm}
-          disabled={text.trim().length < 5 || text.length > 500 || rating < 1 || !experienceConfirmed || !publishConsent}
+          disabled={
+            text.trim().length < 5 ||
+            text.length > 500 ||
+            rating < 1 ||
+            !experienceConfirmed ||
+            !publishConsent ||
+            (nameMode === 'full_name' && !fullNameConsent)
+          }
         >
-          ✅ Aprovar e Publicar Avaliação
+          ✅ Confirmar e Enviar Avaliação
         </Button>
 
         <p className="mt-5 text-xs leading-5 text-slate-500">

@@ -777,7 +777,15 @@ export interface Review {
   status?: 'pending' | 'approved' | 'rejected' | 'in_analysis' | 'draft' | 'archived';
   moderation_notes?: string | null;
   moderated_at?: string | null;
-  capture_flow_source?: 'profile' | 'lead' | 'chat';
+  capture_flow_source?:
+    | 'profile'
+    | 'lead'
+    | 'chat'
+    | 'custom_review_form'
+    | 'qr_code_form'
+    | 'whatsapp_voice';
+  display_reviewer_name?: string;
+  public_reviewer_name?: string;
   verified?: boolean;
   featured?: boolean;
   display_order?: number;
@@ -830,6 +838,9 @@ export interface Review {
     read_count?: number;
     last_aggregated_at?: string;
     reviewer_email?: string;
+    reviewer_name?: string;
+    collection_channel?: string;
+    voice_badge_label?: string;
     would_recommend?: boolean;
     [key: string]: unknown;
   };
@@ -2298,7 +2309,12 @@ export interface ProspectsWorkspaceResponse {
     allowed_origins?: string[];
     snippet_url?: string;
     last_seen_at?: string | null;
-    status: 'healthy' | 'possibly_inactive' | 'configured_no_evidence' | 'inactive' | 'not_configured';
+    status:
+      | 'healthy'
+      | 'possibly_inactive'
+      | 'configured_no_evidence'
+      | 'inactive'
+      | 'not_configured';
     settings?: Record<string, unknown>;
   };
   integrations: {
@@ -2722,9 +2738,12 @@ export interface DashboardLeadsQuery {
 
 export const companyDashboardApi = {
   getLeads: (companyId?: string | number, filters: DashboardLeadsQuery = {}) =>
-    fetchApi<{ data: DashboardCompanyLead[]; meta: { pagination: DashboardLeadPagination } }>('/dashboard/leads', {
-      params: { company_id: companyId, ...filters },
-    }),
+    fetchApi<{ data: DashboardCompanyLead[]; meta: { pagination: DashboardLeadPagination } }>(
+      '/dashboard/leads',
+      {
+        params: { company_id: companyId, ...filters },
+      }
+    ),
   getAnalyticsOverview: (companyId?: string | number, query: AnalyticsQueryParams = {}) =>
     fetchApi<CompanyAnalyticsOverview>('/company_dashboard/analytics/overview', {
       params: { company_id: companyId, ...query },
@@ -3418,8 +3437,7 @@ export const companyTeamApi = {
     fetchApi<void>(`/company/members/${id}`, {
       method: 'DELETE',
     }),
-  getInvitations: () =>
-    fetchApi<{ items: CompanyInvitationItem[] }>('/company/invitations'),
+  getInvitations: () => fetchApi<{ items: CompanyInvitationItem[] }>('/company/invitations'),
   sendInvitation: (email: string, role: string) =>
     fetchApi<CompanyInvitationItem>('/company/invitations', {
       method: 'POST',
@@ -3434,21 +3452,21 @@ export const companyTeamApi = {
       method: 'DELETE',
     }),
   verifyInvitation: (token: string) =>
-    fetchApi<{ company_id: number; company_name: string; email: string; role: string; expires_at: string }>(
-      '/company_invitations/verify',
-      {
-        method: 'POST',
-        body: JSON.stringify({ token }),
-      }
-    ),
+    fetchApi<{
+      company_id: number;
+      company_name: string;
+      email: string;
+      role: string;
+      expires_at: string;
+    }>('/company_invitations/verify', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
   acceptInvitation: (token: string) =>
-    fetchApi<{ message: string; company_id: number; role: string }>(
-      '/company_invitations/accept',
-      {
-        method: 'POST',
-        body: JSON.stringify({ token }),
-      }
-    ),
+    fetchApi<{ message: string; company_id: number; role: string }>('/company_invitations/accept', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
 };
 
 export const plansApi = {
@@ -4248,9 +4266,12 @@ export interface CompanyProposalSettingsPayload {
 
 export const companyProposalSettingsApi = {
   get: (companyId?: string | number) =>
-    fetchApi<{ proposal_settings: CompanyProposalSettingsPayload }>('/company_dashboard/proposal_settings', {
-      params: companyId ? { company_id: companyId } : undefined,
-    }),
+    fetchApi<{ proposal_settings: CompanyProposalSettingsPayload }>(
+      '/company_dashboard/proposal_settings',
+      {
+        params: companyId ? { company_id: companyId } : undefined,
+      }
+    ),
   update: (settings: Partial<CompanyProposalSettingsPayload>, companyId?: string | number) =>
     fetchApi<{ proposal_settings: CompanyProposalSettingsPayload; message?: string }>(
       '/company_dashboard/proposal_settings',
@@ -4260,4 +4281,3 @@ export const companyProposalSettingsApi = {
       }
     ),
 };
-
