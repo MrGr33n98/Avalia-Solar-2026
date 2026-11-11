@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths-ignore:
       - 'AB0-1-front/**'
+      - '.gitignore'
       - '.github/workflows/cd-production.yml'
       - '.github/workflows/cd-frontend-production.yml'
       - '.github/scripts/verify-release-ci.sh'

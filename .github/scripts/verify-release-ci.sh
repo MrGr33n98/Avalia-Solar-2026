@@ -57,7 +57,7 @@ for attempt in $(seq 1 90); do
       exit 1
     }
 
-    # Só tolera RSpec legado; todos os outros jobs devem terminar em success,
+    # Em frontend-only, só tolera RSpec legado; os outros jobs devem passar,
     # exceto E2E, que depende do job de backend e deve estar skipped.
     if ! jq -e '
       (.jobs | length > 0 and length < 100)
@@ -75,6 +75,11 @@ for attempt in $(seq 1 90); do
       and ([.jobs[] | select(.status != "completed")] | length == 0)
     ' <<< "$jobs" >/dev/null; then
       echo "::error::CI possui falhas adicionais ou gates obrigatórios ausentes. Deploy bloqueado."
+      exit 1
+    fi
+
+    if [ "$RELEASE_SCOPE" = "full" ]; then
+      echo "::error::CI integral falhou para release full. Deploy bloqueado."
       exit 1
     fi
   fi
@@ -139,6 +144,7 @@ for attempt in $(seq 1 90); do
     and (.files | length > 0 and length < 300)
     and ([.files[].filename | select(
       (startswith("AB0-1-front/")
+       or . == ".gitignore"
        or . == ".github/workflows/ci-web-backend.yml"
        or . == ".github/workflows/cd-production.yml"
        or . == ".github/workflows/cd-frontend-production.yml"
