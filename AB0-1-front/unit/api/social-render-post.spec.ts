@@ -18,7 +18,7 @@ describe('GET /api/social/render-post', () => {
   it('renders standard Instagram Feed (1080x1350) by default', async () => {
     const request = {
       url: 'https://www.avaliasolar.com.br/api/social/render-post?title=Guia+de+Mercado+Livre&category=Mercado+Livre',
-    };
+    } as unknown as Request;
     const response = (await GET(request)) as unknown as {
       status: number;
       width: number;
@@ -35,7 +35,7 @@ describe('GET /api/social/render-post', () => {
   it('supports story format (1080x1920) when requested', async () => {
     const request = {
       url: 'https://www.avaliasolar.com.br/api/social/render-post?title=Story+Solar&format=story',
-    };
+    } as unknown as Request;
     const response = (await GET(request)) as unknown as {
       width: number;
       height: number;
@@ -48,7 +48,7 @@ describe('GET /api/social/render-post', () => {
   it('falls back to default feed dimensions when an unknown format is provided', async () => {
     const request = {
       url: 'https://www.avaliasolar.com.br/api/social/render-post?format=unknown_format',
-    };
+    } as unknown as Request;
     const response = (await GET(request)) as unknown as {
       width: number;
       height: number;
