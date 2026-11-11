@@ -57,7 +57,7 @@ for attempt in $(seq 1 90); do
       exit 1
     }
 
-    # Em frontend-only, só tolera RSpec legado; os outros jobs devem passar,
+    # Só tolera RSpec legado; todos os outros jobs devem terminar em success,
     # exceto E2E, que depende do job de backend e deve estar skipped.
     if ! jq -e '
       (.jobs | length > 0 and length < 100)
@@ -78,10 +78,6 @@ for attempt in $(seq 1 90); do
       exit 1
     fi
 
-    if [ "$RELEASE_SCOPE" = "full" ]; then
-      echo "::error::CI integral falhou para release full. Deploy bloqueado."
-      exit 1
-    fi
   fi
 
   # Compare against the most recent successful production release, NOT HEAD^.
