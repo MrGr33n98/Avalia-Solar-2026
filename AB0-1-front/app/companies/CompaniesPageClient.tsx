@@ -66,6 +66,7 @@ import { usePageTracking } from '@/hooks/usePageTracking';
 import { track } from '@/lib/analytics/consolidated';
 import { useComparison } from '@/hooks/useComparison';
 import { openComparisonDock } from '@/lib/floating-widget-events';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 interface CompaniesPageClientProps {
   forcedCategoryIds?: number[];
@@ -106,7 +107,30 @@ export function CompaniesContent({
     () => buildCategoryDescriptorMap(treeCategories),
     [treeCategories]
   );
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
+  const isSmallMobile = useIsMobile(360);
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>(() => {
+    const urlView = searchParams.get('view');
+    if (urlView === 'list' || urlView === 'grid' || urlView === 'map') {
+      return urlView;
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+        if (stored === 'list' || stored === 'grid' || stored === 'map') {
+          return stored;
+        }
+      } catch {
+        // LocalStorage inacessível em contexto restrito
+      }
+
+      if (window.innerWidth < 768) {
+        return 'list';
+      }
+    }
+
+    return 'grid';
+  });
 
   useEffect(() => {
     const urlView = searchParams.get('view');
@@ -130,28 +154,25 @@ export function CompaniesContent({
     }
   }, [searchParams]);
 
-  const handleViewModeChange = useCallback(
-    (newMode: 'grid' | 'list' | 'map') => {
-      setViewMode(newMode);
-      try {
-        localStorage.setItem(VIEW_MODE_STORAGE_KEY, newMode);
-      } catch {
-        // Silencia erro de localStorage
-      }
-      track('company_view_mode_changed', { mode: newMode });
+  const handleViewModeChange = useCallback((newMode: 'grid' | 'list' | 'map') => {
+    setViewMode(newMode);
+    try {
+      localStorage.setItem(VIEW_MODE_STORAGE_KEY, newMode);
+    } catch {
+      // Silencia erro de localStorage
+    }
+    track('company_view_mode_changed', { mode: newMode });
 
-      if (typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        if (newMode === 'grid') {
-          url.searchParams.delete('view');
-        } else {
-          url.searchParams.set('view', newMode);
-        }
-        window.history.replaceState({}, '', url.toString());
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (newMode === 'grid') {
+        url.searchParams.delete('view');
+      } else {
+        url.searchParams.set('view', newMode);
       }
-    },
-    []
-  );
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
   const [showMobileLocationGate, setShowMobileLocationGate] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const { detectingGps: detectingLocation, gpsError, getCoordinates } = useCompanyGeolocation();
@@ -170,7 +191,11 @@ export function CompaniesContent({
       const sortedCategoryIds = [...nextFilters.category_ids].sort((a, b) => a - b);
 
       if (sortedCategoryIds.length > 0) {
-        const nextPath = buildCompaniesCategoriesPath(sortedCategoryIds, categoriesById, pathSlugById);
+        const nextPath = buildCompaniesCategoriesPath(
+          sortedCategoryIds,
+          categoriesById,
+          pathSlugById
+        );
         const queryString = stringifyQueryParams(nextFilters, { omitCategoryIds: true });
         return `${nextPath}${queryString ? `?${queryString}` : ''}`;
       }
@@ -190,7 +215,8 @@ export function CompaniesContent({
         q: targetFilters.search || undefined,
         state: targetFilters.state.length > 0 ? targetFilters.state : undefined,
         city: targetFilters.city.length > 0 ? targetFilters.city : undefined,
-        category_ids: targetFilters.category_ids.length > 0 ? targetFilters.category_ids : undefined,
+        category_ids:
+          targetFilters.category_ids.length > 0 ? targetFilters.category_ids : undefined,
         min_rating: targetFilters.min_rating || undefined,
         has_reviews: targetFilters.has_reviews || undefined,
         verified: targetFilters.verified || undefined,
@@ -665,7 +691,10 @@ export function CompaniesContent({
               addressCountry: 'BR',
             },
             aggregateRating:
-              company.rating_count && company.rating_count > 0 && company.rating_avg && company.rating_avg > 0
+              company.rating_count &&
+              company.rating_count > 0 &&
+              company.rating_avg &&
+              company.rating_avg > 0
                 ? {
                     '@type': 'AggregateRating',
                     ratingValue: company.rating_avg,
@@ -723,10 +752,14 @@ export function CompaniesContent({
               Não foi possível carregar as empresas no momento
             </h2>
             <p className="text-slate-600 mb-6 text-sm max-w-md mx-auto">
-              Tivemos uma instabilidade temporária ao consultar as empresas cadastradas. Por favor, tente novamente.
+              Tivemos uma instabilidade temporária ao consultar as empresas cadastradas. Por favor,
+              tente novamente.
             </p>
             <div className="flex justify-center gap-3">
-              <Button onClick={() => refetch()} className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2">
+              <Button
+                onClick={() => refetch()}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2"
+              >
                 Tentar Novamente
               </Button>
             </div>
@@ -793,7 +826,7 @@ export function CompaniesContent({
               <FilterSidebar hideMobileTrigger={true} />
             </aside>
 
-            <div className="flex w-full min-w-0 flex-1 flex-col gap-3 md:gap-6">
+            <div className="flex w-full min-w-0 flex-1 flex-col gap-2 md:gap-6">
               <div className="w-full min-w-0 max-w-full empty:hidden">
                 <BannerByLocation location="companies_top" className="max-w-full" />
               </div>
@@ -802,24 +835,28 @@ export function CompaniesContent({
 
               <div className="flex flex-col gap-2 sm:flex-row sm:gap-4 sm:items-center sm:justify-between">
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  <h1 className="text-[22px] leading-[27px] font-bold text-slate-900 tracking-tight md:text-2xl">
                     {pageHeading}
                   </h1>
-                  <p className="text-slate-500 text-sm mt-1 flex items-center gap-2">
+                  <div className="text-xs leading-[18px] text-slate-500 mt-0.5 md:text-sm md:mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 min-h-[18px] sm:min-h-0">
                     <span>Encontramos {totalCount} empresas que atendem aos seus critérios</span>
                     {isFetching && !loading && (
-                      <span className="inline-flex items-center text-xs text-blue-600 font-medium animate-pulse">
+                      <span
+                        aria-live="polite"
+                        className="inline-flex items-center text-[11px] text-blue-600 font-medium animate-pulse shrink-0"
+                      >
                         • Atualizando...
                       </span>
                     )}
-                  </p>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3 self-start sm:self-center">
+                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                   {/* Swiss Style: Dropdown Ordenar por */}
-                  <div className="relative flex items-center">
+                  <div className="relative flex-1 sm:flex-initial flex items-center min-w-0">
                     <select
                       id="sort-companies"
+                      aria-label="Ordenar por"
                       value={filters.sort || ''}
                       onChange={(e) => {
                         const updated = {
@@ -829,9 +866,11 @@ export function CompaniesContent({
                         };
                         router.replace(buildTargetUrl(updated), { scroll: false });
                       }}
-                      className="appearance-none h-9 pl-3 pr-8 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 font-medium shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="appearance-none h-11 sm:h-9 w-full min-w-0 pl-3 pr-8 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-700 font-medium shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation truncate"
                     >
-                      <option value="">Ordenar: Recomendadas</option>
+                      <option value="">
+                        {isSmallMobile ? 'Recomendadas' : 'Ordenar: Recomendadas'}
+                      </option>
                       <option value="rating">Melhor avaliação</option>
                       <option value="reviews_desc">Mais avaliações</option>
                       <option value="newest">Mais recentes</option>
@@ -843,14 +882,14 @@ export function CompaniesContent({
                   </div>
 
                   {/* Swiss Style: View Mode toggle com botão ativo dark */}
-                  <div className="flex items-center bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
+                  <div className="flex items-center h-11 sm:h-9 bg-white rounded-lg border border-slate-200 p-0.5 sm:p-1 shadow-sm shrink-0">
                     <Button
                       variant="ghost"
                       size="icon"
                       aria-label="Visualização em grade"
                       aria-pressed={viewMode === 'grid'}
                       className={cn(
-                        'h-8 w-8 transition-colors',
+                        'relative h-10 w-10 sm:h-7 sm:w-7 transition-colors rounded touch-manipulation after:absolute after:-inset-0.5 sm:after:hidden',
                         viewMode === 'grid'
                           ? 'bg-slate-900 text-white hover:bg-slate-800'
                           : 'text-slate-500 hover:bg-slate-50'
@@ -865,7 +904,7 @@ export function CompaniesContent({
                       aria-label="Visualização em lista"
                       aria-pressed={viewMode === 'list'}
                       className={cn(
-                        'h-8 w-8 transition-colors',
+                        'relative h-10 w-10 sm:h-7 sm:w-7 transition-colors rounded touch-manipulation after:absolute after:-inset-0.5 sm:after:hidden',
                         viewMode === 'list'
                           ? 'bg-slate-900 text-white hover:bg-slate-800'
                           : 'text-slate-500 hover:bg-slate-50'
@@ -880,7 +919,7 @@ export function CompaniesContent({
                       aria-label="Visualização em mapa"
                       aria-pressed={viewMode === 'map'}
                       className={cn(
-                        'h-8 w-8 transition-colors',
+                        'relative h-10 w-10 sm:h-7 sm:w-7 transition-colors rounded touch-manipulation after:absolute after:-inset-0.5 sm:after:hidden',
                         viewMode === 'map'
                           ? 'bg-slate-900 text-white hover:bg-slate-800'
                           : 'text-slate-500 hover:bg-slate-50'
@@ -894,10 +933,17 @@ export function CompaniesContent({
               </div>
 
               {/* Swiss Style: Contador de resultados */}
-              {!loading && viewMode !== 'map' && (
-                <p className="text-xs text-slate-400 font-medium -mt-1 md:-mt-2">
-                  Mostrando {Math.min(companies.length, PAGE_SIZE)} de {totalCount} empresas
-                </p>
+              {viewMode !== 'map' && (
+                <div
+                  data-testid="results-counter"
+                  className="min-h-4 -mt-1 md:-mt-2 flex items-center"
+                >
+                  {!loading && (
+                    <p className="text-xs text-slate-400 font-medium leading-4">
+                      Mostrando {Math.min(companies.length, PAGE_SIZE)} de {totalCount} empresas
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Mobile quick filters */}
@@ -980,7 +1026,12 @@ export function CompaniesContent({
                 })}
               </section>
 
-              <div className={cn('space-y-4 transition-opacity duration-200', isFetching && !loading && 'opacity-70')}>
+              <div
+                className={cn(
+                  'space-y-4 transition-opacity duration-200',
+                  isFetching && !loading && 'opacity-70'
+                )}
+              >
                 {loading ? (
                   <div
                     className={cn(
@@ -991,7 +1042,10 @@ export function CompaniesContent({
                     )}
                     style={
                       viewMode === 'grid'
-                        ? { gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, var(--company-card-min)), 1fr))' }
+                        ? {
+                            gridTemplateColumns:
+                              'repeat(auto-fit, minmax(min(100%, var(--company-card-min)), 1fr))',
+                          }
                         : undefined
                     }
                   >
@@ -1029,8 +1083,7 @@ export function CompaniesContent({
                           }
                         />
                       </div>
-                    ) : (
-                      viewMode === 'list' ? (
+                    ) : viewMode === 'list' ? (
                       <div
                         data-testid="companies-list"
                         className="flex flex-col gap-2.5 sm:gap-3 w-full min-w-0"
@@ -1060,7 +1113,6 @@ export function CompaniesContent({
                           />
                         ))}
                       </div>
-                    )
                     )}
 
                     {totalPages > 1 && viewMode !== 'map' && (

@@ -39,13 +39,14 @@ export default function MobileCompanyFilterBar({
     return count;
   }, [filters]);
 
-  const hasLocationActive = filters.lat !== null || filters.state.length > 0 || filters.city.length > 0;
+  const hasLocationActive =
+    filters.lat !== null || filters.state.length > 0 || filters.city.length > 0;
   const hasCategoryActive = filters.category_ids.length > 0;
 
   return (
     <div
       className={cn(
-        'w-full bg-white border-b border-slate-100 flex items-center justify-start gap-2 px-3 py-1.5 overflow-x-auto select-none no-scrollbar snap-x snap-mandatory',
+        'w-full bg-white border-b border-slate-100 flex items-center justify-start gap-1.5 px-3 py-1 overflow-x-auto select-none no-scrollbar snap-x snap-mandatory',
         className
       )}
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -55,7 +56,7 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onOpenFilters}
         className={cn(
-          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all border snap-start touch-manipulation',
+          'relative flex h-[34px] min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all border snap-start touch-manipulation after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-[""]',
           activeGroupsCount > 0
             ? 'bg-blue-600 border-blue-600 text-white'
             : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
@@ -80,7 +81,7 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onOpenLocation}
         className={cn(
-          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation',
+          'relative flex h-[34px] min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-[""]',
           hasLocationActive
             ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold'
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
@@ -96,7 +97,7 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onOpenCategory}
         className={cn(
-          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation',
+          'relative flex h-[34px] min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-[""]',
           hasCategoryActive
             ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold'
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
@@ -111,13 +112,15 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onToggleVerified}
         className={cn(
-          'flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation',
+          'relative flex h-[34px] min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-[""]',
           filters.verified
             ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold'
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
         )}
       >
-        <ShieldCheck className={cn('h-3.5 w-3.5', filters.verified ? 'text-blue-700' : 'text-slate-400')} />
+        <ShieldCheck
+          className={cn('h-3.5 w-3.5', filters.verified ? 'text-blue-700' : 'text-slate-400')}
+        />
         <span>Verificadas</span>
       </button>
     </div>
