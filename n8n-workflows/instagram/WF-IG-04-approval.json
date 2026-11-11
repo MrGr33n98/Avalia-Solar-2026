@@ -1,0 +1,162 @@
+{
+  "name": "WF-IG-04-approval",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000041",
+      "name": "Receive Rendered Asset Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [180, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate approval session with HMAC token\nconst crypto = require('crypto');\nconst item = $input.first().json;\n\nconst publicationId = `pub_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;\nconst hmacSecret = $env.APPROVAL_HMAC_SECRET || 'avalia_solar_default_secret_change_me';\n\nconst token = crypto.createHmac('sha256', hmacSecret)\n  .update(`${publicationId}:${item.headline}`)\n  .digest('hex');\n\nconst n8nHost = $env.N8N_HOST || 'https://n8n.avaliasolar.com.br';\nconst approveUrl = `${n8nHost}/webhook/ig-approval-action?id=${publicationId}&action=approve&token=${token}`;\nconst rejectUrl = `${n8nHost}/webhook/ig-approval-action?id=${publicationId}&action=reject&token=${token}`;\n\nreturn [{\n  json: {\n    ...item,\n    publication_id: publicationId,\n    approval_token: token,\n    approve_url: approveUrl,\n    reject_url: rejectUrl,\n    approval_requested_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000042",
+      "name": "Generate Approval Security Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPS_NOTIFICATION_WEBHOOK || 'https://api.avaliasolar.com.br/api/v1/internal/social_review_notification' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"social_post_approval_required\",\n  \"publication_id\": \"{{ $json.publication_id }}\",\n  \"headline\": \"{{ $json.headline }}\",\n  \"caption\": {{ JSON.stringify($json.full_caption) }},\n  \"image_url\": \"{{ $json.image_url }}\",\n  \"approve_url\": \"{{ $json.approve_url }}\",\n  \"reject_url\": \"{{ $json.reject_url }}\",\n  \"timestamp\": \"{{ $json.approval_requested_at }}\"\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000043",
+      "name": "Dispatch Approval Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "ig-approval-action",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000044",
+      "name": "Wait for Approval Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "webhookId": "0b15e4f7-33a5-4847-a36c-9c7cb3d4b8aa"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.query.action }}",
+              "value2": "approve"
+            }
+          ]
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000045",
+      "name": "Is Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": "WF-IG-05-publisher",
+        "dataToSend": "all",
+        "options": {}
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000046",
+      "name": "Dispatch to Publisher",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1360, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Post was rejected by reviewer or timed out\nreturn [{\n  json: {\n    status: 'POST_REJECTED',\n    publication_id: $json.query?.id,\n    reason: 'Explicitly rejected by editorial reviewer',\n    rejected_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000047",
+      "name": "Log Rejection",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 420]
+    }
+  ],
+  "connections": {
+    "Receive Rendered Asset Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate Approval Security Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Approval Security Token": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Approval Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Approval Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Approved?": {
+      "main": [
+        [
+          {
+            "node": "Dispatch to Publisher",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Rejection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "instagram"
+    },
+    {
+      "name": "approval"
+    },
+    {
+      "name": "human-in-the-loop"
+    }
+  ]
+}

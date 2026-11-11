@@ -1,0 +1,136 @@
+{
+  "name": "WF-IG-02-ai-editorial",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000021",
+      "name": "Receive Candidate Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [180, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare LLM prompt payload with editorial guidelines & guardrails\nconst item = $input.first().json;\nconst candidate = item.candidate || item;\n\nconst systemPrompt = `Você é o Editor Chefe do Avalia Solar (@avalia_solar), a maior plataforma de transparência, avaliação e cotações de energia solar do Brasil.\nSua missão é transformar artigos técnicos em posts educativos de alta autoridade para o feed do Instagram.\n\nDIRETRIZES EDITORIAIS:\n- Tom: Técnico, transparente, empoderador, analítico e direto ao ponto.\n- Proibido: Clickbait apelativo, promessas irreais ('ganhe energia de graça'), termos pejorativos ou dados sem embasamento.\n- Contexto regulatório: Conhecimento exato de GD, Lei 14.300, Aneel, micro/minigeração e Mercado Livre de Energia.\n- Formato: Retorne ESTRITAMENTE um objeto JSON válido.`;\n\nconst userPrompt = `Transforme este artigo em um post para o Instagram:\\nTítulo: ${candidate.title}\\nCategoria: ${candidate.category}\\nResumo: ${candidate.summary}\\nConteúdo: ${candidate.content}\\nURL Canônica: ${candidate.canonical_url}\\n\\nRetorne estritamente um JSON com:\\n{\\n  \"headline\": \"Título curto e impactante para o card visual (máx 60 caracteres)\",\\n  \"hook\": \"Gancho inicial intrigante para a primeira linha da legenda (máx 100 caracteres)\",\\n  \"context\": \"Contextualização do cenário atual de energia (máx 250 caracteres)\",\\n  \"explanation\": \"Explicação prática e transparente de como funciona ou impacto real (máx 450 caracteres)\",\\n  \"insight\": \"Recomendação prática para o consumidor ou integrador (máx 200 caracteres)\",\\n  \"cta\": \"Chamada para ação clara (ex: 'Calcule sua economia no link da bio')\",\\n  \"hashtags\": [\"#energiasolar\", \"#avaliasolar\", \"#fotovoltaico\", \"#economiadeenergia\", \"#sustentabilidade\"]\\n}`;\n\nreturn [{\n  json: {\n    candidate,\n    systemPrompt,\n    userPrompt,\n    openai_key: $env.OPENAI_API_KEY || ''\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000022",
+      "name": "Format Editorial Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.openai_key }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o\",\n  \"temperature\": 0.4,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    { \"role\": \"system\", \"content\": {{ JSON.stringify($json.systemPrompt) }} },\n    { \"role\": \"user\", \"content\": {{ JSON.stringify($json.userPrompt) }} }\n  ]\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000023",
+      "name": "Generate Copy via GPT-4o",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate JSON schema, sanitize and assemble caption\nconst response = $input.first().json;\nconst promptData = $('Format Editorial Prompt').first().json;\nconst rawContent = response.choices?.[0]?.message?.content || '{}';\n\nlet editorial;\ntry {\n  editorial = JSON.parse(rawContent);\n} catch (e) {\n  throw new Error(`Failed to parse AI output: ${e.message} - Raw: ${rawContent}`);\n}\n\nconst headline = (editorial.headline || promptData.candidate.title).slice(0, 80);\nconst hook = (editorial.hook || '').trim();\nconst context = (editorial.context || '').trim();\nconst explanation = (editorial.explanation || '').trim();\nconst insight = (editorial.insight || '').trim();\nconst cta = (editorial.cta || 'Confira a análise completa no link da bio.').trim();\nconst hashtags = Array.isArray(editorial.hashtags) ? editorial.hashtags : ['#energiasolar', '#avaliasolar'];\n\nconst fullCaption = `${hook}\\n\\n${context}\\n\\n${explanation}\\n\\n💡 Insight Avalia Solar:\\n${insight}\\n\\n👉 ${cta}\\n🔗 Leia a matéria na íntegra: ${promptData.candidate.canonical_url}\\n\\n.\\n.\\n.\\n${hashtags.join(' ')}`;\n\nreturn [{\n  json: {\n    status: 'EDITORIAL_READY',\n    candidate: promptData.candidate,\n    headline,\n    full_caption: fullCaption,\n    editorial,\n    category: promptData.candidate.category,\n    canonical_url: promptData.candidate.canonical_url,\n    generated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000024",
+      "name": "Assemble & Validate Caption",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": "WF-IG-03-media-render",
+        "dataToSend": "all",
+        "options": {}
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000025",
+      "name": "Dispatch to Media Render",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Receive Candidate Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Editorial Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Editorial Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Copy via GPT-4o",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Copy via GPT-4o": {
+      "main": [
+        [
+          {
+            "node": "Assemble & Validate Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble & Validate Caption": {
+      "main": [
+        [
+          {
+            "node": "Dispatch to Media Render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "instagram"
+    },
+    {
+      "name": "editorial"
+    },
+    {
+      "name": "ai"
+    }
+  ]
+}

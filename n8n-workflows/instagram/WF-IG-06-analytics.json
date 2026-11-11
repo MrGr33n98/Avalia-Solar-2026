@@ -1,0 +1,109 @@
+{
+  "name": "WF-IG-06-analytics",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000061",
+      "name": "Receive Published Event Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [180, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare PostHog capture payload\nconst item = $input.first().json;\nconst posthogKey = $env.NEXT_PUBLIC_POSTHOG_KEY || $env.POSTHOG_API_KEY || '';\nconst posthogHost = $env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';\n\nconst payload = {\n  api_key: posthogKey,\n  event: 'instagram_publication_succeeded',\n  distinct_id: 'instagram_avalia_solar',\n  properties: {\n    media_id: item.id,\n    permalink: item.permalink,\n    media_type: item.media_type,\n    timestamp: item.timestamp,\n    published_at: new Date().toISOString(),\n    platform: 'instagram',\n    account: 'avalia_solar'\n  }\n};\n\nreturn [{\n  json: {\n    ...item,\n    posthog_url: `${posthogHost.replace(/\\/$/, '')}/capture/`,\n    posthog_payload: payload\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000062",
+      "name": "Build Telemetry Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.posthog_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.posthog_payload) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000063",
+      "name": "Dispatch to PostHog",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Record telemetry dispatch result\nreturn [{\n  json: {\n    status: 'TELEMETRY_LOGGED',\n    media_id: $json.media_id,\n    permalink: $json.permalink,\n    synced_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000064",
+      "name": "Record Telemetry Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Receive Published Event Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Telemetry Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Telemetry Payload": {
+      "main": [
+        [
+          {
+            "node": "Dispatch to PostHog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dispatch to PostHog": {
+      "main": [
+        [
+          {
+            "node": "Record Telemetry Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "instagram"
+    },
+    {
+      "name": "analytics"
+    },
+    {
+      "name": "posthog"
+    }
+  ]
+}

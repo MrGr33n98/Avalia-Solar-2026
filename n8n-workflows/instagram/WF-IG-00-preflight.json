@@ -1,0 +1,110 @@
+{
+  "name": "WF-IG-00-preflight",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000001",
+      "name": "Manual / Test Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Step 1: Read and validate required environment / credential variables\nconst igUserId = $env.META_IG_USER_ID || '17841400000000000';\nconst accessToken = $env.META_ACCESS_TOKEN || '';\nconst autoPublishEnabled = ($env.INSTAGRAM_AUTOPUBLISH_ENABLED || 'false').toLowerCase() === 'true';\n\nif (!accessToken) {\n  return [{\n    json: {\n      status: 'ERROR',\n      message: 'META_ACCESS_TOKEN is missing in environment',\n      kill_switch_active: !autoPublishEnabled,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ig_user_id: igUserId,\n    access_token: accessToken,\n    kill_switch_active: !autoPublishEnabled,\n    target_account: 'avalia_solar',\n    graph_api_version: 'v21.0',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000002",
+      "name": "Init & Environment Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.ig_user_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,username,name,profile_picture_url,followers_count,media_count"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000003",
+      "name": "Query Meta IG Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Step 3: Validate identity & business profile integrity\nconst response = $input.first().json;\nconst initData = $('Init & Environment Check').first().json;\n\nconst username = response.username || '';\nconst isValidAccount = username.toLowerCase() === initData.target_account.toLowerCase();\n\nif (!isValidAccount) {\n  throw new Error(`Account verification failed: expected '${initData.target_account}', got '${username}'`);\n}\n\nreturn [{\n  json: {\n    status: 'SUCCESS',\n    verified_account: username,\n    account_id: response.id,\n    account_name: response.name,\n    followers_count: response.followers_count,\n    media_count: response.media_count,\n    kill_switch_active: initData.kill_switch_active,\n    meta_api_healthy: true,\n    checked_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000004",
+      "name": "Validate Identity & Safeguards",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Manual / Test Trigger": {
+      "main": [
+        [
+          {
+            "node": "Init & Environment Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init & Environment Check": {
+      "main": [
+        [
+          {
+            "node": "Query Meta IG Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Meta IG Profile": {
+      "main": [
+        [
+          {
+            "node": "Validate Identity & Safeguards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "instagram"
+    },
+    {
+      "name": "avalia-solar"
+    },
+    {
+      "name": "preflight"
+    }
+  ]
+}

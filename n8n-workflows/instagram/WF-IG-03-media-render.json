@@ -1,0 +1,125 @@
+{
+  "name": "WF-IG-03-media-render",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000031",
+      "name": "Receive Editorial Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [180, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Construct Next.js OG render endpoint URL with strict sanitization\nconst item = $input.first().json;\nconst baseUrl = $env.NEXT_PUBLIC_APP_URL || 'https://www.avaliasolar.com.br';\n\nconst title = encodeURIComponent((item.headline || item.candidate?.title || 'Avalia Solar Notícias').slice(0, 90));\nconst category = encodeURIComponent((item.category || 'Mercado Livre').slice(0, 30));\nconst format = 'feed';\n\nconst renderUrl = `${baseUrl}/api/social/render-post?title=${title}&category=${category}&format=${format}`;\n\nreturn [{\n  json: {\n    ...item,\n    render_url: renderUrl,\n    media_format: 'feed',\n    expected_dimensions: { width: 1080, height: 1350, ratio: '4:5' },\n    prepared_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000032",
+      "name": "Construct Visual Card URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.render_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000033",
+      "name": "Verify Image Renderability",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate image binary and package media payload\nconst prev = $('Construct Visual Card URL').first().json;\n\nreturn [{\n  json: {\n    status: 'MEDIA_READY',\n    candidate: prev.candidate,\n    headline: prev.headline,\n    full_caption: prev.full_caption,\n    image_url: prev.render_url,\n    dimensions: prev.expected_dimensions,\n    verified_public_url: true,\n    rendered_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000034",
+      "name": "Package Media Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": "WF-IG-04-approval",
+        "dataToSend": "all",
+        "options": {}
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000035",
+      "name": "Dispatch to Approval Gate",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Receive Editorial Trigger": {
+      "main": [
+        [
+          {
+            "node": "Construct Visual Card URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Visual Card URL": {
+      "main": [
+        [
+          {
+            "node": "Verify Image Renderability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Image Renderability": {
+      "main": [
+        [
+          {
+            "node": "Package Media Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Package Media Payload": {
+      "main": [
+        [
+          {
+            "node": "Dispatch to Approval Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "instagram"
+    },
+    {
+      "name": "render"
+    },
+    {
+      "name": "media"
+    }
+  ]
+}

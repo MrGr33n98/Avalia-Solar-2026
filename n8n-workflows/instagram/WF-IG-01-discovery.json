@@ -1,0 +1,161 @@
+{
+  "name": "WF-IG-01-discovery",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 * * *"
+            }
+          ]
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000011",
+      "name": "Daily Schedule (09:00 BRT)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [180, 240]
+    },
+    {
+      "parameters": {},
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000012",
+      "name": "Manual Run Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [180, 420]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.avaliasolar.com.br/api/v1/articles",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "per_page",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000013",
+      "name": "Fetch Latest Articles",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Step 2: Content Hash, Deduplication & Candidate Filtering\nconst crypto = require('crypto');\nconst response = $input.first().json;\nconst articles = response.articles || response.data || (Array.isArray(response) ? response : []);\n\nif (!articles || articles.length === 0) {\n  return [{\n    json: {\n      status: 'NO_CANDIDATE',\n      message: 'No articles returned by Avalia Solar API',\n      timestamp: new Date().toISOString()\n    }\n  }];\n}\n\n// Normalize and hash each article\nconst candidates = articles.map(art => {\n  const title = (art.title || '').trim();\n  const slug = (art.slug || '').trim();\n  const category = (art.category && art.category.name) ? art.category.name : (art.category || 'Energia Solar');\n  const summary = (art.excerpt || art.summary || art.description || '').trim();\n  const content = (art.content || art.body || summary).trim();\n  \n  const hashInput = `${slug}|${title}`;\n  const contentHash = crypto.createHash('sha256').update(hashInput).digest('hex');\n  \n  return {\n    article_id: art.id,\n    title,\n    slug,\n    category,\n    summary,\n    content: content.slice(0, 1500),\n    canonical_url: `https://www.avaliasolar.com.br/blog/${slug}`,\n    content_hash: contentHash,\n    published_at: art.published_at || art.created_at || new Date().toISOString()\n  };\n});\n\n// Pick the freshest valid candidate with title and summary\nconst bestCandidate = candidates.find(c => c.title.length > 10 && c.summary.length > 20) || candidates[0];\n\nreturn [{\n  json: {\n    status: 'CANDIDATE_SELECTED',\n    candidate: bestCandidate,\n    discovered_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000014",
+      "name": "Process & Select Candidate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 320]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "value2": "CANDIDATE_SELECTED"
+            }
+          ]
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000015",
+      "name": "Candidate Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 320]
+    },
+    {
+      "parameters": {
+        "workflowId": "WF-IG-02-ai-editorial",
+        "dataToSend": "all",
+        "options": {}
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000016",
+      "name": "Dispatch to AI Editorial",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1120, 240]
+    }
+  ],
+  "connections": {
+    "Daily Schedule (09:00 BRT)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Latest Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Run Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Latest Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Latest Articles": {
+      "main": [
+        [
+          {
+            "node": "Process & Select Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process & Select Candidate": {
+      "main": [
+        [
+          {
+            "node": "Candidate Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidate Found?": {
+      "main": [
+        [
+          {
+            "node": "Dispatch to AI Editorial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "instagram"
+    },
+    {
+      "name": "discovery"
+    }
+  ]
+}

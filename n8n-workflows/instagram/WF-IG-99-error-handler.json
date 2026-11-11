@@ -1,0 +1,100 @@
+{
+  "name": "WF-IG-99-error-handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000091",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [180, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Capture and structure error context\nconst errData = $input.first().json;\n\nconst workflow = errData.workflow || {};\nconst execution = errData.execution || {};\nconst error = execution.error || errData.error || {};\n\nconst incident = {\n  incident_id: `inc_${Date.now()}`,\n  severity: 'P1',\n  service: 'instagram-content-engine',\n  account: 'avalia_solar',\n  workflow_name: workflow.name || 'Unknown',\n  workflow_id: workflow.id,\n  execution_id: execution.id,\n  failed_node: execution.lastNodeExecuted || error.node?.name || 'Unknown',\n  error_message: error.message || 'An unexpected error occurred in automation pipeline',\n  error_stack: error.stack ? error.stack.slice(0, 1000) : null,\n  timestamp: new Date().toISOString()\n};\n\nreturn [{\n  json: incident\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000092",
+      "name": "Format Incident Details",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPS_ALERT_WEBHOOK || 'https://api.avaliasolar.com.br/api/v1/internal/ops_alerts' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000093",
+      "name": "Dispatch Ops Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Acknowledge incident logging\nreturn [{\n  json: {\n    status: 'INCIDENT_DISPATCHED',\n    incident_id: $json.incident_id,\n    recorded_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000094",
+      "name": "Log Incident Resolution",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Incident Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Incident Details": {
+      "main": [
+        [
+          {
+            "node": "Dispatch Ops Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dispatch Ops Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Incident Resolution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "instagram"
+    },
+    {
+      "name": "error-handler"
+    },
+    {
+      "name": "ops"
+    }
+  ]
+}

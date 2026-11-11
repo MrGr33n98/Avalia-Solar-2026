@@ -114,6 +114,8 @@ docs/security-audit/
 !docs/security-audit/
 !docs/security-audit/*
 docs/*
+!docs/instagram-automation/
+!docs/instagram-automation/**
 !docs/INBOX_ROOT_CAUSE_AND_EVIDENCE.md
 !docs/INBOX_AS_IS_TO_BE_ARCHITECTURE.md
 !docs/INBOX_API_CONTRACTS_AND_PERMISSIONS.md

@@ -1,0 +1,326 @@
+{
+  "name": "WF-IG-05-publisher",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000051",
+      "name": "Receive Approved Post Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [180, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Step 1: Kill-switch verification & publish payload setup\nconst item = $input.first().json;\n\nconst autoPublishEnabled = ($env.INSTAGRAM_AUTOPUBLISH_ENABLED || 'false').toLowerCase() === 'true';\nconst igUserId = $env.META_IG_USER_ID || '17841400000000000';\nconst accessToken = $env.META_ACCESS_TOKEN || '';\n\nif (!autoPublishEnabled) {\n  return [{\n    json: {\n      status: 'DRY_RUN',\n      message: 'Publishing aborted by kill-switch: INSTAGRAM_AUTOPUBLISH_ENABLED is false',\n      simulated_payload: {\n        ig_user_id: igUserId,\n        image_url: item.image_url,\n        caption_snippet: (item.full_caption || '').slice(0, 100)\n      },\n      dry_run_at: new Date().toISOString()\n    }\n  }];\n}\n\nif (!accessToken) {\n  throw new Error('META_ACCESS_TOKEN is required for live publishing');\n}\n\nreturn [{\n  json: {\n    ...item,\n    status: 'READY_FOR_META_API',\n    ig_user_id: igUserId,\n    access_token: accessToken,\n    poll_attempts: 0,\n    max_poll_attempts: 12\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000052",
+      "name": "Check Kill-Switch & Credentials",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "value2": "READY_FOR_META_API"
+            }
+          ]
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000053",
+      "name": "Live Publish Allowed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.ig_user_id }}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.image_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.full_caption }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000054",
+      "name": "Create Media Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 220]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "seconds"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000055",
+      "name": "Wait Before Status Poll",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1120, 220],
+      "webhookId": "9b15e4f7-33a5-4847-a36c-9c7cb3d4b855"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Create Media Container').first().json.id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "status_code,status"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Check Kill-Switch & Credentials').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000056",
+      "name": "Check Container Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 220]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status_code }}",
+              "value2": "FINISHED"
+            }
+          ]
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000057",
+      "name": "Is Container Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1560, 220]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Check Kill-Switch & Credentials').first().json.ig_user_id }}/media_publish",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('Create Media Container').first().json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Check Kill-Switch & Credentials').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000058",
+      "name": "Publish Media Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1800, 160]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,permalink,timestamp,media_type"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Check Kill-Switch & Credentials').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-000000000059",
+      "name": "Query Published Post Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2020, 160]
+    },
+    {
+      "parameters": {
+        "workflowId": "WF-IG-06-analytics",
+        "dataToSend": "all",
+        "options": {}
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-00000000005a",
+      "name": "Dispatch to Telemetry",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [2240, 160]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log safe dry-run exit\nreturn [{\n  json: {\n    status: 'DRY_RUN_COMPLETED',\n    info: 'Kill switch prevented live social mutation',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e63d3a01-9a7c-40b1-8b01-00000000005b",
+      "name": "Log Dry Run",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 420]
+    }
+  ],
+  "connections": {
+    "Receive Approved Post Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Kill-Switch & Credentials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Kill-Switch & Credentials": {
+      "main": [
+        [
+          {
+            "node": "Live Publish Allowed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Live Publish Allowed?": {
+      "main": [
+        [
+          {
+            "node": "Create Media Container",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Dry Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Media Container": {
+      "main": [
+        [
+          {
+            "node": "Wait Before Status Poll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Status Poll": {
+      "main": [
+        [
+          {
+            "node": "Check Container Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Container Status": {
+      "main": [
+        [
+          {
+            "node": "Is Container Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Container Ready?": {
+      "main": [
+        [
+          {
+            "node": "Publish Media Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Media Container": {
+      "main": [
+        [
+          {
+            "node": "Query Published Post Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Published Post Details": {
+      "main": [
+        [
+          {
+            "node": "Dispatch to Telemetry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "instagram"
+    },
+    {
+      "name": "publisher"
+    },
+    {
+      "name": "meta-api"
+    }
+  ]
+}
