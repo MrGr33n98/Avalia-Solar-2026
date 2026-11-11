@@ -123,8 +123,8 @@ RSpec.describe CategoryDiscovery::IndexabilityPolicy do
         description: 'Compare empresas especializadas em energia solar rural e projetos fotovoltaicos para agronegócio em todo o Brasil.',
         companies_count: 4
       )
-      allow(category).to receive(:respond_to?).with(anything).and_call_original
-      allow(category).to receive(:respond_to?).with(:editorial_status).and_return(true)
+      allow(category).to receive(:respond_to?).and_call_original
+      allow(category).to receive(:respond_to?).with(:editorial_status, any_args).and_return(true)
       allow(category).to receive(:editorial_status).and_return('draft')
 
       decision = described_class.evaluate(category, enforced: false)

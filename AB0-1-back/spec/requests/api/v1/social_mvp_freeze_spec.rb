@@ -13,7 +13,13 @@ RSpec.describe 'Reviews-only MVP social guards', type: :request do
   end
 
   it 'blocks publication mutations without affecting regular reviews' do
-    post '/api/v1/reviewer/publications', params: { publication: { title: 'Não criar' } }
+    reviewer = create(:user, role: 'review', status: :active)
+    token = JWT.encode({ user_id: reviewer.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256')
+
+    expect do
+      post '/api/v1/reviewer/publications', params: { publication: { title: 'Não criar' } },
+                                            headers: { 'Authorization' => "Bearer #{token}" }
+    end.not_to change(ReviewerPublication, :count)
     expect(response).to have_http_status(:forbidden)
     expect(JSON.parse(response.body)['code']).to eq('FEATURE_TEMPORARILY_DISABLED')
   end

@@ -78,6 +78,12 @@ for attempt in $(seq 1 90); do
       exit 1
     fi
 
+    # A full release publishes backend artifacts and may run migrations.
+    # Never authorize it through the frontend-only legacy RSpec exception.
+    if [ "$RELEASE_SCOPE" = "full" ]; then
+      echo "::error::CI integral falhou para release full; fallback legado permitido somente em frontend_only. Deploy bloqueado."
+      exit 1
+    fi
   fi
 
   # Compare against the most recent successful production release, NOT HEAD^.

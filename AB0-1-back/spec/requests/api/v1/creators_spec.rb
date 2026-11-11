@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Creators API', type: :request do
+  before { allow(ReviewsOnlyMvp).to receive(:creator_enabled?).and_return(true) }
+
   let(:user) do
     create(:user, role: 'review', status: :active, city: 'Florianópolis', state: 'SC', confirmed_at: Time.current)
   end

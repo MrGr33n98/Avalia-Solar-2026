@@ -1,9 +1,11 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Comments', type: :request do
+  before { allow(ReviewsOnlyMvp).to receive(:feed_enabled?).and_return(true) }
+
   let(:user) { create(:user) }
   let(:publication) { create(:reviewer_publication) }
-  let(:jwt_token) { Api::V1::JwtService.encode({ user_id: user.id }) }
+  let(:jwt_token) { JWT.encode({ user_id: user.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{jwt_token}" } }
 
   describe 'GET /api/v1/comments' do

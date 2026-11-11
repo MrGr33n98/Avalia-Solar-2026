@@ -3,9 +3,11 @@
 require 'rails_helper'
 
 RSpec.describe 'Reviewer Tree blocks API', type: :request do
+  before { allow(ReviewsOnlyMvp).to receive(:creator_enabled?).and_return(true) }
+
   let(:reviewer) { create(:user, role: 'review', status: :active, confirmed_at: Time.current) }
   let!(:profile) { create(:reviewer_profile, user: reviewer, creator_enabled: true) }
-  let(:token) { JWT.encode({ user_id: reviewer.id }, Rails.application.secret_key_base, 'HS256') }
+  let(:token) { JWT.encode({ user_id: reviewer.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256') }
   let(:headers) { { 'Authorization' => "Bearer #{token}", 'Content-Type' => 'application/json' } }
 
   it 'requires authentication' do

@@ -3,6 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Feed', type: :request do
+  before { allow(ReviewsOnlyMvp).to receive(:feed_enabled?).and_return(true) }
+
   describe 'GET /api/v1/feed' do
     let(:user) { create(:user) }
     let(:creator) { create(:user) }

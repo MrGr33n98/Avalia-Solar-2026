@@ -43,7 +43,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     render json: @leads
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro ao listar leads',
+    render_error_response(message: 'Erro ao listar leads',
                           status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
@@ -69,7 +69,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
     }
   rescue StandardError => e
     Rails.logger.error("Leads mine error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro ao listar seus orçamentos',
+    render_error_response(message: 'Erro ao listar seus orçamentos',
                           status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
@@ -90,10 +90,10 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def show
     render json: @lead
   rescue ActiveRecord::RecordNotFound
-    render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
+    render_error_response(message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor',
+    render_error_response(message: 'Erro interno no servidor',
                           status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
@@ -446,14 +446,14 @@ class Api::V1::LeadsController < Api::V1::BaseController
     if @lead.update(lead_params)
       render json: @lead
     else
-      render_error_response(error: 'Unprocessable Entity', message: 'Não foi possível atualizar o lead',
+      render_error_response(message: 'Não foi possível atualizar o lead',
                             status: :unprocessable_entity, code: 'UNPROCESSABLE_ENTITY', details: @lead.errors.full_messages)
     end
   rescue ActiveRecord::RecordNotFound
-    render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
+    render_error_response(message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor',
+    render_error_response(message: 'Erro interno no servidor',
                           status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
@@ -461,10 +461,10 @@ class Api::V1::LeadsController < Api::V1::BaseController
     @lead.destroy
     render json: { message: 'Lead excluído' }, status: :ok
   rescue ActiveRecord::RecordNotFound
-    render_error_response(error: 'Not Found', message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
+    render_error_response(message: 'Lead não encontrado', status: :not_found, code: 'NOT_FOUND')
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
-    render_error_response(error: 'Internal Server Error', message: 'Erro interno no servidor',
+    render_error_response(message: 'Erro interno no servidor',
                           status: :internal_server_error, code: 'INTERNAL_ERROR')
   end
 
@@ -480,13 +480,13 @@ class Api::V1::LeadsController < Api::V1::BaseController
     if current_user&.company_user? && current_user.company_id.present?
       company = current_user.company
       unless company_active?(company)
-        render_error_response(error: 'Forbidden', message: 'Company account is not active', status: :forbidden,
+        render_error_response(message: 'Company account is not active', status: :forbidden,
                               code: 'COMPANY_INACTIVE')
         return nil
       end
       return ::Lead.where(company_id: current_user.company_id)
     end
-    render_error_response(error: 'Forbidden', message: 'Not authorized to list leads', status: :forbidden,
+    render_error_response(message: 'Not authorized to list leads', status: :forbidden,
                           code: 'FORBIDDEN')
     nil
   end
@@ -510,13 +510,13 @@ class Api::V1::LeadsController < Api::V1::BaseController
     if current_user&.company_user? && current_user.company_id.present?
       company = current_user.company
       unless company_active?(company)
-        render_error_response(error: 'Forbidden', message: 'Company account is not active', status: :forbidden,
+        render_error_response(message: 'Company account is not active', status: :forbidden,
                               code: 'COMPANY_INACTIVE')
         return
       end
       return if @lead.company_id == current_user.company_id
     end
-    render_error_response(error: 'Forbidden', message: 'Not authorized to access this lead', status: :forbidden,
+    render_error_response(message: 'Not authorized to access this lead', status: :forbidden,
                           code: 'FORBIDDEN')
   end
 
@@ -535,7 +535,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def check_honeypot
     return if params.dig(:lead, :nickname).blank?
 
-    render_error_response(error: 'Unprocessable Entity', message: 'Spam detected', status: :unprocessable_entity,
+    render_error_response(message: 'Spam detected', status: :unprocessable_entity,
                           code: 'SPAM_DETECTED')
   end
 

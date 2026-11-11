@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Billing::ReconciliationJob, type: :job do
-  let!(:free_plan) { Plan.find_by(name: 'Free') || create(:plan, name: 'Free') }
+  let!(:free_plan) { Plan.find_by(name: 'Free', price: 0) || create(:plan, name: 'Free', price: 0) }
   let(:company) { create(:company, plan: free_plan) }
   let(:plan) { Plan.find_by(name: 'Integration Plan') || create(:plan, name: 'Integration Plan', stripe_price_id_monthly: 'price_integration') }
   

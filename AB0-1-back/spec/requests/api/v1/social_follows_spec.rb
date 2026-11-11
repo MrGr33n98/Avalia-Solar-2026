@@ -3,6 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Social follows API', type: :request do
+  before { allow(ReviewsOnlyMvp).to receive(:feed_enabled?).and_return(true) }
+
   let(:user) { create(:user, role: 'review') }
   let(:category) { create(:category) }
   let(:headers) { auth_headers_for(user) }

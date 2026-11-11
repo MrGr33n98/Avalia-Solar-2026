@@ -56,8 +56,7 @@ jobs:
       # Backend Checks
       - name: Rubocop
         working-directory: ./AB0-1-back
-        continue-on-error: true
-        run: bundle exec rubocop --parallel || true
+        run: bundle exec rubocop --parallel
 
       - name: Brakeman (Security)
         working-directory: ./AB0-1-back
@@ -67,10 +66,9 @@ jobs:
 
       - name: Bundler Audit
         working-directory: ./AB0-1-back
-        continue-on-error: true
         run: |
           gem install bundler-audit
-          bundle-audit check --update || true
+          bundle-audit check --update
 
       # Frontend Checks
       - name: Install Frontend Deps
@@ -80,15 +78,14 @@ jobs:
       - name: Frontend Lint & Audit
         working-directory: ./AB0-1-front
         run: |
-          npm run lint -- --quiet || true
-          npm audit --audit-level=high || true
+          npm run lint -- --quiet
+          npm audit --audit-level=high
 
       # Global Secrets Scan
       - name: Gitleaks Scan
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
 
   backend-tests:
     name: Backend Unit Tests (RSpec)

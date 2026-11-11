@@ -58,6 +58,7 @@ class Notification < ApplicationRecord
     review_response
     company_response
     account_update
+    p2p_message_received
     publication_reacted
     publication_commented
     comment_replied
@@ -147,7 +148,7 @@ class Notification < ApplicationRecord
     self.category = case notification_type.to_s
                     when /^quote_/ then 'quotes'
                     when /^review_/ then 'reviews'
-                    when /^new_message/, /^new_conversation/, /^message_/ then 'messages'
+                    when /^new_message/, /^new_conversation/, /^message_/, /^p2p_message/ then 'messages'
                     when /^favorite_company_/ then 'companies'
                     else 'system'
                     end

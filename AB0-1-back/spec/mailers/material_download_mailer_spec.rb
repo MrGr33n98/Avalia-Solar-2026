@@ -22,7 +22,7 @@ RSpec.describe MaterialDownloadMailer, type: :mailer do
 
     expect(mail.subject).to eq("Seu download do material da #{company.name} está pronto!")
     expect(mail.to).to eq([lead.email])
-    expect(mail.body.encoded).to include(material.title)
+    expect(mail.text_part.decoded).to include(material.title)
     expect(mail.body.encoded).to include(token)
   end
 end

@@ -39,7 +39,7 @@ RSpec.describe 'Authentication System', type: :model do
         terms_accepted: true
       )
       expect(user).not_to be_valid
-      expect(user.errors[:email]).to include('must be from company domain (solartech.com)')
+      expect(user.errors[:email]).to include('deve ser corporativo para contas de empresa')
     end
 
     it 'accepts email matching company domain' do
@@ -72,11 +72,11 @@ RSpec.describe 'Authentication System', type: :model do
 
     it 'is not active for authentication when not approved' do
       expect(user.active_for_authentication?).to be false
-      expect(user.inactive_message).to eq :not_approved
+      expect(user.inactive_message).to eq :pending
     end
 
     it 'is active for authentication when approved' do
-      user.update(approved_by_admin: true)
+      user.update(status: :active, approved_by_admin: true)
       expect(user.active_for_authentication?).to be true
     end
   end

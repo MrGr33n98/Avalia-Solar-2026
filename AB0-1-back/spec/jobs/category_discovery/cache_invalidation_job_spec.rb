@@ -7,7 +7,7 @@ RSpec.describe CategoryDiscovery::CacheInvalidationJob, type: :job do
     let(:category) { create(:category, name: 'Inversores', seo_url: 'inversores-solares') }
 
     before do
-      Rails.cache.clear
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
     end
 
     it 'R29: builds canonical category paths and tags for Next.js revalidation' do

@@ -2,7 +2,8 @@ class UserMailer < Devise::Mailer
   helper MailerHelper
   include MailerHelper
 
-  default from: ApplicationMailer.default_sender
+  default from: ApplicationMailer.default_sender,
+          reply_to: -> { ENV.fetch('MAILER_REPLY_TO_EMAIL', ENV.fetch('MAILER_FROM_EMAIL', 'growth@avaliasolar.com.br')) }
   layout 'mailer'
 
   def frontend_url(path = '/')

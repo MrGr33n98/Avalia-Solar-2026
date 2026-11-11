@@ -41,7 +41,7 @@ module Api
 
       def click
         profile = ReviewerProfile.find_by!(public_slug: params[:slug], creator_enabled: true)
-        block = profile.creator_tree_blocks.active.find(params[:block_id])
+        block = profile.creator_tree_blocks.where(active: true).find(params[:block_id])
         block.with_lock { block.increment!(:clicks_count) }
         render json: { ok: true }
       rescue ActiveRecord::RecordNotFound

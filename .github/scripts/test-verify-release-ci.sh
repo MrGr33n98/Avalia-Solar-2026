@@ -108,7 +108,8 @@ assert_gate() {
 }
 
 assert_gate all_green pass
-assert_gate frontend_only_legacy pass
+assert_gate frontend_only_legacy block
+assert_gate frontend_only_legacy pass frontend_only
 assert_gate schema_reconciliation block frontend_only
 assert_gate schema_reconciliation block full
 assert_gate frontend_only_green pass frontend_only

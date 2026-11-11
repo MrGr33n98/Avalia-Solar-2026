@@ -24,6 +24,9 @@ RSpec.describe 'Leads RBAC', type: :request do
   let(:regular_user) { create(:user, role: 'user', status: :active, company: nil) }
 
   def stub_auth(user)
+    if user.company_user? && user.company_id.present?
+      create(:company_member, user: user, company: Company.find(user.company_id), status: :active)
+    end
     allow_any_instance_of(Api::V1::LeadsController).to receive(:authenticate_api_user).and_return(true)
     allow_any_instance_of(Api::V1::LeadsController).to receive(:current_user).and_return(user)
   end

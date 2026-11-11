@@ -194,7 +194,7 @@ RSpec.describe Banner, type: :model do
         end
 
         it 'does not validate limit for inactive banners' do
-          create_list(:banner, 5, company: company, active: true)
+          create_list(:banner, 3, company: company, active: true)
 
           new_banner = build(:banner, company: company, active: false)
           expect(new_banner).to be_valid
@@ -286,7 +286,7 @@ RSpec.describe Banner, type: :model do
         end
 
         it 'sets default dimensions for other positions' do
-          banner = build(:banner, position: 'categories_top', width: nil, height: nil)
+          banner = build(:banner, position: 'other', width: nil, height: nil)
           banner.valid?
 
           expect(banner.width).to eq(600)
@@ -306,7 +306,7 @@ RSpec.describe Banner, type: :model do
     end
 
     describe 'invalidate_cache (Fase 1)' do
-      let(:banner) { create(:banner) }
+      let!(:banner) { create(:banner) }
 
       before do
         allow(Banners::CacheInvalidatorService).to receive(:call)

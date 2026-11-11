@@ -1,17 +1,21 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Reviewer::TreeSettings', type: :request do
-  let(:user) { create(:user) }
+  let(:user) { create(:user, role: 'review') }
   let(:reviewer_profile) { create(:reviewer_profile, user: user) }
-  let(:headers) { auth_headers(user) }
+  let(:headers) do
+    token = JWT.encode({ user_id: user.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256')
+    { 'Authorization' => "Bearer #{token}" }
+  end
 
   before do
+    allow(ReviewsOnlyMvp).to receive(:creator_enabled?).and_return(true)
     reviewer_profile
   end
 
   describe 'GET /api/v1/reviewer/tree/settings' do
     context 'when user has tree settings' do
-      let!(:settings) { create(:creator_tree_setting, reviewer_profile: reviewer_profile, theme_key: 'dark', appearance: { buttonStyle: { variant: 'outline' } }) }
+      let!(:settings) { create(:creator_tree_setting, reviewer: reviewer_profile, theme_key: 'dark', appearance: { buttonStyle: { variant: 'outline' } }) }
 
       it 'returns the settings' do
         get '/api/v1/reviewer/tree/settings', headers: headers
@@ -50,7 +54,7 @@ RSpec.describe 'Api::V1::Reviewer::TreeSettings', type: :request do
     end
 
     it 'updates existing settings' do
-      create(:creator_tree_setting, reviewer_profile: reviewer_profile)
+      create(:creator_tree_setting, reviewer: reviewer_profile)
       patch '/api/v1/reviewer/tree/settings', params: valid_params, headers: headers
       expect(response).to have_http_status(:ok)
       

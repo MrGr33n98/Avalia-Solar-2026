@@ -3,6 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Reviewer publications API', type: :request do
+  before { allow(ReviewsOnlyMvp).to receive(:creator_enabled?).and_return(true) }
+
   let(:reviewer) { create(:user, role: 'review', status: :active) }
   let(:other_reviewer) { create(:user, role: 'review', status: :active) }
   let(:headers) do

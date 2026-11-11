@@ -58,7 +58,7 @@ RSpec.describe Sales::SendEmailJob, type: :job do
         described_class.new.perform(email_message.id)
         email_message.reload
         expect(email_message.status).to eq('sent')
-        expect(email_message.body_html).to include('avalia-solar-watermark.png')
+        expect(email_message.body_html).to include('avalia-solar-logo-horizontal.png')
       end
     end
   end
