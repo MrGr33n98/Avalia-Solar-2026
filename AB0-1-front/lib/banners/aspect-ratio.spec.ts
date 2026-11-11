@@ -72,10 +72,10 @@ describe('resolveBannerAspectRatio', () => {
     expect(spec?.ambientBackground).toBe(true);
   });
 
-  it('retorna a especificação de exibição canônica para compare_page_sidebar (hidden lg:block)', () => {
+  it('retorna a especificação de exibição canônica para compare_page_sidebar (hidden xl:block)', () => {
     const spec = getPlacementDisplaySpec('compare_page_sidebar');
     expect(spec).toBeDefined();
-    expect(spec?.aspectRatioClass).toBe('w-full max-w-[300px] mx-auto aspect-[1/2]');
+    expect(spec?.aspectRatioClass).toBe('hidden xl:block w-full max-w-[300px] mx-auto aspect-[1/2]');
     expect(spec?.desktopAspectRatio).toBe('1/2');
     expect(spec?.desktopMaxHeight).toBe(600);
   });

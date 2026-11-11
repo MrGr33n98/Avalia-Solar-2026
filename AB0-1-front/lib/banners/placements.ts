@@ -142,7 +142,7 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     ambientBackground: true,
   },
   compare_page_sidebar: {
-    aspectRatioClass: 'w-full max-w-[300px] mx-auto aspect-[1/2]',
+    aspectRatioClass: 'hidden xl:block w-full max-w-[300px] mx-auto aspect-[1/2]',
     defaultAspectRatio: '1/2',
     desktopAspectRatio: '1/2',
     desktopMaxHeight: 600,

@@ -432,7 +432,13 @@ function ComparePageContent() {
                   onRemove={removeFromComparison}
                   onClear={clearComparison}
                 />
-                <BannerSlot placement="compare_page_sidebar" limit={3} />
+                <div className="hidden xl:block">
+                  <BannerSlot
+                    placement="compare_page_sidebar"
+                    limit={3}
+                    className="hidden xl:block"
+                  />
+                </div>
                 <VerificationTip />
               </aside>
             </div>

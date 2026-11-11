@@ -5,7 +5,8 @@ import { BannerContainer, type BannerData } from '@/components/BannerContainer';
 jest.mock('next/image', () => ({
   __esModule: true,
   default: ({ alt, onError }: { alt?: string; onError?: () => void }) => (
-    <span data-testid="banner-image" onError={onError}>{alt}</span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img data-testid="banner-image" alt={alt || ''} onError={onError} />
   ),
 }));
 
@@ -121,6 +122,18 @@ describe('BannerContainer - seleção de layout por placement', () => {
     expect(screen.queryByTestId('horizontal-banner-creative')).not.toBeInTheDocument();
     expect(screen.queryByTestId('premium-carousel')).not.toBeInTheDocument();
     expect(collectClassNames(container)).toContain('max-w-[300px]');
+  });
+
+  it('placement compare_page_sidebar propaga classes responsivas desktop-only (hidden xl:block)', () => {
+    const { container } = render(
+      <BannerContainer
+        banners={[editorialBanner]}
+        position="compare_page_sidebar"
+        className="hidden xl:block"
+      />
+    );
+
+    expect(collectClassNames(container)).toContain('hidden xl:block');
   });
 });
 
