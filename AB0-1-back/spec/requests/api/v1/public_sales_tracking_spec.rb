@@ -30,7 +30,8 @@ RSpec.describe 'Public Sales tracking', type: :request do
   it 'cria sessão anônima com tenant resolvido pela chave e classifica origem' do
     post sessions_url,
          params: { session: { account_id: 999_999, contact_id: 999_999, landing_path: '/solar?email=a@b.test',
-                              utm_source: 'newsletter', utm_medium: 'email', utm_campaign: 'prospeccao' } },
+                              utm_source: 'newsletter', utm_medium: 'email', utm_campaign: 'prospeccao',
+                              consent_state: 'granted' } },
          headers: origin_headers
 
     expect(response).to have_http_status(:created), response.body
@@ -155,7 +156,7 @@ RSpec.describe 'Public Sales tracking', type: :request do
     Sales::UserRole.create!(user: user, role: role)
     account = Sales::Account.create!(company: company, owner: user, name: 'Conta tracking')
     contact = Sales::Contact.create!(account: account, first_name: 'Contato', last_name: 'Teste')
-    post sessions_url, params: { session: { utm_source: 'search' } }, headers: origin_headers
+    post sessions_url, params: { session: { utm_source: 'search', consent_state: 'granted' } }, headers: origin_headers
     session_id = JSON.parse(response.body).fetch('session_id')
     post events_url, params: { event: { session_id: session_id, event_uuid: SecureRandom.uuid,
                                         event_name: 'page_view' } }, headers: origin_headers

@@ -85,7 +85,7 @@ module Api
       private
 
       def set_company
-        @company = Company.find_by!(slug: params[:company_id])
+        @company = ::Company.find_by!(slug: params[:company_id])
       end
 
       def ensure_company_ownership

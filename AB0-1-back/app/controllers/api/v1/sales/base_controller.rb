@@ -5,8 +5,13 @@ module Api
     module Sales
       class BaseController < Api::V1::BaseController
         before_action :authenticate_api_user
+        alias_method :authenticate_sales_user!, :authenticate_api_user
         before_action :require_internal_sales
         rescue_from ActiveRecord::RecordNotFound, with: :sales_resource_not_found
+
+        def current_company
+          @current_company ||= current_user&.company
+        end
 
         private
 

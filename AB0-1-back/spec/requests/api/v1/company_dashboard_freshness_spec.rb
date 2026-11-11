@@ -204,7 +204,7 @@ RSpec.describe 'Company Dashboard Freshness Metadata', type: :request do
 
     it 'denies access for free users' do
       # Switch to free plan
-      free_plan = create(:plan, name: 'Free', price: 0)
+      free_plan = Plan.find_by(name: 'Free') || create(:plan, name: 'Free', price: 0)
       company.update(plan: free_plan)
       allow(free_plan).to receive(:tier).and_return('free')
       allow(free_plan).to receive(:plan_tier).and_return('free')

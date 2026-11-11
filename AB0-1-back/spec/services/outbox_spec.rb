@@ -2,8 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Transactional Outbox Engine (Wave 3)', type: :service do
-  self.use_transactional_tests = false
+RSpec.describe 'Transactional Outbox Engine (Wave 3)', type: :model, use_transactional_fixtures: false do
 
   let!(:user) { create(:user, email: "outbox_user_#{SecureRandom.hex(4)}@example.com") }
   let!(:company) { create(:company, name: "Outbox Test Solar #{SecureRandom.hex(4)}") }

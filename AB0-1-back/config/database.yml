@@ -18,6 +18,7 @@ development:
 
 test:
   <<: *default
+  url: <%= ENV['DATABASE_URL'] %>
   database: <%= ENV.fetch("POSTGRES_TEST_DB") { ENV.fetch("DB_TEST_NAME", "avalia_solar_test") } %>
   username: postgres
   password: postgres

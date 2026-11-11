@@ -575,11 +575,18 @@ module PlanFeatureCatalog
         end
 
       FEATURE_DEFINITIONS.each do |key, definition|
-        explicit = explicit_value(raw, key)
-        normalized[key] = explicit.nil? ? normalized[key] : cast_value(explicit, definition)
+        if explicit_entry?(raw, key)
+          explicit = explicit_value(raw, key)
+          normalized[key] = cast_value(explicit, definition)
+        end
       end
 
       normalized
+    end
+
+    def explicit_entry?(features, key)
+      raw = stringify_hash(features)
+      candidates_for(key).any? { |candidate| raw.key?(candidate) }
     end
 
     def explicit_value(features, key)

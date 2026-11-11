@@ -269,7 +269,7 @@ module Types
 
       scope = scope.where('articles.title ILIKE ? OR articles.content ILIKE ?', "%#{q}%", "%#{q}%") if q.present?
 
-      scope = scope.order(published_at: :desc)
+      scope = scope.order('articles.published_at' => :desc)
       paginated = scope.page(page).per(per_page)
 
       {

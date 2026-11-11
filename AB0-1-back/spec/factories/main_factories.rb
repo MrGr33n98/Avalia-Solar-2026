@@ -34,7 +34,7 @@ FactoryBot.define do
 
     after(:build) do |company|
       if company.status == 'active' && company.categories.empty?
-        cat = Category.first || Category.create!(name: "Cat_#{SecureRandom.hex(6)}", description: 'Categoria para testes', status: 'active')
+        cat = Category.first || Category.create!(name: "Cat-#{SecureRandom.hex(6)}", description: 'Categoria para testes', status: 'active')
         company.categories << cat if cat.present?
       end
     end
@@ -167,5 +167,13 @@ FactoryBot.define do
     cta_clicks { 0 }
     quote_clicks { 0 }
     leads { 0 }
+  end
+
+  factory :company_service_area do
+    association :company
+    coverage_type { 'city' }
+    state_code { 'SP' }
+    city_name { 'São Paulo' }
+    is_active { true }
   end
 end

@@ -12,6 +12,14 @@ RSpec.describe 'Rack::Attack' do
   let(:valid_token) { 'Bearer test_token' }
 
   before do
+    Rack::Attack.enabled = true
+    Rack::Attack.reset! if Rack::Attack.respond_to?(:reset!)
+    Rack::Attack.cache.store.clear
+  end
+
+  after do
+    Rack::Attack.enabled = true
+    Rack::Attack.reset! if Rack::Attack.respond_to?(:reset!)
     Rack::Attack.cache.store.clear
   end
 
@@ -38,7 +46,9 @@ RSpec.describe 'Rack::Attack' do
     end
 
     it 'includes rate limit headers' do
-      post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+      101.times do
+        post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+      end
 
       expect(last_response.headers).to include('X-RateLimit-Limit')
     end
@@ -46,6 +56,12 @@ RSpec.describe 'Rack::Attack' do
 
   describe 'authenticated API throttle' do
     let(:endpoint) { '/api/v1/companies' }
+
+    before do
+      allow_any_instance_of(Api::V1::CompaniesController).to receive(:index) do |controller|
+        controller.render plain: 'ok'
+      end
+    end
 
     it 'allows requests under limit (300/5min)' do
       299.times do
@@ -65,8 +81,8 @@ RSpec.describe 'Rack::Attack' do
     end
 
     it 'throttles by token' do
-      150.times { get endpoint, {}, { 'HTTP_AUTHORIZATION' => 'Bearer token1' } }
-      150.times { get endpoint, {}, { 'HTTP_AUTHORIZATION' => 'Bearer token2' } }
+      100.times { get endpoint, {}, { 'HTTP_AUTHORIZATION' => 'Bearer token1' } }
+      100.times { get endpoint, {}, { 'HTTP_AUTHORIZATION' => 'Bearer token2' } }
 
       # Both tokens should still work (separate limits)
       get endpoint, {}, { 'HTTP_AUTHORIZATION' => 'Bearer token1' }

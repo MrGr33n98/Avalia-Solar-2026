@@ -5,8 +5,17 @@ require 'rails_helper'
 RSpec.describe 'Api::V1::Sales::Accounts', type: :request do
   let(:tenant_company) { create(:company, name: 'Tenant Solar S/A') }
   let(:other_company) { create(:company, name: 'Other Org') }
-  let(:sales_user) { create(:user, company: tenant_company, role: :company) }
-  let(:other_user) { create(:user, company: other_company, role: :company) }
+  let(:sales_role) { Sales::Role.find_or_create_by!(name: 'Vendedor', slug: 'sales_rep') }
+  let(:sales_user) do
+    create(:user, company: tenant_company, role: :company).tap do |u|
+      Sales::UserRole.find_or_create_by!(user: u, role: sales_role)
+    end
+  end
+  let(:other_user) do
+    create(:user, company: other_company, role: :company).tap do |u|
+      Sales::UserRole.find_or_create_by!(user: u, role: sales_role)
+    end
+  end
 
   let!(:account) do
     Sales::Account.create!(

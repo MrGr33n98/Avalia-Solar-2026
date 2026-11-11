@@ -2,7 +2,8 @@ require 'rails_helper'
 
 RSpec.describe Lead, type: :model do
   it 'permite criar lead quando a empresa tem active_admin true' do
-    company = create(:company, active_admin: true)
+    plan = create(:plan, name: 'Gratuito', price: 0, features: nil)
+    company = create(:company, plan: plan, active_admin: true)
     lead = build(:lead, company: company)
 
     expect(lead).to be_valid
@@ -41,7 +42,8 @@ RSpec.describe Lead, type: :model do
   end
 
   it 'bloqueia criar lead quando a empresa tem active_admin false' do
-    company = create(:company, active_admin: false)
+    plan = create(:plan, name: 'Gratuito', price: 0, features: nil)
+    company = create(:company, plan: plan, active_admin: false)
     lead = build(:lead, company: company)
 
     expect(lead).not_to be_valid

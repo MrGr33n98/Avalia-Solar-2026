@@ -26,7 +26,7 @@ RSpec.describe CompanyDashboard::FreshnessProvider do
         last_processed = now - 10.minutes
         ActiveRecord::Base.connection.execute(
           "INSERT INTO analytics_processing_state (pipeline_name, last_processed_at, updated_at) " \
-          "VALUES ('main_aggregation', '#{last_processed.iso8601}', '#{now.iso8601}')"
+          "VALUES ('main_aggregation', '#{last_processed.utc.iso8601}', '#{now.utc.iso8601}')"
         )
       end
 

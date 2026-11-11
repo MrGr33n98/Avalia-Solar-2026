@@ -38,10 +38,12 @@ RSpec.describe 'Companies create API', type: :request do
       }
     }
 
+    headers = owner_headers
+
     expect {
       post '/api/v1/companies',
            params: payload.to_json,
-           headers: owner_headers
+           headers: headers
     }.to change(Company, :count).by(1)
 
     expect(response).to have_http_status(:created)

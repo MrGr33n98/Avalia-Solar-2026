@@ -56,6 +56,16 @@ RSpec.describe 'Api::V1::Mcp::Approvals', type: :request do
   let(:other_admin_token) { jwt_token_for(other_admin) }
   let(:regular_token) { jwt_token_for(regular_user) }
 
+  let!(:campaign) do
+    Sales::Campaign.find_by(id: 101) || Sales::Campaign.create!(
+      id: 101,
+      company: company,
+      name: 'Test Campaign',
+      status: 'draft',
+      campaign_type: 'email_broadcast'
+    )
+  end
+
   let!(:approval1) do
     McpApprovalRequest.create!(
       agent_id: 'agent:engineering:primary',

@@ -560,7 +560,7 @@ module Sales
       html.gsub!(/<table\b([^>]*?)(\/?>)/i) do |match|
         attrs = Regexp.last_match(1)
         closing = Regexp.last_match(2)
-        if attrs.include?('max-width:480px') || attrs.include?('Avalia Solar')
+        if attrs.include?('max-width:480px') || attrs.include?('Avalia Solar') || attrs.include?('sales-signature') || attrs.include?('margin')
           attrs = attrs.gsub(/\balign=(["'])center\1/i, 'align="left"')
           attrs += ' align="left"' unless attrs.match?(/\balign=/i)
         end

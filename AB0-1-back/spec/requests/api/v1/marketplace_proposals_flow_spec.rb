@@ -14,8 +14,8 @@ RSpec.describe 'Marketplace Proposals Real Flow API', type: :request do
     expect(proposal.status).to eq('draft')
 
     # 2. Publicar proposta pela empresa
-    proposal.versions.create!(
-      number: 1,
+    version = proposal.versions.find_by!(number: 1)
+    version.update!(
       status: 'published',
       title: 'Sistema Solar 10kWp Premium',
       summary: 'Proposta técnica completa',

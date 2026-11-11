@@ -60,8 +60,14 @@ module Api
           terms_accepted: true
         )
         generated_user.skip_confirmation! if generated_user.respond_to?(:skip_confirmation!)
-        generated_user.save!
-        generated_user
+        if generated_user.save
+          generated_user
+        else
+          generated_user.errors.each do |error|
+            download.errors.add(:contact_email, error.message)
+          end
+          nil
+        end
       end
 
       def normalized_contact_name(name)

@@ -147,11 +147,24 @@ class Category < ApplicationRecord
     t
   end
 
+  def safe_url_options
+    opts = (Rails.application.routes.default_url_options || {}).dup
+    return opts.slice(:host, :protocol, :port) if opts[:host].present?
+
+    app_host = ENV.fetch('APP_HOST', 'http://localhost:3001')
+    uri = URI(app_host)
+    {
+      host: uri.host || app_host,
+      protocol: uri.scheme || 'http',
+      port: uri.port && ![80, 443].include?(uri.port) ? uri.port : nil
+    }.compact
+  end
+
   def banner_url
     return nil unless banner.attached?
 
     begin
-      options = Rails.application.routes.default_url_options.dup
+      options = safe_url_options
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
       Rails.application.routes.url_helpers.rails_storage_proxy_url(banner, options)
     rescue StandardError => e
@@ -164,7 +177,7 @@ class Category < ApplicationRecord
     return nil unless icon.attached?
 
     begin
-      options = Rails.application.routes.default_url_options.dup
+      options = safe_url_options
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
       Rails.application.routes.url_helpers.rails_storage_proxy_url(icon, options)
     rescue StandardError => e
@@ -177,7 +190,7 @@ class Category < ApplicationRecord
     return nil unless home_carousel_banner.attached?
 
     begin
-      options = Rails.application.routes.default_url_options.dup
+      options = safe_url_options
       options[:port] = 3001 if Rails.env.development? && options[:host] == 'localhost'
       Rails.application.routes.url_helpers.rails_storage_proxy_url(home_carousel_banner, options)
     rescue StandardError => e
@@ -239,12 +252,22 @@ class Category < ApplicationRecord
     active_companies = companies.where(status: 'active').count
     active_products = products.where(status: 'active')
 
-    update_columns(
+    updates = {
       companies_count: active_companies,
-      products_count: active_products.count,
-      average_rating: companies.joins(:reviews).average('reviews.rating') || 0.0,
-      average_price: active_products.average(:price) || 0.0
-    )
+      products_count: active_products.count
+    }
+
+    if active_companies.positive?
+      rating = companies.joins(:reviews).average('reviews.rating')
+      updates[:average_rating] = rating if rating.present?
+    end
+
+    if active_products.exists?
+      price = active_products.average(:price)
+      updates[:average_price] = price if price.present?
+    end
+
+    update_columns(updates)
   end
 
   private

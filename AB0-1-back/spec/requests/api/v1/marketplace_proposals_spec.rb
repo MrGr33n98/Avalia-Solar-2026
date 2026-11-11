@@ -122,7 +122,7 @@ RSpec.describe 'Marketplace proposals API', type: :request do
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)['proposals'].map { |item| item['id'] }).to include(proposal.id)
 
-      other_lead = create(:lead, user: buyer, email: buyer.email)
+      other_lead = create(:lead, company: nil, email: buyer.email, name: buyer.name)
       proposal_other_lead = add_published_version(
         create(:marketplace_proposal, lead: other_lead, company: other_company, buyer_user: buyer, status: 'sent')
       )
@@ -373,7 +373,7 @@ RSpec.describe 'Marketplace proposals API', type: :request do
 
     it 'cria uma nova versão preservando o histórico da proposta' do
       proposal = add_published_version(
-        create(:marketplace_proposal, lead: lead, company: company, lead_distribution: distribution, status: 'draft'),
+        create(:marketplace_proposal, lead: lead, company: company, lead_distribution: distribution, status: 'sent'),
         total_cents: 28_500_00
       )
 

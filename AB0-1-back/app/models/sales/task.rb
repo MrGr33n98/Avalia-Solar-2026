@@ -2,8 +2,11 @@ module Sales
   class Task < ApplicationRecord
     self.table_name = 'sales_tasks'
     belongs_to :account, class_name: 'Sales::Account', foreign_key: :sales_account_id
+    belongs_to :sales_account, class_name: 'Sales::Account', foreign_key: :sales_account_id, optional: true
     belongs_to :opportunity, class_name: 'Sales::Opportunity', foreign_key: :sales_opportunity_id, optional: true
+    belongs_to :sales_opportunity, class_name: 'Sales::Opportunity', foreign_key: :sales_opportunity_id, optional: true
     belongs_to :contact, class_name: 'Sales::Contact', foreign_key: :sales_contact_id, optional: true
+    belongs_to :sales_contact, class_name: 'Sales::Contact', foreign_key: :sales_contact_id, optional: true
     belongs_to :owner, class_name: 'User'
     belongs_to :sequence_enrollment_step, class_name: 'Sales::EmailSequenceEnrollmentStep',
                foreign_key: :sales_email_sequence_enrollment_step_id, optional: true

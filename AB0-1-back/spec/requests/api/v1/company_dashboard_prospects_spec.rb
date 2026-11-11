@@ -103,6 +103,7 @@ RSpec.describe 'Company Dashboard Prospects API', type: :request do
         company: company,
         outbound_click: click,
         session_id: SecureRandom.uuid,
+        consent_state: 'granted',
         started_at: 1.day.ago + 1.minute
       )
 
@@ -155,6 +156,7 @@ RSpec.describe 'Company Dashboard Prospects API', type: :request do
         account: account,
         outbound_click: click,
         session_id: SecureRandom.uuid,
+        consent_state: 'granted',
         started_at: Time.current
       )
 

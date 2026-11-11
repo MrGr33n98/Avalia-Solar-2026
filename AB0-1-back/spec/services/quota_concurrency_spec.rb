@@ -2,8 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Metering Atomicity & Quota Concurrency (Wave 2C)', type: :service do
-  self.use_transactional_tests = false
+RSpec.describe 'Metering Atomicity & Quota Concurrency (Wave 2C)', type: :model, use_transactional_fixtures: false do
 
   let(:pro_plan) do
     Plan.find_by(name: 'Pro Concurrency') || create(

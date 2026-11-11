@@ -87,7 +87,7 @@ RSpec.describe 'Company dashboard CTA visibility', type: :request do
   end
 
   it 'does not let Free plans enable restricted quote or WhatsApp buttons' do
-    company.update!(plan: create(:plan, name: 'Gratuito CTA', price: 0, features: {}), quote_cta_enabled: false, whatsapp_enabled: false)
+    company.update!(plan: create(:plan, name: 'Gratuito CTA', price: 0, features: {}), active_admin: false, quote_cta_enabled: false, whatsapp_enabled: false)
     patch_config({ quote_cta_enabled: true, expected_version: 0 })
     expect(response).to have_http_status(:forbidden)
     patch_config({ whatsapp_enabled: true, expected_version: 0 })
@@ -97,7 +97,8 @@ RSpec.describe 'Company dashboard CTA visibility', type: :request do
   end
 
   it 'allows switching an old ON preference off after entitlement expires even when another old ON preference remains' do
-    company.update!(quote_cta_enabled: true, whatsapp_enabled: true, whatsapp_url: 'https://wa.me/5548999545370')
+    free_plan = create(:plan, name: 'Gratuito Expirado', price: 0, features: {})
+    company.update!(plan: free_plan, active_admin: false, quote_cta_enabled: true, whatsapp_enabled: true, whatsapp_url: 'https://wa.me/5548999545370')
     # Even though the company no longer has paid entitlement, these are existing
     # preferences, not a new grant of access.
     patch_config({ quote_cta_enabled: false, whatsapp_enabled: true, expected_version: 0 })

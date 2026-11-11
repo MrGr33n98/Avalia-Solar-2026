@@ -28,6 +28,8 @@ RSpec.describe 'Intent signals API', type: :request do
   before do
     ActiveJob::Base.queue_adapter = :test
     clear_enqueued_jobs
+    Rack::Attack.enabled = true
+    Rack::Attack.reset! if Rack::Attack.respond_to?(:reset!)
     Rack::Attack.cache.store.clear if defined?(Rack::Attack)
   end
 

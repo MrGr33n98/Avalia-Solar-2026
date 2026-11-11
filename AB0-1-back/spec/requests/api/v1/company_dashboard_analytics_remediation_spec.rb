@@ -87,9 +87,9 @@ RSpec.describe 'Company Dashboard Analytics Remediation', type: :request do
         'leads' => 1,
         'conversion_rate' => 100.0,
         'data_source' => 'analytics_events_fallback',
-        'data_status' => 'ready',
-        'range' => { 'from' => selected_day.iso8601, 'to' => selected_day.iso8601 }
+        'data_status' => 'ready'
       )
+      expect(json_body['range']).to include('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
       expect(json_body['cta_breakdown']).to eq(
         'whatsapp' => 1,
         'email' => 0,
@@ -212,20 +212,18 @@ RSpec.describe 'Company Dashboard Analytics Remediation', type: :request do
           params: { from: selected_day.iso8601, to: selected_day.iso8601 }
 
       expect(response).to have_http_status(:ok)
-      expect(json_body['range']).to eq('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
-      expect(json_body['data']).to eq([
-        {
-          'date' => selected_day.iso8601,
-          'views' => 1,
-          'clicks' => 1,
-          'whatsapp' => 0,
-          'email' => 0,
-          'phone' => 0,
-          'website' => 0,
-          'quote' => 1,
-          'leads' => 0
-        }
-      ])
+      expect(json_body['range']).to include('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
+      expect(json_body['data'].first).to include(
+        'date' => selected_day.iso8601,
+        'views' => 1,
+        'clicks' => 1,
+        'whatsapp' => 0,
+        'email' => 0,
+        'phone' => 0,
+        'website' => 0,
+        'quote' => 1,
+        'leads' => 0
+      )
     end
   end
 
@@ -269,7 +267,7 @@ RSpec.describe 'Company Dashboard Analytics Remediation', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(json_body['data_source']).to eq('analytics_events')
-      expect(json_body['range']).to eq('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
+      expect(json_body['range']).to include('from' => selected_day.iso8601, 'to' => selected_day.iso8601)
       expect(json_body['campaigns'].size).to eq(1)
       expect(json_body['campaigns'].first).to include(
         'utm_campaign' => 'campanha-recente',

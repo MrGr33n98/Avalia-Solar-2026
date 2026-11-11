@@ -19,6 +19,14 @@ class RecommendationPlacement < ApplicationRecord
   scope :sponsored, -> { where(placement_type: 'sponsored') }
   scope :pinned, -> { where(placement_type: 'pinned') }
 
+  def self.ransackable_attributes(auth_object = nil)
+    %w[active category_id city company_id created_at current_clicks current_impressions ends_at id max_clicks max_impressions placement_type slot_position starts_at state_code updated_at]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    %w[category company]
+  end
+
   def active_for?(time = Time.current)
     return false unless active?
     return false if time < starts_at || time > ends_at

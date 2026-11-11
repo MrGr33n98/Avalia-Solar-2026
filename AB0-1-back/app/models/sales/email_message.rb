@@ -47,6 +47,7 @@ module Sales
     scope :outbound, -> { where(direction: 'outbound') }
     scope :human_replies, -> { inbound.where(inbound_classification: 'human_reply') }
 
+    before_validation :set_default_from_email, on: :create, if: -> { from_email.blank? }
     before_create :ensure_tracking_token
 
     def register_event!(event_type:, **event_attributes)
@@ -264,6 +265,10 @@ module Sales
         'complaint' => { status: 'unsubscribed', unsubscribed_at: occurred_at },
         'unsubscribed' => { status: 'unsubscribed', unsubscribed_at: occurred_at }
       }[event_type]
+    end
+
+    def set_default_from_email
+      self.from_email = sender_user&.email || email_account&.email || 'contato@avaliasolar.com.br'
     end
 
     def ensure_tracking_token

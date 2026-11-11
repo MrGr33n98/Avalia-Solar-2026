@@ -85,6 +85,7 @@ RSpec.describe 'Company Intent Sync API', type: :request do
   end
 
   it 'prevents editors from archiving audiences' do
+    create(:company_member, company: company, role: :owner, status: 'active')
     member.update!(role: :editor)
     segment = DemandActivation::AudienceSegment.create!(company: company, created_by: user, name: 'Rascunho')
     post "#{base}/audiences/#{segment.id}/archive", params: { company_id: company.id }

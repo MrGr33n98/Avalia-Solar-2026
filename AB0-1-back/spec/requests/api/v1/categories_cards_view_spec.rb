@@ -2,8 +2,9 @@ require 'rails_helper'
 
 RSpec.describe 'Categories cards view', type: :request do
   def attach_png(record, name: 'banner.png', attachment: :banner)
+    png_bytes = Base64.decode64('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==')
     record.public_send(attachment).attach(
-      io: StringIO.new(FactoryBot::BANNER_1X1_PNG),
+      io: StringIO.new(png_bytes),
       filename: name,
       content_type: 'image/png'
     )
@@ -21,6 +22,7 @@ RSpec.describe 'Categories cards view', type: :request do
   end
 
   before do
+    Category.where.not(id: [cat_expensive.id, cat_cheap.id, cat_popular.id]).delete_all
     # Add badges through companies
     # Create a company with a badge and associate it with the popular category
     badge = create(:badge, name: 'Top Seller', description: 'Best selling badge', active: true)

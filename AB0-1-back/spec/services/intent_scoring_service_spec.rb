@@ -47,7 +47,7 @@ RSpec.describe IntentScoringService, type: :service do
         score = described_class.new(company.id, anonymous_id: anonymous_id).calculate!
 
         expect(score.total_score).to be >= 50
-        expect(score).to be_hot
+        expect(score).to be_actionable
         expect(score.hot_signals_count).to eq(4)
         expect(score.confidence_score).to be > 0.0
       end

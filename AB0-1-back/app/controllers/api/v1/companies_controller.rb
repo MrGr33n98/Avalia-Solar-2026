@@ -661,13 +661,15 @@ module Api
 
       def feature_access_payload(company)
         plan_tier = company.respond_to?(:inferred_plan_tier) ? company.inferred_plan_tier : 'free'
+        plan_info = {
+          id: company.plan&.id,
+          name: company.plan&.name,
+          tier: plan_tier
+        }
         {
           features: feature_access_entries_for_api(company),
-          plan: {
-            id: company.plan&.id,
-            name: company.plan&.name,
-            tier: plan_tier
-          },
+          plan: plan_info,
+          plan_details: plan_info,
           subscription: feature_access_subscription_payload(company),
           metadata: {
             timestamp: Time.current.iso8601,
@@ -734,8 +736,8 @@ module Api
           id: company.id,
           slug: company.slug,
           name: company.name,
-          latitude: company.latitude,
-          longitude: company.longitude,
+          latitude: company.latitude&.to_f,
+          longitude: company.longitude&.to_f,
           rating_avg: company.rating_avg,
           rating_count: company.rating_count,
           verified: company.verified,

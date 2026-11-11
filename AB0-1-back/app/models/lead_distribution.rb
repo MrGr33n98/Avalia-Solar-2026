@@ -100,10 +100,10 @@ class LeadDistribution < ApplicationRecord
   private
 
   def valid_status_transition
+    return if new_record?
     old_status = status_was&.to_sym
     new_status = status&.to_sym
     return if old_status == new_status
-    return if old_status.nil? # new record
 
     allowed = {
       queued: [:sent],

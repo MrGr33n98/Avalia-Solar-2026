@@ -17,7 +17,8 @@ RSpec.describe 'Leads quote access', type: :request do
   end
 
   it 'bloqueia criar lead quando a empresa tem active_admin false' do
-    company = create(:company, active_admin: false)
+    plan = Plan.find_by(name: 'Gratuito Sem CTA') || create(:plan, name: 'Gratuito Sem CTA', price: 0, features: nil)
+    company = create(:company, plan: plan, active_admin: false, quote_cta_enabled: false)
 
     post '/api/v1/leads', params: {
       lead: {

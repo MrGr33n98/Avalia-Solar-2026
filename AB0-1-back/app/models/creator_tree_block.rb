@@ -23,6 +23,14 @@ class CreatorTreeBlock < ApplicationRecord
 
   scope :active_ordered, -> { where(active: true).order(position: :asc, id: :asc) }
 
+  def self.ransackable_attributes(auth_object = nil)
+    %w[active block_type company_id created_at id position publication_id reviewer_id subtitle title updated_at url]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    %w[company publication reviewer]
+  end
+
   before_validation :normalize_whatsapp
   after_commit :invalidate_creator_profile_cache
 

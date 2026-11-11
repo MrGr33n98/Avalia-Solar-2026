@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe CategoryDiscovery::SitemapExporter do
+  before { Category.destroy_all }
+
   describe '.call (CDSI-031, CDSI-036)' do
     it 'R18: exports only active and sitemap-eligible categories with canonical path and lastmod' do
       active_cat = create(

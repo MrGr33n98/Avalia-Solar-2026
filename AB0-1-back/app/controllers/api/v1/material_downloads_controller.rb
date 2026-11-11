@@ -45,7 +45,7 @@ module Api
           expires_at: download.expires_at
         }, status: :created
       rescue ActionController::ParameterMissing => e
-        render json: { error: e.message }, status: :unprocessable_entity
+        render json: { error: e.message }, status: :bad_request
       rescue ActiveRecord::RecordInvalid => e
         render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
       rescue StandardError => e

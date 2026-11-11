@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 # Console único de operação de leads. Resources continuam registrados para preservar rotas.
-ActiveAdmin.register_page 'SaaS Leads' do
-  menu priority: 3
+ActiveAdmin.register_page 'SaaS Leads Console' do
+  menu priority: 3, label: 'SaaS Leads Console'
 
   content title: 'SaaS Leads' do
     tabs = [
-      ['Visão Geral', admin_saas_leads_path],
+      ['Visão Geral', admin_saas_leads_console_path],
+      ['SaaS Leads', admin_saas_leads_path],
       ['Leads', admin_leads_path],
       ['Distribuição', admin_lead_distributions_path],
       ['Conteúdo', admin_content_leads_path],

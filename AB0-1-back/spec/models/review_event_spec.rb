@@ -5,45 +5,55 @@ Sidekiq::Testing.fake!
 
 RSpec.describe Review, type: :model do
   describe 'event broadcasting' do
-    before do
-      allow(ActiveSupport::Notifications).to receive(:instrument).and_call_original
-    end
-
     let(:review) { create(:review, status: :pending) }
 
     context 'when review status transitions to approved' do
       it 'instruments review.published event' do
-        expect(ActiveSupport::Notifications).to receive(:instrument).with('review.published',
-                                                                          hash_including(review_id: review.id))
+        events = []
+        callback = ->(_name, _start, _finish, _id, payload) { events << payload }
+        ActiveSupport::Notifications.subscribed(callback, 'review.published') do
+          review.update!(status: :approved)
+        end
 
-        review.update!(status: :approved)
+        expect(events.first).to include(review_id: review.id)
       end
     end
 
     context 'when review is created as approved' do
       it 'instruments review.published event' do
-        review_approved = build(:review, status: :approved)
-        expect(ActiveSupport::Notifications).to receive(:instrument).with('review.published',
-                                                                          hash_including(review_id: anything))
+        events = []
+        callback = ->(_name, _start, _finish, _id, payload) { events << payload }
+        review_approved = nil
+        ActiveSupport::Notifications.subscribed(callback, 'review.published') do
+          review_approved = create(:review, status: :approved)
+        end
 
-        review_approved.save!
+        expect(events.first).to include(review_id: review_approved.id)
       end
     end
 
     context 'when review status transitions to rejected' do
       it 'does not instrument review.published event' do
-        expect(ActiveSupport::Notifications).not_to receive(:instrument).with('review.published', any_args)
+        events = []
+        callback = ->(_name, _start, _finish, _id, payload) { events << payload }
+        ActiveSupport::Notifications.subscribed(callback, 'review.published') do
+          review.update!(status: :rejected)
+        end
 
-        review.update!(status: :rejected)
+        expect(events).to be_empty
       end
     end
 
     context 'when review is updated but status remains approved' do
       it 'does not instrument review.published event again' do
         approved_review = create(:review, status: :approved)
+        events = []
+        callback = ->(_name, _start, _finish, _id, payload) { events << payload }
+        ActiveSupport::Notifications.subscribed(callback, 'review.published') do
+          approved_review.update!(comment: 'Updated comment but same status')
+        end
 
-        expect(ActiveSupport::Notifications).not_to receive(:instrument).with('review.published', any_args)
-        approved_review.update!(comment: 'Updated comment but same status')
+        expect(events).to be_empty
       end
     end
   end

@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Marketplace::ProposalBootstrapService, type: :service do
-  let(:buyer) { create(:user, role: 'review', company: nil, email: 'cliente@example.com') }
+  let(:buyer) { create(:user, :confirmed, role: 'review', company: nil, email: 'cliente@example.com') }
   let(:lead) { create(:lead, company: nil, email: buyer.email.upcase) }
   let(:company) { create(:company, status: 'active') }
   let(:distribution) { create(:lead_distribution, lead: lead, company: company, status: 'sent') }

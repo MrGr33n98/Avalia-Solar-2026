@@ -100,7 +100,7 @@ RSpec.describe 'Company Dashboard Feature Gating', type: :request do
 
   context 'for a pro company' do
     before do
-      plan = create(:plan, name: 'Pro', price: 99.0)
+      plan = Plan.find_by(name: 'Pro') || create(:plan, name: 'Pro', price: 99.0)
       company.update(plan: plan)
       allow(plan).to receive(:tier).and_return('pro')
       allow(plan).to receive(:plan_tier).and_return('pro')
@@ -180,7 +180,7 @@ RSpec.describe 'Company Dashboard Feature Gating', type: :request do
 
   context 'for an enterprise company' do
     before do
-      plan = create(:plan, name: 'Enterprise', price: 499.0)
+      plan = Plan.find_by(name: 'Enterprise') || create(:plan, name: 'Enterprise', price: 499.0)
       company.update(plan: plan)
       allow(plan).to receive(:tier).and_return('enterprise')
       allow(plan).to receive(:plan_tier).and_return('enterprise')

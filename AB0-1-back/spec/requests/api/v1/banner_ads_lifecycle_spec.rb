@@ -38,7 +38,7 @@ RSpec.describe 'Banner Ads lifecycle', type: :request do
     expect(response).to have_http_status(:created)
 
     get "/api/v1/banner_clicks/#{banner.id}"
-    expect(response).to redirect_to('https://example.com/campaign')
+    expect(response.location).to start_with('https://example.com/campaign')
 
     get "/api/v1/company_dashboard/banners/#{banner.id}/performance", headers: headers
     expect(response).to have_http_status(:ok)

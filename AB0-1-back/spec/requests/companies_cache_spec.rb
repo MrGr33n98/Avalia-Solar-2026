@@ -6,10 +6,8 @@ RSpec.describe 'Companies Cache Strategy' do
   let!(:company1) { create(:company, name: 'Solar Co', status: 'active') }
   let!(:company2) { create(:company, name: 'Energy Inc', status: 'active') }
 
-  around do |example|
-    if Rails.cache.respond_to?(:redis) && Rails.cache.redis.respond_to?(:keys)
-      example.run
-    else
+  before(:each) do
+    unless Rails.cache.respond_to?(:redis) && Rails.cache.redis.respond_to?(:keys)
       memory_store = ActiveSupport::Cache::MemoryStore.new
       class << memory_store
         def redis
@@ -23,11 +21,7 @@ RSpec.describe 'Companies Cache Strategy' do
         end
       end
       allow(Rails).to receive(:cache).and_return(memory_store)
-      example.run
     end
-  end
-
-  before do
     Rails.cache.clear
   end
 

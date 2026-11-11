@@ -27,14 +27,14 @@ RSpec.describe 'Golden SaaS Security Proof & Baseline Specs', type: :request do
     let!(:user_a) do
       User.create!(
         name: 'Member A', email: 'member_a@solara.com', password: 'Password123!',
-        terms_accepted: true, role: 'company', company: company_a, confirmed_at: Time.current
+        terms_accepted: true, role: 'company', company: company_a, confirmed_at: Time.current, status: :active
       )
     end
 
     let!(:user_b) do
       User.create!(
         name: 'Member B', email: 'member_b@solarb.com', password: 'Password123!',
-        terms_accepted: true, role: 'company', company: company_b, confirmed_at: Time.current
+        terms_accepted: true, role: 'company', company: company_b, confirmed_at: Time.current, status: :active
       )
     end
 
@@ -105,7 +105,7 @@ RSpec.describe 'Golden SaaS Security Proof & Baseline Specs', type: :request do
     let!(:user) do
       User.create!(
         name: 'JWT Test User', email: 'jwt_test@avaliasolar.com', password: 'Password123!',
-        terms_accepted: true, role: 'company', confirmed_at: Time.current
+        terms_accepted: true, role: 'company', confirmed_at: Time.current, status: :active
       )
     end
 
@@ -113,7 +113,7 @@ RSpec.describe 'Golden SaaS Security Proof & Baseline Specs', type: :request do
       token = jwt_token_for(user)
 
       # 1. Normal authenticated request works (200)
-      get '/api/v1/users/profile', headers: { 'Authorization' => "Bearer #{token}", 'Accept' => 'application/json' }
+      get "/api/v1/users/#{user.id}", headers: { 'Authorization' => "Bearer #{token}", 'Accept' => 'application/json' }
       expect(response).to have_http_status(:success)
 
       # 2. Simulate token revocation via Redis blacklist (as done during logout)
@@ -124,10 +124,10 @@ RSpec.describe 'Golden SaaS Security Proof & Baseline Specs', type: :request do
       # 3. Repeat authenticated request with the SAME token
       # Expected Golden SaaS contract: 401 Unauthorized
       # AS-IS behavior: BaseController does not check blacklist, so returns 200
-      get '/api/v1/users/profile', headers: { 'Authorization' => "Bearer #{token}", 'Accept' => 'application/json' }
+      get "/api/v1/users/#{user.id}", headers: { 'Authorization' => "Bearer #{token}", 'Accept' => 'application/json' }
 
-      # SEC-02 proof: BaseController yields 200 because revoked? is omitted in BaseController#current_user
-      expect(response.status).to eq(200)
+      # Golden SaaS contract: BaseController checks blacklist and returns 401 Unauthorized
+      expect(response.status).to eq(401)
     end
   end
 

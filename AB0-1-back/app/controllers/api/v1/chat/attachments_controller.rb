@@ -76,7 +76,7 @@ module Api
         private
 
         def set_company
-          @company = Company.find(params[:company_id])
+          @company = ::Company.find(params[:company_id])
           return if current_user.admin? || current_user.active_membership_for?(@company.id)
 
           render_error_response(

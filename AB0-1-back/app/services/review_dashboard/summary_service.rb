@@ -116,7 +116,7 @@ module ReviewDashboard
 
     def recommendations
       Company.where(status: 'active', verified: true)
-             .select(:id, :name, :city, :state, :rating_avg, :featured)
+             .select(:id, :name, :city, :state, :rating_avg, :rating_count, :reviews_count, :featured)
              .order(rating_avg: :desc)
              .limit(3)
              .map do |company|

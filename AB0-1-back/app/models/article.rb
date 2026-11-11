@@ -36,7 +36,7 @@ class Article < ApplicationRecord
   # Defaults
   after_initialize :set_defaults, if: :new_record?
 
-  scope :published, -> { where(status: 'published').where('published_at <= ?', Time.current) }
+  scope :published, -> { where(status: 'published').where('articles.published_at <= ?', Time.current) }
   scope :featured, -> { where(featured: true) }
   scope :sponsored, -> { where(sponsored: true) }
 

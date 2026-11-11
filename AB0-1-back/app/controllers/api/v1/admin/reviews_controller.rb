@@ -58,8 +58,13 @@ module Api
         private
 
         def execute_decision(action)
-          service = Reviews::DecisionService.new
-          service.public_send("#{action}!", @review)
+          service = ReviewDecisionService.new(
+            review: @review,
+            admin_user: current_admin_user,
+            notes: params[:notes],
+            lock_version: params[:lock_version]
+          )
+          service.public_send("#{action}!")
 
           render json: serialized_review(@review)
         rescue StandardError => e

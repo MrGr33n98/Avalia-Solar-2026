@@ -10,6 +10,8 @@ RSpec.describe 'Company Dashboard Idempotency', type: :request do
   end
 
   describe 'add_categories idempotency' do
+    before { allow_any_instance_of(CompanyFieldPolicy).to receive(:decision).and_return(direct_update: false, requires_approval: true) }
+
     it 'prevents duplicate pending changes on double-click' do
       params = { category_ids: [1, 2, 3] }
 
@@ -64,6 +66,8 @@ RSpec.describe 'Company Dashboard Idempotency', type: :request do
   end
 
   describe 'remove_category idempotency' do
+    before { allow_any_instance_of(CompanyFieldPolicy).to receive(:decision).and_return(direct_update: false, requires_approval: true) }
+
     it 'prevents duplicate remove requests on double-click' do
       params = { category_id: 1 }
 
@@ -92,6 +96,8 @@ RSpec.describe 'Company Dashboard Idempotency', type: :request do
   end
 
   describe 'update_info idempotency' do
+    before { allow_any_instance_of(CompanyFieldPolicy).to receive(:decision).and_return(direct_update: false, requires_approval: true) }
+
     it 'prevents duplicate info updates on double-click' do
       params = { company: { name: 'New Name', description: 'New Description' } }
 

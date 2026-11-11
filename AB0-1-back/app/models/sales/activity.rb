@@ -27,6 +27,10 @@ module Sales
     belongs_to :contact, class_name: 'Sales::Contact', foreign_key: :sales_contact_id, optional: true
     belongs_to :actor, class_name: 'User'
 
+    attribute :log_status, :string, default: 'completed'
+
+    alias_attribute :description, :body
+
     validates :activity_type, :occurred_at, presence: true
     validates :activity_type, inclusion: { in: ACTIVITY_TYPES }, allow_blank: true
     validates :log_status, inclusion: { in: LOG_STATUSES }, allow_blank: true

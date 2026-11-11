@@ -29,7 +29,7 @@ RSpec.describe 'Public company materials API', type: :request do
       get "/api/v1/companies/#{company.id}/materials"
 
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)).to eq('materials' => [])
+      expect(JSON.parse(response.body)['materials']).to eq([])
     end
   end
 end

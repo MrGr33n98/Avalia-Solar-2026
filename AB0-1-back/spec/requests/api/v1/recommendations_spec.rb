@@ -62,7 +62,7 @@ RSpec.describe 'Api::V1::Recommendations', type: :request do
       expect(json['meta']['location']['state']).to eq('SC')
       expect(json['meta']['location']['source']).to eq('explicit_param')
       expect(json['data'].first['name']).to eq('Solar Local SC')
-      expect(json['data'].first['rating']['label']).to include('4.9')
+      expect(json['data'].first['rating']['label']).to match(/4[,.]9/)
     end
 
     it 'returns honest labels for companies without reviews or SLA' do

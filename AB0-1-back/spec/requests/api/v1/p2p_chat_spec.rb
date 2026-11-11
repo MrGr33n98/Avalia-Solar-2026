@@ -63,7 +63,9 @@ RSpec.describe 'P2P Chat API', type: :request do
            headers: auth_headers_for(buyer)
 
       expect(response).to have_http_status(:forbidden)
-      expect(JSON.parse(response.body)['error']).to eq('Chat is disabled for this company')
+      err = JSON.parse(response.body)['error']
+      msg = err.is_a?(Hash) ? err['message'] : err
+      expect(msg).to eq('Chat is disabled for this company')
     end
 
     context 'when plan feature is locked' do
@@ -82,7 +84,7 @@ RSpec.describe 'P2P Chat API', type: :request do
 
   describe 'GET /api/v1/conversations' do
     it 'returns conversations for active company members' do
-      conversation = create(:conversation, company: company, user: buyer)
+      conversation = create(:conversation, company: company, user: buyer, company_unread_count: 1)
       create(:direct_message, conversation: conversation, sender_type: 'User', read_at: nil)
 
       get '/api/v1/conversations', headers: auth_headers_for(company_user)

@@ -66,6 +66,7 @@ class Review < ApplicationRecord
   after_commit :enqueue_aggregation, on: %i[create update], if: :should_recalculate_aggregates?
   after_update_commit :notify_user_of_reply, if: :should_notify_reply_change?
   after_commit :create_notification_for_company, on: :create
+  after_commit :broadcast_review_published, on: %i[create update], if: :approved_and_status_changed?
 
   # Validations
   validates :rating, presence: true, inclusion: { in: 1..5 }
@@ -392,7 +393,7 @@ class Review < ApplicationRecord
   def create_notification_for_company
     return unless company.present?
 
-    company.users.where(role: 'company_user').find_each do |company_user|
+    company.users.where(role: %w[company company_user]).find_each do |company_user|
       Notification.create!(
         user: company_user,
         notification_type: 'new_review',
@@ -404,5 +405,15 @@ class Review < ApplicationRecord
     end
   rescue StandardError => e
     Rails.logger.error("[Review] Failed to create notification: #{e.message}")
+  end
+
+  def approved_and_status_changed?
+    return false unless approved?
+
+    saved_change_to_status? || previously_new_record?
+  end
+
+  def broadcast_review_published
+    ActiveSupport::Notifications.instrument('review.published', review_id: id)
   end
 end

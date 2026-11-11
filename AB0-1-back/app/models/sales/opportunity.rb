@@ -39,8 +39,23 @@ module Sales
 
     attribute :temperature, :string, default: 'cold'
 
+    alias_attribute :title, :name
+
+    def company_id
+      account&.company_id
+    end
+
+    def company_id=(val)
+      account.company_id = val if account && val.present?
+    end
+
+    def company
+      account&.company
+    end
+
     validates :name, :status, presence: true
     validates :temperature, inclusion: { in: TEMPERATURES }
+    before_validation :assign_pipeline_from_stage, if: -> { sales_pipeline_id.blank? && stage.present? }
     validate :stage_belongs_to_pipeline
 
     scope :open, -> { where(status: 'open') }
@@ -54,6 +69,10 @@ module Sales
     end
 
     private
+
+    def assign_pipeline_from_stage
+      self.sales_pipeline_id = stage.sales_pipeline_id
+    end
 
     def stage_belongs_to_pipeline
       return if sales_stage_id.blank? || sales_pipeline_id.blank?

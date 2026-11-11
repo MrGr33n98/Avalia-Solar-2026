@@ -19,7 +19,7 @@ RSpec.describe 'Company dashboard top campaigns', type: :request do
 
   before do
     # Setup plan so feature gating allows top_campaigns
-    plan = create(:plan, name: 'Pro', price: 99.0)
+    plan = Plan.find_by(name: 'Pro') || create(:plan, name: 'Pro', price: 99.0)
     company.update(plan: plan)
     allow(plan).to receive(:tier).and_return('pro')
     allow(plan).to receive(:plan_tier).and_return('pro')
@@ -64,7 +64,7 @@ RSpec.describe 'Company dashboard top campaigns', type: :request do
   describe 'feature gating for free users' do
     before do
       # Switch to free plan for this context
-      free_plan = create(:plan, name: 'Free', price: 0)
+      free_plan = Plan.find_by(name: 'Free') || create(:plan, name: 'Free', price: 0)
       company.update(plan: free_plan)
       allow(free_plan).to receive(:tier).and_return('free')
       allow(free_plan).to receive(:plan_tier).and_return('free')

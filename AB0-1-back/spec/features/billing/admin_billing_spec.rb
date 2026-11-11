@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Admin Billing System', type: :request do
-  let(:category) { Category.create!(name: 'Sistemas Solares', description: 'Teste') }
+  let(:category) { Category.find_by(name: 'Sistemas Solares') || Category.create!(name: 'Sistemas Solares', description: 'Teste') }
   let(:company) do
     comp = Company.new(
       name: 'Solar Tech',
@@ -22,7 +22,7 @@ RSpec.describe 'Admin Billing System', type: :request do
   end
 
   let(:free_plan) do
-    Plan.create!(
+    Plan.find_by(name: 'Free') || Plan.create!(
       name: 'Free',
       price: 0.0,
       is_public: true,
@@ -31,7 +31,7 @@ RSpec.describe 'Admin Billing System', type: :request do
   end
 
   let(:pro_plan) do
-    Plan.create!(
+    Plan.find_by(name: 'Pro') || Plan.create!(
       name: 'Pro',
       price: 499.00,
       stripe_product_id: 'prod_pro123',
@@ -42,7 +42,7 @@ RSpec.describe 'Admin Billing System', type: :request do
   end
 
   let(:admin_user) do
-    admin = AdminUser.create!(
+    admin = AdminUser.find_by(email: 'admin@avaliasolar.com.br') || AdminUser.create!(
       email: 'admin@avaliasolar.com.br',
       password: 'Password123!',
       billing_role: 'support'
@@ -53,7 +53,7 @@ RSpec.describe 'Admin Billing System', type: :request do
   end
 
   let(:normal_admin) do
-    AdminUser.create!(
+    AdminUser.find_by(email: 'normal@avaliasolar.com.br') || AdminUser.create!(
       email: 'normal@avaliasolar.com.br',
       password: 'Password123!',
       billing_role: nil

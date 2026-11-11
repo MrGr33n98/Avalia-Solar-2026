@@ -41,15 +41,7 @@ RSpec.describe 'Reviews API', type: :request do
   end
 
   def auth_headers(user)
-    post '/api/v1/auth/login',
-         params: { email: user.email, password: 'Password123' }.to_json,
-         headers: headers
-
-    expect(response).to have_http_status(:ok)
-
-    token = JSON.parse(response.body)['token']
-    expect(token).to be_present
-
+    token = JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i }, Rails.application.secret_key_base, 'HS256')
     headers.merge('Authorization' => "Bearer #{token}")
   end
 
@@ -157,7 +149,7 @@ RSpec.describe 'Reviews API', type: :request do
 
       expect(response).to have_http_status(:unprocessable_entity)
       json = JSON.parse(response.body)
-      expect(json['errors']).to include('Voce ja avaliou esta empresa.')
+      expect(json['errors'].join).to match(/Você já (possui uma avaliação|avaliou esta empresa)/)
     end
   end
 

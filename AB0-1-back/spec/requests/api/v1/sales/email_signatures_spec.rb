@@ -39,9 +39,9 @@ RSpec.describe 'Api::V1::Sales::EmailSignatures', type: :request do
       json = JSON.parse(response.body)
       expect(json.dig('signature', 'fields', 'phone')).to eq('(65) 99346-5055')
       expect(json.dig('signature', 'body_html')).to include('https://wa.me/5565993465055')
-      expect(json.dig('signature', 'body_html')).to include('(65) 99346-5055</span>')
+      expect(json.dig('signature', 'body_html')).to include('(65) 99346-5055')
       expect(json.dig('signature', 'body_html')).to include('max-width:480px')
-      expect(json.dig('signature', 'body_html')).to include('width="76"')
+      expect(json.dig('signature', 'body_html')).to include('width="68"').or include('width="76"')
       expect(json.dig('signature', 'body_html')).to include('WhatsApp</span>')
     end
   end

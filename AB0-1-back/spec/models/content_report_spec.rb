@@ -16,7 +16,7 @@ RSpec.describe ContentReport, type: :model do
     it 'validates status inclusion' do
       report = ContentReport.new(status: 'invalid')
       report.valid?
-      expect(report.errors[:status]).to include('não está incluído na lista')
+      expect(report.errors[:status]).to include(I18n.t('errors.messages.inclusion')).or include('não está incluído na lista')
     end
   end
 end

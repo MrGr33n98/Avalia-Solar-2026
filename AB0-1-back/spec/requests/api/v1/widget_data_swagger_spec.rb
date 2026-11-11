@@ -1,4 +1,4 @@
-﻿require 'swagger_helper'
+require 'swagger_helper'
 
 RSpec.describe 'api/v1/companies/{id}/widget_data', type: :request do
   path '/api/v1/companies/{id}/widget_data' do

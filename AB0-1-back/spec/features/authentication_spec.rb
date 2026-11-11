@@ -71,6 +71,10 @@ RSpec.describe 'Authentication System', type: :model do
       )
     end
 
+    before do
+      create(:company_member, user: user, company: company, status: 'active')
+    end
+
     it 'is not active for authentication when not approved' do
       expect(user.active_for_authentication?).to be false
       expect(user.inactive_message).to eq :pending

@@ -1,7 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::CompanyCatalog', type: :request do
-  let!(:company) { create(:company, status: :active) }
+  let!(:free_plan) { create(:plan, name: 'free', price: 0.0) }
+  let!(:company) { create(:company, status: :active, plan: free_plan) }
   let!(:other_company) { create(:company, status: :active) }
   let!(:category) { create(:category, name: 'Carregadores Veiculares', seo_url: 'carregadores-veiculares') }
   let!(:other_category) { create(:category, name: 'Baterias', seo_url: 'baterias') }
@@ -14,12 +15,6 @@ RSpec.describe 'Api::V1::CompanyCatalog', type: :request do
 
   before do
     company.categories << category
-    CompanyProduct.create!(
-      company: company,
-      product: global_product,
-      relationship_type: 'distributor',
-      status: 'active'
-    )
     CompanyService.create!(
       company: company,
       category: category,
@@ -31,6 +26,13 @@ RSpec.describe 'Api::V1::CompanyCatalog', type: :request do
 
   describe 'GET /api/v1/companies/:id/catalog' do
     it 'returns globally canonical products linked to the company in the selected category' do
+      CompanyProduct.create!(
+        company: company,
+        product: global_product,
+        relationship_type: 'distributor',
+        status: 'active'
+      )
+
       get "/api/v1/companies/#{company.id}/catalog", params: { category: category.seo_url }
 
       expect(response).to have_http_status(:ok)

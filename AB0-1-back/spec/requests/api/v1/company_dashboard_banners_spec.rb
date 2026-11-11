@@ -90,7 +90,7 @@ RSpec.describe 'Api::V1::CompanyDashboardBanners', type: :request do
       end
 
       context 'regression: with a realistic Plan that does not respond to max_banners' do
-        let(:plan) { create(:plan, name: 'Pro', price: 100) }
+        let(:plan) { Plan.find_by(name: 'Pro') || create(:plan, name: 'Pro', price: 100) }
         let(:company) { create(:company, plan: plan) }
 
         before do

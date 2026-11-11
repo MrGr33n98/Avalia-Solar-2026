@@ -84,7 +84,7 @@ RSpec.describe 'CategoryEditorial Workflow, Revisions & Seed Safety (R12-R13, R2
       )
 
       category.reload
-      expect(category.seo_title).to eq('Inversores Publicado v1')
+      expect(category.seo_title).to eq('Inversores Publicado v1 | Avalia Solar')
       expect(category.description).to include('Guia Publicado v1')
     end
 
@@ -123,7 +123,7 @@ RSpec.describe 'CategoryEditorial Workflow, Revisions & Seed Safety (R12-R13, R2
       expect(rollback_result.success?).to be(true)
 
       category.reload
-      expect(category.seo_title).to eq('Inversores Publicado v1')
+      expect(category.seo_title).to eq('Inversores Publicado v1 | Avalia Solar')
     end
 
     it 'R27: raises ActiveRecord::StaleObjectError on concurrent optimistic locking conflict' do

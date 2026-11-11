@@ -184,17 +184,17 @@ RSpec.describe 'Leads wizard API', type: :request do
 
     post '/api/v1/leads/wizard_create', params: {
       lead: {
-        product_vertical: 'Energia Solar',
+        product_vertical: 'Solar',
         project_profile: 'Condomínio',
-        quote_type: 'Energia Solar',
-        system_size_band: 'Ate 15 kWp',
+        quote_type: 'Solar',
+        system_size_band: '8 kWp ou mais',
         decision_timeline: 'Agora',
-        address_full: 'Av. Paulista, 1000 - São Paulo/SP',
-        city: 'São Paulo',
-        state: 'SP',
+        address_full: 'Av. Atlântica, 1000 - Rio de Janeiro/RJ',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
         full_name: 'Síndico Responsável',
         email: 'sindico@condominio.com',
-        phone: '11977776666',
+        phone: '21977776666',
         consent: true
       },
       preferred_company_id: company_a.id

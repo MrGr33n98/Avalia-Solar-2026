@@ -21,7 +21,7 @@ RSpec.describe ReviewerSolution, type: :model do
       create(:reviewer_solution, name: 'Unique Solution', user: user)
       duplicate = build(:reviewer_solution, name: 'Unique Solution', user: user)
       expect(duplicate).not_to be_valid
-      expect(duplicate.errors[:name]).to include('já está em uso')
+      expect(duplicate.errors[:name]).to include(I18n.t('errors.messages.taken')).or include('já está em uso')
     end
   end
 

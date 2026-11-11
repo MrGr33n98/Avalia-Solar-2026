@@ -13,6 +13,8 @@ class Notification < ApplicationRecord
   validates :notification_type, presence: true
   validates :title, presence: true
 
+  alias_attribute :body, :message
+
   # Scopes
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }

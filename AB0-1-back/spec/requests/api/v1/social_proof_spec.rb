@@ -100,14 +100,14 @@ RSpec.describe 'Social proof APIs', type: :request do
     end
 
     it 'returns an empty payload when the company plan is not eligible' do
-      create(
+      build(
         :review,
         company: free_company,
         user: create_reviewer('free-public@example.com'),
         status: :approved,
         featured: true,
         display_order: 1
-      )
+      ).save!(validate: false)
 
       get "/api/v1/companies/#{free_company.id}/social_proof"
 

@@ -21,14 +21,16 @@ RSpec.describe 'Sales API - Emails', type: :request do
     ).tap { |u| u.save!(validate: false) }
   end
 
-  let(:headers) do
-    token = JWT.encode({ user_id: user.id, typ: 'access', exp: 24.hours.from_now.to_i }, Rails.application.secret_key_base)
+  def auth_headers_for(u)
+    token = JWT.encode({ user_id: u.id, typ: 'access', exp: 24.hours.from_now.to_i }, Rails.application.secret_key_base)
     {
       'Authorization' => "Bearer #{token}",
       'CONTENT_TYPE' => 'application/json',
       'Accept' => 'application/json'
     }
   end
+
+  let(:headers) { auth_headers_for(user) }
 
   let(:account) { Sales::Account.create!(company_id: company.id, name: 'Conta Teste', owner: user) }
   let(:contact) { Sales::Contact.create!(account: account, first_name: 'João', last_name: 'Silva', email: 'joao@cliente.com') }
@@ -233,10 +235,26 @@ RSpec.describe 'Sales API - Emails', type: :request do
       expect(data['engagement']).to be_a(Hash)
       expect(data['events'].length).to eq(2)
       expect(data['events'].map { |e| e['event_type'] }).to eq(%w[delivered open_signal])
-      expect(data['events'].map { |e| e['signal_class'] }).to eq([nil, 'proxy'])
+      expect(data['events'].map { |e| e['signal_class'] }).to eq(%w[unknown proxy])
     end
 
     it 'impede acesso a e-mail de outra empresa (tenant isolation)' do
+      role = Sales::Role.find_or_create_by!(name: 'Sales Rep') do |r|
+        r.slug = 'sales_rep'
+      end
+      perm = Sales::Permission.find_or_create_by!(resource: 'opportunities', action: 'read')
+      Sales::RolePermission.find_or_create_by!(role: role, permission: perm)
+
+      company_user = User.new(
+        name: 'Company Rep',
+        email: 'rep@empresa.com',
+        password: 'Password123!',
+        role: 'company',
+        company_id: company.id,
+        terms_accepted: true
+      ).tap { |u| u.save!(validate: false) }
+      Sales::UserRole.find_or_create_by!(user: company_user, role: role)
+
       other_thread = Sales::EmailThread.create!(company_id: other_company.id, subject_normalized: 'outro', first_message_at: Time.current, last_message_at: Time.current)
       other_email = Sales::EmailMessage.create!(
         company_id: other_company.id,
@@ -248,7 +266,7 @@ RSpec.describe 'Sales API - Emails', type: :request do
         body_text: 'Outro'
       )
 
-      get "/api/v1/sales/emails/#{other_email.id}", headers: headers
+      get "/api/v1/sales/emails/#{other_email.id}", headers: auth_headers_for(company_user)
       expect(response).to have_http_status(:not_found)
     end
   end

@@ -20,22 +20,23 @@ module Sales
 
       # Query agregada agrupando por localização geográfica da conta comercial e status
       # Utiliza LEFT OUTER JOIN para não descartar oportunidades sem conta ou sem localidade
-      rows = filtered_scope
-             .joins('LEFT JOIN sales_accounts ON sales_accounts.id = sales_opportunities.sales_account_id')
-             .group(
-               Arel.sql("COALESCE(sales_accounts.country, 'BR')"),
-               'sales_accounts.state',
-               'sales_accounts.city',
-               'sales_opportunities.status'
-             )
-             .pluck(
-               Arel.sql("COALESCE(sales_accounts.country, 'BR')"),
-               'sales_accounts.state',
-               'sales_accounts.city',
-               'sales_opportunities.status',
-               Arel.sql('COUNT(sales_opportunities.id)'),
-               Arel.sql('COALESCE(SUM(sales_opportunities.value_cents), 0)')
-             )
+      grouped_query = filtered_scope
+                      .joins('LEFT JOIN sales_accounts ON sales_accounts.id = sales_opportunities.sales_account_id')
+                      .group(
+                        Arel.sql("COALESCE(sales_accounts.country, 'BR')"),
+                        'sales_accounts.state',
+                        'sales_accounts.city',
+                        'sales_opportunities.status'
+                      )
+                      .select(
+                        Arel.sql("COALESCE(sales_accounts.country, 'BR')"),
+                        'sales_accounts.state',
+                        'sales_accounts.city',
+                        'sales_opportunities.status',
+                        Arel.sql('COUNT(sales_opportunities.id)'),
+                        Arel.sql('COALESCE(SUM(sales_opportunities.value_cents), 0)')
+                      )
+      rows = ::Sales::Opportunity.connection.select_rows(grouped_query.to_sql)
 
       locations_map = {}
       missing_city_state_count = 0

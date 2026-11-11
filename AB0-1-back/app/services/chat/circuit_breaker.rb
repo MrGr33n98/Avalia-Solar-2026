@@ -12,7 +12,11 @@ module Chat
 
     def self.failure!(provider:)
       key = "chat:circuit:#{provider}:failures"
-      count = Rails.cache.increment(key, 1, expires_in: 5.minutes, raw: true).to_i
+      count = Rails.cache.increment(key, 1, expires_in: 5.minutes)
+      if count.nil?
+        count = 1
+        Rails.cache.write(key, count, expires_in: 5.minutes)
+      end
       Rails.cache.write("chat:circuit:#{provider}:opened", true, expires_in: OPEN_TTL) if count >= FAILURE_THRESHOLD
     end
 

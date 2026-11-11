@@ -29,7 +29,8 @@ RSpec.describe 'Api::V1::BannerClicks', type: :request do
     end
 
     it 'does not redirect to unsafe destination' do
-      banner = create(:banner, :approved, active: true, link: 'javascript:alert(1)')
+      banner = build(:banner, :approved, active: true, link: 'javascript:alert(1)')
+      banner.save!(validate: false)
 
       get "/api/v1/banner_clicks/#{banner.id}"
 

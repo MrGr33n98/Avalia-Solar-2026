@@ -280,7 +280,7 @@ class Lead < ApplicationRecord
   def create_notification_for_company
     return unless company.present?
 
-    company.users.where(role: 'company_user').find_each do |company_user|
+    company.users.where(role: %w[company company_user]).find_each do |company_user|
       Notification.create!(
         user: company_user,
         notification_type: 'new_lead',

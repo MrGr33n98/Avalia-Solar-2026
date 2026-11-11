@@ -6,8 +6,10 @@ class CreatorTreeSetting < ApplicationRecord
   SAFE_KEY = /\A[a-zA-Z][a-zA-Z0-9_-]*\z/
   ALLOWED_THEMES = %w[solar dark glass monochrome neo].freeze
   belongs_to :reviewer, class_name: 'ReviewerProfile'
-  belongs_to :reviewer_profile, class_name: 'ReviewerProfile', foreign_key: :reviewer_id, optional: true
+  belongs_to :reviewer_profile, class_name: 'ReviewerProfile', foreign_key: :reviewer_id
   has_one_attached :background_image
+
+  before_validation :apply_defaults
 
   validates :theme_key, inclusion: { in: ALLOWED_THEMES }
   validate :validate_json_attributes
@@ -20,6 +22,12 @@ class CreatorTreeSetting < ApplicationRecord
   end
 
   private
+
+  def apply_defaults
+    self.theme_key = 'solar' if theme_key.blank?
+    self.appearance = {} if appearance.nil?
+    self.config = {} if config.nil?
+  end
 
   def validate_json_attributes
     validate_json_attribute(:appearance)

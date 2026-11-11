@@ -125,7 +125,7 @@ module Api
         top_competitors_compared = []
         if competitor_counts.any?
           top_ids = competitor_counts.sort_by { |_id, c| -c }.first(10).map(&:first)
-          companies_map = Company.where(id: top_ids).index_by(&:id)
+          companies_map = ::Company.where(id: top_ids).index_by(&:id)
 
           top_competitors_compared = top_ids.filter_map do |cid|
             comp = companies_map[cid]

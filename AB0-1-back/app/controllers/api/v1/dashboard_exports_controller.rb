@@ -31,7 +31,7 @@ module Api
       private
 
       def set_company
-        @company = Company.find(params[:company_id])
+        @company = ::Company.find(params[:company_id])
       end
 
       def authorize_export

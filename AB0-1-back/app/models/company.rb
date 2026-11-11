@@ -442,7 +442,14 @@ end
   end
 
   def reviews_count
-    (self[:rating_count] || self[:reviews_count] || 0).to_i
+    count = if has_attribute?(:rating_count) && self[:rating_count].present?
+              self[:rating_count]
+            elsif has_attribute?(:reviews_count) && self[:reviews_count].present?
+              self[:reviews_count]
+            else
+              0
+            end
+    count.to_i
   end
 
   def rating_avg
@@ -644,10 +651,12 @@ end
       elsif whatsapp_url.blank? && respond_to?(:whatsapp_enabled=)
         self.whatsapp_enabled = false
       end
-    elsif !whatsapp_enabled?
+    else
       digits = whatsapp.to_s
       digits = digits.sub(/\A55/, '') if digits.length > 11
-      self.whatsapp_url = "https://wa.me/55#{digits}" if whatsapp_url.blank? || will_save_change_to_whatsapp?
+      if (!new_record? && will_save_change_to_whatsapp?) || (!whatsapp_enabled? && whatsapp_url.blank?)
+        self.whatsapp_url = "https://wa.me/55#{digits}"
+      end
     end
   end
 
@@ -910,7 +919,7 @@ end
     )
     return explicit_flag unless explicit_flag.nil?
 
-    return true if respond_to?(:social_proof_enabled) && social_proof_enabled == true
+    return true if respond_to?(:social_proof_enabled) && social_proof_enabled == true && has_paid_plan?
 
     feature_enabled_from_plan?(
       :social_proof,
@@ -1408,7 +1417,7 @@ end
   def raw_company_feature_overrides
     {}.tap do |overrides|
       overrides['custom_ctas'] = true if respond_to?(:active_admin) && active_admin
-      overrides['social_proof'] = true if respond_to?(:social_proof_enabled) && social_proof_enabled
+      overrides['social_proof'] = true if respond_to?(:social_proof_enabled) && social_proof_enabled && has_paid_plan?
       overrides['financing_simulation'] = true if respond_to?(:financing_tab_visible) && financing_tab_visible
       overrides['media_upload'] = true if featured? || verified?
       overrides['p2p_chat'] = true if respond_to?(:p2p_chat_enabled) && p2p_chat_enabled

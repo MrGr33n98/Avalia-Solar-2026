@@ -72,11 +72,11 @@ RSpec.describe 'Api::V1::Billing Webhooks API', type: :request do
         allow_any_instance_of(Billing::StripeWebhookHandler).to receive(:call).and_raise(StandardError.new('Unexpected DB error'))
       end
 
-      it 'retorna status 422 unprocessable_entity' do
+      it 'retorna status 503 service_unavailable para permitir retry do Stripe' do
         post '/api/v1/billing/webhooks/stripe', params: payload, headers: headers
 
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['error']).to eq('Unexpected DB error')
+        expect(response).to have_http_status(:service_unavailable)
+        expect(JSON.parse(response.body)['error']).to eq('Webhook processing failed')
       end
     end
   end

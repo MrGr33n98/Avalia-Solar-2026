@@ -8,7 +8,7 @@ RSpec.describe 'GET /api/v1/company_dashboard/analytics/ranking', type: :request
   let(:snapshot_date) { Time.current.in_time_zone('America/Sao_Paulo').to_date }
 
   before do
-    plan = create(:plan, name: 'Enterprise', price: 299.0)
+    plan = Plan.find_by(name: 'Enterprise') || create(:plan, name: 'Enterprise', price: 299.0)
     company.update!(plan: plan)
     allow(plan).to receive(:tier).and_return('enterprise')
     allow(plan).to receive(:plan_tier).and_return('enterprise')

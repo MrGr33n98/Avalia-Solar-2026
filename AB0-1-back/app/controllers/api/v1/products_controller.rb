@@ -186,7 +186,7 @@ class Api::V1::ProductsController < Api::V1::BaseController
   def create
     @product = Product.new(product_params)
     if @product.company_id.present?
-      company = Company.find_by(id: @product.company_id)
+      company = ::Company.find_by(id: @product.company_id)
       if company
         limit = company.max_products_limit
         if limit && company.products.count >= limit

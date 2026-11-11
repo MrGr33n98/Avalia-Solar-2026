@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Authentication Flow', type: :request do
   let(:category) do
-    Category.create!(name: 'Energia Solar', description: 'Categoria de testes')
+    Category.find_by(name: 'Energia Solar') || Category.create!(name: 'Energia Solar', description: 'Categoria de testes')
   end
   let(:company) do
     company = Company.new(

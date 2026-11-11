@@ -214,7 +214,8 @@ RSpec.describe Mcp::AgentAuthorizationService do
         agent_id: 'agent:engineering:primary',
         tool_name: 'send_outbound_campaign',
         risk_tier: 'r3',
-        status: 'pending'
+        status: 'pending',
+        parameters_payload: { campaign_name: 'Q3 Solar Blast' }
       )
       approval_req.approve!(user: admin_user)
 

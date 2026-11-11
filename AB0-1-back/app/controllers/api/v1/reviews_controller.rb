@@ -270,6 +270,7 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       media: serialize_review_media(review),
       user: serialize_user(review),
       company: serialize_company(review.company),
+      review_criterion_scores: serialize_review_criterion_scores(review),
       granular_scores: serialize_granular_scores(review)
     }
   end

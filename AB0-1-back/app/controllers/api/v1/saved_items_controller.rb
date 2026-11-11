@@ -54,7 +54,7 @@ module Api
         case type
         when 'ReviewerPublication' then ReviewerPublication.find_by(id: id)
         when 'Review' then Review.find_by(id: id)
-        when 'Company' then Company.find_by(id: id)
+        when 'Company' then ::Company.find_by(id: id)
         when 'Product' then Product.find_by(id: id)
         else nil
         end

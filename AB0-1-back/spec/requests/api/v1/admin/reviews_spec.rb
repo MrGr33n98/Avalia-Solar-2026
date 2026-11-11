@@ -34,7 +34,7 @@ RSpec.describe 'Admin Reviews API', type: :request do
 
     it 'requires authentication' do
       get '/api/v1/admin/reviews'
-      expect(response).to have_http_status(:found)
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 

@@ -5,8 +5,8 @@ RSpec.describe ReviewMedia, type: :model do
   let(:user) { review.user }
 
   describe 'associations' do
-    it { is_expected.to belong_to(:review) }
-    it { is_expected.to belong_to(:user).optional }
+    it { is_expected.to belong_to(:review).optional }
+    it { is_expected.to belong_to(:user) }
     it { is_expected.to have_one_attached(:file) }
   end
 

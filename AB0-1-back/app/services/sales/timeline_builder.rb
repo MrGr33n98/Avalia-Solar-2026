@@ -33,7 +33,7 @@ module Sales
           kind: act_kind,
           activity_type: act.activity_type,
           title: act.subject.presence || (act.activity_type == 'call' ? 'Chamada Registrada' : 'Atividade Comercial'),
-          description: act.description || act.body,
+          description: act.try(:description) || act.body,
           occurred_at: act.occurred_at || act.created_at,
           actor_name: act.actor&.name || 'Vendedor'
         }

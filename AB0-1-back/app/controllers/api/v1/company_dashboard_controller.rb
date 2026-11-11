@@ -73,7 +73,7 @@ module Api
               website_clicks: stats[:website_clicks].to_i,
               quote_clicks: stats[:quote_clicks].to_i,
               leads: leads,
-              conversion_rate: rates[:profile_to_lead_conversion],
+              conversion_rate: rates[:profile_to_lead_conversion] || 0,
               cta_breakdown: cta_breakdown,
               is_premium_analytics: true
             )
@@ -1334,7 +1334,7 @@ module Api
           )
 
           render json: {
-            message: 'Solicitação enviada para aprovação comercial',
+            message: pending_change.previously_persisted? ? 'Solicitação já enviada anteriormente' : 'Solicitação enviada para aprovação comercial',
             pending_change: pending_change,
             category_limit: limit_snapshot,
             requires_commercial_approval: true,
