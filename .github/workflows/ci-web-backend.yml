@@ -353,6 +353,10 @@ jobs:
           export BETTER_AUTH_SECRET="$(openssl rand -hex 32)"
           if ! docker compose -f infra/docker/docker-compose.test.yml up --build --wait --wait-timeout 300 -d; then
             docker compose -f infra/docker/docker-compose.test.yml ps -a || true
+            frontend_id="$(docker compose -f infra/docker/docker-compose.test.yml ps -q frontend || true)"
+            if [ -n "$frontend_id" ]; then
+              docker inspect --format='Frontend health details: {{json .State.Health}}' "$frontend_id" || true
+            fi
             docker compose -f infra/docker/docker-compose.test.yml logs --tail=200 || true
             exit 1
           fi
