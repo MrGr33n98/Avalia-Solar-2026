@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       release_sha:
-        description: Commit SHA from main with a frontend-only diff since the last full production release
+        description: Commit SHA from main whose frontend artifact changes are based on the active runtime SHA
         required: true
         type: string
+      dry_run:
+        description: Inspect runtime and validate plan without building or changing production
+        required: true
+        type: boolean
+        default: true
 
 concurrency:
   group: deploy-production
@@ -49,22 +54,160 @@ jobs:
             exit 1
           fi
 
-      - name: Verify CI and release scope
+  inspect-runtime:
+    name: Reconcile production component evidence
+    needs: verify-release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment:
+      name: production
+      url: https://www.avaliasolar.com.br
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      runtime_json: ${{ steps.inventory.outputs.runtime_json }}
+      frontend_source_sha: ${{ steps.inventory.outputs.frontend_source_sha }}
+      frontend_container_id: ${{ steps.inventory.outputs.frontend_container_id }}
+      frontend_image_id: ${{ steps.inventory.outputs.frontend_image_id }}
+      frontend_repo_digest: ${{ steps.inventory.outputs.frontend_repo_digest }}
+      backend_container_id: ${{ steps.inventory.outputs.backend_container_id }}
+      backend_image_id: ${{ steps.inventory.outputs.backend_image_id }}
+      backend_repo_digest: ${{ steps.inventory.outputs.backend_repo_digest }}
+      worker_container_id: ${{ steps.inventory.outputs.worker_container_id }}
+      worker_image_id: ${{ steps.inventory.outputs.worker_image_id }}
+      worker_repo_digest: ${{ steps.inventory.outputs.worker_repo_digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Inspect runtime read-only and validate evidence
+        id: inventory
         env:
-          GH_TOKEN: ${{ github.token }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          RELEASE_SCOPE: frontend_only
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST_FINGERPRINT: ${{ secrets.SSH_HOST_FINGERPRINT }}
+          PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
+        run: |
+          set -euo pipefail
+          REPORT="$RUNNER_TEMP/production-runtime.json"
+          bash .github/scripts/release/ssh-readonly.sh \
+            .github/scripts/release/inspect-runtime.sh > "$REPORT"
+          if ! bash .github/scripts/release/validate-evidence.sh validate-runtime "$REPORT"; then
+            echo "Runtime evidence rejected; divergence summary follows:" >&2
+            jq -c '{manifest, manifest_divergences, components: (.components | with_entries(.value |= {config_image, image_id, repo_digests, source_sha, state, health}))}' "$REPORT" >&2
+            exit 1
+          fi
+          {
+            echo '```json'
+            jq '{manifest, manifest_divergences, components: (.components | with_entries(.value |= {container_id, config_image, image_id, repo_digests, source_sha, state, health}))}' "$REPORT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          {
+            echo "runtime_json<<RUNTIME_JSON"
+            cat "$REPORT"
+            echo "RUNTIME_JSON"
+            for component in frontend backend worker; do
+              echo "${component}_container_id=$(jq -r --arg c "$component" '.components[$c].container_id' "$REPORT")"
+              echo "${component}_image_id=$(jq -r --arg c "$component" '.components[$c].image_id' "$REPORT")"
+              echo "${component}_repo_digest=$(jq -r --arg c "$component" '.components[$c].repo_digests[0]' "$REPORT")"
+            done
+            echo "frontend_source_sha=$(jq -r '.components.frontend.source_sha' "$REPORT")"
+          } >> "$GITHUB_OUTPUT"
+
+  verify-release-scope:
+    name: Verify CI and artifact scope from running frontend SHA
+    needs: [verify-release, inspect-runtime]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    env:
+      RELEASE_SHA: ${{ inputs.release_sha }}
+      RELEASE_BASE_SHA: ${{ needs.inspect-runtime.outputs.frontend_source_sha }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      RELEASE_SCOPE: frontend_only
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify CI and frontend artifact delta from runtime evidence
         run: bash .github/scripts/verify-release-ci.sh
+
+  dry-run-plan:
+    name: Produce verified frontend-only plan
+    if: ${{ inputs.dry_run == true }}
+    needs: [verify-release, inspect-runtime, verify-release-scope]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Write read-only deployment plan
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          RUNTIME_JSON: ${{ needs.inspect-runtime.outputs.runtime_json }}
+        run: |
+          set -euo pipefail
+          jq -n --arg sha "$RELEASE_SHA" --argjson runtime "$RUNTIME_JSON" '
+            {
+              mode: "dry_run",
+              release_sha: $sha,
+              action: (if $runtime.components.frontend.source_sha == $sha then "no_op" else "deploy" end),
+              artifact_digest: "pending; build skipped in dry_run",
+              components_to_change: (if $runtime.components.frontend.source_sha == $sha then [] else ["frontend"] end),
+              frontend_current: {
+                source_sha: $runtime.components.frontend.source_sha,
+                container_id: $runtime.components.frontend.container_id,
+                image_id: $runtime.components.frontend.image_id,
+                repo_digest: $runtime.components.frontend.repo_digests[0]
+              },
+              components_preserved: {
+                backend: {
+                  container_id: $runtime.components.backend.container_id,
+                  image_id: $runtime.components.backend.image_id,
+                  repo_digest: $runtime.components.backend.repo_digests[0]
+                },
+                worker: {
+                  container_id: $runtime.components.worker.container_id,
+                  image_id: $runtime.components.worker.image_id,
+                  repo_digest: $runtime.components.worker.repo_digests[0]
+                }
+              },
+              rollback: $runtime.components.frontend.repo_digests[0],
+              manifest_divergences: $runtime.manifest_divergences,
+              migrations: false
+            }
+          ' | tee "$RUNNER_TEMP/frontend-release-plan.json" >> "$GITHUB_STEP_SUMMARY"
+
+  runtime-noop:
+    name: Frontend already at requested source SHA
+    if: ${{ inputs.dry_run == false && needs.inspect-runtime.outputs.frontend_source_sha == inputs.release_sha }}
+    needs: [inspect-runtime, verify-release-scope]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Record no-op release
+        run: |
+          echo 'NO_OP: frontend runtime already matches requested source SHA; build and deploy skipped.' \
+            >> "$GITHUB_STEP_SUMMARY"
 
   build-frontend:
     name: Build frontend image
-    needs: verify-release
+    if: ${{ inputs.dry_run == false && needs.inspect-runtime.outputs.frontend_source_sha != inputs.release_sha }}
+    needs: [verify-release-scope, inspect-runtime]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     env:
       RELEASE_SHA: ${{ inputs.release_sha }}
+    outputs:
+      digest: ${{ steps.publish.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -92,7 +235,8 @@ jobs:
           [ -n "$SERVER_ACTIONS_KEY" ] || { echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY ausente."; exit 1; }
           [ -n "$AUTH_SECRET" ] || { echo "::error::BETTER_AUTH_SECRET ausente."; exit 1; }
 
-      - name: Build and publish immutable frontend image
+      - name: Build and publish frontend image by source SHA
+        id: publish
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -126,10 +270,22 @@ jobs:
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
             type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
+          labels: |
+            org.opencontainers.image.revision=${{ inputs.release_sha }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      - name: Validate published OCI digest
+        env:
+          ARTIFACT_DIGEST: ${{ steps.publish.outputs.digest }}
+        run: |
+          set -euo pipefail
+          [[ "$ARTIFACT_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] \
+            || { echo "::error::Build não retornou digest OCI válido."; exit 1; }
 
   deploy-frontend:
     name: Deploy frontend only
-    needs: [verify-release, build-frontend]
+    if: ${{ inputs.dry_run == false && needs.inspect-runtime.outputs.frontend_source_sha != inputs.release_sha }}
+    needs: [verify-release-scope, inspect-runtime, build-frontend]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -141,17 +297,29 @@ jobs:
       actions: read
     env:
       RELEASE_SHA: ${{ inputs.release_sha }}
+      FRONTEND_DIGEST: ${{ needs.build-frontend.outputs.digest }}
+      EXPECTED_FRONTEND_CONTAINER_ID: ${{ needs.inspect-runtime.outputs.frontend_container_id }}
+      EXPECTED_FRONTEND_IMAGE_ID: ${{ needs.inspect-runtime.outputs.frontend_image_id }}
+      EXPECTED_FRONTEND_REPO_DIGEST: ${{ needs.inspect-runtime.outputs.frontend_repo_digest }}
+      EXPECTED_BACKEND_CONTAINER_ID: ${{ needs.inspect-runtime.outputs.backend_container_id }}
+      EXPECTED_BACKEND_IMAGE_ID: ${{ needs.inspect-runtime.outputs.backend_image_id }}
+      EXPECTED_BACKEND_REPO_DIGEST: ${{ needs.inspect-runtime.outputs.backend_repo_digest }}
+      EXPECTED_WORKER_CONTAINER_ID: ${{ needs.inspect-runtime.outputs.worker_container_id }}
+      EXPECTED_WORKER_IMAGE_ID: ${{ needs.inspect-runtime.outputs.worker_image_id }}
+      EXPECTED_WORKER_REPO_DIGEST: ${{ needs.inspect-runtime.outputs.worker_repo_digest }}
     steps:
       - name: Validate SSH secrets
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST_FINGERPRINT: ${{ secrets.SSH_HOST_FINGERPRINT }}
         run: |
           set -euo pipefail
           [ -n "$SSH_HOST" ] || { echo "::error::SSH_HOST ausente."; exit 1; }
           [ -n "$SSH_USER" ] || { echo "::error::SSH_USER ausente."; exit 1; }
           [ -n "$SSH_PRIVATE_KEY" ] || { echo "::error::SSH_PRIVATE_KEY ausente."; exit 1; }
+          [ -n "$SSH_HOST_FINGERPRINT" ] || { echo "::error::SSH_HOST_FINGERPRINT ausente."; exit 1; }
 
       - name: Update frontend container over SSH
         id: deploy_frontend
@@ -162,13 +330,24 @@ jobs:
           GH_REPOSITORY: ${{ github.repository }}
           GIT_SHA: ${{ env.RELEASE_SHA }}
           PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
+          FRONTEND_DIGEST: ${{ env.FRONTEND_DIGEST }}
+          EXPECTED_FRONTEND_CONTAINER_ID: ${{ env.EXPECTED_FRONTEND_CONTAINER_ID }}
+          EXPECTED_FRONTEND_IMAGE_ID: ${{ env.EXPECTED_FRONTEND_IMAGE_ID }}
+          EXPECTED_FRONTEND_REPO_DIGEST: ${{ env.EXPECTED_FRONTEND_REPO_DIGEST }}
+          EXPECTED_BACKEND_CONTAINER_ID: ${{ env.EXPECTED_BACKEND_CONTAINER_ID }}
+          EXPECTED_BACKEND_IMAGE_ID: ${{ env.EXPECTED_BACKEND_IMAGE_ID }}
+          EXPECTED_BACKEND_REPO_DIGEST: ${{ env.EXPECTED_BACKEND_REPO_DIGEST }}
+          EXPECTED_WORKER_CONTAINER_ID: ${{ env.EXPECTED_WORKER_CONTAINER_ID }}
+          EXPECTED_WORKER_IMAGE_ID: ${{ env.EXPECTED_WORKER_IMAGE_ID }}
+          EXPECTED_WORKER_REPO_DIGEST: ${{ env.EXPECTED_WORKER_REPO_DIGEST }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
+          fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
           command_timeout: 15m
-          envs: DOCKER_USER,DOCKER_TOKEN,GH_REPOSITORY,GIT_SHA,PRODUCTION_DEPLOY_DIR
+          envs: DOCKER_USER,DOCKER_TOKEN,GH_REPOSITORY,GIT_SHA,PRODUCTION_DEPLOY_DIR,FRONTEND_DIGEST,EXPECTED_FRONTEND_CONTAINER_ID,EXPECTED_FRONTEND_IMAGE_ID,EXPECTED_FRONTEND_REPO_DIGEST,EXPECTED_BACKEND_CONTAINER_ID,EXPECTED_BACKEND_IMAGE_ID,EXPECTED_BACKEND_REPO_DIGEST,EXPECTED_WORKER_CONTAINER_ID,EXPECTED_WORKER_IMAGE_ID,EXPECTED_WORKER_REPO_DIGEST
           script: |
             set -Eeuo pipefail
             DEPLOY_DIR="${PRODUCTION_DEPLOY_DIR:-${HOME:-}/Avalia-Solar-2026}"
@@ -176,10 +355,41 @@ jobs:
             test -f docker-compose.yml
 
             REPO_LOWER="$(printf '%s' "$GH_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
-            FRONTEND_IMAGE="ghcr.io/${REPO_LOWER}-frontend:${GIT_SHA}"
-            FRONTEND_ROLLBACK_IMAGE="ghcr.io/${REPO_LOWER}-frontend:rollback"
-            PREVIOUS_IMAGE="$(docker inspect --format='{{.Config.Image}}' ab0-frontend)"
-            [ -n "$PREVIOUS_IMAGE" ] || { echo "Frontend atual ausente; abortando sem trocar serviço."; exit 1; }
+            FRONTEND_REPOSITORY="ghcr.io/${REPO_LOWER}-frontend"
+            FRONTEND_IMAGE="${FRONTEND_REPOSITORY}@sha256:${FRONTEND_DIGEST}"
+            [[ "$FRONTEND_DIGEST" =~ ^[0-9a-f]{64}$ ]] || { echo "Digest frontend inválido."; exit 1; }
+
+            assert_component_identity() {
+              local container="$1" expected_container="$2" expected_image_id="$3" expected_repo_digest="$4"
+              local actual_container actual_image_id actual_repo_digests health
+              actual_container="$(docker inspect --format='{{.Id}}' "$container")"
+              actual_image_id="$(docker inspect --format='{{.Image}}' "$container")"
+              actual_repo_digests="$(docker image inspect "$actual_image_id" --format='{{json .RepoDigests}}')"
+              health="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container")"
+              [ "$actual_container" = "$expected_container" ] || { echo "Container $container mudou após preflight."; return 1; }
+              [ "$actual_image_id" = "$expected_image_id" ] || { echo "Image ID de $container divergiu do preflight."; return 1; }
+              jq -e --arg digest "$expected_repo_digest" 'index($digest) != null' <<< "$actual_repo_digests" >/dev/null \
+                || { echo "Digest OCI de $container divergiu do preflight."; return 1; }
+              [ "$health" = healthy ] || { echo "Health check de $container não está healthy."; return 1; }
+            }
+
+            assert_component_identity ab0-frontend "$EXPECTED_FRONTEND_CONTAINER_ID" "$EXPECTED_FRONTEND_IMAGE_ID" "$EXPECTED_FRONTEND_REPO_DIGEST"
+            assert_component_identity ab0-backend "$EXPECTED_BACKEND_CONTAINER_ID" "$EXPECTED_BACKEND_IMAGE_ID" "$EXPECTED_BACKEND_REPO_DIGEST"
+            assert_component_identity ab0-worker "$EXPECTED_WORKER_CONTAINER_ID" "$EXPECTED_WORKER_IMAGE_ID" "$EXPECTED_WORKER_REPO_DIGEST"
+
+            CURRENT_FRONTEND_DIGEST="$EXPECTED_FRONTEND_REPO_DIGEST"
+            PREVIOUS_IMAGE="$CURRENT_FRONTEND_DIGEST"
+            PREVIOUS_IMAGE_ID="$EXPECTED_FRONTEND_IMAGE_ID"
+            mkdir -p .deploy
+            ROLLBACK_TMP="$(mktemp .deploy/frontend-rollback.XXXXXX)"
+            umask 077
+            printf 'PREVIOUS_FRONTEND_IMAGE=%s\nPREVIOUS_FRONTEND_IMAGE_ID=%s\n' \
+              "$PREVIOUS_IMAGE" "$PREVIOUS_IMAGE_ID" > "$ROLLBACK_TMP"
+            mv "$ROLLBACK_TMP" .deploy/frontend-rollback.env
+            if [ "$CURRENT_FRONTEND_DIGEST" = "$FRONTEND_IMAGE" ]; then
+              echo "NO_OP: frontend já executa digest solicitado."
+              exit 0
+            fi
 
             DOCKER_CONFIG="$(mktemp -d)"
             export DOCKER_CONFIG
@@ -190,7 +400,10 @@ jobs:
             trap cleanup_registry_auth EXIT
             printf '%s' "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
             docker pull "$FRONTEND_IMAGE"
-            docker image tag "$PREVIOUS_IMAGE" "$FRONTEND_ROLLBACK_IMAGE"
+            TARGET_IMAGE_ID="$(docker image inspect "$FRONTEND_IMAGE" --format='{{.Id}}')"
+            TARGET_REPO_DIGESTS="$(docker image inspect "$FRONTEND_IMAGE" --format='{{json .RepoDigests}}')"
+            jq -e --arg digest "$FRONTEND_IMAGE" 'index($digest) != null' <<< "$TARGET_REPO_DIGESTS" >/dev/null \
+              || { echo "Imagem alvo não resolve para o digest OCI esperado."; exit 1; }
 
             wait_for_frontend() {
               local container_id status state attempt
@@ -211,19 +424,50 @@ jobs:
             }
 
             rollback_frontend() {
-              echo "Rollback apenas do frontend para $PREVIOUS_IMAGE"
-              export FRONTEND_IMAGE="$FRONTEND_ROLLBACK_IMAGE"
-              docker compose up -d --no-deps --no-build frontend || true
-              wait_for_frontend || true
+              echo "Rollback apenas do frontend para digest anterior."
+              export FRONTEND_IMAGE="$PREVIOUS_IMAGE"
+              docker compose up -d --no-deps --no-build frontend
+              wait_for_frontend
+              local restored_id
+              restored_id="$(docker inspect --format='{{.Image}}' ab0-frontend)"
+              [ "$restored_id" = "$PREVIOUS_IMAGE_ID" ] || { echo "Rollback não restaurou Image ID anterior."; return 1; }
+              assert_component_identity ab0-backend "$EXPECTED_BACKEND_CONTAINER_ID" "$EXPECTED_BACKEND_IMAGE_ID" "$EXPECTED_BACKEND_REPO_DIGEST"
+              assert_component_identity ab0-worker "$EXPECTED_WORKER_CONTAINER_ID" "$EXPECTED_WORKER_IMAGE_ID" "$EXPECTED_WORKER_REPO_DIGEST"
             }
 
-            export FRONTEND_IMAGE
+            export FRONTEND_IMAGE="$FRONTEND_IMAGE"
             if ! docker compose up -d --no-deps --no-build frontend; then
-              rollback_frontend
+              rollback_frontend || echo "::error::Rollback frontend falhou."
               exit 1
             fi
             if ! wait_for_frontend; then
-              rollback_frontend
+              rollback_frontend || echo "::error::Rollback frontend falhou."
+              exit 1
+            fi
+
+            RUNNING_FRONTEND_ID="$(docker inspect --format='{{.Image}}' ab0-frontend)"
+            [ "$RUNNING_FRONTEND_ID" = "$TARGET_IMAGE_ID" ] || {
+              echo "Image ID ativo não corresponde ao artefato construído."
+              rollback_frontend || echo "::error::Rollback frontend falhou."
+              exit 1
+            }
+            RUNNING_FRONTEND_DIGESTS="$(docker image inspect "$RUNNING_FRONTEND_ID" --format='{{json .RepoDigests}}')"
+            jq -e --arg digest "$FRONTEND_IMAGE" 'index($digest) != null' <<< "$RUNNING_FRONTEND_DIGESTS" >/dev/null || {
+              echo "Digest OCI ativo diverge do artefato construído."
+              rollback_frontend || echo "::error::Rollback frontend falhou."
+              exit 1
+            }
+            RUNNING_REVISION="$(docker image inspect "$RUNNING_FRONTEND_ID" --format='{{index .Config.Labels "org.opencontainers.image.revision"}}')"
+            [ "$RUNNING_REVISION" = "$GIT_SHA" ] || {
+              echo "OCI revision diverge do commit solicitado."
+              rollback_frontend || echo "::error::Rollback frontend falhou."
+              exit 1
+            }
+
+            if ! assert_component_identity ab0-backend "$EXPECTED_BACKEND_CONTAINER_ID" "$EXPECTED_BACKEND_IMAGE_ID" "$EXPECTED_BACKEND_REPO_DIGEST" \
+              || ! assert_component_identity ab0-worker "$EXPECTED_WORKER_CONTAINER_ID" "$EXPECTED_WORKER_IMAGE_ID" "$EXPECTED_WORKER_REPO_DIGEST"; then
+              echo "Backend/worker drift pós-deploy; restaurando frontend anterior."
+              rollback_frontend || echo "::error::Rollback frontend falhou."
               exit 1
             fi
 
@@ -235,9 +479,9 @@ jobs:
                 const required = ["company-registration-ticker", "CADASTRAR", "wa.me/5565993465055?text=CADASTRAR"];
                 if (!response.ok || response.headers.get("x-release") !== process.env.EXPECTED_RELEASE_SHA
                   || required.some((value) => !html.includes(value))) {
-                  throw new Error(`Homepage inválida: HTTP ${response.status}`);
+                  throw new Error(`Smoke complementar inválido: HTTP ${response.status}`);
                 }
-                console.log("FRONTEND_TICKER_SMOKE_OK");
+                console.log("FRONTEND_TICKER_SMOKE_OK (digest e OCI revision verificados separadamente)");
               })().catch((error) => { console.error(error); process.exit(1); });
             '; then
               rollback_frontend
@@ -278,25 +522,58 @@ jobs:
         env:
           GH_REPOSITORY: ${{ github.repository }}
           PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
+          EXPECTED_BACKEND_CONTAINER_ID: ${{ env.EXPECTED_BACKEND_CONTAINER_ID }}
+          EXPECTED_BACKEND_IMAGE_ID: ${{ env.EXPECTED_BACKEND_IMAGE_ID }}
+          EXPECTED_BACKEND_REPO_DIGEST: ${{ env.EXPECTED_BACKEND_REPO_DIGEST }}
+          EXPECTED_WORKER_CONTAINER_ID: ${{ env.EXPECTED_WORKER_CONTAINER_ID }}
+          EXPECTED_WORKER_IMAGE_ID: ${{ env.EXPECTED_WORKER_IMAGE_ID }}
+          EXPECTED_WORKER_REPO_DIGEST: ${{ env.EXPECTED_WORKER_REPO_DIGEST }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
+          fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
           command_timeout: 10m
-          envs: GH_REPOSITORY,PRODUCTION_DEPLOY_DIR
+          envs: GH_REPOSITORY,PRODUCTION_DEPLOY_DIR,EXPECTED_BACKEND_CONTAINER_ID,EXPECTED_BACKEND_IMAGE_ID,EXPECTED_BACKEND_REPO_DIGEST,EXPECTED_WORKER_CONTAINER_ID,EXPECTED_WORKER_IMAGE_ID,EXPECTED_WORKER_REPO_DIGEST
           script: |
             set -Eeuo pipefail
             DEPLOY_DIR="${PRODUCTION_DEPLOY_DIR:-${HOME:-}/Avalia-Solar-2026}"
             cd "$DEPLOY_DIR"
-            REPO_LOWER="$(printf '%s' "$GH_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
-            export FRONTEND_IMAGE="ghcr.io/${REPO_LOWER}-frontend:rollback"
+            ROLLBACK_FILE=.deploy/frontend-rollback.env
+            [ -r "$ROLLBACK_FILE" ] || { echo "Rollback frontend sem registro verificável."; exit 1; }
+            PREVIOUS_FRONTEND_IMAGE="$(awk -F= '$1 == "PREVIOUS_FRONTEND_IMAGE" {sub(/^[^=]*=/, ""); print; exit}' "$ROLLBACK_FILE")"
+            PREVIOUS_FRONTEND_IMAGE_ID="$(awk -F= '$1 == "PREVIOUS_FRONTEND_IMAGE_ID" {sub(/^[^=]*=/, ""); print; exit}' "$ROLLBACK_FILE")"
+            [[ "$PREVIOUS_FRONTEND_IMAGE" =~ ^ghcr\.io/.+-frontend@sha256:[0-9a-f]{64}$ ]] \
+              || { echo "Digest rollback inválido."; exit 1; }
+            [ "$PREVIOUS_FRONTEND_IMAGE_ID" = "$(docker image inspect "$PREVIOUS_FRONTEND_IMAGE" --format='{{.Id}}')" ] \
+              || { echo "Image ID do rollback diverge do registro."; exit 1; }
+            assert_preserved() {
+              local container="$1" expected_container="$2" expected_image_id="$3" expected_digest="$4"
+              [ "$(docker inspect --format='{{.Id}}' "$container")" = "$expected_container" ]
+              [ "$(docker inspect --format='{{.Image}}' "$container")" = "$expected_image_id" ]
+              [ "$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container")" = healthy ]
+              docker image inspect "$expected_image_id" --format='{{json .RepoDigests}}' \
+                | jq -e --arg digest "$expected_digest" 'index($digest) != null' >/dev/null
+            }
+            assert_preserved ab0-backend "$EXPECTED_BACKEND_CONTAINER_ID" "$EXPECTED_BACKEND_IMAGE_ID" "$EXPECTED_BACKEND_REPO_DIGEST"
+            assert_preserved ab0-worker "$EXPECTED_WORKER_CONTAINER_ID" "$EXPECTED_WORKER_IMAGE_ID" "$EXPECTED_WORKER_REPO_DIGEST"
+            export FRONTEND_IMAGE="$PREVIOUS_FRONTEND_IMAGE"
             docker image inspect "$FRONTEND_IMAGE" >/dev/null
             docker compose up -d --no-deps --no-build frontend
             CID="$(docker compose ps -q frontend)"
             for attempt in $(seq 1 180); do
               STATUS="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$CID" 2>/dev/null || echo missing)"
-              [ "$STATUS" = healthy ] && { echo "Frontend restaurado: $FRONTEND_IMAGE"; exit 0; }
+              if [ "$STATUS" = healthy ]; then
+                RESTORED_ID="$(docker inspect --format='{{.Image}}' "$CID")"
+                [ "$RESTORED_ID" = "$PREVIOUS_FRONTEND_IMAGE_ID" ] || { echo "Rollback Image ID diverge."; exit 1; }
+                docker image inspect "$RESTORED_ID" --format='{{json .RepoDigests}}' \
+                  | jq -e --arg digest "$PREVIOUS_FRONTEND_IMAGE" 'index($digest) != null' >/dev/null
+                assert_preserved ab0-backend "$EXPECTED_BACKEND_CONTAINER_ID" "$EXPECTED_BACKEND_IMAGE_ID" "$EXPECTED_BACKEND_REPO_DIGEST"
+                assert_preserved ab0-worker "$EXPECTED_WORKER_CONTAINER_ID" "$EXPECTED_WORKER_IMAGE_ID" "$EXPECTED_WORKER_REPO_DIGEST"
+                echo "Rollback frontend verificado por Image ID e digest OCI."
+                exit 0
+              fi
               sleep 2
             done
             docker compose logs --tail=150 frontend || true

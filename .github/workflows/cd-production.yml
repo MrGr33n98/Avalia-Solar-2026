@@ -7,8 +7,10 @@ on:
       - 'AB0-1-front/**'
       - '.github/workflows/cd-production.yml'
       - '.github/workflows/cd-frontend-production.yml'
+      - '.github/workflows/ci-web-backend.yml'
       - '.github/scripts/verify-release-ci.sh'
       - '.github/scripts/test-verify-release-ci.sh'
+      - '.github/scripts/release/**'
   workflow_dispatch:
 
 concurrency:
@@ -23,7 +25,29 @@ env:
   RELEASE_SHA: ${{ github.sha }}
 
 jobs:
+  verify-release-ci:
+    name: Verify CI before publishing images
+    runs-on: ubuntu-24.04
+    timeout-minutes: 32
+    permissions:
+      contents: read
+      actions: read
+    env:
+      RELEASE_SHA: ${{ github.sha }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      RELEASE_SCOPE: full
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_SHA }}
+
+      - name: Verify required CI before image publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/verify-release-ci.sh
+
   build-and-push:
+    needs: [verify-release-ci, zeitwerk-check, ranking-gate, ranking-frontend-gate]
     runs-on: ubuntu-latest
     # Specific job permissions
     permissions:
@@ -106,6 +130,9 @@ jobs:
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache
             type=gha,scope=backend
+          labels: |
+            org.opencontainers.image.revision=${{ env.RELEASE_SHA }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
       - name: Build Frontend Image
         if: matrix.component == 'frontend'
@@ -144,6 +171,9 @@ jobs:
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
             type=gha,scope=frontend
+          labels: |
+            org.opencontainers.image.revision=${{ env.RELEASE_SHA }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
       - name: Push to GHCR or Stream to Production Host
         env:

@@ -86,24 +86,21 @@ for attempt in $(seq 1 90); do
     fi
   fi
 
-  # Compare against the most recent successful production release, NOT HEAD^.
-  # The whole deployment delta must be frontend/workflow-only, including any
-  # commits that were previously blocked from production.
-  previous_runs_file="$(mktemp)"
-  frontend_runs_file="$(mktemp)"
-  trap 'rm -f "$previous_runs_file" "$frontend_runs_file"' EXIT
-
-  gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-production.yml/runs?branch=main&per_page=100" > "$previous_runs_file" || exit 1
-
   if [ "$RELEASE_SCOPE" = "frontend_only" ]; then
-    gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-frontend-production.yml/runs?branch=main&per_page=100" > "$frontend_runs_file" 2>/dev/null || echo '{"workflow_runs":[]}' > "$frontend_runs_file"
-    previous_sha="$(jq -n -r --arg sha "$RELEASE_SHA" '
-      [inputs.workflow_runs[]?
-        | select(.head_sha != $sha and .head_branch == "main"
-            and (.event == "push" or .event == "workflow_dispatch") and .conclusion == "success")]
-      | sort_by(.created_at) | last | .head_sha // empty
-    ' "$previous_runs_file" "$frontend_runs_file")"
+    previous_sha="${RELEASE_BASE_SHA:-}"
+    if [[ ! "$previous_sha" =~ ^[0-9a-f]{40}$ ]]; then
+      echo "::error::SHA frontend ativo ausente ou inválido na evidência runtime. Deploy bloqueado."
+      exit 1
+    fi
+    if ! git cat-file -e "${previous_sha}^{commit}" 2>/dev/null \
+      || ! git merge-base --is-ancestor "$previous_sha" "$RELEASE_SHA"; then
+      echo "::error::SHA frontend runtime não pertence ao histórico da release. Deploy bloqueado."
+      exit 1
+    fi
   else
+    previous_runs_file="$(mktemp)"
+    trap 'rm -f "$previous_runs_file"' EXIT
+    gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-production.yml/runs?branch=main&per_page=100" > "$previous_runs_file" || exit 1
     previous_sha="$(jq -r --arg sha "$RELEASE_SHA" '
       [.workflow_runs[]?
         | select(.head_sha != $sha and .head_branch == "main"
@@ -115,6 +112,11 @@ for attempt in $(seq 1 90); do
   if [ -z "$previous_sha" ]; then
     echo "::error::Sem release anterior bem-sucedida. CI integral obrigatório."
     exit 1
+  fi
+
+  if [ "$RELEASE_SCOPE" = "frontend_only" ] && [ "$previous_sha" = "$RELEASE_SHA" ]; then
+    echo "NO_OP: frontend runtime já corresponde ao commit solicitado."
+    exit 0
   fi
 
   if [ "$conclusion" = "failure" ]; then

@@ -37,6 +37,13 @@ jobs:
       - name: Validate production CI gate contract
         run: bash .github/scripts/test-verify-release-ci.sh
 
+      - name: Validate component release evidence and ordering
+        run: |
+          bash .github/scripts/release/test-release-evidence.sh
+          bash .github/scripts/release/test-inspect-runtime.sh
+          bash .github/scripts/release/test-ssh-readonly.sh
+          bash .github/scripts/release/test-workflow-order.sh
+
       # Ruby Setup
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1

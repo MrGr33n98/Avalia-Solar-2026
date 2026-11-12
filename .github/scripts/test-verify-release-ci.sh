@@ -18,7 +18,7 @@ case "$2" in
     else
       conclusion=failure
     fi
-    jq -n --arg c "$conclusion" '{workflow_runs: [{id: 42, run_number: 42, head_sha: "sha-test", head_branch: "main", event: "push", status: "completed", conclusion: $c}]}'
+    jq -n --arg c "$conclusion" --arg sha "$RELEASE_SHA" '{workflow_runs: [{id: 42, run_number: 42, head_sha: $sha, head_branch: "main", event: "push", status: "completed", conclusion: $c}]}'
     ;;
   *"actions/runs/84/jobs"*)
     if [ "$SCENARIO" = baseline_not_rspec ]; then
@@ -55,9 +55,9 @@ case "$2" in
     else
       conclusion=failure
     fi
-    jq -n --arg c "$conclusion" '{workflow_runs:[{id:84,run_number:1,head_sha:"sha-old",event:"push",status:"completed",conclusion:$c}]}'
+    jq -n --arg c "$conclusion" --arg sha "$RELEASE_BASE_SHA" '{workflow_runs:[{id:84,run_number:1,head_sha:$sha,event:"push",status:"completed",conclusion:$c}]}'
     ;;
-  *"compare/sha-old...sha-test"*)
+  *"compare/$RELEASE_BASE_SHA...$RELEASE_SHA"*)
     case "$SCENARIO" in
       backend_changed) path="AB0-1-back/app/models/company.rb" ;;
       schema_reconciliation) path="AB0-1-back/db/migrate/20261110100000_reconcile_historical_schema_snapshot.rb" ;;
@@ -88,12 +88,22 @@ chmod +x "$TMP/bin/gh"
 
 export PATH="$TMP/bin:$PATH"
 export GITHUB_REPOSITORY="MrGr33n98/Avalia-Solar-2026"
-export RELEASE_SHA="sha-test"
+export RELEASE_SHA="8fb8abede6b004bfad3a524c7f3e7a551204eec0"
+export RELEASE_BASE_SHA="5cb4911cfc7f6379c880fc9477d25792b9dbb4e0"
 
 assert_gate() {
   local scenario="$1" expectation="$2" scope="${3:-full}"
   export SCENARIO="$scenario"
   export RELEASE_SCOPE="$scope"
+  if [ "$scenario" = no_runtime_base ]; then
+    export RELEASE_BASE_SHA=""
+  elif [ "$scenario" = invalid_runtime_sha ]; then
+    export RELEASE_BASE_SHA="not-a-full-sha"
+  elif [ "$scenario" = runtime_already_target ]; then
+    export RELEASE_BASE_SHA="$RELEASE_SHA"
+  else
+    export RELEASE_BASE_SHA="5cb4911cfc7f6379c880fc9477d25792b9dbb4e0"
+  fi
   if bash "$ROOT/.github/scripts/verify-release-ci.sh" >"$TMP/log" 2>&1; then
     outcome=pass
   else
@@ -110,6 +120,9 @@ assert_gate() {
 assert_gate all_green pass
 assert_gate frontend_only_legacy block
 assert_gate frontend_only_legacy pass frontend_only
+assert_gate runtime_already_target pass frontend_only
+assert_gate no_runtime_base block frontend_only
+assert_gate invalid_runtime_sha block frontend_only
 assert_gate schema_reconciliation block frontend_only
 assert_gate schema_reconciliation block full
 assert_gate frontend_only_green pass frontend_only
