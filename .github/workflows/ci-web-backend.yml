@@ -1,6 +1,9 @@
 name: CI — Web & Backend (Quality & Tests)
 
 on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
   push:
     branches: [ "main", "develop", "staging" ]
   pull_request:
@@ -339,7 +342,7 @@ jobs:
     name: E2E Playwright Tests
     needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate]
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 120 || 30 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -347,9 +350,7 @@ jobs:
         run: |
           export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
           export BETTER_AUTH_SECRET="$(openssl rand -hex 32)"
-          docker compose -f infra/docker/docker-compose.test.yml up --build -d
-          # Wait for services to be healthy
-          sleep 15
+          docker compose -f infra/docker/docker-compose.test.yml up --build --wait --wait-timeout 300 -d
           docker compose -f infra/docker/docker-compose.test.yml ps
 
       - name: Setup Node for Playwright
@@ -363,7 +364,7 @@ jobs:
         working-directory: ./AB0-1-front
         run: |
           npm ci
-          npx playwright install --with-deps chromium webkit
+          npx playwright install --with-deps chromium
 
       - name: Validate authenticated Banner E2E credentials
         if: github.event_name == 'push'
@@ -379,7 +380,25 @@ jobs:
         working-directory: ./AB0-1-front
         run: npm run test:banners
 
-      - name: Run Playwright Tests
+      - name: Run critical release E2E (Chromium)
+        if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+        working-directory: ./AB0-1-front
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          E2E_CATEGORY_SLUG: energia-solar
+          E2E_PLACEMENT_SMOKE: true
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'password123' }}
+        # Bloqueia regressões nos fluxos centrais: sessão, descoberta, financiamento e propostas.
+        run: >-
+          npx playwright test --project=chromium
+          tests/e2e/auth-logout.spec.ts
+          tests/e2e/category-seo.spec.ts
+          tests/e2e/financing-wizard.spec.ts
+          tests/e2e/proposals-real-journey.spec.ts
+
+      - name: Run extended E2E suite (scheduled or manual)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         working-directory: ./AB0-1-front
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000

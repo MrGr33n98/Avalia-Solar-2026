@@ -15,29 +15,39 @@ fi
 CI_ENDPOINT="repos/$GITHUB_REPOSITORY/actions/workflows/ci-web-backend.yml/runs?head_sha=$RELEASE_SHA&event=push&per_page=20"
 echo "Verificando CI do commit $RELEASE_SHA..."
 
-for attempt in $(seq 1 90); do
-  runs="$(gh api "$CI_ENDPOINT")" || {
-    echo "::error::Não foi possível consultar o CI. Deploy bloqueado."
-    exit 1
-  }
-  run="$(jq -c --arg sha "$RELEASE_SHA" '
-    [.workflow_runs[] | select(.head_sha == $sha and .event == "push" and .head_branch == "main")]
-    | sort_by(.run_number) | last // empty
-  ' <<< "$runs")"
+  if [ -n "${CI_RUN_ID:-}" ]; then
+    run="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CI_RUN_ID" | jq -c '.')" || {
+      echo "::error::Não foi possível consultar a execução de CI associada ao evento. Deploy bloqueado."
+      exit 1
+    }
+    if ! jq -e --arg sha "$RELEASE_SHA" '
+      .head_sha == $sha and .event == "push" and .head_branch == "main"
+    ' <<< "$run" >/dev/null; then
+      echo "::error::A execução de CI não corresponde ao SHA e à branch main do release. Deploy bloqueado."
+      exit 1
+    fi
+  else
+    runs="$(gh api "$CI_ENDPOINT")" || {
+      echo "::error::Não foi possível consultar o CI. Deploy bloqueado."
+      exit 1
+    }
+    run="$(jq -c --arg sha "$RELEASE_SHA" '
+      [.workflow_runs[] | select(.head_sha == $sha and .event == "push" and .head_branch == "main")]
+      | sort_by(.run_number) | last // empty
+    ' <<< "$runs")"
+  fi
 
   if [ -z "$run" ]; then
-    echo "CI ainda não iniciou (tentativa $attempt/90)."
-    sleep 20
-    continue
+    echo "::error::CI ainda não iniciou para $RELEASE_SHA; deploy bloqueado sem consultar repetidamente."
+    exit 1
   fi
 
   status="$(jq -r '.status' <<< "$run")"
   conclusion="$(jq -r '.conclusion // ""' <<< "$run")"
 
   if [ "$status" != "completed" ]; then
-    echo "CI em andamento: $status (tentativa $attempt/90)."
-    sleep 20
-    continue
+    echo "::error::CI ainda está $status para $RELEASE_SHA; aguarde o evento de conclusão e reexecute o release."
+    exit 1
   fi
 
   if [ "$conclusion" = "success" ]; then
@@ -91,18 +101,53 @@ for attempt in $(seq 1 90); do
   # commits that were previously blocked from production.
   previous_runs_file="$(mktemp)"
   frontend_runs_file="$(mktemp)"
-  trap 'rm -f "$previous_runs_file" "$frontend_runs_file"' EXIT
+  validated_deploy_runs_file="$(mktemp)"
+  combined_release_runs_file="$(mktemp)"
+  trap 'rm -f "$previous_runs_file" "$frontend_runs_file" "$validated_deploy_runs_file" "$combined_release_runs_file"' EXIT
 
   gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-production.yml/runs?branch=main&per_page=100" > "$previous_runs_file" || exit 1
 
   if [ "$RELEASE_SCOPE" = "frontend_only" ]; then
     gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-frontend-production.yml/runs?branch=main&per_page=100" > "$frontend_runs_file" 2>/dev/null || echo '{"workflow_runs":[]}' > "$frontend_runs_file"
-    previous_sha="$(jq -n -r --arg sha "$RELEASE_SHA" '
-      [inputs.workflow_runs[]?
+    printf '%s\n' '{"workflow_runs":[]}' > "$validated_deploy_runs_file"
+    for source_file in "$previous_runs_file" "$frontend_runs_file"; do
+      if [ "$source_file" = "$previous_runs_file" ]; then
+        deploy_job="deploy"
+      else
+        deploy_job="Deploy frontend only"
+      fi
+      while IFS= read -r candidate; do
+        candidate_id="$(jq -r '.id' <<< "$candidate")"
+        candidate_jobs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$candidate_id/jobs?per_page=100")" || exit 1
+        if jq -e --arg name "$deploy_job" '
+          [.jobs[] | select(.name == $name and .conclusion == "success")] | length == 1
+        ' <<< "$candidate_jobs" >/dev/null; then
+          jq --arg sha "$(jq -r '.head_sha' <<< "$candidate")" \
+            --arg created "$(jq -r '.created_at' <<< "$candidate")" \
+            '.workflow_runs += [{head_sha:$sha, head_branch:"main", event:"workflow_run", conclusion:"success", created_at:$created}]' \
+            "$validated_deploy_runs_file" > "$combined_release_runs_file"
+          mv "$combined_release_runs_file" "$validated_deploy_runs_file"
+          break
+        fi
+      done < <(jq -c '
+        [.workflow_runs[]? | select(.head_branch == "main" and .event == "workflow_run" and .conclusion == "success")]
+        | sort_by(.created_at) | reverse
+        | .[]
+      ' "$source_file")
+    done
+    jq -s '{workflow_runs: [
+      (.[0].workflow_runs[]? | select(.event != "workflow_run")),
+      (.[1].workflow_runs[]? | select(.event != "workflow_run")),
+      (.[2].workflow_runs[]?)
+    ]}' \
+      "$previous_runs_file" "$frontend_runs_file" "$validated_deploy_runs_file" > "$combined_release_runs_file"
+    previous_sha="$(jq -r --arg sha "$RELEASE_SHA" '
+      [.workflow_runs[]?
         | select(.head_sha != $sha and .head_branch == "main"
-            and (.event == "push" or .event == "workflow_dispatch") and .conclusion == "success")]
+            and (.event == "push" or .event == "workflow_dispatch" or .event == "workflow_run")
+            and .conclusion == "success")]
       | sort_by(.created_at) | last | .head_sha // empty
-    ' "$previous_runs_file" "$frontend_runs_file")"
+    ' "$combined_release_runs_file")"
   else
     previous_sha="$(jq -r --arg sha "$RELEASE_SHA" '
       [.workflow_runs[]?
@@ -166,7 +211,3 @@ for attempt in $(seq 1 90); do
     echo "Detalhes: CI run $run_id; migrations não serão executadas neste fluxo."
   fi
   exit 0
-done
-
-echo "::error::CI não concluiu no prazo. Deploy bloqueado."
-exit 1

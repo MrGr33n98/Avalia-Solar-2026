@@ -1,6 +1,10 @@
 name: CD — Frontend Production Release
 
 on:
+  workflow_run:
+    workflows: ["CI — Web & Backend (Quality & Tests)"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       release_sha:
@@ -19,22 +23,25 @@ permissions:
 jobs:
   verify-release:
     name: Validate frontend release
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
+    outputs:
+      release_scope: ${{ steps.classify.outputs.scope }}
     permissions:
       contents: read
       actions: read
     env:
-      RELEASE_SHA: ${{ inputs.release_sha }}
+      RELEASE_SHA: ${{ inputs.release_sha || github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ env.RELEASE_SHA }}
           fetch-depth: 0
 
       - name: Validate release commit
         run: |
           set -euo pipefail
-          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
             echo "::error::Este workflow só pode publicar um SHA da main."
             exit 1
           fi
@@ -49,22 +56,44 @@ jobs:
             exit 1
           fi
 
-      - name: Verify CI and release scope
+      - name: Classify release scope and verify CI
+        id: classify
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          RELEASE_SCOPE: frontend_only
-        run: bash .github/scripts/verify-release-ci.sh
+          RELEASE_SHA: ${{ env.RELEASE_SHA }}
+          CI_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          frontend_log="$RUNNER_TEMP/frontend-scope-check.log"
+          full_log="$RUNNER_TEMP/full-scope-check.log"
+          if RELEASE_SCOPE=frontend_only bash .github/scripts/verify-release-ci.sh >"$frontend_log" 2>&1; then
+            cat "$frontend_log"
+            echo "scope=frontend_only" >> "$GITHUB_OUTPUT"
+          elif RELEASE_SCOPE=full bash .github/scripts/verify-release-ci.sh >"$full_log" 2>&1; then
+            cat "$full_log"
+            echo "scope=full" >> "$GITHUB_OUTPUT"
+          else
+            cat "$full_log" 2>/dev/null || cat "$frontend_log"
+            exit 1
+          fi
+
+      - name: Reject non-frontend manual releases
+        if: github.event_name == 'workflow_dispatch' && steps.classify.outputs.scope != 'frontend_only'
+        run: |
+          echo "::error::Este fluxo manual aceita somente deltas frontend-only."
+          exit 1
 
   build-frontend:
     name: Build frontend image
     needs: verify-release
+    if: needs.verify-release.outputs.release_scope == 'frontend_only'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     env:
-      RELEASE_SHA: ${{ inputs.release_sha }}
+      RELEASE_SHA: ${{ inputs.release_sha || github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -98,9 +127,9 @@ jobs:
           context: .
           file: ./Dockerfile.frontend
           push: true
-          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:${{ inputs.release_sha }}
+          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:${{ env.RELEASE_SHA }}
           build-args: |
-            GIT_SHA=${{ inputs.release_sha }}
+            GIT_SHA=${{ env.RELEASE_SHA }}
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1' }}
             NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br' }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.avaliasolar.com.br' }}
@@ -130,6 +159,7 @@ jobs:
   deploy-frontend:
     name: Deploy frontend only
     needs: [verify-release, build-frontend]
+    if: needs.verify-release.outputs.release_scope == 'frontend_only'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -140,7 +170,7 @@ jobs:
       packages: read
       actions: read
     env:
-      RELEASE_SHA: ${{ inputs.release_sha }}
+      RELEASE_SHA: ${{ inputs.release_sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Validate SSH secrets
         env:
