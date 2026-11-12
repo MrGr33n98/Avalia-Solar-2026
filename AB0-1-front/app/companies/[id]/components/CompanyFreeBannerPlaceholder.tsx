@@ -1,8 +1,12 @@
 'use client';
 
-import { OptimizedImage } from '@/components/ui/optimized-image';
+import Image, { getImageProps } from 'next/image';
+import { useState } from 'react';
 
 const FREE_COMPANY_BANNER_SRC = '/assets/avalia-solar-banner-placeholder.png';
+const MOBILE_COMPANY_BANNER_SRC =
+  '/assets/avalia-solar-icon-pack/evalia-solar-banner-v2-mobile.png';
+const IMAGE_FALLBACK_SRC = '/images/placeholder.png';
 
 export default function CompanyFreeBannerPlaceholder({
   alt,
@@ -13,52 +17,49 @@ export default function CompanyFreeBannerPlaceholder({
   priority?: boolean;
   desktopCover?: boolean;
 }) {
+  const [mobileSourceFailed, setMobileSourceFailed] = useState(false);
+  const [imageSourceFailed, setImageSourceFailed] = useState(false);
+  const mobileImageSource = getImageProps({
+    src: MOBILE_COMPANY_BANNER_SRC,
+    alt,
+    width: 2103,
+    height: 748,
+    sizes: '100vw',
+    quality: 95,
+  }).props;
+
   return (
-    <div className="relative h-full w-full overflow-hidden bg-slate-900">
-      {/* Background Blur Fill Layer (Mobile only) */}
-      <OptimizedImage
-        src={FREE_COMPANY_BANNER_SRC}
-        alt=""
-        fill
-        quality={60}
-        objectFit="cover"
-        className="scale-110 blur-lg"
-        containerClassName="absolute inset-0 h-full w-full md:hidden"
-        sizes="100vw"
-        useAspectRatio={false}
-        width={2896}
-        height={543}
-      />
-      {/* Mobile foreground - preenchido (cover) */}
-      <OptimizedImage
-        src={FREE_COMPANY_BANNER_SRC}
-        alt={alt}
-        fill
-        priority={priority}
-        quality={95}
-        objectFit="cover"
-        className="object-cover"
-        containerClassName={desktopCover ? 'relative z-10 h-full w-full md:hidden' : 'h-full w-full md:hidden'}
-        sizes="(max-width: 767px) 100vw, 1240px"
-        useAspectRatio={false}
-        width={2896}
-        height={543}
-      />
-      {/* Desktop foreground - preenchido (cover) */}
-      <OptimizedImage
-        src={FREE_COMPANY_BANNER_SRC}
-        alt={alt}
-        fill
-        priority={priority}
-        quality={95}
-        objectFit="cover"
-        className="object-cover"
-        containerClassName={desktopCover ? 'relative z-10 hidden md:block h-full w-full' : 'hidden md:block h-full w-full'}
-        sizes="(max-width: 767px) 100vw, 1240px"
-        useAspectRatio={false}
-        width={2896}
-        height={543}
-      />
+    <div className="relative h-full w-full overflow-hidden bg-white">
+      <picture
+        className={
+          desktopCover ? 'relative z-10 block h-full w-full' : 'relative block h-full w-full'
+        }
+      >
+        {!mobileSourceFailed && !imageSourceFailed && (
+          <source
+            media="(max-width: 767px)"
+            srcSet={mobileImageSource.srcSet}
+            sizes={mobileImageSource.sizes}
+          />
+        )}
+        <Image
+          src={imageSourceFailed ? IMAGE_FALLBACK_SRC : FREE_COMPANY_BANNER_SRC}
+          alt={alt}
+          fill
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
+          quality={95}
+          className="object-contain"
+          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 100vw, 1240px"
+          onError={() => {
+            if (!mobileSourceFailed) {
+              setMobileSourceFailed(true);
+            } else {
+              setImageSourceFailed(true);
+            }
+          }}
+        />
+      </picture>
     </div>
   );
 }
