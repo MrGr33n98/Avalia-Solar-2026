@@ -10,10 +10,23 @@ test.describe('Jornada E2E real de propostas (API real sem Mocks)', () => {
     });
     expect(login.ok()).toBeTruthy();
 
-    const state = await request.storageState();
-    await page.context().addCookies(state.cookies);
+    const { token, user } = await login.json();
+    expect(token).toBeTruthy();
+    expect(user.role).toBe('review');
+    await page.context().addCookies([
+      {
+        name: 'jwt_token',
+        value: token,
+        url: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    ]);
+    const currentUser = await page.request.get('/api/v1/auth/me');
+    expect(currentUser.ok()).toBeTruthy();
+    expect((await currentUser.json()).user.role).toBe('review');
     await page.goto('/review-dashboard/proposals');
 
-    await expect(page.locator('section[aria-label="Jornada de propostas"]')).toBeVisible();
+    await expect(page.getByTestId('marketplace-proposals-journey')).toBeVisible();
   });
 });

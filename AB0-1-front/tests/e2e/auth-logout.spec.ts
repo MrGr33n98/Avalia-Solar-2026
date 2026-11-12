@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('JWT Revocation and Logout', () => {
+  const loginForm = (page: import('@playwright/test').Page) =>
+    page.locator('form').filter({ has: page.locator('#email') });
+
   const testUser = {
     email: process.env.E2E_USER_EMAIL || 'test@avaliasolar.com.br',
     password: process.env.E2E_USER_PASSWORD || 'Password123',
@@ -10,8 +13,8 @@ test.describe('JWT Revocation and Logout', () => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.locator('#email').fill(testUser.email);
     await page.locator('#password').fill(testUser.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/dashboard|home/, { timeout: 10000 });
+    await loginForm(page).locator('button[type="submit"]').click();
+    await page.waitForURL(/review-dashboard|dashboard|home/, { timeout: 10000 });
     await expect
       .poll(async () =>
         (await page.context().cookies()).some((cookie) => cookie.name === 'jwt_token')
@@ -28,10 +31,7 @@ test.describe('JWT Revocation and Logout', () => {
     // Perform logout
     await page
       .click('[data-testid="logout-button"], a[href="/logout"], button:has-text("Sair")')
-      .catch(() => {
-        // If no button found, navigate directly
-        page.goto('/logout');
-      });
+      .catch(async () => page.goto('/logout'));
 
     // Wait for logout page or redirect to login
     await page.waitForURL(/login|logout/, { timeout: 5000 });
@@ -62,7 +62,6 @@ test.describe('JWT Revocation and Logout', () => {
 
     // Logout (revoke token)
     await page.goto('/logout');
-    await page.waitForTimeout(2000);
 
     // Try to use the revoked token
     const response = await request.get('/api/v1/auth/me', {
@@ -89,11 +88,11 @@ test.describe('JWT Revocation and Logout', () => {
     const page2 = await context2.newPage();
 
     // Login in second session
-    await page2.goto('/login');
-    await page2.fill('input[name="email"]', testUser.email);
-    await page2.fill('input[name="password"]', testUser.password);
-    await page2.click('button[type="submit"]');
-    await page2.waitForURL(/dashboard|home/, { timeout: 5000 }).catch(() => {});
+    await page2.goto('/login', { waitUntil: 'domcontentloaded' });
+    await page2.locator('#email').fill(testUser.email);
+    await page2.locator('#password').fill(testUser.password);
+    await loginForm(page2).locator('button[type="submit"]').click();
+    await page2.waitForURL(/review-dashboard|dashboard|home/, { timeout: 10000 });
 
     // Verify both sessions are active
     expect(await page.title()).toBeTruthy();
@@ -116,21 +115,18 @@ test.describe('JWT Revocation and Logout', () => {
       });
     }
 
-    await page.waitForTimeout(2000);
-
     // Try to access dashboard in second session
     await page2.reload();
 
-    // Second session should also be logged out
-    await page2.waitForURL(/login/, { timeout: 5000 }).catch(async () => {
-      // If not redirected, try accessing protected resource
-      const apiResponse = await page2.evaluate(async () => {
-        const res = await fetch('/api/v1/auth/me', { credentials: 'include' });
-        return { status: res.status, ok: res.ok };
-      });
-
-      expect(apiResponse.status).toBe(401);
-    });
+    // The second session must be revoked in the API even if its page was already open.
+    await expect
+      .poll(async () =>
+        page2.evaluate(async () => {
+          const res = await fetch('/api/v1/auth/me', { credentials: 'include' });
+          return res.status;
+        })
+      )
+      .toBe(401);
 
     await context2.close();
   });
@@ -159,7 +155,6 @@ test.describe('JWT Revocation and Logout', () => {
     expect(response.status).toBe(401);
 
     // Page should handle it and redirect to login
-    await page.waitForTimeout(1000);
     await page.reload();
     await expect(page).toHaveURL(/login/);
   });
@@ -170,12 +165,12 @@ test.describe('JWT Revocation and Logout', () => {
     await page.waitForURL(/login/, { timeout: 5000 });
 
     // Login again
-    await page.fill('input[name="email"]', testUser.email);
-    await page.fill('input[name="password"]', testUser.password);
-    await page.click('button[type="submit"]');
+    await page.locator('#email').fill(testUser.email);
+    await page.locator('#password').fill(testUser.password);
+    await loginForm(page).locator('button[type="submit"]').click();
 
     // Should successfully login
-    await page.waitForURL(/dashboard|home/, { timeout: 5000 }).catch(() => {});
+    await page.waitForURL(/review-dashboard|dashboard|home/, { timeout: 10000 });
 
     // Verify new token was issued
     const cookies = await context.cookies();

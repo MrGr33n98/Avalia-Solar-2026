@@ -27,6 +27,10 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.backend.test
+      cache_from:
+        - type=gha,scope=backend-e2e
+      cache_to:
+        - type=gha,scope=backend-e2e,mode=max
     depends_on:
       db:
         condition: service_healthy
@@ -65,6 +69,11 @@ services:
       secrets:
         - NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
         - BETTER_AUTH_SECRET
+      cache_from:
+        - type=gha,scope=frontend
+        - type=gha,scope=frontend-e2e
+      cache_to:
+        - type=gha,scope=frontend-e2e,mode=max
     depends_on:
       backend:
         condition: service_healthy

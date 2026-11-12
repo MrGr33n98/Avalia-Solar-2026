@@ -5,6 +5,24 @@ ENV['SEED_ADMIN_EMAIL'] ||= 'ci-admin@avaliasolar.test'
 ENV['SEED_ADMIN_PASSWORD'] ||= SecureRandom.hex(32)
 load Rails.root.join('db/seeds.rb')
 
+# O perfil de financiamento fica publicado apenas no banco efêmero deste E2E.
+company = Company.find_by!(slug: 'sicredi-solar')
+company.update!(financing_enabled: true, financing_tab_visible: true)
+CompanyFinancingProfile.find_or_initialize_by(company: company).update!(
+  title: 'Simule seu financiamento solar',
+  disclaimer: 'Simulação ilustrativa para fins de teste.',
+  currency: 'BRL',
+  default_amount_cents: 5_000_000,
+  min_amount_cents: 500_000,
+  max_amount_cents: 100_000_000,
+  default_term_months: 60,
+  min_term_months: 12,
+  max_term_months: 120,
+  default_interest_rate_monthly: 1.2,
+  amortization_type: 'price',
+  status: 'published'
+)
+
 email = ENV.fetch('E2E_USER_EMAIL', 'test@avaliasolar.com.br')
 password = ENV.fetch('E2E_USER_PASSWORD', 'Password123')
 
