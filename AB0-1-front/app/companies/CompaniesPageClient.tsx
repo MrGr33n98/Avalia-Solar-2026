@@ -34,6 +34,7 @@ import { parseQueryParams, stringifyQueryParams } from '@/components/filters/que
 import { ActiveFiltersSummary } from '@/components/filters/ActiveFiltersSummary';
 import { CompanyFilters, DEFAULT_FILTERS } from '@/components/filters/types';
 import MobileCompanyFilterBar from '@/components/companies/filters/MobileCompanyFilterBar';
+import TabletCompanyLocationFilters from '@/components/companies/filters/TabletCompanyLocationFilters';
 
 const SearchMapPanel = dynamic(() => import('@/components/search/SearchMapPanel'), {
   ssr: false,
@@ -261,6 +262,65 @@ export function CompaniesContent({
     router.replace(targetUrl, { scroll: false });
     setIsFiltersOpen(false);
   };
+
+  const handleStateChange = useCallback(
+    (stateVal: string) => {
+      const updated: CompanyFilters = {
+        ...filters,
+        state: stateVal ? [stateVal] : [],
+        city: [],
+        lat: null,
+        lng: null,
+        radius_km: null,
+        page: 1,
+      };
+      prefetchCompanies(updated);
+      router.replace(buildTargetUrl(updated), { scroll: false });
+    },
+    [buildTargetUrl, filters, prefetchCompanies, router]
+  );
+
+  const handleCityChange = useCallback(
+    (cityVal: string) => {
+      const updated: CompanyFilters = {
+        ...filters,
+        city: cityVal ? [cityVal] : [],
+        lat: null,
+        lng: null,
+        radius_km: null,
+        page: 1,
+      };
+      prefetchCompanies(updated);
+      router.replace(buildTargetUrl(updated), { scroll: false });
+    },
+    [buildTargetUrl, filters, prefetchCompanies, router]
+  );
+
+  const handleClearLocation = useCallback(() => {
+    const updated: CompanyFilters = {
+      ...filters,
+      state: [],
+      city: [],
+      lat: null,
+      lng: null,
+      radius_km: null,
+      page: 1,
+    };
+    prefetchCompanies(updated);
+    router.replace(buildTargetUrl(updated), { scroll: false });
+  }, [buildTargetUrl, filters, prefetchCompanies, router]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.lat !== null && filters.lng !== null) count += 1;
+    else if (filters.state.length > 0 || filters.city.length > 0) count += 1;
+    if (filters.category_ids.length > 0) count += 1;
+    if (filters.verified) count += 1;
+    if (filters.min_rating !== null) count += 1;
+    if (filters.has_reviews) count += 1;
+    if (filters.whatsapp_enabled || filters.financing_enabled) count += 1;
+    return count;
+  }, [filters]);
 
   const categoryLabel = useMemo(() => {
     if (filters.category_ids.length === 0) return 'Categoria';
@@ -956,6 +1016,20 @@ export function CompaniesContent({
                   onToggleVerified={handleToggleVerified}
                   categoryLabel={categoryLabel}
                   locationLabel={locationLabel}
+                />
+              </div>
+
+              {/* Tablet/iPad quick location filters (visible between md and dashboard) */}
+              <div className="hidden md:block dashboard:hidden">
+                <TabletCompanyLocationFilters
+                  filters={filters}
+                  onStateChange={handleStateChange}
+                  onCityChange={handleCityChange}
+                  onClearLocation={handleClearLocation}
+                  onOpenNearMe={handleNearMe}
+                  onOpenFullFilters={() => setIsFiltersOpen(true)}
+                  activeFiltersCount={activeFiltersCount}
+                  detectingLocation={detectingLocation}
                 />
               </div>
 
