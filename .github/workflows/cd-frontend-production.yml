@@ -68,6 +68,7 @@ jobs:
     outputs:
       runtime_json: ${{ steps.inventory.outputs.runtime_json }}
       frontend_source_sha: ${{ steps.inventory.outputs.frontend_source_sha }}
+      backend_source_sha: ${{ steps.inventory.outputs.backend_source_sha }}
       frontend_container_id: ${{ steps.inventory.outputs.frontend_container_id }}
       frontend_image_id: ${{ steps.inventory.outputs.frontend_image_id }}
       frontend_repo_digest: ${{ steps.inventory.outputs.frontend_repo_digest }}
@@ -92,8 +93,15 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST_FINGERPRINT: ${{ secrets.SSH_HOST_FINGERPRINT }}
           PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
+          PRODUCTION_BACKEND_SOURCE_SHA: ${{ vars.PRODUCTION_BACKEND_SOURCE_SHA }}
+          PRODUCTION_BACKEND_IMAGE_ID: ${{ vars.PRODUCTION_BACKEND_IMAGE_ID }}
+          PRODUCTION_WORKER_SOURCE_SHA: ${{ vars.PRODUCTION_WORKER_SOURCE_SHA }}
+          PRODUCTION_WORKER_IMAGE_ID: ${{ vars.PRODUCTION_WORKER_IMAGE_ID }}
         run: |
           set -euo pipefail
+          for required in PRODUCTION_BACKEND_SOURCE_SHA PRODUCTION_BACKEND_IMAGE_ID PRODUCTION_WORKER_SOURCE_SHA PRODUCTION_WORKER_IMAGE_ID; do
+            [ -n "${!required:-}" ] || { echo "::error::Environment production var $required ausente; runtime sem baseline aprovada."; exit 1; }
+          done
           REPORT="$RUNNER_TEMP/production-runtime.json"
           bash .github/scripts/release/ssh-readonly.sh \
             .github/scripts/release/inspect-runtime.sh > "$REPORT"
@@ -102,6 +110,9 @@ jobs:
             jq -c '{manifest, manifest_divergences, components: (.components | with_entries(.value |= {config_image, image_id, repo_digests, source_sha, state, health}))}' "$REPORT" >&2
             exit 1
           fi
+          bash .github/scripts/release/validate-runtime-baseline.sh \
+            "$REPORT" "$PRODUCTION_BACKEND_SOURCE_SHA" "$PRODUCTION_BACKEND_IMAGE_ID" \
+            "$PRODUCTION_WORKER_SOURCE_SHA" "$PRODUCTION_WORKER_IMAGE_ID"
           {
             echo '```json'
             jq '{manifest, manifest_divergences, components: (.components | with_entries(.value |= {container_id, config_image, image_id, repo_digests, source_sha, state, health}))}' "$REPORT"
@@ -118,6 +129,7 @@ jobs:
               echo "${component}_repo_digest=$(jq -r --arg c "$component" '.components[$c].repo_digests[0]' "$REPORT")"
             done
             echo "frontend_source_sha=$(jq -r '.components.frontend.source_sha' "$REPORT")"
+            echo "backend_source_sha=$(jq -r '.components.backend.source_sha' "$REPORT")"
           } >> "$GITHUB_OUTPUT"
 
   verify-release-scope:
@@ -130,6 +142,7 @@ jobs:
     env:
       RELEASE_SHA: ${{ inputs.release_sha }}
       RELEASE_BASE_SHA: ${{ needs.inspect-runtime.outputs.frontend_source_sha }}
+      COMPATIBILITY_BASE_SHA: ${{ needs.inspect-runtime.outputs.backend_source_sha }}
       GITHUB_REPOSITORY: ${{ github.repository }}
       RELEASE_SCOPE: frontend_only
       GH_TOKEN: ${{ github.token }}
@@ -140,12 +153,73 @@ jobs:
           fetch-depth: 0
 
       - name: Verify CI and frontend artifact delta from runtime evidence
-        run: bash .github/scripts/verify-release-ci.sh
+        run: |
+          set -euo pipefail
+          bash .github/scripts/verify-release-ci.sh
+          bash .github/scripts/release/validate-frontend-scope.sh \
+            "$RELEASE_BASE_SHA" "$COMPATIBILITY_BASE_SHA" "$RELEASE_SHA" \
+            | tee "$RUNNER_TEMP/frontend-scope.json" >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/frontend-scope.json"
+
+  verify-frontend-backend-compatibility:
+    name: Frontend E2E against backend source active in runtime
+    needs: [verify-release, inspect-runtime, verify-release-scope]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_sha }}
+
+      - name: Start isolated frontend/backend compatibility stack
+        run: |
+          set -euo pipefail
+          docker compose -f infra/docker/docker-compose.test.yml up --build -d
+          for attempt in $(seq 1 60); do
+            backend_id="$(docker compose -f infra/docker/docker-compose.test.yml ps -q backend)"
+            frontend_id="$(docker compose -f infra/docker/docker-compose.test.yml ps -q frontend)"
+            backend_health="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$backend_id" 2>/dev/null || echo missing)"
+            frontend_health="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$frontend_id" 2>/dev/null || echo missing)"
+            if [ "$backend_health" = healthy ] && [ "$frontend_health" = healthy ]; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              docker compose -f infra/docker/docker-compose.test.yml ps
+              docker compose -f infra/docker/docker-compose.test.yml logs --tail=150 backend frontend
+              exit 1
+            fi
+            sleep 5
+          done
+        shell: bash
+
+      - name: Install browser tests
+        working-directory: ./AB0-1-front
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium webkit
+
+      - name: Run frontend/backend compatibility contracts
+        working-directory: ./AB0-1-front
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          E2E_CATEGORY_SLUG: energia-solar
+          E2E_PLACEMENT_SMOKE: true
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'password123' }}
+        run: |
+          npm run test:banners
+          npx playwright test
+
+      - name: Tear down isolated compatibility stack
+        if: always()
+        run: docker compose -f infra/docker/docker-compose.test.yml down --volumes
 
   dry-run-plan:
     name: Produce verified frontend-only plan
     if: ${{ inputs.dry_run == true }}
-    needs: [verify-release, inspect-runtime, verify-release-scope]
+    needs: [verify-release, inspect-runtime, verify-release-scope, verify-frontend-backend-compatibility]
     runs-on: ubuntu-24.04
     steps:
       - name: Write read-only deployment plan
@@ -158,9 +232,10 @@ jobs:
             {
               mode: "dry_run",
               release_sha: $sha,
-              action: (if $runtime.components.frontend.source_sha == $sha then "no_op" else "deploy" end),
+              action: "build_candidate_and_compare_digest",
               artifact_digest: "pending; build skipped in dry_run",
-              components_to_change: (if $runtime.components.frontend.source_sha == $sha then [] else ["frontend"] end),
+              components_to_change: ["frontend"],
+              runtime_source_sha_matches: ($runtime.components.frontend.source_sha == $sha),
               frontend_current: {
                 source_sha: $runtime.components.frontend.source_sha,
                 container_id: $runtime.components.frontend.container_id,
@@ -185,21 +260,10 @@ jobs:
             }
           ' | tee "$RUNNER_TEMP/frontend-release-plan.json" >> "$GITHUB_STEP_SUMMARY"
 
-  runtime-noop:
-    name: Frontend already at requested source SHA
-    if: ${{ inputs.dry_run == false && needs.inspect-runtime.outputs.frontend_source_sha == inputs.release_sha }}
-    needs: [inspect-runtime, verify-release-scope]
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Record no-op release
-        run: |
-          echo 'NO_OP: frontend runtime already matches requested source SHA; build and deploy skipped.' \
-            >> "$GITHUB_STEP_SUMMARY"
-
   build-frontend:
     name: Build frontend image
-    if: ${{ inputs.dry_run == false && needs.inspect-runtime.outputs.frontend_source_sha != inputs.release_sha }}
-    needs: [verify-release-scope, inspect-runtime]
+    if: ${{ inputs.dry_run == false }}
+    needs: [verify-release-scope, inspect-runtime, verify-frontend-backend-compatibility]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -208,6 +272,7 @@ jobs:
       RELEASE_SHA: ${{ inputs.release_sha }}
     outputs:
       digest: ${{ steps.publish.outputs.digest }}
+      image: ${{ steps.immutable_ref.outputs.image }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -242,7 +307,7 @@ jobs:
           context: .
           file: ./Dockerfile.frontend
           push: true
-          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:${{ inputs.release_sha }}
+          tags: ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:${{ inputs.release_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           build-args: |
             GIT_SHA=${{ inputs.release_sha }}
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1' }}
@@ -275,17 +340,25 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
       - name: Validate published OCI digest
+        id: immutable_ref
         env:
           ARTIFACT_DIGEST: ${{ steps.publish.outputs.digest }}
         run: |
           set -euo pipefail
-          [[ "$ARTIFACT_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] \
-            || { echo "::error::Build não retornou digest OCI válido."; exit 1; }
+          DIGEST="$ARTIFACT_DIGEST"
+          if [[ "$DIGEST" =~ ^[0-9a-f]{64}$ ]]; then
+            DIGEST="sha256:$DIGEST"
+          fi
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] \
+            || { echo "::error::Build não retornou digest OCI válido ou contém prefixo duplicado."; exit 1; }
+          REPOSITORY="ghcr.io/${GITHUB_REPOSITORY,,}-frontend"
+          echo "image=${REPOSITORY}@${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "Artefato imutável validado: ${REPOSITORY}@${DIGEST}" >> "$GITHUB_STEP_SUMMARY"
 
   deploy-frontend:
     name: Deploy frontend only
-    if: ${{ inputs.dry_run == false && needs.inspect-runtime.outputs.frontend_source_sha != inputs.release_sha }}
-    needs: [verify-release-scope, inspect-runtime, build-frontend]
+    if: ${{ inputs.dry_run == false }}
+    needs: [verify-release-scope, inspect-runtime, verify-frontend-backend-compatibility, build-frontend]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -297,7 +370,7 @@ jobs:
       actions: read
     env:
       RELEASE_SHA: ${{ inputs.release_sha }}
-      FRONTEND_DIGEST: ${{ needs.build-frontend.outputs.digest }}
+      FRONTEND_IMAGE: ${{ needs.build-frontend.outputs.image }}
       EXPECTED_FRONTEND_CONTAINER_ID: ${{ needs.inspect-runtime.outputs.frontend_container_id }}
       EXPECTED_FRONTEND_IMAGE_ID: ${{ needs.inspect-runtime.outputs.frontend_image_id }}
       EXPECTED_FRONTEND_REPO_DIGEST: ${{ needs.inspect-runtime.outputs.frontend_repo_digest }}
@@ -330,7 +403,7 @@ jobs:
           GH_REPOSITORY: ${{ github.repository }}
           GIT_SHA: ${{ env.RELEASE_SHA }}
           PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
-          FRONTEND_DIGEST: ${{ env.FRONTEND_DIGEST }}
+          FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
           EXPECTED_FRONTEND_CONTAINER_ID: ${{ env.EXPECTED_FRONTEND_CONTAINER_ID }}
           EXPECTED_FRONTEND_IMAGE_ID: ${{ env.EXPECTED_FRONTEND_IMAGE_ID }}
           EXPECTED_FRONTEND_REPO_DIGEST: ${{ env.EXPECTED_FRONTEND_REPO_DIGEST }}
@@ -347,7 +420,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || '22' }}
           fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
           command_timeout: 15m
-          envs: DOCKER_USER,DOCKER_TOKEN,GH_REPOSITORY,GIT_SHA,PRODUCTION_DEPLOY_DIR,FRONTEND_DIGEST,EXPECTED_FRONTEND_CONTAINER_ID,EXPECTED_FRONTEND_IMAGE_ID,EXPECTED_FRONTEND_REPO_DIGEST,EXPECTED_BACKEND_CONTAINER_ID,EXPECTED_BACKEND_IMAGE_ID,EXPECTED_BACKEND_REPO_DIGEST,EXPECTED_WORKER_CONTAINER_ID,EXPECTED_WORKER_IMAGE_ID,EXPECTED_WORKER_REPO_DIGEST
+          envs: DOCKER_USER,DOCKER_TOKEN,GH_REPOSITORY,GIT_SHA,PRODUCTION_DEPLOY_DIR,FRONTEND_IMAGE,EXPECTED_FRONTEND_CONTAINER_ID,EXPECTED_FRONTEND_IMAGE_ID,EXPECTED_FRONTEND_REPO_DIGEST,EXPECTED_BACKEND_CONTAINER_ID,EXPECTED_BACKEND_IMAGE_ID,EXPECTED_BACKEND_REPO_DIGEST,EXPECTED_WORKER_CONTAINER_ID,EXPECTED_WORKER_IMAGE_ID,EXPECTED_WORKER_REPO_DIGEST
           script: |
             set -Eeuo pipefail
             DEPLOY_DIR="${PRODUCTION_DEPLOY_DIR:-${HOME:-}/Avalia-Solar-2026}"
@@ -356,8 +429,12 @@ jobs:
 
             REPO_LOWER="$(printf '%s' "$GH_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
             FRONTEND_REPOSITORY="ghcr.io/${REPO_LOWER}-frontend"
-            FRONTEND_IMAGE="${FRONTEND_REPOSITORY}@sha256:${FRONTEND_DIGEST}"
-            [[ "$FRONTEND_DIGEST" =~ ^[0-9a-f]{64}$ ]] || { echo "Digest frontend inválido."; exit 1; }
+            case "$FRONTEND_IMAGE" in
+              "${FRONTEND_REPOSITORY}"@sha256:*) FRONTEND_DIGEST="${FRONTEND_IMAGE#"${FRONTEND_REPOSITORY}"@}" ;;
+              *) echo "Repositório da imagem frontend diverge."; exit 1 ;;
+            esac
+            [[ "$FRONTEND_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] \
+              || { echo "Referência OCI frontend inválida ou com prefixo duplicado."; exit 1; }
 
             assert_component_identity() {
               local container="$1" expected_container="$2" expected_image_id="$3" expected_repo_digest="$4"

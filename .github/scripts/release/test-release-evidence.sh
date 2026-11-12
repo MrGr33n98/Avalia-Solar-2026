@@ -48,6 +48,9 @@ jq '.components |= with_entries(.value |= {digest, container_id, health})' \
 jq -n \
   --arg sha_a "$(printf 'a%.0s' {1..40})" \
   --arg sha_b "$(printf 'b%.0s' {1..40})" \
+  --arg container_front "$(printf 'a%.0s' {1..64})" \
+  --arg container_back "$(printf 'b%.0s' {1..64})" \
+  --arg container_worker "$(printf 'c%.0s' {1..64})" \
   --arg image_id_front "sha256:$(printf 'c%.0s' {1..64})" \
   --arg image_id_back "sha256:$(printf 'd%.0s' {1..64})" \
   --arg digest_front "ghcr.io/mrgr33n98/avalia-solar-2026-frontend@sha256:$(printf 'e%.0s' {1..64})" \
@@ -61,9 +64,9 @@ jq -n \
     },
     manifest_divergences: [],
     components: {
-      frontend: {container_id:"frontend-id", config_image:"ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest", image_id:$image_id_front, repo_digests:[$digest_front], source_sha:$sha_b, state:"running", health:"healthy"},
-      backend: {container_id:"backend-id", config_image:("ghcr.io/mrgr33n98/avalia-solar-2026-backend:" + $sha_a), image_id:$image_id_back, repo_digests:[$digest_back], source_sha:$sha_a, state:"running", health:"healthy"},
-      worker: {container_id:"worker-id", config_image:("ghcr.io/mrgr33n98/avalia-solar-2026-backend:" + $sha_a), image_id:$image_id_back, repo_digests:[$digest_back], source_sha:$sha_a, state:"running", health:"healthy"}
+      frontend: {container_id:$container_front, config_image:"ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest", image_id:$image_id_front, repo_digests:[$digest_front], source_sha:$sha_b, state:"running", health:"healthy"},
+      backend: {container_id:$container_back, config_image:("ghcr.io/mrgr33n98/avalia-solar-2026-backend:" + $sha_a), image_id:$image_id_back, repo_digests:[$digest_back], source_sha:$sha_a, state:"running", health:"healthy"},
+      worker: {container_id:$container_worker, config_image:("ghcr.io/mrgr33n98/avalia-solar-2026-backend:" + $sha_a), image_id:$image_id_back, repo_digests:[$digest_back], source_sha:$sha_a, state:"running", health:"healthy"}
     }
   }' > "$TMP/runtime-report.json"
 
@@ -135,12 +138,30 @@ assert_block 'manifesto ausente bloqueia operação' \
   bash "$VALIDATOR" validate-manifest "$TMP/missing.json"
 assert_pass 'inspeção confirma imagem, digest OCI, SHA e health dos três serviços' \
   bash "$VALIDATOR" validate-runtime "$TMP/runtime-report.json"
+assert_pass 'baseline explícita aprova runtime backend/worker conhecido apesar do manifesto histórico' \
+  bash "$ROOT/.github/scripts/release/validate-runtime-baseline.sh" \
+    "$TMP/runtime-report.json" "$(printf 'a%.0s' {1..40})" \
+    "sha256:$(printf 'd%.0s' {1..64})" "$(printf 'a%.0s' {1..40})" \
+    "sha256:$(printf 'd%.0s' {1..64})"
+assert_block 'baseline explícita bloqueia Image ID backend não autorizado' \
+  bash "$ROOT/.github/scripts/release/validate-runtime-baseline.sh" \
+    "$TMP/runtime-report.json" "$(printf 'a%.0s' {1..40})" \
+    "sha256:$(printf 'e%.0s' {1..64})" "$(printf 'a%.0s' {1..40})" \
+    "sha256:$(printf 'd%.0s' {1..64})"
+assert_block 'baseline explícita bloqueia SHA de origem backend não autorizado' \
+  bash "$ROOT/.github/scripts/release/validate-runtime-baseline.sh" \
+    <(jq '.components.backend.source_sha = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"' "$TMP/runtime-report.json") \
+    "$(printf 'a%.0s' {1..40})" "sha256:$(printf 'd%.0s' {1..64})" \
+    "$(printf 'a%.0s' {1..40})" "sha256:$(printf 'd%.0s' {1..64})"
 assert_block 'health check falho bloqueia preflight' \
   bash "$VALIDATOR" validate-runtime \
     <(jq '.components.frontend.health = "unhealthy"' "$TMP/runtime-report.json")
 assert_block 'divergência de digest backend/worker bloqueia preflight' \
   bash "$VALIDATOR" validate-runtime \
     <(jq '.components.worker.repo_digests[0] |= sub("f+$"; "e")' "$TMP/runtime-report.json")
+assert_block 'Container ID fora do formato Docker bloqueia preflight' \
+  bash "$VALIDATOR" validate-runtime \
+    <(jq '.components.backend.container_id = "not-a-container-id"' "$TMP/runtime-report.json")
 assert_pass 'snapshot subsequente preserva backend e worker' \
   bash "$VALIDATOR" assert-preserved "$TMP/runtime-report.json" "$TMP/runtime-report.json" frontend_only
 assert_block 'mudança de digest backend entre snapshots bloqueia frontend-only' \

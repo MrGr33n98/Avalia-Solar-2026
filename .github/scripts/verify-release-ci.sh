@@ -88,13 +88,17 @@ for attempt in $(seq 1 90); do
 
   if [ "$RELEASE_SCOPE" = "frontend_only" ]; then
     previous_sha="${RELEASE_BASE_SHA:-}"
+    compatibility_base="${COMPATIBILITY_BASE_SHA:-}"
     if [[ ! "$previous_sha" =~ ^[0-9a-f]{40}$ ]]; then
       echo "::error::SHA frontend ativo ausente ou inválido na evidência runtime. Deploy bloqueado."
       exit 1
     fi
-    if ! git cat-file -e "${previous_sha}^{commit}" 2>/dev/null \
-      || ! git merge-base --is-ancestor "$previous_sha" "$RELEASE_SHA"; then
-      echo "::error::SHA frontend runtime não pertence ao histórico da release. Deploy bloqueado."
+    if [[ ! "$compatibility_base" =~ ^[0-9a-f]{40}$ ]] \
+      || ! git cat-file -e "${previous_sha}^{commit}" 2>/dev/null \
+      || ! git cat-file -e "${compatibility_base}^{commit}" 2>/dev/null \
+      || ! git merge-base --is-ancestor "$previous_sha" "$RELEASE_SHA" \
+      || ! git merge-base --is-ancestor "$compatibility_base" "$RELEASE_SHA"; then
+      echo "::error::SHA frontend/backend runtime não pertence ao histórico da release. Deploy bloqueado."
       exit 1
     fi
   else
@@ -114,14 +118,13 @@ for attempt in $(seq 1 90); do
     exit 1
   fi
 
-  if [ "$RELEASE_SCOPE" = "frontend_only" ] && [ "$previous_sha" = "$RELEASE_SHA" ]; then
-    echo "NO_OP: frontend runtime já corresponde ao commit solicitado."
-    exit 0
-  fi
-
   if [ "$conclusion" = "failure" ]; then
+    baseline_sha="$previous_sha"
+    if [ "$RELEASE_SCOPE" = "frontend_only" ]; then
+      baseline_sha="$compatibility_base"
+    fi
     previous_ci_runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci-web-backend.yml/runs?branch=main&per_page=100")" || exit 1
-    previous_ci_run="$(jq -c --arg sha "$previous_sha" '
+    previous_ci_run="$(jq -c --arg sha "$baseline_sha" '
       [.workflow_runs[] | select(.head_sha == $sha and .event == "push")]
       | sort_by(.run_number) | last // empty
     ' <<< "$previous_ci_runs")"
@@ -141,30 +144,28 @@ for attempt in $(seq 1 90); do
     fi
   fi
 
-  comparison="$(gh api "repos/$GITHUB_REPOSITORY/compare/$previous_sha...$RELEASE_SHA")" || exit 1
+  comparison_base="$previous_sha"
+  if [ "$RELEASE_SCOPE" = "frontend_only" ]; then
+    comparison_base="$compatibility_base"
+  fi
+  comparison="$(gh api "repos/$GITHUB_REPOSITORY/compare/$comparison_base...$RELEASE_SHA")" || exit 1
   if ! jq -e '
     (.status == "ahead")
     and (.ahead_by > 0)
     and (.files | length > 0 and length < 300)
     and ([.files[].filename | select(
-      (startswith("AB0-1-front/")
-       or . == ".gitignore"
-       or . == ".github/workflows/ci-web-backend.yml"
-       or . == ".github/workflows/cd-production.yml"
-       or . == ".github/workflows/cd-frontend-production.yml"
-       or . == ".github/scripts/verify-release-ci.sh"
-       or . == ".github/scripts/test-verify-release-ci.sh") | not
+      (startswith("AB0-1-front/") or . == "Dockerfile.frontend" or . == ".dockerignore") | not
     )] | length == 0)
-    and ([.files[].filename | select(startswith("AB0-1-front/"))] | length > 0)
+    and ([.files[].filename | select(startswith("AB0-1-front/") or . == "Dockerfile.frontend" or . == ".dockerignore")] | length > 0)
   ' <<< "$comparison" >/dev/null; then
-    echo "::error::Delta fora do escopo permitido para $RELEASE_SCOPE. Deploy bloqueado."
+    echo "::error::Backend/infra ou artefato frontend inválido desde a base ativa. Deploy bloqueado."
     exit 1
   fi
 
   if [ "$conclusion" = "success" ]; then
-    echo "Escopo frontend-only validado desde $previous_sha; nenhum serviço backend será publicado."
+    echo "CI aprovado; frontend e backend serão comparados com suas próprias bases de runtime."
   else
-    echo "::warning::CI mantém falhas RSpec legadas. Somente escopo frontend-only validado desde $previous_sha."
+    echo "::warning::RSpec do backend ativo mantém falha legada; compatibilidade E2E frontend/backend ainda será obrigatória."
     echo "Detalhes: CI run $run_id; migrations não serão executadas neste fluxo."
   fi
   exit 0

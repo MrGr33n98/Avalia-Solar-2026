@@ -17,7 +17,7 @@ DIGEST_BACK="ghcr.io/mrgr33n98/avalia-solar-2026-backend@sha256:$(printf 'f%.0s'
 cat > "$TMP/deploy/.deploy/current.env" <<EOF
 GIT_SHA=$SHA_GLOBAL
 FRONTEND_IMAGE=ghcr.io/mrgr33n98/avalia-solar-2026-frontend:stale-manifest-ref
-BACKEND_IMAGE=ghcr.io/mrgr33n98/avalia-solar-2026-backend:$SHA_A
+BACKEND_IMAGE=ghcr.io/mrgr33n98/avalia-solar-2026-backend:$SHA_GLOBAL
 EOF
 
 cat > "$TMP/bin/docker" <<'MOCK'
@@ -27,8 +27,8 @@ if [ "$1" = inspect ]; then
   container="$2"
   case "$container" in
     ab0-frontend) service=frontend; image_id="$ID_FRONT"; ref="$MOCK_FRONTEND_IMAGE"; sha="$SHA_B" ;;
-    ab0-backend) service=backend; image_id="$ID_BACK"; ref="$BACKEND_IMAGE"; sha="$SHA_A" ;;
-    ab0-worker) service=worker; image_id="$ID_BACK"; ref="$BACKEND_IMAGE"; sha="$SHA_A" ;;
+    ab0-backend) service=backend; image_id="$ID_BACK"; ref="$MOCK_ACTIVE_BACKEND_IMAGE"; sha="$SHA_A" ;;
+    ab0-worker) service=worker; image_id="$ID_BACK"; ref="$MOCK_ACTIVE_BACKEND_IMAGE"; sha="$SHA_A" ;;
     *) exit 2 ;;
   esac
   jq -n --arg id "$image_id" --arg ref "$ref" --arg sha "$sha" \
@@ -50,15 +50,16 @@ chmod +x "$TMP/bin/docker"
 export PATH="$TMP/bin:$PATH" PRODUCTION_DEPLOY_DIR="$TMP/deploy"
 MOCK_FRONTEND_IMAGE="ghcr.io/mrgr33n98/avalia-solar-2026-frontend:latest"
 BACKEND_IMAGE="ghcr.io/mrgr33n98/avalia-solar-2026-backend:$SHA_A"
-export SHA_A SHA_B SHA_GLOBAL ID_FRONT ID_BACK DIGEST_FRONT DIGEST_BACK MOCK_FRONTEND_IMAGE BACKEND_IMAGE
+MOCK_ACTIVE_BACKEND_IMAGE="$BACKEND_IMAGE"
+export SHA_A SHA_B SHA_GLOBAL ID_FRONT ID_BACK DIGEST_FRONT DIGEST_BACK MOCK_FRONTEND_IMAGE BACKEND_IMAGE MOCK_ACTIVE_BACKEND_IMAGE
 
 REPORT="$(bash "$ROOT/.github/scripts/release/inspect-runtime.sh")"
 bash "$ROOT/.github/scripts/release/validate-evidence.sh" \
   validate-runtime <(jq -n --argjson report "$REPORT" '$report')
-jq -e '.manifest_divergences | length == 4' \
+jq -e '.manifest_divergences | length == 6' \
   <<< "$REPORT" >/dev/null \
   || { jq '.manifest_divergences' <<< "$REPORT" >&2; echo 'FAIL: divergência com GIT_SHA global não foi registrada.' >&2; exit 1; }
-echo 'PASS: divergências do manifesto global registradas sem usar X-Release'
+echo 'PASS: manifesto histórico de backend difere do runtime íntegro e fica auditado'
 if grep -q 'must-not-leak' <<< "$REPORT"; then
   echo 'FAIL: inspeção expôs valor de ambiente fora da allowlist.' >&2
   exit 1

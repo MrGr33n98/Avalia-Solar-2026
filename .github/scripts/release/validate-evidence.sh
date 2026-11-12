@@ -111,7 +111,7 @@ validate_runtime_report() {
         else test("^ghcr\\.io/mrgr33n98/avalia-solar-2026-backend@sha256:[0-9a-f]{64}$")
         end);
     def healthy($component):
-      (.components[$component].container_id | type == "string" and length > 0)
+      (.components[$component].container_id | type == "string" and test("^[0-9a-f]{64}$"))
       and (.components[$component].state == "running")
       and (.components[$component].health == "healthy")
       and (.components[$component].image_id | image_id)
@@ -123,8 +123,6 @@ validate_runtime_report() {
     and (.manifest.backend_image | type == "string" and startswith("ghcr.io/"))
     and ((.manifest_divergences | type) == "array")
     and healthy("frontend") and healthy("backend") and healthy("worker")
-    and (.components.backend.config_image == .manifest.backend_image)
-    and (.components.worker.config_image == .manifest.backend_image)
     and (.components.backend.image_id == .components.worker.image_id)
     and (.components.backend.source_sha == .components.worker.source_sha)
     and (.components.backend.repo_digests == .components.worker.repo_digests)
