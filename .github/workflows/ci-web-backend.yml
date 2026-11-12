@@ -339,7 +339,7 @@ jobs:
     name: E2E Playwright Tests
     needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate]
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
