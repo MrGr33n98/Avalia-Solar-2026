@@ -50,6 +50,19 @@ rescue ActiveRecord::PendingMigrationError => e
   abort e.to_s.strip
 end
 RSpec.configure do |config|
+  # Rack::Attack mantém o cache fora de Rails.cache; isole contadores por exemplo.
+  config.around do |example|
+    rack_attack = Rack::Attack
+    previous_cache_store = rack_attack.cache.store
+    previous_enabled = rack_attack.enabled
+    rack_attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+
+    example.run
+  ensure
+    rack_attack.cache.store = previous_cache_store
+    rack_attack.enabled = previous_enabled
+  end
+
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_path = "#{Rails.root}/spec/fixtures"
 

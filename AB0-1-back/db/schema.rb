@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_11_120000) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_12_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -4364,6 +4364,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_11_120000) do
     t.jsonb "metadata", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index "sales_account_id, lower((email)::text)", name: "index_sales_contacts_on_account_and_normalized_email", unique: true, where: "((email IS NOT NULL) AND (btrim((email)::text) <> ''::text))"
     t.index ["email"], name: "index_sales_contacts_on_email"
     t.index ["sales_account_id"], name: "index_sales_contacts_on_sales_account_id"
     t.index ["user_id"], name: "index_sales_contacts_on_user_id"

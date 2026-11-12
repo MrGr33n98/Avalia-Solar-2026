@@ -61,7 +61,8 @@ RSpec.describe 'GET /t/email/click/:token', type: :request do
 
   it 'rejeita redirect aberto caso a URL de destino seja insegura' do
     email = build_email(click_tracking_enabled: true)
-    link = build_link(email, 'javascript:alert(1)')
+    link = build_link(email)
+    link.update_column(:original_url, 'javascript:alert(1)')
 
     get "/t/email/click/#{link.token}"
     expect(response).to redirect_to('/')

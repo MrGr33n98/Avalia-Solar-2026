@@ -48,6 +48,7 @@ RSpec.describe 'Api::V1::Billing Webhooks API', type: :request do
 
     context 'quando o evento é processado com sucesso' do
       it 'retorna status 200 ok' do
+        plan
         post '/api/v1/billing/webhooks/stripe', params: payload, headers: headers
 
         expect(response).to have_http_status(:ok)

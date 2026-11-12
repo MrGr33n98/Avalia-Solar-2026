@@ -37,7 +37,7 @@ RSpec.describe 'Messaging Platform Unified Inbox API', type: :request do
     let!(:conversation) { create(:conversation, company: company, user: buyer, company_unread_count: 3) }
 
     it 'returns aggregated total unread count' do
-      get '/api/v1/messaging/unread_count', headers: auth_headers_for(company_user)
+      get '/api/v1/messaging/inbox/unread_count', headers: auth_headers_for(company_user)
 
       expect(response).to have_http_status(:ok)
 

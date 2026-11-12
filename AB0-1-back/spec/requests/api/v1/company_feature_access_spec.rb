@@ -35,7 +35,7 @@ RSpec.describe 'Company feature access API', type: :request do
 
       expect(body['features']).to be_a(Hash)
       expect(body['features'].dig('intent_scores', 'state')).to eq('locked')
-      expect(body['plan']).to eq('free')
+      expect(body.dig('plan', 'tier')).to eq('free')
       expect(body['subscription']['status']).to be_present
       expect(body['metadata']).to include(
         'version' => 1,
@@ -60,7 +60,7 @@ RSpec.describe 'Company feature access API', type: :request do
 
       expect(response).to have_http_status(:ok)
       body = JSON.parse(response.body)
-      expect(body['plan']).to eq('pro')
+      expect(body.dig('plan', 'tier')).to eq('pro')
       expect(body['features'].dig('intent_scores', 'state')).to eq('enabled')
     end
 
@@ -71,7 +71,7 @@ RSpec.describe 'Company feature access API', type: :request do
 
       expect(response).to have_http_status(:ok)
       body = JSON.parse(response.body)
-      expect(body['plan']).to eq('enterprise')
+      expect(body.dig('plan', 'tier')).to eq('enterprise')
       expect(body['features'].dig('webhooks', 'state')).to eq('enabled')
       expect(body['features'].dig('profile_media_direct_update', 'state')).to eq('enabled')
     end

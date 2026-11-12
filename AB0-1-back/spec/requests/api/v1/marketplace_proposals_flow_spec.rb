@@ -16,17 +16,19 @@ RSpec.describe 'Marketplace Proposals Real Flow API', type: :request do
     # 2. Publicar proposta pela empresa
     version = proposal.versions.find_by!(number: 1)
     version.update!(
-      status: 'published',
       title: 'Sistema Solar 10kWp Premium',
       summary: 'Proposta técnica completa',
       total_cents: 3_200_000,
       currency: 'BRL',
       valid_until: 30.days.from_now.to_date
     )
+    version.items.create!(name: 'Módulos fotovoltaicos', quantity: 1, unit_price_cents: 3_200_000)
+    version.terms.create!(key: 'payment', label: 'Pagamento', value: 'À vista')
     proposal.publish!
 
     # 3. Chamar API como buyer
-    headers = api_auth_headers_for(buyer)
+    token = JWT.encode({ user_id: buyer.id }, Rails.application.secret_key_base, 'HS256')
+    headers = { 'Authorization' => "Bearer #{token}" }
     get '/api/v1/proposals', headers: headers
 
     expect(response).to have_http_status(:ok)

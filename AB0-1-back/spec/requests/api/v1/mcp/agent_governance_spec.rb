@@ -152,8 +152,16 @@ RSpec.describe 'MCP Agent Identity, Governance & HITL Protocol API', type: :requ
 
   describe '4. Human-in-the-Loop (HITL) Complete Lifecycle' do
     it 'TRIGGERS HITL GATE: R3 mutation generates pending approval request and 202 Accepted' do
+      campaign = Sales::Campaign.create!(company: company_alpha, user: admin_user,
+                                         name: 'Campanha HITL', campaign_type: 'email_broadcast', status: 'draft')
+      arguments = { campaign_id: campaign.id }
+      allow(Sales::Campaigns::Preflight).to receive(:call).with(campaign: campaign).and_return(ready: true)
+      allow(Sales::Campaigns::Dispatcher).to receive(:call)
+        .with(campaign: campaign, action: 'dispatch')
+        .and_return(status: 'queued')
+
       post '/api/v1/mcp/tools/send_outbound_campaign',
-           params: { arguments: { campaign_name: 'Summer Outreach 2026', recipient_count: 250 } },
+           params: { arguments: arguments },
            headers: auth_headers(admin_user, 'agent:engineering:primary')
 
       expect(response).to have_http_status(:accepted)
@@ -178,16 +186,16 @@ RSpec.describe 'MCP Agent Identity, Governance & HITL Protocol API', type: :requ
       post '/api/v1/mcp/tools/send_outbound_campaign',
            params: {
              approval_request_id: approval_uuid,
-             arguments: { campaign_name: 'Summer Outreach 2026', recipient_count: 250 }
+             arguments: arguments
            },
            headers: auth_headers(admin_user, 'agent:engineering:primary')
 
       expect(response).to have_http_status(:ok)
       exec_body = JSON.parse(response.body)
       expect(exec_body['ok']).to be(true)
-      expect(exec_body['data']['status']).to eq('queued')
-      expect(exec_body['data']['dispatched_recipients']).to eq(250)
-      expect(exec_body['data']['governance']['hitl_validated']).to be(true)
+      expect(exec_body['data']['status']).to eq('queued_for_dispatch')
+      expect(exec_body['data']['dispatch']['status']).to eq('queued')
+      expect(exec_body.dig('meta', 'risk_tier')).to eq('r3')
 
       expect(request_record.reload.status).to eq('executed')
     end

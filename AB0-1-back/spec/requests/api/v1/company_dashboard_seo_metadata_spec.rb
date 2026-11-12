@@ -24,14 +24,8 @@ RSpec.describe 'Company Dashboard SEO metadata', type: :request do
       post '/api/v1/company_dashboard/update_info', params: payload
 
       expect(response).to have_http_status(:created)
-      expect(company.reload).to have_attributes(
-        seo_title: payload[:company][:seo_title],
-        seo_description: payload[:company][:seo_description],
-        meta_description: payload[:company][:seo_description],
-        seo_keywords: payload[:company][:seo_keywords]
-      )
-
       pending_change = company.pending_changes.pending.last
+      expect(company.reload).to have_attributes(seo_title: nil, seo_description: nil, seo_keywords: nil)
       expect(pending_change.data['attributes']).to include(
         'seo_title' => payload[:company][:seo_title],
         'seo_description' => payload[:company][:seo_description],

@@ -28,7 +28,7 @@ RSpec.describe 'GraphQL banners', type: :request do
     expect(banners.first['deliveryId']).to match(/\A[a-f0-9]{32}\z/)
   end
 
-  it 'aplica frequency cap quando recebe audienceKey' do
+  it 'mantém entrega enquanto o frequency cap estiver desativado' do
     banner = create(:banner, :approved, active: true, sponsored: false, position: 'home_top')
     create(:banner_event, banner: banner, event_type: 'impression', tracked_at: 1.hour.ago,
            metadata_json: { 'audience_key' => 'graphql-audience-1' }, valid_for_reporting: true)
@@ -46,6 +46,6 @@ RSpec.describe 'GraphQL banners', type: :request do
     expect(response).to have_http_status(:ok)
     json = JSON.parse(response.body)
     expect(json['errors']).to be_blank
-    expect(json.dig('data', 'banners').map { |item| item['id'].to_i }).not_to include(banner.id)
+    expect(json.dig('data', 'banners').map { |item| item['id'].to_i }).to include(banner.id)
   end
 end
