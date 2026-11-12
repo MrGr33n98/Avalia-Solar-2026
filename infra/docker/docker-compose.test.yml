@@ -25,8 +25,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend.test
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.backend.test
     depends_on:
       db:
         condition: service_healthy
@@ -57,8 +57,11 @@ services:
 
   frontend:
     build:
-      context: .
+      context: ../..
       dockerfile: Dockerfile.frontend
+      secrets:
+        - NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+        - BETTER_AUTH_SECRET
     depends_on:
       backend:
         condition: service_healthy
@@ -72,3 +75,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+secrets:
+  NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:
+    environment: NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+  BETTER_AUTH_SECRET:
+    environment: BETTER_AUTH_SECRET

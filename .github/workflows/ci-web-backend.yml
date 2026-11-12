@@ -345,6 +345,8 @@ jobs:
 
       - name: Spin up Local Environment (Docker Compose)
         run: |
+          export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
+          export BETTER_AUTH_SECRET="$(openssl rand -hex 32)"
           docker compose -f infra/docker/docker-compose.test.yml up --build -d
           # Wait for services to be healthy
           sleep 15
