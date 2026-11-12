@@ -42,11 +42,14 @@ services:
       POSTGRES_DEFAULT_DB: postgres
       REDIS_URL: redis://redis:6379/0
       REDIS_ENABLED: "true"
+      E2E_USER_EMAIL: ${E2E_USER_EMAIL:-test@avaliasolar.com.br}
+      E2E_USER_PASSWORD: ${E2E_USER_PASSWORD:-password123}
     ports:
       - "3001:3001"
     command: >
       sh -c "
         bundle exec rails db:create db:migrate &&
+        bundle exec rails runner script/prepare_e2e_user.rb &&
         bundle exec rails server -b 0.0.0.0 -p 3001
       "
     healthcheck:
@@ -68,8 +71,9 @@ services:
     environment:
       NODE_ENV: test
       NEXT_PUBLIC_API_URL: http://backend:3001
-      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:?}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?}
+      API_URL_INTERNAL: http://backend:3001
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
     ports:
       - "3000:3000"
     healthcheck:
