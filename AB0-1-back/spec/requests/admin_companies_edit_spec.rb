@@ -44,7 +44,7 @@ RSpec.describe 'Admin Companies Edit', type: :request do
       get edit_admin_company_path(company)
       expect(response).to have_http_status(:success)
       expect(response.body).to include('Membros da Empresa')
-      expect(response.body).to include(user_member.name)
+      expect(response.body).to include(user_member.display_name)
     end
   end
 

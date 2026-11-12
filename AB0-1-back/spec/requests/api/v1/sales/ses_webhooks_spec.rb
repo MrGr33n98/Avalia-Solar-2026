@@ -267,14 +267,19 @@ RSpec.describe 'POST /api/v1/sales/ses_webhooks', type: :request do
         payload = build_payload(message: '{"eventType":"Delivery","mail":{"messageId":"ses-msg-999","timestamp":"2026-09-25T10:00:00Z"}}')
 
         expect {
-          post '/api/v1/sales/email_events/provider', params: payload.to_json,
+          post '/api/v1/sales/ses_webhooks', params: payload.to_json,
                                                     headers: { 'CONTENT_TYPE' => 'application/json' }
-        }.to change(Sales::Activity, :count).by(1)
+        }.to change(Sales::EmailEvent, :count).by(1)
 
         expect(response).to have_http_status(:ok)
         expect(recipient.reload.status).to eq('delivered')
         expect(campaign.reload.delivered_count).to eq(1)
-        expect(Sales::Activity.last.activity_type).to eq('email_delivered')
+        expect(email_message.events.last.event_type).to eq('delivered')
+
+        expect {
+          post '/api/v1/sales/ses_webhooks', params: payload.to_json,
+                                                    headers: { 'CONTENT_TYPE' => 'application/json' }
+        }.not_to change(Sales::EmailEvent, :count)
       end
     end
   end

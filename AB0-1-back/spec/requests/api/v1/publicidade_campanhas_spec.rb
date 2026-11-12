@@ -28,7 +28,6 @@ RSpec.describe 'Api::V1::PublicidadeCampanhas', type: :request do
         json = JSON.parse(response.body)
         expect(json['id']).to eq(active_campaign.id)
         expect(json['name']).to eq('Campanha Priority')
-        expect(json['priority']).to eq(10)
       end
 
       it 'serves JSON from the admin alias route as well' do

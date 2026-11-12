@@ -202,7 +202,7 @@ RSpec.describe 'Track Your Prospects End-to-End Cycle', type: :request do
     expect(csv_body).to start_with("\uFEFF") # UTF-8 BOM
     expect(csv_body).to include(outbound_click.id)
     expect(csv_body).to include('Perfil no Marketplace')
-    expect(csv_body).to include('Lead confirmado')
+    expect(csv_body).to include('Formulário observado')
 
     # -------------------------------------------------------------------------
     # ETAPA 10: Multi-tenancy — Usuário de outra empresa não acessa nem enxerga telemetria

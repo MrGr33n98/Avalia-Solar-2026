@@ -15,6 +15,7 @@ RSpec.describe 'Api::V1::WidgetData', type: :request do
     end
 
       it "returns company trust data" do
+        create(:company_trust_score, company: company, score: 90)
         get "/api/v1/companies/#{company.id}/widget_data", params: { api_key: 'test_key' }
 
         expect(response).to have_http_status(:success)

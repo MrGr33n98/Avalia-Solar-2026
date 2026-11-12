@@ -107,6 +107,7 @@ RSpec.describe 'Api::V1::Sales::Accounts', type: :request do
       account.activities.create!(
         actor: sales_user,
         activity_type: 'call',
+        occurred_at: Time.current,
         subject: 'Ligação de apresentação',
         body: 'Falamos com o diretor comercial'
       )

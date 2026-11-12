@@ -65,7 +65,8 @@ describe('BannerContainer accessibility and tracking', () => {
       />
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // A impressão só é emitida após o segundo de visibilidade exigido pelo componente.
+    await new Promise((resolve) => setTimeout(resolve, 1100));
     expect(trackBannerEvent).toHaveBeenCalledTimes(1);
 
     rerender(
@@ -78,7 +79,7 @@ describe('BannerContainer accessibility and tracking', () => {
       />
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 1100));
     expect(trackBannerEvent).toHaveBeenCalledTimes(1);
     expect(trackBannerEvent).toHaveBeenCalledWith(
       expect.objectContaining({

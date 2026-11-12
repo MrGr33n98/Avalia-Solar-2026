@@ -193,6 +193,7 @@ module Banners
     end
 
     def apply_frequency_cap(scope)
+      # Desativado até produto definir limite e janela de frequência por audience_key.
       scope
     end
 

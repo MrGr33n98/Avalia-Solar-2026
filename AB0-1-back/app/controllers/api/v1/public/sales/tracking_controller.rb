@@ -81,7 +81,8 @@ module Api
                                               .find_by!(session_id: attributes[:session_id])
 
             if session.consent_state != 'granted' && attributes[:event_name] != 'consent_granted'
-              return render json: { accepted: false, reason: 'consent_required' }, status: :ok
+              reason = session.consent_state == 'denied' ? 'consent_denied' : 'consent_required'
+              return render json: { accepted: false, reason: reason }, status: :ok
             end
 
             if attributes[:event_name] == 'consent_revoked'
