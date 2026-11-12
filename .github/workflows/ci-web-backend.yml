@@ -348,9 +348,14 @@ jobs:
 
       - name: Spin up Local Environment (Docker Compose)
         run: |
+          set -Eeuo pipefail
           export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
           export BETTER_AUTH_SECRET="$(openssl rand -hex 32)"
-          docker compose -f infra/docker/docker-compose.test.yml up --build --wait --wait-timeout 300 -d
+          if ! docker compose -f infra/docker/docker-compose.test.yml up --build --wait --wait-timeout 300 -d; then
+            docker compose -f infra/docker/docker-compose.test.yml ps -a || true
+            docker compose -f infra/docker/docker-compose.test.yml logs --tail=200 || true
+            exit 1
+          fi
           docker compose -f infra/docker/docker-compose.test.yml ps
 
       - name: Setup Node for Playwright

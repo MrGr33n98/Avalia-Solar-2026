@@ -100,9 +100,17 @@ o CI falhar.
 
 ## Medição depois das mudanças
 
-Ainda não medida: a branch não foi publicada e nenhum workflow novo foi
-executado no GitHub. Não apresentar uma melhoria percentual ou meta como resultado.
-Após uma execução real, preencher:
+A PR draft #99 executou o primeiro CI real, mas a validação E2E parou antes dos
+testes: qualidade/segurança passou em 2,37 min; contrato frontend de ranking em
+1,75 min; RSpec em 3,52 min. O Compose gastou 5,90 min e falhou porque o container
+frontend ficou `unhealthy` após cerca de 45 s de inicialização. DB, Redis e backend
+ficaram saudáveis. Não houve tempo de Playwright crítico medido nesse run. O
+healthcheck frontend do Compose de teste não tinha `start_period`; foi alinhado a
+180 s, como em produção, e a falha agora deve imprimir `ps` e logs dos serviços.
+
+Ainda sem comparação “depois” válida: o Playwright crítico precisa concluir em um
+run real antes de calcular melhoria percentual. Não apresentar uma meta como
+resultado. Após a execução seguinte, preencher:
 
 | Métrica | Antes observado | Depois | Melhoria |
 |---|---:|---:|---:|
