@@ -76,6 +76,21 @@ describe('TabletCompanyLocationFilters', () => {
     expect(onStateChange).toHaveBeenCalledWith('SP');
   });
 
+  it('loads cities for the active state', async () => {
+    render(
+      <TabletCompanyLocationFilters
+        filters={{ ...baseFilters, state: ['SP'] }}
+        onStateChange={jest.fn()}
+        onCityChange={jest.fn()}
+        onClearLocation={jest.fn()}
+        onOpenNearMe={jest.fn()}
+        onOpenFullFilters={jest.fn()}
+      />
+    );
+
+    await waitFor(() => expect(mockFetchCities).toHaveBeenCalledWith('SP'));
+  });
+
   it('calls onCityChange when a city is selected', () => {
     const onCityChange = jest.fn();
     const filtersWithState: CompanyFilters = {

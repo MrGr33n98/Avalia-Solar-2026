@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
-import { MapPin, Building2, SlidersHorizontal, Navigation, X, ChevronDown, Loader2 } from 'lucide-react';
+import {
+  MapPin,
+  Building2,
+  SlidersHorizontal,
+  Navigation,
+  X,
+  ChevronDown,
+  Loader2,
+} from 'lucide-react';
 import { BRAZIL_STATES_OPTIONS } from '@/lib/company-options';
 import { useCompanyLocationData } from '@/hooks/useCompanyLocationData';
 import { cn } from '@/lib/utils';
@@ -30,15 +38,11 @@ export default function TabletCompanyLocationFilters({
   detectingLocation = false,
   className,
 }: TabletCompanyLocationFiltersProps) {
-  const { states, cities, fetchStates, fetchCities, loadingCities } = useCompanyLocationData();
+  const { cities, fetchCities, loadingCities } = useCompanyLocationData();
 
   const activeState = filters.state[0] || '';
   const activeCity = filters.city[0] || '';
   const isGpsActive = filters.lat !== null && filters.lng !== null;
-
-  useEffect(() => {
-    fetchStates();
-  }, [fetchStates]);
 
   useEffect(() => {
     if (activeState) {
@@ -68,7 +72,8 @@ export default function TabletCompanyLocationFilters({
       return `Empresas em ${activeCity}, ${activeState}`;
     }
     if (activeState) {
-      const stateName = BRAZIL_STATES_OPTIONS.find((s) => s.state === activeState)?.label || activeState;
+      const stateName =
+        BRAZIL_STATES_OPTIONS.find((s) => s.state === activeState)?.label || activeState;
       return `Empresas no estado de ${stateName}`;
     }
     return 'Filtre empresas por estado e cidade em todo o Brasil';
@@ -179,7 +184,13 @@ export default function TabletCompanyLocationFilters({
                 : 'bg-white border-slate-200 text-slate-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700'
             )}
           >
-            <Navigation className={cn('h-3.5 w-3.5 text-blue-600', isGpsActive && 'text-white', detectingLocation && 'animate-spin')} />
+            <Navigation
+              className={cn(
+                'h-3.5 w-3.5 text-blue-600',
+                isGpsActive && 'text-white',
+                detectingLocation && 'animate-spin'
+              )}
+            />
             <span>{detectingLocation ? 'Buscando...' : 'Perto de mim'}</span>
           </button>
         </div>
