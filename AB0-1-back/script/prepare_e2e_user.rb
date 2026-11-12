@@ -6,7 +6,7 @@ ENV['SEED_ADMIN_PASSWORD'] ||= SecureRandom.hex(32)
 load Rails.root.join('db/seeds.rb')
 
 # O perfil de financiamento fica publicado apenas no banco efêmero deste E2E.
-company = Company.find_by!(slug: 'sicredi-solar')
+company = Company.find_by!(name: 'Sicredi Solar')
 company.update!(financing_enabled: true, financing_tab_visible: true)
 CompanyFinancingProfile.find_or_initialize_by(company: company).update!(
   title: 'Simule seu financiamento solar',
