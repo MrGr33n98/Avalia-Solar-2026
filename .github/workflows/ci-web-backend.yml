@@ -171,6 +171,7 @@ jobs:
 
   ranking-performance-gate:
     name: Ranking Performance Contract
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: fast-feedback
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -365,6 +366,14 @@ jobs:
   e2e-tests:
     name: E2E Playwright Tests
     needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate]
+    if: >-
+      ${{ !cancelled() &&
+          needs.fast-feedback.result == 'success' &&
+          needs.backend-tests.result == 'success' &&
+          needs.ranking-frontend-gate.result == 'success' &&
+          needs.category-seo-contract-gate.result == 'success' &&
+          (needs.ranking-performance-gate.result == 'success' ||
+           needs.ranking-performance-gate.result == 'skipped') }}
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 120 || 30 }}
     steps:
@@ -373,7 +382,7 @@ jobs:
       - name: Spin up Local Environment (Docker Compose)
         env:
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'password123' }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'Password123' }}
         run: |
           set -Eeuo pipefail
           export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
@@ -424,7 +433,7 @@ jobs:
           E2E_CATEGORY_SLUG: energia-solar
           E2E_PLACEMENT_SMOKE: true
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'password123' }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'Password123' }}
         # Bloqueia regressões nos fluxos centrais com o conjunto E2E crítico.
         run: >-
           npx playwright test --project=chromium

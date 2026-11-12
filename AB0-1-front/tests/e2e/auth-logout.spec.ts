@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('JWT Revocation and Logout', () => {
   const testUser = {
     email: process.env.E2E_USER_EMAIL || 'test@avaliasolar.com.br',
-    password: process.env.E2E_USER_PASSWORD || 'password123',
+    password: process.env.E2E_USER_PASSWORD || 'Password123',
   };
 
   test.beforeEach(async ({ page }) => {

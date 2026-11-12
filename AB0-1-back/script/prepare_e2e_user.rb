@@ -6,7 +6,7 @@ ENV['SEED_ADMIN_PASSWORD'] ||= SecureRandom.hex(32)
 load Rails.root.join('db/seeds.rb')
 
 email = ENV.fetch('E2E_USER_EMAIL', 'test@avaliasolar.com.br')
-password = ENV.fetch('E2E_USER_PASSWORD', 'password123')
+password = ENV.fetch('E2E_USER_PASSWORD', 'Password123')
 
 user = User.find_or_initialize_by(email: email)
 user.assign_attributes(
