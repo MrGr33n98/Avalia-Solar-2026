@@ -75,10 +75,10 @@ flowchart LR
   B --> F[E2E completo: até 48 min observados]
 ```
 
-O gargalo mais longo é o E2E completo. O polling de 30 minutos causa um segundo
-bloqueio e é menor que o timeout de 60 minutos do job E2E. Os builds de imagem
-estão fora do caminho crítico quando rodam em paralelo, mas são desperdiçados se
-o CI falhar.
+Na amostra histórica, Playwright e polling eram bloqueios dominantes. No run novo
+da `main`, o Playwright crítico levou 24 s, mas o job E2E levou 12 min 32 s: o
+setup/build da stack Compose consumiu 9 min 36 s. O custo principal medido passou
+a ser o build Docker frio, não a execução Playwright.
 
 ## Otimizações preparadas na branch
 
@@ -121,24 +121,42 @@ podem diferir. O CI de 7:36 não demonstra redução contra o p50 histórico de 
 das falhas: é um único run bem-sucedido e a comparação mistura resultados distintos.
 O E2E crítico não existia como categoria separada antes; não há percentual “antes/depois”.
 
-O run #837 veio antes das alterações backend-only descritas nesta revisão. Nenhum
-build de imagem ou CD de produção foi executado para validar as mudanças mais
-recentes; não houve deploy bem-sucedido na janela histórica. Portanto, builds,
-migrations, download de imagens, health checks de produção, rollback e lead time
-de produção continuam **não medidos depois**. A PR draft #99 ainda exige um run
-GitHub Actions após a atualização desta branch.
+O run #837 veio antes das alterações backend-only descritas nesta revisão. Após
+ele, a PR #99 foi merged às 04:07:47 UTC no SHA `04271ae5`; o CD automático da
+`main` executou a atualização dos serviços:
+
+- CI #43363470366: 18 min 15 s, fila praticamente zero. Fast feedback: 3 min 14 s;
+  RSpec seletivo: job 1 min 18 s, etapa 37 s; E2E: job 12 min 32 s.
+- Compose E2E: 9 min 36 s; Playwright crítico: 24 s; browser install: 58 s. Cache
+  npm de ~227 MB restaurado. O log importou manifestos BuildKit, mas executou
+  `npm ci`, `bundle install` e `npm run build`; essas camadas não foram reutilizadas.
+- CD #43365505508: 16 min 53 s, fila praticamente zero. Builds paralelos: backend
+  2 min 13 s, frontend 8 min 30 s; SSH remoto 4 min 43 s. Migrations, smoke tests
+  e health checks internos passaram; backend, frontend e worker foram recriados e
+  reportados saudáveis.
+- A verificação pública falhou após 3 min 02 s: 12 tentativas de `www` retornaram
+  HTTP 502. Em 04:45:44 UTC, `www` e `app` continuavam 502, enquanto
+  `api/health/liveness` respondia 200. O workflow ficou vermelho depois de
+  atualizar os containers; a falha de verificação pública não acionou rollback.
+  A causa raiz do 502 ainda não foi confirmada.
+- Do merge ao fim do CD com falha: 35 min 14 s. Não é lead time de release
+  bem-sucedido. Nenhum diagnóstico SSH ou rollback manual foi executado nesta sessão.
+
+Este CD prova que build e deploy remoto ocorreram, mas não confirma disponibilidade
+pública; não deve ser contado como release bem-sucedido. A alteração backend-only
+posterior ainda não foi validada remotamente nem implantada.
 
 | Métrica | Antes observado | Depois observado | Melhoria comprovada |
 |---|---:|---:|---:|
-| CI | Falhas: p50 7,03 min; p95 8,55 min | Um sucesso: 7,60 min | Não comprovada |
+| CI | Falhas: p50 7,03 min; p95 8,55 min | PR: 7,60 min; push `main`: 18,25 min | Não comprovada; amostras diferentes |
 | Playwright completo | 48,15 min até cancelamento | Pendente (execução agendada/manual) | Não comprovada |
-| Playwright crítico | Não havia categoria separada | 20 s de Playwright; job E2E 3,57 min | Sem baseline equivalente |
-| Build frontend | 5,47 min | Não executado | Pendente |
-| Build backend | 1,07 min | Não executado | Pendente |
-| Publicação de imagens | Segundos por imagem no run de referência | Não executada | Pendente |
-| Deploy | Sem sucesso; polling 30,77 min | Não executado | Pendente |
-| Tempo total até produção | Sem deploy bem-sucedido na amostra | Não medido | Pendente |
-| Lead time de produção | Sem deploy bem-sucedido na amostra | Não medido | Pendente |
+| Playwright crítico | Não havia categoria separada | 20 s (PR); 24 s (`main`) | Sem baseline equivalente |
+| Build frontend | 5,47 min | 8,50 min (CD) | +55%; runners/cache diferentes |
+| Build backend | 1,07 min | 2,22 min (CD) | +108%; runners/cache diferentes |
+| Publicação de imagens | Segundos por imagem no run de referência | Não isolado | Pendente |
+| Deploy | Sem sucesso; polling 30,77 min | SSH 4,72 min; CD falhou na validação pública após 16,88 min | Release público não confirmado |
+| Tempo total até produção | Sem deploy bem-sucedido na amostra | 35,23 min até a validação falha | Não é release bem-sucedido |
+| Lead time de produção | Sem deploy bem-sucedido na amostra | Sem confirmação pública | Pendente |
 
 Fluxo-alvo após as alterações atuais:
 
@@ -166,4 +184,6 @@ flowchart LR
 - O gate falha fechado quando o CI associado está ausente, incompleto, pertence a
   outro SHA/branch ou não concluiu com sucesso. O deploy concorrente permanece
   serializado e o rollback existente não foi removido.
-- Não houve acesso SSH nem alteração na VM durante esta auditoria.
+- Não houve acesso SSH manual por esta sessão. O workflow executou deploy automático
+  após a PR ser merged e a verificação pública observou 502; nenhuma ação corretiva
+  manual foi tomada.
