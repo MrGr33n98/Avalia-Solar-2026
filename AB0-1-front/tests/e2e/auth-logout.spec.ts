@@ -29,8 +29,8 @@ test.describe('JWT Revocation and Logout', () => {
     // The logout route revokes the active token and clears its browser cookie.
     await page.goto('/logout', { waitUntil: 'domcontentloaded' });
 
-    // Wait for logout page or redirect to login
-    await page.waitForURL(/login|logout/, { timeout: 5000 });
+    // Wait for the logout request and its redirect before checking the cookie.
+    await page.waitForURL(/\/login\?logout=success/, { timeout: 10000 });
 
     // Verify cookies were cleared
     const cookiesAfter = await context.cookies();
@@ -58,6 +58,7 @@ test.describe('JWT Revocation and Logout', () => {
 
     // Logout (revoke token)
     await page.goto('/logout');
+    await page.waitForURL(/\/login\?logout=success/, { timeout: 10000 });
 
     // Try to use the revoked token
     const response = await request.get('/api/v1/auth/me', {

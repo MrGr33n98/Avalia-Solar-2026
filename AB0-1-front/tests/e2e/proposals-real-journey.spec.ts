@@ -18,6 +18,8 @@ test.describe('Jornada E2E real de propostas (API real sem Mocks)', () => {
     expect((await currentUser.json()).user.role).toBe('review');
     await page.goto('/review-dashboard/proposals');
 
-    await expect(page.getByTestId('marketplace-proposals-journey')).toBeVisible();
+    const journey = page.getByTestId('marketplace-proposals-journey');
+    const pageContext = `URL: ${page.url()}\n${(await page.locator('body').innerText()).slice(0, 500)}`;
+    await expect(journey, pageContext).toBeVisible();
   });
 });
