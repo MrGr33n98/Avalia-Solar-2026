@@ -29,7 +29,10 @@ test('banner institucional não gera barras, recortes nem sombras em mobile/PWA 
   expect(pageResponse?.status(), 'A Brand Page não pode retornar HTTP 4xx/5xx').toBeLessThan(400);
 
   const image = page.getByRole('img', { name: 'Banner institucional Avalia Solar' });
-  const frame = page.getByTestId('company-hero-banner-frame');
+  // O caminho público ativo usa CompanyProfileShell -> CompanyPremiumHero;
+  // CompanyHero é um fallback legado e não participa desta navegação.
+  await expect(page.locator('#company-profile-shell')).toBeVisible({ timeout: 15000 });
+  const frame = page.getByTestId('company-premium-banner-frame');
   await expect(frame).toBeVisible({ timeout: 15000 });
   await expect(image).toBeVisible({ timeout: 15000 });
   await expect.poll(
@@ -43,7 +46,7 @@ test('banner institucional não gera barras, recortes nem sombras em mobile/PWA 
 
     const geometry = await image.evaluate((img: HTMLImageElement) => {
       const imageRect = img.getBoundingClientRect();
-      const frameRect = img.closest('[data-testid="company-hero-banner-frame"]')?.getBoundingClientRect();
+      const frameRect = img.closest('[data-testid="company-premium-banner-frame"]')?.getBoundingClientRect();
       const computed = getComputedStyle(img);
       return {
         complete: img.complete,
