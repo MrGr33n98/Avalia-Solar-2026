@@ -222,6 +222,7 @@ export interface Company {
   state: string;
   status: string;
   verified: boolean;
+  claimed?: boolean;
   category: string;
   description: string; // Corrigido de 'about' para 'description'
   seo_title?: string | null;
@@ -3382,10 +3383,14 @@ export const companyAccessApi = {
       throw error;
     }
   },
-  createRequest: (company_id: number, message?: string) =>
+  createRequest: (
+    company_id: number,
+    message?: string,
+    contacts?: { contact_email?: string; contact_phone?: string }
+  ) =>
     fetchApi('/company_access_requests', {
       method: 'POST',
-      body: JSON.stringify({ company_id, message }),
+      body: JSON.stringify({ company_id, message, ...contacts }),
     }),
   cancelRequest: (id: number) => fetchApi(`/company_access_requests/${id}`, { method: 'DELETE' }),
   selectActiveCompany: (company_id: number) =>

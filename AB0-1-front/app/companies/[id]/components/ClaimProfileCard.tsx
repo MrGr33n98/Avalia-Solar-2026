@@ -12,8 +12,7 @@ interface ClaimProfileCardProps {
 }
 
 export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
-  const isClaimed =
-    (company as any).claimed === true || company.verified === true || company.has_paid_plan === true;
+  const isClaimed = company.claimed === true;
 
   if (isClaimed) {
     return (
@@ -25,14 +24,17 @@ export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
             </div>
             <div>
               <h4 className="font-extrabold text-sm uppercase tracking-wider text-white">
-                Perfil Verificado Oficial
+                Perfil gerenciado
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">Empresa auditada e ativa</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Há um responsável com acesso ao perfil
+              </p>
             </div>
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed pt-1">
-            As informações desta empresa foram autenticadas e são gerenciadas ativamente pelo representante legal sob auditoria do portal **Avalia Solar**.
+            Este perfil possui um responsável ativo na plataforma. Isso é diferente do selo de
+            verificação institucional e do plano comercial.
           </p>
         </CardContent>
       </Card>
@@ -53,7 +55,8 @@ export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
 
       {/* Body Description */}
       <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-        Mostre que sua empresa é confiável. Você terá um perfil verificado especial na plataforma, com selo de empresa e destaque nas buscas e cotações.
+        Solicite acesso para manter as informações do perfil e acompanhar a análise da equipe. O
+        envio não concede acesso nem selo automaticamente.
       </p>
 
       {/* Golden CTA Button */}
@@ -61,7 +64,10 @@ export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
         asChild
         className="w-full h-11 bg-[#F5B529] hover:bg-[#E5A71F] text-slate-950 font-black text-sm rounded-none shadow-md transition-all duration-200 group border-none"
       >
-        <Link href={`/companies/${company.id}/claim`} className="flex items-center justify-center gap-2">
+        <Link
+          href={`/companies/${company.id}/claim`}
+          className="flex items-center justify-center gap-2"
+        >
           <span>Reivindicar Perfil Grátis</span>
           <ArrowRight className="h-4 w-4 stroke-[2.5] text-slate-950 group-hover:translate-x-1 transition-transform" />
         </Link>

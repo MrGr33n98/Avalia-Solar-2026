@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_12_000000) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_13_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -1166,6 +1166,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_12_000000) do
     t.bigint "reviewed_by_admin_user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "contact_email"
+    t.string "contact_phone"
     t.index ["company_id"], name: "index_company_access_requests_on_company_id"
     t.index ["reviewed_by_admin_user_id"], name: "index_company_access_requests_on_reviewed_by_admin_user_id"
     t.index ["status"], name: "index_company_access_requests_on_status"
