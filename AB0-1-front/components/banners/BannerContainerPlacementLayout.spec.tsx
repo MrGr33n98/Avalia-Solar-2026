@@ -129,7 +129,7 @@ describe('BannerContainer - seleção de layout por placement', () => {
 
     const creativeImage = screen.getByTestId('banner-image');
     expect(creativeImage).toHaveAttribute('sizes', '300px');
-    expect(creativeImage.getAttribute('sizes')).not.toContain('0px');
+    expect(creativeImage).not.toHaveAttribute('sizes', '(max-width: 1023px) 0px, 300px');
     expect(screen.getAllByTestId('banner-image')).toHaveLength(1); // sem fundo com blur
   });
 
