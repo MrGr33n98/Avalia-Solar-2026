@@ -1,6 +1,19 @@
 ActiveAdmin.register CompanyAccessRequest do
+  # O acesso fica centralizado na aba "Usuários & Acesso"; evitar link duplicado no menu global.
   menu false
   actions :index, :show
+  config.sort_order = 'requested_at_desc'
+
+  # Evita consultas N+1 na listagem administrativa.
+  controller do
+    def scoped_collection
+      super.includes(:user, :company, :reviewed_by_admin_user)
+    end
+  end
+
+  action_item :usuarios_acesso, only: %i[index show] do
+    link_to 'Usuários & Acesso', admin_usuarios_acesso_path
+  end
 
   scope :all, default: true
   scope :pending
@@ -101,14 +114,19 @@ ActiveAdmin.register CompanyAccessRequest do
     selectable_column
     id_column
     column :user
+    column('E-mail da conta') { |request| request.user&.email.presence || '—' }
     column :company
+    column('E-mail de contato') { |request| request.contact_email.presence || '—' }
+    column('Telefone/WhatsApp') { |request| request.contact_phone.presence || '—' }
     column :status do |request|
       status_tag request.status
     end
     column :requested_at
     column :reviewed_at
     column :reviewed_by_admin_user
-    actions
+    actions defaults: false do |request|
+      link_to 'Analisar', resource_path(request)
+    end
   end
 
   show do
@@ -144,7 +162,9 @@ ActiveAdmin.register CompanyAccessRequest do
   end
 
   filter :user
+  filter :user_email, as: :string, label: 'E-mail da conta'
   filter :company
+  filter :contact_email, as: :string, label: 'E-mail de contato'
   filter :status
   filter :requested_at
   filter :reviewed_at
