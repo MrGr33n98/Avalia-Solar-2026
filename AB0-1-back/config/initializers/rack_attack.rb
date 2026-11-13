@@ -129,7 +129,11 @@ class Rack::Attack
 
   # Limitar tentativas de login por IP
   # Protege contra ataques de força bruta
-  e2e_login_limit = Rails.env.test? ? ENV.fetch('E2E_LOGIN_THROTTLE_LIMIT', '5').to_i : 5
+  e2e_login_limit = if Rails.env.test? && ENV['E2E_TEST_MODE'] == 'true'
+                      ENV.fetch('E2E_LOGIN_THROTTLE_LIMIT', '5').to_i
+                    else
+                      5
+                    end
 
   throttle('logins/ip', limit: e2e_login_limit, period: 1.minute) do |req|
     if req.path == '/api/v1/auth/login' && req.post?

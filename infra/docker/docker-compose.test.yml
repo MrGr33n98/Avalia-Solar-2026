@@ -46,6 +46,7 @@ services:
       POSTGRES_DEFAULT_DB: postgres
       REDIS_URL: redis://redis:6379/0
       REDIS_ENABLED: "true"
+      E2E_TEST_MODE: "true"
       E2E_LOGIN_THROTTLE_LIMIT: "20"
       E2E_USER_EMAIL: ${E2E_USER_EMAIL:-test@avaliasolar.com.br}
       E2E_USER_PASSWORD: ${E2E_USER_PASSWORD:-Password123}
