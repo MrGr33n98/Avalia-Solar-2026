@@ -39,7 +39,7 @@ jest.mock('next/image', () => ({
 describe('CompanyFreeBannerPlaceholder — sem barras e sem recortes', () => {
   it('mantém width e height sincronizados com o WebP real (protege contra distorção)', () => {
     const asset = readFileSync(
-      join(process.cwd(), 'public', FREE_COMPANY_BANNER_SRC.replace(/^\\//, ''))
+      join(process.cwd(), 'public', FREE_COMPANY_BANNER_SRC.slice(1))
     );
     expect(asset.toString('ascii', 0, 4)).toBe('RIFF');
     expect(asset.toString('ascii', 8, 12)).toBe('WEBP');
