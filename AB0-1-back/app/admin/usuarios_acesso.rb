@@ -8,12 +8,13 @@ ActiveAdmin.register_page 'Usuarios Acesso' do
       ['Visão Geral', admin_usuarios_acesso_path],
       ['Usuários Finais', admin_users_path],
       ['Administradores', admin_admin_users_path],
-      ['Acessos a Produtos', admin_product_accesses_path]
+      ['Acessos a Produtos', admin_product_accesses_path],
+      ["Reivindicações (#{CompanyAccessRequest.pending.count})", admin_company_access_requests_path]
     ]
 
     div class: 'usuarios-acesso-tabs', style: 'display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;' do
       tabs.each_with_index do |(label, path), index|
-        link_to label, path, class: "button #{index.zero? ? 'primary' : ''}"
+        a label, href: path, class: "button #{index.zero? ? 'primary' : ''}"
       end
       nil
     end
@@ -35,6 +36,12 @@ ActiveAdmin.register_page 'Usuarios Acesso' do
         panel 'Acessos a Produtos' do
           h2 number_with_delimiter(ProductAccess.count, delimiter: '.')
           span 'Controle de aquisições de produtos físicos/digitais'
+        end
+      end
+      column do
+        panel 'Reivindicações Pendentes' do
+          h2 number_with_delimiter(CompanyAccessRequest.pending.count, delimiter: '.')
+          a 'Analisar solicitações', href: admin_company_access_requests_path(scope: 'pending')
         end
       end
     end
