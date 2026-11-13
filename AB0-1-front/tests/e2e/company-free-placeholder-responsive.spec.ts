@@ -52,6 +52,8 @@ test('banner institucional não gera barras, recortes nem sombras em mobile/PWA 
         complete: img.complete,
         naturalWidth: img.naturalWidth,
         naturalHeight: img.naturalHeight,
+        declaredWidth: img.getAttribute('width'),
+        declaredHeight: img.getAttribute('height'),
         currentSrc: img.currentSrc,
         imageWidth: imageRect.width,
         imageHeight: imageRect.height,
@@ -71,9 +73,24 @@ test('banner institucional não gera barras, recortes nem sombras em mobile/PWA 
     expect(geometry.naturalHeight).toBeGreaterThan(0);
     expect(decodeURIComponent(geometry.currentSrc)).toContain('/assets/avalia-solar-banner-v3.webp');
 
-    // Relação geométrica é calculada pela IMAGEM real, sem depender de altura CSS fixa.
-    const expectedRatio = geometry.naturalWidth / geometry.naturalHeight;
-    expect(Math.abs(geometry.imageWidth / geometry.imageHeight - expectedRatio)).toBeLessThan(0.015);
+    // A arte VP8 original tem 1024×191 pixels, lidos diretamente do arquivo.
+    // Comparar ALTURA em pixels evita falsos negativos do Next/Image: ao reduzir
+    // um banner muito largo, o otimizador arredonda a altura para pixel inteiro.
+    // Nunca aumentar artificialmente a tolerância de proporção em valores absolutos.
+    expect(geometry.declaredWidth, 'width HTML precisa coincidir com o WebP real').toBe('1024');
+    expect(geometry.declaredHeight, 'height HTML precisa coincidir com o WebP real').toBe('191');
+    const targetRatio = 1024 / 191;
+    const expectedHeight = geometry.imageWidth / targetRatio;
+    expect(
+      Math.abs(geometry.imageHeight - expectedHeight),
+      `Viewport ${width}px: imagem ${geometry.imageWidth}×${geometry.imageHeight}px, esperada altura ${expectedHeight.toFixed(2)}px; arquivo original 1024×191; source ${geometry.currentSrc}`
+    ).toBeLessThanOrEqual(1.25);
+    // Arquivo otimizado também deve preservar proporção, com no máximo
+    // 1 pixel de arredondamento vertical na miniatura WebP gerada.
+    expect(
+      Math.abs(geometry.naturalHeight - geometry.naturalWidth / targetRatio),
+      `Next/Image alterou a geometria além de 1px: ${geometry.naturalWidth}×${geometry.naturalHeight}`
+    ).toBeLessThanOrEqual(1.25);
     expect(Math.abs(geometry.frameWidth - geometry.imageWidth)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.frameHeight - geometry.imageHeight)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.frameTop - geometry.imageTop)).toBeLessThanOrEqual(1);
