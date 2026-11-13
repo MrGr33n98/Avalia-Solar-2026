@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Briefcase, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
@@ -43,15 +43,10 @@ export default function ClaimProfileCard({ company }: ClaimProfileCardProps) {
 
   return (
     <div className="overflow-hidden bg-[#0B1528] text-white shadow-xl rounded-none p-6 border border-slate-800 space-y-5 font-sans">
-      {/* Top Header with Golden Briefcase Icon Box & Title */}
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-none border border-amber-500/60 bg-amber-500/10 text-amber-400 shrink-0 shadow-inner">
-          <Briefcase className="h-6 w-6 stroke-[2]" />
-        </div>
-        <h3 className="font-extrabold text-sm sm:text-base tracking-wide text-white uppercase leading-tight">
-          TRABALHA NESTA EMPRESA?
-        </h3>
-      </div>
+      {/* Direct title alignment — no generic decorative icon or spacer. */}
+      <h3 className="font-extrabold text-sm sm:text-base tracking-wide text-white uppercase leading-tight">
+        TRABALHA NESTA EMPRESA?
+      </h3>
 
       {/* Body Description */}
       <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
