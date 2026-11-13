@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "measured_on": "2026-11-13",
+  "main_baseline_sha": "ab894b168bc3d42f4ff87655b2fee83e20cb7622",
+  "source": "GitHub Actions REST workflow_runs?per_page=100",
+  "total_runs_sampled": 100,
+  "total_runs_reported_all_history": 10221,
+  "main_workflow": "CI — Web & Backend (Quality & Tests)",
+  "main_workflow_sample": {
+    "runs": 57,
+    "completed": 55,
+    "success": 9,
+    "failure": 41,
+    "cancelled": 5,
+    "queued_or_in_progress": 2,
+    "duration_p50_minutes": 8.4,
+    "duration_p95_minutes": 20.6,
+    "duration_window": "run_started_at -> updated_at",
+    "duration_population": "55 completed (includes failures/cancellations)",
+    "main_branch_runs_in_sample": 18
+  },
+  "notes": [
+    "This snapshot mixes branches and events and is NOT a measure of present main quality.",
+    "This duration baseline is not stratified by change impact; stratify before validating performance gains.",
+    "Release jobs and full vs frontend-only must be distinguished by actual deployed jobs, not just workflow conclusion.",
+    "Secrets and PII are intentionally omitted."
+  ],
+  "targets": {
+    "visual_pr_duration_p50_reduction_pct": 30,
+    "eligible_pr_duration_p95_reduction_pct": 20,
+    "critical_false_negative": 0
+  }
+}
