@@ -27,10 +27,17 @@ export default function CompanyPremiumHero({
   return (
     <div
       id="company-premium-hero"
-      className="relative w-full overflow-hidden bg-slate-900 rounded-2xl md:rounded-3xl"
+      className="relative w-full overflow-hidden bg-white rounded-2xl md:rounded-3xl"
     >
-      <div className="relative w-full aspect-[3.4/1] md:aspect-auto md:h-[176px] lg:h-[194px] xl:h-[202px]">
-        {/* Mobile proporção 3.4:1; desktop compacto para preservar primeira dobra sem vazios. */}
+      <div
+        data-testid="company-premium-banner-frame"
+        className={
+          bannerState.kind === 'company-banner'
+            ? 'relative w-full aspect-[3.4/1] md:aspect-auto md:h-[176px] lg:h-[194px] xl:h-[202px]'
+            : 'relative w-full'
+        }
+      >
+        {/* Institutional / fallback banners retain their intrinsic height on every viewport. */}
         {bannerState.kind === 'free-plan-placeholder' ? (
           <CompanyFreeBannerPlaceholder
             alt="Banner institucional Avalia Solar"
@@ -39,15 +46,6 @@ export default function CompanyPremiumHero({
           />
         ) : bannerState.kind === 'company-banner' ? (
           <>
-            {/* Background Blur Fill Layer (Mobile only) */}
-            <OptimizedImage
-              src={bannerState.src}
-              alt=""
-              fill
-              aria-hidden="true"
-              className="object-cover opacity-40 blur-xl scale-110"
-              containerClassName="absolute inset-0 h-full w-full pointer-events-none md:hidden"
-            />
             {/* Mobile foreground - enquadrado (contain) */}
             <OptimizedImage
               src={bannerState.src}
@@ -99,8 +97,6 @@ export default function CompanyPremiumHero({
             </span>
           </div>
         )}
-        {/* Overlay sutil para contraste */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
       </div>
     </div>
   );
