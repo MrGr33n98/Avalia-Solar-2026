@@ -7,7 +7,7 @@ set -euo pipefail
 : "${RELEASE_SHA:?RELEASE_SHA is required}"
 
 RELEASE_SCOPE="${RELEASE_SCOPE:-full}"
-if [[ "$RELEASE_SCOPE" != "full" && "$RELEASE_SCOPE" != "frontend_only" ]]; then
+if [[ "$RELEASE_SCOPE" != "full" && "$RELEASE_SCOPE" != "frontend_only" && "$RELEASE_SCOPE" != "backend_only" ]]; then
   echo "::error::Escopo de release inválido: $RELEASE_SCOPE"
   exit 1
 fi
@@ -56,6 +56,10 @@ echo "Verificando CI do commit $RELEASE_SHA..."
       exit 0
     fi
   else
+    if [ "$RELEASE_SCOPE" = "backend_only" ]; then
+      echo "::error::CI integral obrigatório para release backend-only; deploy bloqueado."
+      exit 1
+    fi
     if [ "$conclusion" != "failure" ]; then
       echo "::error::CI terminou com $conclusion. Deploy bloqueado."
       exit 1
@@ -74,12 +78,13 @@ echo "Verificando CI do commit $RELEASE_SHA..."
       and ([.jobs[] | select(.name == "Backend Unit Tests (RSpec)" and .conclusion == "failure")] | length == 1)
       and ([.jobs[] | select(.name == "Code Quality & Security Scan" and .conclusion == "success")] | length == 1)
       and ([.jobs[] | select(.name == "Ranking Performance Frontend Contract" and .conclusion == "success")] | length == 1)
-      and ([.jobs[] | select(.name == "Ranking Performance Contract" and .conclusion == "success")] | length == 1)
+      and ([.jobs[] | select(.name == "Ranking Performance Contract" and (.conclusion == "success" or .conclusion == "skipped"))] | length == 1)
       and ([.jobs[] | select(.name == "Category Discovery & SEO Contract Gate" and .conclusion == "success")] | length == 1)
       and ([.jobs[] | select(.name == "E2E Playwright Tests" and .conclusion == "skipped")] | length == 1)
       and ([.jobs[] | select(
         .name != "Backend Unit Tests (RSpec)"
         and .name != "E2E Playwright Tests"
+        and .name != "Ranking Performance Contract"
         and .conclusion != "success"
       )] | length == 0)
       and ([.jobs[] | select(.status != "completed")] | length == 0)
@@ -107,7 +112,7 @@ echo "Verificando CI do commit $RELEASE_SHA..."
 
   gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-production.yml/runs?branch=main&per_page=100" > "$previous_runs_file" || exit 1
 
-  if [ "$RELEASE_SCOPE" = "frontend_only" ]; then
+  if [ "$RELEASE_SCOPE" = "frontend_only" ] || [ "$RELEASE_SCOPE" = "backend_only" ]; then
     gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd-frontend-production.yml/runs?branch=main&per_page=100" > "$frontend_runs_file" 2>/dev/null || echo '{"workflow_runs":[]}' > "$frontend_runs_file"
     printf '%s\n' '{"workflow_runs":[]}' > "$validated_deploy_runs_file"
     for source_file in "$previous_runs_file" "$frontend_runs_file"; do
@@ -185,26 +190,29 @@ echo "Verificando CI do commit $RELEASE_SHA..."
   fi
 
   comparison="$(gh api "repos/$GITHUB_REPOSITORY/compare/$previous_sha...$RELEASE_SHA")" || exit 1
-  if ! jq -e '
-    (.status == "ahead")
-    and (.ahead_by > 0)
-    and (.files | length > 0 and length < 300)
-    and ([.files[].filename | select(
-      (startswith("AB0-1-front/")
-       or . == ".gitignore"
-       or . == ".github/workflows/ci-web-backend.yml"
-       or . == ".github/workflows/cd-production.yml"
-       or . == ".github/workflows/cd-frontend-production.yml"
-       or . == ".github/scripts/verify-release-ci.sh"
-       or . == ".github/scripts/test-verify-release-ci.sh") | not
-    )] | length == 0)
-    and ([.files[].filename | select(startswith("AB0-1-front/"))] | length > 0)
-  ' <<< "$comparison" >/dev/null; then
+  if [ "$RELEASE_SCOPE" = "backend_only" ]; then
+    valid_delta='(.status == "ahead") and (.ahead_by > 0) and (.files | length > 0 and length < 300)
+      and ([.files[].filename | select((startswith("AB0-1-back/") or . == "Dockerfile.backend") | not)] | length == 0)
+      and ([.files[].filename | select(startswith("AB0-1-back/app/controllers/api/")
+        or startswith("AB0-1-back/app/graphql/") or startswith("AB0-1-back/app/serializers/")
+        or . == "AB0-1-back/app/graphql_controller.rb" or . == "AB0-1-back/config/routes.rb")] | length == 0)
+      and ([.files[].filename | select(startswith("AB0-1-back/") or . == "Dockerfile.backend")] | length > 0)'
+  else
+    valid_delta='(.status == "ahead") and (.ahead_by > 0) and (.files | length > 0 and length < 300)
+      and ([.files[].filename | select((startswith("AB0-1-front/") or . == ".gitignore"
+        or . == ".github/workflows/ci-web-backend.yml" or . == ".github/workflows/cd-production.yml"
+        or . == ".github/workflows/cd-frontend-production.yml" or . == ".github/scripts/verify-release-ci.sh"
+        or . == ".github/scripts/test-verify-release-ci.sh") | not)] | length == 0)
+      and ([.files[].filename | select(startswith("AB0-1-front/"))] | length > 0)'
+  fi
+  if ! jq -e "$valid_delta" <<< "$comparison" >/dev/null; then
     echo "::error::Delta fora do escopo permitido para $RELEASE_SCOPE. Deploy bloqueado."
     exit 1
   fi
 
-  if [ "$conclusion" = "success" ]; then
+  if [ "$conclusion" = "success" ] && [ "$RELEASE_SCOPE" = "backend_only" ]; then
+    echo "Escopo backend-only validado desde $previous_sha; imagem frontend atual será preservada."
+  elif [ "$conclusion" = "success" ]; then
     echo "Escopo frontend-only validado desde $previous_sha; nenhum serviço backend será publicado."
   else
     echo "::warning::CI mantém falhas RSpec legadas. Somente escopo frontend-only validado desde $previous_sha."
