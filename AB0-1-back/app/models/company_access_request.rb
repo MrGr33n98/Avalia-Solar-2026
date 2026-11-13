@@ -9,6 +9,8 @@ class CompanyAccessRequest < ApplicationRecord
 
   validates :status, inclusion: { in: STATUSES }
   validates :user_id, :company_id, presence: true
+  validates :contact_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
+  validates :contact_phone, format: { with: /\A\+[1-9]\d{7,14}\z/ }, allow_blank: true
   validates :user_id, uniqueness: {
     scope: :company_id,
     conditions: -> { where(status: %w[pending approved]) },
@@ -20,8 +22,10 @@ class CompanyAccessRequest < ApplicationRecord
   scope :rejected, -> { where(status: 'rejected') }
 
   before_validation :set_requested_at, on: :create
+  before_validation :normalize_contact_details
   after_create_commit :notify_slack_new_request
-  after_update_commit :handle_approval, if: :saved_change_to_approved?
+  after_update :handle_approval, if: :saved_change_to_approved?
+  after_update_commit :notify_slack_approval, if: :saved_change_to_approved?
 
   def approved?
     status == 'approved'
@@ -37,7 +41,7 @@ class CompanyAccessRequest < ApplicationRecord
 
   def self.ransackable_attributes(_auth_object = nil)
     %w[
-      admin_note company_id created_at id message requested_at reviewed_at
+      admin_note company_id contact_email contact_phone created_at id message requested_at reviewed_at
       reviewed_by_admin_user_id status updated_at user_id
     ]
   end
@@ -52,6 +56,15 @@ class CompanyAccessRequest < ApplicationRecord
     self.requested_at ||= Time.current
   end
 
+  def normalize_contact_details
+    self.contact_email = contact_email.to_s.strip.downcase.presence
+    return if contact_phone.blank?
+
+    digits = contact_phone.to_s.gsub(/\D/, '')
+    prefix = !contact_phone.to_s.strip.start_with?('+') && digits.length.in?([10, 11]) ? '55' : ''
+    self.contact_phone = "+#{prefix}#{digits}"
+  end
+
   def saved_change_to_approved?
     saved_change_to_status? && approved?
   end
@@ -59,17 +72,14 @@ class CompanyAccessRequest < ApplicationRecord
   def handle_approval
     create_company_member
     verify_company
-    notify_slack_approval
   end
 
   def create_company_member
-    CompanyMember.find_or_create_by!(
+    member = CompanyMember.find_or_initialize_by(
       company: company,
       user: user
-    ) do |member|
-      member.role = :owner
-      member.status = :active
-    end
+    )
+    member.update!(role: :owner, status: :active) unless member.owner? && member.active? && member.persisted?
   end
 
   def verify_company

@@ -63,22 +63,13 @@ ActiveAdmin.register CompanyAccessRequest do
   end
 
   member_action :approve, method: :put do
-    redirect_to resource_path, notice: 'Solicitacao ja aprovada.' and return if resource.approved?
-
     begin
-      # O callback 'handle_approval' no modelo CompanyAccessRequest agora:
-      # 1. Cria o CompanyMember (Owner)
-      # 2. Marca a Company como verified: true
-      resource.update!(
-        status: 'approved',
-        admin_note: params[:note].presence,
-        reviewed_at: Time.current,
-        reviewed_by_admin_user_id: current_admin_user.id
+      approved = CompanyClaims::DecideRequest.call(
+        request: resource,
+        admin: current_admin_user,
+        note: params[:note]
       )
-
-      # Atualizacoes adicionais de usuario se necessario
-      user = resource.user
-      user.update(role: 'company') if user.respond_to?(:role) && user.role != 'admin'
+      redirect_to resource_path, notice: 'Solicitação já aprovada.' and return unless approved
 
       # Notificacao via email
       begin
@@ -87,7 +78,7 @@ ActiveAdmin.register CompanyAccessRequest do
         Rails.logger.warn("[Admin::CompanyAccessRequest] mailer failed: #{e.message}")
       end
 
-      redirect_to resource_path, notice: 'Acesso aprovado e empresa verificada com sucesso.'
+      redirect_to resource_path, notice: 'Acesso aprovado com sucesso.'
     rescue StandardError => e
       Rails.logger.error("[Admin::CompanyAccessRequest] approve failed id=#{resource.id}: #{e.message}")
       redirect_to resource_path, alert: "Erro ao aprovar: #{e.message}"
@@ -95,15 +86,9 @@ ActiveAdmin.register CompanyAccessRequest do
   end
 
   member_action :reject, method: :put do
-    redirect_to resource_path, notice: 'Solicitacao ja rejeitada.' and return if resource.rejected?
-
-    reason = params[:reason].presence || 'Motivo nao informado'
-    resource.update!(
-      status: 'rejected',
-      admin_note: reason,
-      reviewed_at: Time.current,
-      reviewed_by_admin_user_id: current_admin_user.id
-    )
+    reason = params[:reason].to_s.strip
+    rejected = CompanyClaims::DecideRequest.reject!(request: resource, admin: current_admin_user, reason: reason)
+    redirect_to resource_path, notice: 'Solicitação já rejeitada.' and return if rejected == :already_rejected
 
     CompanyAccessMailer.access_rejected(resource.user, resource.company, reason).deliver_later
     redirect_to resource_path, notice: 'Solicitacao rejeitada e email enviado.'
@@ -134,6 +119,8 @@ ActiveAdmin.register CompanyAccessRequest do
         status_tag request.status
       end
       row :message
+      row :contact_email
+      row :contact_phone
       row :admin_note
       row :requested_at
       row :reviewed_at

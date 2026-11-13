@@ -65,6 +65,38 @@ RSpec.describe 'Company Access API', type: :request do
       expect(request.message).to eq('Sou representante.')
     end
 
+    it 'persists optional contact details separately from the account email' do
+      auth = auth_headers(review_user)
+      post '/api/v1/company_access_requests',
+           params: {
+             company_access_request: {
+               company_id: company.id,
+               contact_email: '  Comercial@Example.COM ',
+               contact_phone: '(65) 99999-1234'
+             }
+           }.to_json,
+           headers: auth
+
+      expect(response).to have_http_status(:created)
+      request = CompanyAccessRequest.find_by!(user: review_user, company: company)
+      expect(request).to have_attributes(
+        status: 'pending',
+        contact_email: 'comercial@example.com',
+        contact_phone: '+5565999991234'
+      )
+      expect(review_user.reload.email).not_to eq(request.contact_email)
+    end
+
+    it 'rejects invalid optional contact details' do
+      auth = auth_headers(review_user)
+      post '/api/v1/company_access_requests',
+           params: { company_id: company.id, contact_email: 'invalid', contact_phone: 'no-phone' }.to_json,
+           headers: auth
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(CompanyAccessRequest.where(user: review_user, company: company)).not_to exist
+    end
+
     it 'creates a pending request for company users' do
       auth = auth_headers(company_user)
       post '/api/v1/company_access_requests',

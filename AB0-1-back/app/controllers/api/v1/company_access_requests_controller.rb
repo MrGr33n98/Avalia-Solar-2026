@@ -17,6 +17,8 @@ module Api
         attributes = params[:company_access_request]
         company_id = params[:company_id].presence || attributes&.[](:company_id)
         message = params[:message].presence || attributes&.[](:message)
+        contact_email = params[:contact_email].presence || attributes&.[](:contact_email)
+        contact_phone = params[:contact_phone].presence || attributes&.[](:contact_phone)
         documents = Array(attributes&.[](:documents)).compact
 
         # Validate evidence before attaching to avoid storing unchecked files.
@@ -75,6 +77,8 @@ module Api
         request = current_user.company_access_requests.new(
           company: company,
           message: message,
+          contact_email: contact_email,
+          contact_phone: contact_phone,
           documents: documents
         )
 
@@ -106,19 +110,24 @@ module Api
           )
         end
 
-        unless @request.pending?
+        cancelled = @request.with_lock do
+          next false unless @request.pending?
+
+          @request.update!(
+            status: 'rejected',
+            admin_note: 'Cancelado pelo usuário',
+            reviewed_at: Time.current
+          )
+          true
+        end
+
+        unless cancelled
           return render_error_response(
             message: 'Apenas solicitaÃ§Ãµes pendentes podem ser canceladas',
             status: :conflict,
             code: 'REQUEST_NOT_PENDING'
           )
         end
-
-        @request.update!(
-          status: 'rejected',
-          admin_note: 'Cancelado pelo usuÃ¡rio',
-          reviewed_at: Time.current
-        )
 
         head :no_content
       rescue ActiveRecord::RecordInvalid

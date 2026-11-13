@@ -388,8 +388,9 @@ const processQueuedMutations = async () => {
 
 const cacheNavigationResponse = async (request, response) => {
   if (!response || !response.ok) return response;
-  const cache = await caches.open(APP_SHELL_CACHE);
   const normalizedPath = normalizePath(new URL(request.url).pathname);
+  if (/^\/companies\/[^/]+\/claim\/?$/.test(normalizedPath)) return response;
+  const cache = await caches.open(APP_SHELL_CACHE);
   await cache.put(normalizedPath, response.clone());
   return response;
 };
@@ -402,6 +403,12 @@ const handleNavigationRequest = async (request) => {
     const response = await fetch(request);
     return await cacheNavigationResponse(request, response);
   } catch (error) {
+    if (/^\/companies\/[^/]+\/claim\/?$/.test(normalizedPath)) {
+      return new Response(
+        '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Conexão necessária</title><main><h1>Conexão necessária</h1><p>Para proteger seus dados, a solicitação de acesso só funciona quando você está online. Reconecte-se e tente novamente.</p><a href="/">Voltar para o Avalia Solar</a></main></html>',
+        { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
+      );
+    }
     const cachedResponse =
       (await cache.match(normalizedPath)) ||
       (await cache.match(request)) ||

@@ -1,12 +1,13 @@
 class CompanySerializer < ActiveModel::Serializer
   include CompanyBadgesSerialization
+  include CompanyClaimSerialization
   include Rails.application.routes.url_helpers
 
   attributes :id, :name, :description, :website,
              :slug, :seo_title, :seo_description, :meta_description, :seo_keywords,
              :state, :city, :address, :phone, :whatsapp, :latitude, :longitude,
              :coverage_states, :coverage_cities, :service_areas, :canonical_coverage, :local_solar_path,
-             :email_public, :featured, :verified,
+             :email_public, :featured, :verified, :claimed,
              :media_upload_allowed,
              :rating_avg, :rating_count,
              :banner_url, :logo_url, :verified_badge_image_url, :verified_badge_url,
