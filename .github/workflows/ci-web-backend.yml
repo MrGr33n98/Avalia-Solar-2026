@@ -475,3 +475,19 @@ jobs:
       - name: Teardown Docker Compose
         if: always()
         run: docker compose -f infra/docker/docker-compose.test.yml down -v
+
+  build:
+    name: build
+    needs: e2e-tests
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Confirmar build e testes de integração
+        env:
+          E2E_RESULT: ${{ needs.e2e-tests.result }}
+        run: |
+          if [ "$E2E_RESULT" != success ]; then
+            echo "Build ou testes E2E não concluíram com sucesso: $E2E_RESULT"
+            exit 1
+          fi
+          echo 'O ambiente Docker foi construído e os testes E2E passaram.'
