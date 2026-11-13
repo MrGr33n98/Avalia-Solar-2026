@@ -31,7 +31,7 @@ PATH_CASES = [
     ("AB0-1-front/app/checkout/page.tsx", "frontend_sensitive", "frontend_only", "high", "none"),
     ("AB0-1-front/app/billing/plans/page.tsx", "frontend_sensitive", "frontend_only", "high", "none"),
     ("AB0-1-front/app/companies/[id]/claim/page.module.css", "frontend_sensitive", "frontend_only", "high", "none"),
-    ("AB0-1-front/components/payments/paywall.css", "frontend_component", "frontend_only", "medium", "none"),
+    ("AB0-1-front/components/payments/paywall.css", "frontend_sensitive", "frontend_only", "high", "none"),
     ("AB0-1-front/lib/auth/post-auth-destination.ts", "frontend_shared", "frontend_only", "high", "none"),
     ("AB0-1-front/contexts/AuthContext.tsx", "frontend_shared", "frontend_only", "high", "none"),
     ("AB0-1-front/hooks/useUser.ts", "frontend_shared", "frontend_only", "high", "none"),
