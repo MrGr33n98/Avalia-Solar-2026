@@ -14,11 +14,14 @@ test('simulador de financiamento no perfil da empresa', async ({ page }) => {
   const financingTitle = page.getByText('Simule seu financiamento solar');
   await expect(financingTitle).toBeVisible({ timeout: 15000 });
 
-  const amount = page.locator('input[type="number"]').first();
+  const amount = page.getByLabel('Valor do projeto');
   await expect(amount).toBeVisible();
-  await amount.fill('60000');
-  await expect(page.getByText('Valor financiado')).toBeVisible();
+  await amount.fill('6000000');
+  await amount.press('Tab');
 
-  await page.getByRole('button', { name: 'Calcular' }).click();
-  await expect(page.getByText('Parcela estimada')).toBeVisible();
+  await page.getByRole('button', { name: 'Simular financiamento' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Simulação de Financiamento Solar' })
+  ).toBeVisible();
+  await expect(page.getByText('Valor financiado:')).toBeVisible();
 });
