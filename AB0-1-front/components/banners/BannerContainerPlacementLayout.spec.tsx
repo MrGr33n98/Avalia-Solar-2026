@@ -4,9 +4,9 @@ import { BannerContainer, type BannerData } from '@/components/BannerContainer';
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ alt, onError }: { alt?: string; onError?: () => void }) => (
+  default: ({ alt, onError, sizes }: { alt?: string; onError?: () => void; sizes?: string }) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img data-testid="banner-image" alt={alt || ''} onError={onError} />
+    <img data-testid="banner-image" alt={alt || ''} onError={onError} sizes={sizes} />
   ),
 }));
 
@@ -112,6 +112,25 @@ describe('BannerContainer - seleção de layout por placement', () => {
 
     expect(screen.queryByText('Publicidade')).not.toBeInTheDocument();
     expect(screen.queryByText('Patrocinado')).not.toBeInTheDocument();
+  });
+
+  it('Brand Page PWA: solicita imagem nítida do patrocinado em largura real (300px), sem 0px', () => {
+    const imageOnlyCampaign: BannerData = {
+      id: 521,
+      title: 'Patrocinado - Brand Page',
+      image_url: '/ad-300x600.webp',
+      position: 'company_profile_sidebar_sponsored',
+      creative_mode: 'image_only',
+      width: 300,
+      height: 600,
+      sponsored: true,
+    };
+    render(<BannerContainer banners={[imageOnlyCampaign]} position="company_profile_sidebar_sponsored" />);
+
+    const creativeImage = screen.getByTestId('banner-image');
+    expect(creativeImage).toHaveAttribute('sizes', '300px');
+    expect(creativeImage).not.toHaveAttribute('sizes', '(max-width: 1023px) 0px, 300px');
+    expect(screen.getAllByTestId('banner-image')).toHaveLength(1); // sem fundo com blur
   });
 
   it('placement de sidebar mantém o card lateral limitado a 300px', () => {
