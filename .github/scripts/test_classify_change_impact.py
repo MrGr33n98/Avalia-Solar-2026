@@ -77,7 +77,7 @@ class PolicyContract(unittest.TestCase):
 
     def test_mixed_frontend_backend_uses_union_and_full_release(self):
         plan = ci.make_plan([
-            ci.Change("M", "AB0-1-front/app/globals.css"),
+            ci.Change("M", "AB0-1-front/components/cards/Card.module.css"),
             ci.Change("M", "AB0-1-back/app/admin/usuarios_acesso.rb"),
         ])
         self.assertEqual(plan["changed_areas"], ["backend_admin", "frontend_style"])
