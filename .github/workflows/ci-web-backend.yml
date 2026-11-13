@@ -42,6 +42,8 @@ jobs:
           fetch-depth: 0
       - name: Contract tests for impact classifier
         run: python3 .github/scripts/test_classify_change_impact.py
+      - name: Contract tests for CI timing metrics
+        run: python3 .github/scripts/test_analyze_ci_runs.py
       - name: Resolve changed paths and publish advisory summary
         run: bash .github/scripts/resolve-change-impact.sh
 
