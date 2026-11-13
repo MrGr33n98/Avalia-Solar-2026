@@ -32,6 +32,45 @@ company.create_company_financing_profile!(
   status: 'published'
 )
 
+# Fixture de banner independente dos dados reais de produção.
+# Executada exclusivamente no banco efêmero do docker-compose.test.yml.
+# Uma empresa Free não tem direito a promo_banner e usa a imagem institucional.
+free_banner_plan = Plan.find_or_initialize_by(name: 'E2E Free Banner Fixture')
+free_banner_plan.assign_attributes(
+  price: 0,
+  is_public: false,
+  features_json: PlanFeatureCatalog.defaults_for_tier('free').merge('promo_banner' => false)
+)
+free_banner_plan.plan_tier_template = 'free'
+free_banner_plan.save!
+
+free_banner_company = Company.find_by(slug: 'e2e-banner-free') ||
+  FactoryBot.create(
+    :company,
+    name: 'Avalia Solar E2E Banner Free',
+    slug: 'e2e-banner-free',
+    description: 'Fixture determinística de banner institucional para os testes responsivos.',
+    plan: free_banner_plan,
+    active_admin: false,
+    featured: false,
+    verified: false
+  )
+free_banner_company.update!(
+  plan: free_banner_plan,
+  active_admin: false,
+  featured: false,
+  verified: false,
+  status: 'active',
+  moderation_status: 'approved',
+  plan_status: 'active'
+)
+raise 'E2E banner fixture must have a Free plan' if free_banner_company.has_paid_plan?
+raise 'E2E banner fixture must not enable promo_banner' if
+  free_banner_company.feature_access.dig('promo_banner', 'value') != false
+raise 'E2E banner fixture must have no custom banner' if free_banner_company.banner.attached?
+
+puts "Empresa E2E Free pronta: #{free_banner_company.slug}"
+
 email = ENV.fetch('E2E_USER_EMAIL', 'test@avaliasolar.com.br')
 password = ENV.fetch('E2E_USER_PASSWORD', 'Password123')
 
