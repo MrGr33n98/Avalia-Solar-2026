@@ -1,22 +1,24 @@
 # Prepara os dados das jornadas E2E somente no banco efêmero do Compose de CI.
 require 'securerandom'
+require 'factory_bot_rails'
 
 ENV['SEED_ADMIN_EMAIL'] ||= 'ci-admin@avaliasolar.test'
 ENV['SEED_ADMIN_PASSWORD'] ||= SecureRandom.hex(32)
 load Rails.root.join('db/seeds.rb')
 
-# O perfil de financiamento fica publicado apenas no banco efêmero deste E2E.
-company = Company.where(status: 'active').first!
-company.update!(
+# Os dados do financiamento pertencem a uma empresa criada para este E2E,
+# sem alterar empresas seed ou fixtures compartilhadas.
+FactoryBot.find_definitions
+company = FactoryBot.create(
+  :company,
   name: 'Empresa E2E de Financiamento',
   slug: 'e2e-financing',
   description: 'Empresa de teste para a jornada de financiamento E2E.',
   financing_enabled: true,
   financing_tab_visible: true
 )
-raise 'Não foi possível reservar a empresa E2E de financiamento.' unless company.reload.slug == 'e2e-financing'
 
-CompanyFinancingProfile.find_or_initialize_by(company: company).update!(
+company.create_company_financing_profile!(
   title: 'Simule seu financiamento solar',
   disclaimer: 'Simulação ilustrativa para fins de teste.',
   currency: 'BRL',
