@@ -28,6 +28,23 @@ env:
   NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
+  # Observational only: no existing job or production release gate depends on it.
+  change-impact-shadow:
+    name: Change Impact (Shadow Mode)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Contract tests for impact classifier
+        run: python3 .github/scripts/test_classify_change_impact.py
+      - name: Resolve changed paths and publish advisory summary
+        run: bash .github/scripts/resolve-change-impact.sh
+
   fast-feedback:
     name: Code Quality & Security Scan
     runs-on: ubuntu-24.04
