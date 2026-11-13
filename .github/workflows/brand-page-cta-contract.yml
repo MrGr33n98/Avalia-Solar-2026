@@ -51,7 +51,10 @@ jobs:
             app/dashboard/components/brand-page/BrandPageCTAVisibility.spec.tsx \
             app/dashboard/components/cta-visibility/CtaVisibilitySettings.spec.tsx \
             lib/company-cta-visibility.spec.ts \
-            lib/feature-access.spec.ts
+            lib/feature-access.spec.ts \
+            __tests__/companies/ClaimCards.spec.tsx \
+            components/banners/BannerMedia.spec.tsx \
+            components/banners/BannerContainerPlacementLayout.spec.tsx
       - name: TypeScript
         run: npm run typecheck
 
