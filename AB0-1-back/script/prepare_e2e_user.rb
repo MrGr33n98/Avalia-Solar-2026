@@ -8,7 +8,6 @@ load Rails.root.join('db/seeds.rb')
 
 # Os dados do financiamento pertencem a uma empresa criada para este E2E,
 # sem alterar empresas seed ou fixtures compartilhadas.
-FactoryBot.find_definitions
 company = FactoryBot.create(
   :company,
   name: 'Empresa E2E de Financiamento',
