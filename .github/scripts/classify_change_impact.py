@@ -206,6 +206,15 @@ def make_plan(changes: Iterable[Change], *, base_sha: str | None = None, head_sh
         release = "full"
     rspec = "full" if areas & {"backend_admin", "backend_api", "backend_critical", "ci_infra", "unknown"} else "changed" if "backend_spec" in areas else "none"
     e2e = "critical" if high or backend else "affected" if frontend else "none"
+    css_canary_eligible = (
+        forced_reason is None and bool(items) and areas == {"frontend_style"}
+        and all(
+            item.status in ("A", "M")
+            and item.path.startswith("AB0-1-front/components/")
+            and item.path.endswith(".module.css")
+            for item in items
+        )
+    )
     plan = {
         "schema_version": SCHEMA_VERSION,
         "policy_version": POLICY_VERSION,
