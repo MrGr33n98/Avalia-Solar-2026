@@ -85,7 +85,8 @@ export default function FinancingInlineCard({ company }: FinancingInlineCardProp
   const minTerm = profile?.min_term_months ?? 12;
   const maxTerm = profile?.max_term_months ?? 120;
 
-  const interestRate = profile?.default_interest_rate_monthly ?? 1.192;
+  const configuredInterestRate = Number(profile?.default_interest_rate_monthly ?? 1.192);
+  const interestRate = Number.isFinite(configuredInterestRate) ? configuredInterestRate : 1.192;
   const amortizationType = (profile?.amortization_type as AmortizationType) || 'price';
 
   // Estados locais dos controles
