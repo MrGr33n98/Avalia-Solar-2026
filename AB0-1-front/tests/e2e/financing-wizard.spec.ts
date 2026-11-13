@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('simulador de financiamento no perfil da empresa', async ({ page }) => {
-  const base = process.env.E2E_COMPANY_URL || '/companies/sicredi-solar';
+  const base = process.env.E2E_COMPANY_URL || '/companies/e2e-financing';
   await page.goto(base, { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByText('Simule seu financiamento solar')).toBeVisible();
