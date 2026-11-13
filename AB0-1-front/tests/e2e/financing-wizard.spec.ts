@@ -8,9 +8,12 @@ test('simulador de financiamento no perfil da empresa', async ({ page }) => {
   expect(company.public_financing_visible).toBe(true);
   const base = process.env.E2E_COMPANY_URL || `/companies/${company.id}`;
 
-  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  const pageResponse = await page.goto(base, { waitUntil: 'domcontentloaded' });
+  expect(pageResponse?.status(), `Falha ao carregar ${base}`).toBeLessThan(400);
 
-  await expect(page.getByText('Simule seu financiamento solar')).toBeVisible();
+  const financingTitle = page.getByText('Simule seu financiamento solar');
+  const pageContext = `URL: ${page.url()}\n${(await page.locator('body').innerText()).slice(0, 500)}`;
+  await expect(financingTitle, pageContext).toBeVisible();
 
   const amount = page.locator('input[type="number"]').first();
   await expect(amount).toBeVisible();

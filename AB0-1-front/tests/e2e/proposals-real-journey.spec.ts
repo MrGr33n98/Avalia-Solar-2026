@@ -5,14 +5,16 @@ const password = process.env.E2E_USER_PASSWORD || 'Password123';
 
 test.describe('Jornada E2E real de propostas (API real sem Mocks)', () => {
   test('PWA e Web - navegabilidade e resiliência', async ({ page }) => {
-    const login = await page.request.post('/api/v1/auth/login', {
-      data: { email, password },
-    });
-    expect(login.ok()).toBeTruthy();
+    await page.goto('/login');
+    await page.locator('#email').fill(email);
+    await page.locator('#password').fill(password);
+    await page
+      .locator('form')
+      .filter({ has: page.locator('#email') })
+      .locator('button[type="submit"]')
+      .click();
+    await expect(page).toHaveURL(/review-dashboard|dashboard|home/, { timeout: 10000 });
 
-    const { token, user } = await login.json();
-    expect(token).toBeTruthy();
-    expect(user.role).toBe('review');
     const currentUser = await page.request.get('/api/v1/auth/me');
     expect(currentUser.ok()).toBeTruthy();
     expect((await currentUser.json()).user.role).toBe('review');
