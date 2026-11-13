@@ -190,19 +190,15 @@ export default function CompanyHero({
         className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
       >
         {/* 1. HERO BANNER */}
-        <div className="relative w-full aspect-[3/1] md:aspect-auto md:h-[200px] lg:h-[220px] xl:h-[230px] overflow-hidden rounded-t-2xl bg-slate-950">
-          {/* Mobile mantém 3:1; desktop limita altura para preservar primeira dobra. */}
-          {/* Background Blur Fill Layer (Mobile only) */}
-          {bannerState.kind === 'company-banner' && (
-            <OptimizedImage
-              src={bannerState.src}
-              alt=""
-              fill
-              aria-hidden="true"
-              className="object-cover opacity-40 blur-xl scale-110"
-              containerClassName="absolute inset-0 h-full w-full pointer-events-none md:hidden"
-            />
-          )}
+        <div
+          data-testid="company-hero-banner-frame"
+          className={
+            bannerState.kind === 'company-banner'
+              ? 'relative w-full aspect-[3/1] md:aspect-auto md:h-[200px] lg:h-[220px] xl:h-[230px] overflow-hidden rounded-t-2xl bg-white'
+              : 'relative w-full overflow-hidden rounded-t-2xl bg-white'
+          }
+        >
+          {/* Institutional / fallback banners determine their own height; no letterboxing. */}
 
           {/* Banner Image */}
           {bannerState.kind === 'free-plan-placeholder' ? (
@@ -253,9 +249,6 @@ export default function CompanyHero({
           ) : (
             <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
           )}
-
-          {/* Overlay sutil — apenas para transição visual, sem texto sobreposto */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
 
           {showTechnicalPlaceholder && (
             <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
