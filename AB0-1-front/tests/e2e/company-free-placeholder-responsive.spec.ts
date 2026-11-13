@@ -25,10 +25,7 @@ test('placeholder Free preserva composição completa em larguras mobile, tablet
     }));
     expect(imageGeometry.complete).toBe(true);
     expect(imageGeometry.naturalWidth).toBeGreaterThan(0);
-    const expectedAsset =
-      width <= 767
-        ? '/assets/avalia-solar-icon-pack/evalia-solar-banner-v2-mobile.png'
-        : '/assets/avalia-solar-banner-placeholder.png';
+    const expectedAsset = '/assets/avalia-solar-banner-v3.webp';
     expect(decodeURIComponent(imageGeometry.currentSrc)).toContain(expectedAsset);
 
     const hasHorizontalOverflow = await page.evaluate(

@@ -33,7 +33,7 @@ describe('CompanyFreeBannerPlaceholder', () => {
     );
 
     const image = screen.getByRole('img', { name: 'Banner institucional Avalia Solar' });
-    expect(image).toHaveAttribute('data-src', '/assets/avalia-solar-banner-placeholder.png');
+    expect(image).toHaveAttribute('data-src', '/assets/avalia-solar-banner-v3.webp');
     expect(image).toHaveClass('object-contain');
     expect(screen.getAllByRole('img')).toHaveLength(1);
     expect(container.querySelector('picture')).toBeInTheDocument();
@@ -41,7 +41,7 @@ describe('CompanyFreeBannerPlaceholder', () => {
     expect(mobileSource).toHaveAttribute('media', '(max-width: 767px)');
     expect(mobileSource?.getAttribute('srcset')).toContain('/_next/image');
     expect(decodeURIComponent(mobileSource?.getAttribute('srcset') || '')).toContain(
-      '/assets/avalia-solar-icon-pack/evalia-solar-banner-v2-mobile.png'
+      '/assets/avalia-solar-banner-v3.webp'
     );
   });
 
@@ -61,7 +61,7 @@ describe('CompanyFreeBannerPlaceholder', () => {
 
     fireEvent.error(image);
     expect(container.querySelector('source')).not.toBeInTheDocument();
-    expect(image).toHaveAttribute('data-src', '/assets/avalia-solar-banner-placeholder.png');
+    expect(image).toHaveAttribute('data-src', '/assets/avalia-solar-banner-v3.webp');
 
     fireEvent.error(image);
     expect(image).toHaveAttribute('data-src', '/images/placeholder.png');

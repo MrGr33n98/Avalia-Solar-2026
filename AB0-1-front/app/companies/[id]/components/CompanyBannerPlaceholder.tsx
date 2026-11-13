@@ -17,10 +17,10 @@ export default function CompanyBannerPlaceholder({
     <picture className="block h-full w-full">
       <source
         media="(max-width: 639px)"
-        srcSet="/assets/avalia-solar-icon-pack/evalia-solar-banner-v2-mobile.png"
+        srcSet="/assets/avalia-solar-banner-v3.webp"
       />
       <img
-        src="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
+        src="/assets/avalia-solar-banner-v3.webp"
         alt={alt}
         className={`h-full w-full object-cover object-center ${className}`}
         loading={priority ? 'eager' : 'lazy'}
