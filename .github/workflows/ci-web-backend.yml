@@ -36,6 +36,8 @@ jobs:
     continue-on-error: true
     permissions:
       contents: read
+    outputs:
+      css_canary_eligible: ${{ steps.impact.outputs.css_canary_eligible }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,6 +47,7 @@ jobs:
       - name: Contract tests for CI timing metrics
         run: python3 .github/scripts/test_analyze_ci_runs.py
       - name: Resolve changed paths and publish advisory summary
+        id: impact
         run: bash .github/scripts/resolve-change-impact.sh
 
   fast-feedback:
@@ -61,6 +64,9 @@ jobs:
 
       - name: Validate RSpec scope classifier
         run: bash .github/scripts/test-classify-rspec-scope.sh
+
+      - name: Validate CSS canary required gate contracts
+        run: bash .github/scripts/test-verify-smart-ci-gate.sh
 
       # Ruby Setup
       - name: Setup Ruby
@@ -384,7 +390,7 @@ jobs:
 
   e2e-tests:
     name: E2E Playwright Tests
-    needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate]
+    needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate, change-impact-shadow]
     if: >-
       ${{ !cancelled() &&
           needs.fast-feedback.result == 'success' &&
@@ -392,7 +398,11 @@ jobs:
           needs.ranking-frontend-gate.result == 'success' &&
           needs.category-seo-contract-gate.result == 'success' &&
           (needs.ranking-performance-gate.result == 'success' ||
-           needs.ranking-performance-gate.result == 'skipped') }}
+           needs.ranking-performance-gate.result == 'skipped') &&
+          !(github.event_name == 'pull_request' &&
+            vars.SMART_CI_ENABLED == 'true' &&
+            needs.change-impact-shadow.result == 'success' &&
+            needs.change-impact-shadow.outputs.css_canary_eligible == 'true') }}
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 120 || 30 }}
     steps:
@@ -497,16 +507,20 @@ jobs:
 
   build:
     name: build
-    needs: e2e-tests
+    needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate, change-impact-shadow, e2e-tests]
     if: always()
     runs-on: ubuntu-24.04
     steps:
-      - name: Confirmar build e testes de integração
+      - uses: actions/checkout@v4
+      - name: Verify all mandatory checks and approved CSS-only PR canary skips
         env:
+          FAST_RESULT: ${{ needs.fast-feedback.result }}
+          BACKEND_RESULT: ${{ needs.backend-tests.result }}
+          RANKING_GATE_RESULT: ${{ needs.ranking-performance-gate.result }}
+          RANKING_FRONTEND_RESULT: ${{ needs.ranking-frontend-gate.result }}
+          CATEGORY_RESULT: ${{ needs.category-seo-contract-gate.result }}
           E2E_RESULT: ${{ needs.e2e-tests.result }}
-        run: |
-          if [ "$E2E_RESULT" != success ]; then
-            echo "Build ou testes E2E não concluíram com sucesso: $E2E_RESULT"
-            exit 1
-          fi
-          echo 'O ambiente Docker foi construído e os testes E2E passaram.'
+          IMPACT_RESULT: ${{ needs.change-impact-shadow.result }}
+          CSS_CANARY_ELIGIBLE: ${{ needs.change-impact-shadow.outputs.css_canary_eligible }}
+          SMART_CI_ENABLED: ${{ vars.SMART_CI_ENABLED || 'false' }}
+        run: bash .github/scripts/verify-smart-ci-gate.sh
