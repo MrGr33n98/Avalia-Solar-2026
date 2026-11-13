@@ -23,6 +23,20 @@ describe('company claim cards', () => {
     );
   });
 
+  it('não renderiza ícones decorativos de maleta nem espaços vazios no card de reivindicação', () => {
+    const first = render(<ClaimProfileCard company={company} />);
+    const heading = screen.getByRole('heading', { name: 'TRABALHA NESTA EMPRESA?' });
+    expect(heading).toHaveClass('tracking-wide', 'text-white');
+    expect(first.container.querySelector('svg.lucide-briefcase')).not.toBeInTheDocument();
+    expect(first.container.querySelector('.border-amber-500\\/60')).not.toBeInTheDocument();
+    first.unmount();
+
+    const second = render(<ClaimCompanyCard company={company} />);
+    expect(screen.getByRole('heading', { name: 'TRABALHA NESTA EMPRESA?' })).toBeVisible();
+    expect(second.container.querySelector('svg.lucide-briefcase')).not.toBeInTheDocument();
+    expect(second.container.querySelector('.border-amber-500\\/60')).not.toBeInTheDocument();
+  });
+
   it('shows managed state and hides claim action only for an active claimed profile', () => {
     const claimedCompany = { ...company, claimed: true };
     const { rerender } = render(<ClaimProfileCard company={claimedCompany} />);

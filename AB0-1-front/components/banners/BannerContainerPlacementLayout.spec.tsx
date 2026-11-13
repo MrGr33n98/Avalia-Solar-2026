@@ -4,9 +4,9 @@ import { BannerContainer, type BannerData } from '@/components/BannerContainer';
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ alt, onError, sizes }: { alt?: string; onError?: () => void; sizes?: string }) => (
+  default: ({ alt, onError, sizes, className }: { alt?: string; onError?: () => void; sizes?: string; className?: string }) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img data-testid="banner-image" alt={alt || ''} onError={onError} sizes={sizes} />
+    <img data-testid="banner-image" alt={alt || ''} onError={onError} sizes={sizes} className={className} />
   ),
 }));
 
@@ -178,9 +178,16 @@ describe('BannerContainer - fundo desfocado (ambientBackground)', () => {
     expect(screen.getAllByTestId('banner-image')).toHaveLength(1);
   });
 
-  it('placement horizontal mantém o fundo desfocado configurado', () => {
-    render(<BannerContainer banners={[imageOnlyBanner]} position="company_profile_about_inline" />);
+  it('Brand Page inline: mantém proporção do card, preserva arte sem corte e sem blur', () => {
+    const { container } = render(
+      <BannerContainer banners={[imageOnlyBanner]} position="company_profile_about_inline" />
+    );
 
-    expect(screen.getAllByTestId('banner-image')).toHaveLength(2);
+    const images = screen.getAllByTestId('banner-image');
+    expect(images).toHaveLength(1);
+    expect(images[0]).toHaveClass('object-contain');
+    expect(images[0]).not.toHaveClass('object-cover');
+    expect(container.querySelector('[class*="blur-xl"]')).not.toBeInTheDocument();
+    expect(screen.getByText('Patrocinado')).toBeInTheDocument();
   });
 });
