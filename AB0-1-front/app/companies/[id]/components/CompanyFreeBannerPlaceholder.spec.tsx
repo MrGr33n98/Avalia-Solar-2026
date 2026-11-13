@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import CompanyFreeBannerPlaceholder, {
   FREE_COMPANY_BANNER_DIMENSIONS,
@@ -35,6 +37,22 @@ jest.mock('next/image', () => ({
 }));
 
 describe('CompanyFreeBannerPlaceholder — sem barras e sem recortes', () => {
+  it('mantém width e height sincronizados com o WebP real (protege contra distorção)', () => {
+    const asset = readFileSync(
+      join(process.cwd(), 'public', FREE_COMPANY_BANNER_SRC.replace(/^\\//, ''))
+    );
+    expect(asset.toString('ascii', 0, 4)).toBe('RIFF');
+    expect(asset.toString('ascii', 8, 12)).toBe('WEBP');
+    expect(asset.toString('ascii', 12, 16)).toBe('VP8 ');
+    expect(Array.from(asset.subarray(23, 26))).toEqual([0x9d, 0x01, 0x2a]);
+
+    const realWidth = asset.readUInt16LE(26) & 0x3fff;
+    const realHeight = asset.readUInt16LE(28) & 0x3fff;
+    expect(realWidth).toBe(FREE_COMPANY_BANNER_DIMENSIONS.width);
+    expect(realHeight).toBe(FREE_COMPANY_BANNER_DIMENSIONS.height);
+    expect([realWidth, realHeight]).toEqual([1024, 191]);
+  });
+
   it('preserva o formato original sem usar fill/object-fit em contêiner de altura fixa', () => {
     const { container } = render(
       <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
