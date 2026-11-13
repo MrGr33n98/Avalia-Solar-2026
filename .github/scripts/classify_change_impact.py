@@ -256,7 +256,7 @@ def main() -> None:
         print("")
         print("| Field | Decision |")
         print("| --- | --- |")
-        for key in ("policy_version", "risk", "release_scope", "fallback", "changed_files_count"):
+        for key in ("policy_version", "risk", "release_scope", "css_canary_eligible", "fallback", "changed_files_count"):
             print(f"| {key} | {plan[key]} |")
         print(f"| changed_areas | {', '.join(plan['changed_areas'])} |")
         print(f"| reason_codes | {', '.join(plan['reason_codes'])} |")
