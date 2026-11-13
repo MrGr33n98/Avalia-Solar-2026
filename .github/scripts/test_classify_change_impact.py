@@ -17,7 +17,7 @@ PATH_CASES = [
     ("CHANGELOG.md", "docs_only", "none", "low", "none"),
     ("docs/architecture/diagram.svg", "docs_only", "none", "low", "none"),
     ("AB0-1-front/app/globals.css", "frontend_shared", "frontend_only", "high", "none"),
-    ("AB0-1-front/styles/mobile.css", "frontend_style", "frontend_only", "low", "none"),
+    ("AB0-1-front/styles/mobile.css", "frontend_shared", "frontend_only", "high", "none"),
     ("AB0-1-front/components/cards/Card.module.css", "frontend_style", "frontend_only", "low", "none"),
     ("AB0-1-front/components/cards/Card.tsx", "frontend_component", "frontend_only", "medium", "none"),
     ("AB0-1-front/app/companies/[id]/page.tsx", "frontend_component", "frontend_only", "medium", "none"),
