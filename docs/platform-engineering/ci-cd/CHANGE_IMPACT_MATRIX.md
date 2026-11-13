@@ -5,7 +5,8 @@
 | Class | Representative paths | Risk | Suggested backend RSpec | Suggested frontend testing | CD classification (informational) |
 |---|---|---|---|---|---|
 | Docs only | `docs/**`, `README.md` | low | none | none | none |
-| Frontend styles | `AB0-1-front/styles/**`, CSS not in sensitive surfaces | low | none | lint + typecheck + affected components + visual | frontend_only |
+| Isolated frontend styles | co-located non-sensitive `*.module.css` | low | none | lint + typecheck + affected components + visual | frontend_only |
+| Global CSS / shared styles | `app/globals.css`, `styles/**` | high | none | global smoke + typecheck + critical frontend E2E | frontend_only |
 | Frontend component | `AB0-1-front/components/**`, `app/**` | medium | none | lint + typecheck + affected Jest/E2E | frontend_only |
 | Frontend sensitive | auth/login/claim/payment/checkout/WhatsApp/lead | high | depends on cross-service contracts | auth/claim/payment-critical E2E + security + typecheck | frontend_only only if no backend changes |
 | Frontend shared | providers/hooks/contexts/lib/lockfile/Next config | high | depends on change | full critical frontend tests | frontend_only only if isolated |
