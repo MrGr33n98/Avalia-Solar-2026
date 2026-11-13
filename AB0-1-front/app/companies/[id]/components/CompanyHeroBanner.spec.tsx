@@ -70,6 +70,46 @@ describe('CompanyHero — enquadramento do banner', () => {
     expect(banner).toHaveStyle({ objectFit: 'cover' });
   });
 
+  it('usa altura intrínseca no banner Free e não adiciona fade escuro', () => {
+    const { container } = render(
+      <CompanyHero
+        company={
+          {
+            id: 2,
+            name: 'Empresa Free',
+            slug: 'empresa-free',
+            verified: false,
+            feature_access: {
+              promo_banner: { state: 'disabled', value: false },
+            },
+          } as any
+        }
+        companyStats={{ rating: 0, reviewCount: 0 }}
+        bannerUrl={null}
+        bannerError={false}
+        setBannerError={jest.fn()}
+        logoUrl={null}
+        logoError={false}
+        setLogoError={jest.fn()}
+      />
+    );
+
+    const frame = container.querySelector('[data-testid="company-hero-banner-frame"]');
+    expect(frame).toBeInTheDocument();
+    expect(frame).not.toHaveClass(
+      'aspect-[3/1]',
+      'md:h-[200px]',
+      'lg:h-[220px]',
+      'xl:h-[230px]',
+      'bg-slate-950'
+    );
+    expect(frame).toHaveClass('relative', 'w-full', 'overflow-hidden', 'bg-white');
+    expect(frame?.querySelector('[class*="bg-gradient-to-t"]')).not.toBeInTheDocument();
+    expect(frame?.querySelector('[class*="blur-xl"]')).not.toBeInTheDocument();
+    const brandBanner = screen.getByRole('img', { name: 'Banner institucional Avalia Solar' });
+    expect(brandBanner).toHaveClass('block', 'h-auto', 'w-full');
+  });
+
   it('renderiza o avatar da empresa padronizado com border-2 border-white e sem padding duplo', () => {
     render(
       <CompanyHero
