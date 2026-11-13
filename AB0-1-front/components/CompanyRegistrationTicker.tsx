@@ -1,13 +1,85 @@
 'use client';
 
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { track } from '@/lib/analytics';
+import styles from './CompanyRegistrationTicker.module.css';
 
-// Palavra-chave exata para o fluxo de cadastro no WhatsApp/WAHA.
-// O disparo do bot ocorre somente após o visitante enviar a mensagem.
+// Palavra-chave exata: WAHA só dispara depois que o visitante envia a mensagem.
 export const COMPANY_REGISTRATION_WHATSAPP_URL =
   'https://wa.me/5565993465055?text=CADASTRAR';
 
+const MARQUEE_SPEED_PX_PER_SECOND = 38;
+const DEFAULT_LAYOUT = { copiesPerGroup: 12, durationSeconds: 64 };
+
+/**
+ * Dois grupos de largura idêntica são necessários para um loop sem saltos.
+ * Cada grupo deve cobrir toda a área visível mais duas mensagens de margem.
+ * A velocidade é baseada na distância real, não em um tempo fixo por viewport.
+ */
+export function getTickerLayout(viewportWidth: number, messageWidth: number) {
+  if (
+    !Number.isFinite(viewportWidth) ||
+    !Number.isFinite(messageWidth) ||
+    viewportWidth <= 0 ||
+    messageWidth <= 0
+  ) {
+    return DEFAULT_LAYOUT;
+  }
+
+  const copiesPerGroup = Math.max(4, Math.ceil(viewportWidth / messageWidth) + 2);
+  return {
+    copiesPerGroup,
+    durationSeconds: Number(
+      ((copiesPerGroup * messageWidth) / MARQUEE_SPEED_PX_PER_SECOND).toFixed(2)
+    ),
+  };
+}
+
 export default function CompanyRegistrationTicker() {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const firstMessageRef = useRef<HTMLSpanElement>(null);
+  const [layout, setLayout] = useState(DEFAULT_LAYOUT);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const firstMessage = firstMessageRef.current;
+    if (!viewport || !firstMessage) return;
+
+    let disposed = false;
+    const measure = () => {
+      if (disposed) return;
+      const viewportWidth = viewport.getBoundingClientRect().width;
+      const messageWidth = firstMessage.getBoundingClientRect().width;
+      if (viewportWidth <= 0 || messageWidth <= 0) return;
+      const next = getTickerLayout(viewportWidth, messageWidth);
+      setLayout((current) =>
+        current.copiesPerGroup === next.copiesPerGroup &&
+        current.durationSeconds === next.durationSeconds
+          ? current
+          : next
+      );
+    };
+
+    measure();
+
+    // ResizeObserver recalcula a quantidade de cópias em desktop, tablet e PWA
+    // sem detectar User-Agent e sem criar intervalos/loops em background.
+    const observer =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    observer?.observe(viewport);
+    observer?.observe(firstMessage);
+    window.addEventListener('resize', measure);
+
+    // Fontes carregadas posteriormente também podem alterar a largura do texto.
+    void document.fonts?.ready.then(measure);
+
+    return () => {
+      disposed = true;
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
+
   const handleCtaClick = () => {
     track('cta_click', {
       cta_text: 'Cadastrar',
@@ -23,19 +95,39 @@ export default function CompanyRegistrationTicker() {
       role="region"
       aria-label="Cadastro de empresas no Avalia Solar"
       data-testid="company-registration-ticker"
-      className="flex h-10 w-full items-center gap-2 overflow-hidden bg-[#062653] px-3 text-white sm:gap-4 sm:px-6"
+      className={styles.ticker}
     >
-      <div className="relative min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
-        <div className="company-ticker-track flex w-max items-center whitespace-nowrap">
-          {[0, 1].map((copy) => (
-            <span
-              key={copy}
-              aria-hidden={copy === 1 ? true : undefined}
-              className="inline-flex shrink-0 items-center pr-8 text-[11px] font-medium sm:text-xs"
+      <div
+        ref={viewportRef}
+        className={styles.messageViewport}
+        data-testid="company-registration-viewport"
+      >
+        <span className="sr-only">Cadastre sua empresa no Avalia Solar</span>
+        <div
+          className={styles.marqueeTrack}
+          data-testid="company-registration-track"
+          aria-hidden="true"
+          style={{ '--ticker-duration': `${layout.durationSeconds}s` } as CSSProperties}
+        >
+          {[0, 1].map((group) => (
+            <div
+              key={group}
+              className={styles.marqueeGroup}
+              data-testid="company-registration-group"
             >
-              Cadastre sua empresa no&nbsp;
-              <strong className="font-semibold text-[#FFC400]">Avalia Solar</strong>
-            </span>
+              {Array.from({ length: layout.copiesPerGroup }, (_, index) => (
+                <span
+                  key={index}
+                  ref={group === 0 && index === 0 ? firstMessageRef : undefined}
+                  className={styles.message}
+                  data-testid="company-registration-message"
+                >
+                  Cadastre sua empresa no&nbsp;
+                  <strong className={styles.brand}>Avalia Solar</strong>
+                  <span className={styles.separator} aria-hidden="true" />
+                </span>
+              ))}
+            </div>
           ))}
         </div>
       </div>
@@ -47,32 +139,12 @@ export default function CompanyRegistrationTicker() {
         rel="noopener noreferrer"
         aria-label="Cadastrar empresa via WhatsApp"
         data-testid="company-registration-cta"
-        className="relative inline-flex h-[34px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#15803D] px-[14px] text-xs font-semibold leading-none text-white transition-colors hover:bg-[#166534] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white before:absolute before:-inset-y-[5px] before:-inset-x-1 before:content-['']"
+        className={styles.ctaHitArea}
       >
-        Cadastrar
+        <span className={styles.ctaPill} data-testid="company-registration-cta-pill">
+          Cadastrar
+        </span>
       </a>
-
-      <style jsx>{`
-        .company-ticker-track {
-          animation: company-ticker-marquee 5s linear infinite;
-        }
-        @keyframes company-ticker-marquee {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-50%);
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .company-ticker-track {
-            animation: none;
-          }
-        }
-        .company-ticker-track:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
     </div>
   );
 }
