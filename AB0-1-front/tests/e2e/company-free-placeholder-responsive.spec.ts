@@ -8,10 +8,34 @@ test('banner institucional não gera barras, recortes nem sombras em mobile/PWA 
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Verificação multiviewport no Chromium.');
 
-  await page.goto('/companies/trends-solar-energy', { waitUntil: 'domcontentloaded' });
+  // O Compose de CI provisiona esta empresa Free: o teste não pode depender
+  // de um perfil existente apenas no banco persistente de produção.
+  const slug = 'e2e-banner-free';
+  const companyResponse = await page.request.get(`/api/v1/companies/by_slug/${slug}`);
+  expect(
+    companyResponse.ok(),
+    `Fixture E2E ausente: GET /api/v1/companies/by_slug/${slug} retornou ${companyResponse.status()} — ${await companyResponse.text()}`
+  ).toBe(true);
+  const { company } = await companyResponse.json();
+  expect(company?.slug, 'O backend deve retornar a empresa Free correta').toBe(slug);
+  expect(company?.has_paid_plan, 'O perfil E2E não deve possuir plano pago').toBe(false);
+  expect(company?.feature_access?.promo_banner?.value, 'Banner promocional deve estar desabilitado').toBe(false);
+  expect(company?.banner_url, 'A empresa Free não deve expor um banner personalizado').toBeFalsy();
+
+  const pageResponse = await page.goto(`/companies/${company.slug}`, {
+    waitUntil: 'domcontentloaded',
+  });
+  expect(pageResponse, 'A Brand Page precisa responder à navegação').not.toBeNull();
+  expect(pageResponse?.status(), 'A Brand Page não pode retornar HTTP 4xx/5xx').toBeLessThan(400);
+
   const image = page.getByRole('img', { name: 'Banner institucional Avalia Solar' });
   const frame = page.getByTestId('company-hero-banner-frame');
-  await expect(image).toBeVisible();
+  await expect(frame).toBeVisible({ timeout: 15000 });
+  await expect(image).toBeVisible({ timeout: 15000 });
+  await expect.poll(
+    () => image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),
+    { message: 'O WebP institucional precisa terminar de carregar antes da análise geométrica' }
+  ).toBe(true);
 
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 });
