@@ -14,7 +14,7 @@ ActiveAdmin.register_page 'Usuarios Acesso' do
 
     div class: 'usuarios-acesso-tabs', style: 'display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;' do
       tabs.each_with_index do |(label, path), index|
-        link_to label, path, class: "button #{index.zero? ? 'primary' : ''}"
+        a label, href: path, class: "button #{index.zero? ? 'primary' : ''}"
       end
       nil
     end
@@ -41,7 +41,7 @@ ActiveAdmin.register_page 'Usuarios Acesso' do
       column do
         panel 'Reivindicações Pendentes' do
           h2 number_with_delimiter(CompanyAccessRequest.pending.count, delimiter: '.')
-          link_to 'Analisar solicitações', admin_company_access_requests_path(scope: 'pending')
+          a 'Analisar solicitações', href: admin_company_access_requests_path(scope: 'pending')
         end
       end
     end
