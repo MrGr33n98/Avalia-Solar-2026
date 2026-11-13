@@ -15,7 +15,7 @@ from pathlib import PurePosixPath
 from typing import Iterable
 
 SCHEMA_VERSION = "1.0"
-POLICY_VERSION = "2026-q4-shadow-1"
+POLICY_VERSION = "2026-q4-canary-1"
 MAX_CHANGES = 500
 VALID_SHA = re.compile(r"^[a-f0-9]{40}$")
 FRONT_ROOT = "AB0-1-front/"
