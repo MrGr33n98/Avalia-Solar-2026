@@ -74,9 +74,23 @@ RSpec.describe 'Admin Company Access Requests', type: :request do
       expect(page.text).to include('E-mail da conta', user.email)
       expect(page.text).to include('E-mail de contato', 'contato-claim@example.org')
       expect(page.text).to include('Telefone/WhatsApp', '+5511998765432')
-      expect(page.css('a[href]').any? do |link|
+      review_link_present = page.css('a[href]').any? do |link|
         link.text.strip == 'Analisar' && link['href'] == admin_company_access_request_path(access_request)
-      end).to be(true)
+      end
+      expect(review_link_present).to be(true)
+    end
+
+    it 'filters requests by the supplied contact email' do
+      access_request.update!(contact_email: 'contato-claim@example.org')
+      other_user = create(:user, role: 'company', status: :active, company: nil, confirmed_at: Time.current)
+      create(:company_access_request, user: other_user, company: company, status: 'pending', contact_email: 'outro@example.org')
+
+      get admin_company_access_requests_path, params: { q: { contact_email_cont: 'contato-claim' } }
+
+      expect(response).to have_http_status(:ok)
+      table_text = Nokogiri::HTML(response.body).css('table.index_table tbody').text
+      expect(table_text).to include('contato-claim@example.org')
+      expect(table_text).not_to include('outro@example.org')
     end
 
     it 'filters requests by applicant account email' do
