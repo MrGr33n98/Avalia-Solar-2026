@@ -35,18 +35,29 @@ export function BannerMedia({
   onMediaLoad,
   onMediaError,
 }: BannerMediaProps) {
-  const [currentSrc, setCurrentSrc] = useState(mobileSrc || src);
+  // O <picture> escolhe o source pelo media query ANTES da hidratação;
+  // nunca usar mobileSrc como imagem padrão também no desktop.
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [mobileSourceEnabled, setMobileSourceEnabled] = useState(Boolean(mobileSrc));
   const [failed, setFailed] = useState(false);
 
-  // GAP-06: Sincroniza currentSrc e reseta estado quando props mudam em rotação/refetch
+  // Reseta arte e fallback ao trocar o anúncio no carrossel.
   useEffect(() => {
-    setCurrentSrc(mobileSrc || src);
+    setCurrentSrc(src);
+    setMobileSourceEnabled(Boolean(mobileSrc));
     setFailed(false);
   }, [src, mobileSrc]);
 
   const objectClass = fit === 'cover' ? 'object-cover' : 'object-contain';
 
-  const handleError = () => {
+  const handleError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const failedUrl = event.currentTarget.currentSrc || '';
+    // Em caso de erro da arte mobile, retira somente o <source> e deixa o
+    // navegador carregar a arte desktop, sem invalidar a campanha inteira.
+    if (mobileSourceEnabled && mobileSrc && failedUrl.endsWith(mobileSrc)) {
+      setMobileSourceEnabled(false);
+      return;
+    }
     if (!failed && currentSrc !== src && src) {
       setCurrentSrc(src);
       return;
@@ -93,18 +104,23 @@ export function BannerMedia({
           style={{ objectPosition: position }}
         />
       )}
-      <Image
-        src={resolvedSrc}
-        alt={alt}
-        fill
-        priority={priority}
-        sizes={sizes}
-        quality={quality}
-        className={cn(objectClass, 'h-full w-full', !failed && 'transition-opacity duration-300')}
-        style={{ objectPosition: position }}
-        onError={handleError}
-        onLoad={handleLoad}
-      />
+      <picture data-testid="banner-responsive-picture">
+        {mobileSourceEnabled && mobileSrc && !failed && currentSrc === src && (
+          <source media="(max-width: 767px)" srcSet={mobileSrc} />
+        )}
+        <Image
+          src={resolvedSrc}
+          alt={alt}
+          fill
+          priority={priority}
+          sizes={sizes}
+          quality={quality}
+          className={cn(objectClass, 'h-full w-full', !failed && 'transition-opacity duration-300')}
+          style={{ objectPosition: position }}
+          onError={handleError}
+          onLoad={handleLoad}
+        />
+      </picture>
     </div>
   );
 }
