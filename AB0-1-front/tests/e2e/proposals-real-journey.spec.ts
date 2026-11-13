@@ -4,8 +4,8 @@ const email = process.env.E2E_USER_EMAIL || 'test@avaliasolar.com.br';
 const password = process.env.E2E_USER_PASSWORD || 'Password123';
 
 test.describe('Jornada E2E real de propostas (API real sem Mocks)', () => {
-  test('PWA e Web - navegabilidade e resiliência', async ({ page, request }) => {
-    const login = await request.post('/api/v1/auth/login', {
+  test('PWA e Web - navegabilidade e resiliência', async ({ page }) => {
+    const login = await page.request.post('/api/v1/auth/login', {
       data: { email, password },
     });
     expect(login.ok()).toBeTruthy();
@@ -13,15 +13,6 @@ test.describe('Jornada E2E real de propostas (API real sem Mocks)', () => {
     const { token, user } = await login.json();
     expect(token).toBeTruthy();
     expect(user.role).toBe('review');
-    await page.context().addCookies([
-      {
-        name: 'jwt_token',
-        value: token,
-        url: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
-        httpOnly: true,
-        sameSite: 'Lax',
-      },
-    ]);
     const currentUser = await page.request.get('/api/v1/auth/me');
     expect(currentUser.ok()).toBeTruthy();
     expect((await currentUser.json()).user.role).toBe('review');

@@ -9,23 +9,14 @@ test.describe('JWT Revocation and Logout', () => {
     password: process.env.E2E_USER_PASSWORD || 'Password123',
   };
 
-  test.beforeEach(async ({ page, request }) => {
-    const response = await request.post('/api/v1/auth/login', {
+  test.beforeEach(async ({ page }) => {
+    const response = await page.request.post('/api/v1/auth/login', {
       data: testUser,
     });
     expect(response.ok()).toBeTruthy();
 
     const { token } = await response.json();
     expect(token).toBeTruthy();
-    await page.context().addCookies([
-      {
-        name: 'jwt_token',
-        value: token,
-        url: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
-        httpOnly: true,
-        sameSite: 'Lax',
-      },
-    ]);
     await page.goto('/');
   });
 
@@ -90,15 +81,6 @@ test.describe('JWT Revocation and Logout', () => {
     });
     expect(secondLogin.ok()).toBeTruthy();
     const { token } = await secondLogin.json();
-    await context2.addCookies([
-      {
-        name: 'jwt_token',
-        value: token,
-        url: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
-        httpOnly: true,
-        sameSite: 'Lax',
-      },
-    ]);
     await page2.goto('/');
 
     // Verify both sessions are active
