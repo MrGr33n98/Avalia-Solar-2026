@@ -117,6 +117,9 @@ def classify_path(path: str) -> str:
             return "frontend_shared"
         if any(fragment in "/" + rlow for fragment in SENSITIVE_FRONT):
             return "frontend_sensitive"
+        # Global CSS reaches unrelated routes; never treat it as isolated visual work.
+        if rlow.startswith("styles/") or rlow in ("app/globals.css", "pages/_app.css") or (rlow.endswith(".css") and not rlow.endswith(".module.css")):
+            return "frontend_shared"
         if rlow.startswith(("components/", "app/", "pages/", "public/", "__tests__/", "tests/")):
             if rlow.endswith((".css", ".scss", ".sass", ".less")):
                 return "frontend_style"
