@@ -460,6 +460,10 @@ jobs:
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'Password123' }}
         run: npx playwright test
 
+      - name: Collect frontend and backend logs on E2E failure
+        if: failure()
+        run: docker compose -f infra/docker/docker-compose.test.yml logs --no-color --tail=250 backend frontend
+
       - name: Upload Playwright Report
         if: always()
         uses: actions/upload-artifact@v4
