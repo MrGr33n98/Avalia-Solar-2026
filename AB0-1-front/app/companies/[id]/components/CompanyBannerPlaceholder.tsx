@@ -17,8 +17,8 @@ export default function CompanyBannerPlaceholder({
     <picture className="block w-full">
       <img
         src="/assets/avalia-solar-banner-v3.webp"
-        width={2103}
-        height={748}
+        width={1024}
+        height={191}
         alt={alt}
         className={`block h-auto w-full ${className}`}
         loading={priority ? 'eager' : 'lazy'}
