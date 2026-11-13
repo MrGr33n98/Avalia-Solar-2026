@@ -128,8 +128,10 @@ export const BANNER_PLACEMENT_DISPLAY_SPECS: Record<string, PlacementDisplaySpec
     desktopAspectRatio: '4/1',
     mobileMinHeight: 90,
     desktopMaxHeight: 220,
-    fit: 'cover',
-    ambientBackground: true,
+    // Banners com tipografia embutida não podem sofrer cortes no PWA.
+    // Art direction (image_mobile) é preferível; sem variante, usar contain.
+    fit: 'contain',
+    ambientBackground: false,
     ignoreCreativeDimensions: true,
   },
   company_profile_related_carousel: {
