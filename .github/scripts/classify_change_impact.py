@@ -105,7 +105,10 @@ def classify_path(path: str) -> str:
         return "ci_infra"
     if lower in (".ruby-version", "gemfile", "gemfile.lock") or lower.startswith("bin/"):
         return "ci_infra"
-    if lower.startswith("docs/") or lower in ("readme.md", "contributing.md", "license", "changelog.md") or lower.endswith(".md") and not lower.startswith((FRONT_ROOT.lower(), BACK_ROOT.lower(), ".github/")):
+    # Documentation scripts and configuration are *not* necessarily inert.
+    if lower.startswith("docs/"):
+        return "docs_only" if lower.endswith((".md", ".mdx", ".txt", ".png", ".svg", ".jpg", ".jpeg", ".webp", ".pdf")) else "unknown"
+    if lower in ("readme.md", "contributing.md", "license", "changelog.md") or (lower.endswith(".md") and not lower.startswith((FRONT_ROOT.lower(), BACK_ROOT.lower(), ".github/"))):
         return "docs_only"
     if name.startswith(FRONT_ROOT):
         rel = name[len(FRONT_ROOT):]
