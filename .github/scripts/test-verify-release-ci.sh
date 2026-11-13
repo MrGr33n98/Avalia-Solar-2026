@@ -12,13 +12,29 @@ cat > "$TMP/bin/gh" <<'MOCK'
 set -euo pipefail
 [ "$1" = api ] || exit 2
 case "$2" in
+  *"actions/runs/42"|*"actions/runs/43")
+    if [ "$2" = "repos/$GITHUB_REPOSITORY/actions/runs/43" ]; then
+      jq -n '{id:43,head_sha:"sha-other",head_branch:"main",event:"push",status:"completed",conclusion:"success"}'
+    else
+      jq -n '{id:42,head_sha:"sha-test",head_branch:"main",event:"push",status:"completed",conclusion:"success"}'
+    fi
+    ;;
   *"ci-web-backend.yml/runs?head_sha="*)
-    if [ "$SCENARIO" = all_green ] || [ "$SCENARIO" = frontend_only_green ]; then
+    if [ "$SCENARIO" = ci_not_started ]; then
+      printf '%s\n' '{"workflow_runs":[]}'
+      exit 0
+    fi
+    if [ "$SCENARIO" = all_green ] || [ "$SCENARIO" = frontend_only_green ] || [ "$SCENARIO" = workflow_run_baseline ]; then
       conclusion=success
     else
       conclusion=failure
     fi
-    jq -n --arg c "$conclusion" '{workflow_runs: [{id: 42, run_number: 42, head_sha: "sha-test", head_branch: "main", event: "push", status: "completed", conclusion: $c}]}'
+    if [ "$SCENARIO" = ci_pending ]; then
+      status=in_progress
+    else
+      status=completed
+    fi
+    jq -n --arg c "$conclusion" --arg s "$status" '{workflow_runs: [{id: 42, run_number: 42, head_sha: "sha-test", head_branch: "main", event: "push", status: $s, conclusion: $c}]}'
     ;;
   *"actions/runs/84/jobs"*)
     if [ "$SCENARIO" = baseline_not_rspec ]; then
@@ -27,6 +43,15 @@ case "$2" in
       conclusion=failure
     fi
     jq -n --arg c "$conclusion" '{jobs:[{name:"Backend Unit Tests (RSpec)",status:"completed",conclusion:$c}]}'
+    ;;
+  *"actions/runs/900/jobs"*)
+    jq -n '{jobs:[{name:"deploy",status:"completed",conclusion:"skipped"}]}'
+    ;;
+  *"actions/runs/899/jobs"*)
+    jq -n '{jobs:[{name:"deploy",status:"completed",conclusion:"success"}]}'
+    ;;
+  *"actions/runs/950/jobs"*)
+    jq -n '{jobs:[{name:"Deploy frontend only",status:"completed",conclusion:"success"}]}'
     ;;
   *"actions/runs/42/jobs"*)
     jq -n --arg scenario "$SCENARIO" '
@@ -42,12 +67,21 @@ case "$2" in
   *"cd-production.yml/runs?branch="*)
     if [ "$SCENARIO" = no_baseline ]; then
       printf '%s\n' '{"workflow_runs":[]}'
+    elif [ "$SCENARIO" = workflow_run_baseline ]; then
+      jq -n '{workflow_runs:[
+        {id:900,head_sha:"sha-no-deploy",head_branch:"main",event:"workflow_run",conclusion:"success",created_at:"2026-11-11T05:00:00Z"},
+        {id:899,head_sha:"sha-old",head_branch:"main",event:"workflow_run",conclusion:"success",created_at:"2026-11-10T03:00:00Z"}
+      ]}'
     else
       printf '%s\n' '{"workflow_runs":[{"head_sha":"sha-old","head_branch":"main","event":"push","conclusion":"success","created_at":"2026-11-10T03:00:00Z"}]}'
     fi
     ;;
   *"cd-frontend-production.yml/runs?branch="*)
-    printf '%s\n' '{"workflow_runs":[]}'
+    if [ "$SCENARIO" = workflow_run_baseline ]; then
+      jq -n '{workflow_runs:[{id:950,head_sha:"sha-front-old",head_branch:"main",event:"workflow_run",conclusion:"success",created_at:"2026-11-09T03:00:00Z"}]}'
+    else
+      printf '%s\n' '{"workflow_runs":[]}'
+    fi
     ;;
   *"ci-web-backend.yml/runs?branch="*)
     if [ "$SCENARIO" = baseline_green ]; then
@@ -94,6 +128,13 @@ assert_gate() {
   local scenario="$1" expectation="$2" scope="${3:-full}"
   export SCENARIO="$scenario"
   export RELEASE_SCOPE="$scope"
+  if [ "$scenario" = ci_run_id_match ]; then
+    export CI_RUN_ID=42
+  elif [ "$scenario" = ci_run_id_mismatch ]; then
+    export CI_RUN_ID=43
+  else
+    unset CI_RUN_ID || true
+  fi
   if bash "$ROOT/.github/scripts/verify-release-ci.sh" >"$TMP/log" 2>&1; then
     outcome=pass
   else
@@ -108,11 +149,16 @@ assert_gate() {
 }
 
 assert_gate all_green pass
+assert_gate ci_run_id_match pass
+assert_gate ci_run_id_mismatch block
+assert_gate ci_not_started block
+assert_gate ci_pending block
 assert_gate frontend_only_legacy block
 assert_gate frontend_only_legacy pass frontend_only
 assert_gate schema_reconciliation block frontend_only
 assert_gate schema_reconciliation block full
 assert_gate frontend_only_green pass frontend_only
+assert_gate workflow_run_baseline pass frontend_only
 assert_gate backend_changed block
 assert_gate backend_changed block frontend_only
 assert_gate unsafe_workflow block

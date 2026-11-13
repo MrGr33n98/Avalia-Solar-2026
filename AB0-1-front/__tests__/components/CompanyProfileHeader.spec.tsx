@@ -20,6 +20,13 @@ jest.mock('next/image', () => ({
   default: ({ src, alt, className }: any) => (
     <img src={src} alt={alt || 'img'} className={className} />
   ),
+  getImageProps: ({ src }: { src: string }) => ({
+    props: {
+      src,
+      srcSet: `/_next/image?url=${encodeURIComponent(src)}&w=640&q=95 640w`,
+      sizes: '100vw',
+    },
+  }),
 }));
 
 jest.mock('@/app/companies/[id]/components/CompanyViewCounter', () => () => (

@@ -1,14 +1,10 @@
 name: CD — Production Deploy (DigitalOcean)
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI — Web & Backend (Quality & Tests)"]
+    types: [completed]
     branches: [main]
-    paths-ignore:
-      - 'AB0-1-front/**'
-      - '.github/workflows/cd-production.yml'
-      - '.github/workflows/cd-frontend-production.yml'
-      - '.github/scripts/verify-release-ci.sh'
-      - '.github/scripts/test-verify-release-ci.sh'
   workflow_dispatch:
 
 concurrency:
@@ -20,11 +16,75 @@ permissions:
   contents: read
 
 env:
-  RELEASE_SHA: ${{ github.sha }}
+  RELEASE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
+  verify-release:
+    name: Verify approved CI release
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    outputs:
+      release_scope: ${{ steps.classify.outputs.scope }}
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_SHA }}
+          fetch-depth: 0
+
+      - name: Validate release source
+        env:
+          RELEASE_SHA: ${{ env.RELEASE_SHA }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::SHA de release inválido."
+            exit 1
+          fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Deploy manual só é permitido a partir da main."
+            exit 1
+          fi
+          git fetch origin main --quiet
+          git merge-base --is-ancestor "$RELEASE_SHA" FETCH_HEAD || {
+            echo "::error::O SHA de release não pertence ao histórico atual da main."
+            exit 1
+          }
+
+      - name: Verify exact CI run for release SHA
+        id: classify
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ env.RELEASE_SHA }}
+          CI_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" != "workflow_run" ]; then
+            RELEASE_SCOPE=full bash .github/scripts/verify-release-ci.sh
+            echo "scope=full" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          frontend_log="$RUNNER_TEMP/frontend-scope-check.log"
+          full_log="$RUNNER_TEMP/full-scope-check.log"
+          if RELEASE_SCOPE=frontend_only bash .github/scripts/verify-release-ci.sh >"$frontend_log" 2>&1; then
+            cat "$frontend_log"
+            echo "scope=frontend_only" >> "$GITHUB_OUTPUT"
+          elif RELEASE_SCOPE=full bash .github/scripts/verify-release-ci.sh >"$full_log" 2>&1; then
+            cat "$full_log"
+            echo "scope=full" >> "$GITHUB_OUTPUT"
+          else
+            cat "$full_log" 2>/dev/null || cat "$frontend_log"
+            exit 1
+          fi
+
   build-and-push:
     runs-on: ubuntu-latest
+    needs: verify-release
+    if: needs.verify-release.outputs.release_scope == 'full'
     # Specific job permissions
     permissions:
       contents: read
@@ -106,6 +166,7 @@ jobs:
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache
             type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
 
       - name: Build Frontend Image
         if: matrix.component == 'frontend'
@@ -144,6 +205,7 @@ jobs:
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-frontend:cache
             type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
 
       - name: Push to GHCR or Stream to Production Host
         env:
@@ -177,6 +239,8 @@ jobs:
 
   zeitwerk-check:
     name: Zeitwerk & Boot Check
+    needs: verify-release
+    if: needs.verify-release.outputs.release_scope == 'full'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     services:
@@ -227,7 +291,8 @@ jobs:
 
   ranking-gate:
     name: Ranking Performance Gate
-    needs: [zeitwerk-check]
+    needs: [verify-release, zeitwerk-check]
+    if: needs.verify-release.outputs.release_scope == 'full'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -344,7 +409,8 @@ jobs:
 
   ranking-frontend-gate:
     name: Ranking Performance Frontend Contract
-    needs: [zeitwerk-check]
+    needs: [verify-release, zeitwerk-check]
+    if: needs.verify-release.outputs.release_scope == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -367,7 +433,8 @@ jobs:
         run: npx eslint app/dashboard/components/RankingPerformanceTab.tsx app/dashboard/components/ranking app/dashboard/components/MagicQuadrant.tsx
 
   deploy:
-    needs: [build-and-push, zeitwerk-check, ranking-gate, ranking-frontend-gate]
+    needs: [verify-release, build-and-push, zeitwerk-check, ranking-gate, ranking-frontend-gate]
+    if: needs.verify-release.outputs.release_scope == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment:
@@ -381,12 +448,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.RELEASE_SHA }}
-
-      - name: Verify CI Status
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_SHA: ${{ env.RELEASE_SHA }}
-        run: bash .github/scripts/verify-release-ci.sh
 
       - name: Validate Secrets
         run: |

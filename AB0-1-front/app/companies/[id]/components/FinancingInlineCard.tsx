@@ -85,7 +85,8 @@ export default function FinancingInlineCard({ company }: FinancingInlineCardProp
   const minTerm = profile?.min_term_months ?? 12;
   const maxTerm = profile?.max_term_months ?? 120;
 
-  const interestRate = profile?.default_interest_rate_monthly ?? 1.192;
+  const configuredInterestRate = Number(profile?.default_interest_rate_monthly ?? 1.192);
+  const interestRate = Number.isFinite(configuredInterestRate) ? configuredInterestRate : 1.192;
   const amortizationType = (profile?.amortization_type as AmortizationType) || 'price';
 
   // Estados locais dos controles
@@ -224,11 +225,12 @@ export default function FinancingInlineCard({ company }: FinancingInlineCardProp
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start pt-5">
           {/* Controle 1: Valor do projeto */}
           <div className="md:col-span-3 space-y-2">
-            <label className="text-xs font-semibold text-slate-600 block">
+            <label htmlFor="financing-project-amount" className="text-xs font-semibold text-slate-600 block">
               Valor do projeto
             </label>
             <div className="relative">
               <Input
+                id="financing-project-amount"
                 type="text"
                 value={isAmountEditing ? displayAmountText : formatCurrency(amount, currency)}
                 onChange={handleAmountChange}

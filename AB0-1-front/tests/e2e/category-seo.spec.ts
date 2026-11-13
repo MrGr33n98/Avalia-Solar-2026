@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('CDSI-019: Category HTTP & SSR SEO Semantics (E01-E06, E18)', () => {
-  test('E01: categoria ativa retorna HTTP 200, H1 único e canonical válida', async ({ page }) => {
+  test('@critical E01: categoria ativa retorna HTTP 200, H1 único e canonical válida', async ({
+    page,
+  }) => {
     const response = await page.goto('/categories/energia-solar-residencial');
     expect(response?.status()).toBe(200);
 
@@ -10,13 +12,10 @@ test.describe('CDSI-019: Category HTTP & SSR SEO Semantics (E01-E06, E18)', () =
     await expect(h1s.first()).not.toHaveText(/Categoria não encontrada/i);
 
     const canonical = page.locator('link[rel="canonical"]');
-    await expect(canonical).toHaveAttribute(
-      'href',
-      /\/categories\/energia-solar-residencial$/
-    );
+    await expect(canonical).toHaveAttribute('href', /\/categories\/energia-solar-residencial$/);
   });
 
-  test('E02: categoria inexistente retorna HTTP 404 real no documento inicial (nunca soft-404 200)', async ({
+  test('@critical E02: categoria inexistente retorna HTTP 404 real no documento inicial (nunca soft-404 200)', async ({
     page,
   }) => {
     const response = await page.goto('/categories/categoria-totalmente-inexistente-xyz-404');
@@ -28,9 +27,7 @@ test.describe('CDSI-019: Category HTTP & SSR SEO Semantics (E01-E06, E18)', () =
     page,
   }) => {
     for (const subroute of ['solutions', 'compare', 'matching']) {
-      const response = await page.goto(
-        `/categories/categoria-inexistente-xyz-404/${subroute}`
-      );
+      const response = await page.goto(`/categories/categoria-inexistente-xyz-404/${subroute}`);
       expect(response?.status()).toBe(404);
     }
   });
@@ -132,5 +129,3 @@ test.describe('CDSI-019: Category HTTP & SSR SEO Semantics (E01-E06, E18)', () =
     await expect(canonical).toHaveAttribute('href', /\/categories\/inversores-solares$/);
   });
 });
-
-

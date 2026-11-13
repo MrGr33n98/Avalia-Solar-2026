@@ -1,6 +1,9 @@
 name: CI — Web & Backend (Quality & Tests)
 
 on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
   push:
     branches: [ "main", "develop", "staging" ]
   pull_request:
@@ -36,6 +39,9 @@ jobs:
 
       - name: Validate production CI gate contract
         run: bash .github/scripts/test-verify-release-ci.sh
+
+      - name: Validate RSpec scope classifier
+        run: bash .github/scripts/test-classify-rspec-scope.sh
 
       # Ruby Setup
       - name: Setup Ruby
@@ -95,6 +101,8 @@ jobs:
     needs: fast-feedback
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    outputs:
+      rspec-scope: ${{ steps.rspec-scope.outputs.scope }}
     services:
       postgres:
         image: postgres:14
@@ -120,8 +128,15 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          fetch-depth: 0
+
+      - name: Determine RSpec scope
+        id: rspec-scope
+        run: bash .github/scripts/resolve-rspec-scope.sh
+
       - name: Setup Ruby
+        if: steps.rspec-scope.outputs.scope != 'none'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
@@ -129,21 +144,34 @@ jobs:
           working-directory: ./AB0-1-back
 
       - name: Run RSpec
+        if: steps.rspec-scope.outputs.scope != 'none'
         working-directory: ./AB0-1-back
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
           RAILS_ENV: test
           SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+          RSPEC_SCOPE: ${{ steps.rspec-scope.outputs.scope }}
+          RSPEC_FILES: ${{ steps.rspec-scope.outputs.specs }}
         run: |
           bundle exec rails db:create db:schema:load db:migrate
           bundle exec rails zeitwerk:check
           bundle exec rails runner script/schema_contract_check.rb
           bundle exec rails runner 'Group.limit(1).load; GroupMembership.limit(1).load; puts "GROUPS_SMOKE_OK"'
           RAILS_ENV=production DATABASE_URL=postgresql://postgres:postgres@localhost:5432/avaliasolar_test SECRET_KEY_BASE=ci-only-secret-key-base-not-for-production bundle exec rails runner 'puts "PRODUCTION_BOOT_OK"'
-          bundle exec rspec
+          if [[ "$RSPEC_SCOPE" == "full" ]]; then
+            bundle exec rspec
+          else
+            read -r -a spec_files <<< "$RSPEC_FILES"
+            bundle exec rspec "${spec_files[@]}"
+          fi
+
+      - name: Report RSpec skipped for unrelated changes
+        if: steps.rspec-scope.outputs.scope == 'none'
+        run: echo "RSpec completo dispensado; alterações sem impacto no backend. E2E e contratos críticos seguem obrigatórios."
 
   ranking-performance-gate:
     name: Ranking Performance Contract
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: fast-feedback
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -338,18 +366,42 @@ jobs:
   e2e-tests:
     name: E2E Playwright Tests
     needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate]
+    if: >-
+      ${{ !cancelled() &&
+          needs.fast-feedback.result == 'success' &&
+          needs.backend-tests.result == 'success' &&
+          needs.ranking-frontend-gate.result == 'success' &&
+          needs.category-seo-contract-gate.result == 'success' &&
+          (needs.ranking-performance-gate.result == 'success' ||
+           needs.ranking-performance-gate.result == 'skipped') }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 120 || 30 }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Buildx for shared Docker cache
+        uses: docker/setup-buildx-action@v3
+
+      - name: Expose GitHub Actions cache runtime
+        uses: crazy-max/ghaction-github-runtime@v3
+
       - name: Spin up Local Environment (Docker Compose)
+        env:
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'Password123' }}
         run: |
+          set -Eeuo pipefail
           export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
           export BETTER_AUTH_SECRET="$(openssl rand -hex 32)"
-          docker compose -f infra/docker/docker-compose.test.yml up --build -d
-          # Wait for services to be healthy
-          sleep 15
+          if ! docker compose -f infra/docker/docker-compose.test.yml up --build --wait --wait-timeout 300 -d; then
+            docker compose -f infra/docker/docker-compose.test.yml ps -a || true
+            frontend_id="$(docker compose -f infra/docker/docker-compose.test.yml ps -q frontend || true)"
+            if [ -n "$frontend_id" ]; then
+              docker inspect --format='Frontend health details: {{json .State.Health}}' "$frontend_id" || true
+            fi
+            docker compose -f infra/docker/docker-compose.test.yml logs --tail=200 || true
+            exit 1
+          fi
           docker compose -f infra/docker/docker-compose.test.yml ps
 
       - name: Setup Node for Playwright
@@ -363,7 +415,7 @@ jobs:
         working-directory: ./AB0-1-front
         run: |
           npm ci
-          npx playwright install --with-deps chromium webkit
+          npx playwright install --with-deps chromium
 
       - name: Validate authenticated Banner E2E credentials
         if: github.event_name == 'push'
@@ -379,15 +431,38 @@ jobs:
         working-directory: ./AB0-1-front
         run: npm run test:banners
 
-      - name: Run Playwright Tests
+      - name: Run critical release E2E (Chromium)
+        if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
         working-directory: ./AB0-1-front
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           E2E_CATEGORY_SLUG: energia-solar
           E2E_PLACEMENT_SMOKE: true
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'password123' }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'Password123' }}
+        # Bloqueia regressões nos fluxos centrais com o conjunto E2E crítico.
+        run: >-
+          npx playwright test --project=chromium
+          tests/e2e/auth-logout.spec.ts
+          tests/e2e/financing-wizard.spec.ts
+          tests/e2e/proposals-real-journey.spec.ts
+          && npx playwright test --project=chromium
+          tests/e2e/category-seo.spec.ts --grep @critical
+
+      - name: Run extended E2E suite (scheduled or manual)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        working-directory: ./AB0-1-front
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          E2E_CATEGORY_SLUG: energia-solar
+          E2E_PLACEMENT_SMOKE: true
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'Password123' }}
         run: npx playwright test
+
+      - name: Collect frontend and backend logs on E2E failure
+        if: failure()
+        run: docker compose -f infra/docker/docker-compose.test.yml logs --no-color --tail=250 backend frontend
 
       - name: Upload Playwright Report
         if: always()

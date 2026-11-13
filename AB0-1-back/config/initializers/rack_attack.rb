@@ -129,7 +129,13 @@ class Rack::Attack
 
   # Limitar tentativas de login por IP
   # Protege contra ataques de força bruta
-  throttle('logins/ip', limit: 5, period: 1.minute) do |req|
+  e2e_login_limit = if Rails.env.test? && ENV['E2E_TEST_MODE'] == 'true'
+                      ENV.fetch('E2E_LOGIN_THROTTLE_LIMIT', '5').to_i
+                    else
+                      5
+                    end
+
+  throttle('logins/ip', limit: e2e_login_limit, period: 1.minute) do |req|
     if req.path == '/api/v1/auth/login' && req.post?
       req.ip
     end
@@ -158,7 +164,7 @@ class Rack::Attack
 
   # Limitar tentativas de login por email
   # Previne ataques direcionados a contas específicas
-  throttle('logins/email', limit: 5, period: 20.seconds) do |req|
+  throttle('logins/email', limit: e2e_login_limit, period: 20.seconds) do |req|
     if req.path == '/api/v1/auth/login' && req.post?
       # Normalizar email (lowercase, sem espaços)
       req.params['email'].to_s.downcase.gsub(/\s+/, "")
