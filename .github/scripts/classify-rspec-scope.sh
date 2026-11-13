@@ -10,6 +10,9 @@ while IFS= read -r path; do
   case "$path" in
     AB0-1-back/script/prepare_e2e_user.rb)
       ;;
+    AB0-1-back/config/initializers/rack_attack.rb)
+      spec_files+=("spec/requests/rack_attack_spec.rb")
+      ;;
     AB0-1-back/spec/*)
       case "$path" in
         AB0-1-back/spec/rails_helper.rb|AB0-1-back/spec/spec_helper.rb|AB0-1-back/spec/factories/*|AB0-1-back/spec/support/*)

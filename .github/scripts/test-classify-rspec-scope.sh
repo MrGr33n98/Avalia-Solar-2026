@@ -20,6 +20,7 @@ assert_scope $'scope=changed\nspecs=spec/services/sales/import/contact_import_sp
 assert_scope $'scope=changed\nspecs=spec/models/company_spec.rb spec/requests/admin_companies_edit_spec.rb ' 'AB0-1-back/spec/models/company_spec.rb' 'AB0-1-back/spec/requests/admin_companies_edit_spec.rb'
 assert_scope $'scope=full\nspecs=' 'AB0-1-back/spec/support/auth_helpers.rb'
 assert_scope $'scope=none\nspecs=' 'AB0-1-back/script/prepare_e2e_user.rb'
+assert_scope $'scope=changed\nspecs=spec/requests/rack_attack_spec.rb ' 'AB0-1-back/config/initializers/rack_attack.rb'
 assert_scope $'scope=none\nspecs=' '.github/workflows/ci-web-backend.yml' 'AB0-1-front/app/page.tsx'
 
 printf 'Todos os cenários de escopo RSpec passaram.\n'
