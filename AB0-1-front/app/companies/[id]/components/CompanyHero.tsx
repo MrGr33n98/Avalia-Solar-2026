@@ -3,6 +3,7 @@
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
 import CompanyFreeBannerPlaceholder from './CompanyFreeBannerPlaceholder';
+import CompanyFluidBanner from './CompanyFluidBanner';
 import { resolveCompanyHeroBannerState } from '@/utils/company-banner';
 import { useRouter } from 'next/navigation';
 import { MessageCircle, Share2, ArrowLeft, MapPin, Star } from 'lucide-react';
@@ -192,11 +193,7 @@ export default function CompanyHero({
         {/* 1. HERO BANNER */}
         <div
           data-testid="company-hero-banner-frame"
-          className={
-            bannerState.kind === 'company-banner'
-              ? 'relative w-full aspect-[3/1] md:aspect-auto md:h-[200px] lg:h-[220px] xl:h-[230px] overflow-hidden rounded-t-2xl bg-white'
-              : 'relative w-full overflow-hidden rounded-t-2xl bg-white'
-          }
+          className="relative w-full overflow-hidden rounded-t-2xl bg-white"
         >
           {/* Institutional / fallback banners determine their own height; no letterboxing. */}
 
@@ -204,48 +201,13 @@ export default function CompanyHero({
           {bannerState.kind === 'free-plan-placeholder' ? (
             <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
           ) : bannerState.kind === 'company-banner' ? (
-            <>
-              {/* Mobile foreground - preenchido (cover) */}
-              <OptimizedImage
-                src={bannerState.src}
-                alt={company.name}
-                fill
-                priority
-                quality={90}
-                imageContext="company-banner"
-                entityName={company.name}
-                locationLabel={locationLabel}
-                objectFit="cover"
-                className="object-center object-cover"
-                containerClassName="relative z-10 h-full w-full md:hidden"
-                sizes="(max-width: 768px) 100vw, 1240px"
-                fallbackSrc="/assets/avalia-solar-banner-v3.webp"
-                useAspectRatio={false}
-                width={1600}
-                height={900}
-                onError={() => setBannerError(true)}
-              />
-              {/* Desktop foreground - preenchido (cover) */}
-              <OptimizedImage
-                src={bannerState.src}
-                alt={company.name}
-                fill
-                priority
-                quality={90}
-                imageContext="company-banner"
-                entityName={company.name}
-                locationLabel={locationLabel}
-                objectFit="cover"
-                className="object-center object-cover"
-                containerClassName="relative z-10 hidden md:block h-full w-full"
-                sizes="(min-width: 769px) 100vw, 1240px"
-                fallbackSrc="/assets/avalia-solar-banner-v3.webp"
-                useAspectRatio={false}
-                width={1600}
-                height={900}
-                onError={() => setBannerError(true)}
-              />
-            </>
+            <CompanyFluidBanner
+              src={bannerState.src}
+              alt={`Banner da empresa ${company.name}${locationLabel ? ` em ${locationLabel}` : ''} - Avalia Solar`}
+              priority
+              quality={90}
+              onError={() => setBannerError(true)}
+            />
           ) : (
             <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
           )}
