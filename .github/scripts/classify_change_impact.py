@@ -162,8 +162,10 @@ def make_plan(changes: Iterable[Change], *, base_sha: str | None = None, head_sh
             paths = [item.path] + ([item.old_path] if item.old_path else [])
             if item.status.startswith(("R", "C")):
                 reasons.add("RENAMED_OR_COPIED_PATH")
+                areas.add("unknown")  # Safest until rename dependency coverage is proven.
             if item.status.startswith(("D", "T", "U", "X", "B")):
                 reasons.add("DELETED_OR_UNMERGED_FILE")
+                areas.add("unknown")  # Deletions can invalidate test ownership mappings.
             for path in paths:
                 try:
                     areas.add(classify_path(path))
