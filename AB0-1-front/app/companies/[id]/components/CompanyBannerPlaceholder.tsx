@@ -5,8 +5,8 @@ interface CompanyBannerPlaceholderProps {
 }
 
 /**
- * Fallback art direction for profiles that do not yet have a custom cover.
- * A <picture> lets the browser download exactly one of the two creatives.
+ * Institutional fallback uses the same intrinsic ratio as the default free
+ * banner. No fixed-height wrapper, background blur or decorative fade.
  */
 export default function CompanyBannerPlaceholder({
   alt,
@@ -14,15 +14,13 @@ export default function CompanyBannerPlaceholder({
   priority = false,
 }: CompanyBannerPlaceholderProps) {
   return (
-    <picture className="block h-full w-full">
-      <source
-        media="(max-width: 639px)"
-        srcSet="/assets/avalia-solar-banner-v3.webp"
-      />
+    <picture className="block w-full">
       <img
         src="/assets/avalia-solar-banner-v3.webp"
+        width={1024}
+        height={191}
         alt={alt}
-        className={`h-full w-full object-cover object-center ${className}`}
+        className={`block h-auto w-full ${className}`}
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}
         decoding="async"

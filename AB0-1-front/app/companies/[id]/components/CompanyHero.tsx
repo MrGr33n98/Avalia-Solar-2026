@@ -3,6 +3,7 @@
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
 import CompanyFreeBannerPlaceholder from './CompanyFreeBannerPlaceholder';
+import CompanyFluidBanner from './CompanyFluidBanner';
 import { resolveCompanyHeroBannerState } from '@/utils/company-banner';
 import { useRouter } from 'next/navigation';
 import { MessageCircle, Share2, ArrowLeft, MapPin, Star } from 'lucide-react';
@@ -190,72 +191,26 @@ export default function CompanyHero({
         className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
       >
         {/* 1. HERO BANNER */}
-        <div className="relative w-full aspect-[3/1] md:aspect-auto md:h-[200px] lg:h-[220px] xl:h-[230px] overflow-hidden rounded-t-2xl bg-slate-950">
-          {/* Mobile mantém 3:1; desktop limita altura para preservar primeira dobra. */}
-          {/* Background Blur Fill Layer (Mobile only) */}
-          {bannerState.kind === 'company-banner' && (
-            <OptimizedImage
-              src={bannerState.src}
-              alt=""
-              fill
-              aria-hidden="true"
-              className="object-cover opacity-40 blur-xl scale-110"
-              containerClassName="absolute inset-0 h-full w-full pointer-events-none md:hidden"
-            />
-          )}
+        <div
+          data-testid="company-hero-banner-frame"
+          className="relative w-full overflow-hidden rounded-t-2xl bg-white"
+        >
+          {/* Institutional / fallback banners determine their own height; no letterboxing. */}
 
           {/* Banner Image */}
           {bannerState.kind === 'free-plan-placeholder' ? (
             <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
           ) : bannerState.kind === 'company-banner' ? (
-            <>
-              {/* Mobile foreground - preenchido (cover) */}
-              <OptimizedImage
-                src={bannerState.src}
-                alt={company.name}
-                fill
-                priority
-                quality={90}
-                imageContext="company-banner"
-                entityName={company.name}
-                locationLabel={locationLabel}
-                objectFit="cover"
-                className="object-center object-cover"
-                containerClassName="relative z-10 h-full w-full md:hidden"
-                sizes="(max-width: 768px) 100vw, 1240px"
-                fallbackSrc="/assets/avalia-solar-banner-v3.webp"
-                useAspectRatio={false}
-                width={1600}
-                height={900}
-                onError={() => setBannerError(true)}
-              />
-              {/* Desktop foreground - preenchido (cover) */}
-              <OptimizedImage
-                src={bannerState.src}
-                alt={company.name}
-                fill
-                priority
-                quality={90}
-                imageContext="company-banner"
-                entityName={company.name}
-                locationLabel={locationLabel}
-                objectFit="cover"
-                className="object-center object-cover"
-                containerClassName="relative z-10 hidden md:block h-full w-full"
-                sizes="(min-width: 769px) 100vw, 1240px"
-                fallbackSrc="/assets/avalia-solar-banner-v3.webp"
-                useAspectRatio={false}
-                width={1600}
-                height={900}
-                onError={() => setBannerError(true)}
-              />
-            </>
+            <CompanyFluidBanner
+              src={bannerState.src}
+              alt={`Banner da empresa ${company.name}${locationLabel ? ` em ${locationLabel}` : ''} - Avalia Solar`}
+              priority
+              quality={90}
+              onError={() => setBannerError(true)}
+            />
           ) : (
             <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
           )}
-
-          {/* Overlay sutil — apenas para transição visual, sem texto sobreposto */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
 
           {showTechnicalPlaceholder && (
             <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">

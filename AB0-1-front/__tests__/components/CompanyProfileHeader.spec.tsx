@@ -296,8 +296,8 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
     });
   });
 
-  describe('CompanyPremiumHero — Proporção do Banner (-12% altura)', () => {
-    it('aplica aspect-[3.4/1] no mobile e alturas compactas no desktop (md:h-[176px])', () => {
+  describe('CompanyPremiumHero — Banner responsivo sem cortes', () => {
+    it('usa imagem fluida e nenhuma altura forçada no mobile ou desktop', () => {
       render(
         <CompanyPremiumHero
           company={mockCompanyVerified}
@@ -308,13 +308,16 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
       );
 
       const bannerContainer = document.getElementById('company-premium-hero')?.firstElementChild;
-      expect(bannerContainer).toHaveClass(
+      expect(bannerContainer).toHaveClass('relative', 'w-full');
+      expect(bannerContainer).not.toHaveClass(
         'aspect-[3.4/1]',
         'md:aspect-auto',
         'md:h-[176px]',
         'lg:h-[194px]',
         'xl:h-[202px]'
       );
+      expect(bannerContainer?.querySelector('[class*="bg-gradient-to-t"]')).not.toBeInTheDocument();
+      expect(bannerContainer?.querySelector('[class*="blur-xl"]')).not.toBeInTheDocument();
     });
   });
 
