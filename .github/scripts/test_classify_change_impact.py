@@ -78,6 +78,11 @@ class PolicyContract(unittest.TestCase):
     def test_css_canary_is_only_for_isolated_module_css_changes(self):
         approved = ci.make_plan([ci.Change("M", "AB0-1-front/components/cards/Card.module.css")])
         self.assertTrue(approved["css_canary_eligible"])
+        two_modules = ci.make_plan([
+            ci.Change("M", "AB0-1-front/components/cards/Card.module.css"),
+            ci.Change("A", "AB0-1-front/components/cards/Compact.module.css"),
+        ])
+        self.assertTrue(two_modules["css_canary_eligible"])
         for change in [
             ci.Change("M", "AB0-1-front/app/globals.css"),
             ci.Change("M", "AB0-1-front/components/AuthModal.module.css"),
