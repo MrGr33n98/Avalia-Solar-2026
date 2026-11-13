@@ -3,9 +3,8 @@
 import Image, { getImageProps } from 'next/image';
 import { useState } from 'react';
 
-const FREE_COMPANY_BANNER_SRC = '/assets/avalia-solar-banner-placeholder.png';
-const MOBILE_COMPANY_BANNER_SRC =
-  '/assets/avalia-solar-icon-pack/evalia-solar-banner-v2-mobile.png';
+const FREE_COMPANY_BANNER_SRC = '/assets/avalia-solar-banner-v3.webp';
+const MOBILE_COMPANY_BANNER_SRC = '/assets/avalia-solar-banner-v3.webp';
 const IMAGE_FALLBACK_SRC = '/images/placeholder.png';
 
 export default function CompanyFreeBannerPlaceholder({

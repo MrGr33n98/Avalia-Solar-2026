@@ -61,7 +61,7 @@ import json, sys
 with open(sys.argv[1], encoding="utf-8") as f:
     plan = json.load(f)
 with open(sys.argv[2], "a", encoding="utf-8") as out:
-    for key in ("release_scope", "risk", "fallback"):
+    for key in ("release_scope", "risk", "fallback", "css_canary_eligible"):
         value = plan[key]
         out.write("{}={}\n".format(key, str(value).lower() if isinstance(value, bool) else value))
 PY

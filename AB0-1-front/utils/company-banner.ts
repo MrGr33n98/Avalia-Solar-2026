@@ -2,7 +2,7 @@ import type { Company } from '@/lib/api';
 import { isFeatureEnabled } from '@/lib/feature-access';
 import { getFullImageUrl } from '@/utils/image';
 
-export const COMPANY_BANNER_FALLBACK_SRC = '/images/avalia-solar-banner-placeholder-v1.png';
+export const COMPANY_BANNER_FALLBACK_SRC = '/assets/avalia-solar-banner-v3.webp';
 const LEGACY_COMPANY_BANNER_PLACEHOLDERS = [
   '/images/banner-avalia-solar.png',
   'banner-avalia-solar.png',

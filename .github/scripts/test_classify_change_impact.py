@@ -75,6 +75,27 @@ class PolicyContract(unittest.TestCase):
                 self.assertTrue(plan["advisory_only"])
                 self.assertEqual(plan["test_plan"]["required_gate"], "build")
 
+    def test_css_canary_is_only_for_isolated_module_css_changes(self):
+        approved = ci.make_plan([ci.Change("M", "AB0-1-front/components/cards/Card.module.css")])
+        self.assertTrue(approved["css_canary_eligible"])
+        two_modules = ci.make_plan([
+            ci.Change("M", "AB0-1-front/components/cards/Card.module.css"),
+            ci.Change("A", "AB0-1-front/components/cards/Compact.module.css"),
+        ])
+        self.assertTrue(two_modules["css_canary_eligible"])
+        for change in [
+            ci.Change("M", "AB0-1-front/app/globals.css"),
+            ci.Change("M", "AB0-1-front/components/AuthModal.module.css"),
+            ci.Change("M", "AB0-1-front/app/companies/[id]/claim/page.module.css"),
+            ci.Change("M", "AB0-1-front/components/cards/Card.tsx"),
+            ci.Change("D", "AB0-1-front/components/cards/Card.module.css"),
+            ci.Change("R100", "AB0-1-front/components/cards/Other.module.css", "AB0-1-front/components/cards/Card.module.css"),
+        ]:
+            with self.subTest(path=change.path, status=change.status):
+                self.assertFalse(ci.make_plan([change])["css_canary_eligible"])
+        mixed = ci.make_plan([ci.Change("M", "AB0-1-front/components/cards/Card.module.css"), ci.Change("M", "README.md")])
+        self.assertFalse(mixed["css_canary_eligible"])
+
     def test_mixed_frontend_backend_uses_union_and_full_release(self):
         plan = ci.make_plan([
             ci.Change("M", "AB0-1-front/components/cards/Card.module.css"),

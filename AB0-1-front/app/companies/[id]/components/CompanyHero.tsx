@@ -223,7 +223,7 @@ export default function CompanyHero({
                 className="object-center object-cover"
                 containerClassName="relative z-10 h-full w-full md:hidden"
                 sizes="(max-width: 768px) 100vw, 1240px"
-                fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
+                fallbackSrc="/assets/avalia-solar-banner-v3.webp"
                 useAspectRatio={false}
                 width={1600}
                 height={900}
@@ -243,7 +243,7 @@ export default function CompanyHero({
                 className="object-center object-cover"
                 containerClassName="relative z-10 hidden md:block h-full w-full"
                 sizes="(min-width: 769px) 100vw, 1240px"
-                fallbackSrc="/assets/avalia-solar-icon-pack/avalia-solar-banner-v2.png"
+                fallbackSrc="/assets/avalia-solar-banner-v3.webp"
                 useAspectRatio={false}
                 width={1600}
                 height={900}

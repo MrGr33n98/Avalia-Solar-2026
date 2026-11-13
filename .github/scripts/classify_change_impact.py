@@ -15,7 +15,7 @@ from pathlib import PurePosixPath
 from typing import Iterable
 
 SCHEMA_VERSION = "1.0"
-POLICY_VERSION = "2026-q4-shadow-1"
+POLICY_VERSION = "2026-q4-canary-1"
 MAX_CHANGES = 500
 VALID_SHA = re.compile(r"^[a-f0-9]{40}$")
 FRONT_ROOT = "AB0-1-front/"
@@ -206,6 +206,15 @@ def make_plan(changes: Iterable[Change], *, base_sha: str | None = None, head_sh
         release = "full"
     rspec = "full" if areas & {"backend_admin", "backend_api", "backend_critical", "ci_infra", "unknown"} else "changed" if "backend_spec" in areas else "none"
     e2e = "critical" if high or backend else "affected" if frontend else "none"
+    css_canary_eligible = (
+        forced_reason is None and bool(items) and areas == {"frontend_style"}
+        and all(
+            item.status in ("A", "M")
+            and item.path.startswith("AB0-1-front/components/")
+            and item.path.endswith(".module.css")
+            for item in items
+        )
+    )
     plan = {
         "schema_version": SCHEMA_VERSION,
         "policy_version": POLICY_VERSION,
@@ -226,6 +235,7 @@ def make_plan(changes: Iterable[Change], *, base_sha: str | None = None, head_sh
         "reason_codes": sorted(reasons),
         "fallback": "unknown" in areas,
         "advisory_only": True,
+        "css_canary_eligible": css_canary_eligible,
         "changed_files_count": len(items),
     }
     return plan
@@ -246,7 +256,7 @@ def main() -> None:
         print("")
         print("| Field | Decision |")
         print("| --- | --- |")
-        for key in ("policy_version", "risk", "release_scope", "fallback", "changed_files_count"):
+        for key in ("policy_version", "risk", "release_scope", "css_canary_eligible", "fallback", "changed_files_count"):
             print(f"| {key} | {plan[key]} |")
         print(f"| changed_areas | {', '.join(plan['changed_areas'])} |")
         print(f"| reason_codes | {', '.join(plan['reason_codes'])} |")
