@@ -100,27 +100,60 @@ o CI falhar.
 
 ## Medição depois das mudanças
 
-A PR draft #99 executou o primeiro CI real, mas a validação E2E parou antes dos
-testes: qualidade/segurança passou em 2,37 min; contrato frontend de ranking em
-1,75 min; RSpec em 3,52 min. O Compose gastou 5,90 min e falhou porque o container
-frontend ficou `unhealthy` após cerca de 45 s de inicialização. DB, Redis e backend
-ficaram saudáveis. Não houve tempo de Playwright crítico medido nesse run. O
-healthcheck frontend do Compose de teste não tinha `start_period`; foi alinhado a
-180 s, como em produção, e a falha agora deve imprimir `ps` e logs dos serviços.
+No CI do PR #99, run #837 (13/11/2026, SHA `04271ae5`), o workflow concluiu
+com sucesso em **7 min 36 s**. A fila observada foi zero. Os jobs medidos foram:
 
-Ainda sem comparação “depois” válida: o Playwright crítico precisa concluir em um
-run real antes de calcular melhoria percentual. Não apresentar uma meta como
-resultado. Após a execução seguinte, preencher:
+| Etapa | Duração observada |
+|---|---:|
+| Qualidade e segurança / fast feedback | 2 min 22 s |
+| RSpec seletivo (job) | 1 min 31 s |
+| RSpec (21 exemplos, 0 falhas) | ~7 s |
+| Contratos de ranking e categoria | 1 min 21 s cada, paralelos |
+| E2E crítico (job completo) | 3 min 34 s |
+| `docker compose up --wait` no E2E | 1 min 30 s |
+| Instalação do Chromium | 49 s |
+| Playwright crítico | 20 s |
 
-| Métrica | Antes observado | Depois | Melhoria |
+O `docker compose up --wait` observado ficou 71% abaixo do setup de 5 min 10 s
+na execução de referência cancelada. Esta comparação é apenas entre dois steps
+de runs diferentes (um cancelado e outro bem-sucedido); runners, cache e carga
+podem diferir. O CI de 7:36 não demonstra redução contra o p50 histórico de 7:03
+das falhas: é um único run bem-sucedido e a comparação mistura resultados distintos.
+O E2E crítico não existia como categoria separada antes; não há percentual “antes/depois”.
+
+O run #837 veio antes das alterações backend-only descritas nesta revisão. Nenhum
+build de imagem ou CD de produção foi executado para validar as mudanças mais
+recentes; não houve deploy bem-sucedido na janela histórica. Portanto, builds,
+migrations, download de imagens, health checks de produção, rollback e lead time
+de produção continuam **não medidos depois**. A PR draft #99 ainda exige um run
+GitHub Actions após a atualização desta branch.
+
+| Métrica | Antes observado | Depois observado | Melhoria comprovada |
 |---|---:|---:|---:|
-| CI (falhas concluídas) | p50 7,03 min; p95 8,55 min | Pendente | Pendente |
-| Playwright completo | 48,15 min até cancelamento | Pendente (execução agendada/manual) | Pendente |
-| Playwright crítico | Não existia como categoria separada | Pendente | Pendente |
-| Build frontend | 5,47 min | Pendente | Pendente |
-| Build backend | 1,07 min | Pendente | Pendente |
-| Deploy | Sem sucesso na amostra; polling 30,77 min | Pendente | Pendente |
-| Lead time de produção | Sem deploy bem-sucedido na amostra | Pendente | Pendente |
+| CI | Falhas: p50 7,03 min; p95 8,55 min | Um sucesso: 7,60 min | Não comprovada |
+| Playwright completo | 48,15 min até cancelamento | Pendente (execução agendada/manual) | Não comprovada |
+| Playwright crítico | Não havia categoria separada | 20 s de Playwright; job E2E 3,57 min | Sem baseline equivalente |
+| Build frontend | 5,47 min | Não executado | Pendente |
+| Build backend | 1,07 min | Não executado | Pendente |
+| Publicação de imagens | Segundos por imagem no run de referência | Não executada | Pendente |
+| Deploy | Sem sucesso; polling 30,77 min | Não executado | Pendente |
+| Tempo total até produção | Sem deploy bem-sucedido na amostra | Não medido | Pendente |
+| Lead time de produção | Sem deploy bem-sucedido na amostra | Não medido | Pendente |
+
+Fluxo-alvo após as alterações atuais:
+
+```mermaid
+flowchart LR
+  A[CI termina para SHA exato na main] --> B[workflow_run valida SHA e escopo]
+  B --> C{Escopo}
+  C -->|frontend-only| D[Build frontend e atualiza só frontend]
+  C -->|backend-only| E[Build backend; migrations; backend e worker]
+  C -->|full| F[Build backend + frontend em paralelo]
+  F --> G[Migrations, serviços e smoke tests]
+  D --> H[Health check e rollback]
+  E --> H
+  G --> H
+```
 
 ## Riscos e validação
 

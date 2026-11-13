@@ -69,10 +69,14 @@ jobs:
           fi
 
           frontend_log="$RUNNER_TEMP/frontend-scope-check.log"
+          backend_log="$RUNNER_TEMP/backend-scope-check.log"
           full_log="$RUNNER_TEMP/full-scope-check.log"
           if RELEASE_SCOPE=frontend_only bash .github/scripts/verify-release-ci.sh >"$frontend_log" 2>&1; then
             cat "$frontend_log"
             echo "scope=frontend_only" >> "$GITHUB_OUTPUT"
+          elif RELEASE_SCOPE=backend_only bash .github/scripts/verify-release-ci.sh >"$backend_log" 2>&1; then
+            cat "$backend_log"
+            echo "scope=backend_only" >> "$GITHUB_OUTPUT"
           elif RELEASE_SCOPE=full bash .github/scripts/verify-release-ci.sh >"$full_log" 2>&1; then
             cat "$full_log"
             echo "scope=full" >> "$GITHUB_OUTPUT"
@@ -84,7 +88,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     needs: verify-release
-    if: needs.verify-release.outputs.release_scope == 'full'
+    if: needs.verify-release.outputs.release_scope == 'full' || (needs.verify-release.outputs.release_scope == 'backend_only' && matrix.component == 'backend')
     # Specific job permissions
     permissions:
       contents: read
@@ -240,7 +244,7 @@ jobs:
   zeitwerk-check:
     name: Zeitwerk & Boot Check
     needs: verify-release
-    if: needs.verify-release.outputs.release_scope == 'full'
+    if: needs.verify-release.outputs.release_scope == 'full' || needs.verify-release.outputs.release_scope == 'backend_only'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     services:
@@ -292,7 +296,7 @@ jobs:
   ranking-gate:
     name: Ranking Performance Gate
     needs: [verify-release, zeitwerk-check]
-    if: needs.verify-release.outputs.release_scope == 'full'
+    if: needs.verify-release.outputs.release_scope == 'full' || needs.verify-release.outputs.release_scope == 'backend_only'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -410,7 +414,7 @@ jobs:
   ranking-frontend-gate:
     name: Ranking Performance Frontend Contract
     needs: [verify-release, zeitwerk-check]
-    if: needs.verify-release.outputs.release_scope == 'full'
+    if: needs.verify-release.outputs.release_scope == 'full' || needs.verify-release.outputs.release_scope == 'backend_only'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -434,7 +438,7 @@ jobs:
 
   deploy:
     needs: [verify-release, build-and-push, zeitwerk-check, ranking-gate, ranking-frontend-gate]
-    if: needs.verify-release.outputs.release_scope == 'full'
+    if: needs.verify-release.outputs.release_scope == 'full' || needs.verify-release.outputs.release_scope == 'backend_only'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment:
@@ -467,6 +471,7 @@ jobs:
           DOCKER_USER: ${{ github.actor }}
           DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_SHA: ${{ env.RELEASE_SHA }}
+          DEPLOY_SCOPE: ${{ needs.verify-release.outputs.release_scope }}
           GH_REPOSITORY: ${{ github.repository }}
           PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
           WORKER_SERVICE: ${{ vars.WORKER_SERVICE || 'worker' }}
@@ -479,9 +484,14 @@ jobs:
           port: ${{ secrets.SSH_PORT || '22' }}
           command_timeout: 30m
           script_stop: false
-          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY,PRODUCTION_DEPLOY_DIR,WORKER_SERVICE,GROUPS_ENABLED,NEXT_PUBLIC_GROUPS_ENABLED
+          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,DEPLOY_SCOPE,GH_REPOSITORY,PRODUCTION_DEPLOY_DIR,WORKER_SERVICE,GROUPS_ENABLED,NEXT_PUBLIC_GROUPS_ENABLED
           script: |
             set -Eeuo pipefail
+
+            if [ "$DEPLOY_SCOPE" != "full" ] && [ "$DEPLOY_SCOPE" != "backend_only" ]; then
+              echo "!! ERRO: escopo de deploy inesperado: $DEPLOY_SCOPE"
+              exit 1
+            fi
 
             DEPLOY_DIR="${PRODUCTION_DEPLOY_DIR:-${HOME:-}/Avalia-Solar-2026}"
             REPOSITORY_URL="git@github.com:${GH_REPOSITORY}.git"
@@ -513,6 +523,7 @@ jobs:
             git reset --hard "$GIT_SHA"
 
             # Desativar temporariamente o modo estrito para que falhas do Nginx (opcional) nao quebrem o deploy
+            if [ "$DEPLOY_SCOPE" = "full" ]; then
             set +e
             set +o pipefail
 
@@ -620,6 +631,7 @@ jobs:
             # Reativar modo estrito para o deploy principal
             set -e
             set -o pipefail
+            fi
 
             echo "?? Login temporario no GitHub Container Registry (ghcr.io)..."
             if [ -z "$DOCKER_USER" ] || [ -z "$DOCKER_TOKEN" ]; then
@@ -640,7 +652,16 @@ jobs:
             BACKEND_REPO="ghcr.io/${REPO_LOWER}-backend"
             FRONTEND_REPO="ghcr.io/${REPO_LOWER}-frontend"
             BACKEND_IMAGE="${BACKEND_REPO}:${GIT_SHA}"
-            FRONTEND_IMAGE="${FRONTEND_REPO}:${GIT_SHA}"
+            if [ "$DEPLOY_SCOPE" = "full" ]; then
+              FRONTEND_IMAGE="${FRONTEND_REPO}:${GIT_SHA}"
+            else
+              FRONTEND_IMAGE="$(docker inspect --format='{{.Config.Image}}' ab0-frontend 2>/dev/null || true)"
+              if [ -z "$FRONTEND_IMAGE" ] || ! docker image inspect "$FRONTEND_IMAGE" >/dev/null 2>&1; then
+                echo "!! ERRO: não foi possível identificar a imagem frontend atualmente ativa"
+                exit 1
+              fi
+              echo "Preservando frontend ativo: $FRONTEND_IMAGE"
+            fi
             BACKEND_ROLLBACK_IMAGE="${BACKEND_REPO}:rollback"
             FRONTEND_ROLLBACK_IMAGE="${FRONTEND_REPO}:rollback"
             export BACKEND_IMAGE FRONTEND_IMAGE
@@ -673,10 +694,12 @@ jobs:
             else
               docker pull -q "$BACKEND_IMAGE"
             fi
-            if docker image inspect "$FRONTEND_IMAGE" >/dev/null 2>&1; then
-              echo "?? Imagem frontend ja carregada localmente no host ($FRONTEND_IMAGE)"
-            else
-              docker pull -q "$FRONTEND_IMAGE"
+            if [ "$DEPLOY_SCOPE" = "full" ]; then
+              if docker image inspect "$FRONTEND_IMAGE" >/dev/null 2>&1; then
+                echo "?? Imagem frontend ja carregada localmente no host ($FRONTEND_IMAGE)"
+              else
+                docker pull -q "$FRONTEND_IMAGE"
+              fi
             fi
 
             FREE_KB=$(df / --output=avail | tail -1 | tr -d ' ')
@@ -692,7 +715,9 @@ jobs:
             echo "?? Removendo containers fantasma com nomes duplicados..."
             # Docker Compose v1 pode deixar containers com nomes hash-prefixados
             # que bloqueiam a criacao de novos containers com o mesmo nome base.
-            for SVC_NAME in ab0-postgres ab0-redis ab0-backend ab0-frontend ab0-worker; do
+            GHOST_SERVICES="ab0-postgres ab0-redis ab0-backend ab0-worker"
+            if [ "$DEPLOY_SCOPE" = "full" ]; then GHOST_SERVICES="$GHOST_SERVICES ab0-frontend"; fi
+            for SVC_NAME in $GHOST_SERVICES; do
               # Encontra containers cujo nome contem o nome do servico mas tem prefixo de hash
               GHOST_IDS=$(docker ps -a --filter "name=${SVC_NAME}" --format '{{.ID}} {{.Names}}' | awk -v name="${SVC_NAME}" '$2 != name {print $1}' || true)
               if [ -n "$GHOST_IDS" ]; then
@@ -737,7 +762,7 @@ jobs:
                 docker compose up -d --no-deps --no-build backend
                 wait_for_health backend 90
               fi
-              if docker image inspect "$FRONTEND_ROLLBACK_IMAGE" >/dev/null 2>&1; then
+              if [ "$DEPLOY_SCOPE" = "full" ] && docker image inspect "$FRONTEND_ROLLBACK_IMAGE" >/dev/null 2>&1; then
                 export FRONTEND_IMAGE="$FRONTEND_ROLLBACK_IMAGE"
                 docker compose up -d --no-deps --no-build frontend
                 wait_for_health frontend 90
@@ -836,14 +861,22 @@ jobs:
               rollback_apps
               exit 1
             fi
+            if [ "$(docker inspect --format='{{.Config.Image}}' ab0-backend)" != "$BACKEND_IMAGE" ]; then
+              echo "!! ERRO: o backend ativo não corresponde à imagem imutável esperada"
+              rollback_apps
+              exit 1
+            fi
 
+            if [ "$DEPLOY_SCOPE" = "full" ]; then
             echo "?? Atualizando frontend..."
             docker compose up -d --no-deps --no-build frontend
             if ! wait_for_health frontend 90; then
               rollback_apps
               exit 1
             fi
+            fi
 
+            if [ "$DEPLOY_SCOPE" = "full" ]; then
             echo "?? Validando HTML da homepage no frontend recém-iniciado..."
             FRONTEND_CID=$(docker compose ps -q frontend)
             if ! docker exec "$FRONTEND_CID" node -e '
@@ -858,6 +891,7 @@ jobs:
               echo "!! Homepage não contém a faixa CADASTRAR; executando rollback."
               rollback_apps
               exit 1
+            fi
             fi
 
             echo "?? Atualizando $WORKER_SERVICE somente apos os health checks..."
@@ -915,6 +949,7 @@ jobs:
               exit 1
             fi
 
+            if [ "$DEPLOY_SCOPE" = "full" ]; then
             echo "?? Reconciliando contas Zoho Mail conectadas e disparando sincronizacao (Fase 3)..."
             docker compose exec -T backend bundle exec rails runner '
               Sales::EmailAccount.where(provider: "zoho").find_each do |a|
@@ -929,6 +964,7 @@ jobs:
                 puts({ account_id: a.id, email: a.email, connection_status: a.connection_status, sync_status: a.sync_status, last_synced_at: a.last_synced_at, messages_imported: a.messages_imported, stored_messages: stored_msgs, stored_threads: stored_threads }.to_json)
               end
             ' || true
+            fi
 
             mkdir -p .deploy
             printf 'GIT_SHA=%s\nBACKEND_IMAGE=%s\nFRONTEND_IMAGE=%s\n' "$GIT_SHA" "$BACKEND_IMAGE" "$FRONTEND_IMAGE" > .deploy/current.env.tmp
@@ -940,6 +976,7 @@ jobs:
             echo "?? Deploy finalizado com sucesso!"
 
       - name: Verify public homepage release
+        if: needs.verify-release.outputs.release_scope == 'full'
         env:
           RELEASE_SHA: ${{ env.RELEASE_SHA }}
         run: |
