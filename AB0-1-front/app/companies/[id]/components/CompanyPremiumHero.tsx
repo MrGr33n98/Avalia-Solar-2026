@@ -1,6 +1,6 @@
 'use client';
 
-import { OptimizedImage } from '@/components/ui/optimized-image';
+import CompanyFluidBanner from './CompanyFluidBanner';
 import { Company } from '@/lib/api';
 import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
 import CompanyFreeBannerPlaceholder from './CompanyFreeBannerPlaceholder';
@@ -31,11 +31,7 @@ export default function CompanyPremiumHero({
     >
       <div
         data-testid="company-premium-banner-frame"
-        className={
-          bannerState.kind === 'company-banner'
-            ? 'relative w-full aspect-[3.4/1] md:aspect-auto md:h-[176px] lg:h-[194px] xl:h-[202px]'
-            : 'relative w-full'
-        }
+        className="relative w-full"
       >
         {/* Institutional / fallback banners retain their intrinsic height on every viewport. */}
         {bannerState.kind === 'free-plan-placeholder' ? (
@@ -45,48 +41,13 @@ export default function CompanyPremiumHero({
             desktopCover
           />
         ) : bannerState.kind === 'company-banner' ? (
-          <>
-            {/* Mobile foreground - enquadrado (contain) */}
-            <OptimizedImage
-              src={bannerState.src}
-              alt={company.name}
-              fill
-              priority
-              quality={95}
-              imageContext="company-banner"
-              entityName={company.name}
-              locationLabel={locationLabel}
-              objectFit="contain"
-              className="object-center object-contain"
-              containerClassName="relative z-10 h-full w-full md:hidden"
-              sizes="(max-width: 768px) 100vw, 1240px"
-              fallbackSrc="/assets/avalia-solar-banner-v3.webp"
-              useAspectRatio={false}
-              width={1600}
-              height={900}
-              onError={() => setBannerError(true)}
-            />
-            {/* Desktop foreground - preenchido (cover) */}
-            <OptimizedImage
-              src={bannerState.src}
-              alt={company.name}
-              fill
-              priority
-              quality={95}
-              imageContext="company-banner"
-              entityName={company.name}
-              locationLabel={locationLabel}
-              objectFit="cover"
-              className="object-center object-cover"
-              containerClassName="relative z-10 hidden md:block h-full w-full"
-              sizes="(min-width: 769px) 100vw, 1240px"
-              fallbackSrc="/assets/avalia-solar-banner-v3.webp"
-              useAspectRatio={false}
-              width={1600}
-              height={900}
-              onError={() => setBannerError(true)}
-            />
-          </>
+          <CompanyFluidBanner
+            src={bannerState.src}
+            alt={`Banner da empresa ${company.name}${locationLabel ? ` em ${locationLabel}` : ''} - Avalia Solar`}
+            priority
+            quality={95}
+            onError={() => setBannerError(true)}
+          />
         ) : (
           <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
         )}
