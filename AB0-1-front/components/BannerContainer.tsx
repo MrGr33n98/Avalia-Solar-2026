@@ -337,9 +337,12 @@ export function BannerContainer({
 
     const getSizes = (pos?: string) => {
       switch (pos) {
+        // O anúncio da Brand Page é visível na PWA e ocupa até 300px.
+        // sizes=0px faz o next/image baixar uma variante minúscula e ampliá-la (blur).
+        case 'company_profile_sidebar_sponsored':
+          return '300px';
         case 'companies_right_rail':
         case 'categories_right_rail':
-        case 'company_profile_sidebar_sponsored':
         case 'compare_page_sidebar':
         case 'company_access_sidebar':
           return '(max-width: 1023px) 0px, 300px';
