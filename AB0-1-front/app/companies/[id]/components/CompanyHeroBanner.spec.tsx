@@ -21,12 +21,20 @@ jest.mock('@/components/ui/optimized-image', () => ({
     <img src={src} alt={alt || 'img'} className={className} style={{ objectFit }} />
   ),
 }));
+jest.mock('./CompanyFluidBanner', () => ({
+  __esModule: true,
+  default: ({ src, alt }: { src: string; alt: string }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} className="block h-auto w-full" data-testid="company-fluid-banner" />
+  ),
+}));
+
 jest.mock('@/components/WhatsappButton', () => () => null);
 jest.mock('@/components/company/ReviewCompanyButton', () => () => null);
 
 describe('CompanyHero — enquadramento do banner', () => {
-  it('preserva a imagem inteira com object-fit contain', () => {
-    render(
+  it('não corta nem escurece um banner personalizado, em qualquer hero', () => {
+    const { container } = render(
       <CompanyHero
         company={
           {
@@ -52,22 +60,14 @@ describe('CompanyHero — enquadramento do banner', () => {
         ctaUrl={null}
       />
     );
-    const heroBanner = document.querySelector('[data-company-layout="standard-hero"] > div');
-    expect(heroBanner).toHaveClass(
-      'aspect-[3/1]',
-      'md:aspect-auto',
-      'md:h-[200px]',
-      'lg:h-[220px]',
-      'xl:h-[230px]'
-    );
-
-    const banner = screen
-      .getAllByAltText('Empresa Teste')
-      .find((image) => image.getAttribute('src') === 'https://example.com/banner.png');
-    expect(banner).toBeDefined();
-    expect(banner).toHaveClass('object-center');
-    expect(banner).toHaveClass('object-cover');
-    expect(banner).toHaveStyle({ objectFit: 'cover' });
+    const frame = container.querySelector('[data-testid="company-hero-banner-frame"]');
+    expect(frame).toHaveClass('w-full', 'overflow-hidden', 'bg-white');
+    expect(frame).not.toHaveClass('aspect-[3/1]', 'md:h-[200px]', 'lg:h-[220px]', 'xl:h-[230px]');
+    expect(frame?.querySelector('[class*="bg-gradient-to-t"]')).not.toBeInTheDocument();
+    expect(frame?.querySelector('[class*="blur-xl"]')).not.toBeInTheDocument();
+    const banner = screen.getByTestId('company-fluid-banner');
+    expect(banner).toHaveAttribute('src', 'https://example.com/banner.png');
+    expect(banner).toHaveClass('block', 'h-auto', 'w-full');
   });
 
   it('usa altura intrínseca no banner Free e não adiciona fade escuro', () => {
