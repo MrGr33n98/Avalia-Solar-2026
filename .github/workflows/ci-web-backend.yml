@@ -475,6 +475,7 @@ jobs:
           tests/e2e/auth-logout.spec.ts
           tests/e2e/financing-wizard.spec.ts
           tests/e2e/proposals-real-journey.spec.ts
+          tests/e2e/company-registration-ticker-responsive.spec.ts
           && npx playwright test --project=chromium
           tests/e2e/category-seo.spec.ts --grep @critical
 
