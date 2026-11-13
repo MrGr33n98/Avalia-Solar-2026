@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type SyntheticEvent } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface BannerMediaProps {
@@ -50,7 +50,7 @@ export function BannerMedia({
 
   const objectClass = fit === 'cover' ? 'object-cover' : 'object-contain';
 
-  const handleError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+  const handleError = (event: SyntheticEvent<HTMLImageElement>) => {
     const failedUrl = event.currentTarget.currentSrc || '';
     // Em caso de erro da arte mobile, retira somente o <source> e deixa o
     // navegador carregar a arte desktop, sem invalidar a campanha inteira.
