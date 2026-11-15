@@ -776,6 +776,7 @@ export default function CompanyCard({
       <CompanyReviewsSummarySheet
         isOpen={isReviewsSheetOpen}
         onOpenChange={setIsReviewsSheetOpen}
+        companyId={id}
         companyName={name}
         logoUrl={logo_url}
         ratingAvg={data.reputation.rating_avg}
