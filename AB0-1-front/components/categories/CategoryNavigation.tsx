@@ -26,7 +26,7 @@ export default function CategoryNavigation({ items }: { items: CategoryNavigatio
           key={href}
           href={href}
           aria-label={label}
-          className="flex h-11 min-h-11 basis-[calc((100%-12px)/3)] shrink-0 snap-start items-center justify-center whitespace-nowrap rounded-lg border border-slate-200 px-1.5 py-1 text-center text-[11px] font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 md:h-auto md:min-h-11 md:basis-auto md:rounded-xl md:px-4 md:py-2 md:text-sm"
+          className="flex h-11 min-h-11 basis-[calc(33.333%_-_4px)] shrink-0 snap-start items-center justify-center whitespace-nowrap rounded-lg border border-slate-200 px-1.5 py-1 text-center text-[11px] font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 md:h-auto md:min-h-11 md:basis-auto md:rounded-xl md:px-4 md:py-2 md:text-sm"
         >
           <span aria-hidden="true" className="md:hidden">
             {MOBILE_LABELS[label] || label}
