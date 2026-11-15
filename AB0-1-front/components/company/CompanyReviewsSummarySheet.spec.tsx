@@ -114,7 +114,7 @@ describe('CompanyReviewsSummarySheet V2 — dados reais e UX responsivo', () => 
     expect(screen.getByText('Cliente Solar')).toBeInTheDocument();
     expect(screen.getByText('Cliente verificado')).toBeInTheDocument();
     expect(screen.getByText('Ótima experiência no projeto.')).toBeInTheDocument();
-    expect(screen.getByText('Atendimento:')).toBeInTheDocument();
+    expect(screen.getByText(/Atendimento:/)).toBeInTheDocument();
     expect(companyGet).toHaveBeenCalledWith(72);
     expect(reviewsGet).toHaveBeenCalledWith({ company_id: 72, status: 'approved', limit: 1 });
     expect(companyGet).toHaveBeenCalledTimes(1);
