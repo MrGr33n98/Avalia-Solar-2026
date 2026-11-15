@@ -38,7 +38,7 @@ const mockCompany = {
 } as any;
 
 describe('CompanyIdentityCard Responsive Layout', () => {
-  test('renders logo and company details in flex-row wrapper from mobile', () => {
+  test('uses a mobile row, preserves the tablet stack and desktop row', () => {
     const { container } = render(
       <CompanyIdentityCard
         company={mockCompany}
@@ -52,9 +52,9 @@ describe('CompanyIdentityCard Responsive Layout', () => {
     const section = container.querySelector('#company-identity-card');
     expect(section).toBeInTheDocument();
 
-    const mainWrapper = section?.querySelector('.flex.w-full.flex-col');
+    const mainWrapper = section?.querySelector('.flex.w-full.flex-row');
     expect(mainWrapper).toBeInTheDocument();
-    expect(mainWrapper).toHaveClass('flex-col', 'lg:flex-row');
+    expect(mainWrapper).toHaveClass('flex-row', 'md:flex-col', 'lg:flex-row');
   });
 
   test('renders company name, location, rating, favorite and share action buttons', () => {
@@ -78,5 +78,31 @@ describe('CompanyIdentityCard Responsive Layout', () => {
     expect(mockToggleFavorite).toHaveBeenCalledWith(1);
 
     expect(screen.getByLabelText('Compartilhar empresa')).toBeInTheDocument();
+  });
+
+  test('keeps long company names on one mobile line while retaining full semantics', () => {
+    const longName = 'Cooperativa Regional de Energia Solar Fotovoltaica Sustentável e Tecnologia';
+    render(
+      <CompanyIdentityCard
+        company={{ ...mockCompany, name: longName }}
+        companyStats={{ rating: '4.8', reviewCount: 15 }}
+        logoUrl="/images/sb-solar.jpg"
+        logoError={false}
+        setLogoError={jest.fn()}
+      />
+    );
+
+    const heading = screen.getByTestId('company-name');
+    expect(heading).toHaveAttribute('title', longName);
+    expect(heading).toHaveAttribute('aria-label', longName);
+    expect(heading).toHaveClass('flex', 'md:block');
+    expect(screen.getByTestId('company-name-text')).toHaveClass(
+      'min-w-0', 'truncate', 'md:whitespace-normal', 'md:break-words'
+    );
+    const iconActions = screen.getByTestId('company-quick-icon-actions');
+    expect(iconActions).toHaveClass('shrink-0', 'gap-0');
+    expect(screen.getByTestId('company-quick-actions')).toHaveClass(
+      'flex-col-reverse', 'md:flex-row'
+    );
   });
 });
