@@ -120,7 +120,9 @@ export default function SearchBar({
   };
 
   const pushToSearchPage = () => {
-    router.push(`/search?q=${encodeURIComponent(query)}&sort=rating&page=1`);
+    // iOS Safari may keep its automatic input-focus zoom across Next.js client navigation.
+    inputRef.current?.blur();
+    router.push(`/search?q=${encodeURIComponent(query.trim())}&sort=rating&page=1`);
     setShowResults(false);
     setActiveIndex(-1);
     onClose?.();
@@ -142,6 +144,7 @@ export default function SearchBar({
   };
 
   const handleItemClick = (type: GroupKey, id: number, slug?: string, name?: string) => {
+    inputRef.current?.blur();
     setShowResults(false);
     setActiveIndex(-1);
     
@@ -236,6 +239,8 @@ export default function SearchBar({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      // Prevent the form's default submit from navigating twice after selecting a suggestion.
+      e.preventDefault();
       if (showResults && activeIndex >= 0 && flatItems[activeIndex]) {
         const target = flatItems[activeIndex];
         handleItemClick(target.type, target.id, target.slug);
@@ -324,7 +329,7 @@ export default function SearchBar({
               }
               className={`
                 h-7 min-h-7 w-full rounded-xl border-[1.5px] border-[#2563EB]
-                bg-white px-3 py-1 pl-10 pr-10 text-xs font-medium text-slate-900
+                bg-white px-3 py-1 pl-10 pr-10 text-[16px] font-medium text-slate-900 md:text-xs
                 shadow-none transition-colors duration-150
                 hover:border-[#1D4ED8]
                 focus:border-[#1D4ED8] focus:bg-white focus:ring-2 focus:ring-blue-100/70

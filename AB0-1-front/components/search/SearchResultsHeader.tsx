@@ -23,10 +23,10 @@ export function SearchResultsHeader({
   onSortChange,
 }: SearchResultsHeaderProps) {
   return (
-    <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
+    <div className="flex min-w-0 max-w-full flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
         {/* Breadcrumb Context */}
-        <nav aria-label="Breadcrumb" className="mb-1.5 flex items-center gap-1.5 text-xs text-slate-500">
+        <nav aria-label="Breadcrumb" className="mb-1.5 flex min-w-0 max-w-full items-center gap-1.5 overflow-hidden text-xs text-slate-500">
           <Link href="/" className="transition-colors hover:text-blue-600">
             Início
           </Link>
@@ -37,14 +37,14 @@ export function SearchResultsHeader({
           {query ? (
             <>
               <ChevronRight className="h-3 w-3 text-slate-400" aria-hidden="true" />
-              <span className="max-w-[200px] truncate font-medium text-slate-800">
+              <span className="min-w-0 max-w-[38vw] truncate font-medium text-slate-800 sm:max-w-[200px]">
                 “{query}”
               </span>
             </>
           ) : null}
         </nav>
 
-        <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+        <h2 className="break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
           {query ? `Resultados para “${query}”` : 'Todos os resultados'}
         </h2>
         <p className="mt-1 text-xs text-slate-600 sm:text-sm" aria-live="polite">
@@ -61,7 +61,7 @@ export function SearchResultsHeader({
         <select
           value={sort}
           onChange={(event) => onSortChange(event.target.value as SearchSort)}
-          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-[16px] font-semibold md:text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           aria-label="Ordenar resultados"
         >
           <option value="relevance">Relevância</option>
