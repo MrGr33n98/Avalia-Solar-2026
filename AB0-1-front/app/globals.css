@@ -1156,6 +1156,13 @@ body[data-scroll-locked] [data-chat-widget] {
     min-width: 44px;
   }
 
+  /* /companies: quatro filtros móveis com alvo de toque de 44px.
+     O ID prevalece sobre o mínimo global de 48px sem afetar outras páginas. */
+  #mobile-company-filter-bar > button {
+    min-height: 44px;
+    min-width: 0;
+  }
+
   /* Tour /founder: 10 etapas cabem em 320px. A regra global de 48px
      não deve alargar os indicadores e causar sobreposição no grid. */
   #tour-interativo button.founder-tour-step {
