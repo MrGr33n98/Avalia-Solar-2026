@@ -21,7 +21,7 @@ describe('CategoryNavigation compact mobile', () => {
     for (const [index, item] of items.entries()) {
       expect(links[index]).toHaveAttribute('aria-label', item.label);
       expect(links[index]).toHaveAttribute('href', item.href);
-      expect(links[index].className).toContain('basis-[calc((100%-12px)/3)]');
+      expect(links[index].className).toContain('basis-[calc(33.333%_-_4px)]');
       expect(links[index]).toHaveClass('h-11', 'min-h-11');
     }
     expect(within(links[1]).getByText('Sobre')).toHaveClass('md:hidden');
