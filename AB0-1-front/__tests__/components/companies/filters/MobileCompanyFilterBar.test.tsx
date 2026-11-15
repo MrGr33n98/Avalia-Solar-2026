@@ -67,7 +67,7 @@ describe('MobileCompanyFilterBar — labels and mobile/PWA density', () => {
 
     within(toolbar).getAllByRole('button').forEach((button) => {
       expect(button).toHaveClass('h-11', 'min-h-11', 'w-full', 'min-w-0');
-      expect(button).toHaveClass('whitespace-nowrap');
+      expect(button).toHaveClass('whitespace-nowrap', 'gap-0.5', 'min-[350px]:gap-1');
       expect(button.className).not.toContain('truncate');
     });
 
