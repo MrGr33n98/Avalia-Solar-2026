@@ -110,7 +110,7 @@ export function SearchFilters({
             value={value.city}
             onChange={(event) => update('city', event.target.value)}
             placeholder="Digite uma cidade ou UF"
-            className="mt-2 h-10 w-full rounded-none border border-slate-300 px-3 text-sm font-normal outline-none placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="mt-2 h-10 w-full rounded-none border border-slate-300 px-3 text-[16px] font-normal md:text-sm outline-none placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           />
         </label>
         {activeTab !== 'companies' ? <label className="block text-sm font-semibold text-slate-700">
@@ -118,7 +118,7 @@ export function SearchFilters({
           <select
             value={value.priceRange}
             onChange={(event) => update('priceRange', event.target.value as PriceRange)}
-            className="mt-2 h-10 w-full rounded-none border border-slate-300 bg-white px-3 text-sm font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="mt-2 h-10 w-full rounded-none border border-slate-300 bg-white px-3 text-[16px] font-normal md:text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
           >
             <option value="all">Todas as faixas</option>
             <option value="under_1000">Até R$ 1.000</option>
@@ -197,7 +197,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-10 w-full rounded-none border border-slate-300 bg-white px-3 text-sm font-normal outline-none hover:bg-slate-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+        className="mt-2 h-10 w-full rounded-none border border-slate-300 bg-white px-3 text-[16px] font-normal md:text-sm outline-none hover:bg-slate-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (
