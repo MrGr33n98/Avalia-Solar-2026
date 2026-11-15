@@ -59,7 +59,7 @@ module VoiceReviews
       retry
     end
 
-    # Retorna true quando a mensagem pertence ao fluxo de cadastro B2B.
+    # Retorna true quando a mensagem pertence ao fluxo de cadastro/reivindicação B2B.
     def route_onboarding(contact, message)
       return false unless defined?(B2b::OnboardingSessionService)
 
@@ -75,7 +75,20 @@ module VoiceReviews
         return true
       end
 
-      if text_body.gsub(/\D/, '').length == 14
+      if text_body.match?(/\A(?:REIVINDICAR|REIVINDICACAO|REIVINDICAÇÃO|ASSUMIR PERFIL)\b/i)
+        cnpj_inline = text_body.gsub(/\D/, '')
+        B2b::OnboardingSessionService.open_claim!(
+          contact: contact,
+          provider: provider,
+          provider_session: provider_session,
+          provider_chat_id: message['chat_id'],
+          sender_name: message['sender_name'],
+          cnpj: (cnpj_inline.length == 14 ? cnpj_inline : nil)
+        )
+        return true
+      end
+
+      if text_body.gsub(/\D/, '').length == 14 && find_existing_session(contact).nil?
         session = open_onboarding(contact, message, skip_greeting: true)
         B2b::OnboardingSessionService.process_message!(session, message)
         return true
@@ -116,6 +129,14 @@ module VoiceReviews
         send_consent_prompt(session) if session.awaiting_consent? && !session.consented_to_audio?
       elsif session
         process_message(record, session, message)
+      elsif defined?(Whatsapp::ConversationRouter)
+        Whatsapp::ConversationRouter.call(
+          provider: provider,
+          provider_session: provider_session,
+          contact: contact,
+          message: message,
+          record: record
+        )
       end
       record.update!(processed_at: Time.current, delivery_status: 'processed')
     end
@@ -151,6 +172,7 @@ module VoiceReviews
     def process_text(record, session, body)
       cleaned = body.strip
       return handle_opt_out(session) if cleaned.match?(/\A(TEXTO|PARAR|NAO|NÃO)\z/i)
+      return handle_human_handoff(session) if cleaned.match?(/\A(?:AJUDA|ATENDENTE|HUMANO|SUPORTE|FALAR COM PESSOA)\b/i)
       return handle_confirmation_reply(session, cleaned) if session.awaiting_confirmation?
 
       if session.submitted? || session.completed?
@@ -186,20 +208,52 @@ module VoiceReviews
 
       rating = extract_rating(cleaned)
       if rating
+        session.merge_draft!(error_strikes: 0)
         advance_criterion_or_prompt_audio!(record, session, rating)
+      elsif cleaned.length >= 25 && !cleaned.match?(/\A(?:ACEITO|SIM|OK|CONCORDO|COMEÇAR|INICIAR)\b/i)
+        # Atalho Express (GAP-03): se o usuário já escreveu um relato completo após dar consentimento, aceita imediatamente.
+        session.merge_draft!(error_strikes: 0)
+        handle_text_review_submission(record, session, cleaned)
       elsif cleaned.match?(/\A(ACEITO|SIM|OK|CONCORDO|COMEÇAR|INICIAR)\z/i)
-        send_audit_greeting(session)
+        current_idx = session.draft_payload.to_h['current_criterion_index'].to_i
+        if current_idx.positive?
+          criteria = session_criteria(session)
+          curr = criteria[current_idx] || criteria.first
+          msg = curr ? criterion_prompt(session, curr, current_idx + 1, criteria.length) : fallback_greeting(session)
+          gateway.send_message(session, msg)
+        else
+          send_audit_greeting(session)
+        end
       else
+        strikes = session.draft_payload.to_h['error_strikes'].to_i + 1
+        session.merge_draft!(error_strikes: strikes)
         criteria = session_criteria(session)
         current_idx = session.draft_payload.to_h['current_criterion_index'].to_i
         curr = criteria[current_idx] || criteria.first
         title = curr&.title || 'este critério'
         name = session.company.name
+        escalation_hint = strikes >= 3 ? "\n\n💡 *Precisa de ajuda?* Responda *AJUDA* para falar com nossa equipe ou *PARAR* para encerrar." : ''
         gateway.send_message(
           session,
-          "Para avaliar a *#{name}*, por favor responda com uma nota de *1 a 5 estrelas* para o critério *#{title}* ⭐\n\n*(Ou envie um áudio contando sua experiência a qualquer momento)*"
+          "Para avaliar a *#{name}*, por favor responda com uma nota de *1 a 5 estrelas* para o critério *#{title}* ⭐\n\n*(Ou envie um áudio/relato escrito contando sua experiência a qualquer momento)*#{escalation_hint}"
         )
       end
+    end
+
+    def handle_human_handoff(session)
+      session.update!(state: 'needs_human_review', version: session.version + 1)
+      VoiceReviews::EventRecorder.record!(
+        event_name: 'voice_session_human_handoff',
+        company: session.company,
+        session: session,
+        dedupe_key: "handoff:#{session.id}:#{session.version}"
+      )
+      gateway.send_message(
+        session,
+        "👩‍💻 *Atendimento Humano Solicitado*\n\n" \
+        "Pausamos o assistente automático e sinalizamos nossa equipe de suporte para ajudar você.\n" \
+        "Se preferir encerrar a avaliação a qualquer momento, responda *PARAR*."
+      )
     end
 
     def extract_rating(cleaned)
@@ -388,7 +442,9 @@ module VoiceReviews
 
     def reviewer_first_name(session)
       raw = session.draft_payload.to_h['reviewer_name'].to_s.strip
-      raw = session.voice_review_invite&.customer_name.to_s.strip if raw.blank?
+      if raw.blank? && session.voice_review_invite.respond_to?(:customer_name)
+        raw = session.voice_review_invite.customer_name.to_s.strip
+      end
       raw.split.first.presence
     end
 
@@ -455,8 +511,12 @@ module VoiceReviews
     end
 
     def minimal_payload(message)
+      chat_id = message['chat_id'].to_s
+      chat_id_hash = if chat_id.present?
+                       OpenSSL::HMAC.hexdigest('SHA256', VoiceReviews::Config.contact_pepper.to_s, chat_id)
+                     end
       { 'id' => message['id'], 'type' => message['type'], 'timestamp' => message['timestamp'],
-        'chat_id' => message['chat_id'], 'audio_id' => message.dig('audio', 'id'),
+        'chat_id_hash' => chat_id_hash, 'audio_id' => message.dig('audio', 'id'),
         'audio_mime_type' => message.dig('audio', 'mime_type') }.compact
     end
   end

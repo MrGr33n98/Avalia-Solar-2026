@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Intent signals API', type: :request do
   include ActiveJob::TestHelper
+  include ActiveSupport::Testing::TimeHelpers
 
   let(:company) { create(:company) }
   let(:headers) do
@@ -103,13 +104,20 @@ RSpec.describe 'Intent signals API', type: :request do
   end
 
   it 'throttles after 120 requests per minute from the same IP' do
-    120.times do
+    # Rack::Attack uses fixed one-minute counter windows. A full RSpec run can
+    # cross a wall-clock boundary midway through 121 requests and incorrectly
+    # observe 201 for request #121. Keep the clock within one window for this
+    # integration test; production throttle configuration is unchanged.
+    travel_to(Time.current.beginning_of_minute + 1.second) do
+      120.times do
+        post '/api/v1/intent_signals', params: payload.to_json, headers: headers
+        expect(response).not_to have_http_status(:too_many_requests)
+      end
+
       post '/api/v1/intent_signals', params: payload.to_json, headers: headers
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.headers['Retry-After']).to be_present
     end
-
-    post '/api/v1/intent_signals', params: payload.to_json, headers: headers
-
-    expect(response).to have_http_status(:too_many_requests)
-    expect(response.headers['Retry-After']).to be_present
   end
 end

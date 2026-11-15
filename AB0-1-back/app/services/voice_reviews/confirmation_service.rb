@@ -101,7 +101,15 @@ module VoiceReviews
       )
       attach_criterion_scores(review, category, transcript)
       review.save!
+      trigger_automated_moderation(review)
       review
+    end
+
+    def trigger_automated_moderation(review)
+      Reviews::ModerationService.new.evaluate(review) if defined?(Reviews::ModerationService)
+      AiModerationWorker.perform_async(review.id) if defined?(AiModerationWorker) && AiModerationWorker.respond_to?(:perform_async)
+    rescue StandardError => e
+      Rails.logger.warn("[VoiceReviews::ConfirmationService] Automated moderation warning review=#{review.id}: #{e.class} - #{e.message}")
     end
 
     def build_metadata(transcript)

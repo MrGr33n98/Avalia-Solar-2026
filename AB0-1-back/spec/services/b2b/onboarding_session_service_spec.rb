@@ -193,7 +193,7 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.draft_data['logo_data']).to eq(fake_b64)
       end
 
-      it 'updates password and associates existing user as company owner on onboarding finalization' do
+      it 'preserves existing user password and associates existing user as company owner on onboarding finalization' do
         existing_user = User.create!(
           email: 'contato@novasolar.com.br',
           password: 'OldPassword123!',
@@ -229,7 +229,14 @@ RSpec.describe B2b::OnboardingSessionService do
           }
         )
 
-        expect(gateway).to receive(:send_message).with(session, /Parabéns! Sua empresa foi cadastrada com sucesso/)
+        expect(gateway).to receive(:send_message).with(
+          session,
+          satisfy { |msg|
+            msg.include?('Parabéns! Sua empresa foi cadastrada com sucesso') &&
+              msg.include?('/companies/') &&
+              !msg.include?('Senha temporária:')
+          }
+        )
         expect(gateway).to receive(:send_message).with(session, /Felipe, fundador do Avalia Solar/)
 
         described_class.process_message!(session, { 'body' => 'pular' })
@@ -239,8 +246,46 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.user).to eq(existing_user)
         expect(session.company.company_members.where(user: existing_user, role: :owner, status: :active)).to exist
 
-        # A senha antiga não é mais válida; o usuário foi sincronizado
-        expect(existing_user.reload.valid_password?('OldPassword123!')).to be false
+        # RCA-001: A senha existente jamás deve ser sobrescrita por um fluxo WhatsApp não autenticado
+        expect(existing_user.reload.valid_password?('OldPassword123!')).to be true
+      end
+
+      it 'supports claiming an existing company via REIVINDICAR and creates a CompanyAccessRequest' do
+        existing_company = create(:company, cnpj: '11222333000181', name: 'Solar Existente Ltda', city: 'Campinas', state: 'SP')
+        session.update!(
+          cnpj: '11222333000181',
+          company: existing_company,
+          state: 'abandoned',
+          draft_payload: { 'existing_company_id' => existing_company.id, 'sender_name' => 'Marcos Diretor' }
+        )
+
+        expect(gateway).to receive(:send_message).with(an_instance_of(CompanyOnboardingSession), /Reivindicação de Perfil — Solar Existente Ltda/)
+        claim_session = described_class.open_claim!(contact: contact, sender_name: 'Marcos Diretor')
+
+        expect(claim_session.state).to eq('claiming_email')
+        expect(claim_session.current_step).to eq('claim_ask_email')
+        expect(claim_session.company).to eq(existing_company)
+
+        expect(gateway).to receive(:send_message).with(claim_session, /Solicitação de Reivindicação Registrada!/)
+        expect {
+          described_class.process_message!(claim_session, { 'body' => 'marcos@solarexistente.com.br' })
+        }.to change(CompanyAccessRequest, :count).by(1)
+
+        expect(claim_session.reload.state).to eq('completed')
+        access_req = CompanyAccessRequest.last
+        expect(access_req.company).to eq(existing_company)
+        expect(access_req.contact_email).to eq('marcos@solarexistente.com.br')
+        expect(access_req.status).to eq('pending')
+      end
+
+      it 'supports stepping back with VOLTAR during onboarding' do
+        session.update!(current_step: 'ask_segment', state: 'awaiting_segment')
+        expect(gateway).to receive(:send_message).with(session, /Voltamos para a etapa anterior/)
+
+        described_class.process_message!(session, { 'body' => 'VOLTAR' })
+
+        expect(session.reload.current_step).to eq('ask_email')
+        expect(session.state).to eq('awaiting_email')
       end
     end
   end
