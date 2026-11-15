@@ -17,5 +17,6 @@ describe('SearchResultsHeader', () => {
     expect(screen.getByText(/473 empresas encontradas/)).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Menor preço' })).not.toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Melhor avaliação' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Ordenar resultados' })).toHaveClass('text-[16px]', 'md:text-sm');
   });
 });
