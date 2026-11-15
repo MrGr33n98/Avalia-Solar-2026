@@ -208,7 +208,7 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
       expect(screen.queryByRole('button', { name: OFFICIAL_VERIFIED_MESSAGE })).not.toBeInTheDocument();
     });
 
-    it('mantém a última palavra e o selo no mesmo agrupamento inline sem truncar o nome', () => {
+    it('trunca o nome apenas no mobile e mantém o selo de verificação acessível', () => {
       render(
         <CompanyIdentityCard
           company={{
@@ -228,14 +228,16 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
         name: /Empresa verificada pelo Avalia Solar/i,
       });
 
-      expect(heading).not.toHaveClass('truncate', 'whitespace-nowrap');
-      expect(heading).toHaveClass('min-w-0', 'max-w-full', 'break-words');
+      expect(heading).toHaveClass('min-w-0', 'max-w-full', 'flex', 'md:block', 'md:break-words');
+      expect(heading).toHaveAttribute('title', 'Cooperativa Regional de Energia Solar');
+      expect(heading).toHaveAttribute('aria-label', 'Cooperativa Regional de Energia Solar');
+      expect(screen.getByTestId('company-name-text')).toHaveClass('truncate', 'md:whitespace-normal');
       expect(tail).toHaveTextContent('Solar');
-      expect(tail).toContainElement(verifiedTrigger);
+      expect(heading).toContainElement(verifiedTrigger);
       expect(tail).toHaveClass('inline');
     });
 
-    it('permite quebra interna de palavra excepcionalmente longa sem overflow mascarado', () => {
+    it('mantém o nome excepcionalmente longo íntegro no DOM e quebra somente no desktop', () => {
       render(
         <CompanyIdentityCard
           company={{
@@ -250,8 +252,9 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
       );
 
       const heading = screen.getByTestId('company-name');
-      expect(heading).toHaveClass('break-words');
-      expect(heading).not.toHaveClass('truncate', 'overflow-hidden');
+      expect(heading).toHaveClass('md:break-words');
+      expect(heading).toHaveAttribute('title', 'Solar SuperintegradoraFotovoltaicaUltrassustentavel');
+      expect(screen.getByTestId('company-name-text')).toHaveClass('truncate', 'md:break-words');
       expect(screen.getByTestId('company-name-tail')).toHaveTextContent(
         'SuperintegradoraFotovoltaicaUltrassustentavel'
       );
@@ -277,10 +280,14 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
       const share = within(actions).getByRole('button', { name: 'Compartilhar empresa' });
       const review = within(actions).getByRole('link', { name: 'Avaliar empresa: WEG Solar' });
 
+      const icons = screen.getByTestId('company-quick-icon-actions');
+      expect(actions).toHaveClass('flex-col-reverse', 'md:flex-row');
       expect(actions.children[0]).toBe(screen.getByTestId('company-compare-action'));
-      expect(actions.children[1]).toBe(favorite);
-      expect(actions.children[2]).toBe(share);
-      expect(actions.children[3]).toBe(review);
+      expect(actions.children[1]).toBe(icons);
+      expect(icons.children[0]).toBe(favorite);
+      expect(icons.children[1]).toBe(share);
+      expect(icons.children[2]).toBe(review);
+      expect(screen.getByTestId('company-compare-action')).toHaveClass('ml-auto', 'md:ml-0');
       expect(compare).not.toBeChecked();
       expect(within(actions).getAllByText('Comparar')).toHaveLength(1);
       expect(review).toHaveAttribute('href', expect.stringMatching(/\/review(?:\/|$)/));
