@@ -19,7 +19,7 @@ export default function CategoryNavigation({ items }: { items: CategoryNavigatio
     <nav
       aria-label="Navegação da categoria"
       data-testid="category-navigation"
-      className="no-scrollbar mx-auto flex max-w-[1280px] snap-x snap-mandatory gap-1.5 overflow-x-auto px-4 py-1.5 sm:px-6 md:gap-2 md:py-3"
+      className="no-scrollbar mx-auto flex max-w-[1280px] snap-x snap-mandatory gap-1.5 overflow-x-auto px-4 py-1.5 sm:px-6 md:snap-none md:gap-2 md:py-3"
     >
       {items.map(({ label, href }) => (
         <Link
