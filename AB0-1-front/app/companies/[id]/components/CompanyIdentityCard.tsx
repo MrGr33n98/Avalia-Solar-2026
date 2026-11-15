@@ -265,21 +265,21 @@ export default function CompanyIdentityCard({
               {compareControl}
             </div>
           )}
-          <div data-testid="company-quick-icon-actions" className="flex shrink-0 items-center gap-0 sm:gap-1.5">
+          <div data-testid="company-quick-icon-actions" className="flex shrink-0 items-center gap-0 md:gap-1.5">
             <button
               type="button"
               onClick={handleToggleFavorite}
               aria-label={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
               title={isFav ? 'Remover dos favoritos' : 'Favoritar empresa'}
-              className="group inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+              className="group inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-xl md:h-11 md:w-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
             >
               <span className={cn(
-                'inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-colors',
+                'inline-flex h-7 w-7 items-center justify-center rounded-[9px] border transition-colors md:h-9 md:w-9 md:rounded-xl',
                 isFav
                   ? 'border-red-200 bg-red-50 text-red-600'
                   : 'border-slate-200/90 bg-white text-slate-700 group-hover:border-slate-300 group-hover:bg-slate-50'
               )}>
-                <Heart className={cn('h-[17px] w-[17px]', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
+                <Heart className={cn('h-3.5 w-3.5 md:h-[17px] md:w-[17px]', isFav ? 'fill-current text-red-600' : 'text-slate-600')} aria-hidden="true" />
               </span>
             </button>
             <button
@@ -288,10 +288,10 @@ export default function CompanyIdentityCard({
               disabled={isSharing}
               aria-label="Compartilhar empresa"
               title="Compartilhar empresa"
-              className="group inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50"
+              className="group inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-xl md:h-11 md:w-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50"
             >
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-700 transition-colors group-hover:border-slate-300 group-hover:bg-slate-50">
-                <Share2 className="h-[17px] w-[17px] text-slate-600" aria-hidden="true" />
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-[9px] border border-slate-200/90 md:h-9 md:w-9 md:rounded-xl bg-white text-slate-700 transition-colors group-hover:border-slate-300 group-hover:bg-slate-50">
+                <Share2 className="h-3.5 w-3.5 md:h-[17px] md:w-[17px] text-slate-600" aria-hidden="true" />
               </span>
             </button>
             <Link
@@ -299,10 +299,10 @@ export default function CompanyIdentityCard({
               aria-label={`Avaliar empresa: ${company.name}`}
               title={`Avaliar empresa: ${company.name}`}
               data-testid="company-review-star"
-              className="group inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+              className="group inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-xl md:h-11 md:w-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
             >
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-500 transition-colors group-hover:border-amber-300 group-hover:bg-amber-100">
-                <Star className="h-[17px] w-[17px] fill-amber-400 text-amber-500" aria-hidden="true" />
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-[9px] border border-amber-200 md:h-9 md:w-9 md:rounded-xl bg-amber-50 text-amber-500 transition-colors group-hover:border-amber-300 group-hover:bg-amber-100">
+                <Star className="h-3.5 w-3.5 md:h-[17px] md:w-[17px] fill-amber-400 text-amber-500" aria-hidden="true" />
               </span>
             </Link>
             </div>
