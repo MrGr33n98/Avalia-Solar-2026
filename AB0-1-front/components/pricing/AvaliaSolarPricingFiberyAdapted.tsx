@@ -22,17 +22,13 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   BarChart3,
-  Building2,
   Check,
   ChevronDown,
   CircleHelp,
-  Compass,
   Loader2,
   Menu,
   MessageCircle,
   Package,
-  ShieldCheck,
-  Sparkles,
   X,
 } from "lucide-react";
 import {
@@ -47,12 +43,7 @@ import {
   type BillingPeriod,
 } from "@/lib/pricing/billing";
 
-const PLAN_ICONS = {
-  free: Building2,
-  essential: Compass,
-  pro: BarChart3,
-  enterprise: ShieldCheck,
-} as const;
+
 
 const PLAN_ORDER: PlanSlug[] = ["free", "essential", "pro", "enterprise"];
 
@@ -125,23 +116,20 @@ interface AvaliaSolarPricingProps {
   onBillingPeriodChange?: (period: BillingPeriod) => void;
 }
 
+// O valor da contratação é primário, como em um comparativo comercial de preços.
+// A equivalência mensal é informativa e nunca representa cobrança recorrente mensal.
 function priceFor(slug: PlanSlug, period: BillingPeriod) {
   if (slug === "free") {
-    return { main: "R$ 0", detail: "Gratuito para sempre", equivalent: false };
+    return { main: "R$ 0", detail: "Sem cobrança", monthlyNote: "" };
   }
   if (slug === "enterprise") {
-    return { main: "Sob consulta", detail: "Proposta personalizada", equivalent: false };
+    return { main: "Sob consulta", detail: "Proposta personalizada", monthlyNote: "" };
   }
   const source = pricingByPlan[slug][period];
   return {
-    main: period === "twelve_months"
-      ? formatBRL(source.monthlyEquivalent)
-      : formatBRLWithoutCents(source.monthlyEquivalent),
-    detail:
-      period === "twelve_months"
-        ? `${formatBRLWithoutCents(source.amount)} cobrados por ano`
-        : `${formatBRLWithoutCents(source.amount)} cobrados a cada 6 meses`,
-    equivalent: true,
+    main: formatBRLWithoutCents(source.amount),
+    detail: period === "twelve_months" ? "por 12 meses" : "por 6 meses",
+    monthlyNote: `Equivale a ${formatBRL(source.monthlyEquivalent)}/mês`,
   };
 }
 
@@ -223,86 +211,63 @@ function Header() {
 
 function Hero() {
   return (
-    <section
-      className="border-b border-[#E4ECF8] bg-[#F7F9FE]"
-      style={{ backgroundImage: "url('/pricing/backgrounds/hero-desktop.svg')", backgroundSize: "cover", backgroundPosition: "center" }}
-    >
-      <div className="mx-auto grid max-w-[1200px] items-center gap-4 px-4 pb-5 pt-9 sm:px-6 md:grid-cols-[minmax(0,1fr)_390px] md:gap-8 md:pb-9 md:pt-11">
-        <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D9E8FF] bg-white/80 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#075AE5]">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Avalia Solar para empresas
-          </span>
-          <h1 className="mt-4 max-w-[640px] text-[30px] font-extrabold leading-[1.14] tracking-[-0.04em] text-[#0B1737] sm:text-[36px] lg:text-[40px]">
-            Planos claros para <br className="hidden sm:block" />
-            fazer sua empresa solar <span className="text-[#075AE5]">crescer.</span>
-          </h1>
-          <p className="mt-3 max-w-[530px] text-[14px] leading-relaxed text-[#53617C] sm:text-[15px]">
-            Compare presença, destaque e inteligência comercial em uma página simples de entender —
-            com valores e recursos organizados para cada fase da sua operação.
-          </p>
-          <div className="mt-5">
-            <a
-              href="#planos"
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#FFC629] px-5 text-[13px] font-extrabold text-[#0B1737] shadow-sm transition hover:bg-[#F3B817] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#075AE5]"
-            >
-              Conhecer os planos <ArrowRight aria-hidden="true" className="h-4 w-4" />
-            </a>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[12px] font-semibold text-[#33415F]">
-            <span className="inline-flex items-center gap-1.5"><Package className="h-4 w-4 text-[#075AE5]" /> Vitrine comercial</span>
-            <span className="inline-flex items-center gap-1.5"><MessageCircle className="h-4 w-4 text-[#075AE5]" /> Contato com compradores</span>
-            <span className="inline-flex items-center gap-1.5"><BarChart3 className="h-4 w-4 text-[#075AE5]" /> Analytics</span>
-          </div>
+    <section className="border-b border-[#E1E7F0] bg-white">
+      <div className="mx-auto max-w-[1200px] px-4 pb-11 pt-12 sm:px-6 sm:pb-14 sm:pt-16 lg:pb-16 lg:pt-20">
+        <p className="text-[11px] font-bold uppercase tracking-[0.17em] text-[#075AE5]">
+          AVALIA SOLAR / PLANOS E PREÇOS
+        </p>
+        <h1 className="mt-5 max-w-[880px] text-[38px] font-extrabold leading-[1.08] tracking-[-0.055em] text-[#0B1737] sm:text-[52px] lg:text-[60px]">
+          Mais visibilidade para sua empresa.{" "}
+          <span className="text-[#075AE5]">Um plano para cada fase.</span>
+        </h1>
+        <p className="mt-5 max-w-[690px] text-[15px] leading-[1.7] text-[#52617A] sm:text-[17px]">
+          Compare os recursos e valores para apresentar seus produtos, conquistar visibilidade e acompanhar
+          o interesse de compradores no marketplace de energia solar e mobilidade elétrica.
+        </p>
+        <div className="mt-7 flex flex-wrap items-center gap-4">
+          <a
+            href="#planos"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#FFC629] px-6 text-[14px] font-bold text-[#0B1737] transition hover:bg-[#F3B817] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075AE5]"
+          >
+            Conhecer os planos <ArrowRight aria-hidden="true" className="h-4 w-4" />
+          </a>
+          <a href="#comparativo" className="inline-flex min-h-11 items-center text-[14px] font-semibold text-[#075AE5] underline-offset-4 hover:underline">
+            Comparar funcionalidades
+          </a>
         </div>
-        <Image
-          src="/pricing/devices/hero-devices-composed.webp"
-          alt="Ilustração de laptop e celular apresentando uma vitrine de produtos solares"
-          width={960}
-          height={600}
-          priority
-          className="mx-auto hidden h-auto w-full max-w-[390px] object-contain md:block"
-          sizes="(min-width: 768px) 390px, 1px"
-        />
       </div>
     </section>
   );
 }
 
 function PricingOverview({ period }: { period: BillingPeriod }) {
-  const freePrice = priceFor("free", period);
-  const periodLabel = period === "twelve_months" ? "12 meses" : "6 meses";
-
+  const selectedPeriod = period === "twelve_months" ? "12 meses" : "6 meses";
   return (
-    <section id="visao-geral" className="scroll-mt-[90px] border-b border-[#E4ECF8] bg-white py-8 sm:py-10">
-      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
-        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#075AE5]">
-              Visão geral dos planos
-            </p>
-            <h2 className="mt-2 max-w-[680px] text-[24px] font-extrabold leading-tight tracking-[-0.035em] text-[#0B1737] sm:text-[28px]">
-              Escolha o nível de presença comercial que sua empresa precisa hoje.
-            </h2>
-            <p className="mt-2 max-w-[650px] text-[13px] leading-relaxed text-[#65738B] sm:text-[14px]">
-              Comece com uma presença básica e evolua para recursos de destaque, atendimento e
-              análise conforme sua operação amadurece.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2">
-            {[
-              { label: "Planos disponíveis", value: `${pricingPlans.length}` },
-              { label: "Começa em", value: freePrice.main },
-              { label: "Período exibido", value: periodLabel },
-              { label: "Cobrança", value: "Transparente" },
-            ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-[#E0E9F5] bg-[#F8FBFF] px-3.5 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#738099]">{item.label}</p>
-                <p className="mt-1 text-[15px] font-extrabold tracking-[-0.02em] text-[#0B1737]">{item.value}</p>
-              </div>
-            ))}
-          </div>
+    <section id="visao-geral" className="scroll-mt-[90px] border-b border-[#E3E9F2] bg-[#F8FAFD] py-8 sm:py-10">
+      <div className="mx-auto grid max-w-[1200px] gap-6 px-4 sm:px-6 lg:grid-cols-[1fr_1.15fr] lg:items-center lg:gap-12">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#075AE5]">Visão geral</p>
+          <h2 className="mt-2 text-[24px] font-extrabold leading-tight tracking-[-0.035em] text-[#0B1737] sm:text-[30px]">
+            Preços transparentes, recursos comparáveis.
+          </h2>
+          <p className="mt-3 max-w-[500px] text-[14px] leading-[1.65] text-[#52617A]">
+            São quatro modalidades, do Gratuito ao Enterprise. Confira o que está incluído
+            e escolha o período de contratação que faz sentido para seu negócio.
+          </p>
         </div>
+        <dl className="grid grid-cols-2 gap-x-7 gap-y-5 border-t border-[#DEE6F1] pt-5 sm:grid-cols-4 lg:border-l lg:border-t-0 lg:py-3 lg:pl-8">
+          {[
+            { label: "Modalidades", value: `${PLAN_ORDER.length} planos` },
+            { label: "Entrada", value: "R$ 0" },
+            { label: "Ciclo selecionado", value: selectedPeriod },
+            { label: "Enterprise", value: "Sob consulta" },
+          ].map((item) => (
+            <div key={item.label}>
+              <dt className="text-[11px] font-medium leading-snug text-[#66758E]">{item.label}</dt>
+              <dd className="mt-1.5 text-[17px] font-bold leading-tight tracking-[-0.025em] text-[#0B1737]">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );
@@ -347,33 +312,57 @@ function PlanCard({
   onSelect: (slug: PlanSlug) => void;
 }) {
   const data = PLAN_COPY[slug];
-  const Icon = PLAN_ICONS[slug];
   const price = priceFor(slug, period);
-  const pro = slug === "pro";
+  const featured = slug === "pro";
+  const name = slug === "free" ? "Gratuito" : slug === "essential" ? "Essencial" : slug === "pro" ? "Pro" : "Enterprise";
+
   return (
-    <article className={`relative flex h-full flex-col rounded-[18px] border p-4 shadow-[0_5px_22px_rgba(15,37,73,0.05)] sm:p-5 ${pro ? "border-[#075AE5] bg-[#075AE5] text-white shadow-[0_10px_28px_rgba(7,90,229,0.16)]" : "border-[#DFE7F2] bg-white text-[#0B1737]"}`}>
-      {pro && <div className="absolute -top-[13px] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#FFC629] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.06em] text-[#0B1737]">Mais vendido</div>}
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-[18px] font-extrabold tracking-[-0.025em]">{slug === "free" ? "Gratuito" : slug === "essential" ? "Essencial" : slug === "pro" ? "Pro" : "Enterprise"}</h3>
-        <span className={`flex h-9 w-9 items-center justify-center rounded-[10px] ${pro ? "bg-white/15 text-[#FFC629]" : "bg-[#EEF5FF] text-[#075AE5]"}`}><Icon className="h-[18px] w-[18px]" aria-hidden="true" /></span>
-      </div>
-      <p className={`mt-1 min-h-[32px] text-[12px] leading-[1.4] ${pro ? "text-[#DBE8FF]" : "text-[#65738B]"}`}>{data.tagline}</p>
-      <div className="mt-4 min-h-[76px]">
-        <div className={`break-words font-extrabold leading-tight tracking-[-0.05em] ${slug === "enterprise" ? "text-[26px]" : "text-[32px]"}`}>
-          {price.main}
+    <article
+      aria-label={`Plano ${name}`}
+      className={`relative flex h-full flex-col rounded-2xl border bg-white p-5 text-[#0B1737] shadow-[0_4px_20px_rgba(15,37,73,0.045)] sm:p-6 ${
+        featured ? "border-2 border-[#075AE5] ring-4 ring-[#075AE5]/[0.055]" : "border-[#DCE4EF]"
+      }`}
+    >
+      {featured && (
+        <div className="absolute -top-3 left-5 whitespace-nowrap rounded-full bg-[#FFC629] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.09em] text-[#0B1737]">
+          Mais vendido
         </div>
-        {price.equivalent && <div className={`mt-0.5 text-[11px] ${pro ? "text-[#DBE8FF]" : "text-[#637189]"}`}>/mês equivalente</div>}
-        <div className={`mt-1 text-[11px] font-semibold ${pro ? "text-[#E5EFFF]" : "text-[#52617B]"}`}>{price.detail}</div>
+      )}
+      <div className="min-h-[96px]">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#60738F]">Plano Avalia Solar</p>
+        <h3 className="mt-2 text-[23px] font-extrabold leading-tight tracking-[-0.035em]">{name}</h3>
+        <p className="mt-2 text-[13px] leading-[1.55] text-[#5E6D84]">{data.tagline}</p>
+      </div>
+      <div className="mt-5 min-h-[110px] border-t border-[#E8EDF5] pt-5">
+        <p className={`break-words font-extrabold leading-[1.05] tracking-[-0.055em] text-[#0B1737] ${
+          slug === "enterprise" ? "text-[28px] sm:text-[30px]" : "text-[40px] sm:text-[42px]"
+        }`}>
+          {price.main}
+        </p>
+        <p className="mt-2 text-[12px] font-semibold text-[#465875]">{price.detail}</p>
+        {price.monthlyNote && (
+          <p className="mt-1 text-[11px] leading-relaxed text-[#65758F]">
+            {price.monthlyNote} — apenas para comparação
+          </p>
+        )}
       </div>
       <button
         type="button"
         onClick={() => onSelect(slug)}
         disabled={current || isLoading}
-        className={`mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg px-3 text-[12px] font-extrabold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFC629] disabled:cursor-default ${current ? "bg-[#E5EBF3] text-[#5F6D83]" : pro ? "bg-[#FFC629] text-[#0B1737] hover:bg-[#F5B90D]" : slug === "essential" ? "bg-[#075AE5] text-white hover:bg-[#0747BF]" : "border border-[#B8CCF1] bg-white text-[#075AE5] hover:bg-[#F1F7FF]"}`}
+        className={`mt-6 inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-lg px-3 text-[13px] font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075AE5] disabled:cursor-default ${
+          current
+            ? "bg-[#E8EDF4] text-[#5F6D83]"
+            : featured
+              ? "bg-[#FFC629] text-[#0B1737] hover:bg-[#F5BA10]"
+              : slug === "essential"
+                ? "bg-[#075AE5] text-white hover:bg-[#0747BF]"
+                : "border border-[#B8CCF1] bg-white text-[#075AE5] hover:bg-[#F1F7FF]"
+        }`}
       >
         {isLoading ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin mr-1" aria-hidden="true" />
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             <span>Processando...</span>
           </>
         ) : current ? (
@@ -381,21 +370,29 @@ function PlanCard({
         ) : (
           <>
             <span>{data.cta}</span>
-            <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </>
         )}
       </button>
-      <div className={`mt-5 h-px ${pro ? "bg-white/20" : "bg-[#E8EEF6]"}`} />
-      <p className={`mt-4 text-[11px] font-bold ${pro ? "text-[#EDF4FF]" : "text-[#65738B]"}`}>Principais recursos</p>
-      <ul className="mt-3 flex-1 space-y-3">
-        {data.features.map((benefit) => (
-          <li key={benefit} className="flex items-start gap-2 text-[12px] leading-[1.4]">
-            <Check aria-hidden="true" className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${pro ? "text-[#FFC629]" : "text-[#075AE5]"}`} />
-            <span>{benefit}</span>
-          </li>
-        ))}
-      </ul>
-      {slug === "free" && <p className="mt-5 rounded-lg bg-[#F0F6FF] px-3 py-2.5 text-[11px] leading-relaxed text-[#4F6080]">Comece com a presença básica e evolua conforme a necessidade.</p>}
+      <div className="mt-6 flex-1 border-t border-[#E8EDF5] pt-5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#53617B]">
+          O que está incluído
+        </p>
+        <ul className="mt-4 space-y-3.5">
+          {data.features.map((benefit) => (
+            <li key={benefit} className="flex items-start gap-2.5 text-[13px] leading-[1.45] text-[#253650]">
+              <Check aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#075AE5]" />
+              <span>{benefit}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <a
+        href="#comparativo"
+        className="mt-6 inline-flex min-h-10 items-center justify-start gap-1.5 text-[12px] font-semibold text-[#075AE5] underline-offset-4 hover:underline"
+      >
+        Comparar recursos <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+      </a>
     </article>
   );
 }
@@ -420,7 +417,7 @@ function PricingSection({
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#075AE5]">Planos e preços</p>
-            <h2 className="mt-1.5 text-[24px] font-extrabold tracking-[-0.035em] text-[#0B1737] sm:text-[27px]">Um plano para cada fase da sua empresa</h2>
+            <h2 className="mt-2 text-[28px] font-extrabold tracking-[-0.045em] text-[#0B1737] sm:text-[34px]">Um plano para cada fase da sua empresa</h2>
             <p className="mt-1.5 max-w-[630px] text-[13px] text-[#65738B]">Compare as possibilidades de presença, divulgação e inteligência comercial.</p>
           </div>
           <CycleToggle period={period} setPeriod={setPeriod} />
@@ -454,7 +451,7 @@ function PricingSection({
           </div>
           <p className="mt-3 text-center text-[11px] text-[#65738B]">Selecione outro plano acima para comparar os preços e benefícios.</p>
         </div>
-        {/* Desktop/tablet: cards alinhados nas quatro colunas da referência. */}
+        {/* Desktop/tablet: quatro modalidades, com preços e recursos comparáveis. */}
         <div className="mt-8 hidden items-stretch gap-3 md:grid md:grid-cols-2 xl:grid-cols-4 xl:gap-4">
           {PLAN_ORDER.map((slug) => (
             <PlanCard
@@ -468,7 +465,7 @@ function PricingSection({
           ))}
         </div>
         <p className="mt-5 text-center text-[11px] leading-relaxed text-[#65738B]">
-          Os valores mensais exibidos são equivalentes. A cobrança ocorre pelo período selecionado. Recursos e elegibilidade dependem do contrato e das permissões efetivas do plano.
+          Os valores em destaque representam o total do período selecionado, não uma mensalidade. A equivalência mensal é apenas informativa. A contratação e os recursos seguem as condições e permissões efetivas do plano.
         </p>
       </div>
     </section>
