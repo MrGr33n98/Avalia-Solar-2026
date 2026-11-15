@@ -46,23 +46,23 @@ export default function MobileCompanyFilterBar({
   return (
     <div
       className={cn(
-        'w-full bg-white border-b border-slate-100 flex items-center justify-start gap-1.5 px-3 py-1 overflow-x-auto select-none no-scrollbar snap-x snap-mandatory',
+        'grid w-full grid-cols-[minmax(0,1.05fr)_minmax(0,0.8fr)_minmax(0,0.95fr)_minmax(0,1.1fr)] items-center gap-1 border-b border-slate-100 bg-white px-1.5 py-1.5 select-none sm:px-2',
         className
       )}
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      data-testid="mobile-company-filter-bar"
     >
       {/* Botão Principal: Filtros com Contador */}
       <button
         type="button"
         onClick={onOpenFilters}
         className={cn(
-          'relative flex h-[34px] min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all border snap-start touch-manipulation after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-[""]',
+          'relative flex h-9 w-full min-w-0 items-center justify-center gap-1 rounded-full border px-1 text-[9px] font-bold transition-all touch-manipulation min-[350px]:text-[10px] min-[375px]:gap-1.5 min-[375px]:px-2 min-[375px]:text-[11px] after:absolute after:-inset-y-1 after:inset-x-0 after:content-[""]',
           activeGroupsCount > 0
             ? 'bg-blue-600 border-blue-600 text-white'
             : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
         )}
       >
-        <SlidersHorizontal className="h-3 w-3" />
+        <SlidersHorizontal className="h-3 w-3 shrink-0" />
         <span>Filtros</span>
         {activeGroupsCount > 0 && (
           <span
@@ -81,15 +81,15 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onOpenLocation}
         className={cn(
-          'relative flex h-[34px] min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-[""]',
+          'relative flex h-9 w-full min-w-0 items-center justify-center gap-1 rounded-full border px-1 text-[9px] font-semibold transition-all touch-manipulation min-[350px]:text-[10px] min-[375px]:gap-1.5 min-[375px]:px-2 min-[375px]:text-[11px] after:absolute after:-inset-y-1 after:inset-x-0 after:content-[""]',
           hasLocationActive
             ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold'
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
         )}
       >
-        <MapPin className="h-3 w-3 text-blue-600" />
-        <span>{locationLabel || 'Perto de mim'}</span>
-        <ChevronDown className="h-3 w-3 opacity-60" />
+        <MapPin className="h-3 w-3 shrink-0 text-blue-600" />
+        <span className="min-w-0 truncate" title={locationLabel || 'Perto de mim'}>{locationLabel || 'Perto de mim'}</span>
+        <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
       </button>
 
       {/* Botão: Categoria */}
@@ -97,31 +97,32 @@ export default function MobileCompanyFilterBar({
         type="button"
         onClick={onOpenCategory}
         className={cn(
-          'relative flex h-[34px] min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-[""]',
+          'relative flex h-9 w-full min-w-0 items-center justify-center gap-1 rounded-full border px-1 text-[9px] font-semibold transition-all touch-manipulation min-[350px]:text-[10px] min-[375px]:gap-1.5 min-[375px]:px-2 min-[375px]:text-[11px] after:absolute after:-inset-y-1 after:inset-x-0 after:content-[""]',
           hasCategoryActive
             ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold'
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
         )}
       >
-        <span className="max-w-[130px] truncate">{categoryLabel || 'Categoria'}</span>
-        <ChevronDown className="h-3 w-3 opacity-60" />
+        <span className="min-w-0 truncate" title={categoryLabel || 'Categoria'}>{categoryLabel || 'Categoria'}</span>
+        <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
       </button>
 
       {/* Botão: Verificadas (Toggle Direto) */}
       <button
         type="button"
+        aria-pressed={filters.verified}
         onClick={onToggleVerified}
         className={cn(
-          'relative flex h-[34px] min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-all border snap-start touch-manipulation after:absolute after:-inset-y-[5px] after:inset-x-0 after:content-[""]',
+          'relative flex h-9 w-full min-w-0 items-center justify-center gap-1 rounded-full border px-1 text-[9px] font-semibold transition-all touch-manipulation min-[350px]:text-[10px] min-[375px]:gap-1.5 min-[375px]:px-2 min-[375px]:text-[11px] after:absolute after:-inset-y-1 after:inset-x-0 after:content-[""]',
           filters.verified
             ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold'
             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
         )}
       >
         <ShieldCheck
-          className={cn('h-3.5 w-3.5', filters.verified ? 'text-blue-700' : 'text-slate-400')}
+          className={cn('h-3 w-3 shrink-0', filters.verified ? 'text-blue-700' : 'text-slate-400')}
         />
-        <span>Verificadas</span>
+        <span className="min-w-0 truncate">Verificadas</span>
       </button>
     </div>
   );
