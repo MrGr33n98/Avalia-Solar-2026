@@ -292,9 +292,11 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
       expect(within(actions).getAllByText('Comparar')).toHaveLength(1);
       expect(review).toHaveAttribute('href', expect.stringMatching(/\/review(?:\/|$)/));
 
+      expect(icons).toHaveClass('gap-0', 'md:gap-1.5');
       for (const control of [favorite, share, review]) {
-        expect(control).toHaveClass('h-11', 'w-11', 'focus-visible:ring-2');
-        expect(control.querySelector('svg')).toBeInTheDocument();
+        expect(control).toHaveClass('h-10', 'w-10', 'md:h-11', 'md:w-11', 'focus-visible:ring-2');
+        expect(control.firstElementChild).toHaveClass('h-7', 'w-7', 'md:h-9', 'md:w-9');
+        expect(control.querySelector('svg')).toHaveClass('h-3.5', 'w-3.5', 'md:h-[17px]', 'md:w-[17px]');
         expect(control).toHaveTextContent('');
       }
       expect(share).not.toHaveClass('hidden', 'lg:flex');
