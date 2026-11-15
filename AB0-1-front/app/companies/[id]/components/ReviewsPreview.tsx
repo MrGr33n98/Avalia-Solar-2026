@@ -135,6 +135,7 @@ export default function ReviewsPreview({
                 <div className="mt-1 flex items-center gap-2">
                   <RatingStars
                     rating={averageRating}
+                    count={ratingCount}
                     showCount={false}
                     starClassName="h-3.5 w-3.5 text-amber-500"
                   />
