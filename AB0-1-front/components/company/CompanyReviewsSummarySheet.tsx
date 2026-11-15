@@ -209,7 +209,7 @@ export function CompanyReviewsSummarySheet({
     return () => { cancelled = true; };
   }, [isOpen, companyId]);
 
-  const aggregate = details?.companyId === companyId ? details.aggregate : null;
+  const aggregate = details && details.companyId === companyId ? details.aggregate : null;
   const count = aggregate ? Number(aggregate.total_reviews) : Number(ratingCount || 0);
   const rating = aggregate ? Number(aggregate.average_rating) : Number(ratingAvg);
   const hasReviews = Number.isFinite(count) && count > 0;
@@ -279,7 +279,7 @@ export function CompanyReviewsSummarySheet({
                 </div>
               </section>
 
-              {details?.companyId === companyId && details.review && (
+              {details && details.companyId === companyId && details.review && (
                 <FeaturedReview review={details.review} />
               )}
 
