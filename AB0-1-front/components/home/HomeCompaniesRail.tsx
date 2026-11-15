@@ -476,7 +476,7 @@ export function HomeCompaniesRail({
       <div className="mb-2 flex flex-col gap-1">
         <div
           data-testid="home-companies-header"
-          className="grid grid-cols-1 gap-1.5 min-[360px]:grid-cols-[minmax(0,1fr)_auto] min-[360px]:items-center min-[360px]:gap-2 sm:gap-4"
+          className="grid grid-cols-1 gap-1.5 min-[480px]:grid-cols-[minmax(0,1fr)_auto] min-[480px]:items-center min-[480px]:gap-2 sm:gap-4"
         >
           <h2
             id="home-companies-title"
@@ -494,7 +494,7 @@ export function HomeCompaniesRail({
               </span>
             ) : null}
           </h2>
-          <div className="flex shrink-0 items-center justify-between gap-1.5 min-[360px]:justify-end">
+          <div className="flex min-w-0 items-center justify-end gap-2">
             {/* View Mode Switcher: Grid / List */}
             <div
               role="group"
@@ -508,7 +508,7 @@ export function HomeCompaniesRail({
                 aria-label="Visualização em grade"
                 aria-pressed={viewMode === 'grid'}
                 className={cn(
-                  "relative flex h-7 w-8 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 before:absolute before:-inset-y-2 before:-left-3 before:right-0 before:content-['']",
+                  "relative flex h-7 w-[30px] min-h-0 min-w-0 shrink-0 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
                   viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-900'
                 )}
               >
@@ -525,7 +525,7 @@ export function HomeCompaniesRail({
                 aria-label="Visualização em lista"
                 aria-pressed={viewMode === 'list'}
                 className={cn(
-                  "relative flex h-7 w-8 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 before:absolute before:-inset-y-2 before:left-0 before:-right-3 before:content-['']",
+                  "relative flex h-7 w-[30px] min-h-0 min-w-0 shrink-0 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
                   viewMode === 'list' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:text-slate-900'
                 )}
               >
