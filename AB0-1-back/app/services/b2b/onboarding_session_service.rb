@@ -4,6 +4,22 @@ module B2b
   class OnboardingSessionService
     class Error < StandardError; end
 
+    PREVIOUS_STEPS = {
+      'confirm_data' => { step: 'ask_cnpj', state: 'awaiting_cnpj' },
+      'ask_email' => { step: 'confirm_data', state: 'confirming_data' },
+      'ask_segment' => { step: 'ask_email', state: 'awaiting_email' },
+      'ask_coverage' => { step: 'ask_segment', state: 'awaiting_segment' },
+      'ask_brands' => { step: 'ask_coverage', state: 'awaiting_coverage' },
+      'ask_logo' => { step: 'ask_brands', state: 'awaiting_brands' },
+      'ask_photos' => { step: 'ask_logo', state: 'awaiting_logo' },
+      'claim_ask_email' => { step: 'claim_ask_cnpj', state: 'claiming_cnpj' }
+    }.freeze
+
+    def self.company_public_url(company)
+      slug_or_id = company.slug.presence || company.id
+      "https://www.avaliasolar.com.br/companies/#{slug_or_id}"
+    end
+
     def self.find_active_by_contact(contact)
       CompanyOnboardingSession.find_by_contact(contact)
     end
@@ -13,7 +29,7 @@ module B2b
       older = find_active_by_contact(contact_clean)
       older&.update(state: 'abandoned')
 
-      hash = Digest::SHA256.hexdigest(contact_clean)
+      hash = CompanyOnboardingSession.contact_hash(contact_clean)
       encryptor = ActiveSupport::MessageEncryptor.new(Rails.application.key_generator.generate_key('b2b-onboarding-contact', 32))
       ciphertext = encryptor.encrypt_and_sign(contact_clean)
       token = SecureRandom.urlsafe_base64(32)
@@ -46,6 +62,63 @@ module B2b
       session
     end
 
+    def self.open_claim!(contact:, provider: 'waha', provider_session: nil, provider_chat_id: nil, sender_name: nil, cnpj: nil)
+      contact_clean = contact.to_s.strip
+      latest = CompanyOnboardingSession.find_latest_by_contact(contact_clean)
+      older = find_active_by_contact(contact_clean)
+      older&.update(state: 'abandoned')
+
+      target_company = if cnpj.present?
+                         Company.find_by(cnpj: cnpj.to_s.gsub(/\D/, ''))
+                       elsif latest&.company_id.present?
+                         Company.find_by(id: latest.company_id)
+                       elsif latest&.draft_data.to_h['existing_company_id'].present?
+                         Company.find_by(id: latest.draft_data['existing_company_id'])
+                       elsif latest&.cnpj.present?
+                         Company.find_by(cnpj: latest.cnpj)
+                       end
+
+      hash = CompanyOnboardingSession.contact_hash(contact_clean)
+      encryptor = ActiveSupport::MessageEncryptor.new(Rails.application.key_generator.generate_key('b2b-onboarding-contact', 32))
+      ciphertext = encryptor.encrypt_and_sign(contact_clean)
+      token = SecureRandom.urlsafe_base64(32)
+      digest = CompanyOnboardingSession.digest_token(token)
+
+      initial_state = target_company ? 'claiming_email' : 'claiming_cnpj'
+      initial_step = target_company ? 'claim_ask_email' : 'claim_ask_cnpj'
+
+      session = CompanyOnboardingSession.create!(
+        provider: provider.presence || 'waha',
+        provider_session: provider_session,
+        provider_contact_hash: hash,
+        provider_contact_ciphertext: ciphertext,
+        provider_chat_id: provider_chat_id,
+        session_token_digest: digest,
+        company: target_company,
+        cnpj: target_company&.cnpj,
+        state: initial_state,
+        current_step: initial_step,
+        draft_payload: {
+          'sender_name' => sender_name.presence || latest&.draft_data.to_h['sender_name'],
+          'existing_company_id' => target_company&.id
+        }.compact,
+        expires_at: 24.hours.from_now
+      )
+
+      if target_company
+        msg = "🔐 *Reivindicação de Perfil — #{target_company.name}*\n\n" \
+              "Para iniciarmos a validação de titularidade e liberarmos seu acesso ao Painel do Integrador:\n\n" \
+              "👉 *Qual é o seu e-mail corporativo na empresa?*\n*(Ex: diretoria@suaempresa.com.br)*"
+      else
+        msg = "🔐 *Reivindicação de Empresa no Avalia Solar*\n\n" \
+              "Para localizarmos o perfil que você deseja gerenciar:\n" \
+              "👉 *Digite o CNPJ da empresa* (14 dígitos, apenas números):"
+      end
+
+      send_message(session, msg)
+      session
+    end
+
     def self.process_message!(session, message)
       new(session, message).process!
     end
@@ -60,7 +133,35 @@ module B2b
     def process!
       if @text.match?(/\A(?:cancelar|sair|parar)\z/i)
         @session.update!(state: 'abandoned')
-        send_message(@session, 'Cadastro cancelado. Quando quiser recomeçar, basta enviar *CADASTRAR*! ☀️')
+        send_message(@session, 'Cadastro cancelado. Quando quiser recomeçar, basta enviar *CADASTRAR* ou *MENU*! ☀️')
+        return
+      end
+
+      if @text.match?(/\A(?:ajuda|atendente|humano|suporte|falar com pessoa)\b/i)
+        @session.update!(state: 'needs_human_review')
+        send_message(
+          @session,
+          "👩‍💻 *Transferindo para atendimento humano*\n\n" \
+          "Registramos sua solicitação. Nossa equipe de suporte ao integrador continuará seu atendimento por aqui ou pelo e-mail *contato@avaliasolar.com.br*.\n\n" \
+          "*(Se desejar voltar ao assistente automático a qualquer momento, envie *MENU* ou *CADASTRAR*)*"
+        )
+        return
+      end
+
+      if @text.match?(/\A(?:voltar|anterior|corrigir)\z/i)
+        handle_step_back
+        return
+      end
+
+      if @text.match?(/\A(?:reivindicar|reivindicacao|reivindicação)\b/i)
+        self.class.open_claim!(
+          contact: @session.provider_contact,
+          provider: @session.provider,
+          provider_session: @session.provider_session,
+          provider_chat_id: @session.provider_chat_id,
+          sender_name: @session.draft_data['sender_name'],
+          cnpj: @session.cnpj
+        )
         return
       end
 
@@ -92,6 +193,10 @@ module B2b
         handle_ask_logo
       when 'ask_photos'
         handle_ask_photos
+      when 'claim_ask_cnpj'
+        handle_claim_ask_cnpj
+      when 'claim_ask_email'
+        handle_claim_ask_email
       else
         finalize_onboarding!
       end
@@ -117,9 +222,19 @@ module B2b
 
       existing_company = Company.find_by(cnpj: clean_cnpj)
       if existing_company
-        @session.update!(state: 'abandoned')
-        send_message(@session, "🏢 Identificamos que a empresa *#{existing_company.name}* já possui cadastro no Avalia Solar!\n\n" \
-                              "Você é o responsável por ela? Para gerenciar este perfil existente, envie *REIVINDICAR* para iniciar a validação da sua titularidade.")
+        @session.merge_draft!(existing_company_id: existing_company.id)
+        @session.update!(
+          state: 'abandoned',
+          cnpj: clean_cnpj,
+          company: existing_company
+        )
+        public_url = self.class.company_public_url(existing_company)
+        send_message(
+          @session,
+          "🏢 Identificamos que a empresa *#{existing_company.name}* já possui cadastro no Avalia Solar!\n" \
+          "🔗 Página pública: #{public_url}\n\n" \
+          "Você é o responsável por ela? Para gerenciar este perfil existente, envie *REIVINDICAR* para iniciar a validação da sua titularidade."
+        )
         return
       end
 
@@ -331,11 +446,152 @@ module B2b
     end
 
     def handle_ask_photos
-      # Se for foto ou pular, finaliza o cadastro
+      image_data = @message['image'] || (@message.is_a?(Hash) && @message['type'] == 'image' ? @message : nil)
+      has_image = image_data && (image_data['data'].present? || image_data['media_url'].present?)
+
+      if has_image
+        @session.merge_draft!(
+          portfolio_photo_data: image_data['data'],
+          portfolio_photo_media_url: image_data['media_url'],
+          portfolio_photo_mime_type: image_data['mime_type'] || 'image/jpeg'
+        )
+      end
+
       finalize_onboarding!
     end
 
+    def handle_step_back
+      prev = PREVIOUS_STEPS[@session.current_step]
+      unless prev
+        send_message(@session, "👉 Você já está no primeiro passo. Digite o *CNPJ da sua empresa* (14 dígitos, apenas números):")
+        return
+      end
+
+      @session.update!(current_step: prev[:step], state: prev[:state])
+      send_message(@session, "↩️ Voltamos para a etapa anterior (#{prev[:step].tr('_', ' ')}). Envie a informação atualizada:")
+    end
+
+    def handle_claim_ask_cnpj
+      clean_cnpj = @text.gsub(/\D/, '')
+      unless clean_cnpj.length == 14
+        send_message(@session, "⚠️ Por favor, digite um *CNPJ válido com 14 números* da empresa que deseja reivindicar:")
+        return
+      end
+
+      existing_company = Company.find_by(cnpj: clean_cnpj)
+      unless existing_company
+        @session.update!(current_step: 'ask_cnpj', state: 'awaiting_cnpj')
+        send_message(
+          @session,
+          "ℹ️ Não encontramos uma empresa cadastrada com o CNPJ *#{clean_cnpj}*. Vamos iniciar o cadastro gratuito dela agora!"
+        )
+        return handle_ask_cnpj
+      end
+
+      @session.merge_draft!(existing_company_id: existing_company.id)
+      @session.update!(
+        company: existing_company,
+        cnpj: clean_cnpj,
+        current_step: 'claim_ask_email',
+        state: 'claiming_email'
+      )
+
+      send_message(
+        @session,
+        "🏢 Localizamos o perfil da *#{existing_company.name}*!\n\n" \
+        "Para registrarmos sua solicitação de titularidade, informe seu *e-mail corporativo* na empresa:\n" \
+        "*(Ex: diretoria@suaempresa.com.br)*"
+      )
+    end
+
+    def handle_claim_ask_email
+      email_candidate = @text.to_s.strip.downcase
+      unless email_candidate.match?(Company::SIMPLE_EMAIL_REGEX)
+        send_message(@session, "⚠️ O e-mail digitado parece inválido.\n\nPor favor, digite seu e-mail corporativo completo (ex: diretoria@suaempresa.com.br):")
+        return
+      end
+
+      target_company = @session.company || Company.find_by(id: @session.draft_data['existing_company_id']) || Company.find_by(cnpj: @session.cnpj)
+      unless target_company
+        @session.update!(current_step: 'claim_ask_cnpj', state: 'claiming_cnpj')
+        send_message(@session, "⚠️ Precisamos confirmar o CNPJ da empresa primeiro. Digite os 14 números do CNPJ:")
+        return
+      end
+
+      access_request = nil
+      user = nil
+
+      ActiveRecord::Base.transaction do
+        user = User.find_by(email: email_candidate)
+        unless user
+          temp_password = "Solar##{SecureRandom.random_number(1000..9999)}!"
+          raw_user_name = (@session.draft_data['sender_name'].presence || "Responsável #{target_company.name}").to_s.strip.truncate(100, omission: '')
+          user_name = raw_user_name.length >= 3 ? raw_user_name : 'Responsável Integrador'
+          user = User.new(
+            name: user_name,
+            email: email_candidate,
+            password: temp_password,
+            password_confirmation: temp_password,
+            role: 'company',
+            company_id: target_company.id,
+            status: :pending,
+            approved_by_admin: false,
+            city: target_company.city.presence || 'São Paulo',
+            state: target_company.state.presence || 'SP',
+            terms_accepted: true,
+            terms_accepted_at: Time.current,
+            public_name_consent: true,
+            display_full_name_consent: true,
+            review_name_consent: true,
+            lgpd_name_consent: true,
+            confirmed_at: Time.current
+          )
+          user.skip_corporate_email_validation = true
+          user.save!
+        end
+
+        raw_phone = @session.provider_contact.to_s.gsub(/\D/, '')
+        contact_phone = raw_phone.length.between?(10, 15) ? "+#{raw_phone.start_with?('55') ? raw_phone : "55#{raw_phone}"}" : nil
+
+        access_request = CompanyAccessRequest.where(user: user, company: target_company, status: %w[pending approved]).first
+        access_request ||= CompanyAccessRequest.create!(
+          user: user,
+          company: target_company,
+          status: 'pending',
+          contact_email: email_candidate,
+          contact_phone: contact_phone,
+          message: "Solicitação de reivindicação de titularidade iniciada via WhatsApp (CNPJ #{target_company.cnpj})."
+        )
+
+        @session.merge_draft!(user_email: email_candidate, company_access_request_id: access_request.id)
+        @session.update!(
+          state: 'completed',
+          current_step: 'finish',
+          company: target_company,
+          user: user
+        )
+      end
+
+      public_url = self.class.company_public_url(target_company)
+      msg = "✅ *Solicitação de Reivindicação Registrada!*\n\n" \
+            "• *Empresa:* #{target_company.name}\n" \
+            "• *Protocolo:* #CAR-#{access_request.id}\n" \
+            "• *E-mail vinculado:* #{email_candidate}\n" \
+            "• *Página pública:* #{public_url}\n\n" \
+            "Nossa equipe de Trust & Safety validará sua titularidade e enviará a liberação de acesso ao Painel do Integrador no seu e-mail."
+      send_message(@session, msg)
+    rescue ActiveRecord::RecordInvalid => e
+      Rails.logger.error("[B2B::OnboardingSessionService] Erro ao registrar reivindicação: #{e.record.errors.full_messages.join(', ')}")
+      send_message(@session, "⚠️ Não foi possível concluir a solicitação: #{e.record.errors.full_messages.first}.")
+    end
+
     def finalize_onboarding!
+      company = nil
+      user = nil
+      existing_user_found = false
+      temp_password = "Solar##{SecureRandom.random_number(1000..9999)}!"
+      cats_names = ''
+
       ActiveRecord::Base.transaction do
         draft = @session.draft_data
         cnpj_data = draft['cnpj_data'] || {}
@@ -361,9 +617,6 @@ module B2b
 
         user_email = draft['user_email'].to_s.strip.downcase.presence || cnpj_data['email'].to_s.strip.downcase.presence
         user_email = "contato_#{@session.id.first(8)}@avaliasolar.com.br" unless user_email&.match?(Company::SIMPLE_EMAIL_REGEX)
-
-        # Senha temporária amigável e segura (passa na validação de complexidade)
-        temp_password = "Solar##{rand(1000..9999)}!"
 
         # Trata marcas para campos estruturados da empresa
         brands_raw = draft['brands'].presence
@@ -395,14 +648,15 @@ module B2b
           attach_company_logo(company, media_url: draft['logo_media_url'], base64_data: draft['logo_data'], mime_type: draft['logo_mime_type'])
         end
 
+        if draft['portfolio_photo_data'].present? || draft['portfolio_photo_media_url'].present?
+          attach_portfolio_photo(company, media_url: draft['portfolio_photo_media_url'], base64_data: draft['portfolio_photo_data'], mime_type: draft['portfolio_photo_mime_type'])
+        end
+
         user = User.find_by(email: user_email)
         if user
-          user.password = temp_password
-          user.password_confirmation = temp_password
+          existing_user_found = true
+          # RCA-001 Fix: Jamais sobrescrever a senha de um usuário existente via WhatsApp não autenticado.
           user.skip_corporate_email_validation = true
-          user.status = :active
-          user.approved_by_admin = true
-          user.confirmed_at ||= Time.current
           user.company_id = company.id if user.company_id.blank?
           user.role = 'company' if user.role.blank?
           user.save!(validate: false)
@@ -440,8 +694,10 @@ module B2b
         # Invalida cache de empresas do usuário para garantir listagem imediata
         Rails.cache.delete_matched("user_#{user.id}_companies_mine_*") rescue nil
 
-        # Dispara e-mail de boas-vindas com a senha provisória e dados de acesso
-        ::CompanyMailer.welcome_onboarding(company, user, temp_password).deliver_later rescue nil
+        unless existing_user_found
+          # Dispara e-mail de boas-vindas com a senha provisória e dados de acesso apenas para novas contas
+          ::CompanyMailer.welcome_onboarding(company, user, temp_password).deliver_later rescue nil
+        end
 
         @session.update!(
           state: 'completed',
@@ -450,44 +706,86 @@ module B2b
           user: user
         )
 
-        slug = company.slug.presence || company.id
-        site_url = "https://avaliasolar.com.br/empresa/#{slug}"
-        dashboard_url = "https://app.avaliasolar.com.br/login?email=#{CGI.escape(user.email)}"
-
         cats_names = company.categories.pluck(:name).join(', ')
-
-        # Mensagem 1: Confirmação e dados de acesso
-        credentials_msg = "*Parabéns! Sua empresa foi cadastrada com sucesso no Avalia Solar.*\n\n" \
-                          "*Empresa:* #{company.name}\n" \
-                          "*Categorias:* #{cats_names.presence || 'Instaladores de Energia Solar'}\n" \
-                          "*Atuação:* #{company.coverage_cities.presence || company.city} (#{company.state})\n" \
-                          "*Página pública:* #{site_url}\n\n" \
-                          "*DADOS DE ACESSO AO PAINEL:*\n" \
-                          "*Login:* #{user.email}\n" \
-                          "*Senha temporária:* `#{temp_password}`\n" \
-                          "👉 *Acessar Painel:* #{dashboard_url}\n\n" \
-                          "*(Uma cópia destes dados também foi enviada para o seu e-mail: #{user.email})*"
-
-        send_message(@session, credentials_msg)
-
-        # Pequena pausa natural de 1.5s antes da mensagem de alinhamento do Felipe
-        sleep 1.5
-
-        # Mensagem 2: Mensagem humanizada do Felipe com agendamento do Zoho
-        booking_url = 'https://avaliasolar.zohobookings.com/5012013000000038009/#/5012013000000038009?bookedFrom=ShortenURL'
-        felipe_msg = "Olá! Aqui é o Felipe, fundador do Avalia Solar. 👋\n\n" \
-                     "Vi que você acabou de cadastrar a *#{company.name}*. Parabéns pelo passo rumo a mais autoridade e conversão de propostas na sua região!\n\n" \
-                     "Para alinharmos o seu *Selo de Empresa Verificada* 🛡️ e deixarmos sua página pronta para receber clientes e ranquear no Google:\n\n" \
-                     "*Podemos fazer um alinhamento rápido de 15 minutos?*\n" \
-                     "Escolha o melhor dia e horário na minha agenda:\n" \
-                     "👉 #{booking_url}\n\n" \
-                     "Ou se preferir, pode me responder por aqui mesmo com o melhor horário pra você!"
-
-        send_message(@session, felipe_msg)
       end
+
+      site_url = self.class.company_public_url(company)
+      dashboard_url = "https://app.avaliasolar.com.br/login?email=#{CGI.escape(user.email)}"
+
+      access_details = if existing_user_found
+                         "*Login:* #{user.email}\n" \
+                         "👉 *Acessar Painel:* #{dashboard_url}\n" \
+                         "*(Como seu e-mail já possuía conta no Avalia Solar, utilize sua senha atual para entrar)*"
+                       else
+                         "*Login:* #{user.email}\n" \
+                         "👉 *Acessar Painel:* #{dashboard_url}\n" \
+                         "*(Por segurança, enviamos os dados de primeiro acesso exclusivamente para o seu e-mail: #{user.email})*"
+                       end
+
+      credentials_msg = "*Parabéns! Sua empresa foi cadastrada com sucesso no Avalia Solar.*\n\n" \
+                        "*Empresa:* #{company.name}\n" \
+                        "*Categorias:* #{cats_names.presence || 'Instaladores de Energia Solar'}\n" \
+                        "*Atuação:* #{company.coverage_cities.presence || company.city} (#{company.state})\n" \
+                        "*Página pública:* #{site_url}\n\n" \
+                        "*DADOS DE ACESSO AO PAINEL:*\n" \
+                        "#{access_details}"
+
+      send_message(@session, credentials_msg)
+
+      booking_url = 'https://avaliasolar.zohobookings.com/5012013000000038009/#/5012013000000038009?bookedFrom=ShortenURL'
+      felipe_msg = "Olá! Aqui é o Felipe, fundador do Avalia Solar. 👋\n\n" \
+                   "Vi que você acabou de cadastrar a *#{company.name}*. Parabéns pelo passo rumo a mais autoridade e conversão de propostas na sua região!\n\n" \
+                   "Para alinharmos o seu *Selo de Empresa Verificada* 🛡️ e deixarmos sua página pronta para receber clientes e ranquear no Google:\n\n" \
+                   "*Podemos fazer um alinhamento rápido de 15 minutos?*\n" \
+                   "Escolha o melhor dia e horário na minha agenda:\n" \
+                   "👉 #{booking_url}\n\n" \
+                   "Ou se preferir, pode me responder por aqui mesmo com o melhor horário pra você!"
+
+      send_message(@session, felipe_msg)
     rescue ActiveRecord::RecordInvalid => e
       Rails.logger.error("[B2B::OnboardingSessionService] Erro ao criar empresa: #{e.record.errors.full_messages.join(', ')}")
       send_message(@session, "⚠️ Ocorreu uma inconsistência nos dados da empresa: #{e.record.errors.full_messages.first}. Nossa equipe técnica foi notificada.")
+    end
+
+    def attach_portfolio_photo(company, media_url: nil, base64_data: nil, mime_type: nil)
+      ext = mime_type.to_s.split('/').last.presence || 'jpeg'
+      ext = 'jpg' if ext == 'jpeg'
+
+      if base64_data.present?
+        decoded = Base64.decode64(base64_data)
+        @session.portfolio_photos.attach(
+          io: StringIO.new(decoded),
+          filename: "portfolio_#{company.id}_1.#{ext}",
+          content_type: mime_type.presence || 'image/jpeg'
+        )
+        company.media_assets.attach(
+          io: StringIO.new(decoded),
+          filename: "portfolio_#{company.id}_1.#{ext}",
+          content_type: mime_type.presence || 'image/jpeg'
+        )
+        return
+      end
+
+      return if media_url.blank?
+
+      base_url = VoiceReviews::Config.waha_base_url
+      api_key = VoiceReviews::Config.waha_api_key
+      return if base_url.blank? || api_key.blank?
+
+      uri = URI.parse(media_url)
+      base = URI.parse(base_url)
+      full_url = URI.join("#{base.scheme}://#{base.host}:#{base.port}", uri.path.to_s).to_s
+
+      response = HTTParty.get(full_url, headers: { 'X-Api-Key' => api_key }, timeout: 15)
+      if response.success? && response.body.present?
+        company.media_assets.attach(
+          io: StringIO.new(response.body),
+          filename: "portfolio_#{company.id}_1.#{ext}",
+          content_type: mime_type.presence || 'image/jpeg'
+        )
+      end
+    rescue StandardError => e
+      Rails.logger.warn("[B2B::OnboardingSessionService] Falha ao anexar foto de portfólio: #{e.message}")
     end
 
     def attach_company_logo(company, media_url: nil, base64_data: nil, mime_type: nil)
