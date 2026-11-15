@@ -65,7 +65,10 @@ RSpec.describe Whatsapp::ConversationRouter do
 
     expect(gateway).to receive(:send_message).with(
       anything,
-      /Atendimento Humano — Avalia Solar/
+      satisfy { |msg|
+        msg.include?('Atendimento Humano — Avalia Solar') &&
+          msg.include?('growth@avaliasolar.com.br')
+      }
     )
 
     described_class.call(

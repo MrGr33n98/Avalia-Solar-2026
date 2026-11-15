@@ -142,7 +142,7 @@ module B2b
         send_message(
           @session,
           "👩‍💻 *Transferindo para atendimento humano*\n\n" \
-          "Registramos sua solicitação. Nossa equipe de suporte ao integrador continuará seu atendimento por aqui ou pelo e-mail *contato@avaliasolar.com.br*.\n\n" \
+          "Registramos sua solicitação. Nossa equipe de suporte ao integrador continuará seu atendimento por aqui ou pelo e-mail *growth@avaliasolar.com.br*.\n\n" \
           "*(Se desejar voltar ao assistente automático a qualquer momento, envie *MENU* ou *CADASTRAR*)*"
         )
         return
