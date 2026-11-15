@@ -616,7 +616,12 @@ module B2b
         primary_cat_id = (category_ids.include?(draft['primary_category_id']) ? draft['primary_category_id'] : category_ids.first)
 
         user_email = draft['user_email'].to_s.strip.downcase.presence || cnpj_data['email'].to_s.strip.downcase.presence
-        user_email = "contato_#{@session.id.first(8)}@avaliasolar.com.br" unless user_email&.match?(Company::SIMPLE_EMAIL_REGEX)
+        # Never fabricate an @avaliasolar.com.br account for an unknown owner.
+        # This must be a real address: owner access is granted only after email confirmation.
+        unless user_email&.match?(Company::SIMPLE_EMAIL_REGEX)
+          @session.errors.add(:base, 'e-mail profissional válido é obrigatório para finalizar o cadastro')
+          raise ActiveRecord::RecordInvalid, @session
+        end
 
         # Trata marcas para campos estruturados da empresa
         brands_raw = draft['brands'].presence
