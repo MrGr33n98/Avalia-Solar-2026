@@ -170,6 +170,7 @@ function BrandMark() {
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const links = [
+    { href: "#visao-geral", label: "Visão geral" },
     { href: "/companies", label: "Empresas" },
     { href: "/categories", label: "Categorias" },
     { href: "#planos", label: "Planos" },
@@ -232,11 +233,12 @@ function Hero() {
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Avalia Solar para empresas
           </span>
           <h1 className="mt-4 max-w-[640px] text-[30px] font-extrabold leading-[1.14] tracking-[-0.04em] text-[#0B1737] sm:text-[36px] lg:text-[40px]">
-            Mais visibilidade. <br className="hidden sm:block" />
-            Mais oportunidades <span className="text-[#075AE5]">para seu negócio.</span>
+            Planos claros para <br className="hidden sm:block" />
+            fazer sua empresa solar <span className="text-[#075AE5]">crescer.</span>
           </h1>
           <p className="mt-3 max-w-[530px] text-[14px] leading-relaxed text-[#53617C] sm:text-[15px]">
-            Apresente sua empresa, destaque produtos e serviços e acompanhe o interesse de compradores no marketplace solar.
+            Compare presença, destaque e inteligência comercial em uma página simples de entender —
+            com valores e recursos organizados para cada fase da sua operação.
           </p>
           <div className="mt-5">
             <a
@@ -261,6 +263,46 @@ function Hero() {
           className="mx-auto hidden h-auto w-full max-w-[390px] object-contain md:block"
           sizes="(min-width: 768px) 390px, 1px"
         />
+      </div>
+    </section>
+  );
+}
+
+function PricingOverview({ period }: { period: BillingPeriod }) {
+  const freePrice = priceFor("free", period);
+  const periodLabel = period === "twelve_months" ? "12 meses" : "6 meses";
+
+  return (
+    <section id="visao-geral" className="scroll-mt-[90px] border-b border-[#E4ECF8] bg-white py-8 sm:py-10">
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
+        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#075AE5]">
+              Visão geral dos planos
+            </p>
+            <h2 className="mt-2 max-w-[680px] text-[24px] font-extrabold leading-tight tracking-[-0.035em] text-[#0B1737] sm:text-[28px]">
+              Escolha o nível de presença comercial que sua empresa precisa hoje.
+            </h2>
+            <p className="mt-2 max-w-[650px] text-[13px] leading-relaxed text-[#65738B] sm:text-[14px]">
+              Comece com uma presença básica e evolua para recursos de destaque, atendimento e
+              análise conforme sua operação amadurece.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2">
+            {[
+              { label: "Planos disponíveis", value: `${pricingPlans.length}` },
+              { label: "Começa em", value: freePrice.main },
+              { label: "Período exibido", value: periodLabel },
+              { label: "Cobrança", value: "Transparente" },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl border border-[#E0E9F5] bg-[#F8FBFF] px-3.5 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#738099]">{item.label}</p>
+                <p className="mt-1 text-[15px] font-extrabold tracking-[-0.02em] text-[#0B1737]">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -671,6 +713,7 @@ export default function AvaliaSolarPricingFiberyAdapted({
       {showHeader && <Header />}
       <main>
         <Hero />
+        <PricingOverview period={period} />
         <PricingSection
           period={period}
           setPeriod={handlePeriodChange}
