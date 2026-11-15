@@ -500,7 +500,7 @@ describe('rails de identidade visual da home', () => {
     expect(headerGrid).toHaveClass(
       'grid',
       'grid-cols-1',
-      'min-[360px]:grid-cols-[minmax(0,1fr)_auto]'
+      'min-[480px]:grid-cols-[minmax(0,1fr)_auto]'
     );
 
     const switcher = screen.getByTestId('company-view-mode-switcher');
@@ -510,5 +510,18 @@ describe('rails de identidade visual da home', () => {
       'rounded-[10px]',
       'border-[#E0E0E0]'
     );
+
+    // O CSS global aplica mínimo de 48px em botões no mobile.
+    // O seletor precisa limitar os dois controles a 30x28px para não invadir "Ver todas".
+    const gridButton = screen.getByRole('button', { name: 'Visualização em grade' });
+    const listButton = screen.getByRole('button', { name: 'Visualização em lista' });
+
+    for (const button of [gridButton, listButton]) {
+      expect(button).toHaveClass('h-7', 'w-[30px]', 'min-h-0', 'min-w-0');
+      expect(button.className).not.toContain('before:');
+    }
+
+    expect(switcher.parentElement).toHaveClass('justify-end', 'gap-2');
+    expect(screen.getByRole('link', { name: /Ver todas/i })).toBeInTheDocument();
   });
 });
