@@ -12,6 +12,7 @@ import {
   ChevronDown,
   CircleDollarSign,
   Megaphone,
+  MessageSquare,
   Settings,
   Sparkles,
   Tag,
@@ -246,6 +247,22 @@ export default function CRMSidebar({ onOpenSearch: _onOpenSearch, onOpenAddModal
         >
           <Tag className={cn('w-4 h-4 shrink-0', isCurrent('/dashboard/sales/leads') ? 'text-slate-900' : 'text-slate-300')} />
           {!collapsed && <span>Leads</span>}
+        </Link>
+
+        {/* WhatsApp: internal CRM metadata only */}
+        <Link
+          href="/dashboard/sales/whatsapp"
+          title="WhatsApp"
+          className={cn(
+            'transition-all duration-150 flex items-center gap-3',
+            collapsed ? 'w-10 h-10 justify-center mx-auto rounded-xl' : 'px-3 py-2.5 rounded-xl font-medium',
+            isCurrent('/dashboard/sales/whatsapp')
+              ? 'bg-white text-slate-900 font-semibold shadow-xs'
+              : 'text-slate-300 hover:bg-slate-850 hover:text-white'
+          )}
+        >
+          <MessageSquare className="w-4 h-4 shrink-0" />
+          {!collapsed && <span>WhatsApp</span>}
         </Link>
 
         {/* Campanhas */}
