@@ -533,7 +533,7 @@ module B2b
             password: temp_password,
             password_confirmation: temp_password,
             role: 'company',
-            company_id: target_company.id,
+            company_id: nil,
             status: :pending,
             approved_by_admin: false,
             city: target_company.city.presence || 'São Paulo',
@@ -544,7 +544,7 @@ module B2b
             display_full_name_consent: true,
             review_name_consent: true,
             lgpd_name_consent: true,
-            confirmed_at: Time.current
+            confirmed_at: nil
           )
           user.skip_corporate_email_validation = true
           user.save!
