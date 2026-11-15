@@ -176,6 +176,21 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(CompanyAccessRequest.where(user: session.user, company: session.company, status: 'pending')).to exist
       end
 
+      it 'refuses to fabricate an owner email when registration data has no valid address' do
+        session.update!(
+          cnpj: '06990590000123',
+          current_step: 'ask_photos',
+          state: 'awaiting_photos',
+          draft_payload: { 'cnpj_data' => cnpj_data.except('email') }
+        )
+
+        expect(gateway).to receive(:send_message).with(session, /e-mail profissional válido/)
+        expect do
+          described_class.process_message!(session, { 'body' => 'pular' })
+        end.not_to change(Company, :count)
+        expect(session.reload.company).to be_nil
+      end
+
       it 'attaches company logo when image with base64 data is provided' do
         session.update!(current_step: 'ask_logo', state: 'awaiting_logo')
         fake_b64 = Base64.encode64('fake image content')
