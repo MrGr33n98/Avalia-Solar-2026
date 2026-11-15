@@ -142,7 +142,7 @@ module B2b
         send_message(
           @session,
           "👩‍💻 *Transferindo para atendimento humano*\n\n" \
-          "Registramos sua solicitação. Nossa equipe de suporte ao integrador continuará seu atendimento por aqui ou pelo e-mail *contato@avaliasolar.com.br*.\n\n" \
+          "Registramos sua solicitação. Nossa equipe de suporte ao integrador continuará seu atendimento por aqui ou pelo e-mail *growth@avaliasolar.com.br*.\n\n" \
           "*(Se desejar voltar ao assistente automático a qualquer momento, envie *MENU* ou *CADASTRAR*)*"
         )
         return
@@ -616,7 +616,7 @@ module B2b
         primary_cat_id = (category_ids.include?(draft['primary_category_id']) ? draft['primary_category_id'] : category_ids.first)
 
         user_email = draft['user_email'].to_s.strip.downcase.presence || cnpj_data['email'].to_s.strip.downcase.presence
-        user_email = "contato_#{@session.id.first(8)}@avaliasolar.com.br" unless user_email&.match?(Company::SIMPLE_EMAIL_REGEX)
+        user_email = "growth_#{@session.id.first(8)}@avaliasolar.com.br" unless user_email&.match?(Company::SIMPLE_EMAIL_REGEX)
 
         # Trata marcas para campos estruturados da empresa
         brands_raw = draft['brands'].presence

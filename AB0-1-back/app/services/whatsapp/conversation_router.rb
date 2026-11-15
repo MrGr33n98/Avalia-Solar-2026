@@ -57,7 +57,7 @@ module Whatsapp
 
       msg = "👩‍💻 *Atendimento Humano — Avalia Solar*\n\n" \
             "Recebemos sua solicitação de ajuda! Nossa equipe de suporte e consultoria já foi sinalizada.\n\n" \
-            "• Para urgências comerciais ou suporte ao integrador, você também pode escrever para *contato@avaliasolar.com.br*.\n" \
+            "• Para urgências comerciais ou suporte ao integrador, você também pode escrever para *growth@avaliasolar.com.br*.\n" \
             "• Para voltar ao menu automático a qualquer momento, digite *MENU*."
       send_reply(msg)
     end
