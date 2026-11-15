@@ -11,6 +11,7 @@ RSpec.describe Sales::WhatsappIngestionJob, type: :job do
       provider_message_id: 'waha-crm-1', message_type: 'text',
       payload_digest: Digest::SHA256.hexdigest('test'),
       payload_minimal: { 'timestamp' => Time.current.to_i, 'type' => 'text' },
+      received_at: Time.current,
       processed_at: Time.current
     )
   end
