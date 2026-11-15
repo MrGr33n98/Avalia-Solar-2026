@@ -54,6 +54,15 @@ test('mobile/PWA keeps the company name and three actions on the same line', asy
         textOverflow: getComputedStyle(text).textOverflow,
         isTruncated: text.scrollWidth > text.clientWidth + 1,
         overflow: document.documentElement.scrollWidth > window.innerWidth + 2,
+        quickActions: Array.from(
+          document.querySelectorAll('[data-testid="company-quick-icon-actions"] > :is(button, a[href])')
+        ).map((control) => ({
+          width: control.getBoundingClientRect().width,
+          height: control.getBoundingClientRect().height,
+          visualWidth: control.firstElementChild?.getBoundingClientRect().width,
+          visualHeight: control.firstElementChild?.getBoundingClientRect().height,
+          iconWidth: control.querySelector('svg')?.getBoundingClientRect().width,
+        })),
       };
     });
 
@@ -65,6 +74,14 @@ test('mobile/PWA keeps the company name and three actions on the same line', asy
     expect(boxes.textOverflow).toBe('ellipsis');
     expect(boxes.isTruncated, `Long company name must truncate at ${width}px`).toBe(true);
     expect(boxes.overflow, `Unexpected horizontal overflow at ${width}px`).toBe(false);
+    expect(boxes.quickActions, `Missing quick actions at ${width}px`).toHaveLength(3);
+    for (const action of boxes.quickActions) {
+      expect(action.width, `Touch target width at ${width}px`).toBe(40);
+      expect(action.height, `Touch target height at ${width}px`).toBe(40);
+      expect(action.visualWidth, `Visible icon button width at ${width}px`).toBe(28);
+      expect(action.visualHeight, `Visible icon button height at ${width}px`).toBe(28);
+      expect(action.iconWidth, `Icon width at ${width}px`).toBe(14);
+    }
   }
 });
 
