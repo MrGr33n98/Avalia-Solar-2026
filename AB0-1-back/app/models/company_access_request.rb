@@ -70,8 +70,12 @@ class CompanyAccessRequest < ApplicationRecord
   end
 
   def handle_approval
+    # Only a reviewed request can promote the previously pending registration.
+    # Never change an existing person's password or mark their email as verified.
+    user.update!(status: :active, approved_by_admin: true) if user.pending? && user.company_user?
     create_company_member
     verify_company
+    user.send_confirmation_instructions if user.company_user? && !user.confirmed?
   end
 
   def create_company_member
@@ -85,6 +89,7 @@ class CompanyAccessRequest < ApplicationRecord
   def verify_company
     company.update!(
       active_admin: true,
+      status: 'active',
       moderation_status: 'approved',
       approved_at: Time.current,
       approved_by_admin_user_id: reviewed_by_admin_user_id
