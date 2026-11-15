@@ -22,6 +22,12 @@ test.describe('Mobile/PWA quick filters — no clipped labels', () => {
             left: rect.left, right: rect.right, top: rect.top,
             bottom: rect.bottom, height: rect.height,
             scrollWidth: el.scrollWidth, clientWidth: el.clientWidth,
+            childrenFit: Array.from(el.children)
+              .filter((child) => getComputedStyle(child).display !== 'none')
+              .every((child) => {
+                const childBox = child.getBoundingClientRect();
+                return childBox.left >= rect.left - 1 && childBox.right <= rect.right + 1;
+              }),
           };
         })
       );
@@ -33,6 +39,7 @@ test.describe('Mobile/PWA quick filters — no clipped labels', () => {
         expect(rect.height).toBeGreaterThanOrEqual(43);
         expect(rect.height).toBeLessThanOrEqual(45);
         expect(rect.scrollWidth).toBeLessThanOrEqual(rect.clientWidth + 1);
+        expect(rect.childrenFit).toBe(true);
         expect(Math.abs(rect.top - rects[0].top)).toBeLessThanOrEqual(1);
       }
 
