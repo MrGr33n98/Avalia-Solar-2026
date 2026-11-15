@@ -49,8 +49,7 @@ module VoiceReviews
     end
 
     class GoogleSpeech
-      ENDPOINT = 'http://www.google.com/speech-api/v2/recognize'.freeze
-      DEFAULT_KEY = 'AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw'.freeze
+      ENDPOINT = 'https://www.google.com/speech-api/v2/recognize'.freeze
 
       def transcribe(asset)
         raise ConfigurationError, 'Arquivo de áudio ausente' unless asset&.audio_attached?
@@ -82,8 +81,10 @@ module VoiceReviews
       end
 
       def request_transcript(flac_bytes)
-        key = ENV.fetch('GOOGLE_SPEECH_API_KEY', DEFAULT_KEY)
-        url = "#{ENDPOINT}?client=chromium&lang=pt-BR&key=#{key}&pFilter=0"
+        key = ENV['GOOGLE_SPEECH_API_KEY'].to_s.strip
+        raise ConfigurationError, 'GOOGLE_SPEECH_API_KEY ausente' if key.blank?
+
+        url = "#{ENDPOINT}?client=chromium&lang=pt-BR&key=#{CGI.escape(key)}&pFilter=0"
         response = HTTParty.post(
           url, headers: { 'Content-Type' => 'audio/x-flac; rate=16000' }, body: flac_bytes, timeout: 25
         )

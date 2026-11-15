@@ -5,8 +5,12 @@ import { track } from '@/lib/analytics';
 import styles from './CompanyRegistrationTicker.module.css';
 
 // Palavra-chave exata: WAHA só dispara depois que o visitante envia a mensagem.
+const WHATSAPP_REGISTRATION_NUMBER = (
+  process.env.NEXT_PUBLIC_WHATSAPP_REGISTRATION_NUMBER || '5565993465055'
+).replace(/\D/g, '');
+
 export const COMPANY_REGISTRATION_WHATSAPP_URL =
-  'https://wa.me/5565993465055?text=CADASTRAR';
+  `https://wa.me/${WHATSAPP_REGISTRATION_NUMBER || '5565993465055'}?text=CADASTRAR`;
 
 const MARQUEE_SPEED_PX_PER_SECOND = 38;
 const DEFAULT_LAYOUT = { copiesPerGroup: 12, durationSeconds: 64 };

@@ -228,10 +228,10 @@ class Rack::Attack
   # Limitar requests gerais por IP
   # Protege contra DDoS e scraping agressivo
   throttle('req/ip', limit: 300, period: 5.minutes) do |req|
-    # Não aplicar throttle em assets estáticos
+    # Não aplicar throttle em assets estáticos ou webhooks autenticados via HMAC (WAHA/Meta)
     # Leituras públicas possuem cache/deduplicação e limites próprios; não
     # devem consumir a cota geral compartilhada por NAT/CDN.
-    next if req.path.start_with?('/assets', '/rails/active_storage', '/api/v1/sales/')
+    next if req.path.start_with?('/assets', '/rails/active_storage', '/api/v1/sales/', '/api/v1/voice_reviews/webhook')
     next if req.get? && %r{\A/api/v1/(banners|auth/me)\z}.match?(req.path)
 
     req.ip
