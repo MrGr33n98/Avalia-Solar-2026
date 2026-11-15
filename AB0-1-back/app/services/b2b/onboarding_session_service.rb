@@ -524,7 +524,7 @@ module B2b
       ActiveRecord::Base.transaction do
         user = User.find_by(email: email_candidate)
         unless user
-          temp_password = "Solar##{SecureRandom.random_number(1000..9999)}!"
+          temp_password = "Aa1!#{SecureRandom.urlsafe_base64(32)}"
           raw_user_name = (@session.draft_data['sender_name'].presence || "Responsável #{target_company.name}").to_s.strip.truncate(100, omission: '')
           user_name = raw_user_name.length >= 3 ? raw_user_name : 'Responsável Integrador'
           user = User.new(

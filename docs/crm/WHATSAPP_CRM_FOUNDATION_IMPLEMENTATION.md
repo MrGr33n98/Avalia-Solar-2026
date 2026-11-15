@@ -52,3 +52,10 @@ Price/plan questions, human support and company claims yield deduplicated Founde
 4. Validate strict cross-tenant API access with fixtures.
 5. Review privacy/legal basis and internal tenant mapping.
 6. Only then consider enabling the CRM bridge in a controlled rollout.
+
+## Two-step owner activation
+
+- Approval by an authenticated administrator is recorded first; if the applicant's email is unconfirmed, the company and owner membership remain pending.
+- The applicant receives a Devise confirmation message after admin approval. Completing confirmation finalizes only reviewed and approved claims.
+- A WhatsApp-onboarded applicant receives a password-setup/reset email after confirmation; the random initial credential is never disclosed.
+- Do not bypass confirmation, owner review or tenant validation during rollout.

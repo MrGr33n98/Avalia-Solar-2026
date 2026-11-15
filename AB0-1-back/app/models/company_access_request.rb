@@ -69,17 +69,36 @@ class CompanyAccessRequest < ApplicationRecord
     saved_change_to_status? && approved?
   end
 
-  def handle_approval
-    # Only a reviewed request can promote the previously pending registration.
-    # Never change an existing person's password or mark their email as verified.
-    if user.company_user? && (user.pending? || user.active?)
-      changes = { approved_by_admin: true }
-      changes[:status] = :active if user.pending?
-      user.update!(changes)
+  # Admin review and confirmed email are separate prerequisites. An unverified
+  # WhatsApp address must never receive an active owner membership.
+  def finalize_confirmed_ownership!
+    return false unless approved? && reviewed_by_admin_user_id.present? && user.confirmed?
+
+    ActiveRecord::Base.transaction do
+      if user.company_user? && (user.pending? || user.active?)
+        changes = { approved_by_admin: true }
+        changes[:status] = :active if user.pending?
+        user.update!(changes)
+      end
+      create_company_member
+      verify_company
     end
-    create_company_member
-    verify_company
-    user.send_confirmation_instructions if user.company_user? && !user.confirmed?
+    true
+  end
+
+  private
+
+  def handle_approval
+    return unless reviewed_by_admin_user_id.present?
+
+    unless user.confirmed?
+      # Allow Devise to send the confirmation without activating the user.
+      user.update!(approved_by_admin: true) if user.company_user?
+      user.send_confirmation_instructions
+      return
+    end
+
+    finalize_confirmed_ownership!
   end
 
   def create_company_member

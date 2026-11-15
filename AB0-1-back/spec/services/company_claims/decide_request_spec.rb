@@ -15,6 +15,33 @@ RSpec.describe CompanyClaims::DecideRequest do
     expect(company.reload.verified).to eq(verified_before)
   end
 
+  it 'requires verified email before activating a pending WhatsApp company owner' do
+    candidate_company = create(:company, status: 'pending', moderation_status: 'pending_review')
+    candidate = create(:user, role: 'company', status: :pending,
+                              company: nil, confirmed_at: nil, approved_by_admin: false)
+    claim = create(:company_access_request, user: candidate, company: candidate_company, status: 'pending')
+
+    expect(described_class.call(request: claim, admin: admin)).to be true
+    expect(claim.reload).to be_approved
+    expect(candidate.reload).to be_pending
+    expect(candidate).not_to be_confirmed
+    expect(CompanyMember.where(user: candidate, company: candidate_company)).not_to exist
+    expect(candidate_company.reload.status).to eq('pending')
+
+    candidate.confirm
+
+    expect(candidate.reload).to be_confirmed
+    expect(candidate).to be_active
+    expect(CompanyMember.find_by!(user: candidate, company: candidate_company))
+      .to have_attributes(role: 'owner', status: 'active')
+    expect(candidate_company.reload.status).to eq('active')
+  end
+
+  it 'does not grant company access from an approved status without admin review' do
+    request.update!(status: 'approved')
+    expect(CompanyMember.where(user: user, company: company)).not_to exist
+  end
+
   it 'reverte a aprovação quando a concessão de acesso falha' do
     allow_any_instance_of(CompanyMember).to receive(:update!).and_raise(ActiveRecord::RecordInvalid)
 
