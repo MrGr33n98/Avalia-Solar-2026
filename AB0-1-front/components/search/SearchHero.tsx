@@ -39,6 +39,15 @@ export function SearchHero({
           'Manutenção e Suporte',
         ];
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    // Release focus before SPA navigation so Safari does not carry input auto-zoom to /search.
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement && event.currentTarget.contains(activeElement)) {
+      activeElement.blur();
+    }
+    onSubmit(event);
+  };
+
   return (
     <section className="relative isolate w-full overflow-hidden border-b border-slate-200/80 bg-[#F8FAFC]">
       {/* Background illustration asset - positioned on the right */}
@@ -78,7 +87,7 @@ export function SearchHero({
 
           {/* Search Form */}
           <form
-            onSubmit={onSubmit}
+            onSubmit={handleSubmit}
             className="mt-3.5 flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xs sm:flex-row sm:items-center sm:gap-0 sm:p-1 md:h-12"
           >
             {/* Search Input */}
@@ -93,7 +102,7 @@ export function SearchHero({
                 value={searchTerm}
                 onChange={(event) => onSearchTermChange(event.target.value)}
                 placeholder="Buscar empresa, produto ou serviço..."
-                className="h-10 w-full min-w-0 bg-transparent pl-10 pr-9 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus-visible:ring-0 sm:h-full"
+                className="h-10 w-full min-w-0 bg-transparent pl-10 pr-9 text-[16px] text-slate-900 md:text-sm outline-none placeholder:text-slate-400 focus-visible:ring-0 sm:h-full"
               />
               {searchTerm ? (
                 <button
@@ -122,7 +131,7 @@ export function SearchHero({
                 value={locationTerm}
                 onChange={(event) => onLocationTermChange(event.target.value)}
                 placeholder="CEP ou cidade..."
-                className="h-10 w-full min-w-0 bg-transparent pl-9 pr-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus-visible:ring-0 sm:h-full"
+                className="h-10 w-full min-w-0 bg-transparent pl-9 pr-3 text-[16px] text-slate-900 md:text-sm outline-none placeholder:text-slate-400 focus-visible:ring-0 sm:h-full"
               />
             </label>
 
