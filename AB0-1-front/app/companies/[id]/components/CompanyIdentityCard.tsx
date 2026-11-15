@@ -176,12 +176,12 @@ export default function CompanyIdentityCard({
       </div>
 
       {/* Linha Principal de Identidade: Logo + Nome/Badges (Esquerda) + Ações (Direita) */}
-      <div className="flex w-full flex-col gap-1.5 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
+      <div className="flex w-full flex-row items-start justify-between gap-2 md:flex-col md:gap-1.5 lg:flex-row lg:gap-4">
         {/* Lado Esquerdo: Logo + Nome + Badges */}
-        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4 lg:gap-5">
+        <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-4 lg:gap-5">
           {/* Box da Logo (Overlapping no Banner) - Moldura única de 2px e 62px mobile */}
           <div className="relative shrink-0 -mt-6 sm:-mt-9 lg:-mt-12 overflow-visible z-30">
-            <div className="relative h-[62px] w-[62px] sm:h-[84px] sm:w-[84px] lg:h-[96px] lg:w-[96px] overflow-hidden rounded-[14px] border-2 border-white bg-white shadow-sm flex items-center justify-center">
+            <div className="relative h-[62px] w-[62px] max-[359px]:h-[52px] max-[359px]:w-[52px] sm:h-[84px] sm:w-[84px] lg:h-[96px] lg:w-[96px] overflow-hidden rounded-[14px] border-2 border-white bg-white shadow-sm flex items-center justify-center">
               {hasLogo ? (
                 <OptimizedImage
                   src={logoUrl!}
@@ -221,40 +221,51 @@ export default function CompanyIdentityCard({
             )}
           </div>
 
-          {/* Header: Nome + Verificado */}
-          <div className="min-w-0 flex-1 pt-0.5 sm:pt-1.5">
+          {/* Mobile/PWA: name and fixed quick actions share the first row.
+              The name is the only shrinking item; desktop keeps multiline names. */}
+          <div className="flex min-h-11 min-w-0 flex-1 items-center pt-0.5 sm:pt-1.5 md:block md:min-h-0">
             <div className="min-w-0 max-w-full">
               <h1
                 data-testid="company-name"
-                className="min-w-0 max-w-full break-words text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl"
+                title={company.name}
+                aria-label={company.name}
+                className="flex min-w-0 max-w-full items-center text-lg font-extrabold leading-tight tracking-tight text-slate-950 sm:text-2xl md:block md:break-words"
               >
-                {companyNameParts.prefix ? `${companyNameParts.prefix} ` : null}
-                <span data-testid="company-name-tail" className="inline">
-                  {companyNameParts.lastWord}
-                  {isVerified ? '\u00a0' : null}
-                  {isVerified && (
+                <span
+                  data-testid="company-name-text"
+                  className="min-w-0 truncate md:inline md:overflow-visible md:whitespace-normal md:break-words"
+                >
+                  {companyNameParts.prefix ? `${companyNameParts.prefix} ` : null}
+                  <span data-testid="company-name-tail" className="inline">
+                    {companyNameParts.lastWord}
+                    {isVerified ? '\u00a0' : null}
+                  </span>
+                </span>
+                {isVerified && (
+                  <span className="inline-flex shrink-0 items-center md:inline">
                     <CompanyVerifiedBadge
                       size="lg"
                       triggerClassName="relative !min-h-0 !min-w-0 align-baseline after:absolute after:-inset-3 after:content-['']"
                     />
-                  )}
-                </span>
+                  </span>
+                )}
               </h1>
             </div>
           </div>
         </div>
 
 
-        {/* Ações rápidas do perfil: primeiro comparar; depois favoritos, compartilhar e avaliar. */}
+        {/* Mobile: ícones na primeira linha e Comparar abaixo, à direita. Desktop mantém a ordem anterior. */}
         <div
           data-testid="company-quick-actions"
-          className="ml-auto flex w-full min-w-0 shrink-0 items-center justify-end gap-1 pt-0.5 sm:gap-1.5 lg:w-auto lg:pt-1.5"
+          className="ml-auto flex w-auto shrink-0 flex-col-reverse items-end gap-0 pt-0.5 sm:gap-1.5 md:w-full md:flex-row md:items-center md:justify-end lg:w-auto lg:pt-1.5"
         >
           {compareControl && (
-            <div data-testid="company-compare-action" className="flex min-w-0 shrink-0 items-center">
+            <div data-testid="company-compare-action" className="ml-auto flex min-w-0 shrink-0 items-center md:ml-0">
               {compareControl}
             </div>
           )}
+          <div data-testid="company-quick-icon-actions" className="flex shrink-0 items-center gap-0 sm:gap-1.5 md:gap-1">
           <button
             type="button"
             onClick={handleToggleFavorite}
@@ -294,6 +305,7 @@ export default function CompanyIdentityCard({
               <Star className="h-[17px] w-[17px] fill-amber-400 text-amber-500" aria-hidden="true" />
             </span>
           </Link>
+          </div>
         </div>
       </div>
 
