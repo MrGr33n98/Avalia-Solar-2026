@@ -1156,6 +1156,13 @@ body[data-scroll-locked] [data-chat-widget] {
     min-width: 44px;
   }
 
+  /* Brand Page: ações rápidas com alvo de 40px e caixa visual de 28px.
+     Escopo local com especificidade maior que o mínimo global de 48px. */
+  #company-identity-card [data-testid="company-quick-icon-actions"] > :is(button, a[href]) {
+    min-height: 40px;
+    min-width: 40px;
+  }
+
   /* /companies: quatro filtros móveis com alvo de toque de 44px.
      O ID prevalece sobre o mínimo global de 48px sem afetar outras páginas. */
   #mobile-company-filter-bar > button {
