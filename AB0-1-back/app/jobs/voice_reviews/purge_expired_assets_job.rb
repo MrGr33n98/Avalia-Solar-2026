@@ -9,7 +9,9 @@ module VoiceReviews
         Rails.logger.error("[VoiceReviews] asset purge failed asset=#{asset.id} error=#{e.class}")
       end
 
-      VoiceReviewSession.where('expires_at <= ?', now).where.not(state: %w[completed expired]).update_all(state: 'expired')
+      VoiceReviewSession.where('expires_at <= ?', now)
+                        .where.not(state: %w[completed submitted expired revoked abandoned failed_permanent])
+                        .update_all(state: 'expired')
     end
   end
 end
