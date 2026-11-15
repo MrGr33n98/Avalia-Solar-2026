@@ -4,7 +4,7 @@ import DecisionChips from './DecisionChips';
 
 jest.mock('@/components/ui/select', () => {
   const Select = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
-  const SelectTrigger = ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button>;
+  const SelectTrigger = ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button type="button" {...props}>{children}</button>;
   const SelectContent = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
   const SelectItem = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
   return { Select, SelectTrigger, SelectContent, SelectItem };
@@ -16,6 +16,24 @@ describe('DecisionChips', () => {
     onFilterChange: jest.fn(),
     onOpenMoreFilters: jest.fn(),
   };
+
+  it('organiza os cinco filtros em duas linhas compactas e preserva as ações acessíveis', () => {
+    render(<DecisionChips {...defaultProps} activeFiltersCount={2} />);
+
+    const grid = screen.getByTestId('category-quick-filters');
+    expect(grid).toHaveClass('grid', 'grid-cols-6', 'md:flex');
+    const verified = screen.getByRole('button', { name: 'Verificadas' });
+    const rating = screen.getByRole('button', { name: 'Nota mínima' });
+    const state = screen.getByRole('button', { name: 'Meu Estado' });
+    const specialty = screen.getByRole('button', { name: 'Especialidade' });
+    const more = screen.getByRole('button', { name: /mais filtros.*2/i });
+    expect(verified).toHaveClass('col-span-3', 'h-11', 'min-h-11');
+    expect(rating).toHaveClass('col-span-3', 'h-11', 'min-h-11');
+    for (const action of [state, specialty, more]) {
+      expect(action).toHaveClass('col-span-2', 'h-11', 'min-h-11');
+    }
+    expect(more).toHaveAttribute('aria-controls', 'category-filters-panel');
+  });
 
   it('abre Mais filtros e expõe estado acessível', () => {
     const onOpenMoreFilters = jest.fn();
