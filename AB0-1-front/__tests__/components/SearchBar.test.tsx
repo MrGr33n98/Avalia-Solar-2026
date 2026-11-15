@@ -73,6 +73,7 @@ describe('SearchBar', () => {
     expect(input).toHaveClass('h-7', 'min-h-7', 'rounded-xl', 'border-[1.5px]', 'border-[#2563EB]');
     expect(input).toHaveClass('pl-10', 'pr-10');
     expect(input).not.toHaveClass('h-14', 'border-2', 'shadow-xl');
+    expect(input).toHaveClass('text-[16px]', 'md:text-xs');
   });
 
   it('updates input value on change', () => {
@@ -135,6 +136,10 @@ describe('SearchBar', () => {
       fireEvent.change(input, { target: { value: 'test query' } });
     });
 
+    // Focused iOS inputs must release focus before route changes.
+    input.focus();
+    expect(input).toHaveFocus();
+
     // Simular submit do form
     const form = input.closest('form');
     await act(async () => {
@@ -142,6 +147,23 @@ describe('SearchBar', () => {
     });
 
     expect(mockPush).toHaveBeenCalledWith('/search?q=test%20query&sort=rating&page=1');
+    expect(input).not.toHaveFocus();
+  });
+
+  it('prevents native form submission on Enter while choosing an autocomplete suggestion', async () => {
+    mockSearchApiSuggest.mockResolvedValueOnce({
+      companies: [{ id: 1, name: 'Empresa Alpha', slug: 'empresa-alpha' }],
+      products: [], categories: [], articles: [],
+    });
+    render(<SearchBar />);
+    const input = screen.getByPlaceholderText('Buscar empresas, produtos, categorias...');
+    fireEvent.change(input, { target: { value: 'Alpha' } });
+    await screen.findByText('Empresa Alpha');
+    input.focus();
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    expect(input.dispatchEvent(enter)).toBe(false);
+    expect(mockPush).toHaveBeenCalledWith('/companies/1');
+    expect(input).not.toHaveFocus();
   });
 
   it('shows loading state when searching', async () => {
