@@ -60,6 +60,10 @@ export default function CategoryHero({
   const resolvedCategoryBanner = bannerUrl ? getFullImageUrl(bannerUrl) : CATEGORY_BANNER_SRC;
   const displayTitle = name;
   const heroDescription = description || '';
+  // Keep duplicate copy in the DOM for desktop/SEO, but do not consume mobile vertical space.
+  const duplicateMobileDescription =
+    !heroDescription.trim() ||
+    heroDescription.trim().toLocaleLowerCase('pt-BR') === displayTitle.trim().toLocaleLowerCase('pt-BR');
 
   // Banners patrocinados para o carrossel lazy (excluindo o hero principal)
   const sponsoredItems = React.useMemo(() => {
@@ -99,7 +103,7 @@ export default function CategoryHero({
   const aspectRatioCls = 'aspect-[12/3] sm:aspect-[16/3.2] md:aspect-[20/3.2]';
 
   return (
-    <section className="bg-white pb-2 pt-3 md:pb-4 md:pt-4">
+    <section className="bg-white pb-1 pt-2 md:pb-4 md:pt-4">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6">
         <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-[12px] font-semibold text-slate-500 md:text-sm">
           <Link href="/" className="transition-colors hover:text-blue-600">
@@ -169,20 +173,20 @@ export default function CategoryHero({
             )}
           </div>
 
-          <div className="pb-1 pt-3 sm:pt-4 md:pb-2 md:pt-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+          <div className="flex flex-row items-center gap-2.5 pb-1 pt-2 md:gap-6 md:pb-2 md:pt-4">
             <CategoryMotionIcon
               slug={slug}
               name={name}
               size="fill"
               motionMode="entrance"
-              className="h-16 w-16 sm:h-24 sm:w-24 shrink-0 rounded-2xl border border-slate-100 bg-slate-50 shadow-sm p-1"
+              className="h-10 w-10 shrink-0 rounded-xl border border-slate-100 bg-slate-50 p-0.5 shadow-sm md:h-24 md:w-24 md:rounded-2xl md:p-1"
             />
             <div className="max-w-[46rem] min-w-0">
-              <h1 className="line-clamp-2 text-[1.45rem] font-black leading-tight text-slate-950 sm:text-[1.8rem] md:text-[2.2rem]">
+              <h1 className="line-clamp-2 text-[21px] font-black leading-[26px] text-slate-950 sm:text-[1.8rem] sm:leading-tight md:text-[2.2rem]">
                 {displayTitle}
               </h1>
 
-              <p className="mt-1.5 line-clamp-2 max-w-[38rem] text-sm font-medium leading-relaxed text-slate-600 md:text-[15px]">
+              <p className={`mt-1 max-w-[38rem] text-[13px] font-medium leading-[18px] text-slate-600 md:mt-1.5 md:text-[15px] md:leading-relaxed ${duplicateMobileDescription ? 'hidden md:line-clamp-2' : 'line-clamp-2'}`}>
                 {heroDescription}
               </p>
             </div>

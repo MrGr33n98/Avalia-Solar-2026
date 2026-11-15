@@ -171,12 +171,12 @@ export default function CategoryCompaniesTable({
   }
 
   return (
-    <section id="more-companies-section" className="space-y-6 pt-4">
+    <section id="more-companies-section" className="space-y-3 pt-1 md:space-y-6 md:pt-4">
       {/* Title & Page Selector bar */}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      <div className="flex flex-col justify-between gap-2 border-b border-slate-100 pb-2 sm:flex-row sm:items-center md:gap-4 md:pb-4">
         <div>
-          <h2 className="text-lg font-black text-slate-900 tracking-tight">
+          <h2 className="text-[17px] font-black tracking-tight text-slate-900 md:text-lg">
             Mais empresas ({totalCompanies})
           </h2>
         </div>

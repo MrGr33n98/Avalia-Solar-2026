@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import CategoryHero from '@/components/categories/CategoryHero';
+import CategoryNavigation from '@/components/categories/CategoryNavigation';
 import CategoryAdsRail from '@/components/categories/CategoryAdsRail';
 import { cn } from '@/lib/utils';
 import DecisionChips from '@/components/categories/DecisionChips';
@@ -281,13 +282,7 @@ export default function CategoryPageClient({
             }
           />
 
-          <nav aria-label="Navegação da categoria" className="mx-auto flex max-w-[1280px] gap-2 overflow-x-auto px-4 py-3 sm:px-6">
-            {buildCategoryNavigationCapabilities(initialCategory, slug).map(({ label, href }) => (
-              <Link key={href} href={href} className="min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700">
-                {label}
-              </Link>
-            ))}
-          </nav>
+          <CategoryNavigation items={buildCategoryNavigationCapabilities(initialCategory, slug)} />
 
           <CategoryNichesCarousel niches={initialCategory?.subcategories || []} />
 
@@ -314,12 +309,12 @@ export default function CategoryPageClient({
 
 
           {/* Main Layout Container */}
-          <div className="max-w-[1280px] mx-auto px-4 py-2 sm:px-6 md:py-8">
+          <div className="mx-auto max-w-[1280px] px-4 py-1 sm:px-6 md:py-8">
             <div className={cn(
               "grid items-start gap-8",
               hasBanners ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "grid-cols-1"
             )}>
-              <div className="min-w-0 space-y-12">
+              <div className="min-w-0 space-y-3 md:space-y-12">
                 {/* 🏆 Section 1: Featured Companies (Empresas em Destaque) — Apenas se houver empresas patrocinadas/destaque autorizadas */}
                 {(() => {
                   const featuredCompanies = initialCompanies
@@ -365,28 +360,43 @@ export default function CategoryPageClient({
                 })()}
 
                 {/* Toolbar & Listing Table */}
-                <div className="space-y-6">
+                <div className="space-y-2 md:space-y-6">
                   {/* Search and Sort Toolbar */}
-                  <div className="sticky top-24 z-10 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                      <div className="relative w-full sm:max-w-md">
+                  <div className="relative z-10 rounded-xl border border-slate-200 bg-white p-2 shadow-sm md:sticky md:top-24 md:rounded-2xl md:p-4">
+                    <div className="flex min-w-0 flex-col items-stretch gap-2 min-[360px]:flex-row min-[360px]:items-center md:justify-between md:gap-4">
+                      <div className="relative w-full min-w-0 min-[360px]:flex-1 md:max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
                           aria-label="Buscar empresas nesta categoria"
                           placeholder="Buscar empresas..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-9 h-11 rounded-xl border-slate-200 focus:ring-blue-500"
+                          className="h-11 min-w-0 rounded-lg border-slate-200 pl-9 text-[16px] focus:ring-blue-500 md:rounded-xl md:text-sm"
                         />
                       </div>
 
-                      <div className="flex gap-2 w-full sm:w-auto">
+                      <div className="flex w-full min-w-0 gap-2 min-[360px]:w-[42%] min-[360px]:shrink-0 md:w-auto">
                         <Select value={sortBy} onValueChange={handleSortChange}>
                           <SelectTrigger
                               aria-label="Ordenar empresas"
-                              className="w-full sm:w-[200px] h-11 rounded-xl border-slate-200"
+                              className="h-11 w-full min-w-0 rounded-lg border-slate-200 text-[13px] md:w-[200px] md:rounded-xl md:text-sm"
                           >
-                            <SelectValue />
+                            <SelectValue>
+                              <span className="md:hidden">
+                                {sortBy === 'rating_desc'
+                                  ? 'Melhor nota'
+                                  : sortBy === 'reviews_desc'
+                                    ? 'Avaliações'
+                                    : 'A-Z'}
+                              </span>
+                              <span className="hidden md:inline">
+                                {sortBy === 'rating_desc'
+                                  ? 'Melhor Avaliação'
+                                  : sortBy === 'reviews_desc'
+                                    ? 'Mais Avaliadas'
+                                    : 'A-Z'}
+                              </span>
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent className="rounded-xl">
                             <SelectItem value="rating_desc">Melhor Avaliação</SelectItem>
@@ -401,7 +411,7 @@ export default function CategoryPageClient({
                             size="icon"
                             onClick={handleClearFilters}
                             aria-label="Limpar filtros da categoria"
-                            className="h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-500 hover:text-red-600"
+                            className="hidden h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-500 hover:text-red-600 md:inline-flex"
                             title="Limpar filtros"
                           >
                             <X className="w-4 h-4" />
