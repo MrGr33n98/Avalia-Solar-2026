@@ -25,8 +25,9 @@ export function compactCompanyLocationLabel(label: string): string | null {
 }
 
 const baseChipClass =
-  'flex h-11 min-h-11 w-full min-w-0 items-center justify-center gap-1 rounded-full ' +
-  'border px-0.5 text-[10px] font-semibold leading-none whitespace-nowrap touch-manipulation ' +
+  'flex h-11 min-h-11 w-full min-w-0 items-center justify-center gap-0.5 rounded-full ' +
+  'border px-0 text-[10px] font-semibold leading-none whitespace-nowrap touch-manipulation ' +
+  'min-[350px]:gap-1 min-[350px]:px-0.5 ' +
   'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ' +
   'focus-visible:ring-offset-1 min-[390px]:px-1 min-[390px]:text-[11px]';
 
