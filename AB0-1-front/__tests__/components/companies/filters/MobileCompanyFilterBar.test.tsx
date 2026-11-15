@@ -83,4 +83,49 @@ describe('MobileCompanyFilterBar', () => {
     // Active groups: state (1) + verified (1) + category_ids (1) = 3
     expect(screen.getByText('3')).toBeInTheDocument();
   });
+
+  it('fits the four quick filters into a single responsive row without horizontal clipping', () => {
+    render(
+      <MobileCompanyFilterBar
+        filters={baseFilters}
+        onOpenFilters={jest.fn()}
+        onOpenLocation={jest.fn()}
+        onOpenCategory={jest.fn()}
+        onToggleVerified={jest.fn()}
+        locationLabel="AL"
+      />
+    );
+
+    const toolbar = screen.getByTestId('mobile-company-filter-bar');
+    expect(toolbar).toHaveClass('grid');
+    expect(toolbar.className).toContain('grid-cols-[minmax(0,1.05fr)');
+    expect(toolbar).not.toHaveClass('overflow-x-auto');
+
+    const chips = screen.getAllByRole('button');
+    expect(chips).toHaveLength(4);
+    chips.forEach((chip) => {
+      expect(chip).toHaveClass('w-full', 'min-w-0', 'h-9');
+      expect(chip).not.toHaveClass('shrink-0');
+    });
+    expect(screen.getByRole('button', { name: /Verificadas/i })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('keeps long location and category names accessible while visually truncating labels', () => {
+    render(
+      <MobileCompanyFilterBar
+        filters={baseFilters}
+        onOpenFilters={jest.fn()}
+        onOpenLocation={jest.fn()}
+        onOpenCategory={jest.fn()}
+        onToggleVerified={jest.fn()}
+        locationLabel="Florianópolis, Santa Catarina"
+        categoryLabel="Instalação e Manutenção de Energia Solar"
+      />
+    );
+
+    expect(screen.getByTitle('Florianópolis, Santa Catarina')).toHaveClass('truncate', 'min-w-0');
+    expect(screen.getByTitle('Instalação e Manutenção de Energia Solar')).toHaveClass('truncate', 'min-w-0');
+    expect(screen.getByRole('button', { name: /Florianópolis, Santa Catarina/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Instalação e Manutenção de Energia Solar/i })).toBeInTheDocument();
+  });
 });
