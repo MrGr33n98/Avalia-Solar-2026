@@ -69,6 +69,8 @@ class CompanyAccessRequest < ApplicationRecord
     saved_change_to_status? && approved?
   end
 
+  public
+
   # Admin review and confirmed email are separate prerequisites. An unverified
   # WhatsApp address must never receive an active owner membership.
   def finalize_confirmed_ownership!
