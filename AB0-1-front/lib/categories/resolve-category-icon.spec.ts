@@ -5,6 +5,7 @@ import {
   resolveCategoryIcon,
   FALLBACK_UNKNOWN_ICON,
 } from './resolve-category-icon';
+import { AUTHORITATIVE_CATEGORY_SEO_URL_BY_CODE } from './resolve-home-category-link';
 
 describe('Canonical Category Icon Resolver (47 SVGs)', () => {
   const publicDir = path.resolve(__dirname, '../../public');
@@ -85,6 +86,18 @@ describe('Canonical Category Icon Resolver (47 SVGs)', () => {
     expect(
       resolveCategoryIcon({ slug: 'mercado-livre-de-energia', format: 'svg' }).src
     ).toBe(CATEGORY_ICON_MANIFEST.D.src);
+  });
+
+  // Teste 4.1: Todos os 39 seo_url autoritativos do backend resolvem ícones em modo SVG e 3D
+  it('resolve todos os 39 seo_url autoritativos do backend sem cair em unknown', () => {
+    for (const [code, seoUrl] of Object.entries(AUTHORITATIVE_CATEGORY_SEO_URL_BY_CODE)) {
+      const svgRes = resolveCategoryIcon({ slug: seoUrl, format: 'svg' });
+      expect(svgRes.catalogId).toBe(code);
+      expect(svgRes.src).toBe(CATEGORY_ICON_MANIFEST[code].src);
+
+      const autoRes = resolveCategoryIcon({ slug: seoUrl });
+      expect(autoRes.source).not.toBe('unknown');
+    }
   });
 
   // Teste 5: Desambiguação de códigos e taxonomia antiga vs nova no modo SVG

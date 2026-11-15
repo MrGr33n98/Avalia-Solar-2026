@@ -200,20 +200,124 @@ describe('rails de identidade visual da home', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renderiza categorias em destaque como chips horizontais compactos', () => {
+  it('renderiza categorias em destaque como chips horizontais compactos com hrefs canônicos e sem categorias inativas', () => {
     render(<HomeCategoryRail categories={[]} />);
 
     expect(screen.getByText('Categorias em destaque')).toBeInTheDocument();
     expect(screen.getByText('Energia Solar')).toBeInTheDocument();
     expect(screen.getByText('Mobilidade Elétrica')).toBeInTheDocument();
+
+    expect(screen.getByRole('link', { name: /Energia Solar/i })).toHaveAttribute(
+      'href',
+      '/categories/energia-solar'
+    );
+    expect(screen.getByRole('link', { name: /Casa Sustentável e Off-Grid/i })).toHaveAttribute(
+      'href',
+      '/categories/casa-sustentavel-offgrid'
+    );
+    expect(screen.getByRole('link', { name: /Apps, Software e Plataformas/i })).toHaveAttribute(
+      'href',
+      '/categories/apps-software-plataformas'
+    );
+    expect(screen.getByRole('link', { name: /Mercado, Legislação e Finanças/i })).toHaveAttribute(
+      'href',
+      '/categories/mercado-legislacao-financas'
+    );
+    expect(screen.getByRole('link', { name: /Sustentabilidade e ESG/i })).toHaveAttribute(
+      'href',
+      '/categories/sustentabilidade-esg'
+    );
+    expect(screen.queryByRole('link', { name: /Frotas Elétricas/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /Hubs de Eletromobilidade e Recarga/i })
+    ).not.toBeInTheDocument();
   });
 
-  it('renderiza tipos de solução oficiais como chips horizontais compactos', () => {
+  it('renderiza tipos de solução oficiais como chips horizontais compactos apontando para seo_url canônico', () => {
     render(<HomeSolutionsRail />);
 
     expect(screen.getByText('Tipos de solução')).toBeInTheDocument();
     expect(screen.getByText('Painéis Solares')).toBeInTheDocument();
     expect(screen.getByText('Inversores')).toBeInTheDocument();
+
+    const expectedLinks = [
+      { label: /Painéis Solares/i, href: '/categories/paineis-solares' },
+      { label: /Inversores/i, href: '/categories/inversores-solares' },
+      { label: /Carregadores Residenciais \/ Wallbox/i, href: '/categories/carregadores-residenciais' },
+      { label: /Estruturas e Fixação/i, href: '/categories/estruturas-fixacao' },
+      { label: /Baterias e Armazenamento de Energia/i, href: '/categories/baterias-armazenamento' },
+      { label: /Monitoramento e O&M/i, href: '/categories/monitoramento-operacao-manutencao' },
+      { label: /Kits Solares para Autossuficiência/i, href: '/categories/kits-offgrid' },
+      { label: /Instaladores de Energia Solar/i, href: '/categories/instaladores-energia-solar' },
+    ];
+
+    for (const { label, href } of expectedLinks) {
+      expect(screen.getByRole('link', { name: label })).toHaveAttribute('href', href);
+    }
+  });
+
+  it('oculta categorias e soluções marcadas como inativas na API (AC-SEO-004)', () => {
+    render(
+      <>
+        <HomeCategoryRail
+          categories={[
+            {
+              id: 10,
+              name: 'Mobilidade Elétrica',
+              seo_url: 'mobilidade-eletrica',
+              seo_title: 'Mobilidade Elétrica',
+              parent_id: null,
+              kind: 'main',
+              status: 'inactive',
+              featured: true,
+              banner_url: null,
+              icon_url: null,
+              average_rating: 0,
+              average_price: 0,
+              views_count: 0,
+              reviews_count: 0,
+              companies_count: 0,
+              products_count: 0,
+              tags: [],
+              badges: [],
+              logo: null,
+              created_at: '',
+              updated_at: '',
+            },
+          ]}
+        />
+        <HomeSolutionsRail
+          categories={[
+            {
+              id: 20,
+              name: 'Inversores',
+              seo_url: 'inversores-solares',
+              seo_title: 'Inversores',
+              parent_id: 1,
+              kind: 'main',
+              status: 'inactive',
+              featured: true,
+              banner_url: null,
+              icon_url: null,
+              average_rating: 0,
+              average_price: 0,
+              views_count: 0,
+              reviews_count: 0,
+              companies_count: 0,
+              products_count: 0,
+              tags: [],
+              badges: [],
+              logo: null,
+              created_at: '',
+              updated_at: '',
+            },
+          ]}
+        />
+      </>
+    );
+
+    expect(screen.queryByRole('link', { name: /Mobilidade Elétrica/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^Inversores$/i })).not.toBeInTheDocument();
   });
 
   it('ancora selo verificado dentro do tail para empresa verificada', () => {
