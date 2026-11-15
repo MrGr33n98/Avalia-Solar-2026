@@ -186,7 +186,7 @@ export default function CategoryHero({
                 {displayTitle}
               </h1>
 
-              <p className={`mt-1 line-clamp-2 max-w-[38rem] text-[13px] font-medium leading-[18px] text-slate-600 md:mt-1.5 md:text-[15px] md:leading-relaxed ${duplicateMobileDescription ? 'hidden md:block' : '' }`}>
+              <p className={`mt-1 max-w-[38rem] text-[13px] font-medium leading-[18px] text-slate-600 md:mt-1.5 md:text-[15px] md:leading-relaxed ${duplicateMobileDescription ? 'hidden md:line-clamp-2' : 'line-clamp-2'}`}>
                 {heroDescription}
               </p>
             </div>
