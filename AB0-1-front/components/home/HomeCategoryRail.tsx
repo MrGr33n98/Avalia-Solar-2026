@@ -8,6 +8,10 @@ import {
   CATEGORY_ICON_MANIFEST,
   type CategoryIconDefinition,
 } from '@/lib/categories/category-icon-manifest';
+import {
+  resolveHomeCategoryItem,
+  type ResolvedHomeCategoryItem,
+} from '@/lib/categories/resolve-home-category-link';
 
 export interface HomeCategoryRailProps {
   categories?: Category[];
@@ -18,39 +22,15 @@ const PRIMARY_CATEGORIES = Object.values(CATEGORY_ICON_MANIFEST).filter(
   (item): item is CategoryIconDefinition => item.type === 'principal'
 );
 
-function normalize(value?: string | null) {
-  return (value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-');
-}
-
 export function HomeCategoryRail({ categories = [], className }: HomeCategoryRailProps) {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(false);
 
   const items = React.useMemo(() => {
-    return PRIMARY_CATEGORIES.map((definition) => {
-      const category = categories.find((candidate) => {
-        if (candidate.parent_id != null) return false;
-        const candidateSlug = normalize(candidate.slug || candidate.seo_url || candidate.name);
-        return (
-          candidateSlug === normalize(definition.canonicalSlug) ||
-          candidateSlug === normalize(definition.name) ||
-          definition.aliases.some((alias) => candidateSlug === normalize(alias))
-        );
-      });
-
-      return {
-        id: category?.id ?? definition.id,
-        name: category?.name || definition.name,
-        slug: category?.slug || category?.seo_url || definition.canonicalSlug,
-        visualKey: category?.visual_key,
-        iconUrl: category?.icon_url || definition.src,
-      };
-    });
+    return PRIMARY_CATEGORIES.map((definition) =>
+      resolveHomeCategoryItem(definition, categories, { requireRoot: true })
+    ).filter((item): item is ResolvedHomeCategoryItem => Boolean(item));
   }, [categories]);
 
   const checkScroll = React.useCallback(() => {
@@ -114,7 +94,7 @@ export function HomeCategoryRail({ categories = [], className }: HomeCategoryRai
           {items.map((category, index) => (
             <HomeFeaturedChip
               key={category.id}
-              href={`/categories/${category.slug}`}
+              href={category.href}
               name={category.name}
               slug={category.slug}
               visualKey={category.visualKey}

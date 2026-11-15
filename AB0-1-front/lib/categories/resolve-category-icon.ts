@@ -318,9 +318,12 @@ function getMotionPresetFor3DCode(code?: string): CategoryMotionPreset {
   // Precedência máxima para as 39 categorias mapeadas: new3D ?? iconUrl ?? legacy
   // -------------------------------------------------------------------------
   if (normalizedInput.format !== 'svg') {
+    const manifestMatchBySlug =
+      (normSlug && (EXACT_SLUG_MAP.get(normSlug) || ALIAS_MAP.get(normSlug))) ||
+      undefined;
     const threeD = getCategory3DDetails({
       slug: rawSlug,
-      seo_url: normalizedInput.seo_url,
+      seo_url: normalizedInput.seo_url || manifestMatchBySlug?.canonicalSlug,
       name: rawName,
       visualKey: rawVisualKey,
       sizeVariant: normalizedInput.sizeVariant,

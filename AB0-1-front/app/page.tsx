@@ -120,15 +120,33 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-async function getHomeData(): Promise<{ featuredCategories: Category[] }> {
-  const featuredCategoriesRaw = await getCachedFeaturedCategories();
+async function getHomeData(): Promise<{
+  featuredCategories: Category[];
+  activeCategories: Category[];
+}> {
+  const [featuredCategoriesRaw, activeCategoriesRaw] = await Promise.all([
+    getCachedFeaturedCategories(),
+    getCachedActiveCategories(),
+  ]);
   const featuredCategories = Array.isArray(featuredCategoriesRaw) ? featuredCategoriesRaw : [];
+  const activeCategories = Array.isArray(activeCategoriesRaw) ? activeCategoriesRaw : [];
   const categoriesForHome =
-    featuredCategories.length > 0
-      ? featuredCategories
-      : (await getCachedActiveCategories()).slice(0, 8);
+    featuredCategories.length > 0 ? featuredCategories : activeCategories.slice(0, 8);
 
-  return { featuredCategories: categoriesForHome };
+  const mergedById = new Map<number | string, Category>();
+  for (const category of [...activeCategories, ...featuredCategories]) {
+    if (category && typeof category === 'object') {
+      const key = category.id ?? category.seo_url ?? category.slug;
+      if (key !== undefined && !mergedById.has(key)) {
+        mergedById.set(key, category);
+      }
+    }
+  }
+
+  return {
+    featuredCategories: categoriesForHome,
+    activeCategories: Array.from(mergedById.values()),
+  };
 }
 
 async function getCompaniesData(): Promise<{ companies: Company[] }> {
@@ -212,7 +230,9 @@ export default async function Home() {
 
       {/* 4. Tipos de solução: categorias filhas oficiais, sem ofertas inventadas */}
       <div className="mx-auto max-w-[1320px]">
-        <HomeSolutionsRail />
+        <Suspense fallback={<div className="h-24 animate-pulse rounded bg-slate-50" />}>
+          <HomeSolutionsRailWrapper dataPromise={categoriesDataPromise} />
+        </Suspense>
       </div>
 
       {/* 5. Seis empresas em destaque com favorito e comparação */}
@@ -333,12 +353,36 @@ async function HomeCategoryRailWrapper({
   let categories: Category[] = [];
   try {
     const data = await dataPromise;
-    categories = Array.isArray(data?.featuredCategories) ? data.featuredCategories : [];
+    categories = Array.isArray(data?.activeCategories)
+      ? data.activeCategories
+      : Array.isArray(data?.featuredCategories)
+      ? data.featuredCategories
+      : [];
   } catch (error) {
     console.error('[Home] HomeCategoryRailWrapper fallback triggered:', error);
   }
 
   return <HomeCategoryRail categories={categories} />;
+}
+
+async function HomeSolutionsRailWrapper({
+  dataPromise,
+}: {
+  dataPromise: ReturnType<typeof getHomeDataCached>;
+}) {
+  let categories: Category[] = [];
+  try {
+    const data = await dataPromise;
+    categories = Array.isArray(data?.activeCategories)
+      ? data.activeCategories
+      : Array.isArray(data?.featuredCategories)
+      ? data.featuredCategories
+      : [];
+  } catch (error) {
+    console.error('[Home] HomeSolutionsRailWrapper fallback triggered:', error);
+  }
+
+  return <HomeSolutionsRail categories={categories} />;
 }
 
 

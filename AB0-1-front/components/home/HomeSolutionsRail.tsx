@@ -3,20 +3,32 @@
 import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { HomeFeaturedChip } from './HomeFeaturedChip';
+import type { Category } from '@/lib/api';
 import { CATEGORY_ICON_MANIFEST } from '@/lib/categories/category-icon-manifest';
+import {
+  resolveHomeCategoryItem,
+  type ResolvedHomeCategoryItem,
+} from '@/lib/categories/resolve-home-category-link';
 
-const SOLUTION_CODES = ['A11', 'A09', 'B02', 'A06', 'A01', 'A10', 'G01', 'A08'] as const;
+export const SOLUTION_CODES = ['A11', 'A09', 'B02', 'A06', 'A01', 'A10', 'G01', 'A08'] as const;
 
 export const SOLUTIONS = SOLUTION_CODES.map((code) => CATEGORY_ICON_MANIFEST[code]).filter(Boolean);
 
 export interface HomeSolutionsRailProps {
+  categories?: Category[];
   className?: string;
 }
 
-export function HomeSolutionsRail({ className }: HomeSolutionsRailProps) {
+export function HomeSolutionsRail({ categories = [], className }: HomeSolutionsRailProps) {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(false);
+
+  const items = React.useMemo(() => {
+    return SOLUTIONS.map((solution) => resolveHomeCategoryItem(solution, categories)).filter(
+      (item): item is ResolvedHomeCategoryItem => Boolean(item)
+    );
+  }, [categories]);
 
   const checkScroll = React.useCallback(() => {
     const el = scrollContainerRef.current;
@@ -35,7 +47,7 @@ export function HomeSolutionsRail({ className }: HomeSolutionsRailProps) {
       el.removeEventListener('scroll', checkScroll);
       window.removeEventListener('resize', checkScroll);
     };
-  }, [checkScroll]);
+  }, [checkScroll, items]);
 
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollContainerRef.current;
@@ -43,6 +55,10 @@ export function HomeSolutionsRail({ className }: HomeSolutionsRailProps) {
     const distance = direction === 'left' ? -320 : 320;
     el.scrollBy({ left: distance, behavior: 'smooth' });
   };
+
+  if (!items.length) {
+    return null;
+  }
 
   return (
     <section aria-labelledby="home-solutions-title" className={className}>
@@ -72,13 +88,14 @@ export function HomeSolutionsRail({ className }: HomeSolutionsRailProps) {
           className="flex w-full min-w-0 snap-x snap-proximity items-center gap-2 overflow-x-auto pb-1 no-scrollbar focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {SOLUTIONS.map((solution) => (
+          {items.map((solution) => (
             <HomeFeaturedChip
               key={solution.id}
-              href={`/categories/${solution.canonicalSlug}`}
+              href={solution.href}
               name={solution.name}
-              slug={solution.canonicalSlug}
-              iconUrl={solution.src}
+              slug={solution.slug}
+              visualKey={solution.visualKey}
+              iconUrl={solution.iconUrl}
             />
           ))}
         </div>

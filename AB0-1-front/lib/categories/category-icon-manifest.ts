@@ -625,6 +625,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     src: `${CATEGORY_ICON_PUBLIC_BASE}/F_apps-software-e-plataformas/principal/f_apps-software-e-plataformas.svg`,
     canonicalSlug: 'apps-software-e-plataformas',
     aliases: [
+      'apps-software-plataformas',
       'software-e-plataformas',
       'apps-software',
       'plataformas-solares',
@@ -643,6 +644,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     src: `${CATEGORY_ICON_PUBLIC_BASE}/F_apps-software-e-plataformas/subcategorias/f01_gestao-de-recarga-ve.svg`,
     canonicalSlug: 'gestao-de-recarga-ve',
     aliases: [
+      'gestao-recarga-ev',
       'gestao-recarga-ve',
       'software-recarga-ve',
       'gestao-recarga',
@@ -674,6 +676,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     src: `${CATEGORY_ICON_PUBLIC_BASE}/F_apps-software-e-plataformas/subcategorias/f03_monitoramento-de-energia-solar.svg`,
     canonicalSlug: 'monitoramento-de-energia-solar',
     aliases: [
+      'monitoramento-apps',
       'software-monitoramento-solar',
       'monitoramento-solar-software',
       'app-monitoramento-solar',
@@ -692,6 +695,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     src: `${CATEGORY_ICON_PUBLIC_BASE}/F_apps-software-e-plataformas/subcategorias/f04_simulacao-e-projeto-solar.svg`,
     canonicalSlug: 'simulacao-e-projeto-solar',
     aliases: [
+      'simulacao-projeto',
       'simulacao-projeto-solar',
       'software-projeto-solar',
       'simulacao-solar',
@@ -714,6 +718,8 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     src: `${CATEGORY_ICON_PUBLIC_BASE}/G_casa-sustentavel-e-off-grid/principal/g_casa-sustentavel-e-off-grid.svg`,
     canonicalSlug: 'casa-sustentavel-e-off-grid',
     aliases: [
+      'casa-sustentavel-offgrid',
+      'casa-sustentavel-off-grid',
       'casa-sustentavel',
       'off-grid',
       'projetos-off-grid',
@@ -732,6 +738,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     src: `${CATEGORY_ICON_PUBLIC_BASE}/G_casa-sustentavel-e-off-grid/subcategorias/g01_kits-solares-para-autossuficiencia.svg`,
     canonicalSlug: 'kits-solares-para-autossuficiencia',
     aliases: [
+      'kits-offgrid',
       'kits-solares',
       'kit-solar',
       'kit-off-grid',
@@ -751,6 +758,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     src: `${CATEGORY_ICON_PUBLIC_BASE}/G_casa-sustentavel-e-off-grid/subcategorias/g02_reuso-de-agua-e-energias-complementares.svg`,
     canonicalSlug: 'reuso-de-agua-e-energias-complementares',
     aliases: [
+      'reuso-agua',
       'reuso-de-agua',
       'energias-complementares',
       'bombas-solares',
@@ -768,7 +776,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     svgRelativePath: 'G_casa-sustentavel-e-off-grid/subcategorias/g03_solucoes-para-areas-remotas.svg',
     src: `${CATEGORY_ICON_PUBLIC_BASE}/G_casa-sustentavel-e-off-grid/subcategorias/g03_solucoes-para-areas-remotas.svg`,
     canonicalSlug: 'solucoes-para-areas-remotas',
-    aliases: ['areas-remotas', 'comunidades-isoladas', 'eletrificacao-rural'],
+    aliases: ['solucoes-remotas', 'areas-remotas', 'comunidades-isoladas', 'eletrificacao-rural'],
     alt: 'Soluções para Áreas Remotas',
     motionPreset: 'solar',
   },
@@ -840,6 +848,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     src: `${CATEGORY_ICON_PUBLIC_BASE}/H_mercado-legislacao-e-financas/subcategorias/h03_seguradoras-para-solar-e-ve.svg`,
     canonicalSlug: 'seguradoras-para-solar-e-ve',
     aliases: [
+      'seguradoras',
       'seguradoras-solar',
       'seguros-solar',
       'seguros-para-ve',
@@ -857,7 +866,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     svgRelativePath: 'H_mercado-legislacao-e-financas/subcategorias/h04_tendencias-de-mercado.svg',
     src: `${CATEGORY_ICON_PUBLIC_BASE}/H_mercado-legislacao-e-financas/subcategorias/h04_tendencias-de-mercado.svg`,
     canonicalSlug: 'tendencias-de-mercado',
-    aliases: ['tendencias', 'analise-de-mercado', 'estudos-setoriais'],
+    aliases: ['tendencias-mercado', 'tendencias', 'analise-de-mercado', 'estudos-setoriais'],
     alt: 'Tendências de Mercado',
     motionPreset: 'energyMarket',
   },
@@ -906,6 +915,7 @@ export const CATEGORY_ICON_MANIFEST: Record<string, CategoryIconDefinition> = {
     src: `${CATEGORY_ICON_PUBLIC_BASE}/I_sustentabilidade-e-esg/subcategorias/i02_politicas-corporativas-esg.svg`,
     canonicalSlug: 'politicas-corporativas-esg',
     aliases: [
+      'esg-corporativo',
       'politicas-esg',
       'corporativo-esg',
       'governanca-esg',
