@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Whatsapp::CrmSignalClassifier do
+RSpec.describe Whatsapp::CRMSignalClassifier do
   it 'detects commercial pricing interest without invoking an LLM' do
     expect(described_class.call('Quais são os planos do Avalia Solar?')).to eq('pricing_requested')
   end

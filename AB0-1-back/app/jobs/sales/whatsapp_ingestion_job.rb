@@ -55,7 +55,7 @@ module Sales
       return unless record.provider == 'waha' && record.voice_review_session_id.blank?
       return unless message['type'].to_s == 'text'
 
-      intent = Whatsapp::CrmSignalClassifier.call(message['text'])
+      intent = Whatsapp::CRMSignalClassifier.call(message['text'])
       return unless intent
 
       phone = normalized_phone(message['from'])
@@ -66,7 +66,7 @@ module Sales
 
     def perform(record_id, intent, encrypted_phone)
       return unless self.class.enabled?
-      return unless Whatsapp::CrmSignalClassifier::INTENTS.include?(intent)
+      return unless Whatsapp::CRMSignalClassifier::INTENTS.include?(intent)
 
       tenant = Company.find_by(id: ENV['WHATSAPP_CRM_TENANT_COMPANY_ID'].to_i)
       return unless tenant

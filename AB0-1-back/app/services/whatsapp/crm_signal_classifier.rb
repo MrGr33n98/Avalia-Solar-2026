@@ -3,7 +3,7 @@
 module Whatsapp
   # Deliberately deterministic: a consumer review or arbitrary chat must not
   # be reclassified as an internal sales lead based on an LLM guess.
-  class CrmSignalClassifier
+  class CRMSignalClassifier
     INTENTS = %w[pricing_requested human_requested registration_started company_claim_requested].freeze
 
     def self.call(text)
