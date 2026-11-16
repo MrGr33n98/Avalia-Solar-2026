@@ -8,6 +8,11 @@ import { CompanyLogo } from '@/components/CompanyLogo';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import type { CompareCompany } from './mapCompanyToCompareCompany';
 import { canUsePaidConversion } from '@/lib/feature-access';
+import {
+  availabilityLabel,
+  companyWarrantyLabel,
+  normalizeCommercialAvailability,
+} from '@/lib/comparison/field-normalizers';
 
 type Value = string | number | boolean | null;
 interface Criterion {
@@ -100,11 +105,10 @@ const groups: Group[] = [
       {
         label: 'Financiamento',
         value: (company) => {
-          const val = company.comparison_profile?.financing_availability;
-          if (val === 'available') return 'Disponível';
-          if (val === 'consult') return 'Consultar';
-          if (val === 'not_offered') return 'Não oferece';
-          return company.financing_enabled === undefined ? null : Boolean(company.financing_enabled);
+          const val = company.comparison_profile?.financing_availability ??
+            (company.financing_enabled === true ? 'available' : null);
+          const state = normalizeCommercialAvailability(val);
+          return state === 'unknown' ? null : availabilityLabel(state, 'Disponível');
         },
       },
       {
@@ -142,8 +146,22 @@ const groups: Group[] = [
           return null;
         },
       },
-      { label: 'Garantia', value: (company) => company.warrantyYears, suffix: ' anos' },
-      { label: 'Suporte pós-venda', value: (company) => company.postSalesSupport },
+      {
+        label: 'Garantia',
+        value: (company) => companyWarrantyLabel(
+          company.comparison_profile?.warranty_years ?? company.warrantyYears,
+          company.comparison_profile?.warranty_confirmed ?? company.warranty_confirmed
+        ),
+      },
+      {
+        label: 'Suporte pós-venda',
+        value: (company) => {
+          const state = normalizeCommercialAvailability(
+            company.comparison_profile?.after_sales_support ?? company.postSalesSupport
+          );
+          return state === 'unknown' ? null : availabilityLabel(state, 'Oferece suporte');
+        },
+      },
     ],
   },
   {
