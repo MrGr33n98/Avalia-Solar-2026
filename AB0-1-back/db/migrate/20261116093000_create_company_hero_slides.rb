@@ -20,6 +20,7 @@ class CreateCompanyHeroSlides < ActiveRecord::Migration[7.0]
       t.datetime :archived_at
       t.string :rejection_reason
       t.bigint :replaces_slide_id
+      t.string :request_key, limit: 80
       t.string :source, null: false, default: 'dashboard'
       t.integer :lock_version, null: false, default: 0
       t.timestamps
@@ -39,6 +40,8 @@ class CreateCompanyHeroSlides < ActiveRecord::Migration[7.0]
     add_index :company_hero_slides, %i[company_id slot],
               unique: true, where: "status = 'published'",
               name: 'idx_company_hero_slides_unique_published_slot'
+    add_index :company_hero_slides, %i[company_id request_key], unique: true,
+              name: 'idx_company_hero_slides_idempotency', where: 'request_key IS NOT NULL'
     add_index :company_hero_slides, %i[company_id status display_position],
               name: 'idx_company_hero_slides_public_order'
   end
