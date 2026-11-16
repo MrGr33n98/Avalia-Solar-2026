@@ -16,13 +16,15 @@ RSpec.describe 'Event Platform Integration DB', type: :model do
 
   it 'processes events end-to-end idempotently', if: -> { @run_integration } do
     test_event_id = "test_id_#{SecureRandom.hex(6)}"
+    tracked_at = 2.minutes.ago
+    aggregate_day = tracked_at.utc.to_date
     
     # Create required data
     ActiveRecord::Base.connection.execute("INSERT INTO companies (id, name, slug, status, created_at, updated_at) VALUES (99, 'Test Company', 'test-company', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ON CONFLICT DO NOTHING")
     ActiveRecord::Base.connection.execute("INSERT INTO event_definitions (event_type, required_keys, enabled) VALUES ('profile_view', '[]', true) ON CONFLICT DO NOTHING")
     
     # 1. Ingest
-    res = Analytics::TrackEventService.call(company_id: 99, event_type: 'profile_view', metadata: {}, tracked_at: 1.minute.ago, event_id: test_event_id)
+    res = Analytics::TrackEventService.call(company_id: 99, event_type: 'profile_view', metadata: {}, tracked_at: tracked_at, event_id: test_event_id)
     expect(res.ok).to be true
     
     # Fast path
@@ -31,7 +33,7 @@ RSpec.describe 'Event Platform Integration DB', type: :model do
     expect(stats['profile_views'].to_i).to eq(1)
 
     # Derived
-    Analytics::FeatureStoreDailyWorker.new.aggregate_day(Date.current)
+    Analytics::FeatureStoreDailyWorker.new.aggregate_day(aggregate_day)
     features = ActiveRecord::Base.connection.select_one("SELECT * FROM company_feature_daily WHERE company_id = 99")
     expect(features['engagement_score'].to_i).to eq(1)
 

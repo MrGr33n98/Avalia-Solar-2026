@@ -52,5 +52,23 @@ RSpec.describe 'Reviewer dashboard API', type: :request do
       expect(payload['daily_views'].size).to eq(7)
       expect(payload['daily_views'].last).to eq('date' => Time.zone.today.strftime('%d/%m'), 'views' => 1)
     end
+
+    it 'attributes a late-evening publication view to the Brasília calendar day' do
+      travel_to(Time.zone.local(2026, 11, 15, 22, 30)) do
+        publication = create(:reviewer_publication, user: reviewer)
+        ReviewerPublicationEvent.create!(
+          reviewer_publication: publication,
+          event_name: 'publication_view',
+          created_at: Time.current,
+          updated_at: Time.current
+        )
+
+        get '/api/v1/reviewer/analytics', headers: auth_headers
+
+        expect(response).to have_http_status(:ok)
+        payload = JSON.parse(response.body)
+        expect(payload['daily_views'].last).to eq('date' => '15/11', 'views' => 1)
+      end
+    end
   end
 end
