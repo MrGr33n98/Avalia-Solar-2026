@@ -158,10 +158,17 @@ module Api
           id: slide.id, slot: slide.slot, position: slide.display_position,
           revision: slide.revision, status: slide.status,
           alt_text: slide.alt_text, width: slide.image_width, height: slide.image_height,
-          image_url: (generate_blob_url(slide.image) if slide.image.attached?),
+          image_url: (attachment_url(slide.image) if slide.image.attached?),
           rejection_reason: slide.rejection_reason, published_at: slide.published_at,
           updated_at: slide.updated_at
         }
+      end
+
+      def attachment_url(attachment)
+        options = Rails.application.routes.default_url_options.dup
+        Rails.application.routes.url_helpers.rails_storage_proxy_url(attachment, options)
+      rescue StandardError
+        nil
       end
 
       def public_version
