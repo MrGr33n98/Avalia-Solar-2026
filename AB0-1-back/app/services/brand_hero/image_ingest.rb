@@ -14,6 +14,7 @@ module BrandHero
         raise InvalidImage, 'Formato inválido: use PNG, JPG ou WebP'
       end
 
+      upload.tempfile.rewind
       blob = ActiveStorage::Blob.create_and_upload!(
         io: upload.tempfile, filename: File.basename(upload.original_filename),
         content_type: detected_type, identify: false
