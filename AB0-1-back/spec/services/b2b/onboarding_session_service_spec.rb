@@ -153,15 +153,14 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.state).to eq('awaiting_photos')
 
         # 7. Envia PULAR na etapa de fotos -> finaliza
-        expect(gateway).to receive(:send_message).with(session, /Parabéns! Sua empresa foi cadastrada com sucesso/)
-        expect(gateway).to receive(:send_message).with(session, /Felipe, fundador do Avalia Solar/)
+        expect(gateway).to receive(:send_message).with(session, /Cadastro recebido para análise/)
         described_class.process_message!(session, { 'body' => 'pular' })
 
         session.reload
         expect(session.state).to eq('completed')
         expect(session.current_step).to eq('finish')
         expect(session.company).to be_present
-        expect(session.company.status).to eq('active')
+        expect(session.company.status).to eq('pending')
         expect(session.company.name).to eq('NOVA ENERGIA')
         expect(session.company.cnpj).to eq('06990590000123')
         expect(session.company.city).to eq('Campinas')
@@ -171,9 +170,25 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.company.primary_category_id).to eq(71)
         expect(session.user).to be_present
         expect(session.user.email).to eq('contato@novasolar.com.br')
-        expect(session.user.status).to eq('active')
-        expect(session.user.approved_by_admin).to be true
-        expect(session.company.company_members.where(user: session.user, role: :owner)).to exist
+        expect(session.user.status).to eq('pending')
+        expect(session.user.approved_by_admin).to be false
+        expect(session.company.company_members.where(user: session.user, role: :owner, status: :active)).not_to exist
+        expect(CompanyAccessRequest.where(user: session.user, company: session.company, status: 'pending')).to exist
+      end
+
+      it 'refuses to fabricate an owner email when registration data has no valid address' do
+        session.update!(
+          cnpj: '06990590000123',
+          current_step: 'ask_photos',
+          state: 'awaiting_photos',
+          draft_payload: { 'cnpj_data' => cnpj_data.except('email') }
+        )
+
+        expect(gateway).to receive(:send_message).with(session, /e-mail profissional válido/)
+        expect do
+          described_class.process_message!(session, { 'body' => 'pular' })
+        end.not_to change(Company, :count)
+        expect(session.reload.company).to be_nil
       end
 
       it 'attaches company logo when image with base64 data is provided' do
@@ -232,21 +247,21 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(gateway).to receive(:send_message).with(
           session,
           satisfy { |msg|
-            msg.include?('Parabéns! Sua empresa foi cadastrada com sucesso') &&
+            msg.include?('Cadastro recebido para análise') &&
               msg.include?('/companies/') &&
               !msg.include?('Senha temporária:')
           }
         )
-        expect(gateway).to receive(:send_message).with(session, /Felipe, fundador do Avalia Solar/)
 
         described_class.process_message!(session, { 'body' => 'pular' })
 
         session.reload
         expect(session.state).to eq('completed')
         expect(session.user).to eq(existing_user)
-        expect(session.company.company_members.where(user: existing_user, role: :owner, status: :active)).to exist
+        expect(session.company.company_members.where(user: existing_user, role: :owner, status: :active)).not_to exist
+        expect(CompanyAccessRequest.where(user: existing_user, company: session.company, status: 'pending')).to exist
 
-        # RCA-001: A senha existente jamás deve ser sobrescrita por um fluxo WhatsApp não autenticado
+        # RCA-001: An unauthenticated WhatsApp message cannot grant membership or overwrite a password
         expect(existing_user.reload.valid_password?('OldPassword123!')).to be true
       end
 

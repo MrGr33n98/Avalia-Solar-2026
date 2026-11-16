@@ -524,7 +524,7 @@ module B2b
       ActiveRecord::Base.transaction do
         user = User.find_by(email: email_candidate)
         unless user
-          temp_password = "Solar##{SecureRandom.random_number(1000..9999)}!"
+          temp_password = "Aa1!#{SecureRandom.urlsafe_base64(32)}"
           raw_user_name = (@session.draft_data['sender_name'].presence || "Responsável #{target_company.name}").to_s.strip.truncate(100, omission: '')
           user_name = raw_user_name.length >= 3 ? raw_user_name : 'Responsável Integrador'
           user = User.new(
@@ -533,7 +533,7 @@ module B2b
             password: temp_password,
             password_confirmation: temp_password,
             role: 'company',
-            company_id: target_company.id,
+            company_id: nil,
             status: :pending,
             approved_by_admin: false,
             city: target_company.city.presence || 'São Paulo',
@@ -544,7 +544,7 @@ module B2b
             display_full_name_consent: true,
             review_name_consent: true,
             lgpd_name_consent: true,
-            confirmed_at: Time.current
+            confirmed_at: nil
           )
           user.skip_corporate_email_validation = true
           user.save!
@@ -616,7 +616,12 @@ module B2b
         primary_cat_id = (category_ids.include?(draft['primary_category_id']) ? draft['primary_category_id'] : category_ids.first)
 
         user_email = draft['user_email'].to_s.strip.downcase.presence || cnpj_data['email'].to_s.strip.downcase.presence
-        user_email = "contato_#{@session.id.first(8)}@avaliasolar.com.br" unless user_email&.match?(Company::SIMPLE_EMAIL_REGEX)
+        # Never fabricate an @avaliasolar.com.br account for an unknown owner.
+        # This must be a real address: owner access is granted only after email confirmation.
+        unless user_email&.match?(Company::SIMPLE_EMAIL_REGEX)
+          @session.errors.add(:base, 'e-mail profissional válido é obrigatório para finalizar o cadastro')
+          raise ActiveRecord::RecordInvalid, @session
+        end
 
         # Trata marcas para campos estruturados da empresa
         brands_raw = draft['brands'].presence
@@ -635,7 +640,7 @@ module B2b
           equipment_brands: brands_list,
           partner_brands: brands_raw,
           segment: 'installer',
-          status: 'active',
+          status: 'pending',
           moderation_status: 'pending_review',
           phone: contact_phone,
           whatsapp: contact_phone,
@@ -656,10 +661,8 @@ module B2b
         if user
           existing_user_found = true
           # RCA-001 Fix: Jamais sobrescrever a senha de um usuário existente via WhatsApp não autenticado.
-          user.skip_corporate_email_validation = true
-          user.company_id = company.id if user.company_id.blank?
-          user.role = 'company' if user.role.blank?
-          user.save!(validate: false)
+          # An unauthenticated WhatsApp message is not proof of email ownership.
+          # Never mutate an existing account or grant Company access here.
         else
           raw_user_name = (draft['sender_name'].presence || company_name).to_s.strip.truncate(100, omission: '')
           user_name = raw_user_name.length >= 3 ? raw_user_name : 'Responsável Integrador'
@@ -669,9 +672,9 @@ module B2b
             password: temp_password,
             password_confirmation: temp_password,
             role: 'company',
-            company_id: company.id,
-            status: :active,
-            approved_by_admin: true,
+            company_id: nil,
+            status: :pending,
+            approved_by_admin: false,
             city: city,
             state: state_code,
             terms_accepted: true,
@@ -680,24 +683,25 @@ module B2b
             display_full_name_consent: true,
             review_name_consent: true,
             lgpd_name_consent: true,
-            confirmed_at: Time.current
+            confirmed_at: nil
           )
           user.skip_corporate_email_validation = true
           user.save!
         end
 
-        member = CompanyMember.find_or_initialize_by(company: company, user: user)
-        member.role = :owner
-        member.status = :active
-        member.save!
-
-        # Invalida cache de empresas do usuário para garantir listagem imediata
-        Rails.cache.delete_matched("user_#{user.id}_companies_mine_*") rescue nil
-
-        unless existing_user_found
-          # Dispara e-mail de boas-vindas com a senha provisória e dados de acesso apenas para novas contas
-          ::CompanyMailer.welcome_onboarding(company, user, temp_password).deliver_later rescue nil
-        end
+        # Create a reviewable claim, never an active membership. Only admin
+        # approval of this request may activate the company and its owner.
+        request = CompanyAccessRequest.where(
+          user: user, company: company, status: %w[pending approved]
+        ).first
+        request ||= CompanyAccessRequest.create!(
+          user: user,
+          company: company,
+          status: 'pending',
+          contact_email: user_email,
+          message: 'Cadastro pelo WhatsApp: titularidade e e-mail ainda não verificados.'
+        )
+        @session.merge_draft!(company_access_request_id: request.id)
 
         @session.update!(
           state: 'completed',
@@ -710,38 +714,14 @@ module B2b
       end
 
       site_url = self.class.company_public_url(company)
-      dashboard_url = "https://app.avaliasolar.com.br/login?email=#{CGI.escape(user.email)}"
-
-      access_details = if existing_user_found
-                         "*Login:* #{user.email}\n" \
-                         "👉 *Acessar Painel:* #{dashboard_url}\n" \
-                         "*(Como seu e-mail já possuía conta no Avalia Solar, utilize sua senha atual para entrar)*"
-                       else
-                         "*Login:* #{user.email}\n" \
-                         "👉 *Acessar Painel:* #{dashboard_url}\n" \
-                         "*(Por segurança, enviamos os dados de primeiro acesso exclusivamente para o seu e-mail: #{user.email})*"
-                       end
-
-      credentials_msg = "*Parabéns! Sua empresa foi cadastrada com sucesso no Avalia Solar.*\n\n" \
-                        "*Empresa:* #{company.name}\n" \
-                        "*Categorias:* #{cats_names.presence || 'Instaladores de Energia Solar'}\n" \
-                        "*Atuação:* #{company.coverage_cities.presence || company.city} (#{company.state})\n" \
-                        "*Página pública:* #{site_url}\n\n" \
-                        "*DADOS DE ACESSO AO PAINEL:*\n" \
-                        "#{access_details}"
-
-      send_message(@session, credentials_msg)
-
-      booking_url = 'https://avaliasolar.zohobookings.com/5012013000000038009/#/5012013000000038009?bookedFrom=ShortenURL'
-      felipe_msg = "Olá! Aqui é o Felipe, fundador do Avalia Solar. 👋\n\n" \
-                   "Vi que você acabou de cadastrar a *#{company.name}*. Parabéns pelo passo rumo a mais autoridade e conversão de propostas na sua região!\n\n" \
-                   "Para alinharmos o seu *Selo de Empresa Verificada* 🛡️ e deixarmos sua página pronta para receber clientes e ranquear no Google:\n\n" \
-                   "*Podemos fazer um alinhamento rápido de 15 minutos?*\n" \
-                   "Escolha o melhor dia e horário na minha agenda:\n" \
-                   "👉 #{booking_url}\n\n" \
-                   "Ou se preferir, pode me responder por aqui mesmo com o melhor horário pra você!"
-
-      send_message(@session, felipe_msg)
+      msg = "*Cadastro recebido para análise!* ☀️\n\n" \
+            "*Empresa:* #{company.name}\n" \
+            "*Categorias:* #{cats_names.presence || 'Instaladores de Energia Solar'}\n" \
+            "*Página pública (após aprovação):* #{site_url}\n\n" \
+            "Para proteger sua empresa, o acesso de proprietário NÃO é liberado " \
+            "pelo WhatsApp. Nossa equipe validará a titularidade e o e-mail " \
+            "antes de liberar o painel. Nenhuma senha será enviada por aqui."
+      send_message(@session, msg)
     rescue ActiveRecord::RecordInvalid => e
       Rails.logger.error("[B2B::OnboardingSessionService] Erro ao criar empresa: #{e.record.errors.full_messages.join(', ')}")
       send_message(@session, "⚠️ Ocorreu uma inconsistência nos dados da empresa: #{e.record.errors.full_messages.first}. Nossa equipe técnica foi notificada.")

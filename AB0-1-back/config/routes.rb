@@ -230,6 +230,7 @@ Rails.application.routes.draw do
           get :board, to: 'sales/pipelines/boards#show', on: :member
         end
         get 'pipelines/board', to: 'sales/pipelines/boards#show'
+        resources :whatsapp_threads, only: %i[index show], controller: 'sales/whatsapp_threads'
         resources :founder_inbox, only: %i[index update], controller: 'sales/founder_inbox' do
           collection { post :refresh }
           member do

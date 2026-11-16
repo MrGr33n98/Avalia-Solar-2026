@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_13_090000) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_15_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -3981,6 +3981,38 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_13_090000) do
     t.check_constraint "rating >= 1::numeric AND rating <= 5::numeric", name: "ck_reviews_valid_rating"
   end
 
+  create_table "sales_whatsapp_threads", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "sales_account_id"
+    t.bigint "sales_contact_id"
+    t.string "provider", default: "waha", null: false
+    t.string "provider_session", default: "", null: false
+    t.string "contact_hash", limit: 64, null: false
+    t.string "status", default: "open", null: false
+    t.string "last_intent"
+    t.datetime "last_message_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "last_message_at"], name: "idx_sales_whatsapp_thread_recent"
+    t.index ["company_id", "provider", "provider_session", "contact_hash"], name: "idx_sales_whatsapp_thread_identity", unique: true
+    t.index ["company_id"], name: "index_sales_whatsapp_threads_on_company_id"
+    t.index ["sales_account_id"], name: "index_sales_whatsapp_threads_on_sales_account_id"
+    t.index ["sales_contact_id"], name: "index_sales_whatsapp_threads_on_sales_contact_id"
+  end
+
+  create_table "sales_whatsapp_messages", force: :cascade do |t|
+    t.bigint "sales_whatsapp_thread_id", null: false
+    t.string "provider_message_id", null: false
+    t.string "direction", default: "inbound", null: false
+    t.string "message_type", null: false
+    t.string "intent", null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sales_whatsapp_thread_id", "provider_message_id"], name: "idx_sales_whatsapp_messages_dedupe", unique: true
+    t.index ["sales_whatsapp_thread_id"], name: "idx_sales_whatsapp_messages_thread"
+  end
+
   create_table "sales_accounts", force: :cascade do |t|
     t.bigint "company_id"
     t.bigint "owner_id", null: false
@@ -6231,6 +6263,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_13_090000) do
   add_foreign_key "reviews", "companies"
   add_foreign_key "reviews", "review_forms"
   add_foreign_key "reviews", "users"
+  add_foreign_key "sales_whatsapp_messages", "sales_whatsapp_threads"
+  add_foreign_key "sales_whatsapp_threads", "companies"
+  add_foreign_key "sales_whatsapp_threads", "sales_accounts"
+  add_foreign_key "sales_whatsapp_threads", "sales_contacts"
   add_foreign_key "sales_accounts", "companies"
   add_foreign_key "sales_accounts", "users", column: "owner_id"
   add_foreign_key "sales_activities", "sales_accounts"

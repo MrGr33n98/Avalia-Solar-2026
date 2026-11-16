@@ -43,7 +43,9 @@ RSpec.describe Reviewer::AnalyticsSummaryService do
       described_class.new(user: user, profile: profile).call
     end
 
-    grouped_queries = sql_queries.grep(/GROUP BY.*DATE\(reviewer_publication_events\.created_at\)/i)
+    # The production aggregation must group by the configured Rails timezone,
+    # not by UTC's calendar date. Keep the single grouped query contract.
+    grouped_queries = sql_queries.grep(/GROUP BY.*DATE\(\(reviewer_publication_events\.created_at AT TIME ZONE 'UTC'\) AT TIME ZONE/i)
     expect(grouped_queries.size).to eq(1)
   end
 

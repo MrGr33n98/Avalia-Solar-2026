@@ -344,17 +344,36 @@ class User < ApplicationRecord
 
   def after_confirmation
     super
-    Analytics::TrackEventService.call(
-      event_type: 'email_confirmed',
-      user: self,
-      company_id: company_id,
-      metadata: {
-        method: provider.present? ? provider : 'email',
-        confirmed_at: confirmed_at
-      }
-    )
-  rescue StandardError => e
-    Rails.logger.error("[Analytics] Failed to track email confirmation: #{e.message}")
+
+    # Complete only admin-approved owner claims. A WhatsApp applicant cannot
+    # become an active owner until the mailbox has actually been confirmed.
+    onboarding_approved = false
+    CompanyAccessRequest.where(user_id: id, status: 'approved').find_each do |request|
+      next unless request.reviewed_by_admin_user_id.present?
+
+      onboarding_approved ||= CompanyOnboardingSession.where(
+        user_id: id, company_id: request.company_id, state: 'completed'
+      ).exists?
+      request.finalize_confirmed_ownership!
+    end
+
+    # WhatsApp onboarding creates an undisclosed random password. Once the
+    # applicant verifies the mailbox, provide a secure password-setup path.
+    send_reset_password_instructions if onboarding_approved
+
+    begin
+      Analytics::TrackEventService.call(
+        event_type: 'email_confirmed',
+        user: self,
+        company_id: company_id,
+        metadata: {
+          method: provider.present? ? provider : 'email',
+          confirmed_at: confirmed_at
+        }
+      )
+    rescue StandardError => e
+      Rails.logger.error("[Analytics] Failed to track email confirmation: #{e.message}")
+    end
   end
 
   private

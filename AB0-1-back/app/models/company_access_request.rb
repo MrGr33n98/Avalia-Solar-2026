@@ -69,9 +69,38 @@ class CompanyAccessRequest < ApplicationRecord
     saved_change_to_status? && approved?
   end
 
+  public
+
+  # Admin review and confirmed email are separate prerequisites. An unverified
+  # WhatsApp address must never receive an active owner membership.
+  def finalize_confirmed_ownership!
+    return false unless approved? && reviewed_by_admin_user_id.present? && user.confirmed?
+
+    ActiveRecord::Base.transaction do
+      if user.company_user? && (user.pending? || user.active?)
+        changes = { approved_by_admin: true }
+        changes[:status] = :active if user.pending?
+        user.update!(changes)
+      end
+      create_company_member
+      verify_company
+    end
+    true
+  end
+
+  private
+
   def handle_approval
-    create_company_member
-    verify_company
+    return unless reviewed_by_admin_user_id.present?
+
+    unless user.confirmed?
+      # Allow Devise to send the confirmation without activating the user.
+      user.update!(approved_by_admin: true) if user.company_user?
+      user.send_confirmation_instructions
+      return
+    end
+
+    finalize_confirmed_ownership!
   end
 
   def create_company_member
@@ -85,6 +114,7 @@ class CompanyAccessRequest < ApplicationRecord
   def verify_company
     company.update!(
       active_admin: true,
+      status: 'active',
       moderation_status: 'approved',
       approved_at: Time.current,
       approved_by_admin_user_id: reviewed_by_admin_user_id

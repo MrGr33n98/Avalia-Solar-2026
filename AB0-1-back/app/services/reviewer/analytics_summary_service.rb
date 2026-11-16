@@ -71,11 +71,21 @@ module Reviewer
     end
 
     def grouped_daily_counts(publication_views, start_date, end_date)
-      publication_views
-        .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
-        .group(Arel.sql('DATE(reviewer_publication_events.created_at)'))
-        .count
-        .transform_keys(&:to_date)
+      scoped = publication_views.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+      connection = ActiveRecord::Base.connection
+
+      if connection.adapter_name.downcase.include?('postgres')
+        # Rails stores UTC timestamps without a time-zone offset in PostgreSQL.
+        # Convert them to the Rails display zone before grouping by calendar day.
+        # DATE(created_at) alone misattributes late-evening Brasília views to tomorrow.
+        zone = connection.quote(Time.zone.tzinfo.identifier)
+        local_day = "DATE((reviewer_publication_events.created_at AT TIME ZONE 'UTC') AT TIME ZONE #{zone})"
+        scoped.group(Arel.sql(local_day)).count.transform_keys(&:to_date)
+      else
+        # Portable fallback for development/test databases such as SQLite.
+        scoped.pluck(:created_at).group_by { |timestamp| timestamp.in_time_zone.to_date }
+              .transform_values(&:size)
+      end
     end
   end
 end

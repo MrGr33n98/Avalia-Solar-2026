@@ -37,6 +37,7 @@ module VoiceReviews
 
       # Rails 7.0 faz ROLLBACK quando um bloco de transação sai via `return`.
       # Por isso o roteamento usa if/else e nunca retorna de dentro do with_lock.
+      processed_now = false
       record.with_lock do
         unless record.processed_at.present?
           contact = message['from'].to_s
@@ -47,8 +48,12 @@ module VoiceReviews
           else
             process_voice_review(record, message, contact, provider_id, invite)
           end
+          processed_now = record.processed_at.present?
         end
       end
+      # The Sales bridge is isolated from the customer-facing WhatsApp response.
+      # It is feature-flagged and never receives raw message content in Sidekiq.
+      Sales::WhatsappIngestionJob.enqueue_for(record: record, message: message) if processed_now
     rescue VoiceReviews::SessionService::Error => e
       record&.update(processed_at: Time.current, delivery_status: 'ignored', processing_error_code: 'invalid_invite')
       Rails.logger.info("[VoiceReviews] ignored message=#{message['id']} reason=#{e.message}")
