@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HelpCircle, ShieldCheck, Award, FileText, Download, LockKeyhole } from "lucide-react";
+import { HelpCircle, Award, FileText, Download, LockKeyhole } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,6 +20,7 @@ import ClaimProfileCard from "./ClaimProfileCard";
 import MaterialLeadMagnetCard from "./MaterialLeadMagnetCard";
 import PremiumSidebarAdSlot from "./PremiumSidebarAdSlot";
 import { DownloadGate, type Material } from "./MaterialsLibrary";
+import { AvaliaShieldBadge } from "@/components/brand/AvaliaShieldBadge";
 
 interface SidebarPremiumProps {
   company: Company;
@@ -41,7 +42,7 @@ export default function SidebarPremium({
 
   const [materials, setMaterials] = useState<Material[]>([]);
   const [materialsLoading, setMaterialsLoading] = useState(true);
-  const [materialsError, setMaterialsError] = useState(false);
+  const [, setMaterialsError] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
 
@@ -142,16 +143,14 @@ export default function SidebarPremium({
 
       {/* 3. Trust/Safety Card (Selo de Confiança) */}
       <Card className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="bg-blue-50 p-2.5 rounded-xl text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
+        <div className="flex items-start gap-3.5 sm:items-center">
+          <AvaliaShieldBadge className="h-12 w-12 sm:h-14 sm:w-14 shrink-0" />
           <div className="space-y-1">
             <h4 className="text-xs font-black text-slate-950 uppercase tracking-wider">
               Garantia de Segurança
             </h4>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              O portal **Avalia Solar** valida e modera ativamente todas as avaliações deste perfil. Nossos especialistas asseguram orçamentos protegidos de ponta a ponta.
+            <p className="text-[12px] text-slate-500 leading-relaxed">
+              O portal <strong className="font-semibold text-slate-900">Avalia Solar</strong> valida e modera ativamente todas as avaliações deste perfil. Nossos especialistas asseguram orçamentos protegidos de ponta a ponta.
             </p>
           </div>
         </div>
