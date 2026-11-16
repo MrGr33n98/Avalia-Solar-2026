@@ -113,6 +113,30 @@ RSpec.describe 'Companies create API', type: :request do
     expect(company.company_members.active.where(user: applicant, role: :owner)).to exist
   end
 
+  it 'never links an unauthenticated application to a privileged user account' do
+    privileged = create(:user, role: 'admin', status: :active, confirmed_at: Time.current)
+    payload = {
+      company: {
+        name: 'Empresa Suspeita', cnpj: '11222333000181',
+        email: 'empresa@solar.example', state: 'SP', city: 'São Paulo',
+        category_ids: [category.id]
+      },
+      applicant: {
+        name: 'Contato Não Verificado', email: privileged.email,
+        phone: '11999999999', relationship: 'owner'
+      },
+      terms_accepted: true,
+      declaration_accepted: true
+    }
+
+    expect do
+      post '/api/v1/companies', params: payload.to_json,
+           headers: { 'Content-Type' => 'application/json' }
+    end.not_to change(Company, :count)
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(CompanyAccessRequest.where(user: privileged)).not_to exist
+  end
+
   it 'does not create a duplicate company for an existing CNPJ' do
     existing = create(:company, cnpj: '11222333000181')
     params = {
