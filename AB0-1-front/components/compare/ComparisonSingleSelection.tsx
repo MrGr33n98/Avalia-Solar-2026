@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Plus, X } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
+import { COMPARISON_LIMITS } from '@/lib/comparison/config';
 
 interface SelectedCompany {
   id: number;
@@ -16,7 +17,6 @@ interface SelectedCompany {
 
 interface Props {
   company: SelectedCompany;
-  maxComparison: number;
   onAddCompany: () => void;
   onRemoveCompany: (id: number) => void;
   onViewProfile: () => void;
@@ -25,7 +25,6 @@ interface Props {
 /** S1: selecting a company is not yet a side-by-side comparison. */
 export default function ComparisonSingleSelection({
   company,
-  maxComparison,
   onAddCompany,
   onRemoveCompany,
   onViewProfile,
@@ -66,7 +65,10 @@ export default function ComparisonSingleSelection({
           <p className="mt-0.5 truncate text-xs leading-4 text-slate-500">
             {location || 'Localização não informada'}
           </p>
-          <p className="mt-1 text-xs font-medium text-blue-700">1 de {maxComparison} selecionadas</p>
+          <p className="mt-1 text-xs font-medium text-blue-700">
+            <span className="md:hidden">1 de {COMPARISON_LIMITS.mobile} selecionadas</span>
+            <span className="hidden md:inline">1 de {COMPARISON_LIMITS.desktop} selecionadas</span>
+          </p>
         </div>
         <button
           type="button"
