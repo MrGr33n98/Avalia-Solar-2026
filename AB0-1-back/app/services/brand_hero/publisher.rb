@@ -26,8 +26,13 @@ module BrandHero
         end
 
         prior = company.company_hero_slides.find_by(slot: slide.slot, status: 'published')
+        # Preserve the visible ordering when a slot receives a new revision.
+        # For a new slot, pick the first available public position.
+        position = prior&.display_position ||
+                   ((1..3).to_a - others.map(&:display_position)).first || slide.slot
         prior&.update!(status: 'archived', archived_at: Time.current)
         slide.update!(
+          display_position: position,
           status: 'published', reviewed_by_id: reviewer_id,
           approved_at: Time.current, published_at: Time.current,
           rejection_reason: nil
