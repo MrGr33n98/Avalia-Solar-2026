@@ -3,6 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Reviewer dashboard API', type: :request do
+  include ActiveSupport::Testing::TimeHelpers
   let(:reviewer) { create(:user, role: 'review') }
   let(:other_reviewer) { create(:user, role: 'review') }
   let(:token) { JWT.encode({ user_id: reviewer.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256') }
