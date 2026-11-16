@@ -159,6 +159,9 @@ class Plan < ApplicationRecord
       unless value.is_a?(Integer) && value >= 0
         errors.add(:features_json, "#{key} deve ser inteiro não negativo")
       end
+      if key == 'brand_hero_slides_limit' && value.is_a?(Integer) && value > 3
+        errors.add(:features_json, 'brand_hero_slides_limit deve estar entre 0 e 3')
+      end
     end
   end
 
