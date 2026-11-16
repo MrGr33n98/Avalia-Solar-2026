@@ -35,10 +35,11 @@ jobs:
         run: npm ci
       - name: Validate TypeScript types
         run: npm run typecheck
-      - name: Run comparison-specific Jest specs
+      - name: Run comparison and home layout Jest specs
         run: |
           npm test -- --runInBand \
             components/CompanyComparisonModal.spec.tsx \
+            components/home/HomeRails.spec.tsx \
             lib/comparison/field-normalizers.spec.ts \
             lib/comparison/comparison-storage.spec.ts
 
