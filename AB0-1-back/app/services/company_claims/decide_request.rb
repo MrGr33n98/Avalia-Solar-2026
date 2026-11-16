@@ -12,6 +12,9 @@ module CompanyClaims
         # Set the company role before the approval callback: it checks company_user?
         # when activating a confirmed applicant's account and ownership.
         request.user.update!(role: 'company') unless request.user.role == 'admin'
+        # The approval callback checks company_user? on request.user. Reload the
+        # association after the role change so it cannot observe a stale role.
+        request.association(:user).reset
         request.update!(
           status: 'approved',
           admin_note: note.presence,
