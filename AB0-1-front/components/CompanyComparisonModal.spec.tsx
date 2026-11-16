@@ -89,6 +89,7 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
   const defaultProps = {
     isOpen: true,
     onClose: jest.fn(),
+    onMinimize: jest.fn(),
     onRemoveCompany: jest.fn(),
     onClearAll: jest.fn(),
     companies: [companyWithPaidPlan, companyWithoutPaidPlan],
@@ -245,7 +246,7 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
     render(
       <CompanyComparisonModal
         {...defaultProps}
-        companies={[emptyCompany]}
+        companies={[emptyCompany, companyWithoutPaidPlan]}
       />
     );
 
@@ -311,7 +312,7 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
         after_sales_support: 'não oferece suporte',
       },
     };
-    render(<CompanyComparisonModal {...defaultProps} companies={[negativeCompany]} />);
+    render(<CompanyComparisonModal {...defaultProps} companies={[negativeCompany, { ...negativeCompany, id: 404, slug: 'segunda-negativa' }]} />);
     expect(screen.getAllByText('Não oferece').length).toBeGreaterThanOrEqual(3);
     expect(screen.queryByText('Oferece')).not.toBeInTheDocument();
     expect(screen.queryByText('Oferece suporte')).not.toBeInTheDocument();
@@ -327,15 +328,45 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
         warranty_confirmed: false,
       },
     };
-    render(<CompanyComparisonModal {...defaultProps} companies={[declared]} />);
+    render(<CompanyComparisonModal {...defaultProps} companies={[declared, companyWithoutPaidPlan]} />);
     expect(screen.getAllByText('Não confirmada').length).toBeGreaterThan(0);
     expect(screen.queryByText('Declarada pela empresa')).not.toBeInTheDocument();
   });
 
   test('não apresenta cinco estrelas preenchidas para notas inferiores a cinco', () => {
-    render(<CompanyComparisonModal {...defaultProps} companies={[companyWithPaidPlan]} />);
+    render(<CompanyComparisonModal {...defaultProps} companies={[companyWithPaidPlan, companyWithoutPaidPlan]} />);
     expect(screen.getAllByLabelText('Nota 4.8 de 5').length).toBeGreaterThan(0);
     expect(screen.queryByText('★★★★★')).not.toBeInTheDocument();
+  });
+
+  test('S1 apresenta escolha da segunda empresa, sem tabela vazia nem CTA prematuro', () => {
+    render(
+      <CompanyComparisonModal
+        {...defaultProps}
+        companies={[companyWithPaidPlan]}
+      />
+    );
+
+    expect(screen.getByTestId('comparison-single-selection')).toBeInTheDocument();
+    expect(screen.queryByText('Avaliações')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /ver comparação completa/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /ver perfil da empresa/i })).toHaveAttribute('href', '/companies/weg-solar');
+
+    fireEvent.click(screen.getByRole('button', { name: /adicionar outra empresa/i }));
+    expect(mockPush).toHaveBeenCalledWith('/search?tab=companies');
+    expect(defaultProps.onClose).toHaveBeenCalled();
+  });
+
+  test('minimizar é diferente de fechar e preserva o seletor', () => {
+    render(
+      <CompanyComparisonModal
+        {...defaultProps}
+        companies={[companyWithPaidPlan]}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /minimizar comparação/i }));
+    expect(defaultProps.onMinimize).toHaveBeenCalledTimes(1);
+    expect(defaultProps.onClose).not.toHaveBeenCalled();
   });
 
 });
