@@ -37,8 +37,15 @@ RSpec.describe 'Admin Companies Edit', type: :request do
       page = Nokogiri::HTML(response.body)
       expect(page.text).to include('Carrossel institucional da Brand Page')
       expect(page.text).to include('Limite contratado: 3 de 3')
+      upload_links = page.css('a').select { |link| link.text.include?('Enviar ou substituir banner') }
+      expect(upload_links.size).to eq(3)
       [1, 2, 3].each do |slot|
-        expect(page.at_css("a[href*='company_id=#{company.id}'][href*='slot=#{slot}']")).to be_present
+        link = upload_links.find { |item| item.text.include?("banner #{slot}") }
+        expect(link).to be_present
+        parsed = URI.parse(link['href'])
+        expect(parsed.path).to end_with('/admin/company_hero_slides/new')
+        query = URI.decode_www_form(parsed.query.to_s).to_h
+        expect(query).to include('company_id' => company.id.to_s, 'slot' => slot.to_s)
       end
     end
 
