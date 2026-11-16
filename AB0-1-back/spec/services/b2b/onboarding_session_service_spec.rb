@@ -109,7 +109,7 @@ RSpec.describe B2b::OnboardingSessionService do
         }
       end
 
-      it 'completes onboarding creating Company, User and CompanyMember' do
+      it 'completes onboarding with pending access and an optional founder call' do
         session.update!(
           cnpj: '06990590000123',
           current_step: 'confirm_data',
@@ -154,6 +154,10 @@ RSpec.describe B2b::OnboardingSessionService do
 
         # 7. Envia PULAR na etapa de fotos -> finaliza
         expect(gateway).to receive(:send_message).with(session, /Cadastro recebido para análise/)
+        expect(gateway).to receive(:send_message).with(
+          session,
+          /Conversa rápida de 15 minutos com o fundador.*Agendar conversa: https:\/\/avaliasolar\.zohobookings\.com\/.*A conversa é opcional/m
+        )
         described_class.process_message!(session, { 'body' => 'pular' })
 
         session.reload
@@ -185,6 +189,7 @@ RSpec.describe B2b::OnboardingSessionService do
         )
 
         expect(gateway).to receive(:send_message).with(session, /e-mail profissional válido/)
+        expect(gateway).not_to receive(:send_message).with(session, /Conversa rápida de 15 minutos/)
         expect do
           described_class.process_message!(session, { 'body' => 'pular' })
         end.not_to change(Company, :count)
@@ -253,6 +258,7 @@ RSpec.describe B2b::OnboardingSessionService do
           }
         )
 
+        expect(gateway).to receive(:send_message).with(session, /Conversa rápida de 15 minutos/)
         described_class.process_message!(session, { 'body' => 'pular' })
 
         session.reload
