@@ -31,7 +31,7 @@ By default, endpoint responds with 404 to all methods unless BOTH are true:
 
 Each preview request must carry `X-MCP-Preview-Key` equal to the secret. Missing/wrong key results in 404; do not put this secret in client-side JavaScript or URL parameters.
 
-`Origin` validation: requests carrying an Origin must exactly match one comma-separated entry in `MCP_REMOTE_ALLOWED_ORIGINS`. Empty allowlist means all Origin-bearing requests are denied. No wildcard. Requests without an Origin still require the preview key.
+`Host` validation: **all requests** must match an explicit comma-separated entry in `MCP_REMOTE_ALLOWED_HOSTS` (e.g. a dedicated staging hostname). Empty allowlist means HTTP 403 even if the preview key is valid.\n\n`Origin` validation: requests carrying an Origin must exactly match one comma-separated entry in `MCP_REMOTE_ALLOWED_ORIGINS`. Empty allowlist means all Origin-bearing requests are denied. No wildcard. Requests without an Origin still require the preview key.
 
 **Security boundary:** This preview token is an internal staging/developer control, NOT OAuth. Never reuse these credentials as customer access or assume an MCP connector can supply this header. For external launch, replace this preview gate with a standards-compliant authorization resource server.
 
