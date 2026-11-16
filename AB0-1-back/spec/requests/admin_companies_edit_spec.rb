@@ -27,6 +27,21 @@ RSpec.describe 'Admin Companies Edit', type: :request do
       expect(response.body).to include('Membros da Empresa')
     end
 
+    it 'exposes three institutional banner slots with company-scoped upload links' do
+      plan.update!(name: 'Plano Pro Hero', price: 1500,
+                   features_json: PlanFeatureCatalog.defaults_for_tier('pro'))
+      company.update!(plan: plan, plan_status: 'active')
+
+      get edit_admin_company_path(company)
+      expect(response).to have_http_status(:ok)
+      page = Nokogiri::HTML(response.body)
+      expect(page.text).to include('Carrossel institucional da Brand Page')
+      expect(page.text).to include('Limite contratado: 3 de 3')
+      [1, 2, 3].each do |slot|
+        expect(page.at_css("a[href*='company_id=#{company.id}'][href*='slot=#{slot}']")).to be_present
+      end
+    end
+
     it 'renders CNPJ field as optional' do
       get edit_admin_company_path(company)
 
