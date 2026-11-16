@@ -11,7 +11,8 @@ module Api
       before_action :authorize_management!, except: :index
 
       def index
-        enabled = BrandHero::Eligibility.allowed?(current_company)
+        enabled = BrandHero::Eligibility.manageable?(current_company)
+        limit = BrandHero::Eligibility.limit(current_company)
         revisions = if enabled
                       current_company.company_hero_slides.order(slot: :asc, revision: :desc).limit(30)
                     else
@@ -19,7 +20,9 @@ module Api
                     end
         render json: {
           enabled: enabled,
-          limit: enabled ? 3 : 0,
+          limit: limit,
+          public_enabled: BrandHero::Eligibility.allowed?(current_company),
+          availability_reason: BrandHero::Eligibility.reason(current_company),
           public_version: public_version,
           slides: revisions.map { |slide| serialize_slide(slide) }
         }
@@ -27,7 +30,7 @@ module Api
 
       def create
         slot = integer_slot(params[:slot])
-        return render_invalid('invalid_slot') unless slot
+        return render_invalid('invalid_slot') unless slot && slot <= BrandHero::Eligibility.limit(current_company)
 
         request_key = request.headers['Idempotency-Key'].to_s.strip.presence
         if request_key && (request_key.bytesize > 80 || !request_key.match?(/\A[a-zA-Z0-9_-]+\z/))
@@ -142,7 +145,7 @@ module Api
         authorize current_company, :update_banner?, policy_class: CompanyDashboardPolicy
         return if performed?
 
-        return if BrandHero::Eligibility.allowed?(current_company)
+        return if BrandHero::Eligibility.manageable?(current_company)
 
         render json: { error: 'feature_locked', feature: 'brand_hero_carousel' }, status: :forbidden
       end
