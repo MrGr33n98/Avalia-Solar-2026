@@ -20,12 +20,14 @@ type ManagedSlide = {
 
 type ResponseData = {
   enabled: boolean;
+  public_enabled: boolean;
+  availability_reason: 'ready' | 'rollout_disabled' | 'paid_plan_required' | 'feature_locked' | 'quota_zero';
   limit: number;
   public_version: string;
   slides: ManagedSlide[];
 };
 
-type Props = { companyId: string; companyName: string; legacyBannerUrl?: string | null };
+type Props = { companyId: string; companyName: string };
 
 const STATUS: Record<ManagedSlide['status'], string> = {
   draft: 'Rascunho',
@@ -36,7 +38,7 @@ const STATUS: Record<ManagedSlide['status'], string> = {
   archived: 'Arquivado',
 };
 
-export default function BrandHeroCarouselManager({ companyId, companyName, legacyBannerUrl }: Props) {
+export default function BrandHeroCarouselManager({ companyId, companyName }: Props) {
   const [data, setData] = useState<ResponseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -165,16 +167,28 @@ export default function BrandHeroCarouselManager({ companyId, companyName, legac
       {message ? <p role="status" className="rounded-lg bg-slate-50 p-2 text-sm text-slate-700">{message}</p> : null}
 
       {data && !data.enabled ? (
-        <div className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600">
-          Carrossel indisponível neste momento. A configuração exige um plano pago habilitado e a liberação do recurso.
-          Nenhuma imagem existente será apagada.
+        <div className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600" role="status">
+          {data.availability_reason === 'paid_plan_required'
+            ? 'O carrossel institucional exige um plano pago ativo.'
+            : data.availability_reason === 'feature_locked'
+              ? 'Carrossel desativado no plano. Um administrador pode habilitá-lo em ActiveAdmin → Planos.'
+              : data.availability_reason === 'quota_zero'
+                ? 'Este plano está com limite de zero banners. Configure o limite em ActiveAdmin → Planos.'
+                : 'Carrossel indisponível nesta conta.'}
+          {' '}Nenhuma imagem existente será apagada.
+        </div>
+      ) : null}
+      {data?.enabled && !data.public_enabled ? (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800" role="status">
+          Seu plano permite preparar {data.limit} banner(s). A publicação pública ainda está em ativação.
+          Você pode enviar as imagens para análise sem substituir o banner atual.
         </div>
       ) : null}
 
       {data?.enabled ? (
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            {[1, 2, 3].map((slot) => {
+            {Array.from({ length: data.limit }, (_, index) => index + 1).map((slot) => {
               const active = (data.slides || []).find((slide) => slide.slot === slot && slide.status === 'published');
               const candidate = (data.slides || []).find(
                 (slide) => slide.slot === slot && ['draft', 'pending_review', 'rejected', 'approved'].includes(slide.status)
@@ -253,12 +267,7 @@ export default function BrandHeroCarouselManager({ companyId, companyName, legac
             </div>
           ) : null}
         </>
-      ) : (
-        legacyBannerUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={getFullImageUrl(legacyBannerUrl)} alt={`Banner atual de ${companyName}`} className="block h-auto w-full rounded-lg" />
-        ) : null
-      )}
+      ) : null}
     </div>
   );
 }
