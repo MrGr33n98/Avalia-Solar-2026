@@ -118,10 +118,12 @@ export default function CompanyReviews({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h3 id="social-proof-title" className="text-2xl font-bold tracking-tight text-[#0B1F4B]">
-            Prova Social
+            O que dizem sobre a empresa?
           </h3>
           <p className="text-sm text-slate-600 font-medium">
-            Veja o que clientes reais estão dizendo sobre a performance desta empresa.
+            {companyName
+              ? `Veja as opiniões e experiências de quem já contratou os serviços da ${companyName}.`
+              : 'Veja as opiniões e experiências de quem já contratou os serviços desta empresa.'}
           </p>
         </div>
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
