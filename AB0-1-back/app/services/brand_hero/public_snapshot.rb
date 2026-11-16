@@ -6,7 +6,7 @@ module BrandHero
 
     def self.call(company:, url_for_attachment:)
       allowed = Eligibility.allowed?(company)
-      slides = allowed ? company.company_hero_slides.published.limit(3).to_a : []
+      slides = allowed ? company.company_hero_slides.published.limit(Eligibility.limit(company)).to_a : []
 
       {
         version: VERSION,

@@ -1007,7 +1007,6 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
               <BrandHeroCarouselManager
                 companyId={companyId}
                 companyName={displayText(currentData.name)}
-                legacyBannerUrl={currentData.banner_url}
               />
             </div>
           </div>

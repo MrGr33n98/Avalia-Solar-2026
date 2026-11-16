@@ -9,6 +9,10 @@ on:
       - 'AB0-1-front/lib/api.ts'
       - 'AB0-1-back/app/services/brand_hero/**'
       - 'AB0-1-back/app/models/company_hero_slide.rb'
+      - 'AB0-1-back/app/models/plan.rb'
+      - 'AB0-1-back/app/models/plan_feature_catalog.rb'
+      - 'AB0-1-back/app/admin/companies.rb'
+      - 'AB0-1-back/app/admin/plans.rb'
       - 'AB0-1-back/app/admin/company_hero_slides.rb'
       - 'AB0-1-back/app/controllers/api/v1/company_dashboard_hero_slides_controller.rb'
       - 'AB0-1-back/db/migrate/*company_hero_slides*'
@@ -42,7 +46,8 @@ jobs:
           npm test -- --runInBand --runTestsByPath \
             app/companies/'[id]'/components/CompanyHeroCarousel.spec.tsx \
             app/companies/'[id]'/components/CompanyHeroBanner.spec.tsx \
-            utils/company-banner.spec.ts
+            utils/company-banner.spec.ts \
+            app/dashboard/components/BrandHeroCarouselManager.spec.tsx
 
   backend:
     name: Brand Hero Domain + Security RSpec
@@ -88,6 +93,10 @@ jobs:
           ruby -c app/services/brand_hero/image_ingest.rb
           ruby -c app/controllers/api/v1/company_dashboard_hero_slides_controller.rb
           ruby -c app/admin/company_hero_slides.rb
+          ruby -c app/admin/companies.rb
+          ruby -c app/admin/plans.rb
+          ruby -c app/models/plan_feature_catalog.rb
+          ruby -c app/models/plan.rb
       - run: bundle exec rails db:create db:schema:load db:migrate
       - run: |
           bundle exec rspec \
@@ -95,4 +104,6 @@ jobs:
             spec/services/brand_hero/eligibility_spec.rb \
             spec/services/brand_hero/publisher_spec.rb \
             spec/services/brand_hero/plan_catalog_spec.rb \
-            spec/requests/api/v1/company_dashboard_hero_slides_spec.rb
+            spec/requests/api/v1/company_dashboard_hero_slides_spec.rb \
+            spec/requests/admin_plans_spec.rb \
+            spec/requests/admin_companies_edit_spec.rb

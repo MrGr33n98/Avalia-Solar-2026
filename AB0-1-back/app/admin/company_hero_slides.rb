@@ -60,8 +60,25 @@ ActiveAdmin.register CompanyHeroSlide do
     f.semantic_errors
     f.inputs 'Imagem institucional — até três posições (não é anúncio)' do
       if f.object.new_record?
-        f.input :company, collection: Company.order(:name).limit(500)
-        f.input :slot, as: :select, collection: [1, 2, 3]
+        requested_id = params[:company_id].to_s
+        selected_company = if requested_id.match?(/\A[1-9]\d*\z/)
+                             Company.find_by(id: requested_id)
+                           end
+        if selected_company
+          f.input :company_id, as: :hidden, input_html: { value: selected_company.id }
+          para "Empresa selecionada: #{selected_company.name} (ID #{selected_company.id})",
+               class: 'inline-hints'
+          limit = BrandHero::Eligibility.limit(selected_company)
+          para "Direito do plano: #{limit} banner(s). Upload permitido somente nos slots liberados.",
+               class: 'inline-hints'
+        else
+          f.input :company_id, as: :number, label: 'ID da empresa',
+                  input_html: { min: 1 },
+                  hint: 'Para evitar a limitação das primeiras 500 empresas, acesse esta tela pelo cadastro da empresa.'
+        end
+        selected_slot = params[:slot].to_i
+        f.input :slot, as: :select, collection: [1, 2, 3], include_blank: false,
+                selected: (1..3).cover?(selected_slot) ? selected_slot : 1
       else
         f.input :company_id, input_html: { disabled: true }
         f.input :slot, input_html: { disabled: true }
@@ -127,8 +144,14 @@ ActiveAdmin.register CompanyHeroSlide do
     def create
       attrs = params.require(:company_hero_slide).permit(:company_id, :slot, :alt_text, :image)
       company = ::Company.find(attrs[:company_id])
+      slot = Integer(attrs[:slot], exception: false)
+      allowed_limit = ::BrandHero::Eligibility.limit(company)
+      if slot.nil? || slot < 1 || slot > allowed_limit
+        return redirect_to edit_admin_company_path(company),
+                           alert: "O plano permite até #{allowed_limit} banners institucionais."
+      end
+
       company.with_lock do
-        slot = attrs[:slot].to_i
         revision = company.company_hero_slides.where(slot: slot).maximum(:revision).to_i + 1
         slide = company.company_hero_slides.new(
           slot: slot, display_position: slot, revision: revision, status: 'draft',
@@ -139,7 +162,10 @@ ActiveAdmin.register CompanyHeroSlide do
         redirect_to admin_company_hero_slide_path(slide), notice: 'Revisão criada em rascunho.'
       end
     rescue ::BrandHero::ImageIngest::InvalidImage, ActiveRecord::RecordInvalid => e
-      redirect_to new_admin_company_hero_slide_path, alert: e.message
+      redirect_to new_admin_company_hero_slide_path(
+        company_id: params.dig(:company_hero_slide, :company_id),
+        slot: params.dig(:company_hero_slide, :slot)
+      ), alert: e.message
     end
 
     def update

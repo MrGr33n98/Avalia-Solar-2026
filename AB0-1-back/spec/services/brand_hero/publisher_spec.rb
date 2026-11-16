@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe BrandHero::Publisher do
   let(:company) { create(:company) }
 
-  before { allow(BrandHero::Eligibility).to receive(:allowed?).with(company).and_return(true) }
+  before { allow(BrandHero::Eligibility).to receive(:limit).with(company).and_return(3) }
 
   def slide(slot:, revision:, state:, width: 1920, height: 600)
     company.company_hero_slides.create!(
@@ -53,11 +53,28 @@ RSpec.describe BrandHero::Publisher do
   end
 
   it 'does not publish during a disabled paid-plan entitlement' do
-    allow(BrandHero::Eligibility).to receive(:allowed?).with(company).and_return(false)
+    allow(BrandHero::Eligibility).to receive(:limit).with(company).and_return(0)
     candidate = slide(slot: 1, revision: 1, state: 'pending_review')
     allow(candidate).to receive(:ready_for_publication?).and_return(true)
 
     expect { described_class.call(slide: candidate) }
       .to raise_error(BrandHero::Publisher::InvalidPublication, /plano/)
   end
+  it 'denies publishing a third position for a plan capped at two' do
+    allow(BrandHero::Eligibility).to receive(:limit).with(company).and_return(2)
+    candidate = slide(slot: 3, revision: 1, state: 'pending_review')
+    allow(candidate).to receive(:ready_for_publication?).and_return(true)
+    expect { described_class.call(slide: candidate) }
+      .to raise_error(BrandHero::Publisher::InvalidPublication, /Posição/)
+    expect(candidate.reload.status).to eq('pending_review')
+  end
+
+  it 'allows an administrator to approve a paid revision while public rollout is OFF' do
+    expect(BrandHero::Eligibility).not_to receive(:allowed?)
+    candidate = slide(slot: 1, revision: 1, state: 'pending_review')
+    allow(candidate).to receive(:ready_for_publication?).and_return(true)
+    expect { described_class.call(slide: candidate) }.not_to raise_error
+    expect(candidate.reload.status).to eq('published')
+  end
+
 end

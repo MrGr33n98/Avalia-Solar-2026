@@ -1200,7 +1200,7 @@ end
   # Institutional carousel is distinct from the advertising promo_banner gate.
   # Gate is resolved in Rails, never inferred from a client's plan label.
   def brand_hero_carousel_entitled?
-    BrandHero::Eligibility.allowed?(self)
+    BrandHero::Eligibility.manageable?(self)
   end
 
   def custom_banner_entitled?
