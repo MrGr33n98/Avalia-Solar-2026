@@ -44,6 +44,14 @@ RSpec.describe 'ActiveAdmin Plan feature editor', type: :request do
       expect(whatsapp).to be_present
       expect(limit).to be_present
       expect(limit['value']).to eq('10')
+      carousel = page.at_css('input[type="checkbox"][name="plan[plan_feature_fields][brand_hero_carousel]"]')
+      hero_limit = page.at_css('input[type="number"][name="plan[plan_feature_fields][brand_hero_slides_limit]"]')
+      expect(carousel).to be_present
+      expect(carousel['checked']).not_to be_nil
+      expect(hero_limit).to be_present
+      expect(hero_limit['value']).to eq('3')
+      expect(hero_limit['max']).to eq('3')
+      expect(page.text).to include('Carrossel institucional da Brand Page')
       expect(page.at_css('#plan-apply-template')).to be_present
       expect(page.at_css('#plan-feature-summary')).to be_present
     end
@@ -75,6 +83,29 @@ RSpec.describe 'ActiveAdmin Plan feature editor', type: :request do
       expect(plan.feature_flags['sector_question_limit']).to eq(15)
       expect(plan.feature_flags['show_alternatives']).to be(false)
       expect(PlanConfigurationAudit.last.change_reason).to eq('Ajuste controlado do catálogo')
+    end
+
+    it 'persists hero entitlement and 2-slide quota through the existing audit trail' do
+      expect do
+        patch admin_plan_path(plan), params: {
+          plan: {
+            plan_tier_template: 'pro', change_reason: 'Limite de hero para teste',
+            plan_feature_fields: { brand_hero_carousel: '1', brand_hero_slides_limit: '2' }
+          }
+        }
+      end.to change(PlanConfigurationAudit, :count).by(1)
+      expect(response).to redirect_to(admin_plan_path(plan))
+      expect(plan.reload.feature_flags).to include(
+        'brand_hero_carousel' => true, 'brand_hero_slides_limit' => 2
+      )
+    end
+
+    it 'rejects banner limits larger than three without writing flags' do
+      initial = plan.feature_flags.deep_dup
+      patch admin_plan_path(plan), params: {
+        plan: { plan_tier_template: 'pro', plan_feature_fields: { brand_hero_slides_limit: '4' } }
+      }
+      expect(plan.reload.feature_flags).to eq(initial)
     end
 
     it 'rejects invalid numeric values and keeps the persisted flags unchanged' do
