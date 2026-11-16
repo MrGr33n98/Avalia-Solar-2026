@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { fetchApi, type Company } from '@/lib/api';
 import SidebarPremium from './SidebarPremium';
 
@@ -80,9 +80,10 @@ describe('SidebarPremium: sem bloco de materiais redundante', () => {
     expect(screen.queryByText('Materiais da Empresa')).not.toBeInTheDocument();
     fireEvent.click(button);
 
-    expect(screen.getByRole('dialog', { name: 'Materiais da WEG' })).toBeInTheDocument();
-    expect(screen.getByText('Catálogo WEG')).toBeInTheDocument();
-    expect(screen.getByText('Guia técnico')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: 'Materiais da WEG' });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText('Catálogo WEG')).toBeInTheDocument();
+    expect(within(dialog).getByText('Guia técnico')).toBeInTheDocument();
   });
 
   it('mantém o convite para reivindicar o perfil quando não há materiais', async () => {
