@@ -17,6 +17,7 @@ RSpec.describe 'CompanyDashboard hero carousel API', type: :request do
 
   before do
     create(:company_member, company: company, user: user, role: :owner, status: :active)
+    allow(ENV).to receive(:[]).and_call_original
     allow(ENV).to receive(:[]).with('BRAND_HERO_CAROUSEL_ENABLED').and_return(nil)
   end
 
