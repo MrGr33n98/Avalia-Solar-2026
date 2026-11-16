@@ -21,7 +21,8 @@ RSpec.describe 'CompanyDashboard hero carousel API', type: :request do
     allow(ENV).to receive(:[]).with('BRAND_HERO_CAROUSEL_ENABLED').and_return(nil)
   end
 
-  it 'returns only an inactive gated read model before launch' do
+  it 'returns no editable slides to a Free company while public rollout is OFF' do
+    company.update!(plan: nil, plan_status: 'inactive')
     get '/api/v1/company_dashboard/hero_slides',
         params: { company_id: company.id }, headers: headers
     expect(response).to have_http_status(:ok)
@@ -57,7 +58,8 @@ RSpec.describe 'CompanyDashboard hero carousel API', type: :request do
     expect(JSON.parse(response.body)['error']).to eq('invalid_image')
   end
 
-  it 'does not authorize uploading via a disabled feature' do
+  it 'does not authorize a Free company to upload' do
+    company.update!(plan: nil, plan_status: 'inactive')
     post '/api/v1/company_dashboard/hero_slides',
          params: { company_id: company.id, slot: 1 },
          headers: headers
