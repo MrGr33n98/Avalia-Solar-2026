@@ -12,7 +12,7 @@ module Companies
       requested_ids = Array(ids).map(&:to_i).uniq.take(MAX_COMPANIES)
       matches = ::Company.active
                          .where(id: requested_ids)
-                         .includes(:plan)
+                         .includes(:plan, :categories, :primary_category)
                          .index_by(&:id)
 
       {
@@ -29,6 +29,13 @@ module Companies
         slug: company.slug,
         name: company.name,
         status: company.status,
+        description: company.description,
+        featured: company.featured?,
+        sponsored: company.sponsored?,
+        category_ids: company.categories.map(&:id),
+        categories: company.categories.map { |category| { id: category.id, name: category.name, seo_url: category.seo_url } },
+        primary_category: company.primary_category&.name,
+        project_types: company.project_types,
         segment: company.segment,
         city: company.city,
         state: company.state,
