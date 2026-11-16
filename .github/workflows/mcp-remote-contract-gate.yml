@@ -1,0 +1,74 @@
+name: MCP Remote — Transport Contract Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+      - feat/mcp-remote-transport-preview-20261116
+    paths:
+      - 'AB0-1-back/app/controllers/api/v1/mcp/remote_transport_controller.rb'
+      - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
+      - 'AB0-1-back/app/services/mcp/public_tool_registry.rb'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/remote_transport_spec.rb'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/modern_transport_spec.rb'
+      - 'AB0-1-back/spec/services/mcp/public_tool_registry_spec.rb'
+      - '.github/workflows/mcp-remote-contract-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-remote-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  transport-contract:
+    name: MCP Legacy + Modern Request Specs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avaliasolar_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: AB0-1-back
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+      SECRET_KEY_BASE: ci-only-mcp-transport-no-production-key
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+      - name: Validate Ruby syntax
+        run: |
+          ruby -c app/controllers/api/v1/mcp/remote_transport_controller.rb
+          ruby -c app/services/mcp/modern_preview_protocol.rb
+          ruby -c app/services/mcp/public_tool_registry.rb
+      - name: Prepare test database
+        run: bundle exec rails db:create db:schema:load db:migrate
+      - name: Run legacy, modern and public tool contract specs
+        run: |
+          bundle exec rspec \
+            spec/requests/api/v1/mcp/remote_transport_spec.rb \
+            spec/requests/api/v1/mcp/modern_transport_spec.rb \
+            spec/services/mcp/public_tool_registry_spec.rb
