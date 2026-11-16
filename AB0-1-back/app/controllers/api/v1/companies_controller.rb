@@ -417,6 +417,10 @@ module Api
                 applicant_user = current_user
                 unless applicant_user
                   applicant_user = User.find_by(email: applicant[:email])
+                  if applicant_user && (applicant_user.admin? || applicant_user.blocked? || applicant_user.rejected?)
+                    @company.errors.add(:base, 'Responsável não elegível para o cadastro público.')
+                    raise ActiveRecord::RecordInvalid, @company
+                  end
                   unless applicant_user
                     random_password = "Aa1!#{SecureRandom.urlsafe_base64(32)}"
                     applicant_user = User.new(
