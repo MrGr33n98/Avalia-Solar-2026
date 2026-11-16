@@ -61,7 +61,24 @@ export function useComparison() {
           return;
         }
 
-        const snapshot = await companiesApi.getComparisonSnapshots(storedIds);
+        // During a staggered deploy the new batch route may not be live yet.
+        // Existing detail endpoints still return fresh backend-owned data.
+        const snapshot = await companiesApi.getComparisonSnapshots(storedIds)
+          .catch(async () => {
+            const details = await Promise.all(
+              storedIds.map((id) => companiesApi.getById(id))
+            );
+            const companies = details.filter(
+              (item): item is Company => Boolean(item && item.status === 'active')
+            );
+            if (companies.length === 0) throw new Error('Comparison refresh unavailable');
+            return {
+              schema_version: 1,
+              companies,
+              missing_ids: storedIds.filter((id) => !companies.some((company) => company.id === id)),
+              refreshed_at: new Date().toISOString(),
+            };
+          });
         if (!active) return;
         if (snapshot.schema_version !== 1 || !Array.isArray(snapshot.companies)) {
           throw new Error('Unsupported comparison snapshot');
