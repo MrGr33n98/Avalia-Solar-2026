@@ -9,13 +9,15 @@ module CompanyClaims
         return false if request.approved?
         raise InvalidTransition, 'Apenas solicitações pendentes podem ser aprovadas.' unless request.pending?
 
+        # Set the company role before the approval callback: it checks company_user?
+        # when activating a confirmed applicant's account and ownership.
+        request.user.update!(role: 'company') unless request.user.role == 'admin'
         request.update!(
           status: 'approved',
           admin_note: note.presence,
           reviewed_at: Time.current,
           reviewed_by_admin_user: admin
         )
-        request.user.update!(role: 'company') unless request.user.role == 'admin'
       end
       true
     end
