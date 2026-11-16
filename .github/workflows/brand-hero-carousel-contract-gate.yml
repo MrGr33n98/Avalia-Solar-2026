@@ -39,7 +39,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: |
-          npm test -- --runInBand \
+          npm test -- --runInBand --runTestsByPath \
             app/companies/'[id]'/components/CompanyHeroCarousel.spec.tsx \
             app/companies/'[id]'/components/CompanyHeroBanner.spec.tsx \
             utils/company-banner.spec.ts
