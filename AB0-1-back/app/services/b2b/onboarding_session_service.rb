@@ -589,7 +589,8 @@ module B2b
       company = nil
       user = nil
       existing_user_found = false
-      temp_password = "Solar##{SecureRandom.random_number(1000..9999)}!"
+      # Undisclosed, high-entropy credential until the verified owner sets a password.
+      temp_password = "Aa1!#{SecureRandom.urlsafe_base64(32)}"
       cats_names = ''
 
       ActiveRecord::Base.transaction do
@@ -729,7 +730,16 @@ module B2b
         'B2B_ONBOARDING_BOOKING_URL',
         'https://avaliasolar.zohobookings.com/5012013000000038009/#/5012013000000038009?bookedFrom=ShortenURL'
       ).to_s.strip
-      if onboarding_booking_url.start_with?('https://avaliasolar.zohobookings.com/')
+      # Compare the parsed hostname instead of a string prefix: URLs with
+      # spoofed suffixes, credentials or a non-HTTPS scheme must not be sent.
+      booking_uri = begin
+        URI.parse(onboarding_booking_url)
+      rescue URI::InvalidURIError
+        nil
+      end
+      if booking_uri.is_a?(URI::HTTPS) &&
+         booking_uri.host == 'avaliasolar.zohobookings.com' &&
+         booking_uri.userinfo.nil?
         booking_msg = "*Conversa rápida de 15 minutos com o fundador*\n\n" \
                       "Sou o Felipe, fundador do Avalia Solar. Podemos conversar por 15 minutos " \
                       "sobre as categorias, serviços e o perfil da sua empresa.\n\n" \
@@ -737,7 +747,16 @@ module B2b
                       "A conversa é opcional, seu cadastro continua em análise e o agendamento " \
                       "não substitui a confirmação do e-mail nem a aprovação administrativa. " \
                       "Se preferir, responda por aqui com um horário."
-        send_message(@session, booking_msg)
+        begin
+          send_message(@session, booking_msg)
+        rescue StandardError => e
+          # The company and claim were committed before either WhatsApp send;
+          # optional commercial messaging must never make onboarding appear to fail.
+          Rails.logger.warn(
+            "[B2B::OnboardingSessionService] Optional booking invitation failed " \
+            "onboarding_session_id=#{@session.id} error=#{e.class}"
+          )
+        end
       end
     rescue ActiveRecord::RecordInvalid => e
       Rails.logger.error("[B2B::OnboardingSessionService] Erro ao criar empresa: #{e.record.errors.full_messages.join(', ')}")

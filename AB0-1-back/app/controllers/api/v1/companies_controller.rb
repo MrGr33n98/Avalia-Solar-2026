@@ -8,7 +8,7 @@ module Api
                     only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic categories catalog
                              catalog_showcase service_detail feature_access social_proof views_count track_view]
       before_action :authenticate_api_user,
-                    only: %i[create update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
+                    only: %i[update destroy request_admin_access analytics_historical analytics_reviews analytics_competitors
                              analytics_traffic mine]
       before_action :authorize_company_update!, only: %i[update destroy request_admin_access]
       before_action :authorize_company_scope!,
@@ -326,6 +326,30 @@ module Api
           return render json: { error: 'validation_error', message: 'Revise os campos destacados.', errors: ['Selecione categorias válidas.'], field_errors: { category_ids: ['Selecione categorias válidas.'] } }, status: :unprocessable_entity
         end
 
+        # Public web/PWA submissions register a pending claim, never active ownership.
+        applicant = nil
+        unless current_user
+          unless ActiveModel::Type::Boolean.new.cast(params[:terms_accepted]) &&
+                 ActiveModel::Type::Boolean.new.cast(params[:declaration_accepted])
+            return render_error_response(
+              message: 'Aceite os termos e confirme a veracidade dos dados.',
+              status: :unprocessable_entity, code: 'CONSENT_REQUIRED'
+            )
+          end
+
+          applicant = params.require(:applicant).permit(:name, :email, :phone, :relationship)
+          applicant[:email] = applicant[:email].to_s.strip.downcase
+          if applicant[:name].to_s.strip.length < 3 ||
+             !applicant[:email].match?(URI::MailTo::EMAIL_REGEXP) ||
+             applicant[:phone].to_s.gsub(/\D/, '').length < 10 ||
+             applicant[:relationship].blank?
+            return render_error_response(
+              message: 'Informe nome, e-mail, telefone e vínculo do responsável.',
+              status: :unprocessable_entity, code: 'INVALID_APPLICANT'
+            )
+          end
+        end
+
         @company = ::Company.new(company_params)
 
         # Injeta localização da borda (Cloudflare) se não fornecida e verificada
@@ -386,13 +410,55 @@ module Api
                 Rails.logger.info "[Audit] Photo Flow: Company logo attached successfully for ID #{@company.id}"
               end
 
-              # FIX #2: Criar CompanyMember owner automaticamente no companies#create com transação
-              if current_user
-                @company.company_members.create!(
-                  user: current_user,
-                  role: :owner
+              # Company applications never receive active ownership before review and email proof.
+              if current_user&.admin?
+                @company.company_members.create!(user: current_user, role: :owner, status: :active)
+              else
+                applicant_user = current_user
+                unless applicant_user
+                  applicant_user = User.find_by(email: applicant[:email])
+                  if applicant_user && (applicant_user.admin? || applicant_user.blocked? || applicant_user.rejected?)
+                    @company.errors.add(:base, 'Responsável não elegível para o cadastro público.')
+                    raise ActiveRecord::RecordInvalid, @company
+                  end
+                  unless applicant_user
+                    random_password = "Aa1!#{SecureRandom.urlsafe_base64(32)}"
+                    applicant_user = User.new(
+                      name: applicant[:name].to_s.strip,
+                      email: applicant[:email],
+                      password: random_password,
+                      password_confirmation: random_password,
+                      role: 'company',
+                      status: :pending,
+                      approved_by_admin: false,
+                      city: @company.city,
+                      state: @company.state,
+                      terms_accepted: true,
+                      terms_accepted_at: Time.current,
+                      public_name_consent: false,
+                      display_full_name_consent: false,
+                      review_name_consent: false,
+                      lgpd_name_consent: false,
+                      confirmed_at: nil
+                    )
+                    applicant_user.skip_confirmation_notification!
+                    applicant_user.save!
+                  end
+                end
+
+                if current_user
+                  @company.company_members.create!(
+                    user: applicant_user, role: :owner, status: :pending
+                  )
+                end
+                @company.company_access_requests.create!(
+                  user: applicant_user,
+                  status: 'pending',
+                  contact_email: current_user&.email || applicant[:email],
+                  contact_phone: applicant && applicant[:phone].to_s.gsub(/\D/, ''),
+                  message: current_user ? 'Cadastro pelo aplicativo: titularidade pendente.' :
+                    'Cadastro pelo aplicativo: responsável sem sessão; titularidade e e-mail pendentes.'
                 )
-                Rails.logger.info "[Audit] User ID #{current_user.id} assigned as owner of Company ID #{@company.id}"
               end
 
               begin
@@ -430,6 +496,11 @@ module Api
               render json: { error: 'validation_error', message: 'Revise os campos destacados.', errors: @company.errors.full_messages, field_errors: @company.errors.to_hash(true) }, status: :unprocessable_entity
             end
           end
+        rescue ActiveRecord::RecordNotUnique
+          render_error_response(
+            message: 'Este CNPJ já está cadastrado. Solicite acesso ao perfil existente.',
+            status: :conflict, code: 'COMPANY_ALREADY_EXISTS'
+          )
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "[Audit] RecordInvalid during company creation: #{e.message}"
           render json: { errors: [e.message] }, status: :unprocessable_entity
@@ -892,6 +963,13 @@ module Api
         permitted << :primary_category_id
         permitted += %i[featured status verified plan_id plan_status social_proof_enabled] if current_user&.admin?
 
+        if current_user.nil?
+          # Public applicants cannot request administrative or paid attributes.
+          permitted = [
+            :name, :description, :website, :phone, :cnpj, :email, :email_public,
+            :state, :city, { category_ids: [] }
+          ]
+        end
         attrs = params.require(:company).permit(*permitted)
         attrs[:whatsapp_enabled] = attrs[:cta_whatsapp_enabled] if attrs.key?(:cta_whatsapp_enabled) && !attrs.key?(:whatsapp_enabled)
         attrs[:whatsapp_url] = attrs[:cta_whatsapp_url] if attrs.key?(:cta_whatsapp_url) && !attrs.key?(:whatsapp_url)

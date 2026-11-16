@@ -156,7 +156,7 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(gateway).to receive(:send_message).with(session, /Cadastro recebido para análise/)
         expect(gateway).to receive(:send_message).with(
           session,
-          /Conversa rápida de 15 minutos com o fundador.*Agendar conversa: https:\/\/avaliasolar\.zohobookings\.com\/.*A conversa é opcional/m
+          /Conversa rápida de 15 minutos com o fundador.*\*Agendar conversa:\*\s+https:\/\/avaliasolar\.zohobookings\.com\/.*A conversa é opcional/m
         )
         described_class.process_message!(session, { 'body' => 'pular' })
 
@@ -178,6 +178,69 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(session.user.approved_by_admin).to be false
         expect(session.company.company_members.where(user: session.user, role: :owner, status: :active)).not_to exist
         expect(CompanyAccessRequest.where(user: session.user, company: session.company, status: 'pending')).to exist
+      end
+
+      it 'preserves the completed registration if the optional booking invitation fails' do
+        session.update!(
+          cnpj: '06990590000123',
+          current_step: 'ask_photos',
+          state: 'awaiting_photos',
+          draft_payload: { 'cnpj_data' => cnpj_data, 'user_email' => 'contato@novasolar.com.br' }
+        )
+        allow(gateway).to receive(:send_message).with(
+          session, /Conversa rápida de 15 minutos/
+        ).and_raise(StandardError, 'WAHA unavailable for optional message')
+
+        expect do
+          described_class.process_message!(session, { 'body' => 'pular' })
+        end.to change(Company, :count).by(1)
+
+        expect(session.reload.state).to eq('completed')
+        expect(session.company.status).to eq('pending')
+        expect(CompanyAccessRequest.where(user: session.user, company: session.company, status: 'pending')).to exist
+      end
+
+      [
+        'https://avaliasolar.zohobookings.com.evil.example/booking',
+        'https://attacker@avaliasolar.zohobookings.com/booking',
+        'https://invalid host/booking'
+      ].each do |unsafe_url|
+        it "never sends an untrusted founder booking URL (#{unsafe_url})" do
+          session.update!(
+            cnpj: '06990590000123',
+            current_step: 'ask_photos',
+            state: 'awaiting_photos',
+            draft_payload: { 'cnpj_data' => cnpj_data, 'user_email' => 'contato@novasolar.com.br' }
+          )
+          allow(ENV).to receive(:fetch).and_call_original
+          allow(ENV).to receive(:fetch).with('B2B_ONBOARDING_BOOKING_URL', anything).and_return(unsafe_url)
+
+          expect(gateway).to receive(:send_message).with(session, /Cadastro recebido para análise/)
+          expect(gateway).not_to receive(:send_message).with(session, /Conversa rápida de 15 minutos/)
+
+          described_class.process_message!(session, { 'body' => 'pular' })
+
+          expect(session.reload.state).to eq('completed')
+          expect(session.company.status).to eq('pending')
+        end
+      end
+
+      it 'creates new WhatsApp applicants with a high-entropy initial password' do
+        session.update!(
+          cnpj: '06990590000123',
+          current_step: 'ask_photos',
+          state: 'awaiting_photos',
+          draft_payload: { 'cnpj_data' => cnpj_data, 'user_email' => 'contato@novasolar.com.br' }
+        )
+        allow(SecureRandom).to receive(:urlsafe_base64).and_call_original
+        allow(SecureRandom).to receive(:urlsafe_base64).with(32).and_return('Z' * 43)
+
+        described_class.process_message!(session, { 'body' => 'pular' })
+
+        expect(session.reload.state).to eq('completed')
+        expect(session.user.valid_password?("Aa1!#{'Z' * 43}")).to be true
+        expect(session.user.confirmed?).to be false
+        expect(session.user.status).to eq('pending')
       end
 
       it 'refuses to fabricate an owner email when registration data has no valid address' do

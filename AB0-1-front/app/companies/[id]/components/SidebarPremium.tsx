@@ -118,7 +118,7 @@ export default function SidebarPremium({
 
       {/* 2. Card "Trabalha nesta empresa?" (Claim Profile Card) ou Material Destacado */}
       {materialsLoading ? (
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm space-y-3 animate-pulse">
+        <div className="rounded-none border border-slate-100 bg-white p-5 shadow-sm space-y-3 animate-pulse">
           <div className="h-4 bg-slate-100 rounded w-2/3" />
           <div className="h-10 bg-slate-100 rounded" />
           <div className="h-8 bg-slate-100 rounded w-1/2" />
@@ -126,6 +126,8 @@ export default function SidebarPremium({
       ) : featuredMaterial ? (
         <MaterialLeadMagnetCard
           material={featuredMaterial}
+          materialCount={materials.length}
+          onViewAll={materials.length > 1 ? () => setOpenModal(true) : undefined}
           onDownload={() => {
             if (featuredMaterial.gated) {
               setSelectedMaterial(featuredMaterial);
@@ -154,40 +156,6 @@ export default function SidebarPremium({
           </div>
         </div>
       </Card>
-
-      {/* Card de Materiais da Empresa */}
-      {materials.length > 0 && (
-        <Card className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-blue-50 p-2.5 rounded-xl text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-xs font-black text-slate-950 uppercase tracking-wider">
-                  Materiais da Empresa
-                </h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Baixe catálogos, apresentações e outros conteúdos técnicos disponibilizados pela {company.name}.
-                </p>
-              </div>
-            </div>
-            
-            <div className="pt-3 flex items-center justify-between border-t border-slate-100 mt-2">
-              <span className="text-[10px] font-bold text-slate-500">
-                {materials.length} {materials.length === 1 ? 'material disponível' : 'materiais disponíveis'}
-              </span>
-              <Button 
-                size="sm" 
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 h-8"
-                onClick={() => setOpenModal(true)}
-              >
-                Baixar materiais
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {/* 4. Slot Lateral de Anúncios Patrocinados ou Galeria de Selos */}
       {paidPlan ? (
@@ -284,7 +252,7 @@ export default function SidebarPremium({
 
       {/* Modal de Lista de Materiais */}
       <Dialog open={openModal} onOpenChange={setOpenModal}>
-        <DialogContent className="sm:max-w-[600px] rounded-2xl p-6">
+        <DialogContent className="w-[calc(100vw-24px)] max-h-[85vh] overflow-y-auto rounded-none p-4 sm:max-w-[600px] sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-black text-slate-950">
               Materiais da {company.name}
@@ -295,7 +263,7 @@ export default function SidebarPremium({
           </DialogHeader>
           <div className="grid gap-3 max-h-[400px] overflow-y-auto mt-4 pr-1">
             {materials.map((material) => (
-              <article key={material.id} className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+              <article key={material.id} className="flex items-center justify-between gap-4 rounded-none border border-slate-100 p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50">
                     <FileText className="h-5 w-5 text-blue-700" />

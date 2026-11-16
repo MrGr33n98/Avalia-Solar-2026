@@ -4,9 +4,23 @@ import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 
-// Existing 15-minute founder booking used by the WhatsApp onboarding journey.
-const ONBOARDING_BOOKING_URL =
+// Configure the same Zoho Bookings onboarding calendar in both registration channels.
+// Never expose a non-HTTPS or third-party redirect from public environment values.
+const DEFAULT_ONBOARDING_BOOKING_URL =
   'https://avaliasolar.zohobookings.com/5012013000000038009/#/5012013000000038009?bookedFrom=ShortenURL';
+
+export function getOnboardingBookingUrl(configured = process.env.NEXT_PUBLIC_B2B_ONBOARDING_BOOKING_URL): string {
+  if (!configured) return DEFAULT_ONBOARDING_BOOKING_URL;
+  try {
+    const url = new URL(configured);
+    if (url.protocol === 'https:' && url.hostname === 'avaliasolar.zohobookings.com') {
+      return url.toString();
+    }
+  } catch {
+    // Keep the existing booking link if the deployment variable is invalid.
+  }
+  return DEFAULT_ONBOARDING_BOOKING_URL;
+}
 
 export default function RegistrationPendingSuccess({
   companyName,
@@ -60,7 +74,7 @@ export default function RegistrationPendingSuccess({
           O agendamento não substitui a análise do cadastro nem a confirmação do e-mail.
         </p>
         <a
-          href={ONBOARDING_BOOKING_URL}
+          href={getOnboardingBookingUrl()}
           target="_blank"
           rel="noopener noreferrer"
           onClick={() =>
