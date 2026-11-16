@@ -27,6 +27,8 @@ As jornadas devem convergir em um **mesmo modelo de titularidade, análise, apro
 | Agendamento | `CompanyMailer` e modelos comerciais | Já usam Zoho Bookings, inclusive link de onboarding de 15 minutos. |
 | Dados de CRM | `docs/crm/WHATSAPP_CRM_FOUNDATION_IMPLEMENTATION.md` | WAHA CRM metadata-only é feature-flagged, desativado por padrão; não confundir com cadastro WhatsApp. |
 
+**P0 acesso ao cadastro app:** o endpoint `POST /api/v1/companies` exige autenticação. O `AuthController#register` cria usuários `company` como `pending`, e `AuthController#login` bloqueia usuário pending. Validar a rota real de entrada de **novo integrador** (criar conta → aprovação/confirmar email → formulário) para evitar jornada circular em que não se pode cadastrar a empresa antes de ativar a conta. Não anunciar cadastro app anônimo sem implementar fluxo seguro específico.
+
 **P0 segurança:** o membro owner do app nasce ativo pelo valor default em `CompanyMember`. Uma empresa pending pode continuar inacessível por outras verificações, mas **não basta inferir segurança a partir do status da empresa**. Verificar `CompanyMember`, `User`, `Pundit`, consultas a `active_member_companies`, endpoints de edição e ação do ActiveAdmin. O PR não deve ser aprovado sem contrato explícito e testes de autorização em ambos os canais.
 
 ## 3. Personas e necessidades
