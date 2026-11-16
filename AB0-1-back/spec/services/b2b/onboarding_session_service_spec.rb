@@ -109,7 +109,7 @@ RSpec.describe B2b::OnboardingSessionService do
         }
       end
 
-      it 'completes onboarding creating Company, User and CompanyMember' do
+      it 'completes onboarding with pending access and an optional founder call' do
         session.update!(
           cnpj: '06990590000123',
           current_step: 'confirm_data',
@@ -154,6 +154,10 @@ RSpec.describe B2b::OnboardingSessionService do
 
         # 7. Envia PULAR na etapa de fotos -> finaliza
         expect(gateway).to receive(:send_message).with(session, /Cadastro recebido para análise/)
+        expect(gateway).to receive(:send_message).with(
+          session,
+          /Conversa rápida de 15 minutos com o fundador.*\*Agendar conversa:\*\s+https:\/\/avaliasolar\.zohobookings\.com\/.*A conversa é opcional/m
+        )
         described_class.process_message!(session, { 'body' => 'pular' })
 
         session.reload
@@ -176,6 +180,69 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(CompanyAccessRequest.where(user: session.user, company: session.company, status: 'pending')).to exist
       end
 
+      it 'preserves the completed registration if the optional booking invitation fails' do
+        session.update!(
+          cnpj: '06990590000123',
+          current_step: 'ask_photos',
+          state: 'awaiting_photos',
+          draft_payload: { 'cnpj_data' => cnpj_data, 'user_email' => 'contato@novasolar.com.br' }
+        )
+        allow(gateway).to receive(:send_message).with(
+          session, /Conversa rápida de 15 minutos/
+        ).and_raise(StandardError, 'WAHA unavailable for optional message')
+
+        expect do
+          described_class.process_message!(session, { 'body' => 'pular' })
+        end.to change(Company, :count).by(1)
+
+        expect(session.reload.state).to eq('completed')
+        expect(session.company.status).to eq('pending')
+        expect(CompanyAccessRequest.where(user: session.user, company: session.company, status: 'pending')).to exist
+      end
+
+      [
+        'https://avaliasolar.zohobookings.com.evil.example/booking',
+        'https://attacker@avaliasolar.zohobookings.com/booking',
+        'https://invalid host/booking'
+      ].each do |unsafe_url|
+        it "never sends an untrusted founder booking URL (#{unsafe_url})" do
+          session.update!(
+            cnpj: '06990590000123',
+            current_step: 'ask_photos',
+            state: 'awaiting_photos',
+            draft_payload: { 'cnpj_data' => cnpj_data, 'user_email' => 'contato@novasolar.com.br' }
+          )
+          allow(ENV).to receive(:fetch).and_call_original
+          allow(ENV).to receive(:fetch).with('B2B_ONBOARDING_BOOKING_URL', anything).and_return(unsafe_url)
+
+          expect(gateway).to receive(:send_message).with(session, /Cadastro recebido para análise/)
+          expect(gateway).not_to receive(:send_message).with(session, /Conversa rápida de 15 minutos/)
+
+          described_class.process_message!(session, { 'body' => 'pular' })
+
+          expect(session.reload.state).to eq('completed')
+          expect(session.company.status).to eq('pending')
+        end
+      end
+
+      it 'creates new WhatsApp applicants with a high-entropy initial password' do
+        session.update!(
+          cnpj: '06990590000123',
+          current_step: 'ask_photos',
+          state: 'awaiting_photos',
+          draft_payload: { 'cnpj_data' => cnpj_data, 'user_email' => 'contato@novasolar.com.br' }
+        )
+        allow(SecureRandom).to receive(:urlsafe_base64).and_call_original
+        allow(SecureRandom).to receive(:urlsafe_base64).with(32).and_return('Z' * 43)
+
+        described_class.process_message!(session, { 'body' => 'pular' })
+
+        expect(session.reload.state).to eq('completed')
+        expect(session.user.valid_password?("Aa1!#{'Z' * 43}")).to be true
+        expect(session.user.confirmed?).to be false
+        expect(session.user.status).to eq('pending')
+      end
+
       it 'refuses to fabricate an owner email when registration data has no valid address' do
         session.update!(
           cnpj: '06990590000123',
@@ -185,6 +252,7 @@ RSpec.describe B2b::OnboardingSessionService do
         )
 
         expect(gateway).to receive(:send_message).with(session, /e-mail profissional válido/)
+        expect(gateway).not_to receive(:send_message).with(session, /Conversa rápida de 15 minutos/)
         expect do
           described_class.process_message!(session, { 'body' => 'pular' })
         end.not_to change(Company, :count)
@@ -253,6 +321,7 @@ RSpec.describe B2b::OnboardingSessionService do
           }
         )
 
+        expect(gateway).to receive(:send_message).with(session, /Conversa rápida de 15 minutos/)
         described_class.process_message!(session, { 'body' => 'pular' })
 
         session.reload

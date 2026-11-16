@@ -353,11 +353,11 @@ class User < ApplicationRecord
 
       onboarding_approved ||= CompanyOnboardingSession.where(
         user_id: id, company_id: request.company_id, state: 'completed'
-      ).exists?
+      ).exists? || request.message.to_s.start_with?('Cadastro pelo aplicativo:')
       request.finalize_confirmed_ownership!
     end
 
-    # WhatsApp onboarding creates an undisclosed random password. Once the
+    # WhatsApp and public app onboarding create undisclosed random passwords. Once the
     # applicant verifies the mailbox, provide a secure password-setup path.
     send_reset_password_instructions if onboarding_approved
 

@@ -138,7 +138,7 @@ export default function RegisterCompanyTab() {
           transition={{ delay: 0.4 }}
           className="text-2xl font-bold text-slate-900 mb-2"
         >
-          Cadastro enviado com sucesso!
+          Conta criada — cadastre sua empresa
         </motion.h2>
 
         <motion.p
@@ -147,8 +147,9 @@ export default function RegisterCompanyTab() {
           transition={{ delay: 0.5 }}
           className="text-slate-600 mb-8 max-w-md"
         >
-          Sua conta de empresa foi criada e está aguardando aprovação administrativa. Você receberá
-          um e-mail assim que sua conta for ativada.
+          Sua conta foi registrada. Para solicitar a aprovação, ainda falta informar o CNPJ
+          e os dados da empresa. Use o mesmo e-mail no formulário abaixo; o acesso só será
+          liberado após análise administrativa e confirmação do e-mail.
         </motion.p>
 
         <motion.div
@@ -158,11 +159,19 @@ export default function RegisterCompanyTab() {
           className="flex flex-col sm:flex-row gap-4 w-full max-w-sm"
         >
           <Button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/register-company')}
             className="w-full rounded-md bg-blue-600 text-white hover:bg-blue-700"
           >
-            Voltar para Home
+            Cadastrar minha empresa
             <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push('/')}
+            className="w-full rounded-md"
+          >
+            Voltar para Home
           </Button>
         </motion.div>
       </motion.div>
