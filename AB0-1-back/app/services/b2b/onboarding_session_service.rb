@@ -722,6 +722,23 @@ module B2b
             "pelo WhatsApp. Nossa equipe validará a titularidade e o e-mail " \
             "antes de liberar o painel. Nenhuma senha será enviada por aqui."
       send_message(@session, msg)
+
+      # The founder call is optional and does not authorize a pending registration.
+      # Do not send it if the registration failed and the transaction was rolled back.
+      onboarding_booking_url = ENV.fetch(
+        'B2B_ONBOARDING_BOOKING_URL',
+        'https://avaliasolar.zohobookings.com/5012013000000038009/#/5012013000000038009?bookedFrom=ShortenURL'
+      ).to_s.strip
+      if onboarding_booking_url.start_with?('https://avaliasolar.zohobookings.com/')
+        booking_msg = "*Conversa rápida de 15 minutos com o fundador*\n\n" \
+                      "Sou o Felipe, fundador do Avalia Solar. Podemos conversar por 15 minutos " \
+                      "sobre as categorias, serviços e o perfil da sua empresa.\n\n" \
+                      "*Agendar conversa:* #{onboarding_booking_url}\n\n" \
+                      "A conversa é opcional, seu cadastro continua em análise e o agendamento " \
+                      "não substitui a confirmação do e-mail nem a aprovação administrativa. " \
+                      "Se preferir, responda por aqui com um horário."
+        send_message(@session, booking_msg)
+      end
     rescue ActiveRecord::RecordInvalid => e
       Rails.logger.error("[B2B::OnboardingSessionService] Erro ao criar empresa: #{e.record.errors.full_messages.join(', ')}")
       send_message(@session, "⚠️ Ocorreu uma inconsistência nos dados da empresa: #{e.record.errors.full_messages.first}. Nossa equipe técnica foi notificada.")
