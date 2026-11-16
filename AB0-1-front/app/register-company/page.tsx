@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { companiesApi, type Category } from '@/lib/api';
+import { companiesApi, fetchApi, type Category } from '@/lib/api';
 import { useCategories } from '@/hooks/useCategories';
 import RegistrationPendingSuccess from '@/components/onboarding/RegistrationPendingSuccess';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ interface Step2Data {
   telefone: string;
   tipo_vinculo: string;
   declaracao_verdadeira: boolean;
+  terms_accepted: boolean;
 }
 
 type WizardStep = 1 | 2 | 3;
@@ -523,6 +524,22 @@ function Step2({
         </Label>
       </div>
 
+      <div className="flex items-start gap-3 pt-1">
+        <Checkbox
+          id="registration_terms"
+          checked={data.terms_accepted}
+          onCheckedChange={(v) => onChange({ terms_accepted: v === true })}
+          className="mt-0.5 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+        />
+        <Label htmlFor="registration_terms" className="text-sm font-normal text-gray-600 cursor-pointer">
+          Li e aceito os{' '}
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-700 underline">Termos de Uso</a>
+          {' '}e a{' '}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-700 underline">Política de Privacidade</a>.
+          {errors.terms_accepted && <span className="block text-xs text-red-500 mt-0.5">{errors.terms_accepted}</span>}
+        </Label>
+      </div>
+
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" className="flex-1 h-11 gap-2" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" />
@@ -580,6 +597,7 @@ export default function RegisterCompanyPage() {
     telefone: user?.phone ?? '',
     tipo_vinculo: '',
     declaracao_verdadeira: false,
+    terms_accepted: false,
   });
 
   const [errors1, setErrors1] = useState<Partial<Record<keyof Step1Data, string>>>({});
@@ -610,6 +628,8 @@ export default function RegisterCompanyPage() {
     if (!step2.tipo_vinculo) errs.tipo_vinculo = 'Selecione o tipo de vínculo';
     if (!step2.declaracao_verdadeira)
       errs.declaracao_verdadeira = 'Você precisa declarar que as informações são verdadeiras';
+    if (!step2.terms_accepted)
+      errs.terms_accepted = 'Aceite os termos e a política de privacidade';
     setErrors2(errs);
     return Object.keys(errs).length === 0;
   };
@@ -625,7 +645,7 @@ export default function RegisterCompanyPage() {
     setSubmitError(null);
 
     try {
-      await companiesApi.create({
+      const companyPayload = {
         name: step1.razao_social.trim(),
         cnpj: step1.cnpj.replace(/\D/g, ''),
         email: step1.email.trim(),
@@ -638,7 +658,27 @@ export default function RegisterCompanyPage() {
         description: step1.nome_comercial
           ? `Nome comercial: ${step1.nome_comercial.trim()}`
           : `Cadastro inicial da empresa ${step1.razao_social.trim()}.`,
-      });
+      };
+
+      if (user) {
+        await companiesApi.create(companyPayload);
+      } else {
+        await fetchApi('/companies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company: companyPayload,
+            applicant: {
+              name: step2.nome_completo.trim(),
+              email: step2.email_corporativo.trim(),
+              phone: step2.telefone.replace(/\\D/g, ''),
+              relationship: step2.tipo_vinculo,
+            },
+            terms_accepted: step2.terms_accepted,
+            declaration_accepted: step2.declaracao_verdadeira,
+          }),
+        });
+      }
       setCreatedCompanyName(step1.razao_social);
       setStep(3);
     } catch (error: unknown) {
