@@ -227,3 +227,9 @@ skills-lock.json
 
 # Skill/ferramenta local
 interface-design/
+
+# Aider Desk - configurações e arquivos locais
+.aider-desk/
+
+# Arquivos gerados e saídas temporárias
+/outputs/

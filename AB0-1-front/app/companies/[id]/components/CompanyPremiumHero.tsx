@@ -57,6 +57,7 @@ export default function CompanyPremiumHero({
         ) : bannerState.kind === 'free-plan-placeholder' ? (
           <CompanyFreeBannerPlaceholder
             alt="Banner institucional Avalia Solar"
+            company={company}
             priority
             desktopCover
           />
@@ -69,7 +70,7 @@ export default function CompanyPremiumHero({
             onError={() => setBannerError(true)}
           />
         ) : (
-          <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
+          <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" company={company} priority />
         )}
         {showTechnicalPlaceholder && (
           <div className="pointer-events-none absolute inset-0 ring-1 ring-slate-300/60">
