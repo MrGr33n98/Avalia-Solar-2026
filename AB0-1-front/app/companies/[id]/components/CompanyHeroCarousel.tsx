@@ -62,17 +62,15 @@ export default function CompanyHeroCarousel({ companyId, companyName, carousel, 
 
   const navigate = useCallback((delta: number, source: 'manual' | 'auto') => {
     if (slides.length < 2) return;
-    setIndex((prev) => {
-      const next = (prev + delta + slides.length) % slides.length;
-      track('hero_slide_advanced', {
-        company_id: companyId, slide_id: slides[next].id,
-        from_index: prev, to_index: next, source, placement: 'brand_page_hero',
-        sponsored: false,
-      });
-      return next;
+    const next = (index + delta + slides.length) % slides.length;
+    setIndex(next);
+    track('hero_slide_advanced', {
+      company_id: companyId, slide_id: slides[next].id,
+      from_index: index, to_index: next, source, placement: 'brand_page_hero',
+      sponsored: false,
     });
     if (source === 'manual') setUserInteracted(true);
-  }, [slides, companyId]);
+  }, [slides, companyId, index]);
 
   useEffect(() => {
     if (slides.length < 2 || paused || hidden || reducedMotion || userInteracted) return;
