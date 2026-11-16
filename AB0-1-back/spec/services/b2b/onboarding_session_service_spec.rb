@@ -200,6 +200,31 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(CompanyAccessRequest.where(user: session.user, company: session.company, status: 'pending')).to exist
       end
 
+      [
+        'https://avaliasolar.zohobookings.com.evil.example/booking',
+        'https://attacker@avaliasolar.zohobookings.com/booking',
+        'https://invalid host/booking'
+      ].each do |unsafe_url|
+        it "never sends an untrusted founder booking URL (#{unsafe_url})" do
+          session.update!(
+            cnpj: '06990590000123',
+            current_step: 'ask_photos',
+            state: 'awaiting_photos',
+            draft_payload: { 'cnpj_data' => cnpj_data, 'user_email' => 'contato@novasolar.com.br' }
+          )
+          allow(ENV).to receive(:fetch).and_call_original
+          allow(ENV).to receive(:fetch).with('B2B_ONBOARDING_BOOKING_URL', anything).and_return(unsafe_url)
+
+          expect(gateway).to receive(:send_message).with(session, /Cadastro recebido para análise/)
+          expect(gateway).not_to receive(:send_message).with(session, /Conversa rápida de 15 minutos/)
+
+          described_class.process_message!(session, { 'body' => 'pular' })
+
+          expect(session.reload.state).to eq('completed')
+          expect(session.company.status).to eq('pending')
+        end
+      end
+
       it 'creates new WhatsApp applicants with a high-entropy initial password' do
         session.update!(
           cnpj: '06990590000123',
