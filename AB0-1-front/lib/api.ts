@@ -2863,7 +2863,32 @@ export const companyDashboardApi = {
     }),
 };
 
+/**
+ * Public comparison snapshots are sourced directly from the Rails
+ * entitlement and Company#comparison_profile policies.
+ */
+export interface CompanyComparisonSnapshotsResponse {
+  schema_version: number;
+  refreshed_at: string;
+  companies: Company[];
+  missing_ids: number[];
+}
+
 export const companiesApi = {
+  getComparisonSnapshots: async (ids: number[]): Promise<CompanyComparisonSnapshotsResponse> => {
+    const unique = Array.from(new Set(ids));
+    if (!unique.length || unique.length > 3 ||
+        unique.some((id) => !Number.isSafeInteger(id) || id <= 0)) {
+      throw new Error('Selecione entre 1 e 3 IDs válidos para comparar.');
+    }
+    return fetchApi<CompanyComparisonSnapshotsResponse>('/companies/compare', {
+      params: { ids: unique.join(',') },
+      noCache: true,
+      retries: 0,
+      timeout: 10000,
+    });
+  },
+
   getAll: async (
     params: {
       status?: string;
