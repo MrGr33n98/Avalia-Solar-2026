@@ -209,3 +209,73 @@ Não emitir eventos novos antes de atualizar contrato/allowlist do pipeline. `bo
 3. Estabelecer política de consentimento/opt-out para mensagens comerciais subsequentes.
 4. Definir única política de criação de CompanyMember e User para cadastro app e WA; prioridade P0.
 5. Definir atribuição entre WA → app sem tokens inseguros na URL.
+
+## 11. Implementação corretiva — 16/11/2026 (PR #136)
+
+> Esta seção atualiza o AS-IS original; os riscos anteriormente mapeados para o cadastro web foram tratados no código da branch, mas a disponibilidade em produção depende do CI e da revisão humana. A seção 2 descreve o estado anterior às correções.
+
+### Contrato do formulário público (POST /api/v1/companies)
+
+O formulário `/register-company` já aceita preenchimento sem sessão. Ao enviar sem login, chama o mesmo endpoint com um contrato explícito de solicitação, **não uma concessão de acesso**:
+
+```json
+{
+  "company": {
+    "name": "Empresa Exemplo",
+    "cnpj": "11222333000181",
+    "email": "contato@empresa.example",
+    "email_public": "comercial@empresa.example",
+    "state": "SP",
+    "city": "São Paulo",
+    "phone": "11999999999",
+    "category_ids": [71]
+  },
+  "applicant": {
+    "name": "Representante Exemplo",
+    "email": "representante@empresa.example",
+    "phone": "11999999999",
+    "relationship": "owner"
+  },
+  "terms_accepted": true,
+  "declaration_accepted": true
+}
+```
+
+Regras implementadas:
+- Consentimento/declaração e dados do responsável obrigatórios **quando não há autenticação**. A UI solicita ambos explicitamente.
+- Campos passíveis de edição pelo visitante limitados à identificação da empresa; atributos administrativos, de plano, badge ou CTA comercial não são aceitos.
+- Empresa sempre nasce em `pending`/`pending_review`; a solicitação `CompanyAccessRequest` nasce em `pending`.
+- Se não existir usuário com o e-mail informado, é criada conta `company/pending` com senha inicial aleatória de alta entropia que não é divulgada no WhatsApp nem no frontend.
+- Se existir usuário, a conta e a senha **não são alteradas** pelo visitante; cria-se apenas pedido pendente para análise administrativa. Exige-se aprovação independente e verificação do e-mail.
+- Não é criado `CompanyMember active` para solicitação pública. Para cadastro autenticado, o vínculo owner começa como `pending`.
+- CNPJ com índice único no PostgreSQL evita criação concorrente de registros duplicados; fluxo de CNPJ existente continua sem reivindicação automática.
+- A aprovação da empresa pelo ActiveAdmin usa o `CompanyClaims::DecideRequest` quando há solicitação pendente; o e-mail é confirmado em etapa independente.
+- Uma validação no modelo Company bloqueia transição para `active` quando existe claim sem proprietário previamente aprovado, confirmado e ativo. A ação de lote também rejeita solicitações pendentes.
+- Após reivindicação aprovada e confirmação do e-mail no fluxo público, segue e-mail de definição de senha.
+
+### WhatsApp / agendamento / resiliência
+- RSpec de texto corrigido para formato WhatsApp `*Agendar conversa:*`.
+- Cadastro WhatsApp cria senha de alta entropia para contas novas, mantendo senha anterior de usuários existentes.
+- Falha de envio da **mensagem comercial opcional** não invalida o cadastro persistido; falha registrada sem dados pessoais.
+- App usa link configurável `NEXT_PUBLIC_B2B_ONBOARDING_BOOKING_URL`, com fallback para o Zoho Bookings conhecido e validação de `https:`/hostname.
+- Backend mantém `B2B_ONBOARDING_BOOKING_URL` como variável opcional, com fallback.
+- O registro de cliques não deve ser tratado como reserva confirmada: `booking_confirmed` depende de evidência do Zoho.
+
+### Testes adicionados/atualizados
+- RSpec de mensagem WhatsApp, credencial inicial e indisponibilidade de gateway comercial.
+- Request specs do formulário sem login, consentimento, ausência de privilégios, CNPJ duplicado e cadeia aprovação → confirmação de e-mail → owner ativo.
+- Testes do ActiveAdmin para confirmação antes da ativação.
+- Model spec para bloquear ativação por caminhos alternativos enquanto o claim estiver pendente.
+- Spec de mudança `review` → `company` para garantir `approved_by_admin`.
+- RTL/Jest do CTA comercial e validação da URL.
+
+### Checklist obrigatório para merge
+- [ ] CI de backend/Frontend e E2E verdes no commit HEAD desta branch.
+- [ ] Revisão de segurança da API pública, incluindo spam, autorização multi-tenant e usuários preexistentes.
+- [ ] QA manual em dispositivo móvel e desktop, cadastro com e sem autenticação.
+- [ ] Confirmar URL Zoho e recebimento dos e-mails transacionais.
+- [ ] Verificar monitoramento, idempotência dos webhooks WAHA e comportamento de reenvio.
+- [ ] Aprovar rollout e plano de rollback.
+
+### Rollback
+Reverter o merge de PR #136 caso o novo fluxo apresente regressão; não existem migrations introduzidas pelo diff atual. O CRM WAHA continua fora deste diff/rollout e desativado por padrão.
