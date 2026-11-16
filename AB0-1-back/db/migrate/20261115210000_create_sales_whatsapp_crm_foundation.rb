@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateSalesWhatsappCrmFoundation < ActiveRecord::Migration[7.0]
+class CreateSalesWhatsappCRMFoundation < ActiveRecord::Migration[7.0]
   def change
     create_table :sales_whatsapp_threads do |t|
       t.references :company, null: false, foreign_key: true
