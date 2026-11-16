@@ -77,7 +77,10 @@ class CompanyAccessRequest < ApplicationRecord
     return false unless approved? && reviewed_by_admin_user_id.present? && user.confirmed?
 
     ActiveRecord::Base.transaction do
-      if user.company_user? && (user.pending? || user.active?)
+      # User#active? includes authorization (approved_by_admin or membership).
+      # An active-status applicant can be awaiting this approval; relying on
+      # active? would skip the grant while still creating owner membership.
+      if user.company_user? && (user.pending? || user.active_status?)
         changes = { approved_by_admin: true }
         changes[:status] = :active if user.pending?
         user.update!(changes)
