@@ -14,10 +14,11 @@ module BrandHero
         raise InvalidImage, 'Formato inválido: use PNG, JPG ou WebP'
       end
 
-      slide.image.attach(upload)
-      blob = slide.image.blob
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: upload.tempfile, filename: File.basename(upload.original_filename),
+        content_type: detected_type, identify: false
+      )
       blob.analyze
-
       meta = blob.metadata
       width = meta['width'].to_i
       height = meta['height'].to_i
@@ -25,12 +26,15 @@ module BrandHero
         raise InvalidImage, 'Imagem precisa ter ao menos 800×200px e até 35 megapixels'
       end
 
+      slide.image.attach(blob)
       slide.assign_attributes(image_width: width, image_height: height,
                               image_format: detected_type, image_bytes: blob.byte_size)
       slide
     rescue InvalidImage
+      blob&.purge if blob && !blob.attachments.exists?
       raise
     rescue StandardError => e
+      blob&.purge if defined?(blob) && blob && !blob.attachments.exists?
       Rails.logger.warn("[BrandHero] rejected unreadable upload: #{e.class}: #{e.message}")
       raise InvalidImage, 'Não foi possível analisar a imagem'
     end
