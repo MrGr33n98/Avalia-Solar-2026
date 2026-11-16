@@ -176,6 +176,22 @@ export interface DirectMessage {
   attachment_url?: string | null;
 }
 
+export interface CompanyHeroCarouselSlide {
+  id: number;
+  slot: number;
+  position: number;
+  image_url: string;
+  width: number;
+  height: number;
+  alt_text?: string | null;
+}
+
+export interface CompanyHeroCarouselData {
+  version: number;
+  enabled: boolean;
+  slides: CompanyHeroCarouselSlide[];
+}
+
 export interface CompanyComparisonProfile {
   quote_turnaround?: 'within_24h' | 'within_3_days' | 'consult' | string | null;
   technical_visit?: 'free' | 'paid' | 'consult' | 'not_offered' | string | null;
@@ -237,6 +253,7 @@ export interface Company {
   created_at: string;
   updated_at: string;
   banner_url?: string | null;
+  hero_carousel?: CompanyHeroCarouselData | null;
   logo_url?: string | null;
   verified_badge_url?: string | null;
   verified_badge_image_url?: string | null;
