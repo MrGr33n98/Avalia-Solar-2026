@@ -73,6 +73,20 @@ ActiveAdmin.register CompanyHeroSlide do
     f.actions
   end
 
+  action_item :submit_for_review, only: :show, if: proc { %w[draft rejected].include?(resource.status) } do
+    link_to 'Enviar para revisão', submit_admin_company_hero_slide_path(resource),
+            method: :post, data: { confirm: 'Enviar imagem para moderação?' }
+  end
+
+  member_action :submit, method: :post do
+    if %w[draft rejected].include?(resource.status) && resource.ready_for_publication?
+      resource.update!(status: 'pending_review', rejection_reason: nil)
+      redirect_to resource_path, notice: 'Revisão enviada para moderação.'
+    else
+      redirect_to resource_path, alert: 'Imagem inválida ou revisão não editável.'
+    end
+  end
+
   action_item :approve_and_publish, only: :show, if: proc { %w[pending_review approved].include?(resource.status) } do
     link_to 'Aprovar e publicar', approve_admin_company_hero_slide_path(resource),
             method: :post, data: { confirm: 'Publicar esta revisão no hero da empresa?' }
